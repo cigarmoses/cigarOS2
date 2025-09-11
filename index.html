@@ -66,49 +66,81 @@
   </div>
 
   <script>
-    function slug(s){
-      return (s||'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'') || 'brand';
-    }
-    function openLogoModal(src){
-      const img = document.getElementById('logoModalImg');
-      img.src = src;
-      document.getElementById('logoModal').style.display = 'flex';
-    }
-    function closeLogoModal(){
-      document.getElementById('logoModal').style.display = 'none';
-    }
+  // Utilities
+  function slug(s){
+    return (s||'').toLowerCase()
+      .replace(/&/g,' and ')
+      .replace(/[^a-z0-9]+/g,'-')
+      .replace(/-+/g,'-')
+      .replace(/^-|-$/g,'') || 'brand';
+  }
+  function openLogoModal(src){
+    const img = document.getElementById('logoModalImg');
+    img.src = src;
+    document.getElementById('logoModal').style.display = 'flex';
+  }
+  function closeLogoModal(){
+    document.getElementById('logoModal').style.display = 'none';
+  }
 
-    async function load(){
-      const res = await fetch('/.netlify/functions/get-data', { cache: 'no-store' });
-      const data = res.ok ? await res.json() : [];
-      const state = { rows: data, q: '' };
-      const elList = document.getElementById('list');
-      const elSearch = document.getElementById('search');
-      elSearch.addEventListener('input', e => { state.q = e.target.value.toLowerCase(); render(); });
-      function invClass(n){ if(n<=0) return 'red'; if(n<10) return 'amber'; return 'green'; }
-      function render(){
-        const rows = state.rows.filter(r => (r.brand+' '+r.item+' '+r.vitola).toLowerCase().includes(state.q));
-        elList.innerHTML = rows.map(r => {
-          const inv = Number(r.inventory||0);
-          const letter = (r.brand && r.brand[0]) ? r.brand[0].toUpperCase() : '?';
-          const src = (r.icon && r.icon.trim()) ? r.icon : ('img/' + slug(r.brand) + '.svg');
-          const imgEl = "<img src='"+src+"' data-letter='"+letter+"' alt='"+(r.brand||"")+"' style='width:100%;height:100%;object-fit:cover;' onerror=\\"this.outerHTML='<span>'+this.dataset.letter+'</span>'\\">";
-          const icon = "<div class='brandIcon' onclick=\\"openLogoModal('"+src+"')\\">"+imgEl+"</div>";
-          return "<div class='row' role='listitem'>"
-            + icon
-            + "<div class='stack'>"
-              + "<div class='brand'>"+(r.brand||'')+"</div>"
-              + "<div class='item'>"+(r.item||'')+"</div>"
-              + "<div class='vitola'>"+(r.vitola||'')+"</div>"
-            + "</div>"
-            + "<div class='price'>"+(r.price||'')+"</div>"
-            + "<div class='inv'><span class='pill "+invClass(inv)+"'>"+inv+"</span></div>"
-          + "</div>";
-        }).join('');
+  // State + elements
+  let ALL_ROWS = [];
+  const elList   = document.getElementById('list');
+  const elSearch = document.getElementById('search');
+
+  function invClass(n){ n = Number(n||0); if(n<=0) return 'red'; if(n<10) return 'amber'; return 'green'; }
+
+  function render(){
+    const q = (elSearch.value||'').toLowerCase();
+    const rows = ALL_ROWS.filter(r => (r.brand+' '+r.item+' '+r.vitola).toLowerCase().includes(q));
+
+    elList.innerHTML = rows.map(r => {
+      const inv = Number(r.inventory||0);
+      const letter = (r.brand && r.brand[0]) ? r.brand[0].toUpperCase() : '?';
+      const src = (r.icon && r.icon.trim()) ? r.icon : ('img/' + slug(r.brand) + '.svg');
+
+      const imgEl = "<img src='"+src+"' data-letter='"+letter+"' alt='"+(r.brand||"")+"' style='width:100%;height:100%;object-fit:cover;' onerror=\"this.outerHTML='<span>'+this.dataset.letter+'</span>'\">";
+      const icon  = "<div class='brandIcon' onclick=\"openLogoModal('"+src+"')\">"+imgEl+"</div>";
+
+      return "<div class='row' role='listitem'>"
+        + icon
+        + "<div class='stack'>"
+          + "<div class='brand'>"+(r.brand||'')+"</div>"
+          + "<div class='item'>"+(r.item||'')+"</div>"
+          + "<div class='vitola'>"+(r.vitola||'')+"</div>"
+        + "</div>"
+        + "<div class='price'>"+(r.price||'')+"</div>"
+        + "<div class='inv'><span class='pill "+invClass(inv)+"'>"+inv+"</span></div>"
+      + "</div>";
+    }).join('') || "<div style='padding:12px;color:#6b7280'>No items match your search.</div>";
+  }
+
+  async function load(){
+    try {
+      // Add cache-buster + no-store to avoid stale responses
+      const url = '/.netlify/functions/get-data?ts=' + Date.now();
+      const res = await fetch(url, { cache: 'no-store' });
+      if(!res.ok){
+        const txt = await res.text().catch(()=> '');
+        throw new Error('get-data failed: ' + res.status + ' ' + txt);
       }
+      const data = await res.json();
+      console.log('Loaded rows:', data);
+      if(!Array.isArray(data)){
+        throw new Error('get-data returned non-array JSON');
+      }
+      ALL_ROWS = data;
       render();
+    } catch (err){
+      console.error('Load error:', err);
+      elList.innerHTML = "<div style='padding:12px;color:#991b1b'>Error loading data. See console for details.</div>";
     }
-    load();
+  }
+
+  // Wire up search and load
+  elSearch.addEventListener('input', render);
+  // Kick off
+  load();
   </script>
 </body>
 </html>
