@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Smoke POS – Admin</title>
+  <style>
+    body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;margin:0;padding:16px}
+    h1{margin:0 0 12px;font-size:18px}
+    .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    button,input[type=file]{font-size:14px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{border:1px solid #e5e7eb;padding:6px 8px;font-size:13px;vertical-align:top}
+    th{background:#f9fafb;text-align:left}
+    td input{width:100%;border:1px solid #e5e7eb;border-radius:6px;padding:6px 8px;font-size:13px}
+    .small{font-size:12px;color:#6b7280}
+    #lock{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center}
+    #lock>div{border:1px solid #e5e7eb;border-radius:12px;padding:20px 16px;max-width:320px;width:92%}
+    #lock input{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;margin-top:8px}
+    #lock button{margin-top:8px;padding:8px 12px;border-radius:8px;background:#111827;color:#fff}
+  </style>
+</head>
+<body>
+  <div id="lock">
+    <div>
+      <div style="font-weight:700;margin-bottom:4px;">Admin Access</div>
+      <div class="small">Enter your admin token to edit and save.</div>
+      <input id="tok" placeholder="Enter ADMIN_TOKEN" />
+      <button id="go">Unlock</button>
+      <div id="msg" class="small" style="color:#991b1b;margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <h1 style="display:none">Smoke POS — Admin Editor</h1>
+  <div class="bar" style="display:none">
+    <input id="file" type="file" accept=".json,.csv"/>
+    <button id="add">Add Row</button>
+    <button id="exportJson">Export JSON</button>
+    <button id="exportCsv">Export CSV</button>
+    <button id="saveServer" style="background:#111827;color:#fff;border-radius:8px;padding:8px 12px">Save to server</button>
+    <span class="small">Fields: brand, item, vitola, price, inventory, icon (SVG URL or /img/&lt;brand&gt;.svg)</span>
+  </div>
+
+  <table id="tbl" style="display:none">
+    <thead>
+      <tr>
+        <th>brand</th><th>item</th><th>vitola</th><th>price</th><th>inventory</th><th>icon</th><th>remove</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+<script>
+let rows = [];
+let ADMIN_TOKEN = "";
+
+function showUI(show){
+  document.querySelector("h1").style.display = show? "block":"none";
+  document.querySelector(".bar").style.display = show? "flex":"none";
+  document.querySelector("#tbl").style.display = show? "table":"none";
+}
+
+async function verify(t){
+  const r = await fetch("/.netlify/functions/verify-token", { method:"POST", headers:{"x-admin-token": t} });
+  return r.ok;
+}
+
+document.getElementById("go").onclick = async ()=>{
+  const t = document.getElementById("tok").value.trim();
+  if(!t){ document.getElementById("msg").textContent = "Token is required."; return; }
+  const ok = await verify(t);
+  if(ok){
+    ADMIN_TOKEN = t;
+    document.getElementById("lock").style.display = "none";
+    showUI(true);
+    boot();
+  }else{
+    document.getElementById("msg").textContent = "Invalid token.";
+  }
+};
+
+function render(){
+  const tb = document.querySelector("#tbl tbody");
+  tb.innerHTML = "";
+  rows.forEach((r,i)=>{
+    const tr = document.createElement("tr");
+    ["brand","item","vitola","price","inventory","icon"].forEach(k=>{
+      const td = document.createElement("td");
+      const inp = document.createElement("input");
+      inp.value = r[k] ?? "";
+      inp.oninput = (e)=>{ rows[i][k] = e.target.value; };
+      td.appendChild(inp); tr.appendChild(td);
+    });
+    const tdDel = document.createElement("td");
+    const btn = document.createElement("button");
+    btn.textContent = "Delete";
+    btn.onclick = ()=>{ rows.splice(i,1); render(); };
+    tdDel.appendChild(btn); tr.appendChild(tdDel);
+    tb.appendChild(tr);
+  });
+}
+
+function toCSV(arr){
+  const cols = ["brand","item","vitola","price","inventory","icon"];
+  const esc = v => ('"'+String(v??"").replace(/"/g,'""')+'"');
+  const head = cols.map(esc).join(",");
+  const body = arr.map(r => cols.map(c=>esc(r[c]??"")).join(",")).join("\n");
+  return head + "\n" + body;
+}
+
+function fromCSV(txt){
+  const lines = txt.split(/\r?\n/).filter(Boolean);
+  const head = lines.shift().split(",").map(s=>s.replace(/^\"|\"$/g,"").trim().toLowerCase());
+  const idx = (k)=> head.indexOf(k);
+  return lines.map(line=>{
+    const cells = line.match(/\s*(\"([^\"]|\"\")*\"|[^,]*)\s*(,|$)/g).map(s=>s.replace(/(^,|,$)/g,""));
+    const clean = cells.map(c=>c.replace(/^\"|\"$/g,"").replace(/\"\"/g,'"'));
+    return { brand: clean[idx("brand")]||"", item: clean[idx("item")]||"", vitola: clean[idx("vitola")]||"",
+      price: clean[idx("price")]||"", inventory: clean[idx("inventory")]||"0", icon: clean[idx("icon")]||"" };
+  });
+}
+
+async function boot(){
+  const r = await fetch("/.netlify/functions/get-data", {cache:"no-store"});
+  rows = r.ok ? await r.json() : [];
+  render();
+
+  document.getElementById("file").addEventListener("change", async (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const txt = await f.text();
+    if(f.name.endsWith(".json")) rows = JSON.parse(txt);
+    else rows = fromCSV(txt);
+    render();
+  });
+
+  document.getElementById("add").onclick = ()=>{ rows.push({brand:"",item:"",vitola:"",price:"",inventory:"0",icon:""}); render(); };
+  document.getElementById("exportJson").onclick = ()=>{
+    const blob = new Blob([JSON.stringify(rows, null, 2)], {type:"application/json"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "data.json"; a.click();
+  };
+  document.getElementById("exportCsv").onclick = ()=>{
+    const blob = new Blob([toCSV(rows)], {type:"text/csv"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "data.csv"; a.click();
+  };
+  document.getElementById("saveServer").onclick = async ()=>{
+    const res = await fetch("/.netlify/functions/save-data", {
+      method: "POST",
+      headers: {"Content-Type":"application/json","x-admin-token": ADMIN_TOKEN},
+      body: JSON.stringify(rows)
+    });
+    if(res.ok) alert("Saved!");
+    else alert("Save failed: " + await res.text());
+  };
+}
+</script>
+</body>
+</html>
