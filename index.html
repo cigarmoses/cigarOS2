@@ -2,145 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smoke POS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>cigarOS</title>
+  <meta name="theme-color" content="#f2f2f2">
   <style>
-    :root { --border:#e5e7eb; --text:#111827; --muted:#6b7280; --bg:#ffffff;
-      --pill-green-bg:#d1fae5; --pill-green-fg:#065f46;
-      --pill-amber-bg:#fef3c7; --pill-amber-fg:#92400e;
-      --pill-red-bg:#fee2e2; --pill-red-fg:#991b1b; }
+    :root{
+      --bg: #f2f2f2;
+      --card: #ffffff;
+      --ring: #e5e7eb;
+      --shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.06);
+    }
     *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:var(--bg)}
-    header{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);
-      border-bottom:1px solid var(--border);padding:10px 12px;z-index:10}
-    h1{margin:0 0 8px;font-size:18px;letter-spacing:.4px}
-    .search{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px}
-
-    .thead{display:flex; align-items:center; gap:12px; padding:8px 12px; font-size:11px; font-weight:600; color:var(--muted); border-bottom:1px solid var(--border)}
-    .th-brand{width:48px}
-    .th-item{flex:1 1 auto}
-    .th-price{width:100px; text-align:right}
-    .th-inv{width:100px; text-align:right}
-
-    .row{display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid var(--border)}
-    .brandIcon{width:40px;height:40px;border-radius:10px;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:700;color:#374151;flex:0 0 40px; cursor:pointer}
-    .stack{flex:1 1 auto; min-width:0; overflow:hidden}
-    .brand{font-size:13px; font-weight:700; line-height:1.1}
-    .item{font-size:12px; color:#374151; line-height:1.2; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-    .vitola{font-size:11px; color:#6b7280; margin-top:3px}
-    .price{width:100px; text-align:right; font-size:13px; font-weight:700; flex:0 0 100px}
-    .inv{width:100px; text-align:right; flex:0 0 100px}
-    .pill{display:inline-block; font-size:11px; font-weight:700; padding:4px 8px; border-radius:999px}
-    .pill.green{background:var(--pill-green-bg); color:var(--pill-green-fg)}
-    .pill.amber{background:var(--pill-amber-bg); color:var(--pill-amber-fg)}
-    .pill.red{background:var(--pill-red-bg); color:var(--pill-red-fg)}
-    .wrap{max-width:1100px; margin:0 auto}
-
-    #logoModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;align-items:center;justify-content:center}
-    #logoModalImg{max-width:92%;max-height:92%;background:#fff;padding:10px;border-radius:8px}
-    #logoClose{position:absolute;top:18px;right:24px;color:#fff;font-size:30px;cursor:pointer}
-    #logoBackdrop{position:absolute;inset:0}
+    html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    /* Header */
+    header{display:flex;align-items:center;justify-content:center;padding:26px 16px 10px}
+    header img{height:64px;max-width:70vw;object-fit:contain}
+    /* Grid */
+    main{max-width:980px;margin:8px auto 60px;padding:0 16px}
+    .grid{
+      display:grid; gap:14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @media (min-width:640px){ .grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (min-width:960px){ .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    /* Tile buttons (icon only) */
+    .tile{
+      display:flex; align-items:center; justify-content:center;
+      min-height:120px; padding:18px;
+      background:var(--card); border:1px solid var(--ring); border-radius:18px;
+      box-shadow:var(--shadow);
+      text-decoration:none; outline:none; touch-action:manipulation;
+      transition: transform .06s ease, box-shadow .15s ease;
+    }
+    .tile:active{ transform: translateY(1px); }
+    .tile:focus-visible{ box-shadow:0 0 0 3px #93c5fd, var(--shadow); }
+    .tile img{ width:56px; height:56px; display:block; }
+    /* Subtle hover lift on larger screens */
+    @media (hover:hover){
+      .tile:hover{ transform: translateY(-1px); }
+    }
+    /* Footer */
+    footer{color:#94a3b8;text-align:center;padding:24px 16px 38px;font-size:12px}
+    /* Reduce tap highlight on iOS */
+    a{-webkit-tap-highlight-color: rgba(0,0,0,0)}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>POS</h1>
-      <input id="search" class="search" placeholder="Search by brand, cigar, or vitola…" />
-    </header>
+  <header>
+    <!-- Replace with your vector logo -->
+    <img src="/img/logo.svg" alt="Shop logo">
+  </header>
 
-    <div class="thead">
-      <div class="th-brand">Brand</div>
-      <div class="th-item">Item</div>
-      <div class="th-price">Price</div>
-      <div class="th-inv">Inventory</div>
-    </div>
+  <main>
+    <section class="grid" aria-label="App grid">
+      <!-- TODAY -->
+      <a class="tile" href="/today.html" aria-label="Today">
+        <img src="/img/icons/today.svg" alt="">
+      </a>
+      <!-- POS -->
+      <a class="tile" href="/pos.html" aria-label="POS">
+        <img src="/img/icons/pos.svg" alt="">
+      </a>
+      <!-- REPORTS -->
+      <a class="tile" href="/reports.html" aria-label="Reports">
+        <img src="/img/icons/reports.svg" alt="">
+      </a>
+      <!-- LOYALTY -->
+      <a class="tile" href="/loyalty.html" aria-label="Loyalty">
+        <img src="/img/icons/loyalty.svg" alt="">
+      </a>
+      <!-- HUB -->
+      <a class="tile" href="/hub.html" aria-label="Hub">
+        <img src="/img/icons/hub.svg" alt="">
+      </a>
+      <!-- LEARN -->
+      <a class="tile" href="/learn.html" aria-label="Learn">
+        <img src="/img/icons/learn.svg" alt="">
+      </a>
+      <!-- NEWS -->
+      <a class="tile" href="/news.html" aria-label="News">
+        <img src="/img/icons/news.svg" alt="">
+      </a>
+    </section>
+  </main>
 
-    <div id="list" role="list"></div>
-  </div>
-
-  <div id="logoModal">
-    <div id="logoBackdrop" onclick="closeLogoModal()"></div>
-    <span id="logoClose" onclick="closeLogoModal()">&times;</span>
-    <img id="logoModalImg" src="">
-  </div>
-
-  <script>
-  // Utilities
-  function slug(s){
-    return (s||'').toLowerCase()
-      .replace(/&/g,' and ')
-      .replace(/[^a-z0-9]+/g,'-')
-      .replace(/-+/g,'-')
-      .replace(/^-|-$/g,'') || 'brand';
-  }
-  function openLogoModal(src){
-    const img = document.getElementById('logoModalImg');
-    img.src = src;
-    document.getElementById('logoModal').style.display = 'flex';
-  }
-  function closeLogoModal(){
-    document.getElementById('logoModal').style.display = 'none';
-  }
-
-  // State + elements
-  let ALL_ROWS = [];
-  const elList   = document.getElementById('list');
-  const elSearch = document.getElementById('search');
-
-  function invClass(n){ n = Number(n||0); if(n<=0) return 'red'; if(n<10) return 'amber'; return 'green'; }
-
-  function render(){
-    const q = (elSearch.value||'').toLowerCase();
-    const rows = ALL_ROWS.filter(r => (r.brand+' '+r.item+' '+r.vitola).toLowerCase().includes(q));
-
-    elList.innerHTML = rows.map(r => {
-      const inv = Number(r.inventory||0);
-      const letter = (r.brand && r.brand[0]) ? r.brand[0].toUpperCase() : '?';
-      const src = (r.icon && r.icon.trim()) ? r.icon : ('img/' + slug(r.brand) + '.svg');
-
-      const imgEl = "<img src='"+src+"' data-letter='"+letter+"' alt='"+(r.brand||"")+"' style='width:100%;height:100%;object-fit:cover;' onerror=\"this.outerHTML='<span>'+this.dataset.letter+'</span>'\">";
-      const icon  = "<div class='brandIcon' onclick=\"openLogoModal('"+src+"')\">"+imgEl+"</div>";
-
-      return "<div class='row' role='listitem'>"
-        + icon
-        + "<div class='stack'>"
-          + "<div class='brand'>"+(r.brand||'')+"</div>"
-          + "<div class='item'>"+(r.item||'')+"</div>"
-          + "<div class='vitola'>"+(r.vitola||'')+"</div>"
-        + "</div>"
-        + "<div class='price'>"+(r.price||'')+"</div>"
-        + "<div class='inv'><span class='pill "+invClass(inv)+"'>"+inv+"</span></div>"
-      + "</div>";
-    }).join('') || "<div style='padding:12px;color:#6b7280'>No items match your search.</div>";
-  }
-
-  async function load(){
-    try {
-      // Add cache-buster + no-store to avoid stale responses
-      const url = '/.netlify/functions/get-data?ts=' + Date.now();
-      const res = await fetch(url, { cache: 'no-store' });
-      if(!res.ok){
-        const txt = await res.text().catch(()=> '');
-        throw new Error('get-data failed: ' + res.status + ' ' + txt);
-      }
-      const data = await res.json();
-      console.log('Loaded rows:', data);
-      if(!Array.isArray(data)){
-        throw new Error('get-data returned non-array JSON');
-      }
-      ALL_ROWS = data;
-      render();
-    } catch (err){
-      console.error('Load error:', err);
-      elList.innerHTML = "<div style='padding:12px;color:#991b1b'>Error loading data. See console for details.</div>";
-    }
-  }
-
-  // Wire up search and load
-  elSearch.addEventListener('input', render);
-  // Kick off
-  load();
-  </script>
+  <footer>© <span id="y"></span> cigarOS</footer>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
 </body>
 </html>
