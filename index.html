@@ -2,91 +2,162 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>cigarOS</title>
-  <meta name="theme-color" content="#f2f2f2">
   <style>
     :root{
-      --bg: #f2f2f2;
-      --card: #ffffff;
-      --ring: #e5e7eb;
-      --shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.06);
+      --bg:#f2f2f2;
+      --tile-size: 132px;   /* icon box footprint */
+      --icon-size: 72px;    /* actual SVG size */
+      --gap: 22px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    /* Header */
-    header{display:flex;align-items:center;justify-content:center;padding:26px 16px 10px}
-    header img{height:64px;max-width:70vw;object-fit:contain}
-    /* Grid */
-    main{max-width:980px;margin:8px auto 60px;padding:0 16px}
-    .grid{
-      display:grid; gap:14px;
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color:#0b1722;
+    }
+    .page{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    /* top logo */
+    .brand{
+      margin:20px 0 10px;
+      display:flex;
+      justify-content:center;
+      width:100%;
+    }
+    .brand img{
+      height:64px;           /* tweak if you want it a little larger/smaller */
+      width:auto;
+    }
+
+    /* grid of tiles */
+    .tiles{
+      width:100%;
+      max-width:960px;
+      padding:16px;
+      display:grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--gap);
+      justify-items: center;
     }
-    @media (min-width:640px){ .grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-    @media (min-width:960px){ .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-    /* Tile buttons (icon only) */
+
+    /* each tile footprint (no background, no shadow) */
     .tile{
-      display:flex; align-items:center; justify-content:center;
-      min-height:120px; padding:18px;
-      background:var(--card); border:1px solid var(--ring); border-radius:18px;
-      box-shadow:var(--shadow);
-      text-decoration:none; outline:none; touch-action:manipulation;
-      transition: transform .06s ease, box-shadow .15s ease;
+      width: min(92vw, 420px);
+      max-width: 420px;
+      aspect-ratio: 3 / 2;         /* keeps those rounded rectangles’ space */
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:24px;
+      background:#fff;             /* keep the card backdrop */
+      box-shadow: 0 1px 0 #e9edf3, 0 8px 28px rgba(16,24,40,0.06);
     }
-    .tile:active{ transform: translateY(1px); }
-    .tile:focus-visible{ box-shadow:0 0 0 3px #93c5fd, var(--shadow); }
-    .tile img{ width:56px; height:56px; display:block; }
-    /* Subtle hover lift on larger screens */
-    @media (hover:hover){
-      .tile:hover{ transform: translateY(-1px); }
+
+    /* icon-only button (transparent—no white inner block) */
+    .tile a{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width: var(--tile-size);
+      height: var(--tile-size);
+      border-radius: 24px;
+      text-decoration:none;
+      background: transparent;   /* ✔ remove white blob */
+      box-shadow: none;           /* ✔ remove extra shadow */
+      outline: none;
     }
-    /* Footer */
-    footer{color:#94a3b8;text-align:center;padding:24px 16px 38px;font-size:12px}
-    /* Reduce tap highlight on iOS */
-    a{-webkit-tap-highlight-color: rgba(0,0,0,0)}
+    .tile a img{
+      width: var(--icon-size);
+      height: var(--icon-size);
+      object-fit: contain;
+      display:block;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* HUB: span full row and center */
+    .tile--hub{
+      grid-column: 1 / -1;       /* full width across both columns */
+      justify-self: center;
+      max-width: 420px;
+    }
+
+    /* iPad / big screens */
+    @media (min-width: 900px){
+      .tiles{
+        grid-template-columns: repeat(2, 420px);
+        justify-content: center;
+      }
+    }
+
+    /* footer */
+    .copy{
+      margin: 12px 0 28px;
+      font-size: 12px;
+      color:#7a8795;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <!-- Replace with your vector logo -->
-    <img src="/img/logo.svg" alt="Shop logo">
-  </header>
+  <main class="page">
+    <div class="brand">
+      <!-- change to your actual logo path if different -->
+      <img src="/img/logo.svg" alt="Shop logo">
+    </div>
 
-  <main>
-    <section class="grid" aria-label="App grid">
-      <!-- TODAY -->
-      <a class="tile" href="/today.html" aria-label="Today">
-        <img src="/img/icons/today.svg" alt="">
-      </a>
-      <!-- POS -->
-      <a class="tile" href="/pos.html" aria-label="POS">
-        <img src="/img/icons/pos.svg" alt="">
-      </a>
-      <!-- REPORTS -->
-      <a class="tile" href="/reports.html" aria-label="Reports">
-        <img src="/img/icons/reports.svg" alt="">
-      </a>
-      <!-- LOYALTY -->
-      <a class="tile" href="/loyalty.html" aria-label="Loyalty">
-        <img src="/img/icons/loyalty.svg" alt="">
-      </a>
-      <!-- HUB -->
-      <a class="tile" href="/hub.html" aria-label="Hub">
-        <img src="/img/icons/hub.svg" alt="">
-      </a>
-      <!-- LEARN -->
-      <a class="tile" href="/learn.html" aria-label="Learn">
-        <img src="/img/icons/learn.svg" alt="">
-      </a>
-      <!-- NEWS -->
-      <a class="tile" href="/news.html" aria-label="News">
-        <img src="/img/icons/news.svg" alt="">
-      </a>
+    <section class="tiles">
+      <!-- Row 1 -->
+      <div class="tile">
+        <a href="/today.html" aria-label="Today">
+          <img src="/img/icons/today.svg" alt="">
+        </a>
+      </div>
+      <div class="tile">
+        <a href="/pos.html" aria-label="POS">
+          <img src="/img/icons/pos.svg" alt="">
+        </a>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="tile">
+        <a href="/reports.html" aria-label="Reports">
+          <img src="/img/icons/reports.svg" alt="">
+        </a>
+      </div>
+      <div class="tile">
+        <a href="/loyalty.html" aria-label="Loyalty">
+          <img src="/img/icons/loyalty.svg" alt="">
+        </a>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="tile">
+        <a href="/learn.html" aria-label="Learn">
+          <img src="/img/icons/learn.svg" alt="">
+        </a>
+      </div>
+      <div class="tile">
+        <a href="/news.html" aria-label="News">
+          <img src="/img/icons/news.svg" alt="">
+        </a>
+      </div>
+
+      <!-- Row 4: HUB centered -->
+      <div class="tile tile--hub">
+        <a href="/hub.html" aria-label="Hub">
+          <img src="/img/icons/hub.svg" alt="">
+        </a>
+      </div>
     </section>
-  </main>
 
-  <footer>© <span id="y"></span> cigarOS</footer>
-  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+    <div class="copy">© 2025 cigarOS</div>
+  </main>
 </body>
 </html>
