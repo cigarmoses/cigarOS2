@@ -1,174 +1,108 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>cigarOS2</title>
+<!-- === styles (put in <head> or your CSS file) === -->
 <style>
-  :root{
-    --bg:#f2f2f2;
-    --tile:#ffffff;
-    --shadow-dark: rgba(0,0,0,.12);
-    --shadow-light: rgba(255,255,255,.85);
-    --text:#6b7280;        /* muted slate */
-    --text-strong:#374151; /* darker for headings if needed */
-    --hub-start:#09c;      /* gradient start */
-    --hub-end:#1da1f2;     /* gradient end (Twitter blue you liked) */
-  }
-  html,body{height:100%}
-  body{
-    margin:0;
-    background:var(--bg);
-    font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-    color:var(--text-strong);
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
+  :root { --bg:#f2f2f2; --tile:#ffffff; --text:#6b7280; }
+  body { background:var(--bg); }
+
+  .home-wrap{
+    max-width:980px; margin:0 auto; padding:24px 16px 56px;
   }
 
-  /* Layout */
-  .wrap{
-    max-width: 1040px;
-    margin: 0 auto;
-    padding: clamp(16px, 3vw, 28px);
-  }
-  .logo{
-    display:block;
-    margin: 12px auto 12px;
-    width: clamp(140px, 40vw, 260px);
-    height:auto;
-  }
+  .logo-wrap{ display:flex; justify-content:center; margin:8px 0 20px; }
+  .logo-wrap img{ height:72px; width:auto; }
 
-  /* Grid of tiles */
   .grid{
     display:grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap: clamp(16px, 3vw, 28px);
-    margin-top: clamp(8px, 2vw, 12px);
-  }
-  @media (min-width: 900px){
-    .grid{grid-template-columns: repeat(2, 360px); justify-content:center;}
+    grid-template-columns: 1fr 1fr;
+    gap:26px;
   }
 
-  /* Neumorphic tile */
   .tile{
     position:relative;
-    background:var(--tile);
-    border-radius: 28px;
-    padding: clamp(14px, 2.4vw, 18px);
-    height: clamp(140px, 24vw, 190px);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-decoration:none;
-    color:var(--text);
+    display:flex; flex-direction:column; gap:8px;
+    align-items:center; justify-content:center;
+    padding:22px 20px;
+    min-height:150px;
+    border-radius:28px;
+    background: var(--tile);
     box-shadow:
-      12px 12px 26px var(--shadow-dark),
-      -12px -12px 26px var(--shadow-light);
+      /* highlight upper-left */
+      -10px -10px 24px rgba(255,255,255,0.9),
+      /* soft body shadow */
+      10px 10px 28px rgba(89,107,129,0.18);
+    text-decoration:none;
     transition: transform .08s ease, box-shadow .12s ease;
   }
-  .tile:active{
-    transform: translateY(2px);
+  .tile:active{ transform: translateY(1px); }
+
+  .tile-icon{
+    width:56px; height:56px; display:block;
+  }
+  .tile-label{
+    font: 600 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    color: var(--text);
+    letter-spacing:.2px;
+  }
+
+  /* HUB full-width last row on phones */
+  .tile--hub{
+    grid-column: 1 / -1;
+    min-height:74px;
+    border-radius:36px;
+    background: linear-gradient(135deg, #00b4ff, #007bff);
     box-shadow:
-      inset 10px 10px 18px rgba(0,0,0,.08),
-      inset -10px -10px 18px rgba(255,255,255,.9);
+      -8px -8px 18px rgba(255,255,255,0.9),
+      10px 14px 28px rgba(0,123,255,0.35);
   }
+  .tile--hub .tile-label{ color:#fff; font-weight:700; }
+  .tile--hub .tile-icon{ display:none; } /* label only */
 
-  /* Icon only (centered) */
-  .tile .icon{
-    display:block;
-    width: clamp(44px, 10vw, 72px);
-    height: clamp(44px, 10vw, 72px);
-    opacity:.95;
-  }
-
-  /* Label (optional under icon) */
-  .label{
-    position:absolute;
-    bottom: 14px;
-    left: 0; right:0;
-    text-align:center;
-    font-weight:700;
-    letter-spacing:.4px;
-    font-size: clamp(14px, 1.8vw, 18px);
-    color:#7a8696;
-    text-transform:uppercase;
-  }
-
-  /* HUB pill button */
-  .hub-row{
-    display:flex; justify-content:center;
-    margin: clamp(22px, 6vw, 36px) 0 10px;
-  }
-  .hub{
-    display:inline-flex; align-items:center; justify-content:center;
-    width: min(520px, 86vw);
-    height: clamp(54px, 9vw, 66px);
-    border-radius: 999px;
-    background: linear-gradient(135deg, var(--hub-start), var(--hub-end));
-    color:#fff; font-weight:800; letter-spacing:.3px;
-    text-decoration:none;
-    box-shadow:
-      10px 10px 22px rgba(0,0,0,.12),
-      -8px -8px 18px rgba(255,255,255,.9);
-    transition: transform .08s ease, box-shadow .12s ease, opacity .2s;
-  }
-  .hub:active{
-    transform: translateY(2px);
-    box-shadow:
-      inset 10px 10px 18px rgba(0,0,0,.12),
-      inset -10px -10px 18px rgba(255,255,255,.6);
-  }
-
-  /* Footer */
-  .foot{
-    text-align:center;
-    margin: 10px 0 26px;
-    font-size: 13px;
-    color:#8a93a4;
+  /* roomier on larger screens */
+  @media (min-width:720px){
+    .grid{ gap:28px; }
+    .tile{ min-height:180px; }
+    .tile-icon{ width:64px; height:64px; }
   }
 </style>
-</head>
-<body>
-  <main class="wrap">
-    <img class="logo" src="/img/logo.png" alt="Shop logo" />
 
-    <section class="grid">
-      <a class="tile" href="/pos.html" aria-label="POS">
-        <img class="icon" src="/img/icons/pos.svg" alt="">
-        <span class="label">POS</span>
-      </a>
+<!-- === body content === -->
+<div class="home-wrap">
+  <div class="logo-wrap">
+    <img src="img/logo.svg" alt="Shop logo" />
+  </div>
 
-      <a class="tile" href="/today.html" aria-label="Today">
-        <img class="icon" src="/img/icons/today.svg" alt="">
-        <span class="label">Today</span>
-      </a>
+  <div class="grid">
+    <a class="tile" href="pos.html">
+      <img class="tile-icon" src="img/icons/pos.svg" alt="" />
+      <div class="tile-label">POS</div>
+    </a>
 
-      <a class="tile" href="/loyalty.html" aria-label="Loyalty">
-        <img class="icon" src="/img/icons/loyalty.svg" alt="">
-        <span class="label">Loyalty</span>
-      </a>
+    <a class="tile" href="today.html">
+      <img class="tile-icon" src="img/icons/today.svg" alt="" />
+      <div class="tile-label">TODAY</div>
+    </a>
 
-      <a class="tile" href="/reports.html" aria-label="Reports">
-        <img class="icon" src="/img/icons/reports.svg" alt="">
-        <span class="label">Reports</span>
-      </a>
+    <a class="tile" href="loyalty.html">
+      <img class="tile-icon" src="img/icons/loyalty.svg" alt="" />
+      <div class="tile-label">LOYALTY</div>
+    </a>
 
-      <a class="tile" href="/learn.html" aria-label="Learn">
-        <img class="icon" src="/img/icons/learn.svg" alt="">
-        <span class="label">Learn</span>
-      </a>
+    <a class="tile" href="reports.html">
+      <img class="tile-icon" src="img/icons/reports.svg" alt="" />
+      <div class="tile-label">REPORTS</div>
+    </a>
 
-      <a class="tile" href="/news.html" aria-label="News">
-        <img class="icon" src="/img/icons/news.svg" alt="">
-        <span class="label">News</span>
-      </a>
-    </section>
+    <a class="tile" href="learn.html">
+      <img class="tile-icon" src="img/icons/learn.svg" alt="" />
+      <div class="tile-label">LEARN</div>
+    </a>
 
-    <div class="hub-row">
-      <a class="hub" href="/hub.html">HUB</a>
-    </div>
+    <a class="tile" href="news.html">
+      <img class="tile-icon" src="img/icons/news.svg" alt="" />
+      <div class="tile-label">NEWS</div>
+    </a>
 
-    <div class="foot">© 2025 cigarOS</div>
-  </main>
-</body>
-</html>
+    <a class="tile tile--hub" href="hub.html">
+      <div class="tile-label">HUB</div>
+    </a>
+  </div>
+</div>
