@@ -1,103 +1,95 @@
-<style>
-  :root { --bg:#f2f2f2; --text:#6b7280; }
-  body { background:var(--bg); }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CigarOS2</title>
+  <style>
+    :root { --bg:#f2f2f2; }
 
-  .home-wrap{
-    max-width:980px; margin:0 auto; padding:24px 16px 56px;
-  }
+    /* page */
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
 
-  .logo-wrap{ display:flex; justify-content:center; margin:8px 0 20px; }
-  .logo-wrap img{ height:72px; width:auto; }
+    /* wrapper + logo */
+    .home-wrap{ max-width:980px; margin:0 auto; padding:24px 16px 56px; }
+    .logo-wrap{ display:flex; justify-content:center; margin:8px 0 20px; }
+    .logo-wrap img{ height:72px; width:auto; display:block; }
 
-  .grid{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:36px;
-    justify-items:center;
-  }
+    /* icon grid */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:36px;
+      justify-items:center;
+    }
 
-  .tile{
-    display:flex; flex-direction:column; gap:10px;
-    align-items:center; justify-content:center;
-    text-decoration:none;
-    transition: transform .08s ease, box-shadow .12s ease;
-  }
-  .tile:active{ transform: translateY(1px); }
+    /* pure-icon tiles */
+    .tile{
+      display:inline-grid;
+      place-items:center;
+      background:transparent !important;   /* no white blocks */
+      box-shadow:none !important;
+      text-decoration:none;
+    }
+    .tile > img{
+      display:block;
+      width:120px;              /* icon size on phones */
+      height:120px;
+      background:transparent !important;   /* no background image/color */
+    }
 
-  .tile-icon{
-    width:90px; height:90px; display:block;
-    border-radius:24px;
-    background:#f2f2f2; /* match background */
-    box-shadow:
-      -10px -10px 24px rgba(255,255,255,0.9),
-      10px 10px 28px rgba(89,107,129,0.18);
-    padding:18px;
-  }
-  .tile-label{
-    font: 600 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-    color: var(--text);
-    letter-spacing:.2px;
-  }
+    /* HUB: bottom center, spans full row */
+    .tile--hub{ grid-column:1 / -1; justify-self:center; }
+    .tile--hub > img{ width:180px; height:auto; }  /* bigger hub icon */
 
-  /* HUB full-width last row */
-  .tile--hub{
-    grid-column: 1 / -1;
-  }
-  .tile--hub .tile-icon{
-    width:140px; height:60px;
-    border-radius:36px;
-    background: linear-gradient(135deg, #00b4ff, #007bff);
-    box-shadow:
-      -8px -8px 18px rgba(255,255,255,0.9),
-      10px 14px 28px rgba(0,123,255,0.35);
-    padding:0;
-  }
-  .tile--hub .tile-label{ color:#fff; font-weight:700; margin-top:8px; }
+    @media (min-width:720px){
+      .logo-wrap img{ height:84px; }
+      .tile > img{ width:140px; height:140px; }
+      .tile--hub > img{ width:220px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="home-wrap">
+    <div class="logo-wrap">
+      <img src="img/logo.svg" alt="Shop logo">
+    </div>
 
-  @media (min-width:720px){
-    .tile-icon{ width:110px; height:110px; padding:22px; }
-  }
-</style>
+    <div class="grid">
+      <a class="tile" href="pos.html">
+        <img src="img/icons/pos.svg" alt="POS">
+      </a>
 
-<div class="home-wrap">
-  <div class="logo-wrap">
-    <img src="img/logo.svg" alt="Shop logo" />
+      <a class="tile" href="today.html">
+        <img src="img/icons/today.svg" alt="Today">
+      </a>
+
+      <a class="tile" href="loyalty.html">
+        <img src="img/icons/loyalty.svg" alt="Loyalty">
+      </a>
+
+      <a class="tile" href="reports.html">
+        <img src="img/icons/reports.svg" alt="Reports">
+      </a>
+
+      <a class="tile" href="learn.html">
+        <img src="img/icons/learn.svg" alt="Learn">
+      </a>
+
+      <a class="tile" href="news.html">
+        <img src="img/icons/news.svg" alt="News">
+      </a>
+
+      <a class="tile tile--hub" href="hub.html">
+        <img src="img/icons/hub.svg" alt="Hub">
+      </a>
+    </div>
   </div>
-
-  <div class="grid">
-    <a class="tile" href="pos.html">
-      <img class="tile-icon" src="img/icons/pos.svg" alt="" />
-      <div class="tile-label">POS</div>
-    </a>
-
-    <a class="tile" href="today.html">
-      <img class="tile-icon" src="img/icons/today.svg" alt="" />
-      <div class="tile-label">TODAY</div>
-    </a>
-
-    <a class="tile" href="loyalty.html">
-      <img class="tile-icon" src="img/icons/loyalty.svg" alt="" />
-      <div class="tile-label">LOYALTY</div>
-    </a>
-
-    <a class="tile" href="reports.html">
-      <img class="tile-icon" src="img/icons/reports.svg" alt="" />
-      <div class="tile-label">REPORTS</div>
-    </a>
-
-    <a class="tile" href="learn.html">
-      <img class="tile-icon" src="img/icons/learn.svg" alt="" />
-      <div class="tile-label">LEARN</div>
-    </a>
-
-    <a class="tile" href="news.html">
-      <img class="tile-icon" src="img/icons/news.svg" alt="" />
-      <div class="tile-label">NEWS</div>
-    </a>
-
-    <a class="tile tile--hub" href="hub.html">
-      <div class="tile-icon"></div>
-      <div class="tile-label">HUB</div>
-    </a>
-  </div>
-</div>
+</body>
+</html>
