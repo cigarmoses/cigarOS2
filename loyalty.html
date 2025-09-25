@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Loyalty • cigarOS2</title>
+  <meta name="color-scheme" content="light only" />
+  <style>
+    :root{
+      --bg:#f2f2f2;
+      --panel:#ffffff;
+      --text:#0f2a2e;
+      --muted:#6a7a80;
+      --line:#e6eaee;
+      --chip-blue:#1DA1F2;     /* Lockers */
+      --chip-orange:#FF6E4A;   /* Regulars */
+      --locker-row:#E9F5FF;
+      --shadow-a: 0 8px 22px rgba(16, 39, 60, .06);
+      --shadow-b: 0 2px 6px rgba(16, 39, 60, .05);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{background:var(--bg);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit}
+
+    header{
+      position:sticky;top:0;z-index:20;background:var(--bg);
+      padding:12px 16px 8px;border-bottom:1px solid #0000;
+    }
+    .row{max-width:1100px;margin:0 auto;padding:0 12px}
+    .topbar{display:flex;align-items:center;gap:12px}
+    .back{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:40px;height:40px;border-radius:12px;background:var(--panel);
+      box-shadow:var(--shadow-b);
+    }
+    .title{font-weight:700;color:var(--text);font-size:18px}
+
+    .searchwrap{margin:12px 0}
+    .search{
+      display:flex;align-items:center;gap:10px;background:var(--panel);
+      border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-b);
+    }
+    .search input{
+      border:0;outline:0;background:transparent;width:100%;
+      font-size:16px;color:var(--text)
+    }
+    .chips{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 6px}
+    .chip{
+      display:inline-flex;align-items:center;gap:10px;
+      background:var(--panel);border-radius:14px;
+      padding:10px 14px;box-shadow:var(--shadow-b);color:var(--text);
+      font-weight:600
+    }
+    .dot{width:10px;height:10px;border-radius:999px}
+    .dot.blue{background:var(--chip-blue)}
+    .dot.orange{background:var(--chip-orange)}
+
+    .card{
+      background:var(--panel);border-radius:18px;box-shadow:var(--shadow-a);
+      overflow:hidden
+    }
+
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{
+      text-align:left;padding:14px 16px;color:var(--text);font-size:16px;
+      border-bottom:1px solid var(--line)
+    }
+    tbody td{
+      padding:14px 16px;border-bottom:1px solid var(--line);color:var(--text)
+    }
+    .sub{display:block;color:var(--muted);font-weight:500;font-size:14px;margin-top:2px}
+    .pts,.last{white-space:nowrap;text-align:right}
+    .row-locker{background:var(--locker-row)}
+    .nameBtn{all:unset;cursor:pointer}
+    .nameBtn:focus-visible{outline:2px solid var(--chip-blue);outline-offset:2px;border-radius:6px}
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      display:none;align-items:center;justify-content:center;z-index:50;
+    }
+    .modal{width:min(640px,92vw);background:var(--panel);border-radius:18px;
+      box-shadow:0 18px 60px rgba(0,0,0,.25);overflow:hidden}
+    .modal-h{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 18px;border-bottom:1px solid var(--line)
+    }
+    .modal-title{font-size:20px;font-weight:800}
+    .modal-x{all:unset;cursor:pointer;font-size:20px;opacity:.75}
+    .modal-b{padding:6px 4px}
+    .kv{display:grid;grid-template-columns:140px 1fr;gap:8px 10px;padding:12px 16px}
+    .k{color:var(--muted);font-weight:700}
+    .v a{color:#0a58ca;text-decoration:underline}
+    @media (max-width:480px){
+      .kv{grid-template-columns:120px 1fr}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div class="topbar">
+        <a class="back" href="index.html" aria-label="Back">←</a>
+        <div class="title">Loyalty</div>
+      </div>
+
+      <div class="searchwrap">
+        <div class="search">
+          🔎
+          <input id="q" placeholder="Search by name or nickname…" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="chips">
+        <button class="chip" id="chip-lockers" data-filter="lockers">
+          <span class="dot blue"></span> Lockers
+        </button>
+        <button class="chip" id="chip-regulars" data-filter="regulars">
+          <span class="dot orange"></span> Regulars
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="row" style="margin-top:6px;margin-bottom:80px">
+    <div class="card">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th style="width:60%;">Name</th>
+            <th class="pts" style="width:15%;">Pts</th>
+            <th class="last" style="width:25%;">Last Visit</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <!-- rows go here -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalWrap" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="modal-h">
+        <div class="modal-title" id="mTitle">Customer</div>
+        <button class="modal-x" id="mClose" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-b">
+        <div class="kv"><div class="k">Nickname</div><div class="v" id="mNick">—</div></div>
+        <div class="kv"><div class="k">Phone</div><div class="v" id="mPhone">—</div></div>
+        <div class="kv"><div class="k">Email</div><div class="v" id="mEmail">—</div></div>
+        <div class="kv"><div class="k">Birthday</div><div class="v" id="mBday">—</div></div>
+        <div class="kv"><div class="k">Points</div><div class="v" id="mPts">0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- CSV loader ----------
+    async function loadCSV(url){
+      const res = await fetch(url + '?v=' + Date.now());
+      const txt = await res.text();
+      return parseCSV(txt);
+    }
+
+    // Tiny CSV parser (handles quoted fields)
+    function parseCSV(text){
+      const rows = [];
+      let row = [], col = '', q = false;
+      for (let i=0;i<text.length;i++){
+        const c = text[i], n = text[i+1];
+        if (q){
+          if (c === '"' && n === '"'){ col += '"'; i++; }
+          else if (c === '"'){ q = false; }
+          else { col += c; }
+        }else{
+          if (c === '"'){ q = true; }
+          else if (c === ','){ row.push(col); col = ''; }
+          else if (c === '\n'){ if (text[i-1] !== '\r'){ row.push(col); rows.push(row); row = []; col=''; } }
+          else if (c === '\r'){ /* ignore */ }
+          else { col += c; }
+        }
+      }
+      if (col.length || row.length){ row.push(col); rows.push(row); }
+      const header = rows.shift().map(h => h.trim());
+      return rows.filter(r=>r.length).map(r=>{
+        const o={}; header.forEach((h,idx)=>o[h]= (r[idx]??'').trim()); return o;
+      });
+    }
+
+    // ---------- State ----------
+    let all = [];          // all contacts
+    let view = [];         // filtered + searched
+    let current = null;    // for modal
+
+    const tbody   = document.getElementById('tbody');
+    const search  = document.getElementById('q');
+    const chipL   = document.getElementById('chip-lockers');
+    const chipR   = document.getElementById('chip-regulars');
+
+    let filter = 'all'; // 'all' | 'lockers' | 'regulars'
+
+    // Map CSV field names (be forgiving about capitalization/spaces)
+    function pick(o, ...keys){
+      for (const k of keys){
+        for (const kk in o){
+          if (kk.toLowerCase() === k.toLowerCase()) return o[kk];
+        }
+      }
+      return '';
+    }
+
+    function normalize(row){
+      const first   = pick(row,'First name','First','Firstname','First Name');
+      const last    = pick(row,'Last name','Last','Lastname','Last Name');
+      const nick    = pick(row,'Nickname','Nick');
+      const phone   = pick(row,'Phone','Phone number','Mobile');
+      const email   = pick(row,'Email','E-mail');
+      const bday    = pick(row,'Birthday','Birthdate','DOB');
+      const points  = pick(row,'Points','Pts') || '0';
+      const lastVisit = pick(row,'Last visit','Last Visit','LastVisit') || '—';
+      const locker  = pick(row,'Locker','Locker #','Locker Number');
+      return { first,last,nick,phone,email,bday,points,lastVisit,locker };
+    }
+
+    function applyFilters(){
+      const q = search.value.trim().toLowerCase();
+      view = all.filter(p=>{
+        const isLocker = !!p.locker && p.locker !== '0';
+        if (filter==='lockers' && !isLocker) return false;
+        if (filter==='regulars' && isLocker) return false;
+        if (!q) return true;
+        const name = (p.first + ' ' + p.last).toLowerCase();
+        const name2 = (p.last + ' ' + p.first).toLowerCase();
+        const nick = (p.nick||'').toLowerCase();
+        return name.includes(q) || name2.includes(q) || nick.includes(q);
+      });
+      render();
+    }
+
+    function render(){
+      tbody.innerHTML = '';
+      for (const p of view){
+        const tr = document.createElement('tr');
+        if (p.locker) tr.className = 'row-locker';
+
+        // Name cell with optional nickname line
+        const tdName = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.className = 'nameBtn';
+        btn.innerHTML = `<strong>${p.last} ${p.first}</strong>` +
+                        (p.nick ? `<span class="sub">“${p.nick}”</span>` : '');
+        btn.addEventListener('click', () => openModal(p));
+        tdName.appendChild(btn);
+
+        const tdPts = document.createElement('td');
+        tdPts.className = 'pts';
+        tdPts.textContent = p.points || '0';
+
+        const tdLast = document.createElement('td');
+        tdLast.className = 'last';
+        tdLast.textContent = p.lastVisit || '—';
+
+        tr.append(tdName, tdPts, tdLast);
+        tbody.appendChild(tr);
+      }
+    }
+
+    // ---------- Modal ----------
+    const modalWrap = document.getElementById('modalWrap');
+    const mTitle = document.getElementById('mTitle');
+    const mNick  = document.getElementById('mNick');
+    const mPhone = document.getElementById('mPhone');
+    const mEmail = document.getElementById('mEmail');
+    const mBday  = document.getElementById('mBday');
+    const mPts   = document.getElementById('mPts');
+    const mClose = document.getElementById('mClose');
+
+    function openModal(p){
+      current = p;
+      mTitle.textContent = `${p.first} ${p.last}`;
+      mNick.textContent  = p.nick || '—';
+      mPhone.innerHTML   = p.phone ? `<a href="tel:${p.phone.replace(/[^0-9+]/g,'')}">${p.phone}</a>` : '—';
+      mEmail.innerHTML   = p.email ? `<a href="mailto:${p.email}">${p.email}</a>` : '—';
+      mBday.textContent  = p.bday || '—';
+      mPts.textContent   = p.points || '0';
+      modalWrap.style.display = 'flex';
+      modalWrap.setAttribute('aria-hidden','false');
+    }
+    function closeModal(){
+      modalWrap.style.display = 'none';
+      modalWrap.setAttribute('aria-hidden','true');
+      current = null;
+    }
+    mClose.addEventListener('click', closeModal);
+    modalWrap.addEventListener('click', (e)=>{ if (e.target === modalWrap) closeModal(); });
+    window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeModal(); });
+
+    // ---------- Events ----------
+    search.addEventListener('input', applyFilters);
+    chipL.addEventListener('click', ()=>{ filter = (filter==='lockers'?'all':'lockers'); chipState(); applyFilters(); });
+    chipR.addEventListener('click', ()=>{ filter = (filter==='regulars'?'all':'regulars'); chipState(); applyFilters(); });
+    function chipState(){
+      chipL.style.outline = filter==='lockers' ? `3px solid var(--chip-blue)` : 'none';
+      chipR.style.outline = filter==='regulars' ? `3px solid var(--chip-orange)` : 'none';
+    }
+
+    // ---------- Init ----------
+    (async () => {
+      try{
+        const rows = await loadCSV('/img/contacts.csv');
+        all = rows.map(normalize);
+        // initial sort by last name then first
+        all.sort((a,b)=> (a.last||'').localeCompare(b.last||'') || (a.first||'').localeCompare(b.first||''));
+        applyFilters();
+      }catch(err){
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="3" style="padding:16px;color:#b00">Error loading contacts.csv</td></tr>`;
+      }
+    })();
+  </script>
+</body>
+</html>
