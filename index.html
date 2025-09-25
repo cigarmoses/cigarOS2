@@ -4,124 +4,160 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>cigarOS</title>
+
   <style>
     :root{
       --bg:#f2f2f2;
-      --tile-gap: clamp(14px, 3.5vw, 22px);
-      --icon-size: clamp(84px, 18vw, 150px);
-      --hub-width: min(520px, 88vw);
-      --hub-height: clamp(52px, 9.5vw, 72px);
-      --hub-start:#00b0ff;
-      --hub-end:#0a80ff;
+      --hub1:#10b3ff;
+      --hub2:#0a7df0;
+      --text:#0e2b2f;
+      --gap:clamp(14px,3.5vw,26px);
+      --icon-size:clamp(122px,32vw,170px); /* target size of each icon tile */
+      --icon-pad:4%; /* breathing room so svg shadows don’t touch edges */
     }
-
+    *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
       background:var(--bg);
-      -webkit-font-smoothing:antialiased;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      display:flex;
-      align-items:stretch;
-      justify-content:center;
+      color:var(--text);
+      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
     }
 
     .wrap{
-      width: min(980px, 100%);
-      margin-inline:auto;
-      padding: clamp(12px, 3.5vw, 28px);
+      min-height:100svh;
       display:flex;
       flex-direction:column;
       align-items:center;
-      gap: clamp(16px, 3.5vw, 28px);
+      padding:clamp(14px,3.5vw,24px);
+      gap:clamp(12px,2vw,16px);
     }
 
+    /* Logo smaller than icons and centered */
     .brand{
-      margin-top: clamp(6px, 2vw, 12px);
       display:flex;
+      align-items:center;
       justify-content:center;
+      width:100%;
+      margin-top:clamp(4px,1vw,8px);
+      margin-bottom:clamp(6px,1.2vw,10px);
     }
     .brand img{
-      height: clamp(46px, 10vw, 96px);
-      width:auto;
+      width:clamp(120px,24vw,180px);
+      height:auto;
       display:block;
+      margin-inline:auto;
+      pointer-events:none;
+      user-select:none;
     }
 
-    /* Grid for the six icons */
+    /* 2x3 grid, tight & even */
     .grid{
-      width:100%;
       display:grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--tile-gap);
-      justify-items:center;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:var(--gap);
       align-items:center;
-    }
-    @media (min-width: 760px){
-      .grid{ grid-template-columns: repeat(3, 1fr); }
+      justify-items:center;
+      width:100%;
+      max-width:720px; /* keeps line length/nice balance on tablets */
     }
 
-    /* Icon links (no white blocks, only the SVG) */
-    .app{
-      text-decoration:none;
-      outline:none;
-      display:inline-flex;
+    .tile{
+      width:var(--icon-size);
+      height:var(--icon-size);
+      display:flex;
       align-items:center;
       justify-content:center;
+      text-decoration:none;
+      border-radius:28px;     /* purely to match icon vibe; no visible bg */
+      -webkit-tap-highlight-color:transparent;
     }
-    .app img{
-      width: var(--icon-size);
-      height: var(--icon-size);
+    /* Only the SVG shows; no extra background */
+    .tile img{
+      width:calc(100% - 2*var(--icon-pad));
+      height:calc(100% - 2*var(--icon-pad));
+      object-fit:contain;
       display:block;
       pointer-events:none;
       user-select:none;
     }
-    .app:active img{
-      transform: translateY(1px) scale(.99);
-      transition: transform .06s ease;
+
+    /* HUB pill at bottom */
+    .hubWrap{
+      margin-top:clamp(16px,4vw,22px);
+      width:100%;
+      display:flex;
+      justify-content:center;
+    }
+    .hubBtn{
+      appearance:none;
+      border:0;
+      border-radius:999px;
+      padding:0;
+      width:min(92vw,560px);
+      height:clamp(48px,10.5vw,64px);
+      background:linear-gradient(135deg,var(--hub1),var(--hub2));
+      color:white;
+      font-weight:800;
+      letter-spacing:0.5px;
+      font-size:clamp(16px,4.2vw,20px);
+      box-shadow:
+        0 18px 28px rgba(0,76,135,.18),
+        0 6px 10px rgba(0,76,135,.12);
+      cursor:pointer;
+      transition:transform .08s ease, box-shadow .12s ease;
+    }
+    .hubBtn:active{
+      transform:translateY(1px);
+      box-shadow:
+        0 10px 18px rgba(0,76,135,.18),
+        0 3px 6px rgba(0,76,135,.18);
     }
 
-    /* HUB button */
-    .hub{
-      width: var(--hub-width);
-      height: var(--hub-height);
-      border-radius: 999px;
-      background: linear-gradient(140deg, var(--hub-start), var(--hub-end));
-      color:#fff;
-      font-weight:700;
-      letter-spacing:.5px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      box-shadow: 0 10px 22px rgba(0,0,0,.15), 0 2px 6px rgba(0,0,0,.08);
-      text-decoration:none;
-      margin-top: clamp(8px, 2.5vw, 18px);
-      -webkit-tap-highlight-color: transparent;
+    /* Add a bit more compact spacing on short phones */
+    @media (max-height:720px){
+      :root{ --gap:clamp(10px,2.8vw,18px); }
+      .hubWrap{ margin-top:clamp(10px,3vw,16px); }
     }
-    .hub:active{ transform: translateY(1px); }
   </style>
 </head>
 <body>
   <main class="wrap">
 
-    <!-- top logo -->
+    <!-- Top logo (smaller than icons, centered) -->
     <div class="brand">
-      <img src="/img/logo.svg" alt="Smoke Cigar Shop & Lounge" />
+      <!-- If your file is named differently, update the path below -->
+      <img src="img/logo.svg" alt="Smoke Cigar Shop & Lounge logo" />
     </div>
 
-    <!-- 6 icons -->
-    <section class="grid">
-      <a class="app" href="/pos.html"       aria-label="POS">      <img src="/img/icons/pos.svg"      alt="" /></a>
-      <a class="app" href="/today.html"     aria-label="Today">    <img src="/img/icons/today.svg"    alt="" /></a>
+    <!-- 2 columns x 3 rows of BIG icons (SVGs already include text) -->
+    <section class="grid" aria-label="Main apps">
+      <a class="tile" href="pos.html" aria-label="POS">
+        <img src="img/icons/pos.svg" alt="POS" />
+      </a>
+      <a class="tile" href="today.html" aria-label="Today">
+        <img src="img/icons/today.svg" alt="Today" />
+      </a>
 
-      <a class="app" href="/loyalty.html"   aria-label="Loyalty">  <img src="/img/icons/loyalty.svg"  alt="" /></a>
-      <a class="app" href="/reports.html"   aria-label="Reports">  <img src="/img/icons/reports.svg"  alt="" /></a>
+      <a class="tile" href="loyalty.html" aria-label="Loyalty">
+        <img src="img/icons/loyalty.svg" alt="Loyalty" />
+      </a>
+      <a class="tile" href="reports.html" aria-label="Reports">
+        <img src="img/icons/reports.svg" alt="Reports" />
+      </a>
 
-      <a class="app" href="/learn.html"     aria-label="Learn">    <img src="/img/icons/learn.svg"    alt="" /></a>
-      <a class="app" href="/news.html"      aria-label="News">     <img src="/img/icons/news.svg"     alt="" /></a>
+      <a class="tile" href="learn.html" aria-label="Learn">
+        <img src="img/icons/learn.svg" alt="Learn" />
+      </a>
+      <a class="tile" href="news.html" aria-label="News">
+        <img src="img/icons/news.svg" alt="News" />
+      </a>
     </section>
 
-    <!-- hub button -->
-    <a class="hub" href="/hub.html" aria-label="Hub">HUB</a>
+    <!-- HUB pill button -->
+    <div class="hubWrap">
+      <button class="hubBtn" onclick="location.href='hub.html'">HUB</button>
+    </div>
   </main>
 </body>
 </html>
