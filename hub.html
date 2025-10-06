@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hub • cigarOS2</title>
+<style>
+  :root{--bg:#f2f2f2;--card:#ffffff;--ink:#0f2b2c;--muted:#66757f;--shadow1:rgba(255,255,255,0.9);--shadow2:rgba(44,80,120,0.12);--blue:#1DA1F2}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{position:sticky;top:0;background:var(--bg);z-index:10}
+  .bar{display:flex;align-items:center;gap:.75rem;padding:1rem 1rem 0}
+  .back{appearance:none;border:0;background:#fff;border-radius:14px;padding:.6rem .8rem;box-shadow:-6px -6px 12px var(--shadow1),6px 6px 12px var(--shadow2);cursor:pointer;text-decoration:none;color:inherit}
+  .title{margin:0 auto 0 .25rem;font-weight:700}
+  .logo{display:block;margin:.35rem auto 1rem;height:56px;object-fit:contain}
+  .wrap{padding:0 1rem 2rem;max-width:1100px;margin:0 auto}
+  .controls{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1rem}
+  input[type="search"],select{background:#fff;border:0;border-radius:12px;padding:.7rem .9rem;min-width:220px;box-shadow:-6px -6px 12px var(--shadow1),6px 6px 12px var(--shadow2)}
+  .logout{margin-left:auto;background:#fff;border:0;border-radius:12px;padding:.6rem .8rem;box-shadow:-6px -6px 12px var(--shadow1),6px 6px 12px var(--shadow2);cursor:pointer}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .card{background:#fff;border-radius:16px;padding:14px;box-shadow:-10px -10px 18px var(--shadow1),10px 10px 18px var(--shadow2)}
+  .brand{font-weight:800;margin-bottom:2px}
+  .sub{color:var(--muted);font-weight:600;font-size:.95rem}
+  .meta{display:flex;gap:8px;color:#445058;margin-top:8px;font-weight:700;flex-wrap:wrap}
+  .chip{background:#eef1f5;border-radius:999px;padding:.2rem .55rem}
+  .warn{margin:12px 0;color:#b3261e}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a class="back" href="index.html">← Back</a>
+    <h1 class="title">Hub</h1>
+    <button class="logout" id="logout">Logout</button>
+  </div>
+  <img class="logo" src="img/logo.svg" alt="Smoke Cigar Shop & Lounge">
+</header>
+
+<main class="wrap">
+  <div class="controls">
+    <input id="q" type="search" placeholder="Search brand, item, vitola…">
+    <select id="live">
+      <option value="any">All items</option>
+      <option value="live">Only LIVE</option>
+    </select>
+    <div id="err" class="warn"></div>
+  </div>
+
+  <div id="grid" class="grid"></div>
+</main>
+
+<script>
+  const grid = document.getElementById('grid');
+  const q = document.getElementById('q');
+  const live = document.getElementById('live');
+  const err = document.getElementById('err');
+
+  function parseCSV(text){
+    const lines = text.split(/\r?\n/).filter(Boolean);
+    if (!lines.length) return [];
+    const headers = lines.shift().split(',').map(h=>h.trim());
+    return lines.map(line=>{
+      const out={}, cells=[]; let cur='', q=false;
+      for (let i=0;i<line.length;i++){
+        const ch=line[i];
+        if (ch==='\"') q=!q;
+        else if (ch===',' && !q){ cells.push(cur); cur=''; }
+        else cur+=ch;
+      }
+      cells.push(cur);
+      headers.forEach((h,i)=> out[h]= (cells[i]||'').replace(/^"|"$/g,'').trim());
+      return out;
+    });
+  }
+
+  let HUB = [];
+
+  async function loadHub() {
+    err.textContent = '';
+    try{
+      const r = await fetch('/.netlify/functions/get-hub-secure?v='+Date.now(), { credentials:'include' });
+      if (r.status === 401) { location.href = 'hub-login.html'; return; }
+      if (!r.ok) throw new Error('Hub data unavailable');
+      const txt = await r.text();
+      HUB = parseCSV(txt);
+      render();
+    }catch(e){
+      err.textContent = e.message || 'Unable to load hub data.';
+      HUB = [];
+      grid.innerHTML = '';
+    }
+  }
+
+  function render(){
+    const term = (q.value||'').toLowerCase().trim();
+    const onlyLive = live.value === 'live';
+    const isLive = v => ['1','true','yes','live','y'].includes((v||'').toString().toLowerCase());
+
+    const rows = HUB.filter(r => {
+      if (onlyLive && !isLive(r.LIVE)) return false;
+      const blob = `${r.brand||''} ${r.item||''} ${r.vitola||''} ${r.wrapper||''}`.toLowerCase();
+      return !term || blob.includes(term);
+    });
+
+    grid.innerHTML = rows.map(r => `
+      <article class="card">
+        <div class="brand">${r.brand||''}</div>
+        <div class="sub">${r.item||''}</div>
+        <div class="meta">
+          ${r.vitola? `<span class="chip">${r.vitola}</span>`:''}
+          ${r.ring? `<span class="chip">⌀ ${r.ring}</span>`:''}
+          ${r.length? `<span class="chip">${r.length}"</span>`:''}
+          ${(['1','true','yes','live','y'].includes((r.LIVE||'').toLowerCase())) ? '<span class="chip">LIVE</span>' : ''}
+        </div>
+      </article>
+    `).join('');
+  }
+
+  q.oninput = render;
+  live.onchange = render;
+
+  document.getElementById('logout').onclick = async () => {
+    await fetch('/.netlify/functions/auth-logout', { method:'POST' });
+    location.href = 'hub-login.html';
+  };
+
+  // Boot
+  loadHub();
+</script>
+</body>
+</html>
