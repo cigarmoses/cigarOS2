@@ -1,163 +1,208 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>cigarOS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>cigarOS2</title>
+<meta name="color-scheme" content="light only" />
+<style>
+  :root{
+    /* Background + ink */
+    --bg: #eef2f6;            /* very soft gray-blue */
+    --surface: #f6f9fc;        /* tile base */
+    --ink: #0f2b2c;            /* label color */
+    --muted:#7c8a96;
 
-  <style>
-    :root{
-      --bg:#f2f2f2;
-      --hub1:#10b3ff;
-      --hub2:#0a7df0;
-      --text:#0e2b2f;
-      --gap:clamp(14px,3.5vw,26px);
-      --icon-size:clamp(122px,32vw,170px); /* target size of each icon tile */
-      --icon-pad:4%; /* breathing room so svg shadows don’t touch edges */
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
-    }
+    /* Brand accent for Hub button */
+    --accent-start:#14b4ff;
+    --accent-end:#0b7ef4;
 
-    .wrap{
-      min-height:100svh;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      padding:clamp(14px,3.5vw,24px);
-      gap:clamp(12px,2vw,16px);
-    }
+    /* Neumorphism shadows */
+    --shadow-light: rgba(255,255,255,0.85);
+    --shadow-dark:  rgba(35,60,90,0.20);
+  }
 
-    /* Logo smaller than icons and centered */
-    .brand{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      width:100%;
-      margin-top:clamp(4px,1vw,8px);
-      margin-bottom:clamp(6px,1.2vw,10px);
-    }
-    .brand img{
-      width:clamp(120px,24vw,180px);
-      height:auto;
-      display:block;
-      margin-inline:auto;
-      pointer-events:none;
-      user-select:none;
-    }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    display:flex;
+    flex-direction:column;
+  }
 
-    /* 2x3 grid, tight & even */
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-      gap:var(--gap);
-      align-items:center;
-      justify-items:center;
-      width:100%;
-      max-width:720px; /* keeps line length/nice balance on tablets */
-    }
+  /* Header / Logo */
+  header{
+    padding: 22px 16px 10px;
+    text-align:center;
+  }
+  .logo{
+    display:inline-block;
+    height:64px;              /* smaller than tiles as you requested */
+    max-width: 78vw;
+    object-fit: contain;
+    filter: drop-shadow(-6px -6px 12px var(--shadow-light))
+            drop-shadow(8px 8px 18px var(--shadow-dark));
+  }
 
-    .tile{
-      width:var(--icon-size);
-      height:var(--icon-size);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-decoration:none;
-      border-radius:28px;     /* purely to match icon vibe; no visible bg */
-      -webkit-tap-highlight-color:transparent;
-    }
-    /* Only the SVG shows; no extra background */
-    .tile img{
-      width:calc(100% - 2*var(--icon-pad));
-      height:calc(100% - 2*var(--icon-pad));
-      object-fit:contain;
-      display:block;
-      pointer-events:none;
-      user-select:none;
-    }
+  /* Grid */
+  .grid{
+    width: min(1020px, 92vw);
+    margin: 10px auto 28px;
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;                /* even spacing – no overlaps */
+  }
+  @media (min-width: 760px){
+    .grid{ grid-template-columns: repeat(3, 1fr); gap: 26px; }
+  }
 
-    /* HUB pill at bottom */
-    .hubWrap{
-      margin-top:clamp(16px,4vw,22px);
-      width:100%;
-      display:flex;
-      justify-content:center;
-    }
-    .hubBtn{
-      appearance:none;
-      border:0;
-      border-radius:999px;
-      padding:0;
-      width:min(92vw,560px);
-      height:clamp(48px,10.5vw,64px);
-      background:linear-gradient(135deg,var(--hub1),var(--hub2));
-      color:white;
-      font-weight:800;
-      letter-spacing:0.5px;
-      font-size:clamp(16px,4.2vw,20px);
-      box-shadow:
-        0 18px 28px rgba(0,76,135,.18),
-        0 6px 10px rgba(0,76,135,.12);
-      cursor:pointer;
-      transition:transform .08s ease, box-shadow .12s ease;
-    }
-    .hubBtn:active{
-      transform:translateY(1px);
-      box-shadow:
-        0 10px 18px rgba(0,76,135,.18),
-        0 3px 6px rgba(0,76,135,.18);
-    }
+  /* Neumorphic tile */
+  .tile{
+    position:relative;
+    border-radius:28px;
+    background: var(--surface);
+    min-height: 150px;
+    padding: 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    color:inherit;
+    box-shadow:
+      -12px -12px 20px var(--shadow-light),
+       12px  12px 22px var(--shadow-dark);
+    transition: transform .06s ease, box-shadow .12s ease, filter .12s ease;
+  }
 
-    /* Add a bit more compact spacing on short phones */
-    @media (max-height:720px){
-      :root{ --gap:clamp(10px,2.8vw,18px); }
-      .hubWrap{ margin-top:clamp(10px,3vw,16px); }
-    }
-  </style>
+  /* Soft inner pod for the icon (like the reference) */
+  .pod{
+    width: 88px;
+    height: 88px;
+    border-radius:22px;
+    display:grid;
+    place-items:center;
+    background: var(--surface);
+    box-shadow:
+      inset -8px -8px 14px var(--shadow-light),
+      inset  8px  8px 14px var(--shadow-dark);
+  }
+
+  /* Masked SVG so we can tint it to ink without editing files */
+  .glyph{
+    width: 46px;
+    height: 46px;
+    background: var(--ink);
+    -webkit-mask: var(--icon) center / contain no-repeat;
+            mask: var(--icon) center / contain no-repeat;
+    opacity: .9;
+  }
+
+  .label{
+    position:absolute;
+    bottom:14px;
+    left:0; right:0;
+    text-align:center;
+    font-weight:800;
+    letter-spacing:.2px;
+  }
+
+  /* Press/hover */
+  .tile:active{
+    transform: translateY(1px);
+    box-shadow:
+      -8px -8px 14px var(--shadow-light),
+       8px  8px 16px var(--shadow-dark);
+    filter: saturate(1.02);
+  }
+  @media (hover:hover){
+    .tile:hover{ filter: saturate(1.05); }
+  }
+
+  /* HUB – long pill button */
+  .hub{
+    grid-column: 1 / -1;
+    border-radius: 999px;
+    min-height: 68px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight: 900;
+    letter-spacing:.4px;
+    color:#fff;
+    background: linear-gradient(135deg,var(--accent-start),var(--accent-end));
+    box-shadow:
+      -10px -10px 18px var(--shadow-light),
+       12px  12px 22px var(--shadow-dark);
+  }
+  .hub:active{
+    transform: translateY(1px);
+    box-shadow:
+      -8px -8px 14px var(--shadow-light),
+       9px  9px 18px var(--shadow-dark);
+  }
+
+  /* Footer space on tall phones */
+  .spacer{height:8px}
+</style>
 </head>
 <body>
-  <main class="wrap">
 
-    <!-- Top logo (smaller than icons, centered) -->
-    <div class="brand">
-      <!-- If your file is named differently, update the path below -->
-      <img src="img/logo.svg" alt="Smoke Cigar Shop & Lounge logo" />
-    </div>
+<header>
+  <img class="logo" src="img/logo.svg" alt="Smoke Cigar Shop &amp; Lounge">
+</header>
 
-    <!-- 2 columns x 3 rows of BIG icons (SVGs already include text) -->
-    <section class="grid" aria-label="Main apps">
-      <a class="tile" href="pos.html" aria-label="POS">
-        <img src="img/icons/pos.svg" alt="POS" />
-      </a>
-      <a class="tile" href="today.html" aria-label="Today">
-        <img src="img/icons/today.svg" alt="Today" />
-      </a>
+<main class="grid">
+  <!-- POS -->
+  <a class="tile" href="pos.html" data-icon="img/icons/pos.svg">
+    <div class="pod"><span class="glyph"></span></div>
+    <div class="label">POS</div>
+  </a>
 
-      <a class="tile" href="loyalty.html" aria-label="Loyalty">
-        <img src="img/icons/loyalty.svg" alt="Loyalty" />
-      </a>
-      <a class="tile" href="reports.html" aria-label="Reports">
-        <img src="img/icons/reports.svg" alt="Reports" />
-      </a>
+  <!-- Today -->
+  <a class="tile" href="today.html" data-icon="img/icons/today.svg">
+    <div class="pod"><span class="glyph"></span></div>
+    <div class="label">Today</div>
+  </a>
 
-      <a class="tile" href="learn.html" aria-label="Learn">
-        <img src="img/icons/learn.svg" alt="Learn" />
-      </a>
-      <a class="tile" href="news.html" aria-label="News">
-        <img src="img/icons/news.svg" alt="News" />
-      </a>
-    </section>
+  <!-- Loyalty -->
+  <a class="tile" href="loyalty.html" data-icon="img/icons/loyalty.svg">
+    <div class="pod"><span class="glyph"></span></div>
+    <div class="label">Loyalty</div>
+  </a>
 
-    <!-- HUB pill button -->
-    <div class="hubWrap">
-      <button class="hubBtn" onclick="location.href='hub.html'">HUB</button>
-    </div>
-  </main>
+  <!-- Reports -->
+  <a class="tile" href="reports.html" data-icon="img/icons/reports.svg">
+    <div class="pod"><span class="glyph"></span></div>
+    <div class="label">Reports</div>
+  </a>
+
+  <!-- Learn -->
+  <a class="tile" href="learn.html" data-icon="img/icons/learn.svg">
+    <div class="pod"><span class="glyph"></span></div>
+    <div class="label">Learn</div>
+  </a>
+
+  <!-- News -->
+  <a class="tile" href="news.html" data-icon="img/icons/news.svg">
+    <div class="pod"><span class="glyph"></span></div>
+    <div class="label">News</div>
+  </a>
+
+  <!-- HUB (full-width pill) -->
+  <a class="tile hub" href="hub.html">HUB</a>
+</main>
+
+<div class="spacer"></div>
+
+<script>
+  // Apply each icon file as a CSS mask so we can tint uniformly
+  document.querySelectorAll('.tile[data-icon]').forEach(el=>{
+    const url = el.getAttribute('data-icon');
+    el.style.setProperty('--icon', `url("${url}")`);
+  });
+</script>
 </body>
 </html>
