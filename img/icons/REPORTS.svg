@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_3" xmlns="http://www.w3.org/2000/svg" width="600" height="600" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 600 600">
+  <!-- Generator: Adobe Illustrator 29.3.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 151)  -->
+  <defs>
+    <linearGradient id="_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_16" data-name="¡ÂÁ˚ÏˇÌÌ˚È „‡‰ËÂÌÚ 16" x1="134.07" y1="268.44" x2="238.63" y2="268.44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00c5ff"/>
+      <stop offset="1" stop-color="#008bff"/>
+    </linearGradient>
+    <linearGradient id="_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_161" data-name="¡ÂÁ˚ÏˇÌÌ˚È „‡‰ËÂÌÚ 16" x1="355.36" y1="140.68" x2="459.91" y2="140.68" xlink:href="#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_16"/>
+    <linearGradient id="_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_162" data-name="¡ÂÁ˚ÏˇÌÌ˚È „‡‰ËÂÌÚ 16" x1="355.36" y1="396.2" x2="459.91" y2="396.2" xlink:href="#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_16"/>
+    <linearGradient id="_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_163" data-name="¡ÂÁ˚ÏˇÌÌ˚È „‡‰ËÂÌÚ 16" x1="231.6" y1="204.56" x2="362.38" y2="204.56" xlink:href="#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_16"/>
+    <linearGradient id="_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_164" data-name="¡ÂÁ˚ÏˇÌÌ˚È „‡‰ËÂÌÚ 16" x1="228.04" y1="204.56" x2="365.93" y2="204.56" xlink:href="#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_16"/>
+    <linearGradient id="_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_165" data-name="¡ÂÁ˚ÏˇÌÌ˚È „‡‰ËÂÌÚ 16" x1="231.59" y1="332.31" x2="362.38" y2="332.31" xlink:href="#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_16"/>
+    <linearGradient id="_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_166" data-name="¡ÂÁ˚ÏˇÌÌ˚È „‡‰ËÂÌÚ 16" x1="228.03" y1="332.31" x2="365.93" y2="332.31" xlink:href="#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_16"/>
+  </defs>
+  <text transform="translate(172.63 578.22)" fill="#818f99" font-family="HelveticaNeue-Bold, &apos;Helvetica Neue&apos;" font-size="53.04" font-weight="700" letter-spacing="0em"><tspan x="0" y="0">REPORTS</tspan></text>
+  <g>
+    <path d="M238.63,268.44c0,28.87-23.4,52.27-52.28,52.27s-52.27-23.4-52.27-52.27,23.4-52.28,52.27-52.28,52.28,23.4,52.28,52.28Z" fill="url(#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_16)"/>
+    <path d="M459.91,140.68c0,28.87-23.4,52.27-52.28,52.27s-52.28-23.4-52.28-52.27,23.4-52.28,52.28-52.28,52.28,23.4,52.28,52.28Z" fill="url(#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_161)"/>
+    <path d="M459.91,396.2c0,28.87-23.4,52.28-52.28,52.28s-52.28-23.4-52.28-52.28,23.4-52.27,52.28-52.27,52.28,23.4,52.28,52.27Z" fill="url(#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_162)"/>
+    <line x1="362.38" y1="166.81" x2="231.6" y2="242.31" fill="url(#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_163)" stroke="url(#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_164)" stroke-miterlimit="10" stroke-width="14.23"/>
+    <line x1="362.38" y1="370.07" x2="231.59" y2="294.55" fill="url(#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_165)" stroke="url(#_ÂÁ_Ï_ÌÌ_È_ËÂÌÚ_166)" stroke-miterlimit="10" stroke-width="14.23"/>
+  </g>
+</svg>
