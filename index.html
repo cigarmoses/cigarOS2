@@ -1,140 +1,171 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>cigarOS2</title>
-<meta name="color-scheme" content="light only" />
-<style>
-  :root{
-    --bg:#eef2f6;
-    --surface:#f6f9fc;
-    --ink:#0f2b2c;
-    --accent-start:#14b4ff;
-    --accent-end:#0b7ef4;
-    --shadow-light: rgba(255,255,255,0.88);
-    --shadow-dark:  rgba(28,46,72,0.22);
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>cigarOS2</title>
+  <link rel="icon" href="/img/logo.svg" />
+  <meta name="color-scheme" content="light only" />
+  <style>
+    /* ===============================
+       Neumorphic Home — Exact Theme
+       =============================== */
+    :root{
+      /* Background + tile colors (set to a soft, cool-gray scheme) */
+      --bg:            #EDF1F5;
+      --tile:          #F7FAFD;
 
-    /* square tile size */
-    --tile: clamp(120px, 30vw, 200px);
-    --gap: clamp(14px, 3.5vw, 26px);
-  }
+      /* Outer drop shadows (neumorphism) */
+      --shadow-dark:   rgba(22, 44, 76, 0.22);   /* bottom-right */
+      --shadow-light:  rgba(255,255,255,0.95);   /* top-left    */
 
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--ink);
-    font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-  }
+      /* Inner inset shadows for the icon “well” */
+      --inset-dark:    rgba(22, 44, 76, 0.20);
+      --inset-light:   rgba(255,255,255,1);
 
-  header{padding:22px 16px 8px; text-align:center}
-  .logo{
-    height:66px;              /* logo smaller than tiles */
-    max-width:78vw;
-    object-fit:contain;
-    filter: drop-shadow(-6px -6px 12px var(--shadow-light))
-            drop-shadow( 8px  8px 18px var(--shadow-dark));
-  }
+      /* Optional tint if your SVGs are monotone (not applied to multi-color art) */
+      --icon-tint:     #24373B;
 
-  /* Grid */
-  .grid{
-    width:min(1000px, 94vw);
-    display:grid;
-    grid-template-columns: repeat(2, var(--tile));
-    justify-content:center;
-    gap: var(--gap);
-    margin: 8px auto 28px;
-  }
-  @media (min-width:760px){
-    .grid{ grid-template-columns: repeat(3, var(--tile)); }
-  }
+      /* Sizing */
+      --tile-size:     clamp(120px, 30vw, 200px);  /* square size */
+      --gap:           clamp(14px, 3.5vw, 26px);   /* spacing     */
+    }
 
-  /* Square neumorphic tile */
-  .tile{
-    width:var(--tile);
-    aspect-ratio:1/1;                  /* <- stays square */
-    border-radius:28px;
-    background:var(--surface);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-decoration:none;
-    box-shadow:
-      -14px -14px 22px var(--shadow-light),
-       14px  14px 24px var(--shadow-dark);
-    transition: transform .06s ease, box-shadow .12s ease, filter .12s ease;
-  }
-  .tile:active{
-    transform:translateY(1px);
-    box-shadow:
-      -10px -10px 16px var(--shadow-light),
-       10px  10px 18px var(--shadow-dark);
-  }
+    /* Base layout */
+    *{ box-sizing: border-box }
+    html,body{ height:100% }
+    body{
+      margin:0;
+      background: var(--bg);
+      color:#0f2b2c;
+      -webkit-font-smoothing: antialiased;
+      font:16px/1.35 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue";
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
 
-  /* Your SVGs (no labels/pods from us) */
-  .icon{
-    width:58%;              /* adjust to taste */
-    height:auto;
-    display:block;
-    pointer-events:none;    /* taps/clicks go to tile link */
-  }
+    /* Logo header */
+    header{ padding:22px 16px 8px; text-align:center }
+    .logo{
+      height:66px; max-width:78vw; object-fit:contain;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));
+      user-select:none; -webkit-user-drag:none;
+    }
 
-  /* Centered HUB tile (same size as others) */
-  .hub-wrapper{
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: center;
-    margin-top: var(--gap);
-    margin-bottom: 20px;
-  }
+    /* Grid of square tiles */
+    .grid{
+      width:min(1000px, 94vw);
+      display:grid;
+      grid-template-columns: repeat(2, var(--tile-size));
+      justify-content:center;
+      gap: var(--gap);
+      margin: 8px auto 28px;
+    }
+    @media (min-width:760px){
+      .grid{ grid-template-columns: repeat(3, var(--tile-size)); }
+    }
 
-  .spacer{height:10px}
-</style>
+    /* Neumorphic tile (square) */
+    .tile{
+      width:var(--tile-size);
+      aspect-ratio:1/1;
+      border-radius:28px;
+      background:var(--tile);
+      display:grid; place-items:center;
+      text-decoration:none;
+      box-shadow:
+        14px 22px 36px var(--shadow-dark),
+       -10px -10px 28px var(--shadow-light);
+      transition: transform .12s ease, box-shadow .12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Inner “icon well” for depth */
+    .tile::before{
+      content:"";
+      position:absolute;
+      width:56%;
+      height:56%;
+      border-radius:20px;
+      background:var(--tile);
+      box-shadow:
+        inset 10px 10px 18px var(--inset-dark),
+        inset -10px -10px 18px var(--inset-light);
+      transition: transform .12s ease;
+    }
+
+    /* Pressed state */
+    .tile:active{
+      transform: translateY(2px);
+      box-shadow:
+        8px 14px 24px var(--shadow-dark),
+       -6px -6px 18px var(--shadow-light);
+    }
+    .tile:active::before{ transform: scale(0.985); }
+
+    /* Your SVG icons (no extra text labels) */
+    .icon{
+      position:relative; z-index:1;
+      width:58%; height:auto; display:block;
+      pointer-events:none; user-select:none; -webkit-user-drag:none;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
+    }
+    /* If you need a global tint for single-color SVGs, add class "tint" to the <img> and uncomment below
+    .tint{ filter: none; }
+    .tint path, .tint use, .tint svg { fill: var(--icon-tint) !important; }
+    */
+
+    /* Centered HUB (same size as others) */
+    .hub-wrapper{
+      grid-column: 1 / -1;
+      display:flex; justify-content:center;
+      margin-top: var(--gap);
+      margin-bottom: 20px;
+    }
+
+    .spacer{ height:12px }
+  </style>
 </head>
 <body>
 
-<header>
-  <img class="logo" src="img/logo.svg" alt="Smoke Cigar Shop &amp; Lounge">
-</header>
+  <header>
+    <img class="logo" src="/img/logo.svg" alt="Smoke Cigar Shop &amp; Lounge">
+  </header>
 
-<main class="grid">
-  <a class="tile" href="pos.html" aria-label="POS">
-    <img class="icon" src="img/icons/pos.svg" alt="">
-  </a>
-
-  <a class="tile" href="today.html" aria-label="Today">
-    <img class="icon" src="img/icons/today.svg" alt="">
-  </a>
-
-  <a class="tile" href="loyalty.html" aria-label="Loyalty">
-    <img class="icon" src="img/icons/loyalty.svg" alt="">
-  </a>
-
-  <a class="tile" href="reports.html" aria-label="Reports">
-    <img class="icon" src="img/icons/reports.svg" alt="">
-  </a>
-
-  <a class="tile" href="learn.html" aria-label="Learn">
-    <img class="icon" src="img/icons/learn.svg" alt="">
-  </a>
-
-  <a class="tile" href="news.html" aria-label="News">
-    <img class="icon" src="img/icons/news.svg" alt="">
-  </a>
-
-  <!-- Centered HUB icon -->
-  <div class="hub-wrapper">
-    <a class="tile" href="hub.html" aria-label="Hub">
-      <img class="icon" src="img/icons/hub.svg" alt="">
+  <main class="grid" aria-label="Main Apps">
+    <a class="tile" href="/pos.html" aria-label="POS">
+      <img class="icon" src="/img/icons/pos.svg" alt="">
     </a>
-  </div>
-</main>
 
-<div class="spacer"></div>
+    <a class="tile" href="/today.html" aria-label="Today">
+      <img class="icon" src="/img/icons/today.svg" alt="">
+    </a>
+
+    <a class="tile" href="/loyalty.html" aria-label="Loyalty">
+      <img class="icon" src="/img/icons/loyalty.svg" alt="">
+    </a>
+
+    <a class="tile" href="/reports.html" aria-label="Reports">
+      <img class="icon" src="/img/icons/reports.svg" alt="">
+    </a>
+
+    <a class="tile" href="/learn.html" aria-label="Learn">
+      <img class="icon" src="/img/icons/learn.svg" alt="">
+    </a>
+
+    <a class="tile" href="/news.html" aria-label="News">
+      <img class="icon" src="/img/icons/news.svg" alt="">
+    </a>
+
+    <!-- HUB: same-size square, centered on its own row -->
+    <div class="hub-wrapper">
+      <a class="tile" href="/hub.html" aria-label="Hub">
+        <img class="icon" src="/img/icons/hub.svg" alt="">
+      </a>
+    </div>
+  </main>
+
+  <div class="spacer"></div>
 </body>
 </html>
