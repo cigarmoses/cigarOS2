@@ -1,182 +1,26 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>cigarOS2</title>
-  <link rel="icon" href="/img/logo.svg" />
-  <meta name="color-scheme" content="light only" />
-  <style>
-    /* -------------------------------
-       Neumorphic home (mobile-first)
-       ------------------------------- */
-
-    /* Soft background & tile colors (cool gray) */
-    :root{
-      --bg:           #ECF1F6;     /* page background */
-      --tile:         #F7FAFD;     /* tile surface    */
-
-      /* Outer (drop) shadows */
-      --sdark:        rgba(26, 42, 63, 0.18);
-      --slight:       rgba(255,255,255,0.96);
-
-      /* Inner (inset) shadows for the icon "well" */
-      --idark:        rgba(26, 42, 63, 0.16);
-      --ilight:       rgba(255,255,255,1);
-
-      /* Sizes */
-      --gap:          clamp(12px, 3.5vw, 22px);
-      --radius:       24px;     /* tile corner radius */
-      --well-radius:  18px;     /* inner well radius  */
-
-      /* Square tile size — scales with viewport but capped */
-      --tile-size:    clamp(116px, 30vw, 180px);
-
-      /* Icon visual size (percent of tile) */
-      --icon-size:    58%;
-    }
-
-    /* Reset-ish */
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body{
-      margin: 0;
-      background: var(--bg);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue";
-      -webkit-font-smoothing: antialiased;
-      color: #0E2830;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* Logo */
-    header{ padding: 18px 16px 8px; text-align: center; }
-    .logo{
-      height: 60px; max-width: 80vw; object-fit: contain;
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,.06));
-      user-select: none; -webkit-user-drag: none;
-    }
-
-    /* Square grid (mobile first = 2 columns) */
-    .grid{
-      width: min(980px, 94vw);
-      display: grid;
-      grid-template-columns: repeat(2, var(--tile-size));
-      justify-content: center;
-      gap: var(--gap);
-      margin: 8px auto 28px;
-    }
-    /* 3 columns on wider screens */
-    @media (min-width: 760px){
-      .grid{ grid-template-columns: repeat(3, var(--tile-size)); }
-    }
-
-    /* Each tile is a SQUARE, not a wide card */
-    .tile{
-      position: relative;
-      width: var(--tile-size);
-      aspect-ratio: 1 / 1;
-      border-radius: var(--radius);
-      background: var(--tile);
-      display: grid;
-      place-items: center;
-      text-decoration: none;
-      /* Softer shadows for small screens (prevents giant blobs) */
-      box-shadow:
-        10px 14px 24px var(--sdark),
-        -8px -8px 18px var(--slight);
-      transition: transform .12s ease, box-shadow .12s ease;
-      -webkit-tap-highlight-color: transparent;
-      overflow: hidden; /* keeps inner well clipped to the radius */
-    }
-
-    /* Inner icon “well” (for the recessed look) */
-    .tile::before{
-      content: "";
-      position: absolute;
-      width: 62%;
-      height: 62%;
-      border-radius: var(--well-radius);
-      background: var(--tile);
-      box-shadow:
-        inset 8px 8px 14px var(--idark),
-        inset -8px -8px 14px var(--ilight);
-      transition: transform .12s ease;
-    }
-
-    /* Press effect */
-    .tile:active{
-      transform: translateY(2px);
-      box-shadow:
-        6px 10px 16px var(--sdark),
-        -5px -5px 12px var(--slight);
-    }
-    .tile:active::before{ transform: scale(0.985); }
-
-    /* Your SVG icons (no text labels) */
-    .icon{
-      position: relative; z-index: 1;
-      width: var(--icon-size);
-      height: auto;
-      display: block;
-      pointer-events: none;
-      user-select: none; -webkit-user-drag: none;
-      /* slight depth so they sit above the well */
-      filter: drop-shadow(0 1px 1px rgba(0,0,0,.06));
-    }
-
-    /* HUB centered, same size as others */
-    .hub-row{
-      grid-column: 1 / -1;
-      display: flex;
-      justify-content: center;
-      margin-top: var(--gap);
-    }
-
-    /* Ensure the page never “scroll-jumps” from excessive shadows */
-    .page-padding{ height: 10px; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smoke POS Dashboard</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <header>
-    <img class="logo" src="/img/logo.svg" alt="Smoke logo" />
-  </header>
+  <div class="logo">
+    <img src="logo.png" alt="Smoke Cigar Shop & Lounge">
+  </div>
 
-  <main class="grid" aria-label="Main apps">
-    <a class="tile" href="/pos.html" aria-label="POS">
-      <img class="icon" src="/img/icons/pos.svg" alt="">
-    </a>
+  <div class="grid">
+    <div class="tile pos"></div>
+    <div class="tile today"></div>
+    <div class="tile profile"></div>
+    <div class="tile reports"></div>
+    <div class="tile learn"></div>
+    <div class="tile news"></div>
+    <div class="tile hub"></div>
+  </div>
 
-    <a class="tile" href="/today.html" aria-label="Today">
-      <img class="icon" src="/img/icons/today.svg" alt="">
-    </a>
-
-    <a class="tile" href="/loyalty.html" aria-label="Loyalty">
-      <img class="icon" src="/img/icons/loyalty.svg" alt="">
-    </a>
-
-    <a class="tile" href="/reports.html" aria-label="Reports">
-      <img class="icon" src="/img/icons/reports.svg" alt="">
-    </a>
-
-    <a class="tile" href="/learn.html" aria-label="Learn">
-      <img class="icon" src="/img/icons/learn.svg" alt="">
-    </a>
-
-    <a class="tile" href="/news.html" aria-label="News">
-      <img class="icon" src="/img/icons/news.svg" alt="">
-    </a>
-
-    <!-- HUB (same square tile, centered on its own row) -->
-    <div class="hub-row">
-      <a class="tile" href="/hub.html" aria-label="Hub">
-        <img class="icon" src="/img/icons/hub.svg" alt="">
-      </a>
-    </div>
-  </main>
-
-  <div class="page-padding"></div>
 </body>
 </html>
