@@ -1,42 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Smoke POS / CigarOS v2</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
   <link rel="icon" href="/img/icons/pos.svg" type="image/svg+xml">
 </head>
 <body>
 
-  <!-- ======= HEADER LOGO ======= -->
-  <div class="logo">
-    <img src="/img/logo.png" alt="Smoke Cigar Shop & Lounge">
-  </div>
+  <main class="page">
+    <!-- HEADER LOGO -->
+    <div class="logo">
+      <!-- Prefer SVG; fallback to PNG -->
+      <picture>
+        <source srcset="/img/logo.svg?v=3" type="image/svg+xml" />
+        <img id="shopLogo" src="/img/logo.png?v=3" alt="Smoke Cigar Shop & Lounge" />
+      </picture>
+    </div>
 
-  <!-- ======= DASHBOARD GRID ======= -->
-  <div class="grid">
-    <div class="tile pos" title="POS"></div>
-    <div class="tile today" title="Today"></div>
-    <div class="tile profile" title="Profile"></div>
-    <div class="tile reports" title="Reports"></div>
-    <div class="tile learn" title="Learn"></div>
-    <div class="tile news" title="News"></div>
-    <div class="tile hub" title="Hub"></div>
-  </div>
+    <!-- DASHBOARD GRID -->
+    <div class="grid">
+      <div class="tile pos"      title="POS"></div>
+      <div class="tile today"    title="Today"></div>
+      <div class="tile profile"  title="Profile"></div>
+      <div class="tile reports"  title="Reports"></div>
+      <div class="tile learn"    title="Learn"></div>
+      <div class="tile news"     title="News"></div>
+      <div class="tile hub"      title="Hub"></div>
+    </div>
+  </main>
 
-  <!-- ======= OPTIONAL SCRIPTS ======= -->
   <script>
-    // Simple example: clickable tiles
-    document.querySelectorAll('.tile').forEach(tile => {
-      tile.addEventListener('click', () => {
-        const section = tile.classList[1]; // e.g., "pos", "reports", etc.
-        alert(`Opening ${section.toUpperCase()} module...`);
-        // In production, you could route to /pos, /reports, etc.
-        // window.location.href = `/${section}.html`;
+    // Logo fallback if path/case is wrong or file missing
+    const logo = document.getElementById('shopLogo');
+    logo?.addEventListener('error', () => {
+      // try alternate common paths/casing
+      const candidates = [
+        '/img/Logo.png?v=3',
+        '/img/LOGO.png?v=3',
+        '/img/logo.webp?v=3',
+        '/img/logo.svg?v=3'
+      ];
+      for (const src of candidates) {
+        const test = new Image();
+        test.onload = () => { logo.src = src; };
+        test.src = src;
+      }
+    });
+
+    // Optional: tap tiles to route later
+    document.querySelectorAll('.tile').forEach(t => {
+      t.addEventListener('click', () => {
+        // window.location.href = `/${t.classList[1]}.html`;
       });
     });
   </script>
-
 </body>
 </html>
