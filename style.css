@@ -61,26 +61,26 @@ body {
   font-size: 15px;
 }
 
-/* Individual icons */
+/* Individual icon paths (updated to /img/icons/) */
 .tile.pos {
-  background-image: url('icons/pos.svg');
+  background-image: url('/img/icons/pos.svg');
 }
 .tile.today {
-  background-image: url('icons/today.svg');
+  background-image: url('/img/icons/today.svg');
 }
 .tile.profile {
-  background-image: url('icons/profile.svg');
+  background-image: url('/img/icons/profile.svg');
 }
 .tile.reports {
-  background-image: url('icons/reports.svg');
+  background-image: url('/img/icons/reports.svg');
 }
 .tile.learn {
-  background-image: url('icons/learn.svg');
+  background-image: url('/img/icons/learn.svg');
 }
 .tile.news {
-  background-image: url('icons/news.svg');
+  background-image: url('/img/icons/news.svg');
 }
 .tile.hub {
-  background-image: url('icons/hub.svg');
+  background-image: url('/img/icons/hub.svg');
   background-size: 38%;
 }
