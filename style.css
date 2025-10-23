@@ -1,0 +1,86 @@
+/* Base layout */
+body {
+  font-family: 'Inter', sans-serif;
+  background: #edf1f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100vh;
+  padding-top: 40px;
+}
+
+/* Logo */
+.logo img {
+  width: 180px;
+  margin-bottom: 40px;
+}
+
+/* Grid layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 160px);
+  grid-gap: 24px;
+  justify-content: center;
+}
+
+/* Tile base */
+.tile {
+  width: 160px;
+  height: 160px;
+  border-radius: 26px;
+  background: #eef2f6;
+  box-shadow:
+    10px 10px 25px #cfd6df,
+    -10px -10px 25px #ffffff;
+  background-repeat: no-repeat;
+  background-position: center 40%;
+  background-size: 50%;
+  position: relative;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.tile:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    6px 6px 15px #cfd6df,
+    -6px -6px 15px #ffffff;
+}
+
+/* Tile labels */
+.tile::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-weight: 600;
+  color: #5d6b79;
+  font-size: 15px;
+}
+
+/* Individual icons */
+.tile.pos {
+  background-image: url('icons/pos.svg');
+}
+.tile.today {
+  background-image: url('icons/today.svg');
+}
+.tile.profile {
+  background-image: url('icons/profile.svg');
+}
+.tile.reports {
+  background-image: url('icons/reports.svg');
+}
+.tile.learn {
+  background-image: url('icons/learn.svg');
+}
+.tile.news {
+  background-image: url('icons/news.svg');
+}
+.tile.hub {
+  background-image: url('icons/hub.svg');
+  background-size: 38%;
+}
