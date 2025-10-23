@@ -1,133 +1,125 @@
 /* =============================
    Smoke POS / CigarOS v2 Dashboard
+   Mobile-first: fits on iPhone without scrolling
    ============================= */
 
-/* Base layout */
+:root{
+  --bg: #edf1f5;
+  --tile: #eef2f6;
+  --shadow-a: #cfd6df;
+  --shadow-b: #ffffff;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
 body {
-  font-family: 'Inter', sans-serif;
-  background: #edf1f5;
+  margin: 0;
+  font-family: system-ui, -apple-system, "Inter", Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+}
+
+/* Page wrapper constrains vertical spacing to avoid scroll */
+.page{
+  min-height: 100dvh;                 /* respect iOS safe areas */
+  padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  min-height: 100vh;
-  padding-top: 40px;
-  margin: 0;
+  justify-content: flex-start;        /* start high on screen */
 }
 
-/* Logo */
-.logo img {
-  width: 180px;
-  margin-bottom: 40px;
+/* Logo area (smaller + less margin so grid shifts up) */
+.logo img{
+  width: clamp(130px, 36vw, 180px);
+  height: auto;
   display: block;
+  margin: 8px auto 10px;              /* reduced bottom margin */
 }
 
-/* Grid layout */
-.grid {
+/* Grid: mobile-first (2 columns), centered, tighter gaps */
+.grid{
   display: grid;
-  grid-template-columns: repeat(3, 160px);
-  grid-gap: 24px;
+  grid-template-columns: repeat(2, 132px); /* 2 columns */
+  grid-auto-rows: 132px;                   /* equal height rows */
+  gap: 16px;                               /* tighter spacing */
   justify-content: center;
-  align-items: center;
+  align-content: start;
+  width: min(92vw, 300px*2);               /* center on small screens */
+  margin: 4px 0 8px;
 }
 
-/* Tile base */
-.tile {
-  width: 160px;
-  height: 160px;
-  border-radius: 26px;
-  background: #eef2f6;
+/* Tile base (slightly smaller to fit 3 rows on phones) */
+.tile{
+  width: 132px;
+  height: 132px;
+  border-radius: 24px;
+  background: var(--tile);
   box-shadow:
-    10px 10px 25px #cfd6df,
-    -10px -10px 25px #ffffff;
+    10px 10px 24px var(--shadow-a),
+    -10px -10px 24px var(--shadow-b);
   background-repeat: no-repeat;
-  background-position: center 40%;
-  background-size: 64%; /* Larger icons */
-  position: relative;
-  transition: all 0.2s ease-in-out;
+  background-position: center 44%;
+  background-size: 72%;                   /* larger icons, still safe */
+  transition: transform .18s ease, box-shadow .18s ease;
   cursor: pointer;
 }
-
-.tile:hover {
-  transform: translateY(-4px);
+.tile:hover{
+  transform: translateY(-3px);
   box-shadow:
-    6px 6px 15px #cfd6df,
-    -6px -6px 15px #ffffff;
+    6px 6px 14px var(--shadow-a),
+    -6px -6px 14px var(--shadow-b);
 }
 
-/* --- Removed captions --- */
-.tile::after {
-  content: none;
-}
+/* Remove captions entirely */
+.tile::after { content: none; }
 
-/* --- Individual icons --- */
-.tile.pos {
-  background-image: url('/img/icons/pos.svg');
-}
+/* Icon images (served as background fills) */
+.tile.pos     { background-image: url('/img/icons/pos.svg'); }
+.tile.today   { background-image: url('/img/icons/today.svg'); }
+.tile.profile { background-image: url('/img/icons/profile.svg'); }
+.tile.reports { background-image: url('/img/icons/reports.svg'); }
+.tile.learn   { background-image: url('/img/icons/learn.svg'); }
+.tile.news    { background-image: url('/img/icons/news.svg'); }
+.tile.hub     { background-image: url('/img/icons/hub.svg'); background-size: 58%; }
 
-.tile.today {
-  background-image: url('/img/icons/today.svg');
-}
+/* ---------------------------------
+   Fit 7 tiles without scrolling
+   Strategy: three rows visible on most iPhones.
+   If vertical space is tight, shrink slightly via height media queries.
+----------------------------------*/
 
-.tile.profile {
-  background-image: url('/img/icons/profile.svg');
-}
-
-.tile.reports {
-  background-image: url('/img/icons/reports.svg');
-}
-
-.tile.learn {
-  background-image: url('/img/icons/learn.svg');
-}
-
-.tile.news {
-  background-image: url('/img/icons/news.svg');
-}
-
-.tile.hub {
-  background-image: url('/img/icons/hub.svg');
-  background-size: 64%;
-}
-
-/* =============================
-   Responsive Design
-   ============================= */
-
-/* Tablet & Mobile (≤768px) */
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: repeat(2, 160px);
-    grid-gap: 24px;
+/* Slightly taller phones / small tablets */
+@media (min-width: 420px){
+  .grid{
+    grid-template-columns: repeat(2, 144px);
+    grid-auto-rows: 144px;
+    gap: 18px;
   }
-
-  .logo img {
-    width: 160px;
-    margin-bottom: 24px;
-  }
-
-  .tile {
-    width: 160px;
-    height: 160px;
-    background-size: 70%; /* Bigger icons for mobile */
-  }
+  .tile{ width:144px; height:144px; background-size: 70%; }
+  .tile.hub{ background-size: 56%; }
 }
 
-/* Very small screens (≤480px) */
-@media (max-width: 480px) {
-  .grid {
-    grid-template-columns: repeat(2, 140px);
-    grid-gap: 20px;
+/* Desktop: restore 3-column layout */
+@media (min-width: 820px){
+  .logo img{ width: 180px; margin: 16px auto 18px; }
+  .grid{
+    grid-template-columns: repeat(3, 160px);
+    grid-auto-rows: 160px;
+    gap: 22px;
+    width: auto;
   }
+  .tile{ width:160px; height:160px; background-size: 64%; }
+  .tile.hub{ background-size: 50%; }
+}
 
-  .tile {
-    width: 140px;
-    height: 140px;
-    background-size: 68%;
+/* If a very short viewport, squeeze a bit more so no scroll */
+@media (max-height: 700px){
+  .logo img{ margin-bottom: 6px; }
+  .grid{
+    grid-template-columns: repeat(2, 124px);
+    grid-auto-rows: 124px;
+    gap: 14px;
   }
-
-  .logo img {
-    width: 140px;
-    margin-bottom: 20px;
-  }
+  .tile{ width:124px; height:124px; background-size: 70%; }
+  .tile.hub{ background-size: 56%; }
 }
