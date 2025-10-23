@@ -1,6 +1,6 @@
 /* =============================
    Smoke POS / CigarOS v2 Dashboard
-   Mobile-first: fits on iPhone without scrolling
+   Optimized for iPhone — fits entirely on screen
    ============================= */
 
 :root{
@@ -11,115 +11,112 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
+html, body { height: 100%; margin: 0; padding: 0; }
 body {
-  margin: 0;
   font-family: system-ui, -apple-system, "Inter", Segoe UI, Roboto, sans-serif;
   background: var(--bg);
 }
 
-/* Page wrapper constrains vertical spacing to avoid scroll */
+/* Page container */
 .page{
-  min-height: 100dvh;                 /* respect iOS safe areas */
-  padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) 8px env(safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;        /* start high on screen */
+  justify-content: flex-start;
 }
 
-/* Logo area (smaller + less margin so grid shifts up) */
+/* LOGO — now 50% smaller overall */
 .logo img{
-  width: clamp(130px, 36vw, 180px);
+  width: clamp(90px, 18vw, 120px);
   height: auto;
   display: block;
-  margin: 8px auto 10px;              /* reduced bottom margin */
+  margin: 4px auto 6px;
 }
 
-/* Grid: mobile-first (2 columns), centered, tighter gaps */
+/* GRID LAYOUT (Mobile-first, 2 columns) */
 .grid{
   display: grid;
-  grid-template-columns: repeat(2, 132px); /* 2 columns */
-  grid-auto-rows: 132px;                   /* equal height rows */
-  gap: 16px;                               /* tighter spacing */
+  grid-template-columns: repeat(2, 112px);
+  grid-auto-rows: 112px;
+  gap: 14px;
   justify-content: center;
   align-content: start;
-  width: min(92vw, 300px*2);               /* center on small screens */
+  width: min(92vw, 250px*2);
   margin: 4px 0 8px;
 }
 
-/* Tile base (slightly smaller to fit 3 rows on phones) */
+/* TILE BASE (icons about 15% smaller than before) */
 .tile{
-  width: 132px;
-  height: 132px;
-  border-radius: 24px;
+  width: 112px;
+  height: 112px;
+  border-radius: 22px;
   background: var(--tile);
   box-shadow:
-    10px 10px 24px var(--shadow-a),
-    -10px -10px 24px var(--shadow-b);
+    8px 8px 20px var(--shadow-a),
+    -8px -8px 20px var(--shadow-b);
   background-repeat: no-repeat;
-  background-position: center 44%;
-  background-size: 72%;                   /* larger icons, still safe */
+  background-position: center 46%;
+  background-size: 58%;   /* reduced from 70% */
   transition: transform .18s ease, box-shadow .18s ease;
   cursor: pointer;
 }
 .tile:hover{
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow:
-    6px 6px 14px var(--shadow-a),
-    -6px -6px 14px var(--shadow-b);
+    5px 5px 14px var(--shadow-a),
+    -5px -5px 14px var(--shadow-b);
 }
 
 /* Remove captions entirely */
 .tile::after { content: none; }
 
-/* Icon images (served as background fills) */
+/* ICON ASSIGNMENTS */
 .tile.pos     { background-image: url('/img/icons/pos.svg'); }
 .tile.today   { background-image: url('/img/icons/today.svg'); }
 .tile.profile { background-image: url('/img/icons/profile.svg'); }
 .tile.reports { background-image: url('/img/icons/reports.svg'); }
 .tile.learn   { background-image: url('/img/icons/learn.svg'); }
 .tile.news    { background-image: url('/img/icons/news.svg'); }
-.tile.hub     { background-image: url('/img/icons/hub.svg'); background-size: 58%; }
+.tile.hub     { background-image: url('/img/icons/hub.svg'); background-size: 50%; }
 
-/* ---------------------------------
-   Fit 7 tiles without scrolling
-   Strategy: three rows visible on most iPhones.
-   If vertical space is tight, shrink slightly via height media queries.
-----------------------------------*/
-
-/* Slightly taller phones / small tablets */
+/* ------------------------------
+   Slightly larger tablets
+--------------------------------*/
 @media (min-width: 420px){
   .grid{
-    grid-template-columns: repeat(2, 144px);
-    grid-auto-rows: 144px;
-    gap: 18px;
+    grid-template-columns: repeat(2, 124px);
+    grid-auto-rows: 124px;
+    gap: 16px;
   }
-  .tile{ width:144px; height:144px; background-size: 70%; }
-  .tile.hub{ background-size: 56%; }
+  .tile{
+    width:124px; height:124px;
+    background-size: 60%;
+  }
+  .tile.hub{ background-size: 52%; }
 }
 
 /* Desktop: restore 3-column layout */
 @media (min-width: 820px){
-  .logo img{ width: 180px; margin: 16px auto 18px; }
+  .logo img{ width: 140px; margin: 10px auto 14px; }
   .grid{
-    grid-template-columns: repeat(3, 160px);
-    grid-auto-rows: 160px;
+    grid-template-columns: repeat(3, 150px);
+    grid-auto-rows: 150px;
     gap: 22px;
-    width: auto;
   }
-  .tile{ width:160px; height:160px; background-size: 64%; }
-  .tile.hub{ background-size: 50%; }
+  .tile{ width:150px; height:150px; background-size: 56%; }
+  .tile.hub{ background-size: 48%; }
 }
 
-/* If a very short viewport, squeeze a bit more so no scroll */
+/* Short viewports — squeeze a bit tighter */
 @media (max-height: 700px){
-  .logo img{ margin-bottom: 6px; }
+  .logo img{ width: 90px; margin-bottom: 4px; }
   .grid{
-    grid-template-columns: repeat(2, 124px);
-    grid-auto-rows: 124px;
-    gap: 14px;
+    grid-template-columns: repeat(2, 104px);
+    grid-auto-rows: 104px;
+    gap: 12px;
   }
-  .tile{ width:124px; height:124px; background-size: 70%; }
-  .tile.hub{ background-size: 56%; }
+  .tile{ width:104px; height:104px; background-size: 56%; }
+  .tile.hub{ background-size: 48%; }
 }
