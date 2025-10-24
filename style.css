@@ -1,6 +1,6 @@
 /* =============================
    Smoke POS / CigarOS v2 Dashboard
-   Optimized for iPhone — fits entirely on screen
+   Even spacing + no scroll on mobile
    ============================= */
 
 :root{
@@ -17,37 +17,38 @@ body {
   background: var(--bg);
 }
 
-/* Page container */
+/* ---------- Page wrapper ---------- */
 .page{
   min-height: 100dvh;
-  padding: env(safe-area-inset-top) 8px env(safe-area-inset-bottom);
+  padding: env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-start; /* keep content high; we control gaps below */
 }
 
-/* LOGO — now 50% smaller overall */
+/* ---------- Logo (50% smaller) ---------- */
 .logo img{
   width: clamp(90px, 18vw, 120px);
   height: auto;
   display: block;
-  margin: 4px auto 6px;
+  margin: 6px auto 14px; /* <- create a clear gap above the grid */
 }
 
-/* GRID LAYOUT (Mobile-first, 2 columns) */
+/* ---------- Grid (mobile-first: 2 columns) ---------- */
+/* Even spacing: equal column + row gaps; grid centered */
 .grid{
   display: grid;
   grid-template-columns: repeat(2, 112px);
   grid-auto-rows: 112px;
-  gap: 14px;
-  justify-content: center;
-  align-content: start;
-  width: min(92vw, 250px*2);
-  margin: 4px 0 8px;
+  column-gap: 20px;  /* even horizontal spacing */
+  row-gap: 20px;     /* even vertical spacing */
+  justify-content: center;  /* center the two columns */
+  align-content: start;     /* start at top, maintain row gap evenly */
+  margin-top: 4px;          /* small breathing room below logo */
 }
 
-/* TILE BASE (icons about 15% smaller than before) */
+/* ---------- Tiles ---------- */
 .tile{
   width: 112px;
   height: 112px;
@@ -58,7 +59,7 @@ body {
     -8px -8px 20px var(--shadow-b);
   background-repeat: no-repeat;
   background-position: center 46%;
-  background-size: 58%;   /* reduced from 70% */
+  background-size: 58%; /* ~15% smaller than earlier */
   transition: transform .18s ease, box-shadow .18s ease;
   cursor: pointer;
 }
@@ -72,7 +73,7 @@ body {
 /* Remove captions entirely */
 .tile::after { content: none; }
 
-/* ICON ASSIGNMENTS */
+/* Icon assignments (served as background fills) */
 .tile.pos     { background-image: url('/img/icons/pos.svg'); }
 .tile.today   { background-image: url('/img/icons/today.svg'); }
 .tile.profile { background-image: url('/img/icons/profile.svg'); }
@@ -81,42 +82,29 @@ body {
 .tile.news    { background-image: url('/img/icons/news.svg'); }
 .tile.hub     { background-image: url('/img/icons/hub.svg'); background-size: 50%; }
 
-/* ------------------------------
-   Slightly larger tablets
---------------------------------*/
-@media (min-width: 420px){
+/* ---------- Short viewports: squeeze slightly so no scroll ---------- */
+@media (max-height: 700px){
+  .logo img{ margin-bottom: 10px; }
   .grid{
-    grid-template-columns: repeat(2, 124px);
-    grid-auto-rows: 124px;
-    gap: 16px;
+    grid-template-columns: repeat(2, 108px);
+    grid-auto-rows: 108px;
+    column-gap: 18px;
+    row-gap: 18px;
   }
-  .tile{
-    width:124px; height:124px;
-    background-size: 60%;
-  }
-  .tile.hub{ background-size: 52%; }
-}
-
-/* Desktop: restore 3-column layout */
-@media (min-width: 820px){
-  .logo img{ width: 140px; margin: 10px auto 14px; }
-  .grid{
-    grid-template-columns: repeat(3, 150px);
-    grid-auto-rows: 150px;
-    gap: 22px;
-  }
-  .tile{ width:150px; height:150px; background-size: 56%; }
+  .tile{ width:108px; height:108px; background-size: 56%; }
   .tile.hub{ background-size: 48%; }
 }
 
-/* Short viewports — squeeze a bit tighter */
-@media (max-height: 700px){
-  .logo img{ width: 90px; margin-bottom: 4px; }
+/* ---------- Tablet up ---------- */
+@media (min-width: 820px){
+  .logo img{ width: 140px; margin: 12px auto 18px; }
   .grid{
-    grid-template-columns: repeat(2, 104px);
-    grid-auto-rows: 104px;
-    gap: 12px;
+    grid-template-columns: repeat(3, 150px);
+    grid-auto-rows: 150px;
+    column-gap: 22px;
+    row-gap: 22px;
+    margin-top: 6px;
   }
-  .tile{ width:104px; height:104px; background-size: 56%; }
+  .tile{ width:150px; height:150px; background-size: 56%; }
   .tile.hub{ background-size: 48%; }
 }
