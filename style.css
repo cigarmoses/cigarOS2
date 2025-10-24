@@ -27,7 +27,7 @@ body {
   justify-content: flex-start; /* keep content high; we control gaps below */
 }
 
-/* ---------- Logo (50% smaller) ---------- */
+/* ---------- Logo (70% smaller) ---------- */
 .logo img{
   width: clamp(90px, 18vw, 120px);
   height: auto;
@@ -41,11 +41,11 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 112px);
   grid-auto-rows: 112px;
-  column-gap: 60px;  /* even horizontal spacing */
-  row-gap: 60px;     /* even vertical spacing */
+  column-gap: 40px;  /* even horizontal spacing */
+  row-gap: 40px;     /* even vertical spacing */
   justify-content: center;  /* center the two columns */
   align-content: start;     /* start at top, maintain row gap evenly */
-  margin-top: 8px;          /* small breathing room below logo */
+  margin-top: 12px;          /* small breathing room below logo */
 }
 
 /* ---------- Tiles ---------- */
@@ -66,8 +66,8 @@ body {
 .tile:hover{
   transform: translateY(-2px);
   box-shadow:
-    5px 5px 14px var(--shadow-a),
-    -5px -5px 14px var(--shadow-b);
+    6px 6px 14px var(--shadow-a),
+    -6px -6px 14px var(--shadow-b);
 }
 
 /* Remove captions entirely */
