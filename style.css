@@ -41,11 +41,11 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 112px);
   grid-auto-rows: 112px;
-  column-gap: 20px;  /* even horizontal spacing */
-  row-gap: 20px;     /* even vertical spacing */
+  column-gap: 60px;  /* even horizontal spacing */
+  row-gap: 60px;     /* even vertical spacing */
   justify-content: center;  /* center the two columns */
   align-content: start;     /* start at top, maintain row gap evenly */
-  margin-top: 4px;          /* small breathing room below logo */
+  margin-top: 8px;          /* small breathing room below logo */
 }
 
 /* ---------- Tiles ---------- */
