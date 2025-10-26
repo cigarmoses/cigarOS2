@@ -1,6 +1,27 @@
 [build]
-publish = "."
+  publish = "."
 
-[functions]
-node_bundler = "esbuild"
-external_node_modules = ["@netlify/blobs"]
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/pos"
+  to = "/pos/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/pos/*"
+  to = "/pos/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/hub"
+  to = "/hub/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/hub/*"
+  to = "/hub/index.html"
+  status = 200
