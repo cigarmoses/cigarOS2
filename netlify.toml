@@ -1,22 +1,37 @@
 [build]
   publish = "."
 
-[[redirects]]
-  from = "/pos"
-  to = "/pos/index.html"
-  status = 200
+[[redirects]]; POS
+from="/pos"      to="/pos/index.html"      status=200
+[[redirects]]; POS wildcard
+from="/pos/*"    to="/pos/index.html"      status=200
 
+[[redirects]]; Today
+from="/today"    to="/today/index.html"    status=200
 [[redirects]]
-  from = "/pos/*"
-  to = "/pos/index.html"
-  status = 200
+from="/today/*"  to="/today/index.html"    status=200
 
+[[redirects]]; Loyalty
+from="/loyalty"  to="/loyalty/index.html"  status=200
 [[redirects]]
-  from = "/hub"
-  to = "/hub.html"
-  status = 200
+from="/loyalty/*"to="/loyalty/index.html"  status=200
 
+[[redirects]]; Reports
+from="/reports"  to="/reports/index.html"  status=200
 [[redirects]]
-  from = "/hub/*"
-  to = "/hub.html"
-  status = 200
+from="/reports/*"to="/reports/index.html"  status=200
+
+[[redirects]]; Learn
+from="/learn"    to="/learn/index.html"    status=200
+[[redirects]]
+from="/learn/*"  to="/learn/index.html"    status=200
+
+[[redirects]]; News
+from="/news"     to="/news/index.html"     status=200
+[[redirects]]
+from="/news/*"   to="/news/index.html"     status=200
+
+[[redirects]]; Hub
+from="/hub"      to="/hub/index.html"      status=200
+[[redirects]]
+from="/hub/*"    to="/hub/index.html"      status=200
