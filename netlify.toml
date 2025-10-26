@@ -3,7 +3,7 @@
 
 [[redirects]]
   from = "/"
-  to = "/index.html"
+  to = "/admin.html"
   status = 200
 
 [[redirects]]
@@ -16,12 +16,13 @@
   to = "/pos/index.html"
   status = 200
 
+# Hub points to existing root-level hub.html
 [[redirects]]
   from = "/hub"
-  to = "/hub/index.html"
+  to = "/hub.html"
   status = 200
 
 [[redirects]]
   from = "/hub/*"
-  to = "/hub/index.html"
+  to = "/hub.html"
   status = 200
