@@ -1,7 +1,14 @@
-# POS Routes
-/pos    /pos/index.html   200
-/pos/*  /pos/index.html   200
-
-# Hub Routes
-/hub    /hub.html         200
-/hub/*  /hub.html         200
+/pos      /pos/index.html      200
+/pos/*    /pos/index.html      200
+/today    /today/index.html    200
+/today/*  /today/index.html    200
+/loyalty  /loyalty/index.html  200
+/loyalty/*/loyalty/index.html  200
+/reports  /reports/index.html  200
+/reports/*/reports/index.html  200
+/learn    /learn/index.html    200
+/learn/*  /learn/index.html    200
+/news     /news/index.html     200
+/news/*   /news/index.html     200
+/hub      /hub/index.html      200
+/hub/*    /hub/index.html      200
