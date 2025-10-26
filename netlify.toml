@@ -16,7 +16,6 @@
   to = "/pos/index.html"
   status = 200
 
-# Hub points to existing root-level hub.html
 [[redirects]]
   from = "/hub"
   to = "/hub.html"
