@@ -10,8 +10,8 @@
     --tile-bg: #ffffff;
     --shadow: 0 4px 10px rgba(0,0,0,0.08);
     --radius: 20px;
-    --accent: #20c997;
   }
+
   body {
     margin: 0;
     background: var(--bg);
@@ -22,49 +22,45 @@
     min-height: 100vh;
     padding: 40px 0 80px;
   }
+
   header {
     text-align: center;
     margin-bottom: 40px;
   }
+
   header img {
     width: 160px;
     height: auto;
-    margin-bottom: 10px;
   }
+
   .grid {
     display: grid;
     grid-template-columns: repeat(2, 130px);
-    gap: 24px;
+    gap: 28px;
     justify-content: center;
   }
+
   .tile {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     background: var(--tile-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    padding: 24px;
-    text-align: center;
+    padding: 30px;
     cursor: pointer;
     text-decoration: none;
-    color: #222;
     transition: transform 0.15s ease, box-shadow 0.2s ease;
   }
+
   .tile:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 16px rgba(0,0,0,0.1);
   }
+
   .tile img {
-    width: 46px;
-    height: 46px;
-    margin-bottom: 12px;
-  }
-  .tile span {
-    font-weight: 600;
-    font-size: 14px;
-    color: #333;
+    width: 56px;
+    height: 56px;
   }
 </style>
 </head>
@@ -77,43 +73,36 @@
     <!-- POS -->
     <a href="/pos/" class="tile" title="Go to POS">
       <img src="/img/icons/pos.svg" alt="POS Icon" />
-      <span>POS</span>
     </a>
 
     <!-- Calendar -->
     <a href="/calendar.html" class="tile" title="Calendar">
       <img src="/img/icons/calendar.svg" alt="Calendar Icon" />
-      <span>Calendar</span>
     </a>
 
     <!-- Profile -->
     <a href="/profile.html" class="tile" title="Profile">
       <img src="/img/icons/profile.svg" alt="Profile Icon" />
-      <span>Profile</span>
     </a>
 
     <!-- Social -->
     <a href="/social.html" class="tile" title="Social">
       <img src="/img/icons/share.svg" alt="Share Icon" />
-      <span>Social</span>
     </a>
 
     <!-- Learn -->
     <a href="/learn.html" class="tile" title="Learn">
       <img src="/img/icons/learn.svg" alt="Learn Icon" />
-      <span>Learn</span>
     </a>
 
     <!-- News -->
     <a href="/news.html" class="tile" title="News">
       <img src="/img/icons/news.svg" alt="News Icon" />
-      <span>News</span>
     </a>
 
     <!-- The Hub -->
     <a href="/hub/" class="tile" title="The Hub">
       <img src="/img/icons/thehub.svg" alt="The Hub Icon" />
-      <span>The Hub</span>
     </a>
   </main>
 </body>
