@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>POS • Categories</title>
+<style>
+  :root{
+    --pos-bg:#0f0f10;
+    --pos-card:#17181a;
+    --pos-accent:#20c997; /* adjust to your brand */
+    --pos-text:#f5f5f7;
+    --pos-dim:#a0a4ab;
+    --pos-border:#272a2f;
+    --radius:14px;
+    --shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  html,body{margin:0;background:var(--pos-bg);color:var(--pos-text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Inter,Arial}
+  .pos-wrap{max-width:980px;margin:0 auto;padding:16px 14px 28px}
+
+  /* Global sticky search */
+  .pos-search{
+    position:sticky;top:0;z-index:50;background:linear-gradient(var(--pos-bg) 80%, transparent);
+    padding:8px 0 14px
+  }
+  .pos-searchbar{
+    display:flex;align-items:center;gap:10px;background:var(--pos-card);border:1px solid var(--pos-border);
+    border-radius:999px;padding:10px 14px;box-shadow:var(--shadow)
+  }
+  .pos-searchbar input{
+    flex:1;background:transparent;border:0;outline:0;color:var(--pos-text);font-size:16px
+  }
+  .pos-searchbar button{
+    background:var(--pos-accent);border:0;color:#04150f;font-weight:700;border-radius:999px;padding:10px 14px;cursor:pointer
+  }
+  .pos-muted{color:var(--pos-dim);font-size:12px;margin-top:6px}
+
+  /* Category grid */
+  .pos-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px
+  }
+  @media (max-width:480px){ .pos-grid{grid-template-columns:repeat(4,1fr)} }
+  .pos-tile{
+    background:var(--pos-card);border:1px solid var(--pos-border);border-radius:16px;padding:12px 8px;
+    display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:transform .08s ease,border .2s ease
+  }
+  .pos-tile:active{ transform:scale(.98) }
+  .pos-tile:hover{ border-color:#2f343b }
+  .pos-icon{
+    width:44px;height:44px;display:block;filter:invert(90%) sepia(5%) saturate(100%) hue-rotate(180deg) brightness(105%)
+  }
+  .pos-label{ font-size:12px; color:var(--pos-dim); text-align:center }
+
+  /* Results panel */
+  .pos-panel{
+    margin-top:18px;background:var(--pos-card);border:1px solid var(--pos-border);border-radius:var(--radius);padding:10px 10px 6px
+  }
+  .pos-panel-header{
+    display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:8px
+  }
+  .pos-chip{
+    font-size:12px;color:var(--pos-dim);border:1px solid var(--pos-border);border-radius:999px;padding:6px 10px
+  }
+  .pos-btn-link{ background:none;border:0;color:var(--pos-accent);font-weight:700;cursor:pointer }
+  .pos-list{ list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto }
+  .pos-item{
+    display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:#121315;border:1px solid var(--pos-border);
+    border-radius:12px;padding:10px
+  }
+  .pos-item-title{ font-size:14px;font-weight:700 }
+  .pos-item-sub{ font-size:12px;color:var(--pos-dim) }
+  .pos-ctas{ display:flex;align-items:center;gap:8px }
+  .pos-ghost{
+    background:transparent;border:1px solid var(--pos-border);color:var(--pos-text);border-radius:10px;padding:8px 10px;cursor:pointer
+  }
+  .pos-primary{
+    background:var(--pos-accent);border:0;color:#04150f;font-weight:800;border-radius:10px;padding:8px 12px;cursor:pointer
+  }
+
+  /* Category browser search (secondary) */
+  .pos-subsearch{
+    display:flex;gap:8px;margin:8px 0 10px
+  }
+  .pos-subsearch input{
+    flex:1;background:#101113;border:1px solid var(--pos-border);border-radius:12px;padding:10px;color:var(--pos-text)
+  }
+</style>
+</head>
+<body>
+  <div class="pos-wrap">
+
+    <!-- GLOBAL SEARCH -->
+    <div class="pos-search">
+      <div class="pos-searchbar">
+        <input id="pos-global-input" type="search" placeholder="Search anything (cigars, packs, lighters...)" autocomplete="off" />
+        <button id="pos-global-clear" title="Clear" aria-label="Clear search" style="display:none">Clear</button>
+        <button id="pos-global-search" aria-label="Search">Search</button>
+      </div>
+      <div class="pos-muted">Type to search across all categories. Tap a category below to browse.</div>
+    </div>
+
+    <!-- CATEGORY GRID -->
+    <div id="pos-category-grid" class="pos-grid" role="list"></div>
+
+    <!-- RESULTS / CATEGORY BROWSER PANEL -->
+    <div id="pos-results" class="pos-panel" style="display:none">
+      <div class="pos-panel-header">
+        <div id="pos-context" class="pos-chip">Results</div>
+        <button id="pos-close" class="pos-btn-link">Close</button>
+      </div>
+
+      <!-- Secondary search when inside a category -->
+      <div id="pos-subsearch" class="pos-subsearch" style="display:none">
+        <input id="pos-category-input" type="search" placeholder="Search in this category…" autocomplete="off" />
+        <button id="pos-category-clear" class="pos-ghost">Clear</button>
+      </div>
+
+      <ul id="pos-list" class="pos-list" aria-live="polite"></ul>
+    </div>
+
+  </div>
+
+<script>
+/* --------------------------
+   Category + Sample Data
+--------------------------- */
+const POS_CATEGORIES = [
+  { key:'Cigars',           icon:'/img/icons/categories/cigars.svg' },
+  { key:'Packs',            icon:'/img/icons/categories/packs.svg' },
+  { key:'Food & Beverages', icon:'/img/icons/categories/foodandbevs.svg' },
+  { key:'Accessories',      icon:'/img/icons/categories/accessories.svg' },
+  { key:'Ashtrays',         icon:'/img/icons/categories/ashtrays.svg' },
+  { key:'Lighters',         icon:'/img/icons/categories/lighters.svg' },
+  { key:'Cutters',          icon:'/img/icons/categories/cutters.svg' },
+  { key:'Pipes',            icon:'/img/icons/categories/pipes.svg' },
+];
+
+const SAMPLE_PRODUCTS = [
+  { id:'af-opx-rob',  name:'Arturo Fuente Opus X Robusto', category:'Cigars', price:39.95, vitola:'Robusto', ring:50, length:"5.00", sku:'AF-OPX-R' },
+  { id:'pad-64-toro', name:'Padron 1964 Anniversary Toro Maduro', category:'Cigars', price:18.50, vitola:'Toro', ring:52, length:"6.00", sku:'PD-64-TM' },
+  { id:'lfd-bull',    name:'La Flor Dominicana Andalusian Bull', category:'Cigars', price:21.99, vitola:'Figurado', ring:64, length:"6.50", sku:'LFD-BULL' },
+  { id:'sampler-opx', name:'Opus X 5-Pack Sampler', category:'Packs', price:299.00, sku:'PK-OPX-5' },
+  { id:'topo',        name:'Topo Chico Mineral Water', category:'Food & Beverages', price:2.50, sku:'FB-TC-12' },
+  { id:'espresso',    name:'Double Espresso', category:'Food & Beverages', price:3.75, sku:'FB-ESP-2' },
+  { id:'pouch',       name:'Leather Cigar Pouch (3-ct)', category:'Accessories', price:34.00, sku:'ACC-PCH-3' },
+  { id:'ash-4',       name:'Ceramic 4-Rest Ashtray', category:'Ashtrays', price:24.00, sku:'ASH-4R' },
+  { id:'jet-2',       name:'Jet Torch Lighter (2-flame)', category:'Lighters', price:19.99, sku:'LGT-2F' },
+  { id:'guill',       name:'Stainless Guillotine Cutter', category:'Cutters', price:14.99, sku:'CUT-GUI' },
+  { id:'briar',       name:'Briar Pipe – Classic Bent', category:'Pipes', price:69.00, sku:'PIP-BR-CL' },
+];
+
+/* --------------------------
+   DOM Elements
+--------------------------- */
+const gridEl       = document.getElementById('pos-category-grid');
+const resultsEl    = document.getElementById('pos-results');
+const listEl       = document.getElementById('pos-list');
+const contextEl    = document.getElementById('pos-context');
+const closeBtn     = document.getElementById('pos-close');
+const subSearchBox = document.getElementById('pos-subsearch');
+const catInput     = document.getElementById('pos-category-input');
+const catClear     = document.getElementById('pos-category-clear');
+const globalInput  = document.getElementById('pos-global-input');
+const globalSearch = document.getElementById('pos-global-search');
+const globalClear  = document.getElementById('pos-global-clear');
+
+let currentCategory = null;
+
+/* --------------------------
+   Render Category Grid
+--------------------------- */
+function renderCategoryGrid(){
+  gridEl.innerHTML = '';
+  POS_CATEGORIES.forEach(cat=>{
+    const btn = document.createElement('button');
+    btn.className = 'pos-tile';
+    btn.setAttribute('role','listitem');
+    btn.innerHTML = `
+      <img class="pos-icon" src="${cat.icon}" alt="${cat.key} icon" />
+      <div class="pos-label">${cat.key}</div>
+    `;
+    btn.addEventListener('click', ()=> openCategory(cat.key));
+    gridEl.appendChild(btn);
+  });
+}
+
+/* --------------------------
+   Search + Results Logic
+--------------------------- */
+function normalize(s){ return (s||'').toString().toLowerCase(); }
+
+function searchAll(query){
+  const q = normalize(query);
+  if(!q) return [];
+  return SAMPLE_PRODUCTS.filter(p=>{
+    return [p.name,p.category,p.vitola,p.sku].some(v=> normalize(v).includes(q));
+  });
+}
+function searchInCategory(category, query){
+  const base = SAMPLE_PRODUCTS.filter(p=> p.category===category);
+  const q = normalize(query);
+  if(!q) return base;
+  return base.filter(p=> [p.name,p.vitola,p.sku].some(v=> normalize(v).includes(q)));
+}
+
+function renderList(items){
+  listEl.innerHTML = '';
+  if(items.length===0){
+    listEl.innerHTML = `<li class="pos-item"><div><div class="pos-item-title">No results</div><div class="pos-item-sub">Try a different search.</div></div></li>`;
+    return;
+  }
+  items.forEach(p=>{
+    const li = document.createElement('li');
+    li.className = 'pos-item';
+    li.innerHTML = `
+      <div>
+        <div class="pos-item-title">${p.name}</div>
+        <div class="pos-item-sub">
+          ${p.category}${p.vitola?` • ${p.vitola}`:''}${p.ring?` • ${p.ring} ring`:''}${p.length?` • ${p.length}"`:''}
+          ${p.sku?` • SKU: ${p.sku}`:''}
+        </div>
+      </div>
+      <div class="pos-ctas">
+        <button class="pos-ghost" data-id="${p.id}" data-action="view">Info</button>
+        <button class="pos-primary" data-id="${p.id}" data-action="add">Add</button>
+      </div>
+    `;
+    li.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      if(action==='add'){ addToBill(id); }
+      if(action==='view'){ viewProduct(id); }
+    });
+    listEl.appendChild(li);
+  });
+}
+
+/* --------------------------
+   Panel Controls
+--------------------------- */
+function openResultsPanel(){
+  resultsEl.style.display = 'block';
+  resultsEl.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function closeResultsPanel(){
+  resultsEl.style.display = 'none';
+  currentCategory = null;
+  if(catInput) catInput.value = '';
+  subSearchBox.style.display='none';
+}
+function openCategory(category){
+  currentCategory = category;
+  contextEl.textContent = `Browsing: ${category}`;
+  subSearchBox.style.display='flex';
+  if(catInput) catInput.value = '';
+  renderList(searchInCategory(category, ''));
+  openResultsPanel();
+}
+function runGlobalSearch(){
+  const q = globalInput.value.trim();
+  globalClear.style.display = q ? 'inline-block' : 'none';
+  if(!q){ closeResultsPanel(); return; }
+  contextEl.textContent = `Search results for: “${q}”`;
+  subSearchBox.style.display='none';
+  renderList(searchAll(q));
+  openResultsPanel();
+}
+
+/* --------------------------
+   POS Hooks
+--------------------------- */
+function addToBill(id){
+  const item = SAMPLE_PRODUCTS.find(p=>p.id===id);
+  if(!item) return;
+  document.dispatchEvent(new CustomEvent('pos:addToBill',{ detail:item }));
+  alert(`Added: ${item.name}`);
+}
+function viewProduct(id){
+  const item = SAMPLE_PRODUCTS.find(p=>p.id===id);
+  if(!item) return;
+  alert(`${item.name}\nCategory: ${item.category}\nPrice: $${item.price.toFixed(2)}${item.vitola?`\nVitola: ${item.vitola}`:''}`);
+}
+
+/* --------------------------
+   Event Listeners + Shortcuts
+--------------------------- */
+renderCategoryGrid();
+
+globalSearch.addEventListener('click', runGlobalSearch);
+globalInput.addEventListener('input', (e)=>{
+  if(e.target.value.trim().length===0){ globalClear.style.display='none'; }
+});
+globalInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') runGlobalSearch(); });
+globalClear.addEventListener('click', ()=>{ globalInput.value=''; globalClear.style.display='none'; closeResultsPanel(); });
+closeBtn.addEventListener('click', closeResultsPanel);
+catInput && catInput.addEventListener('input', (e)=>{
+  renderList(searchInCategory(currentCategory, e.target.value));
+});
+catClear && catClear.addEventListener('click', ()=>{
+  catInput.value=''; renderList(searchInCategory(currentCategory, ''));
+});
+window.addEventListener('keydown',(e)=>{
+  if(e.key === '/'){ e.preventDefault(); globalInput.focus(); }
+  else if(e.key === 'Escape'){ closeResultsPanel(); }
+});
+</script>
+</body>
+</html>
