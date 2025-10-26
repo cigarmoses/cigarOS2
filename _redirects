@@ -4,7 +4,6 @@
 /pos              /pos/index.html   200
 /pos/*            /pos/index.html   200
 
-# Hub (you currently have hub.html at root)
-#/hub route to root hub.html
+# Hub
 /hub              /hub.html         200
 /hub/*            /hub.html         200
