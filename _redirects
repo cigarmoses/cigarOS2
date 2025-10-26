@@ -1,9 +1,7 @@
-/                 /admin.html       200
+# POS Routes
+/pos    /pos/index.html   200
+/pos/*  /pos/index.html   200
 
-# POS
-/pos              /pos/index.html   200
-/pos/*            /pos/index.html   200
-
-# Hub
-/hub              /hub.html         200
-/hub/*            /hub.html         200
+# Hub Routes
+/hub    /hub.html         200
+/hub/*  /hub.html         200
