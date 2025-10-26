@@ -1,13 +1,10 @@
-# -----------------------------------------
-# Netlify clean routes for cigarOS2
-# -----------------------------------------
+/                 /admin.html       200
 
-/                /index.html        200
+# POS
+/pos              /pos/index.html   200
+/pos/*            /pos/index.html   200
 
-# POS routes
-/pos             /pos/index.html    200
-/pos/*           /pos/index.html    200
-
-# Hub routes
-/hub             /hub/index.html    200
-/hub/*           /hub/index.html    200
+# Hub (you currently have hub.html at root)
+#/hub route to root hub.html
+/hub              /hub.html         200
+/hub/*            /hub.html         200
