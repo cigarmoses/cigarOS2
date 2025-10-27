@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Food & Beverages · Smoke POS</title>
+
+  <!-- Shared app styles -->
+  <link rel="stylesheet" href="/style.css?v=5" />
+  <!-- Module styles -->
+  <link rel="stylesheet" href="/foodandbevs/food.css?v=5" />
+
+  <link rel="icon" href="/img/icons/foodandbevs/cocacola.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#edf1f5" />
+</head>
+<body>
+  <main class="page">
+    <!-- Top bar -->
+    <header class="topbar">
+      <a href="/" class="back">← Home</a>
+      <div class="brand">
+        <img src="/img/logo.png?v=5" alt="Smoke Cigar Shop & Lounge" />
+        <h1>Food & Beverages</h1>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <section class="module-content module-split">
+      <!-- Left: Items grid -->
+      <div class="bev-grid" id="bevGrid" aria-label="Beverages"></div>
+
+      <!-- Right: Cart -->
+      <aside class="cart" aria-label="Current Order">
+        <div class="cart-header">
+          <h2>Order</h2>
+          <button id="clearCart" class="btn btn-light" title="Clear cart">Clear</button>
+        </div>
+
+        <div id="cartItems" class="cart-items"></div>
+
+        <div class="cart-totals">
+          <div class="row">
+            <span>Subtotal</span>
+            <strong id="subtotal">$0.00</strong>
+          </div>
+          <div class="row">
+            <span>Tax (7%)</span>
+            <strong id="tax">$0.00</strong>
+          </div>
+          <div class="row total">
+            <span>Total</span>
+            <strong id="total">$0.00</strong>
+          </div>
+          <button id="checkout" class="btn btn-primary" disabled>Checkout</button>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <!-- Logic -->
+  <script src="/foodandbevs/food.js?v=5"></script>
+</body>
+</html>
