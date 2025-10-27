@@ -1,303 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>POS • Categories</title>
-<style>
-  :root{
-    /* Match home screen look */
-    --bg:#f5f6fa;
-    --tile-bg:#ffffff;
-    --shadow:0 4px 10px rgba(0,0,0,0.08);
-    --shadow-hover:0 6px 16px rgba(0,0,0,0.10);
-    --radius:20px;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>POS · Smoke POS</title>
 
-    /* Interface accents */
-    --text:#222;
-    --muted:#667085;
-    --border:#e7e7ec;
-    --accent:#20c997;
-  }
-
-  html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,Inter,Arial}
-  .wrap{max-width:980px;margin:0 auto;padding:24px 18px 40px}
-
-  /* Top: global search */
-  .search{
-    position:sticky;top:0;z-index:10;
-    padding:8px 0 18px;background:linear-gradient(var(--bg) 85%, transparent);
-  }
-  .searchbar{
-    display:flex;align-items:center;gap:10px;
-    background:var(--tile-bg);border:1px solid var(--border);border-radius:999px;
-    padding:12px 14px;box-shadow:var(--shadow);
-  }
-  .searchbar input{
-    flex:1;background:transparent;border:0;outline:0;font-size:16px;color:var(--text)
-  }
-  .pill{
-    border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 12px;font-weight:700;cursor:pointer
-  }
-  .pill.primary{
-    border:0;background:var(--accent);color:#053826
-  }
-  .hint{color:var(--muted);font-size:12px;margin-top:8px}
-
-  /* Category grid to match home */
-  .grid{
-    display:grid;grid-template-columns:repeat(2, 130px);
-    gap:28px;justify-content:center;margin-top:24px
-  }
-  .tile{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:var(--tile-bg);border-radius:var(--radius);box-shadow:var(--shadow);
-    padding:30px;cursor:pointer;text-decoration:none;color:var(--text);
-    transition:transform .15s ease, box-shadow .2s ease, border-color .2s ease;
-    border:1px solid var(--border);
-  }
-  .tile:hover{ transform:translateY(-3px); box-shadow:var(--shadow-hover) }
-  .tile img{ width:56px;height:56px; margin-bottom:12px }
-  .tile span{ font-weight:700; font-size:14px }
-
-  /* Results / browser panel (light theme) */
-  .panel{
-    margin-top:24px;background:#fff;border:1px solid var(--border);
-    border-radius:16px;box-shadow:var(--shadow);padding:12px
-  }
-  .panel-head{
-    display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px
-  }
-  .chip{font-size:12px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:#fff}
-  .link{background:none;border:0;color:#0b7a63;font-weight:700;cursor:pointer}
-
-  .subsearch{display:flex;gap:8px;margin:10px 0 8px}
-  .subsearch input{
-    flex:1;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;color:var(--text)
-  }
-  .ghost{background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer}
-  .primary{background:var(--accent);border:0;color:#053826;font-weight:800;border-radius:10px;padding:8px 12px;cursor:pointer}
-
-  .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:58vh;overflow:auto}
-  .item{
-    display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
-    background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px
-  }
-  .title{font-size:14px;font-weight:800}
-  .sub{font-size:12px;color:var(--muted)}
-</style>
+  <link rel="stylesheet" href="/style.css?v=6" />
+  <link rel="stylesheet" href="/pos/pos.css?v=6" />
+  <link rel="icon" href="/img/icons/pos.svg" type="image/svg+xml" />
 </head>
 <body>
-  <div class="wrap">
-
-    <!-- Global search (kept, but styled to match home) -->
-    <div class="search">
-      <div class="searchbar">
-        <input id="global-input" type="search" placeholder="Search anything (cigars, packs, lighters...)" autocomplete="off" />
-        <button id="global-clear" class="pill" style="display:none">Clear</button>
-        <button id="global-search" class="pill primary">Search</button>
+  <main class="page">
+    <header class="topbar">
+      <a href="/" class="back">← Home</a>
+      <div class="brand">
+        <img src="/img/logo.png?v=6" alt="Smoke Cigar Shop & Lounge" />
+        <h1>POS</h1>
       </div>
-      <div class="hint">Tip: “/” focuses search • Tap a category to browse with a per-category search.</div>
-    </div>
+    </header>
 
-    <!-- Category tiles (2 columns, with captions like home) -->
-    <div id="cat-grid" class="grid"></div>
+    <section class="module-content module-split">
+      <!-- Left: simple cigar grid (demo) -->
+      <div class="cigar-grid" id="cigarGrid"></div>
 
-    <!-- Results panel -->
-    <div id="panel" class="panel" style="display:none">
-      <div class="panel-head">
-        <div id="context" class="chip">Results</div>
-        <button id="close" class="link">Close</button>
-      </div>
+      <!-- Right: shared cart -->
+      <aside class="cart">
+        <div class="cart-header">
+          <h2>Order</h2>
+          <button id="clearCart" class="btn btn-light">Clear</button>
+        </div>
+        <div id="cartItems" class="cart-items"></div>
+        <div class="cart-totals">
+          <div class="row"><span>Subtotal</span><strong id="subtotal">$0.00</strong></div>
+          <div class="row"><span>Tax (7%)</span><strong id="tax">$0.00</strong></div>
+          <div class="row total"><span>Total</span><strong id="total">$0.00</strong></div>
+          <button id="checkout" class="btn btn-primary" disabled>Checkout</button>
+        </div>
+      </aside>
+    </section>
+  </main>
 
-      <div id="subsearch" class="subsearch" style="display:none">
-        <input id="cat-input" type="search" placeholder="Search in this category…" autocomplete="off" />
-        <button id="cat-clear" class="ghost">Clear</button>
-      </div>
-
-      <ul id="list" class="list" aria-live="polite"></ul>
-    </div>
-
-  </div>
-
-<script>
-/* --------------------------
-   Data (icons match your /img/icons/categories folder)
---------------------------- */
-const POS_CATEGORIES = [
-  { key:'Cigars',           icon:'/img/icons/categories/cigars.svg' },
-  { key:'Packs',            icon:'/img/icons/categories/packs.svg' },
-  { key:'Food & Beverages', icon:'/img/icons/categories/foodandbevs.svg' },
-  { key:'Accessories',      icon:'/img/icons/categories/accessories.svg' },
-  { key:'Ashtrays',         icon:'/img/icons/categories/ashtrays.svg' },
-  { key:'Lighters',         icon:'/img/icons/categories/lighters.svg' },
-  { key:'Cutters',          icon:'/img/icons/categories/cutters.svg' },
-  { key:'Pipes',            icon:'/img/icons/categories/pipes.svg' },
-];
-
-// Sample items – swap for your live data
-const SAMPLE_PRODUCTS = [
-  { id:'af-opx-rob',  name:'Arturo Fuente Opus X Robusto', category:'Cigars', price:39.95, vitola:'Robusto', ring:50, length:"5.00", sku:'AF-OPX-R' },
-  { id:'pad-64-toro', name:'Padron 1964 Anniversary Toro Maduro', category:'Cigars', price:18.50, vitola:'Toro', ring:52, length:"6.00", sku:'PD-64-TM' },
-  { id:'lfd-bull',    name:'La Flor Dominicana Andalusian Bull', category:'Cigars', price:21.99, vitola:'Figurado', ring:64, length:"6.50", sku:'LFD-BULL' },
-
-  { id:'sampler-opx', name:'Opus X 5-Pack Sampler', category:'Packs', price:299.00, sku:'PK-OPX-5' },
-
-  { id:'topo',        name:'Topo Chico Mineral Water', category:'Food & Beverages', price:2.50, sku:'FB-TC-12' },
-  { id:'espresso',    name:'Double Espresso', category:'Food & Beverages', price:3.75, sku:'FB-ESP-2' },
-
-  { id:'pouch',       name:'Leather Cigar Pouch (3-ct)', category:'Accessories', price:34.00, sku:'ACC-PCH-3' },
-  { id:'ash-4',       name:'Ceramic 4-Rest Ashtray', category:'Ashtrays', price:24.00, sku:'ASH-4R' },
-  { id:'jet-2',       name:'Jet Torch Lighter (2-flame)', category:'Lighters', price:19.99, sku:'LGT-2F' },
-  { id:'guill',       name:'Stainless Guillotine Cutter', category:'Cutters', price:14.99, sku:'CUT-GUI' },
-  { id:'briar',       name:'Briar Pipe – Classic Bent', category:'Pipes', price:69.00, sku:'PIP-BR-CL' },
-];
-
-/* --------------------------
-   DOM
---------------------------- */
-const grid   = document.getElementById('cat-grid');
-const panel  = document.getElementById('panel');
-const listEl = document.getElementById('list');
-const context= document.getElementById('context');
-const closeB = document.getElementById('close');
-const subBox = document.getElementById('subsearch');
-const catInp = document.getElementById('cat-input');
-const catClr = document.getElementById('cat-clear');
-
-const gInp   = document.getElementById('global-input');
-const gBtn   = document.getElementById('global-search');
-const gClr   = document.getElementById('global-clear');
-
-let currentCategory = null;
-
-/* --------------------------
-   Render grid (home-style tiles)
---------------------------- */
-function renderGrid(){
-  grid.innerHTML='';
-  POS_CATEGORIES.forEach(c=>{
-    const a = document.createElement('button');
-    a.className='tile';
-    a.innerHTML = `<img src="${c.icon}" alt="${c.key} icon"/><span>${c.key}</span>`;
-    a.addEventListener('click', ()=> openCategory(c.key));
-    grid.appendChild(a);
-  });
-}
-
-/* --------------------------
-   Search helpers
---------------------------- */
-const norm = s => (s||'').toString().toLowerCase();
-
-function searchAll(q){
-  const n = norm(q);
-  if(!n) return [];
-  return SAMPLE_PRODUCTS.filter(p =>
-    [p.name,p.category,p.vitola,p.sku].some(v => norm(v).includes(n))
-  );
-}
-function searchInCategory(cat, q){
-  const base = SAMPLE_PRODUCTS.filter(p => p.category===cat);
-  const n = norm(q);
-  if(!n) return base;
-  return base.filter(p => [p.name,p.vitola,p.sku].some(v => norm(v).includes(n)));
-}
-
-/* --------------------------
-   Results list
---------------------------- */
-function renderList(items){
-  listEl.innerHTML='';
-  if(items.length===0){
-    listEl.innerHTML = `<li class="item"><div><div class="title">No results</div><div class="sub">Try a different search.</div></div></li>`;
-    return;
-  }
-  items.forEach(p=>{
-    const li = document.createElement('li');
-    li.className='item';
-    li.innerHTML = `
-      <div>
-        <div class="title">${p.name}</div>
-        <div class="sub">${p.category}${p.vitola?` • ${p.vitola}`:''}${p.ring?` • ${p.ring} ring`:''}${p.length?` • ${p.length}"`:''}${p.sku?` • SKU: ${p.sku}`:''}</div>
-      </div>
-      <div>
-        <button class="ghost" data-id="${p.id}" data-a="view">Info</button>
-        <button class="primary" data-id="${p.id}" data-a="add">Add</button>
-      </div>
-    `;
-    li.addEventListener('click', e=>{
-      const b = e.target.closest('button'); if(!b) return;
-      const id = b.getAttribute('data-id');
-      const act = b.getAttribute('data-a');
-      if(act==='add') addToBill(id);
-      if(act==='view') viewProduct(id);
-    });
-    listEl.appendChild(li);
-  });
-}
-
-/* --------------------------
-   Open/close panels
---------------------------- */
-function openPanel(){ panel.style.display='block'; panel.scrollIntoView({behavior:'smooth',block:'start'}); }
-function closePanel(){ panel.style.display='none'; currentCategory=null; catInp.value=''; subBox.style.display='none'; }
-
-function openCategory(cat){
-  currentCategory = cat;
-  context.textContent = `Browsing: ${cat}`;
-  subBox.style.display='flex';
-  catInp.value='';
-  renderList(searchInCategory(cat,''));
-  openPanel();
-}
-
-/* --------------------------
-   Hooks / Events
---------------------------- */
-function addToBill(id){
-  const item = SAMPLE_PRODUCTS.find(p=>p.id===id);
-  if(!item) return;
-  document.dispatchEvent(new CustomEvent('pos:addToBill',{detail:item}));
-  alert(`Added: ${item.name}`);
-}
-function viewProduct(id){
-  const item = SAMPLE_PRODUCTS.find(p=>p.id===id);
-  if(!item) return;
-  alert(`${item.name}\nCategory: ${item.category}\nPrice: $${item.price.toFixed(2)}${item.vitola?`\nVitola: ${item.vitola}`:''}`);
-}
-
-renderGrid();
-
-gBtn.addEventListener('click', ()=>{
-  const q = gInp.value.trim();
-  gClr.style.display = q ? 'inline-block' : 'none';
-  if(!q){ closePanel(); return; }
-  context.textContent = `Search results for: “${q}”`;
-  subBox.style.display='none';
-  renderList(searchAll(q));
-  openPanel();
-});
-gInp.addEventListener('input', e=>{
-  if(e.target.value.trim().length===0){ gClr.style.display='none'; }
-});
-gInp.addEventListener('keydown', e=>{ if(e.key==='Enter') gBtn.click(); });
-gClr.addEventListener('click', ()=>{ gInp.value=''; gClr.style.display='none'; closePanel(); });
-
-closeB.addEventListener('click', closePanel);
-
-catInp.addEventListener('input', e=>{
-  renderList(searchInCategory(currentCategory, e.target.value));
-});
-catClr.addEventListener('click', ()=>{
-  catInp.value=''; renderList(searchInCategory(currentCategory, ''));
-});
-
-// Keyboard shortcuts
-window.addEventListener('keydown', e=>{
-  if(e.key==='/'){ e.preventDefault(); gInp.focus(); }
-  if(e.key==='Escape'){ closePanel(); }
-});
-</script>
+  <!-- Shared cart libraries -->
+  <script src="/js/cart.js?v=6"></script>
+  <script src="/js/cart-ui.js?v=6"></script>
+  <!-- Module logic -->
+  <script src="/pos/pos.js?v=6"></script>
 </body>
 </html>
