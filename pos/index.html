@@ -4,138 +4,56 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>POS · Categories</title>
-  <link rel="stylesheet" href="/style.css?v=13" />
+  <link rel="stylesheet" href="/css/ui.css?v=1" />
   <link rel="icon" href="/img/icons/pos.svg" type="image/svg+xml" />
-  <meta name="theme-color" content="#edf1f5" />
-  <style>
-    /* --- Top Bar --- */
-    .pos-topbar {
-      position: sticky; top: 0; z-index: 5;
-      display: grid; grid-template-columns: 40px 1fr 40px;
-      align-items: center;
-      padding: 8px 12px;
-      background: rgba(237,241,245,.9);
-      backdrop-filter: blur(6px);
-    }
-    .pos-back {
-      width: 32px; height: 32px;
-      display: grid; place-items: center;
-      text-decoration: none; color: #6b7280;
-      font-size: 20px;
-      background: #e9eef5;
-      border-radius: 10px;
-    }
-    .pos-title {
-      margin: 0; text-align: center;
-      font-size: 26px; font-weight: 900; letter-spacing: .4px;
-      color: #0f172a;
-    }
-    .pos-spacer { display:block; width:32px; height:32px; }
-
-    /* --- Category Grid --- */
-    .pos-cats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      justify-items: center;
-      padding: 10px 14px 20px;
-    }
-
-    .cat-tile {
-      width: 100%; max-width: 190px;
-      aspect-ratio: 1.05 / 1;
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 6px 6px 14px #d0d7e0, -6px -6px 14px #fff;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-decoration: none; color: #111827;
-      transition: transform .15s, box-shadow .15s;
-      padding: 6px 4px;
-    }
-    .cat-tile:hover {
-      transform: translateY(-2px);
-      box-shadow: 5px 5px 12px #cfd6df, -5px -5px 12px #fff;
-    }
-
-    .cat-tile img {
-      width: 48px; height: 48px;
-      object-fit: contain;
-      margin-bottom: 6px;
-    }
-
-    .cat-tile span {
-      font-size: 16px;
-      font-weight: 700;
-      text-align: center;
-      line-height: 1.2;
-    }
-
-    /* --- Responsive Tweaks --- */
-    @media (max-width: 420px) {
-      .pos-title { font-size: 22px; }
-      .cat-tile img { width: 42px; height: 42px; margin-bottom: 4px; }
-      .cat-tile span { font-size: 14px; }
-      .pos-cats { gap: 10px; padding: 10px; }
-    }
-  </style>
 </head>
-
 <body>
-  <main class="page">
-    <header class="pos-topbar">
-      <a href="/" class="pos-back" aria-label="Home">←</a>
-      <h1 class="pos-title">POS</h1>
-      <span class="pos-spacer"></span>
+  <main>
+    <header class="topbar">
+      <a href="/" class="topbar-back" aria-label="Home">←</a>
+      <h1 class="topbar-title">POS</h1>
+      <span class="topbar-spacer"></span>
     </header>
 
-    <section class="module-content pos-cats">
-      <!-- Accessories -->
-      <a class="cat-tile" href="/pos/accessories/">
-        <img src="/img/icons/categories/accessories.svg" alt="Accessories" />
-        <span>Accessories</span>
+    <section class="app-grid">
+      <a class="app-tile" href="/pos/accessories/">
+        <img class="app-icon" src="/img/icons/categories/accessories.svg" alt="" />
+        <span class="app-label">Accessories</span>
       </a>
 
-      <!-- Ashtrays -->
-      <a class="cat-tile" href="/pos/ashtrays/">
-        <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays" />
-        <span>Ashtrays</span>
+      <a class="app-tile" href="/pos/ashtrays/">
+        <img class="app-icon" src="/img/icons/categories/ashtrays.svg" alt="" />
+        <span class="app-label">Ashtrays</span>
       </a>
 
-      <!-- Cigars -->
-      <a class="cat-tile" href="/pos/cigars/">
-        <img src="/img/icons/categories/cigars.svg" alt="Cigars" />
-        <span>Cigars</span>
+      <a class="app-tile" href="/pos/cigars/">
+        <img class="app-icon" src="/img/icons/categories/cigars.svg" alt="" />
+        <span class="app-label">Cigars</span>
       </a>
 
-      <!-- Cutters -->
-      <a class="cat-tile" href="/pos/cutters/">
-        <img src="/img/icons/categories/cutters.svg" alt="Cutters" />
-        <span>Cutters</span>
+      <a class="app-tile" href="/pos/cutters/">
+        <img class="app-icon" src="/img/icons/categories/cutters.svg" alt="" />
+        <span class="app-label">Cutters</span>
       </a>
 
-      <!-- Food and Bevs -->
-      <a class="cat-tile" href="/foodandbevs/">
-        <img src="/img/icons/categories/foodandbevs.svg" alt="Food and Bevs" />
-        <span>Food &amp; Bevs</span>
+      <a class="app-tile" href="/foodandbevs/">
+        <img class="app-icon" src="/img/icons/categories/foodandbevs.svg" alt="" />
+        <span class="app-label">Food and Bevs</span>
       </a>
 
-      <!-- Lighters -->
-      <a class="cat-tile" href="/pos/lighters/">
-        <img src="/img/icons/categories/lighters.svg" alt="Lighters" />
-        <span>Lighters</span>
+      <a class="app-tile" href="/pos/lighters/">
+        <img class="app-icon" src="/img/icons/categories/lighters.svg" alt="" />
+        <span class="app-label">Lighters</span>
       </a>
 
-      <!-- Packs -->
-      <a class="cat-tile" href="/pos/packs/">
-        <img src="/img/icons/categories/packs.svg" alt="Packs" />
-        <span>Packs</span>
+      <a class="app-tile" href="/pos/packs/">
+        <img class="app-icon" src="/img/icons/categories/packs.svg" alt="" />
+        <span class="app-label">Packs</span>
       </a>
 
-      <!-- Pipes -->
-      <a class="cat-tile" href="/pos/pipes/">
-        <img src="/img/icons/categories/pipes.svg" alt="Pipes" />
-        <span>Pipes</span>
+      <a class="app-tile" href="/pos/pipes/">
+        <img class="app-icon" src="/img/icons/categories/pipes.svg" alt="" />
+        <span class="app-label">Pipes</span>
       </a>
     </section>
   </main>
