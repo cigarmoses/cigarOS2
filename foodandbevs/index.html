@@ -5,42 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Food & Beverages · Smoke POS</title>
 
-  <link rel="stylesheet" href="/style.css?v=12" />
-  <link rel="stylesheet" href="/foodandbevs/food.css?v=12" />
+  <link rel="stylesheet" href="/css/ui.css?v=1" />
+  <link rel="stylesheet" href="/foodandbevs/food.css?v=20" />
   <link rel="icon" href="/img/icons/categories/foodandbevs.svg" type="image/svg+xml" />
   <meta name="theme-color" content="#edf1f5" />
 </head>
 <body>
   <main class="page">
-    <header class="pos-topbar">
-      <a href="/pos/" class="pos-back" aria-label="Back">←</a>
-      <h1 class="pos-title">Food &amp; Beverages</h1>
-      <span class="pos-spacer"></span>
+    <!-- Top bar -->
+    <header class="topbar">
+      <a href="/pos/" class="topbar-back" aria-label="Back">←</a>
+      <h1 class="topbar-title">Food &amp; Beverages</h1>
+      <span class="topbar-spacer"></span>
     </header>
 
-    <section class="module-content module-split">
+    <!-- 3-up grid -->
+    <section class="app-grid app-grid--3up">
       <div class="bev-grid" id="bevGrid"></div>
-
-      <aside class="cart">
-        <div class="cart-header">
-          <h2>Order</h2>
-          <button id="clearCart" class="btn btn-light">Clear</button>
-        </div>
-        <div id="cartItems" class="cart-items"></div>
-        <div class="cart-totals">
-          <div class="row"><span>Subtotal</span><strong id="subtotal">$0.00</strong></div>
-          <div class="row"><span>Tax (7%)</span><strong id="tax">$0.00</strong></div>
-          <div class="row total"><span>Total</span><strong id="total">$0.00</strong></div>
-          <button id="checkout" class="btn btn-primary" disabled>Checkout</button>
-        </div>
-      </aside>
     </section>
+
+    <!-- Floating Bill tab -->
+    <button id="fabCart" class="fab">
+      <img src="/img/icons/pos.svg" alt="" />
+      <span class="fab-badge" id="fabCount">0</span>
+      <span class="fab-sub"   id="fabSub">$0.00</span>
+    </button>
+
+    <!-- Quantity modal -->
+    <dialog id="qtyModal" class="qty-modal">
+      <form method="dialog" class="modal-card" id="qtyForm">
+        <div class="m-head">
+          <img id="mIcon" alt="" />
+          <div class="m-title">
+            <h3 id="mName">—</h3>
+            <div id="mPrice" class="muted">$0.00</div>
+          </div>
+        </div>
+
+        <div class="qty-row">
+          <button type="button" class="step" id="minus">−</button>
+          <input type="number" id="qty" value="1" min="1" inputmode="numeric" />
+          <button type="button" class="step" id="plus">+</button>
+        </div>
+
+        <menu class="m-actions">
+          <button class="btn btn-light" value="cancel">Cancel</button>
+          <button class="btn btn-primary" id="addBtn" value="default">Add to Bill</button>
+        </menu>
+      </form>
+    </dialog>
   </main>
 
-  <!-- Shared cart -->
-  <script src="/js/cart.js?v=12"></script>
-  <script src="/js/cart-ui.js?v=12"></script>
-  <!-- Module logic -->
-  <script src="/foodandbevs/food.js?v=12"></script>
+  <!-- Shared cart (persists across pages) -->
+  <script src="/js/cart.js?v=13"></script>
+  <!-- No sidebar UI here -->
+  <script src="/foodandbevs/food.js?v=20"></script>
 </body>
 </html>
