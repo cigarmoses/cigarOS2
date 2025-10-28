@@ -1,77 +1,48 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>CigarOS Home</title>
-<style>
-  :root {
-    --bg: #f5f6fa;
-    --tile-bg: #ffffff;
-    --shadow: 0 4px 10px rgba(0,0,0,0.08);
-    --shadow-hover: 0 6px 16px rgba(0,0,0,0.10);
-    --radius: 20px;
-  }
-  body {
-    margin: 0;
-    background: var(--bg);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    padding: 40px 0 80px;
-  }
-  header {
-    text-align: center;
-    margin-bottom: 40px;
-  }
-  header img {
-    width: 160px;
-    height: auto;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(2, 130px);
-    gap: 28px;
-    justify-content: center;
-  }
-  .tile {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--tile-bg);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 30px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: transform 0.15s ease, box-shadow 0.2s ease;
-  }
-  .tile:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-hover);
-  }
-  .tile img {
-    width: 56px;
-    height: 56px;
-    display: block;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Home · CigarOS</title>
+  <link rel="stylesheet" href="/css/ui.css?v=1" />
+  <link rel="icon" href="/img/icons/pos.svg" type="image/svg+xml" />
 </head>
 <body>
-  <header>
-    <img src="/img/homescreenlogo.svg" alt="Smoke Cigar Shop & Lounge logo" />
-  </header>
+  <main>
+    <!-- Shop logo -->
+    <img class="home-logo" src="/img/homescreenlogo.svg" alt="Smoke Cigar Shop & Lounge" />
 
-  <main class="grid">
-    <a href="/pos/"      class="tile" title="POS"><img src="/img/icons/pos.svg" alt="POS" /></a>
-    <a href="/today/"    class="tile" title="Today"><img src="/img/icons/today.svg" alt="Today" /></a>
-    <a href="/loyalty/"  class="tile" title="Loyalty"><img src="/img/icons/loyalty.svg" alt="Loyalty" /></a>
-    <a href="/reports/"  class="tile" title="Reports"><img src="/img/icons/reports.svg" alt="Reports" /></a>
-    <a href="/learn/"    class="tile" title="Learn"><img src="/img/icons/learn.svg" alt="Learn" /></a>
-    <a href="/news/"     class="tile" title="News"><img src="/img/icons/news.svg" alt="News" /></a>
-    <a href="/hub/"      class="tile" title="Hub"><img src="/img/icons/hub.svg" alt="Hub" /></a>
+    <!-- Home tiles: icons only (no labels per your rule) -->
+    <section class="app-grid">
+      <a class="app-tile" href="/pos/">
+        <img class="app-icon" src="/img/icons/categories/cigars.svg" alt="POS" />
+        <!-- no label -->
+      </a>
+
+      <a class="app-tile" href="/today/">
+        <img class="app-icon" src="/img/icons/today.svg" alt="Today" />
+      </a>
+
+      <a class="app-tile" href="/loyalty/">
+        <img class="app-icon" src="/img/icons/loyalty.svg" alt="Loyalty" />
+      </a>
+
+      <a class="app-tile" href="/reports/">
+        <img class="app-icon" src="/img/icons/reports.svg" alt="Reports" />
+      </a>
+
+      <a class="app-tile" href="/learn/">
+        <img class="app-icon" src="/img/icons/learn.svg" alt="Learn" />
+      </a>
+
+      <a class="app-tile" href="/news/">
+        <img class="app-icon" src="/img/icons/news.svg" alt="News" />
+      </a>
+
+      <a class="app-tile" href="/hub/">
+        <img class="app-icon" src="/img/icons/hub.svg" alt="Hub" />
+      </a>
+    </section>
   </main>
 </body>
 </html>
