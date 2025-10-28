@@ -1,80 +1,37 @@
-/* ====================================
-   Food & Beverages POS — Styles
-   ==================================== */
-
+/* Layout shares the same split as POS categories */
 .module-split{
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 18px;
+  display:grid;
+  grid-template-columns:1fr 360px;
+  gap:18px;
 }
 
-/* Grid of beverages */
+/* Product grid */
 .bev-grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 16px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+  gap:14px;
 }
 
 .bev-card{
-  display:flex; flex-direction:column; align-items:center; justify-content:space-between;
-  background:#ffffff; border-radius:16px;
-  box-shadow:4px 4px 16px rgba(0,0,0,0.05);
-  padding:14px 10px; cursor:pointer;
-  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-  border:1px solid transparent;
-  user-select:none;
+  background:#fff;
+  border-radius:16px;
+  border:1px solid #eef2f6;
+  box-shadow:4px 4px 16px rgba(0,0,0,.05);
+  padding:12px;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  cursor:pointer; user-select:none;
+  transition:transform .08s ease;
 }
-.bev-card:hover{ transform:translateY(-2px); box-shadow:6px 6px 18px rgba(0,0,0,.08); }
-.bev-card:active{ transform:translateY(0); border-color:#cfe4ff; }
+.bev-card:active{ transform:scale(.98); }
 
-.bev-card img{ width:64px; height:auto; margin-bottom:8px; }
-.bev-name{ font-size:14px; font-weight:600; color:#1e293b; text-align:center; margin-bottom:4px; }
-.bev-price{ font-size:13px; color:#4da3ff; font-weight:700; }
-
-/* Cart panel */
-.cart{
-  background:#fff; border-radius:16px; box-shadow:4px 4px 20px rgba(0,0,0,.06);
-  padding:14px; display:flex; flex-direction:column; min-height: 420px;
+.bev-card img{
+  width:60px; height:60px; object-fit:contain;
+  background:#f7fafc; border-radius:12px;
 }
-.cart-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-.cart-header h2{ margin:0; font-size:18px; }
 
-.cart-items{ overflow:auto; border:1px solid #e6edf4; border-radius:12px; max-height: 50vh; background:#fff; }
-.cart-items .empty{ padding:14px; color:#6b7280; font-size:14px; }
+.bev-name{ font-weight:700; text-align:center; }
+.bev-price{ font-size:13px; color:#0f172a; }
 
-.cart-row{
-  display:grid; grid-template-columns: 48px 1fr auto; align-items:center;
-  gap:10px; padding:10px; border-bottom:1px solid #f2f5f8;
-}
-.cart-row:last-child{ border-bottom:none; }
-.cart-thumb{ width:48px; height:48px; border-radius:10px; object-fit:contain; background:#f7fafc; }
-.cart-title{ display:flex; flex-direction:column; }
-.cart-title .name{ font-weight:700; font-size:14px; color:#0f172a; }
-.cart-title .unit{ font-size:12px; color:#64748b; }
-
-.cart-qty{
-  display:flex; align-items:center; gap:6px;
-}
-.qty-btn{
-  width:28px; height:28px; border-radius:8px; border:1px solid #dbe3ec; background:#fff; cursor:pointer;
-  font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center;
-}
-.qty-btn:hover{ background:#f6f9fc; }
-.qty-num{ min-width:18px; text-align:center; font-weight:700; }
-
-.cart-line-total{ font-weight:800; color:#111827; min-width:70px; text-align:right; }
-
-/* Totals */
-.cart-totals{ margin-top:12px; display:flex; flex-direction:column; gap:8px; }
-.cart-totals .row{ display:flex; align-items:center; justify-content:space-between; }
-.cart-totals .total{ font-size:18px; }
-.btn{ border:0; border-radius:10px; padding:12px 14px; cursor:pointer; }
-.btn-primary{ background:#4da3ff; color:#fff; font-weight:800; }
-.btn-primary:disabled{ background:#9ecbff; cursor:not-allowed; }
-.btn-light{ background:#eef6ff; color:#2563eb; font-weight:700; }
-
-/* Responsive: stack cart below grid on small screens */
-@media (max-width: 980px){
-  .module-split{ grid-template-columns: 1fr; }
-  .cart{ order:2; }
+@media (max-width:980px){
+  .module-split{ grid-template-columns:1fr; }
 }
