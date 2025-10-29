@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Cigars · Smoke POS</title>
+  <link rel="stylesheet" href="/css/ui.css?v=1" />
+  <link rel="stylesheet" href="/css/inventory.css?v=1" />
+  <link rel="icon" href="/img/icons/categories/cigars.svg" type="image/svg+xml" />
+</head>
+<body>
+  <script id="inv-config" type="application/json">
+  {
+    "title": "Cigars",
+    "backHref": "/pos/",
+    "grid": "2up",
+    "showNames": true,
+    "showPrices": true,
+    "iconPath": "/img/cigars/",
+    "taxRate": 0.07,
+    "dataUrl": "/data/cigars.json"
+  }
+  </script>
+
+  <script src="/js/cart.js?v=13"></script>
+  <script src="/js/inventory.js?v=1"></script>
+</body>
+</html>
