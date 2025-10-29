@@ -1,65 +1,54 @@
-/* Uses tokens from /css/ui.css; this adds inventory-specific UI */
+/* =========  Inventory pages to match the old look  ========= */
+.inv-wrap{ padding:0 22px 120px }
 
-.inv-wrap { padding: 0 14px 20px; }
+/* Header */
+.topbar .topbar-title{ font-size:40px } /* big "Food & Beverages", etc. */
 
-.inv-grid {
-  display: grid;
-  gap: var(--tile-gap);
-}
+/* 3-up or 2-up grids (set by page config) */
+.inv-grid{ display:grid; gap:var(--gap) }
+.inv-grid.inv-3up{ grid-template-columns:repeat(3, minmax(90px,1fr)) }
+.inv-grid.inv-2up{ grid-template-columns:repeat(2, minmax(140px,1fr)) }
 
-/* grid presets */
-.inv-grid.inv-2up { grid-template-columns: repeat(2, 1fr); }
-.inv-grid.inv-3up { grid-template-columns: repeat(3, 1fr); }
-
-/* product tile (icon-only or icon+label) */
+/* card tiles */
 .inv-card{
-  background:#fff;
-  border-radius:16px;
-  border:1px solid #eef2f6;
-  box-shadow:4px 4px 16px rgba(0,0,0,.05);
-  padding:10px;
-  display:flex; flex-direction:column; align-items:center; gap:8px;
-  cursor:pointer; user-select:none;
-  transition:transform .08s ease, box-shadow .12s ease;
+  background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:16px 10px; display:flex; flex-direction:column; align-items:center; gap:12px;
+  min-height:140px; transition:transform .08s ease, box-shadow .12s ease;
 }
-.inv-card:active{ transform:scale(.98); }
-.inv-card:hover{ box-shadow:6px 6px 18px rgba(0,0,0,.06); }
+.inv-card:hover{ box-shadow:var(--shadow-hover) }
+.inv-card:active{ transform:scale(.985) }
 
-/* raw SVG only by default */
-.inv-card img{
-  width:56px; height:56px; object-fit:contain;
-  background:transparent; border-radius:0; box-shadow:none;
-}
+/* pure SVG logos (no inner border) */
+.inv-card img{ width:72px; height:72px; object-fit:contain; background:transparent }
 
-/* optional captions below icon */
-.inv-name{ font-size:14px; font-weight:800; text-align:center; }
-.inv-price{ font-size:13px; color:#0f172a; font-weight:700; }
+/* captions/prices to match your old weight/size */
+.inv-name{ font-size:16px; font-weight:900; text-align:center }
+.inv-price{ font-size:18px; font-weight:900; color:#111827 }
 
-/* ===== Floating Bill Tab (FAB) ===== */
+/* Floating bill tab */
 .fab{
   position:fixed; right:16px; bottom:18px; z-index:9;
   display:flex; align-items:center; gap:10px;
   background:#111827; color:#fff; border:0; border-radius:999px;
-  padding:10px 18px; box-shadow:0 8px 20px rgba(0,0,0,.25);
+  padding:10px 18px; box-shadow:0 12px 26px rgba(0,0,0,.25);
   transition: transform .15s ease;
 }
-.fab:hover{ transform: scale(1.05); }
-.fab img{ width:22px; height:22px; filter: brightness(0) invert(1); }
+.fab:hover{ transform:scale(1.05) }
+.fab img{ width:22px; height:22px; filter:brightness(0) invert(1) }
 .fab-badge{
-  background:#ef4444; color:#fff; font-weight:800;
-  min-width:22px; height:22px; padding:0 7px; border-radius:999px;
-  display:inline-grid; place-items:center; font-size:12px;
+  background:#ef4444; color:#fff; font-weight:900; min-width:22px; height:22px;
+  padding:0 7px; border-radius:999px; display:grid; place-items:center; font-size:12px;
 }
-.fab-sub{ font-weight:800; font-size:14px; color:#f9fafb; }
+.fab-sub{ font-weight:900; font-size:14px }
 
-/* ===== Quantity modal ===== */
-.qty-modal::backdrop{ background:rgba(0,0,0,.25); }
-.modal-card{ padding:0; border:0; border-radius:16px; background:#fff; width:min(420px, 92vw); }
-.m-head{ display:flex; gap:12px; padding:14px 14px 8px; }
-.m-head img{ width:56px; height:56px; object-fit:contain; }
-.m-title h3{ margin:0; }
-.muted{ color:#64748b; }
-.qty-row{ display:flex; justify-content:center; align-items:center; gap:10px; padding:10px 14px 2px; }
-.qty-row .step{ width:40px; height:40px; border-radius:10px; border:0; background:#eef6ff; color:#2563eb; font-weight:900; font-size:20px; cursor:pointer; }
-.qty-row input{ width:80px; text-align:center; padding:10px 8px; font-size:16px; border-radius:10px; border:1px solid #dbe3ec; background:#fff; }
-.m-actions{ display:flex; justify-content:flex-end; gap:8px; padding:12px 14px; background:#f6f9fc; border-top:1px solid #e6edf4; border-radius:0 0 16px 16px; }
+/* Quantity modal (same visual language) */
+.qty-modal::backdrop{ background:rgba(0,0,0,.25) }
+.modal-card{ width:min(420px,92vw); border:0; border-radius:16px; background:#fff }
+.m-head{ display:flex; gap:12px; padding:16px 16px 10px }
+.m-head img{ width:60px; height:60px; object-fit:contain }
+.m-title h3{ margin:0; font-size:18px }
+.muted{ color:#6B7280 }
+.qty-row{ display:flex; justify-content:center; align-items:center; gap:12px; padding:6px 16px 4px }
+.qty-row .step{ width:44px; height:44px; border-radius:12px; border:0; background:#EEF6FF; color:#2563EB; font-weight:900; font-size:22px; cursor:pointer }
+.qty-row input{ width:88px; text-align:center; padding:10px 8px; font-size:16px; border-radius:12px; border:1px solid #dbe3ec; background:#fff }
+.m-actions{ display:flex; justify-content:flex-end; gap:8px; padding:12px 16px; background:#F6F9FC; border-top:1px solid #E6EDF4; border-radius:0 0 16px 16px }
