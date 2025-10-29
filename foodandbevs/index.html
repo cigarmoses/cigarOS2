@@ -4,61 +4,39 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Food & Beverages · Smoke POS</title>
-
   <link rel="stylesheet" href="/css/ui.css?v=1" />
-  <link rel="stylesheet" href="/foodandbevs/food.css?v=20" />
+  <link rel="stylesheet" href="/css/inventory.css?v=1" />
   <link rel="icon" href="/img/icons/categories/foodandbevs.svg" type="image/svg+xml" />
-  <meta name="theme-color" content="#edf1f5" />
 </head>
 <body>
-  <main class="page">
-    <!-- Top bar -->
-    <header class="topbar">
-      <a href="/pos/" class="topbar-back" aria-label="Back">←</a>
-      <h1 class="topbar-title">Food &amp; Beverages</h1>
-      <span class="topbar-spacer"></span>
-    </header>
+  <!-- Page config (JSON) -->
+  <script id="inv-config" type="application/json">
+  {
+    "title": "Food & Beverages",
+    "backHref": "/pos/",
+    "grid": "3up",
+    "showNames": false,
+    "showPrices": true,
+    "iconPath": "/img/icons/foodandbevs/",
+    "taxRate": 0.07,
+    "data": [
+      {"sku":"7up","name":"7 UP","iconFile":"7up.svg","price":1.50},
+      {"sku":"cocacola","name":"Coca-Cola","iconFile":"cocacola.svg","price":1.50},
+      {"sku":"cocacolazero","name":"Coca-Cola Zero","iconFile":"cocacolazero.svg","price":1.50},
+      {"sku":"dietcoke","name":"Diet Coke","iconFile":"dietcoke.svg","price":1.50},
+      {"sku":"dietdrpepper","name":"Diet Dr Pepper","iconFile":"dietdrpepper.svg","price":1.50},
+      {"sku":"drpepper","name":"Dr Pepper","iconFile":"drpepper.svg","price":1.50},
+      {"sku":"gingerale","name":"Ginger Ale","iconFile":"gingerale.svg","price":1.50},
+      {"sku":"monstertea","name":"Monster Tea","iconFile":"monstertea.svg","price":3.50},
+      {"sku":"pepsi","name":"Pepsi","iconFile":"pepsi.svg","price":1.50},
+      {"sku":"rootbeer","name":"Root Beer","iconFile":"rootbeer.svg","price":1.50},
+      {"sku":"sprite","name":"Sprite","iconFile":"sprite.svg","price":1.50},
+      {"sku":"water","name":"Water","iconFile":"water.svg","price":1.00}
+    ]
+  }
+  </script>
 
-    <!-- 3-up grid -->
-    <section class="app-grid app-grid--3up">
-      <div class="bev-grid" id="bevGrid"></div>
-    </section>
-
-    <!-- Floating Bill tab -->
-    <button id="fabCart" class="fab">
-      <img src="/img/icons/pos.svg" alt="" />
-      <span class="fab-badge" id="fabCount">0</span>
-      <span class="fab-sub"   id="fabSub">$0.00</span>
-    </button>
-
-    <!-- Quantity modal -->
-    <dialog id="qtyModal" class="qty-modal">
-      <form method="dialog" class="modal-card" id="qtyForm">
-        <div class="m-head">
-          <img id="mIcon" alt="" />
-          <div class="m-title">
-            <h3 id="mName">—</h3>
-            <div id="mPrice" class="muted">$0.00</div>
-          </div>
-        </div>
-
-        <div class="qty-row">
-          <button type="button" class="step" id="minus">−</button>
-          <input type="number" id="qty" value="1" min="1" inputmode="numeric" />
-          <button type="button" class="step" id="plus">+</button>
-        </div>
-
-        <menu class="m-actions">
-          <button class="btn btn-light" value="cancel">Cancel</button>
-          <button class="btn btn-primary" id="addBtn" value="default">Add to Bill</button>
-        </menu>
-      </form>
-    </dialog>
-  </main>
-
-  <!-- Shared cart (persists across pages) -->
   <script src="/js/cart.js?v=13"></script>
-  <!-- No sidebar UI here -->
-  <script src="/foodandbevs/food.js?v=20"></script>
+  <script src="/js/inventory.js?v=1"></script>
 </body>
 </html>
