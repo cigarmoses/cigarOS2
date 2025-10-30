@@ -2,41 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Food & Beverages · Smoke POS</title>
-  <link rel="stylesheet" href="/css/ui.css?v=1" />
-  <link rel="stylesheet" href="/css/inventory.css?v=1" />
-  <link rel="icon" href="/img/icons/categories/foodandbevs.svg" type="image/svg+xml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food & Beverages</title>
+  <link rel="stylesheet" href="/css/ui.css" />
 </head>
 <body>
-  <!-- Page config (JSON) -->
-  <script id="inv-config" type="application/json">
-  {
-    "title": "Food & Beverages",
-    "backHref": "/pos/",
-    "grid": "3up",
-    "showNames": false,
-    "showPrices": true,
-    "iconPath": "/img/icons/foodandbevs/",
-    "taxRate": 0.07,
-    "data": [
-      {"sku":"7up","name":"7 UP","iconFile":"7up.svg","price":1.50},
-      {"sku":"cocacola","name":"Coca-Cola","iconFile":"cocacola.svg","price":1.50},
-      {"sku":"cocacolazero","name":"Coca-Cola Zero","iconFile":"cocacolazero.svg","price":1.50},
-      {"sku":"dietcoke","name":"Diet Coke","iconFile":"dietcoke.svg","price":1.50},
-      {"sku":"dietdrpepper","name":"Diet Dr Pepper","iconFile":"dietdrpepper.svg","price":1.50},
-      {"sku":"drpepper","name":"Dr Pepper","iconFile":"drpepper.svg","price":1.50},
-      {"sku":"gingerale","name":"Ginger Ale","iconFile":"gingerale.svg","price":1.50},
-      {"sku":"monstertea","name":"Monster Tea","iconFile":"monstertea.svg","price":3.50},
-      {"sku":"pepsi","name":"Pepsi","iconFile":"pepsi.svg","price":1.50},
-      {"sku":"rootbeer","name":"Root Beer","iconFile":"rootbeer.svg","price":1.50},
-      {"sku":"sprite","name":"Sprite","iconFile":"sprite.svg","price":1.50},
-      {"sku":"water","name":"Water","iconFile":"water.svg","price":1.00}
-    ]
-  }
-  </script>
+  <main class="inv-wrap">
+    <header class="topbar">
+      <a class="topbar-back" href="/pos/" aria-label="Back">←</a>
+      <h1 class="topbar-title">Food & Beverages</h1>
+      <span class="topbar-spacer" aria-hidden="true"></span>
+    </header>
 
-  <script src="/js/cart.js?v=13"></script>
-  <script src="/js/inventory.js?v=1"></script>
+    <!-- PURE ICON GRID (4-up mobile) -->
+    <section class="icon-grid" id="bevGrid">
+      <!-- Example cells; your JS can render these dynamically -->
+      <button class="icon-cell"><img src="/img/icons/foodandbevs/gatorade.svg" alt="Gatorade"></button>
+      <button class="icon-cell"><img src="/img/icons/foodandbevs/7up.svg" alt="7 UP"></button>
+      <button class="icon-cell"><img src="/img/icons/foodandbevs/pepsi.svg" alt="Pepsi"></button>
+      <button class="icon-cell"><img src="/img/icons/foodandbevs/aw.svg" alt="A&W"></button>
+
+      <!-- …render the rest exactly as uploaded; no wrappers needed -->
+    </section>
+  </main>
+
+  <!-- FAB (bill) -->
+  <button class="fab" id="fabBtn" aria-label="Open bill">
+    <img src="/img/icons/pos.svg" alt="">
+    <span class="fab-badge" id="fabQty">0</span>
+    <span class="fab-sub" id="fabSub">$0.00</span>
+  </button>
+
+  <!-- Your existing JS that: opens qty modal on tap, adds to bill, updates FAB -->
+  <script src="/foodandbevs/foodandbevs.js"></script>
 </body>
 </html>
