@@ -1,0 +1,32 @@
+/* Quantity dialog */
+.qty-dialog::backdrop{ background: rgba(0,0,0,.25); }
+.qd-card{
+  width:min(740px,94vw);
+  border:0; border-radius:16px; background:#fff;
+  overflow:hidden;
+  font-family:"Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, sans-serif;
+}
+.qd-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid #E6EDF4; }
+.qd-head h3{ margin:0; font-size:18px; font-weight:900; }
+.qd-x{ border:0; background:transparent; font-size:18px; cursor:pointer; }
+
+.qd-body{ display:grid; gap:18px; padding:16px; grid-template-columns: 1fr; }
+@media (min-width:680px){ .qd-body{ grid-template-columns: 1fr 1fr; } }
+
+.qd-media{ display:flex; align-items:center; justify-content:center; }
+.qd-media img{ max-width: 280px; width:100%; height:auto; display:block; object-fit:contain; }
+
+.qd-side{ display:flex; flex-direction:column; gap:14px; }
+.qd-price{ font-weight:900; font-size:22px; }
+.qd-qty{ display:flex; align-items:center; gap:10px; }
+.qd-qty button{
+  width:40px; height:40px; border-radius:12px; border:0; cursor:pointer;
+  background:#EEF6FF; color:#2563EB; font-weight:900; font-size:20px;
+}
+.qd-qty input{
+  width:74px; text-align:center; padding:10px 8px; font-size:16px; border-radius:12px; border:1px solid #dbe3ec;
+}
+.btn-primary{
+  border:0; cursor:pointer; padding:12px 14px; border-radius:12px;
+  background:#0B1220; color:#fff; font-weight:800;
+}
