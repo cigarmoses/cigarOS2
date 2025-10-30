@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Food & Beverages</title>
   <link rel="stylesheet" href="/css/ui.css" />
+  <link rel="stylesheet" href="/css/foodandbevs.css" />
 </head>
 <body>
   <main class="inv-wrap">
@@ -14,16 +15,8 @@
       <span class="topbar-spacer" aria-hidden="true"></span>
     </header>
 
-    <!-- PURE ICON GRID (4-up mobile) -->
-    <section class="icon-grid" id="bevGrid">
-      <!-- Example cells; your JS can render these dynamically -->
-      <button class="icon-cell"><img src="/img/icons/foodandbevs/gatorade.svg" alt="Gatorade"></button>
-      <button class="icon-cell"><img src="/img/icons/foodandbevs/7up.svg" alt="7 UP"></button>
-      <button class="icon-cell"><img src="/img/icons/foodandbevs/pepsi.svg" alt="Pepsi"></button>
-      <button class="icon-cell"><img src="/img/icons/foodandbevs/aw.svg" alt="A&W"></button>
-
-      <!-- …render the rest exactly as uploaded; no wrappers needed -->
-    </section>
+    <!-- PURE ICON GRID (no borders, no captions) -->
+    <section id="bevGrid" class="icon-grid"></section>
   </main>
 
   <!-- FAB (bill) -->
@@ -33,7 +26,59 @@
     <span class="fab-sub" id="fabSub">$0.00</span>
   </button>
 
-  <!-- Your existing JS that: opens qty modal on tap, adds to bill, updates FAB -->
+  <!-- Quantity / Add dialog -->
+  <dialog id="qtyDialog" class="qty-dialog">
+    <div class="qd-card">
+      <header class="qd-head">
+        <h3 id="qdName"></h3>
+        <button id="qdClose" class="qd-x" aria-label="Close">✕</button>
+      </header>
+      <div class="qd-body">
+        <div class="qd-media">
+          <img id="qdImg" alt="">
+        </div>
+        <div class="qd-side">
+          <div class="qd-price"><span id="qdPrice">$0.00</span></div>
+          <div class="qd-qty">
+            <button id="qMinus" aria-label="Decrease">−</button>
+            <input id="qInput" type="number" min="1" value="1">
+            <button id="qPlus" aria-label="Increase">+</button>
+          </div>
+          <button id="qAdd" class="btn-primary">Add to bill</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Page config (you can add/remove items here; icons must exist in iconPath) -->
+  <script id="bev-config" type="application/json">
+  {
+    "iconPath": "/img/icons/foodandbevs/",
+    "taxRate": 0.07,
+    "items": [
+      { "id":"gatorade",     "name":"Gatorade",          "iconFile":"gatorade.svg",     "price":1.50 },
+      { "id":"7up",          "name":"7 UP",              "iconFile":"7up.svg",          "price":1.50 },
+      { "id":"pepsi",        "name":"Pepsi",             "iconFile":"pepsi.svg",        "price":1.50 },
+      { "id":"aw",           "name":"A&W",               "iconFile":"aw.svg",           "price":1.50 },
+      { "id":"sprite",       "name":"Sprite",            "iconFile":"sprite.svg",       "price":1.50 },
+      { "id":"drpepperdiet", "name":"Diet Dr Pepper",    "iconFile":"dietdrpepper.svg", "price":1.50 },
+      { "id":"monstertea",   "name":"Monster Tea",       "iconFile":"monstert ea.svg",  "price":3.50 },
+      { "id":"dietcoke",     "name":"Diet Coke",         "iconFile":"dietcoke.svg",     "price":1.50 },
+      { "id":"canadadry",    "name":"Canada Dry",        "iconFile":"gingerale.svg",    "price":1.50 },
+      { "id":"drpepper",     "name":"Dr Pepper",         "iconFile":"drpepper.svg",     "price":1.50 },
+      { "id":"coke",         "name":"Coca-Cola",         "iconFile":"cocacola.svg",     "price":1.50 },
+      { "id":"cokezero",     "name":"Coca-Cola Zero",    "iconFile":"cocacolazero.svg", "price":1.50 },
+      { "id":"rootbeer",     "name":"Root Beer",         "iconFile":"rootbeer.svg",     "price":1.50 },
+      { "id":"mountaindew",  "name":"Mountain Dew",      "iconFile":"mountaindew.svg",  "price":1.50 },
+      { "id":"goldpeak0",    "name":"Gold Peak Zero",    "iconFile":"goldpeak_zero.svg","price":1.50 },
+      { "id":"goldpeakS",    "name":"Gold Peak Sweet",   "iconFile":"goldpeak_sweet.svg","price":1.50 },
+      { "id":"goldpeakU",    "name":"Gold Peak Unsweet", "iconFile":"goldpeak_unsweet.svg","price":1.50 },
+      { "id":"redbull",      "name":"Red Bull",          "iconFile":"redbull.svg",      "price":1.50 },
+      { "id":"water",        "name":"Water",             "iconFile":"water.svg",        "price":1.00 }
+    ]
+  }
+  </script>
+
   <script src="/foodandbevs/foodandbevs.js"></script>
 </body>
 </html>
