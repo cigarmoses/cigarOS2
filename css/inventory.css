@@ -1,54 +1,38 @@
-/* =========  Inventory pages to match the old look  ========= */
-.inv-wrap{ padding:0 22px 120px }
-
-/* Header */
-.topbar .topbar-title{ font-size:40px } /* big "Food & Beverages", etc. */
-
-/* 3-up or 2-up grids (set by page config) */
-.inv-grid{ display:grid; gap:var(--gap) }
-.inv-grid.inv-3up{ grid-template-columns:repeat(3, minmax(90px,1fr)) }
-.inv-grid.inv-2up{ grid-template-columns:repeat(2, minmax(140px,1fr)) }
-
-/* card tiles */
-.inv-card{
-  background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
-  padding:16px 10px; display:flex; flex-direction:column; align-items:center; gap:12px;
-  min-height:140px; transition:transform .08s ease, box-shadow .12s ease;
+/* =========  Inventory (final mobile + desktop unified)  ========= */
+.inv-grid {
+  display: grid;
+  gap: var(--gap);
+  padding: 10px 24px 120px;
 }
-.inv-card:hover{ box-shadow:var(--shadow-hover) }
-.inv-card:active{ transform:scale(.985) }
 
-/* pure SVG logos (no inner border) */
-.inv-card img{ width:72px; height:72px; object-fit:contain; background:transparent }
-
-/* captions/prices to match your old weight/size */
-.inv-name{ font-size:16px; font-weight:900; text-align:center }
-.inv-price{ font-size:18px; font-weight:900; color:#111827 }
-
-/* Floating bill tab */
-.fab{
-  position:fixed; right:16px; bottom:18px; z-index:9;
-  display:flex; align-items:center; gap:10px;
-  background:#111827; color:#fff; border:0; border-radius:999px;
-  padding:10px 18px; box-shadow:0 12px 26px rgba(0,0,0,.25);
-  transition: transform .15s ease;
+/* Base mobile: 4-up, tablet 5-up, desktop 6-up */
+.inv-grid {
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
 }
-.fab:hover{ transform:scale(1.05) }
-.fab img{ width:22px; height:22px; filter:brightness(0) invert(1) }
-.fab-badge{
-  background:#ef4444; color:#fff; font-weight:900; min-width:22px; height:22px;
-  padding:0 7px; border-radius:999px; display:grid; place-items:center; font-size:12px;
+@media (min-width: 680px) {
+  .inv-grid { grid-template-columns: repeat(5, minmax(90px, 1fr)); }
 }
-.fab-sub{ font-weight:900; font-size:14px }
+@media (min-width: 1024px) {
+  .inv-grid { grid-template-columns: repeat(6, minmax(110px, 1fr)); }
+}
 
-/* Quantity modal (same visual language) */
-.qty-modal::backdrop{ background:rgba(0,0,0,.25) }
-.modal-card{ width:min(420px,92vw); border:0; border-radius:16px; background:#fff }
-.m-head{ display:flex; gap:12px; padding:16px 16px 10px }
-.m-head img{ width:60px; height:60px; object-fit:contain }
-.m-title h3{ margin:0; font-size:18px }
-.muted{ color:#6B7280 }
-.qty-row{ display:flex; justify-content:center; align-items:center; gap:12px; padding:6px 16px 4px }
-.qty-row .step{ width:44px; height:44px; border-radius:12px; border:0; background:#EEF6FF; color:#2563EB; font-weight:900; font-size:22px; cursor:pointer }
-.qty-row input{ width:88px; text-align:center; padding:10px 8px; font-size:16px; border-radius:12px; border:1px solid #dbe3ec; background:#fff }
-.m-actions{ display:flex; justify-content:flex-end; gap:8px; padding:12px 16px; background:#F6F9FC; border-top:1px solid #E6EDF4; border-radius:0 0 16px 16px }
+/* Cards = clean floating icons */
+.inv-card {
+  background: transparent;               /* no white background */
+  border-radius: var(--radius);
+  box-shadow: none;                      /* no drop shadow */
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .08s ease;
+  aspect-ratio: 1 / 1;                   /* square icons */
+}
+.inv-card:active { transform: scale(.94); }
+
+.inv-card img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  object-fit: contain;
+}
+
+/* Hide captions and prices completely */
+.inv-name, .inv-price { display: none !important; }
