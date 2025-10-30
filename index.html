@@ -2,45 +2,87 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Home · CigarOS</title>
-  <link rel="stylesheet" href="/css/ui.css?v=1" />
-  <link rel="icon" href="/img/icons/pos.svg" type="image/svg+xml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smoke · Home</title>
+  <link rel="stylesheet" href="/css/system.css" />
+  <style>
+    /* Home-only layout to match your screenshot */
+    .home{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--s-5) var(--s-8);
+    }
+    .home__grid{
+      display: grid;
+      grid-template-columns: repeat(2, 1fr); /* 2-up like your mock */
+      gap: 22px;
+      margin-top: 22px;
+      margin-bottom: 28px;
+    }
+    .tile{
+      background: #ffffff;
+      border-radius: 26px;
+      box-shadow: 0 18px 40px rgba(8,15,30,.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 1 / 1;      /* perfect square */
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+      text-decoration: none;
+    }
+    .tile img{
+      display: block;
+      width: 62%;
+      height: 62%;
+      object-fit: contain;
+    }
+
+    /* Tablet/Desktop: keep the same look, just breathe a bit more */
+    @media (min-width: 820px){
+      .home__grid{ gap: 28px; }
+      .tile{ border-radius: 28px; }
+      .tile img{ width: 60%; height: 60%; }
+    }
+  </style>
 </head>
 <body>
-  <main>
-    <!-- Shop logo -->
-    <img class="home-logo" src="/img/homescreenlogo.svg" alt="Smoke Cigar Shop & Lounge" />
+  <main class="page home">
+    <!-- Centered logo (sizing controlled in /css/system.css) -->
+    <section class="home__logo-wrap">
+      <img src="/img/homescreenlogo.svg"
+           alt="Smoke Cigar Shop & Lounge"
+           class="home__logo">
+    </section>
 
-    <!-- Home tiles: icons only (no labels per your rule) -->
-    <section class="app-grid">
-      <a class="app-tile" href="/pos/">
-        <img class="app-icon" src="/img/icons/categories/cigars.svg" alt="POS" />
-        <!-- no label -->
+    <!-- 2-column icon tiles, no captions -->
+    <section class="home__grid" aria-label="Main Apps">
+      <a class="tile" href="/pos/" aria-label="POS">
+        <img src="/img/icons/pos.svg" alt="">
       </a>
 
-      <a class="app-tile" href="/today/">
-        <img class="app-icon" src="/img/icons/today.svg" alt="Today" />
+      <a class="tile" href="/today/" aria-label="Today">
+        <img src="/img/icons/today.svg" alt="">
       </a>
 
-      <a class="app-tile" href="/loyalty/">
-        <img class="app-icon" src="/img/icons/loyalty.svg" alt="Loyalty" />
+      <a class="tile" href="/loyalty/" aria-label="Loyalty">
+        <img src="/img/icons/loyalty.svg" alt="">
       </a>
 
-      <a class="app-tile" href="/reports/">
-        <img class="app-icon" src="/img/icons/reports.svg" alt="Reports" />
+      <a class="tile" href="/reports/" aria-label="Reports">
+        <img src="/img/icons/reports.svg" alt="">
       </a>
 
-      <a class="app-tile" href="/learn/">
-        <img class="app-icon" src="/img/icons/learn.svg" alt="Learn" />
+      <a class="tile" href="/learn/" aria-label="Learn">
+        <img src="/img/icons/learn.svg" alt="">
       </a>
 
-      <a class="app-tile" href="/news/">
-        <img class="app-icon" src="/img/icons/news.svg" alt="News" />
+      <a class="tile" href="/news/" aria-label="News">
+        <img src="/img/icons/news.svg" alt="">
       </a>
 
-      <a class="app-tile" href="/hub/">
-        <img class="app-icon" src="/img/icons/hub.svg" alt="Hub" />
+      <a class="tile" href="/hub/" aria-label="Hub">
+        <img src="/img/icons/hub.svg" alt="">
       </a>
     </section>
   </main>
