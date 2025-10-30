@@ -1,206 +1,207 @@
-// UNIVERSAL INVENTORY ENGINE
-// Read config, render grid, show qty modal, manage FAB, add to Cart (shared).
+/* =========  Universal Inventory Engine  =========
+   - Reads per-page JSON config from <script id="inv-config">
+   - Renders icon-only grid (prices hidden on card)
+   - On click: opens modal with price + qty (+/-) + Add to Bill
+   - Maintains floating "bill" tab (FAB) with count and subtotal
+*/
 
-(() => {
-  const $ = s => document.querySelector(s);
-  const fmt = n => `$${(Math.round(n*100)/100).toFixed(2)}`;
+(function(){
+  // ---- helpers ----
+  const $ = (sel, ctx=document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+  const money = n => `$${n.toFixed(2)}`;
 
-  // ----- Read inline JSON config -----
-  const CONFIG = (() => {
-    try {
-      const node = document.getElementById('inv-config');
-      return node ? JSON.parse(node.textContent) : {};
-    } catch { return {}; }
-  })();
+  // ---- read config ----
+  const cfgEl = $('#inv-config');
+  if(!cfgEl){ console.warn('inv-config not found'); return; }
+  const cfg = JSON.parse(cfgEl.textContent || '{}');
 
-  const {
-    title = 'Inventory',
-    grid = '3up',              // '2up' or '3up'
-    showNames = false,         // show caption under icon
-    showPrices = true,         // show price under icon
-    iconPath = '/img/icons/',  // base path for icons
-    data = [],                 // inline items (optional)
-    dataUrl = '',              // OR external JSON file
-    taxRate = 0.07             // default 7%
-  } = CONFIG;
+  const TITLE     = cfg.title || 'Inventory';
+  const BACK_HREF = cfg.backHref || '/';
+  const GRID_MOBILE = cfg.grid || '3up'; // we always do responsive; left for future
+  const SHOW_NAMES  = !!cfg.showNames;    // we keep classes but CSS currently hides
+  const SHOW_PRICES = !!cfg.showPrices;   // we suppress prices on card (modal shows)
+  const ICON_PATH   = cfg.iconPath || '';
+  const TAX_RATE    = typeof cfg.taxRate === 'number' ? cfg.taxRate : 0.07;
 
-  // ----- Helpers -----
-  function icon(src){
-    const img = document.createElement('img');
-    img.src = src; img.alt = '';
-    img.onerror = () => { img.onerror = null; img.src = '/img/icons/pos.svg'; };
-    return img;
-  }
+  // ---- cart (shared via localStorage) ----
+  const CART_KEY = 'smoke_cart_v1';
+  const loadCart = () => {
+    try { return JSON.parse(localStorage.getItem(CART_KEY)) || {items:[], taxRate:TAX_RATE}; }
+    catch(e){ return {items:[], taxRate:TAX_RATE}; }
+  };
+  const saveCart = cart => localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  const cart = loadCart();
+  cart.taxRate = TAX_RATE;
 
-  function getCartSnapshot(){
-    let count = 0, subtotal = 0;
-    try{
-      const list = (window.Cart && (Cart.items || (Cart.getItems && Cart.getItems()))) ||
-                   JSON.parse(localStorage.getItem('cart') || localStorage.getItem('pos_cart') || '[]');
-      const arr = Array.isArray(list) ? list : (Array.isArray(list?.list) ? list.list : []);
-      arr.forEach(it => { const q = Number(it.qty||1), p = Number(it.price||0); count += q; subtotal += q*p; });
-    }catch(e){}
-    return { count, subtotal };
-  }
+  const cartTotals = c => {
+    const sub = c.items.reduce((s,it)=> s + (it.price * it.qty), 0);
+    const tax = +(sub * c.taxRate).toFixed(2);
+    const total = +(sub + tax).toFixed(2);
+    const qty = c.items.reduce((s,it)=> s + it.qty, 0);
+    return {sub, tax, total, qty};
+  };
 
-  // Toast
-  function showToast(msg) {
-    const toast = document.createElement('div');
-    toast.textContent = msg;
-    toast.style.cssText = `
-      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-      background:#111827;color:#fff;padding:10px 20px;border-radius:20px;
-      font-weight:700; box-shadow:0 4px 12px rgba(0,0,0,.3); z-index:99; opacity:0; transition:opacity .3s;
-    `;
-    document.body.appendChild(toast);
-    requestAnimationFrame(() => (toast.style.opacity = 1));
-    setTimeout(() => { toast.style.opacity = 0; setTimeout(() => toast.remove(), 400); }, 1300);
-  }
+  // ---- build base DOM ----
+  document.body.insertAdjacentHTML('afterbegin', `
+    <main class="inv-wrap">
+      <header class="topbar">
+        <a class="topbar-back" href="${BACK_HREF}" aria-label="Back">←</a>
+        <h1 class="topbar-title">${TITLE}</h1>
+      </header>
+      <section id="invGrid" class="inv-grid"></section>
+    </main>
 
-  // ----- Build shell -----
-  document.title = `${title} · Smoke POS`;
-
-  const wrap = document.createElement('main');
-  wrap.className = 'page';
-
-  wrap.innerHTML = `
-    <header class="topbar">
-      <a href="${CONFIG.backHref || '/pos/'}" class="topbar-back" aria-label="Back">←</a>
-      <h1 class="topbar-title">${title}</h1>
-      <span class="topbar-spacer"></span>
-    </header>
-
-    <section class="inv-wrap">
-      <div class="inv-grid ${grid === '2up' ? 'inv-2up' : 'inv-3up'}" id="invGrid"></div>
-    </section>
-
-    <button id="fabCart" class="fab">
-      <img src="/img/icons/pos.svg" alt="" />
-      <span class="fab-badge" id="fabCount">0</span>
-      <span class="fab-sub"   id="fabSub">$0.00</span>
-    </button>
-
-    <dialog id="qtyModal" class="qty-modal">
-      <form method="dialog" class="modal-card" id="qtyForm">
+    <dialog class="qty-modal" id="qtyModal">
+      <div class="modal-card">
         <div class="m-head">
-          <img id="mIcon" alt="" />
+          <img id="mIcon" alt="">
           <div class="m-title">
-            <h3 id="mName">—</h3>
-            <div id="mPrice" class="muted">$0.00</div>
+            <h3 id="mName"></h3>
+            <div id="mMeta" class="muted"></div>
           </div>
         </div>
+        <div class="price-line" id="mPrice"></div>
         <div class="qty-row">
-          <button type="button" class="step" id="minus">−</button>
-          <input type="number" id="qty" value="1" min="1" inputmode="numeric" />
-          <button type="button" class="step" id="plus">+</button>
+          <button class="step" id="mMinus">−</button>
+          <input type="number" id="mQty" min="1" step="1" value="1">
+          <button class="step" id="mPlus">+</button>
         </div>
-        <menu class="m-actions">
-          <button class="btn btn-light" value="cancel">Cancel</button>
-          <button class="btn btn-primary" id="addBtn" value="default">Add to Bill</button>
-        </menu>
-      </form>
+        <div class="m-actions">
+          <button class="btn btn-light" id="mCancel">Cancel</button>
+          <button class="btn btn-primary" id="mAdd">Add to Bill</button>
+        </div>
+      </div>
     </dialog>
-  `;
-  document.body.appendChild(wrap);
 
-  // ----- FAB logic -----
-  function updateFab(){
-    const { count, subtotal } = getCartSnapshot();
-    document.getElementById('fabCount').textContent = String(count);
-    document.getElementById('fabSub').textContent   = fmt(subtotal);
-  }
-  document.getElementById('fabCart').addEventListener('click', () => location.href = '/invoice/');
-  window.addEventListener('cart:updated', updateFab);
+    <button class="fab" id="fabBtn" aria-label="Open bill">
+      <img src="/img/icons/pos.svg" alt="">
+      <span class="fab-badge" id="fabQty">0</span>
+      <span class="fab-sub" id="fabSub">$0.00</span>
+    </button>
+  `);
 
-  // ----- Qty modal -----
-  const modal = document.getElementById('qtyModal');
-  const qtyInput = document.getElementById('qty');
-  let activeItem = null;
+  const grid = $('#invGrid');
+  const modal = $('#qtyModal');
+  const mIcon = $('#mIcon'), mName = $('#mName'), mMeta = $('#mMeta'), mPrice = $('#mPrice');
+  const mMinus = $('#mMinus'), mPlus = $('#mPlus'), mQty = $('#mQty'), mAdd = $('#mAdd'), mCancel = $('#mCancel');
+  const fabBtn = $('#fabBtn'), fabQty = $('#fabQty'), fabSub = $('#fabSub');
 
-  document.getElementById('minus').addEventListener('click', () => {
-    const n = Math.max(1, parseInt(qtyInput.value || '1', 10) - 1);
-    qtyInput.value = String(n);
-  });
-  document.getElementById('plus').addEventListener('click', () => {
-    const n = Math.max(1, parseInt(qtyInput.value || '1', 10) + 1);
-    qtyInput.value = String(n);
-  });
-  document.getElementById('addBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-    const q = Math.max(1, parseInt(qtyInput.value || '1', 10));
-    if (activeItem){
-      Cart?.setTaxRate?.(taxRate);
-      Cart?.addItem?.(activeItem, q);
-      window.dispatchEvent(new Event('cart:updated'));
-      showToast(`${activeItem.name} ×${q} added`);
+  // ---- load data ----
+  const normalizeItem = raw => {
+    const icon = raw.icon ? raw.icon : (raw.iconFile ? (ICON_PATH + raw.iconFile) : '');
+    return {
+      id: raw.id || raw.sku || crypto.randomUUID(),
+      sku: raw.sku || raw.id || '',
+      name: raw.name || 'Item',
+      brand: raw.brand || '',
+      vitola: raw.vitola || '',
+      price: typeof raw.price === 'number' ? raw.price : parseFloat(raw.price||0),
+      icon,
+      taxable: raw.taxable !== false,
+      meta: raw.meta || ''
+    };
+  };
+
+  const fetchData = async () => {
+    if (Array.isArray(cfg.data)) return cfg.data.map(normalizeItem);
+    if (cfg.dataUrl){
+      const res = await fetch(cfg.dataUrl, {cache:'no-store'});
+      const json = await res.json();
+      return json.map(normalizeItem);
     }
-    modal.close();
-  });
+    return [];
+  };
 
-  // ----- Render grid -----
-  function render(list){
-    const host = document.getElementById('invGrid');
-    host.innerHTML = '';
-    list.forEach(it => {
-      const card = document.createElement('div');
-      card.className = 'inv-card';
+  let ITEMS = [];
+  (async () => {
+    ITEMS = await fetchData();
+    renderGrid(ITEMS);
+    syncFab();
+  })();
 
-      const img = icon(it.icon || (iconPath + (it.iconFile || '')));
-      card.appendChild(img);
-
-      if (showNames) {
-        const nm = document.createElement('div');
-        nm.className = 'inv-name';
-        nm.textContent = it.name || it.sku || 'Item';
-        card.appendChild(nm);
-      }
-      if (showPrices) {
-        const pr = document.createElement('div');
-        pr.className = 'inv-price';
-        pr.textContent = fmt(Number(it.price || 0));
-        card.appendChild(pr);
-      }
-
-      card.addEventListener('click', () => {
-        activeItem = {
-          id: it.id || it.sku || it.name,
-          sku: it.sku || it.id || '',
-          name: it.name || 'Item',
-          category: title,
-          price: Number(it.price || 0),
-          icon: it.icon || (iconPath + (it.iconFile || '')),
-          taxable: it.taxable !== false,
-          // cigar-specific optional fields (carried through to invoice, if used)
-          brand: it.brand, vitola: it.vitola, length: it.length, ring: it.ring,
-          wrapper: it.wrapper, binder: it.binder, filler: it.filler, origin: it.origin, strength: it.strength
-        };
-        document.getElementById('mIcon').src = activeItem.icon || '/img/icons/pos.svg';
-        document.getElementById('mName').textContent = activeItem.name;
-        document.getElementById('mPrice').textContent = fmt(activeItem.price);
-        qtyInput.value = '1';
-        modal.showModal();
+  // ---- render grid (icons only) ----
+  function renderGrid(items){
+    grid.innerHTML = items.map(it => {
+      const name = SHOW_NAMES ? `<div class="inv-name">${it.name}</div>` : '';
+      const price = SHOW_PRICES ? `<div class="inv-price">${money(it.price)}</div>` : '';
+      const icon = it.icon ? `<img src="${it.icon}" alt="${it.name}" loading="lazy">` : '';
+      return `
+        <button class="inv-card" data-id="${it.id}" aria-label="${it.name}">
+          ${icon}
+          ${name}
+          ${price}
+        </button>
+      `;
+    }).join('');
+    // attach handlers
+    $$('.inv-card', grid).forEach(btn=>{
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const it = ITEMS.find(x=>x.id===id);
+        openModal(it);
       });
-
-      host.appendChild(card);
     });
   }
 
-  async function loadData(){
-    try{
-      if (dataUrl){
-        const res = await fetch(dataUrl, { cache: 'no-store' });
-        if (!res.ok) throw new Error('no data file');
-        const json = await res.json();
-        return Array.isArray(json) ? json : (Array.isArray(json.items) ? json.items : []);
-      }
-      return data;
-    }catch{ return data; }
+  // ---- modal / add to cart ----
+  let currentItem = null;
+
+  function openModal(it){
+    currentItem = it;
+    mIcon.src = it.icon || '/img/icons/pos.svg';
+    mIcon.alt = it.name;
+    mName.textContent = it.name;
+    const metaParts = [];
+    if (it.brand) metaParts.push(it.brand);
+    if (it.vitola) metaParts.push(it.vitola);
+    mMeta.textContent = metaParts.join(' • ');
+    mPrice.textContent = `Price: ${money(it.price)}`;
+    mQty.value = 1;
+    modal.showModal();
+    mQty.focus();
   }
 
-  (async () => {
-    Cart?.setTaxRate?.(taxRate);
-    updateFab();
-    const list = await loadData();
-    render(list || []);
-  })();
+  function closeModal(){ modal.close(); currentItem = null; }
+
+  mMinus.addEventListener('click', ()=>{ const v=Math.max(1, (parseInt(mQty.value||'1',10)-1)); mQty.value=v; });
+  mPlus.addEventListener('click', ()=>{ const v=(parseInt(mQty.value||'1',10)+1); mQty.value=v; });
+  mCancel.addEventListener('click', closeModal);
+  modal.addEventListener('close', ()=>{ currentItem=null; });
+
+  mAdd.addEventListener('click', ()=>{
+    if(!currentItem) return;
+    const qty = Math.max(1, parseInt(mQty.value||'1',10));
+    const existing = cart.items.find(x=>x.id===currentItem.id);
+    if (existing){
+      existing.qty += qty;
+    } else {
+      cart.items.push({
+        id: currentItem.id,
+        name: currentItem.name,
+        price: currentItem.price,
+        qty,
+        sku: currentItem.sku || '',
+        icon: currentItem.icon || '',
+        brand: currentItem.brand || '',
+        vitola: currentItem.vitola || '',
+        taxable: currentItem.taxable !== false
+      });
+    }
+    saveCart(cart);
+    syncFab();
+    closeModal();
+  });
+
+  function syncFab(){
+    const t = cartTotals(cart);
+    fabQty.textContent = t.qty;
+    fabSub.textContent = money(t.sub);
+  }
+
+  fabBtn.addEventListener('click', ()=>{
+    // go to invoice; change if your invoice path differs
+    window.location.href = '/invoice/';
+  });
+
 })();
