@@ -2,60 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>POS · Categories</title>
-  <link rel="stylesheet" href="/css/ui.css?v=1" />
-  <link rel="icon" href="/img/icons/pos.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/css/system.css" />
 </head>
 <body>
-  <main>
-    <header class="topbar">
-      <a href="/" class="topbar-back" aria-label="Home">←</a>
-      <h1 class="topbar-title">POS</h1>
-      <span class="topbar-spacer"></span>
+  <main class="page">
+    <header class="page__header">
+      <a class="page__back" href="/" aria-label="Back">←</a>
+      <h1 class="page__title">POS</h1>
+      <span></span>
     </header>
 
-    <section class="app-grid">
-      <a class="app-tile" href="/pos/accessories/">
-        <img class="app-icon" src="/img/icons/categories/accessories.svg" alt="" />
-        <span class="app-label">Accessories</span>
-      </a>
+    <section class="page__content">
+      <!-- Category grid: captions ON (beneath icon), consistent spacing -->
+      <div class="icon-grid">
+        <a class="icon" href="/pos/accessories/" aria-label="Accessories">
+          <img src="/img/icons/categories/accessories.svg" alt="Accessories">
+          <div class="icon__label">Accessories</div>
+        </a>
 
-      <a class="app-tile" href="/pos/ashtrays/">
-        <img class="app-icon" src="/img/icons/categories/ashtrays.svg" alt="" />
-        <span class="app-label">Ashtrays</span>
-      </a>
+        <a class="icon" href="/pos/ashtrays/" aria-label="Ashtrays">
+          <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays">
+          <div class="icon__label">Ashtrays</div>
+        </a>
 
-      <a class="app-tile" href="/pos/cigars/">
-        <img class="app-icon" src="/img/icons/categories/cigars.svg" alt="" />
-        <span class="app-label">Cigars</span>
-      </a>
+        <a class="icon" href="/pos/cigars/" aria-label="Cigars">
+          <img src="/img/icons/categories/cigars.svg" alt="Cigars">
+          <div class="icon__label">Cigars</div>
+        </a>
 
-      <a class="app-tile" href="/pos/cutters/">
-        <img class="app-icon" src="/img/icons/categories/cutters.svg" alt="" />
-        <span class="app-label">Cutters</span>
-      </a>
+        <a class="icon" href="/pos/cutters/" aria-label="Cutters">
+          <img src="/img/icons/categories/cutters.svg" alt="Cutters">
+          <div class="icon__label">Cutters</div>
+        </a>
 
-      <a class="app-tile" href="/foodandbevs/">
-        <img class="app-icon" src="/img/icons/categories/foodandbevs.svg" alt="" />
-        <span class="app-label">Food and Bevs</span>
-      </a>
+        <a class="icon" href="/foodandbevs/" aria-label="Food & Bevs">
+          <img src="/img/icons/categories/foodandbevs.svg" alt="Food & Bevs">
+          <div class="icon__label">Food & Bevs</div>
+        </a>
 
-      <a class="app-tile" href="/pos/lighters/">
-        <img class="app-icon" src="/img/icons/categories/lighters.svg" alt="" />
-        <span class="app-label">Lighters</span>
-      </a>
+        <a class="icon" href="/pos/lighters/" aria-label="Lighters">
+          <img src="/img/icons/categories/lighters.svg" alt="Lighters">
+          <div class="icon__label">Lighters</div>
+        </a>
 
-      <a class="app-tile" href="/pos/packs/">
-        <img class="app-icon" src="/img/icons/categories/packs.svg" alt="" />
-        <span class="app-label">Packs</span>
-      </a>
+        <a class="icon" href="/pos/packs/" aria-label="Packs">
+          <img src="/img/icons/categories/packs.svg" alt="Packs">
+          <div class="icon__label">Packs</div>
+        </a>
 
-      <a class="app-tile" href="/pos/pipes/">
-        <img class="app-icon" src="/img/icons/categories/pipes.svg" alt="" />
-        <span class="app-label">Pipes</span>
-      </a>
+        <a class="icon" href="/pos/pipes/" aria-label="Pipes">
+          <img src="/img/icons/categories/pipes.svg" alt="Pipes">
+          <div class="icon__label">Pipes</div>
+        </a>
+      </div>
     </section>
   </main>
+
+  <!-- FAB / Bill (optional on this page; include if you want persistent totals) -->
+  <button class="fab" id="fabBtn" aria-label="Open bill">
+    <img src="/img/icons/pos.svg" alt="">
+    <span class="fab__qty" id="fabQty">0</span>
+    <span class="fab__sum" id="fabSum">$0.00</span>
+  </button>
+
+  <script>
+    // If you maintain shared cart totals, wire them here (optional).
+    const qtyEl = document.getElementById('fabQty');
+    const sumEl = document.getElementById('fabSum');
+    const fabBtn = document.getElementById('fabBtn');
+    const CART_KEY='smoke_cart_v1';
+    function money(n){ return '$' + (+n).toFixed(2); }
+    function syncFab(){
+      try{
+        const c = JSON.parse(localStorage.getItem(CART_KEY)) || {items:[]};
+        const qty = c.items.reduce((s,i)=>s+i.qty,0);
+        const sub = c.items.reduce((s,i)=>s+i.price*i.qty,0);
+        qtyEl.textContent = qty;
+        sumEl.textContent = money(sub);
+      }catch(e){}
+    }
+    syncFab();
+    fabBtn.addEventListener('click', ()=>location.href='/invoice/');
+  </script>
 </body>
 </html>
