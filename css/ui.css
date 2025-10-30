@@ -1,49 +1,112 @@
-/* =========  UI BASE  ========= */
-:root{
-  --bg:#ECF2F6;              /* page bg */
-  --card:#ffffff;            /* tiles (home/POS) */
-  --ink:#0F172A;             /* primary text */
-  --muted:#6B7280;           /* secondary */
-  --radius:22px;             /* rounded corners */
-  --gap:26px;                /* spacing */
-  --shadow: 0 10px 26px rgba(15,23,42,.08);
-  --shadow-hover: 0 14px 30px rgba(15,23,42,.10);
+/* ========== GLOBAL (Helvetica Neue + base) ========== */
+:root {
+  --ink:#0F172A;
+  --bg:#ECF3F7;       /* your light app bg */
+  --gap: 18px;        /* grid gap mobile */
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
-html{-webkit-text-size-adjust:100%}
+* { box-sizing:border-box; }
+html,body { height:100%; }
 body{
-  margin:0; background:var(--bg); color:var(--ink);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Topbar */
-.topbar{ position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:center; height:64px; padding:0 12px; background:transparent; }
-.topbar-back{ position:absolute; left:12px; top:50%; transform:translateY(-50%); text-decoration:none; color:var(--muted); font-size:28px; line-height:1; }
-.topbar-title{ margin:0; font-size:36px; letter-spacing:.5px; font-weight:900; }
-
-/* Brand (Home) */
-.brand-wrap{ display:flex; justify-content:center; margin:18px 0 8px }
-#brand-logo{ width:220px; max-width:60vw; height:auto } /* ~50% smaller from earlier */
-
-/* Home & POS category tiles */
-.app-grid{ display:grid; grid-template-columns:repeat(2, minmax(140px,1fr)); gap:var(--gap); padding:12px 22px 34px; }
-.app-tile{
-  display:flex; align-items:center; justify-content:center; flex-direction:column;
-  min-height:150px; border-radius:var(--radius); background:var(--card);
-  box-shadow:var(--shadow); text-decoration:none; color:inherit;
-  transition:transform .08s ease, box-shadow .12s ease; will-change:transform;
+/* ========== TOPBAR + TITLE (matches your mockup) ========== */
+/* Grid keeps title perfectly centered with a back arrow on the left */
+.topbar{
+  position: sticky; top: 0; z-index: 5;
+  display: grid; grid-template-columns: 56px 1fr 56px;
+  align-items: center;
+  height: 60px;
+  background: transparent; /* no stripe bar look */
+  padding: 0 6px;
 }
-.app-tile:hover{ box-shadow:var(--shadow-hover) }
-.app-tile:active{ transform:scale(.985) }
-.app-icon{ width:74px; height:74px; object-fit:contain; margin-bottom:10px }
-.app-label{ font-weight:900; font-size:22px; text-align:center }
+.topbar-back{
+  display:flex; align-items:center; justify-content:center;
+  text-decoration:none; color:var(--ink);
+  font-size: 26px; line-height: 1; padding: 0 6px;
+}
+.topbar-title{
+  justify-self: center;
+  margin: 0;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: .5px;
+  font-size: 30px;           /* mobile title size */
+  line-height: 1.05;
+}
+@media (min-width:768px){
+  .topbar-title{ font-size: 34px; }
+}
+@media (min-width:1200px){
+  .topbar-title{ font-size: 38px; }
+}
 
-/* Buttons */
-.btn{ appearance:none; border:0; border-radius:12px; cursor:pointer; padding:12px 16px; font-weight:800; font-size:15px; }
-.btn-primary{ background:#111827; color:#fff }
-.btn-light{ background:#F3F4F6; color:#111827 }
+/* Optional spacer element if some pages include it */
+.topbar-spacer{ width:56px; height:1px; }
 
-.center{text-align:center}
-.hidden{display:none!important}
+/* ========== GENERIC ICON GRID (no tiles, no borders) ========== */
+/* Use this on any page section that should show pure SVG logos */
+.icon-grid{
+  width:100%;
+  padding: 8px 18px 100px;
+  display:grid;
+  grid-template-columns: repeat(4, minmax(64px, 1fr)); /* 4-up mobile */
+  gap: var(--gap);
+  justify-items: center;
+}
+@media (min-width: 700px){
+  .icon-grid{ grid-template-columns: repeat(6, minmax(80px, 1fr)); }
+}
+@media (min-width: 1100px){
+  .icon-grid{ grid-template-columns: repeat(8, minmax(96px, 1fr)); }
+}
+
+/* Each icon cell is just a square box to contain the SVG, nothing else */
+.icon-cell{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display:flex; align-items:center; justify-content:center;
+  background: transparent;     /* no shells */
+  border: 0; box-shadow: none; /* no outlines */
+  padding: 0;
+}
+
+/* Render icons exactly “as uploaded”: no cropping, no distortion */
+.icon-cell img,
+.icon-cell svg{
+  display:block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;       /* preserve intrinsic aspect */
+  height: auto;      /* preserve intrinsic aspect */
+  object-fit: contain;
+  border: 0;
+  border-radius: 0;  /* no rounding unless the asset has it */
+}
+
+/* ========== FAB (bill) ========== */
+.fab{
+  position: fixed; right: 18px; bottom: 22px;
+  display: inline-flex; align-items: center; gap: 10px;
+  border: 0; cursor: pointer;
+  padding: 12px 16px; border-radius: 20px;
+  background: #0B1220; color: #fff;
+  box-shadow: 0 12px 30px rgba(11,18,32,.35);
+}
+.fab img{ width:20px; height:20px; display:block; }
+.fab-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width: 28px; height: 28px; border-radius: 16px;
+  background:#E53935; font-weight:800;
+}
+.fab-sub{ font-weight: 800; }
+
+/* Utility wrapper some pages use */
+.inv-wrap{ max-width: 1600px; margin: 0 auto; }
