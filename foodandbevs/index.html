@@ -4,29 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Food & Beverages</title>
-  <link rel="stylesheet" href="/css/ui.css" />
-  <link rel="stylesheet" href="/css/foodandbevs.css" />
+  <link rel="stylesheet" href="/css/system.css" />
 </head>
 <body>
-  <main class="inv-wrap">
-    <header class="topbar">
-      <a class="topbar-back" href="/pos/" aria-label="Back">←</a>
-      <h1 class="topbar-title">Food & Beverages</h1>
-      <span class="topbar-spacer" aria-hidden="true"></span>
+  <main class="page">
+    <header class="page__header">
+      <a class="page__back" href="/pos/" aria-label="Back">←</a>
+      <h1 class="page__title">Food & Beverages</h1>
+      <span></span>
     </header>
 
-    <!-- PURE ICON GRID (no borders, no captions) -->
-    <section id="bevGrid" class="icon-grid"></section>
+    <section class="page__content">
+      <!-- Pure SVG grid (no shells/borders/captions). JS will populate. -->
+      <div id="bevGrid" class="icon-grid"></div>
+    </section>
   </main>
 
-  <!-- FAB (bill) -->
+  <!-- FAB / Bill -->
   <button class="fab" id="fabBtn" aria-label="Open bill">
     <img src="/img/icons/pos.svg" alt="">
-    <span class="fab-badge" id="fabQty">0</span>
-    <span class="fab-sub" id="fabSub">$0.00</span>
+    <span class="fab__qty" id="fabQty">0</span>
+    <span class="fab__sum" id="fabSum">$0.00</span>
   </button>
 
-  <!-- Quantity / Add dialog -->
+  <!-- Quantity dialog (used by the page JS) -->
   <dialog id="qtyDialog" class="qty-dialog">
     <div class="qd-card">
       <header class="qd-head">
@@ -50,35 +51,35 @@
     </div>
   </dialog>
 
-  <!-- Page config (you can add/remove items here; icons must exist in iconPath) -->
+  <!-- Config + logic -->
+  <!-- If you already have /foodandbevs/foodandbevs.js from earlier, keep it. -->
   <script id="bev-config" type="application/json">
   {
     "iconPath": "/img/icons/foodandbevs/",
     "taxRate": 0.07,
     "items": [
-      { "id":"gatorade",     "name":"Gatorade",          "iconFile":"gatorade.svg",     "price":1.50 },
-      { "id":"7up",          "name":"7 UP",              "iconFile":"7up.svg",          "price":1.50 },
-      { "id":"pepsi",        "name":"Pepsi",             "iconFile":"pepsi.svg",        "price":1.50 },
-      { "id":"aw",           "name":"A&W",               "iconFile":"aw.svg",           "price":1.50 },
-      { "id":"sprite",       "name":"Sprite",            "iconFile":"sprite.svg",       "price":1.50 },
-      { "id":"drpepperdiet", "name":"Diet Dr Pepper",    "iconFile":"dietdrpepper.svg", "price":1.50 },
-      { "id":"monstertea",   "name":"Monster Tea",       "iconFile":"monstert ea.svg",  "price":3.50 },
-      { "id":"dietcoke",     "name":"Diet Coke",         "iconFile":"dietcoke.svg",     "price":1.50 },
-      { "id":"canadadry",    "name":"Canada Dry",        "iconFile":"gingerale.svg",    "price":1.50 },
-      { "id":"drpepper",     "name":"Dr Pepper",         "iconFile":"drpepper.svg",     "price":1.50 },
-      { "id":"coke",         "name":"Coca-Cola",         "iconFile":"cocacola.svg",     "price":1.50 },
-      { "id":"cokezero",     "name":"Coca-Cola Zero",    "iconFile":"cocacolazero.svg", "price":1.50 },
-      { "id":"rootbeer",     "name":"Root Beer",         "iconFile":"rootbeer.svg",     "price":1.50 },
-      { "id":"mountaindew",  "name":"Mountain Dew",      "iconFile":"mountaindew.svg",  "price":1.50 },
-      { "id":"goldpeak0",    "name":"Gold Peak Zero",    "iconFile":"goldpeak_zero.svg","price":1.50 },
-      { "id":"goldpeakS",    "name":"Gold Peak Sweet",   "iconFile":"goldpeak_sweet.svg","price":1.50 },
+      { "id":"gatorade",     "name":"Gatorade",          "iconFile":"gatorade.svg",       "price":1.50 },
+      { "id":"7up",          "name":"7 UP",              "iconFile":"7up.svg",            "price":1.50 },
+      { "id":"pepsi",        "name":"Pepsi",             "iconFile":"pepsi.svg",          "price":1.50 },
+      { "id":"aw",           "name":"A&W",               "iconFile":"aw.svg",             "price":1.50 },
+      { "id":"sprite",       "name":"Sprite",            "iconFile":"sprite.svg",         "price":1.50 },
+      { "id":"dietdrpepper", "name":"Diet Dr Pepper",    "iconFile":"dietdrpepper.svg",   "price":1.50 },
+      { "id":"monstertea",   "name":"Monster Tea",       "iconFile":"monstertea.svg",     "price":3.50 },
+      { "id":"dietcoke",     "name":"Diet Coke",         "iconFile":"dietcoke.svg",       "price":1.50 },
+      { "id":"canadadry",    "name":"Canada Dry",        "iconFile":"gingerale.svg",      "price":1.50 },
+      { "id":"drpepper",     "name":"Dr Pepper",         "iconFile":"drpepper.svg",       "price":1.50 },
+      { "id":"coke",         "name":"Coca-Cola",         "iconFile":"cocacola.svg",       "price":1.50 },
+      { "id":"cokezero",     "name":"Coca-Cola Zero",    "iconFile":"cocacolazero.svg",   "price":1.50 },
+      { "id":"rootbeer",     "name":"Root Beer",         "iconFile":"rootbeer.svg",       "price":1.50 },
+      { "id":"mountaindew",  "name":"Mountain Dew",      "iconFile":"mountaindew.svg",    "price":1.50 },
+      { "id":"goldpeak0",    "name":"Gold Peak Zero",    "iconFile":"goldpeak_zero.svg",  "price":1.50 },
+      { "id":"goldpeakS",    "name":"Gold Peak Sweet",   "iconFile":"goldpeak_sweet.svg", "price":1.50 },
       { "id":"goldpeakU",    "name":"Gold Peak Unsweet", "iconFile":"goldpeak_unsweet.svg","price":1.50 },
-      { "id":"redbull",      "name":"Red Bull",          "iconFile":"redbull.svg",      "price":1.50 },
-      { "id":"water",        "name":"Water",             "iconFile":"water.svg",        "price":1.00 }
+      { "id":"redbull",      "name":"Red Bull",          "iconFile":"redbull.svg",        "price":1.50 },
+      { "id":"water",        "name":"Water",             "iconFile":"water.svg",          "price":1.00 }
     ]
   }
   </script>
-
   <script src="/foodandbevs/foodandbevs.js"></script>
 </body>
 </html>
