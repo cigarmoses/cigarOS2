@@ -1,133 +1,121 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Food & Beverages</title>
-<link rel="stylesheet" href="/css/system.css" />
-<style>
-  :root{ --bg:#ECF3F7; --shadow:0 16px 36px rgba(8,15,30,.10); }
-  body{ margin:0; background:var(--bg); font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
-  .wrap{ max-width:520px; margin:0 auto; padding:18px 18px 120px; }
-  .topbar{ display:flex; align-items:center; gap:10px; }
-  .back{ text-decoration:none; color:#111; font-size:28px; line-height:1; }
-  h1{ margin:6px 0 18px; text-align:center; font-size:22px; letter-spacing:.06em; }
-  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
-  .icon{ display:flex; align-items:center; justify-content:center; aspect-ratio:1/1; }
-  .icon img{ width:100%; height:100%; object-fit:contain; display:block; border:none; }
-  .pad-bill{ height:110px; }
-
-  /* Simple modal */
-  dialog{ border:none; border-radius:18px; width:min(92vw,420px); padding:18px;
-          box-shadow:var(--shadow); }
-  .modal-head{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-  .qty{ display:flex; gap:10px; align-items:center; margin:10px 0 18px; }
-  .qty button{ width:36px; height:36px; border-radius:10px; border:none; background:#0b1423; color:#fff; font-size:18px; }
-  .primary{ width:100%; border:none; border-radius:12px; padding:12px 14px; background:#0b1423; color:#fff; font-weight:700; }
-  .ghost{ border:none; background:transparent; color:#0b1423; font-weight:600; padding:8px 10px; }
-
-  /* bill dock */
-  .bill-dock{ position:fixed; right:18px; bottom:18px; background:#0b1423; color:#fff;
-              border-radius:22px; padding:10px 16px; display:flex; gap:10px; align-items:center;
-              box-shadow:0 18px 46px rgba(8,15,30,.22); }
-  .pill{ background:#E35151; color:#fff; border-radius:999px; padding:2px 10px; font-weight:700; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Food & Beverages</title>
+  <link rel="stylesheet" href="/css/system.css?v=2.2" />
 </head>
 <body>
-  <main class="wrap">
+  <main class="page">
     <header class="topbar">
-      <a class="back" href="/pos/">‹</a><div style="flex:1"></div>
+      <a class="back-btn" aria-label="Back" href="/pos/">←</a>
+      <h1 class="page-title">FOOD & BEVERAGES</h1>
     </header>
-    <h1>FOOD &amp; BEVERAGES</h1>
 
-    <section id="grid" class="grid"></section>
-    <div class="pad-bill"></div>
+    <!-- 3-up grid on mobile, pure SVGs (no captions, no shells) -->
+    <section id="bevGrid" class="grid cols-3"></section>
   </main>
 
-  <!-- Quantity / Add modal -->
-  <dialog id="picker">
-    <div class="modal-head">
-      <img id="pIcon" alt="" style="width:44px;height:44px;object-fit:contain" />
-      <div>
-        <div id="pName" style="font-weight:700"></div>
-        <div id="pPrice" style="opacity:.7"></div>
-      </div>
-      <div style="flex:1"></div>
-      <button class="ghost" onclick="picker.close()">Close</button>
-    </div>
-    <div class="qty">
-      <button onclick="chg(-1)">−</button>
-      <div id="q" style="min-width:36px;text-align:center;font-weight:700;">1</div>
-      <button onclick="chg(1)">+</button>
-    </div>
-    <button class="primary" onclick="addToBill()">Add to bill</button>
-  </dialog>
-
-  <button class="bill-dock" onclick="location.href='/pos/checkout/'" aria-label="Open Bill">
-    <img src="/img/icons/pos.svg" alt="" style="width:22px;height:22px" />
-    <span class="pill" id="billCount">0</span>
-    <span id="billTotal">$0.00</span>
-  </button>
+  <!-- Cart dock (shared look) -->
+  <div class="cart-dock" id="dock">
+    <img class="cart-icon" src="/img/icons/pos.svg" alt="" />
+    <span class="cart-count" id="dockCount">0</span>
+    <span class="cart-total" id="dockTotal">$0.00</span>
+  </div>
 
   <script>
-    // Catalog (icons live in /img/icons/foodandbevs/)
+    /* ---------- DATA ---------- */
+    // Use simple, consistent ids. Price per your spec.
     const items = [
-      { id:'gatorade', name:'Gatorade', price:1.50 },
-      { id:'7up', name:'7 UP', price:1.50 },
-      { id:'pepsi', name:'Pepsi', price:1.50 },
-      { id:'aw', name:'A&W Root Beer', price:1.50, icon:'rootbeer' },
-      { id:'sprite', name:'Sprite', price:1.50 },
-      { id:'drpepperdiet', name:'Diet Dr Pepper', price:1.50, icon:'dietdrpepper' },
-      { id:'monstertea', name:'Monster Tea', price:3.50 },
-      { id:'dietcoke', name:'Diet Coke', price:1.50, icon:'dietcoke' },
-      { id:'goldpeakzero', name:'Gold Peak Zero', price:1.50 },
-      { id:'goldpeaksweet', name:'Gold Peak Sweet', price:1.50 },
-      { id:'goldpeakunsweet', name:'Gold Peak Unsweet', price:1.50 },
-      { id:'mountaindew', name:'Mountain Dew', price:1.50 },
-      { id:'canadadry', name:'Canada Dry', price:1.50, icon:'canadadry' },
-      { id:'drpepper', name:'Dr Pepper', price:1.50, icon:'drpepper' },
-      { id:'cocacola', name:'Coca-Cola', price:1.50, icon:'cocacola' },
-      { id:'cocacolazero', name:'Coca-Cola Zero', price:1.50, icon:'cocacolazero' },
-      { id:'redbull', name:'Red Bull', price:1.50 },
-      { id:'water', name:'Water', price:1.00, icon:'pos' } // replace icon when you add water.svg
+      { id:"gatorade",        price:1.50 },
+      { id:"7up",             price:1.50 },
+      { id:"pepsi",           price:1.50 },
+      { id:"aw",              price:1.50 }, // if your file is 'rootbeer.svg', we add an alias below
+      { id:"sprite",          price:1.50 },
+      { id:"drpepper-diet",   price:1.50 },
+      { id:"monstertea",      price:3.50 },
+      { id:"dietcoke",        price:1.50 },
+      { id:"canadadry",       price:1.50 },
+      { id:"drpepper",        price:1.50 },
+      { id:"cocacola",        price:1.50 },
+      { id:"cocacolazero",    price:1.50 },
+      { id:"mountaindew",     price:1.50 },
+      { id:"redbull",         price:1.50 },
+      { id:"gold-peak-zero",  price:1.50 },
+      { id:"gold-peak-sweet", price:1.50 },
+      { id:"gold-peak-unsweet", price:1.50 },
+      { id:"water",           price:1.00 },
     ];
 
-    const grid = document.getElementById('grid');
+    // Optional filename aliases if your repo used different names:
+    const aliases = {
+      "aw": "rootbeer",                  // use file 'rootbeer.svg' for A&W
+      "drpepper-diet": "dietdrpepper",   // file named 'dietdrpepper.svg'
+      "gold-peak-zero": "goldpeak-zero",
+      "gold-peak-sweet": "goldpeak-sweet",
+      "gold-peak-unsweet": "goldpeak-unsweet",
+    };
+
+    /* ---------- HELPERS ---------- */
+    const $grid = document.getElementById('bevGrid');
+    const countEl = document.getElementById('dockCount');
+    const totalEl = document.getElementById('dockTotal');
+    const fmt = n => '$' + n.toFixed(2);
+
+    // Lightweight cart so the dock shows something
+    const cart = JSON.parse(localStorage.getItem('cart')||'{"c":0,"t":0}');
+    function updateDock(){ countEl.textContent = cart.c||0; totalEl.textContent = fmt(cart.t||0); }
+    function addToCart(price, qty=1){ cart.c += qty; cart.t += price*qty; localStorage.setItem('cart', JSON.stringify(cart)); updateDock(); }
+    updateDock();
+
+    // Build a resilient <img> that tries multiple paths/extensions
+    function buildSmartImg(baseId){
+      const file = (aliases[baseId] || baseId)
+        .toLowerCase()
+        .replace(/\s+/g,'-')
+        .replace(/[^a-z0-9\-]/g,'');
+
+      const candidates = [
+        `/img/icons/foodandbevs/${file}.svg`,
+        `/img/foodandbevs/${file}.svg`,
+        `/img/icons/foodandbevs/${file}.png`,
+        `/img/foodandbevs/${file}.png`,
+      ];
+
+      const img = new Image();
+      img.className = 'app-icon';
+      img.alt = '';
+      let i = 0;
+      img.src = candidates[i];
+      img.onerror = () => {
+        i++;
+        if(i < candidates.length){ img.src = candidates[i]; }
+        else {
+          // Final fallback: tiny transparent pixel so layout stays clean
+          img.removeAttribute('onerror');
+          img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+        }
+      };
+      return img;
+    }
+
+    // Render the grid (no captions beneath icons)
     items.forEach(it => {
-      const btn = document.createElement('button');
-      btn.className = 'icon';
-      btn.style.background='transparent';
-      btn.style.border='0';
-      btn.style.padding='0';
-      btn.onclick = () => openPicker(it);
-      const img = document.createElement('img');
-      const file = it.icon || it.id;
-      img.src = `/img/icons/foodandbevs/${file}.svg`;
-      img.alt = it.name;
-      btn.appendChild(img);
-      grid.appendChild(btn);
+      const a = document.createElement('a');
+      a.className = 'app-tile';
+      a.href = '#';
+      a.appendChild(buildSmartImg(it.id));
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        addToCart(it.price, 1); // default qty = 1 on tap
+      });
+      $grid.appendChild(a);
     });
 
-    let current = null, qty = 1;
-    const picker = document.getElementById('picker');
-    function openPicker(it){
-      current = it; qty = 1;
-      document.getElementById('pIcon').src = `/img/icons/foodandbevs/${(it.icon||it.id)}.svg`;
-      document.getElementById('pName').textContent = it.name;
-      document.getElementById('pPrice').textContent = `$${it.price.toFixed(2)}`;
-      document.getElementById('q').textContent = qty;
-      picker.showModal();
-    }
-    function chg(n){ qty = Math.max(1, qty + n); document.getElementById('q').textContent = qty; }
-    function addToBill(){
-      // Hook into your cart; for now, update simple totals
-      const countEl = document.getElementById('billCount');
-      const totalEl = document.getElementById('billTotal');
-      const newCount = (+countEl.textContent || 0) + qty;
-      const newTotal = (+totalEl.textContent.replace(/[$,]/g,'') || 0) + qty * current.price;
-      countEl.textContent = newCount;
-      totalEl.textContent = `$${newTotal.toFixed(2)}`;
-      picker.close();
+    // Ensure cached CSS isn’t causing “white tiles”
+    if('serviceWorker' in navigator){
+      caches && caches.keys && caches.keys().then(keys => keys.forEach(k=>caches.delete(k)));
     }
   </script>
 </body>
