@@ -68,7 +68,6 @@
   </div>
 
   <script>
-    /* ===== UPDATED FOOD & BEVERAGE LIST (matches your latest table) ===== */
     const items = [
       { id: "7up",              price: 1.50, label: "7 Up" },
       { id: "cocacola",         price: 1.50, label: "Cocacola" },
@@ -79,9 +78,9 @@
       { id: "dunkin",           price: 3.50, label: "Dunkin" },
       { id: "gatorade",         price: 3.50, label: "Gatorade" },
       { id: "gingerale",        price: 1.50, label: "Ginger Ale" },
-      { id: "goldpeaksweet",    price: 1.50, label: "GP Sweet Tea" },
-      { id: "goldpeakunsweet",  price: 1.50, label: "GP Unsweetened Tea" },
-      { id: "goldpeakzero",     price: 1.50, label: "GP Zero Sugar Sweet Tea" },
+      { id: "gpsweettea",       price: 1.50, label: "GP Sweet Tea" },
+      { id: "gpunsweetened",    price: 1.50, label: "GP Unsweetened Tea" },
+      { id: "gpzerosugarsweettea", price: 1.50, label: "GP Zero Sugar Sweet Tea" },
       { id: "monstertea",       price: 3.50, label: "Monster Tea" },
       { id: "mountaindew",      price: 1.50, label: "Mountain Dew" },
       { id: "pepsi",            price: 1.50, label: "Pepsi" },
@@ -92,16 +91,14 @@
       { id: "water",            price: 1.50, label: "Water" },
     ];
 
-    /* ===== CART DOCK ===== */
-    const countEl = document.getElementById("dockCount");
-    const totalEl = document.getElementById("dockTotal");
-    const fmt = (n) => "$" + n.toFixed(2);
-    const cart = JSON.parse(localStorage.getItem("cart") || '{"c":0,"t":0}');
-    function updateDock(){countEl.textContent=cart.c||0;totalEl.textContent=fmt(cart.t||0)}
-    function addToCart(price,qty=1){cart.c+=qty;cart.t+=price*qty;localStorage.setItem("cart",JSON.stringify(cart));updateDock()}
+    const countEl=document.getElementById("dockCount");
+    const totalEl=document.getElementById("dockTotal");
+    const fmt=(n)=>"$"+n.toFixed(2);
+    const cart=JSON.parse(localStorage.getItem("cart")||'{"c":0,"t":0}');
+    function updateDock(){countEl.textContent=cart.c||0;totalEl.textContent=fmt(cart.t||0);}
+    function addToCart(price,qty=1){cart.c+=qty;cart.t+=price*qty;localStorage.setItem("cart",JSON.stringify(cart));updateDock();}
     updateDock();
 
-    /* ===== IMAGE HELPERS ===== */
     function buildSmartImg(id){
       const img=new Image();
       img.className="app-icon"; img.alt="";
@@ -116,7 +113,6 @@
       return img;
     }
 
-    /* ===== RENDER GRID ===== */
     const grid=document.getElementById("bevGrid");
     items.forEach(it=>{
       const tile=document.createElement("a");
@@ -127,7 +123,6 @@
       grid.appendChild(tile);
     });
 
-    /* ===== MODAL ===== */
     const backdrop=document.getElementById("qtyBackdrop");
     const qtyImg=document.getElementById("qtyImg");
     const qtyTitle=document.getElementById("qtyTitle");
@@ -153,9 +148,6 @@
     btnCancel.onclick=()=>closeQtyModal();
     btnAdd.onclick=()=>{addToCart(current.price,+qtyVal.textContent); closeQtyModal();}
     backdrop.addEventListener("click",(e)=>{if(e.target===backdrop) closeQtyModal();});
-
-    /* ===== CACHE BUST (safety) ===== */
-    if("serviceWorker" in navigator){caches&&caches.keys&&caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)))}
   </script>
 </body>
 </html>
