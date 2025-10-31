@@ -4,118 +4,321 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Food & Beverages</title>
-  <link rel="stylesheet" href="/css/system.css?v=2.2" />
+  <link rel="stylesheet" href="/css/system.css?v=2.4" />
+  <style>
+    /* ===== PAGE-LEVEL LAYOUT ===== */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 14px 8px;
+    }
+    .back-btn {
+      text-decoration: none;
+      font-size: 24px;
+      color: #0c1523;
+    }
+    .page-title {
+      margin: 0 auto;
+      text-align: center;
+      font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, Segoe UI, sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      font-size: 28px;
+      color: #0c1523;
+    }
+    main.page {
+      padding-bottom: 110px;
+    }
+
+    /* ===== GRID ===== */
+    .grid.cols-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap, 16px);
+      padding: 0 var(--page-gutter, 16px) var(--page-gutter, 16px);
+    }
+    .app-tile {
+      display: block;
+    }
+    .app-icon {
+      width: 100%;
+      aspect-ratio: 1/1;
+      object-fit: contain;
+      display: block;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ===== MODAL ===== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      width: 100%;
+      max-width: 520px;
+      border-radius: 20px 20px 0 0;
+      background: #0c1523;
+      color: #fff;
+      padding: 20px 16px 16px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35);
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .modal-head img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: transparent;
+    }
+    .modal-title {
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.3px;
+    }
+    .modal-price {
+      margin-left: auto;
+      font-weight: 700;
+    }
+    .qty-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 10px 0 14px;
+    }
+    .qty-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      border: none;
+      background: #121f33;
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .qty-val {
+      min-width: 56px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 800;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: #0f1b2d;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .modal-sub {
+      text-align: center;
+      opacity: 0.85;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      flex: 1;
+      height: 50px;
+      border-radius: 14px;
+      border: none;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      font-size: 16px;
+    }
+    .btn-cancel {
+      background: #0f1b2d;
+      color: #c9d6ff;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .btn-primary {
+      background: #ff3040;
+      color: #fff;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
+  </style>
 </head>
 <body>
   <main class="page">
     <header class="topbar">
       <a class="back-btn" aria-label="Back" href="/pos/">←</a>
-      <h1 class="page-title">FOOD & BEVERAGES</h1>
+      <h1 class="page-title">FOOD &amp; BEVERAGES</h1>
+      <span style="width:24px"></span>
     </header>
 
-    <!-- 3-up grid on mobile, pure SVGs (no captions, no shells) -->
-    <section id="bevGrid" class="grid cols-3"></section>
+    <!-- 4-up icon grid -->
+    <section id="bevGrid" class="grid cols-4" aria-label="Food & Beverages items"></section>
   </main>
 
-  <!-- Cart dock (shared look) -->
-  <div class="cart-dock" id="dock">
+  <!-- Cart dock -->
+  <div class="cart-dock" id="dock" role="button" aria-label="Open bill">
     <img class="cart-icon" src="/img/icons/pos.svg" alt="" />
     <span class="cart-count" id="dockCount">0</span>
     <span class="cart-total" id="dockTotal">$0.00</span>
   </div>
 
+  <!-- Quantity Modal -->
+  <div id="qtyBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="qtyTitle">
+      <div class="modal-head">
+        <img id="qtyImg" alt="">
+        <div class="modal-title" id="qtyTitle">Item</div>
+        <div class="modal-price" id="qtyPrice">$0.00</div>
+      </div>
+      <div class="qty-row">
+        <button class="qty-btn" id="btnMinus" aria-label="Decrease quantity">−</button>
+        <div class="qty-val" id="qtyVal">1</div>
+        <button class="qty-btn" id="btnPlus" aria-label="Increase quantity">+</button>
+      </div>
+      <div class="modal-sub" id="qtySub">$0.00 subtotal</div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" id="btnCancel">Cancel</button>
+        <button class="btn btn-primary" id="btnAdd">Add to Bill</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    /* ---------- DATA ---------- */
-    // Use simple, consistent ids. Price per your spec.
+    /* ===== FOOD & BEVERAGE PRICE LIST ===== */
     const items = [
-      { id:"gatorade",        price:1.50 },
-      { id:"7up",             price:1.50 },
-      { id:"pepsi",           price:1.50 },
-      { id:"aw",              price:1.50 }, // if your file is 'rootbeer.svg', we add an alias below
-      { id:"sprite",          price:1.50 },
-      { id:"drpepper-diet",   price:1.50 },
-      { id:"monstertea",      price:3.50 },
-      { id:"dietcoke",        price:1.50 },
-      { id:"canadadry",       price:1.50 },
-      { id:"drpepper",        price:1.50 },
-      { id:"cocacola",        price:1.50 },
-      { id:"cocacolazero",    price:1.50 },
-      { id:"mountaindew",     price:1.50 },
-      { id:"redbull",         price:1.50 },
-      { id:"gold-peak-zero",  price:1.50 },
-      { id:"gold-peak-sweet", price:1.50 },
-      { id:"gold-peak-unsweet", price:1.50 },
-      { id:"water",           price:1.00 },
+      { id: "7up", price: 1.50, label: "7 Up" },
+      { id: "cocacola", price: 1.50, label: "Cocacola" },
+      { id: "cocacolazero", price: 1.50, label: "Coke Zero" },
+      { id: "dietcoke", price: 1.50, label: "Diet Coke" },
+      { id: "dietdrpepper", price: 1.50, label: "Diet Dr. Pepper" },
+      { id: "drpepper", price: 1.50, label: "Dr. Pepper" },
+      { id: "dunkin", price: 3.50, label: "Dunkin" },
+      { id: "gatorade", price: 3.50, label: "Gatorade" },
+      { id: "gingerale", price: 1.50, label: "Ginger Ale" },
+      { id: "goldpeaksweet", price: 1.50, label: "Gold Peak Sweet Tea" },
+      { id: "goldpeakunsweet", price: 1.50, label: "Gold Peak Unsweetened" },
+      { id: "goldpeakzero", price: 1.50, label: "Gold Peak Zero Sugar" },
+      { id: "monstertea", price: 3.50, label: "Monster Tea" },
+      { id: "mountaindew", price: 1.50, label: "Mountain Dew" },
+      { id: "pepsi", price: 1.50, label: "Pepsi" },
+      { id: "redbull", price: 3.50, label: "Red Bull" },
+      { id: "rootbeer", price: 1.50, label: "Root Beer" },
+      { id: "sprite", price: 1.50, label: "Sprite" },
+      { id: "starbucks", price: 3.50, label: "Starbucks" },
+      { id: "water", price: 1.50, label: "Water" },
     ];
 
-    // Optional filename aliases if your repo used different names:
-    const aliases = {
-      "aw": "rootbeer",                  // use file 'rootbeer.svg' for A&W
-      "drpepper-diet": "dietdrpepper",   // file named 'dietdrpepper.svg'
-      "gold-peak-zero": "goldpeak-zero",
-      "gold-peak-sweet": "goldpeak-sweet",
-      "gold-peak-unsweet": "goldpeak-unsweet",
-    };
-
-    /* ---------- HELPERS ---------- */
-    const $grid = document.getElementById('bevGrid');
-    const countEl = document.getElementById('dockCount');
-    const totalEl = document.getElementById('dockTotal');
-    const fmt = n => '$' + n.toFixed(2);
-
-    // Lightweight cart so the dock shows something
-    const cart = JSON.parse(localStorage.getItem('cart')||'{"c":0,"t":0}');
-    function updateDock(){ countEl.textContent = cart.c||0; totalEl.textContent = fmt(cart.t||0); }
-    function addToCart(price, qty=1){ cart.c += qty; cart.t += price*qty; localStorage.setItem('cart', JSON.stringify(cart)); updateDock(); }
+    /* ===== CART DOCK ===== */
+    const countEl = document.getElementById("dockCount");
+    const totalEl = document.getElementById("dockTotal");
+    const fmt = (n) => "$" + n.toFixed(2);
+    const cart = JSON.parse(localStorage.getItem("cart") || '{"c":0,"t":0}');
+    function updateDock() {
+      countEl.textContent = cart.c || 0;
+      totalEl.textContent = fmt(cart.t || 0);
+    }
+    function addToCart(price, qty = 1) {
+      cart.c += qty;
+      cart.t += price * qty;
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateDock();
+    }
     updateDock();
 
-    // Build a resilient <img> that tries multiple paths/extensions
-    function buildSmartImg(baseId){
-      const file = (aliases[baseId] || baseId)
-        .toLowerCase()
-        .replace(/\s+/g,'-')
-        .replace(/[^a-z0-9\-]/g,'');
-
-      const candidates = [
-        `/img/icons/foodandbevs/${file}.svg`,
-        `/img/foodandbevs/${file}.svg`,
-        `/img/icons/foodandbevs/${file}.png`,
-        `/img/foodandbevs/${file}.png`,
-      ];
-
+    /* ===== IMAGE HELPERS ===== */
+    function buildSmartImg(id) {
       const img = new Image();
-      img.className = 'app-icon';
-      img.alt = '';
+      img.className = "app-icon";
+      img.alt = "";
+      const paths = [
+        `/img/icons/foodandbevs/${id}.svg`,
+        `/img/foodandbevs/${id}.svg`,
+        `/img/icons/foodandbevs/${id}.png`,
+        `/img/foodandbevs/${id}.png`,
+      ];
       let i = 0;
-      img.src = candidates[i];
+      img.src = paths[i];
       img.onerror = () => {
         i++;
-        if(i < candidates.length){ img.src = candidates[i]; }
-        else {
-          // Final fallback: tiny transparent pixel so layout stays clean
-          img.removeAttribute('onerror');
-          img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
-        }
+        if (i < paths.length) img.src = paths[i];
+        else img.src = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
       };
       return img;
     }
 
-    // Render the grid (no captions beneath icons)
-    items.forEach(it => {
-      const a = document.createElement('a');
-      a.className = 'app-tile';
-      a.href = '#';
-      a.appendChild(buildSmartImg(it.id));
-      a.addEventListener('click', e => {
+    /* ===== RENDER GRID ===== */
+    const grid = document.getElementById("bevGrid");
+    items.forEach((it) => {
+      const tile = document.createElement("a");
+      tile.className = "app-tile";
+      tile.href = "#";
+      const img = buildSmartImg(it.id);
+      tile.appendChild(img);
+      tile.addEventListener("click", (e) => {
         e.preventDefault();
-        addToCart(it.price, 1); // default qty = 1 on tap
+        openQtyModal(it, img.currentSrc);
       });
-      $grid.appendChild(a);
+      grid.appendChild(tile);
     });
 
-    // Ensure cached CSS isn’t causing “white tiles”
-    if('serviceWorker' in navigator){
-      caches && caches.keys && caches.keys().then(keys => keys.forEach(k=>caches.delete(k)));
+    /* ===== MODAL FUNCTIONS ===== */
+    const backdrop = document.getElementById("qtyBackdrop");
+    const qtyImg = document.getElementById("qtyImg");
+    const qtyTitle = document.getElementById("qtyTitle");
+    const qtyPrice = document.getElementById("qtyPrice");
+    const qtyVal = document.getElementById("qtyVal");
+    const qtySub = document.getElementById("qtySub");
+    const btnMinus = document.getElementById("btnMinus");
+    const btnPlus = document.getElementById("btnPlus");
+    const btnCancel = document.getElementById("btnCancel");
+    const btnAdd = document.getElementById("btnAdd");
+
+    let current = { price: 0, label: "", src: "" };
+
+    function openQtyModal(item, src) {
+      current.price = item.price;
+      current.label = item.label || "";
+      current.src = src || "";
+      qtyImg.src = current.src;
+      qtyTitle.textContent = current.label;
+      qtyPrice.textContent = fmt(current.price);
+      setQty(1);
+      backdrop.classList.add("show");
+      backdrop.setAttribute("aria-hidden", "false");
+    }
+    function closeQtyModal() {
+      backdrop.classList.remove("show");
+      backdrop.setAttribute("aria-hidden", "true");
+    }
+    function setQty(n) {
+      const q = Math.max(1, n | 0);
+      qtyVal.textContent = q;
+      qtySub.textContent = `${fmt(current.price * q)} subtotal`;
+    }
+
+    btnMinus.onclick = () => setQty(+qtyVal.textContent - 1);
+    btnPlus.onclick = () => setQty(+qtyVal.textContent + 1);
+    btnCancel.onclick = () => closeQtyModal();
+    btnAdd.onclick = () => {
+      addToCart(current.price, +qtyVal.textContent);
+      closeQtyModal();
+    };
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) closeQtyModal();
+    });
+
+    /* ===== CACHE CLEANUP ===== */
+    if ("serviceWorker" in navigator) {
+      caches && caches.keys && caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
     }
   </script>
 </body>
