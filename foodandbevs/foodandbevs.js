@@ -1,92 +1,139 @@
-/* Food & Beverages: pure SVG grid (no captions), qty modal, add-to-bill, FAB totals */
+/* Food & Beverages page
+   - 4-up grid
+   - Icons stay at: /img/icons/foodandbevs/<slug>.svg
+   - Price list = the one you provided
+*/
 
-(function(){
-  const $ = (s,c=document)=>c.querySelector(s);
-  const $$ = (s,c=document)=>Array.from(c.querySelectorAll(s));
-  const money = n => `$${(+n).toFixed(2)}`;
+const ITEMS = [
+  { name: "7 Up", price: 1.50, slug: "7up" },
+  { name: "Cocacola", price: 1.50, slug: "cocacola" },
+  { name: "Coke Zero", price: 1.50, slug: "cokezero" },
+  { name: "Diet Coke", price: 1.50, slug: "dietcoke" },
+  { name: "Diet Dr. Pepper", price: 1.50, slug: "dietdrpepper" }, // period removed in slug
+  { name: "Dr. Pepper", price: 1.50, slug: "drpepper" },
+  { name: "Dunkin", price: 3.50, slug: "dunkin" },
+  { name: "Gatorade", price: 3.50, slug: "gatorade" },
+  { name: "Ginger Ale", price: 1.50, slug: "gingerale" },
+  { name: "GP Sweet Tea", price: 1.50, slug: "gpsweettea" },
+  { name: "GP Unsweetened Tea", price: 1.50, slug: "gpunsweetened" },
+  { name: "GP Zero Sugar Sweet Tea", price: 1.50, slug: "gpzerosugarsweettea" },
+  { name: "Monster Tea", price: 3.50, slug: "monstertea" },
+  { name: "Mountain Dew", price: 1.50, slug: "mountaindew" },
+  { name: "Pepsi", price: 1.50, slug: "pepsi" },
+  { name: "Red Bull", price: 3.50, slug: "redbull" },
+  { name: "Root Beer", price: 1.50, slug: "rootbeer" },
+  { name: "Sprite", price: 1.50, slug: "sprite" },
+  { name: "Starbucks", price: 3.50, slug: "starbucks" },
+  { name: "Water", price: 1.50, slug: "water" }
+];
 
-  /* ---- Config ---- */
-  const cfg = JSON.parse(($('#bev-config')?.textContent)||'{}');
-  const ICON_PATH = cfg.iconPath || '/img/icons/foodandbevs/';
-  const ITEMS = cfg.items || [];
-  const TAX = typeof cfg.taxRate==='number' ? cfg.taxRate : 0.07;
+const grid = document.getElementById("grid");
+const cartPill = document.getElementById("cartPill");
+const cartCountEl = document.getElementById("cartCount");
+const cartTotalEl = document.getElementById("cartTotal");
 
-  /* ---- Cart (shared) ---- */
-  const CART_KEY='smoke_cart_v1';
-  const load=()=>{ try{ return JSON.parse(localStorage.getItem(CART_KEY))||{items:[],taxRate:TAX}; }catch(e){ return {items:[],taxRate:TAX}; } };
-  const save=c=>localStorage.setItem(CART_KEY, JSON.stringify(c));
-  const cart=load(); cart.taxRate=TAX;
-  const totals=c=>{
-    const sub=c.items.reduce((s,i)=>s+i.price*i.qty,0);
-    const qty=c.items.reduce((s,i)=>s+i.qty,0);
-    return {sub, qty};
-  };
+const sheet = document.getElementById("sheet");
+const sheetTitle = document.getElementById("sheetTitle");
+const sheetPrice = document.getElementById("sheetPrice");
+const sheetSubtotal = document.getElementById("sheetSubtotal");
+const qtyVal = document.getElementById("qtyVal");
+const btnMinus = document.getElementById("btnMinus");
+const btnPlus = document.getElementById("btnPlus");
+const btnAddToBill = document.getElementById("btnAddToBill");
 
-  /* ---- FAB ---- */
-  const fabBtn=$('#fabBtn'), fabQty=$('#fabQty'), fabSub=$('#fabSub');
-  function syncFab(){ const t=totals(cart); fabQty.textContent=t.qty; fabSub.textContent=money(t.sub); }
-  fabBtn?.addEventListener('click', ()=>window.location.href='/invoice/');
+// Simple cart
+let cartQty = 0;
+let cartTotal = 0;
 
-  /* ---- Render grid ---- */
-  const grid = $('#bevGrid');
-  function render(){
-    grid.innerHTML = ITEMS.map(it => `
-      <button class="icon-cell" data-id="${it.id}" title="${it.name}" aria-label="${it.name}">
-        <img src="${ICON_PATH + it.iconFile}" alt="${it.name}" loading="lazy">
-      </button>
-    `).join('');
+// Render grid (4-up)
+function render() {
+  const frag = document.createDocumentFragment();
 
-    $$('.icon-cell', grid).forEach(btn=>{
-      btn.addEventListener('click', ()=>openQty(btn.dataset.id));
-    });
-  }
+  ITEMS.forEach(item => {
+    const wrap = document.createElement("div");
+    wrap.className = "food-tile";
 
-  /* ---- Qty dialog ---- */
-  const dlg = $('#qtyDialog');
-  const qdName = $('#qdName'), qdImg = $('#qdImg'), qdPrice = $('#qdPrice');
-  const qMinus = $('#qMinus'), qPlus = $('#qPlus'), qInput = $('#qInput'), qAdd = $('#qAdd');
-  const qClose = $('#qdClose');
+    const btn = document.createElement("button");
+    btn.className = "food-tile__btn";
+    btn.type = "button";
+    btn.dataset.name = item.name;
+    btn.dataset.price = String(item.price);
 
-  let active = null;
+    const img = document.createElement("img");
+    img.alt = item.name;
 
-  function openQty(id){
-    const it = ITEMS.find(x=>x.id===id);
-    if(!it) return;
-    active = it;
+    // Keep your exact icon location
+    img.src = `/img/icons/foodandbevs/${item.slug}.svg`;
 
-    qdName.textContent = it.name;
-    qdImg.src = ICON_PATH + it.iconFile;
-    qdImg.alt = it.name;
-    qdPrice.textContent = money(it.price);
-    qInput.value = 1;
+    btn.appendChild(img);
 
-    dlg.showModal();
-  }
+    const label = document.createElement("div");
+    label.className = "food-tile__label";
+    label.textContent = item.name;
 
-  qMinus.addEventListener('click', ()=> qInput.value = Math.max(1, (+qInput.value||1)-1) );
-  qPlus.addEventListener('click',  ()=> qInput.value = (+qInput.value||1)+1 );
-  qClose.addEventListener('click', ()=> dlg.close() );
+    const price = document.createElement("div");
+    price.className = "food-tile__price";
+    price.textContent = `$${item.price.toFixed(2)}`;
 
-  qAdd.addEventListener('click', ()=>{
-    if(!active) return;
-    const qty = Math.max(1, parseInt(qInput.value||'1',10));
-    const found = cart.items.find(x=>x.id===active.id);
-    if(found){ found.qty += qty; }
-    else{
-      cart.items.push({
-        id: active.id,
-        name: active.name,
-        price: +active.price,
-        qty,
-        icon: ICON_PATH + active.iconFile,
-        brand: 'Food & Beverages',
-        vitola: '',
-        taxable: true
-      });
-    }
-    save(cart); syncFab(); dlg.close();
+    wrap.append(btn, label, price);
+    frag.appendChild(wrap);
+
+    btn.addEventListener("click", () => openSheet(item));
   });
 
-  /* ---- Boot ---- */
-  render(); syncFab();
-})();
+  grid.innerHTML = "";
+  grid.appendChild(frag);
+}
+
+function openSheet(item) {
+  currentItem = { ...item };
+  currentQty = 1;
+
+  sheetTitle.textContent = item.name;
+  sheetPrice.textContent = `$${item.price.toFixed(2)}`;
+  qtyVal.textContent = String(currentQty);
+  sheetSubtotal.textContent = `$${(item.price * currentQty).toFixed(2)} subtotal`;
+
+  sheet.classList.add("sheet--open");
+  sheet.setAttribute("aria-hidden", "false");
+}
+
+function closeSheet() {
+  sheet.classList.remove("sheet--open");
+  sheet.setAttribute("aria-hidden", "true");
+}
+
+let currentItem = null;
+let currentQty = 1;
+
+btnMinus.addEventListener("click", () => {
+  if (currentQty > 1) {
+    currentQty--;
+    qtyVal.textContent = String(currentQty);
+    sheetSubtotal.textContent = `$${(currentItem.price * currentQty).toFixed(2)} subtotal`;
+  }
+});
+
+btnPlus.addEventListener("click", () => {
+  currentQty++;
+  qtyVal.textContent = String(currentQty);
+  sheetSubtotal.textContent = `$${(currentItem.price * currentQty).toFixed(2)} subtotal`;
+});
+
+btnAddToBill.addEventListener("click", () => {
+  const add = currentItem.price * currentQty;
+  cartQty += currentQty;
+  cartTotal += add;
+
+  cartCountEl.textContent = String(cartQty);
+  cartTotalEl.textContent = `$${cartTotal.toFixed(2)}`;
+
+  closeSheet();
+});
+
+document.querySelectorAll("[data-close-sheet]").forEach(el =>
+  el.addEventListener("click", closeSheet)
+);
+
+// Kick things off
+render();
