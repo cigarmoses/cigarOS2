@@ -1,3 +1,30 @@
-/* POS categories — mobile visual lock */
-body{background:#eaf1f5}
-.page-title{ /* inherits from system.css, tweak if needed */ }
+/* POS home (categories) — keep layout, remove white card backgrounds */
+:root{
+  --bg:#e9f1f5;
+  --ink:#0f1c2e;
+}
+body{background:var(--bg);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Apple Color Emoji";}
+h1{margin:24px 20px 8px;font-size:34px;letter-spacing:.5px;color:var(--ink);}
+
+.pos-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:24px;
+  padding:16px 20px 120px;
+}
+
+/* kill all white wrappers/cards that may exist */
+.card,.category-card,.tile,.icon-card{
+  background:transparent !important;
+  box-shadow:none !important;
+  border:0 !important;
+}
+
+/* icon tile content */
+.cat-tile{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:6px;
+}
+.cat-tile .thumb{width:92px;height:92px}
+.cat-tile .thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.cat-tile .label{font-weight:800;font-size:18px;letter-spacing:.2px;color:var(--ink);text-align:center}
