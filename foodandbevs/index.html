@@ -4,131 +4,111 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Food & Beverages</title>
-  <link rel="stylesheet" href="/css/system.css" />
+  <link rel="preload" href="/css/system.css" as="style">
+  <link rel="stylesheet" href="/css/system.css">
   <style>
-    body {
-      font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, sans-serif;
-      background: #eaf0f4;
-      margin: 0;
-      padding: 0;
+    :root{
+      --bg:#eaf2f6; --ink:#0f2433; --tile:#fff;
+      --shadow:0 10px 24px rgba(15,36,51,.10);
+      --radius:22px; --gap:18px;
     }
-    .screen {
-      padding: 18px 18px 96px;
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
+    .wrap{max-width:980px;margin:0 auto;padding:20px 18px 120px}
+    .back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);opacity:.7;font-weight:600}
+    h1{font-size:32px;line-height:1.1;font-weight:800;margin:14px 0 22px;letter-spacing:.5px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap)}
+    @media (max-width:960px){.grid{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:460px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+    .tile{
+      background:var(--tile);border-radius:var(--radius);box-shadow:var(--shadow);
+      padding:12px 10px 14px;display:flex;flex-direction:column;align-items:center;text-decoration:none;color:var(--ink)
     }
-    a.back {
-      display: inline-flex;
-      align-items: center;
-      text-decoration: none;
-      color: #1b2430;
-      font-weight: 700;
-    }
-    h1 {
-      margin: 12px 0 18px;
-      font-weight: 800;
-      letter-spacing: .5px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px 16px;
-      justify-items: center;
-    }
-    .tile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 80px;
-    }
-    .tile img {
-      width: 80px;
-      height: 80px;
-      object-fit: contain;
-      display: block;
-    }
-    .label {
-      text-align: center;
-      font-size: 13px;
-      font-weight: 600;
-      color: #1b2430;
-      margin-top: 6px;
-      line-height: 1.1;
-    }
+    .icon{width:90px;height:90px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+    .icon img{width:100%;height:100%;object-fit:contain;background:transparent;display:block}
+    .name{font-weight:700;font-size:14px;text-align:center;line-height:1.2}
+    .price{font-size:12px;opacity:.65;margin-top:2px}
+    .fallback{width:90px;height:90px;border-radius:20px;border:2px dashed rgba(15,36,51,.25);display:flex;align-items:center;justify-content:center;font-weight:700;opacity:.55}
   </style>
 </head>
-
 <body>
-  <div class="screen">
-    <a class="back" href="/pos/"><span style="font-size:22px;">←</span>&nbsp;POS</a>
+  <div class="wrap">
+    <a class="back" href="/pos/"><span aria-hidden="true">←</span> POS</a>
     <h1>FOOD &amp; BEVERAGES</h1>
 
-    <div id="grid" class="grid" aria-live="polite"></div>
+    <div id="grid" class="grid"></div>
   </div>
 
   <script>
-    // --- Fix image path base to root directory ---
-    function iconSlug(label) {
-      return String(label)
-        .toLowerCase()
-        .replace(/&/g, 'and')
-        .replace(/\+/g, 'plus')
-        .replace(/\s+/g, '')
-        .replace(/[^a-z0-9]/g, '');
-    }
-
-    function iconBaseFolder(section) {
-      switch (section) {
-        case 'pos':          return '/img/icons/categories';
-        case 'foodandbevs':  return '/img/icons/foodandbevs';
-        case 'cigars':       return '/img/icons/brands';
-        default:             return '/img/icons/foodandbevs';
-      }
-    }
-
-    const ICON_OVERRIDES = {};
-
-    function iconPath(section, label) {
-      const base = iconBaseFolder(section);
-      const slug = iconSlug(label);
-      const file = ICON_OVERRIDES[slug] || slug;
-      return `${base}/${file}.svg`;
-    }
+    // Absolute, explicit filename mapping so icons never miss
+    const ICON_BASE = "/img/icons/foodandbevs/";
 
     const ITEMS = [
-      { name: "7 Up", price: 1.50 },
-      { name: "Cocacola", price: 1.50 },
-      { name: "Coke Zero", price: 1.50 },
-      { name: "Diet Coke", price: 1.50 },
-      { name: "Diet Dr. Pepper", price: 1.50 },
-      { name: "Dr. Pepper", price: 1.50 },
-      { name: "Dunkin", price: 3.50 },
-      { name: "Gatorade", price: 3.50 },
-      { name: "Ginger Ale", price: 1.50 },
-      { name: "GP Sweet Tea", price: 1.50 },
-      { name: "GP Unsweetened Tea", price: 1.50 },
-      { name: "Monster Tea", price: 3.50 },
-      { name: "Canada Dry", price: 1.50 },
-      { name: "Mountain Dew", price: 1.50 },
-      { name: "Pepsi", price: 1.50 },
-      { name: "Red Bull", price: 3.50 },
-      { name: "Root Beer", price: 1.50 },
-      { name: "Sprite", price: 1.50 },
-      { name: "Starbucks", price: 3.50 },
-      { name: "Water", price: 1.50 },
+      { name:"7 Up",                    price:1.50, icon:"7up.svg" },
+      { name:"Cocacola",               price:1.50, icon:"cocacola.svg" },
+      { name:"Coke Zero",              price:1.50, icon:"cokezero.svg" },
+      { name:"Diet Coke",              price:1.50, icon:"dietcoke.svg" },
+      { name:"Diet Dr. Pepper",        price:1.50, icon:"dietdrpepper.svg" },
+      { name:"Dr. Pepper",             price:1.50, icon:"drpepper.svg" },
+      { name:"Dunkin",                 price:3.50, icon:"dunkin.svg" },
+      { name:"Gatorade",               price:3.50, icon:"gatorade.svg" },
+      { name:"Canada Dry",             price:1.50, icon:"canadadry.svg" },
+      { name:"GP Sweet Tea",           price:1.50, icon:"gpsweettea.svg" },
+      { name:"GP Unsweetened Tea",     price:1.50, icon:"gpunsweetened.svg" },
+      { name:"GP Zero Sugar Sweet Tea",price:1.50, icon:"gpzerosugarsweettea.svg" }, // ← the missing one
+      { name:"Monster Tea",            price:3.50, icon:"monstertea.svg" },
+      { name:"Mountain Dew",           price:1.50, icon:"mountaindew.svg" },
+      { name:"Pepsi",                  price:1.50, icon:"pepsi.svg" },
+      { name:"Red Bull",               price:3.50, icon:"redbull.svg" },
+      { name:"Root Beer",              price:1.50, icon:"rootbeer.svg" },
+      { name:"Sprite",                 price:1.50, icon:"sprite.svg" },
+      { name:"Starbucks",              price:3.50, icon:"starbucks.svg" },
+      { name:"Water",                  price:1.50, icon:"water.svg" }
     ];
 
-    const grid = document.getElementById("grid");
+    const grid = document.getElementById('grid');
 
     ITEMS.forEach(item => {
-      const cell = document.createElement("div");
-      cell.className = "tile";
-      cell.innerHTML = `
-        <img loading="lazy" alt="${item.name}" 
-          src="${iconPath('foodandbevs', item.name)}" 
-          onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 80 80&quot;><rect width=&quot;100%&quot; height=&quot;100%&quot; fill=&quot;#e9eef3&quot;/><text x=&quot;50%&quot; y=&quot;50%&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Helvetica Neue, Arial&quot; font-size=&quot;10&quot; fill=&quot;#94a3b8&quot;>icon</text></svg>')}'" />
-        <div class="label">${item.name}</div>
-      `;
-      grid.appendChild(cell);
+      const a = document.createElement('a');
+      a.className = 'tile';
+      a.href = '#'; // keep your existing modal/cart wiring if needed
+
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+
+      const img = document.createElement('img');
+      img.alt = item.name;
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.src = ICON_BASE + item.icon;
+      img.onerror = () => { icon.innerHTML = '<div class="fallback">SVG</div>'; };
+
+      icon.appendChild(img);
+
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = item.name;
+
+      const price = document.createElement('div');
+      price.className = 'price';
+      price.textContent = `$${item.price.toFixed(2)}`;
+
+      a.appendChild(icon);
+      a.appendChild(name);
+      a.appendChild(price);
+
+      // If you have a global add-to-bill handler, expose data attributes:
+      a.dataset.itemName  = item.name;
+      a.dataset.itemPrice = item.price;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Hook back into your existing drawer/modal if present:
+        const evt = new CustomEvent('pos:add', { detail: { name:item.name, price:item.price }});
+        window.dispatchEvent(evt);
+      });
+
+      grid.appendChild(a);
     });
   </script>
 </body>
