@@ -1,0 +1,10 @@
+/* Cigars (brands) — mobile visual lock */
+body{background:#eaf1f5}
+
+/* brand grid uses the same .app-grid/.app-tile */
+.cigar-brands{ /* alias if your HTML uses a different wrapper */
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:18px;
+  padding:0 18px 28px;
+}
