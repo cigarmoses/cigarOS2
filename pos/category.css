@@ -1,0 +1,34 @@
+/* Shared styling for POS category pages (Food & Bevs, Cigars, Pipes, Packs, Accessories, Ashtrays) */
+:root{
+  --bg:#e9f1f5;
+  --ink:#0f1c2e;
+  --muted:#6b7b8f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue"}
+.page{max-width:1100px;margin:0 auto}
+header{padding:18px 16px 8px}
+header .title{margin:0;text-align:center;font-weight:900;font-size:28px;letter-spacing:.5px;color:var(--ink)}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:18px;
+  padding:8px 16px 110px;
+}
+
+/* icon tile — no backgrounds/boxes */
+.item{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  background:transparent !important;box-shadow:none !important;border:0 !important;padding:6px;
+}
+.item .thumb{width:86px;height:86px}
+.item .thumb img{width:100%;height:100%;object-fit:contain;display:block}
+
+/* unified, smaller, centered labels (if a page shows them) */
+.item .label{font-size:15px;font-weight:800;text-align:center;color:var(--ink);line-height:1.15}
+.item .price{font-size:13px;font-weight:700;color:var(--muted);text-align:center}
+
+/* utility: hide captions on pages that should be icon-only */
+.hide-captions .label,
+.hide-captions .price{display:none !important}
