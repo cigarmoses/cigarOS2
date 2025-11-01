@@ -1,68 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>POS</title>
-
-  <!-- Core styles -->
-  <link rel="stylesheet" href="../css/system.css" />
-  <link rel="stylesheet" href="./pos.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>POS</title>
+<link rel="stylesheet" href="../css/system.css" />
+<style>
+  :root { --ink:#0e1a28; --pill:#0e1a28; --accent:#ff4040; }
+  body { font-family:"Helvetica Neue",Helvetica,Arial,system-ui,-apple-system,sans-serif; }
+  .page { padding:18px 16px 120px; background:#eaf1f5; min-height:100vh; }
+  .toprow { display:flex; align-items:center; gap:16px; margin-bottom:14px; }
+  .back-link { text-decoration:none; color:inherit; font-size:22px; }
+  .page-title { font-weight:800; font-size:28px; letter-spacing:.5px; color:#1a2733; margin:0; }
+  .app-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }
+  .app-tile { display:flex; align-items:center; justify-content:center; border-radius:24px; background:#ffffff; box-shadow:0 10px 30px rgba(10,25,41,.08); height:140px; }
+  .app-icon { width:90px; height:90px; background:none!important; box-shadow:none!important; }
+  .cart-pill { position:fixed; right:20px; bottom:20px; z-index:70; background:var(--pill); color:#fff; border-radius:24px; padding:12px 18px; display:flex; gap:12px; align-items:center; box-shadow:0 8px 24px rgba(0,0,0,.25); font-weight:700; }
+  .cart-pill .count { background:#e94d45; border-radius:999px; padding:4px 8px; }
+</style>
 </head>
-
-<body class="pos-page">
-  <div class="page">
+<body>
+  <main class="page">
     <div class="toprow">
-      <a href="../index.html" style="text-decoration:none;color:inherit;font-size:22px;">←</a>
+      <a class="back-link" href="../index.html">←</a>
       <h1 class="page-title">POS</h1>
     </div>
 
-    <div class="app-grid">
-      <!-- Pipes -->
-      <a href="../pipes/" class="app-tile">
-        <img src="../img/icons/pipes.svg" class="app-icon" alt="Pipes" />
-      </a>
+    <section id="grid" class="app-grid"></section>
+  </main>
 
-      <!-- Cigars -->
-      <a href="../cigars/" class="app-tile">
-        <img src="../img/icons/cigars.svg" class="app-icon" alt="Cigars" />
-      </a>
-
-      <!-- Food & Beverages -->
-      <a href="../foodandbevs/" class="app-tile">
-        <img src="../img/icons/foodandbevs.svg" class="app-icon" alt="Food and Beverages" />
-      </a>
-
-      <!-- Learn -->
-      <a href="../learn/" class="app-tile">
-        <img src="../img/icons/learn.svg" class="app-icon" alt="Learn" />
-      </a>
-
-      <!-- Ashtrays -->
-      <a href="../ashtrays/" class="app-tile">
-        <img src="../img/icons/ashtray.svg" class="app-icon" alt="Ashtrays" />
-      </a>
-    </div>
+  <div class="cart-pill" id="cartPill">
+    <img src="../img/icons/cart.svg" alt="" style="width:18px;height:18px">
+    <span class="count" id="cartCount">0</span>
+    <span id="cartTotal">$0.00</span>
   </div>
 
-  <!-- Cart Tab (Floating Bottom Right) -->
-  <div style="
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    background:#0e1a28;
-    color:white;
-    border-radius:24px;
-    padding:12px 18px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    box-shadow:0 8px 24px rgba(0,0,0,.25);
-    font-weight:600;
-  ">
-    <img src="../img/icons/cart.svg" alt="Cart" style="width:18px;height:18px;">
-    <span style="background:#e94d45;border-radius:50%;padding:4px 8px;">3</span>
-    <span>$4.50</span>
-  </div>
+<script>
+  const CATS = [
+    { n:'Pipes', href:'../pos/pipes/', f:'pipes.svg' },
+    { n:'Cigars', href:'../cigars/', f:'cigars.svg' },
+    { n:'Food & Bevs', href:'../foodandbevs/', f:'foodbev.svg' },
+    { n:'Packs', href:'../pos/packs/', f:'packs.svg' },
+    { n:'Ashtrays', href:'../pos/ashtrays/', f:'ashtray.svg' }
+  ];
+  const ICON_BASE = '../img/icons/categories/';
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = CATS.map(c => `
+    <a class="app-tile" href="${c.href}">
+      <img class="app-icon" src="${ICON_BASE + c.f}" alt="${c.n}">
+    </a>
+  `).join('');
+
+  let cartCount=0, cartTotal=0;
+  const cartCountEl=document.getElementById('cartCount');
+  const cartTotalEl=document.getElementById('cartTotal');
+  function updatePill(){ cartCountEl.textContent=cartCount; cartTotalEl.textContent=`$${cartTotal.toFixed(2)}`; }
+  updatePill();
+</script>
 </body>
 </html>
