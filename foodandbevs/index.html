@@ -66,9 +66,7 @@
   </div>
 
   <script>
-    // ----------------------------------------------------------------
-    // 1) ICON RESOLVER — universal fix for all lowercase filenames
-    // ----------------------------------------------------------------
+    // --- Fix image path base to root directory ---
     function iconSlug(label) {
       return String(label)
         .toLowerCase()
@@ -80,14 +78,14 @@
 
     function iconBaseFolder(section) {
       switch (section) {
-        case 'pos':          return 'img/icons/categories';
-        case 'foodandbevs':  return 'img/icons/foodandbevs';
-        case 'cigars':       return 'img/icons/brands';
-        default:             return 'img/icons/foodandbevs';
+        case 'pos':          return '/img/icons/categories';
+        case 'foodandbevs':  return '/img/icons/foodandbevs';
+        case 'cigars':       return '/img/icons/brands';
+        default:             return '/img/icons/foodandbevs';
       }
     }
 
-    const ICON_OVERRIDES = {}; // Optional manual overrides if needed later
+    const ICON_OVERRIDES = {};
 
     function iconPath(section, label) {
       const base = iconBaseFolder(section);
@@ -96,9 +94,6 @@
       return `${base}/${file}.svg`;
     }
 
-    // ----------------------------------------------------------------
-    // 2) ITEM DATA
-    // ----------------------------------------------------------------
     const ITEMS = [
       { name: "7 Up", price: 1.50 },
       { name: "Cocacola", price: 1.50 },
@@ -122,9 +117,6 @@
       { name: "Water", price: 1.50 },
     ];
 
-    // ----------------------------------------------------------------
-    // 3) RENDER GRID
-    // ----------------------------------------------------------------
     const grid = document.getElementById("grid");
 
     ITEMS.forEach(item => {
