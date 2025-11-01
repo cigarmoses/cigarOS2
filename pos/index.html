@@ -1,62 +1,123 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>POS</title>
-<link rel="stylesheet" href="../css/system.css" />
-<style>
-  :root { --ink:#0e1a28; --pill:#0e1a28; --accent:#ff4040; }
-  body { font-family:"Helvetica Neue",Helvetica,Arial,system-ui,-apple-system,sans-serif; }
-  .page { padding:18px 16px 120px; background:#eaf1f5; min-height:100vh; }
-  .toprow { display:flex; align-items:center; gap:16px; margin-bottom:14px; }
-  .back-link { text-decoration:none; color:inherit; font-size:22px; }
-  .page-title { font-weight:800; font-size:28px; letter-spacing:.5px; color:#1a2733; margin:0; }
-  .app-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }
-  .app-tile { display:flex; align-items:center; justify-content:center; border-radius:24px; background:#ffffff; box-shadow:0 10px 30px rgba(10,25,41,.08); height:140px; }
-  .app-icon { width:90px; height:90px; background:none!important; box-shadow:none!important; }
-  .cart-pill { position:fixed; right:20px; bottom:20px; z-index:70; background:var(--pill); color:#fff; border-radius:24px; padding:12px 18px; display:flex; gap:12px; align-items:center; box-shadow:0 8px 24px rgba(0,0,0,.25); font-weight:700; }
-  .cart-pill .count { background:#e94d45; border-radius:999px; padding:4px 8px; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>POS</title>
+  <link rel="preload" href="/css/system.css" as="style">
+  <link rel="stylesheet" href="/css/system.css">
+  <style>
+    /* Mobile-first layout & visual consistency */
+    :root{
+      --bg:#eaf2f6;
+      --ink:#0f2433;
+      --tile:#ffffff;
+      --shadow:0 10px 24px rgba(15,36,51,.10);
+      --radius:22px;
+      --gap:22px;
+    }
+    body{margin:0;background:var(--bg);color:var(--ink);font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    .wrap{max-width:980px;margin:0 auto;padding:20px 18px 120px;}
+    .back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);opacity:.7;font-weight:600}
+    .title{font-size:32px;line-height:1.1;font-weight:800;letter-spacing:.5px;margin:14px 0 22px;}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:var(--gap);
+    }
+    @media (min-width:520px){
+      .grid{grid-template-columns:repeat(3, minmax(0,1fr))}
+    }
+
+    .tile{
+      background:var(--tile);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      text-align:center;
+      text-decoration:none;color:var(--ink);
+      transition:transform .08s ease-out, box-shadow .08s ease-out;
+    }
+    .tile:active{transform:scale(.98)}
+    .iconBox{
+      width:104px;height:104px;display:flex;align-items:center;justify-content:center;margin:8px auto 10px;
+    }
+    .iconBox img{
+      display:block;
+      width:100%;height:100%;
+      object-fit:contain; /* SVG renders without any added background */
+      background:transparent;
+    }
+    .label{font-weight:700;font-size:16px}
+    /* graceful-missing image placeholder */
+    .fallback{
+      width:104px;height:104px;border-radius:26px;border:2px dashed rgba(15,36,51,.25);
+      display:flex;align-items:center;justify-content:center;font-weight:700;opacity:.5
+    }
+  </style>
 </head>
 <body>
-  <main class="page">
-    <div class="toprow">
-      <a class="back-link" href="../index.html">←</a>
-      <h1 class="page-title">POS</h1>
-    </div>
+  <div class="wrap">
+    <a class="back" href="/"><span aria-hidden="true">←</span> Home</a>
+    <h1 class="title">POS</h1>
 
-    <section id="grid" class="app-grid"></section>
-  </main>
-
-  <div class="cart-pill" id="cartPill">
-    <img src="../img/icons/cart.svg" alt="" style="width:18px;height:18px">
-    <span class="count" id="cartCount">0</span>
-    <span id="cartTotal">$0.00</span>
+    <div id="grid" class="grid" role="list"></div>
   </div>
 
-<script>
-  const CATS = [
-    { n:'Pipes', href:'../pos/pipes/', f:'pipes.svg' },
-    { n:'Cigars', href:'../cigars/', f:'cigars.svg' },
-    { n:'Food & Bevs', href:'../foodandbevs/', f:'foodbev.svg' },
-    { n:'Packs', href:'../pos/packs/', f:'packs.svg' },
-    { n:'Ashtrays', href:'../pos/ashtrays/', f:'ashtray.svg' }
-  ];
-  const ICON_BASE = '../img/icons/categories/';
+  <script>
+    // Canonical list (labels must match what you want shown)
+    const CATEGORIES = [
+      { label: "Food & Bevs", href: "/foodandbevs/" },
+      { label: "Ashtrays",     href: "/pos/ashtrays/" },
+      { label: "Cigars",       href: "/cigars/" },
+      { label: "Packs",        href: "/pos/packs/" },
+      { label: "Pipes",        href: "/pos/pipes/" },
+      { label: "Accessories",  href: "/pos/accessories/" }
+    ];
 
-  const grid = document.getElementById('grid');
-  grid.innerHTML = CATS.map(c => `
-    <a class="app-tile" href="${c.href}">
-      <img class="app-icon" src="${ICON_BASE + c.f}" alt="${c.n}">
-    </a>
-  `).join('');
+    // Slug → filename rules (matches your repo convention)
+    function iconFile(label){
+      // special case to collapse spaces/&
+      if (/^food\s*&\s*bevs$/i.test(label)) return "foodandbevs.svg";
+      return label
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "") + ".svg"; // remove spaces/punctuation
+    }
 
-  let cartCount=0, cartTotal=0;
-  const cartCountEl=document.getElementById('cartCount');
-  const cartTotalEl=document.getElementById('cartTotal');
-  function updatePill(){ cartCountEl.textContent=cartCount; cartTotalEl.textContent=`$${cartTotal.toFixed(2)}`; }
-  updatePill();
-</script>
+    const grid = document.getElementById('grid');
+
+    CATEGORIES.forEach(({label, href}) => {
+      const file = iconFile(label);
+      const tile = document.createElement('a');
+      tile.className = 'tile';
+      tile.href = href;
+
+      const box = document.createElement('div');
+      box.className = 'iconBox';
+
+      const img = document.createElement('img');
+      img.alt = label + " icon";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.src = `/img/icons/categories/${file}`;
+
+      // graceful fallback if file missing
+      img.onerror = () => {
+        box.innerHTML = `<div class="fallback">SVG</div>`;
+      };
+
+      box.appendChild(img);
+
+      const lab = document.createElement('div');
+      lab.className = 'label';
+      lab.textContent = label;
+
+      tile.appendChild(box);
+      tile.appendChild(lab);
+      grid.appendChild(tile);
+    });
+  </script>
 </body>
 </html>
