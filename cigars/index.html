@@ -1,69 +1,49 @@
-<!doctype html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Cigars</title>
-<link rel="stylesheet" href="/css/system.css">
-<script defer src="/js/inventory.js"></script>
-<style>
-.search {
-  margin-bottom:14px;
-  background:#fff;border-radius:18px;box-shadow:var(--shadow);
-  padding:12px 14px;
-}
-.search input{
-  width:100%;border:0;outline:0;background:transparent;
-  font-size:16px;font-family:"Helvetica Neue","Helvetica","Arial",system-ui,sans-serif;
-}
-.brand-label{margin-top:6px;text-align:center;font:600 12px/1.2 "Helvetica Neue","Helvetica",Arial,sans-serif;color:var(--ink);}
-.brand-card{display:flex;flex-direction:column;align-items:center;gap:6px;}
-</style>
-</head><body>
-<main>
-  <div class="topbar">
-    <a class="back" href="/pos/"><span>←</span></a>
-    <h1 class="title">Cigars</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cigars</title>
+
+  <!-- Core styles -->
+  <link rel="stylesheet" href="../css/system.css" />
+  <link rel="stylesheet" href="./cigars.css" />
+</head>
+
+<body class="cigars-page">
+  <div class="page">
+    <div class="toprow">
+      <a href="../pos/index.html" style="text-decoration:none;color:inherit;font-size:22px;">←</a>
+      <h1 class="page-title">CIGARS</h1>
+    </div>
+
+    <!-- Search -->
+    <div class="search-wrap">
+      <input type="text" class="search" placeholder="Search brands..." />
+    </div>
+
+    <!-- Brand grid -->
+    <div class="app-grid">
+      <a href="./arturo-fuente.html" class="app-tile">
+        <img src="../img/brands/arturofuente.svg" class="app-icon" alt="Arturo Fuente" />
+        <span class="app-label">Arturo Fuente</span>
+      </a>
+
+      <a href="./padron.html" class="app-tile">
+        <img src="../img/brands/padron.svg" class="app-icon" alt="Padron" />
+        <span class="app-label">Padron</span>
+      </a>
+
+      <a href="./myfather.html" class="app-tile">
+        <img src="../img/brands/myfather.svg" class="app-icon" alt="My Father" />
+        <span class="app-label">My Father</span>
+      </a>
+
+      <a href="./oliva.html" class="app-tile">
+        <img src="../img/brands/oliva.svg" class="app-icon" alt="Oliva" />
+        <span class="app-label">Oliva</span>
+      </a>
+    </div>
   </div>
-
-  <div class="search">
-    <input id="brandSearch" type="search" placeholder="Search brands…">
-  </div>
-
-  <section id="brandGrid" class="grid">
-    <!-- Example brand cards (put your real brand svgs in /img/icons/brands/) -->
-    <button class="brand-card" data-brand="Arturo Fuente">
-      <img class="icon-img" src="/img/icons/brands/fuente.svg" alt="Arturo Fuente">
-      <div class="brand-label">Arturo Fuente</div>
-    </button>
-
-    <button class="brand-card" data-brand="Padron">
-      <img class="icon-img" src="/img/icons/brands/padron.svg" alt="Padron">
-      <div class="brand-label">Padron</div>
-    </button>
-
-    <button class="brand-card" data-brand="My Father">
-      <img class="icon-img" src="/img/icons/brands/myfather.svg" alt="My Father">
-      <div class="brand-label">My Father</div>
-    </button>
-
-    <button class="brand-card" data-brand="Oliva">
-      <img class="icon-img" src="/img/icons/brands/oliva.svg" alt="Oliva">
-      <div class="brand-label">Oliva</div>
-    </button>
-    <!-- Add more brands as needed -->
-  </section>
-
-  <div class="page-bottom-pad"></div>
-</main>
-
-<script>
-  // simple client-side brand filter
-  const q = document.getElementById('brandSearch');
-  const cards = [...document.querySelectorAll('#brandGrid .brand-card')];
-  q?.addEventListener('input', e=>{
-    const v = q.value.trim().toLowerCase();
-    cards.forEach(c=>{
-      const name = (c.dataset.brand||'').toLowerCase();
-      c.style.display = name.includes(v) ? '' : 'none';
-    });
-  });
-</script>
-</body></html>
+</body>
+</html>
