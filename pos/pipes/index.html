@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><!-- set by script --></title>
+  <link rel="stylesheet" href="/css/system.css" />
+  <style>
+    .page{background:#eaf1f5;min-height:100dvh}
+    .header{display:flex;align-items:center;gap:12px;padding:16px}
+    .header a{color:#203147;font-weight:800;text-decoration:none}
+    .title{padding:0 16px 8px;font:900 32px/1.05 system-ui;color:#203147}
+
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;padding:12px 16px 96px}
+    .tile{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+    .tile__btn{width:74px;height:74px;border-radius:18px;background:#fff;border:none;box-shadow:0 8px 24px rgba(9,30,66,.08);padding:0}
+    .tile__btn img{width:74px;height:74px;border-radius:18px;display:block}
+    .tile__label{font:700 14px/1.1 system-ui;color:#142033}
+    .tile__price{font:13px system-ui;color:#5b738d;margin-top:-2px}
+
+    .cart-pill{position:fixed;right:16px;bottom:20px;display:flex;align-items:center;gap:12px;background:#0f1b2b;color:#fff;border-radius:22px;padding:12px 18px;box-shadow:0 14px 28px rgba(14,27,45,.35);z-index:40}
+    .cart-pill__count{background:#e04c4c;min-width:28px;height:28px;border-radius:999px;display:grid;place-items:center;font-weight:800}
+    .cart-pill__total{font-weight:800;letter-spacing:.2px}
+
+    .sheet{position:fixed;inset:0;z-index:50;display:none}
+    .sheet--open{display:block}
+    .sheet__scrim{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
+    .sheet__panel{position:absolute;left:0;right:0;bottom:0;background:#0f1b2b;color:white;border-radius:20px 20px 0 0;padding:18px 16px 20px}
+    .sheet__row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .sheet__title{font:900 22px system-ui}
+    .sheet__price{font:800 20px system-ui}
+    .qty{display:flex;align-items:center;gap:12px;margin:14px 0 8px}
+    .qty button{width:56px;height:56px;border-radius:14px;border:none;background:#0b1523;color:#fff;font-size:26px;font-weight:900}
+    .qty__val{width:74px;height:56px;border-radius:14px;border:none;display:grid;place-items:center;background:#142033;font:800 20px system-ui}
+    .sheet__subtotal{color:#a7b8cc;font:14px system-ui;margin:8px 0 14px}
+    .sheet__actions{display:grid;grid-template-columns:1fr 1.2fr;gap:10px}
+    .btn{height:52px;border:none;border-radius:14px;font:800 16px system-ui}
+    .btn--ghost{background:#1a2940;color:#cfe0f2}
+    .btn--primary{background:#ff4343;color:#fff}
+  </style>
+</head>
+<body class="page">
+  <div class="header">
+    <a href="/pos/">←</a><span style="font-weight:800;color:#5b738d">POS</span>
+  </div>
+  <h1 id="pageTitle" class="title"></h1>
+
+  <main id="grid" class="grid" aria-live="polite"></main>
+
+  <button id="cartPill" class="cart-pill" type="button">
+    <span class="cart-pill__count" id="cartCount">0</span>
+    <span class="cart-pill__total" id="cartTotal">$0.00</span>
+  </button>
+
+  <!-- Modal -->
+  <div id="sheet" class="sheet" aria-hidden="true">
+    <div class="sheet__scrim" data-close-sheet></div>
+    <div class="sheet__panel">
+      <div class="sheet__row">
+        <div class="sheet__title" id="sheetTitle">Item</div>
+        <div class="sheet__price" id="sheetPrice">$0.00</div>
+      </div>
+      <div class="qty">
+        <button id="btnMinus">−</button>
+        <div class="qty__val" id="qtyVal">1</div>
+        <button id="btnPlus">+</button>
+      </div>
+      <div class="sheet__subtotal" id="sheetSubtotal">$0.00 subtotal</div>
+      <div class="sheet__actions">
+        <button class="btn btn--ghost" data-close-sheet>Cancel</button>
+        <button id="btnAddToBill" class="btn btn--primary">Add to Bill</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { attachCartUI } from "/js/shared-cart.js";
+
+    // >>> EDIT THESE THREE LINES PER CATEGORY <<<
+    const PAGE_TITLE = "Pipes";                         // e.g., "Pipes", "Ashtrays"
+    const ICON_BASE  = "/img/icons/pipes";              // folder for this category's item icons
+    const ITEMS = [                                     // name/price/slug (slug = svg filename)
+      // { name:"Corn Cob Pipe", price:9.99, slug:"corncob" },
+      // { name:"Briar Pipe",    price:49.00, slug:"briar"  },
+    ];
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    document.title = PAGE_TITLE; 
+    document.getElementById("pageTitle").textContent = PAGE_TITLE;
+
+    const grid = document.getElementById("grid");
+    const frag = document.createDocumentFragment();
+
+    ITEMS.forEach(it=>{
+      const wrap=document.createElement('div'); wrap.className='tile';
+      const btn=document.createElement('button'); btn.className='tile__btn'; btn.type='button';
+      btn.dataset.name = it.name; btn.dataset.price = String(it.price);
+
+      const img=document.createElement('img'); img.alt=it.name; img.src=`${ICON_BASE}/${it.slug}.svg`;
+      btn.appendChild(img);
+
+      const label=document.createElement('div'); label.className='tile__label'; label.textContent=it.name;
+      const price=document.createElement('div'); price.className='tile__price'; price.textContent=`$${it.price.toFixed(2)}`;
+
+      wrap.append(btn,label,price); frag.appendChild(wrap);
+    });
+    grid.appendChild(frag);
+
+    attachCartUI({ openButtonSelector: '.tile__btn' });
+  </script>
+</body>
+</html>
