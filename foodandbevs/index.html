@@ -7,16 +7,16 @@
 <link rel="stylesheet" href="../css/system.css" />
 <style>
   :root { --ink:#0e1a28; --pill:#0e1a28; --accent:#ff4040; }
-  body { font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, sans-serif; }
-  .page { padding: 18px 16px 120px; background:#eaf1f5; min-height:100vh; }
+  body { font-family:"Helvetica Neue",Helvetica,Arial,system-ui,-apple-system,sans-serif; }
+  .page { padding:18px 16px 120px; background:#eaf1f5; min-height:100vh; }
   .toprow { display:flex; align-items:center; gap:16px; margin-bottom:10px; }
   .back-link { text-decoration:none; color:inherit; font-size:22px; }
   .page-title { font-weight:800; font-size:28px; letter-spacing:.5px; color:#1a2733; margin:0 0 10px; }
-  .app-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; }
+  .app-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
   .app-tile { border:none; background:none; padding:0; }
-  .app-icon { width:72px; height:72px; background:none !important; box-shadow:none !important; }
-  .app-label { display:none; }
-  /* Sheet */
+  .app-icon { width:72px; height:72px; background:none!important; box-shadow:none!important; }
+  .cart-pill { position:fixed; right:20px; bottom:20px; z-index:70; background:#0e1a28; color:#fff; border-radius:24px; padding:12px 18px; display:flex; align-items:center; gap:12px; box-shadow:0 8px 24px rgba(0,0,0,.25); font-weight:700; }
+  .cart-pill .count { background:#e94d45; border-radius:999px; padding:4px 8px; }
   .sheet { position:fixed; left:0; right:0; bottom:-100%; background:#0e1a28; color:#fff; border-radius:20px 20px 0 0; padding:20px 16px 24px; transition:bottom .25s ease; z-index:80; box-shadow:0 -12px 24px rgba(0,0,0,.35); }
   .sheet.open { bottom:0; }
   .sheet h2 { font-size:20px; margin:0 0 6px; }
@@ -29,9 +29,6 @@
   .btn { flex:1; height:54px; border-radius:14px; font-weight:700; font-size:16px; border:none; }
   .btn-secondary { background:#101c2b; color:#fff; }
   .btn-primary { background:#ff4040; color:#fff; }
-  /* Cart pill */
-  .cart-pill { position:fixed; right:20px; bottom:20px; z-index:70; background:#0e1a28; color:#fff; border-radius:24px; padding:12px 18px; display:flex; align-items:center; gap:12px; box-shadow:0 8px 24px rgba(0,0,0,.25); font-weight:700; }
-  .cart-pill .count { background:#e94d45; border-radius:999px; padding:4px 8px; }
 </style>
 </head>
 <body>
@@ -90,7 +87,7 @@
     { n:'Starbucks', p:3.50, f:'starbucks.svg' },
     { n:'Water', p:1.50, f:'water.svg' }
   ];
-  const ICON_BASE = '../img/foodandbevs/';
+  const ICON_BASE = '../img/icons/foodandbevs/';
 
   const grid = document.getElementById('grid');
   grid.innerHTML = ITEMS.map((it, i) => `
@@ -136,9 +133,7 @@
   minusBtn.onclick=()=>{ if(qty>1){ qty--; qtyEl.textContent=qty; subtotalEl.textContent=`$${(currentItem.p*qty).toFixed(2)} subtotal`; } };
   plusBtn.onclick =()=>{ qty++; qtyEl.textContent=qty; subtotalEl.textContent=`$${(currentItem.p*qty).toFixed(2)} subtotal`; };
   cancelBtn.onclick=closeSheet;
-  addBtn.onclick=()=>{
-    cartCount+=qty; cartTotal+=currentItem.p*qty; updatePill(); closeSheet();
-  };
+  addBtn.onclick=()=>{ cartCount+=qty; cartTotal+=currentItem.p*qty; updatePill(); closeSheet(); };
 </script>
 </body>
 </html>
