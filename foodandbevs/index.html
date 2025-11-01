@@ -1,139 +1,143 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Food & Beverages</title>
-<link rel="stylesheet" href="../css/system.css" />
-<style>
-  :root { --ink:#0e1a28; --pill:#0e1a28; --accent:#ff4040; }
-  body { font-family:"Helvetica Neue",Helvetica,Arial,system-ui,-apple-system,sans-serif; }
-  .page { padding:18px 16px 120px; background:#eaf1f5; min-height:100vh; }
-  .toprow { display:flex; align-items:center; gap:16px; margin-bottom:10px; }
-  .back-link { text-decoration:none; color:inherit; font-size:22px; }
-  .page-title { font-weight:800; font-size:28px; letter-spacing:.5px; color:#1a2733; margin:0 0 10px; }
-  .app-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
-  .app-tile { border:none; background:none; padding:0; }
-  .app-icon { width:72px; height:72px; background:none!important; box-shadow:none!important; }
-  .cart-pill { position:fixed; right:20px; bottom:20px; z-index:70; background:#0e1a28; color:#fff; border-radius:24px; padding:12px 18px; display:flex; align-items:center; gap:12px; box-shadow:0 8px 24px rgba(0,0,0,.25); font-weight:700; }
-  .cart-pill .count { background:#e94d45; border-radius:999px; padding:4px 8px; }
-  .sheet { position:fixed; left:0; right:0; bottom:-100%; background:#0e1a28; color:#fff; border-radius:20px 20px 0 0; padding:20px 16px 24px; transition:bottom .25s ease; z-index:80; box-shadow:0 -12px 24px rgba(0,0,0,.35); }
-  .sheet.open { bottom:0; }
-  .sheet h2 { font-size:20px; margin:0 0 6px; }
-  .sheet .price { font-weight:700; font-size:18px; margin-left:auto; }
-  .qty-row { display:flex; align-items:center; gap:12px; margin:14px 0 10px; }
-  .qty-btn { width:56px; height:56px; border-radius:14px; background:#09121d; color:#fff; font-size:28px; border:1px solid rgba(255,255,255,.08); }
-  .qty { width:72px; height:56px; border-radius:14px; background:#0b1725; color:#fff; font-weight:700; font-size:22px; border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; }
-  .subtotal { opacity:.85; font-size:14px; margin:10px 0 16px; }
-  .sheet-actions { display:flex; gap:12px; }
-  .btn { flex:1; height:54px; border-radius:14px; font-weight:700; font-size:16px; border:none; }
-  .btn-secondary { background:#101c2b; color:#fff; }
-  .btn-primary { background:#ff4040; color:#fff; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Food & Beverages</title>
+  <link rel="stylesheet" href="/css/system.css" />
+  <style>
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, sans-serif;
+      background: #eaf0f4;
+      margin: 0;
+      padding: 0;
+    }
+    .screen {
+      padding: 18px 18px 96px;
+    }
+    a.back {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      color: #1b2430;
+      font-weight: 700;
+    }
+    h1 {
+      margin: 12px 0 18px;
+      font-weight: 800;
+      letter-spacing: .5px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px 16px;
+      justify-items: center;
+    }
+    .tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+    }
+    .tile img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      display: block;
+    }
+    .label {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1b2430;
+      margin-top: 6px;
+      line-height: 1.1;
+    }
+  </style>
 </head>
+
 <body>
-  <main class="page">
-    <div class="toprow">
-      <a class="back-link" href="../pos/index.html">←</a>
-      <h1 class="page-title">FOOD &amp; BEVERAGES</h1>
-    </div>
-    <section id="grid" class="app-grid"></section>
-  </main>
+  <div class="screen">
+    <a class="back" href="/pos/"><span style="font-size:22px;">←</span>&nbsp;POS</a>
+    <h1>FOOD &amp; BEVERAGES</h1>
 
-  <div class="cart-pill" id="cartPill">
-    <img src="../img/icons/cart.svg" alt="" style="width:18px;height:18px">
-    <span class="count" id="cartCount">0</span>
-    <span id="cartTotal">$0.00</span>
+    <div id="grid" class="grid" aria-live="polite"></div>
   </div>
 
-  <div id="sheet" class="sheet" aria-hidden="true">
-    <div style="display:flex; align-items:center; gap:12px;">
-      <img id="sheetIcon" src="" alt="" style="width:28px;height:28px;border-radius:8px; background:#0b1725;">
-      <h2 id="sheetTitle">Item</h2>
-      <div class="price" id="sheetPrice">$0.00</div>
-    </div>
-    <div class="qty-row">
-      <button class="qty-btn" id="minusBtn">−</button>
-      <div class="qty" id="qty">1</div>
-      <button class="qty-btn" id="plusBtn">+</button>
-    </div>
-    <div class="subtotal" id="subtotal">$0.00 subtotal</div>
-    <div class="sheet-actions">
-      <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
-      <button class="btn btn-primary" id="addBtn">Add to Bill</button>
-    </div>
-  </div>
+  <script>
+    // ----------------------------------------------------------------
+    // 1) ICON RESOLVER — universal fix for all lowercase filenames
+    // ----------------------------------------------------------------
+    function iconSlug(label) {
+      return String(label)
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/\+/g, 'plus')
+        .replace(/\s+/g, '')
+        .replace(/[^a-z0-9]/g, '');
+    }
 
-<script>
-  const ITEMS = [
-    { n:'7 Up', p:1.50, f:'7up.svg' },
-    { n:'Cocacola', p:1.50, f:'cocacola.svg' },
-    { n:'Coke Zero', p:1.50, f:'cokezero.svg' },
-    { n:'Diet Coke', p:1.50, f:'dietcoke.svg' },
-    { n:'Diet Dr. Pepper', p:1.50, f:'drpepperdiet.svg' },
-    { n:'Dr. Pepper', p:1.50, f:'drpepper.svg' },
-    { n:'Dunkin', p:3.50, f:'dunkin.svg' },
-    { n:'Gatorade', p:3.50, f:'gatorade.svg' },
-    { n:'Ginger Ale', p:1.50, f:'canadadry.svg' },
-    { n:'GP Sweet Tea', p:1.50, f:'gpsweettea.svg' },
-    { n:'GP Unsweetened Tea', p:1.50, f:'gpunsweetened.svg' },
-    { n:'GP Zero Sugar Sweet Tea', p:1.50, f:'gpzerosugarsweettea.svg' },
-    { n:'Monster Tea', p:3.50, f:'monster.svg' },
-    { n:'Mountain Dew', p:1.50, f:'mountaindew.svg' },
-    { n:'Pepsi', p:1.50, f:'pepsi.svg' },
-    { n:'Red Bull', p:3.50, f:'redbull.svg' },
-    { n:'Root Beer', p:1.50, f:'aw.svg' },
-    { n:'Sprite', p:1.50, f:'sprite.svg' },
-    { n:'Starbucks', p:3.50, f:'starbucks.svg' },
-    { n:'Water', p:1.50, f:'water.svg' }
-  ];
-  const ICON_BASE = '../img/icons/foodandbevs/';
+    function iconBaseFolder(section) {
+      switch (section) {
+        case 'pos':          return 'img/icons/categories';
+        case 'foodandbevs':  return 'img/icons/foodandbevs';
+        case 'cigars':       return 'img/icons/brands';
+        default:             return 'img/icons/foodandbevs';
+      }
+    }
 
-  const grid = document.getElementById('grid');
-  grid.innerHTML = ITEMS.map((it, i) => `
-    <button class="app-tile" data-i="${i}">
-      <img class="app-icon" alt="${it.n}" src="${ICON_BASE + it.f}">
-    </button>
-  `).join('');
+    const ICON_OVERRIDES = {}; // Optional manual overrides if needed later
 
-  let cartCount=0, cartTotal=0;
-  const cartCountEl=document.getElementById('cartCount');
-  const cartTotalEl=document.getElementById('cartTotal');
-  function updatePill(){ cartCountEl.textContent=cartCount; cartTotalEl.textContent=`$${cartTotal.toFixed(2)}`; }
-  updatePill();
+    function iconPath(section, label) {
+      const base = iconBaseFolder(section);
+      const slug = iconSlug(label);
+      const file = ICON_OVERRIDES[slug] || slug;
+      return `${base}/${file}.svg`;
+    }
 
-  const sheet=document.getElementById('sheet');
-  const sheetTitle=document.getElementById('sheetTitle');
-  const sheetPrice=document.getElementById('sheetPrice');
-  const sheetIcon=document.getElementById('sheetIcon');
-  const qtyEl=document.getElementById('qty');
-  const subtotalEl=document.getElementById('subtotal');
-  const minusBtn=document.getElementById('minusBtn');
-  const plusBtn=document.getElementById('plusBtn');
-  const cancelBtn=document.getElementById('cancelBtn');
-  const addBtn=document.getElementById('addBtn');
-  let currentItem=null, qty=1;
+    // ----------------------------------------------------------------
+    // 2) ITEM DATA
+    // ----------------------------------------------------------------
+    const ITEMS = [
+      { name: "7 Up", price: 1.50 },
+      { name: "Cocacola", price: 1.50 },
+      { name: "Coke Zero", price: 1.50 },
+      { name: "Diet Coke", price: 1.50 },
+      { name: "Diet Dr. Pepper", price: 1.50 },
+      { name: "Dr. Pepper", price: 1.50 },
+      { name: "Dunkin", price: 3.50 },
+      { name: "Gatorade", price: 3.50 },
+      { name: "Ginger Ale", price: 1.50 },
+      { name: "GP Sweet Tea", price: 1.50 },
+      { name: "GP Unsweetened Tea", price: 1.50 },
+      { name: "Monster Tea", price: 3.50 },
+      { name: "Canada Dry", price: 1.50 },
+      { name: "Mountain Dew", price: 1.50 },
+      { name: "Pepsi", price: 1.50 },
+      { name: "Red Bull", price: 3.50 },
+      { name: "Root Beer", price: 1.50 },
+      { name: "Sprite", price: 1.50 },
+      { name: "Starbucks", price: 3.50 },
+      { name: "Water", price: 1.50 },
+    ];
 
-  function openSheet(item){
-    currentItem=item; qty=1;
-    sheetTitle.textContent=item.n;
-    sheetPrice.textContent=`$${item.p.toFixed(2)}`;
-    sheetIcon.src=ICON_BASE+item.f;
-    qtyEl.textContent=qty;
-    subtotalEl.textContent=`$${(item.p*qty).toFixed(2)} subtotal`;
-    sheet.classList.add('open'); sheet.setAttribute('aria-hidden','false');
-  }
-  function closeSheet(){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden','true'); }
+    // ----------------------------------------------------------------
+    // 3) RENDER GRID
+    // ----------------------------------------------------------------
+    const grid = document.getElementById("grid");
 
-  grid.addEventListener('click', e=>{
-    const btn=e.target.closest('.app-tile'); if(!btn) return;
-    openSheet(ITEMS[+btn.dataset.i]);
-  });
-
-  minusBtn.onclick=()=>{ if(qty>1){ qty--; qtyEl.textContent=qty; subtotalEl.textContent=`$${(currentItem.p*qty).toFixed(2)} subtotal`; } };
-  plusBtn.onclick =()=>{ qty++; qtyEl.textContent=qty; subtotalEl.textContent=`$${(currentItem.p*qty).toFixed(2)} subtotal`; };
-  cancelBtn.onclick=closeSheet;
-  addBtn.onclick=()=>{ cartCount+=qty; cartTotal+=currentItem.p*qty; updatePill(); closeSheet(); };
-</script>
+    ITEMS.forEach(item => {
+      const cell = document.createElement("div");
+      cell.className = "tile";
+      cell.innerHTML = `
+        <img loading="lazy" alt="${item.name}" 
+          src="${iconPath('foodandbevs', item.name)}" 
+          onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 80 80&quot;><rect width=&quot;100%&quot; height=&quot;100%&quot; fill=&quot;#e9eef3&quot;/><text x=&quot;50%&quot; y=&quot;50%&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Helvetica Neue, Arial&quot; font-size=&quot;10&quot; fill=&quot;#94a3b8&quot;>icon</text></svg>')}'" />
+        <div class="label">${item.name}</div>
+      `;
+      grid.appendChild(cell);
+    });
+  </script>
 </body>
 </html>
