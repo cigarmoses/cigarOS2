@@ -1,47 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cigars</title>
-  <link rel="stylesheet" href="/css/system.css">
-  <link rel="stylesheet" href="/css/round-icons.css">
-</head>
-<body>
-  <div class="page-container">
-    <button class="back-button" onclick="history.back()">←</button>
-    <h1 class="page-title">CIGARS</h1>
-
-    <div class="search-bar">
-      <input type="text" id="cigarSearch" placeholder="Search cigars..." onkeyup="filterCigars()">
-    </div>
-
-    <div class="icon-grid" id="cigarGrid">
-      <img src="/img/icons/brands/arturofuente.svg" alt="Arturo Fuente">
-      <img src="/img/icons/brands/padron.svg" alt="Padron">
-      <img src="/img/icons/brands/myfather.svg" alt="My Father">
-      <img src="/img/icons/brands/perdomo.svg" alt="Perdomo">
-      <img src="/img/icons/brands/lfd.svg" alt="La Flor Dominicana">
-      <img src="/img/icons/brands/oliva.svg" alt="Oliva">
-      <!-- Add additional cigar brands here -->
-    </div>
-
-    <div class="cart-button">
-      <img src="/img/icons/cart.svg" alt="Cart">
-      <span class="cart-count">0</span>
-      <span class="cart-total">$0.00</span>
-    </div>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Cigars</title>
+<link rel="stylesheet" href="/css/system.css">
+<script defer src="/js/inventory.js"></script>
+<style>
+.search {
+  margin-bottom:14px;
+  background:#fff;border-radius:18px;box-shadow:var(--shadow);
+  padding:12px 14px;
+}
+.search input{
+  width:100%;border:0;outline:0;background:transparent;
+  font-size:16px;font-family:"Helvetica Neue","Helvetica","Arial",system-ui,sans-serif;
+}
+.brand-label{margin-top:6px;text-align:center;font:600 12px/1.2 "Helvetica Neue","Helvetica",Arial,sans-serif;color:var(--ink);}
+.brand-card{display:flex;flex-direction:column;align-items:center;gap:6px;}
+</style>
+</head><body>
+<main>
+  <div class="topbar">
+    <a class="back" href="/pos/"><span>←</span></a>
+    <h1 class="title">Cigars</h1>
   </div>
 
-  <script>
-    function filterCigars() {
-      const input = document.getElementById('cigarSearch').value.toLowerCase();
-      const icons = document.querySelectorAll('#cigarGrid img');
-      icons.forEach(icon => {
-        const match = icon.alt.toLowerCase().includes(input);
-        icon.style.display = match ? 'block' : 'none';
-      });
-    }
-  </script>
-</body>
-</html>
+  <div class="search">
+    <input id="brandSearch" type="search" placeholder="Search brands…">
+  </div>
+
+  <section id="brandGrid" class="grid">
+    <!-- Example brand cards (put your real brand svgs in /img/icons/brands/) -->
+    <button class="brand-card" data-brand="Arturo Fuente">
+      <img class="icon-img" src="/img/icons/brands/fuente.svg" alt="Arturo Fuente">
+      <div class="brand-label">Arturo Fuente</div>
+    </button>
+
+    <button class="brand-card" data-brand="Padron">
+      <img class="icon-img" src="/img/icons/brands/padron.svg" alt="Padron">
+      <div class="brand-label">Padron</div>
+    </button>
+
+    <button class="brand-card" data-brand="My Father">
+      <img class="icon-img" src="/img/icons/brands/myfather.svg" alt="My Father">
+      <div class="brand-label">My Father</div>
+    </button>
+
+    <button class="brand-card" data-brand="Oliva">
+      <img class="icon-img" src="/img/icons/brands/oliva.svg" alt="Oliva">
+      <div class="brand-label">Oliva</div>
+    </button>
+    <!-- Add more brands as needed -->
+  </section>
+
+  <div class="page-bottom-pad"></div>
+</main>
+
+<script>
+  // simple client-side brand filter
+  const q = document.getElementById('brandSearch');
+  const cards = [...document.querySelectorAll('#brandGrid .brand-card')];
+  q?.addEventListener('input', e=>{
+    const v = q.value.trim().toLowerCase();
+    cards.forEach(c=>{
+      const name = (c.dataset.brand||'').toLowerCase();
+      c.style.display = name.includes(v) ? '' : 'none';
+    });
+  });
+</script>
+</body></html>
