@@ -1,0 +1,20 @@
+/* ============================================
+   round-icons.css
+   Adds 124px corner radius to all SVG icons
+   in brands, foodandbevs, and categories folders
+   ============================================ */
+
+:root {
+  --icon-radius: 124px;
+}
+
+/* Apply rounded corners automatically */
+img[src*="/img/icons/brands/"],
+img[src*="/img/icons/foodandbevs/"],
+img[src*="/img/icons/categories/"] {
+  display: block;
+  border-radius: var(--icon-radius);
+  overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+          mask-image: radial-gradient(white, black);
+}
