@@ -1,73 +1,43 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>POS • Categories</title>
-  <link rel="stylesheet" href="/css/system.css?v=2.1" />
-</head>
-<body>
-  <main class="page">
-    <header class="topbar">
-      <a class="back-btn" aria-label="Back" href="/">←</a>
-      <h1 class="page-title">POS</h1>
-    </header>
-
-    <!-- POS categories: icons only (no captions, no shells) -->
-    <section class="grid cols-2">
-      <a class="app-tile" href="/pos/pipes/">
-        <img class="app-icon" src="/img/icons/categories/pipes.svg" alt="Pipes" />
-      </a>
-
-      <a class="app-tile" href="/pos/cutters/">
-        <img class="app-icon" src="/img/icons/categories/cutters.svg" alt="Cutters" />
-      </a>
-
-      <a class="app-tile" href="/cigars/">
-        <img class="app-icon" src="/img/icons/categories/cigars.svg" alt="Cigars" />
-      </a>
-
-      <a class="app-tile" href="/foodandbevs/">
-        <img class="app-icon" src="/img/icons/categories/foodandbevs.svg" alt="Food & Bevs" />
-      </a>
-
-      <a class="app-tile" href="/pos/packs/">
-        <img class="app-icon" src="/img/icons/categories/packs.svg" alt="Packs" />
-      </a>
-
-      <a class="app-tile" href="/pos/lighters/">
-        <img class="app-icon" src="/img/icons/categories/lighters.svg" alt="Lighters" />
-      </a>
-
-      <a class="app-tile" href="/pos/ashtrays/">
-        <img class="app-icon" src="/img/icons/categories/ashtrays.svg" alt="Ashtrays" />
-      </a>
-
-      <a class="app-tile" href="/pos/accessories/">
-        <img class="app-icon" src="/img/icons/categories/accessories.svg" alt="Accessories" />
-      </a>
-    </section>
-  </main>
-
-  <!-- Cart dock (shared look) -->
-  <div class="cart-dock" id="dock">
-    <img class="cart-icon" src="/img/icons/pos.svg" alt="" />
-    <span class="cart-count" id="dockCount">0</span>
-    <span class="cart-total" id="dockTotal">$0.00</span>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>POS · Categories</title>
+<link rel="stylesheet" href="/css/system.css">
+</head><body>
+<main>
+  <div class="topbar">
+    <a class="back" href="/"><span>←</span></a>
+    <h1 class="title">POS</h1>
   </div>
 
-  <script>
-    // small cache-bust helper to ensure fresh CSS loads
-    if('serviceWorker' in navigator){
-      caches && caches.keys && caches.keys().then(keys => keys.forEach(k=>caches.delete(k)));
-    }
-    // simple cart init so dock isn't blank
-    const fmt = n => '$' + n.toFixed(2);
-    const countEl = document.getElementById('dockCount');
-    const totalEl = document.getElementById('dockTotal');
-    const cart = JSON.parse(localStorage.getItem('cart')||'{"c":0,"t":0}');
-    countEl.textContent = cart.c||0;
-    totalEl.textContent = fmt(cart.t||0);
-  </script>
-</body>
-</html>
+  <section class="grid">
+    <!-- Pipes -->
+    <a class="tile" href="/pos/pipes/">
+      <img src="/img/icons/categories/pipes.svg" alt="Pipes">
+    </a>
+
+    <!-- (Cutters REMOVED) -->
+    <!-- Cigars -->
+    <a class="tile" href="/cigars/">
+      <img src="/img/icons/categories/cigars.svg" alt="Cigars">
+    </a>
+
+    <!-- Food & Beverages -->
+    <a class="tile" href="/foodandbevs/">
+      <img src="/img/icons/categories/foodandbevs.svg" alt="Food & Beverages">
+    </a>
+
+    <!-- Packs -->
+    <a class="tile" href="/pos/packs/">
+      <img src="/img/icons/categories/packs.svg" alt="Packs">
+    </a>
+
+    <!-- (Lighters REMOVED) -->
+    <!-- Ashtrays -->
+    <a class="tile" href="/pos/ashtrays/">
+      <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays">
+    </a>
+  </section>
+
+  <div class="page-bottom-pad"></div>
+</main>
+</body></html>
