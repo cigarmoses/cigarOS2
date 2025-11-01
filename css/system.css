@@ -1,68 +1,106 @@
-/* ====== System (Mobile-first) ====== */
+/* ============ SYSTEM (mobile-first) ============ */
+
+/* Font & base */
 :root{
-  --page-bg:#eaf2f6;
-  --tile-bg:#ffffff;
-  --ink:#0e1930;
-  --muted:#8aa2b6;
-  --shadow: 0 10px 28px rgba(22,30,50,.08);
-  --radius-tile: 24px;           /* POS tiles */
-  --radius-icon: 24px;           /* rounded corners for square SVGs */
-  --gap: 22px;
-  --grid-cols: 4;                /* 4-up mobile everywhere */
-  --icon-size: 104px;            /* keeps icons from changing size */
-  --title-pt: 28px;              /* Helvetica Neue styling */
-  --title-lh: 1.05;
-  --title-mt: 18px;              /* space from back arrow to title */
-  --title-mb: 18px;              /* space from title to grid */
+  --bg:#eaf1f5;      /* light blue page bg you use */
+  --ink:#0e1a28;     /* title/nav dark */
+  --muted:#6e7a87;
+  --gap:18px;        /* grid gap */
+  --edge:18px;       /* page side padding */
 }
 
-/* Page */
-body{margin:0;background:var(--page-bg);-webkit-font-smoothing:antialiased;}
-main{padding:16px 18px 120px;}
-
-/* Top bar */
-.topbar{
-  display:flex;align-items:center;gap:12px;
-  padding-top:8px;
-}
-.back{display:inline-flex;width:28px;height:28px;border-radius:999px;align-items:center;justify-content:center;text-decoration:none;color:var(--ink);}
-.title{
-  margin:var(--title-mt) 0 var(--title-mb);
-  font-family:"Helvetica Neue","Helvetica","Arial",system-ui,sans-serif;
-  font-weight:800; font-size:var(--title-pt); line-height:var(--title-lh); letter-spacing:.3px;
-  color:var(--ink); text-transform:uppercase;
+*{box-sizing:border-box}
+html,body{height:100%}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
 
-/* ====== Grids ====== */
-.grid{
+/* Page header */
+.page{
+  padding:12px var(--edge) 24px;
+}
+.page-title{
+  margin:6px 0 18px;
+  font-weight:800;
+  letter-spacing:-0.5px;
+  line-height:1.05;
+  font-size: clamp(24px, 6.3vw, 32px); /* consistent mobile scale */
+  text-transform:uppercase;
+}
+
+/* Back arrow row (if you use one) */
+.toprow{
+  display:flex; align-items:center; gap:10px;
+  padding:6px var(--edge) 0;
+}
+
+/* Universal 4-up grid (no shells) */
+.app-grid{
   display:grid;
-  grid-template-columns:repeat(var(--grid-cols), minmax(0,1fr));
+  grid-template-columns:repeat(4,1fr);
   gap:var(--gap);
+  padding:0 var(--edge) 24px;
 }
 
-/* POS Category tiles (keep white card look) */
-.tile{
-  background:var(--tile-bg);
-  border-radius:var(--radius-tile);
-  box-shadow:var(--shadow);
-  padding:18px;
+/* Tiles – stripped bare so SVGs “float” with no background */
+.app-tile{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  text-decoration:none;
+  color:var(--ink);
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  padding:0 !important;
 }
-.tile img{display:block;width:100%;height:auto;}
 
-/* Icon-only grid (Food/Brands/Cigars lists)  */
-.icon-cell{
-  display:flex;align-items:center;justify-content:center;
-}
-.icon-img{
-  width:var(--icon-size);
-  height:var(--icon-size);
-  object-fit:contain;                 /* show full SVG, no distortion */
+/* The SVG itself */
+.app-icon{
+  width:78px; height:78px;      /* mobile icon size */
   display:block;
-  border-radius:var(--radius-icon);   /* << rounded corners applied here */
-  overflow:hidden;                    /* forces clipping on SVGs */
-  box-shadow:none;                    /* no shells or borders */
-  background:transparent;             /* no background behind SVGs */
+  object-fit:contain;           /* do not distort */
+  border-radius:0 !important;   /* do NOT force rounding */
 }
 
-/* Sticky bill button space */
-.page-bottom-pad{height:110px;}
+/* Caption style (used on brands, hidden on POS) */
+.app-label{
+  margin-top:8px;
+  font-size:13px;
+  font-weight:700;
+  text-align:center;
+}
+
+/* Search bar (CIGARS brands page) */
+.search-wrap{padding:0 var(--edge) 16px}
+.search{
+  width:100%;
+  height:42px;
+  border-radius:22px;
+  border:0;
+  outline:none;
+  padding:0 16px;
+  background:#fff;
+  color:var(--ink);
+  font-size:15px;
+  box-shadow:0 8px 24px rgba(12,25,45,.06);
+}
+
+/* --- Page-specific visibility rules (class is set on <body>) --- */
+body.pos-page .app-label{display:none;}    /* POS categories: no captions */
+body.cigars-page .app-label{display:block;}/* Cigars brands: show captions */
+
+/* Remove any legacy shells/cards that may linger */
+.tile, .card, .brand-card, .brand-box{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+
+/* Image fallbacks */
+img::selection{background:transparent}
