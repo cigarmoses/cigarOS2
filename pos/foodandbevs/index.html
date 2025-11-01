@@ -2,188 +2,276 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Food & Beverages</title>
-
-  <!-- Base styles (your existing system.css) -->
-  <link rel="stylesheet" href="/css/system.css" />
-
-  <!-- Hard-lock this page to 4-up grid and ensure mobile cart/modal look right -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Food & Beverages • POS</title>
+  <link rel="preload" as="image" href="/img/icons/foodandbevs/7up.svg">
   <style>
-    /* 4-per-row on mobile */
-    .grid--foods {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 18px;
-      padding: 12px 16px 96px; /* bottom room for cart pill */
+    :root{
+      --bg:#eaf2f6;
+      --ink:#0f1a2c;
+      --muted:#6d7b8e;
+      --tile-gap:20px;
+      --tile-size:84px; /* icon size inside cell */
+      --radius:18px;
+      --sheet:#0c1322;
+      --sheet-ink:#eaf2f6;
+      --accent:#ff3b30;
+      --pill:#0b1a2a;
+      --shadow:0 8px 30px rgba(20,30,50,.18);
     }
-    /* Icon tile wrapper – no gray boxes, just clean tiles */
-    .food-tile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 8px;
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%}
+    body{
+      margin:0;background:var(--bg);color:var(--ink);
+      font:600 18px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    .food-tile__btn {
-      width: 74px;
-      height: 74px;
-      display: grid;
-      place-items: center;
-      border-radius: 18px;
-      box-shadow: 0 8px 24px rgba(9,30,66,0.08);
-      background: var(--surface, #ffffff);
-      border: none;
-      padding: 0;
+    header{
+      position:sticky;top:0;z-index:5;background:linear-gradient(#eaf2f6,#eaf2f6cc 70%,#eaf2f600);
+      padding:20px 18px 8px;
     }
-    .food-tile__btn img,
-    .food-tile__btn svg {
-      width: 74px; height: 74px;
-      border-radius: 18px;          /* respects rounded-corner SVG artwork */
-      display: block;
+    .row{display:flex;align-items:center;gap:12px}
+    .back{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:36px;height:36px;border-radius:999px;background:#dbe6ee;box-shadow:var(--shadow);
+      text-decoration:none;color:var(--ink);font-size:22px;font-weight:700;
     }
-    .food-tile__label {
-      font-weight: 700;
-      font-size: 14px;
-      line-height: 1.1;
-      color: #142033;
+    h1{margin:0 4px;font-size:36px;letter-spacing:.5px}
+    main{padding:12px 14px 120px;max-width:1100px;margin:0 auto}
+    /* 4 across, always */
+    .grid{
+      display:grid;gap:22px;
+      grid-template-columns:repeat(4,1fr);
     }
-    .food-tile__price {
-      font-size: 13px;
-      color: #5b738d;
-      margin-top: -2px;
+    .cell{
+      display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+      text-align:center;gap:10px;
     }
+    .icon-btn{
+      width:100%;aspect-ratio:1/1;display:grid;place-items:center;border:none;background:transparent;padding:0;
+    }
+    .icon-btn img{
+      width:var(--tile-size);height:var(--tile-size);object-fit:contain;background:transparent;display:block;
+      border-radius:0; /* do NOT add any background around SVGs */
+    }
+    .name{font-size:16px;font-weight:700}
+    .price{font-size:14px;color:var(--muted);font-weight:700}
 
-    /* Page header */
-    .page {
-      background: #eaf1f5; /* your soft blue */
-      min-height: 100dvh;
+    /* Cart pill */
+    .cart{
+      position:fixed;right:16px;bottom:22px;z-index:20;
+      background:#0c1a2a;color:#fff;border-radius:20px;padding:12px 16px;display:flex;align-items:center;gap:10px;
+      box-shadow:0 12px 40px rgba(15,27,45,.35);
     }
-    .header {
-      display: flex; align-items: center; gap: 12px;
-      padding: 16px;
+    .cart .bubble{
+      min-width:28px;height:28px;border-radius:999px;background:var(--accent);
+      display:grid;place-items:center;font-size:14px;font-weight:800;
     }
-    .header a { text-decoration: none; color: #203147; font-weight: 800; }
-    .title {
-      padding: 0 16px 8px;
-      font-size: 32px; line-height: 1.05; font-weight: 900;
-      color: #203147;
-    }
+    .cart .total{font-weight:800;font-size:16px}
 
-    /* Floating cart pill (bottom-right) */
-    .cart-pill {
-      position: fixed;
-      right: 16px; bottom: 20px;
-      display: flex; align-items: center; gap: 12px;
-      background: #0f1b2b;
-      color: #fff;
-      border-radius: 22px;
-      padding: 12px 18px;
-      box-shadow: 0 14px 28px rgba(14,27,45,0.35);
-      z-index: 40;
+    /* Bottom sheet modal */
+    .sheet{
+      position:fixed;left:0;right:0;bottom:-100%;z-index:30;
+      background:var(--sheet);color:var(--sheet-ink);border-top-left-radius:18px;border-top-right-radius:18px;
+      padding:18px 16px 20px;transition:bottom .28s ease;box-shadow:0 -20px 50px rgba(0,0,0,.35);
     }
-    .cart-pill__count {
-      background: #e04c4c;
-      min-width: 28px; height: 28px;
-      border-radius: 999px;
-      display: grid; place-items: center;
-      font-weight: 800;
+    .sheet.show{bottom:0}
+    .sheet .title{font-size:22px;font-weight:800;margin:2px 0 8px}
+    .sheet .row{justify-content:space-between}
+    .qty{
+      display:flex;align-items:center;gap:12px;
     }
-    .cart-pill__total {
-      font-weight: 800;
-      letter-spacing: 0.2px;
+    .qty button{
+      width:54px;height:54px;border-radius:14px;border:1px solid #253249;background:#132035;color:#eaf2f6;
+      font-size:28px;font-weight:900;
     }
-
-    /* Modal sheet */
-    .sheet {
-      position: fixed; inset: 0; z-index: 50;
-      display: none;
+    .qty .n{
+      width:72px;height:54px;border-radius:14px;border:1px solid #253249;background:#0f1b2d;
+      display:grid;place-items:center;font-size:22px;font-weight:900;
     }
-    .sheet--open { display: block; }
-    .sheet__scrim {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.45);
-      backdrop-filter: blur(2px);
+    .subtotal{margin:14px 0 18px;color:#9fb3c8;font-weight:700}
+    .bar{
+      display:flex;gap:12px
     }
-    .sheet__panel {
-      position: absolute; left: 0; right: 0; bottom: 0;
-      background: #0f1b2b; color: white;
-      border-radius: 20px 20px 0 0;
-      padding: 18px 16px 20px;
+    .btn{
+      flex:1;display:grid;place-items:center;height:56px;border-radius:16px;border:1px solid #223049;
+      background:#111e33;color:#cfe2f7;font-weight:800;font-size:18px;text-decoration:none;
     }
-    .sheet__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .sheet__title { font-size: 22px; font-weight: 900; }
-    .sheet__price { font-size: 20px; font-weight: 800; }
-
-    .qty {
-      display: flex; align-items: center; gap: 12px;
-      margin: 14px 0 8px;
+    .btn.primary{background:#ff3b30;border-color:#ff3b30;color:#fff}
+    /* Small screens safe area */
+    @supports(padding:max(0px)){
+      .cart{right:max(16px, env(safe-area-inset-right));bottom:max(22px, env(safe-area-inset-bottom));}
+      .sheet{padding-bottom:calc(20px + env(safe-area-inset-bottom));}
     }
-    .qty button {
-      width: 56px; height: 56px; border-radius: 14px; border: none;
-      background: #0b1523; color: white; font-size: 26px; font-weight: 900;
-    }
-    .qty__val {
-      width: 74px; height: 56px; border-radius: 14px; border: none;
-      display: grid; place-items: center; background: #142033; font-size: 20px; font-weight: 800;
-    }
-
-    .sheet__subtotal {
-      color: #a7b8cc; font-size: 14px; margin: 8px 0 14px;
-    }
-
-    .sheet__actions {
-      display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px;
-    }
-    .btn {
-      height: 52px; border: none; border-radius: 14px; font-weight: 800; font-size: 16px;
-    }
-    .btn--ghost { background: #1a2940; color: #cfe0f2; }
-    .btn--primary { background: #ff4343; color: white; }
   </style>
 </head>
-<body class="page">
+<body>
+  <header>
+    <div class="row">
+      <a class="back" href="/pos/">‹</a>
+      <h1>FOOD &amp; BEVERAGES</h1>
+    </div>
+  </header>
 
-  <!-- Header -->
-  <div class="header">
-    <a href="/pos/" aria-label="Back">←</a>
-    <span style="font-weight:800;color:#5b738d;">POS</span>
-  </div>
-  <h1 class="title">FOOD &amp; BEVERAGES</h1>
+  <main>
+    <section id="grid" class="grid" aria-label="Food & Beverages"></section>
+  </main>
 
-  <!-- Grid -->
-  <main id="grid" class="grid--foods" aria-live="polite"></main>
+  <!-- Cart pill -->
+  <a class="cart" href="/pos/">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="3" stroke="#9fb3c8" stroke-width="2"/>
+      <rect x="7" y="7" width="10" height="2" fill="#9fb3c8"/>
+      <rect x="7" y="11" width="10" height="2" fill="#9fb3c8"/>
+      <rect x="7" y="15" width="6" height="2" fill="#9fb3c8"/>
+    </svg>
+    <span id="cartCount" class="bubble">0</span>
+    <span id="cartTotal" class="total">$0.00</span>
+  </a>
 
-  <!-- Floating cart pill -->
-  <button id="cartPill" class="cart-pill" type="button">
-    <span class="cart-pill__count" id="cartCount">0</span>
-    <span class="cart-pill__total" id="cartTotal">$0.00</span>
-  </button>
-
-  <!-- Quantity modal sheet -->
-  <div id="sheet" class="sheet" aria-hidden="true">
-    <div class="sheet__scrim" data-close-sheet></div>
-    <div class="sheet__panel">
-      <div class="sheet__row">
-        <div class="sheet__title" id="sheetTitle">Item</div>
-        <div class="sheet__price" id="sheetPrice">$0.00</div>
-      </div>
-
-      <div class="qty">
-        <button id="btnMinus" aria-label="Decrease">−</button>
-        <div class="qty__val" id="qtyVal">1</div>
-        <button id="btnPlus" aria-label="Increase">+</button>
-      </div>
-
-      <div class="sheet__subtotal" id="sheetSubtotal">$0.00 subtotal</div>
-
-      <div class="sheet__actions">
-        <button class="btn btn--ghost" data-close-sheet>Cancel</button>
-        <button id="btnAddToBill" class="btn btn--primary">Add to Bill</button>
+  <!-- Bottom sheet -->
+  <aside id="sheet" class="sheet" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="row">
+      <div>
+        <div id="sheetName" class="title">Item</div>
+        <div id="sheetPrice" class="price" style="color:#b8cbe0">$0.00</div>
       </div>
     </div>
-  </div>
+    <div class="qty" style="margin:18px 0">
+      <button id="minus" aria-label="Decrease">−</button>
+      <div id="qty" class="n">1</div>
+      <button id="plus" aria-label="Increase">+</button>
+    </div>
+    <div id="subtotal" class="subtotal">$0.00 subtotal</div>
+    <div class="bar">
+      <button id="cancel" class="btn">Cancel</button>
+      <button id="add" class="btn primary">Add to Bill</button>
+    </div>
+  </aside>
 
-  <!-- Page logic (keeps your image pathing exactly as-is) -->
-  <script src="/js/foodandbevs.js"></script>
+  <script>
+  // ---------------- CONFIG ----------------
+  // Keep filenames lowercase with no spaces/punctuation.
+  const ITEMS = [
+    { name:'7 Up',                price:1.50, slug:'7up' },
+    { name:'Cocacola',            price:1.50, slug:'cocacola' },
+    { name:'Coke Zero',           price:1.50, slug:'cokezero' },
+    { name:'Diet Coke',           price:1.50, slug:'dietcoke' },
+    { name:'Diet Dr. Pepper',     price:1.50, slug:'dietdrpepper' }, // note: period removed in file
+    { name:'Dr. Pepper',          price:1.50, slug:'drpepper' },
+    { name:'Dunkin',              price:3.50, slug:'dunkin' },
+    { name:'Gatorade',            price:3.50, slug:'gatorade' },
+    { name:'Ginger Ale',          price:1.50, slug:'gingerale' },
+    { name:'GP Sweet Tea',        price:1.50, slug:'gpsweettea' },
+    { name:'GP Unsweetened Tea',  price:1.50, slug:'gpunsweetened' },
+    { name:'GP Zero Sugar Sweet Tea', price:1.50, slug:'gpzerosugarsweettea' },
+    { name:'Monster Tea',         price:3.50, slug:'monstertea' },
+    { name:'Mountain Dew',        price:1.50, slug:'mountaindew' },
+    { name:'Pepsi',               price:1.50, slug:'pepsi' },
+    { name:'Red Bull',            price:3.50, slug:'redbull' },
+    { name:'Root Beer',           price:1.50, slug:'rootbeer' },
+    { name:'Sprite',              price:1.50, slug:'sprite' },
+    { name:'Starbucks',           price:3.50, slug:'starbucks' },
+    { name:'Water',               price:1.50, slug:'water' },
+    // (Optional) If you want Canada Dry visible, uncomment below:
+    // { name:'Canada Dry',          price:1.50, slug:'canadadry' },
+  ];
+
+  const ICON_BASE = '/img/icons/foodandbevs'; // do NOT change path
+
+  // --------------- RENDER GRID ---------------
+  const $grid = document.getElementById('grid');
+  $grid.innerHTML = ITEMS.map((it,i)=>`
+    <div class="cell">
+      <button class="icon-btn" data-i="${i}" aria-label="${it.name}">
+        <img loading="lazy" src="${ICON_BASE}/${it.slug}.svg" alt="${it.name}">
+      </button>
+      <div class="name">${it.name}</div>
+      <div class="price">$${it.price.toFixed(2)}</div>
+    </div>
+  `).join('');
+
+  // --------------- CART (localStorage shared) ---------------
+  const CART_KEY = 'cigaros_cart_v1';
+  const $cartCount = document.getElementById('cartCount');
+  const $cartTotal = document.getElementById('cartTotal');
+
+  function readCart(){
+    try{ return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); }
+    catch{ return []; }
+  }
+  function writeCart(items){
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    recalc();
+  }
+  function recalc(){
+    const c = readCart();
+    const count = c.reduce((n,i)=>n+i.qty,0);
+    const total = c.reduce((s,i)=>s+i.qty*i.price,0);
+    $cartCount.textContent = count;
+    $cartTotal.textContent = `$${total.toFixed(2)}`;
+  }
+  recalc();
+
+  // --------------- SHEET (modal) ---------------
+  const $sheet = document.getElementById('sheet');
+  const $name  = document.getElementById('sheetName');
+  const $price = document.getElementById('sheetPrice');
+  const $qty   = document.getElementById('qty');
+  const $sub   = document.getElementById('subtotal');
+  const $minus = document.getElementById('minus');
+  const $plus  = document.getElementById('plus');
+  const $add   = document.getElementById('add');
+  const $cancel= document.getElementById('cancel');
+
+  let current = null;
+  function openSheet(item){
+    current = { ...item, qty:1 };
+    $name.textContent  = item.name;
+    $price.textContent = `$${item.price.toFixed(2)}`;
+    $qty.textContent   = '1';
+    $sub.textContent   = `$${item.price.toFixed(2)} subtotal`;
+    $sheet.classList.add('show');
+    $sheet.setAttribute('aria-hidden','false');
+  }
+  function closeSheet(){
+    $sheet.classList.remove('show');
+    $sheet.setAttribute('aria-hidden','true');
+    current = null;
+  }
+
+  $grid.addEventListener('click', e=>{
+    const btn = e.target.closest('.icon-btn');
+    if(!btn) return;
+    const i = +btn.dataset.i;
+    openSheet(ITEMS[i]);
+  });
+
+  $minus.onclick = ()=>{
+    if(!current) return;
+    current.qty = Math.max(1, current.qty-1);
+    $qty.textContent = String(current.qty);
+    $sub.textContent = `$${(current.qty*current.price).toFixed(2)} subtotal`;
+  };
+  $plus.onclick = ()=>{
+    if(!current) return;
+    current.qty++;
+    $qty.textContent = String(current.qty);
+    $sub.textContent = `$${(current.qty*current.price).toFixed(2)} subtotal`;
+  };
+  $cancel.onclick = closeSheet;
+
+  $add.onclick = ()=>{
+    if(!current) return;
+    const cart = readCart();
+    const key  = `${current.name}@${current.price}`;
+    const hit  = cart.find(i=>i.key===key);
+    if(hit){ hit.qty += current.qty; }
+    else{ cart.push({ key, name:current.name, price:current.price, qty:current.qty, slug:current.slug, cat:'foodandbevs' }); }
+    writeCart(cart);
+    closeSheet();
+  };
+
+  // Close sheet by dragging background (optional future)
+  </script>
 </body>
 </html>
