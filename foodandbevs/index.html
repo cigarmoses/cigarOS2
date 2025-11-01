@@ -1,40 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Food & Beverages</title>
-  <link rel="stylesheet" href="/css/system.css">
-  <link rel="stylesheet" href="/css/round-icons.css">
-</head>
-<body>
-  <div class="page-container">
-    <button class="back-button" onclick="history.back()">←</button>
-    <h1 class="page-title">FOOD & BEVERAGES</h1>
-
-    <div class="icon-grid">
-      <img src="/img/icons/foodandbevs/7up.svg" alt="7 Up">
-      <img src="/img/icons/foodandbevs/cocacola.svg" alt="Coca-Cola">
-      <img src="/img/icons/foodandbevs/cokezero.svg" alt="Coke Zero">
-      <img src="/img/icons/foodandbevs/dietcoke.svg" alt="Diet Coke">
-      <img src="/img/icons/foodandbevs/drpepper.svg" alt="Dr Pepper">
-      <img src="/img/icons/foodandbevs/gatorade.svg" alt="Gatorade">
-      <img src="/img/icons/foodandbevs/goldpeaksweettea.svg" alt="Gold Peak Sweet Tea">
-      <img src="/img/icons/foodandbevs/goldpeakunsweet.svg" alt="Gold Peak Unsweetened Tea">
-      <img src="/img/icons/foodandbevs/goldpeakzerosugar.svg" alt="Gold Peak Zero Sugar Sweet Tea">
-      <img src="/img/icons/foodandbevs/mountaindew.svg" alt="Mountain Dew">
-      <img src="/img/icons/foodandbevs/redbull.svg" alt="Red Bull">
-      <img src="/img/icons/foodandbevs/monster.svg" alt="Monster Energy">
-      <img src="/img/icons/foodandbevs/canadadry.svg" alt="Canada Dry">
-      <img src="/img/icons/foodandbevs/water.svg" alt="Water">
-      <!-- Add other beverage icons as needed -->
-    </div>
-
-    <div class="cart-button">
-      <img src="/img/icons/cart.svg" alt="Cart">
-      <span class="cart-count">0</span>
-      <span class="cart-total">$0.00</span>
-    </div>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Food & Beverages</title>
+<link rel="stylesheet" href="/css/system.css">
+<script defer src="/js/inventory.js"></script> <!-- your add-to-bill logic -->
+</head><body>
+<main>
+  <div class="topbar">
+    <a class="back" href="/pos/"><span>←</span></a>
+    <h1 class="title">Food & Beverages</h1>
   </div>
-</body>
-</html>
+
+  <section class="grid">
+    <!-- 1st row -->
+    <button class="icon-cell" data-sku="7up" data-name="7 Up" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/7up.svg" alt="7 Up">
+    </button>
+    <button class="icon-cell" data-sku="cocacola" data-name="Cocacola" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/cocacola.svg" alt="Cocacola">
+    </button>
+    <button class="icon-cell" data-sku="cokezero" data-name="Coke Zero" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/cocacolazero.svg" alt="Coke Zero">
+    </button>
+    <button class="icon-cell" data-sku="dietcoke" data-name="Diet Coke" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/dietcoke.svg" alt="Diet Coke">
+    </button>
+
+    <!-- 2nd row -->
+    <button class="icon-cell" data-sku="dietdrpepper" data-name="Diet Dr. Pepper" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/dietdrpepper.svg" alt="Diet Dr. Pepper">
+    </button>
+    <button class="icon-cell" data-sku="drpepper" data-name="Dr. Pepper" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/drpepper.svg" alt="Dr. Pepper">
+    </button>
+    <button class="icon-cell" data-sku="dunkin" data-name="Dunkin" data-price="3.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/dunkin.svg" alt="Dunkin">
+    </button>
+    <button class="icon-cell" data-sku="gatorade" data-name="Gatorade" data-price="3.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/gatorade.svg" alt="Gatorade">
+    </button>
+
+    <!-- 3rd row -->
+    <button class="icon-cell" data-sku="gingerale" data-name="Ginger Ale" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/gingerale.svg" alt="Ginger Ale">
+    </button>
+
+    <!-- GOLD PEAK (file names fixed) -->
+    <button class="icon-cell" data-sku="gpsweettea" data-name="GP Sweet Tea" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/gpsweettea.svg" alt="GP Sweet Tea">
+    </button>
+    <button class="icon-cell" data-sku="gpunsweetened" data-name="GP Unsweetened Tea" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/gpunsweetened.svg" alt="GP Unsweetened Tea">
+    </button>
+    <button class="icon-cell" data-sku="gpzerosugarsweettea" data-name="GP Zero Sugar Sweet Tea" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/gpzerosugarsweettea.svg" alt="GP Zero Sugar Sweet Tea">
+    </button>
+
+    <!-- 4th row -->
+    <button class="icon-cell" data-sku="monstertea" data-name="Monster Tea" data-price="3.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/monstertea.svg" alt="Monster Tea">
+    </button>
+    <button class="icon-cell" data-sku="mountaindew" data-name="Mountain Dew" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/mountaindew.svg" alt="Mountain Dew">
+    </button>
+    <button class="icon-cell" data-sku="pepsi" data-name="Pepsi" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/pepsi.svg" alt="Pepsi">
+    </button>
+    <button class="icon-cell" data-sku="redbull" data-name="Red Bull" data-price="3.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/redbull.svg" alt="Red Bull">
+    </button>
+
+    <!-- 5th row -->
+    <button class="icon-cell" data-sku="rootbeer" data-name="Root Beer" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/rootbeer.svg" alt="Root Beer">
+    </button>
+    <button class="icon-cell" data-sku="sprite" data-name="Sprite" data-price="1.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/sprite.svg" alt="Sprite">
+    </button>
+    <button class="icon-cell" data-sku="starbucks" data-name="Starbucks" data-price="3.50">
+      <img class="icon-img" src="/img/icons/foodandbevs/starbucks.svg" alt="Starbucks">
+    </button>
+    <button class="icon-cell" data-sku="water" data-name="Water" data-price="1.00">
+      <img class="icon-img" src="/img/icons/foodandbevs/water.svg" alt="Water">
+    </button>
+  </section>
+
+  <div class="page-bottom-pad"></div>
+</main>
+</body></html>
