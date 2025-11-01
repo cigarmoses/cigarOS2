@@ -1,43 +1,68 @@
-<!doctype html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>POS · Categories</title>
-<link rel="stylesheet" href="/css/system.css">
-</head><body>
-<main>
-  <div class="topbar">
-    <a class="back" href="/"><span>←</span></a>
-    <h1 class="title">POS</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS</title>
+
+  <!-- Core styles -->
+  <link rel="stylesheet" href="../css/system.css" />
+  <link rel="stylesheet" href="./pos.css" />
+</head>
+
+<body class="pos-page">
+  <div class="page">
+    <div class="toprow">
+      <a href="../index.html" style="text-decoration:none;color:inherit;font-size:22px;">←</a>
+      <h1 class="page-title">POS</h1>
+    </div>
+
+    <div class="app-grid">
+      <!-- Pipes -->
+      <a href="../pipes/" class="app-tile">
+        <img src="../img/icons/pipes.svg" class="app-icon" alt="Pipes" />
+      </a>
+
+      <!-- Cigars -->
+      <a href="../cigars/" class="app-tile">
+        <img src="../img/icons/cigars.svg" class="app-icon" alt="Cigars" />
+      </a>
+
+      <!-- Food & Beverages -->
+      <a href="../foodandbevs/" class="app-tile">
+        <img src="../img/icons/foodandbevs.svg" class="app-icon" alt="Food and Beverages" />
+      </a>
+
+      <!-- Learn -->
+      <a href="../learn/" class="app-tile">
+        <img src="../img/icons/learn.svg" class="app-icon" alt="Learn" />
+      </a>
+
+      <!-- Ashtrays -->
+      <a href="../ashtrays/" class="app-tile">
+        <img src="../img/icons/ashtray.svg" class="app-icon" alt="Ashtrays" />
+      </a>
+    </div>
   </div>
 
-  <section class="grid">
-    <!-- Pipes -->
-    <a class="tile" href="/pos/pipes/">
-      <img src="/img/icons/categories/pipes.svg" alt="Pipes">
-    </a>
-
-    <!-- (Cutters REMOVED) -->
-    <!-- Cigars -->
-    <a class="tile" href="/cigars/">
-      <img src="/img/icons/categories/cigars.svg" alt="Cigars">
-    </a>
-
-    <!-- Food & Beverages -->
-    <a class="tile" href="/foodandbevs/">
-      <img src="/img/icons/categories/foodandbevs.svg" alt="Food & Beverages">
-    </a>
-
-    <!-- Packs -->
-    <a class="tile" href="/pos/packs/">
-      <img src="/img/icons/categories/packs.svg" alt="Packs">
-    </a>
-
-    <!-- (Lighters REMOVED) -->
-    <!-- Ashtrays -->
-    <a class="tile" href="/pos/ashtrays/">
-      <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays">
-    </a>
-  </section>
-
-  <div class="page-bottom-pad"></div>
-</main>
-</body></html>
+  <!-- Cart Tab (Floating Bottom Right) -->
+  <div style="
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:#0e1a28;
+    color:white;
+    border-radius:24px;
+    padding:12px 18px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+    font-weight:600;
+  ">
+    <img src="../img/icons/cart.svg" alt="Cart" style="width:18px;height:18px;">
+    <span style="background:#e94d45;border-radius:50%;padding:4px 8px;">3</span>
+    <span>$4.50</span>
+  </div>
+</body>
+</html>
