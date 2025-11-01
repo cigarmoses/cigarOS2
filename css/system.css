@@ -1,147 +1,68 @@
-/* =============== CigarOS • System Styles (Mobile-First, No Icon Backgrounds) =============== */
-
-/* 1) Reset & base */
-*,
-*::before,
-*::after { box-sizing: border-box; }
-
+/* ====== System (Mobile-first) ====== */
 :root{
-  --bg:#eaf1f5;
-  --card: transparent;          /* no background tiles anywhere */
-  --ink:#0f1b2d;
-  --muted:#6b7a90;
-  --shadow:none;
-  --radius:20px;
-  --tap:12px;
-  --gap:18px;
-  --tilePad:18px;
-  --brand:#0f1b2d;
-  --accent:#ff3b30;
+  --page-bg:#eaf2f6;
+  --tile-bg:#ffffff;
+  --ink:#0e1930;
+  --muted:#8aa2b6;
+  --shadow: 0 10px 28px rgba(22,30,50,.08);
+  --radius-tile: 24px;           /* POS tiles */
+  --radius-icon: 24px;           /* rounded corners for square SVGs */
+  --gap: 22px;
+  --grid-cols: 4;                /* 4-up mobile everywhere */
+  --icon-size: 104px;            /* keeps icons from changing size */
+  --title-pt: 28px;              /* Helvetica Neue styling */
+  --title-lh: 1.05;
+  --title-mt: 18px;              /* space from back arrow to title */
+  --title-mb: 18px;              /* space from title to grid */
 }
 
-html,body{ height:100%; }
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,"Segoe UI",Roboto,system-ui,sans-serif;
-  color:var(--ink);
-  background:var(--bg);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-}
+/* Page */
+body{margin:0;background:var(--page-bg);-webkit-font-smoothing:antialiased;}
+main{padding:16px 18px 120px;}
 
-/* 2) Page shell */
-.page{
-  min-height:100dvh;
-  width:100%;
-  margin:0 auto;
-  padding: clamp(14px, 3.5vw, 24px);
-  display:flex;
-  flex-direction:column;
-  gap: clamp(12px, 2.8vw, 18px);
-}
-
-/* back + title */
+/* Top bar */
 .topbar{
-  display:flex;
-  align-items:center;
-  gap:12px;
+  display:flex;align-items:center;gap:12px;
+  padding-top:8px;
 }
-.back-btn{
-  display:inline-grid; place-items:center;
-  width:36px; height:36px; border-radius:999px;
-  text-decoration:none; color:var(--ink);
-}
-.page-title{
-  margin:0 auto;
-  font-weight:800;
-  letter-spacing:.02em;
-  text-transform:uppercase;
-  font-size: clamp(20px, 5.5vw, 28px);
+.back{display:inline-flex;width:28px;height:28px;border-radius:999px;align-items:center;justify-content:center;text-decoration:none;color:var(--ink);}
+.title{
+  margin:var(--title-mt) 0 var(--title-mb);
+  font-family:"Helvetica Neue","Helvetica","Arial",system-ui,sans-serif;
+  font-weight:800; font-size:var(--title-pt); line-height:var(--title-lh); letter-spacing:.3px;
+  color:var(--ink); text-transform:uppercase;
 }
 
-/* 3) Grids & tiles */
-.grid{ display:grid; gap:var(--gap); }
-.grid.cols-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-.grid.cols-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-.grid.cols-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
-
-/* Outer tile — NO BACKGROUND, NO BOX, NO WHITE */
-.app-tile{
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  padding:0;
-  background:transparent !important;
-  box-shadow:none !important;
-  border-radius:0 !important;
-  border:none !important;
-  text-decoration:none; color:var(--ink);
-  min-height:auto;
-  transition: transform .08s ease;
+/* ====== Grids ====== */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(var(--grid-cols), minmax(0,1fr));
+  gap:var(--gap);
 }
-.app-tile:active{ transform: scale(.97); }
 
-/* The SVG/icon itself — rendered AS IS */
-.app-icon{
+/* POS Category tiles (keep white card look) */
+.tile{
+  background:var(--tile-bg);
+  border-radius:var(--radius-tile);
+  box-shadow:var(--shadow);
+  padding:18px;
+}
+.tile img{display:block;width:100%;height:auto;}
+
+/* Icon-only grid (Food/Brands/Cigars lists)  */
+.icon-cell{
+  display:flex;align-items:center;justify-content:center;
+}
+.icon-img{
+  width:var(--icon-size);
+  height:var(--icon-size);
+  object-fit:contain;                 /* show full SVG, no distortion */
   display:block;
-  width: clamp(56px, 24vw, 96px);
-  height:auto;
-  border-radius:0;
-  object-fit:contain;
+  border-radius:var(--radius-icon);   /* << rounded corners applied here */
+  overflow:hidden;                    /* forces clipping on SVGs */
+  box-shadow:none;                    /* no shells or borders */
+  background:transparent;             /* no background behind SVGs */
 }
 
-/* Optional label under icons (used on Cigars/brands) */
-.app-label{
-  margin-top:8px; font-weight:700; font-size:12px; text-align:center; line-height:1.25;
-}
-
-/* 4) Search (Cigars) */
-.search-wrap{ margin-top:2px; margin-bottom:4px; }
-.search{
-  width:100%; height:44px; border-radius:999px; border:none; outline:none;
-  padding:0 16px; font-size:16px; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,.06);
-}
-
-/* 5) Cart dock (bottom-right) */
-.cart-dock{
-  position:fixed; right:clamp(12px,4vw,24px); bottom:clamp(16px,5vw,28px);
-  background:#0b1425; color:#fff; display:flex; align-items:center; gap:10px;
-  height:52px; padding:0 14px 0 12px; border-radius:20px;
-  box-shadow:0 10px 40px rgba(0,0,0,.22);
-}
-.cart-dock .cart-icon{ width:22px; height:22px; display:block; }
-.cart-dock .cart-count{
-  background:var(--accent); border-radius:999px; min-width:28px; height:28px;
-  display:inline-grid; place-items:center; font-weight:800;
-}
-.cart-dock .cart-total{ font-weight:800; letter-spacing:.01em; }
-
-/* ───────── Desktop helpers (inactive on mobile) ───────── */
-@media (min-width:768px){
-  .page{ max-width:1100px; }
-  .grid.cols-2{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-  .grid.cols-3{ grid-template-columns: repeat(4, minmax(0,1fr)); }
-  .grid.cols-4{ grid-template-columns: repeat(5, minmax(0,1fr)); }
-  .app-icon{ width: clamp(72px, 48%, 140px); }
-}
-@media (min-width:1024px){
-  .page{ max-width:1280px; }
-  .page-title{ font-size: clamp(32px, 2.6vw, 48px); }
-  .grid{ gap: clamp(18px, 2vw, 28px); }
-  .app-icon{ width: clamp(84px, 46%, 160px); }
-}
-
-/* ========== LEGACY KILL-SWITCH (neutralize old classes that add white boxes) ========== */
-/* If any old styles exist (.tile, .category, .pos-card, .icon-bg, etc.), make them transparent. */
-.tile, .category, .category-tile, .pos-card, .icon-bg, .icon-shell, .surface, .inner, .panel {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-.tile img, .category img, .pos-card img, .icon-bg img, .icon-shell img {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  object-fit: contain !important;
-}
+/* Sticky bill button space */
+.page-bottom-pad{height:110px;}
