@@ -2,114 +2,188 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Food & Beverages</title>
-  <link rel="preload" href="/css/system.css" as="style">
-  <link rel="stylesheet" href="/css/system.css">
-  <style>
-    :root{
-      --bg:#eaf2f6; --ink:#0f2433; --tile:#fff;
-      --shadow:0 10px 24px rgba(15,36,51,.10);
-      --radius:22px; --gap:18px;
-    }
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
-    .wrap{max-width:980px;margin:0 auto;padding:20px 18px 120px}
-    .back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);opacity:.7;font-weight:600}
-    h1{font-size:32px;line-height:1.1;font-weight:800;margin:14px 0 22px;letter-spacing:.5px}
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap)}
-    @media (max-width:960px){.grid{grid-template-columns:repeat(3,1fr)}}
-    @media (max-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
-    @media (max-width:460px){.grid{grid-template-columns:repeat(3,1fr)}}
 
-    .tile{
-      background:var(--tile);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:12px 10px 14px;display:flex;flex-direction:column;align-items:center;text-decoration:none;color:var(--ink)
+  <!-- Base styles (your existing system.css) -->
+  <link rel="stylesheet" href="/css/system.css" />
+
+  <!-- Hard-lock this page to 4-up grid and ensure mobile cart/modal look right -->
+  <style>
+    /* 4-per-row on mobile */
+    .grid--foods {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      padding: 12px 16px 96px; /* bottom room for cart pill */
     }
-    .icon{width:90px;height:90px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
-    .icon img{width:100%;height:100%;object-fit:contain;background:transparent;display:block}
-    .name{font-weight:700;font-size:14px;text-align:center;line-height:1.2}
-    .price{font-size:12px;opacity:.65;margin-top:2px}
-    .fallback{width:90px;height:90px;border-radius:20px;border:2px dashed rgba(15,36,51,.25);display:flex;align-items:center;justify-content:center;font-weight:700;opacity:.55}
+    /* Icon tile wrapper – no gray boxes, just clean tiles */
+    .food-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+    }
+    .food-tile__btn {
+      width: 74px;
+      height: 74px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(9,30,66,0.08);
+      background: var(--surface, #ffffff);
+      border: none;
+      padding: 0;
+    }
+    .food-tile__btn img,
+    .food-tile__btn svg {
+      width: 74px; height: 74px;
+      border-radius: 18px;          /* respects rounded-corner SVG artwork */
+      display: block;
+    }
+    .food-tile__label {
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.1;
+      color: #142033;
+    }
+    .food-tile__price {
+      font-size: 13px;
+      color: #5b738d;
+      margin-top: -2px;
+    }
+
+    /* Page header */
+    .page {
+      background: #eaf1f5; /* your soft blue */
+      min-height: 100dvh;
+    }
+    .header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px;
+    }
+    .header a { text-decoration: none; color: #203147; font-weight: 800; }
+    .title {
+      padding: 0 16px 8px;
+      font-size: 32px; line-height: 1.05; font-weight: 900;
+      color: #203147;
+    }
+
+    /* Floating cart pill (bottom-right) */
+    .cart-pill {
+      position: fixed;
+      right: 16px; bottom: 20px;
+      display: flex; align-items: center; gap: 12px;
+      background: #0f1b2b;
+      color: #fff;
+      border-radius: 22px;
+      padding: 12px 18px;
+      box-shadow: 0 14px 28px rgba(14,27,45,0.35);
+      z-index: 40;
+    }
+    .cart-pill__count {
+      background: #e04c4c;
+      min-width: 28px; height: 28px;
+      border-radius: 999px;
+      display: grid; place-items: center;
+      font-weight: 800;
+    }
+    .cart-pill__total {
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    /* Modal sheet */
+    .sheet {
+      position: fixed; inset: 0; z-index: 50;
+      display: none;
+    }
+    .sheet--open { display: block; }
+    .sheet__scrim {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(2px);
+    }
+    .sheet__panel {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      background: #0f1b2b; color: white;
+      border-radius: 20px 20px 0 0;
+      padding: 18px 16px 20px;
+    }
+    .sheet__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .sheet__title { font-size: 22px; font-weight: 900; }
+    .sheet__price { font-size: 20px; font-weight: 800; }
+
+    .qty {
+      display: flex; align-items: center; gap: 12px;
+      margin: 14px 0 8px;
+    }
+    .qty button {
+      width: 56px; height: 56px; border-radius: 14px; border: none;
+      background: #0b1523; color: white; font-size: 26px; font-weight: 900;
+    }
+    .qty__val {
+      width: 74px; height: 56px; border-radius: 14px; border: none;
+      display: grid; place-items: center; background: #142033; font-size: 20px; font-weight: 800;
+    }
+
+    .sheet__subtotal {
+      color: #a7b8cc; font-size: 14px; margin: 8px 0 14px;
+    }
+
+    .sheet__actions {
+      display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px;
+    }
+    .btn {
+      height: 52px; border: none; border-radius: 14px; font-weight: 800; font-size: 16px;
+    }
+    .btn--ghost { background: #1a2940; color: #cfe0f2; }
+    .btn--primary { background: #ff4343; color: white; }
   </style>
 </head>
-<body>
-  <div class="wrap">
-    <a class="back" href="/pos/"><span aria-hidden="true">←</span> POS</a>
-    <h1>FOOD &amp; BEVERAGES</h1>
+<body class="page">
 
-    <div id="grid" class="grid"></div>
+  <!-- Header -->
+  <div class="header">
+    <a href="/pos/" aria-label="Back">←</a>
+    <span style="font-weight:800;color:#5b738d;">POS</span>
+  </div>
+  <h1 class="title">FOOD &amp; BEVERAGES</h1>
+
+  <!-- Grid -->
+  <main id="grid" class="grid--foods" aria-live="polite"></main>
+
+  <!-- Floating cart pill -->
+  <button id="cartPill" class="cart-pill" type="button">
+    <span class="cart-pill__count" id="cartCount">0</span>
+    <span class="cart-pill__total" id="cartTotal">$0.00</span>
+  </button>
+
+  <!-- Quantity modal sheet -->
+  <div id="sheet" class="sheet" aria-hidden="true">
+    <div class="sheet__scrim" data-close-sheet></div>
+    <div class="sheet__panel">
+      <div class="sheet__row">
+        <div class="sheet__title" id="sheetTitle">Item</div>
+        <div class="sheet__price" id="sheetPrice">$0.00</div>
+      </div>
+
+      <div class="qty">
+        <button id="btnMinus" aria-label="Decrease">−</button>
+        <div class="qty__val" id="qtyVal">1</div>
+        <button id="btnPlus" aria-label="Increase">+</button>
+      </div>
+
+      <div class="sheet__subtotal" id="sheetSubtotal">$0.00 subtotal</div>
+
+      <div class="sheet__actions">
+        <button class="btn btn--ghost" data-close-sheet>Cancel</button>
+        <button id="btnAddToBill" class="btn btn--primary">Add to Bill</button>
+      </div>
+    </div>
   </div>
 
-  <script>
-    // Absolute, explicit filename mapping so icons never miss
-    const ICON_BASE = "/img/icons/foodandbevs/";
-
-    const ITEMS = [
-      { name:"7 Up",                    price:1.50, icon:"7up.svg" },
-      { name:"Cocacola",               price:1.50, icon:"cocacola.svg" },
-      { name:"Coke Zero",              price:1.50, icon:"cokezero.svg" },
-      { name:"Diet Coke",              price:1.50, icon:"dietcoke.svg" },
-      { name:"Diet Dr. Pepper",        price:1.50, icon:"dietdrpepper.svg" },
-      { name:"Dr. Pepper",             price:1.50, icon:"drpepper.svg" },
-      { name:"Dunkin",                 price:3.50, icon:"dunkin.svg" },
-      { name:"Gatorade",               price:3.50, icon:"gatorade.svg" },
-      { name:"Gingerale",               price:3.50, icon:"gingerale.svg" },
-      { name:"GP Sweet Tea",           price:1.50, icon:"gpsweettea.svg" },
-      { name:"GP Unsweetened Tea",     price:1.50, icon:"gpunsweetenedtea.svg" },
-      { name:"GP Zero Sugar Sweet Tea",price:1.50, icon:"gpzerosugarsweettea.svg" },
-      { name:"Monster Tea",            price:3.50, icon:"monstertea.svg" },
-      { name:"Mountain Dew",           price:1.50, icon:"mountaindew.svg" },
-      { name:"Pepsi",                  price:1.50, icon:"pepsi.svg" },
-      { name:"Red Bull",               price:3.50, icon:"redbull.svg" },
-      { name:"Root Beer",              price:1.50, icon:"rootbeer.svg" },
-      { name:"Sprite",                 price:1.50, icon:"sprite.svg" },
-      { name:"Starbucks",              price:3.50, icon:"starbucks.svg" },
-      { name:"Water",                  price:1.50, icon:"water.svg" }
-    ];
-
-    const grid = document.getElementById('grid');
-
-    ITEMS.forEach(item => {
-      const a = document.createElement('a');
-      a.className = 'tile';
-      a.href = '#'; // keep your existing modal/cart wiring if needed
-
-      const icon = document.createElement('div');
-      icon.className = 'icon';
-
-      const img = document.createElement('img');
-      img.alt = item.name;
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.src = ICON_BASE + item.icon;
-      img.onerror = () => { icon.innerHTML = '<div class="fallback">SVG</div>'; };
-
-      icon.appendChild(img);
-
-      const name = document.createElement('div');
-      name.className = 'name';
-      name.textContent = item.name;
-
-      const price = document.createElement('div');
-      price.className = 'price';
-      price.textContent = `$${item.price.toFixed(2)}`;
-
-      a.appendChild(icon);
-      a.appendChild(name);
-      a.appendChild(price);
-
-      // If you have a global add-to-bill handler, expose data attributes:
-      a.dataset.itemName  = item.name;
-      a.dataset.itemPrice = item.price;
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        // Hook back into your existing drawer/modal if present:
-        const evt = new CustomEvent('pos:add', { detail: { name:item.name, price:item.price }});
-        window.dispatchEvent(evt);
-      });
-
-      grid.appendChild(a);
-    });
-  </script>
+  <!-- Page logic (keeps your image pathing exactly as-is) -->
+  <script src="/js/foodandbevs.js"></script>
 </body>
 </html>
