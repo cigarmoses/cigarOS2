@@ -2,56 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>POS</title>
-  <link rel="stylesheet" href="/css/system.css" />
   <style>
-    .page { background:#eaf1f5; min-height:100dvh; }
-    .header{display:flex;align-items:center;gap:12px;padding:16px}
-    .header a{color:#203147;font-weight:800;text-decoration:none}
-    .title{padding:0 16px 8px;font:900 32px/1.05 system-ui;color:#203147}
-
-    .grid--cats{
-      display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:18px; padding:12px 16px 96px;
-    }
-    .tile{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
-    .tile__btn{width:74px;height:74px;border-radius:18px;box-shadow:0 8px 24px rgba(9,30,66,.08);background:#fff;border:none;padding:0}
-    .tile__btn img{width:74px;height:74px;border-radius:18px;display:block}
-    .tile__label{font:700 14px/1.1 system-ui;color:#142033}
+    :root{--bg:#eaf2f6;--ink:#0f1a2c;--muted:#6d7b8e;--shadow:0 8px 30px rgba(20,30,50,.16)}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--ink);font:600 18px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    header{position:sticky;top:0;z-index:5;background:linear-gradient(#eaf2f6,#eaf2f6cc 70%,#eaf2f600);padding:20px 18px 8px}
+    .row{display:flex;align-items:center;gap:12px}
+    h1{margin:0 4px;font-size:36px;letter-spacing:.5px}
+    main{padding:16px 14px 120px;max-width:1100px;margin:0 auto}
+    .grid{display:grid;gap:24px;grid-template-columns:repeat(4,1fr)}
+    .cell{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+    .tile{width:100%;aspect-ratio:1/1;border-radius:22px;background:#fff;display:grid;place-items:center;box-shadow:var(--shadow);text-decoration:none}
+    .tile img{width:84px;height:84px;object-fit:contain;display:block}
+    .name{font-size:16px;font-weight:800}
+    a{color:inherit;text-decoration:none}
+    @media (max-width:480px){.grid{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
-<body class="page">
-  <div class="header">
-    <a href="/">←</a><span style="font-weight:800;color:#5b738d">HOME</span>
-  </div>
-  <h1 class="title">POS</h1>
+<body>
+  <header>
+    <div class="row">
+      <h1>POS</h1>
+    </div>
+  </header>
 
-  <main id="grid" class="grid--cats" aria-live="polite"></main>
+  <main>
+    <section class="grid" aria-label="POS Categories">
+      <!-- Food & Beverages -->
+      <a class="cell" href="/pos/foodandbevs/">
+        <span class="tile">
+          <img src="/img/icons/categories/foodandbevs.svg" alt="Food & Beverages icon" loading="eager">
+        </span>
+        <span class="name">Food & Beverages</span>
+      </a>
 
-  <script>
-    const CATS = [
-      { name:"Pipes", slug:"pipes", href:"/pipes/" },
-      { name:"Cigars", slug:"cigars", href:"/cigars/" },
-      { name:"Food & Bevs", slug:"foodandbevs", href:"/foodandbevs/" },
-      { name:"Accessories", slug:"accessories", href:"/accessories/" },
-      { name:"Packs", slug:"packs", href:"/packs/" },
-      { name:"Ashtrays", slug:"ashtrays", href:"/ashtrays/" },
-    ];
-    const grid = document.getElementById('grid');
-    const frag = document.createDocumentFragment();
+      <!-- Cigars -->
+      <a class="cell" href="/pos/cigars/">
+        <span class="tile">
+          <img src="/img/icons/categories/cigars.svg" alt="Cigars icon" loading="lazy">
+        </span>
+        <span class="name">Cigars</span>
+      </a>
 
-    CATS.forEach(c=>{
-      const wrap=document.createElement('div'); wrap.className='tile';
-      const btn=document.createElement('a'); btn.className='tile__btn'; btn.href=c.href; btn.setAttribute('aria-label',c.name);
-      const img=document.createElement('img'); img.alt=c.name; img.src=`/img/icons/categories/${c.slug}.svg`;
-      btn.appendChild(img);
+      <!-- Pipes -->
+      <a class="cell" href="/pos/pipes/">
+        <span class="tile">
+          <img src="/img/icons/categories/pipes.svg" alt="Pipes icon" loading="lazy">
+        </span>
+        <span class="name">Pipes</span>
+      </a>
 
-      const label=document.createElement('div'); label.className='tile__label'; label.textContent=c.name;
-      wrap.append(btn,label); frag.appendChild(wrap);
-    });
+      <!-- Packs -->
+      <a class="cell" href="/pos/packs/">
+        <span class="tile">
+          <img src="/img/icons/categories/packs.svg" alt="Packs icon" loading="lazy">
+        </span>
+        <span class="name">Packs</span>
+      </a>
 
-    grid.appendChild(frag);
-  </script>
+      <!-- Ashtrays -->
+      <a class="cell" href="/pos/ashtrays/">
+        <span class="tile">
+          <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays icon" loading="lazy">
+        </span>
+        <span class="name">Ashtrays</span>
+      </a>
+
+      <!-- Accessories -->
+      <a class="cell" href="/pos/accessories/">
+        <span class="tile">
+          <img src="/img/icons/categories/accessories.svg" alt="Accessories icon" loading="lazy">
+        </span>
+        <span class="name">Accessories</span>
+      </a>
+    </section>
+  </main>
 </body>
 </html>
