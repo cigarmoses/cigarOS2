@@ -15,7 +15,7 @@
   header .title{margin:0 auto;font-weight:900;font-size:28px;letter-spacing:.5px;text-align:center}
   main{padding:14px}
 
-  /* 4-up grid; ICONS ONLY – no captions under icons */
+  /* 4-up grid; ICONS ONLY (no captions) */
   .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 16px}
   .item{display:flex;flex-direction:column;align-items:center;text-decoration:none;color:inherit;background:transparent;border:none;padding:0}
   .thumb{width:90px;height:90px;border-radius:20px;overflow:hidden}
@@ -87,8 +87,10 @@
   </aside>
 
   <script>
-    // EXACT icon folder + slugs (all lowercase, no spaces/punctuation)
+    // Folder is exactly the one you showed:
     const ICON_BASE = '/img/icons/foodandbevs';
+
+    // Slugs EXACTLY match your filenames (all lowercase, no spaces)
     const ITEMS = [
       {name:'7 Up', price:1.50, slug:'7up'},
       {name:'Cocacola', price:1.50, slug:'cocacola'},
@@ -100,7 +102,7 @@
       {name:'Gatorade', price:3.50, slug:'gatorade'},
       {name:'Ginger Ale', price:1.50, slug:'gingerale'},
       {name:'GP Sweet Tea', price:1.50, slug:'gpsweettea'},
-      {name:'GP Unsweetened Tea', price:1.50, slug:'gpunsweetened'},
+      {name:'GP Unsweetened Tea', price:1.50, slug:'gpunsweetenedtea'},
       {name:'GP Zero Sugar Sweet Tea', price:1.50, slug:'gpzerosugarsweettea'},
       {name:'Monster Tea', price:3.50, slug:'monstertea'},
       {name:'Mountain Dew', price:1.50, slug:'mountaindew'},
@@ -112,7 +114,7 @@
       {name:'Water', price:1.50, slug:'water'}
     ];
 
-    // Render icons ONLY (no captions) for neat 4x rows
+    // Render (icons only)
     const $grid=document.getElementById('grid');
     $grid.innerHTML = ITEMS.map((it,i)=>`
       <button class="item" data-i="${i}" aria-label="${it.name}">
@@ -122,7 +124,7 @@
       </button>
     `).join('');
 
-    // Cart helpers (shared key across POS)
+    // Cart utils
     const CART_KEY='cigaros_cart_v1';
     const $count=document.getElementById('cartCount'),$total=document.getElementById('cartTotal');
     const read=()=>{try{return JSON.parse(localStorage.getItem(CART_KEY)||'[]')}catch{return[]}};
@@ -137,7 +139,7 @@
     document.getElementById('minus').onclick=()=>{if(!cur)return;cur.qty=Math.max(1,cur.qty-1);$qty.textContent=cur.qty;$sub.textContent=`$${(cur.qty*cur.price).toFixed(2)} subtotal`}
     document.getElementById('plus').onclick =()=>{if(!cur)return;cur.qty++;$qty.textContent=cur.qty;$sub.textContent=`$${(cur.qty*cur.price).toFixed(2)} subtotal`}
     document.getElementById('cancel').onclick=closeSheet;
-    document.getElementById('add').onclick=()=>{if(!cur)return;const cart=read();const key=\`${cur.name}@${cur.price}\`;const hit=cart.find(i=>i.key===key);if(hit){hit.qty+=cur.qty}else{cart.push({key,name:cur.name,price:cur.price,qty:cur.qty,slug:cur.slug,cat:'foodandbevs'})}write(cart);closeSheet()};
+    document.getElementById('add').onclick=()=>{if(!cur)return;const cart=read();const key=`${cur.name}@${cur.price}`;const hit=cart.find(i=>i.key===key);if(hit){hit.qty+=cur.qty}else{cart.push({key,name:cur.name,price:cur.price,qty:cur.qty,slug:cur.slug,cat:'foodandbevs'})}write(cart);closeSheet()};
     $grid.addEventListener('click',e=>{const b=e.target.closest('.item');if(!b)return;openSheet(ITEMS[+b.dataset.i])});
   </script>
 </body>
