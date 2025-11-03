@@ -1,30 +1,170 @@
-/* POS home (categories) — keep layout, remove white card backgrounds */
-:root{
-  --bg:#e9f1f5;
-  --ink:#0f1c2e;
-}
-body{background:var(--bg);margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Apple Color Emoji";}
-h1{margin:24px 20px 8px;font-size:34px;letter-spacing:.5px;color:var(--ink);}
-
-.pos-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:24px;
-  padding:16px 20px 120px;
+:root {
+  --pos-bg: #eaf2f6;
+  --pos-ink: #0f1a2c;
+  --pos-muted: #6b7a90;
+  --pos-line: #dfe7ee;
+  --pos-accent: #3775c8;
+  --pos-card: #ffffff;
+  --pos-shadow: 0 10px 28px rgba(15,26,44,.10);
+  --pos-bill: #091423;
+  --pos-badge: #ff2d2d;
 }
 
-/* kill all white wrappers/cards that may exist */
-.card,.category-card,.tile,.icon-card{
-  background:transparent !important;
-  box-shadow:none !important;
-  border:0 !important;
+html, body {
+  margin: 0;
+  background: var(--pos-bg);
+  color: var(--pos-ink);
+  font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* icon tile content */
-.cat-tile{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:10px;padding:6px;
+.pos-wrap {
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 12px 12px 72px;
+  box-sizing: border-box;
 }
-.cat-tile .thumb{width:92px;height:92px}
-.cat-tile .thumb img{width:100%;height:100%;object-fit:contain;display:block}
-.cat-tile .label{font-weight:800;font-size:18px;letter-spacing:.2px;color:var(--ink);text-align:center}
+
+/* top bar with centered title */
+.pos-topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  margin-bottom: 6px;
+}
+
+.pos-back {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pos-accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.pos-star {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;
+  color: #f5d34f;
+}
+
+.pos-header-spacer {
+  height: 14px;
+}
+
+.pos-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 30px;
+  margin: 0 0 10px 0;
+}
+
+/* search bar */
+.pos-search {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 999px;
+  padding: 10px 12px;
+  border: 1px solid var(--pos-line);
+  box-shadow: var(--pos-shadow);
+  margin-bottom: 14px;
+}
+.pos-search input {
+  border: 0;
+  outline: 0;
+  width: 100%;
+  font-size: 15px;
+  background: transparent;
+}
+
+/* grid */
+.pos-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 0;
+}
+.pos-tile {
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.pos-tile-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background: #d9d9d9;
+  border: 1px solid rgba(0,0,0,.04);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.pos-tile-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pos-tile-label {
+  font-size: 14px;
+  font-weight: 500; /* Helvetica Neue Medium look */
+}
+
+.empty {
+  text-align: center;
+  color: var(--pos-muted);
+  margin-top: 20px;
+}
+
+/* universal bill tab bottom-right */
+.pos-bill-tab {
+  position: fixed;
+  right: 12px;
+  bottom: 16px;
+  background: var(--pos-bill);
+  color: #fff;
+  border-radius: 999px;
+  padding: 10px 16px 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 14px 45px rgba(0,0,0,.25);
+  z-index: 999;
+}
+.pos-bill-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+.pos-bill-badge {
+  background: var(--pos-badge);
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+.pos-bill-total {
+  font-weight: 600;
+  font-size: 15px;
+}
