@@ -1,33 +1,33 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>CIGARS • POS</title>
-<style>
-  :root{
-    --bg:#eaf2f6; --ink:#0f1a2c; --muted:#6b7a90; --brand:#3775c8; --line:#dfe7ee;
-    --card:#fff; --shadow:0 10px 28px rgba(15,26,44,.10);
-  }
-  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-  .wrap{max-width:480px;margin:0 auto;padding:12px 12px 64px}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CIGARS • POS</title>
+  <style>
+    :root{
+      --bg:#eaf2f6; --ink:#0f1a2c; --muted:#6b7a90; --brand:#3775c8; --line:#dfe7ee;
+      --card:#fff; --shadow:0 10px 28px rgba(15,26,44,.10);
+    }
+    html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+    .wrap{max-width:480px;margin:0 auto;padding:12px 12px 64px}
 
-  .top{display:flex;align-items:center;gap:10px;margin:4px 0 10px}
-  .back{display:inline-flex;gap:6px;align-items:center;color:#3775c8;text-decoration:none;font-weight:600}
-  h1{margin:6px 0 10px 0;font-size:26px;letter-spacing:.2px}
+    .top{display:flex;align-items:center;gap:10px;margin:4px 0 10px}
+    .back{display:inline-flex;gap:6px;align-items:center;color:var(--brand);text-decoration:none;font-weight:600}
+    h1{margin:6px 0 10px 0;font-size:26px;letter-spacing:.2px}
 
-  .search{display:flex;align-items:center;background:#fff;border-radius:999px;padding:10px 12px;border:1px solid var(--line);box-shadow:var(--shadow)}
-  .search input{border:0;outline:0;width:100%;font-size:15px}
-  .search svg{opacity:.6}
+    .search{display:flex;align-items:center;background:#fff;border-radius:999px;padding:10px 12px;border:1px solid var(--line);box-shadow:var(--shadow)}
+    .search input{border:0;outline:0;width:100%;font-size:15px}
+    .search svg{opacity:.6}
 
-  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:14px}
-  .tile{display:flex;flex-direction:column;gap:6px;align-items:center;text-decoration:none;color:inherit}
-  .icon{width:72px;height:72px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);display:grid;place-items:center;overflow:hidden}
-  .icon img{width:100%;height:100%;object-fit:contain;background:#000}
-  .name{font-weight:700;text-align:center;font-size:14px}
-  .count{font-size:12px;color:var(--muted)}
-  .empty{color:var(--muted);text-align:center;margin:24px 0}
-</style>
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:14px}
+    .tile{display:flex;flex-direction:column;gap:6px;align-items:center;text-decoration:none;color:inherit}
+    .icon{width:72px;height:72px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);display:grid;place-items:center;overflow:hidden}
+    .icon img{width:100%;height:100%;object-fit:contain;background:#000}
+    .name{font-weight:700;text-align:center;font-size:14px}
+    .count{font-size:12px;color:var(--muted)}
+    .empty{color:var(--muted);text-align:center;margin:24px 0}
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -42,111 +42,102 @@
     </div>
 
     <div id="grid" class="grid"></div>
-    <div id="empty" class="empty" style="display:none;">No brands match your search.</div>
+    <div id="empty" class="empty" style="display:none;">Could not load /pos/data/cigars_master.json</div>
   </div>
 
-<script>
-const DATA_URL = "/pos/data/cigars_master.json";
+  <script>
+    const DATA_URL = "/pos/data/cigars_master.json";
+    const $grid = document.getElementById('grid');
+    const $q = document.getElementById('q');
+    const $empty = document.getElementById('empty');
+    let BRANDS = [];
 
-/* Helpers */
-function rootify(p){ return p ? '/' + String(p).replace(/^\/+/, '') : ''; }
-function slug(s){
-  return String(s||'')
-    .toLowerCase()
-    .replace(/&/g,'and')
-    .replace(/[^a-z0-9]+/g,''); // compact slug (matches your existing folders like /pos/cigars/aladino/)
-}
-
-/* Robust icon loader with fallbacks */
-function setBrandIcon(imgEl, brand, providedPath){
-  const provided = providedPath ? rootify(providedPath) : "";
-  if (provided) {
-    imgEl.src = provided;
-    imgEl.onerror = () => tryFallbacks(imgEl, brand);
-    return;
-  }
-  tryFallbacks(imgEl, brand);
-}
-function tryFallbacks(imgEl, brand){
-  const s = slug(brand);
-  const candidates = [
-    `/img/icons/brands/${s}.svg`,
-    `/img/icons/brand/${s}.svg`
-  ];
-  let i = 0;
-  function next(){
-    if (i >= candidates.length) return;
-    imgEl.onerror = () => { i++; next(); };
-    imgEl.src = candidates[i];
-  }
-  next();
-}
-
-/* Build the brand tiles */
-const $grid = document.getElementById('grid');
-const $q = document.getElementById('q');
-const $empty = document.getElementById('empty');
-
-let BRANDS = []; // [{name, img, count, href}]
-
-function buildTile(b){
-  const a = document.createElement('a');
-  a.className = 'tile';
-  a.href = `/pos/cigars/${slug(b.name)}/`; // expects brand folder (e.g., /pos/cigars/aladino/)
-  a.innerHTML = `
-    <div class="icon"><img alt="${b.name} logo"></div>
-    <div class="name">${b.name}</div>
-    <div class="count">${b.count} cigar${b.count===1?'':'s'}</div>
-  `;
-  const img = a.querySelector('img');
-  setBrandIcon(img, b.name, b.img);
-  return a;
-}
-
-function render(list){
-  $grid.innerHTML = '';
-  if (!list || list.length === 0){
-    $empty.style.display = 'block';
-    return;
-  }
-  $empty.style.display = 'none';
-  list.forEach(b => $grid.appendChild(buildTile(b)));
-}
-
-/* Live search */
-$q.addEventListener('input', ()=>{
-  const q = $q.value.trim().toLowerCase();
-  const filtered = BRANDS.filter(b => b.name.toLowerCase().includes(q));
-  render(filtered);
-});
-
-/* Load data and aggregate brands */
-fetch(DATA_URL)
-  .then(r => {
-    if(!r.ok) throw new Error("Failed to load " + DATA_URL);
-    return r.json();
-  })
-  .then(rows => {
-    const map = new Map();
-    for(const r of rows){
-      const name = String(r["Brand"]||"").trim();
-      if(!name) continue;
-      const img = r["Brand IMG"] || "";
-      if(!map.has(name)){
-        map.set(name, { name, img, count: 0 });
-      }
-      map.get(name).count += 1;
+    function slug(s){
+      return String(s||'')
+        .toLowerCase()
+        .replace(/&/g,'and')
+        .replace(/[^a-z0-9]+/g,'');
     }
-    BRANDS = Array.from(map.values()).sort((a,b)=> a.name.localeCompare(b.name));
+    function rootify(p){ return p ? '/' + String(p).replace(/^\/+/, '') : ''; }
 
-    // If you only have Aladino for now, it still shows just that one.
-    render(BRANDS);
-  })
-  .catch(err => {
-    console.error(err);
-    $empty.textContent = "Could not load " + DATA_URL;
-    $empty.style.display = 'block';
-  });
-</script>
+    function setBrandIcon(imgEl, brand, providedPath){
+      const provided = providedPath ? rootify(providedPath) : "";
+      if (provided) {
+        imgEl.src = provided;
+        imgEl.onerror = () => tryFallbacks(imgEl, brand);
+        return;
+      }
+      tryFallbacks(imgEl, brand);
+    }
+    function tryFallbacks(imgEl, brand){
+      const s = slug(brand);
+      const candidates = [
+        `/img/icons/brands/${s}.svg`,
+        `/img/icons/brand/${s}.svg`
+      ];
+      let i = 0;
+      function next(){
+        if (i >= candidates.length) return;
+        imgEl.onerror = () => { i++; next(); };
+        imgEl.src = candidates[i];
+      }
+      next();
+    }
+
+    function buildTile(b){
+      const a = document.createElement('a');
+      a.className = 'tile';
+      // expects brand folders like /pos/cigars/aladino/
+      a.href = `/pos/cigars/${slug(b.name)}/`;
+      a.innerHTML = `
+        <div class="icon"><img alt="${b.name} logo"></div>
+        <div class="name">${b.name}</div>
+        <div class="count">${b.count} cigar${b.count === 1 ? '' : 's'}</div>
+      `;
+      const img = a.querySelector('img');
+      setBrandIcon(img, b.name, b.img);
+      return a;
+    }
+
+    function render(list){
+      $grid.innerHTML = '';
+      if (!list || list.length === 0){
+        $empty.style.display = 'block';
+        return;
+      }
+      $empty.style.display = 'none';
+      list.forEach(b => $grid.appendChild(buildTile(b)));
+    }
+
+    $q.addEventListener('input', ()=>{
+      const q = $q.value.trim().toLowerCase();
+      const filtered = BRANDS.filter(b => b.name.toLowerCase().includes(q));
+      render(filtered);
+    });
+
+    fetch(DATA_URL)
+      .then(r => {
+        if(!r.ok) throw new Error("fetch failed");
+        return r.json();
+      })
+      .then(rows => {
+        const map = new Map();
+        rows.forEach(r => {
+          const name = (r["Brand"] || "").trim();
+          if(!name) return;
+          const img = r["Brand IMG"] || "";
+          if(!map.has(name)){
+            map.set(name, { name, img, count: 0 });
+          }
+          map.get(name).count += 1;
+        });
+        BRANDS = Array.from(map.values()).sort((a,b)=>a.name.localeCompare(b.name));
+        render(BRANDS);
+      })
+      .catch(err => {
+        console.error(err);
+        $empty.style.display = 'block';
+      });
+  </script>
 </body>
 </html>
