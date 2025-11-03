@@ -1,90 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smoke · Home</title>
-  <link rel="stylesheet" href="/css/system.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Smoke Cigar Shop & Lounge</title>
   <style>
-    /* Home-only layout to match your screenshot */
-    .home{
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 var(--s-5) var(--s-8);
+    :root {
+      --bg: #eaf2f6;
+      --ink: #0f1a2c;
+      --muted: #607080;
     }
-    .home__grid{
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding-top: 28px;
+    }
+
+    /* logo styling */
+    .shop-logo {
+      width: 64px; /* reduced to 1/4 of main icon height */
+      height: auto;
+      margin-bottom: 24px;
+    }
+
+    /* grid of main icons */
+    .home-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr); /* 2-up like your mock */
-      gap: 22px;
-      margin-top: 22px;
-      margin-bottom: 28px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px 36px;
+      justify-items: center;
+      margin-top: 24px;
     }
-    .tile{
+
+    /* icon wrapper with white rounded bg */
+    .icon-tile {
+      width: 140px;
+      height: 140px;
       background: #ffffff;
-      border-radius: 26px;
-      box-shadow: 0 18px 40px rgba(8,15,30,.10);
+      border-radius: 124px;
       display: flex;
       align-items: center;
       justify-content: center;
-      aspect-ratio: 1 / 1;      /* perfect square */
-      -webkit-tap-highlight-color: transparent;
-      outline: none;
-      text-decoration: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
     }
-    .tile img{
-      display: block;
-      width: 62%;
-      height: 62%;
-      object-fit: contain;
+    .icon-tile:hover {
+      transform: scale(1.05);
     }
 
-    /* Tablet/Desktop: keep the same look, just breathe a bit more */
-    @media (min-width: 820px){
-      .home__grid{ gap: 28px; }
-      .tile{ border-radius: 28px; }
-      .tile img{ width: 60%; height: 60%; }
+    .icon-tile img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
     }
   </style>
 </head>
 <body>
-  <main class="page home">
-    <!-- Centered logo (sizing controlled in /css/system.css) -->
-    <section class="home__logo-wrap">
-      <img src="/img/homescreenlogo.svg"
-           alt="Smoke Cigar Shop & Lounge"
-           class="home__logo">
-    </section>
+  <!-- shop logo -->
+  <img src="/img/homescreenlogo.svg" alt="Smoke Cigar Shop & Lounge" class="shop-logo">
 
-    <!-- 2-column icon tiles, no captions -->
-    <section class="home__grid" aria-label="Main Apps">
-      <a class="tile" href="/pos/" aria-label="POS">
-        <img src="/img/icons/pos.svg" alt="">
-      </a>
-
-      <a class="tile" href="/today/" aria-label="Today">
-        <img src="/img/icons/today.svg" alt="">
-      </a>
-
-      <a class="tile" href="/loyalty/" aria-label="Loyalty">
-        <img src="/img/icons/loyalty.svg" alt="">
-      </a>
-
-      <a class="tile" href="/reports/" aria-label="Reports">
-        <img src="/img/icons/reports.svg" alt="">
-      </a>
-
-      <a class="tile" href="/learn/" aria-label="Learn">
-        <img src="/img/icons/learn.svg" alt="">
-      </a>
-
-      <a class="tile" href="/news/" aria-label="News">
-        <img src="/img/icons/news.svg" alt="">
-      </a>
-
-      <a class="tile" href="/hub/" aria-label="Hub">
-        <img src="/img/icons/hub.svg" alt="">
-      </a>
-    </section>
-  </main>
+  <!-- main home grid -->
+  <div class="home-grid">
+    <a href="/pos/" class="icon-tile"><img src="/img/icons/pos.svg" alt="POS"></a>
+    <a href="/today/" class="icon-tile"><img src="/img/icons/today.svg" alt="Today"></a>
+    <a href="/loyalty/" class="icon-tile"><img src="/img/icons/loyalty.svg" alt="Loyalty"></a>
+    <a href="/hub/" class="icon-tile"><img src="/img/icons/hub.svg" alt="Hub"></a>
+    <a href="/reports/" class="icon-tile"><img src="/img/icons/reports.svg" alt="Reports"></a>
+    <a href="/learn/" class="icon-tile"><img src="/img/icons/learn.svg" alt="Learn"></a>
+    <a href="/news/" class="icon-tile"><img src="/img/icons/news.svg" alt="News"></a>
+  </div>
 </body>
 </html>
