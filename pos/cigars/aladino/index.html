@@ -23,27 +23,34 @@
   .search input{border:0;outline:0;width:100%;font-size:15px}
   .search svg{opacity:.6}
 
-  /* legend row */
-  .legend{display:grid;grid-template-columns:70px 1fr auto;gap:10px;color:#5f7aa0;font-size:12px;margin:14px 2px 6px}
-  .legend .pill{background:#2b63ff;color:#fff;border-radius:10px;padding:8px 10px;display:inline-block;font-weight:700}
-  .legend .right{justify-self:end}
-
   /* list */
-  .list{display:grid;gap:10px;margin-top:4px}
-  .item{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;background:var(--card);border-radius:16px;padding:10px;border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer}
+  .list{display:grid;gap:10px;margin-top:10px}
+  .item{
+    display:grid;grid-template-columns:70px 1fr; /* full width for title */
+    gap:10px;align-items:center;background:var(--card);border-radius:16px;
+    padding:10px;border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer
+  }
   .brandImg{width:52px;height:52px;border-radius:12px;background:#000;display:grid;place-items:center;overflow:hidden}
   .brandImg img{width:100%;height:100%;object-fit:contain}
-  .meta{display:grid;gap:4px}
+
+  .meta{display:grid;grid-template-rows:auto auto auto auto;gap:6px}
   .brandTiny{color:var(--muted);font-size:12px}
-  .title{font-weight:700}
+  .title{font-weight:800}               /* lets Line + Cigar run full width */
   .vitola{color:var(--muted);font-size:12px}
-  .qtyRow{display:flex;align-items:center;gap:8px;margin-top:6px}
+
+  .rowFlex{display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .qtyRow{display:flex;align-items:center;gap:8px}
   .qtyBtn{height:28px;min-width:28px;border-radius:999px;border:1px solid var(--line);background:#f6f8fb;font-weight:800;display:inline-grid;place-items:center;cursor:pointer}
   .qtyNum{min-width:34px;height:28px;border-radius:8px;border:1px solid var(--line);display:inline-grid;place-items:center;background:#fff}
-  .price{align-self:center;justify-self:end;background:#ebf9ef;border:1px solid #d6f2dc;border-radius:999px;padding:8px 14px;font-weight:800;min-width:74px;text-align:center;color:var(--ok)}
+
+  .price{
+    background:#ebf9ef;border:1px solid #d6f2dc;border-radius:999px;
+    padding:8px 14px;font-weight:800;min-width:88px;text-align:center;color:var(--ok)
+  }
+
   .empty{color:var(--muted);text-align:center;margin:20px 0}
 
-  /* modal (detail) */
+  /* modal (detail) — unchanged layout */
   .modal{position:fixed;inset:0;background:rgba(15,26,44,.35);display:none;z-index:40}
   .sheet{position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:min(520px,100%);background:var(--card);border-radius:20px 20px 0 0;box-shadow:var(--shadow);padding:12px}
   .sheetHead{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:8px 6px 0}
@@ -83,13 +90,6 @@
       <input id="q" placeholder="Search Aladino..." />
     </div>
 
-    <!-- legend -->
-    <div class="legend">
-      <div class="pill">Brand IMG</div>
-      <div><strong>Brand</strong> <span style="opacity:.75">Line + Cigar</span><div style="font-size:11px">Vitola</div></div>
-      <div class="right"><span style="opacity:.75">Cigar MSRP</span></div>
-    </div>
-
     <!-- list -->
     <div class="list" id="list"></div>
     <div id="empty" class="empty" style="display:none;">No cigars match your search.</div>
@@ -110,7 +110,7 @@
             <div>Box count <span id="d_count">10</span></div>
           </div>
         </div>
-        <div class="badge"><img id="d_brandimg" src="img/icons/brands/aladino.svg" alt="Brand"></div>
+        <div class="badge"><img id="d_brandimg" src="/img/icons/brands/aladino.svg" alt="Brand"></div>
       </div>
 
       <div class="sheetBody">
@@ -156,24 +156,32 @@ function setTxt(id,val){ const el=document.getElementById(id); if(el) el.textCon
 function setImg(id,src){ const el=document.getElementById(id); if(el && src) el.src = src; }
 function setFlag(id,on){ const el=document.getElementById(id); if(el) el.dataset.on = !!on; }
 
+/* Force brand icon to the known correct SVG */
+const BRAND_ICON = '/img/icons/brands/aladino.svg';
+
 /* ---------- list render ---------- */
 function buildRow(r){
   const li = document.createElement('div');
   li.className = 'item';
+
   const title = `${(r["Line"]||"").replace(/^Aladino\\s+/, '')} ${r["Cigar"]||""}`.trim();
+
   li.innerHTML = `
-    <div class="brandImg"><img alt="${r["Brand"]||'Brand'}" src="${r["Brand IMG"]||''}"></div>
+    <div class="brandImg"><img alt="${r["Brand"]||'Brand'}" src="${BRAND_ICON}"></div>
     <div class="meta">
       <div class="brandTiny">${r["Brand"]||""}</div>
       <div class="title">${title}</div>
       <div class="vitola">${r["Vitola"]||""}</div>
-      <div class="qtyRow">
-        <button class="qtyBtn" data-act="plus">+</button>
-        <div class="qtyNum" data-role="num">1</div>
-        <button class="qtyBtn" data-act="minus">−</button>
+
+      <div class="rowFlex">
+        <div class="qtyRow">
+          <button class="qtyBtn" data-act="plus">+</button>
+          <div class="qtyNum" data-role="num">1</div>
+          <button class="qtyBtn" data-act="minus">−</button>
+        </div>
+        <div class="price">$${money(r["CIGAR MSRP"])}</div>
       </div>
     </div>
-    <div class="price">$${money(r["CIGAR MSRP"])}</div>
   `;
 
   // qty controls
@@ -212,7 +220,7 @@ function openDetail(r){
   setTxt('d_box', money(r["BOX MSRP"]));
   setTxt('d_count', r["BOX COUNT"]);
 
-  setImg('d_brandimg', r["Brand IMG"]);
+  setImg('d_brandimg', BRAND_ICON);
   setImg('d_cigarimg', r["Cigar IMG"]);
 
   setTxt('d_vitola', r["Vitola"]);
@@ -253,7 +261,6 @@ fetch("hub_aladino.json")
     return r.json();
   })
   .then(json => {
-    // Expecting full Excel export with these columns present.
     ALL_ROWS = Array.isArray(json) ? json : [];
     render(ALL_ROWS);
   })
