@@ -6,12 +6,12 @@
   <title>FOOD &amp; BEVS • POS</title>
   <link rel="stylesheet" href="/pos/pos.css">
   <style>
-    /* same layout as cigars: 4-across icons, no captions, no search */
+    /* consistent top spacing, 4-across layout */
     .bev-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
-      margin-top: 12px;
+      margin-top: 32px; /* increased spacing between title and icons */
     }
     .bev-tile {
       display: flex;
@@ -23,32 +23,95 @@
       height: 72px;
       border-radius: 18px;
       overflow: hidden;
-      /* your other pages have rounded colored icons, so no extra border */
     }
     .bev-icon img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
+
+    /* top bar & title styling same as CIGARS page */
+    .pos-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .pos-back {
+      text-decoration: none;
+      color: #0f1a2c;
+      font-weight: 500;
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pos-star {
+      font-size: 22px;
+      color: #ffcc00;
+    }
+    .pos-header-spacer {
+      height: 16px;
+    }
+    .pos-title {
+      text-align: center;
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      color: #0f1a2c;
+      letter-spacing: 0.3px;
+      margin: 0;
+    }
+
+    /* bill tab universal styling */
+    .pos-bill-tab {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0f1a2c;
+      color: #fff;
+      border-radius: 50px;
+      padding: 10px 16px;
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+    .pos-bill-icon {
+      font-size: 16px;
+    }
+    .pos-bill-badge {
+      background: #e11;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 2px 7px;
+    }
+    .pos-bill-total {
+      font-weight: 600;
+      font-size: 15px;
+    }
   </style>
 </head>
 <body>
   <div class="pos-wrap">
-    <!-- top bar just like cigars -->
+    <!-- top bar -->
     <div class="pos-topbar">
       <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
       <div class="pos-star">★</div>
     </div>
     <div class="pos-header-spacer"></div>
+
+    <!-- page title -->
     <h1 class="pos-title">FOOD &amp; BEVS</h1>
 
-    <!-- no search bar here -->
-
-    <!-- icons -->
+    <!-- grid of SVG icons -->
     <div id="bevGrid" class="bev-grid"></div>
   </div>
 
-  <!-- universal bill tab -->
+  <!-- bottom-right bill tab -->
   <div class="pos-bill-tab">
     <div class="pos-bill-icon">🧾</div>
     <div class="pos-bill-badge" id="billCount">1</div>
@@ -56,26 +119,25 @@
   </div>
 
   <script>
-    // all SVGs live in /img/icons/foodandbevs/
-    // change the filenames below if your repo uses a slightly different naming
+    // All SVGs from /img/icons/foodandbevs/
     const FOOD_BEVS = [
       { name: "7up",               file: "7up.svg" },
       { name: "cocacola",          file: "cocacola.svg" },
-      { name: "cokezero",     file: "cokezero.svg" },
+      { name: "cocacola-zero",     file: "cocacola-zero.svg" },
       { name: "dietcoke",          file: "dietcoke.svg" },
-      { name: "dietdrpepper",     file: "dietdrpepper.svg" },
+      { name: "drpepper-diet",     file: "drpepper-diet.svg" },
       { name: "drpepper",          file: "drpepper.svg" },
       { name: "dunkin",            file: "dunkin.svg" },
       { name: "gatorade",          file: "gatorade.svg" },
-      { name: "gingerale",         file: "gingerale.svg" },
-      { name: "gpsweettea",    file: "gpsweettea.svg" },
-      { name: "gpunsweetenedtea",  file: "gpunsweetenedtea.svg" },
-      { name: "gpzerosugarsweettea",    file: "gpzerosugarsweettea.svg" },
-      { name: "monstertea",      file: "monstertea.svg" },
+      { name: "canadadry",         file: "canadadry.svg" },
+      { name: "goldpeak-sweet",    file: "goldpeak-sweet.svg" },
+      { name: "goldpeak-unsweet",  file: "goldpeak-unsweet.svg" },
+      { name: "goldpeak-black",    file: "goldpeak-black.svg" },
+      { name: "monsterrehab",      file: "monsterrehab.svg" },
       { name: "mountaindew",       file: "mountaindew.svg" },
       { name: "pepsi",             file: "pepsi.svg" },
       { name: "redbull",           file: "redbull.svg" },
-      { name: "rootbeer",       file: "rootbeer.svg" },
+      { name: "aw-rootbeer",       file: "aw-rootbeer.svg" },
       { name: "sprite",            file: "sprite.svg" },
       { name: "starbucks",         file: "starbucks.svg" },
       { name: "water",             file: "water.svg" },
@@ -93,10 +155,6 @@
       `;
       grid.appendChild(div);
     });
-
-    // bill tab can later read real cart values
-    // document.getElementById('billCount').textContent = cart.count;
-    // document.getElementById('billTotal').textContent = '$' + cart.total.toFixed(2);
   </script>
 </body>
 </html>
