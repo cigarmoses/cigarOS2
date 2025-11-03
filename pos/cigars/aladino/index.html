@@ -1,286 +1,34 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Aladino • POS</title>
-<style>
-  :root{
-    --bg:#eaf2f6; --ink:#0f1a2c; --muted:#6b7a90; --brand:#3775c8;
-    --ok:#1fb74a; --line:#dfe7ee; --card:#fff; --shadow:0 10px 28px rgba(15,26,44,.10);
-  }
-  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-  .wrap{max-width:480px;margin:0 auto;padding:12px 12px 64px;position:relative;}
-
-  /* top */
-  .top{display:flex;align-items:center;gap:10px;margin:4px 0 10px}
-  .back{display:inline-flex;gap:6px;align-items:center;color:var(--brand);text-decoration:none;font-weight:600}
-  h1{margin:6px 0 10px 0;font-size:26px;letter-spacing:.2px}
-  .star{margin-left:auto;font-size:22px;line-height:1;cursor:pointer;color:#f5d34f}
-
-  /* search */
-  .search{display:flex;align-items:center;background:#fff;border-radius:999px;padding:10px 12px;border:1px solid var(--line);box-shadow:var(--shadow)}
-  .search input{border:0;outline:0;width:100%;font-size:15px}
-  .search svg{opacity:.6}
-
-  /* list */
-  .list{display:grid;gap:10px;margin-top:10px}
-  .item{
-    display:grid;grid-template-columns:70px 1fr; /* full width for title */
-    gap:10px;align-items:center;background:var(--card);border-radius:16px;
-    padding:10px;border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer
-  }
-  .brandImg{width:52px;height:52px;border-radius:12px;background:#000;display:grid;place-items:center;overflow:hidden}
-  .brandImg img{width:100%;height:100%;object-fit:contain}
-
-  .meta{display:grid;grid-template-rows:auto auto auto auto;gap:6px}
-  .brandTiny{color:var(--muted);font-size:12px}
-  .title{font-weight:800}               /* lets Line + Cigar run full width */
-  .vitola{color:var(--muted);font-size:12px}
-
-  .rowFlex{display:flex;align-items:center;gap:8px;justify-content:space-between}
-  .qtyRow{display:flex;align-items:center;gap:8px}
-  .qtyBtn{height:28px;min-width:28px;border-radius:999px;border:1px solid var(--line);background:#f6f8fb;font-weight:800;display:inline-grid;place-items:center;cursor:pointer}
-  .qtyNum{min-width:34px;height:28px;border-radius:8px;border:1px solid var(--line);display:inline-grid;place-items:center;background:#fff}
-
-  .price{
-    background:#ebf9ef;border:1px solid #d6f2dc;border-radius:999px;
-    padding:8px 14px;font-weight:800;min-width:88px;text-align:center;color:var(--ok)
-  }
-
-  .empty{color:var(--muted);text-align:center;margin:20px 0}
-
-  /* modal (detail) — unchanged layout */
-  .modal{position:fixed;inset:0;background:rgba(15,26,44,.35);display:none;z-index:40}
-  .sheet{position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:min(520px,100%);background:var(--card);border-radius:20px 20px 0 0;box-shadow:var(--shadow);padding:12px}
-  .sheetHead{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:8px 6px 0}
-  .sheetTitle{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .name{font-size:22px;font-weight:600;color:#3775c8}
-  .favStar{font-size:22px;color:#f5d34f}
-  .msrp{font-size:22px;font-weight:800;color:#22c55e;margin-top:2px}
-  .sub{display:flex;gap:18px;color:#22c55e;margin-top:2px;font-weight:600}
-  .badge img{height:36px;width:36px;object-fit:contain}
-  .sheetBody{display:grid;grid-template-columns:1fr 190px;gap:12px;margin-top:6px;padding:6px}
-  .photo{display:flex;align-items:flex-start;justify-content:center}
-  .photo img{max-height:360px;max-width:100%;object-fit:contain}
-  .specs{background:#fff;border-radius:12px;border:1px solid var(--line);padding:8px}
-  .specs dl{margin:0}
-  .specs dt{font-weight:700}
-  .specs dd{margin:0 0 10px;border-bottom:1px solid var(--line);padding:6px 0}
-  .flags{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:10px 6px 6px}
-  .flag{display:flex;flex-direction:column;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
-  .flag .box{width:44px;height:44px;border-radius:10px;border:2px solid var(--line);background:#f7f9fc}
-  .flag[data-on="true"] .box{border-color:#22c55e;background:rgba(34,197,94,.08)}
-  .close{display:flex;justify-content:center;margin:6px 0 2px}
-  .close button{appearance:none;border:0;background:#eaf2f6;border:1px solid var(--line);padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer}
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <!-- top -->
-    <div class="top">
-      <a class="back" href="/pos/cigars/"><span>←</span><span>POS</span></a>
-      <h1>Aladino</h1>
-      <div class="star" title="Favorite brand">★</div>
+<div class="cigar-item">
+  <div class="cigar-left">
+    <div class="brand-icon">
+      <img src="/img/icons/brands/aladino.svg" alt="Aladino">
     </div>
-
-    <!-- search -->
-    <div class="search">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <input id="q" placeholder="Search Aladino..." />
-    </div>
-
-    <!-- list -->
-    <div class="list" id="list"></div>
-    <div id="empty" class="empty" style="display:none;">No cigars match your search.</div>
-  </div>
-
-  <!-- modal -->
-  <div class="modal" id="modal" aria-hidden="true">
-    <div class="sheet" role="dialog" aria-modal="true">
-      <div class="sheetHead">
-        <div>
-          <div class="sheetTitle">
-            <div class="name" id="d_name">Cameroon Elegante</div>
-            <div class="favStar" id="d_fav">★</div>
-          </div>
-          <div class="msrp" id="d_msrp">$13.99</div>
-          <div class="sub">
-            <div>Box <span id="d_box">$145.99</span></div>
-            <div>Box count <span id="d_count">10</span></div>
-          </div>
-        </div>
-        <div class="badge"><img id="d_brandimg" src="/img/icons/brands/aladino.svg" alt="Brand"></div>
-      </div>
-
-      <div class="sheetBody">
-        <div class="specs">
-          <dl>
-            <dt>Vitola:</dt><dd id="d_vitola">Lancero</dd>
-            <dt>Length:</dt><dd><span id="d_len">7.00</span>  •  Ring: <span id="d_rg">38</span></dd>
-            <dt>Wrapper Shade:</dt><dd id="d_shade">Natural</dd>
-            <dt>Strength:</dt><dd id="d_strength">Medium</dd>
-            <dt>Origin:</dt><dd id="d_origin">Honduras</dd>
-            <dt>Wrapper Type:</dt><dd id="d_wrapper">Honduras</dd>
-            <dt>Binder:</dt><dd id="d_binder">Honduras</dd>
-            <dt>Filler:</dt><dd id="d_filler">Honduras</dd>
-            <dt>Shape:</dt><dd id="d_shape">Parejo</dd>
-          </dl>
-        </div>
-        <div class="photo"><img id="d_cigarimg" src="img/cigars/aladino/cameroon-elegante.png" alt="Cigar"></div>
-      </div>
-
-      <div class="flags">
-        <div class="flag" id="f_box"><div class="box"></div><div>Box Pressed</div></div>
-        <div class="flag" id="f_fs"><div class="box"></div><div>Flavor/Sweet</div></div>
-        <div class="flag" id="f_barb"><div class="box"></div><div>Barberpole</div></div>
-        <div class="flag" id="f_pack"><div class="box"></div><div>Pack</div></div>
-        <div class="flag" id="f_tin"><div class="box"></div><div>Tin</div></div>
-      </div>
-
-      <div class="close"><button id="close">Close</button></div>
+    <div class="cigar-text">
+      <div class="brand-name">Aladino</div>
+      <div class="cigar-name">Vintage Selection Elegante</div>
+      <div class="cigar-vitola">Lancero</div>
+      <div class="cigar-msrp">$13.95</div>
     </div>
   </div>
+  <div class="inv-wrap inv-ok">
+    <div class="inv-circle">76</div>
+  </div>
+</div>
 
-<script>
-/* ---------- DOM refs ---------- */
-const $list  = document.getElementById('list');
-const $q     = document.getElementById('q');
-const $empty = document.getElementById('empty');
-const $modal = document.getElementById('modal');
-const $close = document.getElementById('close');
-
-/* ---------- helpers ---------- */
-function money(n){ const v = Number(n); return isFinite(v) ? v.toFixed(2) : (n ?? ""); }
-function setTxt(id,val){ const el=document.getElementById(id); if(el) el.textContent = val ?? ""; }
-function setImg(id,src){ const el=document.getElementById(id); if(el && src) el.src = src; }
-function setFlag(id,on){ const el=document.getElementById(id); if(el) el.dataset.on = !!on; }
-
-/* Force brand icon to the known correct SVG */
-const BRAND_ICON = '/img/icons/brands/aladino.svg';
-
-/* ---------- list render ---------- */
-function buildRow(r){
-  const li = document.createElement('div');
-  li.className = 'item';
-
-  const title = `${(r["Line"]||"").replace(/^Aladino\\s+/, '')} ${r["Cigar"]||""}`.trim();
-
-  li.innerHTML = `
-    <div class="brandImg"><img alt="${r["Brand"]||'Brand'}" src="${BRAND_ICON}"></div>
-    <div class="meta">
-      <div class="brandTiny">${r["Brand"]||""}</div>
-      <div class="title">${title}</div>
-      <div class="vitola">${r["Vitola"]||""}</div>
-
-      <div class="rowFlex">
-        <div class="qtyRow">
-          <button class="qtyBtn" data-act="plus">+</button>
-          <div class="qtyNum" data-role="num">1</div>
-          <button class="qtyBtn" data-act="minus">−</button>
-        </div>
-        <div class="price">$${money(r["CIGAR MSRP"])}</div>
-      </div>
+<div class="cigar-item">
+  <div class="cigar-left">
+    <div class="brand-icon">
+      <img src="/img/icons/brands/aladino.svg" alt="Aladino">
     </div>
-  `;
-
-  // qty controls
-  const num = li.querySelector('[data-role="num"]');
-  li.querySelectorAll('.qtyBtn').forEach(btn=>{
-    btn.addEventListener('click', e=>{
-      e.stopPropagation();
-      let n = parseInt(num.textContent||'1',10);
-      if(btn.dataset.act==='plus') n++;
-      if(btn.dataset.act==='minus') n = Math.max(0, n-1);
-      num.textContent = n;
-      // hook: add-to-cart here
-    });
-  });
-
-  // open modal
-  li.addEventListener('click', ()=> openDetail(r));
-  return li;
-}
-
-function render(rows){
-  $list.innerHTML = '';
-  if(!rows || rows.length === 0){
-    $empty.style.display = 'block';
-    return;
-  }
-  $empty.style.display = 'none';
-  rows.forEach(r => $list.appendChild(buildRow(r)));
-}
-
-/* ---------- detail modal ---------- */
-function openDetail(r){
-  setTxt('d_name', r["Cigar"]);
-  document.getElementById('d_fav').style.opacity = r["FAVORITE"] ? '1' : '.25';
-  setTxt('d_msrp', `$${money(r["CIGAR MSRP"])}`);
-  setTxt('d_box', money(r["BOX MSRP"]));
-  setTxt('d_count', r["BOX COUNT"]);
-
-  setImg('d_brandimg', BRAND_ICON);
-  setImg('d_cigarimg', r["Cigar IMG"]);
-
-  setTxt('d_vitola', r["Vitola"]);
-  setTxt('d_len', r["LENGTH"]);
-  setTxt('d_rg', r["RG"]);
-  setTxt('d_shade', r["WRAPPER SHADE"]);
-  setTxt('d_strength', r["STRENGTH"]);
-  setTxt('d_origin', r["ORIGIN"]);
-  setTxt('d_wrapper', r["WRAPPER"]);
-  setTxt('d_binder', r["BINDER"]);
-  setTxt('d_filler', r["FILLER"]);
-  setTxt('d_shape', r["SHAPE"]);
-
-  setFlag('f_box', r["Box Pressed"]);
-  setFlag('f_fs',  r["F/S"]);
-  setFlag('f_barb',r["Barberpole"]);
-  setFlag('f_pack',r["Pack"]);
-  setFlag('f_tin', r["TIN"]);
-
-  $modal.style.display = 'block';
-  $modal.setAttribute('aria-hidden','false');
-  // close on backdrop tap
-  $modal.addEventListener('click', e=>{
-    if(e.target === $modal) closeDetail();
-  }, { once:true });
-}
-function closeDetail(){
-  $modal.style.display = 'none';
-  $modal.setAttribute('aria-hidden','true');
-}
-document.getElementById('close').addEventListener('click', closeDetail);
-
-/* ---------- load JSON & wire search ---------- */
-let ALL_ROWS = [];
-fetch("hub_aladino.json")
-  .then(r => {
-    if(!r.ok) throw new Error("Failed to load hub_aladino.json");
-    return r.json();
-  })
-  .then(json => {
-    ALL_ROWS = Array.isArray(json) ? json : [];
-    render(ALL_ROWS);
-  })
-  .catch(err => {
-    console.error(err);
-    $empty.textContent = "Could not load data (hub_aladino.json).";
-    $empty.style.display = 'block';
-  });
-
-$q.addEventListener('input', ()=>{
-  const q = $q.value.trim().toLowerCase();
-  if(!q){ render(ALL_ROWS); return; }
-  const filtered = ALL_ROWS.filter(r =>
-    (r["Brand"]||"").toLowerCase().includes(q) ||
-    (r["Line"]||"").toLowerCase().includes(q) ||
-    (r["Cigar"]||"").toLowerCase().includes(q) ||
-    (r["Vitola"]||"").toLowerCase().includes(q)
-  );
-  render(filtered);
-});
-</script>
-</body>
-</html>
+    <div class="cigar-text">
+      <div class="brand-name">Aladino</div>
+      <div class="cigar-name">Cameroon Toro</div>
+      <div class="cigar-vitola">Toro</div>
+      <div class="cigar-msrp">$11.00</div>
+    </div>
+  </div>
+  <!-- example of low inventory (<12) -->
+  <div class="inv-wrap inv-low">
+    <div class="inv-circle">6</div>
+  </div>
+</div>
