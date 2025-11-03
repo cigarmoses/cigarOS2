@@ -1,34 +1,222 @@
-<div class="cigar-item">
-  <div class="cigar-left">
-    <div class="brand-icon">
-      <img src="/img/icons/brands/aladino.svg" alt="Aladino">
-    </div>
-    <div class="cigar-text">
-      <div class="brand-name">Aladino</div>
-      <div class="cigar-name">Vintage Selection Elegante</div>
-      <div class="cigar-vitola">Lancero</div>
-      <div class="cigar-msrp">$13.95</div>
-    </div>
-  </div>
-  <div class="inv-wrap inv-ok">
-    <div class="inv-circle">76</div>
-  </div>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Aladino • POS</title>
+  <style>
+    :root{
+      --bg:#eaf2f6; --ink:#0f1a2c; --muted:#6b7a90; --brand:#3775c8;
+      --line:#dfe7ee; --card:#fff; --shadow:0 10px 28px rgba(15,26,44,.10);
+    }
+    html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+    .wrap{max-width:520px;margin:0 auto;padding:12px 12px 72px}
 
-<div class="cigar-item">
-  <div class="cigar-left">
-    <div class="brand-icon">
-      <img src="/img/icons/brands/aladino.svg" alt="Aladino">
+    /* top */
+    .top{display:flex;align-items:center;gap:10px;margin:4px 0 10px}
+    .back{display:inline-flex;gap:6px;align-items:center;color:var(--brand);text-decoration:none;font-weight:600}
+    h1{margin:6px 0 10px 0;font-size:26px}
+    .star{margin-left:auto;font-size:22px;line-height:1;color:#f5d34f}
+
+    /* search */
+    .search{display:flex;align-items:center;background:#fff;border-radius:999px;padding:10px 12px;border:1px solid var(--line);box-shadow:var(--shadow)}
+    .search input{border:0;outline:0;width:100%;font-size:15px}
+    .search svg{opacity:.6}
+
+    /* list item (new design) */
+    .cigar-list{margin-top:12px;display:grid;gap:12px}
+    .cigar-item{
+      background:#dfe9ef33;
+      border-radius:20px;
+      padding:10px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .cigar-left{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      min-width:0;
+      flex:1;
+    }
+    .brand-icon{
+      width:56px;
+      height:56px;
+      border-radius:16px;
+      background:#000;
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      flex:0 0 56px;
+    }
+    .brand-icon img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+    }
+    .cigar-text{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .brand-name{
+      font-size:12px;
+      color:#7a8a9f;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .cigar-name{
+      font-size:18px;
+      font-weight:700;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .cigar-vitola{
+      font-size:13px;
+      color:#7a8a9f;
+    }
+    .cigar-msrp{
+      font-size:13px;
+      color:#0f1a2c;
+    }
+    .inv-wrap{
+      min-width:70px;
+      display:flex;
+      justify-content:flex-end;
+    }
+    .inv-circle{
+      width:54px;
+      height:54px;
+      border-radius:999px;
+      background:#fff;
+      border:1.5px solid #d7e1e8;
+      display:grid;
+      place-items:center;
+      font-weight:600;
+      font-size:16px;
+      color:#0f1a2c;
+    }
+    .inv-low .inv-circle{
+      color:#e11d48;
+      border-color:#f4c2cd;
+    }
+    .empty{color:#7a8a9f;text-align:center;margin:24px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- header -->
+    <div class="top">
+      <a class="back" href="/pos/cigars/"><span>←</span><span>POS</span></a>
+      <h1>Aladino</h1>
+      <div class="star" title="Favorite brand">★</div>
     </div>
-    <div class="cigar-text">
-      <div class="brand-name">Aladino</div>
-      <div class="cigar-name">Cameroon Toro</div>
-      <div class="cigar-vitola">Toro</div>
-      <div class="cigar-msrp">$11.00</div>
+
+    <!-- search -->
+    <div class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="q" placeholder="Search Aladino..." />
     </div>
+
+    <!-- list -->
+    <div id="cigarList" class="cigar-list"></div>
+    <div id="empty" class="empty" style="display:none;">No cigars found for this brand.</div>
   </div>
-  <!-- example of low inventory (<12) -->
-  <div class="inv-wrap inv-low">
-    <div class="inv-circle">6</div>
-  </div>
-</div>
+
+  <script>
+    const DATA_URL = "/pos/data/cigars_master.json";
+    const BRAND = "Aladino"; // this page is specific to Aladino
+
+    const $list = document.getElementById('cigarList');
+    const $empty = document.getElementById('empty');
+    const $q = document.getElementById('q');
+
+    let ALL_ROWS = [];
+    let BRAND_ROWS = [];
+
+    function money(n){
+      const v = Number(n);
+      return isFinite(v) ? v.toFixed(2) : (n ?? "");
+    }
+
+    function rootify(p){ return p ? '/' + String(p).replace(/^\/+/, '') : ''; }
+
+    function render(rows){
+      $list.innerHTML = '';
+      if (!rows || rows.length === 0){
+        $empty.style.display = 'block';
+        return;
+      }
+      $empty.style.display = 'none';
+
+      rows.forEach(r => {
+        const invNum = parseInt(r["INVENTORY"] || 0, 10);
+        const isLow = invNum < 12;
+        const brandImg = r["Brand IMG"] ? rootify(r["Brand IMG"]) : "/img/icons/brands/aladino.svg";
+        const lineCigar = `${r["Line"] || ""} ${r["Cigar"] || ""}`.trim();
+
+        const div = document.createElement('div');
+        div.className = 'cigar-item';
+        div.innerHTML = `
+          <div class="cigar-left">
+            <div class="brand-icon">
+              <img src="${brandImg}" alt="${r["Brand"] || ""}">
+            </div>
+            <div class="cigar-text">
+              <div class="brand-name">${r["Brand"] || ""}</div>
+              <div class="cigar-name">${lineCigar}</div>
+              <div class="cigar-vitola">${r["Vitola"] || ""}</div>
+              <div class="cigar-msrp">$${money(r["CIGAR MSRP"])}</div>
+            </div>
+          </div>
+          <div class="inv-wrap ${isLow ? 'inv-low' : 'inv-ok'}">
+            <div class="inv-circle">${Math.floor(isNaN(invNum) ? 0 : invNum)}</div>
+          </div>
+        `;
+        // click to open detail later if you want
+        $list.appendChild(div);
+      });
+    }
+
+    function applySearch(){
+      const q = $q.value.trim().toLowerCase();
+      if (!q) {
+        render(BRAND_ROWS);
+        return;
+      }
+      const filtered = BRAND_ROWS.filter(r => {
+        return (
+          (r["Line"]||"").toLowerCase().includes(q) ||
+          (r["Cigar"]||"").toLowerCase().includes(q) ||
+          (r["Vitola"]||"").toLowerCase().includes(q)
+        );
+      });
+      render(filtered);
+    }
+
+    $q.addEventListener('input', applySearch);
+
+    // load data
+    fetch(DATA_URL)
+      .then(r => {
+        if(!r.ok) throw new Error("failed to load data");
+        return r.json();
+      })
+      .then(json => {
+        ALL_ROWS = Array.isArray(json) ? json : [];
+        BRAND_ROWS = ALL_ROWS.filter(r => (r["Brand"] || "").trim() === BRAND);
+        render(BRAND_ROWS);
+      })
+      .catch(err => {
+        console.error(err);
+        $empty.textContent = "Could not load " + DATA_URL;
+        $empty.style.display = 'block';
+      });
+  </script>
+</body>
+</html>
