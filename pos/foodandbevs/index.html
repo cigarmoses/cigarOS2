@@ -6,7 +6,7 @@
   <title>FOOD &amp; BEVS • POS</title>
   <link rel="stylesheet" href="/pos/pos.css">
   <style>
-    /* food/bevs uses same grid as cigars but no captions & no search */
+    /* same layout as cigars: 4-across icons, no captions, no search */
     .bev-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -22,8 +22,8 @@
       width: 72px;
       height: 72px;
       border-radius: 18px;
-      background: #d9d9d9;
       overflow: hidden;
+      /* your other pages have rounded colored icons, so no extra border */
     }
     .bev-icon img {
       width: 100%;
@@ -34,7 +34,7 @@
 </head>
 <body>
   <div class="pos-wrap">
-    <!-- top bar -->
+    <!-- top bar just like cigars -->
     <div class="pos-topbar">
       <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
       <div class="pos-star">★</div>
@@ -44,11 +44,11 @@
 
     <!-- no search bar here -->
 
-    <!-- icons only -->
+    <!-- icons -->
     <div id="bevGrid" class="bev-grid"></div>
   </div>
 
-  <!-- bill tab (universal) -->
+  <!-- universal bill tab -->
   <div class="pos-bill-tab">
     <div class="pos-bill-icon">🧾</div>
     <div class="pos-bill-badge" id="billCount">1</div>
@@ -56,42 +56,47 @@
   </div>
 
   <script>
-    // this matches what’s in your screenshot – update paths/names as you add more
-    const BEVS = [
-      { name: "7up",               file: "/img/icons/foodandbevs/7up.png" },
-      { name: "Coca Cola",         file: "/img/icons/foodandbevs/cocacola.png" },
-      { name: "Coke Zero",         file: "/img/icons/foodandbevs/cokezero.png" },
-      { name: "Diet Coke",         file: "/img/icons/foodandbevs/dietcoke.png" },
-      { name: "Dr Pepper Light",   file: "/img/icons/foodandbevs/drpepper-light.png" },
-      { name: "Dr Pepper",         file: "/img/icons/foodandbevs/drpepper.png" },
-      { name: "Dunkin",            file: "/img/icons/foodandbevs/dunkin.png" },
-      { name: "Gatorade",          file: "/img/icons/foodandbevs/gatorade.png" },
-      { name: "Canada Dry",        file: "/img/icons/foodandbevs/canadadry.png" },
-      { name: "Gold Peak Sweet",   file: "/img/icons/foodandbevs/goldpeak-sweet.png" },
-      { name: "Gold Peak Unsweet", file: "/img/icons/foodandbevs/goldpeak-unsweet.png" },
-      { name: "Gold Peak Black",   file: "/img/icons/foodandbevs/goldpeak-black.png" },
-      { name: "Monster Rehab",     file: "/img/icons/foodandbevs/monsterrehab.png" },
-      { name: "Mountain Dew",      file: "/img/icons/foodandbevs/mountaindew.png" },
-      { name: "Pepsi",             file: "/img/icons/foodandbevs/pepsi.png" },
-      { name: "Red Bull",          file: "/img/icons/foodandbevs/redbull.png" },
-      { name: "A&W",               file: "/img/icons/foodandbevs/aw.png" },
-      { name: "Sprite",            file: "/img/icons/foodandbevs/sprite.png" },
-      { name: "Starbucks",         file: "/img/icons/foodandbevs/starbucks.png" },
-      { name: "Water",             file: "/img/icons/foodandbevs/water.png" },
+    // all SVGs live in /img/icons/foodandbevs/
+    // change the filenames below if your repo uses a slightly different naming
+    const FOOD_BEVS = [
+      { name: "7up",               file: "7up.svg" },
+      { name: "cocacola",          file: "cocacola.svg" },
+      { name: "cokezero",     file: "cokezero.svg" },
+      { name: "dietcoke",          file: "dietcoke.svg" },
+      { name: "dietdrpepper",     file: "dietdrpepper.svg" },
+      { name: "drpepper",          file: "drpepper.svg" },
+      { name: "dunkin",            file: "dunkin.svg" },
+      { name: "gatorade",          file: "gatorade.svg" },
+      { name: "gingerale",         file: "gingerale.svg" },
+      { name: "gpsweettea",    file: "gpsweettea.svg" },
+      { name: "gpunsweetened",  file: "gpunsweetened.svg" },
+      { name: "gpzerosugar",    file: "gpzerosugar.svg" },
+      { name: "monstertea",      file: "monstertea.svg" },
+      { name: "mountaindew",       file: "mountaindew.svg" },
+      { name: "pepsi",             file: "pepsi.svg" },
+      { name: "redbull",           file: "redbull.svg" },
+      { name: "rootbeer",       file: "rootbeer.svg" },
+      { name: "sprite",            file: "sprite.svg" },
+      { name: "starbucks",         file: "starbucks.svg" },
+      { name: "water",             file: "water.svg" },
     ];
 
     const grid = document.getElementById('bevGrid');
 
-    BEVS.forEach(item => {
+    FOOD_BEVS.forEach(item => {
       const div = document.createElement('div');
       div.className = 'bev-tile';
       div.innerHTML = `
         <div class="bev-icon">
-          <img src="${item.file}" alt="${item.name}">
+          <img src="/img/icons/foodandbevs/${item.file}" alt="${item.name}">
         </div>
       `;
       grid.appendChild(div);
     });
+
+    // bill tab can later read real cart values
+    // document.getElementById('billCount').textContent = cart.count;
+    // document.getElementById('billTotal').textContent = '$' + cart.total.toFixed(2);
   </script>
 </body>
 </html>
