@@ -4,206 +4,101 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CIGARS • POS</title>
+  <link rel="stylesheet" href="/pos/pos.css">
   <style>
-    :root{
-      --bg:#eaf2f6; --ink:#0f1a2c; --muted:#6b7a90; --brand:#3775c8; --line:#dfe7ee;
-      --card:#fff; --shadow:0 10px 28px rgba(15,26,44,.10);
-    }
-    html,body{
-      margin:0;
-      background:var(--bg);
-      color:var(--ink);
-      font:16px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-    }
-    .wrap{
-      max-width:480px;
-      width:100%;
-      margin:0 auto;
-      padding:12px 12px 64px;
-      box-sizing:border-box;
-    }
-
-    /* top bar with centered title */
-    .topbar{
-      position:relative;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      height:40px;
-      margin-bottom:6px;
-    }
-    .back{
-      position:absolute;
-      left:0;
-      top:50%;
-      transform:translateY(-50%);
-      display:inline-flex;
-      gap:6px;
-      align-items:center;
-      color:var(--brand);
-      text-decoration:none;
-      font-weight:600;
-      font-size:14px;
-    }
-    .title{
-      font-size:26px;
-      font-weight:700;
-      text-align:center;
-      line-height:1;
-    }
-    .fav{
-      position:absolute;
-      right:0;
-      top:50%;
-      transform:translateY(-50%);
-      font-size:22px;
-      color:#f5d34f;
-      cursor:pointer;
-    }
-
-    .search{
-      display:flex;align-items:center;background:#fff;border-radius:999px;
-      padding:10px 12px;border:1px solid var(--line);box-shadow:var(--shadow);
-      margin-top:14px;
-    }
-    .search input{border:0;outline:0;width:100%;font-size:15px}
-    .search svg{opacity:.6}
-
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
-    .tile{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      align-items:center;
-      text-decoration:none;
-      color:inherit;
-    }
-    .icon{
-      width:72px;
-      height:72px;
-      border-radius:16px;
-      background:#fff;
-      border:1px solid var(--line);
-      box-shadow:var(--shadow);
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-    }
-    .icon img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
+    .pos-tile-icon img {
       background:#000;
+      object-fit: contain;
     }
-    .name{
-      font-weight:700;
-      text-align:center;
-      font-size:14px;
-    }
-    .empty{color:var(--muted);text-align:center;margin:24px 0}
-    .tile.disabled{
-      opacity:0.55;
+    .pos-tile.disabled {
+      opacity:.55;
       cursor:default;
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <a class="back" href="/pos/"><span>←</span><span>POS</span></a>
-      <div class="title">CIGARS</div>
-      <div class="fav" title="Favorite list">★</div>
+  <div class="pos-wrap">
+    <div class="pos-topbar">
+      <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
+      <div class="pos-star">★</div>
+    </div>
+    <div class="pos-header-spacer"></div>
+    <h1 class="pos-title">CIGARS</h1>
+
+    <div class="pos-search">
+      <input id="q" placeholder="Search" />
     </div>
 
-    <div class="search">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <input id="q" placeholder="Search brands..." />
-    </div>
-
-    <div id="grid" class="grid"></div>
+    <div id="grid" class="pos-grid"></div>
     <div id="empty" class="empty" style="display:none;">No brands match your search.</div>
   </div>
 
-<script>
-  /*
-    We’ll map label → file exactly as your GitHub shows.
+  <!-- universal bill tab -->
+  <div class="pos-bill-tab">
+    <div class="pos-bill-icon">🧾</div>
+    <div class="pos-bill-badge" id="billCount">1</div>
+    <div class="pos-bill-total" id="billTotal">$1.50</div>
+  </div>
 
-    Folder: /img/icons/brands/
-    Files you showed:
-      1502.svg
-      acid.svg
-      agingroom.svg
-      aladino.svg
-      alecbradley.svg
-      angelcuesta.svg
-      arturofuente.svg
-      ashton.svg
-      asylum13.svg
-      atabey.svg
-      avo.svg
-      baccarat.svg
-      ... (add more here when you upload them)
-  */
+  <script>
+    const ALL_BRANDS = [
+      { label: "Aladino",       file: "aladino.svg",      clickable: true  },
+      { label: "1502",          file: "1502.svg",         clickable: false },
+      { label: "Acid",          file: "acid.svg",         clickable: false },
+      { label: "Aging Room",    file: "agingroom.svg",    clickable: false },
+      { label: "Alec Bradley",  file: "alecbradley.svg",  clickable: false },
+      { label: "Angel Cuesta",  file: "angelcuesta.svg",  clickable: false },
+      { label: "Arturo Fuente", file: "arturofuente.svg", clickable: false },
+      { label: "Ashton",        file: "ashton.svg",       clickable: false },
+      { label: "Asylum 13",     file: "asylum13.svg",     clickable: false },
+      { label: "Atabey",        file: "atabey.svg",       clickable: false },
+      { label: "AVO",           file: "avo.svg",          clickable: false },
+      { label: "Baccarat",      file: "baccarat.svg",     clickable: false },
+    ];
 
-  const ALL_BRANDS = [
-    { label: "Aladino",        file: "aladino.svg",        clickable: true  },
-    { label: "1502",           file: "1502.svg",           clickable: false },
-    { label: "Acid",           file: "acid.svg",           clickable: false },
-    { label: "Aging Room",     file: "agingroom.svg",      clickable: false },
-    { label: "Alec Bradley",   file: "alecbradley.svg",    clickable: false },
-    { label: "Angel Cuesta",   file: "angelcuesta.svg",    clickable: false },
-    { label: "Arturo Fuente",  file: "arturofuente.svg",   clickable: false },
-    { label: "Ashton",         file: "ashton.svg",         clickable: false },
-    { label: "Asylum 13",      file: "asylum13.svg",       clickable: false },
-    { label: "Atabey",         file: "atabey.svg",         clickable: false },
-    { label: "AVO",            file: "avo.svg",            clickable: false },
-    { label: "Baccarat",       file: "baccarat.svg",       clickable: false },
-    // add the rest of your .svg files here:
-    // { label: "Plasencia", file: "plasencia.svg", clickable: false },
-    // { label: "Crowned Heads", file: "crownedheads.svg", clickable: false },
-    // { label: "Davidoff", file: "davidoff.svg", clickable: false },
-  ];
+    const $grid = document.getElementById('grid');
+    const $q = document.getElementById('q');
+    const $empty = document.getElementById('empty');
 
-  const $grid = document.getElementById('grid');
-  const $q = document.getElementById('q');
-  const $empty = document.getElementById('empty');
-
-  function buildTile(brand){
-    const src = `/img/icons/brands/${brand.file}`;
-    const el = document.createElement(brand.clickable ? 'a' : 'div');
-    el.className = 'tile' + (brand.clickable ? '' : ' disabled');
-    if (brand.clickable) {
-      // this assumes you have /pos/cigars/aladino/
-      el.href = `/pos/cigars/${brand.label.toLowerCase().replace(/[^a-z0-9]+/g,'')}/`;
+    function toSlug(s){
+      return s.toLowerCase().replace(/[^a-z0-9]+/g,'');
     }
-    el.innerHTML = `
-      <div class="icon">
-        <img src="${src}" alt="${brand.label}">
-      </div>
-      <div class="name">${brand.label}</div>
-    `;
-    return el;
-  }
 
-  function render(list){
-    $grid.innerHTML = '';
-    if (!list.length){
-      $empty.style.display = 'block';
-      return;
+    function buildTile(brand){
+      const src = `/img/icons/brands/${brand.file}`;
+      const el = document.createElement(brand.clickable ? 'a' : 'div');
+      el.className = 'pos-tile' + (brand.clickable ? '' : ' disabled');
+      if (brand.clickable) {
+        el.href = `/pos/cigars/${toSlug(brand.label)}/`;
+      }
+      el.innerHTML = `
+        <div class="pos-tile-icon"><img src="${src}" alt="${brand.label}"></div>
+        <div class="pos-tile-label">${brand.label}</div>
+      `;
+      return el;
     }
-    $empty.style.display = 'none';
-    list.forEach(b => $grid.appendChild(buildTile(b)));
-  }
 
-  // initial render
-  render(ALL_BRANDS);
+    function render(list){
+      $grid.innerHTML = '';
+      if (!list.length){
+        $empty.style.display = 'block';
+        return;
+      }
+      $empty.style.display = 'none';
+      list.forEach(b => $grid.appendChild(buildTile(b)));
+    }
 
-  // search
-  $q.addEventListener('input', ()=>{
-    const q = $q.value.trim().toLowerCase();
-    const filtered = ALL_BRANDS.filter(b => b.label.toLowerCase().includes(q));
-    render(filtered);
-  });
-</script>
+    render(ALL_BRANDS);
+
+    $q.addEventListener('input', ()=>{
+      const v = $q.value.trim().toLowerCase();
+      const filtered = ALL_BRANDS.filter(b => b.label.toLowerCase().includes(v));
+      render(filtered);
+    });
+
+    // bill tab: hook into real cart later
+    // document.getElementById('billCount').textContent = cart.items.length;
+    // document.getElementById('billTotal').textContent = '$' + cart.total.toFixed(2);
+  </script>
 </body>
 </html>
