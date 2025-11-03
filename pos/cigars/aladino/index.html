@@ -9,112 +9,156 @@
       --bg:#eaf2f6; --ink:#0f1a2c; --muted:#6b7a90; --brand:#3775c8;
       --line:#dfe7ee; --card:#fff; --shadow:0 10px 28px rgba(15,26,44,.10);
     }
-    html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-    .wrap{max-width:520px;margin:0 auto;padding:12px 12px 72px}
+    html,body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font:15px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    }
+    .wrap{
+      max-width:480px;
+      width:100%;
+      margin:0 auto;
+      padding:12px 12px 72px;
+      box-sizing:border-box;
+    }
 
-    /* top */
-    .top{display:flex;align-items:center;gap:10px;margin:4px 0 10px}
-    .back{display:inline-flex;gap:6px;align-items:center;color:var(--brand);text-decoration:none;font-weight:600}
-    h1{margin:6px 0 10px 0;font-size:26px}
-    .star{margin-left:auto;font-size:22px;line-height:1;color:#f5d34f}
+    /* header (centered title, back left, star right) */
+    .topbar{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:40px;
+      margin-bottom:6px;
+    }
+    .back{
+      position:absolute;
+      left:0;
+      top:50%;
+      transform:translateY(-50%);
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      color:var(--brand);
+      text-decoration:none;
+      font-weight:600;
+      font-size:14px;
+    }
+    .title{
+      font-size:28px;
+      font-weight:700;
+      text-align:center;
+      line-height:1;
+    }
+    .fav{
+      position:absolute;
+      right:0;
+      top:50%;
+      transform:translateY(-50%);
+      font-size:24px;
+      color:#f5d34f;
+      cursor:pointer;
+    }
 
-    /* search */
-    .search{display:flex;align-items:center;background:#fff;border-radius:999px;padding:10px 12px;border:1px solid var(--line);box-shadow:var(--shadow)}
-    .search input{border:0;outline:0;width:100%;font-size:15px}
+    /* search with gap under title */
+    .search{
+      display:flex;align-items:center;background:#fff;border-radius:999px;
+      padding:9px 12px;border:1px solid var(--line);box-shadow:var(--shadow);
+      margin-top:14px;
+    }
+    .search input{border:0;outline:0;width:100%;font-size:14px}
     .search svg{opacity:.6}
 
-    /* list item (new design) */
-    .cigar-list{margin-top:12px;display:grid;gap:12px}
+    /* list */
+    .cigar-list{margin-top:12px;display:grid;gap:10px}
     .cigar-item{
       background:#dfe9ef33;
-      border-radius:20px;
-      padding:10px 14px;
+      border-radius:16px;
+      padding:10px 12px;
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
+      gap:10px;
+      min-width:0;
     }
     .cigar-left{
       display:flex;
-      gap:12px;
+      gap:10px;
       align-items:center;
       min-width:0;
-      flex:1;
+      flex:1 1 auto;
     }
     .brand-icon{
-      width:56px;
-      height:56px;
-      border-radius:16px;
+      width:52px;
+      height:52px;
+      border-radius:14px;
       background:#000;
       display:grid;
       place-items:center;
       overflow:hidden;
-      flex:0 0 56px;
+      flex:0 0 52px;
     }
-    .brand-icon img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-    }
+    .brand-icon img{width:100%;height:100%;object-fit:contain;}
     .cigar-text{
       display:flex;
       flex-direction:column;
       gap:2px;
-      min-width:0;
+      min-width:0; /* allow wrapping */
     }
     .brand-name{
       font-size:12px;
       color:#7a8a9f;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      line-height:1.1;
     }
     .cigar-name{
-      font-size:18px;
+      font-size:15px;
       font-weight:700;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      line-height:1.1;
+      white-space:normal;
+      word-break:break-word;
     }
     .cigar-vitola{
-      font-size:13px;
+      font-size:12px;
       color:#7a8a9f;
+      line-height:1.1;
     }
     .cigar-msrp{
-      font-size:13px;
+      font-size:12px;
       color:#0f1a2c;
+      line-height:1.1;
     }
     .inv-wrap{
-      min-width:70px;
       display:flex;
       justify-content:flex-end;
+      flex:0 0 auto;
     }
     .inv-circle{
-      width:54px;
-      height:54px;
+      width:44px;
+      height:44px;
       border-radius:999px;
       background:#fff;
       border:1.5px solid #d7e1e8;
       display:grid;
       place-items:center;
       font-weight:600;
-      font-size:16px;
+      font-size:14px;
       color:#0f1a2c;
     }
     .inv-low .inv-circle{
       color:#e11d48;
       border-color:#f4c2cd;
     }
-    .empty{color:#7a8a9f;text-align:center;margin:24px 0}
+    .empty{color:#7a8a9f;text-align:center;margin:24px 0;font-size:14px}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- header -->
-    <div class="top">
+    <!-- top -->
+    <div class="topbar">
       <a class="back" href="/pos/cigars/"><span>←</span><span>POS</span></a>
-      <h1>Aladino</h1>
-      <div class="star" title="Favorite brand">★</div>
+      <div class="title">Aladino</div>
+      <div class="fav" title="Favorite brand">★</div>
     </div>
 
     <!-- search -->
@@ -130,7 +174,7 @@
 
   <script>
     const DATA_URL = "/pos/data/cigars_master.json";
-    const BRAND = "Aladino"; // this page is specific to Aladino
+    const BRAND = "Aladino";
 
     const $list = document.getElementById('cigarList');
     const $empty = document.getElementById('empty');
@@ -139,29 +183,37 @@
     let ALL_ROWS = [];
     let BRAND_ROWS = [];
 
-    function money(n){
-      const v = Number(n);
-      return isFinite(v) ? v.toFixed(2) : (n ?? "");
+    function getMsrp(row){
+      return row["CIGAR MSRP"] ??
+             row["Cigar MSRP"] ??
+             row["MSRP"] ??
+             "";
     }
-
+    function moneyMaybe(n){
+      const v = Number(n);
+      if (isFinite(v)) return v.toFixed(2);
+      return n;
+    }
     function rootify(p){ return p ? '/' + String(p).replace(/^\/+/, '') : ''; }
 
     function render(rows){
-      $list.innerHTML = '';
+      $list.innerHTML = "";
       if (!rows || rows.length === 0){
-        $empty.style.display = 'block';
+        $empty.style.display = "block";
         return;
       }
-      $empty.style.display = 'none';
+      $empty.style.display = "none";
 
       rows.forEach(r => {
         const invNum = parseInt(r["INVENTORY"] || 0, 10);
-        const isLow = invNum < 12;
+        const low = invNum < 12;
         const brandImg = r["Brand IMG"] ? rootify(r["Brand IMG"]) : "/img/icons/brands/aladino.svg";
         const lineCigar = `${r["Line"] || ""} ${r["Cigar"] || ""}`.trim();
+        const msrpVal = getMsrp(r);
+        const msrpText = msrpVal !== "" ? "$" + moneyMaybe(msrpVal) : "";
 
-        const div = document.createElement('div');
-        div.className = 'cigar-item';
+        const div = document.createElement("div");
+        div.className = "cigar-item";
         div.innerHTML = `
           <div class="cigar-left">
             <div class="brand-icon">
@@ -171,37 +223,35 @@
               <div class="brand-name">${r["Brand"] || ""}</div>
               <div class="cigar-name">${lineCigar}</div>
               <div class="cigar-vitola">${r["Vitola"] || ""}</div>
-              <div class="cigar-msrp">$${money(r["CIGAR MSRP"])}</div>
+              <div class="cigar-msrp">${msrpText}</div>
             </div>
           </div>
-          <div class="inv-wrap ${isLow ? 'inv-low' : 'inv-ok'}">
-            <div class="inv-circle">${Math.floor(isNaN(invNum) ? 0 : invNum)}</div>
+          <div class="inv-wrap ${low ? "inv-low" : "inv-ok"}">
+            <div class="inv-circle">${isNaN(invNum) ? 0 : Math.floor(invNum)}</div>
           </div>
         `;
-        // click to open detail later if you want
         $list.appendChild(div);
       });
     }
 
     function applySearch(){
       const q = $q.value.trim().toLowerCase();
-      if (!q) {
+      if (!q){
         render(BRAND_ROWS);
         return;
       }
       const filtered = BRAND_ROWS.filter(r => {
         return (
-          (r["Line"]||"").toLowerCase().includes(q) ||
-          (r["Cigar"]||"").toLowerCase().includes(q) ||
-          (r["Vitola"]||"").toLowerCase().includes(q)
+          (r["Line"] || "").toLowerCase().includes(q) ||
+          (r["Cigar"] || "").toLowerCase().includes(q) ||
+          (r["Vitola"] || "").toLowerCase().includes(q)
         );
       });
       render(filtered);
     }
 
-    $q.addEventListener('input', applySearch);
+    $q.addEventListener("input", applySearch);
 
-    // load data
     fetch(DATA_URL)
       .then(r => {
         if(!r.ok) throw new Error("failed to load data");
@@ -215,7 +265,7 @@
       .catch(err => {
         console.error(err);
         $empty.textContent = "Could not load " + DATA_URL;
-        $empty.style.display = 'block';
+        $empty.style.display = "block";
       });
   </script>
 </body>
