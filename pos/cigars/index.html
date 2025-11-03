@@ -6,18 +6,46 @@
   <title>CIGARS • POS</title>
   <link rel="stylesheet" href="/pos/pos.css">
   <style>
-    .pos-tile-icon img {
-      background:#000;
-      object-fit: contain;
+    /* 4-column cigar grid, matches Food & Bevs layout */
+    .cigar-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 12px;
     }
-    .pos-tile.disabled {
-      opacity:.55;
-      cursor:default;
+    .cigar-tile {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: #0f1a2c;
+      text-decoration: none;
+    }
+    .cigar-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #d9d9d9;
+      display: grid;
+      place-items: center;
+    }
+    .cigar-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .cigar-label {
+      font-size: 13px;
+      font-weight: 500;
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
   </style>
 </head>
 <body>
   <div class="pos-wrap">
+    <!-- top bar -->
     <div class="pos-topbar">
       <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
       <div class="pos-star">★</div>
@@ -25,15 +53,16 @@
     <div class="pos-header-spacer"></div>
     <h1 class="pos-title">CIGARS</h1>
 
+    <!-- search bar -->
     <div class="pos-search">
-      <input id="q" placeholder="Search" />
+      <input placeholder="Search" id="searchInput" />
     </div>
 
-    <div id="grid" class="pos-grid"></div>
-    <div id="empty" class="empty" style="display:none;">No brands match your search.</div>
+    <!-- cigar icons -->
+    <div id="cigarGrid" class="cigar-grid"></div>
   </div>
 
-  <!-- universal bill tab -->
+  <!-- bill tab -->
   <div class="pos-bill-tab">
     <div class="pos-bill-icon">🧾</div>
     <div class="pos-bill-badge" id="billCount">1</div>
@@ -41,64 +70,45 @@
   </div>
 
   <script>
-    const ALL_BRANDS = [
-      { label: "Aladino",       file: "aladino.svg",      clickable: true  },
-      { label: "1502",          file: "1502.svg",         clickable: false },
-      { label: "Acid",          file: "acid.svg",         clickable: false },
-      { label: "Aging Room",    file: "agingroom.svg",    clickable: false },
-      { label: "Alec Bradley",  file: "alecbradley.svg",  clickable: false },
-      { label: "Angel Cuesta",  file: "angelcuesta.svg",  clickable: false },
-      { label: "Arturo Fuente", file: "arturofuente.svg", clickable: false },
-      { label: "Ashton",        file: "ashton.svg",       clickable: false },
-      { label: "Asylum 13",     file: "asylum13.svg",     clickable: false },
-      { label: "Atabey",        file: "atabey.svg",       clickable: false },
-      { label: "AVO",           file: "avo.svg",          clickable: false },
-      { label: "Baccarat",      file: "baccarat.svg",     clickable: false },
+    // all cigar brand icons from /img/icons/brands/
+    const CIGAR_BRANDS = [
+      "aladino", "1502", "acid", "agingroom", "alecbradley", "angelcuesta",
+      "arturofuente", "ashton", "asylum13", "atabey", "avo", "baccarat"
+      // add more as you upload them
     ];
 
-    const $grid = document.getElementById('grid');
-    const $q = document.getElementById('q');
-    const $empty = document.getElementById('empty');
+    const grid = document.getElementById("cigarGrid");
+    const searchInput = document.getElementById("searchInput");
 
-    function toSlug(s){
-      return s.toLowerCase().replace(/[^a-z0-9]+/g,'');
+    function renderGrid(filter = "") {
+      grid.innerHTML = "";
+      CIGAR_BRANDS.filter(name =>
+        name.toLowerCase().includes(filter.toLowerCase())
+      ).forEach(name => {
+        const div = document.createElement("a");
+        div.className = "cigar-tile";
+        div.href = `/pos/cigars/${name}/`;
+        div.innerHTML = `
+          <div class="cigar-icon">
+            <img src="/img/icons/brands/${name}.svg" alt="${name}">
+          </div>
+          <div class="cigar-label">${formatName(name)}</div>
+        `;
+        grid.appendChild(div);
+      });
     }
 
-    function buildTile(brand){
-      const src = `/img/icons/brands/${brand.file}`;
-      const el = document.createElement(brand.clickable ? 'a' : 'div');
-      el.className = 'pos-tile' + (brand.clickable ? '' : ' disabled');
-      if (brand.clickable) {
-        el.href = `/pos/cigars/${toSlug(brand.label)}/`;
-      }
-      el.innerHTML = `
-        <div class="pos-tile-icon"><img src="${src}" alt="${brand.label}"></div>
-        <div class="pos-tile-label">${brand.label}</div>
-      `;
-      return el;
+    function formatName(name) {
+      return name
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    function render(list){
-      $grid.innerHTML = '';
-      if (!list.length){
-        $empty.style.display = 'block';
-        return;
-      }
-      $empty.style.display = 'none';
-      list.forEach(b => $grid.appendChild(buildTile(b)));
-    }
+    renderGrid();
 
-    render(ALL_BRANDS);
-
-    $q.addEventListener('input', ()=>{
-      const v = $q.value.trim().toLowerCase();
-      const filtered = ALL_BRANDS.filter(b => b.label.toLowerCase().includes(v));
-      render(filtered);
+    searchInput.addEventListener("input", e => {
+      renderGrid(e.target.value);
     });
-
-    // bill tab: hook into real cart later
-    // document.getElementById('billCount').textContent = cart.items.length;
-    // document.getElementById('billTotal').textContent = '$' + cart.total.toFixed(2);
   </script>
 </body>
 </html>
