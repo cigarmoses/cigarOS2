@@ -17,6 +17,7 @@
   .back{display:inline-flex;gap:6px;align-items:center;color:var(--brand);text-decoration:none;font-weight:600}
   h1{margin:6px 0 10px 0;font-size:26px;letter-spacing:.2px}
   .star{margin-left:auto;font-size:22px;line-height:1;cursor:pointer;color:#f5d34f}
+
   /* search */
   .search{display:flex;align-items:center;background:#fff;border-radius:999px;padding:10px 12px;border:1px solid var(--line);box-shadow:var(--shadow)}
   .search input{border:0;outline:0;width:100%;font-size:15px}
@@ -40,8 +41,9 @@
   .qtyBtn{height:28px;min-width:28px;border-radius:999px;border:1px solid var(--line);background:#f6f8fb;font-weight:800;display:inline-grid;place-items:center;cursor:pointer}
   .qtyNum{min-width:34px;height:28px;border-radius:8px;border:1px solid var(--line);display:inline-grid;place-items:center;background:#fff}
   .price{align-self:center;justify-self:end;background:#ebf9ef;border:1px solid #d6f2dc;border-radius:999px;padding:8px 14px;font-weight:800;min-width:74px;text-align:center;color:var(--ok)}
+  .empty{color:var(--muted);text-align:center;margin:20px 0}
 
-  /* modal */
+  /* modal (detail) */
   .modal{position:fixed;inset:0;background:rgba(15,26,44,.35);display:none;z-index:40}
   .sheet{position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:min(520px,100%);background:var(--card);border-radius:20px 20px 0 0;box-shadow:var(--shadow);padding:12px}
   .sheetHead{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:8px 6px 0}
@@ -70,7 +72,7 @@
   <div class="wrap">
     <!-- top -->
     <div class="top">
-      <a class="back" href="/pos/categories/cigars/"><span>←</span><span>POS</span></a>
+      <a class="back" href="/pos/cigars/"><span>←</span><span>POS</span></a>
       <h1>Aladino</h1>
       <div class="star" title="Favorite brand">★</div>
     </div>
@@ -90,6 +92,7 @@
 
     <!-- list -->
     <div class="list" id="list"></div>
+    <div id="empty" class="empty" style="display:none;">No cigars match your search.</div>
   </div>
 
   <!-- modal -->
@@ -140,97 +143,24 @@
   </div>
 
 <script>
-/* ---------------------------
-   SAMPLE DATA (map to Excel)
-   Replace with JSON export of hub_aladino.xlsx when ready
-----------------------------*/
-const rows = [
-  {
-    "Brand IMG":"img/icons/brands/aladino.svg",
-    "Cigar IMG":"img/cigars/aladino/cameroon-le-toro.png",
-    "Manufacturer":"JRE Tobacco Co",
-    "Brand":"Aladino",
-    "Line":"Aladino Cameroon",
-    "Cigar":"LE Cameroon Toro",
-    "Vitola":"Toro",
-    "CIGAR MSRP":16.60,
-    "BOX MSRP":408.00,
-    "BOX COUNT":24,
-    "LENGTH":"6.00","RG":52,"SHAPE":"Parejo",
-    "WRAPPER SHADE":"Natural","ORIGIN":"Honduras",
-    "WRAPPER":"Honduras","BINDER":"Honduras","FILLER":"Honduras",
-    "STRENGTH":"Medium","FAVORITE":false,"Box Pressed":false,"F/S":false,"Barberpole":false,"Pack":false,"TIN":false,
-    "PRODUCT #":"AL12CM"
-  },
-  {
-    "Brand IMG":"img/icons/brands/aladino.svg",
-    "Cigar IMG":"img/cigars/aladino/cameroon-elegante.png",
-    "Manufacturer":"JRE Tobacco Co",
-    "Brand":"Aladino",
-    "Line":"Aladino Cameroon",
-    "Cigar":"Vintage Selection Elegante",
-    "Vitola":"Lancero",
-    "CIGAR MSRP":11.00,
-    "BOX MSRP":337.50,
-    "BOX COUNT":25,
-    "LENGTH":"7.00","RG":38,"SHAPE":"Parejo",
-    "WRAPPER SHADE":"Natural","ORIGIN":"Honduras",
-    "WRAPPER":"Honduras","BINDER":"Honduras","FILLER":"Honduras",
-    "STRENGTH":"Medium","FAVORITE":true,"Box Pressed":false,"F/S":false,"Barberpole":false,"Pack":false,"TIN":false,
-    "PRODUCT #":"AL02CM"
-  },
-  {
-    "Brand IMG":"img/icons/brands/aladino.svg",
-    "Cigar IMG":"img/cigars/aladino/connecticut-perfecto.png",
-    "Manufacturer":"JRE Tobacco Co",
-    "Brand":"Aladino",
-    "Line":"Aladino Connecticut",
-    "Cigar":"Queens Perfecto",
-    "Vitola":"Perfecto",
-    "CIGAR MSRP":14.20,
-    "BOX MSRP":325.00,
-    "BOX COUNT":25,
-    "LENGTH":"5.25","RG":46,"SHAPE":"Parejo",
-    "WRAPPER SHADE":"Claro","ORIGIN":"Honduras",
-    "WRAPPER":"Ecuador","BINDER":"Honduras","FILLER":"Honduras",
-    "STRENGTH":"Mild","FAVORITE":false,"Box Pressed":false,"F/S":false,"Barberpole":false,"Pack":false,"TIN":false,
-    "PRODUCT #":"AL13CM"
-  },
-  {
-    "Brand IMG":"img/icons/brands/aladino.svg",
-    "Cigar IMG":"img/cigars/aladino/classic-gorbusto.png",
-    "Manufacturer":"JRE Tobacco Co",
-    "Brand":"Aladino",
-    "Line":"Camp Aladino",
-    "Cigar":"Gorbusto Maduro",
-    "Vitola":"Short Gordo",
-    "CIGAR MSRP":10.60,
-    "BOX MSRP":350.00,
-    "BOX COUNT":25,
-    "LENGTH":"5.00","RG":60,"SHAPE":"Parejo",
-    "WRAPPER SHADE":"Maduro","ORIGIN":"Honduras",
-    "WRAPPER":"Mexican San Andres Maduro","BINDER":"Corojo","FILLER":"Corojo",
-    "STRENGTH":"Medium","FAVORITE":false,"Box Pressed":false,"F/S":false,"Barberpole":false,"Pack":false,"TIN":false,
-    "PRODUCT #":"AL06CL"
-  }
-];
-
-/* --------- helpers ---------- */
-const $list = document.getElementById('list');
-const $q = document.getElementById('q');
+/* ---------- DOM refs ---------- */
+const $list  = document.getElementById('list');
+const $q     = document.getElementById('q');
+const $empty = document.getElementById('empty');
 const $modal = document.getElementById('modal');
 const $close = document.getElementById('close');
 
-function money(n){ const v=Number(n); return isFinite(v)? v.toFixed(2) : n; }
+/* ---------- helpers ---------- */
+function money(n){ const v = Number(n); return isFinite(v) ? v.toFixed(2) : (n ?? ""); }
 function setTxt(id,val){ const el=document.getElementById(id); if(el) el.textContent = val ?? ""; }
 function setImg(id,src){ const el=document.getElementById(id); if(el && src) el.src = src; }
 function setFlag(id,on){ const el=document.getElementById(id); if(el) el.dataset.on = !!on; }
 
-/* --------- list render ---------- */
+/* ---------- list render ---------- */
 function buildRow(r){
   const li = document.createElement('div');
   li.className = 'item';
-  const title = `${(r["Line"]||"").replace(/^Aladino\s+/,'')} ${r["Cigar"]||""}`.trim();
+  const title = `${(r["Line"]||"").replace(/^Aladino\\s+/, '')} ${r["Cigar"]||""}`.trim();
   li.innerHTML = `
     <div class="brandImg"><img alt="${r["Brand"]||'Brand'}" src="${r["Brand IMG"]||''}"></div>
     <div class="meta">
@@ -253,38 +183,28 @@ function buildRow(r){
       e.stopPropagation();
       let n = parseInt(num.textContent||'1',10);
       if(btn.dataset.act==='plus') n++;
-      if(btn.dataset.act==='minus') n=Math.max(0,n-1);
-      num.textContent=n;
+      if(btn.dataset.act==='minus') n = Math.max(0, n-1);
+      num.textContent = n;
       // hook: add-to-cart here
     });
   });
 
-  // open modal on click
+  // open modal
   li.addEventListener('click', ()=> openDetail(r));
   return li;
 }
 
-function render(list){
+function render(rows){
   $list.innerHTML = '';
-  list.forEach(r => $list.appendChild(buildRow(r)));
+  if(!rows || rows.length === 0){
+    $empty.style.display = 'block';
+    return;
+  }
+  $empty.style.display = 'none';
+  rows.forEach(r => $list.appendChild(buildRow(r)));
 }
 
-render(rows);
-
-/* --------- search ---------- */
-$q.addEventListener('input', ()=>{
-  const q = $q.value.trim().toLowerCase();
-  if(!q) return render(rows);
-  const filtered = rows.filter(r =>
-    (r["Brand"]||"").toLowerCase().includes(q) ||
-    (r["Line"]||"").toLowerCase().includes(q) ||
-    (r["Cigar"]||"").toLowerCase().includes(q) ||
-    (r["Vitola"]||"").toLowerCase().includes(q)
-  );
-  render(filtered);
-});
-
-/* --------- detail modal ---------- */
+/* ---------- detail modal ---------- */
 function openDetail(r){
   setTxt('d_name', r["Cigar"]);
   document.getElementById('d_fav').style.opacity = r["FAVORITE"] ? '1' : '.25';
@@ -324,6 +244,36 @@ function closeDetail(){
   $modal.setAttribute('aria-hidden','true');
 }
 document.getElementById('close').addEventListener('click', closeDetail);
+
+/* ---------- load JSON & wire search ---------- */
+let ALL_ROWS = [];
+fetch("hub_aladino.json")
+  .then(r => {
+    if(!r.ok) throw new Error("Failed to load hub_aladino.json");
+    return r.json();
+  })
+  .then(json => {
+    // Expecting full Excel export with these columns present.
+    ALL_ROWS = Array.isArray(json) ? json : [];
+    render(ALL_ROWS);
+  })
+  .catch(err => {
+    console.error(err);
+    $empty.textContent = "Could not load data (hub_aladino.json).";
+    $empty.style.display = 'block';
+  });
+
+$q.addEventListener('input', ()=>{
+  const q = $q.value.trim().toLowerCase();
+  if(!q){ render(ALL_ROWS); return; }
+  const filtered = ALL_ROWS.filter(r =>
+    (r["Brand"]||"").toLowerCase().includes(q) ||
+    (r["Line"]||"").toLowerCase().includes(q) ||
+    (r["Cigar"]||"").toLowerCase().includes(q) ||
+    (r["Vitola"]||"").toLowerCase().includes(q)
+  );
+  render(filtered);
+});
 </script>
 </body>
 </html>
