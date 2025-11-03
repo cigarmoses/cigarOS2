@@ -64,18 +64,52 @@
     .search{
       display:flex;align-items:center;background:#fff;border-radius:999px;
       padding:10px 12px;border:1px solid var(--line);box-shadow:var(--shadow);
-      margin-top:14px; /* gap between title and search */
+      margin-top:14px; /* gap under title */
     }
     .search input{border:0;outline:0;width:100%;font-size:15px}
     .search svg{opacity:.6}
 
     .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
-    .tile{display:flex;flex-direction:column;gap:6px;align-items:center;text-decoration:none;color:inherit}
-    .icon{width:72px;height:72px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);display:grid;place-items:center;overflow:hidden}
-    .icon img{width:100%;height:100%;object-fit:contain;background:#000}
-    .name{font-weight:700;text-align:center;font-size:14px}
-    .count{font-size:12px;color:var(--muted)}
+    .tile{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      align-items:center;
+      text-decoration:none;
+      color:inherit;
+    }
+    .icon{
+      width:72px;
+      height:72px;
+      border-radius:16px;
+      background:#fff;
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+    }
+    .icon img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      background:#000;
+    }
+    .name{
+      font-weight:700;
+      text-align:center;
+      font-size:14px;
+    }
     .empty{color:var(--muted);text-align:center;margin:24px 0}
+
+    /* non-clickable brands */
+    .tile.disabled{
+      opacity:0.55;
+      cursor:default;
+    }
+    .tile.disabled:hover{
+      transform:none;
+    }
   </style>
 </head>
 <body>
@@ -92,100 +126,95 @@
     </div>
 
     <div id="grid" class="grid"></div>
-    <div id="empty" class="empty" style="display:none;">Could not load /pos/data/cigars_master.json</div>
+    <div id="empty" class="empty" style="display:none;">No brands match your search.</div>
   </div>
 
-  <script>
-    const DATA_URL = "/pos/data/cigars_master.json";
-    const $grid = document.getElementById('grid');
-    const $q = document.getElementById('q');
-    const $empty = document.getElementById('empty');
-    let BRANDS = [];
+<script>
+  // 1) list every SVG you currently have in /img/icons/brands/
+  // add/remove from here — this is your “visual roster”
+  const ALL_BRANDS = [
+    "Aladino",
+    "Arturo Fuente",
+    "Padron",
+    "My Father",
+    "Oliva",
+    "Aging Room",
+    "Acid",
+    "Alec Bradley",
+    "Angel Cuesta",
+    "Ashton",
+    "Asylum",
+    "Plasencia",
+    "Crowned Heads"
+    "Davidoff"
+  ];
 
-    function slug(s){
-      return String(s||'')
-        .toLowerCase()
-        .replace(/&/g,'and')
-        .replace(/[^a-z0-9]+/g,'');
-    }
-    function rootify(p){ return p ? '/' + String(p).replace(/^\/+/, '') : ''; }
+  // 2) make only these clickable right now
+  const CLICKABLE = new Set([
+    "Aladino"  // the only live brand today
+  ]);
 
-    function setBrandIcon(imgEl, brand, providedPath){
-      const provided = providedPath ? rootify(providedPath) : "";
-      if (provided) {
-        imgEl.src = provided;
-        imgEl.onerror = () => tryFallbacks(imgEl, brand);
-        return;
-      }
-      tryFallbacks(imgEl, brand);
-    }
-    function tryFallbacks(imgEl, brand){
-      const s = slug(brand);
-      const candidates = [
-        `/img/icons/brands/${s}.svg`,
-        `/img/icons/brand/${s}.svg`
-      ];
-      let i = 0;
-      (function next(){
-        if (i >= candidates.length) return;
-        imgEl.onerror = () => { i++; next(); };
-        imgEl.src = candidates[i];
-      })();
-    }
+  const $grid = document.getElementById('grid');
+  const $q = document.getElementById('q');
+  const $empty = document.getElementById('empty');
 
-    function buildTile(b){
-      const a = document.createElement('a');
-      a.className = 'tile';
-      a.href = `/pos/cigars/${slug(b.name)}/`;
-      a.innerHTML = `
-        <div class="icon"><img alt="${b.name} logo"></div>
-        <div class="name">${b.name}</div>
-        <div class="count">${b.count} cigar${b.count === 1 ? '' : 's'}</div>
-      `;
-      const img = a.querySelector('img');
-      setBrandIcon(img, b.name, b.img);
-      return a;
-    }
+  function slug(s){
+    return String(s||'')
+      .toLowerCase()
+      .replace(/&/g,'and')
+      .replace(/[^a-z0-9]+/g,'');
+  }
+  function rootify(p){ return p ? '/' + String(p).replace(/^\/+/, '') : ''; }
 
-    function render(list){
-      $grid.innerHTML = '';
-      if (!list || list.length === 0){
-        $empty.style.display = 'block';
-        return;
-      }
-      $empty.style.display = 'none';
-      list.forEach(b => $grid.appendChild(buildTile(b)));
+  function toNiceName(name){
+    // if you added raw filenames like "agingroom", make them nicer
+    if (name === "agingroom") return "Aging Room";
+    if (name === "acid") return "Acid";
+    if (name === "alecbradley") return "Alec Bradley";
+    if (name === "arturofuente") return "Arturo Fuente";
+    return name;
+  }
+
+  function buildTile(brandName){
+    const nice = toNiceName(brandName);
+    const isClickable = CLICKABLE.has(nice) || CLICKABLE.has(brandName);
+    const s = slug(brandName);
+    const imgPath = `/img/icons/brands/${s}.svg`;
+
+    const el = document.createElement(isClickable ? 'a' : 'div');
+    el.className = 'tile' + (isClickable ? '' : ' disabled');
+    if (isClickable){
+      el.href = `/pos/cigars/${slug(nice)}/`;
     }
 
-    $q.addEventListener('input', ()=>{
-      const q = $q.value.trim().toLowerCase();
-      const filtered = BRANDS.filter(b => b.name.toLowerCase().includes(q));
-      render(filtered);
+    el.innerHTML = `
+      <div class="icon"><img src="${imgPath}" alt="${nice}"></div>
+      <div class="name">${nice}</div>
+    `;
+    return el;
+  }
+
+  function render(list){
+    $grid.innerHTML = '';
+    if (!list.length){
+      $empty.style.display = 'block';
+      return;
+    }
+    $empty.style.display = 'none';
+    list.forEach(name => {
+      $grid.appendChild(buildTile(name));
     });
+  }
 
-    fetch(DATA_URL)
-      .then(r => {
-        if(!r.ok) throw new Error("fetch failed");
-        return r.json();
-      })
-      .then(rows => {
-        const map = new Map();
-        rows.forEach(r => {
-          const name = (r["Brand"] || "").trim();
-          if(!name) return;
-          const img = r["Brand IMG"] || "";
-          if(!map.has(name)){
-            map.set(name, { name, img, count: 0 });
-          }
-          map.get(name).count += 1;
-        });
-        BRANDS = Array.from(map.values()).sort((a,b)=>a.name.localeCompare(b.name));
-        render(BRANDS);
-      })
-      .catch(err => {
-        console.error(err);
-        $empty.style.display = 'block';
-      });
-  </script>
+  // initial render
+  render(ALL_BRANDS);
+
+  // search
+  $q.addEventListener('input', ()=>{
+    const q = $q.value.trim().toLowerCase();
+    const filtered = ALL_BRANDS.filter(name => toNiceName(name).toLowerCase().includes(q));
+    render(filtered);
+  });
+</script>
 </body>
 </html>
