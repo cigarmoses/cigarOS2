@@ -64,7 +64,7 @@
     .search{
       display:flex;align-items:center;background:#fff;border-radius:999px;
       padding:10px 12px;border:1px solid var(--line);box-shadow:var(--shadow);
-      margin-top:14px; /* gap under title */
+      margin-top:14px;
     }
     .search input{border:0;outline:0;width:100%;font-size:15px}
     .search svg{opacity:.6}
@@ -101,14 +101,9 @@
       font-size:14px;
     }
     .empty{color:var(--muted);text-align:center;margin:24px 0}
-
-    /* non-clickable brands */
     .tile.disabled{
       opacity:0.55;
       cursor:default;
-    }
-    .tile.disabled:hover{
-      transform:none;
     }
   </style>
 </head>
@@ -130,66 +125,62 @@
   </div>
 
 <script>
-  // 1) list every SVG you currently have in /img/icons/brands/
-  // add/remove from here — this is your “visual roster”
-  const ALL_BRANDS = [
-    "Aladino",
-    "Arturo Fuente",
-    "Padron",
-    "My Father",
-    "Oliva",
-    "Aging Room",
-    "Acid",
-    "Alec Bradley",
-    "Angel Cuesta",
-    "Ashton",
-    "Asylum",
-    "Plasencia",
-    "Crowned Heads"
-    "Davidoff"
-  ];
+  /*
+    We’ll map label → file exactly as your GitHub shows.
 
-  // 2) make only these clickable right now
-  const CLICKABLE = new Set([
-    "Aladino"  // the only live brand today
-  ]);
+    Folder: /img/icons/brands/
+    Files you showed:
+      1502.svg
+      acid.svg
+      agingroom.svg
+      aladino.svg
+      alecbradley.svg
+      angelcuesta.svg
+      arturofuente.svg
+      ashton.svg
+      asylum13.svg
+      atabey.svg
+      avo.svg
+      baccarat.svg
+      ... (add more here when you upload them)
+  */
+
+  const ALL_BRANDS = [
+    { label: "Aladino",        file: "aladino.svg",        clickable: true  },
+    { label: "1502",           file: "1502.svg",           clickable: false },
+    { label: "Acid",           file: "acid.svg",           clickable: false },
+    { label: "Aging Room",     file: "agingroom.svg",      clickable: false },
+    { label: "Alec Bradley",   file: "alecbradley.svg",    clickable: false },
+    { label: "Angel Cuesta",   file: "angelcuesta.svg",    clickable: false },
+    { label: "Arturo Fuente",  file: "arturofuente.svg",   clickable: false },
+    { label: "Ashton",         file: "ashton.svg",         clickable: false },
+    { label: "Asylum 13",      file: "asylum13.svg",       clickable: false },
+    { label: "Atabey",         file: "atabey.svg",         clickable: false },
+    { label: "AVO",            file: "avo.svg",            clickable: false },
+    { label: "Baccarat",       file: "baccarat.svg",       clickable: false },
+    // add the rest of your .svg files here:
+    // { label: "Plasencia", file: "plasencia.svg", clickable: false },
+    // { label: "Crowned Heads", file: "crownedheads.svg", clickable: false },
+    // { label: "Davidoff", file: "davidoff.svg", clickable: false },
+  ];
 
   const $grid = document.getElementById('grid');
   const $q = document.getElementById('q');
   const $empty = document.getElementById('empty');
 
-  function slug(s){
-    return String(s||'')
-      .toLowerCase()
-      .replace(/&/g,'and')
-      .replace(/[^a-z0-9]+/g,'');
-  }
-  function rootify(p){ return p ? '/' + String(p).replace(/^\/+/, '') : ''; }
-
-  function toNiceName(name){
-    // if you added raw filenames like "agingroom", make them nicer
-    if (name === "agingroom") return "Aging Room";
-    if (name === "acid") return "Acid";
-    if (name === "alecbradley") return "Alec Bradley";
-    if (name === "arturofuente") return "Arturo Fuente";
-    return name;
-  }
-
-  function buildTile(brandName){
-    const nice = toNiceName(brandName);
-    const isClickable = CLICKABLE.has(nice) || CLICKABLE.has(brandName);
-    const s = slug(brandName);
-    const imgPath = `/img/icons/brands/${s}.svg`;
-
-    const el = document.createElement(isClickable ? 'a' : 'div');
-    el.className = 'tile' + (isClickable ? '' : ' disabled');
-    if (isClickable){
-      el.href = `/pos/cigars/${slug(nice)}/`;
+  function buildTile(brand){
+    const src = `/img/icons/brands/${brand.file}`;
+    const el = document.createElement(brand.clickable ? 'a' : 'div');
+    el.className = 'tile' + (brand.clickable ? '' : ' disabled');
+    if (brand.clickable) {
+      // this assumes you have /pos/cigars/aladino/
+      el.href = `/pos/cigars/${brand.label.toLowerCase().replace(/[^a-z0-9]+/g,'')}/`;
     }
-
     el.innerHTML = `
-      <div class="icon"><img src="${imgPath}" alt="${nice}"></div>
-      <div class="name">${nice}</div>
+      <div class="icon">
+        <img src="${src}" alt="${brand.label}">
+      </div>
+      <div class="name">${brand.label}</div>
     `;
     return el;
   }
@@ -201,9 +192,7 @@
       return;
     }
     $empty.style.display = 'none';
-    list.forEach(name => {
-      $grid.appendChild(buildTile(name));
-    });
+    list.forEach(b => $grid.appendChild(buildTile(b)));
   }
 
   // initial render
@@ -212,7 +201,7 @@
   // search
   $q.addEventListener('input', ()=>{
     const q = $q.value.trim().toLowerCase();
-    const filtered = ALL_BRANDS.filter(name => toNiceName(name).toLowerCase().includes(q));
+    const filtered = ALL_BRANDS.filter(b => b.label.toLowerCase().includes(q));
     render(filtered);
   });
 </script>
