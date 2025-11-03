@@ -1,65 +1,64 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>POS</title>
-<style>
-  :root{--bg:#eaf2f6;--ink:#0f1a2c}
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0;background:var(--bg);color:var(--ink);font:600 18px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"}
-  .wrap{max-width:1100px;margin:0 auto}
-  header{padding:22px 16px 8px}
-  h1{margin:0;font-size:42px;letter-spacing:.5px}
-  main{padding:10px 14px 24px}
-
-  /* 2-up on phones, scales up automatically; NO white background tiles */
-  .grid{display:grid;gap:24px 20px;grid-template-columns:repeat(2,1fr)}
-  @media(min-width:760px){.grid{grid-template-columns:repeat(3,1fr)}}
-
-  .item{display:flex;flex-direction:column;align-items:center;text-decoration:none;color:inherit;background:transparent;border:none;padding:0}
-  .thumb{width:132px;height:132px;display:grid;place-items:center}
-  .thumb img{width:112px;height:112px;display:block;border-radius:26px;object-fit:contain} /* the blue icon file supplies its own rounded square */
-  .label{margin-top:10px;font-size:18px;font-weight:900;text-align:center}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>POS</title>
+  <link rel="stylesheet" href="/pos/pos.css">
 </head>
 <body>
-  <div class="wrap">
-    <header><h1>POS</h1></header>
+  <div class="pos-wrap">
 
-    <main>
-      <section class="grid" aria-label="POS Categories">
-        <a class="item" href="/pos/foodandbevs/">
-          <div class="thumb"><img alt="Food & Beverages" src="/img/icons/categories/foodandbevs.svg" loading="eager"></div>
-          <div class="label">Food &amp; Beverages</div>
-        </a>
+    <div class="pos-topbar">
+      <a class="pos-back" href="/"><span>←</span><span>Home</span></a>
+      <div class="pos-star">★</div>
+    </div>
+    <div class="pos-header-spacer"></div>
+    <h1 class="pos-title">POS</h1>
 
-        <a class="item" href="/pos/cigars/">
-          <div class="thumb"><img alt="Cigars" src="/img/icons/categories/cigars.svg" loading="eager"></div>
-          <div class="label">Cigars</div>
-        </a>
+    <div class="pos-search">
+      <input placeholder="Search" />
+    </div>
 
-        <a class="item" href="/pos/pipes/">
-          <div class="thumb"><img alt="Pipes" src="/img/icons/categories/pipes.svg"></div>
-          <div class="label">Pipes</div>
-        </a>
-
-        <a class="item" href="/pos/packs/">
-          <div class="thumb"><img alt="Packs" src="/img/icons/categories/packs.svg"></div>
-          <div class="label">Packs</div>
-        </a>
-
-        <a class="item" href="/pos/ashtrays/">
-          <div class="thumb"><img alt="Ashtrays" src="/img/icons/categories/ashtrays.svg"></div>
-          <div class="label">Ashtrays</div>
-        </a>
-
-        <a class="item" href="/pos/accessories/">
-          <div class="thumb"><img alt="Accessories" src="/img/icons/categories/accessories.svg"></div>
-          <div class="label">Accessories</div>
-        </a>
-      </section>
-    </main>
+    <div class="pos-grid">
+      <a class="pos-tile" href="/pos/cigars/">
+        <div class="pos-tile-icon"></div>
+        <div class="pos-tile-label">Cigars</div>
+      </a>
+      <a class="pos-tile" href="/pos/pipes/">
+        <div class="pos-tile-icon"></div>
+        <div class="pos-tile-label">Pipes</div>
+      </a>
+      <a class="pos-tile" href="/pos/foodandbevs/">
+        <div class="pos-tile-icon"></div>
+        <div class="pos-tile-label">Food &amp; Bevs</div>
+      </a>
+      <a class="pos-tile" href="/pos/packs/">
+        <div class="pos-tile-icon"></div>
+        <div class="pos-tile-label">Packs</div>
+      </a>
+      <a class="pos-tile" href="/pos/accessories/">
+        <div class="pos-tile-icon"></div>
+        <div class="pos-tile-label">Accessories</div>
+      </a>
+      <a class="pos-tile" href="/pos/ashtrays/">
+        <div class="pos-tile-icon"></div>
+        <div class="pos-tile-label">Ashtrays</div>
+      </a>
+    </div>
   </div>
+
+  <!-- universal bill tab -->
+  <div class="pos-bill-tab">
+    <div class="pos-bill-icon">🧾</div>
+    <div class="pos-bill-badge" id="billCount">1</div>
+    <div class="pos-bill-total" id="billTotal">$1.50</div>
+  </div>
+
+  <script>
+    // later you can replace this with real cart logic
+    // document.getElementById('billCount').textContent = cart.items.length;
+    // document.getElementById('billTotal').textContent = '$' + cart.total.toFixed(2);
+  </script>
 </body>
 </html>
