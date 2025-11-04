@@ -17,7 +17,7 @@
       color: var(--ink);
     }
 
-    /* top bar like your screenshot */
+    /* top bar */
     .top-bar {
       height: 70px;
       background: #000;
@@ -187,7 +187,7 @@
 
   <!-- top bar -->
   <div class="top-bar">
-    <!-- this calls the parent page to close the modal -->
+    <!-- let the iframe tell parent to close -->
     <div class="top-left" onclick="if (window.parent && window.parent.closeBill) window.parent.closeBill();">×</div>
     <div class="top-right">
       <div class="dot"></div>
@@ -203,13 +203,14 @@
     <!-- ITEM 1 -->
     <div class="item">
       <div class="item-icon">
-        <img src="/img/icons/brands/fatbottombetty.svg" alt="Fat Bottom Betty">
+        <!-- changed to a path we KNOW exists in your project -->
+        <img src="/img/icons/categories/cigars.svg" alt="Cigar">
       </div>
       <div class="item-body">
         <div class="item-title">Fat Bottom Betty</div>
         <div class="item-sub">Gordo</div>
         <div class="item-sub">La Flor Dominicana</div>
-        <!-- no “MSRP” label per your request -->
+        <!-- no “MSRP” text -->
         <div class="item-sub">3.99</div>
       </div>
       <div class="item-right">
@@ -225,7 +226,8 @@
     <!-- ITEM 2 -->
     <div class="item">
       <div class="item-icon">
-        <img src="/img/icons/brands/lfd.svg" alt="Andalusian Bull">
+        <!-- another safe icon from your categories -->
+        <img src="/img/icons/categories/cigars.svg" alt="Cigar">
       </div>
       <div class="item-body">
         <div class="item-title">Andalusian Bull</div>
@@ -261,7 +263,7 @@
   </div>
 
   <script>
-    // put current date/time at top
+    // Show current date/time
     const d = new Date();
     const dayName = d.toLocaleDateString(undefined, { weekday: "long" });
     const dateStr = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
