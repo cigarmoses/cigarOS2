@@ -9,11 +9,14 @@
       --bg: #eaf2f6;
       --ink: #0f1a2c;
     }
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       background: var(--bg);
       color: var(--ink);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -23,21 +26,22 @@
 
     h1 {
       text-align: center;
-      font-size: 30px;
-      margin: 0 0 20px;
+      font-size: 32px;
+      margin: 0 0 26px;
       font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
     .pos-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 32px 36px;
+      gap: 36px 40px;
       justify-items: center;
     }
 
     .pos-tile {
-      width: 140px;
-      height: 140px;
+      width: 150px;
+      height: 150px;
       background: #ffffff;
       border-radius: 124px;
       display: flex;
@@ -46,12 +50,13 @@
       justify-content: center;
       text-decoration: none;
       color: var(--ink);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .pos-tile:hover {
-      transform: scale(1.05);
+      transform: scale(1.04);
+      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.12);
     }
 
     .pos-tile img {
@@ -62,8 +67,9 @@
     }
 
     .pos-tile span {
-      font-size: 15px;
-      font-weight: 600;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
     }
 
     .pos-bill-tab {
@@ -116,27 +122,27 @@
 
   <div class="pos-grid">
     <a href="/pos/cigars/" class="pos-tile">
-      <img src="/img/cigars.svg" alt="Cigars">
+      <img src="/img/icons/categories/cigars.svg" alt="Cigars">
       <span>Cigars</span>
     </a>
     <a href="/pos/pipes/" class="pos-tile">
-      <img src="/img/pipes.svg" alt="Pipes">
+      <img src="/img/icons/categories/pipes.svg" alt="Pipes">
       <span>Pipes</span>
     </a>
     <a href="/pos/foodandbevs/" class="pos-tile">
-      <img src="/img/foodandbevs.svg" alt="Food & Bevs">
+      <img src="/img/icons/categories/foodandbevs.svg" alt="Food & Bevs">
       <span>Food & Bevs</span>
     </a>
     <a href="/pos/packs/" class="pos-tile">
-      <img src="/img/packs.svg" alt="Packs">
+      <img src="/img/icons/categories/packs.svg" alt="Packs">
       <span>Packs</span>
     </a>
     <a href="/pos/accessories/" class="pos-tile">
-      <img src="/img/accessories.svg" alt="Accessories">
+      <img src="/img/icons/categories/accessories.svg" alt="Accessories">
       <span>Accessories</span>
     </a>
     <a href="/pos/ashtrays/" class="pos-tile">
-      <img src="/img/ashtrays.svg" alt="Ashtrays">
+      <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays">
       <span>Ashtrays</span>
     </a>
   </div>
