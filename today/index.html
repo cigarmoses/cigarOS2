@@ -1,31 +1,187 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Today</title>
-<style>
-  :root{--bg:#f5f6fa;--tile:#fff;--radius:20px;--sh:0 4px 10px rgba(0,0,0,.08);--sh2:0 6px 16px rgba(0,0,0,.10);--muted:#667085}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:24px 0 60px}
-  header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-  header a{display:inline-flex;align-items:center;text-decoration:none;color:#111;font-weight:700}
-  header img{width:32px;height:32px;border-radius:6px}
-  .hint{color:var(--muted);font-size:12px;margin-bottom:12px}
-  .grid{display:grid;grid-template-columns:repeat(2,130px);gap:28px;justify-content:center}
-  .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;width:130px;height:130px;background:var(--tile);border-radius:var(--radius);box-shadow:var(--sh);text-decoration:none;color:#111;transition:.15s transform,.2s box-shadow}
-  .tile:hover{transform:translateY(-3px);box-shadow:var(--sh2)}
-  .tile svg{width:40px;height:40px;margin-bottom:10px}
-  .label{font-weight:800;font-size:14px}
-</style></head>
-<body>
-  <header>
-    <a href="/"><img src="/img/logo-smoke.png" alt="Back" /></a>
-    <span>Today</span>
-  </header>
-  <div class="hint">Tap to open.</div>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Today • Dashboard</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #000000;
+      --muted: #666;
+      --card: #f9f9f9;
+      --radius: 22px;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+    .wrap {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 22px 18px 40px;
+    }
 
-  <main class="grid">
-    <a href="#" class="tile"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="15" rx="2.5" stroke="#2f8cff" stroke-width="1.5"/><rect x="3" y="8" width="18" height="3" fill="#a7d0ff"/><circle cx="12" cy="15" r="3" fill="#2f8cff"/></svg><div class="label">Calendar</div></a>
-    <a href="#" class="tile"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="#2f8cff" stroke-width="1.5"/><path d="M7 13h10M7 9h10M7 17h6" stroke="#2f8cff" stroke-width="1.5" stroke-linecap="round"/></svg><div class="label">Tasks</div></a>
-    <a href="#" class="tile"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4v5c0 5-4 7-8 9-4-2-8-4-8-9V7l8-4z" stroke="#2f8cff" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="#a7d0ff"/></svg><div class="label">Events</div></a>
-    <a href="#" class="tile"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="#2f8cff" stroke-width="1.5"/><path d="M6 8h12M6 12h10M6 16h8" stroke="#2f8cff" stroke-width="1.5" stroke-linecap="round"/></svg><div class="label">Notes</div></a>
-  </main>
-</body></html>
+    /* header date/day */
+    .date-line {
+      font-size: 14px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .day-line {
+      font-weight: 800;
+      font-size: 50px;
+      line-height: .9;
+      margin-bottom: 20px;
+    }
+
+    /* card grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      grid-gap: 12px;
+      margin-bottom: 12px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 14px 16px 14px;
+    }
+    .card-title {
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: .08em;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .card-big {
+      font-size: 46px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .card-mid {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    /* second row: vitola + history */
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      grid-gap: 12px;
+      margin-bottom: 12px;
+    }
+    .list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .history-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 13px;
+    }
+    /* brand row */
+    .row3 {
+      margin-bottom: 12px;
+    }
+
+    /* make it friendly on smaller phones */
+    @media (max-width: 420px) {
+      .grid,
+      .row2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .card-big {
+        font-size: 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- DATE / DAY -->
+    <div class="date-line" id="todayDate">NOVEMBER 10</div>
+    <div class="day-line" id="todayDow">MON</div>
+
+    <!-- ROW 1: cigars / sales / avg -->
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Cigars</div>
+        <div class="card-big" id="cigarsSold">133</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sales</div>
+        <div class="card-mid" id="salesTotal">2.4</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Avg</div>
+        <div class="card-mid" id="avgUnit">18</div>
+      </div>
+    </div>
+
+    <!-- ROW 2: vitola + history -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-title">Vitola</div>
+        <ul class="list" id="vitolaList">
+          <li>Toro</li>
+          <li>Gordo</li>
+          <li>Robusto</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">History</div>
+        <ul class="list" id="historyList">
+          <li class="history-line"><span>Moses</span><span>89.13</span></li>
+          <li class="history-line"><span>Nguyen</span><span>13.12</span></li>
+          <li class="history-line"><span>Sibbett</span><span>90.15</span></li>
+          <li class="history-line"><span>McClure</span><span>22.01</span></li>
+          <li class="history-line"><span>Guest</span><span>203.45</span></li>
+          <li class="history-line"><span>Kennedy</span><span>30.45</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ROW 3: brands -->
+    <div class="row3">
+      <div class="card">
+        <div class="card-title">Brand</div>
+        <ul class="list" id="brandList">
+          <li>Arturo Fuente</li>
+          <li>Padron</li>
+          <li>Oscar Vala Dares</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // light date injection so it actually shows the right day
+    const dateEl = document.getElementById('todayDate');
+    const dowEl = document.getElementById('todayDow');
+    const now = new Date();
+
+    const monthNames = [
+      "JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE",
+      "JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"
+    ];
+    const dayNames = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+
+    dateEl.textContent = `${monthNames[now.getMonth()]} ${now.getDate()}`;
+    dowEl.textContent = dayNames[now.getDay()];
+  </script>
+</body>
+</html>
