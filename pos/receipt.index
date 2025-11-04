@@ -6,10 +6,7 @@
   <title>Invoice</title>
   <style>
     :root {
-      --bg: #111518;
-      --panel: #151b1f;
       --ink: #ffffff;
-      --ink-muted: rgba(255,255,255,.6);
       --blue: #2da3ff;
     }
     * { box-sizing: border-box; }
@@ -20,7 +17,7 @@
       color: var(--ink);
     }
 
-    /* top bar */
+    /* top bar like your screenshot */
     .top-bar {
       height: 70px;
       background: #000;
@@ -53,7 +50,7 @@
       box-shadow: 0 7px 0 #fff, 0 -7px 0 #fff;
     }
 
-    /* main invoice sheet */
+    /* main sheet */
     .sheet {
       background: #121820;
       border-top-left-radius: 26px;
@@ -76,7 +73,7 @@
       margin-bottom: 18px;
     }
 
-    /* items */
+    /* line items */
     .item {
       display: flex;
       align-items: center;
@@ -116,11 +113,8 @@
       color: rgba(255,255,255,.65);
       line-height: 1.25;
     }
-    .item-sub:last-child {
-      margin-top: 3px;
-    }
+    .item-sub:last-child { margin-top: 3px; }
 
-    /* right side qty and price */
     .item-right {
       display: flex;
       align-items: center;
@@ -191,16 +185,17 @@
 </head>
 <body>
 
-  <!-- top black bar -->
+  <!-- top bar -->
   <div class="top-bar">
-    <div class="top-left" onclick="parent.closeBill()">×</div>
+    <!-- this calls the parent page to close the modal -->
+    <div class="top-left" onclick="if (window.parent && window.parent.closeBill) window.parent.closeBill();">×</div>
     <div class="top-right">
       <div class="dot"></div>
       <div class="menu-dots"></div>
     </div>
   </div>
 
-  <!-- invoice content -->
+  <!-- invoice sheet -->
   <div class="sheet">
     <div class="title">INVOICE</div>
     <div class="date-line" id="invDate">Thursday, 10/23/25 — 11:02 PM</div>
@@ -214,6 +209,7 @@
         <div class="item-title">Fat Bottom Betty</div>
         <div class="item-sub">Gordo</div>
         <div class="item-sub">La Flor Dominicana</div>
+        <!-- no “MSRP” label per your request -->
         <div class="item-sub">3.99</div>
       </div>
       <div class="item-right">
@@ -265,7 +261,7 @@
   </div>
 
   <script>
-    // Dynamically show date/time
+    // put current date/time at top
     const d = new Date();
     const dayName = d.toLocaleDateString(undefined, { weekday: "long" });
     const dateStr = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
