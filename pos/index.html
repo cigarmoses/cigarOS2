@@ -3,56 +3,148 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>POS</title>
-  <link rel="stylesheet" href="/pos/pos.css">
+  <title>POS • CigarOS</title>
+  <style>
+    :root {
+      --bg: #eaf2f6;
+      --ink: #0f1a2c;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 0 80px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 30px;
+      margin: 0 0 20px;
+      font-weight: 700;
+    }
+
+    .pos-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px 36px;
+      justify-items: center;
+    }
+
+    .pos-tile {
+      width: 140px;
+      height: 140px;
+      background: #ffffff;
+      border-radius: 124px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: var(--ink);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+    }
+
+    .pos-tile:hover {
+      transform: scale(1.05);
+    }
+
+    .pos-tile img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    .pos-tile span {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .pos-bill-tab {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: #0f1a2c;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      border-radius: 50px;
+      padding: 8px 14px 8px 10px;
+      gap: 6px;
+      font-size: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .pos-bill-icon {
+      background: #fff;
+      color: #0f1a2c;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    .pos-bill-badge {
+      background: #ff3b30;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pos-bill-total {
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
-  <div class="pos-wrap">
-    <div class="pos-topbar">
-      <a class="pos-back" href="/"><span>←</span><span>Home</span></a>
-      <div class="pos-star">★</div>
-    </div>
+  <h1>POS</h1>
 
-    <div class="pos-header-spacer"></div>
-    <h1 class="pos-title">POS</h1>
-
-    <div class="pos-search">
-      <input placeholder="Search" />
-    </div>
-
-    <div class="pos-grid">
-      <a class="pos-tile" href="/pos/cigars/">
-        <div class="pos-tile-icon"></div>
-        <div class="pos-tile-label">Cigars</div>
-      </a>
-      <a class="pos-tile" href="/pos/pipes/">
-        <div class="pos-tile-icon"></div>
-        <div class="pos-tile-label">Pipes</div>
-      </a>
-      <a class="pos-tile" href="/pos/foodandbevs/">
-        <div class="pos-tile-icon"></div>
-        <div class="pos-tile-label">Food &amp; Bevs</div>
-      </a>
-      <a class="pos-tile" href="/pos/packs/">
-        <div class="pos-tile-icon"></div>
-        <div class="pos-tile-label">Packs</div>
-      </a>
-      <a class="pos-tile" href="/pos/accessories/">
-        <div class="pos-tile-icon"></div>
-        <div class="pos-tile-label">Accessories</div>
-      </a>
-      <a class="pos-tile" href="/pos/ashtrays/">
-        <div class="pos-tile-icon"></div>
-        <div class="pos-tile-label">Ashtrays</div>
-      </a>
-    </div>
+  <div class="pos-grid">
+    <a href="/pos/cigars/" class="pos-tile">
+      <img src="/img/cigars.svg" alt="Cigars">
+      <span>Cigars</span>
+    </a>
+    <a href="/pos/pipes/" class="pos-tile">
+      <img src="/img/pipes.svg" alt="Pipes">
+      <span>Pipes</span>
+    </a>
+    <a href="/pos/foodandbevs/" class="pos-tile">
+      <img src="/img/foodandbevs.svg" alt="Food & Bevs">
+      <span>Food & Bevs</span>
+    </a>
+    <a href="/pos/packs/" class="pos-tile">
+      <img src="/img/packs.svg" alt="Packs">
+      <span>Packs</span>
+    </a>
+    <a href="/pos/accessories/" class="pos-tile">
+      <img src="/img/accessories.svg" alt="Accessories">
+      <span>Accessories</span>
+    </a>
+    <a href="/pos/ashtrays/" class="pos-tile">
+      <img src="/img/ashtrays.svg" alt="Ashtrays">
+      <span>Ashtrays</span>
+    </a>
   </div>
 
-  <!-- Bill tab -->
   <div class="pos-bill-tab">
     <div class="pos-bill-icon">🧾</div>
-    <div class="pos-bill-badge" id="billCount">1</div>
-    <div class="pos-bill-total" id="billTotal">$1.50</div>
+    <div class="pos-bill-badge">1</div>
+    <div class="pos-bill-total">$1.50</div>
   </div>
 </body>
 </html>
