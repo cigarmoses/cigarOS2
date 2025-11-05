@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Cigar • POS</title>
+  <style>
+    :root {
+      --bg: #eaf2f6;
+      --ink: #0f1a2c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px 12px 110px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .back {
+      text-decoration: none;
+      color: var(--ink);
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      font-weight: 500;
+    }
+    .star { font-size: 22px; color: #ffcc00; }
+    .title {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      margin: 16px 0 14px;
+      min-height: 38px;
+    }
+    .search-bar {
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .search-bar input {
+      border: none;
+      outline: none;
+      width: 100%;
+      background: transparent;
+    }
+    /* quick filters row */
+    .quick-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .quick-filters label {
+      background: rgba(255,255,255,.65);
+      padding: 6px 10px;
+      border-radius: 999px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    /* cigar cards */
+    .cigar-card {
+      background: #dfe7ec;
+      border-radius: 20px;
+      padding: 10px 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .brand-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      flex: 0 0 58px;
+    }
+    .brand-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .cigar-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .cigar-brand {
+      font-size: 12px;
+      opacity: .7;
+      margin-bottom: 2px;
+    }
+    .cigar-name {
+      font-weight: 700;
+      font-size: 15px;
+      line-height: 1.1;
+      margin-bottom: 2px;
+      word-break: break-word;
+    }
+    .cigar-vitola {
+      font-size: 12px;
+      opacity: .7;
+      margin-bottom: 3px;
+    }
+    .cigar-price {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .inv-bubble {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: #fff;
+      border: 2px solid rgba(255,0,0,.4);
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      flex: 0 0 40px;
+    }
+    .inv-safe {
+      border-color: rgba(15,26,44,.28);
+    }
+
+    /* bill tab */
+    .pos-bill-tab {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0f1a2c;
+      color: #fff;
+      border-radius: 50px;
+      padding: 10px 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      cursor: pointer;
+      z-index: 50;
+    }
+    .pos-bill-icon { font-size: 16px; }
+    .pos-bill-badge {
+      background: #e11;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .pos-bill-total { font-weight: 600; }
+
+    /* bill modal */
+    #billModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 80;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a href="/pos/cigars/" class="back">← POS</a>
+      <div class="star">★</div>
+    </div>
+
+    <h1 id="brandTitle" class="title">Brand</h1>
+
+    <div class="search-bar">
+      <input id="searchInput" placeholder="Search this brand…" />
+    </div>
+
+    <!-- quick feature filters -->
+    <div class="quick-filters">
+      <label><input type="checkbox" class="qf" value="box_pressed"> Box Pressed</label>
+      <label><input type="checkbox" class="qf" value="f_s"> Flavored/Sweet</label>
+      <label><input type="checkbox" class="qf" value="pack"> Packs</label>
+      <label><input type="checkbox" class="qf" value="tin"> Tins</label>
+      <label><input type="checkbox" class="qf" value="barber"> Barberpole</label>
+    </div>
+
+    <div id="cigarList"></div>
+
+    <p id="empty" style="display:none; margin-top:18px; text-align:center; opacity:.6;">No cigars found for this brand.</p>
+  </div>
+
+  <!-- bill tab -->
+  <div class="pos-bill-tab" onclick="openBill()">
+    <div class="pos-bill-icon">🧾</div>
+    <div class="pos-bill-badge" id="billCount">0</div>
+    <div class="pos-bill-total" id="billTotal">$0.00</div>
+  </div>
+
+  <!-- bill modal -->
+  <div id="billModal">
+    <div onclick="closeBill()" style="position:fixed;inset:0;background:rgba(0,0,0,.35);"></div>
+    <div style="position:fixed;bottom:0;left:0;right:0;height:92vh;display:flex;justify-content:center;align-items:flex-end;">
+      <iframe src="/pos/receipt/" style="width:100%;max-width:480px;height:100%;border:none;border-top-left-radius:26px;border-top-right-radius:26px;"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const MASTER_URL = "/pos/data/cigars_master.json";
+
+    const brandTitle = document.getElementById("brandTitle");
+    const cigarList = document.getElementById("cigarList");
+    const emptyMsg = document.getElementById("empty");
+    const searchInput = document.getElementById("searchInput");
+
+    let BRAND_SLUG = getBrandFromUrl();
+    let BRAND_NAME = ""; // we'll infer from data
+    let BRAND_CIGARS = [];
+    let billCount = 0;
+    let billTotal = 0;
+
+    fetch(MASTER_URL)
+      .then(r => r.json())
+      .then(all => {
+        // filter by brand
+        BRAND_CIGARS = all.filter(row => {
+          const name = (row.brand || "").trim();
+          return slugify(name) === BRAND_SLUG;
+        });
+
+        if (BRAND_CIGARS.length) {
+          BRAND_NAME = BRAND_CIGARS[0].brand;
+        } else {
+          // fallback: title-case the slug
+          BRAND_NAME = unslug(BRAND_SLUG);
+        }
+        brandTitle.textContent = BRAND_NAME;
+
+        renderList(BRAND_CIGARS);
+      })
+      .catch(err => {
+        console.error(err);
+        emptyMsg.style.display = "block";
+        emptyMsg.textContent = "Could not load master list.";
+      });
+
+    function renderList(list) {
+      cigarList.innerHTML = "";
+      if (!list.length) {
+        emptyMsg.style.display = "block";
+        return;
+      }
+      emptyMsg.style.display = "none";
+
+      list.forEach((c, idx) => {
+        const inv = Number(c.inventory || 0);
+        const bubbleClass = inv > 12 ? "inv-bubble inv-safe" : "inv-bubble";
+
+        // figure out icon
+        let icon = c.brand_img || c.brandimg || "";
+        if (!icon) {
+          icon = `/img/icons/brands/${slugify(c.brand || "")}.svg`;
+        }
+
+        const div = document.createElement("div");
+        div.className = "cigar-card";
+        div.innerHTML = `
+          <div class="brand-icon">
+            <img src="${icon}" alt="${c.brand}" onerror="this.src='/img/placeholder.svg'">
+          </div>
+          <div class="cigar-body">
+            <div class="cigar-brand">${c.brand || ""}</div>
+            <div class="cigar-name">${(c.line || "") + " " + (c.cigar || "")}</div>
+            <div class="cigar-vitola">${c.vitola || ""}</div>
+            <div class="cigar-price">$${Number(c.cigar_msrp || c.cigarmsrp || 0).toFixed(2)}</div>
+          </div>
+          <div class="${bubbleClass}" data-index="${idx}">${inv}</div>
+        `;
+        cigarList.appendChild(div);
+      });
+
+      // attach click for inventory
+      document.querySelectorAll(".inv-bubble").forEach(b => {
+        b.addEventListener("click", onInventoryTap);
+      });
+    }
+
+    function onInventoryTap(e) {
+      const idx = e.currentTarget.dataset.index;
+      const cigar = BRAND_CIGARS[idx];
+      let inv = Number(cigar.inventory || 0);
+      if (inv <= 0) return;
+
+      inv -= 1;
+      cigar.inventory = inv;
+      e.currentTarget.textContent = inv;
+
+      // update bubble color
+      if (inv > 12) {
+        e.currentTarget.className = "inv-bubble inv-safe";
+      } else {
+        e.currentTarget.className = "inv-bubble";
+      }
+
+      // update bill
+      const price = Number(cigar.cigar_msrp || cigar.cigarmsrp || 0);
+      billCount += 1;
+      billTotal += price;
+      document.getElementById("billCount").textContent = billCount;
+      document.getElementById("billTotal").textContent = "$" + billTotal.toFixed(2);
+
+      // OPTIONAL: tell receipt iframe about this item
+      const iframe = document.querySelector("#billModal iframe");
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: "ADD_LINE",
+          item: {
+            brand: cigar.brand,
+            line: cigar.line,
+            cigar: cigar.cigar,
+            vitola: cigar.vitola,
+            price: price,
+            qty: 1,
+            icon: cigar.brand_img || `/img/icons/brands/${slugify(cigar.brand || "")}.svg`
+          }
+        }, "*");
+      }
+    }
+
+    // search within this brand
+    searchInput.addEventListener("input", () => {
+      const term = searchInput.value.toLowerCase();
+      const feats = Array.from(document.querySelectorAll(".qf:checked")).map(x => x.value);
+
+      let filtered = BRAND_CIGARS.filter(c => {
+        const hay = ((c.line || "") + " " + (c.cigar || "") + " " + (c.vitola || "")).toLowerCase();
+        return hay.includes(term);
+      });
+
+      if (feats.length) {
+        filtered = filtered.filter(c => {
+          return feats.every(f => {
+            // CSV headers came in lowercase with underscores
+            return c[f] === true || c[f] === "TRUE" || c[f] === "true" || c[f] === 1;
+          });
+        });
+      }
+
+      renderList(filtered);
+    });
+
+    // quick filters change
+    document.querySelectorAll(".qf").forEach(cb => {
+      cb.addEventListener("change", () => {
+        searchInput.dispatchEvent(new Event("input"));
+      });
+    });
+
+    // bill modal open/close
+    function openBill() {
+      document.getElementById("billModal").style.display = "block";
+    }
+    function closeBill() {
+      document.getElementById("billModal").style.display = "none";
+    }
+    window.closeBill = closeBill;
+
+    function getBrandFromUrl() {
+      // 1) try query ?b=aladino
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("b")) return params.get("b").toLowerCase();
+
+      // 2) try last path segment /pos/cigars/aladino/
+      const parts = window.location.pathname.split("/").filter(Boolean);
+      return parts[parts.length - 1].toLowerCase();
+    }
+
+    function slugify(str) {
+      return (str || "")
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+    function unslug(str) {
+      return str.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+    }
+  </script>
+</body>
+</html>
