@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Cigars • POS</title>
+  <title>POS • Cigars</title>
   <style>
     :root {
       --bg: #eaf2f6;
@@ -16,107 +16,80 @@
       color: var(--ink);
       font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     }
-
-    .pos-wrap {
+    .wrap {
       max-width: 480px;
       margin: 0 auto;
-      padding: 12px 12px 90px;
+      padding: 12px 12px 110px;
     }
-    .pos-topbar {
+    .topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-top: 4px;
     }
-    .pos-back {
+    .back {
       text-decoration: none;
       color: var(--ink);
       display: flex;
-      align-items: center;
       gap: 4px;
+      align-items: center;
       font-weight: 500;
     }
-    .pos-star { font-size: 22px; color: #ffcc00; }
-
-    .pos-header-spacer { height: 16px; }
-    .pos-title {
+    .star {
+      font-size: 22px;
+      color: #ffcc00;
+    }
+    .title {
       text-align: center;
-      font-weight: 700;
       font-size: 32px;
-      margin: 0 0 14px;
+      font-weight: 700;
+      margin: 16px 0 14px;
     }
-
-    /* search + filter */
-    .search-row {
-      display: grid;
-      grid-template-columns: 110px 1fr;
-      gap: 8px;
-      align-items: center;
-    }
-    .filter-pill {
-      background: var(--ink);
-      color: #fff;
-      border-radius: 999px;
-      padding: 8px 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 500;
-      cursor: pointer;
-      justify-content: center;
-    }
-    .filter-pill svg { width: 15px; height: 15px; }
-
-    .pos-search {
-      display: flex;
-      align-items: center;
+    .search-bar {
       background: #fff;
       border-radius: 999px;
       padding: 8px 12px;
+      display: flex;
       gap: 6px;
-      border: 1px solid rgba(0,0,0,.02);
+      margin-bottom: 16px;
     }
-    .pos-search input {
-      border: 0;
-      outline: 0;
+    .search-bar input {
+      border: none;
+      outline: none;
       width: 100%;
       background: transparent;
-      font-size: 14px;
     }
-
-    /* brand grid */
     .brand-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px 14px;
-      margin-top: 20px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px 12px;
     }
-    .brand-tile {
+    .brand-card {
       text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      align-items: center;
-      text-decoration: none;
-      color: inherit;
+      cursor: pointer;
     }
     .brand-icon {
-      width: 78px;
-      height: 78px;
+      width: 70px;
+      height: 70px;
       border-radius: 20px;
-      overflow: hidden;
-      background: #d7dfe4;
+      background: #dfe7ec;
       display: grid;
       place-items: center;
+      margin: 0 auto 5px;
+      overflow: hidden;
     }
     .brand-icon img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
-    .brand-label { font-size: 13px; font-weight: 500; }
-    .brand-disabled { opacity: .6; pointer-events: none; }
-
+    .brand-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: #243448;
+      line-height: 1.1;
+    }
     /* bill tab */
     .pos-bill-tab {
       position: fixed;
@@ -145,224 +118,153 @@
       font-weight: 600;
     }
     .pos-bill-total { font-weight: 600; }
-
-    /* FILTER PANEL */
-    .filter-overlay { position: fixed; inset: 0; display: none; z-index: 9999; }
-    .filter-overlay.show { display: block; }
-    .filter-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
-    .filter-panel {
-      position: absolute;
-      top: 0; right: 0;
-      width: min(420px, 100%);
-      height: 100%;
-      background: #fff;
-      border-top-left-radius: 26px;
-      border-bottom-left-radius: 26px;
-      box-shadow: -4px 0 10px rgba(0,0,0,0.08);
-      overflow-y: auto;
-      padding: 16px 16px 40px;
+    /* bill modal */
+    #billModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 80;
     }
-    .filter-header {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
-    }
-    .filter-title { font-weight: 700; font-size: 18px; }
-    .filter-close { font-size: 26px; line-height: 1; cursor: pointer; }
-    .section { margin-bottom: 16px; }
-    .section-title {
-      font-weight: 700;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-    }
-    .chev {
-      border: solid #000;
-      border-width: 0 2px 2px 0;
-      display: inline-block;
-      padding: 3px;
-      transform: rotate(45deg);
-      margin-left: 6px;
-    }
-
-    /* vitola icons grid (NO BACKGROUND, LARGER) */
-    .vitola-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px 10px;
-    }
-    .vitola-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-    .vitola-icon {
-      width: 100%;
-      height: 58px;
-      display: grid;
-      place-items: center;
-    }
-    .vitola-icon img {
-      width: 90%;
-      height: 90%;
-      object-fit: contain;
-      filter: none;
-    }
-    .vitola-label {
-      font-size: 12px;
-      text-align: center;
-      font-weight: 500;
-    }
-    .is-selected .vitola-icon img {
-      transform: scale(1.1);
-    }
-
-    /* wrapper shades */
-    .shade-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-    .shade-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
-    }
-    .shade-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: none;
-    }
-    .shade-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-    .shade-label { font-size: 11px; text-align: center; }
-
-    /* features */
-    .feature-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
-    .feature-row { display: flex; align-items: center; gap: 8px; }
-    .feature-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: #0f1a2c; }
   </style>
 </head>
 <body>
-  <div class="pos-wrap">
-    <div class="pos-topbar">
-      <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
-      <div class="pos-star">★</div>
-    </div>
-    <div class="pos-header-spacer"></div>
-    <h1 class="pos-title">CIGARS</h1>
-
-    <div class="search-row">
-      <div class="filter-pill" onclick="openFilter()">
-        <svg viewBox="0 0 20 20"><path fill="white" d="M2 3h16l-5.5 6.2V14L7.5 17V9.2L2 3z"/></svg>
-        <span>filter</span>
-      </div>
-      <div class="pos-search">
-        <input id="searchInput" placeholder="Search brands..." />
-      </div>
+  <div class="wrap">
+    <div class="topbar">
+      <a href="/pos/" class="back">← POS</a>
+      <div class="star">★</div>
     </div>
 
-    <div id="brandGrid" class="brand-grid"></div>
+    <h1 class="title">CIGARS</h1>
+
+    <div class="search-bar">
+      <input id="searchInput" placeholder="Search…" />
+    </div>
+
+    <div id="brandGrid" class="brand-grid">
+      <!-- brands will be injected here -->
+    </div>
+
+    <p id="empty" style="display:none; margin-top:18px; text-align:center; opacity:.6;">No brands matched.</p>
   </div>
 
-  <!-- bill tab -->
+  <!-- bill tab (universal) -->
   <div class="pos-bill-tab" onclick="openBill()">
     <div class="pos-bill-icon">🧾</div>
-    <div class="pos-bill-badge" id="billCount">1</div>
-    <div class="pos-bill-total" id="billTotal">$1.50</div>
+    <div class="pos-bill-badge" id="billCount">0</div>
+    <div class="pos-bill-total" id="billTotal">$0.00</div>
   </div>
 
-  <!-- FILTER PANEL -->
-  <div id="filterOverlay" class="filter-overlay">
-    <div class="filter-backdrop" onclick="closeFilter()"></div>
-    <div class="filter-panel">
-      <div class="filter-header">
-        <div class="filter-title">Filters</div>
-        <div class="filter-close" onclick="closeFilter()">×</div>
-      </div>
-
-      <div class="section" id="secVitola">
-        <div class="section-title" onclick="toggleSection('vitolaBody')">
-          <span>Vitola</span><span class="chev"></span>
-        </div>
-        <div id="vitolaBody" class="vitola-grid"></div>
-      </div>
-
-      <hr style="border:none;border-top:1px solid rgba(0,0,0,.05);margin:10px 0 14px;">
-
-      <div class="section" id="secShade">
-        <div class="section-title" onclick="toggleSection('shadeBody')">
-          <span>Wrapper Shade</span><span class="chev"></span>
-        </div>
-        <div id="shadeBody" class="shade-grid"></div>
-      </div>
-
-      <hr style="border:none;border-top:1px solid rgba(0,0,0,.05);margin:10px 0 14px;">
-
-      <div class="section" id="secFeatures">
-        <div class="section-title" onclick="toggleSection('featuresBody')">
-          <span>Features</span><span class="chev"></span>
-        </div>
-        <div id="featuresBody" class="feature-list">
-          <label class="feature-row"><input type="checkbox"> Box Pressed</label>
-          <label class="feature-row"><input type="checkbox"> Flavored/Sweet</label>
-          <label class="feature-row"><input type="checkbox"> Packs</label>
-          <label class="feature-row"><input type="checkbox"> Tins</label>
-          <label class="feature-row"><input type="checkbox"> Barberpole</label>
-        </div>
-      </div>
+  <!-- bill modal with iframe -->
+  <div id="billModal">
+    <div onclick="closeBill()" style="position:fixed;inset:0;background:rgba(0,0,0,.35);"></div>
+    <div style="position:fixed;bottom:0;left:0;right:0;height:92vh;display:flex;justify-content:center;align-items:flex-end;">
+      <iframe src="/pos/receipt/" style="width:100%;max-width:480px;height:100%;border:none;border-top-left-radius:26px;border-top-right-radius:26px;"></iframe>
     </div>
   </div>
 
   <script>
-    const VITOLAS = ["robusto","toro","churchill","gordo","perfecto","torpedo"];
-    const SHADES = ["connecticut","colorado","coloradomaduro","maduro","oscuro"];
-    const ALL_BRANDS = ["Aladino","1502","Acid","Aging Room","Alec Bradley","Angel Cuesta","Arturo Fuente","Ashton","Asylum 13","Atabey","AVO","Baccarat"];
+    // path to your master file
+    const MASTER_URL = "/pos/data/cigars_master.json";
 
-    const vitolaBody = document.getElementById('vitolaBody');
-    const shadeBody = document.getElementById('shadeBody');
-    const brandGrid = document.getElementById('brandGrid');
-    const searchInput = document.getElementById('searchInput');
-    const filterOverlay = document.getElementById('filterOverlay');
+    const brandGrid = document.getElementById("brandGrid");
+    const searchInput = document.getElementById("searchInput");
+    const emptyMsg = document.getElementById("empty");
 
-    function renderBrands(term=""){
-      brandGrid.innerHTML="";
-      ALL_BRANDS.filter(n=>n.toLowerCase().includes(term.toLowerCase())).forEach(n=>{
-        const t=document.createElement('a');
-        t.className="brand-tile"+(n.toLowerCase()==="aladino"?"":" brand-disabled");
-        t.href=n.toLowerCase()==="aladino"?"/pos/cigars/aladino/":"javascript:void(0)";
-        t.innerHTML=`<div class="brand-icon"><img src="/img/icons/brands/${n.toLowerCase().replace(/\s+/g,'')}.svg"></div><div class="brand-label">${n}</div>`;
-        brandGrid.appendChild(t);
+    let ALL_BRANDS = []; // [{name: 'Aladino', img: '/img/icons/brands/aladino.svg'}]
+    let billCount = 0;
+    let billTotal = 0;
+
+    // 1. fetch master and build brand list
+    fetch(MASTER_URL)
+      .then(r => r.json())
+      .then(rows => {
+        // collect unique brands from master
+        const map = new Map();
+        rows.forEach(row => {
+          const name = (row.brand || "").trim();
+          if (!name) return;
+
+          // pick image from CSV if present
+          let img = row.brand_img || row.brandimg || row.brand_image || "";
+          // normalize things like "img/icons/brands/aladino.svg"
+          if (!img) {
+            // fallback: build from brand name
+            const slug = slugify(name);
+            img = `/img/icons/brands/${slug}.svg`;
+          }
+
+          if (!map.has(name)) {
+            map.set(name, { name, img });
+          }
+        });
+
+        ALL_BRANDS = Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name));
+        renderBrands(ALL_BRANDS);
+      })
+      .catch(err => {
+        console.error("could not load master", err);
+        emptyMsg.style.display = "block";
+        emptyMsg.textContent = "Could not load /pos/data/cigars_master.json";
+      });
+
+    function renderBrands(list) {
+      brandGrid.innerHTML = "";
+      if (!list.length) {
+        emptyMsg.style.display = "block";
+        return;
+      }
+      emptyMsg.style.display = "none";
+
+      list.forEach(b => {
+        const div = document.createElement("div");
+        div.className = "brand-card";
+        div.innerHTML = `
+          <div class="brand-icon">
+            <img src="${b.img}" alt="${b.name}" onerror="this.src='/img/placeholder.svg'">
+          </div>
+          <div class="brand-name">${b.name}</div>
+        `;
+        div.addEventListener("click", () => {
+          // go to that brand page
+          const slug = slugify(b.name);
+          window.location.href = `/pos/cigars/${slug}/`;
+        });
+        brandGrid.appendChild(div);
       });
     }
-    renderBrands();
-    searchInput.addEventListener('input',e=>renderBrands(e.target.value));
 
-    VITOLAS.forEach(v=>{
-      const d=document.createElement('div');
-      d.className="vitola-item";
-      d.innerHTML=`<div class="vitola-icon"><img src="/img/icons/vitolas/${v}.svg"></div><div class="vitola-label">${v.charAt(0).toUpperCase()+v.slice(1)}</div>`;
-      vitolaBody.appendChild(d);
-    });
-    SHADES.forEach(s=>{
-      const d=document.createElement('div');
-      d.className="shade-item";
-      d.innerHTML=`<div class="shade-icon"><img src="/img/icons/wrappershades/${s}.svg"></div><div class="shade-label">${s.charAt(0).toUpperCase()+s.slice(1)}</div>`;
-      shadeBody.appendChild(d);
+    function slugify(str) {
+      return str
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    // search brands
+    searchInput.addEventListener("input", () => {
+      const term = searchInput.value.toLowerCase();
+      const filtered = ALL_BRANDS.filter(b => b.name.toLowerCase().includes(term));
+      renderBrands(filtered);
     });
 
-    function openFilter(){filterOverlay.classList.add('show')}
-    function closeFilter(){filterOverlay.classList.remove('show')}
-    function toggleSection(id){const el=document.getElementById(id);el.style.display=el.style.display==="none"?"grid":"none";}
+    // bill tab logic (this page doesn't add items, but we keep the UI consistent)
+    function openBill() {
+      document.getElementById("billModal").style.display = "block";
+    }
+    function closeBill() {
+      document.getElementById("billModal").style.display = "none";
+    }
+    window.closeBill = closeBill; // so iframe can close it if needed
+
+    // if you later share cart totals across pages, you can read from localStorage here
+    // e.g.:
+    // const saved = JSON.parse(localStorage.getItem("posCart") || "{}");
+    // updateBill(saved.count, saved.total);
+    function updateBill(count, total) {
+      document.getElementById("billCount").textContent = count;
+      document.getElementById("billTotal").textContent = "$" + total.toFixed(2);
+    }
   </script>
 </body>
 </html>
