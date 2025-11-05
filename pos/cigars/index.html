@@ -170,7 +170,7 @@
     const searchInput = document.getElementById("searchInput");
     const emptyMsg = document.getElementById("empty");
 
-    let ALL_BRANDS = []; // [{name: 'Aladino', img: '/img/icons/brands/aladino.svg'}]
+    let ALL_BRANDS = [];
     let billCount = 0;
     let billTotal = 0;
 
@@ -178,17 +178,13 @@
     fetch(MASTER_URL)
       .then(r => r.json())
       .then(rows => {
-        // collect unique brands from master
         const map = new Map();
         rows.forEach(row => {
           const name = (row.brand || "").trim();
           if (!name) return;
 
-          // pick image from CSV if present
           let img = row.brand_img || row.brandimg || row.brand_image || "";
-          // normalize things like "img/icons/brands/aladino.svg"
           if (!img) {
-            // fallback: build from brand name
             const slug = slugify(name);
             img = `/img/icons/brands/${slug}.svg`;
           }
@@ -225,9 +221,9 @@
           <div class="brand-name">${b.name}</div>
         `;
         div.addEventListener("click", () => {
-          // go to that brand page
           const slug = slugify(b.name);
-          window.location.href = `/pos/cigars/${slug}/`;
+          // ✅ send to the universal brand page
+          window.location.href = `/pos/cigars/brand.html?b=${slug}`;
         });
         brandGrid.appendChild(div);
       });
@@ -248,19 +244,15 @@
       renderBrands(filtered);
     });
 
-    // bill tab logic (this page doesn't add items, but we keep the UI consistent)
+    // bill tab logic
     function openBill() {
       document.getElementById("billModal").style.display = "block";
     }
     function closeBill() {
       document.getElementById("billModal").style.display = "none";
     }
-    window.closeBill = closeBill; // so iframe can close it if needed
+    window.closeBill = closeBill;
 
-    // if you later share cart totals across pages, you can read from localStorage here
-    // e.g.:
-    // const saved = JSON.parse(localStorage.getItem("posCart") || "{}");
-    // updateBill(saved.count, saved.total);
     function updateBill(count, total) {
       document.getElementById("billCount").textContent = count;
       document.getElementById("billTotal").textContent = "$" + total.toFixed(2);
