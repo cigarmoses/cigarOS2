@@ -140,10 +140,7 @@
       <input id="searchInput" placeholder="Search…" />
     </div>
 
-    <div id="brandGrid" class="brand-grid">
-      <!-- brands will be injected here -->
-    </div>
-
+    <div id="brandGrid" class="brand-grid"></div>
     <p id="empty" style="display:none; margin-top:18px; text-align:center; opacity:.6;">No brands matched.</p>
   </div>
 
@@ -163,44 +160,39 @@
   </div>
 
   <script>
-    // path to your master file
-    const MASTER_URL = "/pos/data/cigars_master.json";
+    // 👇 change this only when you upload a new CSV online
+    const CSV_URL = "/hub/hub_11-5-25.csv";
 
     const brandGrid = document.getElementById("brandGrid");
     const searchInput = document.getElementById("searchInput");
     const emptyMsg = document.getElementById("empty");
-
     let ALL_BRANDS = [];
-    let billCount = 0;
-    let billTotal = 0;
 
-    // 1. fetch master and build brand list
-    fetch(MASTER_URL)
-      .then(r => r.json())
-      .then(rows => {
+    // fetch CSV from your site
+    fetch(CSV_URL)
+      .then(r => r.text())
+      .then(text => {
+        const rows = parseCSV(text);
+        // get unique brands
         const map = new Map();
         rows.forEach(row => {
-          const name = (row.brand || "").trim();
-          if (!name) return;
-
-          let img = row.brand_img || row.brandimg || row.brand_image || "";
-          if (!img) {
-            const slug = slugify(name);
-            img = `/img/icons/brands/${slug}.svg`;
-          }
-
-          if (!map.has(name)) {
-            map.set(name, { name, img });
+          const brand = (row["Brand"] || "").trim();
+          if (!brand) return;
+          if (!map.has(brand)) {
+            // if CSV has Brand IMG use it, else build path with NO dashes
+            const img = (row["Brand IMG"] && row["Brand IMG"].trim())
+              ? row["Brand IMG"].trim()
+              : `/img/icons/brands/${brand}.svg`;
+            map.set(brand, { name: brand, img });
           }
         });
-
         ALL_BRANDS = Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name));
         renderBrands(ALL_BRANDS);
       })
       .catch(err => {
-        console.error("could not load master", err);
+        console.error("CSV load failed", err);
         emptyMsg.style.display = "block";
-        emptyMsg.textContent = "Could not load /pos/data/cigars_master.json";
+        emptyMsg.textContent = "Could not load " + CSV_URL;
       });
 
     function renderBrands(list) {
@@ -221,30 +213,58 @@
           <div class="brand-name">${b.name}</div>
         `;
         div.addEventListener("click", () => {
-          const slug = slugify(b.name);
-          // ✅ send to the universal brand page
-          window.location.href = `/pos/cigars/brand.html?b=${slug}`;
+          // go to brand page — uses exact brand name, no dashes
+          // if your folders are lowercase, you can .toLowerCase() here
+          window.location.href = "/pos/cigars/" + encodeURIComponent(b.name) + "/";
         });
         brandGrid.appendChild(div);
       });
     }
 
-    function slugify(str) {
-      return str
-        .toLowerCase()
-        .replace(/&/g, "and")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+    function parseCSV(str) {
+      const lines = str.split(/\r?\n/).filter(l => l.trim().length);
+      if (!lines.length) return [];
+      const headers = splitCSVLine(lines[0]);
+      const out = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = splitCSVLine(lines[i]);
+        const row = {};
+        headers.forEach((h, idx) => {
+          row[h.trim()] = (cols[idx] || "").trim();
+        });
+        out.push(row);
+      }
+      return out;
+    }
+    function splitCSVLine(line) {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          inQuotes = !inQuotes;
+          continue;
+        }
+        if (ch === "," && !inQuotes) {
+          out.push(cur);
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+      out.push(cur);
+      return out;
     }
 
-    // search brands
+    // search
     searchInput.addEventListener("input", () => {
       const term = searchInput.value.toLowerCase();
       const filtered = ALL_BRANDS.filter(b => b.name.toLowerCase().includes(term));
       renderBrands(filtered);
     });
 
-    // bill tab logic
+    // bill tab open/close
     function openBill() {
       document.getElementById("billModal").style.display = "block";
     }
@@ -252,11 +272,6 @@
       document.getElementById("billModal").style.display = "none";
     }
     window.closeBill = closeBill;
-
-    function updateBill(count, total) {
-      document.getElementById("billCount").textContent = count;
-      document.getElementById("billTotal").textContent = "$" + total.toFixed(2);
-    }
   </script>
 </body>
 </html>
