@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>POS • Cigar Brand</title>
+  <title>POS • Brand Cigars</title>
   <style>
     :root {
       --bg: #eaf2f6;
       --ink: #0f1a2c;
-      --card: #f4f6f8;
     }
     * { box-sizing: border-box; }
     body {
@@ -28,24 +27,18 @@
       align-items: center;
       margin-top: 4px;
     }
-    .back {
-      text-decoration: none;
-      color: var(--ink);
-      display: flex;
-      gap: 4px;
-      align-items: center;
-      font-weight: 500;
-    }
-    .star {
-      font-size: 22px;
-      color: #ffcc00;
-    }
+    .back { text-decoration:none;color:var(--ink);display:flex;gap:4px;align-items:center;font-weight:500; }
+    .star { font-size:22px;color:#ffcc00; }
     .title {
       text-align: center;
-      font-size: 30px;
+      font-size: 32px;
       font-weight: 700;
       margin: 16px 0 14px;
-      word-break: break-word;
+    }
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
     }
     .search-bar {
       background: #fff;
@@ -53,116 +46,97 @@
       padding: 8px 12px;
       display: flex;
       gap: 6px;
-      margin-bottom: 12px;
+      flex: 1;
     }
-    .search-bar input {
-      border: none;
-      outline: none;
-      width: 100%;
-      background: transparent;
-    }
-    .filter-chips {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-    }
-    .chip {
-      background: #fff;
-      border-radius: 14px;
-      padding: 5px 10px;
-      font-size: 12px;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      cursor: pointer;
-      border: 1px solid transparent;
-    }
-    .chip input { pointer-events: none; }
-    .chip.active {
-      border-color: #0f1a2c;
-    }
-    .cigar-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .cigar-row {
-      display: flex;
-      gap: 10px;
-      background: var(--card);
-      border-radius: 18px;
-      padding: 10px 12px;
-      align-items: center;
-      min-height: 70px;
-    }
-    .brand-icon {
-      width: 54px;
-      height: 54px;
+    .search-bar input { border:none;outline:none;background:transparent;width:100%; }
+    .filter-btn {
+      width: 48px;
+      height: 48px;
       border-radius: 16px;
-      background: #000;
-      overflow: hidden;
-      flex: 0 0 54px;
+      border: none;
+      background: #0f1a2c;
+      color: #fff;
+      font-size: 14px;
       display: grid;
       place-items: center;
+      cursor: pointer;
     }
-    .brand-icon img {
+    .cigar-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 12px 12px 12px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .cigar-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: #000;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .cigar-icon img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: block;
     }
-    .cigar-body {
+    .cigar-info {
       flex: 1;
       min-width: 0;
-      cursor: pointer;
     }
-    .brand-line {
-      font-size: 12px;
-      opacity: .6;
-      margin-bottom: 2px;
-    }
-    .cigar-title {
+    .cigar-name {
       font-weight: 700;
-      font-size: 15px;
-      line-height: 1.1;
-      margin-bottom: 1px;
-      overflow-wrap: anywhere;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .cigar-vitola {
-      font-size: 12px;
-      opacity: .8;
+      font-size: 13px;
+      opacity: .7;
     }
-    .cigar-price {
-      font-size: 12px;
-      margin-top: 3px;
-      opacity: .9;
+    .cigar-msrp {
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 2px;
     }
-    .inv-pill {
-      width: 38px;
-      height: 38px;
+    .inventory-pill {
+      width: 44px;
+      height: 44px;
       border-radius: 999px;
-      border: 2px solid #e3e3e3;
-      background: #fff;
+      border: 1.5px solid #d9dce0;
       display: grid;
       place-items: center;
-      font-weight: 600;
-      font-size: 12px;
-      color: #0f1a2c;
-      flex: 0 0 38px;
+      font-weight: 700;
+      background: #fff;
       cursor: pointer;
     }
-    .inv-pill.low {
-      color: #d00;
-      border-color: #d00;
+    /* detail modal */
+    #detailModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      display: none;
+      z-index: 300;
     }
-    #empty {
-      text-align: center;
-      opacity: .6;
-      margin-top: 20px;
+    .detail-panel {
+      background: #fff;
+      max-width: 480px;
+      margin: 50px auto;
+      border-radius: 20px;
+      padding: 16px;
+    }
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    /* bottom bill tab */
+    /* bill tab */
     .pos-bill-tab {
       position: fixed;
       bottom: 18px;
@@ -176,7 +150,7 @@
       padding: 10px 16px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
       cursor: pointer;
-      z-index: 60;
+      z-index: 200;
     }
     .pos-bill-badge {
       background: #e11;
@@ -190,89 +164,86 @@
     }
     .pos-bill-total { font-weight: 600; }
 
-    /* bill modal */
-    #billModal {
+    /* filter sheet (same as index) */
+    #filterSheet {
       position: fixed;
       inset: 0;
+      background: rgba(0,0,0,.3);
       display: none;
-      z-index: 80;
+      z-index: 180;
     }
-
-    /* detail overlay */
-    .detail-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.4);
-      display: none;
-      z-index: 90;
-      justify-content: center;
-      align-items: flex-end;
-    }
-    .detail-card {
-      background: #fff;
-      width: 100%;
+    .filter-panel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
       max-width: 480px;
-      border-top-left-radius: 28px;
-      border-top-right-radius: 28px;
-      padding: 16px 18px 26px;
-      max-height: 88vh;
+      margin: 0 auto;
+      background: #fff;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 16px 16px 26px;
+      max-height: 90vh;
       overflow-y: auto;
     }
-    .detail-top {
+    .filter-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 12px;
     }
-    .detail-title {
-      font-size: 20px;
-      font-weight: 700;
+    .filter-title { font-size: 20px; font-weight: 700; }
+    .filter-close { background:none;border:none;font-size:24px;cursor:pointer;}
+    .filter-section { margin-top: 12px; }
+    .filter-section h3 {
+      font-size: 16px;
+      margin: 10px 0 6px;
     }
-    .detail-row {
-      margin: 5px 0;
-      font-size: 14px;
-    }
-    .detail-label {
-      font-weight: 600;
-      margin-right: 4px;
-    }
-    .detail-flags {
+    .vitola-row, .wrapper-row {
       display: flex;
-      gap: 8px;
-      margin-top: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    .flag-box {
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      background: #e9edf0;
+    .vitola-item, .wrapper-item {
+      border: 1px solid #e5e9ee;
+      border-radius: 16px;
+      padding: 6px 10px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 12px;
     }
+    .vitola-item.active,
+    .wrapper-item.active {
+      background: #0f1a2c;
+      color: #fff;
+      border-color: #0f1a2c;
+    }
+    .features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .feature-check { display:flex;gap:8px;align-items:center;font-size:14px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <a href="/pos/cigars/" class="back">← CIGARS</a>
+      <a href="/pos/cigars/" class="back">← Cigars</a>
       <div class="star">★</div>
     </div>
 
     <h1 class="title" id="brandTitle">Brand</h1>
 
-    <div class="search-bar">
-      <input id="searchInput" placeholder="Search this brand…" />
+    <div class="search-row">
+      <div class="search-bar">
+        <input id="searchInput" placeholder="Search this brand…" />
+      </div>
+      <button class="filter-btn" onclick="openFilter()">⌕</button>
     </div>
 
-    <!-- quick feature filters -->
-    <div class="filter-chips" id="featureChips">
-      <label class="chip"><input type="checkbox" value="Box Pressed" /> Box Pressed</label>
-      <label class="chip"><input type="checkbox" value="F/S" /> Flavored/Sweet</label>
-      <label class="chip"><input type="checkbox" value="Pack" /> Packs</label>
-      <label class="chip"><input type="checkbox" value="TIN" /> Tins</label>
-      <label class="chip"><input type="checkbox" value="Barberpole" /> Barberpole</label>
-    </div>
-
-    <div id="cigarList" class="cigar-list"></div>
-    <p id="empty">Loading…</p>
+    <div id="cigarList"></div>
+    <p id="empty" style="display:none;opacity:.6;text-align:center;margin-top:20px;">No cigars for this selection.</p>
   </div>
 
   <!-- bill tab -->
@@ -282,278 +253,256 @@
     <div class="pos-bill-total" id="billTotal">$0.00</div>
   </div>
 
+  <!-- detail modal -->
+  <div id="detailModal">
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-head">
+        <h2 id="detailName" style="margin:0;"></h2>
+        <button onclick="closeDetail()" style="background:none;border:none;font-size:22px;cursor:pointer;">×</button>
+      </div>
+      <p id="detailVitola" style="margin:4px 0;"></p>
+      <p id="detailWrapper" style="margin:4px 0;"></p>
+      <p id="detailOrigin" style="margin:4px 0;"></p>
+      <p id="detailStrength" style="margin:4px 0;"></p>
+      <p id="detailMsrp" style="margin:4px 0;"></p>
+    </div>
+  </div>
+
+  <!-- filter sheet -->
+  <div id="filterSheet">
+    <div class="filter-panel">
+      <div class="filter-head">
+        <div class="filter-title">Filters</div>
+        <button class="filter-close" onclick="closeFilter()">×</button>
+      </div>
+
+      <div class="filter-section">
+        <h3>Vitola</h3>
+        <div id="vitolaList" class="vitola-row"></div>
+      </div>
+      <div class="filter-section">
+        <h3>Wrapper Shade</h3>
+        <div id="wrapperList" class="wrapper-row"></div>
+      </div>
+      <div class="filter-section">
+        <h3>Features</h3>
+        <div class="features-list">
+          <label class="feature-check"><input type="checkbox" data-feature="Box Pressed"> Box Pressed</label>
+          <label class="feature-check"><input type="checkbox" data-feature="Flavored/Sweet"> Flavored/Sweet</label>
+          <label class="feature-check"><input type="checkbox" data-feature="Pack"> Packs</label>
+          <label class="feature-check"><input type="checkbox" data-feature="Tin"> Tins</label>
+          <label class="feature-check"><input type="checkbox" data-feature="Barberpole"> Barberpole</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- bill modal -->
-  <div id="billModal">
+  <div id="billModal" style="position:fixed;inset:0;display:none;z-index:250;">
     <div onclick="closeBill()" style="position:fixed;inset:0;background:rgba(0,0,0,.35);"></div>
     <div style="position:fixed;bottom:0;left:0;right:0;height:92vh;display:flex;justify-content:center;align-items:flex-end;">
       <iframe src="/pos/receipt/" style="width:100%;max-width:480px;height:100%;border:none;border-top-left-radius:26px;border-top-right-radius:26px;"></iframe>
     </div>
   </div>
 
-  <!-- detail overlay -->
-  <div id="detailOverlay" class="detail-overlay">
-    <div class="detail-card" id="detailCard">
-      <div class="detail-top">
-        <div class="detail-title" id="detailTitle">Cigar name</div>
-        <button onclick="closeDetail()" style="background:none;border:none;font-size:20px;">×</button>
-      </div>
-      <div id="detailBody"></div>
-    </div>
-  </div>
-
   <script>
-    // --- CONFIG ---
-    const CSV_URL = "/hub/hub_11-5-25.csv"; // your uploaded CSV
-    // ---------------
-
-    const brandName = decodeURIComponent(
-      window.location.pathname.split("/").filter(Boolean).slice(-1)[0] || "Brand"
-    );
-
+    const CSV_URL = "/hub/hub_11-5-25.csv";
+    const params = new URLSearchParams(location.search);
+    const brandName = params.get("brand") || "Unknown Brand";
     document.getElementById("brandTitle").textContent = brandName;
 
-    const cigarListEl = document.getElementById("cigarList");
-    const emptyEl = document.getElementById("empty");
-    const searchInput = document.getElementById("searchInput");
-    const featureChips = document.getElementById("featureChips");
+    let allRows = [];
+    let brandRows = [];
+    let activeFilters = { vitola:null, wrapper:null, features:[] };
 
-    let ALL_ROWS = [];
-    let ACTIVE_FEATURES = new Set();
-
-    // cart ui
-    function loadCart() {
-      const saved = JSON.parse(localStorage.getItem("posCart") || '{"items":[],"count":0,"total":0}');
-      document.getElementById("billCount").textContent = saved.count || 0;
-      document.getElementById("billTotal").textContent = "$" + (saved.total || 0).toFixed(2);
-      return saved;
-    }
-    function saveCart(cart) {
-      localStorage.setItem("posCart", JSON.stringify(cart));
-      document.getElementById("billCount").textContent = cart.count;
-      document.getElementById("billTotal").textContent = "$" + cart.total.toFixed(2);
-    }
-    let CART = loadCart();
-
-    // fetch CSV and render
     fetch(CSV_URL)
       .then(r => r.text())
       .then(text => {
-        const rows = parseCSV(text);
-        ALL_ROWS = rows.filter(r => (r["Brand"] || "").trim() === brandName);
-        renderList();
-      })
-      .catch(err => {
-        console.error(err);
-        emptyEl.textContent = "Could not load " + CSV_URL;
+        allRows = parseCSV(text);
+        brandRows = allRows.filter(r => (r["Brand"] || r["brand"] || "").trim().toLowerCase() === brandName.trim().toLowerCase());
+        buildFilterLists(brandRows);
+        renderCigars(brandRows);
       });
 
-    function renderList() {
-      cigarListEl.innerHTML = "";
-      let list = [...ALL_ROWS];
+    function parseCSV(text){
+      const lines = text.trim().split(/\r?\n/);
+      const header = lines.shift().split(",");
+      return lines.map(line=>{
+        const cells = line.split(",");
+        const obj = {};
+        header.forEach((h,i)=>obj[h.trim()] = (cells[i]||"").trim());
+        return obj;
+      });
+    }
 
-      // search
-      const term = searchInput.value.toLowerCase();
-      if (term) {
-        list = list.filter(r => {
-          const line = (r["Line"] || "").toLowerCase();
-          const cigar = (r["Cigar"] || "").toLowerCase();
-          const vitola = (r["Vitola"] || "").toLowerCase();
-          return line.includes(term) || cigar.includes(term) || vitola.includes(term);
-        });
-      }
-
-      // feature filters
-      if (ACTIVE_FEATURES.size) {
-        list = list.filter(r => {
-          for (const f of ACTIVE_FEATURES) {
-            if (f === "Box Pressed" && !isX(r["Box Pressed"])) return false;
-            if (f === "F/S" && !isX(r["F/S"]) && !isX(r["Flavored or sweet"])) return false;
-            if (f === "Pack" && !isX(r["Pack"])) return false;
-            if (f === "TIN" && !isX(r["TIN"])) return false;
-            if (f === "Barberpole" && !isX(r["Barberpole"])) return false;
-          }
-          return true;
-        });
-      }
-
-      if (!list.length) {
-        emptyEl.style.display = "block";
-        emptyEl.textContent = "No cigars for this brand.";
+    function renderCigars(list){
+      const container = document.getElementById("cigarList");
+      container.innerHTML = "";
+      if (!list.length){
+        document.getElementById("empty").style.display = "block";
         return;
       }
-      emptyEl.style.display = "none";
+      document.getElementById("empty").style.display = "none";
 
-      list.forEach(row => {
-        const line = row["Line"] || "";
-        const cigar = row["Cigar"] || "";
-        const vitola = row["Vitola"] || "";
-        const msrp = row["Cigar MSRP"] || row["MSRP"] || "";
-        const inv = row["INVENTORY"] || row["Inventory"] || "0";
-        const invNum = parseInt(inv, 10) || 0;
-        const brandImg = row["Brand IMG"] && row["Brand IMG"].trim()
-          ? row["Brand IMG"].trim()
-          : `/img/icons/brands/${brandName}.svg`;
+      list.forEach(row=>{
+        const name = (row["Cigar"] || row["CIGAR"] || "").trim();
+        const line = (row["Line"] || row["LINE"] || "").trim();
+        const vitola = (row["Vitola"] || row["VITOLA"] || "").trim();
+        const msrp = parseFloat(row["Cigar MSRP"] || row["MSRP"] || "0") || 0;
+        const inventory = parseInt(row["INVENTORY"] || row["Inventory"] || "0") || 0;
+        const brandSvg = brandName.toLowerCase().replace(/[^a-z0-9]/g,"");
 
-        const rowEl = document.createElement("div");
-        rowEl.className = "cigar-row";
-        rowEl.innerHTML = `
-          <div class="brand-icon">
-            <img src="${brandImg}" alt="${brandName}" onerror="this.src='/img/placeholder.svg'">
+        const card = document.createElement("div");
+        card.className = "cigar-card";
+        card.innerHTML = `
+          <div class="cigar-icon">
+            <img src="/img/icons/brands/${brandSvg}.svg" onerror="this.src='/img/placeholder.svg'">
           </div>
-          <div class="cigar-body">
-            <div class="brand-line">${brandName}</div>
-            <div class="cigar-title">${line ? line + " " : ""}${cigar}</div>
-            ${vitola ? `<div class="cigar-vitola">${vitola}</div>` : ""}
-            ${msrp ? `<div class="cigar-price">$${Number(msrp).toFixed(2)}</div>` : ""}
+          <div class="cigar-info">
+            <div class="cigar-name">${line ? line + " " + name : name}</div>
+            <div class="cigar-vitola">${vitola || ""}</div>
+            <div class="cigar-msrp">${msrp ? msrp.toFixed(2) : "0.00"}</div>
           </div>
-          <div class="inv-pill ${invNum < 12 ? "low" : ""}">${invNum}</div>
+          <div class="inventory-pill">${inventory}</div>
         `;
-
-        // click on body = show details
-        rowEl.querySelector(".cigar-body").addEventListener("click", () => {
-          openDetail(row, brandImg, brandName);
+        // name click -> details
+        card.querySelector(".cigar-name").addEventListener("click", () => {
+          openDetail(row);
         });
-
-        // click on inventory = add to bill
-        rowEl.querySelector(".inv-pill").addEventListener("click", (e) => {
-          const price = parseFloat(msrp) || 0;
-          // add to cart
-          CART.count = (CART.count || 0) + 1;
-          CART.total = (CART.total || 0) + price;
-          CART.items = CART.items || [];
-          CART.items.push({
-            name: (line ? line + " " : "") + cigar,
+        // inventory click -> add to cart
+        card.querySelector(".inventory-pill").addEventListener("click", () => {
+          addToCart({
             brand: brandName,
-            price: price,
-            qty: 1
+            name: line ? line + " " + name : name,
+            qty: 1,
+            price: msrp
           });
-          saveCart(CART);
-
-          // decrease visible inventory
-          let current = parseInt(e.currentTarget.textContent.trim(), 10) || 0;
-          if (current > 0) current -= 1;
-          e.currentTarget.textContent = current;
-          if (current < 12) e.currentTarget.classList.add("low");
         });
-
-        cigarListEl.appendChild(rowEl);
+        container.appendChild(card);
       });
+
+      // update badge from current cart
+      updateBillFromStorage();
     }
 
-    // search
-    searchInput.addEventListener("input", renderList);
+    // detail
+    function openDetail(row){
+      document.getElementById("detailName").textContent = (row["Line"] || "") + " " + (row["Cigar"] || "");
+      document.getElementById("detailVitola").textContent = "Vitola: " + (row["Vitola"] || "");
+      document.getElementById("detailWrapper").textContent = "Wrapper Shade: " + (row["Wrapper Shade"] || row["WRAPPER SHADE"] || "");
+      document.getElementById("detailOrigin").textContent = "Origin: " + (row["Origin"] || row["ORIGIN"] || "");
+      document.getElementById("detailStrength").textContent = "Strength: " + (row["Strength"] || row["STRENGTH"] || "");
+      const msrp = parseFloat(row["Cigar MSRP"] || row["MSRP"] || "0") || 0;
+      document.getElementById("detailMsrp").textContent = "Price: " + msrp.toFixed(2);
+      document.getElementById("detailModal").style.display = "block";
+    }
+    function closeDetail(){ document.getElementById("detailModal").style.display = "none"; }
 
-    // feature chips
-    featureChips.addEventListener("click", (e) => {
-      const chip = e.target.closest(".chip");
-      if (!chip) return;
-      const input = chip.querySelector("input");
-      if (chip.classList.contains("active")) {
-        chip.classList.remove("active");
-        input.checked = false;
-        ACTIVE_FEATURES.delete(input.value);
+    // filters
+    function buildFilterLists(rows){
+      const vSet = new Set();
+      const wSet = new Set();
+      rows.forEach(r=>{
+        const v = r["Vitola"] || r["VITOLA"] || "";
+        if (v) vSet.add(v.trim());
+        const w = r["Wrapper Shade"] || r["WRAPPER SHADE"] || "";
+        if (w) wSet.add(w.trim());
+      });
+      const vList = document.getElementById("vitolaList");
+      Array.from(vSet).sort().forEach(v=>{
+        const btn = document.createElement("div");
+        btn.className = "vitola-item";
+        btn.textContent = v;
+        btn.onclick = ()=>{
+          if (activeFilters.vitola === v) {
+            activeFilters.vitola = null;
+            btn.classList.remove("active");
+          } else {
+            activeFilters.vitola = v;
+            [...vList.children].forEach(c=>c.classList.remove("active"));
+            btn.classList.add("active");
+          }
+          runFilters();
+        };
+        vList.appendChild(btn);
+      });
+      const wList = document.getElementById("wrapperList");
+      Array.from(wSet).sort().forEach(w=>{
+        const btn = document.createElement("div");
+        btn.className = "wrapper-item";
+        btn.textContent = w;
+        btn.onclick = ()=>{
+          if (activeFilters.wrapper === w) {
+            activeFilters.wrapper = null;
+            btn.classList.remove("active");
+          } else {
+            activeFilters.wrapper = w;
+            [...wList.children].forEach(c=>c.classList.remove("active"));
+            btn.classList.add("active");
+          }
+          runFilters();
+        };
+        wList.appendChild(btn);
+      });
+
+      document.querySelectorAll(".feature-check input").forEach(cb=>{
+        cb.addEventListener("change", ()=>{
+          const feat = cb.dataset.feature;
+          if (cb.checked) {
+            if (!activeFilters.features.includes(feat)) activeFilters.features.push(feat);
+          } else {
+            activeFilters.features = activeFilters.features.filter(f=>f!==feat);
+          }
+          runFilters();
+        });
+      });
+
+      document.getElementById("searchInput").addEventListener("input", runFilters);
+    }
+
+    function runFilters(){
+      const term = document.getElementById("searchInput").value.toLowerCase();
+      const filtered = brandRows.filter(r=>{
+        const fullName = ((r["Line"] || "") + " " + (r["Cigar"] || "")).toLowerCase();
+        if (!fullName.includes(term)) return false;
+        if (activeFilters.vitola && (r["Vitola"] || "").toLowerCase() !== activeFilters.vitola.toLowerCase()) return false;
+        if (activeFilters.wrapper && (r["Wrapper Shade"] || r["WRAPPER SHADE"] || "").toLowerCase() !== activeFilters.wrapper.toLowerCase()) return false;
+        for (const ft of activeFilters.features) {
+          const val = r[ft] || r[ft.toUpperCase()] || "";
+          if (!val || val === "0" || val.toLowerCase() === "false") return false;
+        }
+        return true;
+      });
+      renderCigars(filtered);
+    }
+
+    function openFilter(){ document.getElementById("filterSheet").style.display = "block"; }
+    function closeFilter(){ document.getElementById("filterSheet").style.display = "none"; }
+
+    // cart
+    function addToCart(item){
+      const cart = JSON.parse(localStorage.getItem("posCart") || "[]");
+      const key = item.name + "|" + item.brand;
+      const found = cart.find(c => (c.name + "|" + c.brand) === key);
+      if (found) {
+        found.qty += item.qty;
       } else {
-        chip.classList.add("active");
-        input.checked = true;
-        ACTIVE_FEATURES.add(input.value);
+        cart.push({ ...item });
       }
-      renderList();
-    });
-
-    // detail overlay functions
-    function openDetail(row, brandImg, brandName) {
-      const overlay = document.getElementById("detailOverlay");
-      const body = document.getElementById("detailBody");
-      document.getElementById("detailTitle").textContent =
-        (row["Line"] ? row["Line"] + " " : "") + (row["Cigar"] || "");
-
-      let html = "";
-      const fields = [
-        ["Vitola", row["Vitola"]],
-        ["Length", row["LENGTH"] || row["Length"]],
-        ["Ring", row["Ring"] || row["RG"]],
-        ["Wrapper Shade", row["WRAPPER SHADE"]],
-        ["Strength", row["STRENGTH"]],
-        ["Origin", row["ORIGIN"]],
-        ["Wrapper", row["WRAPPER"]],
-        ["Binder", row["BINDER"]],
-        ["Filler", row["FILLER"]],
-        ["Shape", row["SHAPE"]],
-        ["Cigar MSRP", row["Cigar MSRP"] || row["MSRP"]],
-        ["Box MSRP", row["Box MSRP"]],
-        ["Box Count", row["Box Count"]],
-      ];
-      fields.forEach(([label, val]) => {
-        if (val && String(val).trim() !== "") {
-          html += `<div class="detail-row"><span class="detail-label">${label}:</span> ${val}</div>`;
-        }
-      });
-
-      html += `<div class="detail-row" style="margin-top:12px;font-weight:600;">Features</div>`;
-      html += `<div class="detail-row">
-        ${isX(row["Box Pressed"]) ? "• Box Pressed<br>" : ""}
-        ${isX(row["F/S"]) || isX(row["Flavored or sweet"]) ? "• Flavored/Sweet<br>" : ""}
-        ${isX(row["Pack"]) ? "• Pack<br>" : ""}
-        ${isX(row["TIN"]) ? "• Tin<br>" : ""}
-        ${isX(row["Barberpole"]) ? "• Barberpole<br>" : ""}
-      </div>`;
-
-      body.innerHTML = html;
-      overlay.style.display = "flex";
+      localStorage.setItem("posCart", JSON.stringify(cart));
+      updateBillFromStorage();
     }
-    function closeDetail() {
-      document.getElementById("detailOverlay").style.display = "none";
+    function updateBillFromStorage(){
+      const cart = JSON.parse(localStorage.getItem("posCart") || "[]");
+      const count = cart.reduce((s,i)=>s+i.qty,0);
+      const total = cart.reduce((s,i)=>s+(i.price||0)*i.qty,0);
+      document.getElementById("billCount").textContent = count;
+      document.getElementById("billTotal").textContent = "$" + total.toFixed(2);
     }
-    window.closeDetail = closeDetail;
 
-    // bill modal
-    function openBill() {
-      document.getElementById("billModal").style.display = "block";
-    }
-    function closeBill() {
-      document.getElementById("billModal").style.display = "none";
-    }
+    function openBill(){ document.getElementById("billModal").style.display="block"; }
+    function closeBill(){ document.getElementById("billModal").style.display="none"; }
     window.closeBill = closeBill;
-
-    function isX(v) {
-      if (!v) return false;
-      return String(v).trim().toLowerCase() === "x";
-    }
-
-    // tiny CSV parser that handles quoted fields
-    function parseCSV(text) {
-      const lines = text.replace(/\r/g, "").split("\n").filter(Boolean);
-      if (!lines.length) return [];
-      const headers = splitCSVLine(lines[0]);
-      const rows = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = splitCSVLine(lines[i]);
-        const obj = {};
-        headers.forEach((h, idx) => {
-          obj[h.trim()] = cols[idx] !== undefined ? cols[idx].trim() : "";
-        });
-        rows.push(obj);
-      }
-      return rows;
-    }
-    function splitCSVLine(line) {
-      const out = [];
-      let cur = "";
-      let inside = false;
-      for (let i = 0; i < line.length; i++) {
-        const c = line[i];
-        if (c === '"') {
-          inside = !inside;
-        } else if (c === "," && !inside) {
-          out.push(cur);
-          cur = "";
-        } else {
-          cur += c;
-        }
-      }
-      out.push(cur);
-      return out;
-    }
   </script>
 </body>
 </html>
