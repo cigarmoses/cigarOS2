@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Cigar • POS</title>
+  <title>POS • Cigar Brand</title>
   <style>
     :root {
       --bg: #eaf2f6;
       --ink: #0f1a2c;
+      --card: #f4f6f8;
     }
     * { box-sizing: border-box; }
     body {
@@ -35,13 +36,16 @@
       align-items: center;
       font-weight: 500;
     }
-    .star { font-size: 22px; color: #ffcc00; }
+    .star {
+      font-size: 22px;
+      color: #ffcc00;
+    }
     .title {
       text-align: center;
-      font-size: 32px;
+      font-size: 30px;
       font-weight: 700;
       margin: 16px 0 14px;
-      min-height: 38px;
+      word-break: break-word;
     }
     .search-bar {
       background: #fff;
@@ -49,7 +53,7 @@
       padding: 8px 12px;
       display: flex;
       gap: 6px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .search-bar input {
       border: none;
@@ -57,91 +61,108 @@
       width: 100%;
       background: transparent;
     }
-    /* quick filters row */
-    .quick-filters {
+    .filter-chips {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
       margin-bottom: 14px;
     }
-    .quick-filters label {
-      background: rgba(255,255,255,.65);
-      padding: 6px 10px;
-      border-radius: 999px;
+    .chip {
+      background: #fff;
+      border-radius: 14px;
+      padding: 5px 10px;
+      font-size: 12px;
       display: flex;
       gap: 6px;
       align-items: center;
-      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
     }
-
-    /* cigar cards */
-    .cigar-card {
-      background: #dfe7ec;
-      border-radius: 20px;
-      padding: 10px 12px;
+    .chip input { pointer-events: none; }
+    .chip.active {
+      border-color: #0f1a2c;
+    }
+    .cigar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cigar-row {
       display: flex;
       gap: 10px;
+      background: var(--card);
+      border-radius: 18px;
+      padding: 10px 12px;
       align-items: center;
-      margin-bottom: 10px;
+      min-height: 70px;
     }
     .brand-icon {
-      width: 58px;
-      height: 58px;
+      width: 54px;
+      height: 54px;
       border-radius: 16px;
+      background: #000;
       overflow: hidden;
-      background: #fff;
+      flex: 0 0 54px;
       display: grid;
       place-items: center;
-      flex: 0 0 58px;
     }
     .brand-icon img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
     .cigar-body {
       flex: 1;
       min-width: 0;
+      cursor: pointer;
     }
-    .cigar-brand {
+    .brand-line {
       font-size: 12px;
-      opacity: .7;
+      opacity: .6;
       margin-bottom: 2px;
     }
-    .cigar-name {
+    .cigar-title {
       font-weight: 700;
       font-size: 15px;
       line-height: 1.1;
-      margin-bottom: 2px;
-      word-break: break-word;
+      margin-bottom: 1px;
+      overflow-wrap: anywhere;
     }
     .cigar-vitola {
       font-size: 12px;
-      opacity: .7;
-      margin-bottom: 3px;
+      opacity: .8;
     }
     .cigar-price {
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 12px;
+      margin-top: 3px;
+      opacity: .9;
     }
-    .inv-bubble {
-      width: 40px;
-      height: 40px;
+    .inv-pill {
+      width: 38px;
+      height: 38px;
       border-radius: 999px;
+      border: 2px solid #e3e3e3;
       background: #fff;
-      border: 2px solid rgba(255,0,0,.4);
       display: grid;
       place-items: center;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 12px;
+      color: #0f1a2c;
+      flex: 0 0 38px;
       cursor: pointer;
-      flex: 0 0 40px;
     }
-    .inv-safe {
-      border-color: rgba(15,26,44,.28);
+    .inv-pill.low {
+      color: #d00;
+      border-color: #d00;
+    }
+    #empty {
+      text-align: center;
+      opacity: .6;
+      margin-top: 20px;
     }
 
-    /* bill tab */
+    /* bottom bill tab */
     .pos-bill-tab {
       position: fixed;
       bottom: 18px;
@@ -155,9 +176,8 @@
       padding: 10px 16px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
       cursor: pointer;
-      z-index: 50;
+      z-index: 60;
     }
-    .pos-bill-icon { font-size: 16px; }
     .pos-bill-badge {
       background: #e11;
       width: 20px;
@@ -177,38 +197,87 @@
       display: none;
       z-index: 80;
     }
+
+    /* detail overlay */
+    .detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      display: none;
+      z-index: 90;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    .detail-card {
+      background: #fff;
+      width: 100%;
+      max-width: 480px;
+      border-top-left-radius: 28px;
+      border-top-right-radius: 28px;
+      padding: 16px 18px 26px;
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+    .detail-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .detail-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .detail-row {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .detail-label {
+      font-weight: 600;
+      margin-right: 4px;
+    }
+    .detail-flags {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .flag-box {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: #e9edf0;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <a href="/pos/cigars/" class="back">← POS</a>
+      <a href="/pos/cigars/" class="back">← CIGARS</a>
       <div class="star">★</div>
     </div>
 
-    <h1 id="brandTitle" class="title">Brand</h1>
+    <h1 class="title" id="brandTitle">Brand</h1>
 
     <div class="search-bar">
       <input id="searchInput" placeholder="Search this brand…" />
     </div>
 
     <!-- quick feature filters -->
-    <div class="quick-filters">
-      <label><input type="checkbox" class="qf" value="box_pressed"> Box Pressed</label>
-      <label><input type="checkbox" class="qf" value="f_s"> Flavored/Sweet</label>
-      <label><input type="checkbox" class="qf" value="pack"> Packs</label>
-      <label><input type="checkbox" class="qf" value="tin"> Tins</label>
-      <label><input type="checkbox" class="qf" value="barber"> Barberpole</label>
+    <div class="filter-chips" id="featureChips">
+      <label class="chip"><input type="checkbox" value="Box Pressed" /> Box Pressed</label>
+      <label class="chip"><input type="checkbox" value="F/S" /> Flavored/Sweet</label>
+      <label class="chip"><input type="checkbox" value="Pack" /> Packs</label>
+      <label class="chip"><input type="checkbox" value="TIN" /> Tins</label>
+      <label class="chip"><input type="checkbox" value="Barberpole" /> Barberpole</label>
     </div>
 
-    <div id="cigarList"></div>
-
-    <p id="empty" style="display:none; margin-top:18px; text-align:center; opacity:.6;">No cigars found for this brand.</p>
+    <div id="cigarList" class="cigar-list"></div>
+    <p id="empty">Loading…</p>
   </div>
 
   <!-- bill tab -->
   <div class="pos-bill-tab" onclick="openBill()">
-    <div class="pos-bill-icon">🧾</div>
+    <div>🧾</div>
     <div class="pos-bill-badge" id="billCount">0</div>
     <div class="pos-bill-total" id="billTotal">$0.00</div>
   </div>
@@ -221,158 +290,223 @@
     </div>
   </div>
 
+  <!-- detail overlay -->
+  <div id="detailOverlay" class="detail-overlay">
+    <div class="detail-card" id="detailCard">
+      <div class="detail-top">
+        <div class="detail-title" id="detailTitle">Cigar name</div>
+        <button onclick="closeDetail()" style="background:none;border:none;font-size:20px;">×</button>
+      </div>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
   <script>
-    const MASTER_URL = "/pos/data/cigars_master.json";
+    // --- CONFIG ---
+    const CSV_URL = "/hub/hub_11-5-25.csv"; // your uploaded CSV
+    // ---------------
 
-    const brandTitle = document.getElementById("brandTitle");
-    const cigarList = document.getElementById("cigarList");
-    const emptyMsg = document.getElementById("empty");
+    const brandName = decodeURIComponent(
+      window.location.pathname.split("/").filter(Boolean).slice(-1)[0] || "Brand"
+    );
+
+    document.getElementById("brandTitle").textContent = brandName;
+
+    const cigarListEl = document.getElementById("cigarList");
+    const emptyEl = document.getElementById("empty");
     const searchInput = document.getElementById("searchInput");
+    const featureChips = document.getElementById("featureChips");
 
-    let BRAND_SLUG = getBrandFromUrl();
-    let BRAND_NAME = ""; // we'll infer from data
-    let BRAND_CIGARS = [];
-    let billCount = 0;
-    let billTotal = 0;
+    let ALL_ROWS = [];
+    let ACTIVE_FEATURES = new Set();
 
-    fetch(MASTER_URL)
-      .then(r => r.json())
-      .then(all => {
-        // filter by brand
-        BRAND_CIGARS = all.filter(row => {
-          const name = (row.brand || "").trim();
-          return slugify(name) === BRAND_SLUG;
-        });
+    // cart ui
+    function loadCart() {
+      const saved = JSON.parse(localStorage.getItem("posCart") || '{"items":[],"count":0,"total":0}');
+      document.getElementById("billCount").textContent = saved.count || 0;
+      document.getElementById("billTotal").textContent = "$" + (saved.total || 0).toFixed(2);
+      return saved;
+    }
+    function saveCart(cart) {
+      localStorage.setItem("posCart", JSON.stringify(cart));
+      document.getElementById("billCount").textContent = cart.count;
+      document.getElementById("billTotal").textContent = "$" + cart.total.toFixed(2);
+    }
+    let CART = loadCart();
 
-        if (BRAND_CIGARS.length) {
-          BRAND_NAME = BRAND_CIGARS[0].brand;
-        } else {
-          // fallback: title-case the slug
-          BRAND_NAME = unslug(BRAND_SLUG);
-        }
-        brandTitle.textContent = BRAND_NAME;
-
-        renderList(BRAND_CIGARS);
+    // fetch CSV and render
+    fetch(CSV_URL)
+      .then(r => r.text())
+      .then(text => {
+        const rows = parseCSV(text);
+        ALL_ROWS = rows.filter(r => (r["Brand"] || "").trim() === brandName);
+        renderList();
       })
       .catch(err => {
         console.error(err);
-        emptyMsg.style.display = "block";
-        emptyMsg.textContent = "Could not load master list.";
+        emptyEl.textContent = "Could not load " + CSV_URL;
       });
 
-    function renderList(list) {
-      cigarList.innerHTML = "";
-      if (!list.length) {
-        emptyMsg.style.display = "block";
-        return;
-      }
-      emptyMsg.style.display = "none";
+    function renderList() {
+      cigarListEl.innerHTML = "";
+      let list = [...ALL_ROWS];
 
-      list.forEach((c, idx) => {
-        const inv = Number(c.inventory || 0);
-        const bubbleClass = inv > 12 ? "inv-bubble inv-safe" : "inv-bubble";
-
-        // figure out icon
-        let icon = c.brand_img || c.brandimg || "";
-        if (!icon) {
-          icon = `/img/icons/brands/${slugify(c.brand || "")}.svg`;
-        }
-
-        const div = document.createElement("div");
-        div.className = "cigar-card";
-        div.innerHTML = `
-          <div class="brand-icon">
-            <img src="${icon}" alt="${c.brand}" onerror="this.src='/img/placeholder.svg'">
-          </div>
-          <div class="cigar-body">
-            <div class="cigar-brand">${c.brand || ""}</div>
-            <div class="cigar-name">${(c.line || "") + " " + (c.cigar || "")}</div>
-            <div class="cigar-vitola">${c.vitola || ""}</div>
-            <div class="cigar-price">$${Number(c.cigar_msrp || c.cigarmsrp || 0).toFixed(2)}</div>
-          </div>
-          <div class="${bubbleClass}" data-index="${idx}">${inv}</div>
-        `;
-        cigarList.appendChild(div);
-      });
-
-      // attach click for inventory
-      document.querySelectorAll(".inv-bubble").forEach(b => {
-        b.addEventListener("click", onInventoryTap);
-      });
-    }
-
-    function onInventoryTap(e) {
-      const idx = e.currentTarget.dataset.index;
-      const cigar = BRAND_CIGARS[idx];
-      let inv = Number(cigar.inventory || 0);
-      if (inv <= 0) return;
-
-      inv -= 1;
-      cigar.inventory = inv;
-      e.currentTarget.textContent = inv;
-
-      // update bubble color
-      if (inv > 12) {
-        e.currentTarget.className = "inv-bubble inv-safe";
-      } else {
-        e.currentTarget.className = "inv-bubble";
-      }
-
-      // update bill
-      const price = Number(cigar.cigar_msrp || cigar.cigarmsrp || 0);
-      billCount += 1;
-      billTotal += price;
-      document.getElementById("billCount").textContent = billCount;
-      document.getElementById("billTotal").textContent = "$" + billTotal.toFixed(2);
-
-      // OPTIONAL: tell receipt iframe about this item
-      const iframe = document.querySelector("#billModal iframe");
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage({
-          type: "ADD_LINE",
-          item: {
-            brand: cigar.brand,
-            line: cigar.line,
-            cigar: cigar.cigar,
-            vitola: cigar.vitola,
-            price: price,
-            qty: 1,
-            icon: cigar.brand_img || `/img/icons/brands/${slugify(cigar.brand || "")}.svg`
-          }
-        }, "*");
-      }
-    }
-
-    // search within this brand
-    searchInput.addEventListener("input", () => {
+      // search
       const term = searchInput.value.toLowerCase();
-      const feats = Array.from(document.querySelectorAll(".qf:checked")).map(x => x.value);
-
-      let filtered = BRAND_CIGARS.filter(c => {
-        const hay = ((c.line || "") + " " + (c.cigar || "") + " " + (c.vitola || "")).toLowerCase();
-        return hay.includes(term);
-      });
-
-      if (feats.length) {
-        filtered = filtered.filter(c => {
-          return feats.every(f => {
-            // CSV headers came in lowercase with underscores
-            return c[f] === true || c[f] === "TRUE" || c[f] === "true" || c[f] === 1;
-          });
+      if (term) {
+        list = list.filter(r => {
+          const line = (r["Line"] || "").toLowerCase();
+          const cigar = (r["Cigar"] || "").toLowerCase();
+          const vitola = (r["Vitola"] || "").toLowerCase();
+          return line.includes(term) || cigar.includes(term) || vitola.includes(term);
         });
       }
 
-      renderList(filtered);
-    });
+      // feature filters
+      if (ACTIVE_FEATURES.size) {
+        list = list.filter(r => {
+          for (const f of ACTIVE_FEATURES) {
+            if (f === "Box Pressed" && !isX(r["Box Pressed"])) return false;
+            if (f === "F/S" && !isX(r["F/S"]) && !isX(r["Flavored or sweet"])) return false;
+            if (f === "Pack" && !isX(r["Pack"])) return false;
+            if (f === "TIN" && !isX(r["TIN"])) return false;
+            if (f === "Barberpole" && !isX(r["Barberpole"])) return false;
+          }
+          return true;
+        });
+      }
 
-    // quick filters change
-    document.querySelectorAll(".qf").forEach(cb => {
-      cb.addEventListener("change", () => {
-        searchInput.dispatchEvent(new Event("input"));
+      if (!list.length) {
+        emptyEl.style.display = "block";
+        emptyEl.textContent = "No cigars for this brand.";
+        return;
+      }
+      emptyEl.style.display = "none";
+
+      list.forEach(row => {
+        const line = row["Line"] || "";
+        const cigar = row["Cigar"] || "";
+        const vitola = row["Vitola"] || "";
+        const msrp = row["Cigar MSRP"] || row["MSRP"] || "";
+        const inv = row["INVENTORY"] || row["Inventory"] || "0";
+        const invNum = parseInt(inv, 10) || 0;
+        const brandImg = row["Brand IMG"] && row["Brand IMG"].trim()
+          ? row["Brand IMG"].trim()
+          : `/img/icons/brands/${brandName}.svg`;
+
+        const rowEl = document.createElement("div");
+        rowEl.className = "cigar-row";
+        rowEl.innerHTML = `
+          <div class="brand-icon">
+            <img src="${brandImg}" alt="${brandName}" onerror="this.src='/img/placeholder.svg'">
+          </div>
+          <div class="cigar-body">
+            <div class="brand-line">${brandName}</div>
+            <div class="cigar-title">${line ? line + " " : ""}${cigar}</div>
+            ${vitola ? `<div class="cigar-vitola">${vitola}</div>` : ""}
+            ${msrp ? `<div class="cigar-price">$${Number(msrp).toFixed(2)}</div>` : ""}
+          </div>
+          <div class="inv-pill ${invNum < 12 ? "low" : ""}">${invNum}</div>
+        `;
+
+        // click on body = show details
+        rowEl.querySelector(".cigar-body").addEventListener("click", () => {
+          openDetail(row, brandImg, brandName);
+        });
+
+        // click on inventory = add to bill
+        rowEl.querySelector(".inv-pill").addEventListener("click", (e) => {
+          const price = parseFloat(msrp) || 0;
+          // add to cart
+          CART.count = (CART.count || 0) + 1;
+          CART.total = (CART.total || 0) + price;
+          CART.items = CART.items || [];
+          CART.items.push({
+            name: (line ? line + " " : "") + cigar,
+            brand: brandName,
+            price: price,
+            qty: 1
+          });
+          saveCart(CART);
+
+          // decrease visible inventory
+          let current = parseInt(e.currentTarget.textContent.trim(), 10) || 0;
+          if (current > 0) current -= 1;
+          e.currentTarget.textContent = current;
+          if (current < 12) e.currentTarget.classList.add("low");
+        });
+
+        cigarListEl.appendChild(rowEl);
       });
+    }
+
+    // search
+    searchInput.addEventListener("input", renderList);
+
+    // feature chips
+    featureChips.addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+      const input = chip.querySelector("input");
+      if (chip.classList.contains("active")) {
+        chip.classList.remove("active");
+        input.checked = false;
+        ACTIVE_FEATURES.delete(input.value);
+      } else {
+        chip.classList.add("active");
+        input.checked = true;
+        ACTIVE_FEATURES.add(input.value);
+      }
+      renderList();
     });
 
-    // bill modal open/close
+    // detail overlay functions
+    function openDetail(row, brandImg, brandName) {
+      const overlay = document.getElementById("detailOverlay");
+      const body = document.getElementById("detailBody");
+      document.getElementById("detailTitle").textContent =
+        (row["Line"] ? row["Line"] + " " : "") + (row["Cigar"] || "");
+
+      let html = "";
+      const fields = [
+        ["Vitola", row["Vitola"]],
+        ["Length", row["LENGTH"] || row["Length"]],
+        ["Ring", row["Ring"] || row["RG"]],
+        ["Wrapper Shade", row["WRAPPER SHADE"]],
+        ["Strength", row["STRENGTH"]],
+        ["Origin", row["ORIGIN"]],
+        ["Wrapper", row["WRAPPER"]],
+        ["Binder", row["BINDER"]],
+        ["Filler", row["FILLER"]],
+        ["Shape", row["SHAPE"]],
+        ["Cigar MSRP", row["Cigar MSRP"] || row["MSRP"]],
+        ["Box MSRP", row["Box MSRP"]],
+        ["Box Count", row["Box Count"]],
+      ];
+      fields.forEach(([label, val]) => {
+        if (val && String(val).trim() !== "") {
+          html += `<div class="detail-row"><span class="detail-label">${label}:</span> ${val}</div>`;
+        }
+      });
+
+      html += `<div class="detail-row" style="margin-top:12px;font-weight:600;">Features</div>`;
+      html += `<div class="detail-row">
+        ${isX(row["Box Pressed"]) ? "• Box Pressed<br>" : ""}
+        ${isX(row["F/S"]) || isX(row["Flavored or sweet"]) ? "• Flavored/Sweet<br>" : ""}
+        ${isX(row["Pack"]) ? "• Pack<br>" : ""}
+        ${isX(row["TIN"]) ? "• Tin<br>" : ""}
+        ${isX(row["Barberpole"]) ? "• Barberpole<br>" : ""}
+      </div>`;
+
+      body.innerHTML = html;
+      overlay.style.display = "flex";
+    }
+    function closeDetail() {
+      document.getElementById("detailOverlay").style.display = "none";
+    }
+    window.closeDetail = closeDetail;
+
+    // bill modal
     function openBill() {
       document.getElementById("billModal").style.display = "block";
     }
@@ -381,25 +515,44 @@
     }
     window.closeBill = closeBill;
 
-    function getBrandFromUrl() {
-      // 1) try query ?b=aladino
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("b")) return params.get("b").toLowerCase();
-
-      // 2) try last path segment /pos/cigars/aladino/
-      const parts = window.location.pathname.split("/").filter(Boolean);
-      return parts[parts.length - 1].toLowerCase();
+    function isX(v) {
+      if (!v) return false;
+      return String(v).trim().toLowerCase() === "x";
     }
 
-    function slugify(str) {
-      return (str || "")
-        .toLowerCase()
-        .replace(/&/g, "and")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+    // tiny CSV parser that handles quoted fields
+    function parseCSV(text) {
+      const lines = text.replace(/\r/g, "").split("\n").filter(Boolean);
+      if (!lines.length) return [];
+      const headers = splitCSVLine(lines[0]);
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = splitCSVLine(lines[i]);
+        const obj = {};
+        headers.forEach((h, idx) => {
+          obj[h.trim()] = cols[idx] !== undefined ? cols[idx].trim() : "";
+        });
+        rows.push(obj);
+      }
+      return rows;
     }
-    function unslug(str) {
-      return str.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+    function splitCSVLine(line) {
+      const out = [];
+      let cur = "";
+      let inside = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') {
+          inside = !inside;
+        } else if (c === "," && !inside) {
+          out.push(cur);
+          cur = "";
+        } else {
+          cur += c;
+        }
+      }
+      out.push(cur);
+      return out;
     }
   </script>
 </body>
