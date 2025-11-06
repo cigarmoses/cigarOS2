@@ -8,6 +8,7 @@
     :root {
       --bg: #eaf2f6;
       --ink: #0f1a2c;
+      --panel: #ffffff;
     }
     * { box-sizing: border-box; }
     body {
@@ -45,19 +46,36 @@
       font-weight: 700;
       margin: 16px 0 14px;
     }
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
     .search-bar {
       background: #fff;
       border-radius: 999px;
       padding: 8px 12px;
       display: flex;
       gap: 6px;
-      margin-bottom: 16px;
+      flex: 1;
     }
     .search-bar input {
       border: none;
       outline: none;
       width: 100%;
       background: transparent;
+    }
+    .filter-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      border: none;
+      background: #0f1a2c;
+      color: #fff;
+      font-size: 14px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
     }
     .brand-grid {
       display: grid;
@@ -69,9 +87,9 @@
       cursor: pointer;
     }
     .brand-icon {
-      width: 70px;
-      height: 70px;
-      border-radius: 20px;
+      width: 72px;
+      height: 72px;
+      border-radius: 22px;
       background: #dfe7ec;
       display: grid;
       place-items: center;
@@ -90,6 +108,12 @@
       color: #243448;
       line-height: 1.1;
     }
+    #empty {
+      text-align: center;
+      opacity: .6;
+      margin-top: 18px;
+    }
+
     /* bill tab */
     .pos-bill-tab {
       position: fixed;
@@ -104,9 +128,8 @@
       padding: 10px 16px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
       cursor: pointer;
-      z-index: 50;
+      z-index: 200;
     }
-    .pos-bill-icon { font-size: 16px; }
     .pos-bill-badge {
       background: #e11;
       width: 20px;
@@ -118,12 +141,75 @@
       font-weight: 600;
     }
     .pos-bill-total { font-weight: 600; }
-    /* bill modal */
-    #billModal {
+
+    /* filter sheet */
+    #filterSheet {
       position: fixed;
       inset: 0;
+      background: rgba(0,0,0,.3);
       display: none;
-      z-index: 80;
+      z-index: 180;
+    }
+    .filter-panel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #fff;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 16px 16px 26px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .filter-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .filter-title { font-size: 20px; font-weight: 700; }
+    .filter-close { background:none;border:none;font-size:24px;cursor:pointer;}
+    .filter-section { margin-top: 12px; }
+    .filter-section h3 {
+      font-size: 16px;
+      margin: 10px 0 6px;
+    }
+    .vitola-row, .wrapper-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .vitola-item, .wrapper-item {
+      border: 1px solid #e5e9ee;
+      border-radius: 16px;
+      padding: 6px 10px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .vitola-item.active,
+    .wrapper-item.active {
+      background: #0f1a2c;
+      color: #fff;
+      border-color: #0f1a2c;
+    }
+    .features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .feature-check {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 14px;
+    }
+    .feature-check input {
+      width: 16px;
+      height: 16px;
     }
   </style>
 </head>
@@ -136,23 +222,57 @@
 
     <h1 class="title">CIGARS</h1>
 
-    <div class="search-bar">
-      <input id="searchInput" placeholder="Search…" />
+    <div class="search-row">
+      <div class="search-bar">
+        <input id="searchInput" placeholder="Search…" />
+      </div>
+      <button class="filter-btn" onclick="openFilter()">⌕</button>
     </div>
 
     <div id="brandGrid" class="brand-grid"></div>
-    <p id="empty" style="display:none; margin-top:18px; text-align:center; opacity:.6;">No brands matched.</p>
+    <p id="empty" style="display:none;">No brands matched.</p>
   </div>
 
-  <!-- bill tab (universal) -->
+  <!-- bill tab -->
   <div class="pos-bill-tab" onclick="openBill()">
-    <div class="pos-bill-icon">🧾</div>
+    <div>🧾</div>
     <div class="pos-bill-badge" id="billCount">0</div>
     <div class="pos-bill-total" id="billTotal">$0.00</div>
   </div>
 
-  <!-- bill modal with iframe -->
-  <div id="billModal">
+  <!-- filter sheet -->
+  <div id="filterSheet">
+    <div class="filter-panel">
+      <div class="filter-head">
+        <div class="filter-title">Filters</div>
+        <button class="filter-close" onclick="closeFilter()">×</button>
+      </div>
+
+      <div class="filter-section">
+        <h3>Vitola</h3>
+        <div id="vitolaList" class="vitola-row"></div>
+      </div>
+
+      <div class="filter-section">
+        <h3>Wrapper Shade</h3>
+        <div id="wrapperList" class="wrapper-row"></div>
+      </div>
+
+      <div class="filter-section">
+        <h3>Features</h3>
+        <div class="features-list">
+          <label class="feature-check"><input type="checkbox" data-feature="Box Pressed"> Box Pressed</label>
+          <label class="feature-check"><input type="checkbox" data-feature="Flavored/Sweet"> Flavored/Sweet</label>
+          <label class="feature-check"><input type="checkbox" data-feature="Pack"> Packs</label>
+          <label class="feature-check"><input type="checkbox" data-feature="Tin"> Tins</label>
+          <label class="feature-check"><input type="checkbox" data-feature="Barberpole"> Barberpole</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bill modal (iframe like before) -->
+  <div id="billModal" style="position:fixed;inset:0;display:none;z-index:250;">
     <div onclick="closeBill()" style="position:fixed;inset:0;background:rgba(0,0,0,.35);"></div>
     <div style="position:fixed;bottom:0;left:0;right:0;height:92vh;display:flex;justify-content:center;align-items:flex-end;">
       <iframe src="/pos/receipt/" style="width:100%;max-width:480px;height:100%;border:none;border-top-left-radius:26px;border-top-right-radius:26px;"></iframe>
@@ -160,40 +280,61 @@
   </div>
 
   <script>
-    // 👇 change this only when you upload a new CSV online
+    // CSV location (the one you just committed)
     const CSV_URL = "/hub/hub_11-5-25.csv";
 
     const brandGrid = document.getElementById("brandGrid");
-    const searchInput = document.getElementById("searchInput");
     const emptyMsg = document.getElementById("empty");
-    let ALL_BRANDS = [];
+    const searchInput = document.getElementById("searchInput");
 
-    // fetch CSV from your site
+    let allRows = [];
+    let allBrands = [];
+    let activeFilters = {
+      vitola: null,
+      wrapper: null,
+      features: []
+    };
+
     fetch(CSV_URL)
       .then(r => r.text())
       .then(text => {
-        const rows = parseCSV(text);
-        // get unique brands
-        const map = new Map();
-        rows.forEach(row => {
-          const brand = (row["Brand"] || "").trim();
-          if (!brand) return;
-          if (!map.has(brand)) {
-            // if CSV has Brand IMG use it, else build path with NO dashes
-            const img = (row["Brand IMG"] && row["Brand IMG"].trim())
-              ? row["Brand IMG"].trim()
-              : `/img/icons/brands/${brand}.svg`;
-            map.set(brand, { name: brand, img });
-          }
-        });
-        ALL_BRANDS = Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name));
-        renderBrands(ALL_BRANDS);
+        allRows = parseCSV(text);
+        buildFilterLists(allRows);
+        buildBrandList(allRows);
       })
       .catch(err => {
-        console.error("CSV load failed", err);
+        console.error(err);
         emptyMsg.style.display = "block";
         emptyMsg.textContent = "Could not load " + CSV_URL;
       });
+
+    // basic CSV -> objects
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/);
+      const header = lines.shift().split(",");
+      return lines.map(line => {
+        const cells = line.split(",");
+        const obj = {};
+        header.forEach((h,i) => obj[h.trim()] = (cells[i] || "").trim());
+        return obj;
+      });
+    }
+
+    function normalizeBrandToSvg(name) {
+      return name.toLowerCase().replace(/[^a-z0-9]/g,"");
+    }
+
+    function buildBrandList(rows) {
+      const map = new Map();
+      rows.forEach(r => {
+        const b = (r["Brand"] || r["brand"] || "").trim();
+        if (!b) return;
+        if (!map.has(b)) map.set(b, []);
+        map.get(b).push(r);
+      });
+      allBrands = Array.from(map.entries()).map(([name,rows]) => ({ name, rows }));
+      renderBrands(allBrands);
+    }
 
     function renderBrands(list) {
       brandGrid.innerHTML = "";
@@ -204,74 +345,137 @@
       emptyMsg.style.display = "none";
 
       list.forEach(b => {
+        const iconName = normalizeBrandToSvg(b.name);
         const div = document.createElement("div");
         div.className = "brand-card";
         div.innerHTML = `
           <div class="brand-icon">
-            <img src="${b.img}" alt="${b.name}" onerror="this.src='/img/placeholder.svg'">
+            <img src="/img/icons/brands/${iconName}.svg" alt="${b.name}" onerror="this.src='/img/placeholder.svg'">
           </div>
           <div class="brand-name">${b.name}</div>
         `;
         div.addEventListener("click", () => {
-          // go to brand page — uses exact brand name, no dashes
-          // if your folders are lowercase, you can .toLowerCase() here
-          window.location.href = "/pos/cigars/" + encodeURIComponent(b.name) + "/";
+          // go to brand.html with query
+          window.location.href = "/pos/cigars/brand.html?brand=" + encodeURIComponent(b.name);
         });
         brandGrid.appendChild(div);
       });
     }
 
-    function parseCSV(str) {
-      const lines = str.split(/\r?\n/).filter(l => l.trim().length);
-      if (!lines.length) return [];
-      const headers = splitCSVLine(lines[0]);
-      const out = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = splitCSVLine(lines[i]);
-        const row = {};
-        headers.forEach((h, idx) => {
-          row[h.trim()] = (cols[idx] || "").trim();
-        });
-        out.push(row);
-      }
-      return out;
-    }
-    function splitCSVLine(line) {
-      const out = [];
-      let cur = "";
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-          inQuotes = !inQuotes;
-          continue;
-        }
-        if (ch === "," && !inQuotes) {
-          out.push(cur);
-          cur = "";
-        } else {
-          cur += ch;
-        }
-      }
-      out.push(cur);
-      return out;
-    }
+    // search & filters work together
+    searchInput.addEventListener("input", applyFilters);
 
-    // search
-    searchInput.addEventListener("input", () => {
+    function applyFilters() {
       const term = searchInput.value.toLowerCase();
-      const filtered = ALL_BRANDS.filter(b => b.name.toLowerCase().includes(term));
-      renderBrands(filtered);
-    });
+      const filtered = allBrands.filter(b => {
+        // text match
+        const matchesText = b.name.toLowerCase().includes(term);
 
-    // bill tab open/close
-    function openBill() {
-      document.getElementById("billModal").style.display = "block";
+        // filter match: brand must have at least 1 cigar that matches
+        const matchesCigar = b.rows.some(row => {
+          // vitola
+          if (activeFilters.vitola && (row["Vitola"] || "").toLowerCase() !== activeFilters.vitola.toLowerCase()) return false;
+          // wrapper
+          if (activeFilters.wrapper && (row["Wrapper Shade"] || row["WRAPPER SHADE"] || "").toLowerCase() !== activeFilters.wrapper.toLowerCase()) return false;
+          // features
+          for (const ft of activeFilters.features) {
+            const colVal =
+              row[ft] || row[ft.toUpperCase()] || row[ft.replace("/", " or ").toUpperCase()] || "";
+            if (!colVal || colVal === "0" || colVal.toLowerCase() === "false") {
+              return false;
+            }
+          }
+          return true;
+        });
+
+        return matchesText && matchesCigar;
+      });
+
+      renderBrands(filtered);
     }
-    function closeBill() {
-      document.getElementById("billModal").style.display = "none";
+
+    // build lists for filters
+    function buildFilterLists(rows) {
+      const vitolas = new Set();
+      const wrappers = new Set();
+
+      rows.forEach(r => {
+        const v = r["Vitola"] || r["VITOLA"] || "";
+        if (v) vitolas.add(v.trim());
+        const w = r["Wrapper Shade"] || r["WRAPPER SHADE"] || "";
+        if (w) wrappers.add(w.trim());
+      });
+
+      const vList = document.getElementById("vitolaList");
+      Array.from(vitolas).sort().forEach(v => {
+        const btn = document.createElement("div");
+        btn.className = "vitola-item";
+        btn.textContent = v;
+        btn.onclick = () => {
+          if (activeFilters.vitola === v) {
+            activeFilters.vitola = null;
+            btn.classList.remove("active");
+          } else {
+            activeFilters.vitola = v;
+            [...vList.children].forEach(c => c.classList.remove("active"));
+            btn.classList.add("active");
+          }
+          applyFilters();
+        };
+        vList.appendChild(btn);
+      });
+
+      const wList = document.getElementById("wrapperList");
+      Array.from(wrappers).sort().forEach(w => {
+        const btn = document.createElement("div");
+        btn.className = "wrapper-item";
+        btn.textContent = w;
+        btn.onclick = () => {
+          if (activeFilters.wrapper === w) {
+            activeFilters.wrapper = null;
+            btn.classList.remove("active");
+          } else {
+            activeFilters.wrapper = w;
+            [...wList.children].forEach(c => c.classList.remove("active"));
+            btn.classList.add("active");
+          }
+          applyFilters();
+        };
+        wList.appendChild(btn);
+      });
+
+      // features
+      document.querySelectorAll(".feature-check input").forEach(cb => {
+        cb.addEventListener("change", () => {
+          const feat = cb.dataset.feature;
+          if (cb.checked) {
+            if (!activeFilters.features.includes(feat)) activeFilters.features.push(feat);
+          } else {
+            activeFilters.features = activeFilters.features.filter(f => f !== feat);
+          }
+          applyFilters();
+        });
+      });
     }
+
+    function openFilter(){ document.getElementById("filterSheet").style.display="block"; }
+    function closeFilter(){ document.getElementById("filterSheet").style.display="none"; }
+
+    // bill
+    function openBill(){ document.getElementById("billModal").style.display="block"; }
+    function closeBill(){ document.getElementById("billModal").style.display="none"; }
     window.closeBill = closeBill;
+
+    // read cart from localStorage so badge matches
+    const savedCart = JSON.parse(localStorage.getItem("posCart") || "[]");
+    updateBillBadge(savedCart);
+
+    function updateBillBadge(items){
+      const count = items.reduce((s,i)=>s+i.qty,0);
+      const total = items.reduce((s,i)=>s + (i.price || 0)*i.qty,0);
+      document.getElementById("billCount").textContent = count;
+      document.getElementById("billTotal").textContent = "$" + total.toFixed(2);
+    }
   </script>
 </body>
 </html>
