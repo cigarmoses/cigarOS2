@@ -13,6 +13,7 @@
       --popup-bg: #ffffff;
     }
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: var(--bg);
@@ -32,18 +33,31 @@
     .back-btn { display:inline-flex; align-items:center; gap:4px; cursor:pointer; }
 
     .page-wrap { padding: 0 16px 80px; }
+
     .brand-title-row {
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px; margin:6px 0 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin:6px 0 12px;
+      gap:12px;
     }
-    .brand-title { font-size:1.9rem; font-weight:700; line-height:1.05; }
+    .brand-title {
+      font-size:1.9rem;
+      font-weight:700;
+      line-height:1.05;
+    }
     .fav-star {
-      width:28px; height:28px; border-radius:999px; background:#f7c948;
-      display:grid; place-items:center; cursor:pointer;
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      background:#f7c948;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
     }
 
     .search-box {
-      background:#ffffff;
+      background:#fff;
       border-radius:999px;
       display:flex;
       align-items:center;
@@ -52,29 +66,45 @@
       margin-bottom:18px;
     }
     .search-input {
-      border:0; outline:0; background:transparent; width:100%; font-size:.85rem;
+      border:0;
+      outline:0;
+      background:transparent;
+      width:100%;
+      font-size:.85rem;
     }
 
     /* cigar list */
     .cigar-list { display:flex; flex-direction:column; gap:12px; }
     .cigar-row {
-      display:flex; align-items:center; gap:12px;
-      background:#fff; border-radius:20px; padding:12px 14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      background:#fff;
+      border-radius:20px;
+      padding:12px 14px;
       box-shadow:0 6px 20px rgba(15,26,44,.05);
       cursor:pointer;
     }
     .cigar-icon {
-      width:54px; height:54px; border-radius:18px; background:#3a3029;
-      display:grid; place-items:center; overflow:hidden;
+      width:54px;
+      height:54px;
+      border-radius:18px;
+      background:#3a3029;
+      display:grid;
+      place-items:center;
+      overflow:hidden;
     }
     .cigar-icon img { width:46px; height:46px; object-fit:contain; }
     .cigar-info { flex:1; min-width:0; }
     .cigar-name { font-weight:700; font-size:.9rem; }
     .cigar-meta { font-size:.74rem; color:var(--muted); }
     .qty-pill {
-      width:44px; height:44px; border-radius:999px;
+      width:44px;
+      height:44px;
+      border-radius:999px;
       border:1px solid rgba(14,25,35,.15);
-      display:grid; place-items:center;
+      display:grid;
+      place-items:center;
       font-weight:600;
       background:#fff;
     }
@@ -95,7 +125,7 @@
       background:var(--popup-bg);
       border-radius:30px;
       width:94%;
-      max-width:620px;
+      max-width:640px;
       max-height:92vh;
       overflow-y:auto;
       padding:22px 20px 26px;
@@ -113,7 +143,7 @@
       font-size:1.6rem;
       cursor:pointer;
       font-weight:700;
-      z-index:2;
+      z-index:3;
     }
 
     .popup-brandicon {
@@ -127,26 +157,40 @@
       display:grid;
       place-items:center;
       overflow:hidden;
+      z-index:2;
     }
-    .popup-brandicon img { width:70%; height:70%; object-fit:contain; }
+    .popup-brandicon img {
+      width:70%;
+      height:70%;
+      object-fit:contain;
+    }
 
-    .popup-title {
+    .popup-brand {
+      font-weight:700;
+      font-size:1rem;
+      margin:0;
+    }
+    .popup-cigar {
       font-weight:700;
       font-size:1.05rem;
-      margin:0 0 16px;
-      line-height:1.15;
+      margin:2px 0 14px;
+    }
+    .popup-divider {
+      height:1px;
+      background:#e3e6ea;
+      margin-bottom:16px;
     }
 
-    /* two-column layout */
     .popup-body {
       display:flex;
       gap:18px;
       align-items:flex-start;
     }
 
+    /* left: image */
     .popup-img-col {
       width:42%;
-      max-width:230px;
+      max-width:240px;
       display:flex;
       justify-content:center;
       align-items:flex-start;
@@ -158,6 +202,7 @@
       object-fit:contain;
     }
 
+    /* right: details */
     .popup-details {
       flex:1;
       min-width:0;
@@ -167,14 +212,16 @@
       font-size:.83rem;
     }
 
-    /* when no image, make it single column */
+    /* when no image, make single column */
     .no-image .popup-body {
       display:block;
     }
 
-    @media (max-width: 540px) {
+    @media (max-width:540px) {
+      .popup {
+        max-width:100%;
+      }
       .popup-body {
-        flex-direction:row;
         gap:12px;
       }
       .popup-img-col {
@@ -213,14 +260,17 @@
         <img id="popupBrandIcon" src="" alt="">
       </div>
 
-      <h2 class="popup-title" id="popupTitle">Cigar name</h2>
+      <p class="popup-brand" id="popupBrand">Brand name</p>
+      <p class="popup-cigar" id="popupCigar">Cigar name</p>
+      <div class="popup-divider"></div>
 
       <div class="popup-body" id="popupBody">
-        <!-- left image -->
+        <!-- LEFT IMAGE -->
         <div class="popup-img-col" id="popupImgCol" style="display:none;">
           <img id="popupImg" src="" alt="cigar photo">
         </div>
-        <!-- right details -->
+
+        <!-- RIGHT DETAILS -->
         <div class="popup-details">
           <p id="pMsrp">MSRP —</p>
           <p id="pSize"></p>
@@ -243,7 +293,7 @@
     const brandParam = url.searchParams.get('brand') || 'Pappy Van Winkle';
     document.getElementById('brandTitle').textContent = brandParam;
 
-    // mock "hub" data (yours will be bigger)
+    // example hub data (yours will be the real hub)
     const hubCigars = [
       {
         brand: "Pappy Van Winkle",
@@ -277,7 +327,7 @@
     const brandCigars = hubCigars.filter(c => c.brand === brandParam);
 
     function slugify(str) {
-      return (str || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]/g, "");
+      return (str || "").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]/g,"");
     }
 
     function renderList(list) {
@@ -312,8 +362,15 @@
       const popupImgCol = document.getElementById('popupImgCol');
       const popupImg = document.getElementById('popupImg');
 
-      // title = cigar name only
-      document.getElementById('popupTitle').textContent = cigar.name;
+      // header
+      document.getElementById('popupBrand').textContent = cigar.brand;
+      // cigar name without repeating brand if hub already included it
+      let cigarName = cigar.name;
+      if (cigarName.toLowerCase().startsWith(cigar.brand.toLowerCase())) {
+        // remove brand from front
+        cigarName = cigarName.slice(cigar.brand.length).trim();
+      }
+      document.getElementById('popupCigar').textContent = cigarName;
 
       // details
       document.getElementById('pMsrp').textContent = 'MSRP ' + (cigar.msrp || '—');
@@ -332,8 +389,7 @@
       const brandSlug = slugify(cigar.brand);
       document.getElementById('popupBrandIcon').src = `/img/icons/brands/${brandSlug}.svg`;
 
-      // image: only for pappyvanwinkleflyingpig
-      // strip brand from name if duplicated
+      // figure out photo filename
       let cigarSlug = slugify(cigar.name);
       if (cigarSlug.startsWith(brandSlug)) {
         cigarSlug = cigarSlug.slice(brandSlug.length);
