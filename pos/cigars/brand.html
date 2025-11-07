@@ -3,506 +3,275 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>POS • Brand Cigars</title>
+  <title>Cigars • CigarOS 2</title>
+
   <style>
-    :root {
-      --bg: #eaf2f6;
-      --ink: #0f1a2c;
-    }
-    * { box-sizing: border-box; }
+    /* ========== EXISTING PAGE STYLES (keep yours above if needed) ========== */
     body {
       margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #eaf2f6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #0f1a2c;
+      min-height: 100vh;
     }
-    .wrap {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 12px 12px 110px;
-    }
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 4px;
-    }
-    .back { text-decoration:none;color:var(--ink);display:flex;gap:4px;align-items:center;font-weight:500; }
-    .star { font-size:22px;color:#ffcc00; }
-    .title {
-      text-align: center;
-      font-size: 32px;
+
+    .header {
+      padding: 16px;
       font-weight: 700;
-      margin: 16px 0 14px;
+      font-size: 1.2rem;
     }
-    .search-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-    .search-bar {
+
+    .cigar-row {
       background: #fff;
-      border-radius: 999px;
-      padding: 8px 12px;
+      border-radius: 20px;
+      padding: 14px 16px;
+      margin: 12px;
       display: flex;
-      gap: 6px;
-      flex: 1;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(15,26,44,.05);
     }
-    .search-bar input { border:none;outline:none;background:transparent;width:100%; }
-    .filter-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 16px;
-      border: none;
-      background: #0f1a2c;
-      color: #fff;
-      font-size: 14px;
-      display: grid;
-      place-items: center;
+
+    .cigar-row:hover {
+      background: #f7faff;
+    }
+
+    /* ========== NEW CIGAR DETAIL POPUP STYLING ========== */
+    .cigar-detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.12);
+      z-index: 999;
+      display: none;
+    }
+
+    .cigar-detail-card {
+      position: absolute;
+      top: 70px;
+      left: 0;
+      right: 0;
+      margin: 0 12px;
+      background: #fff;
+      border-radius: 32px 0 24px 24px;
+      box-shadow: 0 14px 30px rgba(8,16,24,0.12);
+      padding: 16px 16px 14px;
+    }
+
+    .cigar-detail-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      position: relative;
+    }
+
+    .cd-brand {
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1.1;
+    }
+
+    .cd-name {
+      font-weight: 700;
+      font-size: .95rem;
+      line-height: 1.1;
+      margin-top: 3px;
+    }
+
+    .cd-close {
+      border: 0;
+      background: transparent;
+      color: #0057b8;
+      font-size: 1.4rem;
+      font-weight: 700;
+      position: absolute;
+      top: -5px;
+      right: 6px;
       cursor: pointer;
     }
-    .cigar-card {
-      background: #ffffff;
+
+    .cd-brand-icon {
+      position: absolute;
+      top: -8px;
+      right: 36px;
+      width: 64px;
+      height: 64px;
       border-radius: 20px;
-      padding: 12px 12px 12px 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .cigar-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 16px;
-      background: #000;
+      background: #3a2f28;
       display: grid;
       place-items: center;
       overflow: hidden;
     }
-    .cigar-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+
+    .cd-brand-icon img {
+      width: 70%;
+      height: 70%;
+      object-fit: contain;
     }
-    .cigar-info {
+
+    .cigar-detail-body {
+      display: flex;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .cd-photo {
+      width: 120px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .cd-photo img {
+      max-width: 110px;
+      height: auto;
+    }
+
+    .cd-info {
       flex: 1;
       min-width: 0;
     }
-    .cigar-name {
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .cigar-vitola {
-      font-size: 13px;
-      opacity: .7;
-    }
-    .cigar-msrp {
-      font-size: 13px;
-      font-weight: 600;
-      margin-top: 2px;
-    }
-    .inventory-pill {
-      width: 44px;
-      height: 44px;
-      border-radius: 999px;
-      border: 1.5px solid #d9dce0;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      background: #fff;
-      cursor: pointer;
-    }
-    /* detail modal */
-    #detailModal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.35);
-      display: none;
-      z-index: 300;
-    }
-    .detail-panel {
-      background: #fff;
-      max-width: 480px;
-      margin: 50px auto;
-      border-radius: 20px;
-      padding: 16px;
-    }
-    .detail-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+
+    .cd-line {
+      font-size: .8rem;
+      margin-bottom: 4px;
     }
 
-    /* bill tab */
-    .pos-bill-tab {
-      position: fixed;
-      bottom: 18px;
-      right: 18px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #0f1a2c;
-      color: #fff;
-      border-radius: 50px;
-      padding: 10px 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      cursor: pointer;
-      z-index: 200;
+    .cd-field {
+      font-size: .78rem;
+      margin-bottom: 3px;
     }
-    .pos-bill-badge {
-      background: #e11;
-      width: 20px;
-      height: 20px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .pos-bill-total { font-weight: 600; }
 
-    /* filter sheet (same as index) */
-    #filterSheet {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.3);
-      display: none;
-      z-index: 180;
+    @media (max-width: 520px) {
+      .cigar-detail-body {
+        gap: 10px;
+      }
+      .cd-photo {
+        width: 95px;
+      }
+      .cigar-detail-card {
+        top: 64px;
+      }
     }
-    .filter-panel {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      max-width: 480px;
-      margin: 0 auto;
-      background: #fff;
-      border-top-left-radius: 24px;
-      border-top-right-radius: 24px;
-      padding: 16px 16px 26px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .filter-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .filter-title { font-size: 20px; font-weight: 700; }
-    .filter-close { background:none;border:none;font-size:24px;cursor:pointer;}
-    .filter-section { margin-top: 12px; }
-    .filter-section h3 {
-      font-size: 16px;
-      margin: 10px 0 6px;
-    }
-    .vitola-row, .wrapper-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .vitola-item, .wrapper-item {
-      border: 1px solid #e5e9ee;
-      border-radius: 16px;
-      padding: 6px 10px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .vitola-item.active,
-    .wrapper-item.active {
-      background: #0f1a2c;
-      color: #fff;
-      border-color: #0f1a2c;
-    }
-    .features-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .feature-check { display:flex;gap:8px;align-items:center;font-size:14px; }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <a href="/pos/cigars/" class="back">← Cigars</a>
-      <div class="star">★</div>
-    </div>
-
-    <h1 class="title" id="brandTitle">Brand</h1>
-
-    <div class="search-row">
-      <div class="search-bar">
-        <input id="searchInput" placeholder="Search this brand…" />
-      </div>
-      <button class="filter-btn" onclick="openFilter()">⌕</button>
-    </div>
-
-    <div id="cigarList"></div>
-    <p id="empty" style="display:none;opacity:.6;text-align:center;margin-top:20px;">No cigars for this selection.</p>
+  <div class="header">
+    ← Cigars
   </div>
 
-  <!-- bill tab -->
-  <div class="pos-bill-tab" onclick="openBill()">
-    <div>🧾</div>
-    <div class="pos-bill-badge" id="billCount">0</div>
-    <div class="pos-bill-total" id="billTotal">$0.00</div>
-  </div>
-
-  <!-- detail modal -->
-  <div id="detailModal">
-    <div class="detail-panel" id="detailPanel">
-      <div class="detail-head">
-        <h2 id="detailName" style="margin:0;"></h2>
-        <button onclick="closeDetail()" style="background:none;border:none;font-size:22px;cursor:pointer;">×</button>
-      </div>
-      <p id="detailVitola" style="margin:4px 0;"></p>
-      <p id="detailWrapper" style="margin:4px 0;"></p>
-      <p id="detailOrigin" style="margin:4px 0;"></p>
-      <p id="detailStrength" style="margin:4px 0;"></p>
-      <p id="detailMsrp" style="margin:4px 0;"></p>
+  <!-- ========== EXAMPLE CIGAR ROW ========== -->
+  <div class="cigar-row" onclick="openCigarDetail({
+      name: 'Flying Pig',
+      vitola: 'Perfecto',
+      wrapperShade: 'USA',
+      origin: 'Nicaragua',
+      strength: 'Full',
+      price: '13.99',
+      length: '4.00',
+      ring: '56'
+  })">
+    <div>
+      <div style="font-weight:700;">Pappy Van Winkle Flying Pig</div>
+      <div style="font-size:.8rem;color:#6e7b8f;">Perfecto</div>
     </div>
+    <div style="font-weight:600;">$13.99</div>
   </div>
 
-  <!-- filter sheet -->
-  <div id="filterSheet">
-    <div class="filter-panel">
-      <div class="filter-head">
-        <div class="filter-title">Filters</div>
-        <button class="filter-close" onclick="closeFilter()">×</button>
+  <!-- ========== NEW CIGAR DETAIL POPUP ========== -->
+  <div class="cigar-detail-overlay" id="cigarDetailOverlay">
+    <div class="cigar-detail-card" id="cigarDetailCard">
+      <div class="cigar-detail-top">
+        <div>
+          <div class="cd-brand" id="cdBrand">Brand</div>
+          <div class="cd-name" id="cdName">Cigar Name</div>
+        </div>
+        <button class="cd-close" onclick="closeCigarDetail()">×</button>
+        <div class="cd-brand-icon">
+          <img id="cdBrandIcon" src="" alt="brand icon" onerror="this.style.opacity='0'">
+        </div>
       </div>
 
-      <div class="filter-section">
-        <h3>Vitola</h3>
-        <div id="vitolaList" class="vitola-row"></div>
-      </div>
-      <div class="filter-section">
-        <h3>Wrapper Shade</h3>
-        <div id="wrapperList" class="wrapper-row"></div>
-      </div>
-      <div class="filter-section">
-        <h3>Features</h3>
-        <div class="features-list">
-          <label class="feature-check"><input type="checkbox" data-feature="Box Pressed"> Box Pressed</label>
-          <label class="feature-check"><input type="checkbox" data-feature="Flavored/Sweet"> Flavored/Sweet</label>
-          <label class="feature-check"><input type="checkbox" data-feature="Pack"> Packs</label>
-          <label class="feature-check"><input type="checkbox" data-feature="Tin"> Tins</label>
-          <label class="feature-check"><input type="checkbox" data-feature="Barberpole"> Barberpole</label>
+      <div class="cigar-detail-body">
+        <div class="cd-photo">
+          <img id="cdPhoto" src="" alt="cigar photo" onerror="this.style.opacity='0'">
+        </div>
+        <div class="cd-info">
+          <div class="cd-line" id="cdMsrp">MSRP —</div>
+          <div class="cd-line" id="cdSize">—</div>
+          <div class="cd-line" id="cdVitola">—</div>
+
+          <div class="cd-field" id="cdWrapperShade">Wrapper Shade:</div>
+          <div class="cd-field" id="cdShape">Shape:</div>
+          <div class="cd-field" id="cdWrapper">Wrapper:</div>
+          <div class="cd-field" id="cdBinder">Binder:</div>
+          <div class="cd-field" id="cdFiller">Filler:</div>
+          <div class="cd-field" id="cdOrigin">Origin:</div>
+          <div class="cd-field" id="cdStrength">Strength:</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- bill modal -->
-  <div id="billModal" style="position:fixed;inset:0;display:none;z-index:250;">
-    <div onclick="closeBill()" style="position:fixed;inset:0;background:rgba(0,0,0,.35);"></div>
-    <div style="position:fixed;bottom:0;left:0;right:0;height:92vh;display:flex;justify-content:center;align-items:flex-end;">
-      <iframe src="/pos/receipt/" style="width:100%;max-width:480px;height:100%;border:none;border-top-left-radius:26px;border-top-right-radius:26px;"></iframe>
-    </div>
-  </div>
-
+  <!-- ========== NEW JAVASCRIPT FUNCTIONS ========== -->
   <script>
-    const CSV_URL = "/hub/hub_11-5-25.csv";
-    const params = new URLSearchParams(location.search);
-    const brandName = params.get("brand") || "Unknown Brand";
-    document.getElementById("brandTitle").textContent = brandName;
-
-    let allRows = [];
-    let brandRows = [];
-    let activeFilters = { vitola:null, wrapper:null, features:[] };
-
-    fetch(CSV_URL)
-      .then(r => r.text())
-      .then(text => {
-        allRows = parseCSV(text);
-        brandRows = allRows.filter(r => (r["Brand"] || r["brand"] || "").trim().toLowerCase() === brandName.trim().toLowerCase());
-        buildFilterLists(brandRows);
-        renderCigars(brandRows);
-      });
-
-    function parseCSV(text){
-      const lines = text.trim().split(/\r?\n/);
-      const header = lines.shift().split(",");
-      return lines.map(line=>{
-        const cells = line.split(",");
-        const obj = {};
-        header.forEach((h,i)=>obj[h.trim()] = (cells[i]||"").trim());
-        return obj;
-      });
+    function slugify(str) {
+      return (str || "")
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]/g, "");
     }
 
-    function renderCigars(list){
-      const container = document.getElementById("cigarList");
-      container.innerHTML = "";
-      if (!list.length){
-        document.getElementById("empty").style.display = "block";
-        return;
-      }
-      document.getElementById("empty").style.display = "none";
+    function openCigarDetail(cigarObj) {
+      const url = new URL(window.location.href);
+      const brandName = url.searchParams.get('brand') || 'Pappy Van Winkle';
+      const cigarName = cigarObj?.name || '';
+      const brandSlug = slugify(brandName);
+      const cigarSlug = slugify(cigarName);
+      const masterSlug = brandSlug + cigarSlug;
 
-      list.forEach(row=>{
-        const name = (row["Cigar"] || row["CIGAR"] || "").trim();
-        const line = (row["Line"] || row["LINE"] || "").trim();
-        const vitola = (row["Vitola"] || row["VITOLA"] || "").trim();
-        const msrp = parseFloat(row["Cigar MSRP"] || row["MSRP"] || "0") || 0;
-        const inventory = parseInt(row["INVENTORY"] || row["Inventory"] || "0") || 0;
-        const brandSvg = brandName.toLowerCase().replace(/[^a-z0-9]/g,"");
+      // Text fields
+      document.getElementById('cdBrand').textContent = brandName;
+      document.getElementById('cdName').textContent = cigarName;
+      document.getElementById('cdMsrp').textContent = cigarObj.price
+        ? 'MSRP  ' + cigarObj.price
+        : 'MSRP  —';
+      document.getElementById('cdSize').textContent =
+        cigarObj.length && cigarObj.ring
+          ? cigarObj.length + '" x ' + cigarObj.ring
+          : '';
+      document.getElementById('cdVitola').textContent = cigarObj.vitola || '';
 
-        const card = document.createElement("div");
-        card.className = "cigar-card";
-        card.innerHTML = `
-          <div class="cigar-icon">
-            <img src="/img/icons/brands/${brandSvg}.svg" onerror="this.src='/img/placeholder.svg'">
-          </div>
-          <div class="cigar-info">
-            <div class="cigar-name">${line ? line + " " + name : name}</div>
-            <div class="cigar-vitola">${vitola || ""}</div>
-            <div class="cigar-msrp">${msrp ? msrp.toFixed(2) : "0.00"}</div>
-          </div>
-          <div class="inventory-pill">${inventory}</div>
-        `;
-        // name click -> details
-        card.querySelector(".cigar-name").addEventListener("click", () => {
-          openDetail(row);
-        });
-        // inventory click -> add to cart
-        card.querySelector(".inventory-pill").addEventListener("click", () => {
-          addToCart({
-            brand: brandName,
-            name: line ? line + " " + name : name,
-            qty: 1,
-            price: msrp
-          });
-        });
-        container.appendChild(card);
-      });
+      // Details
+      document.getElementById('cdWrapperShade').textContent =
+        'Wrapper Shade: ' + (cigarObj.wrapperShade || '');
+      document.getElementById('cdShape').textContent =
+        'Shape: ' + (cigarObj.shape || '');
+      document.getElementById('cdWrapper').textContent =
+        'Wrapper: ' + (cigarObj.wrapper || '');
+      document.getElementById('cdBinder').textContent =
+        'Binder: ' + (cigarObj.binder || '');
+      document.getElementById('cdFiller').textContent =
+        'Filler: ' + (cigarObj.filler || '');
+      document.getElementById('cdOrigin').textContent =
+        'Origin: ' + (cigarObj.origin || '');
+      document.getElementById('cdStrength').textContent =
+        'Strength: ' + (cigarObj.strength || '');
 
-      // update badge from current cart
-      updateBillFromStorage();
+      // Images
+      document.getElementById('cdBrandIcon').src =
+        '/img/icons/brands/' + brandSlug + '.svg';
+      document.getElementById('cdPhoto').src =
+        '/img/cigars/' + masterSlug + '.png';
+
+      // Show popup
+      document.getElementById('cigarDetailOverlay').style.display = 'block';
     }
 
-    // detail
-    function openDetail(row){
-      document.getElementById("detailName").textContent = (row["Line"] || "") + " " + (row["Cigar"] || "");
-      document.getElementById("detailVitola").textContent = "Vitola: " + (row["Vitola"] || "");
-      document.getElementById("detailWrapper").textContent = "Wrapper Shade: " + (row["Wrapper Shade"] || row["WRAPPER SHADE"] || "");
-      document.getElementById("detailOrigin").textContent = "Origin: " + (row["Origin"] || row["ORIGIN"] || "");
-      document.getElementById("detailStrength").textContent = "Strength: " + (row["Strength"] || row["STRENGTH"] || "");
-      const msrp = parseFloat(row["Cigar MSRP"] || row["MSRP"] || "0") || 0;
-      document.getElementById("detailMsrp").textContent = "Price: " + msrp.toFixed(2);
-      document.getElementById("detailModal").style.display = "block";
+    function closeCigarDetail() {
+      document.getElementById('cigarDetailOverlay').style.display = 'none';
     }
-    function closeDetail(){ document.getElementById("detailModal").style.display = "none"; }
-
-    // filters
-    function buildFilterLists(rows){
-      const vSet = new Set();
-      const wSet = new Set();
-      rows.forEach(r=>{
-        const v = r["Vitola"] || r["VITOLA"] || "";
-        if (v) vSet.add(v.trim());
-        const w = r["Wrapper Shade"] || r["WRAPPER SHADE"] || "";
-        if (w) wSet.add(w.trim());
-      });
-      const vList = document.getElementById("vitolaList");
-      Array.from(vSet).sort().forEach(v=>{
-        const btn = document.createElement("div");
-        btn.className = "vitola-item";
-        btn.textContent = v;
-        btn.onclick = ()=>{
-          if (activeFilters.vitola === v) {
-            activeFilters.vitola = null;
-            btn.classList.remove("active");
-          } else {
-            activeFilters.vitola = v;
-            [...vList.children].forEach(c=>c.classList.remove("active"));
-            btn.classList.add("active");
-          }
-          runFilters();
-        };
-        vList.appendChild(btn);
-      });
-      const wList = document.getElementById("wrapperList");
-      Array.from(wSet).sort().forEach(w=>{
-        const btn = document.createElement("div");
-        btn.className = "wrapper-item";
-        btn.textContent = w;
-        btn.onclick = ()=>{
-          if (activeFilters.wrapper === w) {
-            activeFilters.wrapper = null;
-            btn.classList.remove("active");
-          } else {
-            activeFilters.wrapper = w;
-            [...wList.children].forEach(c=>c.classList.remove("active"));
-            btn.classList.add("active");
-          }
-          runFilters();
-        };
-        wList.appendChild(btn);
-      });
-
-      document.querySelectorAll(".feature-check input").forEach(cb=>{
-        cb.addEventListener("change", ()=>{
-          const feat = cb.dataset.feature;
-          if (cb.checked) {
-            if (!activeFilters.features.includes(feat)) activeFilters.features.push(feat);
-          } else {
-            activeFilters.features = activeFilters.features.filter(f=>f!==feat);
-          }
-          runFilters();
-        });
-      });
-
-      document.getElementById("searchInput").addEventListener("input", runFilters);
-    }
-
-    function runFilters(){
-      const term = document.getElementById("searchInput").value.toLowerCase();
-      const filtered = brandRows.filter(r=>{
-        const fullName = ((r["Line"] || "") + " " + (r["Cigar"] || "")).toLowerCase();
-        if (!fullName.includes(term)) return false;
-        if (activeFilters.vitola && (r["Vitola"] || "").toLowerCase() !== activeFilters.vitola.toLowerCase()) return false;
-        if (activeFilters.wrapper && (r["Wrapper Shade"] || r["WRAPPER SHADE"] || "").toLowerCase() !== activeFilters.wrapper.toLowerCase()) return false;
-        for (const ft of activeFilters.features) {
-          const val = r[ft] || r[ft.toUpperCase()] || "";
-          if (!val || val === "0" || val.toLowerCase() === "false") return false;
-        }
-        return true;
-      });
-      renderCigars(filtered);
-    }
-
-    function openFilter(){ document.getElementById("filterSheet").style.display = "block"; }
-    function closeFilter(){ document.getElementById("filterSheet").style.display = "none"; }
-
-    // cart
-    function addToCart(item){
-      const cart = JSON.parse(localStorage.getItem("posCart") || "[]");
-      const key = item.name + "|" + item.brand;
-      const found = cart.find(c => (c.name + "|" + c.brand) === key);
-      if (found) {
-        found.qty += item.qty;
-      } else {
-        cart.push({ ...item });
-      }
-      localStorage.setItem("posCart", JSON.stringify(cart));
-      updateBillFromStorage();
-    }
-    function updateBillFromStorage(){
-      const cart = JSON.parse(localStorage.getItem("posCart") || "[]");
-      const count = cart.reduce((s,i)=>s+i.qty,0);
-      const total = cart.reduce((s,i)=>s+(i.price||0)*i.qty,0);
-      document.getElementById("billCount").textContent = count;
-      document.getElementById("billTotal").textContent = "$" + total.toFixed(2);
-    }
-
-    function openBill(){ document.getElementById("billModal").style.display="block"; }
-    function closeBill(){ document.getElementById("billModal").style.display="none"; }
-    window.closeBill = closeBill;
   </script>
 </body>
 </html>
