@@ -4,241 +4,122 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Cigars • CigarOS 2</title>
-
   <style>
     :root {
-      --bg: #dfeaf0;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --blue: #0a7ed6; /* blue labels like mock */
-      --popup-bg: #ffffff;
-      --divider: #e4e7ea;
+      --bg:#dfeaf0;
+      --ink:#0f1a2c;
+      --muted:#6a7586;
+      --blue:#0a7ed6;
+      --divider:#e4e7ea;
+      --popup-bg:#ffffff;
     }
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      min-height: 100vh;
-    }
-
-    /* top bar */
-    .topbar {
-      display:flex;
-      align-items:center;
-      gap:6px;
-      padding:16px 16px 4px;
-      font-weight:600;
-    }
-    .back-btn { display:inline-flex; align-items:center; gap:4px; cursor:pointer; }
-
-    .page-wrap { padding: 0 16px 80px; }
-
-    .brand-title-row {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      margin:6px 0 12px;
-      gap:12px;
-    }
-    .brand-title {
-      font-size:1.9rem;
-      font-weight:700;
-    }
-    .fav-star {
-      width:28px;
-      height:28px;
-      border-radius:999px;
-      background:#f7c948;
-      display:grid;
-      place-items:center;
-      cursor:pointer;
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--ink);
+      min-height:100vh;
     }
 
-    .search-box {
-      background:#fff;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      padding:10px 14px;
-      margin-bottom:18px;
-    }
-    .search-input {
-      border:0; outline:0; background:transparent; width:100%; font-size:.85rem;
-    }
+    /* Page shell ---------------------------------------------------- */
+    .topbar{display:flex;align-items:center;gap:6px;padding:16px 16px 4px;font-weight:600;}
+    .back-btn{display:flex;align-items:center;gap:4px;cursor:pointer;}
+    .page-wrap{padding:0 16px 80px;}
+    .brand-title-row{display:flex;align-items:center;justify-content:space-between;margin:6px 0 12px;}
+    .brand-title{font-size:1.9rem;font-weight:700;}
+    .fav-star{width:28px;height:28px;border-radius:50%;background:#f7c948;display:grid;place-items:center;}
+    .search-box{background:#fff;border-radius:999px;display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:18px;}
+    .search-input{border:0;outline:0;background:transparent;width:100%;font-size:.85rem;}
 
-    /* cigar list */
-    .cigar-list { display:flex; flex-direction:column; gap:12px; }
-    .cigar-row {
-      display:flex;
-      align-items:center;
-      gap:12px;
-      background:#fff;
-      border-radius:20px;
-      padding:12px 14px;
-      box-shadow:0 6px 20px rgba(15,26,44,.05);
-      cursor:pointer;
-    }
-    .cigar-icon {
-      width:54px;
-      height:54px;
-      border-radius:18px;
-      background:#3a3029;
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-    }
-    .cigar-icon img { width:46px; height:46px; object-fit:contain; }
-    .cigar-info { flex:1; min-width:0; }
-    .cigar-name { font-weight:700; font-size:.9rem; }
-    .cigar-meta { font-size:.74rem; color:var(--muted); }
-    .qty-pill {
-      width:44px; height:44px; border-radius:999px;
-      border:1px solid rgba(14,25,35,.15);
-      display:grid; place-items:center;
-      font-weight:600;
-      background:#fff;
-    }
+    /* Cigars list --------------------------------------------------- */
+    .cigar-list{display:flex;flex-direction:column;gap:12px;}
+    .cigar-row{display:flex;align-items:center;gap:12px;background:#fff;border-radius:20px;padding:12px 14px;box-shadow:0 6px 20px rgba(15,26,44,.05);cursor:pointer;}
+    .cigar-icon{width:54px;height:54px;border-radius:18px;background:#3a3029;display:grid;place-items:center;overflow:hidden;}
+    .cigar-icon img{width:46px;height:46px;object-fit:contain;}
+    .cigar-info{flex:1;}
+    .cigar-name{font-weight:700;font-size:.9rem;}
+    .cigar-meta{font-size:.74rem;color:var(--muted);}
+    .qty-pill{width:44px;height:44px;border-radius:50%;border:1px solid rgba(14,25,35,.15);display:grid;place-items:center;font-weight:600;background:#fff;}
 
-    /* overlay + popup */
-    .overlay {
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,0.45);
-      z-index:999;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:10px;
-    }
-
-    .popup {
+    /* Overlay + popup ----------------------------------------------- */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;display:none;align-items:center;justify-content:center;padding:10px;}
+    .popup{
       background:var(--popup-bg);
       border-radius:28px;
       width:94%;
-      max-width:620px;
+      max-width:640px;
       max-height:92vh;
       overflow-y:auto;
-      padding:16px 18px 22px;
-      position:relative;
+      padding:16px 20px 24px;
       box-shadow:0 20px 40px rgba(0,0,0,.28);
+      position:relative;
     }
+    .popup-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+    .popup-icon{width:58px;height:58px;border-radius:18px;background:#3a2f28;display:grid;place-items:center;overflow:hidden;}
+    .popup-icon img{width:70%;height:70%;object-fit:contain;}
+    .popup-head-text{flex:1;}
+    .popup-brand{font-weight:700;font-size:.95rem;margin:0;}
+    .popup-cigar{font-weight:700;font-size:1.1rem;margin:2px 0;}
+    .popup-msrp{font-size:.85rem;margin:0;}
+    .popup-close{border:0;background:transparent;font-size:1.6rem;color:#d53434;font-weight:700;cursor:pointer;line-height:1;}
+    .popup-divider{height:1px;background:var(--divider);margin-bottom:18px;}
 
-    /* header like mockup: icon + text on left, X on right */
-    .popup-header {
+    /* Body layout: image left, text right --------------------------- */
+    .popup-body{
       display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:12px;
-    }
-    .popup-icon {
-      width:58px;
-      height:58px;
-      border-radius:18px;
-      background:#3a2f28;
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-      flex:0 0 58px;
-    }
-    .popup-icon img {
-      width:70%; height:70%; object-fit:contain;
-    }
-    .popup-head-text {
-      flex:1;
-      min-width:0;
-    }
-    .popup-brand {
-      font-weight:700;
-      font-size:.9rem;
-      margin:0;
-    }
-    .popup-cigar {
-      font-weight:700;
-      font-size:1.05rem;
-      margin:2px 0 2px;
-    }
-    .popup-msrp {
-      font-size:.78rem;
-      margin:0;
-    }
-    .popup-close {
-      border:0;
-      background:transparent;
-      font-size:1.45rem;
-      color:#d53434; /* red like your screenshot */
-      cursor:pointer;
-      font-weight:700;
-      line-height:1;
-    }
-
-    .popup-divider {
-      height:1px;
-      background:var(--divider);
-      margin-bottom:14px;
-    }
-
-    /* body two columns */
-    .popup-body {
-      display:flex;
-      gap:16px;
+      gap:36px;          /* <- more space from cigar */
       align-items:flex-start;
     }
-    .popup-img-col {
+    .popup-img-col{
       width:38%;
-      max-width:220px;
+      max-width:230px;
       display:flex;
       justify-content:center;
       align-items:flex-start;
     }
-    .popup-img-col img {
+    .popup-img-col img{
       width:100%;
       height:auto;
       max-height:70vh;
       object-fit:contain;
     }
-    .popup-details {
-      flex:1;
-      min-width:0;
-    }
 
-    /* label + value */
-    .spec-block { margin-bottom:8px; }
-    .spec-label {
-      font-family:"Helvetica Neue", -apple-system, sans-serif;
-      font-weight:700;
-      font-size:.77rem;
-      color:var(--blue);
-      text-transform:none;
+    /* right text column */
+    .popup-details{
+      flex:1 1 58%;      /* <- make it wider to fill yellow zone */
+      min-width:0;
+      padding-top:2px;
     }
-    .spec-value {
-      font-family:"Helvetica Neue", -apple-system, sans-serif;
+    .spec-block{margin-bottom:12px;}
+    .spec-label{
+      font-family:"Helvetica Neue";
+      font-weight:700;
+      font-size:1.02rem;   /* a bit larger */
+      color:var(--blue);
+    }
+    .spec-value{
+      font-family:"Helvetica Neue";
       font-weight:400;
-      font-size:.78rem;
+      font-size:1.05rem;   /* a bit larger */
       color:var(--ink);
     }
 
-    /* when no image, make single column */
-    .no-image .popup-body { display:block; }
+    /* if no image, stack */
+    .no-image .popup-body{display:block;}
 
-    @media (max-width:540px) {
-      .popup { max-width:100%; }
-      .popup-body {
-        gap:12px;
-      }
-      .popup-img-col { width:40%; max-width:200px; }
+    @media(max-width:540px){
+      .popup{max-width:100%;}
+      .popup-body{gap:26px;}
+      .popup-img-col{width:42%;max-width:210px;}
+      .spec-label{font-size:.98rem;}
+      .spec-value{font-size:1.02rem;}
     }
   </style>
 </head>
 <body>
   <div class="topbar">
-    <div class="back-btn" onclick="history.back()">
-      <span style="font-size:1.2rem;">←</span>
-      <span>Cigars</span>
-    </div>
+    <div class="back-btn" onclick="history.back()"><span style="font-size:1.2rem;">←</span><span>Cigars</span></div>
   </div>
 
   <div class="page-wrap">
@@ -246,21 +127,17 @@
       <div class="brand-title" id="brandTitle">Brand</div>
       <div class="fav-star">★</div>
     </div>
-
     <div class="search-box">
       <input id="searchInput" class="search-input" placeholder="Search this brand..." oninput="filterCigars()" />
     </div>
-
     <div class="cigar-list" id="cigarList"></div>
   </div>
 
-  <!-- popup -->
+  <!-- POPUP -->
   <div class="overlay" id="popupOverlay">
     <div class="popup" id="popup">
       <div class="popup-header">
-        <div class="popup-icon">
-          <img id="popupBrandIcon" src="" alt="">
-        </div>
+        <div class="popup-icon"><img id="popupBrandIcon" src="" alt=""></div>
         <div class="popup-head-text">
           <p class="popup-brand" id="popupBrand">Brand</p>
           <p class="popup-cigar" id="popupCigar">Cigar name</p>
@@ -268,16 +145,12 @@
         </div>
         <button class="popup-close" onclick="closePopup()">×</button>
       </div>
-
       <div class="popup-divider"></div>
 
       <div class="popup-body" id="popupBody">
-        <!-- LEFT IMAGE -->
         <div class="popup-img-col" id="popupImgCol" style="display:none;">
           <img id="popupImg" src="" alt="cigar photo">
         </div>
-
-        <!-- RIGHT DETAILS -->
         <div class="popup-details">
           <div class="spec-block">
             <div class="spec-label">RG x LENGTH</div>
@@ -326,47 +199,51 @@
     const brandParam = url.searchParams.get('brand') || 'Pappy Van Winkle';
     document.getElementById('brandTitle').textContent = brandParam;
 
-    // sample hub rows (your real hub feeds this)
+    // sample hub rows – add "brandAka" now
     const hubCigars = [
       {
         brand: "Pappy Van Winkle",
+        brandAka: "",                 // no aka for this one
         name: "Pappy Van Winkle Flying Pig",
         msrp: "13.99",
         length: "4.00",
         ring: "56",
         vitola: "Perfecto",
         wrapperShade: "USA",
-        wrapper: "",
-        binder: "",
-        filler: "",
         origin: "Nicaragua",
         strength: "Full"
       },
       {
-        brand: "Pappy Van Winkle",
-        name: "Pappy Van Winkle Churchill",
-        msrp: "18.00",
-        vitola: "Churchill",
-        origin: "Nicaragua",
-        strength: "Medium"
-      },
-      {
         brand: "Aladino",
+        brandAka: "",                 // example without aka
         name: "Aladino Cameroon Toro",
         msrp: "9.50",
         vitola: "Toro",
         origin: "Honduras",
         strength: "Medium"
+      },
+      {
+        brand: "La Aroma de Cuba",
+        brandAka: "ladc",
+        name: "Mi Amor Belicoso",
+        msrp: "12.00",
+        vitola: "Belicoso",
+        origin: "Nicaragua",
+        strength: "Medium-Full"
       }
     ];
 
+    // filter to this brand
     const brandCigars = hubCigars.filter(c => c.brand === brandParam);
 
-    function slugify(str) {
-      return (str || "").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]/g,"");
+    function slugify(str){
+      return (str || "")
+        .toLowerCase()
+        .replace(/&/g,"and")
+        .replace(/[^a-z0-9]/g,"");
     }
 
-    function renderList(list) {
+    function renderList(list){
       const wrap = document.getElementById('cigarList');
       wrap.innerHTML = '';
       list.forEach(cigar => {
@@ -388,27 +265,26 @@
       });
     }
 
-    function filterCigars() {
+    function filterCigars(){
       const val = document.getElementById('searchInput').value.toLowerCase();
       renderList(brandCigars.filter(c => c.name.toLowerCase().includes(val)));
     }
 
-    function openPopup(cigar) {
+    function openPopup(cigar){
       const popup = document.getElementById('popup');
       const popupImgCol = document.getElementById('popupImgCol');
       const popupImg = document.getElementById('popupImg');
 
-      // top texts
+      // header text
       document.getElementById('popupBrand').textContent = cigar.brand;
-      // remove brand prefix from name for 2nd line
       let cigarName = cigar.name;
       if (cigarName.toLowerCase().startsWith(cigar.brand.toLowerCase())) {
         cigarName = cigarName.slice(cigar.brand.length).trim();
       }
       document.getElementById('popupCigar').textContent = cigarName;
-      document.getElementById('popupMsrp').textContent = cigar.msrp ? cigar.msrp : '—';
+      document.getElementById('popupMsrp').textContent = cigar.msrp || '—';
 
-      // details on right
+      // right column values
       document.getElementById('svSize').textContent =
         cigar.ring && cigar.length ? `${cigar.ring} x ${cigar.length}”` : '—';
       document.getElementById('svVitola').textContent = cigar.vitola || '—';
@@ -424,30 +300,54 @@
       const brandSlug = slugify(cigar.brand);
       document.getElementById('popupBrandIcon').src = `/img/icons/brands/${brandSlug}.svg`;
 
-      // figure out image file
+      // ------------ IMAGE LOOKUP WITH brandAka ------------
       let cigarSlug = slugify(cigar.name);
       if (cigarSlug.startsWith(brandSlug)) {
         cigarSlug = cigarSlug.slice(brandSlug.length);
       }
-      const masterSlug = brandSlug + cigarSlug;
+      const brandAka = cigar.brandAka ? slugify(cigar.brandAka) : "";
+      const akaPath = brandAka ? `/img/cigars/${brandAka}${cigarSlug}.png` : "";
+      const normalPath = `/img/cigars/${brandSlug}${cigarSlug}.png`;
 
-      if (masterSlug === 'pappyvanwinkleflyingpig') {
-        popupImg.src = `/img/cigars/${masterSlug}.png`;
-        popupImgCol.style.display = 'flex';
-        popup.classList.remove('no-image');
+      // try aka first, then normal
+      if (brandAka) {
+        const testImg = new Image();
+        testImg.onload = function(){
+          popupImg.src = akaPath;
+          popupImgCol.style.display = 'flex';
+          popup.classList.remove('no-image');
+        };
+        testImg.onerror = function(){
+          fallbackToNormal();
+        };
+        testImg.src = akaPath;
       } else {
-        popupImgCol.style.display = 'none';
-        popup.classList.add('no-image');
+        fallbackToNormal();
       }
+
+      function fallbackToNormal(){
+        const testImg2 = new Image();
+        testImg2.onload = function(){
+          popupImg.src = normalPath;
+          popupImgCol.style.display = 'flex';
+          popup.classList.remove('no-image');
+        };
+        testImg2.onerror = function(){
+          popupImgCol.style.display = 'none';
+          popup.classList.add('no-image');
+        };
+        testImg2.src = normalPath;
+      }
+      // ----------------------------------------------------
 
       document.getElementById('popupOverlay').style.display = 'flex';
     }
 
-    function closePopup() {
+    function closePopup(){
       document.getElementById('popupOverlay').style.display = 'none';
     }
 
-    // initial
+    // initial render
     renderList(brandCigars);
   </script>
 </body>
