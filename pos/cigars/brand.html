@@ -10,6 +10,7 @@
       --bg: #dfeaf0;
       --ink: #0f1a2c;
       --muted: #6a7586;
+      --popup-bg: #ffffff;
     }
     * { box-sizing: border-box; }
     body {
@@ -21,19 +22,21 @@
     }
 
     /* top bar */
-    .topbar { display:flex; align-items:center; gap:6px; padding:16px 16px 4px; font-weight:600; }
+    .topbar {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:16px 16px 4px;
+      font-weight:600;
+    }
     .back-btn { display:inline-flex; align-items:center; gap:4px; cursor:pointer; }
 
     .page-wrap { padding: 0 16px 80px; }
-
     .brand-title-row {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin:6px 0 12px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin:6px 0 12px;
     }
-    .brand-title { font-size: 1.9rem; font-weight: 700; line-height:1.05; }
+    .brand-title { font-size:1.9rem; font-weight:700; line-height:1.05; }
     .fav-star {
       width:28px; height:28px; border-radius:999px; background:#f7c948;
       display:grid; place-items:center; cursor:pointer;
@@ -55,12 +58,8 @@
     /* cigar list */
     .cigar-list { display:flex; flex-direction:column; gap:12px; }
     .cigar-row {
-      display:flex;
-      align-items:center;
-      gap:12px;
-      background:#fff;
-      border-radius:20px;
-      padding:12px 14px;
+      display:flex; align-items:center; gap:12px;
+      background:#fff; border-radius:20px; padding:12px 14px;
       box-shadow:0 6px 20px rgba(15,26,44,.05);
       cursor:pointer;
     }
@@ -77,30 +76,33 @@
       border:1px solid rgba(14,25,35,.15);
       display:grid; place-items:center;
       font-weight:600;
+      background:#fff;
     }
 
     /* overlay + popup */
     .overlay {
       position:fixed;
       inset:0;
-      background:rgba(0,0,0,0.45); /* darker so pop stands out */
+      background:rgba(0,0,0,0.45);
       z-index:999;
       display:none;
       align-items:center;
       justify-content:center;
-      padding:12px;
+      padding:10px;
     }
+
     .popup {
-      background:#fff;
+      background:var(--popup-bg);
       border-radius:30px;
       width:94%;
-      max-width:560px;
+      max-width:620px;
       max-height:92vh;
       overflow-y:auto;
-      padding:22px 20px 28px;
+      padding:22px 20px 26px;
       position:relative;
       box-shadow:0 20px 40px rgba(0,0,0,.28);
     }
+
     .popup-close {
       position:absolute;
       top:14px;
@@ -111,7 +113,9 @@
       font-size:1.6rem;
       cursor:pointer;
       font-weight:700;
+      z-index:2;
     }
+
     .popup-brandicon {
       position:absolute;
       top:14px;
@@ -133,22 +137,51 @@
       line-height:1.15;
     }
 
-    /* image area – tall */
-    .popup-img-wrap {
-      display:none; /* shown only for pappyvanwinkleflyingpig */
-      width:100%;
-      margin-bottom:16px;
+    /* two-column layout */
+    .popup-body {
+      display:flex;
+      gap:18px;
+      align-items:flex-start;
+    }
+
+    .popup-img-col {
+      width:42%;
+      max-width:230px;
       display:flex;
       justify-content:center;
-      align-items:center;
+      align-items:flex-start;
     }
-    .popup-img-wrap img {
-      max-height:60vh; /* about 70% on iphone once padding considered */
-      width:auto;
+    .popup-img-col img {
+      width:100%;
+      height:auto;
+      max-height:70vh;
+      object-fit:contain;
+    }
+
+    .popup-details {
+      flex:1;
+      min-width:0;
+    }
+    .popup-details p {
+      margin:4px 0;
+      font-size:.83rem;
+    }
+
+    /* when no image, make it single column */
+    .no-image .popup-body {
       display:block;
     }
 
-    .popup p { margin:3px 0; font-size:.83rem; }
+    @media (max-width: 540px) {
+      .popup-body {
+        flex-direction:row;
+        gap:12px;
+      }
+      .popup-img-col {
+        width:38%;
+        max-width:200px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -174,39 +207,43 @@
 
   <!-- popup -->
   <div class="overlay" id="popupOverlay">
-    <div class="popup">
+    <div class="popup" id="popup">
       <button class="popup-close" onclick="closePopup()">×</button>
       <div class="popup-brandicon">
         <img id="popupBrandIcon" src="" alt="">
       </div>
 
-      <!-- title: ONLY cigar name -->
       <h2 class="popup-title" id="popupTitle">Cigar name</h2>
 
-      <div class="popup-img-wrap" id="popupImgWrap">
-        <img id="popupImg" src="" alt="cigar photo">
+      <div class="popup-body" id="popupBody">
+        <!-- left image -->
+        <div class="popup-img-col" id="popupImgCol" style="display:none;">
+          <img id="popupImg" src="" alt="cigar photo">
+        </div>
+        <!-- right details -->
+        <div class="popup-details">
+          <p id="pMsrp">MSRP —</p>
+          <p id="pSize"></p>
+          <p id="pVitola"></p>
+          <p id="pWrapperShade">Wrapper Shade:</p>
+          <p id="pShape">Shape:</p>
+          <p id="pWrapper">Wrapper:</p>
+          <p id="pBinder">Binder:</p>
+          <p id="pFiller">Filler:</p>
+          <p id="pOrigin">Origin:</p>
+          <p id="pStrength">Strength:</p>
+        </div>
       </div>
-
-      <p id="pMsrp">MSRP —</p>
-      <p id="pSize"></p>
-      <p id="pVitola"></p>
-      <p id="pWrapperShade">Wrapper Shade:</p>
-      <p id="pShape">Shape:</p>
-      <p id="pWrapper">Wrapper:</p>
-      <p id="pBinder">Binder:</p>
-      <p id="pFiller">Filler:</p>
-      <p id="pOrigin">Origin:</p>
-      <p id="pStrength">Strength:</p>
     </div>
   </div>
 
   <script>
-    // get brand from ?brand=
+    // brand from URL
     const url = new URL(window.location.href);
     const brandParam = url.searchParams.get('brand') || 'Pappy Van Winkle';
     document.getElementById('brandTitle').textContent = brandParam;
 
-    // pretend this is the hub result (your hub will return many more)
+    // mock "hub" data (yours will be bigger)
     const hubCigars = [
       {
         brand: "Pappy Van Winkle",
@@ -237,7 +274,6 @@
       }
     ];
 
-    // filter to brand
     const brandCigars = hubCigars.filter(c => c.brand === brandParam);
 
     function slugify(str) {
@@ -272,9 +308,14 @@
     }
 
     function openPopup(cigar) {
-      // heading: JUST the cigar name
+      const popup = document.getElementById('popup');
+      const popupImgCol = document.getElementById('popupImgCol');
+      const popupImg = document.getElementById('popupImg');
+
+      // title = cigar name only
       document.getElementById('popupTitle').textContent = cigar.name;
 
+      // details
       document.getElementById('pMsrp').textContent = 'MSRP ' + (cigar.msrp || '—');
       document.getElementById('pSize').textContent =
         cigar.length && cigar.ring ? `${cigar.length}" x ${cigar.ring}` : '';
@@ -291,24 +332,21 @@
       const brandSlug = slugify(cigar.brand);
       document.getElementById('popupBrandIcon').src = `/img/icons/brands/${brandSlug}.svg`;
 
-      // IMAGE: only if file name is /img/cigars/pappyvanwinkleflyingpig.png
-      // but hub gives name "Pappy Van Winkle Flying Pig"
-      // so: cigar.slug = pappyvanwinkleflyingpig
-      // remove the brand part if it’s repeated
+      // image: only for pappyvanwinkleflyingpig
+      // strip brand from name if duplicated
       let cigarSlug = slugify(cigar.name);
       if (cigarSlug.startsWith(brandSlug)) {
-        cigarSlug = cigarSlug.slice(brandSlug.length); // remove "pappyvanwinkle" from front
+        cigarSlug = cigarSlug.slice(brandSlug.length);
       }
-      const masterSlug = brandSlug + cigarSlug; // pappyvanwinkle + flyingpig
-
-      const imgWrap = document.getElementById('popupImgWrap');
-      const img = document.getElementById('popupImg');
+      const masterSlug = brandSlug + cigarSlug;
 
       if (masterSlug === 'pappyvanwinkleflyingpig') {
-        img.src = `/img/cigars/${masterSlug}.png`;
-        imgWrap.style.display = 'flex';
+        popupImg.src = `/img/cigars/${masterSlug}.png`;
+        popupImgCol.style.display = 'flex';
+        popup.classList.remove('no-image');
       } else {
-        imgWrap.style.display = 'none';
+        popupImgCol.style.display = 'none';
+        popup.classList.add('no-image');
       }
 
       document.getElementById('popupOverlay').style.display = 'flex';
