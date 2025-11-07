@@ -4,40 +4,169 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Cigars • CigarOS 2</title>
-
   <style>
-    /* ========== EXISTING PAGE STYLES (keep yours above if needed) ========== */
+    :root {
+      --page-bg: #dfeaf0;
+      --card: #ffffff;
+      --ink: #0f1a2c;
+      --muted: #6a7586;
+      --pill: #0f1a2c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      background: #eaf2f6;
+      background: var(--page-bg);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #0f1a2c;
+      color: var(--ink);
       min-height: 100vh;
     }
 
-    .header {
-      padding: 16px;
+    /* top header */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 16px 16px 4px;
+      font-weight: 600;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    /* brand title + search */
+    .page-wrap {
+      padding: 0 16px 80px;
+    }
+
+    .brand-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+
+    .brand-title {
+      font-size: 1.9rem;
       font-weight: 700;
-      font-size: 1.2rem;
+      line-height: 1.05;
+    }
+
+    .fav-star {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: #f7c948;
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .search-box {
+      background: #ffffff;
+      border-radius: 999px;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+    }
+
+    .search-input {
+      border: 0;
+      outline: 0;
+      background: transparent;
+      width: 100%;
+      font-size: .8rem;
+    }
+
+    .search-btn {
+      background: #0f1a2c;
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    /* cigar list */
+    .cigar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .cigar-row {
       background: #fff;
       border-radius: 20px;
-      padding: 14px 16px;
-      margin: 12px;
+      padding: 12px 14px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 8px 26px rgba(15,26,44,.05);
       cursor: pointer;
-      box-shadow: 0 8px 20px rgba(15,26,44,.05);
     }
 
-    .cigar-row:hover {
-      background: #f7faff;
+    .cigar-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      background: #3a3029;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
     }
 
-    /* ========== NEW CIGAR DETAIL POPUP STYLING ========== */
+    .cigar-icon img {
+      width: 46px;
+      height: 46px;
+      object-fit: contain;
+    }
+
+    .cigar-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cigar-name {
+      font-weight: 700;
+      font-size: .88rem;
+    }
+
+    .cigar-meta {
+      font-size: .72rem;
+      color: var(--muted);
+    }
+
+    .qty-pill {
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      border: 1px solid rgba(14,25,35,0.15);
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      background: #fff;
+    }
+
+    /* ========== POPUP ========== */
     .cigar-detail-overlay {
       position: fixed;
       inset: 0;
@@ -102,7 +231,6 @@
       place-items: center;
       overflow: hidden;
     }
-
     .cd-brand-icon img {
       width: 70%;
       height: 70%;
@@ -121,7 +249,6 @@
       justify-content: center;
       align-items: center;
     }
-
     .cd-photo img {
       max-width: 110px;
       height: auto;
@@ -143,43 +270,51 @@
     }
 
     @media (max-width: 520px) {
+      .cigar-detail-card {
+        top: 64px;
+      }
       .cigar-detail-body {
         gap: 10px;
       }
       .cd-photo {
         width: 95px;
       }
-      .cigar-detail-card {
-        top: 64px;
-      }
     }
   </style>
 </head>
-
 <body>
-  <div class="header">
-    ← Cigars
-  </div>
-
-  <!-- ========== EXAMPLE CIGAR ROW ========== -->
-  <div class="cigar-row" onclick="openCigarDetail({
-      name: 'Flying Pig',
-      vitola: 'Perfecto',
-      wrapperShade: 'USA',
-      origin: 'Nicaragua',
-      strength: 'Full',
-      price: '13.99',
-      length: '4.00',
-      ring: '56'
-  })">
-    <div>
-      <div style="font-weight:700;">Pappy Van Winkle Flying Pig</div>
-      <div style="font-size:.8rem;color:#6e7b8f;">Perfecto</div>
+  <!-- top bar -->
+  <div class="topbar">
+    <div class="back-btn" onclick="history.back()">
+      <span style="font-size:1.2rem;">←</span>
+      <span>Cigars</span>
     </div>
-    <div style="font-weight:600;">$13.99</div>
   </div>
 
-  <!-- ========== NEW CIGAR DETAIL POPUP ========== -->
+  <div class="page-wrap">
+    <div class="brand-title-row">
+      <div class="brand-title" id="brandTitle">Brand Name</div>
+      <div class="fav-star">★</div>
+    </div>
+
+    <div class="search-row">
+      <div class="search-box">
+        <input id="searchInput" type="text" class="search-input" placeholder="Search this brand..." oninput="filterCigars()" />
+      </div>
+      <div class="search-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="5" stroke="#fff" stroke-width="1.4"></circle>
+          <path d="m15 15 3.5 3.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round"></path>
+        </svg>
+      </div>
+    </div>
+
+    <div class="cigar-list" id="cigarList">
+      <!-- rows injected -->
+    </div>
+  </div>
+
+  <!-- popup -->
   <div class="cigar-detail-overlay" id="cigarDetailOverlay">
     <div class="cigar-detail-card" id="cigarDetailCard">
       <div class="cigar-detail-top">
@@ -199,8 +334,8 @@
         </div>
         <div class="cd-info">
           <div class="cd-line" id="cdMsrp">MSRP —</div>
-          <div class="cd-line" id="cdSize">—</div>
-          <div class="cd-line" id="cdVitola">—</div>
+          <div class="cd-line" id="cdSize"></div>
+          <div class="cd-line" id="cdVitola"></div>
 
           <div class="cd-field" id="cdWrapperShade">Wrapper Shade:</div>
           <div class="cd-field" id="cdShape">Shape:</div>
@@ -214,8 +349,90 @@
     </div>
   </div>
 
-  <!-- ========== NEW JAVASCRIPT FUNCTIONS ========== -->
   <script>
+    // ======= DATA (replace with your hub JSON later) =======
+    // this is brand-specific; we'll set brand from URL and only show matching cigars
+    const allCigars = [
+      {
+        brand: "Pappy Van Winkle",
+        name: "Pappy Van Winkle Flying Pig",
+        vitola: "Perfecto",
+        msrp: "13.99",
+        length: "4.00",
+        ring: "56",
+        wrapperShade: "USA",
+        origin: "Nicaragua",
+        strength: "Full",
+        wrapper: "",
+        binder: "",
+        filler: ""
+      },
+      {
+        brand: "Pappy Van Winkle",
+        name: "Pappy Van Winkle Robusto",
+        vitola: "Robusto",
+        msrp: "15.50",
+        length: "5.00",
+        ring: "50",
+        origin: "Nicaragua",
+        strength: "Medium-Full"
+      },
+      {
+        brand: "Pappy Van Winkle",
+        name: "Pappy Van Winkle Churchill",
+        vitola: "Churchill",
+        msrp: "18.00",
+        length: "7.00",
+        ring: "48",
+        origin: "Nicaragua",
+        strength: "Medium"
+      }
+    ];
+
+    const url = new URL(window.location.href);
+    const currentBrand = url.searchParams.get("brand") || "Pappy Van Winkle";
+
+    document.getElementById("brandTitle").textContent = currentBrand;
+
+    // filter cigars for this brand
+    let brandCigars = allCigars.filter(c => c.brand === currentBrand);
+
+    function renderCigarList(list) {
+      const container = document.getElementById("cigarList");
+      container.innerHTML = "";
+      list.forEach(cigar => {
+        const row = document.createElement("div");
+        row.className = "cigar-row";
+        row.setAttribute("data-cigar", cigar.name);
+
+        row.innerHTML = `
+          <div class="cigar-icon">
+            <img src="/img/icons/brands/${slugify(cigar.brand)}.svg" onerror="this.style.opacity='0'">
+          </div>
+          <div class="cigar-info">
+            <div class="cigar-name">${cigar.name}</div>
+            <div class="cigar-meta">${cigar.vitola || ""}</div>
+            <div class="cigar-meta">${cigar.msrp ? cigar.msrp : "0.00"}</div>
+          </div>
+          <div class="qty-pill">0</div>
+        `;
+
+        row.addEventListener("click", function () {
+          openCigarDetail(cigar);
+        });
+
+        container.appendChild(row);
+      });
+    }
+
+    function filterCigars() {
+      const val = document.getElementById("searchInput").value.toLowerCase();
+      const filtered = brandCigars.filter(c =>
+        c.name.toLowerCase().includes(val)
+      );
+      renderCigarList(filtered);
+    }
+
     function slugify(str) {
       return (str || "")
         .toLowerCase()
@@ -223,55 +440,60 @@
         .replace(/[^a-z0-9]/g, "");
     }
 
+    // ===== POPUP FUNCTIONS =====
     function openCigarDetail(cigarObj) {
-      const url = new URL(window.location.href);
-      const brandName = url.searchParams.get('brand') || 'Pappy Van Winkle';
-      const cigarName = cigarObj?.name || '';
+      const brandName = cigarObj.brand || currentBrand;
+      const cigarName = cigarObj.name || "";
       const brandSlug = slugify(brandName);
       const cigarSlug = slugify(cigarName);
       const masterSlug = brandSlug + cigarSlug;
 
-      // Text fields
-      document.getElementById('cdBrand').textContent = brandName;
-      document.getElementById('cdName').textContent = cigarName;
-      document.getElementById('cdMsrp').textContent = cigarObj.price
-        ? 'MSRP  ' + cigarObj.price
-        : 'MSRP  —';
-      document.getElementById('cdSize').textContent =
-        cigarObj.length && cigarObj.ring
-          ? cigarObj.length + '" x ' + cigarObj.ring
-          : '';
-      document.getElementById('cdVitola').textContent = cigarObj.vitola || '';
+      document.getElementById("cdBrand").textContent = brandName;
+      document.getElementById("cdName").textContent = cigarName;
 
-      // Details
-      document.getElementById('cdWrapperShade').textContent =
-        'Wrapper Shade: ' + (cigarObj.wrapperShade || '');
-      document.getElementById('cdShape').textContent =
-        'Shape: ' + (cigarObj.shape || '');
-      document.getElementById('cdWrapper').textContent =
-        'Wrapper: ' + (cigarObj.wrapper || '');
-      document.getElementById('cdBinder').textContent =
-        'Binder: ' + (cigarObj.binder || '');
-      document.getElementById('cdFiller').textContent =
-        'Filler: ' + (cigarObj.filler || '');
-      document.getElementById('cdOrigin').textContent =
-        'Origin: ' + (cigarObj.origin || '');
-      document.getElementById('cdStrength').textContent =
-        'Strength: ' + (cigarObj.strength || '');
+      document.getElementById("cdMsrp").textContent = cigarObj.msrp
+        ? "MSRP  " + cigarObj.msrp
+        : "MSRP  —";
 
-      // Images
-      document.getElementById('cdBrandIcon').src =
-        '/img/icons/brands/' + brandSlug + '.svg';
-      document.getElementById('cdPhoto').src =
-        '/img/cigars/' + masterSlug + '.png';
+      if (cigarObj.length && cigarObj.ring) {
+        document.getElementById("cdSize").textContent =
+          cigarObj.length + `" x ` + cigarObj.ring;
+      } else {
+        document.getElementById("cdSize").textContent = "";
+      }
 
-      // Show popup
-      document.getElementById('cigarDetailOverlay').style.display = 'block';
+      document.getElementById("cdVitola").textContent = cigarObj.vitola || "";
+
+      document.getElementById("cdWrapperShade").textContent =
+        "Wrapper Shade: " + (cigarObj.wrapperShade || "");
+      document.getElementById("cdShape").textContent =
+        "Shape: " + (cigarObj.shape || "");
+      document.getElementById("cdWrapper").textContent =
+        "Wrapper: " + (cigarObj.wrapper || "");
+      document.getElementById("cdBinder").textContent =
+        "Binder: " + (cigarObj.binder || "");
+      document.getElementById("cdFiller").textContent =
+        "Filler: " + (cigarObj.filler || "");
+      document.getElementById("cdOrigin").textContent =
+        "Origin: " + (cigarObj.origin || "");
+      document.getElementById("cdStrength").textContent =
+        "Strength: " + (cigarObj.strength || "");
+
+      // images
+      document.getElementById("cdBrandIcon").src =
+        "/img/icons/brands/" + brandSlug + ".svg";
+      document.getElementById("cdPhoto").src =
+        "/img/cigars/" + masterSlug + ".png";
+
+      document.getElementById("cigarDetailOverlay").style.display = "block";
     }
 
     function closeCigarDetail() {
-      document.getElementById('cigarDetailOverlay').style.display = 'none';
+      document.getElementById("cigarDetailOverlay").style.display = "none";
     }
+
+    // initial render
+    renderCigarList(brandCigars);
   </script>
 </body>
 </html>
