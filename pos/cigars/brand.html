@@ -7,9 +7,8 @@
   <style>
     :root {
       --bg:#dfeaf0;
-      --ink:#0f1a2c;
+      --ink:#000000;
       --muted:#6a7586;
-      --blue:#0a7ed6;
       --divider:#e4e7ea;
       --popup-bg:#ffffff;
     }
@@ -53,21 +52,51 @@
     .popup-close{border:0;background:transparent;font-size:1.6rem;color:#d53434;font-weight:700;cursor:pointer;line-height:1;}
     .popup-divider{height:1px;background:var(--divider);margin-bottom:18px;}
 
-    .popup-body{display:flex;gap:36px;align-items:flex-start;}
-    .popup-img-col{width:38%;max-width:230px;display:flex;justify-content:center;align-items:flex-start;}
-    .popup-img-col img{width:100%;height:auto;max-height:70vh;object-fit:contain;}
+    .popup-body{
+      display:flex;
+      align-items:flex-start;
+      gap:36px;
+    }
+    .popup-img-col{
+      width:38%;
+      max-width:230px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+    .popup-img-col img{
+      width:100%;
+      height:auto;
+      max-height:70vh;
+      object-fit:contain;
+    }
 
-    .popup-details{flex:1 1 58%;min-width:0;padding-top:2px;}
-    .spec-block{margin-bottom:12px;}
-    .spec-label{font-family:"Helvetica Neue";font-weight:700;font-size:1.02rem;color:var(--blue);}
-    .spec-value{font-family:"Helvetica Neue";font-weight:400;font-size:1.05rem;color:var(--ink);}
-    .no-image .popup-body{display:block;}
+    /* Adjusted right column position and font size */
+    .popup-details{
+      flex:1 1 58%;
+      margin-left:30px;     /* pushes text right */
+      margin-top:25px;      /* moves text down */
+      min-width:0;
+    }
+    .spec-block{margin-bottom:14px;}
+    .spec-label{
+      font-family:"Helvetica Neue";
+      font-weight:700;
+      font-size:1.15rem;
+      color:var(--ink);
+    }
+    .spec-value{
+      font-family:"Helvetica Neue";
+      font-weight:400;
+      font-size:1.18rem;
+      color:var(--ink);
+    }
+
     @media(max-width:540px){
-      .popup{max-width:100%;}
       .popup-body{gap:26px;}
-      .popup-img-col{width:42%;max-width:210px;}
-      .spec-label{font-size:.98rem;}
-      .spec-value{font-size:1.02rem;}
+      .popup-details{margin-left:18px;margin-top:18px;}
+      .spec-label{font-size:1.05rem;}
+      .spec-value{font-size:1.08rem;}
     }
   </style>
 </head>
@@ -107,7 +136,7 @@
         </div>
 
         <div class="popup-details">
-          <!-- no labels for size or vitola -->
+          <!-- RG x LENGTH and VITOLA shown without labels -->
           <div class="spec-block">
             <div class="spec-value" id="svSize" style="font-weight:700;"></div>
             <div class="spec-value" id="svVitola"></div>
@@ -130,7 +159,7 @@
 
     const hubCigars = [
       {brand:"Pappy Van Winkle",brandAka:"",name:"Pappy Van Winkle Flying Pig",msrp:"13.99",length:"4.00",ring:"56",vitola:"Perfecto",wrapperShade:"USA",origin:"Nicaragua",strength:"Full"},
-      {brand:"La Aroma de Cuba",brandAka:"ladc",name:"Mi Amor Belicoso",msrp:"12.00",vitola:"Belicoso",origin:"Nicaragua",strength:"Medium-Full"},
+      {brand:"La Aroma de Cuba",brandAka:"ladc",name:"Mi Amor Belicoso",msrp:"12.00",vitola:"Belicoso",origin:"Nicaragua",strength:"Medium-Full"}
     ];
     const brandCigars = hubCigars.filter(c=>c.brand===brandParam);
 
