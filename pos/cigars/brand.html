@@ -71,7 +71,7 @@
       gap:12px;
     }
 
-    /* cigar card like your screenshot */
+    /* cigar card */
     .cigar-row {
       display:flex;
       align-items:center;
@@ -154,7 +154,7 @@
   </div>
 
   <script>
-    // brand from URL
+    // 1. brand from url
     const url = new URL(window.location.href);
     const brandParam = url.searchParams.get('brand') || 'Pappy Van Winkle';
     document.getElementById('brandTitle').textContent = brandParam;
@@ -162,17 +162,17 @@
     let allCigars = [];
     let brandCigars = [];
 
-    // load full hub JSON we just made
-    fetch('/data/cigars_full.json')
+    // 2. load YOUR file (you put it at /pos/data/…)
+    fetch('/pos/data/cigars_full.json')
       .then(res => res.json())
       .then(data => {
         allCigars = data;
-        // match CSV column "Brand"
+        // csv column name is "Brand"
         brandCigars = allCigars.filter(row => (row["Brand"] || "").trim() === brandParam);
         renderList(brandCigars);
       })
       .catch(err => {
-        console.error('error loading cigars_full.json', err);
+        console.error('error loading /pos/data/cigars_full.json', err);
         document.getElementById('cigarList').innerHTML = '<p style="color:#6a7586;">Could not load cigars.</p>';
       });
 
@@ -189,7 +189,6 @@
       }
 
       list.forEach(cigar => {
-        // Line + Cigar
         const line = cigar["Line"] ? cigar["Line"].toString().trim() : "";
         const cigarName = cigar["Cigar"] ? cigar["Cigar"].toString().trim() : "";
         const displayName = (line ? line + " " : "") + cigarName;
@@ -213,7 +212,6 @@
           </div>
           <div class="qty-pill">${inventory}</div>
         `;
-        // you can hook up click → detail popup here later
         wrap.appendChild(row);
       });
     }
