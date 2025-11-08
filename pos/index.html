@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CigarOS • POS</title>
+  <title>CigarOS POS</title>
   <style>
     :root {
-      --bg: #eaf2f6;
+      --bg: #e0ecf2;
       --ink: #0f1a2c;
       --card: #ffffff;
+      --nav: #0f1a2c;
     }
     * { box-sizing: border-box; }
     body {
@@ -16,18 +17,18 @@
       background: var(--bg);
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
       color: var(--ink);
-      min-height: 100vh;
+      padding-bottom: 68px; /* space for bottom bar */
     }
     header {
-      padding: 18px 16px 8px;
+      padding: 20px 16px 6px;
+      font-size: 1.9rem;
       font-weight: 700;
-      font-size: 1.6rem;
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 18px;
-      padding: 0 16px 70px;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      gap: 16px;
+      padding: 10px 16px 20px;
     }
     .tile {
       background: var(--card);
@@ -35,15 +36,14 @@
       padding: 16px 14px 20px;
       text-decoration: none;
       color: inherit;
-      box-shadow: 0 10px 30px rgba(15,26,44,.04);
+      box-shadow: 0 16px 35px rgba(9, 16, 26, 0.03);
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
       gap: 10px;
     }
     .tile-icon {
-      width: 48px;
-      height: 48px;
+      width: 50px;
+      height: 50px;
       border-radius: 16px;
       background: #0f1a2c;
       display: grid;
@@ -54,19 +54,34 @@
     }
     .tile-title {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1.05rem;
     }
     .tile-sub {
-      font-size: .75rem;
-      color: rgba(15,26,44,.55);
+      font-size: .78rem;
+      color: rgba(15,26,44,0.5);
     }
-    footer {
+    /* bottom nav like your other screens */
+    .bottom-nav {
       position: fixed;
-      bottom: 0;
       left: 0;
       right: 0;
-      height: 54px;
-      background: #0f1a2c;
+      bottom: 0;
+      height: 58px;
+      background: var(--nav);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+    }
+    .bottom-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.02);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 1.2rem;
     }
   </style>
 </head>
@@ -74,42 +89,31 @@
   <header>CigarOS POS</header>
 
   <div class="grid">
-    <!-- Cigars -->
     <a href="/pos/cigars/" class="tile">
       <div class="tile-icon">C</div>
       <div class="tile-title">Cigars</div>
       <div class="tile-sub">Browse brands, lines, vitolas</div>
     </a>
-
-    <!-- Accessories -->
     <a href="/pos/accessories/" class="tile">
       <div class="tile-icon">A</div>
       <div class="tile-title">Accessories</div>
       <div class="tile-sub">Cutters, lighters, cases</div>
     </a>
-
-    <!-- Ashtrays -->
     <a href="/pos/ashtrays/" class="tile">
       <div class="tile-icon">As</div>
       <div class="tile-title">Ashtrays</div>
       <div class="tile-sub">Table, lounge, outdoor</div>
     </a>
-
-    <!-- Food & Bevs -->
     <a href="/pos/foodandbevs/" class="tile">
       <div class="tile-icon">F</div>
       <div class="tile-title">Food & Bevs</div>
       <div class="tile-sub">Drinks, snacks</div>
     </a>
-
-    <!-- Packs -->
     <a href="/pos/packs/" class="tile">
       <div class="tile-icon">P</div>
       <div class="tile-title">Packs</div>
       <div class="tile-sub">Bundles & promos</div>
     </a>
-
-    <!-- Pipes -->
     <a href="/pos/pipes/" class="tile">
       <div class="tile-icon">Pi</div>
       <div class="tile-title">Pipes</div>
@@ -117,6 +121,12 @@
     </a>
   </div>
 
-  <footer></footer>
+  <div class="bottom-nav">
+    <div class="bottom-btn">←</div>
+    <div class="bottom-btn">→</div>
+    <div class="bottom-btn">＋</div>
+    <div class="bottom-btn">☺</div>
+    <div class="bottom-btn">⋯</div>
+  </div>
 </body>
 </html>
