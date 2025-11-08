@@ -18,6 +18,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
       color: var(--ink);
       min-height: 100vh;
+      padding-bottom: 62px;
     }
     .topbar {
       display:flex;
@@ -45,10 +46,8 @@
       height:32px;
       border-radius:999px;
       background:#f7c948;
-      display:grid;
-      place-items:center;
+      display:grid; place-items:center;
     }
-
     .search-box {
       background:#fff;
       border-radius:999px;
@@ -58,18 +57,9 @@
       margin-bottom:18px;
     }
     .search-input {
-      border:0;
-      outline:0;
-      background:transparent;
-      width:100%;
-      font-size:.9rem;
+      border:0; outline:0; background:transparent; width:100%;
     }
-
-    .cigar-list {
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
+    .cigar-list { display:flex; flex-direction:column; gap:12px; }
 
     .cigar-row {
       display:flex;
@@ -79,56 +69,44 @@
       border-radius:20px;
       padding:12px 14px;
       box-shadow:0 8px 22px rgba(14,25,35,0.05);
-      cursor:pointer;
     }
     .cigar-icon {
-      width:54px;
-      height:54px;
-      border-radius:18px;
-      background:#3a3029;
-      display:grid;
-      place-items:center;
+      width:54px; height:54px; border-radius:18px;
+      background:#3a3029; display:grid; place-items:center;
       overflow:hidden;
-      flex:0 0 54px;
     }
-    .cigar-icon img {
-      width:46px;
-      height:46px;
-      object-fit:contain;
-    }
-    .cigar-info {
-      flex:1;
-      min-width:0;
-    }
+    .cigar-icon img { width:46px; height:46px; object-fit:contain; }
+    .cigar-info { flex:1; min-width:0; }
     .cigar-line {
-      font-weight:700;
-      font-size:.9rem;
-      line-height:1.15;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      font-weight:700; font-size:.9rem;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .cigar-vitola {
-      font-size:.8rem;
-      color:var(--muted);
-      margin-top:2px;
-    }
-    .cigar-price {
-      font-size:.8rem;
-      color:var(--ink);
-      margin-top:2px;
-    }
+    .cigar-vitola { font-size:.78rem; color:var(--muted); margin-top:2px; }
+    .cigar-price { font-size:.78rem; margin-top:2px; }
     .qty-pill {
-      width:44px;
-      height:44px;
-      border-radius:999px;
+      width:44px; height:44px; border-radius:999px;
       border:1px solid rgba(15,26,44,0.12);
-      display:grid;
-      place-items:center;
-      font-weight:600;
+      display:grid; place-items:center; font-weight:600;
       background:#fff;
-      flex:0 0 44px;
     }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: 58px;
+      background: #0f1a2c;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+    }
+    .bottom-btn {
+      width: 40px; height: 40px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      display: grid; place-items: center;
+      color: #fff;
+    }
+    #debug { font-size: .65rem; color: #a33; margin-top: 10px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -150,40 +128,57 @@
     </div>
 
     <div class="cigar-list" id="cigarList"></div>
+    <div id="debug"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="bottom-btn">←</div>
+    <div class="bottom-btn">→</div>
+    <div class="bottom-btn">＋</div>
+    <div class="bottom-btn">☺</div>
+    <div class="bottom-btn">⋯</div>
   </div>
 
   <script>
     const url = new URL(window.location.href);
-    const brandParam = url.searchParams.get('brand') || '';
-    document.getElementById('brandTitle').textContent = brandParam;
+    const brandParam = (url.searchParams.get('brand') || '').trim();
+    document.getElementById('brandTitle').textContent = brandParam || 'Cigars';
 
     let allCigars = [];
     let brandCigars = [];
 
-    // ✅ Correct path to JSON file
+    // exact path based on your repo: /pos/cigars/brand.html → /pos/data/cigars_full.json
     fetch('../data/cigars_full.json')
-      .then(res => res.json())
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
       .then(data => {
         allCigars = data;
-        const brandLower = brandParam.trim().toLowerCase();
-
-        // Flexible match
-        brandCigars = allCigars.filter(row => {
-          const brand = (row.Brand || '').toString().trim().toLowerCase();
-          const aka = (row['Brand aka'] || '').toString().trim().toLowerCase();
-          return (
-            brand.includes(brandLower) ||
-            brandLower.includes(brand) ||
-            aka.includes(brandLower)
-          );
-        });
-
-        renderList(brandCigars);
+        renderForBrand();
       })
       .catch(err => {
-        console.error(err);
-        document.getElementById('cigarList').innerHTML = '<p style="color:#a33;">Could not load cigars.</p>';
+        document.getElementById('debug').textContent = 'Fetch failed: ' + err;
       });
+
+    function renderForBrand() {
+      const target = brandParam.toLowerCase();
+      // flexible match: Brand or Brand aka
+      brandCigars = allCigars.filter(row => {
+        const b = (row["Brand"] || "").toString().trim().toLowerCase();
+        const aka = (row["Brand aka"] || "").toString().trim().toLowerCase();
+        return target && (b.includes(target) || target.includes(b) || aka.includes(target));
+      });
+
+      // if we still got nothing, show first 25 so you can see data is loading
+      if (!target || brandCigars.length === 0) {
+        brandCigars = allCigars.slice(0, 25);
+        document.getElementById('debug').textContent =
+          'No exact matches for "' + brandParam + '". Showing first 25 cigars from file so you can confirm data.';
+      }
+
+      renderList(brandCigars);
+    }
 
     function slugify(str){
       return (str || "").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]/g,"");
@@ -192,20 +187,16 @@
     function renderList(list){
       const wrap = document.getElementById('cigarList');
       wrap.innerHTML = '';
-      if (!list || list.length === 0) {
-        wrap.innerHTML = '<p style="color:#6a7586;">No cigars found for this brand.</p>';
-        return;
-      }
-
       list.forEach(cigar => {
-        const line = cigar["Line"] ? cigar["Line"].toString().trim() : "";
+        // handle weird "_ine" key we saw in your JSON
+        const lineCol = cigar["Line"] || cigar["_ine"] || "";
+        const line = lineCol ? lineCol.toString().trim() : "";
         const cigarName = cigar["Cigar"] ? cigar["Cigar"].toString().trim() : "";
         const displayName = (line ? line + " " : "") + cigarName;
 
         const vitola = cigar["Vitola"] || "";
         const msrp = cigar["MSRP"] ? cigar["MSRP"].toString() : "";
         const inventory = cigar["Inventory"] != null ? cigar["Inventory"] : "89";
-
         const brandSlug = slugify(cigar["Brand"] || "");
 
         const row = document.createElement('div');
@@ -225,11 +216,11 @@
       });
     }
 
-    function filterCigars(){
+    function filterCigars() {
       const val = document.getElementById('searchInput').value.toLowerCase();
       const filtered = brandCigars.filter(row => {
-        const line = (row["Line"] || "").toLowerCase();
-        const cigar = (row["Cigar"] || "").toLowerCase();
+        const line = (row["Line"] || row["_ine"] || "").toString().toLowerCase();
+        const cigar = (row["Cigar"] || "").toString().toLowerCase();
         return (line + " " + cigar).includes(val);
       });
       renderList(filtered);
