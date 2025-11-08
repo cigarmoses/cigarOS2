@@ -21,6 +21,7 @@
       padding-bottom: 20px;
     }
 
+    /* top + brand list page */
     .topbar {
       display:flex;
       align-items:center;
@@ -34,41 +35,26 @@
       align-items:center;
       cursor:pointer;
     }
-    .page-wrap {
-      padding:0 16px 20px;
-    }
+    .page-wrap { padding:0 16px 20px; }
     .brand-title-row {
       display:flex;
       align-items:center;
       justify-content:space-between;
       margin:6px 0 12px;
     }
-    .brand-title {
-      font-size:2rem;
-      font-weight:700;
-    }
+    .brand-title { font-size:2rem; font-weight:700; }
     .fav-star {
-      width:32px;
-      height:32px;
-      border-radius:999px;
-      background:#f7c948;
-      display:grid;
-      place-items:center;
+      width:32px;height:32px;border-radius:999px;
+      background:#f7c948;display:grid;place-items:center;
     }
     .search-box {
-      background:#fff;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      padding:10px 16px;
-      margin-bottom:18px;
+      background:#fff;border-radius:999px;
+      display:flex;align-items:center;
+      padding:10px 16px;margin-bottom:18px;
     }
     .search-input {
-      border:0;
-      outline:0;
-      background:transparent;
-      width:100%;
-      font-size:.9rem;
+      border:0;outline:0;background:transparent;
+      width:100%;font-size:.9rem;
     }
     .cigar-list {
       display:flex;
@@ -85,54 +71,31 @@
       box-shadow:0 8px 22px rgba(14,25,35,0.05);
       cursor:pointer;
     }
-    /* changed: no dark background behind brand icons */
+    /* row icon — no black frame */
     .cigar-icon {
-      width:54px;
-      height:54px;
-      border-radius:18px;
+      width:54px;height:54px;border-radius:18px;
       background:transparent;
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-      flex:0 0 54px;
+      display:grid;place-items:center;
+      overflow:hidden;flex:0 0 54px;
     }
     .cigar-icon img {
-      width:46px;
-      height:46px;
-      object-fit:contain;
+      width:46px;height:46px;object-fit:contain;
     }
-    .cigar-info {
-      flex:1;
-      min-width:0;
-    }
+    .cigar-info { flex:1;min-width:0; }
     .cigar-line {
-      font-weight:700;
-      font-size:.9rem;
-      line-height:1.15;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      font-weight:700;font-size:.9rem;line-height:1.15;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
-    .cigar-vitola {
-      font-size:.8rem;
-      color:var(--muted);
-      margin-top:2px;
-    }
-    .cigar-price {
-      font-size:.8rem;
-      margin-top:2px;
-    }
+    .cigar-vitola { font-size:.8rem;color:var(--muted);margin-top:2px; }
+    .cigar-price { font-size:.8rem;margin-top:2px; }
     .qty-pill {
-      width:44px;
-      height:44px;
-      border-radius:999px;
+      width:44px;height:44px;border-radius:999px;
       border:1px solid rgba(15,26,44,0.12);
-      display:grid;
-      place-items:center;
-      font-weight:600;
-      background:#fff;
+      display:grid;place-items:center;
+      font-weight:600;background:#fff;
     }
 
+    /* receipt pill (bottom right) */
     .receipt-pill {
       position: fixed;
       right: 16px;
@@ -146,6 +109,7 @@
       box-shadow: 0 10px 30px rgba(0,0,0,.12);
       color: #fff;
       min-width: 110px;
+      z-index: 50;
     }
     .receipt-icon {
       width: 38px;
@@ -168,11 +132,9 @@
       font-size:.65rem;
       font-weight:700;
     }
-    .receipt-total {
-      font-weight:600;
-      font-size:.85rem;
-    }
+    .receipt-total { font-weight:600;font-size:.85rem; }
 
+    /* overlay / modal */
     .overlay {
       position: fixed;
       inset: 0;
@@ -196,9 +158,7 @@
       flex-direction:column;
     }
     .modal-header {
-      display:flex;
-      align-items:center;
-      gap:12px;
+      display:flex;align-items:center;gap:12px;
       padding: 16px 20px 10px;
     }
     .modal-brand-icon {
@@ -212,33 +172,39 @@
     .modal-msrp { font-size:.8rem;margin-top:2px; }
     .modal-close { font-size:1.6rem;color:#d92029;cursor:pointer;font-weight:600; }
     .modal-divider { height:1px;background:rgba(0,0,0,.12);margin:6px 0 8px; }
+
+    /* THIS is the part that fixes the layout like your screenshot */
     .modal-body {
       display:flex;
-      gap:16px;
-      padding: 0 20px 0;
+      flex-direction:row;         /* image left, text right */
+      gap:18px;
+      padding: 0 20px 12px;
       overflow-y:auto;
+      align-items:flex-start;
     }
     .modal-img-wrap {
-      flex:0 0 38%;
+      flex:0 0 38%;               /* give image a fixed column on the left */
       display:flex;
       align-items:flex-start;
-      justify-content:center;
-      padding: 12px 0 10px;
+      justify-content:flex-start; /* left align */
+      padding: 4px 0 0;
     }
     .modal-img-wrap img {
-      width: 100%;
-      max-width: 230px;
-      height: auto;
+      width:auto;
+      max-width: 240px;           /* good size for iPhone */
+      height: 430px;              /* tall/vertical like your mock */
       object-fit:contain;
+      display:block;
     }
     .modal-details {
       flex:1;
-      padding: 12px 0 10px;
-      padding-left: 10px;
+      padding-top: 4px;
+      padding-left: 6px;          /* small gap from cigar */
+      line-height:1.05;
     }
     .first-size-line { font-weight:700;margin-bottom:2px;font-size:1rem; }
-    .first-size-sub { margin-bottom:8px;font-size:.9rem; }
-    .modal-detail-line { margin-bottom:5px;font-size:.9rem; }
+    .first-size-sub { margin-bottom:10px;font-size:.9rem; }
+    .modal-detail-line { margin-bottom:6px;font-size:.9rem; }
     .modal-detail-label { font-weight:700;color:#000;font-size:.86rem; }
     .modal-detail-value { font-size:.86rem;color:#000; }
 
@@ -251,7 +217,8 @@
 
     @media (max-width: 680px) {
       .modal-body { flex-direction:column; }
-      .modal-img-wrap { justify-content:flex-start; }
+      .modal-img-wrap img { height: 360px; max-width: 200px; }
+      .modal-details { padding-left:0; }
     }
   </style>
 </head>
@@ -324,6 +291,13 @@
         document.getElementById('debug').textContent = 'Fetch failed: ' + err;
       });
 
+    function slugify(str){
+      return (str || "")
+        .toLowerCase()
+        .replace(/&/g,"and")
+        .replace(/[^a-z0-9]/g,"");
+    }
+
     function applyFilter() {
       const target = brandParam.toLowerCase();
 
@@ -353,15 +327,11 @@
       if (matches.length === 0) {
         matches = allCigars.slice(0, 25);
         document.getElementById('debug').textContent =
-          'No matches for "' + brandParam + '". Showing first 25 cigars from file.';
+          'No matches for "' + brandParam + '". Showing first 25 cigars.';
       }
 
       shownCigars = matches;
       renderList(shownCigars);
-    }
-
-    function slugify(str){
-      return (str || "").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]/g,"");
     }
 
     function renderList(list){
@@ -420,34 +390,49 @@
       mbImg.src = `/img/icons/brands/${brandSlug}.svg`;
       mbImg.style.display = '';
 
+      /* image fallbacks, same as before */
       const cigarSlug = slugify(cigarName);
-      const akaSlug = slugify(brandAka);
-      const mci = document.getElementById('modalCigarImg');
+      const akaSlug   = slugify(brandAka);
+      const shortCigarSlug = cigarSlug.replace(/(tubo|tube|tubos)$/,'');
+      const candidates = [];
 
-      let src1 = akaSlug ? `/img/cigars/${akaSlug}/${cigarSlug}.png` : '';
-      let src2 = `/img/cigars/${brandSlug}/${cigarSlug}.png`;
-      let src3 = akaSlug ? `/img/cigars/${akaSlug}${cigarSlug}.png` : '';
-      let src4 = `/img/cigars/${brandSlug}${cigarSlug}.png`;
-
-      mci.style.display = 'block';
-      mci.src = src1 || src2 || src3 || src4;
-      mci.onerror = function() {
-        if (mci.src.endsWith(src1) && src2) {
-          mci.src = src2;
-        } else if (mci.src.endsWith(src2) && src3) {
-          mci.src = src3;
-        } else if (mci.src.endsWith(src3) && src4) {
-          mci.src = src4;
-        } else {
-          mci.style.display = 'none';
+      if (akaSlug) {
+        candidates.push(`/img/cigars/${akaSlug}/${akaSlug}${cigarSlug}.png`);
+        if (shortCigarSlug !== cigarSlug) {
+          candidates.push(`/img/cigars/${akaSlug}/${akaSlug}${shortCigarSlug}.png`);
         }
-      };
+        candidates.push(`/img/cigars/${akaSlug}/${cigarSlug}.png`);
+        if (shortCigarSlug !== cigarSlug) {
+          candidates.push(`/img/cigars/${akaSlug}/${shortCigarSlug}.png`);
+        }
+      }
+
+      candidates.push(`/img/cigars/${brandSlug}/${brandSlug}${cigarSlug}.png`);
+      if (shortCigarSlug !== cigarSlug) {
+        candidates.push(`/img/cigars/${brandSlug}/${brandSlug}${shortCigarSlug}.png`);
+      }
+      candidates.push(`/img/cigars/${brandSlug}/${cigarSlug}.png`);
+      if (shortCigarSlug !== cigarSlug) {
+        candidates.push(`/img/cigars/${brandSlug}/${shortCigarSlug}.png`);
+      }
+
+      const mci = document.getElementById('modalCigarImg');
+      let currentIndex = 0;
+      function tryNext() {
+        if (currentIndex >= candidates.length) {
+          mci.style.display = 'none';
+          return;
+        }
+        mci.style.display = 'block';
+        mci.src = candidates[currentIndex];
+        currentIndex++;
+      }
+      mci.onerror = tryNext;
+      tryNext();
 
       const details = document.getElementById('modalDetails');
       let sizeLine = '';
-      if (rg || length) {
-        sizeLine = `${rg ? rg : ''}${rg && length ? ' x ' : ''}${length ? length : ''}`;
-      }
+      if (rg || length) sizeLine = `${rg ? rg : ''}${rg && length ? ' x ' : ''}${length ? length : ''}`;
 
       details.innerHTML = `
         ${sizeLine ? `<div class="first-size-line">${sizeLine}</div>` : ''}
