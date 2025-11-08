@@ -85,11 +85,12 @@
       box-shadow:0 8px 22px rgba(14,25,35,0.05);
       cursor:pointer;
     }
+    /* changed: no dark background behind brand icons */
     .cigar-icon {
       width:54px;
       height:54px;
       border-radius:18px;
-      background:#3a3029;
+      background:transparent;
       display:grid;
       place-items:center;
       overflow:hidden;
@@ -132,7 +133,6 @@
       background:#fff;
     }
 
-    /* receipt pill */
     .receipt-pill {
       position: fixed;
       right: 16px;
@@ -173,7 +173,6 @@
       font-size:.85rem;
     }
 
-    /* modal */
     .overlay {
       position: fixed;
       inset: 0;
@@ -235,7 +234,7 @@
     .modal-details {
       flex:1;
       padding: 12px 0 10px;
-      padding-left: 10px; /* nudge right */
+      padding-left: 10px;
     }
     .first-size-line { font-weight:700;margin-bottom:2px;font-size:1rem; }
     .first-size-sub { margin-bottom:8px;font-size:.9rem; }
@@ -421,26 +420,17 @@
       mbImg.src = `/img/icons/brands/${brandSlug}.svg`;
       mbImg.style.display = '';
 
-      // build cigar image src – support subfolders:
-      // 1) /img/cigars/{aka}/{cigar}.png
-      // 2) /img/cigars/{brandSlug}/{cigar}.png
-      // 3) /img/cigars/{aka}{cigar}.png
-      // 4) /img/cigars/{brandSlug}{cigar}.png
       const cigarSlug = slugify(cigarName);
       const akaSlug = slugify(brandAka);
       const mci = document.getElementById('modalCigarImg');
 
-      // start with folder by aka if we have it
       let src1 = akaSlug ? `/img/cigars/${akaSlug}/${cigarSlug}.png` : '';
       let src2 = `/img/cigars/${brandSlug}/${cigarSlug}.png`;
       let src3 = akaSlug ? `/img/cigars/${akaSlug}${cigarSlug}.png` : '';
       let src4 = `/img/cigars/${brandSlug}${cigarSlug}.png`;
 
-      // set the first plausible one
       mci.style.display = 'block';
       mci.src = src1 || src2 || src3 || src4;
-
-      // chain fallbacks
       mci.onerror = function() {
         if (mci.src.endsWith(src1) && src2) {
           mci.src = src2;
