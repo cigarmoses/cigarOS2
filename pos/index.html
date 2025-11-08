@@ -1,156 +1,97 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>POS • CigarOS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CigarOS • POS Brands</title>
   <style>
-    :root {
-      --bg: #eaf2f6;
-      --ink: #0f1a2c;
-    }
-    * {
-      box-sizing: border-box;
-    }
     body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: #eaf2f6;
       margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 24px 0 80px;
+      padding: 0;
     }
 
     h1 {
+      font-size: 1.6rem;
       text-align: center;
-      font-size: 32px;
-      margin: 0 0 26px;
       font-weight: 700;
-      letter-spacing: 0.02em;
+      color: #0f1a2c;
+      margin-top: 24px;
     }
 
-    .pos-grid {
+    .brand-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 36px 40px;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 28px;
+      padding: 20px;
       justify-items: center;
     }
 
-    .pos-tile {
-      width: 150px;
-      height: 150px;
-      background: #ffffff;
-      border-radius: 124px;
+    .brand-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       text-decoration: none;
-      color: var(--ink);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .pos-tile:hover {
-      transform: scale(1.04);
-      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.12);
-    }
-
-    .pos-tile img {
-      width: 70px;
-      height: 70px;
-      object-fit: contain;
-      margin-bottom: 10px;
-    }
-
-    .pos-tile span {
-      font-size: 16px;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-    }
-
-    .pos-bill-tab {
-      position: fixed;
-      bottom: 22px;
-      right: 22px;
-      background: #0f1a2c;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      border-radius: 50px;
-      padding: 8px 14px 8px 10px;
-      gap: 6px;
-      font-size: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-
-    .pos-bill-icon {
-      background: #fff;
       color: #0f1a2c;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
+    }
+
+    /* ---- ICON CONTAINER ---- */
+    .brand-icon {
+      width: 150px;
+      height: 150px;
+      background-color: #ffffff;
+      border-radius: 124px;       /* ✅ consistent rounded corners */
+      overflow: hidden;           /* ✅ ensures clean crop */
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      transition: transform 0.2s ease;
     }
 
-    .pos-bill-badge {
-      background: #ff3b30;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 600;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .brand-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;          /* ✅ prevents stretching or cutoff */
+      border-radius: 124px;       /* ✅ double-protection for rounding */
     }
 
-    .pos-bill-total {
-      font-weight: 600;
+    .brand-card:hover .brand-icon {
+      transform: scale(1.05);
+    }
+
+    /* ---- BRAND NAME ---- */
+    .brand-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-top: 10px;
+      text-align: center;
+      color: #0f1a2c;
     }
   </style>
 </head>
+
 <body>
-  <h1>POS</h1>
+  <h1>Cigar Brands</h1>
 
-  <div class="pos-grid">
-    <a href="/pos/cigars/" class="pos-tile">
-      <img src="/img/icons/categories/cigars.svg" alt="Cigars">
-      <span>Cigars</span>
+  <div class="brand-grid">
+    <!-- Example Brand Tile -->
+    <a href="/pos/cigars/brand.html?brand=Davidoff" class="brand-card">
+      <div class="brand-icon">
+        <img src="/img/icons/brands/davidoff.svg" alt="Davidoff Logo" />
+      </div>
+      <div class="brand-name">Davidoff</div>
     </a>
-    <a href="/pos/pipes/" class="pos-tile">
-      <img src="/img/icons/categories/pipes.svg" alt="Pipes">
-      <span>Pipes</span>
-    </a>
-    <a href="/pos/foodandbevs/" class="pos-tile">
-      <img src="/img/icons/categories/foodandbevs.svg" alt="Food & Bevs">
-      <span>Food & Bevs</span>
-    </a>
-    <a href="/pos/packs/" class="pos-tile">
-      <img src="/img/icons/categories/packs.svg" alt="Packs">
-      <span>Packs</span>
-    </a>
-    <a href="/pos/accessories/" class="pos-tile">
-      <img src="/img/icons/categories/accessories.svg" alt="Accessories">
-      <span>Accessories</span>
-    </a>
-    <a href="/pos/ashtrays/" class="pos-tile">
-      <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays">
-      <span>Ashtrays</span>
-    </a>
-  </div>
 
-  <div class="pos-bill-tab">
-    <div class="pos-bill-icon">🧾</div>
-    <div class="pos-bill-badge">1</div>
-    <div class="pos-bill-total">$1.50</div>
+    <a href="/pos/cigars/brand.html?brand=Cuba%20Aliados" class="brand-card">
+      <div class="brand-icon">
+        <img src="/img/icons/brands/cubaaliados.svg" alt="Cuba Aliados Logo" />
+      </div>
+      <div class="brand-name">Cuba Aliados</div>
+    </a>
+
+    <!-- Repeat for all brands dynamically or manually as needed -->
   </div>
 </body>
 </html>
