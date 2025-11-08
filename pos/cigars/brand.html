@@ -21,7 +21,6 @@
       padding-bottom: 20px;
     }
 
-    /* top area */
     .topbar {
       display:flex;
       align-items:center;
@@ -71,8 +70,6 @@
       width:100%;
       font-size:.9rem;
     }
-
-    /* list of cigars */
     .cigar-list {
       display:flex;
       flex-direction:column;
@@ -135,7 +132,7 @@
       background:#fff;
     }
 
-    /* receipt pill bottom right */
+    /* receipt pill */
     .receipt-pill {
       position: fixed;
       right: 16px;
@@ -176,7 +173,7 @@
       font-size:.85rem;
     }
 
-    /* modal overlay */
+    /* modal */
     .overlay {
       position: fixed;
       inset: 0;
@@ -187,16 +184,13 @@
       padding: 16px;
       z-index: 200;
     }
-    .overlay.show {
-      display:flex;
-    }
+    .overlay.show { display:flex; }
     .cigar-modal {
       background:#fff;
       width: 100%;
       max-width: 720px;
       border-radius: 32px;
       box-shadow:0 20px 40px rgba(15,26,44,0.22);
-      padding: 0 0 22px;
       overflow:hidden;
       max-height: calc(100vh - 32px);
       display:flex;
@@ -209,47 +203,16 @@
       padding: 16px 20px 10px;
     }
     .modal-brand-icon {
-      width:70px;
-      height:70px;
-      border-radius:20px;
-      background:#3a3029;
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-      flex:0 0 70px;
+      width:70px;height:70px;border-radius:20px;background:#3a3029;
+      display:grid;place-items:center;overflow:hidden;flex:0 0 70px;
     }
-    .modal-brand-icon img {
-      width:56px;
-      height:56px;
-      object-fit:contain;
-    }
-    .modal-titles {
-      flex:1;
-      min-width:0;
-    }
-    .modal-brand-name {
-      font-weight:700;
-      font-size:1rem;
-    }
-    .modal-cigar-name {
-      font-weight:700;
-      font-size:1rem;
-    }
-    .modal-msrp {
-      font-size:.8rem;
-      margin-top:2px;
-    }
-    .modal-close {
-      font-size:1.6rem;
-      color:#d92029;
-      cursor:pointer;
-      font-weight:600;
-    }
-    .modal-divider {
-      height:1px;
-      background:rgba(0,0,0,.12);
-      margin:6px 0 8px;
-    }
+    .modal-brand-icon img { width:56px;height:56px;object-fit:contain; }
+    .modal-titles { flex:1;min-width:0; }
+    .modal-brand-name { font-weight:700;font-size:1rem; }
+    .modal-cigar-name { font-weight:700;font-size:1rem; }
+    .modal-msrp { font-size:.8rem;margin-top:2px; }
+    .modal-close { font-size:1.6rem;color:#d92029;cursor:pointer;font-weight:600; }
+    .modal-divider { height:1px;background:rgba(0,0,0,.12);margin:6px 0 8px; }
     .modal-body {
       display:flex;
       gap:16px;
@@ -272,32 +235,13 @@
     .modal-details {
       flex:1;
       padding: 12px 0 10px;
-      /* this mimics your “move down/right a bit” */
-      padding-left: 10px;
+      padding-left: 10px; /* nudge right */
     }
-    .modal-detail-line {
-      margin-bottom: 5px;
-      font-size: .9rem;
-    }
-    .modal-detail-label {
-      font-weight:700;
-      color:#000;
-      font-size:.86rem;
-    }
-    .modal-detail-value {
-      margin-left:0;
-      font-size:.86rem;
-      color:#000;
-    }
-    .first-size-line {
-      font-weight:700;
-      margin-bottom: 2px;
-      font-size:1rem;
-    }
-    .first-size-sub {
-      margin-bottom:8px;
-      font-size:.9rem;
-    }
+    .first-size-line { font-weight:700;margin-bottom:2px;font-size:1rem; }
+    .first-size-sub { margin-bottom:8px;font-size:.9rem; }
+    .modal-detail-line { margin-bottom:5px;font-size:.9rem; }
+    .modal-detail-label { font-weight:700;color:#000;font-size:.86rem; }
+    .modal-detail-value { font-size:.86rem;color:#000; }
 
     #debug {
       margin-top:8px;
@@ -307,12 +251,8 @@
     }
 
     @media (max-width: 680px) {
-      .modal-body {
-        flex-direction:column;
-      }
-      .modal-img-wrap {
-        justify-content:flex-start;
-      }
+      .modal-body { flex-direction:column; }
+      .modal-img-wrap { justify-content:flex-start; }
     }
   </style>
 </head>
@@ -338,14 +278,12 @@
     <div id="debug"></div>
   </div>
 
-  <!-- floating receipt -->
   <div class="receipt-pill">
     <div class="receipt-icon">🧾</div>
     <div class="receipt-count">4</div>
     <div class="receipt-total">$24.50</div>
   </div>
 
-  <!-- modal -->
   <div class="overlay" id="cigarOverlay">
     <div class="cigar-modal">
       <div class="modal-header">
@@ -362,11 +300,9 @@
       <div class="modal-divider"></div>
       <div class="modal-body">
         <div class="modal-img-wrap">
-          <img id="modalCigarImg" src="" alt="" onerror="this.style.display='none'">
+          <img id="modalCigarImg" src="" alt="">
         </div>
-        <div class="modal-details" id="modalDetails">
-          <!-- filled by JS -->
-        </div>
+        <div class="modal-details" id="modalDetails"></div>
       </div>
     </div>
   </div>
@@ -379,7 +315,6 @@
     let allCigars = [];
     let shownCigars = [];
 
-    // load your big JSON
     fetch('../data/cigars_full.json')
       .then(r => r.json())
       .then(data => {
@@ -393,7 +328,6 @@
     function applyFilter() {
       const target = brandParam.toLowerCase();
 
-      // 1) match by Brand or Brand aka
       let matches = allCigars.filter(row => {
         const brand = (row["Brand"] || "").toString().trim().toLowerCase();
         const aka   = (row["Brand aka"] || "").toString().trim().toLowerCase();
@@ -405,7 +339,6 @@
            aka.includes(target));
       });
 
-      // 2) if no match, match by Line/Cigar (for things like Fat Bottom Betty)
       if (matches.length === 0 && target) {
         matches = allCigars.filter(row => {
           const line  = (row["Line"]  || "").toString().trim().toLowerCase();
@@ -418,7 +351,6 @@
         }
       }
 
-      // 3) still nothing? show first 25
       if (matches.length === 0) {
         matches = allCigars.slice(0, 25);
         document.getElementById('debug').textContent =
@@ -436,14 +368,13 @@
     function renderList(list){
       const wrap = document.getElementById('cigarList');
       wrap.innerHTML = '';
-      list.forEach((cigar, idx) => {
+      list.forEach(cigar => {
         const line = (cigar["Line"] || "").toString().trim();
         const cigarName = (cigar["Cigar"] || "").toString().trim();
         const displayName = (line ? line + " " : "") + cigarName;
         const vitola = (cigar["Vitola"] || "").toString().trim();
         const msrp   = (cigar["MSRP"] || "").toString().trim();
         const inventory = '89';
-
         const brandSlug = slugify(cigar["Brand"] || "");
 
         const row = document.createElement('div');
@@ -473,7 +404,6 @@
       const vitola = (cigar["Vitola"] || "").toString().trim();
       const length = (cigar["LENGTH"] || "").toString().trim();
       const rg     = (cigar["RG"] || "").toString().trim();
-      const shape  = (cigar["SHAPE"] || "").toString().trim();
       const shade  = (cigar["WRAPPER SHADE"] || "").toString().trim();
       const wrapper = (cigar["WRAPPER"] || "").toString().trim();
       const binder  = (cigar["BINDER"] || "").toString().trim();
@@ -486,27 +416,43 @@
       document.getElementById('modalCigarName').textContent = (line ? line + " " : "") + cigarName;
       document.getElementById('modalMSRP').textContent = msrp ? msrp : "";
 
-      // brand icon
       const brandSlug = slugify(brandName);
       const mbImg = document.getElementById('modalBrandImg');
       mbImg.src = `/img/icons/brands/${brandSlug}.svg`;
       mbImg.style.display = '';
 
-      // try to find cigar image
+      // build cigar image src – support subfolders:
+      // 1) /img/cigars/{aka}/{cigar}.png
+      // 2) /img/cigars/{brandSlug}/{cigar}.png
+      // 3) /img/cigars/{aka}{cigar}.png
+      // 4) /img/cigars/{brandSlug}{cigar}.png
       const cigarSlug = slugify(cigarName);
-      const lineSlug = slugify(line);
-      let imgPath = ``;
-      if (brandAka) {
-        const akaSlug = slugify(brandAka);
-        imgPath = `/img/cigars/${akaSlug}${cigarSlug}.png`;
-      } else {
-        imgPath = `/img/cigars/${brandSlug}${cigarSlug}.png`;
-      }
+      const akaSlug = slugify(brandAka);
       const mci = document.getElementById('modalCigarImg');
-      mci.style.display = 'block';
-      mci.src = imgPath;
 
-      // build details
+      // start with folder by aka if we have it
+      let src1 = akaSlug ? `/img/cigars/${akaSlug}/${cigarSlug}.png` : '';
+      let src2 = `/img/cigars/${brandSlug}/${cigarSlug}.png`;
+      let src3 = akaSlug ? `/img/cigars/${akaSlug}${cigarSlug}.png` : '';
+      let src4 = `/img/cigars/${brandSlug}${cigarSlug}.png`;
+
+      // set the first plausible one
+      mci.style.display = 'block';
+      mci.src = src1 || src2 || src3 || src4;
+
+      // chain fallbacks
+      mci.onerror = function() {
+        if (mci.src.endsWith(src1) && src2) {
+          mci.src = src2;
+        } else if (mci.src.endsWith(src2) && src3) {
+          mci.src = src3;
+        } else if (mci.src.endsWith(src3) && src4) {
+          mci.src = src4;
+        } else {
+          mci.style.display = 'none';
+        }
+      };
+
       const details = document.getElementById('modalDetails');
       let sizeLine = '';
       if (rg || length) {
@@ -517,27 +463,27 @@
         ${sizeLine ? `<div class="first-size-line">${sizeLine}</div>` : ''}
         ${vitola ? `<div class="first-size-sub">${vitola}</div>` : ''}
         <div class="modal-detail-line">
-          <span class="modal-detail-label">WRAPPER SHADE</span><br>
+          <span class="modal-detail-label">Shade</span><br>
           <span class="modal-detail-value">${shade || '—'}</span>
         </div>
         <div class="modal-detail-line">
-          <span class="modal-detail-label">WRAPPER</span><br>
+          <span class="modal-detail-label">Wrapper</span><br>
           <span class="modal-detail-value">${wrapper || '—'}</span>
         </div>
         <div class="modal-detail-line">
-          <span class="modal-detail-label">BINDER</span><br>
+          <span class="modal-detail-label">Binder</span><br>
           <span class="modal-detail-value">${binder || '—'}</span>
         </div>
         <div class="modal-detail-line">
-          <span class="modal-detail-label">FILLER</span><br>
+          <span class="modal-detail-label">Filler</span><br>
           <span class="modal-detail-value">${filler || '—'}</span>
         </div>
         <div class="modal-detail-line">
-          <span class="modal-detail-label">ORIGIN</span><br>
+          <span class="modal-detail-label">Origin</span><br>
           <span class="modal-detail-value">${origin || '—'}</span>
         </div>
         <div class="modal-detail-line">
-          <span class="modal-detail-label">STRENGTH</span><br>
+          <span class="modal-detail-label">Strength</span><br>
           <span class="modal-detail-value">${strength || '—'}</span>
         </div>
       `;
