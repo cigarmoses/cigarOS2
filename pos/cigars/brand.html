@@ -18,7 +18,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
       color: var(--ink);
       min-height: 100vh;
-      padding-bottom: 62px;
+      padding-bottom: 65px;
     }
     .topbar {
       display:flex;
@@ -28,36 +28,28 @@
       font-weight:600;
     }
     .back-btn { display:flex; gap:4px; align-items:center; cursor:pointer; }
-
     .page-wrap { padding:0 16px 80px; }
-
     .brand-title-row {
       display:flex;
       align-items:center;
       justify-content:space-between;
       margin:6px 0 12px;
     }
-    .brand-title {
-      font-size:2rem;
-      font-weight:700;
-    }
+    .brand-title { font-size:2rem; font-weight:700; }
     .fav-star {
-      width:32px;
-      height:32px;
-      border-radius:999px;
-      background:#f7c948;
-      display:grid; place-items:center;
+      width:32px; height:32px; border-radius:999px;
+      background:#f7c948; display:grid; place-items:center;
     }
     .search-box {
       background:#fff;
       border-radius:999px;
-      display:flex;
-      align-items:center;
+      display:flex; align-items:center;
       padding:10px 16px;
       margin-bottom:18px;
     }
     .search-input {
       border:0; outline:0; background:transparent; width:100%;
+      font-size:.9rem;
     }
     .cigar-list { display:flex; flex-direction:column; gap:12px; }
 
@@ -73,23 +65,28 @@
     .cigar-icon {
       width:54px; height:54px; border-radius:18px;
       background:#3a3029; display:grid; place-items:center;
-      overflow:hidden;
+      overflow:hidden; flex:0 0 54px;
     }
-    .cigar-icon img { width:46px; height:46px; object-fit:contain; }
+    .cigar-icon img {
+      width:46px; height:46px; object-fit:contain;
+    }
     .cigar-info { flex:1; min-width:0; }
     .cigar-line {
-      font-weight:700; font-size:.9rem;
+      font-weight:700; font-size:.9rem; line-height:1.15;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .cigar-vitola { font-size:.78rem; color:var(--muted); margin-top:2px; }
-    .cigar-price { font-size:.78rem; margin-top:2px; }
+    .cigar-vitola {
+      font-size:.8rem; color:var(--muted); margin-top:2px;
+    }
+    .cigar-price {
+      font-size:.8rem; margin-top:2px;
+    }
     .qty-pill {
       width:44px; height:44px; border-radius:999px;
       border:1px solid rgba(15,26,44,0.12);
-      display:grid; place-items:center; font-weight:600;
-      background:#fff;
+      display:grid; place-items:center;
+      font-weight:600; background:#fff;
     }
-
     .bottom-nav {
       position: fixed;
       left: 0; right: 0; bottom: 0;
@@ -106,7 +103,12 @@
       display: grid; place-items: center;
       color: #fff;
     }
-    #debug { font-size: .65rem; color: #a33; margin-top: 10px; white-space: pre-wrap; }
+    #debug {
+      margin-top:8px;
+      font-size:.65rem;
+      color:#a33;
+      white-space:pre-wrap;
+    }
   </style>
 </head>
 <body>
@@ -147,34 +149,41 @@
     let allCigars = [];
     let brandCigars = [];
 
-    // exact path based on your repo: /pos/cigars/brand.html → /pos/data/cigars_full.json
+    // path is relative: /pos/cigars/brand.html -> /pos/data/cigars_full.json
     fetch('../data/cigars_full.json')
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
+      .then(r => r.json())
       .then(data => {
         allCigars = data;
-        renderForBrand();
+        showForBrand();
       })
       .catch(err => {
         document.getElementById('debug').textContent = 'Fetch failed: ' + err;
       });
 
-    function renderForBrand() {
+    function showForBrand() {
       const target = brandParam.toLowerCase();
-      // flexible match: Brand or Brand aka
+
+      // filter by Brand or Brand aka
       brandCigars = allCigars.filter(row => {
-        const b = (row["Brand"] || "").toString().trim().toLowerCase();
+        const brand = (row["Brand"] || "").toString().trim().toLowerCase();
         const aka = (row["Brand aka"] || "").toString().trim().toLowerCase();
-        return target && (b.includes(target) || target.includes(b) || aka.includes(target));
+        if (!target) return false;
+        return (
+          brand === target ||
+          brand.includes(target) ||
+          target.includes(brand) ||
+          aka === target ||
+          aka.includes(target)
+        );
       });
 
-      // if we still got nothing, show first 25 so you can see data is loading
-      if (!target || brandCigars.length === 0) {
+      // if no match, show first 25 so we can see data
+      if (brandCigars.length === 0) {
         brandCigars = allCigars.slice(0, 25);
         document.getElementById('debug').textContent =
-          'No exact matches for "' + brandParam + '". Showing first 25 cigars from file so you can confirm data.';
+          'No exact matches for "' + brandParam + '". Showing first 25 cigars from file.';
+      } else {
+        document.getElementById('debug').textContent = '';
       }
 
       renderList(brandCigars);
@@ -188,15 +197,17 @@
       const wrap = document.getElementById('cigarList');
       wrap.innerHTML = '';
       list.forEach(cigar => {
-        // handle weird "_ine" key we saw in your JSON
-        const lineCol = cigar["Line"] || cigar["_ine"] || "";
-        const line = lineCol ? lineCol.toString().trim() : "";
-        const cigarName = cigar["Cigar"] ? cigar["Cigar"].toString().trim() : "";
+        // your JSON has both Line and Cigar separately
+        const line = (cigar["Line"] || "").toString().trim();
+        const cigarName = (cigar["Cigar"] || "").toString().trim();
         const displayName = (line ? line + " " : "") + cigarName;
 
-        const vitola = cigar["Vitola"] || "";
-        const msrp = cigar["MSRP"] ? cigar["MSRP"].toString() : "";
-        const inventory = cigar["Inventory"] != null ? cigar["Inventory"] : "89";
+        const vitola = (cigar["Vitola"] || "").toString().trim();
+        const msrp = (cigar["MSRP"] || "").toString().trim();
+
+        // you don't have Inventory in the JSON yet, so show 89 like before
+        const inventory = '89';
+
         const brandSlug = slugify(cigar["Brand"] || "");
 
         const row = document.createElement('div');
@@ -216,10 +227,10 @@
       });
     }
 
-    function filterCigars() {
+    function filterCigars(){
       const val = document.getElementById('searchInput').value.toLowerCase();
       const filtered = brandCigars.filter(row => {
-        const line = (row["Line"] || row["_ine"] || "").toString().toLowerCase();
+        const line = (row["Line"] || "").toString().toLowerCase();
         const cigar = (row["Cigar"] || "").toString().toLowerCase();
         return (line + " " + cigar).includes(val);
       });
