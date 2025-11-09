@@ -92,7 +92,6 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      /* REMOVE black border */
       border: none;
     }
     .cigar-thumb img {
@@ -139,7 +138,6 @@
       flex: 0 0 auto;
     }
 
-    /* receipt button bottom right */
     .receipt-fab {
       position: fixed;
       right: 16px;
@@ -179,7 +177,6 @@
       font-size: 16px;
     }
 
-    /* MODAL */
     .cigar-modal-backdrop {
       position: fixed;
       inset: 0;
@@ -260,7 +257,6 @@
       overflow-y: auto;
       max-height: 70vh;
     }
-    /* LEFT COLUMN – cigar image */
     .cigar-modal-imagewrap {
       flex: 0 0 38%;
       max-width: 38%;
@@ -276,7 +272,6 @@
       object-fit: contain;
       display: block;
     }
-    /* RIGHT COLUMN – details */
     .cigar-modal-info {
       flex: 1 1 auto;
       display: flex;
@@ -318,21 +313,16 @@
   <div class="search-wrap">
     <input id="searchInput" class="search-input" placeholder="Search this brand..." />
   </div>
-  <div class="list-wrap" id="cigarList">
-    <!-- cards inject here -->
-  </div>
+  <div class="list-wrap" id="cigarList"></div>
 
-  <!-- receipt button -->
   <div class="receipt-fab">
     <div class="receipt-icon">
-      <!-- little receipt icon could be img -->
       <div style="width:22px;height:28px;background:#0f1a2c;border-radius:4px;opacity:.15"></div>
     </div>
     <div class="receipt-count">4</div>
     <div class="receipt-total">$24.50</div>
   </div>
 
-  <!-- modal -->
   <div class="cigar-modal-backdrop" id="cigarModal">
     <div class="cigar-modal">
       <div class="cigar-modal-header">
@@ -397,7 +387,6 @@
 
   let cigarsForBrand = [];
 
-  // ---- helpers
   function slugify(str) {
     return (str || '')
       .toLowerCase()
@@ -406,16 +395,12 @@
   }
 
   function buildCigarImagePath(item) {
-    // try brand aka first
     const aka = item["Brand aka"] || item["Brand AKA"] || "";
     const brand = item["Brand"] || "";
     const brandFolder = slugify(aka || brand);
     const fullName = ((item["Line"] || "") + " " + (item["Cigar"] || "")).trim();
     const cigarSlug = slugify(fullName);
     if (!brandFolder || !cigarSlug) return "";
-    // your pattern: /img/cigars/{brandFolder}/{brandFolder}{cigarSlug}.png
-    // BUT you have some like /img/cigars/acid/acid1400cc.png
-    // so we try two options
     const opt1 = `/img/cigars/${brandFolder}/${brandFolder}${cigarSlug}.png`;
     const opt2 = `/img/cigars/${brandFolder}/${cigarSlug}.png`;
     return {opt1, opt2};
@@ -431,14 +416,17 @@
       const thumb = document.createElement('div');
       thumb.className = 'cigar-thumb';
       const img = document.createElement('img');
-      img.src = (row["Brand IMG"] || "").trim();
+
+      // FIX 1: make brand img absolute to site root
+      const rawBrandImg = (row["Brand IMG"] || "").trim();
+      const brandImgSrc = rawBrandImg ? '/' + rawBrandImg.replace(/^\/+/, '') : '';
+      if (brandImgSrc) img.src = brandImgSrc;
       img.alt = row["Brand"] || "";
       thumb.appendChild(img);
 
       const meta = document.createElement('div');
       meta.className = 'cigar-meta';
       const h = document.createElement('div');
-      // display name = Line + Cigar
       const line = (row["Line"] || "").trim();
       const cigar = (row["Cigar"] || "").trim();
       const displayName = (line ? line + ' ' : '') + cigar;
@@ -466,7 +454,6 @@
     });
   }
 
-  // ---- modal
   const modal = document.getElementById('cigarModal');
   const modalBrandIcon = document.getElementById('modalBrandIcon');
   const modalBrand = document.getElementById('modalBrand');
@@ -485,9 +472,12 @@
 
   function openModal(row) {
     modalBrandIcon.innerHTML = '';
-    if (row["Brand IMG"]) {
+    const rawBrandImg = (row["Brand IMG"] || "").trim();
+    const brandImgSrc = rawBrandImg ? '/' + rawBrandImg.replace(/^\/+/, '') : '';
+
+    if (brandImgSrc) {
       const bi = document.createElement('img');
-      bi.src = row["Brand IMG"];
+      bi.src = brandImgSrc;
       modalBrandIcon.appendChild(bi);
     }
 
@@ -507,7 +497,6 @@
     modalOrigin.textContent = (row["ORIGIN"] || row["Origin"] || "—").trim() || "—";
     modalStrength.textContent = (row["STRENGTH"] || row["Strength"] || "—").trim() || "—";
 
-    // image
     const imgCandidates = buildCigarImagePath(row);
     if (imgCandidates) {
       modalImg.style.display = 'block';
@@ -531,17 +520,13 @@
     if (e.target === modal) modal.classList.remove('show');
   });
 
-  // fetch data
   fetch('/pos/data/cigars_full.json')
     .then(res => res.json())
     .then(data => {
-      // normalize brand comparison
       const wanted = brandParam.toLowerCase();
       cigarsForBrand = data.filter(row => {
         const brand = (row["Brand"] || "").trim().toLowerCase();
         if (brand !== wanted) return false;
-
-        // filter OUT empty rows → this removes your blank cards
         const line = (row["Line"] || "").trim();
         const cigar = (row["Cigar"] || "").trim();
         return line.length > 0 || cigar.length > 0;
@@ -554,7 +539,6 @@
       listEl.innerHTML = '<p>Could not load cigars.</p>';
     });
 
-  // search
   searchInput.addEventListener('input', function() {
     const q = this.value.toLowerCase();
     const filtered = cigarsForBrand.filter(row => {
