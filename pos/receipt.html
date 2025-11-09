@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CigarOS • Invoice</title>
+  <style>
+    :root {
+      --bg-app: #93979b;
+      --ink: #0f1a2c;
+      --muted: #6a7586;
+      --card: #ffffff;
+      --item-bg: #e5edf2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg-app);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+    }
+    .shell {
+      min-height: 100vh;
+      padding-bottom: 120px;
+    }
+    .topbar {
+      padding: 16px;
+    }
+    .topbar a {
+      text-decoration: none;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .invoice-card {
+      background: #fff;
+      width: min(760px, calc(100% - 32px));
+      margin: 8px auto 0;
+      border-radius: 52px 52px 28px 28px;
+      padding: 26px 20px 28px;
+      box-shadow: 0 14px 35px rgba(0,0,0,.15);
+    }
+    .invoice-title {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+    }
+    .invoice-datetime {
+      text-align: center;
+      margin-top: 6px;
+      font-size: 17px;
+    }
+
+    .loyalty-bar {
+      margin-top: 20px;
+      background: #e5edf2;
+      border-radius: 999px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .loyalty-bar label {
+      font-weight: 600;
+    }
+    .loyalty-bar select {
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      outline: none;
+      flex: 1;
+    }
+
+    .line-items {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .line-card {
+      background: var(--item-bg);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      min-height: 100px;
+    }
+
+    /* LEFT: BRAND ICON */
+    .line-icon {
+      width: 94px;
+      height: 94px;
+      border-radius: 28px;
+      background: #333;
+      background-size: cover;
+      background-position: center;
+      flex: 0 0 94px;
+    }
+
+    /* MIDDLE: INFO STACK */
+    .line-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .line-name {
+      font-weight: 700;
+      color: #1f70ba;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1.05;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .line-meta {
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    /* RIGHT: QTY + LINE TOTAL */
+    .line-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      min-width: 90px;
+    }
+    .qty-label {
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: .02em;
+    }
+    .qty-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .qty-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: none;
+      background: #0f1a2c;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      font-size: 16px;
+    }
+    .qty-value {
+      min-width: 22px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .line-total {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .totals {
+      margin-top: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+      font-size: 16px;
+    }
+    .totals-row {
+      display: flex;
+      gap: 30px;
+    }
+    .totals-label { font-weight: 500; }
+    .totals-value {
+      min-width: 80px;
+      text-align: right;
+      font-weight: 600;
+    }
+    .totals-final .totals-label,
+    .totals-final .totals-value {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .receipt-pill {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      background: #0f1a2c;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 9px 22px 9px 9px;
+      color: #fff;
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      text-decoration: none;
+    }
+    .receipt-pill-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 999px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      color: #0f1a2c;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .receipt-pill-count {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: #d11219;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+    .receipt-pill-total {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 640px) {
+      .invoice-card {
+        width: calc(100% - 12px);
+        border-radius: 38px 38px 22px 22px;
+        padding: 22px 10px 24px;
+      }
+      .line-card {
+        gap: 12px;
+      }
+      .line-icon {
+        width: 80px; height: 80px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <a href="/pos/">← Cigars</a>
+    </div>
+
+    <div class="invoice-card">
+      <div class="invoice-title">Invoice</div>
+      <div class="invoice-datetime" id="invoiceDate">Sunday, 11/9/25 &nbsp; 6:13 PM</div>
+
+      <div class="loyalty-bar">
+        <label for="loyaltySelect">Loyalty customer</label>
+        <select id="loyaltySelect">
+          <option value="">Select customer…</option>
+          <option value="locker27">Locker 27</option>
+          <option value="michael">Michael</option>
+          <option value="lonnie">Lonnie Adams</option>
+        </select>
+      </div>
+
+      <div class="line-items" id="lineItems"></div>
+
+      <div class="totals">
+        <div class="totals-row">
+          <div class="totals-label">Subtotal</div>
+          <div class="totals-value" id="subtotal">$0.00</div>
+        </div>
+        <div class="totals-row">
+          <div class="totals-label">Tax (7%)</div>
+          <div class="totals-value" id="tax">$0.00</div>
+        </div>
+        <div class="totals-row totals-final">
+          <div class="totals-label">TOTAL</div>
+          <div class="totals-value" id="grandTotal">$0.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a href="/pos/receipt.html" class="receipt-pill" id="receiptPill">
+    <div class="receipt-pill-icon">RCP</div>
+    <div class="receipt-pill-count" id="pillCount">0</div>
+    <div class="receipt-pill-total" id="pillTotal">$0.00</div>
+  </a>
+
+  <script>
+    // mock cart
+    const CART = [
+      {
+        id: 'pvw-flyingpig',
+        type: 'cigar',
+        brand: 'Pappy Van Winkle',
+        icon: '/img/icons/brands/pappyvanwinkle.svg',
+        name: 'Flying Pig',
+        vitola: 'Perfecto',
+        msrp: 13.99,
+        qty: 1
+      },
+      {
+        id: 'padron-3000-maduro',
+        type: 'cigar',
+        brand: 'Padron',
+        icon: '/img/icons/brands/padron.svg',
+        name: 'Padron 3000 Maduro',
+        vitola: 'Robusto',
+        msrp: 10.25,
+        qty: 2
+      },
+      {
+        id: 'sprite',
+        type: 'food',
+        brand: 'Food and Beverages',
+        icon: '/img/icons/brands/sprite.svg',
+        name: 'Sprite',
+        vitola: 'Food and Beverages',
+        msrp: 1.50,
+        qty: 3
+      }
+    ];
+
+    function money(n){ return n.toFixed(2); }
+
+    const lineWrap = document.getElementById('lineItems');
+
+    function renderLines() {
+      lineWrap.innerHTML = '';
+      CART.forEach(item => {
+        const line = document.createElement('div');
+        line.className = 'line-card';
+
+        // left icon
+        const icon = document.createElement('div');
+        icon.className = 'line-icon';
+        if (item.icon) icon.style.backgroundImage = `url(${item.icon})`;
+
+        // middle info
+        const body = document.createElement('div');
+        body.className = 'line-body';
+
+        const name = document.createElement('div');
+        name.className = 'line-name';
+        name.textContent = item.name;
+        name.addEventListener('click', () => {
+          alert('show cigar detail popup for: ' + item.name);
+        });
+
+        const meta = document.createElement('div');
+        meta.className = 'line-meta';
+
+        if (item.type === 'cigar') {
+          meta.innerHTML = `
+            ${item.vitola || ''}<br>
+            ${item.brand || ''}<br>
+            ${money(item.msrp)}
+          `;
+        } else {
+          meta.innerHTML = `
+            ${item.vitola || ''}<br>
+            ${item.brand || ''}<br>
+            ${money(item.msrp)}
+          `;
+        }
+
+        body.appendChild(name);
+        body.appendChild(meta);
+
+        // right qty + line total
+        const right = document.createElement('div');
+        right.className = 'line-right';
+
+        const qtyLabel = document.createElement('div');
+        qtyLabel.className = 'qty-label';
+        qtyLabel.textContent = 'QTY';
+
+        const qtyControls = document.createElement('div');
+        qtyControls.className = 'qty-controls';
+
+        const minus = document.createElement('button');
+        minus.className = 'qty-btn';
+        minus.textContent = '–';
+        minus.addEventListener('click', () => {
+          if (item.qty > 1) {
+            item.qty--;
+            renderLines();
+            renderTotals();
+          }
+        });
+
+        const qtyVal = document.createElement('div');
+        qtyVal.className = 'qty-value';
+        qtyVal.textContent = item.qty;
+
+        const plus = document.createElement('button');
+        plus.className = 'qty-btn';
+        plus.textContent = '+';
+        plus.addEventListener('click', () => {
+          item.qty++;
+          renderLines();
+          renderTotals();
+        });
+
+        qtyControls.appendChild(minus);
+        qtyControls.appendChild(qtyVal);
+        qtyControls.appendChild(plus);
+
+        const lineTotal = document.createElement('div');
+        lineTotal.className = 'line-total';
+        lineTotal.textContent = money(item.qty * item.msrp);
+
+        right.appendChild(qtyLabel);
+        right.appendChild(qtyControls);
+        right.appendChild(lineTotal);
+
+        line.appendChild(icon);
+        line.appendChild(body);
+        line.appendChild(right);
+
+        lineWrap.appendChild(line);
+      });
+    }
+
+    function renderTotals() {
+      let subtotal = 0;
+      CART.forEach(i => subtotal += i.qty * i.msrp);
+      const tax = subtotal * 0.07;
+      const total = subtotal + tax;
+
+      document.getElementById('subtotal').textContent = money(subtotal);
+      document.getElementById('tax').textContent = money(tax);
+      document.getElementById('grandTotal').textContent = money(total);
+
+      document.getElementById('pillCount').textContent =
+        CART.reduce((n, i) => n + i.qty, 0);
+      document.getElementById('pillTotal').textContent =
+        '$' + money(total);
+    }
+
+    function renderDate() {
+      const el = document.getElementById('invoiceDate');
+      const now = new Date();
+      const weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const day = weekdays[now.getDay()];
+      const month = now.getMonth() + 1;
+      const date = now.getDate();
+      const year = now.getFullYear();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2,'0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12; if (hours === 0) hours = 12;
+      el.textContent = `${day}, ${month}/${date}/${year}   ${hours}:${minutes} ${ampm}`;
+    }
+
+    renderLines();
+    renderTotals();
+    renderDate();
+  </script>
+</body>
+</html>
