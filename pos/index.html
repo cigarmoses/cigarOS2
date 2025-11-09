@@ -1,132 +1,188 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CigarOS POS</title>
   <style>
     :root {
-      --bg: #e0ecf2;
+      --bg: #dfeaf0;
       --ink: #0f1a2c;
+      --muted: #6a7586;
       --card: #ffffff;
-      --nav: #0f1a2c;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       background: var(--bg);
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--ink);
-      padding-bottom: 68px; /* space for bottom bar */
+      min-height: 100vh;
     }
     header {
-      padding: 20px 16px 6px;
-      font-size: 1.9rem;
+      padding: 22px 16px 10px 16px;
+    }
+    h1 {
+      font-size: 40px;
       font-weight: 700;
+      margin: 0;
     }
     .grid {
+      padding: 10px 16px 90px 16px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(172px, 1fr));
       gap: 16px;
-      padding: 10px 16px 20px;
     }
     .tile {
       background: var(--card);
-      border-radius: 22px;
-      padding: 16px 14px 20px;
+      border-radius: 26px;
+      padding: 18px 16px 20px 16px;
+      box-shadow: 0 10px 30px rgba(15,26,44,0.04);
       text-decoration: none;
       color: inherit;
-      box-shadow: 0 16px 35px rgba(9, 16, 26, 0.03);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
     .tile-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 16px;
-      background: #0f1a2c;
-      display: grid;
-      place-items: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 1.1rem;
-    }
-    .tile-title {
-      font-weight: 700;
-      font-size: 1.05rem;
-    }
-    .tile-sub {
-      font-size: .78rem;
-      color: rgba(15,26,44,0.5);
-    }
-    /* bottom nav like your other screens */
-    .bottom-nav {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      width: 58px;
       height: 58px;
-      background: var(--nav);
+      border-radius: 20px;
+      background: #fff;
       display: flex;
       align-items: center;
-      justify-content: space-around;
+      justify-content: center;
+      overflow: hidden;
     }
-    .bottom-btn {
-      width: 40px;
-      height: 40px;
+    .tile-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .tile-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .tile-sub {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+    /* receipt button at bottom (unchanged) */
+    .receipt-fab {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: #0f1a2c;
       border-radius: 999px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.02);
-      display: grid;
-      place-items: center;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 20px 10px 10px;
+      box-shadow: 0 10px 30px rgba(15,26,44,.25);
+      z-index: 5;
+    }
+    .receipt-icon {
+      width: 49px;
+      height: 49px;
+      background: #fff;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .receipt-count {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: #d72828;
       color: #fff;
-      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .receipt-total {
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <header>CigarOS POS</header>
+  <header>
+    <h1>CigarOS POS</h1>
+  </header>
 
-  <div class="grid">
-    <a href="/pos/cigars/" class="tile">
-      <div class="tile-icon">C</div>
+  <main class="grid">
+    <!-- Cigars -->
+    <a class="tile" href="/pos/cigars/">
+      <div class="tile-icon">
+        <!-- NEW ICON -->
+        <img src="/img/icons/categories/cigars.svg" alt="Cigars" />
+      </div>
       <div class="tile-title">Cigars</div>
       <div class="tile-sub">Browse brands, lines, vitolas</div>
     </a>
-    <a href="/pos/accessories/" class="tile">
-      <div class="tile-icon">A</div>
+
+    <!-- Accessories -->
+    <a class="tile" href="/pos/accessories/">
+      <div class="tile-icon">
+        <!-- NEW ICON -->
+        <img src="/img/icons/categories/accessories.svg" alt="Accessories" />
+      </div>
       <div class="tile-title">Accessories</div>
       <div class="tile-sub">Cutters, lighters, cases</div>
     </a>
-    <a href="/pos/ashtrays/" class="tile">
-      <div class="tile-icon">As</div>
+
+    <!-- Ashtrays -->
+    <a class="tile" href="/pos/ashtrays/">
+      <div class="tile-icon">
+        <!-- NEW ICON -->
+        <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays" />
+      </div>
       <div class="tile-title">Ashtrays</div>
       <div class="tile-sub">Table, lounge, outdoor</div>
     </a>
-    <a href="/pos/foodandbevs/" class="tile">
-      <div class="tile-icon">F</div>
-      <div class="tile-title">Food & Bevs</div>
+
+    <!-- Food & Bevs -->
+    <a class="tile" href="/pos/foodandbevs/">
+      <div class="tile-icon">
+        <!-- NEW ICON -->
+        <img src="/img/icons/categories/foodandbevs.svg" alt="Food and Bevs" />
+      </div>
+      <div class="tile-title">Food &amp; Bevs</div>
       <div class="tile-sub">Drinks, snacks</div>
     </a>
-    <a href="/pos/packs/" class="tile">
-      <div class="tile-icon">P</div>
-      <div class="tile-title">Packs</div>
-      <div class="tile-sub">Bundles & promos</div>
-    </a>
-    <a href="/pos/pipes/" class="tile">
-      <div class="tile-icon">Pi</div>
-      <div class="tile-title">Pipes</div>
-      <div class="tile-sub">Tobacco & accessories</div>
-    </a>
-  </div>
 
-  <div class="bottom-nav">
-    <div class="bottom-btn">←</div>
-    <div class="bottom-btn">→</div>
-    <div class="bottom-btn">＋</div>
-    <div class="bottom-btn">☺</div>
-    <div class="bottom-btn">⋯</div>
+    <!-- Packs -->
+    <a class="tile" href="/pos/packs/">
+      <div class="tile-icon">
+        <!-- NEW ICON -->
+        <img src="/img/icons/categories/packs.svg" alt="Packs" />
+      </div>
+      <div class="tile-title">Packs</div>
+      <div class="tile-sub">Bundles &amp; promos</div>
+    </a>
+
+    <!-- Pipes -->
+    <a class="tile" href="/pos/pipes/">
+      <div class="tile-icon">
+        <!-- NEW ICON -->
+        <img src="/img/icons/categories/pipes.svg" alt="Pipes" />
+      </div>
+      <div class="tile-title">Pipes</div>
+      <div class="tile-sub">Tobacco &amp; accessories</div>
+    </a>
+  </main>
+
+  <!-- same receipt button -->
+  <div class="receipt-fab">
+    <div class="receipt-icon">
+      <div style="width:22px;height:28px;background:#0f1a2c;border-radius:4px;opacity:.15"></div>
+    </div>
+    <div class="receipt-count">4</div>
+    <div class="receipt-total">$24.50</div>
   </div>
 </body>
 </html>
