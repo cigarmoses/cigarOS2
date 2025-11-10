@@ -37,7 +37,7 @@
       width: min(760px, calc(100% - 32px));
       margin: 8px auto 0;
       border-radius: 52px 52px 28px 28px;
-      padding: 26px 20px 28px;
+      padding: 26px 16px 28px;
       box-shadow: 0 14px 35px rgba(0,0,0,.15);
     }
     .invoice-title {
@@ -58,44 +58,43 @@
       padding: 10px 16px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
     }
-    .loyalty-bar label {
+    .loyalty-bar span {
       font-weight: 600;
     }
-    .loyalty-bar select {
-      border: none;
-      background: transparent;
-      font-size: 15px;
-      outline: none;
-      flex: 1;
+    .loyalty-bar a {
+      margin-left: 8px;
+      color: #1f70ba;
+      text-decoration: none;
+      font-weight: 600;
     }
 
     .line-items {
-      margin-top: 20px;
+      margin-top: 18px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
     .line-card {
       background: var(--item-bg);
-      border-radius: 28px;
+      border-radius: 26px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 14px 18px;
-      min-height: 100px;
+      gap: 12px;
+      padding: 10px 14px 10px 14px;
+      min-height: 90px;
     }
 
-    /* LEFT: BRAND ICON */
+    /* LEFT: BRAND ICON (smaller) */
     .line-icon {
-      width: 94px;
-      height: 94px;
-      border-radius: 28px;
+      width: 72px;
+      height: 72px;
+      border-radius: 22px;
       background: #333;
       background-size: cover;
       background-position: center;
-      flex: 0 0 94px;
+      flex: 0 0 72px;
     }
 
     /* MIDDLE: INFO STACK */
@@ -108,34 +107,34 @@
       color: #1f70ba;
       text-decoration: underline;
       cursor: pointer;
-      font-size: 20px;
+      font-size: 18px;
       line-height: 1.05;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .line-meta {
-      font-size: 16px;
-      line-height: 1.25;
+      font-size: 14.5px;
+      line-height: 1.2;
     }
 
-    /* RIGHT: QTY + LINE TOTAL */
+    /* RIGHT: QTY + LINE TOTAL (smaller) */
     .line-right {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 6px;
-      min-width: 90px;
+      gap: 4px;
+      min-width: 80px;
     }
     .qty-label {
-      font-size: 16px;
-      font-weight: 500;
+      font-size: 13.5px;
+      font-weight: 600;
       letter-spacing: .02em;
     }
     .qty-controls {
       display: flex;
-      gap: 6px;
+      gap: 4px;
       align-items: center;
     }
     .qty-btn {
@@ -151,26 +150,27 @@
       font-size: 16px;
     }
     .qty-value {
-      min-width: 22px;
+      min-width: 20px;
       text-align: center;
       font-weight: 600;
     }
     .line-total {
       font-weight: 600;
-      font-size: 18px;
+      font-size: 16px;
     }
 
     .totals {
-      margin-top: 28px;
+      margin-top: 24px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       align-items: flex-end;
       font-size: 16px;
+      padding-right: 6px;
     }
     .totals-row {
       display: flex;
-      gap: 30px;
+      gap: 26px;
     }
     .totals-label { font-weight: 500; }
     .totals-value {
@@ -230,36 +230,36 @@
         padding: 22px 10px 24px;
       }
       .line-card {
-        gap: 12px;
+        gap: 10px;
       }
       .line-icon {
-        width: 80px; height: 80px;
+        width: 68px; height: 68px;
       }
+      .line-name { font-size: 17px; }
     }
   </style>
 </head>
 <body>
   <div class="shell">
     <div class="topbar">
-      <a href="/pos/">← Cigars</a>
+      <a href="/pos/">← POS</a>
     </div>
 
     <div class="invoice-card">
       <div class="invoice-title">Invoice</div>
-      <div class="invoice-datetime" id="invoiceDate">Sunday, 11/9/25 &nbsp; 6:13 PM</div>
+      <div class="invoice-datetime" id="invoiceDate">Sunday, 11/9/2025 7:04 PM</div>
 
+      <!-- loyalty -->
       <div class="loyalty-bar">
-        <label for="loyaltySelect">Loyalty customer</label>
-        <select id="loyaltySelect">
-          <option value="">Select customer…</option>
-          <option value="locker27">Locker 27</option>
-          <option value="michael">Michael</option>
-          <option value="lonnie">Lonnie Adams</option>
-        </select>
+        <span>Loyalty customer</span>
+        <a href="#" onclick="alert('open loyalty customer search');return false;">Select customer…</a>
+        <span style="margin-left:auto;opacity:.5;">➤</span>
       </div>
 
+      <!-- line items -->
       <div class="line-items" id="lineItems"></div>
 
+      <!-- totals -->
       <div class="totals">
         <div class="totals-row">
           <div class="totals-label">Subtotal</div>
@@ -277,6 +277,7 @@
     </div>
   </div>
 
+  <!-- sticky pill -->
   <a href="/pos/receipt.html" class="receipt-pill" id="receiptPill">
     <div class="receipt-pill-icon">RCP</div>
     <div class="receipt-pill-count" id="pillCount">0</div>
@@ -284,7 +285,7 @@
   </a>
 
   <script>
-    // mock cart
+    // EXAMPLE CART
     const CART = [
       {
         id: 'pvw-flyingpig',
@@ -310,7 +311,7 @@
         id: 'sprite',
         type: 'food',
         brand: 'Food and Beverages',
-        icon: '/img/icons/brands/sprite.svg',
+        icon: '/img/icons/foodandbevs/sprite.svg',
         name: 'Sprite',
         vitola: 'Food and Beverages',
         msrp: 1.50,
@@ -328,12 +329,12 @@
         const line = document.createElement('div');
         line.className = 'line-card';
 
-        // left icon
+        // icon
         const icon = document.createElement('div');
         icon.className = 'line-icon';
         if (item.icon) icon.style.backgroundImage = `url(${item.icon})`;
 
-        // middle info
+        // body
         const body = document.createElement('div');
         body.className = 'line-body';
 
@@ -348,14 +349,15 @@
         meta.className = 'line-meta';
 
         if (item.type === 'cigar') {
+          // cigar: vitola, brand, msrp
           meta.innerHTML = `
             ${item.vitola || ''}<br>
             ${item.brand || ''}<br>
             ${money(item.msrp)}
           `;
         } else {
+          // non-cigar: name already above; show category once + price
           meta.innerHTML = `
-            ${item.vitola || ''}<br>
             ${item.brand || ''}<br>
             ${money(item.msrp)}
           `;
@@ -364,7 +366,7 @@
         body.appendChild(name);
         body.appendChild(meta);
 
-        // right qty + line total
+        // right qty / total
         const right = document.createElement('div');
         right.className = 'line-right';
 
@@ -447,7 +449,7 @@
       const minutes = now.getMinutes().toString().padStart(2,'0');
       const ampm = hours >= 12 ? 'PM' : 'AM';
       hours = hours % 12; if (hours === 0) hours = 12;
-      el.textContent = `${day}, ${month}/${date}/${year}   ${hours}:${minutes} ${ampm}`;
+      el.textContent = `${day}, ${month}/${date}/${year} ${hours}:${minutes} ${ampm}`;
     }
 
     renderLines();
