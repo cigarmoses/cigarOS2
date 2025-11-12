@@ -3,458 +3,370 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CigarOS • Invoice</title>
+  <title>Invoice</title>
   <style>
-    :root {
-      --bg-app: #93979b;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --card: #ffffff;
-      --item-bg: #e5edf2;
+    :root{
+      --bg:#9aa1a6;           /* page backdrop (behind the card) */
+      --ink:#0f1a2c;          /* primary text */
+      --muted:#6a7586;        /* secondary text */
+      --card:#ffffff;         /* invoice card */
+      --pill:#0f1a2c;         /* receipt pill background */
+      --accent:#0b62ff;       /* links/interactive */
+      --danger:#d11219;
+      --ring:#e8eef2;         /* line item bg */
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg-app);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      color:var(--ink);
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:14px 14px 6px;
+    }
+    .back{
+      text-decoration:none;
+      color:var(--ink);
+      font-weight:700;
+      font-size:16px;
+    }
+
+    /* Invoice card */
+    .sheet{
+      width:min(880px, 100%);
+      margin:8px auto 120px;
+      background:var(--card);
+      border-radius:36px;
+      padding:24px 18px 28px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.18);
+    }
+    .title{
+      text-align:center;
+      font-weight:900;
+      font-size:42px;
+      margin:6px 0 2px;
+    }
+    .stamp{
+      text-align:center;
+      font-size:20px;
+      margin:0 0 14px;
+    }
+
+    /* Loyalty select */
+    .loyal-wrap{
+      background:#eef4f7;
+      border-radius:18px;
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin: 0 6px 16px;
+      font-weight:700;
+    }
+    .loyal-select{
+      flex:1;
+      min-width:0;
+      background:#eef4f7;
+      border:none;
+      font: inherit;
       color: var(--ink);
-    }
-    .shell {
-      min-height: 100vh;
-      padding-bottom: 120px;
-    }
-    .topbar {
-      padding: 16px;
-    }
-    .topbar a {
-      text-decoration: none;
-      color: #fff;
-      font-weight: 600;
+      outline:none;
     }
 
-    .invoice-card {
-      background: #fff;
-      width: min(760px, calc(100% - 32px));
-      margin: 8px auto 0;
-      border-radius: 52px 52px 28px 28px;
-      padding: 26px 16px 28px;
-      box-shadow: 0 14px 35px rgba(0,0,0,.15);
+    /* Lines */
+    .lines{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      padding:0 6px;
     }
-    .invoice-title {
-      text-align: center;
-      font-size: 32px;
-      font-weight: 700;
+    .line{
+      background:var(--ring);
+      border-radius:26px;
+      padding:14px;
+      display:grid;
+      grid-template-columns: 86px 1fr 120px;
+      gap:12px;
+      align-items:center;
     }
-    .invoice-datetime {
-      text-align: center;
-      margin-top: 6px;
-      font-size: 17px;
+    .brand-ic{
+      width:86px;
+      height:86px;
+      border-radius:20px;
+      background:#ddd;
+      background-size:cover;
+      background-position:center;
+    }
+    .mid{
+      min-width:0;
+    }
+    .name{
+      margin:0;
+      font-weight:900;
+      font-size:22px;
+      color:var(--accent);
+      text-decoration:underline;
+      text-underline-offset:3px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .meta{ margin:4px 0 0; color:var(--ink); }
+    .muted{ color:var(--muted); }
+    .msrp{ margin-top:2px; font-weight:600; }
+
+    .qty{
+      justify-self:end;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .qty label{ font-weight:800; letter-spacing:.5px; }
+    .stepper{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:8px;
+      justify-content:flex-end;
+    }
+    .btn{
+      width:42px; height:42px;
+      border-radius:999px;
+      border:none;
+      display:grid; place-items:center;
+      font-weight:900; font-size:20px;
+      background:#0f1a2c; color:#fff;
+      cursor:pointer;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .qty-val{
+      width:34px; text-align:center; font-weight:800;
+    }
+    .line-total{
+      text-align:right;
+      font-weight:800;
+      font-size:22px;
     }
 
-    .loyalty-bar {
-      margin-top: 20px;
-      background: #e5edf2;
-      border-radius: 999px;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    /* Totals */
+    .totals{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      row-gap:10px;
+      width:min(420px, 100%);
+      margin: 18px 6px 0 auto;
+      font-size:20px;
     }
-    .loyalty-bar span {
-      font-weight: 600;
-    }
-    .loyalty-bar a {
-      margin-left: 8px;
-      color: #1f70ba;
-      text-decoration: none;
-      font-weight: 600;
-    }
+    .totals b{ font-weight:900; }
+    .hr{ border:none; border-top:1px solid #e6eaee; margin:16px 6px; }
 
-    .line-items {
-      margin-top: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+    /* Receipt pill (always present) */
+    .pill{
+      position:fixed;
+      right:14px;
+      bottom:14px;
+      background:var(--pill);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:9px 22px 9px 9px;
+      border-radius:999px;
+      text-decoration:none;
+      box-shadow: 0 18px 50px rgba(0,0,0,.25);
+      z-index:999;
     }
-    .line-card {
-      background: var(--item-bg);
-      border-radius: 26px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 14px 10px 14px;
-      min-height: 90px;
+    .pill-ic{
+      width:54px; height:54px; border-radius:999px; background:#fff;
+      color:var(--pill); display:grid; place-items:center;
+      font-weight:900; font-size:12px;
     }
+    .pill-count{
+      width:26px; height:26px; border-radius:999px; background:#d11219;
+      display:grid; place-items:center; font-weight:900;
+    }
+    .pill-total{ font-size:20px; font-weight:900; }
 
-    /* LEFT: BRAND ICON (smaller) */
-    .line-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 22px;
-      background: #333;
-      background-size: cover;
-      background-position: center;
-      flex: 0 0 72px;
-    }
-
-    /* MIDDLE: INFO STACK */
-    .line-body {
-      flex: 1;
-      min-width: 0;
-    }
-    .line-name {
-      font-weight: 700;
-      color: #1f70ba;
-      text-decoration: underline;
-      cursor: pointer;
-      font-size: 18px;
-      line-height: 1.05;
-      margin-bottom: 3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .line-meta {
-      font-size: 14.5px;
-      line-height: 1.2;
-    }
-
-    /* RIGHT: QTY + LINE TOTAL (smaller) */
-    .line-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-      min-width: 80px;
-    }
-    .qty-label {
-      font-size: 13.5px;
-      font-weight: 600;
-      letter-spacing: .02em;
-    }
-    .qty-controls {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
-    .qty-btn {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      border: none;
-      background: #0f1a2c;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      line-height: 1;
-      font-size: 16px;
-    }
-    .qty-value {
-      min-width: 20px;
-      text-align: center;
-      font-weight: 600;
-    }
-    .line-total {
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .totals {
-      margin-top: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: flex-end;
-      font-size: 16px;
-      padding-right: 6px;
-    }
-    .totals-row {
-      display: flex;
-      gap: 26px;
-    }
-    .totals-label { font-weight: 500; }
-    .totals-value {
-      min-width: 80px;
-      text-align: right;
-      font-weight: 600;
-    }
-    .totals-final .totals-label,
-    .totals-final .totals-value {
-      font-weight: 700;
-      font-size: 18px;
-    }
-
-    .receipt-pill {
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
-      background: #0f1a2c;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 9px 22px 9px 9px;
-      color: #fff;
-      box-shadow: 0 12px 40px rgba(0,0,0,.25);
-      text-decoration: none;
-    }
-    .receipt-pill-icon {
-      width: 54px;
-      height: 54px;
-      border-radius: 999px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      color: #0f1a2c;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .receipt-pill-count {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      background: #d11219;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-    }
-    .receipt-pill-total {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    @media (max-width: 640px) {
-      .invoice-card {
-        width: calc(100% - 12px);
-        border-radius: 38px 38px 22px 22px;
-        padding: 22px 10px 24px;
+    @media (max-width:720px){
+      .line{
+        grid-template-columns: 74px 1fr;
+        grid-template-areas:
+          "ic mid"
+          "ic qty";
+        align-items:start;
       }
-      .line-card {
-        gap: 10px;
-      }
-      .line-icon {
-        width: 68px; height: 68px;
-      }
-      .line-name { font-size: 17px; }
+      .brand-ic{ grid-area: ic; width:74px; height:74px; }
+      .mid{ grid-area: mid; }
+      .qty{ grid-area: qty; justify-self:start; }
+      .line-total{ grid-column: 1 / -1; }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <div class="topbar">
-      <a href="/pos/">← POS</a>
+
+  <header>
+    <a class="back" href="/pos/">← Back</a>
+  </header>
+
+  <main class="sheet" id="sheet">
+    <h1 class="title">Invoice</h1>
+    <p class="stamp" id="stamp">—</p>
+
+    <div class="loyal-wrap">
+      <div>Loyalty customer</div>
+      <select id="loyal" class="loyal-select">
+        <option value="">Select customer…</option>
+        <option>John Smith</option>
+        <option>Mary Jones</option>
+        <option>Walk-in</option>
+      </select>
     </div>
 
-    <div class="invoice-card">
-      <div class="invoice-title">Invoice</div>
-      <div class="invoice-datetime" id="invoiceDate">Sunday, 11/9/2025 7:04 PM</div>
+    <section id="lines" class="lines"></section>
 
-      <!-- loyalty -->
-      <div class="loyalty-bar">
-        <span>Loyalty customer</span>
-        <a href="#" onclick="alert('open loyalty customer search');return false;">Select customer…</a>
-        <span style="margin-left:auto;opacity:.5;">➤</span>
-      </div>
+    <hr class="hr" />
 
-      <!-- line items -->
-      <div class="line-items" id="lineItems"></div>
+    <section class="totals">
+      <div>Subtotal</div>      <div id="subtotal"><b>$0.00</b></div>
+      <div>Tax (7%)</div>      <div id="tax"><b>$0.00</b></div>
+      <div><b>TOTAL</b></div>  <div id="grand"><b>$0.00</b></div>
+    </section>
+  </main>
 
-      <!-- totals -->
-      <div class="totals">
-        <div class="totals-row">
-          <div class="totals-label">Subtotal</div>
-          <div class="totals-value" id="subtotal">$0.00</div>
-        </div>
-        <div class="totals-row">
-          <div class="totals-label">Tax (7%)</div>
-          <div class="totals-value" id="tax">$0.00</div>
-        </div>
-        <div class="totals-row totals-final">
-          <div class="totals-label">TOTAL</div>
-          <div class="totals-value" id="grandTotal">$0.00</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- sticky pill -->
-  <a href="/pos/receipt.html" class="receipt-pill" id="receiptPill">
-    <div class="receipt-pill-icon">RCP</div>
-    <div class="receipt-pill-count" id="pillCount">0</div>
-    <div class="receipt-pill-total" id="pillTotal">$0.00</div>
+  <!-- Always-on pill -->
+  <a href="/pos/receipt.html" class="pill" id="pill">
+    <div class="pill-ic">RCP</div>
+    <div class="pill-count" id="pillCount">0</div>
+    <div class="pill-total" id="pillTotal">$0.00</div>
   </a>
 
   <script>
-    // EXAMPLE CART
-    const CART = [
-      {
-        id: 'pvw-flyingpig',
-        type: 'cigar',
-        brand: 'Pappy Van Winkle',
-        icon: '/img/icons/brands/pappyvanwinkle.svg',
-        name: 'Flying Pig',
-        vitola: 'Perfecto',
-        msrp: 13.99,
-        qty: 1
-      },
-      {
-        id: 'padron-3000-maduro',
-        type: 'cigar',
-        brand: 'Padron',
-        icon: '/img/icons/brands/padron.svg',
-        name: 'Padron 3000 Maduro',
-        vitola: 'Robusto',
-        msrp: 10.25,
-        qty: 2
-      },
-      {
-        id: 'sprite',
-        type: 'food',
-        brand: 'Food and Beverages',
-        icon: '/img/icons/foodandbevs/sprite.svg',
-        name: 'Sprite',
-        vitola: 'Food and Beverages',
-        msrp: 1.50,
-        qty: 3
+    /* --------- Storage + helpers --------- */
+    const STORAGE_KEY = 'cigaros_receipt_v1';
+    const TAX_RATE = 0.07;
+
+    function loadCart(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch(e){ return []; }
+    }
+    function saveCart(v){ localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); }
+    function money(n){ return (n||0).toFixed(2); }
+
+    function setStamp(){
+      const d = new Date();
+      const day = d.toLocaleDateString(undefined, { weekday:'long' });
+      const date = d.toLocaleDateString(undefined, { year:'numeric', month:'numeric', day:'numeric' });
+      const time = d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+      document.getElementById('stamp').textContent = `${day}, ${date} ${time}`;
+    }
+
+    /* --------- Render --------- */
+    let CART = loadCart();
+
+    function render(){
+      setStamp();
+      const wrap = document.getElementById('lines');
+      wrap.innerHTML = '';
+
+      if (!CART.length){
+        wrap.innerHTML = `<div style="padding:18px; color:var(--muted);">Nothing here yet. Add items from any POS page, then tap the pill.</div>`;
       }
-    ];
 
-    function money(n){ return n.toFixed(2); }
-
-    const lineWrap = document.getElementById('lineItems');
-
-    function renderLines() {
-      lineWrap.innerHTML = '';
       CART.forEach(item => {
         const line = document.createElement('div');
-        line.className = 'line-card';
+        line.className = 'line';
+        line.dataset.id = item.id;
 
-        // icon
-        const icon = document.createElement('div');
-        icon.className = 'line-icon';
-        if (item.icon) icon.style.backgroundImage = `url(${item.icon})`;
+        const ic = document.createElement('div');
+        ic.className = 'brand-ic';
+        if (item.icon) ic.style.backgroundImage = `url(${item.icon})`;
 
-        // body
-        const body = document.createElement('div');
-        body.className = 'line-body';
+        const mid = document.createElement('div');
+        mid.className = 'mid';
+        mid.innerHTML = `
+          <h3 class="name"><a href="#" style="color:var(--accent);text-decoration:underline">${item.name}</a></h3>
+          <div class="meta"><span class="muted">${item.vitola || ''}</span></div>
+          <div class="meta"><span class="muted">${item.brand || ''}</span></div>
+          <div class="msrp">${money(item.msrp)}</div>
+        `;
 
-        const name = document.createElement('div');
-        name.className = 'line-name';
-        name.textContent = item.name;
-        name.addEventListener('click', () => {
-          alert('show cigar detail popup for: ' + item.name);
-        });
+        const qty = document.createElement('div');
+        qty.className = 'qty';
+        qty.innerHTML = `
+          <div style="text-align:right">
+            <label>QTY</label>
+            <div class="stepper">
+              <button class="btn btn-minus" aria-label="decrease">−</button>
+              <div class="qty-val">${item.qty}</div>
+              <button class="btn btn-plus" aria-label="increase">+</button>
+            </div>
+            <div class="line-total">$${money(item.qty * item.msrp)}</div>
+          </div>
+        `;
 
-        const meta = document.createElement('div');
-        meta.className = 'line-meta';
-
-        if (item.type === 'cigar') {
-          // cigar: vitola, brand, msrp
-          meta.innerHTML = `
-            ${item.vitola || ''}<br>
-            ${item.brand || ''}<br>
-            ${money(item.msrp)}
-          `;
-        } else {
-          // non-cigar: name already above; show category once + price
-          meta.innerHTML = `
-            ${item.brand || ''}<br>
-            ${money(item.msrp)}
-          `;
-        }
-
-        body.appendChild(name);
-        body.appendChild(meta);
-
-        // right qty / total
-        const right = document.createElement('div');
-        right.className = 'line-right';
-
-        const qtyLabel = document.createElement('div');
-        qtyLabel.className = 'qty-label';
-        qtyLabel.textContent = 'QTY';
-
-        const qtyControls = document.createElement('div');
-        qtyControls.className = 'qty-controls';
-
-        const minus = document.createElement('button');
-        minus.className = 'qty-btn';
-        minus.textContent = '–';
-        minus.addEventListener('click', () => {
-          if (item.qty > 1) {
-            item.qty--;
-            renderLines();
-            renderTotals();
-          }
-        });
-
-        const qtyVal = document.createElement('div');
-        qtyVal.className = 'qty-value';
-        qtyVal.textContent = item.qty;
-
-        const plus = document.createElement('button');
-        plus.className = 'qty-btn';
-        plus.textContent = '+';
-        plus.addEventListener('click', () => {
-          item.qty++;
-          renderLines();
-          renderTotals();
-        });
-
-        qtyControls.appendChild(minus);
-        qtyControls.appendChild(qtyVal);
-        qtyControls.appendChild(plus);
-
-        const lineTotal = document.createElement('div');
-        lineTotal.className = 'line-total';
-        lineTotal.textContent = money(item.qty * item.msrp);
-
-        right.appendChild(qtyLabel);
-        right.appendChild(qtyControls);
-        right.appendChild(lineTotal);
-
-        line.appendChild(icon);
-        line.appendChild(body);
-        line.appendChild(right);
-
-        lineWrap.appendChild(line);
+        line.appendChild(ic);
+        line.appendChild(mid);
+        line.appendChild(qty);
+        wrap.appendChild(line);
       });
+
+      updateTotals();
+      updatePill();
     }
 
-    function renderTotals() {
-      let subtotal = 0;
-      CART.forEach(i => subtotal += i.qty * i.msrp);
-      const tax = subtotal * 0.07;
-      const total = subtotal + tax;
-
-      document.getElementById('subtotal').textContent = money(subtotal);
-      document.getElementById('tax').textContent = money(tax);
-      document.getElementById('grandTotal').textContent = money(total);
-
-      document.getElementById('pillCount').textContent =
-        CART.reduce((n, i) => n + i.qty, 0);
-      document.getElementById('pillTotal').textContent =
-        '$' + money(total);
+    function updateTotals(){
+      const subtotal = CART.reduce((n,i)=> n + i.qty*i.msrp, 0);
+      const tax = subtotal * TAX_RATE;
+      const grand = subtotal + tax;
+      document.getElementById('subtotal').innerHTML = `<b>$${money(subtotal)}</b>`;
+      document.getElementById('tax').innerHTML = `<b>$${money(tax)}</b>`;
+      document.getElementById('grand').innerHTML = `<b>$${money(grand)}</b>`;
     }
 
-    function renderDate() {
-      const el = document.getElementById('invoiceDate');
-      const now = new Date();
-      const weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-      const day = weekdays[now.getDay()];
-      const month = now.getMonth() + 1;
-      const date = now.getDate();
-      const year = now.getFullYear();
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2,'0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12; if (hours === 0) hours = 12;
-      el.textContent = `${day}, ${month}/${date}/${year} ${hours}:${minutes} ${ampm}`;
+    function updatePill(){
+      const count = CART.reduce((n,i)=>n+i.qty,0);
+      const total = CART.reduce((n,i)=>n+i.qty*i.msrp,0);
+      document.getElementById('pillCount').textContent = count;
+      document.getElementById('pillTotal').textContent = '$'+money(total);
     }
 
-    renderLines();
-    renderTotals();
-    renderDate();
+    /* --------- Events --------- */
+    document.getElementById('lines').addEventListener('click', (e)=>{
+      const btnMinus = e.target.closest('.btn-minus');
+      const btnPlus  = e.target.closest('.btn-plus');
+      if (!btnMinus && !btnPlus) return;
+
+      const lineEl = e.target.closest('.line');
+      const id = lineEl?.dataset?.id;
+      if (!id) return;
+      const item = CART.find(i=>i.id===id);
+      if (!item) return;
+
+      if (btnPlus) item.qty += 1;
+      if (btnMinus) item.qty -= 1;
+
+      if (item.qty <= 0){
+        CART = CART.filter(i=>i.id!==id);
+      }
+      saveCart(CART);
+      render();
+    });
+
+    /* Optional: remember chosen loyalty customer */
+    const loyal = document.getElementById('loyal');
+    loyal.value = localStorage.getItem('cigaros_loyal_name') || '';
+    loyal.addEventListener('change', ()=>{
+      localStorage.setItem('cigaros_loyal_name', loyal.value || '');
+    });
+
+    /* --------- Kickoff --------- */
+    render();
   </script>
 </body>
 </html>
