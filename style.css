@@ -123,3 +123,181 @@ body {
   .tile{ width:104px; height:104px; background-size: 56%; }
   .tile.hub{ background-size: 48%; }
 }
+/* =========================
+   Tony – Global Assistant
+   ========================= */
+
+#tony-button {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9998;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#tony-button img {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: block;
+}
+
+#tony-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.3);
+}
+
+/* Panel */
+
+#tony-panel {
+  position: fixed;
+  bottom: 100px;
+  left: 16px;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(520px, calc(100vh - 140px));
+  background: #f8f5ef;
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 9999;
+  overflow: hidden;
+  border: 1px solid #e1d4bc;
+  font-family: "Georgia", "Times New Roman", serif;
+}
+
+#tony-panel.tony-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Header */
+
+#tony-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #f2e7d4;
+  border-bottom: 1px solid #e1d4bc;
+}
+
+#tony-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#tony-header img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+.tony-title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tony-subtitle {
+  font-size: 12px;
+  color: #7b6b4c;
+}
+
+#tony-close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  color: #7b6b4c;
+}
+
+/* Messages */
+
+#tony-messages {
+  flex: 1;
+  padding: 12px 14px 4px;
+  overflow-y: auto;
+  font-size: 15px;
+  color: #2f2617;
+}
+
+.tony-bubble {
+  max-width: 88%;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 14px;
+  line-height: 1.45;
+}
+
+.tony-bubble.user {
+  margin-left: auto;
+  background: #d9c7a5;
+}
+
+.tony-bubble.tony {
+  margin-right: auto;
+  background: #ffffff;
+  border: 1px solid #e1d4bc;
+}
+
+/* Input */
+
+#tony-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid #e1d4bc;
+  background: #f5eee3;
+}
+
+#tony-query {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid #d0c2a5;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  background: #fdfaf5;
+}
+
+#tony-query:focus {
+  border-color: #b89b64;
+  box-shadow: 0 0 0 1px rgba(184,155,100,0.35);
+}
+
+#tony-send {
+  border: none;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 18px;
+  cursor: pointer;
+  background: #b89b64;
+  color: #fff;
+}
+
+/* Mobile tweaks */
+
+@media (max-width: 640px) {
+  #tony-panel {
+    bottom: 90px;
+    max-height: calc(100vh - 120px);
+  }
+}
