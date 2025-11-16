@@ -1,163 +1,100 @@
-:root {
-  --pos-bg: #eaf2f6;
-  --pos-ink: #0f1a2c;
-  --pos-muted: #6b7a90;
-  --pos-line: #dfe7ee;
-  --pos-card: #ffffff;
-  --pos-bill: #091423;
-  --pos-badge: #ff2d2d;
-}
-
-html, body {
-  margin: 0;
-  background: var(--pos-bg);
-  color: var(--pos-ink);
-  font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-.pos-wrap {
-  max-width: 480px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 12px 12px 72px;
-  box-sizing: border-box;
-}
-
-/* top bar */
-.pos-topbar {
-  position: relative;
+/* Line item container (your grey rounded block) */
+.invoice-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 40px;
-  margin-bottom: 6px;
-}
-
-.pos-back {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #3775c8;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.pos-star {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 22px;
-  color: #f5d34f;
-}
-
-.pos-header-spacer {
-  height: 14px;
-}
-
-.pos-title {
-  text-align: center;
-  font-weight: 700;
-  font-size: 32px;
-  margin: 0 0 10px 0;
-}
-
-/* search bar */
-.pos-search {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border-radius: 999px;
-  padding: 10px 12px;
-  border: 1px solid var(--pos-line);
-  box-shadow: 0 4px 12px rgba(0,0,0,.08);
-  margin-bottom: 24px;
-}
-.pos-search input {
-  border: 0;
-  outline: 0;
-  width: 100%;
-  font-size: 15px;
-  background: transparent;
-}
-
-/* 2×2 grid layout for POS categories */
-.pos-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 40px 32px;
-  justify-items: center;
-}
-
-.pos-tile {
-  text-align: center;
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 12px 14px;
+  border-radius: 24px;
+  background: #e6edf4; /* match your current grey */
   gap: 12px;
 }
 
-.pos-tile-icon {
-  width: 120px;
-  height: 120px;
-  border-radius: 24px;
-  background: #d9d9d9;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.05);
-}
-
-.pos-tile-label {
-  font-size: 17px;
-  font-weight: 500;
-}
-
-/* bill tab */
-.pos-bill-tab {
-  position: fixed;
-  right: 12px;
-  bottom: 16px;
-  background: var(--pos-bill);
-  color: #fff;
-  border-radius: 999px;
-  padding: 10px 16px 10px 14px;
+/* LEFT: icon */
+.invoice-item-icon {
+  flex: 0 0 56px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 14px 45px rgba(0,0,0,.25);
-  z-index: 999;
+  justify-content: center;
+}
+.invoice-item-icon img {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  object-fit: cover;
 }
 
-.pos-bill-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.12);
-  display: grid;
-  place-items: center;
+/* MIDDLE: text block */
+.invoice-item-text {
+  flex: 1 1 auto;
+  min-width: 0; /* allows ellipsis/wrap inside flex */
+}
+
+/* Line + cigar name (link, max 2 lines) */
+.invoice-item-title {
   font-size: 14px;
+  line-height: 1.2;
+  font-weight: 700;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;  /* max 2 lines */
+  overflow: hidden;
+  word-wrap: break-word;
+  text-decoration: underline; /* keep current link look */
+  color: #0055cc; /* or match your existing link color */
 }
 
-.pos-bill-badge {
-  background: var(--pos-badge);
-  min-width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-size: 11px;
+/* Vitola / brand / msrp lines (3 lines) */
+.invoice-item-meta {
+  margin-top: 2px;
+}
+.invoice-item-meta > div {
+  font-size: 12px;
+  line-height: 1.25;
+  color: #2b3547;
+}
+
+/* RIGHT: QTY block (3 lines) */
+.invoice-item-qty {
+  flex: 0 0 auto;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 12px; /* same as vitola/brand/msrp */
+}
+
+/* "QTY" label */
+.invoice-item-qty-label {
   font-weight: 700;
 }
 
-.pos-bill-total {
-  font-weight: 600;
-  font-size: 15px;
+/* +/- controls */
+.invoice-item-qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.invoice-qty-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  background: #0f1a2c;  /* match your existing dark buttons */
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invoice-qty-value {
+  min-width: 12px;
+}
+
+/* Line item total ($) */
+.invoice-item-line-total {
+  font-weight: 700;
+  font-size: 12px;
 }
