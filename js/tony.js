@@ -7,7 +7,7 @@
       return;
     }
 
-    // --- Button ---
+    // --- Tony Button (bottom-left) ---
     const btn = document.createElement("div");
     btn.id = "tony-button";
     btn.style.cssText = [
@@ -36,7 +36,7 @@
     ].join(";");
     btn.appendChild(btnImg);
 
-    // --- Panel ---
+    // --- Tony Panel (slide-up) ---
     const panel = document.createElement("div");
     panel.id = "tony-panel";
     panel.setAttribute("aria-hidden", "true");
@@ -151,11 +151,11 @@
       if (!msgs.hasChildNodes()) {
         addTony(
           msgs,
-          "Hey, I’m Tony. Ask me anything about cigars—brands, sizes, strength, pairings, you name it."
+          "Hey, I’m Tony. I help you pick cigars that actually make sense for you. Brands, blends, size, strength—I got you."
         );
         addTony(
           msgs,
-          "Try: “Show me a medium Nicaraguan toro under $15.”"
+          "Ask me something like: “Show me a medium Nicaraguan toro under $15” or “What’s similar to Fuente Hemingway?”"
         );
       }
       setTimeout(() => input && input.focus(), 150);
@@ -193,52 +193,90 @@
       addBubble(container, text, true);
     }
 
+    // 93% cigar info, 7% Tony attitude
     function fakeTonyAnswer(q) {
       const qq = q.toLowerCase();
 
+      // Nicaraguan / Nicaragua
       if (qq.includes("nicaragua") || qq.includes("nicaraguan")) {
         return (
-          "If you like Nicaraguan cigars, look for pepper, earth, and cocoa.\n\n" +
-          "Classic Nicaraguan families:\n" +
-          "• Padrón (1964 / 1926)\n" +
-          "• My Father / Don Pepin\n" +
-          "• Oliva Serie V\n" +
-          "• AJ Fernandez blends"
+          "You’re talking Nicaraguan, so expect pepper, earth, cocoa — plenty of flavor.\n\n" +
+          "Lines you should look at:\n" +
+          "• Padrón 2000 / 3000 (classic, no nonsense)\n" +
+          "• Oliva Serie V for something richer\n" +
+          "• My Father if you like a little spice\n\n" +
+          "What do you think, I’ve had my fair share of sticks?"
         );
       }
 
+      // Cameroon wrapper
       if (qq.includes("cameroon")) {
         return (
-          "Cameroon wrapper is usually medium with a dry sweetness—baking spice, cedar, and toast.\n\n" +
-          "Great for flavor without heavy strength."
+          "Cameroon wrapper is medium, sweet, and a little toasty — think baking spice, cedar, and a dry sweetness.\n\n" +
+          "If you’re into that profile, look for cigars like:\n" +
+          "• Arturo Fuente Hemingway (classic move)\n" +
+          "• Some of the old-school Oliva and CAO Cameroon blends\n\n" +
+          "You want flavor without getting knocked over? Cameroon’s a good lane."
         );
       }
 
-      if (qq.includes("beginner") || qq.includes("new")) {
+      // Beginner / new smoker
+      if (
+        qq.includes("beginner") ||
+        qq.includes("new to cigars") ||
+        qq.includes("first cigar") ||
+        qq.includes("new smoker")
+      ) {
         return (
-          "For beginners I like mild-to-medium sticks:\n" +
-          "• Connecticut-wrapped robustos\n" +
-          "• Smaller ring gauges\n" +
-          "• Pair with coffee or water so you really taste the cigar."
+          "First cigar or still figuring it out? No problem.\n\n" +
+          "Here’s where I’d start you:\n" +
+          "• Connecticut-wrapped robusto — mild to medium\n" +
+          "• Smaller ring gauge so you’re not wrestling with it\n" +
+          "• Pair it with coffee or water so you taste the cigar, not just the drink\n\n" +
+          "Everybody started somewhere. I got you."
         );
       }
 
-      if (qq.includes("pair") || qq.includes("pairing")) {
+      // Pairings
+      if (
+        qq.includes("pair") ||
+        qq.includes("pairing") ||
+        qq.includes("drink with") ||
+        qq.includes("go with")
+      ) {
         return (
-          "Pairing rule of thumb:\n" +
-          "• Light cigars → coffee, light rum, champagne\n" +
+          "Alright, here’s the move on pairings:\n\n" +
+          "• Light / Connecticut cigars → coffee, light rum, champagne\n" +
           "• Medium cigars → bourbon, aged rum, red wine\n" +
-          "• Full cigars → peated whisky, espresso\n\n" +
-          "Match strength first, then play with flavors."
+          "• Full-bodied cigars → peated whisky, espresso, rich stout\n\n" +
+          "Match the strength first, then worry about flavor notes. You do that, you’re already ahead of half the room."
         );
       }
 
+      // Strong / full cigars
+      if (
+        qq.includes("strong") ||
+        qq.includes("full body") ||
+        qq.includes("full-bodied") ||
+        qq.includes("full strength")
+      ) {
+        return (
+          "You want something with some horsepower, huh?\n\n" +
+          "Look at cigars like:\n" +
+          "• Joya de Nicaragua Antaño\n" +
+          "• My Father Le Bijou\n" +
+          "• Some of the stronger Nicaraguan maduros\n\n" +
+          "Take it slow, especially if you haven’t danced with the full-strength stuff before."
+        );
+      }
+
+      // Default catch-all
       return (
-        "Good question. Quick checklist:\n\n" +
-        "1) Wrapper (biggest flavor driver)\n" +
-        "2) Country (Nicaragua, DR, Honduras, Cuba, etc.)\n" +
-        "3) Size / vitola (how long & intense it’ll be)\n\n" +
-        "Give me brand + line + size and I’ll go deeper."
+        "Good question. Here’s how I think about any cigar:\n\n" +
+        "1) Wrapper — biggest driver of flavor and first impression\n" +
+        "2) Country — Nicaragua, DR, Honduras, Cuba… all have their own character\n" +
+        "3) Size / vitola — how long you’re smoking and how intense it feels\n\n" +
+        "Give me brand, line, and size, and I’ll narrow it down for you. I got you."
       );
     }
 
