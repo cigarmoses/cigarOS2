@@ -1,38 +1,132 @@
 (function () {
-  // Path to Tony icon used in button + header
-  const ICON_SRC = "/img/tony.png"; // change if you store it somewhere else
+  const ICON_SRC = "/img/tony.png"; // path to your Tony icon
 
-  // Create Tony button + panel and inject into DOM
   function createTonyDOM() {
     if (document.getElementById("tony-button") ||
         document.getElementById("tony-panel")) {
-      return; // already injected
+      return;
     }
 
-    // Floating button
+    // --- Button ---
     const btn = document.createElement("div");
     btn.id = "tony-button";
-    btn.innerHTML = `<img src="${ICON_SRC}" alt="Ask Tony">`;
+    btn.style.cssText = [
+      "position:fixed",
+      "bottom:20px",
+      "left:20px",
+      "width:44px",
+      "height:44px",
+      "border-radius:50%",
+      "background:#ffffff",
+      "box-shadow:0 4px 12px rgba(0,0,0,0.25)",
+      "display:flex",
+      "align-items:center",
+      "justify-content:center",
+      "cursor:pointer",
+      "z-index:9998"
+    ].join(";");
+    const btnImg = document.createElement("img");
+    btnImg.src = ICON_SRC;
+    btnImg.alt = "Ask Tony";
+    btnImg.style.cssText = [
+      "width:38px",
+      "height:38px",
+      "border-radius:50%",
+      "display:block"
+    ].join(";");
+    btn.appendChild(btnImg);
 
-    // Slide-up panel
+    // --- Panel ---
     const panel = document.createElement("div");
     panel.id = "tony-panel";
     panel.setAttribute("aria-hidden", "true");
+    panel.style.cssText = [
+      "position:fixed",
+      "bottom:80px",
+      "left:16px",
+      "width:min(420px,calc(100vw - 32px))",
+      "max-height:min(520px,calc(100vh - 140px))",
+      "background:#f8f5ef",
+      "border-radius:20px",
+      "box-shadow:0 16px 40px rgba(0,0,0,0.35)",
+      "display:flex",
+      "flex-direction:column",
+      "opacity:0",
+      "transform:translateY(16px)",
+      "pointer-events:none",
+      "transition:opacity .25s ease,transform .25s ease",
+      "z-index:9999",
+      "overflow:hidden",
+      "border:1px solid #e1d4bc",
+      "font-family:Georgia,'Times New Roman',serif"
+    ].join(";");
+
     panel.innerHTML = `
-      <div id="tony-header">
-        <div id="tony-header-left">
-          <img src="${ICON_SRC}" alt="Tony">
+      <div id="tony-header" style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:10px 14px;
+        background:#f2e7d4;
+        border-bottom:1px solid #e1d4bc;
+      ">
+        <div id="tony-header-left" style="display:flex;align-items:center;gap:8px;">
+          <img src="${ICON_SRC}" alt="Tony" style="
+            width:32px;
+            height:32px;
+            border-radius:50%;
+          ">
           <div>
-            <div class="tony-title">Ask Tony…</div>
-            <div class="tony-subtitle">Your personal cigar guide</div>
+            <div class="tony-title" style="font-size:15px;font-weight:600;letter-spacing:.02em;">
+              Ask Tony…
+            </div>
+            <div class="tony-subtitle" style="font-size:11px;color:#7b6b4c;">
+              Your personal cigar guide
+            </div>
           </div>
         </div>
-        <button id="tony-close" aria-label="Close Tony">✕</button>
+        <button id="tony-close" aria-label="Close Tony" style="
+          border:none;
+          background:transparent;
+          font-size:16px;
+          cursor:pointer;
+          color:#7b6b4c;
+        ">✕</button>
       </div>
-      <div id="tony-messages"></div>
-      <form id="tony-input" autocomplete="off">
-        <input id="tony-query" placeholder="Ask Tony…" />
-        <button id="tony-send" type="submit">➤</button>
+      <div id="tony-messages" style="
+        flex:1;
+        padding:10px 12px 4px;
+        overflow-y:auto;
+        font-size:13px;
+        color:#2f2617;
+      "></div>
+      <form id="tony-input" autocomplete="off" style="
+        display:flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 10px 10px;
+        border-top:1px solid #e1d4bc;
+        background:#f5eee3;
+      ">
+        <input id="tony-query" placeholder="Ask Tony…" style="
+          flex:1;
+          padding:7px 9px;
+          border-radius:10px;
+          border:1px solid #d0c2a5;
+          font-size:13px;
+          font-family:inherit;
+          outline:none;
+          background:#fdfaf5;
+        " />
+        <button id="tony-send" type="submit" style="
+          border:none;
+          border-radius:10px;
+          padding:6px 12px;
+          font-size:16px;
+          cursor:pointer;
+          background:#b89b64;
+          color:#fff;
+        ">➤</button>
       </form>
     `;
 
@@ -42,7 +136,6 @@
     wireTony(btn, panel);
   }
 
-  // Wire up behavior: open/close, send, fake responses
   function wireTony(btn, panel) {
     const form = panel.querySelector("#tony-input");
     const input = panel.querySelector("#tony-query");
@@ -50,9 +143,11 @@
     const close = panel.querySelector("#tony-close");
 
     function openPanel() {
-      panel.classList.add("tony-open");
+      panel.style.opacity = "1";
+      panel.style.transform = "translateY(0)";
+      panel.style.pointerEvents = "auto";
       panel.setAttribute("aria-hidden", "false");
-      // Seed with intro messages once
+
       if (!msgs.hasChildNodes()) {
         addTony(
           msgs,
@@ -67,14 +162,25 @@
     }
 
     function closePanel() {
-      panel.classList.remove("tony-open");
+      panel.style.opacity = "0";
+      panel.style.transform = "translateY(16px)";
+      panel.style.pointerEvents = "none";
       panel.setAttribute("aria-hidden", "true");
     }
 
     function addBubble(container, text, fromTony) {
       const div = document.createElement("div");
-      div.className = "tony-bubble " + (fromTony ? "tony" : "user");
       div.textContent = text;
+      div.style.cssText = [
+        "max-width:88%",
+        "padding:8px 10px",
+        "margin-bottom:6px",
+        "border-radius:12px",
+        "line-height:1.4",
+        fromTony
+          ? "margin-right:auto;background:#ffffff;border:1px solid #e1d4bc;"
+          : "margin-left:auto;background:#d9c7a5;"
+      ].join("");
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }
@@ -87,7 +193,6 @@
       addBubble(container, text, true);
     }
 
-    // Simple canned “AI” responses for demo purposes
     function fakeTonyAnswer(q) {
       const qq = q.toLowerCase();
 
@@ -137,18 +242,15 @@
       );
     }
 
-    // Events
     btn.addEventListener("click", () => {
-      if (panel.classList.contains("tony-open")) {
+      if (panel.getAttribute("aria-hidden") === "false") {
         closePanel();
       } else {
         openPanel();
       }
     });
 
-    if (close) {
-      close.addEventListener("click", closePanel);
-    }
+    if (close) close.addEventListener("click", closePanel);
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closePanel();
@@ -166,7 +268,6 @@
     });
   }
 
-  // Inject once DOM is ready on every page where this script is loaded
   if (typeof document !== "undefined") {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", createTonyDOM);
