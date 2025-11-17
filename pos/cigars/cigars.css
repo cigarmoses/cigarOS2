@@ -8,3 +8,175 @@ body{background:#eaf1f5}
   gap:18px;
   padding:0 18px 28px;
 }
+/* =========================
+   Tony – POS Assistant
+   ========================= */
+
+#tony-button {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 44px;   /* match receipt pill height */
+  height: 44px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9998;
+}
+
+#tony-button img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: block;
+}
+
+/* Panel */
+
+#tony-panel {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(520px, calc(100vh - 140px));
+  background: #f8f5ef;
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 9999;
+  overflow: hidden;
+  border: 1px solid #e1d4bc;
+  font-family: "Georgia", "Times New Roman", serif;
+}
+
+#tony-panel.tony-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Header */
+
+#tony-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f2e7d4;
+  border-bottom: 1px solid #e1d4bc;
+}
+
+#tony-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#tony-header img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.tony-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tony-subtitle {
+  font-size: 11px;
+  color: #7b6b4c;
+}
+
+#tony-close {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  color: #7b6b4c;
+}
+
+/* Messages */
+
+#tony-messages {
+  flex: 1;
+  padding: 10px 12px 4px;
+  overflow-y: auto;
+  font-size: 13px;
+  color: #2f2617;
+}
+
+.tony-bubble {
+  max-width: 88%;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  line-height: 1.4;
+}
+
+.tony-bubble.user {
+  margin-left: auto;
+  background: #d9c7a5;
+}
+
+.tony-bubble.tony {
+  margin-right: auto;
+  background: #ffffff;
+  border: 1px solid #e1d4bc;
+}
+
+/* Input */
+
+#tony-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid #e1d4bc;
+  background: #f5eee3;
+}
+
+#tony-query {
+  flex: 1;
+  padding: 7px 9px;
+  border-radius: 10px;
+  border: 1px solid #d0c2a5;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: #fdfaf5;
+}
+
+#tony-query:focus {
+  border-color: #b89b64;
+  box-shadow: 0 0 0 1px rgba(184,155,100,0.35);
+}
+
+#tony-send {
+  border: none;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  background: #b89b64;
+  color: #fff;
+}
+
+/* Mobile tweaks */
+
+@media (max-width: 640px) {
+  #tony-panel {
+    bottom: 76px;
+    max-height: calc(100vh - 120px);
+  }
+}
