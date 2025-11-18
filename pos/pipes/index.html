@@ -101,5 +101,48 @@
       renderPipes(e.target.value);
     });
   </script>
+  <!-- Receipt Pill -->
+<div class="receipt-pill" id="open-receipt">
+  <img src="/uxui/receipt-icon.svg" alt="Receipt" />
+</div>
+
+<!-- Invoice Popup -->
+<div id="invoice-popup" class="invoice-popup">
+  <div class="invoice-popup-inner">
+    <div class="invoice-header">
+      <h2>Invoice</h2>
+      <p id="invoice-date"></p>
+    </div>
+
+    <div class="invoice-body">
+
+      <div class="loyalty-row">
+        <span>Loyalty customer</span>
+        <span class="dropdown-arrow">▼</span>
+      </div>
+
+      <!-- CART ITEMS GO HERE -->
+      <div id="invoice-items"></div>
+
+    </div>
+
+    <div class="invoice-totals">
+      <div class="total-row">
+        <span>Subtotal</span>
+        <span id="invoice-subtotal">$0.00</span>
+      </div>
+      <div class="total-row">
+        <span>Tax</span>
+        <span id="invoice-tax">$0.00</span>
+      </div>
+      <div class="total-row total-bold">
+        <span>TOTAL</span>
+        <span id="invoice-total">$0.00</span>
+      </div>
+    </div>
+
+    <div id="close-receipt" class="invoice-close">Close</div>
+  </div>
+</div>
 </body>
 </html>
