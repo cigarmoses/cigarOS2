@@ -28,7 +28,7 @@
       margin: 0;
     }
     .grid {
-      padding: 10px 16px 90px 16px; /* bottom padding leaves room for FAB */
+      padding: 10px 16px 90px 16px; /* leave room for the pill */
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(172px, 1fr));
       gap: 16px;
@@ -69,53 +69,39 @@
       line-height: 1.25;
     }
 
-    /* ===== receipt button at bottom (FAB) ===== */
-    .receipt-fab {
+    /* === Receipt Pill (FIXED SIZE, BOTTOM-RIGHT) === */
+    #receipt-pill {
       position: fixed;
       right: 16px;
       bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
       background: #0f1a2c;
-      border-radius: 999px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      padding: 10px 20px 10px 10px;
-      box-shadow: 0 10px 30px rgba(15,26,44,.25);
-      z-index: 5;
-      text-decoration: none;
+      box-shadow: 0 10px 30px rgba(15,26,44,0.25);
+      color: #ffffff;
+      z-index: 10;
+      font-size: 14px;
+      font-weight: 600;
     }
-    .receipt-icon {
-      width: 49px;
-      height: 49px;
-      background: #fff;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    /* keep the SVG from filling the whole screen */
-    .receipt-icon img {
+    #receipt-pill img {
       width: 28px;
       height: 28px;
       display: block;
     }
-    .receipt-count {
-      width: 30px;
-      height: 30px;
+    #receipt-count {
+      min-width: 24px;
+      height: 24px;
       border-radius: 999px;
       background: #d72828;
-      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 13px;
       font-weight: 700;
-      font-size: 14px;
-    }
-    .receipt-total {
-      color: #fff;
-      font-weight: 700;
-      font-size: 16px;
-      white-space: nowrap;
+      color: #ffffff;
     }
   </style>
 </head>
@@ -128,6 +114,7 @@
     <!-- Cigars -->
     <a class="tile" href="/pos/cigars/">
       <div class="tile-icon">
+        <!-- NEW ICON -->
         <img src="/img/icons/categories/cigars.svg" alt="Cigars" />
       </div>
       <div class="tile-title">Cigars</div>
@@ -137,6 +124,7 @@
     <!-- Accessories -->
     <a class="tile" href="/pos/accessories/">
       <div class="tile-icon">
+        <!-- NEW ICON -->
         <img src="/img/icons/categories/accessories.svg" alt="Accessories" />
       </div>
       <div class="tile-title">Accessories</div>
@@ -146,6 +134,7 @@
     <!-- Ashtrays -->
     <a class="tile" href="/pos/ashtrays/">
       <div class="tile-icon">
+        <!-- NEW ICON -->
         <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays" />
       </div>
       <div class="tile-title">Ashtrays</div>
@@ -155,6 +144,7 @@
     <!-- Food & Bevs -->
     <a class="tile" href="/pos/foodandbevs/">
       <div class="tile-icon">
+        <!-- NEW ICON -->
         <img src="/img/icons/categories/foodandbevs.svg" alt="Food and Bevs" />
       </div>
       <div class="tile-title">Food &amp; Bevs</div>
@@ -164,6 +154,7 @@
     <!-- Packs -->
     <a class="tile" href="/pos/packs/">
       <div class="tile-icon">
+        <!-- NEW ICON -->
         <img src="/img/icons/categories/packs.svg" alt="Packs" />
       </div>
       <div class="tile-title">Packs</div>
@@ -173,6 +164,7 @@
     <!-- Pipes -->
     <a class="tile" href="/pos/pipes/">
       <div class="tile-icon">
+        <!-- NEW ICON -->
         <img src="/img/icons/categories/pipes.svg" alt="Pipes" />
       </div>
       <div class="tile-title">Pipes</div>
@@ -180,17 +172,14 @@
     </a>
   </main>
 
-  <!-- Receipt Pill (FAB) -->
-  <a href="/pos/checkout/" class="receipt-fab" id="receipt-pill">
-    <div class="receipt-icon">
-      <img
-        src="/uxui/receipt-icon.svg"
-        alt="Receipt"
-        id="receipt-icon"
-      />
-    </div>
-    <span class="receipt-total" id="receipt-total">$0.00</span>
-    <span class="receipt-count" id="receipt-count">0</span>
-  </a>
+  <!-- Receipt Pill -->
+  <div id="receipt-pill">
+    <img
+      src="/uxui/receipt-icon.svg"
+      alt="Receipt"
+      id="receipt-icon"
+    />
+    <span id="receipt-count">0</span>
+  </div>
 </body>
 </html>
