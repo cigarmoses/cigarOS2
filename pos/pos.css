@@ -1,100 +1,93 @@
-/* Line item container (your grey rounded block) */
+/* --------------------------------------------------------- */
+/* UNIVERSAL RECEIPT PILL (red vertical icon)                */
+/* --------------------------------------------------------- */
+.receipt-pill {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  width: 70px;
+  height: 130px;
+  z-index: 9999;
+  cursor: pointer;
+}
+
+.receipt-pill img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------- */
+/* INVOICE POPUP OVERLAY                                     */
+/* --------------------------------------------------------- */
+.invoice-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 10000;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+.invoice-popup.open {
+  display: flex;
+}
+
+.invoice-popup-inner {
+  width: 100%;
+  max-width: 520px;
+  background: white;
+  border-radius: 32px;
+  padding: 24px 24px 40px 24px;
+  overflow-y: auto;
+  max-height: 90vh;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+/* --------------------------------------------------------- */
+/* HEADER                                                     */
+/* --------------------------------------------------------- */
+.invoice-header h2 {
+  text-align: center;
+  margin-bottom: 4px;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.invoice-header p {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 17px;
+  opacity: 0.75;
+}
+
+/* --------------------------------------------------------- */
+/* LOYALTY ROW                                                */
+/* --------------------------------------------------------- */
+.loyalty-row {
+  width: 100%;
+  background: #eef3f7;
+  padding: 16px 20px;
+  border-radius: 50px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 17px;
+  color: #2c2c2c;
+}
+
+.dropdown-arrow {
+  opacity: 0.7;
+}
+
+/* --------------------------------------------------------- */
+/* CART ITEM BLOCK                                            */
+/* --------------------------------------------------------- */
 .invoice-item {
   display: flex;
-  align-items: center;
-  padding: 12px 14px;
-  border-radius: 24px;
-  background: #e6edf4; /* match your current grey */
-  gap: 12px;
-}
-
-/* LEFT: icon */
-.invoice-item-icon {
-  flex: 0 0 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.invoice-item-icon img {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  object-fit: cover;
-}
-
-/* MIDDLE: text block */
-.invoice-item-text {
-  flex: 1 1 auto;
-  min-width: 0; /* allows ellipsis/wrap inside flex */
-}
-
-/* Line + cigar name (link, max 2 lines) */
-.invoice-item-title {
-  font-size: 14px;
-  line-height: 1.2;
-  font-weight: 700;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;  /* max 2 lines */
-  overflow: hidden;
-  word-wrap: break-word;
-  text-decoration: underline; /* keep current link look */
-  color: #0055cc; /* or match your existing link color */
-}
-
-/* Vitola / brand / msrp lines (3 lines) */
-.invoice-item-meta {
-  margin-top: 2px;
-}
-.invoice-item-meta > div {
-  font-size: 12px;
-  line-height: 1.25;
-  color: #2b3547;
-}
-
-/* RIGHT: QTY block (3 lines) */
-.invoice-item-qty {
-  flex: 0 0 auto;
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  font-size: 12px; /* same as vitola/brand/msrp */
-}
-
-/* "QTY" label */
-.invoice-item-qty-label {
-  font-weight: 700;
-}
-
-/* +/- controls */
-.invoice-item-qty-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.invoice-qty-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  border: none;
-  font-size: 16px;
-  font-weight: 700;
-  background: #0f1a2c;  /* match your existing dark buttons */
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.invoice-qty-value {
-  min-width: 12px;
-}
-
-/* Line item total ($) */
-.invoice-item-line-total {
-  font-weight: 700;
-  font-size: 12px;
-}
+  background: #e7f0f7;
+  padding: 18px;
+  border-radius:
