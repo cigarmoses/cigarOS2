@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>PIPES • POS</title>
-  <link rel="stylesheet" href="/pos/pos.css">
+  <link rel="stylesheet" href="/pos/pos.css" />
+
   <style>
     .pipes-grid {
       display: grid;
@@ -39,14 +40,33 @@
       font-size: 13px;
       font-weight: 500;
     }
+
+    .pos-search {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 12px;
+      border: 1px solid rgba(0,0,0,.03);
+      margin-bottom: 14px;
+    }
+    .pos-search input {
+      border: 0;
+      outline: 0;
+      width: 100%;
+      background: transparent;
+      font-size: 14px;
+    }
   </style>
 </head>
+
 <body>
   <div class="pos-wrap">
     <div class="pos-topbar">
       <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
       <div class="pos-star">★</div>
     </div>
+
     <div class="pos-header-spacer"></div>
     <h1 class="pos-title">PIPES</h1>
 
@@ -57,34 +77,26 @@
     <div id="pipesGrid" class="pipes-grid"></div>
   </div>
 
-  <div class="pos-bill-tab">
-    <div class="pos-bill-icon">🧾</div>
-    <div class="pos-bill-badge" id="billCount">1</div>
-    <div class="pos-bill-total" id="billTotal">$1.50</div>
-  </div>
-
   <script>
-    // update these names to match /img/icons/pipes/*.svg
+    // update names to match /img/icons/pipes/*.svg
     const PIPES = [
-      { name: "Corncob", file: "corncob.svg" },
-      { name: "Briar", file: "briar.svg" },
-      { name: "Churchwarden", file: "churchwarden.svg" },
-      { name: "Meerschaum", file: "meerschaum.svg" },
-      { name: "Long Stem", file: "longstem.svg" },
-      { name: "Bent", file: "bent.svg" },
+      { name: "Billiard",        file: "billiard.svg" },
+      { name: "Bent Billiard",   file: "bentbilliard.svg" },
+      { name: "Poker",           file: "poker.svg" },
+      { name: "Churchwarden",    file: "churchwarden.svg" },
+      { name: "Corncob",         file: "corncob.svg" },
     ];
 
-    const pipesGrid = document.getElementById('pipesGrid');
-    const pipesSearch = document.getElementById('pipesSearch');
+    const pipesGrid = document.getElementById("pipesGrid");
+    const pipesSearch = document.getElementById("pipesSearch");
 
     function renderPipes(filter = "") {
       pipesGrid.innerHTML = "";
       PIPES.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
         .forEach(p => {
-          const el = document.createElement('a');
-          el.className = 'pipes-tile';
-          // if you later have per-pipe pages, change href here
-          el.href = 'javascript:void(0)';
+          const el = document.createElement("a");
+          el.className = "pipes-tile";
+          el.href = "javascript:void(0)";
           el.innerHTML = `
             <div class="pipes-icon">
               <img src="/img/icons/pipes/${p.file}" alt="${p.name}">
@@ -97,52 +109,55 @@
 
     renderPipes();
 
-    pipesSearch.addEventListener('input', e => {
+    pipesSearch.addEventListener("input", e => {
       renderPipes(e.target.value);
     });
   </script>
-  <!-- Receipt Pill -->
-<div class="receipt-pill" id="open-receipt">
-  <img src="/uxui/receipt-icon.svg" alt="Receipt" />
-</div>
 
-<!-- Invoice Popup -->
-<div id="invoice-popup" class="invoice-popup">
-  <div class="invoice-popup-inner">
-    <div class="invoice-header">
-      <h2>Invoice</h2>
-      <p id="invoice-date"></p>
-    </div>
-
-    <div class="invoice-body">
-
-      <div class="loyalty-row">
-        <span>Loyalty customer</span>
-        <span class="dropdown-arrow">▼</span>
-      </div>
-
-      <!-- CART ITEMS GO HERE -->
-      <div id="invoice-items"></div>
-
-    </div>
-
-    <div class="invoice-totals">
-      <div class="total-row">
-        <span>Subtotal</span>
-        <span id="invoice-subtotal">$0.00</span>
-      </div>
-      <div class="total-row">
-        <span>Tax</span>
-        <span id="invoice-tax">$0.00</span>
-      </div>
-      <div class="total-row total-bold">
-        <span>TOTAL</span>
-        <span id="invoice-total">$0.00</span>
-      </div>
-    </div>
-
-    <div id="close-receipt" class="invoice-close">Close</div>
+  <!-- Red receipt pill -->
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" alt="Receipt" />
   </div>
-</div>
+
+  <!-- Invoice Popup -->
+  <div id="invoice-popup" class="invoice-popup">
+    <div class="invoice-popup-inner">
+
+      <div class="invoice-header">
+        <h2>Invoice</h2>
+        <p id="invoice-date"></p>
+      </div>
+
+      <div class="invoice-body">
+        <div class="loyalty-row">
+          <span>Loyalty customer</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+
+        <!-- CART ITEMS -->
+        <div id="invoice-items"></div>
+      </div>
+
+      <div class="invoice-totals">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span id="invoice-subtotal">$0.00</span>
+        </div>
+        <div class="total-row">
+          <span>Tax</span>
+          <span id="invoice-tax">$0.00</span>
+        </div>
+        <div class="total-row total-bold">
+          <span>TOTAL</span>
+          <span id="invoice-total">$0.00</span>
+        </div>
+      </div>
+
+      <div id="close-receipt" class="invoice-close">Close</div>
+    </div>
+  </div>
+
+  <script src="/js/tony.js" defer></script>
+  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
