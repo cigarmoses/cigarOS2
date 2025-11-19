@@ -441,7 +441,7 @@
       document.querySelectorAll(".feature-check input").forEach(cb => {
         cb.addEventListener("change", () => {
           const feat = cb.dataset.feature;
-          if (cb.checked) {
+          if (cb.checked) {by
             if (!activeFilters.features.includes(feat)) activeFilters.features.push(feat);
           } else {
             activeFilters.features = activeFilters.features.filter(f => f !== feat);
