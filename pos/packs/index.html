@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>PACKS • POS</title>
-  <link rel="stylesheet" href="/pos/pos.css">
+  <link rel="stylesheet" href="/pos/pos.css" />
+
   <style>
     .packs-grid {
       display: grid;
@@ -39,14 +40,33 @@
       font-size: 13px;
       font-weight: 500;
     }
+
+    .pos-search {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 12px;
+      border: 1px solid rgba(0,0,0,.03);
+      margin-bottom: 14px;
+    }
+    .pos-search input {
+      border: 0;
+      outline: 0;
+      width: 100%;
+      background: transparent;
+      font-size: 14px;
+    }
   </style>
 </head>
+
 <body>
   <div class="pos-wrap">
     <div class="pos-topbar">
       <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
       <div class="pos-star">★</div>
     </div>
+
     <div class="pos-header-spacer"></div>
     <h1 class="pos-title">PACKS</h1>
 
@@ -57,32 +77,26 @@
     <div id="packsGrid" class="packs-grid"></div>
   </div>
 
-  <div class="pos-bill-tab">
-    <div class="pos-bill-icon">🧾</div>
-    <div class="pos-bill-badge" id="billCount">1</div>
-    <div class="pos-bill-total" id="billTotal">$1.50</div>
-  </div>
-
   <script>
     // update names to match /img/icons/packs/*.svg
     const PACKS = [
-      { name: "3 Pack", file: "3pack.svg" },
-      { name: "4 Pack", file: "4pack.svg" },
-      { name: "5 Pack", file: "5pack.svg" },
-      { name: "10 Pack", file: "10pack.svg" },
-      { name: "Sampler", file: "sampler.svg" },
+      { name: "3 Pack",   file: "3pack.svg" },
+      { name: "4 Pack",   file: "4pack.svg" },
+      { name: "5 Pack",   file: "5pack.svg" },
+      { name: "10 Pack",  file: "10pack.svg" },
+      { name: "Sampler",  file: "sampler.svg" },
     ];
 
-    const packsGrid = document.getElementById('packsGrid');
-    const packsSearch = document.getElementById('packsSearch');
+    const packsGrid = document.getElementById("packsGrid");
+    const packsSearch = document.getElementById("packsSearch");
 
     function renderPacks(filter = "") {
       packsGrid.innerHTML = "";
       PACKS.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
         .forEach(p => {
-          const el = document.createElement('a');
-          el.className = 'packs-tile';
-          el.href = 'javascript:void(0)';
+          const el = document.createElement("a");
+          el.className = "packs-tile";
+          el.href = "javascript:void(0)";
           el.innerHTML = `
             <div class="packs-icon">
               <img src="/img/icons/packs/${p.file}" alt="${p.name}">
@@ -95,52 +109,55 @@
 
     renderPacks();
 
-    packsSearch.addEventListener('input', e => {
+    packsSearch.addEventListener("input", e => {
       renderPacks(e.target.value);
     });
   </script>
-  <!-- Receipt Pill -->
-<div class="receipt-pill" id="open-receipt">
-  <img src="/uxui/receipt-icon.svg" alt="Receipt" />
-</div>
 
-<!-- Invoice Popup -->
-<div id="invoice-popup" class="invoice-popup">
-  <div class="invoice-popup-inner">
-    <div class="invoice-header">
-      <h2>Invoice</h2>
-      <p id="invoice-date"></p>
-    </div>
-
-    <div class="invoice-body">
-
-      <div class="loyalty-row">
-        <span>Loyalty customer</span>
-        <span class="dropdown-arrow">▼</span>
-      </div>
-
-      <!-- CART ITEMS GO HERE -->
-      <div id="invoice-items"></div>
-
-    </div>
-
-    <div class="invoice-totals">
-      <div class="total-row">
-        <span>Subtotal</span>
-        <span id="invoice-subtotal">$0.00</span>
-      </div>
-      <div class="total-row">
-        <span>Tax</span>
-        <span id="invoice-tax">$0.00</span>
-      </div>
-      <div class="total-row total-bold">
-        <span>TOTAL</span>
-        <span id="invoice-total">$0.00</span>
-      </div>
-    </div>
-
-    <div id="close-receipt" class="invoice-close">Close</div>
+  <!-- Red receipt pill -->
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" alt="Receipt" />
   </div>
-</div>
+
+  <!-- Invoice Popup -->
+  <div id="invoice-popup" class="invoice-popup">
+    <div class="invoice-popup-inner">
+
+      <div class="invoice-header">
+        <h2>Invoice</h2>
+        <p id="invoice-date"></p>
+      </div>
+
+      <div class="invoice-body">
+        <div class="loyalty-row">
+          <span>Loyalty customer</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+
+        <!-- CART ITEMS -->
+        <div id="invoice-items"></div>
+      </div>
+
+      <div class="invoice-totals">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span id="invoice-subtotal">$0.00</span>
+        </div>
+        <div class="total-row">
+          <span>Tax</span>
+          <span id="invoice-tax">$0.00</span>
+        </div>
+        <div class="total-row total-bold">
+          <span>TOTAL</span>
+          <span id="invoice-total">$0.00</span>
+        </div>
+      </div>
+
+      <div id="close-receipt" class="invoice-close">Close</div>
+    </div>
+  </div>
+
+  <script src="/js/tony.js" defer></script>
+  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
