@@ -39,7 +39,7 @@
 .invoice-popup-inner {
   width: 100%;
   max-width: 520px;
-  background: white;
+  background: #ffffff;
   border-radius: 32px;
   padding: 24px 24px 40px 24px;
   overflow-y: auto;
@@ -84,49 +84,43 @@
 }
 
 /* --------------------------------------------------------- */
-/* CART ITEM BLOCK                                            */
+/* CART ITEM BLOCK (placeholder, in case you style later)    */
 /* --------------------------------------------------------- */
 .invoice-item {
-  display: flex;
   background: #e7f0f7;
   padding: 18px;
-  border-radius:
-    /* --- Universal red receipt pill --- */
-.receipt-pill {
-  position: fixed;
-  bottom: 22px;
-  right: 22px;
-  width: 70px;
-  height: 130px;
-  z-index: 9999;
-  cursor: pointer;
-}
-.receipt-pill img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
 }
 
-/* --- Invoice popup overlay --- */
-.invoice-popup {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9998;
+/* --------------------------------------------------------- */
+/* TOTALS                                                     */
+/* --------------------------------------------------------- */
+.invoice-totals {
+  margin-top: 24px;
 }
-.invoice-popup.open {
+
+.total-row {
   display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 18px;
 }
-.invoice-popup-inner {
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  background: #ffffff;
-  border-radius: 26px;
-  padding: 24px 22px 28px;
-  overflow-y: auto;
+
+.total-bold {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+/* CLOSE BUTTON -------------------------------------------- */
+.invoice-close {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #333;
 }
