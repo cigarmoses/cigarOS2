@@ -237,43 +237,7 @@
     </div>
   </div>
 
-  <!-- Invoice Popup -->
-  <div id="invoice-popup" class="invoice-popup">
-    <div class="invoice-popup-inner">
-      <div class="invoice-header">
-        <h2>Invoice</h2>
-        <p id="invoice-date"></p>
-      </div>
-
-      <div class="invoice-body">
-        <div class="loyalty-row">
-          <span>Loyalty customer</span>
-          <span class="dropdown-arrow">▼</span>
-        </div>
-
-        <!-- CART ITEMS GO HERE -->
-        <div id="invoice-items"></div>
-      </div>
-
-      <div class="invoice-totals">
-        <div class="total-row">
-          <span>Subtotal</span>
-          <span id="invoice-subtotal">$0.00</span>
-        </div>
-        <div class="total-row">
-          <span>Tax</span>
-          <span id="invoice-tax">$0.00</span>
-        </div>
-        <div class="total-row total-bold">
-          <span>TOTAL</span>
-          <span id="invoice-total">$0.00</span>
-        </div>
-      </div>
-
-      <div id="close-receipt" class="invoice-close">Close</div>
-    </div>
-  </div>
-
+  <!-- main cigars JS -->
   <script>
     // CSV location
     const CSV_URL = "/hub/hub_11-5-25.csv";
@@ -442,7 +406,7 @@
       document.querySelectorAll(".feature-check input").forEach(cb => {
         cb.addEventListener("change", () => {
           const feat = cb.dataset.feature;
-          if (cb.checked) {by
+          if (cb.checked) {
             if (!activeFilters.features.includes(feat)) activeFilters.features.push(feat);
           } else {
             activeFilters.features = activeFilters.features.filter(f => f !== feat);
@@ -456,43 +420,43 @@
     function closeFilter(){ document.getElementById("filterSheet").style.display="none"; }
   </script>
 
-<!-- Red receipt pill -->
-<div class="receipt-pill" id="open-receipt">
-  <img src="/uxui/receipt-icon.svg" alt="Receipt" />
-</div>
+  <!-- Red receipt pill -->
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" alt="Receipt" />
+  </div>
 
   <!-- Invoice Popup -->
-<div id="invoice-popup" class="invoice-popup">
-  <div class="invoice-popup-inner">
+  <div id="invoice-popup" class="invoice-popup">
+    <div class="invoice-popup-inner">
 
-    <div class="invoice-header">
-      <h2>Invoice</h2>
-      <p id="invoice-date"></p>
-    </div>
-
-    <div class="invoice-body">
-
-      <div class="loyalty-row">
-        <span>Loyalty customer</span>
-        <span class="dropdown-arrow">▼</span>
+      <div class="invoice-header">
+        <h2>Invoice</h2>
+        <p id="invoice-date"></p>
       </div>
 
-      <!-- CART ITEMS -->
-      <div id="invoice-items"></div>
+      <div class="invoice-body">
 
+        <div class="loyalty-row">
+          <span>Loyalty customer</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+
+        <!-- CART ITEMS -->
+        <div id="invoice-items"></div>
+
+      </div>
+
+      <div class="invoice-totals">
+        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
+        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
+        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
+      </div>
+
+      <div id="close-receipt" class="invoice-close">Close</div>
     </div>
-
-    <div class="invoice-totals">
-      <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
-      <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
-      <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
-    </div>
-
-    <div id="close-receipt" class="invoice-close">Close</div>
   </div>
-</div>
-  
-<script src="/js/tony.js" defer></script>
-<script src="/pos/pos.js" defer></script>
+
+  <script src="/js/tony.js" defer></script>
+  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
