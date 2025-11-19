@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ACCESSORIES • POS</title>
-  <link rel="stylesheet" href="/pos/pos.css">
+  <link rel="stylesheet" href="/pos/pos.css" />
   <style>
     .acc-grid {
       display: grid;
@@ -57,32 +57,27 @@
     <div id="accGrid" class="acc-grid"></div>
   </div>
 
-  <div class="pos-bill-tab">
-    <div class="pos-bill-icon">🧾</div>
-    <div class="pos-bill-badge" id="billCount">1</div>
-    <div class="pos-bill-total" id="billTotal">$1.50</div>
-  </div>
-
   <script>
     // update names to match /img/icons/accessories/*.svg
     const ACCESSORIES = [
-      { name: "Cutter", file: "cutter.svg" },
-      { name: "Lighter", file: "lighter.svg" },
-      { name: "Humidifier", file: "humidifier.svg" },
-      { name: "Travel Case", file: "travelcase.svg" },
-      { name: "Torch", file: "torch.svg" },
+      { name: "Cutter",       file: "cutter.svg" },
+      { name: "Lighter",      file: "lighter.svg" },
+      { name: "Humidifier",   file: "humidifier.svg" },
+      { name: "Travel Case",  file: "travelcase.svg" },
+      { name: "Torch",        file: "torch.svg" },
     ];
 
-    const accGrid = document.getElementById('accGrid');
-    const accSearch = document.getElementById('accSearch');
+    const accGrid = document.getElementById("accGrid");
+    const accSearch = document.getElementById("accSearch");
 
     function renderAccessories(filter = "") {
       accGrid.innerHTML = "";
-      ACCESSORIES.filter(a => a.name.toLowerCase().includes(filter.toLowerCase()))
+      ACCESSORIES
+        .filter(a => a.name.toLowerCase().includes(filter.toLowerCase()))
         .forEach(a => {
-          const el = document.createElement('a');
-          el.className = 'acc-tile';
-          el.href = 'javascript:void(0)';
+          const el = document.createElement("a");
+          el.className = "acc-tile";
+          el.href = "javascript:void(0)";
           el.innerHTML = `
             <div class="acc-icon">
               <img src="/img/icons/accessories/${a.file}" alt="${a.name}">
@@ -95,52 +90,54 @@
 
     renderAccessories();
 
-    accSearch.addEventListener('input', e => {
+    accSearch.addEventListener("input", e => {
       renderAccessories(e.target.value);
     });
   </script>
-  <!-- Receipt Pill -->
-<div class="receipt-pill" id="open-receipt">
-  <img src="/uxui/receipt-icon.svg" alt="Receipt" />
-</div>
 
-<!-- Invoice Popup -->
-<div id="invoice-popup" class="invoice-popup">
-  <div class="invoice-popup-inner">
-    <div class="invoice-header">
-      <h2>Invoice</h2>
-      <p id="invoice-date"></p>
-    </div>
-
-    <div class="invoice-body">
-
-      <div class="loyalty-row">
-        <span>Loyalty customer</span>
-        <span class="dropdown-arrow">▼</span>
-      </div>
-
-      <!-- CART ITEMS GO HERE -->
-      <div id="invoice-items"></div>
-
-    </div>
-
-    <div class="invoice-totals">
-      <div class="total-row">
-        <span>Subtotal</span>
-        <span id="invoice-subtotal">$0.00</span>
-      </div>
-      <div class="total-row">
-        <span>Tax</span>
-        <span id="invoice-tax">$0.00</span>
-      </div>
-      <div class="total-row total-bold">
-        <span>TOTAL</span>
-        <span id="invoice-total">$0.00</span>
-      </div>
-    </div>
-
-    <div id="close-receipt" class="invoice-close">Close</div>
+  <!-- Red receipt pill -->
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" alt="Receipt" />
   </div>
-</div>
+
+  <!-- Invoice Popup -->
+  <div id="invoice-popup" class="invoice-popup">
+    <div class="invoice-popup-inner">
+      <div class="invoice-header">
+        <h2>Invoice</h2>
+        <p id="invoice-date"></p>
+      </div>
+
+      <div class="invoice-body">
+        <div class="loyalty-row">
+          <span>Loyalty customer</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+
+        <!-- CART ITEMS GO HERE -->
+        <div id="invoice-items"></div>
+      </div>
+
+      <div class="invoice-totals">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span id="invoice-subtotal">$0.00</span>
+        </div>
+        <div class="total-row">
+          <span>Tax</span>
+          <span id="invoice-tax">$0.00</span>
+        </div>
+        <div class="total-row total-bold">
+          <span>TOTAL</span>
+          <span id="invoice-total">$0.00</span>
+        </div>
+      </div>
+
+      <div id="close-receipt" class="invoice-close">Close</div>
+    </div>
+  </div>
+
+  <script src="/js/tony.js" defer></script>
+  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
