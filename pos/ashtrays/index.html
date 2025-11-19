@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ASHTRAYS • POS</title>
+  <link rel="stylesheet" href="/pos/pos.css" />
   <style>
     :root {
       --bg: #eaf2f6;
@@ -100,69 +101,6 @@
       font-size: 13px;
       font-weight: 500;
     }
-
-    /* bill tab */
-    .pos-bill-tab {
-      position: fixed;
-      bottom: 18px;
-      right: 18px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #0f1a2c;
-      color: #fff;
-      border-radius: 50px;
-      padding: 10px 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      cursor: pointer;
-      z-index: 50;
-    }
-    .pos-bill-icon { font-size: 16px; }
-    .pos-bill-badge {
-      background: #e11;
-      width: 20px;
-      height: 20px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .pos-bill-total { font-weight: 600; }
-
-    /* bill modal */
-    .bill-modal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      z-index: 9999;
-    }
-    .bill-modal.show { display: block; }
-    .bill-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,.35);
-    }
-    .bill-panel {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 92vh;
-      max-height: 760px;
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-    }
-    .bill-frame {
-      width: 100%;
-      max-width: 480px;
-      height: 100%;
-      border: none;
-      border-top-left-radius: 26px;
-      border-top-right-radius: 26px;
-      overflow: hidden;
-    }
   </style>
 </head>
 <body>
@@ -181,42 +119,27 @@
     <div id="ashGrid" class="ash-grid"></div>
   </div>
 
-  <!-- bill tab -->
-  <div class="pos-bill-tab" onclick="openBill()">
-    <div class="pos-bill-icon">🧾</div>
-    <div class="pos-bill-badge" id="billCount">1</div>
-    <div class="pos-bill-total" id="billTotal">$1.50</div>
-  </div>
-
-  <!-- bill modal -->
-  <div id="billModal" class="bill-modal">
-    <div class="bill-backdrop" onclick="closeBill()"></div>
-    <div class="bill-panel">
-      <iframe src="/pos/receipt/" class="bill-frame" title="Invoice"></iframe>
-    </div>
-  </div>
-
   <script>
     // icons from /img/icons/ashtrays/
     const ASHTRAYS = [
       { name: "Single Slot", file: "single.svg" },
-      { name: "4 Slot", file: "4slot.svg" },
-      { name: "Ceramic", file: "ceramic.svg" },
-      { name: "Glass", file: "glass.svg" },
-      { name: "Branded", file: "branded.svg" },
+      { name: "4 Slot",      file: "4slot.svg" },
+      { name: "Ceramic",     file: "ceramic.svg" },
+      { name: "Glass",       file: "glass.svg" },
+      { name: "Branded",     file: "branded.svg" },
     ];
 
-    const grid = document.getElementById('ashGrid');
-    const search = document.getElementById('ashSearch');
+    const grid = document.getElementById("ashGrid");
+    const search = document.getElementById("ashSearch");
 
     function renderAshtrays(filter = "") {
       grid.innerHTML = "";
       ASHTRAYS
         .filter(a => a.name.toLowerCase().includes(filter.toLowerCase()))
         .forEach(a => {
-          const div = document.createElement('a');
-          div.className = 'ash-tile';
-          div.href = 'javascript:void(0)';
+          const div = document.createElement("a");
+          div.className = "ash-tile";
+          div.href = "javascript:void(0)";
           div.innerHTML = `
             <div class="ash-icon">
               <img src="/img/icons/ashtrays/${a.file}" alt="${a.name}">
@@ -229,61 +152,54 @@
 
     renderAshtrays();
 
-    search.addEventListener('input', e => {
+    search.addEventListener("input", e => {
       renderAshtrays(e.target.value);
     });
-
-    function openBill() {
-      document.getElementById('billModal').classList.add('show');
-    }
-    function closeBill() {
-      document.getElementById('billModal').classList.remove('show');
-    }
-    // let the iframe close it
-    window.closeBill = closeBill;
   </script>
-  <!-- Receipt Pill -->
-<div class="receipt-pill" id="open-receipt">
-  <img src="/uxui/receipt-icon.svg" alt="Receipt" />
-</div>
 
-<!-- Invoice Popup -->
-<div id="invoice-popup" class="invoice-popup">
-  <div class="invoice-popup-inner">
-    <div class="invoice-header">
-      <h2>Invoice</h2>
-      <p id="invoice-date"></p>
-    </div>
-
-    <div class="invoice-body">
-
-      <div class="loyalty-row">
-        <span>Loyalty customer</span>
-        <span class="dropdown-arrow">▼</span>
-      </div>
-
-      <!-- CART ITEMS GO HERE -->
-      <div id="invoice-items"></div>
-
-    </div>
-
-    <div class="invoice-totals">
-      <div class="total-row">
-        <span>Subtotal</span>
-        <span id="invoice-subtotal">$0.00</span>
-      </div>
-      <div class="total-row">
-        <span>Tax</span>
-        <span id="invoice-tax">$0.00</span>
-      </div>
-      <div class="total-row total-bold">
-        <span>TOTAL</span>
-        <span id="invoice-total">$0.00</span>
-      </div>
-    </div>
-
-    <div id="close-receipt" class="invoice-close">Close</div>
+  <!-- Red receipt pill -->
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" alt="Receipt" />
   </div>
-</div>
+
+  <!-- Invoice Popup -->
+  <div id="invoice-popup" class="invoice-popup">
+    <div class="invoice-popup-inner">
+      <div class="invoice-header">
+        <h2>Invoice</h2>
+        <p id="invoice-date"></p>
+      </div>
+
+      <div class="invoice-body">
+        <div class="loyalty-row">
+          <span>Loyalty customer</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+
+        <!-- CART ITEMS GO HERE -->
+        <div id="invoice-items"></div>
+      </div>
+
+      <div class="invoice-totals">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span id="invoice-subtotal">$0.00</span>
+        </div>
+        <div class="total-row">
+          <span>Tax</span>
+          <span id="invoice-tax">$0.00</span>
+        </div>
+        <div class="total-row total-bold">
+          <span>TOTAL</span>
+          <span id="invoice-total">$0.00</span>
+        </div>
+      </div>
+
+      <div id="close-receipt" class="invoice-close">Close</div>
+    </div>
+  </div>
+
+  <script src="/js/tony.js" defer></script>
+  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
