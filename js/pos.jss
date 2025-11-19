@@ -1,16 +1,27 @@
 // /js/pos.js
-// Universal red receipt pill for all POS pages
+// Universal red receipt pill + invoice popup behavior for ALL /pos pages
 
 (function () {
   document.addEventListener("DOMContentLoaded", function () {
-    // Only run on POS pages
+    // Only run on POS section
     if (!window.location.pathname.startsWith("/pos/")) return;
 
-    // Inject styles for the pill + hide any old icons
+    // --- CLEAN UP ANY OLD STUFF ---------------------------------------
+    // remove any existing pills
+    document.querySelectorAll(".receipt-pill").forEach(el => el.remove());
+    // remove any stray raw receipt-icon images
+    document.querySelectorAll('img[src="/uxui/receipt-icon.svg"]').forEach(el => el.remove());
+    // hide legacy black bill tab if it still exists
+    document.querySelectorAll(".pos-bill-tab, .bill-modal").forEach(el => {
+      el.style.display = "none";
+    });
+
+    // --- INJECT GLOBAL STYLES (PILL + POPUP) --------------------------
     if (!document.getElementById("receipt-pill-style")) {
       const style = document.createElement("style");
       style.id = "receipt-pill-style";
       style.textContent = `
+        /* Small red vertical receipt pill - universal */
         .receipt-pill {
           position: fixed;
           bottom: 22px;
@@ -26,43 +37,69 @@
           object-fit: contain;
           display: block;
         }
-        /* Hide any old black bill tab if it still exists */
-        .pos-bill-tab {
-          display: none !important;
+
+        /* Universal invoice popup overlay */
+        .invoice-popup {
+          position: fixed;
+          inset: 0;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0,0,0,0.35);
+          z-index: 9998;
         }
-        /* Hide any stray big receipt icons that were dropped directly on the page */
-        img[src="/uxui/receipt-icon.svg"]:not(.receipt-pill img) {
-          display: none !important;
+        .invoice-popup.open {
+          display: flex;
+        }
+        .invoice-popup-inner {
+          width: 100%;
+          max-width: 480px;
+          max-height: 90vh;
+          overflow-y: auto;
+          background: #ffffff;
+          border-radius: 26px;
+          padding: 24px 22px 28px;
+          box-sizing: border-box;
         }
       `;
       document.head.appendChild(style);
     }
 
-    // Avoid duplicates
-    if (!document.querySelector(".receipt-pill")) {
-      const pill = document.createElement("div");
-      pill.className = "receipt-pill";
-      pill.id = "open-receipt";
-      pill.innerHTML = '<img src="/uxui/receipt-icon.svg" alt="Receipt">';
-      document.body.appendChild(pill);
+    // --- CREATE ONE PILL ----------------------------------------------
+    const pill = document.createElement("div");
+    pill.className = "receipt-pill";
+    pill.id = "open-receipt";
+    pill.innerHTML = '<img src="/uxui/receipt-icon.svg" alt="Receipt">';
+    document.body.appendChild(pill);
 
-      pill.addEventListener("click", function () {
-        const popup = document.getElementById("invoice-popup");
-        if (popup) {
-          popup.classList.add("open");
-        } else {
-          // Fallback: go to main receipt page if no popup on this screen
-          window.location.href = "/pos/receipt/";
-        }
-      });
-    }
-
-    // Optional: close handler for invoice popup, if present
+    // --- WIRE UP OPEN/CLOSE LOGIC -------------------------------------
     const popup = document.getElementById("invoice-popup");
     const closeBtn = document.getElementById("close-receipt");
-    if (popup && closeBtn) {
-      closeBtn.addEventListener("click", function () {
+
+    function openInvoice() {
+      if (popup) {
+        popup.classList.add("open");
+      } else {
+        // Fallback if a page doesn't have the popup markup
+        window.location.href = "/pos/receipt/";
+      }
+    }
+
+    function closeInvoice() {
+      if (popup) {
         popup.classList.remove("open");
+      }
+    }
+
+    pill.addEventListener("click", openInvoice);
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeInvoice);
+    }
+    if (popup) {
+      // click outside to close
+      popup.addEventListener("click", function (e) {
+        if (e.target === popup) closeInvoice();
       });
     }
   });
