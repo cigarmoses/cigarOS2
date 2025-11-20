@@ -4,7 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ACCESSORIES • POS</title>
+  <!-- POS-wide styles (red receipt pill, invoice popup, etc.) -->
   <link rel="stylesheet" href="/pos/pos.css" />
+
   <style>
     .acc-grid {
       display: grid;
@@ -17,7 +19,7 @@
       text-decoration: none;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       align-items: center;
       color: #0f1a2c;
     }
@@ -36,8 +38,31 @@
       object-fit: cover;
     }
     .acc-label {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
+      line-height: 1.2;
+    }
+    .acc-price {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    /* simple search bar */
+    .pos-search {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 12px;
+      border: 1px solid rgba(0,0,0,.03);
+      margin-bottom: 14px;
+    }
+    .pos-search input {
+      border: 0;
+      outline: 0;
+      width: 100%;
+      background: transparent;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -47,6 +72,7 @@
       <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
       <div class="pos-star">★</div>
     </div>
+
     <div class="pos-header-spacer"></div>
     <h1 class="pos-title">ACCESSORIES</h1>
 
@@ -58,13 +84,34 @@
   </div>
 
   <script>
-    // update names to match /img/icons/accessories/*.svg
+    // ACCESSORY PRODUCTS (using /img/lighters/ images)
     const ACCESSORIES = [
-      { name: "Cutter",       file: "cutter.svg" },
-      { name: "Lighter",      file: "lighter.svg" },
-      { name: "Humidifier",   file: "humidifier.svg" },
-      { name: "Travel Case",  file: "travelcase.svg" },
-      { name: "Torch",        file: "torch.svg" },
+      {
+        name: "Vertigo Cyclone Triple Torch",
+        price: "$9.99",
+        img: "/img/lighters/vertigocyclonetripletorch.jpg"
+      },
+      {
+        name: "Vertigo Boxer Triple Torch",
+        price: "$9.99",
+        // if you upload a dedicated boxer image, just change this path
+        img: "/img/lighters/vertigocyclonetripletorch.jpg"
+      },
+      {
+        name: "Excalibur Double Torch V-Cutter Lighter",
+        price: "$39.99",
+        img: "/img/lighters/lotusexcaliburdoubletorchvcutterlighter.jpg"
+      },
+      {
+        name: "Elie Bleu Opus X Hemingway Lighter",
+        price: "$330.00",
+        img: "/img/lighters/elliebleuopusxhemingwaylighter.jpg"
+      },
+      {
+        name: "Elie Bleu Opus X Angel’s Share Lighter",
+        price: "$600.00",
+        img: "/img/lighters/elliebleuopusxangelssharelighter.jpg"
+      }
     ];
 
     const accGrid = document.getElementById("accGrid");
@@ -72,17 +119,20 @@
 
     function renderAccessories(filter = "") {
       accGrid.innerHTML = "";
+      const term = filter.toLowerCase();
+
       ACCESSORIES
-        .filter(a => a.name.toLowerCase().includes(filter.toLowerCase()))
+        .filter(a => a.name.toLowerCase().includes(term))
         .forEach(a => {
           const el = document.createElement("a");
           el.className = "acc-tile";
           el.href = "javascript:void(0)";
           el.innerHTML = `
             <div class="acc-icon">
-              <img src="/img/icons/accessories/${a.file}" alt="${a.name}">
+              <img src="${a.img}" alt="${a.name}">
             </div>
             <div class="acc-label">${a.name}</div>
+            <div class="acc-price">${a.price}</div>
           `;
           accGrid.appendChild(el);
         });
@@ -114,23 +164,14 @@
           <span class="dropdown-arrow">▼</span>
         </div>
 
-        <!-- CART ITEMS GO HERE -->
+        <!-- CART ITEMS -->
         <div id="invoice-items"></div>
       </div>
 
       <div class="invoice-totals">
-        <div class="total-row">
-          <span>Subtotal</span>
-          <span id="invoice-subtotal">$0.00</span>
-        </div>
-        <div class="total-row">
-          <span>Tax</span>
-          <span id="invoice-tax">$0.00</span>
-        </div>
-        <div class="total-row total-bold">
-          <span>TOTAL</span>
-          <span id="invoice-total">$0.00</span>
-        </div>
+        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
+        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
+        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
       </div>
 
       <div id="close-receipt" class="invoice-close">Close</div>
