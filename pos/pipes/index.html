@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>PIPES • POS</title>
   <link rel="stylesheet" href="/pos/pos.css" />
-
   <style>
     .pipes-grid {
       display: grid;
@@ -18,7 +17,7 @@
       text-decoration: none;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       align-items: center;
       color: #0f1a2c;
     }
@@ -39,6 +38,10 @@
     .pipes-label {
       font-size: 13px;
       font-weight: 500;
+    }
+    .pipes-price {
+      font-size: 12px;
+      opacity: 0.8;
     }
 
     .pos-search {
@@ -78,13 +81,13 @@
   </div>
 
   <script>
-    // update names to match /img/icons/pipes/*.svg
+    // PRODUCTS (using /img/pipes/)
     const PIPES = [
-      { name: "Billiard",        file: "billiard.svg" },
-      { name: "Bent Billiard",   file: "bentbilliard.svg" },
-      { name: "Poker",           file: "poker.svg" },
-      { name: "Churchwarden",    file: "churchwarden.svg" },
-      { name: "Corncob",         file: "corncob.svg" },
+      {
+        name: "Pipe Tobacco",
+        price: "$4.99",
+        img: "/img/pipes/pipetobacco.jpg"
+      }
     ];
 
     const pipesGrid = document.getElementById("pipesGrid");
@@ -92,16 +95,19 @@
 
     function renderPipes(filter = "") {
       pipesGrid.innerHTML = "";
-      PIPES.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
+      const term = filter.toLowerCase();
+
+      PIPES.filter(p => p.name.toLowerCase().includes(term))
         .forEach(p => {
           const el = document.createElement("a");
           el.className = "pipes-tile";
           el.href = "javascript:void(0)";
           el.innerHTML = `
             <div class="pipes-icon">
-              <img src="/img/icons/pipes/${p.file}" alt="${p.name}">
+              <img src="${p.img}" alt="${p.name}">
             </div>
             <div class="pipes-label">${p.name}</div>
+            <div class="pipes-price">${p.price}</div>
           `;
           pipesGrid.appendChild(el);
         });
@@ -134,7 +140,6 @@
           <span class="dropdown-arrow">▼</span>
         </div>
 
-        <!-- CART ITEMS -->
         <div id="invoice-items"></div>
       </div>
 
