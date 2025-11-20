@@ -50,7 +50,6 @@
       margin: 0 0 10px;
     }
 
-    /* search like cigars */
     .pos-search {
       display: flex;
       align-items: center;
@@ -68,7 +67,6 @@
       font-size: 14px;
     }
 
-    /* 4-across with captions */
     .ash-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -80,7 +78,7 @@
       color: inherit;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       align-items: center;
     }
     .ash-icon {
@@ -98,8 +96,13 @@
       object-fit: cover;
     }
     .ash-label {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
+      line-height: 1.2;
+    }
+    .ash-price {
+      font-size: 12px;
+      opacity: 0.8;
     }
   </style>
 </head>
@@ -120,13 +123,18 @@
   </div>
 
   <script>
-    // icons from /img/icons/ashtrays/
+    // PRODUCTS (using /img/ashtrays/)
     const ASHTRAYS = [
-      { name: "Single Slot", file: "single.svg" },
-      { name: "4 Slot",      file: "4slot.svg" },
-      { name: "Ceramic",     file: "ceramic.svg" },
-      { name: "Glass",       file: "glass.svg" },
-      { name: "Branded",     file: "branded.svg" },
+      {
+        name: "Opus X 20th Anniversary Ashtray",
+        price: "$199.99",
+        img: "/img/ashtrays/opusx20thanniversaryashtray.jpg"
+      },
+      {
+        name: "Rocky Patel Luxury Luminoso Ashtray",
+        price: "$59.99",
+        img: "/img/ashtrays/rockypatelluxuryluminosoashtray.jpg"
+      }
     ];
 
     const grid = document.getElementById("ashGrid");
@@ -134,17 +142,20 @@
 
     function renderAshtrays(filter = "") {
       grid.innerHTML = "";
+      const term = filter.toLowerCase();
+
       ASHTRAYS
-        .filter(a => a.name.toLowerCase().includes(filter.toLowerCase()))
+        .filter(a => a.name.toLowerCase().includes(term))
         .forEach(a => {
           const div = document.createElement("a");
           div.className = "ash-tile";
           div.href = "javascript:void(0)";
           div.innerHTML = `
             <div class="ash-icon">
-              <img src="/img/icons/ashtrays/${a.file}" alt="${a.name}">
+              <img src="${a.img}" alt="${a.name}">
             </div>
             <div class="ash-label">${a.name}</div>
+            <div class="ash-price">${a.price}</div>
           `;
           grid.appendChild(div);
         });
@@ -175,24 +186,13 @@
           <span>Loyalty customer</span>
           <span class="dropdown-arrow">▼</span>
         </div>
-
-        <!-- CART ITEMS GO HERE -->
         <div id="invoice-items"></div>
       </div>
 
       <div class="invoice-totals">
-        <div class="total-row">
-          <span>Subtotal</span>
-          <span id="invoice-subtotal">$0.00</span>
-        </div>
-        <div class="total-row">
-          <span>Tax</span>
-          <span id="invoice-tax">$0.00</span>
-        </div>
-        <div class="total-row total-bold">
-          <span>TOTAL</span>
-          <span id="invoice-total">$0.00</span>
-        </div>
+        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
+        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
+        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
       </div>
 
       <div id="close-receipt" class="invoice-close">Close</div>
