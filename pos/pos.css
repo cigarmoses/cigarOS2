@@ -1,14 +1,7 @@
-/* =========================================================
-   GLOBAL POS INVOICE STYLES
-   - Red receipt pill
-   - Invoice popup "sheet"
-   - Loyalty dropdown with search
-   - Line items + totals
-   ======================================================== */
+/* --------------------------------------------------------- */
+/* UNIVERSAL RED RECEIPT PILL                               */
+/* --------------------------------------------------------- */
 
-/* ---------------------------------------------------------
-   UNIVERSAL RED RECEIPT PILL (bottom-right)
-   --------------------------------------------------------- */
 .receipt-pill {
   position: fixed;
   bottom: 22px;
@@ -18,247 +11,231 @@
   z-index: 9999;
   cursor: pointer;
 }
+
 .receipt-pill img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
+  pointer-events: none;
 }
 
-/* ---------------------------------------------------------
-   INVOICE POPUP OVERLAY
-   --------------------------------------------------------- */
+/* --------------------------------------------------------- */
+/* INVOICE POPUP OVERLAY (BIG WHITE SHEET)                  */
+/* --------------------------------------------------------- */
+
 .invoice-popup {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45); /* dark grey backdrop */
-  z-index: 9998;
-  display: none;                 /* .open -> flex */
+  /* medium grey outer background, like your mock */
+  background: rgba(120, 120, 120, 0.92);
+  display: none;              /* toggled by .open */
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  z-index: 9998;
+  padding: 18px;
 }
+
 .invoice-popup.open {
   display: flex;
 }
 
-/* The big white sheet in the center */
 .invoice-popup-inner {
   width: 100%;
   max-width: 520px;
   max-height: 90vh;
   background: #ffffff;
-  border-radius: 36px;
-  padding: 26px 22px 34px;
+  border-radius: 40px;
+  padding: 28px 26px 34px;
   overflow-y: auto;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+    "Segoe UI", Arial, sans-serif;
+  color: #111111;
 }
 
-/* ---------------------------------------------------------
-   HEADER
-   --------------------------------------------------------- */
+/* --------------------------------------------------------- */
+/* HEADER: TITLE + DATE                                     */
+/* --------------------------------------------------------- */
+
 .invoice-header h2 {
+  margin: 0 0 4px 0;
   text-align: center;
-  margin-bottom: 4px;
   font-size: 32px;
   font-weight: 700;
 }
-.invoice-header p {
+
+.invoice-header p,
+#invoice-date {
+  margin: 0 0 24px 0;
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 15px;
-  opacity: 0.8;
+  font-size: 16px;
+  color: #333333;
 }
 
-/* ---------------------------------------------------------
-   LOYALTY ROW + DROPDOWN
-   --------------------------------------------------------- */
+/* --------------------------------------------------------- */
+/* LOYALTY ROW (LIGHT BLUE PILL)                            */
+/* --------------------------------------------------------- */
 
-.loyalty-wrapper {
-  position: relative;
-  margin-bottom: 22px;
-}
-
-/* pill displayed on the sheet */
 .loyalty-row {
   width: 100%;
-  background: #eef3f7;           /* light blue pill */
-  padding: 14px 18px;
+  background: #e6eff7;
   border-radius: 999px;
+  padding: 14px 18px;
+  margin-bottom: 22px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 15px;
-  color: #2c2c2c;
-  cursor: pointer;
-  user-select: none;
+  font-size: 16px;
 }
-.loyalty-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+
+.loyalty-row span:first-child {
+  font-weight: 500;
 }
+
 .dropdown-arrow {
-  font-size: 13px;
+  font-size: 14px;
   opacity: 0.8;
 }
 
-/* dropdown menu container */
-.loyalty-menu {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 8px);
-  background: #f6f9fd;
-  border-radius: 22px;
-  padding: 10px 12px 12px;
-  box-shadow: 0 14px 30px rgba(0,0,0,0.18);
-  display: none;                 /* .open -> block */
-  z-index: 20;
-}
-.loyalty-menu.open {
-  display: block;
-}
+/* --------------------------------------------------------- */
+/* LINE ITEMS                                                */
+/* --------------------------------------------------------- */
 
-/* search input inside dropdown */
-.loyalty-search-wrap {
-  background: #ffffff;
-  border-radius: 999px;
-  padding: 8px 12px;
-  border: 1px solid rgba(0,0,0,0.06);
+.invoice-body {
+  /* separates items from header a bit more */
 }
-.loyalty-search-wrap input {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  font-size: 14px;
-}
-
-/* scrollable customer list */
-.loyalty-list {
-  margin-top: 8px;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-/* individual customer row */
-.loyalty-customer {
-  padding: 7px 4px;
-  border-radius: 12px;
-  cursor: pointer;
-}
-.loyalty-customer:hover {
-  background: #e1edf8;
-}
-.loyalty-name {
-  font-size: 14px;
-  font-weight: 600;
-}
-.loyalty-meta {
-  font-size: 12px;
-  opacity: 0.75;
-}
-
-/* ---------------------------------------------------------
-   LINE ITEMS
-   --------------------------------------------------------- */
 
 .invoice-item {
   display: flex;
-  background: #e7f0f7;           /* light blue block */
-  padding: 16px 16px 14px;
+  align-items: center;
+  gap: 14px;
+  background: #e6f1fb;        /* light blue block */
   border-radius: 26px;
-  margin-bottom: 12px;
-  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
 }
 
-/* icon on the left */
-.invoice-item-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 18px;
+.invoice-item-left {
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
   overflow: hidden;
-  background: #d8dde4;
+  background: #d7dde5;
   flex-shrink: 0;
   display: grid;
   place-items: center;
 }
-.invoice-item-icon img {
+
+.invoice-item-left img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-/* middle stacked text */
-.invoice-item-body {
+.invoice-item-main {
   flex: 1;
   min-width: 0;
-}
-.invoice-item-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f86d9;
-  text-decoration: underline;    /* clickable link style */
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.invoice-item-sub {
-  font-size: 13px;
-  line-height: 1.25;
-  color: #273242;
+  font-size: 14px;
+  line-height: 1.3;
 }
 
-/* right side: QTY + line total */
+.invoice-item-name {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.invoice-item-name a {
+  color: #0073d9;             /* blue link */
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.invoice-item-meta {
+  color: #333333;
+}
+
+.invoice-item-meta div + div {
+  margin-top: 2px;
+}
+
+/* Right side: QTY + line total */
+
 .invoice-item-right {
   text-align: right;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  font-size: 13px;
+  font-size: 14px;
+  flex-shrink: 0;
+  min-width: 70px;
 }
-.invoice-qty {
-  font-weight: 600;
+
+.invoice-item-qty {
+  font-weight: 500;
+  margin-bottom: 6px;
 }
-.invoice-line-total {
+
+.invoice-item-total {
   font-weight: 600;
 }
 
-/* ---------------------------------------------------------
-   TOTALS SECTION
-   --------------------------------------------------------- */
+/* --------------------------------------------------------- */
+/* TOTALS SECTION                                            */
+/* --------------------------------------------------------- */
 
 .invoice-totals {
-  margin-top: 18px;
+  margin-top: 26px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  max-width: 260px;
+  margin-left: auto;
+  font-size: 18px;
 }
-.invoice-total-row {
+
+.invoice-totals .total-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 4px;
-  font-size: 16px;
 }
-.invoice-total-row.invoice-grand {
-  margin-top: 8px;
+
+.invoice-totals .total-row span:first-child {
+  font-weight: 500;
+}
+
+.invoice-totals .total-row.total-bold span:first-child {
   font-size: 22px;
   font-weight: 700;
 }
 
-/* ---------------------------------------------------------
-   CLOSE LINK
-   --------------------------------------------------------- */
-
-.invoice-close {
-  text-align: center;
-  margin-top: 14px;
-  font-size: 15px;
-  cursor: pointer;
-  color: #2b6ad4;
+.invoice-totals .total-row.total-bold span:last-child {
+  font-size: 22px;
+  font-weight: 700;
 }
 
-/* Optional: small helper for a subtle bottom-safe-area */
-@media (min-width: 520px) {
+/* --------------------------------------------------------- */
+/* CLOSE LINK                                                */
+/* --------------------------------------------------------- */
+
+.invoice-close {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 16px;
+  color: #0066cc;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Smaller screens */
+@media (max-width: 360px) {
   .invoice-popup-inner {
-    padding-bottom: 40px;
+    padding: 22px 18px 28px;
+  }
+
+  .invoice-item {
+    padding: 12px 14px;
+  }
+
+  .invoice-item-left {
+    width: 64px;
+    height: 64px;
   }
 }
