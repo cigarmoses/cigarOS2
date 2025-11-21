@@ -2,476 +2,516 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Cigars • Brand</title>
+
+  <!-- Shared invoice / receipt styles -->
+  <link rel="stylesheet" href="/pos/pos.css" />
+
   <style>
     :root {
-      --bg: #dfeaf0;
+      --bg: #eaf2f6;
       --ink: #0f1a2c;
-      --muted: #6a7586;
       --card: #ffffff;
     }
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: var(--bg);
-      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
       color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
     }
-    header {
+
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px 12px 110px;
+    }
+
+    .topbar {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 14px;
-      padding: 16px 16px 8px;
+      margin-top: 4px;
     }
-    header a {
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       text-decoration: none;
       color: var(--ink);
-      font-weight: 600;
+      font-weight: 500;
     }
-    h1 {
-      font-size: 38px;
-      margin: 4px 16px 12px;
+    .star {
+      font-size: 22px;
+      color: #ffcc00;
     }
-    .fav {
-      margin-left: auto;
-      width: 52px;
-      height: 52px;
-      border-radius: 999px;
-      background: #f1c836;
-      display: grid;
-      place-items: center;
-      font-size: 28px;
+
+    .brand-title {
+      margin: 18px 0 10px;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
     }
-    .search-wrap {
-      padding: 0 16px 14px;
+
+    /* search bar */
+    .brand-search {
+      margin: 6px 0 18px;
     }
-    .search {
-      width: 100%;
-      background: #ffffff;
-      border: none;
-      border-radius: 999px;
-      padding: 14px 16px;
-      font-size: 16px;
-      outline: none;
-    }
-    .list {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      padding: 0 16px 120px;
-    }
-    .cigar-card {
-      background: #fff;
-      border-radius: 28px;
-      padding: 12px 14px;
+    .brand-search-inner {
       display: flex;
       align-items: center;
-      gap: 14px;
-      box-shadow: 0 10px 18px rgba(0,0,0,.06);
+      background: #ffffff;
+      border-radius: 999px;
+      padding: 10px 14px;
+      border: 1px solid rgba(15,26,44,0.05);
+      box-shadow: 0 1px 3px rgba(15,26,44,0.06);
     }
+    .brand-search-inner input {
+      border: none;
+      outline: none;
+      width: 100%;
+      background: transparent;
+      font-size: 15px;
+    }
+
+    /* cigar list */
+    .cigar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cigar-card {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 22px;
+      background: var(--card);
+      box-shadow: 0 2px 6px rgba(15,26,44,0.04);
+    }
+
     .cigar-icon {
-      width: 64px;
-      height: 64px;
+      flex: 0 0 60px;
+      width: 60px;
+      height: 60px;
       border-radius: 18px;
-      background: #ddd;
-      background-size: cover;
-      background-position: center;
-      flex: 0 0 64px;
-      /* no border here – you asked to remove it */
+      overflow: hidden;
+      background: #dfe7ec;
+      display: grid;
+      place-items: center;
+      margin-right: 12px;
     }
-    .cigar-body {
+    .cigar-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cigar-main {
       flex: 1;
       min-width: 0;
     }
-    .cigar-title {
+    .cigar-line {
+      font-size: 18px;
       font-weight: 700;
-      font-size: 16.5px;
+      color: #111827;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .cigar-vitola {
       font-size: 14px;
-      color: var(--muted);
+      color: rgba(17,24,39,0.78);
+      margin-top: 3px;
     }
     .cigar-price {
       font-size: 14px;
-      margin-top: 2px;
-    }
-    .qty-badge {
-      width: 62px;
-      height: 62px;
-      border-radius: 999px;
-      border: 1.5px solid #d7d7d7;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      font-size: 19px;
-      color: var(--ink);
+      color: rgba(17,24,39,0.78);
+      margin-top: 3px;
     }
 
-    /* POPUP */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.4);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      padding: 14px;
-      z-index: 1000;
-    }
-    .overlay.show { display: flex; }
-    .popup {
-      width: min(760px, 100%);
-      background: #fff;
-      border-radius: 38px;
-      position: relative;
-      padding: 20px 16px 18px;
-      max-height: calc(100vh - 28px);
-      overflow-y: auto;
-    }
-    .popup-close {
-      position: absolute;
-      right: 16px;
-      top: 12px;
-      font-size: 28px;
-      color: #d11219;
+    /* inventory number on the right – NO circle */
+    .cigar-inv {
+      margin-left: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
       cursor: pointer;
-      font-weight: 600;
-    }
-    .popup-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 10px;
-    }
-    .popup-brand-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 22px;
-      background: #333;
-      background-size: cover;
-      background-position: center;
-    }
-    .popup-title-block {
-      flex: 1;
-    }
-    .popup-title-block h2 {
-      margin: 0;
-      font-size: 22px;
-    }
-    .popup-title-block .msrp {
-      font-size: 16px;
-      margin-top: 2px;
-    }
-    .popup-body {
-      display: flex;
-      gap: 14px;
-      margin-top: 10px;
-    }
-    .popup-img {
-      flex: 0 0 42%;
-      background: #f7f7f7;
-      border-radius: 18px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      min-height: 270px;
-    }
-    .popup-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-    .popup-details {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 16px;
-    }
-    .popup-details b {
-      display: block;
-      margin-bottom: 2px;
-    }
-    .add-btn {
-      margin-top: 14px;
-      background: #0f1a2c;
-      color: #fff;
+      /* remove any circle look */
       border: none;
-      border-radius: 16px;
-      padding: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
+      background: none;
+      padding: 0;
     }
 
-    /* receipt pill on this page too */
-    .receipt-pill {
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
-      background: #0f1a2c;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 9px 22px 9px 9px;
-      color: #fff;
-      box-shadow: 0 12px 40px rgba(0,0,0,.25);
-      text-decoration: none;
-      z-index: 999;
-    }
-    .receipt-pill-icon {
-      width: 54px;
-      height: 54px;
-      border-radius: 999px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      color: #0f1a2c;
+    .cigar-inv small {
+      display: block;
       font-size: 11px;
-      font-weight: 700;
-    }
-    .receipt-pill-count {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      background: #d11219;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-    }
-    .receipt-pill-total {
-      font-size: 20px;
-      font-weight: 700;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(17,24,39,0.55);
     }
 
-    @media(max-width: 640px){
-      .popup-body { flex-direction: column; }
-      .popup-img { min-height: 220px; }
+    #emptyMsg {
+      text-align: center;
+      opacity: 0.6;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    /* simple invoice item styling inside popup */
+    .invoice-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      font-size: 14px;
+    }
+    .invoice-line-main {
+      flex: 1;
+      min-width: 0;
+      margin-right: 8px;
+    }
+    .invoice-line-name {
+      font-weight: 600;
+    }
+    .invoice-line-meta {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    .invoice-line-qty {
+      width: 30px;
+      text-align: center;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    .invoice-line-price {
+      width: 70px;
+      text-align: right;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
-  <header>
-    <a href="/pos/">← Cigars</a>
-    <div class="fav">★</div>
-  </header>
-  <h1 id="brandTitle">Brand</h1>
-  <div class="search-wrap">
-    <input id="search" class="search" placeholder="Search this brand…" />
-  </div>
-  <div id="list" class="list"></div>
+  <div class="wrap">
+    <div class="topbar">
+      <a href="/pos/cigars/" class="back-link">← <span>Cigars</span></a>
+      <div class="star">★</div>
+    </div>
 
-  <!-- POPUP -->
-  <div id="overlay" class="overlay">
-    <div class="popup" id="popup">
-      <div class="popup-close" id="popupClose">×</div>
-      <div class="popup-header">
-        <div class="popup-brand-icon" id="popupBrandIcon"></div>
-        <div class="popup-title-block">
-          <h2 id="popupTitle">Title</h2>
-          <div class="msrp" id="popupPrice"></div>
+    <h1 id="brandTitle" class="brand-title">Brand</h1>
+
+    <div class="brand-search">
+      <div class="brand-search-inner">
+        <input id="searchInput" placeholder="Search this brand…" />
+      </div>
+    </div>
+
+    <div id="cigarList" class="cigar-list"></div>
+    <p id="emptyMsg" style="display:none;">No cigars found for this brand.</p>
+  </div>
+
+  <!-- Tony icon stays on all POS pages -->
+  <script src="/js/tony.js" defer></script>
+
+  <!-- Red receipt pill -->
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" alt="Receipt" />
+  </div>
+
+  <!-- Invoice Popup -->
+  <div id="invoice-popup" class="invoice-popup">
+    <div class="invoice-popup-inner">
+      <div class="invoice-header">
+        <h2>Invoice</h2>
+        <p id="invoice-date"></p>
+      </div>
+
+      <div class="invoice-body">
+        <div class="loyalty-row">
+          <span>Loyalty customer</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+
+        <!-- CART ITEMS GO HERE -->
+        <div id="invoice-items"></div>
+      </div>
+
+      <div class="invoice-totals">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span id="invoice-subtotal">$0.00</span>
+        </div>
+        <div class="total-row">
+          <span>Tax</span>
+          <span id="invoice-tax">$0.00</span>
+        </div>
+        <div class="total-row total-bold">
+          <span>TOTAL</span>
+          <span id="invoice-total">$0.00</span>
         </div>
       </div>
-      <hr style="border:none;border-top:1px solid #e0e0e0;margin:8px 0 14px;">
-      <div class="popup-body">
-        <div class="popup-img">
-          <img id="popupImg" src="" alt="">
-        </div>
-        <div class="popup-details" id="popupDetails">
-          <!-- filled in js -->
-        </div>
-      </div>
-      <button class="add-btn" id="addToInvoiceBtn">Add to invoice</button>
+
+      <div id="close-receipt" class="invoice-close">Close</div>
     </div>
   </div>
 
-  <!-- sticky receipt pill -->
-  <a href="/pos/receipt.html" class="receipt-pill" id="receiptPill">
-    <div class="receipt-pill-icon">RCP</div>
-    <div class="receipt-pill-count" id="pillCount">0</div>
-    <div class="receipt-pill-total" id="pillTotal">$0.00</div>
-  </a>
+  <!-- Shared behavior for red pill open/close -->
+  <script src="/pos/pos.js" defer></script>
 
+  <!-- Brand-page specific logic -->
   <script>
-    const RECEIPT_KEY = 'cigaros_receipt_v1';
+    // ====== CONFIG ======
+    const CSV_URL = "/hub/hub_11-5-25.csv";
+    const TAX_RATE = 0.07;
 
-    function loadReceipt() {
-      try {
-        return JSON.parse(localStorage.getItem(RECEIPT_KEY)) || [];
-      } catch (e) {
-        return [];
+    const params = new URLSearchParams(window.location.search);
+    const BRAND_NAME = params.get("brand") || "Cigars";
+
+    const brandTitle = document.getElementById("brandTitle");
+    const listEl = document.getElementById("cigarList");
+    const emptyMsg = document.getElementById("emptyMsg");
+    const searchInput = document.getElementById("searchInput");
+
+    brandTitle.textContent = BRAND_NAME;
+
+    let brandRows = [];
+    let cart = [];
+
+    // ---- CSV parsing ----
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/);
+      if (!lines.length) return [];
+
+      const header = lines.shift().split(",").map(h => h.trim());
+      return lines.map(line => {
+        // Very simple CSV split – OK for your sheet
+        const cells = line.split(",");
+        const obj = {};
+        header.forEach((h, i) => {
+          obj[h] = (cells[i] || "").trim();
+        });
+        return obj;
+      });
+    }
+
+    function normalizeBrand(str) {
+      return (str || "").trim();
+    }
+
+    function buildDisplayRow(row) {
+      const brand = normalizeBrand(row["Brand"] || row["BRAND"] || "");
+      if (brand !== BRAND_NAME) return null;
+
+      const line = row["Line"] || row["LINE"] || "";
+      const cigar =
+        row["Cigar"] ||
+        row["Cigar Name"] ||
+        row["CIGAR NAME"] ||
+        row["Name"] ||
+        "";
+      const vitola = row["Vitola"] || row["VITOLA"] || "";
+      const priceRaw =
+        row["MSRP"] ||
+        row["Price"] ||
+        row["PRICE"] ||
+        row["Price (MSRP)"] ||
+        "";
+      const rating =
+        row["RATING"] ||
+        row["Rating"] ||
+        row["rating"] ||
+        row["Score"] ||
+        row["SCORE"] ||
+        "89";
+
+      return {
+        brand,
+        line,
+        cigar,
+        vitola,
+        priceRaw,
+        rating
+      };
+    }
+
+    function parsePriceNumber(priceRaw) {
+      const n = parseFloat(String(priceRaw).replace(/[^0-9.]/g, ""));
+      return isNaN(n) ? 0 : n;
+    }
+
+    function renderList(filterTerm = "") {
+      listEl.innerHTML = "";
+      const term = filterTerm.toLowerCase();
+
+      const filtered = brandRows.filter(item => {
+        if (!item) return false;
+        if (!term) return true;
+        return (
+          (item.cigar || "").toLowerCase().includes(term) ||
+          (item.line || "").toLowerCase().includes(term) ||
+          (item.vitola || "").toLowerCase().includes(term)
+        );
+      });
+
+      if (!filtered.length) {
+        emptyMsg.style.display = "block";
+        return;
+      }
+      emptyMsg.style.display = "none";
+
+      filtered.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "cigar-card";
+
+        const iconName = item.brand.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const priceLabel = item.priceRaw ? `$${parsePriceNumber(item.priceRaw).toFixed(2)}` : "";
+
+        card.innerHTML = `
+          <div class="cigar-icon">
+            <img src="/img/icons/brands/${iconName}.svg" alt="${item.brand}" onerror="this.src='/img/placeholder.svg'">
+          </div>
+          <div class="cigar-main">
+            <div class="cigar-line">${item.cigar || item.line || "Cigar"}</div>
+            <div class="cigar-vitola">${item.vitola || ""}</div>
+            <div class="cigar-price">${priceLabel}</div>
+          </div>
+          <button
+            class="cigar-inv"
+            type="button"
+            data-role="inventory-badge"
+            data-brand="${item.brand}"
+            data-line="${item.line}"
+            data-cigar="${item.cigar}"
+            data-vitola="${item.vitola}"
+            data-price="${parsePriceNumber(item.priceRaw)}"
+          >
+            ${item.rating}
+            <small>IN STOCK</small>
+          </button>
+        `;
+
+        const badge = card.querySelector(".cigar-inv");
+        badge.addEventListener("click", () => handleInventoryClick(badge, item));
+
+        listEl.appendChild(card);
+      });
+    }
+
+    function handleInventoryClick(el, item) {
+      const brand = el.dataset.brand || item.brand;
+      const line = el.dataset.line || item.line;
+      const cigar = el.dataset.cigar || item.cigar;
+      const vitola = el.dataset.vitola || item.vitola;
+      const priceNum = parseFloat(el.dataset.price || "") || parsePriceNumber(item.priceRaw || "");
+
+      if (!cigar) return;
+
+      // Find existing cart line
+      const key = `${brand}|||${line}|||${cigar}|||${vitola}`;
+      let existing = cart.find(c => c.key === key);
+      if (!existing) {
+        existing = { key, brand, line, cigar, vitola, priceNum, qty: 0 };
+        cart.push(existing);
+      }
+      existing.qty += 1;
+
+      rebuildInvoice();
+      openInvoicePopup();
+    }
+
+    function rebuildInvoice() {
+      const itemsEl = document.getElementById("invoice-items");
+      if (!itemsEl) return;
+
+      itemsEl.innerHTML = "";
+
+      if (!cart.length) {
+        itemsEl.innerHTML = "<p style='opacity:.7;font-size:14px;'>No items yet.</p>";
+        updateTotals(0);
+        return;
+      }
+
+      let subtotal = 0;
+
+      cart.forEach(item => {
+        const lineTotal = item.priceNum * item.qty;
+        subtotal += lineTotal;
+
+        const row = document.createElement("div");
+        row.className = "invoice-line";
+        row.innerHTML = `
+          <div class="invoice-line-main">
+            <div class="invoice-line-name">${item.cigar || item.line}</div>
+            <div class="invoice-line-meta">
+              ${item.vitola ? item.vitola + " · " : ""}${item.brand}
+            </div>
+          </div>
+          <div class="invoice-line-qty">×${item.qty}</div>
+          <div class="invoice-line-price">$${lineTotal.toFixed(2)}</div>
+        `;
+        itemsEl.appendChild(row);
+      });
+
+      updateTotals(subtotal);
+    }
+
+    function updateTotals(subtotal) {
+      const subEl = document.getElementById("invoice-subtotal");
+      const taxEl = document.getElementById("invoice-tax");
+      const totalEl = document.getElementById("invoice-total");
+
+      const tax = subtotal * TAX_RATE;
+      const total = subtotal + tax;
+
+      if (subEl) subEl.textContent = `$${subtotal.toFixed(2)}`;
+      if (taxEl) taxEl.textContent = `$${tax.toFixed(2)}`;
+      if (totalEl) totalEl.textContent = `$${total.toFixed(2)}`;
+
+      // also set date on header
+      const dateEl = document.getElementById("invoice-date");
+      if (dateEl) {
+        const d = new Date();
+        const dayName = d.toLocaleDateString(undefined, { weekday: "long" });
+        const dateStr = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
+        const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+        dateEl.textContent = `${dayName}, ${dateStr} — ${timeStr}`;
       }
     }
-    function saveReceipt(arr){
-      localStorage.setItem(RECEIPT_KEY, JSON.stringify(arr));
-    }
-    function money(n){
-      return n ? n.toFixed(2) : '0.00';
-    }
-    function updatePill(){
-      const cart = loadReceipt();
-      const count = cart.reduce((n,i)=>n+i.qty,0);
-      const total = cart.reduce((n,i)=>n + i.qty * i.msrp, 0);
-      document.getElementById('pillCount').textContent = count;
-      document.getElementById('pillTotal').textContent = '$' + money(total);
+
+    function openInvoicePopup() {
+      const popup = document.getElementById("invoice-popup");
+      if (popup) {
+        popup.classList.add("open");
+      }
     }
 
-    const brandParam = new URLSearchParams(location.search).get('brand') || '';
-    document.getElementById('brandTitle').textContent = brandParam;
+    // Hook up search
+    if (searchInput) {
+      searchInput.addEventListener("input", e => {
+        renderList(e.target.value || "");
+      });
+    }
 
-    let ALL = [];
-    let CURRENT_CIGAR = null;
-
-    fetch('/pos/data/cigars_full.json')
-      .then(r => r.json())
-      .then(data => {
-        ALL = data.filter(row => (row['Brand'] || row['brand'] || '').trim().toLowerCase() === brandParam.trim().toLowerCase());
-        renderList(ALL);
+    // Load data
+    fetch(CSV_URL)
+      .then(res => res.text())
+      .then(text => {
+        const rows = parseCSV(text);
+        brandRows = rows
+          .map(buildDisplayRow)
+          .filter(Boolean);
+        renderList("");
       })
       .catch(err => {
         console.error(err);
-        document.getElementById('list').innerHTML = '<p>Could not load cigars.</p>';
+        emptyMsg.style.display = "block";
+        emptyMsg.textContent = "Could not load cigar data.";
       });
-
-    function renderList(rows){
-      const list = document.getElementById('list');
-      list.innerHTML = '';
-      rows.forEach(row => {
-        const line = (row['Line'] || row['line'] || '').trim();
-        const cigar = (row['Cigar'] || row['cigar'] || '').trim();
-        const name = (line ? line + ' ' : '') + cigar;
-        const vitola = row['Vitola'] || row['vitola'] || '';
-        const msrp = parseFloat(row['MSRP'] || row['msrp'] || 0) || 0;
-        const icon = row['Brand IMG'] || row['brand img'] || row['brand_img'] || '';
-
-        const card = document.createElement('div');
-        card.className = 'cigar-card';
-        card.addEventListener('click', () => openPopup(row));
-
-        const ic = document.createElement('div');
-        ic.className = 'cigar-icon';
-        if (icon) ic.style.backgroundImage = `url(/${icon.replace(/^\//,'')})`;
-
-        const body = document.createElement('div');
-        body.className = 'cigar-body';
-
-        const t = document.createElement('div');
-        t.className = 'cigar-title';
-        t.textContent = name || cigar || 'Untitled cigar';
-
-        const v = document.createElement('div');
-        v.className = 'cigar-vitola';
-        v.textContent = vitola;
-
-        const p = document.createElement('div');
-        p.className = 'cigar-price';
-        p.textContent = msrp ? msrp.toFixed(2) : '';
-
-        body.appendChild(t);
-        body.appendChild(v);
-        body.appendChild(p);
-
-        const qty = document.createElement('div');
-        qty.className = 'qty-badge';
-        qty.textContent = '89';
-
-        card.appendChild(ic);
-        card.appendChild(body);
-        card.appendChild(qty);
-
-        list.appendChild(card);
-      });
-    }
-
-    document.getElementById('search').addEventListener('input', (e)=>{
-      const q = e.target.value.toLowerCase();
-      const filtered = ALL.filter(row=>{
-        const line = (row['Line'] || '').toLowerCase();
-        const cigar = (row['Cigar'] || '').toLowerCase();
-        return line.includes(q) || cigar.includes(q);
-      });
-      renderList(filtered);
-    });
-
-    function openPopup(row){
-      CURRENT_CIGAR = row;
-      const overlay = document.getElementById('overlay');
-      const brandIcon = row['Brand IMG'] || '';
-      const cigarImg = row['Cigar IMG'] || '';
-      const line = (row['Line'] || '').trim();
-      const cigar = (row['Cigar'] || '').trim();
-      const name = (line ? line + ' ' : '') + cigar;
-      document.getElementById('popupTitle').textContent = name || 'Cigar';
-      document.getElementById('popupPrice').textContent = (row['MSRP'] ? row['MSRP'] : '0.00');
-      if (brandIcon) {
-        document.getElementById('popupBrandIcon').style.backgroundImage = `url(/${brandIcon.replace(/^\//,'')})`;
-      } else {
-        document.getElementById('popupBrandIcon').style.backgroundImage = 'none';
-      }
-      if (cigarImg) {
-        document.getElementById('popupImg').src = `/${cigarImg.replace(/^\//,'')}`;
-      } else {
-        document.getElementById('popupImg').src = '/img/cigars/placeholder.png';
-      }
-
-      // details
-      const d = [];
-      d.push(`<b>${row['RG'] && row['LENGTH'] ? `${row['RG']} x ${row['LENGTH']}` : ''}</b>`);
-      if (row['Vitola']) d.push(`Vitola: ${row['Vitola']}`);
-      if (row['WRAPPER SHADE']) d.push(`Wrapper shade: ${row['WRAPPER SHADE']}`);
-      if (row['WRAPPER']) d.push(`Wrapper: ${row['WRAPPER']}`);
-      if (row['BINDER']) d.push(`Binder: ${row['BINDER']}`);
-      if (row['FILLER']) d.push(`Filler: ${row['FILLER']}`);
-      if (row['ORIGIN']) d.push(`Origin: ${row['ORIGIN']}`);
-      if (row['STRENGTH']) d.push(`Strength: ${row['STRENGTH']}`);
-      document.getElementById('popupDetails').innerHTML = d.filter(Boolean).map(s=>`<div>${s}</div>`).join('');
-
-      overlay.classList.add('show');
-    }
-    document.getElementById('popupClose').addEventListener('click', ()=> {
-      document.getElementById('overlay').classList.remove('show');
-    });
-
-    // add to invoice
-    document.getElementById('addToInvoiceBtn').addEventListener('click', ()=>{
-      if (!CURRENT_CIGAR) return;
-      const line = (CURRENT_CIGAR['Line'] || '').trim();
-      const cigar = (CURRENT_CIGAR['Cigar'] || '').trim();
-      const name = (line ? line + ' ' : '') + cigar;
-      const msrp = parseFloat(CURRENT_CIGAR['MSRP'] || 0) || 0;
-      const brand = CURRENT_CIGAR['Brand'] || '';
-      const icon = CURRENT_CIGAR['Brand IMG'] ? `/${CURRENT_CIGAR['Brand IMG'].replace(/^\//,'')}` : '';
-      const id = (brand + '-' + name).toLowerCase().replace(/\s+/g,'-');
-
-      const cart = loadReceipt();
-      const found = cart.find(i => i.id === id);
-      if (found) {
-        found.qty += 1;
-      } else {
-        cart.push({
-          id,
-          type: 'cigar',
-          brand,
-          icon,
-          name,
-          vitola: CURRENT_CIGAR['Vitola'] || '',
-          msrp,
-          qty: 1
-        });
-      }
-      saveReceipt(cart);
-      updatePill();
-      document.getElementById('overlay').classList.remove('show');
-    });
-
-    updatePill();
   </script>
-  <script src="/js/tony.js" defer></script>
 </body>
 </html>
