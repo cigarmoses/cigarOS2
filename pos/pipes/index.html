@@ -5,60 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>PIPES • POS</title>
   <link rel="stylesheet" href="/pos/pos.css" />
+
   <style>
-    .pipes-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-top: 12px;
+    :root {
+      --bg: #eaf2f6;
+      --ink: #0f1a2c;
     }
-    .pipes-tile {
-      text-align: center;
-      text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: center;
-      color: #0f1a2c;
-    }
-    .pipes-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      overflow: hidden;
-      background: #d9d9d9;
-      display: grid;
-      place-items: center;
-    }
-    .pipes-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .pipes-label {
-      font-size: 13px;
-      font-weight: 500;
-    }
-    .pipes-price {
-      font-size: 12px;
-      opacity: 0.8;
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     }
 
+    .pos-wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 22px 12px 110px;
+    }
+
+    .pos-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .pos-back {
+      text-decoration: none;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+      font-size: 18px;
+    }
+
+    .pos-star {
+      font-size: 26px;
+      color: #ffcc00;
+    }
+
+    h1.pos-title {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      margin: 0 0 18px;
+    }
+
+    /* Search bar */
     .pos-search {
       display: flex;
       align-items: center;
-      background: #fff;
+      background: #ffffff;
       border-radius: 999px;
-      padding: 10px 12px;
-      border: 1px solid rgba(0,0,0,.03);
-      margin-bottom: 14px;
+      padding: 12px 16px;
+      border: none;
+      margin-bottom: 18px;
     }
     .pos-search input {
       border: 0;
       outline: 0;
       width: 100%;
       background: transparent;
+      font-size: 16px;
+    }
+
+    /* Items Grid */
+    .pipe-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+      margin-top: 10px;
+    }
+
+    .pipe-tile {
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+      color: #0f1a2c;
+    }
+
+    .pipe-icon {
+      width: 120px;
+      height: 120px;
+      border-radius: 22px;
+      overflow: hidden;
+      background: #ffffff;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .pipe-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .pipe-label {
       font-size: 14px;
+      font-weight: 600;
+    }
+
+    .pipe-price {
+      font-size: 14px;
+      margin-top: -3px;
     }
   </style>
 </head>
@@ -66,96 +123,76 @@
 <body>
   <div class="pos-wrap">
     <div class="pos-topbar">
-      <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
+      <a href="/pos/" class="pos-back">← POS</a>
       <div class="pos-star">★</div>
     </div>
 
-    <div class="pos-header-spacer"></div>
     <h1 class="pos-title">PIPES</h1>
 
     <div class="pos-search">
-      <input id="pipesSearch" placeholder="Search" />
+      <input id="pipeSearch" placeholder="Search" />
     </div>
 
-    <div id="pipesGrid" class="pipes-grid"></div>
+    <div id="pipeGrid" class="pipe-grid"></div>
   </div>
 
   <script>
-    // PRODUCTS (using /img/pipes/)
     const PIPES = [
-      {
-        name: "Pipe Tobacco",
-        price: "$4.99",
-        img: "/img/pipes/pipetobacco.jpg"
-      }
+      { name: "Pipe Tobacco", file: "pipetobacco.jpg", price: 4.99 },
+      { name: "Mr. Consul Pipe", file: "mrconsulpipe.svg", price: 59.99 }
     ];
 
-    const pipesGrid = document.getElementById("pipesGrid");
-    const pipesSearch = document.getElementById("pipesSearch");
+    const grid = document.getElementById("pipeGrid");
+    const search = document.getElementById("pipeSearch");
 
     function renderPipes(filter = "") {
-      pipesGrid.innerHTML = "";
-      const term = filter.toLowerCase();
+      grid.innerHTML = "";
 
-      PIPES.filter(p => p.name.toLowerCase().includes(term))
-        .forEach(p => {
-          const el = document.createElement("a");
-          el.className = "pipes-tile";
-          el.href = "javascript:void(0)";
-          el.innerHTML = `
-            <div class="pipes-icon">
-              <img src="${p.img}" alt="${p.name}">
+      PIPES
+        .filter(item => item.name.toLowerCase().includes(filter.toLowerCase()))
+        .forEach(item => {
+          const div = document.createElement("a");
+          div.className = "pipe-tile";
+          div.innerHTML = `
+            <div class="pipe-icon">
+              <img src="/img/pipes/${item.file}" alt="${item.name}">
             </div>
-            <div class="pipes-label">${p.name}</div>
-            <div class="pipes-price">${p.price}</div>
+            <div class="pipe-label">${item.name}</div>
+            <div class="pipe-price">$${item.price.toFixed(2)}</div>
           `;
-          pipesGrid.appendChild(el);
+          grid.appendChild(div);
         });
     }
 
     renderPipes();
 
-    pipesSearch.addEventListener("input", e => {
+    search.addEventListener("input", (e) => {
       renderPipes(e.target.value);
     });
   </script>
 
-  <!-- Red receipt pill -->
   <div class="receipt-pill" id="open-receipt">
-    <img src="/uxui/receipt-icon.svg" alt="Receipt" />
+    <img src="/uxui/receipt-icon.svg" alt="Receipt">
   </div>
 
-  <!-- Invoice Popup -->
   <div id="invoice-popup" class="invoice-popup">
     <div class="invoice-popup-inner">
-
       <div class="invoice-header">
         <h2>Invoice</h2>
         <p id="invoice-date"></p>
       </div>
-
       <div class="invoice-body">
         <div class="loyalty-row">
           <span>Loyalty customer</span>
           <span class="dropdown-arrow">▼</span>
         </div>
-
         <div id="invoice-items"></div>
       </div>
 
       <div class="invoice-totals">
-        <div class="total-row">
-          <span>Subtotal</span>
-          <span id="invoice-subtotal">$0.00</span>
-        </div>
-        <div class="total-row">
-          <span>Tax</span>
-          <span id="invoice-tax">$0.00</span>
-        </div>
-        <div class="total-row total-bold">
-          <span>TOTAL</span>
-          <span id="invoice-total">$0.00</span>
-        </div>
+        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
+        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
+        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
       </div>
 
       <div id="close-receipt" class="invoice-close">Close</div>
