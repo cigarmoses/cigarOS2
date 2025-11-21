@@ -81,6 +81,7 @@
       gap: 4px;
       align-items: center;
     }
+
     .ash-icon {
       width: 72px;
       height: 72px;
@@ -95,14 +96,21 @@
       height: 100%;
       object-fit: cover;
     }
+
+    /* 3-line description */
+    .ash-brand {
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.1;
+    }
     .ash-label {
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       line-height: 1.2;
     }
     .ash-price {
       font-size: 12px;
-      opacity: 0.8;
+      margin-top: -2px;
     }
   </style>
 </head>
@@ -123,14 +131,16 @@
   </div>
 
   <script>
-    // PRODUCTS (using /img/ashtrays/)
+    // FINAL ASHTRAY DATA (brand skipped if "n/a")
     const ASHTRAYS = [
       {
+        brand: "n/a",
         name: "Opus X 20th Anniversary Ashtray",
         price: "$199.99",
         img: "/img/ashtrays/opusx20thanniversaryashtray.jpg"
       },
       {
+        brand: "n/a",
         name: "Rocky Patel Luxury Luminoso Ashtray",
         price: "$59.99",
         img: "/img/ashtrays/rockypatelluxuryluminosoashtray.jpg"
@@ -147,6 +157,11 @@
       ASHTRAYS
         .filter(a => a.name.toLowerCase().includes(term))
         .forEach(a => {
+          const brandLine =
+            a.brand && a.brand.toLowerCase() !== "n/a"
+              ? `<div class="ash-brand">${a.brand}</div>`
+              : "";
+
           const div = document.createElement("a");
           div.className = "ash-tile";
           div.href = "javascript:void(0)";
@@ -154,6 +169,7 @@
             <div class="ash-icon">
               <img src="${a.img}" alt="${a.name}">
             </div>
+            ${brandLine}
             <div class="ash-label">${a.name}</div>
             <div class="ash-price">${a.price}</div>
           `;
@@ -190,9 +206,15 @@
       </div>
 
       <div class="invoice-totals">
-        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span id="invoice-subtotal">$0.00</span>
+        </div>
         <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
-        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
+        <div class="total-row total-bold">
+          <span>TOTAL</span>
+          <span id="invoice-total">$0.00</span>
+        </div>
       </div>
 
       <div id="close-receipt" class="invoice-close">Close</div>
