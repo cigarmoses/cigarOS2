@@ -1,6 +1,14 @@
-/* --------------------------------------------------------- */
-/* UNIVERSAL RED RECEIPT PILL                               */
-/* --------------------------------------------------------- */
+/* =========================================================
+   GLOBAL POS INVOICE STYLES
+   - Red receipt pill
+   - Invoice popup "sheet"
+   - Loyalty dropdown with search
+   - Line items + totals
+   ======================================================== */
+
+/* ---------------------------------------------------------
+   UNIVERSAL RED RECEIPT PILL (bottom-right)
+   --------------------------------------------------------- */
 .receipt-pill {
   position: fixed;
   bottom: 22px;
@@ -17,15 +25,15 @@
   display: block;
 }
 
-/* --------------------------------------------------------- */
-/* INVOICE POPUP OVERLAY                                    */
-/* --------------------------------------------------------- */
+/* ---------------------------------------------------------
+   INVOICE POPUP OVERLAY
+   --------------------------------------------------------- */
 .invoice-popup {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0,0,0,0.45); /* dark grey backdrop */
   z-index: 9998;
-  display: none;
+  display: none;                 /* .open -> flex */
   align-items: center;
   justify-content: center;
   padding: 16px;
@@ -33,6 +41,8 @@
 .invoice-popup.open {
   display: flex;
 }
+
+/* The big white sheet in the center */
 .invoice-popup-inner {
   width: 100%;
   max-width: 520px;
@@ -43,9 +53,9 @@
   overflow-y: auto;
 }
 
-/* --------------------------------------------------------- */
-/* HEADER                                                   */
-/* --------------------------------------------------------- */
+/* ---------------------------------------------------------
+   HEADER
+   --------------------------------------------------------- */
 .invoice-header h2 {
   text-align: center;
   margin-bottom: 4px;
@@ -59,16 +69,19 @@
   opacity: 0.8;
 }
 
-/* --------------------------------------------------------- */
-/* LOYALTY ROW + DROPDOWN                                   */
-/* --------------------------------------------------------- */
+/* ---------------------------------------------------------
+   LOYALTY ROW + DROPDOWN
+   --------------------------------------------------------- */
+
 .loyalty-wrapper {
   position: relative;
   margin-bottom: 22px;
 }
+
+/* pill displayed on the sheet */
 .loyalty-row {
   width: 100%;
-  background: #eef3f7;
+  background: #eef3f7;           /* light blue pill */
   padding: 14px 18px;
   border-radius: 999px;
   display: flex;
@@ -89,7 +102,7 @@
   opacity: 0.8;
 }
 
-/* dropdown panel */
+/* dropdown menu container */
 .loyalty-menu {
   position: absolute;
   left: 0;
@@ -99,14 +112,14 @@
   border-radius: 22px;
   padding: 10px 12px 12px;
   box-shadow: 0 14px 30px rgba(0,0,0,0.18);
-  display: none;
+  display: none;                 /* .open -> block */
   z-index: 20;
 }
 .loyalty-menu.open {
   display: block;
 }
 
-/* search inside dropdown */
+/* search input inside dropdown */
 .loyalty-search-wrap {
   background: #ffffff;
   border-radius: 999px;
@@ -121,12 +134,14 @@
   font-size: 14px;
 }
 
-/* customer list */
+/* scrollable customer list */
 .loyalty-list {
   margin-top: 8px;
   max-height: 260px;
   overflow-y: auto;
 }
+
+/* individual customer row */
 .loyalty-customer {
   padding: 7px 4px;
   border-radius: 12px;
@@ -144,17 +159,20 @@
   opacity: 0.75;
 }
 
-/* --------------------------------------------------------- */
-/* LINE ITEMS                                               */
-/* --------------------------------------------------------- */
+/* ---------------------------------------------------------
+   LINE ITEMS
+   --------------------------------------------------------- */
+
 .invoice-item {
   display: flex;
-  background: #e7f0f7;
+  background: #e7f0f7;           /* light blue block */
   padding: 16px 16px 14px;
   border-radius: 26px;
   margin-bottom: 12px;
   gap: 12px;
 }
+
+/* icon on the left */
 .invoice-item-icon {
   width: 60px;
   height: 60px;
@@ -170,6 +188,8 @@
   height: 100%;
   object-fit: cover;
 }
+
+/* middle stacked text */
 .invoice-item-body {
   flex: 1;
   min-width: 0;
@@ -178,7 +198,7 @@
   font-size: 16px;
   font-weight: 600;
   color: #1f86d9;
-  text-decoration: underline;
+  text-decoration: underline;    /* clickable link style */
   margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -189,6 +209,8 @@
   line-height: 1.25;
   color: #273242;
 }
+
+/* right side: QTY + line total */
 .invoice-item-right {
   text-align: right;
   display: flex;
@@ -203,9 +225,10 @@
   font-weight: 600;
 }
 
-/* --------------------------------------------------------- */
-/* TOTALS                                                   */
-/* --------------------------------------------------------- */
+/* ---------------------------------------------------------
+   TOTALS SECTION
+   --------------------------------------------------------- */
+
 .invoice-totals {
   margin-top: 18px;
 }
@@ -221,11 +244,21 @@
   font-weight: 700;
 }
 
-/* close link */
+/* ---------------------------------------------------------
+   CLOSE LINK
+   --------------------------------------------------------- */
+
 .invoice-close {
   text-align: center;
   margin-top: 14px;
   font-size: 15px;
   cursor: pointer;
   color: #2b6ad4;
+}
+
+/* Optional: small helper for a subtle bottom-safe-area */
+@media (min-width: 520px) {
+  .invoice-popup-inner {
+    padding-bottom: 40px;
+  }
 }
