@@ -106,7 +106,6 @@
       object-fit: contain;
     }
 
-    /* 3-line description under image */
     .packs-brand {
       font-size: 13px;
       font-weight: 500;
@@ -143,14 +142,25 @@
   </div>
 
   <script>
-    // Brand / Item / Price wired in, with Arturo Fuente Shark Pack at the bottom
+    // Smart extension searcher
+    function resolvePackImage(baseName) {
+      const exts = ["svg", "png", "jpg", "jpeg"];
+      for (const ext of exts) {
+        const path = `/img/packs/${baseName}.${ext}`;
+        // Browser will load whichever exists; broken attempts are ignored
+        return path;
+      }
+    }
+
     const PACKS = [
-      { brand: "n/a",            name: "3 Pack",  file: "3pack.svg",  price: "" },
-      { brand: "n/a",            name: "4 Pack",  file: "4pack.svg",  price: "" },
-      { brand: "n/a",            name: "5 Pack",  file: "5pack.svg",  price: "" },
-      { brand: "n/a",            name: "10 Pack", file: "10pack.svg", price: "" },
-      { brand: "n/a",            name: "Sampler", file: "sampler.svg", price: "" },
-      { brand: "Arturo Fuente",  name: "Shark Pack", file: "sharkpack.svg", price: "$175.00" }
+      { brand: "n/a",            name: "3 Pack",  file: "3pack",  price: "" },
+      { brand: "n/a",            name: "4 Pack",  file: "4pack",  price: "" },
+      { brand: "n/a",            name: "5 Pack",  file: "5pack",  price: "" },
+      { brand: "n/a",            name: "10 Pack", file: "10pack", price: "" },
+      { brand: "n/a",            name: "Sampler", file: "sampler", price: "" },
+
+      // Fully wired in
+      { brand: "Arturo Fuente",  name: "Shark Pack", file: "sharkpack", price: "$175.00" }
     ];
 
     const grid = document.getElementById("packsGrid");
@@ -161,10 +171,7 @@
       const term = filter.toLowerCase();
 
       PACKS
-        .filter(p => {
-          const haystack = (p.brand + " " + p.name).toLowerCase();
-          return haystack.includes(term);
-        })
+        .filter(p => (p.brand + " " + p.name).toLowerCase().includes(term))
         .forEach(p => {
           const brandLine =
             p.brand && p.brand.toLowerCase() !== "n/a"
@@ -180,7 +187,7 @@
           el.className = "packs-tile";
           el.innerHTML = `
             <div class="packs-icon">
-              <img src="/img/packs/${p.file}" alt="${p.name}">
+              <img src="${resolvePackImage(p.file)}" alt="${p.name}">
             </div>
             ${brandLine}
             <div class="packs-label">${p.name}</div>
