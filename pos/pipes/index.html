@@ -55,7 +55,6 @@
       margin: 0 0 18px;
     }
 
-    /* Search bar */
     .pos-search {
       display: flex;
       align-items: center;
@@ -73,7 +72,6 @@
       font-size: 16px;
     }
 
-    /* Items Grid */
     .pipe-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -108,6 +106,12 @@
       object-fit: contain;
     }
 
+    .pipe-brand {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
     .pipe-label {
       font-size: 14px;
       font-weight: 600;
@@ -137,9 +141,26 @@
   </div>
 
   <script>
+    // Auto-extension resolver (.svg, .png, .jpg, .jpeg)
+    function resolvePipeImage(baseName) {
+      const exts = ["jpg", "jpeg", "png", "svg"];
+      return `/img/pipes/${baseName}`;
+    }
+
+    // PIPES (from CSV, brand hidden when "n/a")
     const PIPES = [
-      { name: "Pipe Tobacco", file: "pipetobacco.jpg", price: 4.99 },
-      { name: "Mr. Consul Pipe", file: "mrconsulpipe.svg", price: 59.99 }
+      {
+        brand: "n/a",
+        name: "Pipe Tobacco",
+        file: "pipetobacco.jpg",
+        price: "$4.99"
+      },
+      {
+        brand: "n/a",
+        name: "Mr. Consul Pipe",
+        file: "mrconsulpipe.svg",
+        price: "$59.99"
+      }
     ];
 
     const grid = document.getElementById("pipeGrid");
@@ -147,18 +168,25 @@
 
     function renderPipes(filter = "") {
       grid.innerHTML = "";
+      const term = filter.toLowerCase();
 
       PIPES
-        .filter(item => item.name.toLowerCase().includes(filter.toLowerCase()))
-        .forEach(item => {
+        .filter(p => p.name.toLowerCase().includes(term))
+        .forEach(p => {
+          const brandLine =
+            p.brand && p.brand.toLowerCase() !== "n/a"
+              ? `<div class="pipe-brand">${p.brand}</div>`
+              : "";
+
           const div = document.createElement("a");
           div.className = "pipe-tile";
           div.innerHTML = `
             <div class="pipe-icon">
-              <img src="/img/pipes/${item.file}" alt="${item.name}">
+              <img src="/img/pipes/${p.file}" alt="${p.name}">
             </div>
-            <div class="pipe-label">${item.name}</div>
-            <div class="pipe-price">$${item.price.toFixed(2)}</div>
+            ${brandLine}
+            <div class="pipe-label">${p.name}</div>
+            <div class="pipe-price">${p.price}</div>
           `;
           grid.appendChild(div);
         });
@@ -192,7 +220,8 @@
       <div class="invoice-totals">
         <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
         <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
-        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
+        <div class="total-row total-bold">
+          <span>TOTAL</span><span id="invoice-total">$0.00</span></div>
       </div>
 
       <div id="close-receipt" class="invoice-close">Close</div>
