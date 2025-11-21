@@ -184,6 +184,147 @@
       width: 16px;
       height: 16px;
     }
+
+    /* ---------- Invoice popup line-item layout ---------- */
+
+    .invoice-body {
+      margin-top: 18px;
+    }
+
+    #invoice-items {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .invoice-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #e7f0f7;
+      border-radius: 30px;
+      padding: 14px 18px;
+    }
+
+    .invoice-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .invoice-thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #c4d4df;
+      flex-shrink: 0;
+    }
+
+    .invoice-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .invoice-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 13px;
+    }
+
+    .invoice-name {
+      padding: 0;
+      margin: 0;
+      border: none;
+      background: none;
+      font-size: 15px;
+      font-weight: 700;
+      color: #0080ff;
+      text-decoration: underline;
+      cursor: pointer;
+      text-align: left;
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    .invoice-meta {
+      color: #222222;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .invoice-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      margin-left: 10px;
+      min-width: 90px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .invoice-qty-label {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+    }
+
+    .invoice-qty-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(15,26,44,0.05);
+    }
+
+    .invoice-qty-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.2);
+      background: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .invoice-qty-value {
+      min-width: 14px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .invoice-line-total {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .invoice-totals {
+      margin-top: 24px;
+      text-align: right;
+    }
+
+    .invoice-totals .total-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 4px;
+      font-size: 16px;
+    }
+
+    .invoice-totals .total-bold {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -418,6 +559,123 @@
 
     function openFilter(){ document.getElementById("filterSheet").style.display="block"; }
     function closeFilter(){ document.getElementById("filterSheet").style.display="none"; }
+
+    /* ---------- Demo invoice content & qty adjusters ---------- */
+
+    const POS_TAX_RATE = 0.07;
+
+    const demoCartItems = [
+      {
+        id: "flying-pig",
+        name: "Flying Pig",
+        vitola: "Perfecto",
+        brand: "Pappy Van Winkle",
+        price: 13.99,
+        qty: 1,
+        icon: "/img/icons/categories/cigars.svg"
+      },
+      {
+        id: "padron-3000-maduro",
+        name: "Padron 3000 Maduro",
+        vitola: "Robusto",
+        brand: "Padron",
+        price: 10.25,
+        qty: 2,
+        icon: "/img/icons/categories/cigars.svg"
+      },
+      {
+        id: "sprite-can",
+        name: "Sprite",
+        vitola: "Food and Beverages",
+        brand: "",
+        price: 1.50,
+        qty: 3,
+        icon: "/img/icons/foodandbevs/sprite.svg"
+      }
+    ];
+
+    function formatMoney(value) {
+      return value.toFixed(2);
+    }
+
+    function renderInvoice() {
+      const container = document.getElementById("invoice-items");
+      if (!container) return;
+
+      container.innerHTML = "";
+      let subtotal = 0;
+
+      demoCartItems.forEach((item, index) => {
+        const lineTotal = item.price * item.qty;
+        subtotal += lineTotal;
+
+        const row = document.createElement("div");
+        row.className = "invoice-item";
+        row.dataset.index = String(index);
+        row.innerHTML = `
+          <div class="invoice-left">
+            <div class="invoice-thumb">
+              <img src="${item.icon}" alt="${item.brand || item.name}">
+            </div>
+            <div class="invoice-text">
+              <button type="button" class="invoice-name">${item.name}</button>
+              <div class="invoice-meta">${item.vitola}</div>
+              <div class="invoice-meta">${item.brand}</div>
+              <div class="invoice-meta">${formatMoney(item.price)}</div>
+            </div>
+          </div>
+          <div class="invoice-right">
+            <div class="invoice-qty-label">QTY</div>
+            <div class="invoice-qty-control">
+              <button class="invoice-qty-btn" data-dir="-1">−</button>
+              <span class="invoice-qty-value">${item.qty}</span>
+              <button class="invoice-qty-btn" data-dir="1">+</button>
+            </div>
+            <div class="invoice-line-total">$${formatMoney(lineTotal)}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      const subtotalEl = document.getElementById("invoice-subtotal");
+      const taxEl = document.getElementById("invoice-tax");
+      const totalEl = document.getElementById("invoice-total");
+
+      const tax = subtotal * POS_TAX_RATE;
+      const total = subtotal + tax;
+
+      if (subtotalEl) subtotalEl.textContent = `$${formatMoney(subtotal)}`;
+      if (taxEl) taxEl.textContent = `$${formatMoney(tax)}`;
+      if (totalEl) totalEl.textContent = `$${formatMoney(total)}`;
+
+      // bind qty buttons
+      container.querySelectorAll(".invoice-qty-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest(".invoice-item");
+          if (!row) return;
+          const index = Number(row.dataset.index || "0");
+          const dir = Number(btn.getAttribute("data-dir") || "0");
+          const item = demoCartItems[index];
+          if (!item) return;
+          const newQty = item.qty + dir;
+          if (newQty < 0) return;
+          item.qty = newQty;
+          renderInvoice();
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const dateEl = document.getElementById("invoice-date");
+      if (dateEl) {
+        const d = new Date();
+        const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+        const dateStr = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
+        const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+        dateEl.textContent = `${weekday}, ${dateStr} — ${timeStr}`;
+      }
+      renderInvoice();
+    });
   </script>
 
   <!-- Red receipt pill -->
