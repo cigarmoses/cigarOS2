@@ -108,6 +108,13 @@
       object-fit: contain;
     }
 
+    /* 3-line description under image */
+    .acc-brand {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
     .acc-label {
       font-size: 14px;
       font-weight: 600;
@@ -138,12 +145,39 @@
   </div>
 
   <script>
+    // Brand / Item / Price pulled from your updated accessories list
     const ACCESSORIES = [
-      { name: "Vertigo Cyclone Triple Torch", file: "vertigocyclonetripletorch.jpg", price: 9.99 },
-      { name: "Vertigo Boxer Triple Torch", file: "vertigoboxertripletorch.jpg", price: 9.99 },
-      { name: "Excalibur Double Torch V-Cutter Lighter", file: "lotusexcaliburdoubletorchvcutterlighter.jpg", price: 39.99 },
-      { name: "Elie Bleu Opus X Hemingway Lighter", file: "elliebleuopusxhemingwaylighter.jpg", price: 330.00 },
-      { name: "Elie Bleu Opus X Angel’s Share Lighter", file: "elliebleuopusxangelssharelighter.jpg", price: 600.00 }
+      {
+        brand: "Lotus",
+        name: "Vertigo Cyclone Triple Torch",
+        file: "vertigocyclonetripletorch.jpg",
+        price: 9.99
+      },
+      {
+        brand: "Lotus",
+        name: "Vertigo Boxer Triple Torch",
+        file: "vertigoboxertripletorch.jpg",
+        price: 9.99
+      },
+      {
+        brand: "Lotus",
+        name: "Excalibur Double Torch V-Cutter Lighter",
+        file: "lotusexcaliburdoubletorchvcutterlighter.jpg",
+        price: 39.99
+      },
+      {
+        brand: "Elie Bleu",
+        name: "Elie Bleu Opus X Hemingway Lighter",
+        file: "elliebleuopusxhemingwaylighter.jpg",
+        price: 330.00
+      },
+      {
+        brand: "Elie Bleu",
+        name: "Elie Bleu Opus X Angel’s Share Lighter",
+        file: "elliebleuopusxangelssharelighter.jpg",
+        price: 600.00
+      }
+      // When you're ready, you can add the ST Dupont + Cyclops Punch here too.
     ];
 
     const grid = document.getElementById("accGrid");
@@ -152,8 +186,13 @@
     function renderAccessories(filter = "") {
       grid.innerHTML = "";
 
+      const normalizedFilter = filter.toLowerCase();
+
       ACCESSORIES
-        .filter(item => item.name.toLowerCase().includes(filter.toLowerCase()))
+        .filter(item => {
+          const haystack = (item.brand + " " + item.name).toLowerCase();
+          return haystack.includes(normalizedFilter);
+        })
         .forEach(item => {
           const div = document.createElement("a");
           div.className = "acc-tile";
@@ -161,6 +200,7 @@
             <div class="acc-icon">
               <img src="/img/lighters/${item.file}" alt="${item.name}" />
             </div>
+            <div class="acc-brand">${item.brand}</div>
             <div class="acc-label">${item.name}</div>
             <div class="acc-price">$${item.price.toFixed(2)}</div>
           `;
