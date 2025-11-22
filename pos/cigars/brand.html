@@ -158,6 +158,7 @@
       font-weight: 700;
       line-height: 1.2;
       white-space: normal; /* allow wrapping */
+      cursor: pointer; /* clickable for popup */
     }
     .cigar-vitola {
       font-size: 13px;
@@ -172,6 +173,7 @@
       font-size: 17px;
       font-weight: 600;
       line-height: 1;
+      cursor: pointer; /* clickable to add to receipt */
     }
 
     #brandEmpty {
@@ -376,6 +378,42 @@
       cursor: pointer;
       font-size: 16px;
     }
+
+    /* ===== Cigar detail popup (for cigar-name click) ===== */
+    #cigar-detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    .cigar-detail-card {
+      width: 100%;
+      max-width: 380px;
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 22px 22px 18px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .cigar-detail-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+    .cigar-detail-meta {
+      font-size: 14px;
+      margin: 2px 0;
+    }
+    .cigar-detail-close {
+      margin-top: 16px;
+      text-align: center;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 15px;
+    }
   </style>
 </head>
 <body>
@@ -520,6 +558,19 @@
 
         const rowEl = document.createElement("div");
         rowEl.className = "cigar-row";
+
+        // store cigar data on the element for later (popup + invoice)
+        rowEl.__cigarData = {
+          raw: r,
+          brand: r["Brand"] || brandParam || "",
+          line,
+          cigarName,
+          vitola,
+          msrp,
+          stockCount,
+          imgSrc
+        };
+
         rowEl.innerHTML = `
           <div class="cigar-inner">
             <div class="cigar-section cigar-section-left">
@@ -549,6 +600,153 @@
         renderBrandCigars(brandRows, e.target.value);
       });
     }
+
+    // ====== BRAND ICON IN HEADER (from /img/icons/brands/{brand}.svg) ======
+    if (brandParam && brandTitleEl) {
+      const headerEl = brandTitleEl.parentElement;
+      const brandSlug = slug(brandParam);
+      const iconImg = document.createElement("img");
+      iconImg.src = `/img/icons/brands/${brandSlug}.svg`;
+      iconImg.alt = brandParam + " logo";
+      iconImg.style.height = "40px";
+      iconImg.style.width = "40px";
+      iconImg.style.borderRadius = "12px";
+      iconImg.style.display = "inline-block";
+      iconImg.style.verticalAlign = "middle";
+      iconImg.style.marginRight = "8px";
+
+      const wrapper = document.createElement("div");
+      wrapper.style.display = "flex";
+      wrapper.style.alignItems = "center";
+      wrapper.style.gap = "8px";
+
+      // move the existing title into the wrapper
+      if (brandTitleEl.parentNode === headerEl) {
+        headerEl.insertBefore(wrapper, brandTitleEl);
+        wrapper.appendChild(iconImg);
+        wrapper.appendChild(brandTitleEl);
+      }
+    }
+
+    // ===== CIGAR DETAIL POPUP + ADD TO RECEIPT BEHAVIOR =====
+
+    function parsePriceToNumber(raw) {
+      if (!raw) return 0;
+      const num = parseFloat(String(raw).replace(/[^0-9.]/g, ""));
+      return isNaN(num) ? 0 : num;
+    }
+
+    function openCigarDetailPopup(cigarData) {
+      if (!cigarData) return;
+
+      // If a global handler exists in pos.js, use that instead
+      if (typeof window.openCigarDetailPopupGlobal === "function") {
+        window.openCigarDetailPopupGlobal(cigarData);
+        return;
+      }
+
+      const existing = document.getElementById("cigar-detail-overlay");
+      if (existing) existing.remove();
+
+      const fullName = (cigarData.line ? cigarData.line + " " : "") + (cigarData.cigarName || "");
+      const brand = cigarData.brand || brandParam || "";
+      const vitola = cigarData.vitola || "";
+      const msrp = cigarData.msrp || "";
+
+      const overlay = document.createElement("div");
+      overlay.id = "cigar-detail-overlay";
+      overlay.innerHTML = `
+        <div class="cigar-detail-card">
+          <h2 class="cigar-detail-title">${fullName}</h2>
+          <p class="cigar-detail-meta"><strong>Brand:</strong> ${brand}</p>
+          <p class="cigar-detail-meta"><strong>Vitola:</strong> ${vitola}</p>
+          <p class="cigar-detail-meta"><strong>MSRP:</strong> ${msrp}</p>
+          <div class="cigar-detail-close">Close</div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target.id === "cigar-detail-overlay" || e.target.classList.contains("cigar-detail-close")) {
+          overlay.remove();
+        }
+      });
+    }
+
+    // Use the existing demoCartItems / renderInvoice to add cigars to invoice
+    function addCigarToInvoiceFromBrand(cigarData) {
+      if (!cigarData) return;
+
+      // If a global invoice-add function exists in pos.js, prefer that
+      if (typeof window.addToInvoice === "function") {
+        // build a minimal cigar object and pass it through
+        const fullName = (cigarData.line ? cigarData.line + " " : "") + (cigarData.cigarName || "");
+        const brand = cigarData.brand || brandParam || "";
+        const vitola = cigarData.vitola || "";
+        const priceNumber = parsePriceToNumber(
+          (cigarData.raw && (cigarData.raw["MSRP"] || cigarData.raw["Price"])) || cigarData.msrp
+        );
+        const cigarObj = {
+          id: "brand_" + slug(brand + "_" + fullName + "_" + vitola),
+          name: fullName,
+          vitola,
+          brand,
+          price: priceNumber,
+          qty: 1,
+          icon: `/img/icons/brands/${slug(brand) || "cigars"}.svg`
+        };
+        window.addToInvoice(cigarObj);
+        return;
+      }
+
+      // Fallback: use the local demoCartItems + renderInvoice defined below
+      if (!Array.isArray(demoCartItems)) return;
+
+      const fullName = (cigarData.line ? cigarData.line + " " : "") + (cigarData.cigarName || "");
+      const brand = cigarData.brand || brandParam || "";
+      const vitola = cigarData.vitola || "";
+      const priceNumber = parsePriceToNumber(
+        (cigarData.raw && (cigarData.raw["MSRP"] || cigarData.raw["Price"])) || cigarData.msrp
+      );
+      const icon = `/img/icons/brands/${slug(brand) || "cigars"}.svg`;
+
+      const existing = demoCartItems.find(
+        item => item.name === fullName && item.vitola === vitola && item.brand === brand
+      );
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        demoCartItems.push({
+          id: "brand_" + slug(brand + "_" + fullName + "_" + vitola),
+          name: fullName,
+          vitola,
+          brand,
+          price: priceNumber || 0,
+          qty: 1,
+          icon
+        });
+      }
+      renderInvoice();
+    }
+
+    // Delegated click handling: cigar-name → popup, stock-count → add to invoice
+    document.addEventListener("click", (e) => {
+      const nameEl = e.target.closest(".cigar-name");
+      if (nameEl && cigarList.contains(nameEl)) {
+        const rowEl = nameEl.closest(".cigar-row");
+        if (rowEl && rowEl.__cigarData) {
+          openCigarDetailPopup(rowEl.__cigarData);
+        }
+      }
+
+      const stockEl = e.target.closest(".cigar-stock-count");
+      if (stockEl && cigarList.contains(stockEl)) {
+        const rowEl = stockEl.closest(".cigar-row");
+        if (rowEl && rowEl.__cigarData) {
+          addCigarToInvoiceFromBrand(rowEl.__cigarData);
+        }
+      }
+    });
 
     // ===== INVOICE DEMO LOGIC (unchanged) =====
 
