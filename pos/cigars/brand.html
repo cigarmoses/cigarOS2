@@ -49,7 +49,7 @@
       margin-top: 4px;
     }
 
-    /* Grid of cigars for this brand (placeholder layout) */
+    /* Grid of cigars for this brand (you can wire this later) */
     .grid {
       padding: 10px 16px 110px 16px;
       display: grid;
@@ -92,7 +92,7 @@
       line-height: 1.25;
     }
 
-    /* ================= INVOICE POPUP LAYOUT (matches PNG) ================ */
+    /* ================= INVOICE POPUP LAYOUT (matches your PNG) ================ */
 
     .invoice-popup {
       position: fixed;
@@ -303,13 +303,13 @@
     <div id="brandSubtitle" class="brand-subtitle"></div>
   </header>
 
-  <!-- Brand cigars grid (hook this up to CSV later) -->
+  <!-- Brand cigars grid (hook this to CSV later) -->
   <main class="grid" id="brandGrid">
-    <!-- tiles will go here later -->
+    <!-- tiles go here -->
   </main>
 
   <script>
-    // Show brand name from ?brand= query in header
+    // Put brand name from ?brand= into the header
     (function () {
       const params = new URLSearchParams(window.location.search);
       const brand = params.get("brand");
@@ -321,27 +321,19 @@
       }
     })();
 
-    /* ---------- Demo invoice content & qty adjusters (same layout as cigars POS) ---------- */
+    /* ---------- Demo invoice content & qty adjusters (same layout everywhere) ---------- */
 
     const POS_TAX_RATE = 0.07;
 
+    // TEMP DEMO ITEMS – replace later with real cart contents
     const demoCartItems = [
       {
-        id: "flying-pig",
-        name: "Flying Pig",
-        vitola: "Perfecto",
-        brand: "Pappy Van Winkle",
-        price: 13.99,
+        id: "andalusian-bull",
+        name: "Andalusian Bull",
+        vitola: "Figurado",
+        brand: "La Flor Dominicana",
+        price: 22.00,
         qty: 1,
-        icon: "/img/icons/categories/cigars.svg"
-      },
-      {
-        id: "padron-3000-maduro",
-        name: "Padron 3000 Maduro",
-        vitola: "Robusto",
-        brand: "Padron",
-        price: 10.25,
-        qty: 2,
         icon: "/img/icons/categories/cigars.svg"
       },
       {
@@ -350,8 +342,17 @@
         vitola: "Food & Beverage",
         brand: "",
         price: 1.50,
-        qty: 3,
+        qty: 2,
         icon: "/img/icons/foodandbevs/sprite.svg"
+      },
+      {
+        id: "table-lighter",
+        name: "Table Lighter",
+        vitola: "Accessory",
+        brand: "",
+        price: 35.00,
+        qty: 1,
+        icon: "/img/lighters/vertigocyclonetripletorch.jpg"
       }
     ];
 
@@ -409,7 +410,7 @@
       if (taxEl) taxEl.textContent = `$${formatMoney(tax)}`;
       if (totalEl) totalEl.textContent = `$${formatMoney(total)}`;
 
-      // bind qty buttons
+      // qty buttons
       container.querySelectorAll(".invoice-qty-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           const row = btn.closest(".invoice-item");
@@ -439,12 +440,12 @@
     });
   </script>
 
-  <!-- Red receipt pill (same as other POS pages) -->
+  <!-- Red receipt pill -->
   <div class="receipt-pill" id="open-receipt">
     <img src="/uxui/receipt-icon.svg" alt="Receipt">
   </div>
 
-  <!-- Invoice Popup (new layout) -->
+  <!-- Invoice Popup -->
   <div id="invoice-popup" class="invoice-popup">
     <div class="invoice-popup-inner">
 
