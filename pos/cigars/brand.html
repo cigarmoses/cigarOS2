@@ -12,7 +12,6 @@
       --ink: #0f1a2c;
       --muted: #6a7586;
       --pill: #f3f7fb;
-      --card: #ffffff;
     }
     * { box-sizing: border-box; }
 
@@ -84,7 +83,7 @@
       font-size: 14px;
     }
 
-    /* Cigar list pills – original cigar layout */
+    /* Cigar list pills – 3-section inner rectangle */
     .cigar-list-wrap {
       padding: 4px 12px 110px 12px;
     }
@@ -95,21 +94,40 @@
     }
 
     .cigar-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--pill);
-      border-radius: 999px;
-      padding: 10px 14px;
-      box-shadow: 0 10px 24px rgba(15,26,44,0.08);
+      padding: 2px 4px;
     }
 
-    .cigar-left {
+    .cigar-inner {
+      width: 100%;
+      background: var(--pill);
+      border-radius: 30px;
+      padding: 8px 10px;
+      box-shadow: 0 10px 24px rgba(15,26,44,0.08);
+      display: grid;
+      grid-template-columns: 86px minmax(0, 1fr) 52px;
+      align-items: center;
+      column-gap: 8px;
+    }
+
+    .cigar-section {
+      height: 64px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      min-width: 0;
-      flex: 1;
+      justify-content: center;
+    }
+
+    .cigar-section-left {
+      justify-content: flex-start;
+    }
+    .cigar-section-middle {
+      justify-content: flex-start;
+      align-items: flex-start;
+      padding-right: 4px;
+    }
+    .cigar-section-right {
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
 
     .cigar-thumb {
@@ -139,8 +157,7 @@
       font-size: 15px;
       font-weight: 700;
       line-height: 1.2;
-      /* allow wrapping to 2nd line */
-      white-space: normal;
+      white-space: normal; /* allow wrapping */
     }
     .cigar-vitola {
       font-size: 13px;
@@ -151,22 +168,10 @@
       font-weight: 600;
     }
 
-    .cigar-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      margin-left: 12px;
-      flex-shrink: 0;
-    }
     .cigar-stock-count {
       font-size: 18px;
       font-weight: 800;
       line-height: 1;
-    }
-    .cigar-stock-label {
-      margin-top: 4px;
-      font-size: 12px;
-      color: var(--muted);
     }
 
     #brandEmpty {
@@ -175,7 +180,7 @@
       color: var(--muted);
     }
 
-    /* ================= INVOICE POPUP LAYOUT (matches new design) ================= */
+    /* ================= INVOICE POPUP (same as before) ================= */
 
     .invoice-popup {
       position: fixed;
@@ -464,7 +469,6 @@
     }
 
     function getStockCount(row) {
-      // if later you store inventory in CSV, plug it here
       const fromCsv =
         row["On Hand"] ||
         row["On-hand"] ||
@@ -517,20 +521,23 @@
         const rowEl = document.createElement("div");
         rowEl.className = "cigar-row";
         rowEl.innerHTML = `
-          <div class="cigar-left">
-            <div class="cigar-thumb">
-              <img src="${imgSrc}" alt="${cigarName || line}"
-                   onerror="this.src='/img/icons/categories/cigars.svg'">
+          <div class="cigar-inner">
+            <div class="cigar-section cigar-section-left">
+              <div class="cigar-thumb">
+                <img src="${imgSrc}" alt="${cigarName || line}"
+                     onerror="this.src='/img/icons/categories/cigars.svg'">
+              </div>
             </div>
-            <div class="cigar-middle">
-              <div class="cigar-name">${line ? line + " " + cigarName : cigarName || line}</div>
-              <div class="cigar-vitola">${vitola}</div>
-              <div class="cigar-price">${msrp}</div>
+            <div class="cigar-section cigar-section-middle">
+              <div class="cigar-middle">
+                <div class="cigar-name">${line ? line + " " + cigarName : cigarName || line}</div>
+                <div class="cigar-vitola">${vitola}</div>
+                <div class="cigar-price">${msrp}</div>
+              </div>
             </div>
-          </div>
-          <div class="cigar-right">
-            <div class="cigar-stock-count">${stockCount}</div>
-            <div class="cigar-stock-label">In stock</div>
+            <div class="cigar-section cigar-section-right">
+              <div class="cigar-stock-count">${stockCount}</div>
+            </div>
           </div>
         `;
         cigarList.appendChild(rowEl);
@@ -543,7 +550,7 @@
       });
     }
 
-    // ===== INVOICE DEMO LOGIC (same layout as cigars POS) =====
+    // ===== INVOICE DEMO LOGIC (unchanged) =====
 
     const POS_TAX_RATE = 0.07;
 
