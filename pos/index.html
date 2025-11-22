@@ -1,9 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <link rel="stylesheet" href="/pos/pos.css" />
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>CigarOS POS</title>
+
   <style>
     :root {
       --bg: #dfeaf0;
@@ -20,9 +22,12 @@
       min-height: 100vh;
     }
 
-    /* back button */
+    /* Topbar */
     .pos-topbar {
       padding: 14px 16px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .pos-back {
       font-size: 16px;
@@ -33,6 +38,10 @@
       background: #ffffff;
       box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
     }
+    .pos-star {
+      font-size: 22px;
+      color: #ffcc00;
+    }
 
     header {
       padding: 10px 16px 10px 16px;
@@ -42,10 +51,17 @@
       font-weight: 700;
       margin: 0;
     }
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Category grid */
     .grid {
-      padding: 10px 16px 90px 16px;
+      padding: 10px 16px 110px 16px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(172px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 16px;
     }
     .tile {
@@ -63,7 +79,7 @@
       width: 58px;
       height: 58px;
       border-radius: 20px;
-      background: #fff;
+      background: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -84,59 +100,416 @@
       line-height: 1.25;
     }
 
-    #receipt-pill {
+    /* ================= INVOICE POPUP LAYOUT (matches your PNG) ================ */
+
+    .invoice-popup {
       position: fixed;
-      right: 16px;
-      bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: #0f1a2c;
-      box-shadow: 0 10px 30px rgba(15,26,44,0.25);
-      color: #ffffff;
-      z-index: 10;
-      font-size: 14px;
-      font-weight: 600;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      z-index: 9999;
+      padding: 20px;
     }
-    #receipt-pill img {
-      width: 28px;
-      height: 28px;
-    }
-    #receipt-count {
-      min-width: 24px;
-      height: 24px;
-      border-radius: 999px;
-      background: #d72828;
+    .invoice-popup.open {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+    }
+    .invoice-popup-inner {
+      width: 100%;
+      max-width: 420px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 36px;
+      padding: 28px 26px 32px;
+      box-shadow: 0 12px 50px rgba(0,0,0,0.20);
+      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .invoice-header {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .invoice-title {
+      font-size: 22px;
       font-weight: 700;
-      color: #ffffff;
+      margin: 0;
+    }
+    .invoice-date {
+      margin: 0;
+      font-size: 13px;
+      color: #222;
+      font-weight: 500;
+    }
+
+    .invoice-body {
+      margin-top: 18px;
+    }
+
+    .loyalty-row {
+      width: 100%;
+      background: #e8f0f5;
+      border-radius: 999px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #invoice-items {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .invoice-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #e8f0f5;
+      border-radius: 30px;
+      padding: 14px 18px;
+      box-sizing: border-box;
+    }
+
+    .invoice-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .invoice-thumb {
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
+      background: #cfdde7;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .invoice-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .invoice-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .invoice-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #007aff;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .invoice-meta {
+      font-size: 13px;
+      color: #111;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .invoice-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      min-width: 90px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .invoice-qty-label {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+    }
+
+    .invoice-qty-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f2f6fa;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    .invoice-qty-btn {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.2);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .invoice-qty-value {
+      min-width: 20px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .invoice-line-total {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .invoice-totals {
+      margin-top: 26px;
+      text-align: right;
+      font-size: 16px;
+    }
+    .invoice-totals .total-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .invoice-totals .total-bold {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .invoice-close {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
 
-  <!-- ✅ Back Button Goes Here -->
   <div class="pos-topbar">
     <a class="pos-back" onclick="history.back()">← Back</a>
+    <div class="pos-star">★</div>
   </div>
 
   <header>
     <h1>CigarOS POS</h1>
+    <div class="subtitle">Select a category</div>
   </header>
 
   <main class="grid">
-    <!-- tiles… unchanged -->
+    <!-- CIGARS -->
+    <a class="tile" href="/pos/cigars/">
+      <div class="tile-icon">
+        <img src="/img/icons/categories/cigars.svg" alt="Cigars" />
+      </div>
+      <div class="tile-title">Cigars</div>
+      <div class="tile-sub">Browse all premium cigars by brand.</div>
+    </a>
+
+    <!-- FOOD & BEVS -->
+    <a class="tile" href="/pos/foodandbevs/">
+      <div class="tile-icon">
+        <img src="/img/icons/categories/foodandbevs.svg" alt="Food & Bevs" />
+      </div>
+      <div class="tile-title">Food &amp; Bevs</div>
+      <div class="tile-sub">Drinks and snacks for the lounge.</div>
+    </a>
+
+    <!-- ACCESSORIES -->
+    <a class="tile" href="/pos/accessories/">
+      <div class="tile-icon">
+        <img src="/img/icons/categories/accessories.svg" alt="Accessories" />
+      </div>
+      <div class="tile-title">Accessories</div>
+      <div class="tile-sub">Lighters, cutters, and more.</div>
+    </a>
+
+    <!-- ASHTRAYS -->
+    <a class="tile" href="/pos/ashtrays/">
+      <div class="tile-icon">
+        <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays" />
+      </div>
+      <div class="tile-title">Ashtrays</div>
+      <div class="tile-sub">Table and personal ashtrays.</div>
+    </a>
+
+    <!-- PIPES -->
+    <a class="tile" href="/pos/pipes/">
+      <div class="tile-icon">
+        <img src="/img/icons/categories/pipes.svg" alt="Pipes" />
+      </div>
+      <div class="tile-title">Pipes</div>
+      <div class="tile-sub">Pipes and pipe tobacco.</div>
+    </a>
+
+    <!-- PACKS -->
+    <a class="tile" href="/pos/packs/">
+      <div class="tile-icon">
+        <img src="/img/icons/categories/packs.svg" alt="Packs" />
+      </div>
+      <div class="tile-title">Packs</div>
+      <div class="tile-sub">Shark packs and samplers.</div>
+    </a>
   </main>
 
-  <div id="receipt-pill">
-    <img src="/uxui/receipt-icon.svg" alt="Receipt" id="receipt-icon"/>
-    <span id="receipt-count">0</span>
+  <script>
+    /* ---------- DEMO CART ITEMS ON HOME SCREEN (same layout as others) ---------- */
+
+    const POS_TAX_RATE = 0.07;
+
+    const demoCartItems = [
+      {
+        id: "andalusian-bull",
+        name: "Andalusian Bull",
+        vitola: "Figurado",
+        brand: "La Flor Dominicana",
+        price: 22.00,
+        qty: 1,
+        icon: "/img/icons/categories/cigars.svg"
+      },
+      {
+        id: "sprite-can",
+        name: "Sprite",
+        vitola: "Food & Beverage",
+        brand: "",
+        price: 1.50,
+        qty: 2,
+        icon: "/img/icons/foodandbevs/sprite.svg"
+      }
+    ];
+
+    function formatMoney(value) {
+      return value.toFixed(2);
+    }
+
+    function renderInvoice() {
+      const container = document.getElementById("invoice-items");
+      if (!container) return;
+
+      container.innerHTML = "";
+      let subtotal = 0;
+
+      demoCartItems.forEach((item, index) => {
+        const lineTotal = item.price * item.qty;
+        subtotal += lineTotal;
+
+        const row = document.createElement("div");
+        row.className = "invoice-item";
+        row.dataset.index = String(index);
+        row.innerHTML = `
+          <div class="invoice-left">
+            <div class="invoice-thumb">
+              <img src="${item.icon}" alt="${item.brand || item.name}">
+            </div>
+            <div class="invoice-text">
+              <button type="button" class="invoice-name">${item.name}</button>
+              <div class="invoice-meta">${item.vitola}</div>
+              <div class="invoice-meta">${item.brand}</div>
+              <div class="invoice-meta">$${formatMoney(item.price)}</div>
+            </div>
+          </div>
+          <div class="invoice-right">
+            <div class="invoice-qty-label">QTY</div>
+            <div class="invoice-qty-control">
+              <button class="invoice-qty-btn" data-dir="-1">−</button>
+              <span class="invoice-qty-value">${item.qty}</span>
+              <button class="invoice-qty-btn" data-dir="1">+</button>
+            </div>
+            <div class="invoice-line-total">$${formatMoney(lineTotal)}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      const subtotalEl = document.getElementById("invoice-subtotal");
+      const taxEl = document.getElementById("invoice-tax");
+      const totalEl = document.getElementById("invoice-total");
+
+      const tax = subtotal * POS_TAX_RATE;
+      const total = subtotal + tax;
+
+      if (subtotalEl) subtotalEl.textContent = `$${formatMoney(subtotal)}`;
+      if (taxEl) taxEl.textContent = `$${formatMoney(tax)}`;
+      if (totalEl) totalEl.textContent = `$${formatMoney(total)}`;
+
+      // qty buttons
+      container.querySelectorAll(".invoice-qty-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest(".invoice-item");
+          if (!row) return;
+          const index = Number(row.dataset.index || "0");
+          const dir = Number(btn.getAttribute("data-dir") || "0");
+          const item = demoCartItems[index];
+          if (!item) return;
+          const newQty = item.qty + dir;
+          if (newQty < 0) return;
+          item.qty = newQty;
+          renderInvoice();
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const dateEl = document.getElementById("invoice-date");
+      if (dateEl) {
+        const d = new Date();
+        const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+        const dateStr = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
+        const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+        dateEl.textContent = `${weekday}, ${dateStr} — ${timeStr}`;
+      }
+      renderInvoice();
+    });
+  </script>
+
+  <!-- Red receipt pill (wired to /pos/pos.js via id="open-receipt") -->
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" alt="Receipt">
   </div>
 
+  <!-- Invoice Popup -->
+  <div id="invoice-popup" class="invoice-popup">
+    <div class="invoice-popup-inner">
+
+      <div class="invoice-header">
+        <h2 class="invoice-title">INVOICE</h2>
+        <p class="invoice-date" id="invoice-date"></p>
+      </div>
+
+      <div class="invoice-body">
+        <div class="loyalty-row">
+          <span>Loyalty customer</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+
+        <div id="invoice-items"></div>
+      </div>
+
+      <div class="invoice-totals">
+        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
+        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
+        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
+      </div>
+
+      <div id="close-receipt" class="invoice-close">Close</div>
+    </div>
+  </div>
+
+  <script src="/js/tony.js" defer></script>
+  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
