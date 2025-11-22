@@ -36,7 +36,7 @@
       box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
     }
     header {
-      padding: 10px 16px 10px 16px;
+      padding: 10px 16px 8px 16px;
     }
     h1 {
       font-size: 32px;
@@ -49,50 +49,84 @@
       margin-top: 4px;
     }
 
-    /* Grid of cigars for this brand (you can wire this later) */
-    .grid {
-      padding: 10px 16px 110px 16px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(172px, 1fr));
-      gap: 16px;
+    /* Search */
+    .brand-search-row {
+      padding: 0 16px 8px 16px;
     }
-    .tile {
+    .brand-search {
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+    }
+    .brand-search input {
+      border: none;
+      outline: none;
+      width: 100%;
+      background: transparent;
+      font-size: 14px;
+    }
+
+    /* Cigar grid for this brand */
+    .cigar-grid {
+      padding: 8px 16px 110px 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+    .cigar-card {
       background: var(--card);
-      border-radius: 26px;
-      padding: 18px 16px 20px 16px;
+      border-radius: 24px;
+      padding: 12px 12px 14px 12px;
       box-shadow: 0 10px 30px rgba(15,26,44,0.04);
       text-decoration: none;
       color: inherit;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
     }
-    .tile-icon {
-      width: 58px;
-      height: 58px;
-      border-radius: 20px;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .cigar-photo {
+      width: 100%;
+      border-radius: 18px;
+      background: #dfe7ec;
       overflow: hidden;
+      display: grid;
+      place-items: center;
+      height: 120px;
     }
-    .tile-icon img {
+    .cigar-photo img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
+      display: block;
     }
-    .tile-title {
-      font-size: 18px;
+    .cigar-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 13px;
+    }
+    .cigar-name {
+      font-size: 14px;
       font-weight: 700;
     }
-    .tile-sub {
+    .cigar-meta {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .cigar-price {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    #brandEmpty {
+      padding: 12px 16px;
       font-size: 14px;
       color: var(--muted);
-      line-height: 1.25;
     }
 
-    /* ================= INVOICE POPUP LAYOUT (matches your PNG) ================ */
+    /* ============== INVOICE POPUP LAYOUT (matches cigars POS / PNG) ============== */
 
     .invoice-popup {
       position: fixed;
@@ -294,65 +328,162 @@
 
   <!-- Top bar -->
   <div class="pos-topbar">
-    <a class="pos-back" onclick="history.back()">← Back</a>
+    <a class="pos-back" href="/pos/cigars/">← Cigars</a>
   </div>
 
   <!-- Header for this brand -->
   <header>
-    <h1 id="brandTitle">CigarOS POS</h1>
+    <h1 id="brandTitle">Brand</h1>
     <div id="brandSubtitle" class="brand-subtitle"></div>
   </header>
 
-  <!-- Brand cigars grid (hook this to CSV later) -->
-  <main class="grid" id="brandGrid">
-    <!-- tiles go here -->
+  <!-- Search within this brand -->
+  <div class="brand-search-row">
+    <div class="brand-search">
+      <input id="brandSearch" placeholder="Search cigars in this brand…" />
+    </div>
+  </div>
+
+  <!-- Brand cigars grid -->
+  <main>
+    <div id="brandEmpty" style="display:none;"></div>
+    <div id="cigarGrid" class="cigar-grid"></div>
   </main>
 
   <script>
-    // Put brand name from ?brand= into the header
-    (function () {
-      const params = new URLSearchParams(window.location.search);
-      const brand = params.get("brand");
-      if (brand) {
-        const titleEl = document.getElementById("brandTitle");
-        const subEl = document.getElementById("brandSubtitle");
-        if (titleEl) titleEl.textContent = brand;
-        if (subEl) subEl.textContent = "CigarOS POS • Brand View";
-      }
-    })();
+    // === BRAND INVENTORY LOGIC ===
 
-    /* ---------- Demo invoice content & qty adjusters (same layout everywhere) ---------- */
+    const CSV_URL = "/hub/hub_11-5-25.csv";
+    const params = new URLSearchParams(window.location.search);
+    const brandParam = (params.get("brand") || "").trim();
+
+    const brandTitleEl = document.getElementById("brandTitle");
+    const brandSubtitleEl = document.getElementById("brandSubtitle");
+    const cigarGrid = document.getElementById("cigarGrid");
+    const brandEmpty = document.getElementById("brandEmpty");
+    const brandSearch = document.getElementById("brandSearch");
+
+    if (brandParam) {
+      if (brandTitleEl) brandTitleEl.textContent = brandParam;
+      if (brandSubtitleEl) brandSubtitleEl.textContent = "CigarOS POS • " + brandParam;
+    }
+
+    let brandRows = [];
+
+    fetch(CSV_URL)
+      .then(r => r.text())
+      .then(text => {
+        const rows = parseCSV(text);
+        const normalizedBrand = brandParam.toLowerCase();
+        brandRows = rows.filter(r => {
+          const b = (r["Brand"] || r["brand"] || "").trim().toLowerCase();
+          return b === normalizedBrand;
+        });
+
+        renderBrandCigars(brandRows);
+      })
+      .catch(err => {
+        console.error(err);
+        brandEmpty.style.display = "block";
+        brandEmpty.textContent = "Could not load cigar inventory.";
+      });
+
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/);
+      const header = lines.shift().split(",");
+      return lines.map(line => {
+        const cells = line.split(",");
+        const obj = {};
+        header.forEach((h, i) => {
+          obj[h.trim()] = (cells[i] || "").trim();
+        });
+        return obj;
+      });
+    }
+
+    function slug(str) {
+      return (str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
+    function renderBrandCigars(rows, term = "") {
+      cigarGrid.innerHTML = "";
+
+      const searchTerm = term.toLowerCase();
+      const filtered = rows.filter(r => {
+        const line = (r["Line"] || "").toLowerCase();
+        const name = (r["Cigar Name"] || r["Cigar"] || "").toLowerCase();
+        return !searchTerm || line.includes(searchTerm) || name.includes(searchTerm);
+      });
+
+      if (!filtered.length) {
+        brandEmpty.style.display = "block";
+        brandEmpty.textContent = "No cigars found for this brand.";
+        return;
+      }
+
+      brandEmpty.style.display = "none";
+
+      filtered.forEach(r => {
+        const line = r["Line"] || "";
+        const cigarName = r["Cigar Name"] || r["Cigar"] || "";
+        const vitola = r["Vitola"] || "";
+        const msrpRaw = r["MSRP"] || r["Price"] || "";
+        const msrp = msrpRaw ? `$${msrpRaw}` : "";
+
+        // Try to build a reasonable image path; fallback to the cigar icon
+        const photoCol = r["Cigar Photo"] || r["Photo"] || "";
+        let imgSrc = photoCol;
+        if (!imgSrc) {
+          const brandSlug = slug(r["Brand"] || "");
+          const cigarSlug = slug(cigarName || line);
+          imgSrc = `/img/cigars/${brandSlug}_${cigarSlug}.jpg`;
+        }
+
+        const card = document.createElement("div");
+        card.className = "cigar-card";
+        card.innerHTML = `
+          <div class="cigar-photo">
+            <img src="${imgSrc}" alt="${cigarName || line}"
+                 onerror="this.src='/img/icons/categories/cigars.svg'">
+          </div>
+          <div class="cigar-text">
+            <div class="cigar-name">${line ? line + " – " + cigarName : cigarName || line}</div>
+            <div class="cigar-meta">${vitola}</div>
+            <div class="cigar-price">${msrp}</div>
+          </div>
+        `;
+        cigarGrid.appendChild(card);
+      });
+    }
+
+    if (brandSearch) {
+      brandSearch.addEventListener("input", e => {
+        renderBrandCigars(brandRows, e.target.value);
+      });
+    }
+
+    // === INVOICE DEMO LOGIC (same layout as other POS pages) ===
 
     const POS_TAX_RATE = 0.07;
 
-    // TEMP DEMO ITEMS – replace later with real cart contents
     const demoCartItems = [
       {
-        id: "andalusian-bull",
-        name: "Andalusian Bull",
-        vitola: "Figurado",
-        brand: "La Flor Dominicana",
-        price: 22.00,
+        id: "demo1",
+        name: "Sample Cigar",
+        vitola: "Robusto",
+        brand: brandParam || "House",
+        price: 10.00,
         qty: 1,
         icon: "/img/icons/categories/cigars.svg"
       },
       {
-        id: "sprite-can",
+        id: "demo2",
         name: "Sprite",
         vitola: "Food & Beverage",
         brand: "",
         price: 1.50,
         qty: 2,
         icon: "/img/icons/foodandbevs/sprite.svg"
-      },
-      {
-        id: "table-lighter",
-        name: "Table Lighter",
-        vitola: "Accessory",
-        brand: "",
-        price: 35.00,
-        qty: 1,
-        icon: "/img/lighters/vertigocyclonetripletorch.jpg"
       }
     ];
 
@@ -410,7 +541,6 @@
       if (taxEl) taxEl.textContent = `$${formatMoney(tax)}`;
       if (totalEl) totalEl.textContent = `$${formatMoney(total)}`;
 
-      // qty buttons
       container.querySelectorAll(".invoice-qty-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           const row = btn.closest(".invoice-item");
@@ -460,7 +590,6 @@
           <span class="dropdown-arrow">▼</span>
         </div>
 
-        <!-- CART ITEMS -->
         <div id="invoice-items"></div>
       </div>
 
