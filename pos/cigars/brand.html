@@ -182,7 +182,7 @@
       color: var(--muted);
     }
 
-    /* ================= INVOICE POPUP (same as before) ================= */
+    /* ================= INVOICE POPUP ================= */
 
     .invoice-popup {
       position: fixed;
@@ -506,15 +506,24 @@
       return `$${trimmed}`;
     }
 
+    // keep a mutable stock count on each row object
     function getStockCount(row) {
+      if (typeof row.__currentStock === "number") {
+        return row.__currentStock;
+      }
       const fromCsv =
         row["On Hand"] ||
         row["On-hand"] ||
         row["Inventory"] ||
         row["Stock"] ||
         "";
-      if (fromCsv) return fromCsv;
-      return "89"; // default for now
+      if (fromCsv) {
+        const n = parseInt(fromCsv, 10);
+        row.__currentStock = isNaN(n) ? 89 : n;
+        return row.__currentStock;
+      }
+      row.__currentStock = 89; // default
+      return row.__currentStock;
     }
 
     function renderBrandCigars(rows, term = "") {
@@ -553,7 +562,8 @@
         if (!imgSrc) {
           const brandSlug = slug(r["Brand"] || "");
           const cigarSlug = slug(cigarName || line);
-        imgSrc = `/img/icons/brands/${brandSlug}.svg`;}
+          imgSrc = `/img/icons/brands/${brandSlug}.svg`;
+        }
 
         const rowEl = document.createElement("div");
         rowEl.className = "cigar-row";
@@ -627,8 +637,6 @@
       }
     }
 
-    // ===== CIGAR DETAIL POPUP + ADD TO RECEIPT BEHAVIOR =====
-
     function parsePriceToNumber(raw) {
       if (!raw) return 0;
       const num = parseFloat(String(raw).replace(/[^0-9.]/g, ""));
@@ -638,16 +646,11 @@
     function openCigarDetailPopup(cigarData) {
       if (!cigarData) return;
 
-      // If a global handler exists in pos.js, use that instead
-      if (typeof window.openCigarDetailPopupGlobal === "function") {
-        window.openCigarDetailPopupGlobal(cigarData);
-        return;
-      }
-
       const existing = document.getElementById("cigar-detail-overlay");
       if (existing) existing.remove();
 
-      const fullName = (cigarData.line ? cigarData.line + " " : "") + (cigarData.cigarName || "");
+      const fullName =
+        (cigarData.line ? cigarData.line + " " : "") + (cigarData.cigarName || "");
       const brand = cigarData.brand || brandParam || "";
       const vitola = cigarData.vitola || "";
       const msrp = cigarData.msrp || "";
@@ -666,66 +669,55 @@
       document.body.appendChild(overlay);
 
       overlay.addEventListener("click", (e) => {
-        if (e.target.id === "cigar-detail-overlay" || e.target.classList.contains("cigar-detail-close")) {
+        if (
+          e.target.id === "cigar-detail-overlay" ||
+          e.target.classList.contains("cigar-detail-close")
+        ) {
           overlay.remove();
         }
       });
     }
 
-    // Use the existing demoCartItems / renderInvoice to add cigars to invoice
-    function addCigarToInvoiceFromBrand(cigarData) {
+    function addCigarToInvoiceFromBrand(cigarData, stockEl) {
       if (!cigarData) return;
 
-      // If a global invoice-add function exists in pos.js, prefer that
+      const fullName =
+        (cigarData.line ? cigarData.line + " " : "") + (cigarData.cigarName || "");
+      const brand = cigarData.brand || brandParam || "";
+      const vitola = cigarData.vitola || "";
+      const priceNumber = parsePriceToNumber(
+        (cigarData.raw && (cigarData.raw["MSRP"] || cigarData.raw["Price"])) ||
+          cigarData.msrp
+      );
+      const iconPath = `/img/icons/brands/${slug(brand) || "cigars"}.svg`;
+
+      // Decrement stock visually + in the row object
+      const rowObj = cigarData.raw || {};
+      let current =
+        typeof rowObj.__currentStock === "number"
+          ? rowObj.__currentStock
+          : parseInt((stockEl && stockEl.textContent) || "89", 10);
+
+      if (isNaN(current)) current = 89;
+      const newVal = Math.max(0, current - 1);
+      rowObj.__currentStock = newVal;
+      if (stockEl) {
+        stockEl.textContent = String(newVal);
+      }
+
       if (typeof window.addToInvoice === "function") {
-        // build a minimal cigar object and pass it through
-        const fullName = (cigarData.line ? cigarData.line + " " : "") + (cigarData.cigarName || "");
-        const brand = cigarData.brand || brandParam || "";
-        const vitola = cigarData.vitola || "";
-        const priceNumber = parsePriceToNumber(
-          (cigarData.raw && (cigarData.raw["MSRP"] || cigarData.raw["Price"])) || cigarData.msrp
-        );
-        const cigarObj = {
+        window.addToInvoice({
           id: "brand_" + slug(brand + "_" + fullName + "_" + vitola),
           name: fullName,
           vitola,
           brand,
           price: priceNumber,
           qty: 1,
-          icon: `/img/icons/brands/${slug(brand) || "cigars"}.svg`
-        };
-        window.addToInvoice(cigarObj);
-        return;
-      }
-
-      // Fallback: use the local demoCartItems + renderInvoice defined below
-      if (!Array.isArray(demoCartItems)) return;
-
-      const fullName = (cigarData.line ? cigarData.line + " " : "") + (cigarData.cigarName || "");
-      const brand = cigarData.brand || brandParam || "";
-      const vitola = cigarData.vitola || "";
-      const priceNumber = parsePriceToNumber(
-        (cigarData.raw && (cigarData.raw["MSRP"] || cigarData.raw["Price"])) || cigarData.msrp
-      );
-      const icon = `/img/icons/brands/${slug(brand) || "cigars"}.svg`;
-
-      const existing = demoCartItems.find(
-        item => item.name === fullName && item.vitola === vitola && item.brand === brand
-      );
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        demoCartItems.push({
-          id: "brand_" + slug(brand + "_" + fullName + "_" + vitola),
-          name: fullName,
-          vitola,
-          brand,
-          price: priceNumber || 0,
-          qty: 1,
-          icon
+          icon: iconPath,
         });
+      } else {
+        console.warn("addToInvoice() is not defined yet.");
       }
-      renderInvoice();
     }
 
     // Delegated click handling: cigar-name → popup, stock-count → add to invoice
@@ -742,122 +734,16 @@
       if (stockEl && cigarList.contains(stockEl)) {
         const rowEl = stockEl.closest(".cigar-row");
         if (rowEl && rowEl.__cigarData) {
-          addCigarToInvoiceFromBrand(rowEl.__cigarData);
+          addCigarToInvoiceFromBrand(rowEl.__cigarData, stockEl);
         }
       }
     });
-
-    // ===== INVOICE DEMO LOGIC (unchanged) =====
-
-    const POS_TAX_RATE = 0.07;
-
-    const demoCartItems = [
-      {
-        id: "demo1",
-        name: "Sample Cigar",
-        vitola: "Robusto",
-        brand: brandParam || "House",
-        price: 10.00,
-        qty: 1,
-        icon: "/img/icons/categories/cigars.svg"
-      },
-      {
-        id: "demo2",
-        name: "Sprite",
-        vitola: "Food & Beverage",
-        brand: "",
-        price: 1.50,
-        qty: 2,
-        icon: "/img/icons/foodandbevs/sprite.svg"
-      }
-    ];
-
-    function money(value) {
-      return value.toFixed(2);
-    }
-
-    function renderInvoice() {
-      const container = document.getElementById("invoice-items");
-      if (!container) return;
-
-      container.innerHTML = "";
-      let subtotal = 0;
-
-      demoCartItems.forEach((item, index) => {
-        const lineTotal = item.price * item.qty;
-        subtotal += lineTotal;
-
-        const row = document.createElement("div");
-        row.className = "invoice-item";
-        row.dataset.index = String(index);
-        row.innerHTML = `
-          <div class="invoice-left">
-            <div class="invoice-thumb">
-              <img src="${item.icon}" alt="${item.brand || item.name}">
-            </div>
-            <div class="invoice-text">
-              <button type="button" class="invoice-name">${item.name}</button>
-              <div class="invoice-meta">${item.vitola}</div>
-              <div class="invoice-meta">${item.brand}</div>
-              <div class="invoice-meta">$${money(item.price)}</div>
-            </div>
-          </div>
-          <div class="invoice-right">
-            <div class="invoice-qty-label">QTY</div>
-            <div class="invoice-qty-control">
-              <button class="invoice-qty-btn" data-dir="-1">−</button>
-              <span class="invoice-qty-value">${item.qty}</span>
-              <button class="invoice-qty-btn" data-dir="1">+</button>
-            </div>
-            <div class="invoice-line-total">$${money(lineTotal)}</div>
-          </div>
-        `;
-        container.appendChild(row);
-      });
-
-      const subtotalEl = document.getElementById("invoice-subtotal");
-      const taxEl = document.getElementById("invoice-tax");
-      const totalEl = document.getElementById("invoice-total");
-
-      const tax = subtotal * POS_TAX_RATE;
-      const total = subtotal + tax;
-
-      if (subtotalEl) subtotalEl.textContent = `$${money(subtotal)}`;
-      if (taxEl) taxEl.textContent = `$${money(tax)}`;
-      if (totalEl) totalEl.textContent = `$${money(total)}`;
-
-      container.querySelectorAll(".invoice-qty-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const row = btn.closest(".invoice-item");
-          if (!row) return;
-          const index = Number(row.dataset.index || "0");
-          const dir = Number(btn.getAttribute("data-dir") || "0");
-          const item = demoCartItems[index];
-          if (!item) return;
-          const newQty = item.qty + dir;
-          if (newQty < 0) return;
-          item.qty = newQty;
-          renderInvoice();
-        });
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const dateEl = document.getElementById("invoice-date");
-      if (dateEl) {
-        const d = new Date();
-        const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
-        const dateStr = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
-        const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-        dateEl.textContent = `${weekday}, ${dateStr} — ${timeStr}`;
-      }
-      renderInvoice();
-    });
   </script>
 
-  <!-- Red receipt pill -->
+  <!-- Red receipt pill (now with count element for cart size) -->
   <div class="receipt-pill" id="open-receipt">
     <img src="/uxui/receipt-icon.svg" alt="Receipt" />
+    <div class="receipt-pill-count" id="receipt-count">0</div>
   </div>
 
   <!-- Invoice Popup -->
