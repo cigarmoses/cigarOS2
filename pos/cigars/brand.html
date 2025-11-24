@@ -553,8 +553,7 @@
         if (!imgSrc) {
           const brandSlug = slug(r["Brand"] || "");
           const cigarSlug = slug(cigarName || line);
-          imgSrc = `/img/cigars/${brandSlug}_${cigarSlug}.jpg`;
-        }
+        imgSrc = `/img/icons/brands/${brandSlug}.svg`;}
 
         const rowEl = document.createElement("div");
         rowEl.className = "cigar-row";
