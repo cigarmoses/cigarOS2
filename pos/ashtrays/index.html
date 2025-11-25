@@ -17,17 +17,20 @@
       color: var(--ink);
       font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     }
+
     .pos-wrap {
       max-width: 480px;
       margin: 0 auto;
       padding: 12px 12px 90px;
     }
+
     .pos-topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-top: 4px;
     }
+
     .pos-back {
       text-decoration: none;
       color: var(--ink);
@@ -36,13 +39,16 @@
       gap: 4px;
       font-weight: 500;
     }
+
     .pos-star {
       font-size: 22px;
       color: #ffcc00;
     }
+
     .pos-header-spacer {
       height: 16px;
     }
+
     .pos-title {
       text-align: center;
       font-weight: 700;
@@ -72,6 +78,7 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
     }
+
     .ash-tile {
       text-align: center;
       text-decoration: none;
@@ -80,6 +87,7 @@
       flex-direction: column;
       gap: 4px;
       align-items: center;
+      cursor: pointer;
     }
 
     .ash-icon {
@@ -97,17 +105,18 @@
       object-fit: cover;
     }
 
-    /* 3-line description */
     .ash-brand {
       font-size: 11px;
       font-weight: 500;
       line-height: 1.1;
     }
+
     .ash-label {
       font-size: 12px;
       font-weight: 600;
       line-height: 1.2;
     }
+
     .ash-price {
       font-size: 12px;
       margin-top: -2px;
@@ -120,6 +129,7 @@
       <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
       <div class="pos-star">★</div>
     </div>
+
     <div class="pos-header-spacer"></div>
     <h1 class="pos-title">ASHTRAYS</h1>
 
@@ -131,16 +141,16 @@
   </div>
 
   <script>
-    // FINAL ASHTRAY DATA (brand skipped if "n/a")
+    // ------------------------------ DATA ------------------------------
     const ASHTRAYS = [
       {
-        brand: "n/a",
+        brand: "Opus X",
         name: "Opus X 20th Anniversary Ashtray",
         price: "$199.99",
         img: "/img/ashtrays/opusx20thanniversaryashtray.jpg"
       },
       {
-        brand: "n/a",
+        brand: "Rocky Patel",
         name: "Rocky Patel Luxury Luminoso Ashtray",
         price: "$59.99",
         img: "/img/ashtrays/rockypatelluxuryluminosoashtray.jpg"
@@ -150,6 +160,17 @@
     const grid = document.getElementById("ashGrid");
     const search = document.getElementById("ashSearch");
 
+    function slug(str) {
+      return (str || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+    }
+
+    function parsePriceToNumber(raw) {
+      if (!raw) return 0;
+      const num = parseFloat(String(raw).replace(/[^0-9.]/g, ""));
+      return isNaN(num) ? 0 : num;
+    }
+
+    // -------------------------- RENDER --------------------------
     function renderAshtrays(filter = "") {
       grid.innerHTML = "";
       const term = filter.toLowerCase();
@@ -158,13 +179,13 @@
         .filter(a => a.name.toLowerCase().includes(term))
         .forEach(a => {
           const brandLine =
-            a.brand && a.brand.toLowerCase() !== "n/a"
+            a.brand.toLowerCase() !== "n/a"
               ? `<div class="ash-brand">${a.brand}</div>`
               : "";
 
-          const div = document.createElement("a");
+          const div = document.createElement("div");
           div.className = "ash-tile";
-          div.href = "javascript:void(0)";
+
           div.innerHTML = `
             <div class="ash-icon">
               <img src="${a.img}" alt="${a.name}">
@@ -173,6 +194,24 @@
             <div class="ash-label">${a.name}</div>
             <div class="ash-price">${a.price}</div>
           `;
+
+          // CLICK → Add ashtray to the invoice cart
+          div.addEventListener("click", () => {
+            if (typeof window.addToInvoice === "function") {
+              const priceNumber = parsePriceToNumber(a.price);
+              const cartItem = {
+                id: "ash_" + slug(a.name),
+                name: a.name,
+                vitola: "Ashtray",
+                brand: a.brand,
+                price: priceNumber,
+                qty: 1,
+                icon: a.img
+              };
+              window.addToInvoice(cartItem);
+            }
+          });
+
           grid.appendChild(div);
         });
     }
@@ -184,13 +223,13 @@
     });
   </script>
 
-  <!-- Red receipt pill -->
-<div class="receipt-pill" id="open-receipt">
-  <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
-  <span class="receipt-pill-count" id="receipt-count">0</span>
-</div>
+  <!-- ===================== RECEIPT PILL ===================== -->
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
+    <span class="receipt-pill-count" id="receipt-count">0</span>
+  </div>
 
-  <!-- Invoice Popup -->
+  <!-- ===================== INVOICE POPUP ===================== -->
   <div id="invoice-popup" class="invoice-popup">
     <div class="invoice-popup-inner">
       <div class="invoice-header">
@@ -207,15 +246,9 @@
       </div>
 
       <div class="invoice-totals">
-        <div class="total-row">
-          <span>Subtotal</span>
-          <span id="invoice-subtotal">$0.00</span>
-        </div>
+        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
         <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
-        <div class="total-row total-bold">
-          <span>TOTAL</span>
-          <span id="invoice-total">$0.00</span>
-        </div>
+        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
       </div>
 
       <div id="close-receipt" class="invoice-close">Close</div>
