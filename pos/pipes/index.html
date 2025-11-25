@@ -141,12 +141,6 @@
   </div>
 
   <script>
-    // Auto-extension resolver (.svg, .png, .jpg, .jpeg)
-    function resolvePipeImage(baseName) {
-      const exts = ["jpg", "jpeg", "png", "svg"];
-      return `/img/pipes/${baseName}`;
-    }
-
     // PIPES (from CSV, brand hidden when "n/a")
     const PIPES = [
       {
@@ -180,6 +174,7 @@
 
           const div = document.createElement("a");
           div.className = "pipe-tile";
+          div.href = "javascript:void(0)";
           div.innerHTML = `
             <div class="pipe-icon">
               <img src="/img/pipes/${p.file}" alt="${p.name}">
@@ -199,10 +194,13 @@
     });
   </script>
 
+  <!-- Red receipt pill with live count -->
   <div class="receipt-pill" id="open-receipt">
-    <img src="/uxui/receipt-icon.svg" alt="Receipt">
+    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
+    <span class="receipt-pill-count" id="receipt-count">0</span>
   </div>
 
+  <!-- Invoice Popup -->
   <div id="invoice-popup" class="invoice-popup">
     <div class="invoice-popup-inner">
       <div class="invoice-header">
@@ -218,10 +216,18 @@
       </div>
 
       <div class="invoice-totals">
-        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
-        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span id="invoice-subtotal">$0.00</span>
+        </div>
+        <div class="total-row">
+          <span>Tax</span>
+          <span id="invoice-tax">$0.00</span>
+        </div>
         <div class="total-row total-bold">
-          <span>TOTAL</span><span id="invoice-total">$0.00</span></div>
+          <span>TOTAL</span>
+          <span id="invoice-total">$0.00</span>
+        </div>
       </div>
 
       <div id="close-receipt" class="invoice-close">Close</div>
