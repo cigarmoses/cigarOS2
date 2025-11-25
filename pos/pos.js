@@ -30,7 +30,10 @@
       name: item.name || "",
       vitola: item.vitola || "",
       brand: item.brand || "",
-      price: typeof item.price === "number" ? item.price : (parseFloat(item.price) || 0),
+      price:
+        typeof item.price === "number"
+          ? item.price
+          : (parseFloat(item.price) || 0),
       qty: item.qty && item.qty > 0 ? item.qty : 1,
       icon: item.icon || "/img/icons/categories/cigars.svg",
     };
@@ -107,6 +110,7 @@
     const item = cart[idx];
     item.qty += delta;
     if (item.qty <= 0) {
+      // When qty hits zero, remove the product from the receipt
       cart.splice(idx, 1);
     }
     renderInvoice();
@@ -169,7 +173,7 @@
   window.initInvoice = initInvoice;
 })();
 
-// Popup open/close wiring + initInvoice call
+// Popup open/close wiring + initInvoice call + POS contacts dropdown
 document.addEventListener("DOMContentLoaded", () => {
   const pill = document.getElementById("open-receipt");
   const popup = document.getElementById("invoice-popup");
@@ -197,5 +201,128 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (typeof window.initInvoice === "function") {
     window.initInvoice();
+  }
+
+  // -----------------------
+  // Loyalty contacts wiring
+  // -----------------------
+
+  const customerSelect = document.getElementById("receipt-customer");
+  const customerSearchInput = document.getElementById("receipt-customer-search");
+
+  let allContacts = [];
+
+  // JSON version of your pos-contacts.xlsx (generated at build time)
+  const CONTACTS_URL = "/pos/pos-contacts.json";
+
+  function normalizePhone(value) {
+    if (!value) return "";
+    return String(value).replace(/\D+/g, "");
+  }
+
+  function formatContactLabel(contact) {
+    const parts = [];
+
+    const first = contact.first_name || "";
+    const last = contact.last_name || "";
+    const name = `${first} ${last}`.trim();
+
+    if (name) parts.push(name);
+    if (contact.phone) parts.push(contact.phone);
+    if (contact.email) parts.push(contact.email);
+
+    if (!parts.length && contact.customer_id != null) {
+      parts.push(`Customer #${contact.customer_id}`);
+    }
+
+    return parts.join(" • ");
+  }
+
+  function renderCustomerOptions(contacts) {
+    if (!customerSelect) return;
+
+    customerSelect.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Attach customer (optional)";
+    customerSelect.appendChild(placeholder);
+
+    contacts.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c.customer_id;
+      opt.textContent = formatContactLabel(c);
+      customerSelect.appendChild(opt);
+    });
+  }
+
+  function filterContacts(term) {
+    if (!term) return allContacts;
+
+    const search = term.toLowerCase().trim();
+    const numeric = normalizePhone(term);
+
+    return allContacts.filter((c) => {
+      const first = (c.first_name || "").toLowerCase();
+      const last = (c.last_name || "").toLowerCase();
+      const email = (c.email || "").toLowerCase();
+      const phoneNorm = normalizePhone(c.phone || "");
+
+      const nameMatch = first.includes(search) || last.includes(search);
+      const emailMatch = email.includes(search);
+      const phoneMatch = numeric && phoneNorm.includes(numeric);
+
+      return nameMatch || emailMatch || phoneMatch;
+    });
+  }
+
+  async function loadContacts() {
+    // If there is no UI for contacts on this page, we can still safely try; it just won't render.
+    try {
+      const res = await fetch(CONTACTS_URL);
+      if (!res.ok) {
+        console.error("Failed to load contacts JSON:", res.status, res.statusText);
+        return;
+      }
+
+      const data = await res.json();
+      // Keep only active contacts by default (active !== false)
+      allContacts = (data || []).filter((c) => c.active !== false);
+      renderCustomerOptions(allContacts);
+    } catch (err) {
+      console.error("Error loading contacts:", err);
+    }
+  }
+
+  if (customerSearchInput) {
+    customerSearchInput.addEventListener("input", (e) => {
+      const term = e.target.value || "";
+      const filtered = filterContacts(term);
+      renderCustomerOptions(filtered);
+    });
+  }
+
+  if (customerSelect) {
+    customerSelect.addEventListener("change", (e) => {
+      const selectedId = e.target.value || "";
+
+      // Attach to current invoice if you’re tracking it globally
+      if (window.currentInvoice) {
+        window.currentInvoice.customer_id = selectedId || null;
+      }
+
+      // Example: you could also look up the contact here
+      // const chosen = allContacts.find(
+      //   (c) => String(c.customer_id) === String(selectedId)
+      // );
+      // if (chosen) {
+      //   // Show rewards_points, locker_number, etc.
+      // }
+    });
+  }
+
+  // Kick off loading contacts
+  if (customerSelect || customerSearchInput) {
+    loadContacts();
   }
 });
