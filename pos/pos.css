@@ -1,5 +1,5 @@
 /* --------------------------------------------------------- */
-/* UNIVERSAL RED RECEIPT PILL                               */
+/* UNIVERSAL RED RECEIPT PILL — 50% SCALE                   */
 /* --------------------------------------------------------- */
 
 .receipt-pill {
@@ -7,11 +7,11 @@
   bottom: 22px;
   right: 22px;
 
-  /* NEW SIZE — matches your mockup shape better */
-  width: 82px;
-  height: 158px;
+  /* 50% SIZE */
+  width: 41px;        /* was 82px */
+  height: 79px;       /* was 158px */
 
-  background: #f4361e;                /* your red */
+  background: #f4361e;
   border-radius: 32px;
 
   display: flex;
@@ -25,20 +25,20 @@
 }
 
 .receipt-pill-icon {
-  width: 48px;
+  width: 24px;        /* was 48px */
   height: auto;
   pointer-events: none;
 }
 
 .receipt-pill-count {
-  margin-top: 8px;
+  margin-top: 4px;    /* reduced spacing */
 
   /* SF PRO DISPLAY HEAVY */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
                "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 
-  font-weight: 900;        /* Heavy */
-  font-size: 20px;
+  font-weight: 900;
+  font-size: 11px;    /* was 21px */
   color: #ffffff;
   line-height: 1;
   pointer-events: none;
