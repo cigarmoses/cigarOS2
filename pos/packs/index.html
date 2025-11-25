@@ -142,7 +142,7 @@
   </div>
 
   <script>
-    // ONLY Shark Pack, matching CSV + correct image path
+    // Only Shark Pack — correct path
     const PACKS = [
       {
         brand: "Arturo Fuente",
@@ -164,6 +164,7 @@
         .forEach(p => {
           const el = document.createElement("a");
           el.className = "packs-tile";
+          el.href = "javascript:void(0)";
           el.innerHTML = `
             <div class="packs-icon">
               <img src="${p.img}" alt="${p.name}">
@@ -183,21 +184,26 @@
     });
   </script>
 
+  <!-- New 50% size receipt pill with live count -->
   <div class="receipt-pill" id="open-receipt">
-    <img src="/uxui/receipt-icon.svg" alt="Receipt">
+    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
+    <span class="receipt-pill-count" id="receipt-count">0</span>
   </div>
 
+  <!-- Invoice Popup -->
   <div id="invoice-popup" class="invoice-popup">
     <div class="invoice-popup-inner">
       <div class="invoice-header">
         <h2>Invoice</h2>
         <p id="invoice-date"></p>
       </div>
+
       <div class="invoice-body">
         <div class="loyalty-row">
           <span>Loyalty customer</span>
           <span class="dropdown-arrow">▼</span>
         </div>
+
         <div id="invoice-items"></div>
       </div>
 
