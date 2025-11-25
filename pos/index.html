@@ -100,7 +100,7 @@
       line-height: 1.25;
     }
 
-    /* ================= INVOICE POPUP LAYOUT (matches your PNG) ================ */
+    /* ================= INVOICE POPUP LAYOUT ================ */
 
     .invoice-popup {
       position: fixed;
@@ -367,7 +367,7 @@
   </main>
 
   <script>
-    /* ---------- DEMO CART ITEMS ON HOME SCREEN (same layout as others) ---------- */
+    /* ---------- DEMO CART ITEMS ON HOME SCREEN ---------- */
 
     const POS_TAX_RATE = 0.07;
 
@@ -446,7 +446,6 @@
       if (taxEl) taxEl.textContent = `$${formatMoney(tax)}`;
       if (totalEl) totalEl.textContent = `$${formatMoney(total)}`;
 
-      // qty buttons
       container.querySelectorAll(".invoice-qty-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           const row = btn.closest(".invoice-item");
@@ -476,9 +475,10 @@
     });
   </script>
 
-  <!-- Red receipt pill (wired to /pos/pos.js via id="open-receipt") -->
+  <!-- Red receipt pill with icon + live count (matches other pages) -->
   <div class="receipt-pill" id="open-receipt">
-    <img src="/uxui/receipt-icon.svg" alt="Receipt">
+    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
+    <span class="receipt-pill-count" id="receipt-count">0</span>
   </div>
 
   <!-- Invoice Popup -->
