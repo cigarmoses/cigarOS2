@@ -6,19 +6,44 @@
   position: fixed;
   bottom: 22px;
   right: 22px;
-  width: 70px;
-  height: 130px;
-  z-index: 9999;
+
+  /* NEW SIZE — matches your mockup shape better */
+  width: 82px;
+  height: 158px;
+
+  background: #f4361e;                /* your red */
+  border-radius: 32px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 14px 32px rgba(0,0,0,0.35);
   cursor: pointer;
+  z-index: 9999;
 }
 
-.receipt-pill img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
+.receipt-pill-icon {
+  width: 48px;
+  height: auto;
   pointer-events: none;
 }
+
+.receipt-pill-count {
+  margin-top: 8px;
+
+  /* SF PRO DISPLAY HEAVY */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+               "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+
+  font-weight: 900;        /* Heavy */
+  font-size: 20px;
+  color: #ffffff;
+  line-height: 1;
+  pointer-events: none;
+}
+
 
 /* --------------------------------------------------------- */
 /* INVOICE POPUP OVERLAY (BIG WHITE SHEET)                  */
@@ -27,9 +52,8 @@
 .invoice-popup {
   position: fixed;
   inset: 0;
-  /* medium grey outer background, like your mock */
   background: rgba(120, 120, 120, 0.92);
-  display: none;              /* toggled by .open */
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 9998;
@@ -102,15 +126,11 @@
 /* LINE ITEMS                                                */
 /* --------------------------------------------------------- */
 
-.invoice-body {
-  /* separates items from header a bit more */
-}
-
 .invoice-item {
   display: flex;
   align-items: center;
   gap: 14px;
-  background: #e6f1fb;        /* light blue block */
+  background: #e6f1fb;
   border-radius: 26px;
   padding: 14px 18px;
   margin-bottom: 14px;
@@ -131,7 +151,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .invoice-item-main {
@@ -147,7 +166,7 @@
 }
 
 .invoice-item-name a {
-  color: #0073d9;             /* blue link */
+  color: #0073d9;
   text-decoration: underline;
   font-weight: 600;
 }
@@ -224,7 +243,9 @@
   cursor: pointer;
 }
 
-/* Smaller screens */
+/* --------------------------------------------------------- */
+/* Smaller screens                                           */
+/* --------------------------------------------------------- */
 @media (max-width: 360px) {
   .invoice-popup-inner {
     padding: 22px 18px 28px;
