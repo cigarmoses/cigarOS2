@@ -89,6 +89,7 @@
       gap: 6px;
       align-items: center;
       color: #0f1a2c;
+      cursor: pointer;
     }
 
     .acc-icon {
@@ -144,7 +145,7 @@
   </div>
 
   <script>
-    // ACCESSORIES synced to your CSV (Brand / Item / Price)
+    // ---------------- ACCESSORIES DATA ----------------
     const ACCESSORIES = [
       {
         brand: "Elie Bleu",
@@ -211,6 +212,19 @@
     const grid = document.getElementById("accGrid");
     const search = document.getElementById("accSearch");
 
+    function slug(str) {
+      return (str || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "")
+        .replace(/^\s+|\s+$/g, "");
+    }
+
+    function parsePriceToNumber(raw) {
+      if (!raw) return 0;
+      const num = parseFloat(String(raw).replace(/[^0-9.]/g, ""));
+      return isNaN(num) ? 0 : num;
+    }
+
     function renderAccessories(filter = "") {
       grid.innerHTML = "";
 
@@ -222,8 +236,9 @@
           return haystack.includes(normalizedFilter);
         })
         .forEach(item => {
-          const div = document.createElement("a");
+          const div = document.createElement("div");
           div.className = "acc-tile";
+
           div.innerHTML = `
             <div class="acc-icon">
               <img src="/img/lighters/${item.file}" alt="${item.name}" />
@@ -232,6 +247,24 @@
             <div class="acc-label">${item.name}</div>
             <div class="acc-price">${item.price}</div>
           `;
+
+          // Click = add to invoice (shared cart)
+          div.addEventListener("click", () => {
+            if (typeof window.addToInvoice === "function") {
+              const priceNumber = parsePriceToNumber(item.price);
+              const cartItem = {
+                id: "acc_" + slug(item.brand + "_" + item.name),
+                name: item.name,
+                vitola: "Accessory",
+                brand: item.brand,
+                price: priceNumber,
+                qty: 1,
+                icon: `/img/lighters/${item.file}`
+              };
+              window.addToInvoice(cartItem);
+            }
+          });
+
           grid.appendChild(div);
         });
     }
@@ -243,13 +276,13 @@
     });
   </script>
 
-  <!-- Receipt Pill -->
-<div class="receipt-pill" id="open-receipt">
-  <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
-  <span class="receipt-pill-count" id="receipt-count">0</span>
-</div>
+  <!-- Receipt Pill (shared across POS) -->
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
+    <span class="receipt-pill-count" id="receipt-count">0</span>
+  </div>
 
-  <!-- Invoice Popup -->
+  <!-- Invoice Popup (shared layout) -->
   <div id="invoice-popup" class="invoice-popup">
     <div class="invoice-popup-inner">
       <div class="invoice-header">
