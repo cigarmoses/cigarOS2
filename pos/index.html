@@ -301,7 +301,7 @@
 <body>
 
   <div class="pos-topbar">
-    <a class="pos-back" onclick="history.back()">← Back</a>
+    <a class="pos-back" href="/">← Back</a>
     <div class="pos-star">★</div>
   </div>
 
@@ -367,8 +367,6 @@
   </main>
 
   <script>
-    /* ---------- DEMO CART ITEMS ON HOME SCREEN ---------- */
-
     const POS_TAX_RATE = 0.07;
 
     const demoCartItems = [
@@ -475,13 +473,11 @@
     });
   </script>
 
-  <!-- Red receipt pill with icon + live count (matches other pages) -->
   <div class="receipt-pill" id="open-receipt">
     <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
     <span class="receipt-pill-count" id="receipt-count">0</span>
   </div>
 
-  <!-- Invoice Popup -->
   <div id="invoice-popup" class="invoice-popup">
     <div class="invoice-popup-inner">
 
