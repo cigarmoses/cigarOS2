@@ -12,7 +12,7 @@ function formatDate(iso) {
   return d.toLocaleDateString();
 }
 
-// simple helper: turn "Arturo Fuente" -> "arturo-fuente"
+// simple helper to map brand names to icon filenames
 function slugBrand(name) {
   return name
     .toLowerCase()
@@ -26,23 +26,9 @@ function buildLockerItem(c) {
   const last = c.last_name || "";
   const name = `${first} ${last}`.trim() || "Customer";
 
-  const favBrands = [
-    c.fav_brand_1,
-    c.fav_brand_2,
-    c.fav_brand_3,
-  ].filter(Boolean);
-
-  const favCigars = [
-    c.fav_cigar_1,
-    c.fav_cigar_2,
-    c.fav_cigar_3,
-  ].filter(Boolean);
-
-  const wishlist = [
-    c.wishlist_1,
-    c.wishlist_2,
-    c.wishlist_3,
-  ].filter(Boolean);
+  const favBrands = [c.fav_brand_1, c.fav_brand_2, c.fav_brand_3].filter(Boolean);
+  const favCigars = [c.fav_cigar_1, c.fav_cigar_2, c.fav_cigar_3].filter(Boolean);
+  const wishlist = [c.wishlist_1, c.wishlist_2, c.wishlist_3].filter(Boolean);
 
   return {
     lockerNo: c.locker_number || "",
@@ -66,23 +52,9 @@ function buildRegularItem(c) {
   const last = c.last_name || "";
   const name = `${first} ${last}`.trim() || "Customer";
 
-  const favBrands = [
-    c.fav_brand_1,
-    c.fav_brand_2,
-    c.fav_brand_3,
-  ].filter(Boolean);
-
-  const favCigars = [
-    c.fav_cigar_1,
-    c.fav_cigar_2,
-    c.fav_cigar_3,
-  ].filter(Boolean);
-
-  const wishlist = [
-    c.wishlist_1,
-    c.wishlist_2,
-    c.wishlist_3,
-  ].filter(Boolean);
+  const favBrands = [c.fav_brand_1, c.fav_brand_2, c.fav_brand_3].filter(Boolean);
+  const favCigars = [c.fav_cigar_1, c.fav_cigar_2, c.fav_cigar_3].filter(Boolean);
+  const wishlist = [c.wishlist_1, c.wishlist_2, c.wishlist_3].filter(Boolean);
 
   return {
     name,
@@ -164,39 +136,30 @@ function clearChildren(node) {
 }
 
 function openModal(item) {
-  const overlay = document.getElementById("loyaltyProfile");
-  if (!overlay) return;
+  // CONTACT
+  document.getElementById("pName").textContent = item.name || "—";
+  document.getElementById("pNickname").textContent = item.nickname || "";
+  document.getElementById("pContactLine1").textContent =
+    `${item.phone || "—"}; ${item.email || "—"}`;
+  document.getElementById("pContactLine2").textContent =
+    `Birthday: ${item.birthday || "—"}`;
 
-  // contact card
-  const nameEl = document.getElementById("pName");
-  const nickEl = document.getElementById("pNickname");
-  const line1 = document.getElementById("pContactLine1");
-  const line2 = document.getElementById("pContactLine2");
+  // HISTORY / POINTS
+  const pts = item.pts ?? 0;
+  document.getElementById("pPoints").textContent =
+    `${pts} point${pts === 1 ? "" : "s"}`;
 
-  if (nameEl) nameEl.textContent = item.name || "—";
-  if (nickEl) nickEl.textContent = item.nickname || "";
-  if (line1) line1.textContent = `${item.phone || "—"}; ${item.email || "—"}`;
-  if (line2) line2.textContent = `Birthday: ${item.birthday || "—"}`;
+  // PROFILE: ring & vitola
+  document.getElementById("pRing").textContent = item.ring || "—";
+  document.getElementById("pVitola").textContent = item.vitola || "—";
 
-  // history points
-  const pointsEl = document.getElementById("pPoints");
-  if (pointsEl) {
-    const pts = item.pts ?? 0;
-    pointsEl.textContent = `${pts} point${pts === 1 ? "" : "s"}`;
-  }
-
-  // profile ring / vitola
-  const ringEl = document.getElementById("pRing");
-  const vitolaEl = document.getElementById("pVitola");
-  if (ringEl) ringEl.textContent = item.ring || "—";
-  if (vitolaEl) vitolaEl.textContent = item.vitola || "—";
-
-  // favorite brands
+  // FAVORITE BRANDS
   const brandsRow = document.getElementById("favBrandsRow");
   clearChildren(brandsRow);
-  (item.favBrands && item.favBrands.length ? item.favBrands : ["—"]).forEach(brand => {
+  const brandList = item.favBrands && item.favBrands.length ? item.favBrands : ["—"];
+  brandList.forEach(brand => {
     const pill = document.createElement("div");
-    pill.className = "lp-brand-pill";
+    pill.className = "brand-pill";
 
     if (brand === "—") {
       pill.textContent = "None yet";
@@ -206,76 +169,77 @@ function openModal(item) {
       img.src = `/img/icons/brands/${slugBrand(brand)}.svg`;
       pill.appendChild(img);
     }
-    brandsRow && brandsRow.appendChild(pill);
+    brandsRow.appendChild(pill);
   });
 
-  // favorite cigars
+  // FAVORITE CIGARS
   const cigarsRow = document.getElementById("favCigarsRow");
   clearChildren(cigarsRow);
-  (item.favCigars && item.favCigars.length ? item.favCigars : ["—"]).forEach(label => {
+  const cigarList = item.favCigars && item.favCigars.length ? item.favCigars : ["—"];
+  cigarList.forEach(label => {
     const card = document.createElement("div");
-    card.className = "lp-cigar-card";
+    card.className = "cigar-card";
 
     const stick = document.createElement("div");
-    stick.className = "lp-cigar-stick";
+    stick.className = "cigar-stick";
     card.appendChild(stick);
 
     const copy = document.createElement("div");
-    copy.className = "lp-cigar-copy";
+    copy.className = "cigar-copy";
 
     const name = document.createElement("div");
-    name.className = "lp-cigar-name";
+    name.className = "cigar-name";
     name.textContent = label === "—" ? "No favorites yet" : label;
     copy.appendChild(name);
 
     if (label !== "—") {
       const sub = document.createElement("div");
-      sub.className = "lp-cigar-sub";
+      sub.className = "cigar-sub";
       sub.textContent = "Favorite cigar";
       copy.appendChild(sub);
     }
 
     card.appendChild(copy);
-    cigarsRow && cigarsRow.appendChild(card);
+    cigarsRow.appendChild(card);
   });
 
-  // wishlist
+  // WISHLIST
   const wishlistRow = document.getElementById("wishlistRow");
   clearChildren(wishlistRow);
   const wl = item.wishlist && item.wishlist.length ? item.wishlist : ["—"];
   wl.forEach(label => {
     const card = document.createElement("div");
-    card.className = "lp-cigar-card";
+    card.className = "cigar-card";
 
     const stick = document.createElement("div");
-    stick.className = "lp-cigar-stick lp-cigar-wishlist";
+    stick.className = "cigar-stick wishlist";
     card.appendChild(stick);
 
     const copy = document.createElement("div");
-    copy.className = "lp-cigar-copy";
+    copy.className = "cigar-copy";
 
     const name = document.createElement("div");
-    name.className = "lp-cigar-name";
+    name.className = "cigar-name";
     name.textContent = label === "—" ? "Empty wishlist" : label;
     copy.appendChild(name);
 
     if (label !== "—") {
       const sub = document.createElement("div");
-      sub.className = "lp-cigar-sub";
+      sub.className = "cigar-sub";
       sub.textContent = "Not purchased yet";
       copy.appendChild(sub);
     }
 
     card.appendChild(copy);
-    wishlistRow && wishlistRow.appendChild(card);
+    wishlistRow.appendChild(card);
   });
 
-  overlay.classList.add("is-visible");
+  // SHOW MODAL
+  document.getElementById("modalOverlay").style.display = "flex";
 }
 
 function closeModal() {
-  const overlay = document.getElementById("loyaltyProfile");
-  if (overlay) overlay.classList.remove("is-visible");
+  document.getElementById("modalOverlay").style.display = "none";
 }
 
 // Expose handlers for inline HTML
