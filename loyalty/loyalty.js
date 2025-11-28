@@ -12,19 +12,36 @@ function formatDate(iso) {
   return d.toLocaleDateString();
 }
 
-// simple helper to map brand names to icon filenames
+// Turn a brand name into something like "arturo-fuente"
 function slugBrand(name) {
-  return name
+  return (name || "")
     .toLowerCase()
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
 
+// Build a display name from JSON
+function buildName(c) {
+  const first = (c.first_name || "").trim();
+  const last = (c.last_name || "").trim();
+  const full = `${first} ${last}`.trim();
+  if (full) return full;
+  if (c.email && c.email.trim()) return c.email.trim(); // fallback
+  return "Customer";
+}
+
+// Only keep contacts that have *some* identifier (name or email)
+function hasIdentity(c) {
+  return (
+    (c.first_name && c.first_name.trim()) ||
+    (c.last_name && c.last_name.trim()) ||
+    (c.email && c.email.trim())
+  );
+}
+
 function buildLockerItem(c) {
-  const first = c.first_name || "";
-  const last = c.last_name || "";
-  const name = `${first} ${last}`.trim() || "Customer";
+  const name = buildName(c);
 
   const favBrands = [c.fav_brand_1, c.fav_brand_2, c.fav_brand_3].filter(Boolean);
   const favCigars = [c.fav_cigar_1, c.fav_cigar_2, c.fav_cigar_3].filter(Boolean);
@@ -39,8 +56,8 @@ function buildLockerItem(c) {
     phone: c.phone || "—",
     email: c.email || "—",
     birthday: formatDate(c.birthday),
-    ring: c.pref_ring || c.ring || "",
-    vitola: c.pref_vitola || c.vitola || "",
+    ring: c.ring_pref || "",
+    vitola: "", // you’ll compute this later from history
     favBrands,
     favCigars,
     wishlist,
@@ -48,9 +65,7 @@ function buildLockerItem(c) {
 }
 
 function buildRegularItem(c) {
-  const first = c.first_name || "";
-  const last = c.last_name || "";
-  const name = `${first} ${last}`.trim() || "Customer";
+  const name = buildName(c);
 
   const favBrands = [c.fav_brand_1, c.fav_brand_2, c.fav_brand_3].filter(Boolean);
   const favCigars = [c.fav_cigar_1, c.fav_cigar_2, c.fav_cigar_3].filter(Boolean);
@@ -64,8 +79,8 @@ function buildRegularItem(c) {
     phone: c.phone || "—",
     email: c.email || "—",
     birthday: formatDate(c.birthday),
-    ring: c.pref_ring || c.ring || "",
-    vitola: c.pref_vitola || c.vitola || "",
+    ring: c.ring_pref || "",
+    vitola: "",
     favBrands,
     favCigars,
     wishlist,
@@ -76,7 +91,18 @@ function renderList() {
   const wrap = document.getElementById("listWrap");
   if (!wrap) return;
 
+  // Remove existing data rows
   wrap.querySelectorAll(".row").forEach(r => r.remove());
+
+  // If no data, show a single “No matching customers” row
+  if (!currentData.length) {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.style.gridTemplateColumns = "1fr";
+    row.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: rgba(15,26,44,.45);">No matching customers.</div>`;
+    wrap.appendChild(row);
+    return;
+  }
 
   currentData.forEach((item) => {
     const row = document.createElement("div");
@@ -126,7 +152,10 @@ function filterRows() {
   const input = document.getElementById("searchInput");
   const val = (input ? input.value : "").toLowerCase();
   const base = currentMode === "lockers" ? lockerData : regularData;
-  currentData = base.filter(r => r.name.toLowerCase().includes(val));
+  currentData = base.filter(r =>
+    (r.name || "").toLowerCase().includes(val) ||
+    (r.nickname || "").toLowerCase().includes(val)
+  );
   renderList();
 }
 
@@ -156,8 +185,8 @@ function openModal(item) {
   // FAVORITE BRANDS
   const brandsRow = document.getElementById("favBrandsRow");
   clearChildren(brandsRow);
-  const brandList = item.favBrands && item.favBrands.length ? item.favBrands : ["—"];
-  brandList.forEach(brand => {
+  const brands = item.favBrands && item.favBrands.length ? item.favBrands : ["—"];
+  brands.forEach(brand => {
     const pill = document.createElement("div");
     pill.className = "brand-pill";
 
@@ -175,8 +204,8 @@ function openModal(item) {
   // FAVORITE CIGARS
   const cigarsRow = document.getElementById("favCigarsRow");
   clearChildren(cigarsRow);
-  const cigarList = item.favCigars && item.favCigars.length ? item.favCigars : ["—"];
-  cigarList.forEach(label => {
+  const favCigars = item.favCigars && item.favCigars.length ? item.favCigars : ["—"];
+  favCigars.forEach(label => {
     const card = document.createElement("div");
     card.className = "cigar-card";
 
@@ -212,8 +241,8 @@ function openModal(item) {
     card.className = "cigar-card";
 
     const stick = document.createElement("div");
-    stick.className = "cigar-stick wishlist";
-    card.appendChild(stick);
+      stick.className = "cigar-stick wishlist";
+      card.appendChild(stick);
 
     const copy = document.createElement("div");
     copy.className = "cigar-copy";
@@ -254,14 +283,16 @@ function loadContacts() {
       return res.json();
     })
     .then(data => {
-      const contacts = (data || []).filter(c => c.active !== false);
+      const contacts = (data || []).filter(c => c.active !== false && hasIdentity(c));
 
+      // Lockers: have a locker_number
       lockerData = contacts
         .filter(c => c.locker_number != null && String(c.locker_number).trim() !== "")
         .map(buildLockerItem);
 
+      // Regulars: no locker_number
       regularData = contacts
-        .filter(c => (!c.locker_number || String(c.locker_number).trim() === "") && (c.first_name || c.last_name))
+        .filter(c => !c.locker_number || String(c.locker_number).trim() === "")
         .map(buildRegularItem);
 
       switchMode("lockers");
