@@ -136,27 +136,24 @@
       }
     }
 
-    /* ========= NEW LOYALTY PROFILE OVERLAY ========= */
+    /* ========== MODAL OVERLAY / PROFILE CARD ========== */
 
-    .loyalty-overlay {
+    .modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(15, 26, 44, 0.3);
-      display: none;
-      justify-content: center;
+      display: none;            /* JS toggles to flex */
       align-items: center;
+      justify-content: center;
       padding: 16px;
       z-index: 998;
     }
-    .loyalty-overlay.is-visible {
-      display: flex;
-    }
 
-    .loyalty-card {
+    .modal {
       width: 100%;
       max-width: 480px;
       max-height: 90vh;
-      background: #f3f4f6;
+      background: #f3f4f6;      /* light gray like your mock */
       border-radius: 28px;
       padding: 18px 18px 20px;
       box-shadow: 0 24px 50px rgba(15, 23, 42, 0.25);
@@ -165,7 +162,7 @@
       position: relative;
     }
 
-    .loyalty-close {
+    .close-btn {
       position: absolute;
       top: 10px;
       right: 12px;
@@ -179,48 +176,45 @@
       cursor: pointer;
     }
 
-    .lp-panel {
+    .profile-panel {
       background: #ffffff;
       border-radius: 26px;
       padding: 16px 18px 14px;
       margin-bottom: 14px;
     }
 
-    /* contact panel */
-    .lp-panel-contact {
-      padding-bottom: 18px;
-    }
-    .lp-contact-top {
+    /* CONTACT PANEL */
+    .profile-contact-top {
       display: flex;
       align-items: center;
       gap: 14px;
       margin-bottom: 10px;
     }
-    .lp-avatar {
+    .profile-avatar {
       width: 64px;
       height: 64px;
       border-radius: 999px;
-      background: #e5e7eb; /* placeholder silhouette */
+      background: #e5e7eb; /* gray silhouette */
     }
-    .lp-contact-text { flex: 1; }
-    .lp-name {
+    .profile-contact-text { flex: 1; }
+    .profile-name {
       font-weight: 700;
       font-size: 22px;
     }
-    .lp-nickname {
+    .profile-nickname {
       color: #6b7280;
       font-size: 16px;
       margin-top: 2px;
     }
-    .lp-contact-details {
+    .profile-contact-lines {
       font-size: 15px;
       color: #6b7280;
       margin-top: 8px;
     }
-    .lp-contact-line + .lp-contact-line {
+    .profile-contact-line + .profile-contact-line {
       margin-top: 2px;
     }
-    .lp-link-small {
+    .profile-link {
       margin-top: 8px;
       margin-left: auto;
       display: inline-block;
@@ -233,59 +227,59 @@
       cursor: pointer;
     }
 
-    /* history panel */
-    .lp-panel-header {
+    /* HISTORY PANEL */
+    .profile-header-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    .lp-panel-title {
+    .profile-title {
       font-size: 22px;
       font-weight: 700;
     }
-    .lp-points {
+    .profile-points {
       font-size: 18px;
       font-weight: 500;
       color: #6b7280;
     }
-    .lp-history-link {
+    .profile-history-link {
       margin-top: 60px;
     }
 
-    /* profile panel */
-    .lp-ring-vitola-row {
+    /* PROFILE PREF PANEL */
+    .profile-ring-vitola {
       display: flex;
       justify-content: space-between;
       margin-top: 10px;
       font-size: 17px;
       color: #6b7280;
     }
-    .lp-ring-vitola-row strong {
+    .profile-ring-vitola strong {
       font-weight: 600;
       color: #111827;
     }
 
-    .lp-pref-block {
+    .profile-pref-block {
       margin-top: 14px;
     }
-    .lp-pref-label {
+    .profile-pref-label {
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 6px;
     }
 
-    .lp-scroll-row {
+    .profile-scroll-row {
       display: flex;
       gap: 10px;
       overflow-x: auto;
       padding-bottom: 4px;
       -webkit-overflow-scrolling: touch;
     }
-    .lp-scroll-row::-webkit-scrollbar {
+    .profile-scroll-row::-webkit-scrollbar {
       display: none;
     }
 
-    .lp-brand-pill {
+    .brand-pill {
       min-width: 96px;
       height: 56px;
       border-radius: 18px;
@@ -294,12 +288,12 @@
       align-items: center;
       justify-content: center;
     }
-    .lp-brand-pill img {
+    .brand-pill img {
       max-width: 70%;
       max-height: 70%;
     }
 
-    .lp-cigar-card {
+    .cigar-card {
       min-width: 170px;
       border-radius: 18px;
       background: #f3f4f6;
@@ -308,23 +302,23 @@
       gap: 10px;
       align-items: center;
     }
-    .lp-cigar-stick {
+    .cigar-stick {
       width: 26px;
       height: 70px;
       border-radius: 999px;
       background: #8b5a2b;
     }
-    .lp-cigar-stick.lp-cigar-wishlist {
+    .cigar-stick.wishlist {
       opacity: 0.6;
       border: 1px dashed rgba(0,0,0,0.2);
     }
-    .lp-cigar-copy {
+    .cigar-copy {
       font-size: 14px;
     }
-    .lp-cigar-name {
+    .cigar-name {
       font-weight: 600;
     }
-    .lp-cigar-sub {
+    .cigar-sub {
       font-size: 12px;
       color: #6b7280;
     }
@@ -359,65 +353,65 @@
     </div>
   </div>
 
-  <!-- NEW floating profile modal -->
-  <div class="loyalty-overlay" id="loyaltyProfile">
-    <div class="loyalty-card">
-      <button class="loyalty-close" type="button" onclick="closeModal()">×</button>
+  <!-- PROFILE MODAL -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
 
-      <!-- CONTACT -->
-      <section class="lp-panel lp-panel-contact">
-        <div class="lp-contact-top">
-          <div class="lp-avatar"></div>
-          <div class="lp-contact-text">
-            <div class="lp-name" id="pName">Robert Jones</div>
-            <div class="lp-nickname" id="pNickname">Uncle Bob</div>
+      <!-- CONTACT CARD -->
+      <section class="profile-panel">
+        <div class="profile-contact-top">
+          <div class="profile-avatar"></div>
+          <div class="profile-contact-text">
+            <div class="profile-name" id="pName">Robert Jones</div>
+            <div class="profile-nickname" id="pNickname">Uncle Bob</div>
           </div>
         </div>
-        <div class="lp-contact-details">
-          <div class="lp-contact-line" id="pContactLine1">—</div>
-          <div class="lp-contact-line" id="pContactLine2">—</div>
+        <div class="profile-contact-lines">
+          <div class="profile-contact-line" id="pContactLine1">—</div>
+          <div class="profile-contact-line" id="pContactLine2">—</div>
         </div>
-        <button class="lp-link-small">EDIT</button>
+        <button class="profile-link">EDIT</button>
       </section>
 
       <!-- HISTORY -->
-      <section class="lp-panel lp-panel-history">
-        <div class="lp-panel-header">
-          <span class="lp-panel-title">History</span>
-          <span class="lp-points" id="pPoints">0 points</span>
+      <section class="profile-panel">
+        <div class="profile-header-row">
+          <span class="profile-title">History</span>
+          <span class="profile-points" id="pPoints">0 points</span>
         </div>
-        <button class="lp-link-small lp-history-link">VIEW ALL</button>
+        <button class="profile-link profile-history-link">VIEW ALL</button>
       </section>
 
-      <!-- PROFILE -->
-      <section class="lp-panel lp-panel-profile">
-        <div class="lp-panel-header">
-          <span class="lp-panel-title">Profile</span>
-          <button class="lp-link-small">EDIT</button>
+      <!-- PROFILE / PREFERENCES -->
+      <section class="profile-panel">
+        <div class="profile-header-row">
+          <span class="profile-title">Profile</span>
+          <button class="profile-link">EDIT</button>
         </div>
 
-        <div class="lp-ring-vitola-row">
+        <div class="profile-ring-vitola">
           <span>Ring: <strong id="pRing">—</strong></span>
           <span>Vitola: <strong id="pVitola">—</strong></span>
         </div>
 
-        <div class="lp-pref-block">
-          <div class="lp-pref-label">Favorite Brands</div>
-          <div class="lp-scroll-row" id="favBrandsRow">
+        <div class="profile-pref-block">
+          <div class="profile-pref-label">Favorite Brands</div>
+          <div class="profile-scroll-row" id="favBrandsRow">
             <!-- brand pills injected -->
           </div>
         </div>
 
-        <div class="lp-pref-block">
-          <div class="lp-pref-label">Favorite Cigars</div>
-          <div class="lp-scroll-row" id="favCigarsRow">
+        <div class="profile-pref-block">
+          <div class="profile-pref-label">Favorite Cigars</div>
+          <div class="profile-scroll-row" id="favCigarsRow">
             <!-- cigar cards injected -->
           </div>
         </div>
 
-        <div class="lp-pref-block">
-          <div class="lp-pref-label">Wishlist</div>
-          <div class="lp-scroll-row" id="wishlistRow">
+        <div class="profile-pref-block">
+          <div class="profile-pref-label">Wishlist</div>
+          <div class="profile-scroll-row" id="wishlistRow">
             <!-- wishlist cards injected -->
           </div>
         </div>
@@ -425,7 +419,6 @@
     </div>
   </div>
 
-  <!-- External JS that loads contacts + handles lockers/regulars -->
   <script src="/loyalty/loyalty.js"></script>
 </body>
 </html>
