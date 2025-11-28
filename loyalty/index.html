@@ -129,111 +129,204 @@
       background: var(--regular-row);
     }
 
-    /* modal */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 26, 44, 0.25);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 998;
-    }
-
-    .modal {
-      background: #fff;
-      border-radius: 26px;
-      width: min(92vw, 460px);
-      box-shadow: 0 18px 38px rgba(15,26,44,.18);
-      padding: 16px 16px 10px;
-    }
-
-    .modal-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .cust-name {
-      font-weight: 700;
-      font-size: 1rem;
-    }
-
-    .nickname {
-      font-size: .7rem;
-      color: var(--muted);
-    }
-
-    .icon-stack {
-      display: flex;
-      gap: 6px;
-    }
-    .small-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: #445232;
-    }
-    .small-icon:nth-child(2) {
-      background: #a77549;
-    }
-
-    .divider {
-      height: 1px;
-      background: rgba(227, 231, 236, 1);
-      margin: 10px -16px 10px;
-    }
-
-    .field-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 0;
-      gap: 10px;
-    }
-
-    .field-label {
-      font-weight: 600;
-      font-size: .70rem;
-    }
-
-    .field-value {
-      font-size: .70rem;
-      color: var(--muted);
-      text-align: right;
-    }
-
-    .full-link {
-      color: #0f63d1;
-      font-size: .7rem;
-      text-decoration: underline;
-      display: inline-block;
-      margin-top: 6px;
-      margin-bottom: 4px;
-    }
-
-    .close-btn {
-      border: 0;
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      background: #f1f4f7;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-    }
-
     @media (max-width: 540px) {
       .list-header,
       .row {
         grid-template-columns: 0.4fr 1fr 0.4fr 0.6fr;
       }
-      .modal {
-        width: 100%;
-      }
+    }
+
+    /* ========= NEW LOYALTY PROFILE OVERLAY ========= */
+
+    .loyalty-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 26, 44, 0.3);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 998;
+    }
+    .loyalty-overlay.is-visible {
+      display: flex;
+    }
+
+    .loyalty-card {
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      background: #f3f4f6;
+      border-radius: 28px;
+      padding: 18px 18px 20px;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.25);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+    }
+
+    .loyalty-close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: none;
+      background: #e5e7eb;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .lp-panel {
+      background: #ffffff;
+      border-radius: 26px;
+      padding: 16px 18px 14px;
+      margin-bottom: 14px;
+    }
+
+    /* contact panel */
+    .lp-panel-contact {
+      padding-bottom: 18px;
+    }
+    .lp-contact-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .lp-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 999px;
+      background: #e5e7eb; /* placeholder silhouette */
+    }
+    .lp-contact-text { flex: 1; }
+    .lp-name {
+      font-weight: 700;
+      font-size: 22px;
+    }
+    .lp-nickname {
+      color: #6b7280;
+      font-size: 16px;
+      margin-top: 2px;
+    }
+    .lp-contact-details {
+      font-size: 15px;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+    .lp-contact-line + .lp-contact-line {
+      margin-top: 2px;
+    }
+    .lp-link-small {
+      margin-top: 8px;
+      margin-left: auto;
+      display: inline-block;
+      background: none;
+      border: none;
+      padding: 0;
+      color: #2563eb;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* history panel */
+    .lp-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .lp-panel-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .lp-points {
+      font-size: 18px;
+      font-weight: 500;
+      color: #6b7280;
+    }
+    .lp-history-link {
+      margin-top: 60px;
+    }
+
+    /* profile panel */
+    .lp-ring-vitola-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 17px;
+      color: #6b7280;
+    }
+    .lp-ring-vitola-row strong {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .lp-pref-block {
+      margin-top: 14px;
+    }
+    .lp-pref-label {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .lp-scroll-row {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .lp-scroll-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .lp-brand-pill {
+      min-width: 96px;
+      height: 56px;
+      border-radius: 18px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lp-brand-pill img {
+      max-width: 70%;
+      max-height: 70%;
+    }
+
+    .lp-cigar-card {
+      min-width: 170px;
+      border-radius: 18px;
+      background: #f3f4f6;
+      padding: 10px 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .lp-cigar-stick {
+      width: 26px;
+      height: 70px;
+      border-radius: 999px;
+      background: #8b5a2b;
+    }
+    .lp-cigar-stick.lp-cigar-wishlist {
+      opacity: 0.6;
+      border: 1px dashed rgba(0,0,0,0.2);
+    }
+    .lp-cigar-copy {
+      font-size: 14px;
+    }
+    .lp-cigar-name {
+      font-weight: 600;
+    }
+    .lp-cigar-sub {
+      font-size: 12px;
+      color: #6b7280;
     }
   </style>
 </head>
@@ -266,57 +359,69 @@
     </div>
   </div>
 
-  <!-- modal -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <div class="modal-top">
-        <div>
-          <div class="cust-name" id="mName">—</div>
-          <div class="nickname" id="mNickname">—</div>
+  <!-- NEW floating profile modal -->
+  <div class="loyalty-overlay" id="loyaltyProfile">
+    <div class="loyalty-card">
+      <button class="loyalty-close" type="button" onclick="closeModal()">×</button>
+
+      <!-- CONTACT -->
+      <section class="lp-panel lp-panel-contact">
+        <div class="lp-contact-top">
+          <div class="lp-avatar"></div>
+          <div class="lp-contact-text">
+            <div class="lp-name" id="pName">Robert Jones</div>
+            <div class="lp-nickname" id="pNickname">Uncle Bob</div>
+          </div>
         </div>
-        <div class="icon-stack">
-          <div class="small-icon" title="Regular"></div>
-          <div class="small-icon" title="Locker"></div>
-          <button class="close-btn" onclick="closeModal()">&times;</button>
+        <div class="lp-contact-details">
+          <div class="lp-contact-line" id="pContactLine1">—</div>
+          <div class="lp-contact-line" id="pContactLine2">—</div>
         </div>
-      </div>
+        <button class="lp-link-small">EDIT</button>
+      </section>
 
-      <div class="divider"></div>
+      <!-- HISTORY -->
+      <section class="lp-panel lp-panel-history">
+        <div class="lp-panel-header">
+          <span class="lp-panel-title">History</span>
+          <span class="lp-points" id="pPoints">0 points</span>
+        </div>
+        <button class="lp-link-small lp-history-link">VIEW ALL</button>
+      </section>
 
-      <div class="field-row">
-        <div class="field-label">Phone</div>
-        <div class="field-value" id="mPhone">—</div>
-      </div>
-      <div class="field-row">
-        <div class="field-label">Email</div>
-        <div class="field-value" id="mEmail">—</div>
-      </div>
-      <div class="field-row">
-        <div class="field-label">Birthday</div>
-        <div class="field-value" id="mBirthday">—</div>
-      </div>
-      <div class="field-row">
-        <div class="field-label">Points</div>
-        <div class="field-value" id="mPoints">0</div>
-      </div>
-      <div class="field-row">
-        <div class="field-label">Favorite Brands /or Cigars</div>
-        <div class="field-value" id="mFav">—</div>
-      </div>
-      <div class="field-row">
-        <div class="field-label">Wishlist</div>
-        <div class="field-value" id="mWishlist">—</div>
-      </div>
-      <div class="field-row">
-        <div class="field-label">Connections</div>
-        <div class="field-value" id="mConnections">—</div>
-      </div>
-      <div class="field-row">
-        <div class="field-label">Last Purchase</div>
-        <div class="field-value" id="mLastPurchase">—</div>
-      </div>
+      <!-- PROFILE -->
+      <section class="lp-panel lp-panel-profile">
+        <div class="lp-panel-header">
+          <span class="lp-panel-title">Profile</span>
+          <button class="lp-link-small">EDIT</button>
+        </div>
 
-      <a href="#" class="full-link">Click for full purchase history here</a>
+        <div class="lp-ring-vitola-row">
+          <span>Ring: <strong id="pRing">—</strong></span>
+          <span>Vitola: <strong id="pVitola">—</strong></span>
+        </div>
+
+        <div class="lp-pref-block">
+          <div class="lp-pref-label">Favorite Brands</div>
+          <div class="lp-scroll-row" id="favBrandsRow">
+            <!-- brand pills injected -->
+          </div>
+        </div>
+
+        <div class="lp-pref-block">
+          <div class="lp-pref-label">Favorite Cigars</div>
+          <div class="lp-scroll-row" id="favCigarsRow">
+            <!-- cigar cards injected -->
+          </div>
+        </div>
+
+        <div class="lp-pref-block">
+          <div class="lp-pref-label">Wishlist</div>
+          <div class="lp-scroll-row" id="wishlistRow">
+            <!-- wishlist cards injected -->
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
