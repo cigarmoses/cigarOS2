@@ -12,19 +12,37 @@ function formatDate(iso) {
   return d.toLocaleDateString();
 }
 
+// simple helper: turn "Arturo Fuente" -> "arturo-fuente"
+function slugBrand(name) {
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function buildLockerItem(c) {
   const first = c.first_name || "";
   const last = c.last_name || "";
   const name = `${first} ${last}`.trim() || "Customer";
 
-  const favs = [
+  const favBrands = [
     c.fav_brand_1,
     c.fav_brand_2,
     c.fav_brand_3,
+  ].filter(Boolean);
+
+  const favCigars = [
     c.fav_cigar_1,
     c.fav_cigar_2,
     c.fav_cigar_3,
-  ].filter(Boolean).join(" • ");
+  ].filter(Boolean);
+
+  const wishlist = [
+    c.wishlist_1,
+    c.wishlist_2,
+    c.wishlist_3,
+  ].filter(Boolean);
 
   return {
     lockerNo: c.locker_number || "",
@@ -35,10 +53,11 @@ function buildLockerItem(c) {
     phone: c.phone || "—",
     email: c.email || "—",
     birthday: formatDate(c.birthday),
-    fav: favs || "—",
-    wishlist: "—",
-    connections: "—",
-    lastPurchase: formatDate(c.last_purchase),
+    ring: c.pref_ring || c.ring || "",
+    vitola: c.pref_vitola || c.vitola || "",
+    favBrands,
+    favCigars,
+    wishlist,
   };
 }
 
@@ -47,14 +66,23 @@ function buildRegularItem(c) {
   const last = c.last_name || "";
   const name = `${first} ${last}`.trim() || "Customer";
 
-  const favs = [
+  const favBrands = [
     c.fav_brand_1,
     c.fav_brand_2,
     c.fav_brand_3,
+  ].filter(Boolean);
+
+  const favCigars = [
     c.fav_cigar_1,
     c.fav_cigar_2,
     c.fav_cigar_3,
-  ].filter(Boolean).join(" • ");
+  ].filter(Boolean);
+
+  const wishlist = [
+    c.wishlist_1,
+    c.wishlist_2,
+    c.wishlist_3,
+  ].filter(Boolean);
 
   return {
     name,
@@ -64,10 +92,11 @@ function buildRegularItem(c) {
     phone: c.phone || "—",
     email: c.email || "—",
     birthday: formatDate(c.birthday),
-    fav: favs || "—",
-    wishlist: "—",
-    connections: "—",
-    lastPurchase: formatDate(c.last_purchase),
+    ring: c.pref_ring || c.ring || "",
+    vitola: c.pref_vitola || c.vitola || "",
+    favBrands,
+    favCigars,
+    wishlist,
   };
 }
 
@@ -93,7 +122,11 @@ function renderList() {
         <div></div>
         <div>
           ${item.name}
-          ${item.nickname ? `<div style="font-size:.6rem;color:rgba(15,26,44,.45);">"${item.nickname}"</div>` : ""}
+          ${
+            item.nickname
+              ? `<div style="font-size:.6rem;color:rgba(15,26,44,.45);">"${item.nickname}"</div>`
+              : ""
+          }
         </div>
         <div>${item.pts ?? 0}</div>
         <div>${item.last ?? "—"}</div>
@@ -125,22 +158,124 @@ function filterRows() {
   renderList();
 }
 
+function clearChildren(node) {
+  if (!node) return;
+  while (node.firstChild) node.removeChild(node.firstChild);
+}
+
 function openModal(item) {
-  document.getElementById("mName").textContent = item.name || "—";
-  document.getElementById("mNickname").textContent = item.nickname || "—";
-  document.getElementById("mPhone").textContent = item.phone || "—";
-  document.getElementById("mEmail").textContent = item.email || "—";
-  document.getElementById("mBirthday").textContent = item.birthday || "—";
-  document.getElementById("mPoints").textContent = item.pts ?? 0;
-  document.getElementById("mFav").textContent = item.fav || "—";
-  document.getElementById("mWishlist").textContent = item.wishlist || "—";
-  document.getElementById("mConnections").textContent = item.connections || "—";
-  document.getElementById("mLastPurchase").textContent = item.lastPurchase || "—";
-  document.getElementById("modalOverlay").style.display = "flex";
+  const overlay = document.getElementById("loyaltyProfile");
+  if (!overlay) return;
+
+  // contact card
+  const nameEl = document.getElementById("pName");
+  const nickEl = document.getElementById("pNickname");
+  const line1 = document.getElementById("pContactLine1");
+  const line2 = document.getElementById("pContactLine2");
+
+  if (nameEl) nameEl.textContent = item.name || "—";
+  if (nickEl) nickEl.textContent = item.nickname || "";
+  if (line1) line1.textContent = `${item.phone || "—"}; ${item.email || "—"}`;
+  if (line2) line2.textContent = `Birthday: ${item.birthday || "—"}`;
+
+  // history points
+  const pointsEl = document.getElementById("pPoints");
+  if (pointsEl) {
+    const pts = item.pts ?? 0;
+    pointsEl.textContent = `${pts} point${pts === 1 ? "" : "s"}`;
+  }
+
+  // profile ring / vitola
+  const ringEl = document.getElementById("pRing");
+  const vitolaEl = document.getElementById("pVitola");
+  if (ringEl) ringEl.textContent = item.ring || "—";
+  if (vitolaEl) vitolaEl.textContent = item.vitola || "—";
+
+  // favorite brands
+  const brandsRow = document.getElementById("favBrandsRow");
+  clearChildren(brandsRow);
+  (item.favBrands && item.favBrands.length ? item.favBrands : ["—"]).forEach(brand => {
+    const pill = document.createElement("div");
+    pill.className = "lp-brand-pill";
+
+    if (brand === "—") {
+      pill.textContent = "None yet";
+    } else {
+      const img = document.createElement("img");
+      img.alt = brand;
+      img.src = `/img/icons/brands/${slugBrand(brand)}.svg`;
+      pill.appendChild(img);
+    }
+    brandsRow && brandsRow.appendChild(pill);
+  });
+
+  // favorite cigars
+  const cigarsRow = document.getElementById("favCigarsRow");
+  clearChildren(cigarsRow);
+  (item.favCigars && item.favCigars.length ? item.favCigars : ["—"]).forEach(label => {
+    const card = document.createElement("div");
+    card.className = "lp-cigar-card";
+
+    const stick = document.createElement("div");
+    stick.className = "lp-cigar-stick";
+    card.appendChild(stick);
+
+    const copy = document.createElement("div");
+    copy.className = "lp-cigar-copy";
+
+    const name = document.createElement("div");
+    name.className = "lp-cigar-name";
+    name.textContent = label === "—" ? "No favorites yet" : label;
+    copy.appendChild(name);
+
+    if (label !== "—") {
+      const sub = document.createElement("div");
+      sub.className = "lp-cigar-sub";
+      sub.textContent = "Favorite cigar";
+      copy.appendChild(sub);
+    }
+
+    card.appendChild(copy);
+    cigarsRow && cigarsRow.appendChild(card);
+  });
+
+  // wishlist
+  const wishlistRow = document.getElementById("wishlistRow");
+  clearChildren(wishlistRow);
+  const wl = item.wishlist && item.wishlist.length ? item.wishlist : ["—"];
+  wl.forEach(label => {
+    const card = document.createElement("div");
+    card.className = "lp-cigar-card";
+
+    const stick = document.createElement("div");
+    stick.className = "lp-cigar-stick lp-cigar-wishlist";
+    card.appendChild(stick);
+
+    const copy = document.createElement("div");
+    copy.className = "lp-cigar-copy";
+
+    const name = document.createElement("div");
+    name.className = "lp-cigar-name";
+    name.textContent = label === "—" ? "Empty wishlist" : label;
+    copy.appendChild(name);
+
+    if (label !== "—") {
+      const sub = document.createElement("div");
+      sub.className = "lp-cigar-sub";
+      sub.textContent = "Not purchased yet";
+      copy.appendChild(sub);
+    }
+
+    card.appendChild(copy);
+    wishlistRow && wishlistRow.appendChild(card);
+  });
+
+  overlay.classList.add("is-visible");
 }
 
 function closeModal() {
-  document.getElementById("modalOverlay").style.display = "none";
+  const overlay = document.getElementById("loyaltyProfile");
+  if (overlay) overlay.classList.remove("is-visible");
 }
 
 // Expose handlers for inline HTML
