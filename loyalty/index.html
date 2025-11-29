@@ -10,15 +10,10 @@
       --surface: #ffffff;
       --ink: #0f1a2c;
       --muted: #6e7b8f;
-      --blue-pill: #cfeeff;
-      --peach-pill: #ffe0d7;
-      --locker-row: #d6ecff;
-      --regular-row: #ffe9e1;
       --radius-lg: 20px;
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       background: var(--bg);
@@ -33,315 +28,239 @@
       margin: 0 auto;
     }
 
-    /* top search */
+    /* Search Box */
     .search-box {
       background: var(--surface);
-      border-radius: 999px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 14px;
-      margin-bottom: 12px;
-      box-shadow: 0 10px 26px rgba(15,26,44,.03);
-      border: 1px solid rgba(255,255,255,0.1);
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 14px rgba(15,26,44,.08);
     }
     .search-box input {
       border: 0;
       outline: 0;
       background: transparent;
       width: 100%;
-      font-size: .75rem;
+      font-size: .85rem;
     }
 
-    /* pills */
+    /* Segment Controls */
     .segmented {
       display: flex;
       gap: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
     .seg-btn {
       background: var(--surface);
-      border-radius: 999px;
-      padding: 7px 16px;
+      border-radius: 12px;
+      padding: 8px 18px;
       border: 1px solid transparent;
-      font-size: .7rem;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      font-size: .8rem;
       cursor: pointer;
     }
-    .seg-btn.lockers.active {
-      background: #cfeeff;
-      border-color: rgba(102, 173, 221, .15);
-      color: #12486c;
-    }
-    .seg-btn.regulars.active {
-      background: #ffe0d7;
-      border-color: rgba(234, 143, 105, .15);
-      color: #7c2f1b;
+    .seg-btn.active {
+      background: #d7ecff;
+      border-color: #b6d7ff;
+      color: #003c73;
     }
 
-    /* list */
+    /* List Rows */
     .list-wrap {
       background: var(--surface);
       border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 10px 26px rgba(15,26,44,.03);
+      box-shadow: 0 4px 18px rgba(15,26,44,.06);
     }
 
-    .list-header {
+    .list-header, .row {
       display: grid;
-      grid-template-columns: 0.3fr 1fr 0.3fr 0.5fr;
-      padding: 10px 14px;
-      background: #f3f7fb;
-      font-size: .7rem;
+      grid-template-columns: 0.4fr 1fr 0.4fr 0.7fr;
+      padding: 12px 14px;
+      font-size: .75rem;
+      align-items: center;
+    }
+    .list-header {
       font-weight: 600;
+      background: #f3f7fb;
     }
 
     .row {
-      display: grid;
-      grid-template-columns: 0.3fr 1fr 0.3fr 0.5fr;
-      padding: 10px 14px;
-      gap: 6px;
-      align-items: center;
-      font-size: .7rem;
+      border-bottom: 1px solid rgba(0,0,0,.04);
       cursor: pointer;
-      border-bottom: 1px solid rgba(0,0,0,.02);
     }
     .row:last-child { border-bottom: 0; }
 
-    .row.locker { background: var(--locker-row); }
-    .row.regular { background: #fff; }
-
     .locker-badge {
-      width: 34px;
+      width: 36px;
       height: 28px;
-      border-radius: 12px;
-      background: rgba(169, 211, 255, 0.6);
-      display: grid;
-      place-items: center;
+      border-radius: 10px;
+      background: #cfe9ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-weight: 700;
-      font-size: .65rem;
-      color: #0f1a2c;
+      font-size: .7rem;
     }
+    .regular-bg { background: #fff; }
 
-    .regular-bg {
-      background: var(--regular-row);
-    }
-
-    @media (max-width: 540px) {
-      .list-header,
-      .row {
-        grid-template-columns: 0.4fr 1fr 0.4fr 0.6fr;
-      }
-    }
-
-    /* ========== MODAL OVERLAY / PROFILE CARD ========== */
-
+    /* MODAL */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 26, 44, 0.3);
-      display: none;            /* JS toggles to flex */
-      align-items: center;
+      background: rgba(0,0,0,0.3);
+      display: none;
+      align-items: flex-start;
       justify-content: center;
-      padding: 16px;
-      z-index: 998;
+      padding: 28px 16px;
+      z-index: 999;
     }
 
     .modal {
-      width: 100%;
-      max-width: 480px;
-      max-height: 90vh;
-      background: #f3f4f6;      /* light gray like your mock */
+      background: #fff;
       border-radius: 28px;
-      padding: 18px 18px 20px;
-      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.25);
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      position: relative;
+      width: min(92vw, 480px);
+      box-shadow: 0 20px 40px rgba(15,26,44,.2);
+      padding: 20px 20px 30px;
     }
 
-    .close-btn {
+    .close-x {
       position: absolute;
-      top: 10px;
-      right: 12px;
-      width: 28px;
-      height: 28px;
+      top: 18px;
+      right: 18px;
+      background: #f1f4f7;
       border-radius: 999px;
-      border: none;
-      background: #e5e7eb;
-      font-size: 18px;
-      line-height: 1;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
       cursor: pointer;
     }
 
-    .profile-panel {
-      background: #ffffff;
-      border-radius: 26px;
-      padding: 16px 18px 14px;
-      margin-bottom: 14px;
-    }
-
-    /* CONTACT PANEL */
-    .profile-contact-top {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 10px;
-    }
-    .profile-avatar {
-      width: 64px;
-      height: 64px;
-      border-radius: 999px;
-      background: #e5e7eb; /* gray silhouette */
-    }
-    .profile-contact-text { flex: 1; }
-    .profile-name {
-      font-weight: 700;
-      font-size: 22px;
-    }
-    .profile-nickname {
-      color: #6b7280;
-      font-size: 16px;
-      margin-top: 2px;
-    }
-    .profile-contact-lines {
-      font-size: 15px;
-      color: #6b7280;
-      margin-top: 8px;
-    }
-    .profile-contact-line + .profile-contact-line {
-      margin-top: 2px;
-    }
-    .profile-link {
-      margin-top: 8px;
-      margin-left: auto;
-      display: inline-block;
-      background: none;
-      border: none;
-      padding: 0;
-      color: #2563eb;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    /* HISTORY PANEL */
-    .profile-header-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .profile-title {
-      font-size: 22px;
-      font-weight: 700;
-    }
-    .profile-points {
-      font-size: 18px;
-      font-weight: 500;
-      color: #6b7280;
-    }
-    .profile-history-link {
-      margin-top: 60px;
-    }
-
-    /* PROFILE PREF PANEL */
-    .profile-ring-vitola {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-      font-size: 17px;
-      color: #6b7280;
-    }
-    .profile-ring-vitola strong {
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .profile-pref-block {
-      margin-top: 14px;
-    }
-    .profile-pref-label {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .profile-scroll-row {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      -webkit-overflow-scrolling: touch;
-    }
-    .profile-scroll-row::-webkit-scrollbar {
-      display: none;
-    }
-
-    .brand-pill {
-      min-width: 96px;
-      height: 56px;
+    .contact-card {
+      background: #fff;
+      padding: 18px;
       border-radius: 18px;
-      background: #f3f4f6;
+      box-shadow: 0 4px 14px rgba(15,26,44,.08);
+      margin-bottom: 18px;
       display: flex;
+      gap: 16px;
       align-items: center;
-      justify-content: center;
     }
+
+    .avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 999px;
+      background: #e7eaef;
+      background-size: cover;
+    }
+
+    .contact-lines {
+      display: flex;
+      flex-direction: column;
+      font-size: .85rem;
+    }
+
+    .contact-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 2px;
+    }
+    .contact-nick {
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-size: .8rem;
+    }
+
+    /* HISTORY */
+    .history-card {
+      background: #fff;
+      padding: 18px;
+      border-radius: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 14px rgba(15,26,44,.08);
+    }
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    /* PROFILE */
+    .profile-card {
+      background: #fff;
+      padding: 18px;
+      border-radius: 18px;
+      box-shadow: 0 4px 14px rgba(15,26,44,.08);
+    }
+    .profile-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .profile-grid {
+      display: flex;
+      gap: 28px;
+      font-size: .85rem;
+      margin-bottom: 16px;
+    }
+
+    .section-label {
+      font-size: .82rem;
+      font-weight: 600;
+      margin: 10px 0 6px;
+    }
+
+    .h-scroll {
+      display: flex;
+      overflow-x: auto;
+      gap: 12px;
+      padding-bottom: 6px;
+    }
+
     .brand-pill img {
-      max-width: 70%;
-      max-height: 70%;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #f3f4f5;
+      padding: 6px;
     }
 
     .cigar-card {
-      min-width: 170px;
-      border-radius: 18px;
-      background: #f3f4f6;
-      padding: 10px 12px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
+      background: #f8f9fb;
+      padding: 12px 14px;
+      border-radius: 12px;
+      min-width: 150px;
     }
-    .cigar-stick {
-      width: 26px;
-      height: 70px;
-      border-radius: 999px;
-      background: #8b5a2b;
-    }
-    .cigar-stick.wishlist {
-      opacity: 0.6;
-      border: 1px dashed rgba(0,0,0,0.2);
-    }
-    .cigar-copy {
-      font-size: 14px;
-    }
-    .cigar-name {
-      font-weight: 600;
-    }
-    .cigar-sub {
-      font-size: 12px;
-      color: #6b7280;
-    }
+    .cigar-name { font-weight: 600; margin-bottom: 4px; }
+    .cigar-sub { font-size: .75rem; color: var(--muted); }
+
   </style>
 </head>
 <body>
   <div class="page">
-    <!-- search -->
+
+    <!-- Search -->
     <div class="search-box">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <circle cx="11" cy="11" r="5" stroke="#6e7b8f" stroke-width="1.4"></circle>
-        <path d="m15 15 3.5 3.5" stroke="#6e7b8f" stroke-width="1.4" stroke-linecap="round"></path>
-      </svg>
-      <input id="searchInput" type="text" placeholder="Search" oninput="filterRows()" />
+      <input id="searchInput" type="text" placeholder="Search" oninput="filterRows()">
     </div>
 
-    <!-- pills -->
+    <!-- Segments -->
     <div class="segmented">
-      <button class="seg-btn lockers active" onclick="switchMode('lockers')">Lockers ▾</button>
-      <button class="seg-btn regulars" onclick="switchMode('regulars')">Regulars ▾</button>
+      <button class="seg-btn lockers active" onclick="switchMode('lockers')">Lockers</button>
+      <button class="seg-btn regulars" onclick="switchMode('regulars')">Regulars</button>
     </div>
 
-    <!-- list -->
+    <!-- List -->
     <div class="list-wrap" id="listWrap">
       <div class="list-header">
         <div></div>
@@ -349,73 +268,61 @@
         <div>Pts</div>
         <div>Last Visit</div>
       </div>
-      <!-- rows injected by loyalty.js -->
     </div>
+
   </div>
 
-  <!-- PROFILE MODAL -->
+  <!-- MODAL -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
-      <button class="close-btn" onclick="closeModal()">&times;</button>
 
-      <!-- CONTACT CARD -->
-      <section class="profile-panel">
-        <div class="profile-contact-top">
-          <div class="profile-avatar"></div>
-          <div class="profile-contact-text">
-            <div class="profile-name" id="pName">Robert Jones</div>
-            <div class="profile-nickname" id="pNickname">Uncle Bob</div>
-          </div>
-        </div>
-        <div class="profile-contact-lines">
-          <div class="profile-contact-line" id="pContactLine1">—</div>
-          <div class="profile-contact-line" id="pContactLine2">—</div>
-        </div>
-        <button class="profile-link">EDIT</button>
-      </section>
+      <div class="close-x" onclick="closeModal()">&times;</div>
 
-      <!-- HISTORY -->
-      <section class="profile-panel">
-        <div class="profile-header-row">
-          <span class="profile-title">History</span>
-          <span class="profile-points" id="pPoints">0 points</span>
-        </div>
-        <button class="profile-link profile-history-link">VIEW ALL</button>
-      </section>
+      <!-- Contact -->
+      <div class="contact-card">
+        <div class="avatar" id="pAvatar"></div>
 
-      <!-- PROFILE / PREFERENCES -->
-      <section class="profile-panel">
-        <div class="profile-header-row">
-          <span class="profile-title">Profile</span>
-          <button class="profile-link">EDIT</button>
+        <div class="contact-lines">
+          <div class="contact-name" id="pName">Robert Jones</div>
+          <div class="contact-nick" id="pNickname">Uncle Bob</div>
+          <div id="pContactLine1">—</div>
+          <div id="pContactLine2">—</div>
         </div>
+      </div>
 
-        <div class="profile-ring-vitola">
-          <span>Ring: <strong id="pRing">—</strong></span>
-          <span>Vitola: <strong id="pVitola">—</strong></span>
+      <!-- History -->
+      <div class="history-card">
+        <div class="history-head">
+          <div>History</div>
+          <div id="pPoints">0 points</div>
+        </div>
+        <div style="text-align:right; font-size:.8rem; color:#006ded; cursor:pointer;">
+          VIEW ALL
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="profile-card">
+        <div class="profile-head">
+          <div>Profile</div>
+          <div style="font-size:.85rem; color:#006ded;">EDIT</div>
         </div>
 
-        <div class="profile-pref-block">
-          <div class="profile-pref-label">Favorite Brands</div>
-          <div class="profile-scroll-row" id="favBrandsRow">
-            <!-- brand pills injected -->
-          </div>
+        <div class="profile-grid">
+          <div>Ring: <span id="pRing">—</span></div>
+          <div>Vitola: <span id="pVitola">—</span></div>
         </div>
 
-        <div class="profile-pref-block">
-          <div class="profile-pref-label">Favorite Cigars</div>
-          <div class="profile-scroll-row" id="favCigarsRow">
-            <!-- cigar cards injected -->
-          </div>
-        </div>
+        <div class="section-label">Favorite Brands</div>
+        <div class="h-scroll" id="favBrandsRow"></div>
 
-        <div class="profile-pref-block">
-          <div class="profile-pref-label">Wishlist</div>
-          <div class="profile-scroll-row" id="wishlistRow">
-            <!-- wishlist cards injected -->
-          </div>
-        </div>
-      </section>
+        <div class="section-label">Favorite Cigars</div>
+        <div class="h-scroll" id="favCigarsRow"></div>
+
+        <div class="section-label">Wishlist</div>
+        <div class="h-scroll" id="wishlistRow"></div>
+      </div>
+
     </div>
   </div>
 
