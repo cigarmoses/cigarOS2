@@ -3,17 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Loyalty • CigarOS 2</title>
+  <title>Loyalty • CigarOS2</title>
+
   <style>
     :root {
       --bg: #edf3f9;
       --surface: #ffffff;
       --ink: #0f1a2c;
       --muted: #6e7b8f;
+      --blue-pill: #cfeeff;
+      --peach-pill: #ffe0d7;
+      --locker-row: #d6ecff;
+      --regular-row: #ffe9e1;
       --radius-lg: 20px;
     }
 
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: var(--bg);
@@ -22,310 +28,219 @@
       min-height: 100vh;
     }
 
-    .page {
-      padding: 16px;
+    .wrap {
       max-width: 520px;
       margin: 0 auto;
+      padding: 12px 12px 24px;
     }
 
-    /* Search Box */
-    .search-box {
-      background: var(--surface);
-      border-radius: 16px;
+    /* Top bar */
+    .topbar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 3px 14px rgba(15,26,44,.08);
+      justify-content: space-between;
+      margin-bottom: 8px;
     }
-    .search-box input {
-      border: 0;
-      outline: 0;
+
+    .back-link {
+      font-size: 15px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.03);
+    }
+
+    .back-link:hover {
+      background: rgba(0,0,0,0.06);
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .subtitle {
+      margin-top: 2px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* Mode toggle */
+    .mode-toggle {
+      display: inline-flex;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 6px 16px rgba(15,26,44,0.12);
+      margin-top: 12px;
+    }
+
+    .mode-btn {
+      border: none;
       background: transparent;
-      width: 100%;
-      font-size: .85rem;
-    }
-
-    /* Segment Controls */
-    .segmented {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .seg-btn {
-      background: var(--surface);
-      border-radius: 12px;
-      padding: 8px 18px;
-      border: 1px solid transparent;
-      font-size: .8rem;
+      padding: 7px 14px;
+      font-size: 14px;
+      border-radius: 999px;
       cursor: pointer;
-    }
-    .seg-btn.active {
-      background: #d7ecff;
-      border-color: #b6d7ff;
-      color: #003c73;
+      color: var(--muted);
+      font-weight: 500;
     }
 
-    /* List Rows */
-    .list-wrap {
-      background: var(--surface);
-      border-radius: 18px;
-      overflow: hidden;
-      box-shadow: 0 4px 18px rgba(15,26,44,.06);
+    .mode-btn.active {
+      background: var(--blue-pill);
+      color: var(--ink);
     }
 
-    .list-header, .row {
-      display: grid;
-      grid-template-columns: 0.4fr 1fr 0.4fr 0.7fr;
-      padding: 12px 14px;
-      font-size: .75rem;
-      align-items: center;
+    .mode-btn[data-mode="regular"].active {
+      background: var(--peach-pill);
     }
-    .list-header {
-      font-weight: 600;
-      background: #f3f7fb;
+
+    /* Search bar */
+    .search-wrap {
+      margin-top: 14px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid #d1d8e2;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: #96b7ff;
+      box-shadow: 0 0 0 1px #c4d7ff;
+    }
+
+    /* Summary */
+    .summary {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* List */
+    .list {
+      margin-top: 12px;
+      padding-bottom: 40px;
     }
 
     .row {
-      border-bottom: 1px solid rgba(0,0,0,.04);
-      cursor: pointer;
-    }
-    .row:last-child { border-bottom: 0; }
-
-    .locker-badge {
-      width: 36px;
-      height: 28px;
-      border-radius: 10px;
-      background: #cfe9ff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: .7rem;
-    }
-    .regular-bg { background: #fff; }
-
-    /* MODAL */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.3);
-      display: none;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 28px 16px;
-      z-index: 999;
-    }
-
-    .modal {
-      background: #fff;
-      border-radius: 28px;
-      width: min(92vw, 480px);
-      box-shadow: 0 20px 40px rgba(15,26,44,.2);
-      padding: 20px 20px 30px;
-    }
-
-    .close-x {
-      position: absolute;
-      top: 18px;
-      right: 18px;
-      background: #f1f4f7;
-      border-radius: 999px;
-      width: 32px;
-      height: 32px;
-      display: grid;
-      place-items: center;
-      font-size: 22px;
-      cursor: pointer;
-    }
-
-    .contact-card {
-      background: #fff;
-      padding: 18px;
-      border-radius: 18px;
-      box-shadow: 0 4px 14px rgba(15,26,44,.08);
-      margin-bottom: 18px;
-      display: flex;
-      gap: 16px;
-      align-items: center;
-    }
-
-    .avatar {
-      width: 58px;
-      height: 58px;
-      border-radius: 999px;
-      background: #e7eaef;
-      background-size: cover;
-    }
-
-    .contact-lines {
+      border-radius: var(--radius-lg);
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--surface);
       display: flex;
       flex-direction: column;
-      font-size: .85rem;
+      box-shadow: 0 4px 10px rgba(15,26,44,0.06);
     }
 
-    .contact-name {
-      font-weight: 700;
-      font-size: 1.1rem;
-      margin-bottom: 2px;
-    }
-    .contact-nick {
-      color: var(--muted);
-      margin-bottom: 8px;
-      font-size: .8rem;
+    .row.locker {
+      background: linear-gradient(120deg, var(--locker-row), #f8fbff);
     }
 
-    /* HISTORY */
-    .history-card {
-      background: #fff;
-      padding: 18px;
-      border-radius: 18px;
-      margin-bottom: 18px;
-      box-shadow: 0 4px 14px rgba(15,26,44,.08);
+    .row.regular {
+      background: linear-gradient(120deg, var(--regular-row), #fff8f4);
     }
-    .history-head {
+
+    .row-header {
       display: flex;
       justify-content: space-between;
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 8px;
+      align-items: baseline;
+      gap: 8px;
     }
 
-    /* PROFILE */
-    .profile-card {
-      background: #fff;
-      padding: 18px;
-      border-radius: 18px;
-      box-shadow: 0 4px 14px rgba(15,26,44,.08);
-    }
-    .profile-head {
-      display: flex;
-      justify-content: space-between;
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 12px;
-    }
-
-    .profile-grid {
-      display: flex;
-      gap: 28px;
-      font-size: .85rem;
-      margin-bottom: 16px;
-    }
-
-    .section-label {
-      font-size: .82rem;
+    .name {
       font-weight: 600;
-      margin: 10px 0 6px;
+      font-size: 15px;
     }
 
-    .h-scroll {
+    .nickname {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .points-pill {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.06);
+    }
+
+    .meta-line {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
       display: flex;
-      overflow-x: auto;
-      gap: 12px;
-      padding-bottom: 6px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
-    .brand-pill img {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      background: #f3f4f5;
-      padding: 6px;
+    .meta-pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.05);
     }
 
-    .cigar-card {
-      background: #f8f9fb;
-      padding: 12px 14px;
-      border-radius: 12px;
-      min-width: 150px;
+    .contact-line {
+      margin-top: 6px;
+      font-size: 12px;
     }
-    .cigar-name { font-weight: 600; margin-bottom: 4px; }
-    .cigar-sub { font-size: .75rem; color: var(--muted); }
 
+    .empty-state {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    footer {
+      margin-top: 16px;
+      font-size: 11px;
+      text-align: center;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
-  <div class="page">
-
-    <!-- Search -->
-    <div class="search-box">
-      <input id="searchInput" type="text" placeholder="Search" oninput="filterRows()">
+  <div class="wrap">
+    <div class="topbar">
+      <a href="javascript:history.back()" class="back-link">← Back</a>
+      <div></div>
     </div>
 
-    <!-- Segments -->
-    <div class="segmented">
-      <button class="seg-btn lockers active" onclick="switchMode('lockers')">Lockers</button>
-      <button class="seg-btn regulars" onclick="switchMode('regulars')">Regulars</button>
+    <h1>Loyalty</h1>
+    <div class="subtitle">Lockers, regulars & rewards contacts</div>
+
+    <div class="mode-toggle" aria-label="Contact type toggle">
+      <button class="mode-btn active" data-mode="lockers">Lockers</button>
+      <button class="mode-btn" data-mode="regular">Regulars</button>
     </div>
 
-    <!-- List -->
-    <div class="list-wrap" id="listWrap">
-      <div class="list-header">
-        <div></div>
-        <div>Name</div>
-        <div>Pts</div>
-        <div>Last Visit</div>
-      </div>
+    <div class="search-wrap">
+      <input
+        id="search"
+        class="search-input"
+        type="search"
+        placeholder="Search by name, locker, phone, email..."
+        autocomplete="off"
+      />
     </div>
 
+    <div id="summary" class="summary"></div>
+
+    <div id="list" class="list"></div>
+
+    <footer>
+      CigarOS2 • Loyalty
+    </footer>
   </div>
 
-  <!-- MODAL -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-
-      <div class="close-x" onclick="closeModal()">&times;</div>
-
-      <!-- Contact -->
-      <div class="contact-card">
-        <div class="avatar" id="pAvatar"></div>
-
-        <div class="contact-lines">
-          <div class="contact-name" id="pName">Robert Jones</div>
-          <div class="contact-nick" id="pNickname">Uncle Bob</div>
-          <div id="pContactLine1">—</div>
-          <div id="pContactLine2">—</div>
-        </div>
-      </div>
-
-      <!-- History -->
-      <div class="history-card">
-        <div class="history-head">
-          <div>History</div>
-          <div id="pPoints">0 points</div>
-        </div>
-        <div style="text-align:right; font-size:.8rem; color:#006ded; cursor:pointer;">
-          VIEW ALL
-        </div>
-      </div>
-
-      <!-- Profile -->
-      <div class="profile-card">
-        <div class="profile-head">
-          <div>Profile</div>
-          <div style="font-size:.85rem; color:#006ded;">EDIT</div>
-        </div>
-
-        <div class="profile-grid">
-          <div>Ring: <span id="pRing">—</span></div>
-          <div>Vitola: <span id="pVitola">—</span></div>
-        </div>
-
-        <div class="section-label">Favorite Brands</div>
-        <div class="h-scroll" id="favBrandsRow"></div>
-
-        <div class="section-label">Favorite Cigars</div>
-        <div class="h-scroll" id="favCigarsRow"></div>
-
-        <div class="section-label">Wishlist</div>
-        <div class="h-scroll" id="wishlistRow"></div>
-      </div>
-
-    </div>
-  </div>
-
-  <script src="/loyalty/loyalty.js"></script>
+  <script src="/loyalty/loyalty.js" defer></script>
 </body>
 </html>
