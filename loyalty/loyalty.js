@@ -5,6 +5,10 @@ let regularData = [];
 let currentMode = "lockers";
 let currentData = [];
 
+/* --------------------
+    UTILITIES
+--------------------- */
+
 function formatDate(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -12,7 +16,6 @@ function formatDate(iso) {
   return d.toLocaleDateString();
 }
 
-// Turn a brand name into something like "arturo-fuente"
 function slugBrand(name) {
   return (name || "")
     .toLowerCase()
@@ -21,17 +24,15 @@ function slugBrand(name) {
     .replace(/^-+|-+$/g, "");
 }
 
-// Build a display name from JSON
 function buildName(c) {
   const first = (c.first_name || "").trim();
   const last = (c.last_name || "").trim();
   const full = `${first} ${last}`.trim();
   if (full) return full;
-  if (c.email && c.email.trim()) return c.email.trim(); // fallback
+  if (c.email) return c.email;
   return "Customer";
 }
 
-// Only keep contacts that have *some* identifier (name or email)
 function hasIdentity(c) {
   return (
     (c.first_name && c.first_name.trim()) ||
@@ -40,24 +41,31 @@ function hasIdentity(c) {
   );
 }
 
-function buildLockerItem(c) {
-  const name = buildName(c);
+function clearChildren(node) {
+  if (!node) return;
+  while (node.firstChild) node.removeChild(node.firstChild);
+}
 
+/* --------------------
+   BUILD CONTACT ITEMS
+--------------------- */
+
+function buildLockerItem(c) {
   const favBrands = [c.fav_brand_1, c.fav_brand_2, c.fav_brand_3].filter(Boolean);
   const favCigars = [c.fav_cigar_1, c.fav_cigar_2, c.fav_cigar_3].filter(Boolean);
   const wishlist = [c.wishlist_1, c.wishlist_2, c.wishlist_3].filter(Boolean);
 
   return {
     lockerNo: c.locker_number || "",
-    name,
+    name: buildName(c),
     nickname: c.nickname || "",
     pts: c.rewards_points ?? 0,
     last: formatDate(c.last_purchase),
     phone: c.phone || "—",
     email: c.email || "—",
     birthday: formatDate(c.birthday),
-    ring: c.ring_pref || "",
-    vitola: "", // you’ll compute this later from history
+    ring: c.ring_pref || "—",
+    vitola: "—",
     favBrands,
     favCigars,
     wishlist,
@@ -65,205 +73,164 @@ function buildLockerItem(c) {
 }
 
 function buildRegularItem(c) {
-  const name = buildName(c);
-
   const favBrands = [c.fav_brand_1, c.fav_brand_2, c.fav_brand_3].filter(Boolean);
   const favCigars = [c.fav_cigar_1, c.fav_cigar_2, c.fav_cigar_3].filter(Boolean);
   const wishlist = [c.wishlist_1, c.wishlist_2, c.wishlist_3].filter(Boolean);
 
   return {
-    name,
+    name: buildName(c),
     nickname: c.nickname || "",
     pts: c.rewards_points ?? 0,
     last: formatDate(c.last_purchase),
     phone: c.phone || "—",
     email: c.email || "—",
     birthday: formatDate(c.birthday),
-    ring: c.ring_pref || "",
-    vitola: "",
+    ring: c.ring_pref || "—",
+    vitola: "—",
     favBrands,
     favCigars,
     wishlist,
   };
 }
 
+/* --------------------
+     RENDER LIST
+--------------------- */
+
 function renderList() {
   const wrap = document.getElementById("listWrap");
-  if (!wrap) return;
-
-  // Remove existing data rows
   wrap.querySelectorAll(".row").forEach(r => r.remove());
 
-  // If no data, show a single “No matching customers” row
   if (!currentData.length) {
     const row = document.createElement("div");
     row.className = "row";
     row.style.gridTemplateColumns = "1fr";
-    row.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: rgba(15,26,44,.45);">No matching customers.</div>`;
+    row.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#999;">No matching customers.</div>`;
     wrap.appendChild(row);
     return;
   }
 
-  currentData.forEach((item) => {
+  currentData.forEach(item => {
     const row = document.createElement("div");
+
     if (currentMode === "lockers") {
       row.className = "row locker";
       row.innerHTML = `
-        <div><div class="locker-badge">${item.lockerNo ?? ""}</div></div>
+        <div><div class="locker-badge">${item.lockerNo}</div></div>
         <div>${item.name}</div>
-        <div>${item.pts ?? 0}</div>
-        <div>${item.last ?? "—"}</div>
+        <div>${item.pts}</div>
+        <div>${item.last}</div>
       `;
     } else {
-      row.className = "row regular regular-bg";
+      row.className = "row regular-bg";
       row.innerHTML = `
         <div></div>
         <div>
           ${item.name}
-          ${
-            item.nickname
-              ? `<div style="font-size:.6rem;color:rgba(15,26,44,.45);">"${item.nickname}"</div>`
-              : ""
-          }
+          ${item.nickname ? `<div style="font-size:.6rem; color:#889;">"${item.nickname}"</div>` : ""}
         </div>
-        <div>${item.pts ?? 0}</div>
-        <div>${item.last ?? "—"}</div>
+        <div>${item.pts}</div>
+        <div>${item.last}</div>
       `;
     }
+
     row.addEventListener("click", () => openModal(item));
     wrap.appendChild(row);
   });
 }
 
+/* --------------------
+   MODE & SEARCH
+--------------------- */
+
 function switchMode(mode) {
   currentMode = mode;
-  const lockersBtn = document.querySelector(".seg-btn.lockers");
-  const regularsBtn = document.querySelector(".seg-btn.regulars");
-  if (lockersBtn) lockersBtn.classList.toggle("active", mode === "lockers");
-  if (regularsBtn) regularsBtn.classList.toggle("active", mode === "regulars");
+
+  document.querySelector(".seg-btn.lockers").classList.toggle("active", mode === "lockers");
+  document.querySelector(".seg-btn.regulars").classList.toggle("active", mode === "regulars");
 
   currentData = mode === "lockers" ? lockerData.slice() : regularData.slice();
-  const searchInput = document.getElementById("searchInput");
-  if (searchInput) searchInput.value = "";
+  document.getElementById("searchInput").value = "";
   renderList();
 }
 
 function filterRows() {
-  const input = document.getElementById("searchInput");
-  const val = (input ? input.value : "").toLowerCase();
+  const val = document.getElementById("searchInput").value.toLowerCase();
   const base = currentMode === "lockers" ? lockerData : regularData;
+
   currentData = base.filter(r =>
     (r.name || "").toLowerCase().includes(val) ||
     (r.nickname || "").toLowerCase().includes(val)
   );
+
   renderList();
 }
 
-function clearChildren(node) {
-  if (!node) return;
-  while (node.firstChild) node.removeChild(node.firstChild);
-}
+/* --------------------
+      MODAL
+--------------------- */
 
 function openModal(item) {
-  // CONTACT
-  document.getElementById("pName").textContent = item.name || "—";
+  document.getElementById("pName").textContent = item.name;
   document.getElementById("pNickname").textContent = item.nickname || "";
-  document.getElementById("pContactLine1").textContent =
-    `${item.phone || "—"}; ${item.email || "—"}`;
-  document.getElementById("pContactLine2").textContent =
-    `Birthday: ${item.birthday || "—"}`;
+  document.getElementById("pContactLine1").textContent = `${item.phone}; ${item.email}`;
+  document.getElementById("pContactLine2").textContent = `Birthday: ${item.birthday}`;
+  document.getElementById("pPoints").textContent = `${item.pts} points`;
 
-  // HISTORY / POINTS
-  const pts = item.pts ?? 0;
-  document.getElementById("pPoints").textContent =
-    `${pts} point${pts === 1 ? "" : "s"}`;
+  document.getElementById("pRing").textContent = item.ring;
+  document.getElementById("pVitola").textContent = item.vitola;
 
-  // PROFILE: ring & vitola
-  document.getElementById("pRing").textContent = item.ring || "—";
-  document.getElementById("pVitola").textContent = item.vitola || "—";
-
-  // FAVORITE BRANDS
+  /* FAVORITE BRANDS */
   const brandsRow = document.getElementById("favBrandsRow");
   clearChildren(brandsRow);
-  const brands = item.favBrands && item.favBrands.length ? item.favBrands : ["—"];
-  brands.forEach(brand => {
-    const pill = document.createElement("div");
-    pill.className = "brand-pill";
 
-    if (brand === "—") {
-      pill.textContent = "None yet";
-    } else {
-      const img = document.createElement("img");
-      img.alt = brand;
-      img.src = `/img/icons/brands/${slugBrand(brand)}.svg`;
-      pill.appendChild(img);
-    }
-    brandsRow.appendChild(pill);
-  });
+  if (!item.favBrands.length) {
+    brandsRow.innerHTML = `<div style="color:#999;">None yet</div>`;
+  } else {
+    item.favBrands.forEach(brand => {
+      const pill = document.createElement("div");
+      pill.className = "brand-pill";
+      pill.innerHTML = `<img src="/img/icons/brands/${slugBrand(brand)}.svg" alt="${brand}">`;
+      brandsRow.appendChild(pill);
+    });
+  }
 
-  // FAVORITE CIGARS
+  /* FAVORITE CIGARS */
   const cigarsRow = document.getElementById("favCigarsRow");
   clearChildren(cigarsRow);
-  const favCigars = item.favCigars && item.favCigars.length ? item.favCigars : ["—"];
-  favCigars.forEach(label => {
-    const card = document.createElement("div");
-    card.className = "cigar-card";
 
-    const stick = document.createElement("div");
-    stick.className = "cigar-stick";
-    card.appendChild(stick);
+  if (!item.favCigars.length) {
+    cigarsRow.innerHTML = `<div style="color:#999;">None yet</div>`;
+  } else {
+    item.favCigars.forEach(c => {
+      const card = document.createElement("div");
+      card.className = "cigar-card";
+      card.innerHTML = `
+        <div class="cigar-name">${c}</div>
+        <div class="cigar-sub">Favorite cigar</div>
+      `;
+      cigarsRow.appendChild(card);
+    });
+  }
 
-    const copy = document.createElement("div");
-    copy.className = "cigar-copy";
+  /* WISHLIST */
+  const wlRow = document.getElementById("wishlistRow");
+  clearChildren(wlRow);
 
-    const name = document.createElement("div");
-    name.className = "cigar-name";
-    name.textContent = label === "—" ? "No favorites yet" : label;
-    copy.appendChild(name);
+  if (!item.wishlist.length) {
+    wlRow.innerHTML = `<div style="color:#999;">Empty</div>`;
+  } else {
+    item.wishlist.forEach(c => {
+      const card = document.createElement("div");
+      card.className = "cigar-card";
+      card.innerHTML = `
+        <div class="cigar-name">${c}</div>
+        <div class="cigar-sub">Not purchased yet</div>
+      `;
+      wlRow.appendChild(card);
+    });
+  }
 
-    if (label !== "—") {
-      const sub = document.createElement("div");
-      sub.className = "cigar-sub";
-      sub.textContent = "Favorite cigar";
-      copy.appendChild(sub);
-    }
-
-    card.appendChild(copy);
-    cigarsRow.appendChild(card);
-  });
-
-  // WISHLIST
-  const wishlistRow = document.getElementById("wishlistRow");
-  clearChildren(wishlistRow);
-  const wl = item.wishlist && item.wishlist.length ? item.wishlist : ["—"];
-  wl.forEach(label => {
-    const card = document.createElement("div");
-    card.className = "cigar-card";
-
-    const stick = document.createElement("div");
-      stick.className = "cigar-stick wishlist";
-      card.appendChild(stick);
-
-    const copy = document.createElement("div");
-    copy.className = "cigar-copy";
-
-    const name = document.createElement("div");
-    name.className = "cigar-name";
-    name.textContent = label === "—" ? "Empty wishlist" : label;
-    copy.appendChild(name);
-
-    if (label !== "—") {
-      const sub = document.createElement("div");
-      sub.className = "cigar-sub";
-      sub.textContent = "Not purchased yet";
-      copy.appendChild(sub);
-    }
-
-    card.appendChild(copy);
-    wishlistRow.appendChild(card);
-  });
-
-  // SHOW MODAL
   document.getElementById("modalOverlay").style.display = "flex";
 }
 
@@ -271,35 +238,31 @@ function closeModal() {
   document.getElementById("modalOverlay").style.display = "none";
 }
 
-// Expose handlers for inline HTML
 window.switchMode = switchMode;
 window.filterRows = filterRows;
 window.closeModal = closeModal;
 
+/* --------------------
+   LOAD CONTACTS
+--------------------- */
+
 function loadContacts() {
   fetch(CONTACTS_URL)
-    .then(res => {
-      if (!res.ok) throw new Error("Failed to load contacts: " + res.status);
-      return res.json();
-    })
+    .then(res => res.json())
     .then(data => {
-      const contacts = (data || []).filter(c => c.active !== false && hasIdentity(c));
+      const contacts = data.filter(c => c.active !== false && hasIdentity(c));
 
-      // Lockers: have a locker_number
       lockerData = contacts
-        .filter(c => c.locker_number != null && String(c.locker_number).trim() !== "")
+        .filter(c => c.locker_number)
         .map(buildLockerItem);
 
-      // Regulars: no locker_number
       regularData = contacts
-        .filter(c => !c.locker_number || String(c.locker_number).trim() === "")
+        .filter(c => !c.locker_number)
         .map(buildRegularItem);
 
       switchMode("lockers");
     })
-    .catch(err => {
-      console.error("Error loading loyalty contacts:", err);
-    });
+    .catch(err => console.error(err));
 }
 
 document.addEventListener("DOMContentLoaded", loadContacts);
