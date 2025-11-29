@@ -69,21 +69,14 @@
     }
 
     header.news-header h1 {
-      margin: 4px 0 4px;
+      margin: 4px 0 0;
       font-size: 32px;
       font-weight: 700;
       letter-spacing: -0.03em;
     }
 
-    header.news-header p {
-      margin: 0;
-      font-size: 13px;
-      color: var(--muted);
-      max-width: 320px;
-    }
-
     .news-section-label {
-      margin: 6px 0 8px;
+      margin: 10px 0 8px;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.14em;
@@ -117,8 +110,9 @@
     .news-logo {
       width: 52px;
       height: 52px;
-      border-radius: 16px;
-      background: #f1f4f8;
+      /* no background, svg as-is */
+      background: transparent;
+      border-radius: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -142,7 +136,7 @@
     .news-card-top {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start; /* name + X icon inline */
       gap: 8px;
     }
 
@@ -153,31 +147,22 @@
     }
 
     .news-x-link {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      background: var(--pill);
-      padding: 4px 8px;
-      border-radius: 999px;
+      font-size: 13px;
+      text-transform: none;
+      letter-spacing: 0;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
       color: var(--muted);
       text-decoration: none;
       flex-shrink: 0;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
     }
 
     .news-x-link span.icon {
-      font-size: 12px;
+      font-size: 14px;
       transform: translateY(-0.5px);
-    }
-
-    .news-meta-label {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      margin-top: 2px;
     }
 
     .news-links {
@@ -231,108 +216,194 @@
 
     <header class="news-header">
       <h1>News</h1>
-      <p>Quick links to the latest cigar industry headlines from leading media &amp; trade sources.</p>
       <div class="news-section-label">Sources</div>
     </header>
 
-    <section class="news-list">
-
-      <!-- Halfwheel -->
-      <article class="news-card">
-        <div class="news-logo-wrap">
-          <div class="news-logo">
-            <img src="/img/icons/halfwheel.svg" alt="Halfwheel logo" />
-          </div>
-        </div>
-        <div class="news-content">
-          <div class="news-card-top">
-            <div class="news-source-name">Halfwheel</div>
-            <a class="news-x-link" href="https://x.com/halfwheel" target="_blank" rel="noopener noreferrer">
-              <span class="icon">𝕏</span><span>@halfwheel</span>
-            </a>
-          </div>
-          <div class="news-meta-label">Latest stories</div>
-          <ul class="news-links">
-            <li><a href="https://halfwheel.com/s-t-dupont-introduces-70000-jackpot-lighter/457611/" target="_blank">S.T. Dupont Introduces $70,000 Jackpot Lighter</a></li>
-            <li><a href="https://halfwheel.com/the-cigar-accessories-i-use-brooks-whittington/456951/" target="_blank">The Cigar Accessories I Use: Brooks Whittington</a></li>
-            <li><a href="https://halfwheel.com/the-cigar-accessories-i-use-patrick-lagreid/457119/" target="_blank">The Cigar Accessories I Use: Patrick Lagreid</a></li>
-          </ul>
-        </div>
-      </article>
-
-      <!-- Cigar Aficionado -->
-      <article class="news-card">
-        <div class="news-logo-wrap">
-          <div class="news-logo">
-            <img src="/img/icons/cigaraficionado.svg" alt="Cigar Aficionado logo" />
-          </div>
-        </div>
-        <div class="news-content">
-          <div class="news-card-top">
-            <div class="news-source-name">Cigar Aficionado</div>
-            <a class="news-x-link" href="https://x.com/CigarAficMag" target="_blank" rel="noopener noreferrer">
-              <span class="icon">𝕏</span><span>@CigarAficMag</span>
-            </a>
-          </div>
-          <div class="news-meta-label">Latest stories</div>
-          <ul class="news-links">
-            <li><a href="https://www.cigaraficionado.com/article/tatuaje-releasing-new-and-relatively-inexpensive-cigar" target="_blank">Tatuaje Releasing New (And Relatively Inexpensive) Cigar</a></li>
-            <li><a href="https://www.cigaraficionado.com/article/cigar-friendly-havens-for-winter-golf" target="_blank">Cigar-Friendly Havens For Winter Golf</a></li>
-            <li><a href="https://www.cigaraficionado.com/article/new-cuban-trinidad-premieres-in-mexico-city" target="_blank">New Cuban Trinidad Premieres In Mexico City</a></li>
-          </ul>
-        </div>
-      </article>
-
-      <!-- Cigar Journal -->
-      <article class="news-card">
-        <div class="news-logo-wrap">
-          <div class="news-logo">
-            <img src="/img/icons/cigarjournal.svg" alt="Cigar Journal logo" />
-          </div>
-        </div>
-        <div class="news-content">
-          <div class="news-card-top">
-            <div class="news-source-name">Cigar Journal</div>
-            <a class="news-x-link" href="https://x.com/CigarJournalMag" target="_blank" rel="noopener noreferrer">
-              <span class="icon">𝕏</span><span>@CigarJournalMag</span>
-            </a>
-          </div>
-
-          <div class="news-meta-label">Latest stories</div>
-          <ul class="news-links">
-            <li><a href="https://www.cigarjournal.com/tatuaje-releases-sextooth/" target="_blank">Tatuaje Releases “Sextooth”</a></li>
-            <li><a href="https://www.cigarjournal.com/10-off-procigar-festival-2026-registration-black-friday-deal/" target="_blank">10% Off Procigar Festival 2026 Registration – Black Friday Deal</a></li>
-            <li><a href="https://www.cigarjournal.com/pca-x-fiu-luxury-marketing-experiences-masterclass/" target="_blank">PCA × FIU Luxury Marketing & Experiences Masterclass</a></li>
-          </ul>
-        </div>
-      </article>
-
-      <!-- PCA -->
-      <article class="news-card">
-        <div class="news-logo-wrap">
-          <div class="news-logo">
-            <img src="/img/icons/pca.svg" alt="PCA logo" />
-          </div>
-        </div>
-        <div class="news-content">
-          <div class="news-card-top">
-            <div class="news-source-name">Premium Cigar Association</div>
-            <a class="news-x-link" href="https://x.com/PCA1933" target="_blank" rel="noopener noreferrer">
-              <span class="icon">𝕏</span><span>@PCA1933</span>
-            </a>
-          </div>
-
-          <div class="news-meta-label">Latest stories</div>
-          <ul class="news-links">
-            <li><a href="https://premiumcigars.org/powstanie-cigars-unleashes-the-2025-war-bear-war-bear-of-mass-destruction/" target="_blank">Powstanie Cigars Unleashes the 2025 War Bear “War Bear of Mass Destruction”</a></li>
-            <li><a href="https://premiumcigars.org/pg-cigars-marks-35-years-with-two-special-anniversary-releases/" target="_blank">PG Cigars Marks 35 Years With Two Special Anniversary Releases</a></li>
-            <li><a href="https://premiumcigars.org/crowned-heads-unveils-new-look-for-iconic-jericho-hill-line/" target="_blank">Crowned Heads Unveils New Look for Iconic Jericho Hill Line</a></li>
-          </ul>
-        </div>
-      </article>
-
-    </section>
+    <!-- JS will populate this -->
+    <section class="news-list" id="news-list"></section>
 
   </div>
+
+  <script>
+    const NEWS_JSON_URL = "/pos/pos-news.json";
+
+    // Fallback data (keeps working even if JSON fetch fails)
+    const staticNewsSources = [
+      {
+        id: "halfwheel",
+        name: "Halfwheel",
+        icon: "/img/icons/halfwheel.svg",
+        xHandle: "@halfwheel",
+        xUrl: "https://x.com/halfwheel",
+        stories: [
+          {
+            title: "S.T. Dupont Introduces $70,000 Jackpot Lighter",
+            url: "https://halfwheel.com/s-t-dupont-introduces-70000-jackpot-lighter/457611/"
+          },
+          {
+            title: "The Cigar Accessories I Use: Brooks Whittington",
+            url: "https://halfwheel.com/the-cigar-accessories-i-use-brooks-whittington/456951/"
+          },
+          {
+            title: "The Cigar Accessories I Use: Patrick Lagreid",
+            url: "https://halfwheel.com/the-cigar-accessories-i-use-patrick-lagreid/457119/"
+          }
+        ]
+      },
+      {
+        id: "cigaraficionado",
+        name: "Cigar Aficionado",
+        icon: "/img/icons/cigaraficionado.svg",
+        xHandle: "@CigarAficMag",
+        xUrl: "https://x.com/CigarAficMag",
+        stories: [
+          {
+            title: "A Dozen Delightful Cigars You Need To Try Right Now",
+            url: "https://www.cigaraficionado.com/article/a-dozen-delightful-cigars-you-need-to-try-right-now"
+          },
+          {
+            title: "Rocky Patel Thirtieth Anniversary Heading To Shops",
+            url: "https://www.cigaraficionado.com/article/rocky-patel-thirtieth-anniversary-heading-to-shops"
+          },
+          {
+            title: "New Cuban Hoyo Debuts In Germany",
+            url: "https://www.cigaraficionado.com/article/new-cuban-hoyo-debuts-in-germany"
+          }
+        ]
+      },
+      {
+        id: "cigarjournal",
+        name: "Cigar Journal",
+        icon: "/img/icons/cigarjournal.svg",
+        xHandle: "@CigarJournalMag",
+        xUrl: "https://x.com/CigarJournalMag",
+        stories: [
+          {
+            title: "Tatuaje Releases “Sextooth”",
+            url: "https://www.cigarjournal.com/tatuaje-releases-sextooth/"
+          },
+          {
+            title: "10% Off Procigar Festival 2026 Registration – Black Friday Deal",
+            url: "https://www.cigarjournal.com/10-off-procigar-festival-2026-registration-black-friday-deal/"
+          },
+          {
+            title: "PCA × FIU Luxury Marketing & Experiences Masterclass",
+            url: "https://www.cigarjournal.com/pca-x-fiu-luxury-marketing-experiences-masterclass/"
+          }
+        ]
+      },
+      {
+        id: "pca",
+        name: "Premium Cigar Association",
+        icon: "/img/icons/pca.svg",
+        xHandle: "@PCA1933",
+        xUrl: "https://x.com/PCA1933",
+        stories: [
+          {
+            title: "J.C. Newman Releases Limited-Edition “The Brick House is on Fire” for TAA Retailers",
+            url: "https://premiumcigars.org/j-c-newman-releases-limited-edition-the-brick-house-is-on-fire-for-taa-retailers/"
+          },
+          {
+            title: "Duran Cigars Debuts Roberto Duran Reserva",
+            url: "https://premiumcigars.org/duran-cigars-debuts-roberto-duran-reserva/"
+          },
+          {
+            title: "Powstanie Cigars Unleashes the 2025 War Bear “War Bear of Mass Destruction”",
+            url: "https://premiumcigars.org/powstanie-cigars-unleashes-the-2025-war-bear-war-bear-of-mass-destruction/"
+          }
+        ]
+      }
+    ];
+
+    function createNewsCard(source) {
+      const article = document.createElement("article");
+      article.className = "news-card";
+
+      const logoWrap = document.createElement("div");
+      logoWrap.className = "news-logo-wrap";
+
+      const logo = document.createElement("div");
+      logo.className = "news-logo";
+
+      const img = document.createElement("img");
+      img.src = source.icon;
+      img.alt = source.name + " logo";
+      logo.appendChild(img);
+      logoWrap.appendChild(logo);
+
+      const content = document.createElement("div");
+      content.className = "news-content";
+
+      const top = document.createElement("div");
+      top.className = "news-card-top";
+
+      const nameEl = document.createElement("div");
+      nameEl.className = "news-source-name";
+      nameEl.textContent = source.name;
+
+      const xLink = document.createElement("a");
+      xLink.className = "news-x-link";
+      xLink.href = source.xUrl;
+      xLink.target = "_blank";
+      xLink.rel = "noopener noreferrer";
+      xLink.setAttribute("aria-label", (source.xHandle || source.name) + " on X");
+
+      const xIcon = document.createElement("span");
+      xIcon.className = "icon";
+      xIcon.textContent = "𝕏";
+
+      xLink.appendChild(xIcon);
+
+      top.appendChild(nameEl);
+      top.appendChild(xLink);
+
+      const ul = document.createElement("ul");
+      ul.className = "news-links";
+
+      (source.stories || []).forEach(story => {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = story.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = story.title;
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+
+      content.appendChild(top);
+      content.appendChild(ul);
+
+      article.appendChild(logoWrap);
+      article.appendChild(content);
+
+      return article;
+    }
+
+    async function loadNews() {
+      const container = document.getElementById("news-list");
+      container.innerHTML = "";
+
+      let sources = staticNewsSources;
+
+      try {
+        const res = await fetch(NEWS_JSON_URL, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.sources) && data.sources.length) {
+            sources = data.sources;
+          }
+        }
+      } catch (err) {
+        console.warn("Using static fallback news data:", err);
+      }
+
+      sources.forEach(src => {
+        container.appendChild(createNewsCard(src));
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", loadNews);
+  </script>
 </body>
 </html>
