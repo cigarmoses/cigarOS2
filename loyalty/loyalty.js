@@ -10,6 +10,10 @@ let searchTerm = "";
 let lastRenderedList = [];
 let selectedContact = null;
 
+// for visit history in the modal
+let currentVisitHistory = [];
+let showAllVisits = false;
+
 function safeLower(v) {
   if (v === null || v === undefined) return "";
   return String(v).toLowerCase();
@@ -41,7 +45,7 @@ function isLocker(c) {
   return ln !== "" && ln !== "0";
 }
 
-// Regulars are indicated by the "Regular" column containing "regular", "reg", "yes", "1", etc.
+// Regulars: based on "Regular" column
 function isRegular(c) {
   const v = safeLower(c["Regular"]);
   if (!v) return false;
@@ -77,7 +81,6 @@ function buildMetaPills(c, lockerFlag, regularFlag) {
     pills.push("Fav brand: " + favBrand);
   }
 
-  // NOTE: we intentionally do NOT include points here.
   return pills;
 }
 
@@ -95,7 +98,6 @@ function renderList() {
     base = allContacts;
   }
 
-  // Filter by search term
   const term = searchTerm.trim().toLowerCase();
   let filtered = base;
 
@@ -117,9 +119,7 @@ function renderList() {
     });
   }
 
-  // Sort
   filtered = [...filtered].sort((a, b) => {
-    // For lockers, sort by locker number first
     if (currentMode === "lockers") {
       const la = safeLower(a["Locker number"]);
       const lb = safeLower(b["Locker number"]);
@@ -137,25 +137,25 @@ function renderList() {
 
   lastRenderedList = filtered;
 
-  // Summary label
   let label = "customers";
   if (currentMode === "lockers") label = "locker customers";
   if (currentMode === "regular") label = "regular customers";
 
   summaryEl.textContent = `${filtered.length.toLocaleString()} of ${base.length.toLocaleString()} ${label} shown`;
 
-  // Empty state
   if (!filtered.length) {
     listEl.innerHTML = `<div class="empty-state">No matching customers.</div>`;
     return;
   }
 
-  // Build HTML
   const rowsHtml = filtered
     .map((c, idx) => {
       const lockerFlag = isLocker(c);
       const regularFlag = isRegular(c);
-      const modeClass = lockerFlag ? "locker" : "regular";
+
+      let rowClass = "neutral";
+      if (lockerFlag) rowClass = "locker";
+      else if (regularFlag) rowClass = "regular";
 
       const displayName = buildDisplayName(c);
       const email = c["Email"] || "";
@@ -174,7 +174,7 @@ function renderList() {
       const contactsLine = contactPieces.join(" • ");
 
       return `
-        <div class="row ${modeClass}" data-idx="${idx}">
+        <div class="row ${rowClass}" data-idx="${idx}">
           <div class="row-header">
             <div>
               <div class="name">${displayName}</div>
@@ -207,7 +207,6 @@ function renderList() {
 
   listEl.innerHTML = rowsHtml;
 
-  // Attach row click handlers to open profile card
   listEl.querySelectorAll(".row").forEach((rowEl) => {
     rowEl.addEventListener("click", () => {
       const idx = Number(rowEl.getAttribute("data-idx"));
@@ -248,6 +247,54 @@ function setMode(mode) {
   renderList();
 }
 
+/* ---------- Visit history helpers ---------- */
+
+// Placeholder: expect an array of { date, amount } in future back-end
+function getVisitHistory(contact) {
+  const arr =
+    contact.purchase_history ||
+    contact.purchaseHistory ||
+    contact.PurchaseHistory;
+  return Array.isArray(arr) ? arr : [];
+}
+
+function renderVisitHistory() {
+  const container = document.getElementById("pVisitList");
+  container.innerHTML = "";
+
+  if (!currentVisitHistory || !currentVisitHistory.length) {
+    container.innerHTML =
+      '<div class="visit-item"><span class="visit-date">No visit history yet</span></div>';
+    return;
+  }
+
+  const items = showAllVisits
+    ? currentVisitHistory
+    : currentVisitHistory.slice(0, 6);
+
+  items.forEach((v) => {
+    const row = document.createElement("div");
+    row.className = "visit-item";
+    const date = v.date ? formatDate(v.date) : "—";
+    const amount = v.amount != null ? `$${v.amount}` : "";
+    row.innerHTML = `
+      <span class="visit-date">${date}</span>
+      <span class="visit-amount">${amount}</span>
+    `;
+    container.appendChild(row);
+  });
+
+  const btn = document.getElementById("viewAllVisitsBtn");
+  if (!btn) return;
+  if (!currentVisitHistory.length || currentVisitHistory.length <= 6) {
+    btn.disabled = true;
+    btn.textContent = "View all";
+  } else {
+    btn.disabled = false;
+    btn.textContent = showAllVisits ? "View less" : "View all";
+  }
+}
+
 /* ---------- Profile dialog ---------- */
 
 function fillChips(container, items) {
@@ -273,26 +320,32 @@ function openProfile(c) {
   const profileDialog = document.getElementById("profileDialog");
   const card = document.getElementById("profileCard");
 
-  // Header
   const name = buildDisplayName(c);
   document.getElementById("pName").textContent = name;
 
   const lockerInfo = isLocker(c) ? `Locker ${c["Locker number"]}` : "No locker";
   const email = c["Email"] || "";
   const phone = c["Phone"] || "";
-  const contactLine = [lockerInfo, email || phone].filter(Boolean).join(" • ");
-  document.getElementById("pSub").textContent = contactLine || lockerInfo;
+  const subPieces = [lockerInfo];
+  if (email) subPieces.push(email);
+  else if (phone) subPieces.push(phone);
+  document.getElementById("pSub").textContent = subPieces.join(" • ");
 
   document.getElementById("pPoints").textContent = formatPoints(c["Rewards"]);
 
-  // Purchase history
+  // Purchase history summary
   document.getElementById("pLastPurchase").textContent =
     c["Last Purchase"] ? formatDate(c["Last Purchase"]) : "—";
-  document.getElementById("pYtd").textContent = c["YTD spend"] || "—";
-  document.getElementById("pVisits90").textContent =
-    c["90-day visits"] || "—";
-  document.getElementById("pGift").textContent =
-    c["Gift card balance"] || "—";
+
+  currentVisitHistory = getVisitHistory(c);
+  showAllVisits = false;
+  renderVisitHistory();
+
+  // Contact section
+  document.getElementById("pPhone").textContent = phone || "—";
+  document.getElementById("pEmail").textContent = email || "—";
+  document.getElementById("pBirthday").textContent =
+    c["Birthday"] ? formatDate(c["Birthday"]) : "—";
 
   // Favorites
   const favBrands = [
@@ -312,12 +365,25 @@ function openProfile(c) {
   document.getElementById("pRingPref").textContent =
     c["Ring Pref"] || "—";
 
-  // Wishlist – collect any fields starting with "Wishlist"
+  // Wishlist (freeform text / chips later)
   const wishlistItems = Object.keys(c)
     .filter((k) => k.toLowerCase().startsWith("wishlist"))
     .map((k) => c[k])
     .filter(Boolean);
-  fillChips(document.getElementById("pWishlist"), wishlistItems);
+  const wishlistEl = document.getElementById("pWishlist");
+  if (!wishlistItems.length) {
+    wishlistEl.textContent = "None";
+  } else {
+    wishlistEl.textContent = wishlistItems.join(", ");
+  }
+
+  // Loyalty stats pills
+  document.getElementById("pStatYtd").textContent =
+    c["YTD spend"] || "YTD: —";
+  document.getElementById("pStatVisits90").textContent =
+    c["90-day visits"] || "90-day visits: —";
+  document.getElementById("pStatGift").textContent =
+    c["Gift card balance"] || "Gift card: —";
 
   // Reset editing state
   card.classList.remove("editing");
@@ -332,13 +398,12 @@ function openProfile(c) {
   profileDialog.showModal();
 }
 
-/* ---------- Init ---------- */
-
 function initProfileDialog() {
   const profileDialog = document.getElementById("profileDialog");
   const card = document.getElementById("profileCard");
   const closeBtn = document.querySelector(".profile-close");
   const editBtn = document.getElementById("editProfileBtn");
+  const viewAllBtn = document.getElementById("viewAllVisitsBtn");
 
   closeBtn.addEventListener("click", () => {
     profileDialog.close();
@@ -350,25 +415,61 @@ function initProfileDialog() {
     }
   });
 
-  editBtn.addEventListener("click", () => {
+  viewAllBtn.addEventListener("click", () => {
+    if (!currentVisitHistory.length || currentVisitHistory.length <= 6) return;
+    showAllVisits = !showAllVisits;
+    renderVisitHistory();
+  });
+
+  editBtn.addEventListener("click", async () => {
     const isEditing = card.classList.toggle("editing");
-    document
-      .querySelectorAll("#profileDialog .profile-editable")
-      .forEach((el) => {
-        el.contentEditable = isEditing ? "true" : "false";
-      });
+    const editables = document.querySelectorAll(
+      "#profileDialog .profile-editable"
+    );
+
+    editables.forEach((el) => {
+      el.contentEditable = isEditing ? "true" : "false";
+    });
+
+    if (!isEditing) {
+      // finished editing -> prepare changes to send to backend later
+      if (!selectedContact) return;
+
+      const changes = {
+        "Last Purchase":
+          document.getElementById("pLastPurchase").textContent === "—"
+            ? null
+            : document.getElementById("pLastPurchase").textContent,
+        Phone: document.getElementById("pPhone").textContent || null,
+        Email: document.getElementById("pEmail").textContent || null,
+        Birthday: document.getElementById("pBirthday").textContent || null,
+        "Ring Pref": document.getElementById("pRingPref").textContent || null,
+        "YTD spend":
+          document.getElementById("pStatYtd").textContent || null,
+        "90-day visits":
+          document.getElementById("pStatVisits90").textContent || null,
+        "Gift card balance":
+          document.getElementById("pStatGift").textContent || null,
+        Wishlist: document.getElementById("pWishlist").innerText.trim() || null,
+      };
+
+      // TODO: hook this into a real write API.
+      // For now we just merge into the local object so UI stays in sync.
+      Object.assign(selectedContact, changes);
+      renderList();
+    }
+
     editBtn.textContent = isEditing ? "Done" : "Edit";
-    // (We can hook up saving back into selectedContact later if desired.)
   });
 }
 
+/* ---------- Init ---------- */
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Mode buttons
   document.querySelectorAll(".mode-btn").forEach((btn) => {
     btn.addEventListener("click", () => setMode(btn.dataset.mode));
   });
 
-  // Search
   const searchEl = document.getElementById("search");
   searchEl.addEventListener("input", (e) => {
     searchTerm = e.target.value || "";
