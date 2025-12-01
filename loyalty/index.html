@@ -19,8 +19,8 @@
       --reg-active-text: #8a3a00;
       --lock-active: #e5f0ff;
       --lock-active-text: #003e9f;
-      --blue-pill: #0a84ff1a;
-      --peach-pill: #ff9f0a1a;
+      --blue-pill: #e5f0ff;
+      --peach-pill: #fff3e6;
     }
 
     * { box-sizing: border-box; }
@@ -149,15 +149,23 @@
     .row {
       padding: 8px 0;
       margin: 0;
-      background: transparent;
       display: flex;
       flex-direction: column;
       border-bottom: 0.5px solid #d1d1d6;
       cursor: pointer;
+      background: #ffffff;
     }
 
     .row:last-child {
       border-bottom: none;
+    }
+
+    .row.locker {
+      background: #e5f0ff; /* blue tint */
+    }
+
+    .row.regular {
+      background: #fff3e6; /* orange tint */
     }
 
     .row-header {
@@ -185,14 +193,6 @@
       background: #f2f2f7;
       color: var(--muted);
       white-space: nowrap;
-    }
-
-    .row.locker .points-pill {
-      background: var(--blue-pill);
-    }
-
-    .row.regular .points-pill {
-      background: var(--peach-pill);
     }
 
     .meta-line {
@@ -354,6 +354,30 @@
       background: #f2f2f7;
     }
 
+    .visit-list {
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .visit-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0;
+    }
+
+    .visit-date {
+      color: var(--muted);
+    }
+
+    .visit-amount {
+      font-weight: 500;
+    }
+
+    .visit-actions {
+      margin-top: 4px;
+      text-align: right;
+    }
+
     .profile-actions {
       display: flex;
       justify-content: flex-end;
@@ -424,26 +448,37 @@
         <div class="profile-points" id="pPoints">0 pts</div>
       </div>
 
+      <!-- Purchase history -->
       <div class="profile-sections">
         <div class="profile-section-title">Purchase History</div>
         <div class="profile-row">
           <div class="profile-label">Last purchase</div>
           <div class="profile-value profile-editable" data-field="Last Purchase" id="pLastPurchase">—</div>
         </div>
-        <div class="profile-row">
-          <div class="profile-label">YTD spend</div>
-          <div class="profile-value profile-editable" data-field="YTD spend" id="pYtd">—</div>
-        </div>
-        <div class="profile-row">
-          <div class="profile-label">90-day visits</div>
-          <div class="profile-value profile-editable" data-field="90-day visits" id="pVisits90">—</div>
-        </div>
-        <div class="profile-row">
-          <div class="profile-label">Gift card balance</div>
-          <div class="profile-value profile-editable" data-field="Gift card balance" id="pGift">—</div>
+        <div class="visit-list" id="pVisitList"></div>
+        <div class="visit-actions">
+          <button class="btn-ghost" type="button" id="viewAllVisitsBtn">View all</button>
         </div>
       </div>
 
+      <!-- Contact -->
+      <div class="profile-sections">
+        <div class="profile-section-title">Contact</div>
+        <div class="profile-row">
+          <div class="profile-label">Phone</div>
+          <div class="profile-value profile-editable" data-field="Phone" id="pPhone">—</div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-label">Email</div>
+          <div class="profile-value profile-editable" data-field="Email" id="pEmail">—</div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-label">Birthday</div>
+          <div class="profile-value profile-editable" data-field="Birthday" id="pBirthday">—</div>
+        </div>
+      </div>
+
+      <!-- Favorites -->
       <div class="profile-sections">
         <div class="profile-section-title">Favorites</div>
         <div class="profile-multi-line">
@@ -460,11 +495,22 @@
         </div>
       </div>
 
+      <!-- Wishlist -->
       <div class="profile-sections">
         <div class="profile-section-title">Wishlist</div>
         <div class="profile-multi-line">
           <div class="profile-multi-label">Items</div>
           <div class="chip-list profile-editable" data-field="Wishlist" id="pWishlist"></div>
+        </div>
+      </div>
+
+      <!-- Loyalty stats pills -->
+      <div class="profile-sections">
+        <div class="profile-section-title">Loyalty Stats</div>
+        <div class="chip-list">
+          <span class="chip profile-editable" data-field="YTD spend" id="pStatYtd">—</span>
+          <span class="chip profile-editable" data-field="90-day visits" id="pStatVisits90">—</span>
+          <span class="chip profile-editable" data-field="Gift card balance" id="pStatGift">—</span>
         </div>
       </div>
 
