@@ -13,6 +13,12 @@
       --muted: #8e8e93;
       --seg-bg: #e4e4ea;
       --seg-border: #c7c7cc;
+      --all-active: #e5fbe7;
+      --all-active-text: #034d1b;
+      --reg-active: #fff2e5;
+      --reg-active-text: #8a3a00;
+      --lock-active: #e5f0ff;
+      --lock-active-text: #003e9f;
       --blue-pill: #0a84ff1a;
       --peach-pill: #ff9f0a1a;
     }
@@ -43,7 +49,7 @@
 
     .back-link {
       font-size: 15px;
-      color: var(--blue);
+      color: #007aff;
       text-decoration: none;
       padding: 4px 0;
     }
@@ -73,19 +79,34 @@
     .mode-btn {
       border: none;
       background: transparent;
-      padding: 5px 16px;
+      padding: 5px 12px;
       font-size: 14px;
       border-radius: 999px;
       cursor: pointer;
       color: var(--muted);
       font-weight: 500;
-      min-width: 96px;
+      min-width: 80px;
     }
 
     .mode-btn.active {
       background: var(--surface);
       color: var(--ink);
       box-shadow: 0 1px 1px rgba(0,0,0,0.12);
+    }
+
+    .mode-btn[data-mode="all"].active {
+      background: var(--all-active);
+      color: var(--all-active-text);
+    }
+
+    .mode-btn[data-mode="regular"].active {
+      background: var(--reg-active);
+      color: var(--reg-active-text);
+    }
+
+    .mode-btn[data-mode="lockers"].active {
+      background: var(--lock-active);
+      color: var(--lock-active-text);
     }
 
     /* Search bar */
@@ -132,15 +153,11 @@
       display: flex;
       flex-direction: column;
       border-bottom: 0.5px solid #d1d1d6;
+      cursor: pointer;
     }
 
     .row:last-child {
       border-bottom: none;
-    }
-
-    .row.locker,
-    .row.regular {
-      /* same layout; no background gradients like Contacts */
     }
 
     .row-header {
@@ -212,6 +229,151 @@
       text-align: center;
       color: var(--muted);
     }
+
+    /* Profile dialog */
+    dialog#profileDialog {
+      border: none;
+      padding: 0;
+      border-radius: 16px;
+      max-width: 520px;
+      width: calc(100% - 32px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    }
+
+    dialog::backdrop {
+      background: rgba(0,0,0,0.35);
+    }
+
+    .profile-card {
+      padding: 16px 18px 18px;
+      background: #f2f2f7;
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .profile-name {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .profile-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .profile-points {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #0a84ff1a;
+      color: #0a84ff;
+      white-space: nowrap;
+    }
+
+    .profile-close {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      border: none;
+      background: transparent;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .profile-sections {
+      margin-top: 6px;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .profile-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 4px 0 6px;
+    }
+
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      padding: 4px 0;
+      border-bottom: 0.5px solid #e5e5ea;
+    }
+
+    .profile-row:last-child {
+      border-bottom: none;
+    }
+
+    .profile-label {
+      color: var(--muted);
+    }
+
+    .profile-value {
+      text-align: right;
+      max-width: 60%;
+      word-wrap: break-word;
+    }
+
+    .profile-multi-line {
+      font-size: 13px;
+      padding: 2px 0 4px;
+    }
+
+    .profile-multi-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .chip {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #f2f2f7;
+    }
+
+    .profile-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+      gap: 8px;
+    }
+
+    .btn-ghost {
+      border-radius: 999px;
+      padding: 6px 14px;
+      border: 1px solid #c7c7cc;
+      background: #ffffff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .profile-card.editing .profile-editable {
+      outline: 1px solid #0a84ff;
+      background: #ffffff;
+    }
   </style>
 </head>
 <body>
@@ -225,8 +387,9 @@
     <div class="subtitle">Lockers, regulars & rewards contacts</div>
 
     <div class="mode-toggle" aria-label="Contact type toggle">
-      <button class="mode-btn active" data-mode="lockers">Lockers</button>
+      <button class="mode-btn active" data-mode="all">All</button>
       <button class="mode-btn" data-mode="regular">Regulars</button>
+      <button class="mode-btn" data-mode="lockers">Lockers</button>
     </div>
 
     <div class="search-wrap">
@@ -247,6 +410,69 @@
       CigarOS2 • Loyalty
     </footer>
   </div>
+
+  <!-- Profile dialog -->
+  <dialog id="profileDialog">
+    <div class="profile-card" id="profileCard">
+      <button class="profile-close" type="button" aria-label="Close">&times;</button>
+
+      <div class="profile-header">
+        <div>
+          <div class="profile-name" id="pName">Customer Name</div>
+          <div class="profile-sub" id="pSub">Locker • Contact</div>
+        </div>
+        <div class="profile-points" id="pPoints">0 pts</div>
+      </div>
+
+      <div class="profile-sections">
+        <div class="profile-section-title">Purchase History</div>
+        <div class="profile-row">
+          <div class="profile-label">Last purchase</div>
+          <div class="profile-value profile-editable" data-field="Last Purchase" id="pLastPurchase">—</div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-label">YTD spend</div>
+          <div class="profile-value profile-editable" data-field="YTD spend" id="pYtd">—</div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-label">90-day visits</div>
+          <div class="profile-value profile-editable" data-field="90-day visits" id="pVisits90">—</div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-label">Gift card balance</div>
+          <div class="profile-value profile-editable" data-field="Gift card balance" id="pGift">—</div>
+        </div>
+      </div>
+
+      <div class="profile-sections">
+        <div class="profile-section-title">Favorites</div>
+        <div class="profile-multi-line">
+          <div class="profile-multi-label">Brands</div>
+          <div class="chip-list" id="pFavBrands"></div>
+        </div>
+        <div class="profile-multi-line">
+          <div class="profile-multi-label">Cigars</div>
+          <div class="chip-list" id="pFavCigars"></div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-label">Ring preference</div>
+          <div class="profile-value profile-editable" data-field="Ring Pref" id="pRingPref">—</div>
+        </div>
+      </div>
+
+      <div class="profile-sections">
+        <div class="profile-section-title">Wishlist</div>
+        <div class="profile-multi-line">
+          <div class="profile-multi-label">Items</div>
+          <div class="chip-list profile-editable" data-field="Wishlist" id="pWishlist"></div>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn-ghost" id="editProfileBtn" type="button">Edit</button>
+      </div>
+    </div>
+  </dialog>
 
   <script src="/loyalty/loyalty.js" defer></script>
 </body>
