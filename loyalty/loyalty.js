@@ -1,14 +1,14 @@
 // loyalty/loyalty.js
 
-// Static JSON generated from your Excel, stored here:
 const CONTACTS_URL = "/pos/pos-contacts.json";
 
 let allContacts = [];
 let lockerData = [];
 let regularData = [];
-let currentMode = "lockers";
-let currentData = [];
+let currentMode = "all";
 let searchTerm = "";
+let lastRenderedList = [];
+let selectedContact = null;
 
 function safeLower(v) {
   if (v === null || v === undefined) return "";
@@ -32,23 +32,34 @@ function formatPoints(raw) {
 function buildDisplayName(c) {
   const first = c["First Name"] || "";
   const last = c["Last Name"] || "";
-  const nickname = c["Nickname AKA"] || "";
   const base = (first + " " + last).trim();
-  if (nickname) return base + " (" + nickname + ")";
-  return base || nickname || "Unknown";
+  return base || c["Nickname AKA"] || "Unknown";
 }
 
-function buildMetaPills(c, isLocker) {
+function isLocker(c) {
+  const ln = (c["Locker number"] ?? "").toString().trim();
+  return ln !== "" && ln !== "0";
+}
+
+// Regulars are indicated by the "Regular" column containing "regular", "reg", "yes", "1", etc.
+function isRegular(c) {
+  const v = safeLower(c["Regular"]);
+  if (!v) return false;
+  if (v.includes("regular")) return true;
+  if (["reg", "r", "yes", "y", "1"].includes(v)) return true;
+  return false;
+}
+
+function buildMetaPills(c, lockerFlag, regularFlag) {
   const pills = [];
 
-  if (isLocker) {
+  if (lockerFlag) {
     const ln = c["Locker number"];
     if (ln) pills.push("Locker " + ln);
   }
 
-  const rewards = c["Rewards"];
-  if (rewards !== null && rewards !== undefined && rewards !== "") {
-    pills.push(formatPoints(rewards));
+  if (regularFlag) {
+    pills.push("Regular");
   }
 
   const lastPurchase = c["Last Purchase"];
@@ -66,6 +77,7 @@ function buildMetaPills(c, isLocker) {
     pills.push("Fav brand: " + favBrand);
   }
 
+  // NOTE: we intentionally do NOT include points here.
   return pills;
 }
 
@@ -74,8 +86,14 @@ function renderList() {
   const summaryEl = document.getElementById("summary");
   if (!listEl || !summaryEl) return;
 
-  const base = currentMode === "lockers" ? lockerData : regularData;
-  currentData = base;
+  let base;
+  if (currentMode === "lockers") {
+    base = lockerData;
+  } else if (currentMode === "regular") {
+    base = regularData;
+  } else {
+    base = allContacts;
+  }
 
   // Filter by search term
   const term = searchTerm.trim().toLowerCase();
@@ -99,12 +117,15 @@ function renderList() {
     });
   }
 
-  // Sort: lockers by locker number, regulars by last name then first
+  // Sort
   filtered = [...filtered].sort((a, b) => {
+    // For lockers, sort by locker number first
     if (currentMode === "lockers") {
       const la = safeLower(a["Locker number"]);
       const lb = safeLower(b["Locker number"]);
-      if (la && lb && la !== lb) return la.localeCompare(lb, undefined, { numeric: true });
+      if (la && lb && la !== lb) {
+        return la.localeCompare(lb, undefined, { numeric: true });
+      }
     }
     const lastA = safeLower(a["Last Name"]);
     const lastB = safeLower(b["Last Name"]);
@@ -114,22 +135,27 @@ function renderList() {
     return firstA.localeCompare(firstB);
   });
 
-  // Summary text
-  const total = base.length;
-  const shown = filtered.length;
-  const label = currentMode === "lockers" ? "locker customers" : "regular customers";
-  summaryEl.textContent = `${shown.toLocaleString()} of ${total.toLocaleString()} ${label} shown`;
+  lastRenderedList = filtered;
 
-  // Build rows
+  // Summary label
+  let label = "customers";
+  if (currentMode === "lockers") label = "locker customers";
+  if (currentMode === "regular") label = "regular customers";
+
+  summaryEl.textContent = `${filtered.length.toLocaleString()} of ${base.length.toLocaleString()} ${label} shown`;
+
+  // Empty state
   if (!filtered.length) {
     listEl.innerHTML = `<div class="empty-state">No matching customers.</div>`;
     return;
   }
 
+  // Build HTML
   const rowsHtml = filtered
-    .map((c) => {
-      const isLocker = (c.type || "").toLowerCase() === "locker";
-      const rowClass = isLocker ? "row locker" : "row regular";
+    .map((c, idx) => {
+      const lockerFlag = isLocker(c);
+      const regularFlag = isRegular(c);
+      const modeClass = lockerFlag ? "locker" : "regular";
 
       const displayName = buildDisplayName(c);
       const email = c["Email"] || "";
@@ -137,7 +163,7 @@ function renderList() {
       const birthday = c["Birthday"] ? formatDate(c["Birthday"]) : "";
       const company = c["Company"] || "";
 
-      const metaPills = buildMetaPills(c, isLocker);
+      const metaPills = buildMetaPills(c, lockerFlag, regularFlag);
 
       const contactPieces = [];
       if (phone) contactPieces.push(phone);
@@ -145,8 +171,10 @@ function renderList() {
       if (birthday) contactPieces.push("Birthday " + birthday);
       if (company) contactPieces.push(company);
 
+      const contactsLine = contactPieces.join(" • ");
+
       return `
-        <div class="${rowClass}">
+        <div class="row ${modeClass}" data-idx="${idx}">
           <div class="row-header">
             <div>
               <div class="name">${displayName}</div>
@@ -164,12 +192,12 @@ function renderList() {
             metaPills.length
               ? `<div class="meta-line">
                   ${metaPills.map((p) => `<span class="meta-pill">${p}</span>`).join("")}
-                </div>`
+                 </div>`
               : ""
           }
           ${
-            contactPieces.length
-              ? `<div class="contact-line">${contactPieces.join(" • ")}</div>`
+            contactsLine
+              ? `<div class="contact-line">${contactsLine}</div>`
               : ""
           }
         </div>
@@ -178,6 +206,15 @@ function renderList() {
     .join("");
 
   listEl.innerHTML = rowsHtml;
+
+  // Attach row click handlers to open profile card
+  listEl.querySelectorAll(".row").forEach((rowEl) => {
+    rowEl.addEventListener("click", () => {
+      const idx = Number(rowEl.getAttribute("data-idx"));
+      const contact = lastRenderedList[idx];
+      if (contact) openProfile(contact);
+    });
+  });
 }
 
 async function loadContacts() {
@@ -189,14 +226,9 @@ async function loadContacts() {
     }
     const data = await res.json();
 
-    // data is an array with "type" and "id" already set
     allContacts = Array.isArray(data) ? data : [];
-    lockerData = allContacts.filter(
-      (c) => safeLower(c.type) === "locker"
-    );
-    regularData = allContacts.filter(
-      (c) => safeLower(c.type) === "regular"
-    );
+    lockerData = allContacts.filter(isLocker);
+    regularData = allContacts.filter(isRegular);
 
     renderList();
   } catch (err) {
@@ -205,35 +237,144 @@ async function loadContacts() {
 }
 
 function setMode(mode) {
-  currentMode = mode === "regular" ? "regular" : "lockers";
+  currentMode = mode;
 
-  const buttons = document.querySelectorAll(".mode-btn");
-  buttons.forEach((btn) => {
-    const m = btn.getAttribute("data-mode");
-    btn.classList.toggle("active", m === currentMode);
-  });
+  document
+    .querySelectorAll(".mode-btn")
+    .forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.mode === mode);
+    });
 
   renderList();
 }
 
-function init() {
-  const searchEl = document.getElementById("search");
-  if (searchEl) {
-    searchEl.addEventListener("input", (e) => {
-      searchTerm = e.target.value || "";
-      renderList();
-    });
+/* ---------- Profile dialog ---------- */
+
+function fillChips(container, items) {
+  container.innerHTML = "";
+  if (!items.length) {
+    const span = document.createElement("span");
+    span.textContent = "None";
+    span.className = "chip";
+    container.appendChild(span);
+    return;
   }
-
-  const buttons = document.querySelectorAll(".mode-btn");
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const mode = btn.getAttribute("data-mode");
-      setMode(mode);
-    });
+  items.forEach((item) => {
+    const span = document.createElement("span");
+    span.textContent = item;
+    span.className = "chip";
+    container.appendChild(span);
   });
-
-  loadContacts();
 }
 
-document.addEventListener("DOMContentLoaded", init);
+function openProfile(c) {
+  selectedContact = c;
+
+  const profileDialog = document.getElementById("profileDialog");
+  const card = document.getElementById("profileCard");
+
+  // Header
+  const name = buildDisplayName(c);
+  document.getElementById("pName").textContent = name;
+
+  const lockerInfo = isLocker(c) ? `Locker ${c["Locker number"]}` : "No locker";
+  const email = c["Email"] || "";
+  const phone = c["Phone"] || "";
+  const contactLine = [lockerInfo, email || phone].filter(Boolean).join(" • ");
+  document.getElementById("pSub").textContent = contactLine || lockerInfo;
+
+  document.getElementById("pPoints").textContent = formatPoints(c["Rewards"]);
+
+  // Purchase history
+  document.getElementById("pLastPurchase").textContent =
+    c["Last Purchase"] ? formatDate(c["Last Purchase"]) : "—";
+  document.getElementById("pYtd").textContent = c["YTD spend"] || "—";
+  document.getElementById("pVisits90").textContent =
+    c["90-day visits"] || "—";
+  document.getElementById("pGift").textContent =
+    c["Gift card balance"] || "—";
+
+  // Favorites
+  const favBrands = [
+    c["Fav brand 1"],
+    c["Fav brand 2"],
+    c["Fav brand 3"],
+  ].filter(Boolean);
+  fillChips(document.getElementById("pFavBrands"), favBrands);
+
+  const favCigars = [
+    c["Fav cigar"],
+    c["Fav cigar 2"],
+    c["Fav cigar 3"],
+  ].filter(Boolean);
+  fillChips(document.getElementById("pFavCigars"), favCigars);
+
+  document.getElementById("pRingPref").textContent =
+    c["Ring Pref"] || "—";
+
+  // Wishlist – collect any fields starting with "Wishlist"
+  const wishlistItems = Object.keys(c)
+    .filter((k) => k.toLowerCase().startsWith("wishlist"))
+    .map((k) => c[k])
+    .filter(Boolean);
+  fillChips(document.getElementById("pWishlist"), wishlistItems);
+
+  // Reset editing state
+  card.classList.remove("editing");
+  document
+    .querySelectorAll("#profileDialog .profile-editable")
+    .forEach((el) => {
+      el.contentEditable = "false";
+    });
+  const editBtn = document.getElementById("editProfileBtn");
+  editBtn.textContent = "Edit";
+
+  profileDialog.showModal();
+}
+
+/* ---------- Init ---------- */
+
+function initProfileDialog() {
+  const profileDialog = document.getElementById("profileDialog");
+  const card = document.getElementById("profileCard");
+  const closeBtn = document.querySelector(".profile-close");
+  const editBtn = document.getElementById("editProfileBtn");
+
+  closeBtn.addEventListener("click", () => {
+    profileDialog.close();
+  });
+
+  profileDialog.addEventListener("click", (e) => {
+    if (e.target === profileDialog) {
+      profileDialog.close();
+    }
+  });
+
+  editBtn.addEventListener("click", () => {
+    const isEditing = card.classList.toggle("editing");
+    document
+      .querySelectorAll("#profileDialog .profile-editable")
+      .forEach((el) => {
+        el.contentEditable = isEditing ? "true" : "false";
+      });
+    editBtn.textContent = isEditing ? "Done" : "Edit";
+    // (We can hook up saving back into selectedContact later if desired.)
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Mode buttons
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setMode(btn.dataset.mode));
+  });
+
+  // Search
+  const searchEl = document.getElementById("search");
+  searchEl.addEventListener("input", (e) => {
+    searchTerm = e.target.value || "";
+    renderList();
+  });
+
+  initProfileDialog();
+  loadContacts();
+});
