@@ -7,6 +7,9 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Loyalty • CigarOS2</title>
 
+  <!-- Global SF Pro type system -->
+  <link rel="stylesheet" href="/css/type.css" />
+
   <style>
     :root {
       --bg: #f2f2f7;        /* iOS background */
@@ -28,9 +31,10 @@
     body {
       margin: 0;
       background: var(--bg);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: var(--font-text); /* use global SF Pro Text */
       color: var(--ink);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
     .wrap {
@@ -54,7 +58,7 @@
       padding: 4px 0;
     }
 
-    h1 {
+    h1.page-title {
       font-size: 30px;
       font-weight: 700;
       margin: 4px 0 0;
@@ -170,7 +174,7 @@
       gap: 8px;
     }
 
-    .name {
+    .name.customer-name {
       font-weight: 600;
       font-size: 16px;
     }
@@ -393,6 +397,26 @@
       outline: 1px solid #0a84ff;
       background: #ffffff;
     }
+
+    /* Tony floating icon bottom-left */
+    .tony-fab {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      background: transparent;
+      border: none;
+      padding: 0;
+      z-index: 40;
+    }
+    .tony-fab img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: inherit;
+    }
   </style>
 </head>
 <body>
@@ -402,7 +426,7 @@
       <div></div>
     </div>
 
-    <h1>Loyalty</h1>
+    <h1 class="page-title">Loyalty</h1>
 
     <div class="mode-toggle" aria-label="Contact type toggle">
       <button class="mode-btn active" data-mode="all">All</button>
@@ -513,6 +537,11 @@
       </div>
     </div>
   </dialog>
+
+  <!-- Tony floating icon (bottom-left, same on all pages) -->
+  <button class="tony-fab" id="tonyFab">
+    <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
+  </button>
 
   <script src="/loyalty/loyalty.js" defer></script>
 </body>
