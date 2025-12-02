@@ -10,7 +10,7 @@ let searchTerm = "";
 let lastRenderedList = [];
 let selectedContact = null;
 
-// for visit history in the modal
+// visit history in the modal
 let currentVisitHistory = [];
 let showAllVisits = false;
 
@@ -50,7 +50,7 @@ function isRegular(c) {
   const v = safeLower(c["Regular"]);
   if (!v) return false;
   if (v.includes("regular")) return true;
-  if (["reg", "r", "yes", "y", "1"].includes(v)) return true;
+  if (["reg", "r", "yes", "y", "1", "true"].includes(v)) return true;
   return false;
 }
 
@@ -83,6 +83,50 @@ function buildMetaPills(c, lockerFlag, regularFlag) {
 
   return pills;
 }
+
+/* ---------- STATUS ICONS (MILITARY / FIRST RESPONDERS) ---------- */
+
+function hasFlagValue(value) {
+  const v = safeLower(value);
+  if (!v) return false;
+  if (["yes", "y", "1", "true"].includes(v)) return true;
+  // also treat the label itself as truthy if present
+  if (v.includes("military") || v.includes("first responder")) return true;
+  return false;
+}
+
+function buildStatusIcons(c) {
+  const icons = [];
+
+  if (hasFlagValue(c["Military"])) {
+    icons.push({
+      src: "/img/icons/military.svg",
+      alt: "Military",
+    });
+  }
+
+  if (hasFlagValue(c["First Responders"])) {
+    icons.push({
+      src: "/img/icons/firstresponders.svg",
+      alt: "First responder",
+    });
+  }
+
+  if (!icons.length) return "";
+
+  return `
+    <div class="status-icons">
+      ${icons
+        .map(
+          (i) =>
+            `<img src="${i.src}" alt="${i.alt}" class="status-icon" loading="lazy">`
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+/* ---------- LIST RENDER ---------- */
 
 function renderList() {
   const listEl = document.getElementById("list");
@@ -164,6 +208,7 @@ function renderList() {
       const company = c["Company"] || "";
 
       const metaPills = buildMetaPills(c, lockerFlag, regularFlag);
+      const statusIcons = buildStatusIcons(c);
 
       const contactPieces = [];
       if (phone) contactPieces.push(phone);
@@ -176,8 +221,11 @@ function renderList() {
       return `
         <div class="row ${rowClass}" data-idx="${idx}">
           <div class="row-header">
-            <div>
-              <div class="name">${displayName}</div>
+            <div class="name-block">
+              <div class="name-row">
+                <div class="name">${displayName}</div>
+                ${statusIcons}
+              </div>
               ${
                 c["Nickname AKA"]
                   ? `<div class="nickname">AKA ${c["Nickname AKA"]}</div>`
@@ -207,6 +255,7 @@ function renderList() {
 
   listEl.innerHTML = rowsHtml;
 
+  // attach row click handlers
   listEl.querySelectorAll(".row").forEach((rowEl) => {
     rowEl.addEventListener("click", () => {
       const idx = Number(rowEl.getAttribute("data-idx"));
@@ -215,6 +264,8 @@ function renderList() {
     });
   });
 }
+
+/* ---------- DATA LOAD ---------- */
 
 async function loadContacts() {
   try {
@@ -247,9 +298,8 @@ function setMode(mode) {
   renderList();
 }
 
-/* ---------- Visit history helpers ---------- */
+/* ---------- VISIT HISTORY HELPERS ---------- */
 
-// Placeholder: expect an array of { date, amount } in future back-end
 function getVisitHistory(contact) {
   const arr =
     contact.purchase_history ||
@@ -295,7 +345,7 @@ function renderVisitHistory() {
   }
 }
 
-/* ---------- Profile dialog ---------- */
+/* ---------- PROFILE DIALOG ---------- */
 
 function fillChips(container, items) {
   container.innerHTML = "";
@@ -333,7 +383,7 @@ function openProfile(c) {
 
   document.getElementById("pPoints").textContent = formatPoints(c["Rewards"]);
 
-  // Purchase history summary
+  // purchase history summary
   document.getElementById("pLastPurchase").textContent =
     c["Last Purchase"] ? formatDate(c["Last Purchase"]) : "—";
 
@@ -341,13 +391,13 @@ function openProfile(c) {
   showAllVisits = false;
   renderVisitHistory();
 
-  // Contact section
+  // contact section
   document.getElementById("pPhone").textContent = phone || "—";
   document.getElementById("pEmail").textContent = email || "—";
   document.getElementById("pBirthday").textContent =
     c["Birthday"] ? formatDate(c["Birthday"]) : "—";
 
-  // Favorites
+  // favorites
   const favBrands = [
     c["Fav brand 1"],
     c["Fav brand 2"],
@@ -365,7 +415,7 @@ function openProfile(c) {
   document.getElementById("pRingPref").textContent =
     c["Ring Pref"] || "—";
 
-  // Wishlist (freeform text / chips later)
+  // wishlist
   const wishlistItems = Object.keys(c)
     .filter((k) => k.toLowerCase().startsWith("wishlist"))
     .map((k) => c[k])
@@ -377,7 +427,7 @@ function openProfile(c) {
     wishlistEl.textContent = wishlistItems.join(", ");
   }
 
-  // Loyalty stats pills
+  // loyalty stats pills
   document.getElementById("pStatYtd").textContent =
     c["YTD spend"] || "YTD: —";
   document.getElementById("pStatVisits90").textContent =
@@ -385,7 +435,7 @@ function openProfile(c) {
   document.getElementById("pStatGift").textContent =
     c["Gift card balance"] || "Gift card: —";
 
-  // Reset editing state
+  // reset editing state
   card.classList.remove("editing");
   document
     .querySelectorAll("#profileDialog .profile-editable")
@@ -421,7 +471,7 @@ function initProfileDialog() {
     renderVisitHistory();
   });
 
-  editBtn.addEventListener("click", async () => {
+  editBtn.addEventListener("click", () => {
     const isEditing = card.classList.toggle("editing");
     const editables = document.querySelectorAll(
       "#profileDialog .profile-editable"
@@ -432,7 +482,6 @@ function initProfileDialog() {
     });
 
     if (!isEditing) {
-      // finished editing -> prepare changes to send to backend later
       if (!selectedContact) return;
 
       const changes = {
@@ -453,17 +502,16 @@ function initProfileDialog() {
         Wishlist: document.getElementById("pWishlist").innerText.trim() || null,
       };
 
-      // TODO: hook this into a real write API.
-      // For now we just merge into the local object so UI stays in sync.
       Object.assign(selectedContact, changes);
       renderList();
+      // later: send `changes` to a write API so it persists
     }
 
     editBtn.textContent = isEditing ? "Done" : "Edit";
   });
 }
 
-/* ---------- Init ---------- */
+/* ---------- INIT ---------- */
 
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".mode-btn").forEach((btn) => {
@@ -475,6 +523,16 @@ document.addEventListener("DOMContentLoaded", () => {
     searchTerm = e.target.value || "";
     renderList();
   });
+
+  // Add CSS for the new icon layout (keeps everything aligned)
+  const style = document.createElement("style");
+  style.textContent = `
+    .name-block { display:flex; flex-direction:column; gap:2px; }
+    .name-row { display:flex; align-items:center; gap:4px; }
+    .status-icons { display:flex; align-items:center; gap:4px; }
+    .status-icon { width:16px; height:16px; }
+  `;
+  document.head.appendChild(style);
 
   initProfileDialog();
   loadContacts();
