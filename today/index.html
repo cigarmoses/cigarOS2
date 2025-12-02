@@ -68,70 +68,13 @@
       font-size: 17px;
       font-weight: 600;
     }
-
-    /* Date selector row */
-    .date-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-    .day-chip-row {
-      display: flex;
-      overflow-x: auto;
-      gap: 6px;
-      padding-bottom: 4px;
-      -webkit-overflow-scrolling: touch;
-    }
-    .day-chip {
-      border-radius: 999px;
-      border: 1px solid #e1e1ea;
-      padding: 4px 10px;
-      font-size: 12px;
-      color: var(--muted);
-      background: #ffffff;
-      white-space: nowrap;
-      flex: 0 0 auto;
-    }
-    .day-chip span {
-      display: block;
-      line-height: 1.1;
-    }
-    .day-chip .day-label {
-      font-weight: 600;
-      font-size: 11px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-    .day-chip .day-num {
-      font-weight: 600;
+    .history-btn {
+      border: none;
+      background: transparent;
       font-size: 14px;
-    }
-    .day-chip.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
+      font-weight: 500;
       color: var(--accent);
-    }
-
-    .date-picker-wrap {
-      flex: 0 0 auto;
-      font-size: 11px;
-      color: var(--muted);
-      text-align: right;
-    }
-    .date-picker-wrap label {
-      display: block;
-      margin-bottom: 2px;
-    }
-    .date-picker-wrap input[type="date"] {
-      border-radius: 999px;
-      border: 1px solid #d4d4de;
-      padding: 3px 8px;
-      font-size: 11px;
-      font-family: inherit;
-      color: var(--ink);
-      background: #fff;
+      padding: 6px 4px;
     }
 
     /* Date headline */
@@ -140,7 +83,7 @@
     }
     .date-headline .month {
       font-size: 12px;
-      letter-spacing: .16em;
+      letter-spacing: .08em;
       text-transform: uppercase;
       color: var(--muted);
       font-weight: 600;
@@ -148,42 +91,38 @@
     .date-headline .dow {
       font-size: 40px;
       font-weight: 800;
-      letter-spacing: .08em;
+      letter-spacing: .06em;
     }
 
-    /* Cards layout */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+    /* Hidden date picker used by History button */
+    #datePicker {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 0;
+      height: 0;
     }
+
+    /* Cards */
     .card {
       background: var(--surface);
       border-radius: var(--radius-lg);
       padding: 12px 14px;
       box-shadow: 0 12px 30px rgba(15, 26, 44, 0.08);
     }
-    .card.full {
-      grid-column: 1 / -1;
-    }
+
     .card-label {
       font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: .18em;
+      letter-spacing: .10em;
       color: var(--muted);
       font-weight: 600;
       margin-bottom: 2px;
     }
     .card-value {
-      font-size: 32px;
+      font-size: 30px;
       font-weight: 800;
-      line-height: 1.05;
-    }
-    .card-caption {
-      margin-top: 3px;
-      font-size: 12px;
-      color: #a06cff;
-      max-width: 110px;
+      line-height: 1.1;
     }
 
     .card-label-pill {
@@ -198,13 +137,31 @@
     }
     .card-label-pill span {
       font-size: 11px;
-      letter-spacing: .18em;
+      letter-spacing: .10em;
       text-transform: uppercase;
       font-weight: 700;
       color: #b07800;
     }
 
-    /* Lists inside cards */
+    /* Top stats row (3 cards) */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    /* Lower grid: Vitola + Brand side by side, History full width */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .full-row {
+      grid-column: 1 / -1;
+    }
+
+    /* Lists */
     .simple-list {
       list-style: none;
       padding: 0;
@@ -256,7 +213,7 @@
       font-size: 13px;
     }
 
-    /* Brand card */
+    /* Brand footer */
     .brand-card-footer {
       margin-top: 6px;
       display: flex;
@@ -278,7 +235,7 @@
     }
 
     @media (max-width: 360px) {
-      .card-value { font-size: 28px; }
+      .card-value { font-size: 26px; }
     }
   </style>
 </head>
@@ -292,19 +249,9 @@
         </button>
       </div>
       <div class="top-title">Today</div>
-      <div style="width:44px;"></div>
+      <button class="history-btn" id="historyBtn">History</button>
+      <input type="date" id="datePicker" />
     </header>
-
-    <!-- Day selector + date picker -->
-    <div class="date-row">
-      <div class="day-chip-row" id="dayChipRow">
-        <!-- Chips injected via JS -->
-      </div>
-      <div class="date-picker-wrap">
-        <label for="datePicker">Jump to date</label>
-        <input type="date" id="datePicker">
-      </div>
-    </div>
 
     <!-- Date headline -->
     <section class="date-headline">
@@ -312,76 +259,57 @@
       <div class="dow" id="headlineDow">MON</div>
     </section>
 
-    <!-- Main grid -->
-    <section class="grid">
-      <!-- Cigars -->
+    <!-- Top stats row: Cigars / Sales / Avg -->
+    <section class="stats-row">
       <article class="card">
         <div class="card-label">Cigars</div>
         <div class="card-value" id="cigarsCount">0</div>
-        <div class="card-caption">Total individual cigar sales</div>
       </article>
 
-      <!-- Sales -->
       <article class="card">
         <div class="card-label">Sales</div>
         <div class="card-value" id="salesTotal">0</div>
-        <div class="card-caption">Total dollar amount sales</div>
       </article>
 
-      <!-- Average sale -->
-      <article class="card full">
+      <article class="card">
         <div class="card-label">Avg</div>
         <div class="card-value" id="avgSale">0</div>
-        <div class="card-caption">Avg sale for the day</div>
       </article>
+    </section>
 
+    <!-- Lower grid: Vitola + Brand side by side, History full width -->
+    <section class="grid">
       <!-- Vitola -->
       <article class="card">
         <div class="card-label-pill">
           <span>Vitola</span>
         </div>
-        <ul class="simple-list" id="vitolaList">
-          <!-- Filled via JS -->
-        </ul>
-      </article>
-
-      <!-- History -->
-      <article class="card history-card">
-        <div class="card-label">History</div>
-        <ul class="history-list" id="historyList">
-          <!-- Filled via JS -->
-        </ul>
+        <ul class="simple-list" id="vitolaList"></ul>
       </article>
 
       <!-- Brand -->
-      <article class="card full">
+      <article class="card">
         <div class="card-label-pill">
           <span>Brand</span>
         </div>
-        <ul class="simple-list" id="brandList">
-          <!-- Filled via JS -->
-        </ul>
-
+        <ul class="simple-list" id="brandList"></ul>
         <div class="brand-card-footer">
-          <div>
-            Most popular brands of cigars<br>sold today (includes # of cigars)
-          </div>
-          <div class="tony-avatar">
-            <!-- You can replace this with your Tony SVG -->
-            🧔🏻‍♂️
-          </div>
+          <div>Most popular brands of cigars sold today</div>
+          <div class="tony-avatar">🧔🏻‍♂️</div>
         </div>
+      </article>
+
+      <!-- History -->
+      <article class="card history-card full-row">
+        <div class="card-label">History</div>
+        <ul class="history-list" id="historyList"></ul>
       </article>
     </section>
   </div>
 
   <script>
     /************************************************************
-     * SAMPLE SALES DATA
-     * - Generates a synthetic set of tickets for 2025-12-01
-     * - Uses only named customers (no walk-ins)
-     * - Each line item has an MSRP
-     * - Total cigars for that day = 133
+     * SAMPLE SALES DATA (same concept as before)
      ************************************************************/
 
     const CUSTOMER_POOL = [
@@ -446,8 +374,6 @@
       const sales = [];
       let remainingCigars = 133;
       let ticketIndex = 1;
-
-      // Use a base timestamp and space tickets by a few minutes
       const base = new Date(dateStr + "T10:00:00");
 
       while (remainingCigars > 0) {
@@ -461,7 +387,6 @@
           PRODUCT_POOL[Math.floor(Math.random() * PRODUCT_POOL.length)];
 
         const ticketTime = new Date(base.getTime() + ticketIndex * 7 * 60000);
-
         const lineTotal = product.msrp * qty;
 
         sales.push({
@@ -490,11 +415,11 @@
       return sales;
     }
 
-    // In a real system, this would come from /pos/pos-sales.json or similar.
+    // In a real system this becomes shared JSON.
     const SALES_DATA = generateSampleSalesForDay("2025-12-01");
 
     /************************************************************
-     * UI + AGGREGATION LOGIC
+     * UI + AGGREGATION
      ************************************************************/
 
     const cigarsCountEl = document.getElementById("cigarsCount");
@@ -505,7 +430,6 @@
     const historyListEl = document.getElementById("historyList");
     const headlineMonthEl = document.getElementById("headlineMonth");
     const headlineDowEl = document.getElementById("headlineDow");
-    const dayChipRowEl = document.getElementById("dayChipRow");
     const datePickerEl = document.getElementById("datePicker");
 
     let currentDate = "2025-12-01";
@@ -520,9 +444,7 @@
 
     function formatMonthAndDay(dateStr) {
       const d = new Date(dateStr + "T12:00:00");
-      const monthName = d.toLocaleDateString(undefined, {
-        month: "long"
-      });
+      const monthName = d.toLocaleDateString(undefined, { month: "long" });
       return `${monthName.toUpperCase()} ${d.getDate()}`;
     }
 
@@ -538,7 +460,6 @@
     function updateSummaryForDate(dateStr) {
       const tickets = getSalesForDate(dateStr);
 
-      // Headline
       headlineMonthEl.textContent = formatMonthAndDay(dateStr);
       headlineDowEl.textContent = formatDow(dateStr);
 
@@ -552,24 +473,17 @@
         return;
       }
 
-      // Totals
       let totalCigars = 0;
       let totalSales = 0;
-
       const vitolaCounts = {};
       const brandCounts = {};
 
       tickets.forEach(t => {
         totalSales += t.ticketTotal;
-
         t.items.forEach(item => {
           totalCigars += item.qty;
-
-          // vitola
           vitolaCounts[item.vitola] =
             (vitolaCounts[item.vitola] || 0) + item.qty;
-
-          // brand
           brandCounts[item.brand] =
             (brandCounts[item.brand] || 0) + item.qty;
         });
@@ -579,9 +493,11 @@
         tickets.length > 0 ? totalSales / tickets.length : 0;
 
       cigarsCountEl.textContent = totalCigars;
-      // Show total sales in thousands with one decimal (e.g., 2.4)
+
+      // Total sales in thousands (1.6 = $1,600 style)
       const thousands = totalSales / 1000;
       salesTotalEl.textContent = thousands.toFixed(1);
+
       avgSaleEl.textContent = Math.round(avgSale);
 
       // Vitola list (top 3)
@@ -612,7 +528,7 @@
         brandListEl.appendChild(li);
       });
 
-      // Last 10 sales history (by timestamp)
+      // Last 10 sales (first + last name)
       const lastTen = [...tickets]
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
         .slice(-10);
@@ -625,7 +541,7 @@
 
         const nameSpan = document.createElement("span");
         nameSpan.className = "history-name";
-        nameSpan.textContent = t.customerLast;
+        nameSpan.textContent = `${t.customerFirst} ${t.customerLast}`;
 
         const amtSpan = document.createElement("span");
         amtSpan.className = "history-amount";
@@ -635,7 +551,6 @@
         li.appendChild(amtSpan);
 
         li.addEventListener("click", () => {
-          // TODO: Update URL pattern to match your Loyalty customer detail page
           const url = `/loyalty/?customer=${encodeURIComponent(t.customerId)}`;
           window.location.href = url;
         });
@@ -644,63 +559,31 @@
       });
     }
 
-    // Build last-7-days chips
-    function buildDayChips(anchorDateStr) {
-      const anchor = new Date(anchorDateStr + "T12:00:00");
-      dayChipRowEl.innerHTML = "";
-
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(anchor.getTime() - i * 24 * 60 * 60 * 1000);
-        const ds = d.toISOString().slice(0, 10);
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "day-chip" + (ds === anchorDateStr ? " active" : "");
-        chip.dataset.date = ds;
-
-        const dayLabel = document.createElement("span");
-        dayLabel.className = "day-label";
-        dayLabel.textContent = d.toLocaleDateString(undefined, {
-          weekday: "short"
-        });
-
-        const dayNum = document.createElement("span");
-        dayNum.className = "day-num";
-        dayNum.textContent = d.getDate();
-
-        chip.appendChild(dayLabel);
-        chip.appendChild(dayNum);
-        chip.addEventListener("click", () => {
-          currentDate = ds;
-          document
-            .querySelectorAll(".day-chip")
-            .forEach(c => c.classList.toggle("active", c === chip));
-          datePickerEl.value = ds;
-          updateSummaryForDate(ds);
-        });
-
-        dayChipRowEl.appendChild(chip);
-      }
-    }
-
     // Back button
     document.getElementById("backBtn").addEventListener("click", () => {
-      // Update to your home-screen URL as needed:
-      window.location.href = "/";
+      window.location.href = "/"; // point this to your home screen
     });
 
-    // Date picker handler
+    // History button -> open date picker
+    document.getElementById("historyBtn").addEventListener("click", () => {
+      try {
+        datePickerEl.showPicker(); // modern browsers
+      } catch (e) {
+        datePickerEl.click(); // fallback
+      }
+    });
+
+    // Date picker change
     datePickerEl.addEventListener("change", e => {
       const ds = e.target.value;
       if (!ds) return;
       currentDate = ds;
-      buildDayChips(ds);
       updateSummaryForDate(ds);
     });
 
     // Initial load
     (function init() {
       datePickerEl.value = currentDate;
-      buildDayChips(currentDate);
       updateSummaryForDate(currentDate);
     })();
   </script>
