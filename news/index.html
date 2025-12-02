@@ -4,7 +4,12 @@
   <meta charset="utf-8" />
   <title>News • CigarOS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- Main POS styles -->
   <link rel="stylesheet" href="/pos/pos.css" />
+  <!-- Global SF Pro type system -->
+  <link rel="stylesheet" href="/css/type.css" />
+
   <style>
     :root {
       --bg: #eaf2f6;
@@ -21,7 +26,7 @@
       margin: 0;
       background: var(--bg);
       color: var(--ink);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      font-family: var(--font-text); /* SF Pro Text via type.css */
       -webkit-font-smoothing: antialiased;
     }
 
@@ -68,11 +73,12 @@
       padding-bottom: 12px;
     }
 
-    header.news-header h1 {
+    header.news-header h1.page-title {
       margin: 4px 0 0;
       font-size: 32px;
       font-weight: 700;
       letter-spacing: -0.03em;
+      font-family: var(--font-display); /* SF Pro Display */
     }
 
     .news-section-label {
@@ -144,6 +150,7 @@
       font-size: 15px;
       font-weight: 600;
       letter-spacing: 0.02em;
+      font-family: var(--font-display); /* Display for source labels */
     }
 
     .news-x-link {
@@ -192,11 +199,31 @@
       text-decoration: underline;
     }
 
+    /* Tony floating icon bottom-left (global pattern) */
+    .tony-fab {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      background: transparent;
+      border: none;
+      padding: 0;
+      z-index: 40;
+    }
+    .tony-fab img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: inherit;
+    }
+
     @media (min-width: 520px) {
       .wrap {
         padding-top: 18px;
       }
-      header.news-header h1 {
+      header.news-header h1.page-title {
         font-size: 34px;
       }
     }
@@ -215,7 +242,7 @@
     </div>
 
     <header class="news-header">
-      <h1>News</h1>
+      <h1 class="page-title">News</h1>
       <div class="news-section-label">Sources</div>
     </header>
 
@@ -223,6 +250,11 @@
     <section class="news-list" id="news-list"></section>
 
   </div>
+
+  <!-- Tony floating icon (bottom-left, same across app) -->
+  <button class="tony-fab" id="tonyFab">
+    <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
+  </button>
 
   <script>
     const NEWS_JSON_URL = "/pos/pos-news.json";
@@ -405,5 +437,8 @@
 
     document.addEventListener("DOMContentLoaded", loadNews);
   </script>
+
+  <!-- Tony behavior -->
+  <script src="/js/tony.js" defer></script>
 </body>
 </html>
