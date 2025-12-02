@@ -56,7 +56,6 @@
       border-radius: 999px;
       border: 1px solid var(--outline);
       background: #f9fafb;
-      box-shadow: 0 0 0 0 transparent;
     }
 
     .master-search-icon {
@@ -162,36 +161,70 @@
       border-color: var(--feature-active);
     }
 
-    /* Results list */
-    .results {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* BRAND GRID (icons) */
+    .brand-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
       margin-top: 8px;
     }
 
-    .cigar-card {
+    .brand-tile {
       background: #f7f9fc;
-      border-radius: 14px;
-      padding: 12px 12px 10px;
+      border-radius: 16px;
+      padding: 10px 6px 9px;
       border: 1px solid #e0e6f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: inherit;
     }
 
-    .cigar-name {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 2px;
+    .brand-icon-wrap {
+      width: 54px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .cigar-line {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 3px;
+    .brand-icon {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
     }
 
-    .cigar-meta {
+    .brand-name {
       font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .brand-count {
+      font-size: 11px;
       color: var(--muted);
+    }
+
+    @media (min-width: 640px) {
+      .brand-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 900px) {
+      .brand-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+      .page {
+        padding-top: 32px;
+      }
+      .page-title {
+        font-size: 44px;
+      }
     }
 
     /* Popup overlay */
@@ -305,15 +338,6 @@
       font-weight: 600;
       cursor: pointer;
     }
-
-    @media (min-width: 768px) {
-      .page {
-        padding-top: 32px;
-      }
-      .page-title {
-        font-size: 44px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -391,8 +415,8 @@
       </div>
     </div>
 
-    <!-- Results -->
-    <div id="results" class="results"></div>
+    <!-- BRAND ICON GRID -->
+    <div id="brandGrid" class="brand-grid"></div>
   </div>
 
   <!-- Filter popup sheet -->
@@ -416,8 +440,8 @@
 
   <script>
     // ---- DATA SOURCE ----
-    // Point this at your hub JSON (all cigars inventory)
-    const DATA_URL = "/pos/pos-hub.json"; // change if your path is different
+    // Point this at your hub JSON (full cigars inventory)
+    const DATA_URL = "/pos/pos-hub.json"; // change if needed
 
     let allCigars = [];
     let currentFiltered = [];
@@ -485,39 +509,49 @@
       applyFilters();
     }
 
-    // --------- RENDER RESULTS ---------
-    function renderResults(list) {
-      const container = document.getElementById("results");
+    // Brand slug for icon filenames
+    function brandSlug(brand) {
+      return String(brand || "")
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]/g, ""); // removes spaces, periods, etc.
+    }
+
+    // --------- RENDER BRAND GRID ---------
+    function renderBrandGrid(list) {
+      const container = document.getElementById("brandGrid");
+
       if (!list.length) {
-        container.innerHTML = '<div style="font-size:13px;color:#8994a5;">No cigars match your filters yet.</div>';
+        container.innerHTML =
+          '<div style="font-size:13px;color:#8994a5;">No brands match your filters yet.</div>';
         return;
       }
 
-      container.innerHTML = list.map(c => {
-        const line  = c.line || "";
-        const cigar = c.cigar || c.name || "";
-        const brand = c.brand || "";
-        const vitola = c.vitola || "";
-        const rg = c.ring || c.rg || "";
-        const len = c.length || "";
-        const wrapper = c.wrapper || "";
-        const origin = c.origin || "";
+      const counts = {};
+      list.forEach(c => {
+        const b = c.brand || "Unknown";
+        counts[b] = (counts[b] || 0) + 1;
+      });
+
+      const brands = Object.keys(counts).sort((a,b)=>a.localeCompare(b));
+
+      container.innerHTML = brands.map(brand => {
+        const slug = brandSlug(brand);
+        const count = counts[brand];
+        const brandParam = encodeURIComponent(brand);
         return `
-          <div class="cigar-card">
-            <div class="cigar-name">${cigar}</div>
-            <div class="cigar-line">${brand}${line ? " • " + line : ""}</div>
-            <div class="cigar-meta">
-              ${vitola ? vitola + " • " : ""}${len && rg ? `${len} × ${rg}` : ""}
+          <a class="brand-tile" href="/pos/cigars/brand.html?brand=${brandParam}">
+            <div class="brand-icon-wrap">
+              <img class="brand-icon" src="/img/icons/brands/${slug}.svg" alt="${brand}">
             </div>
-            <div class="cigar-meta">
-              ${wrapper || ""}${wrapper && origin ? " • " : ""}${origin || ""}
-            </div>
-          </div>
+            <div class="brand-name">${brand}</div>
+            <div class="brand-count">${count} cigar${count === 1 ? "" : "s"}</div>
+          </a>
         `;
       }).join("");
     }
 
-    // --------- APPLY FILTERS ---------
+    // --------- APPLY FILTERS (returns cigar list, then we aggregate by brand) ---------
     function applyFilters() {
       const text = state.searchText.trim().toLowerCase();
 
@@ -565,7 +599,7 @@
       });
 
       currentFiltered = list;
-      renderResults(list);
+      renderBrandGrid(list);
       refreshFilterPills();
       refreshFeatureToggles();
     }
