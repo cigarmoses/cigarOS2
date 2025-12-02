@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Learn • CigarOS 2</title>
 
+  <!-- Global POS + type system -->
+  <link rel="stylesheet" href="/pos/pos.css" />
+  <link rel="stylesheet" href="/css/type.css" />
+
   <style>
     :root {
       --bg: #e6edf5;
@@ -14,18 +18,15 @@
       --shadow-soft: 0 10px 25px rgba(15, 26, 44, 0.12);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       background: var(--bg);
-      font-family: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont,
-        "Segoe UI", system-ui, sans-serif;
       color: var(--ink);
-      -webkit-font-smoothing: antialiased;
       min-height: 100vh;
+      font-family: var(--font-text); /* SF Pro Text */
+      -webkit-font-smoothing: antialiased;
     }
 
     .learn-shell {
@@ -34,39 +35,40 @@
       padding: 18px 16px 32px;
     }
 
-    /* Top bar to match Loyalty ("‹ Back" + big Learn) */
+    /* Topbar (same as Loyalty / News / Hub) */
     .learn-topbar {
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      margin-bottom: 4px;
+      padding: 2px 0 0;
     }
 
     .learn-back {
+      color: #007aff;
       text-decoration: none;
-      color: #007aff; /* iOS blue */
       font-size: 16px;
-      font-weight: 400;
-    }
-
-    .learn-back span {
-      margin-right: 2px;
+      font-weight: 500;
+      letter-spacing: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
     }
 
     .learn-title-main {
-      margin: 4px 0 16px;
+      font-family: var(--font-display); /* SF Pro Display */
       font-size: 32px;
-      font-weight: 800;
+      font-weight: 700;
       letter-spacing: -0.03em;
+      margin: 10px 0 18px;
     }
 
-    /* Circle grid – mimic home layout */
+    /* Icon circle grid */
     .learn-grid {
-      margin-top: 8px;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 24px 32px; /* row gap / column gap */
+      gap: 24px 32px;
+      margin-top: 4px;
     }
 
     .learn-circle-link {
@@ -83,103 +85,102 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      text-align: center;
       padding: 12px;
       transition: transform 0.12s ease-out, box-shadow 0.12s ease-out, background 0.12s ease-out;
     }
 
     .learn-circle:active {
       transform: translateY(1px) scale(0.97);
-      box-shadow: 0 6px 16px rgba(15, 26, 44, 0.18);
       background: #f9fbff;
+      box-shadow: 0 6px 16px rgba(15, 26, 44, 0.18);
     }
 
     .learn-circle-label {
+      font-family: var(--font-display); /* Use Display for icon labels */
       font-size: 14px;
-      font-weight: 700;  /* bold */
+      font-weight: 700;
+      color: #000;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #000000;    /* black as requested */
+      letter-spacing: 0.02em;
+      text-align: center;
       line-height: 1.2;
     }
 
     @media (min-width: 520px) {
-      .learn-shell {
-        padding-top: 26px;
-      }
-      .learn-title-main {
-        font-size: 34px;
-      }
-      .learn-circle {
-        width: 130px;
-        height: 130px;
-      }
+      .learn-shell { padding-top: 26px; }
+      .learn-title-main { font-size: 34px; }
+      .learn-circle { width: 130px; height: 130px; }
+    }
+
+    /* Tony floating button */
+    .tony-fab {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      width: 46px;
+      height: 46px;
+      border: none;
+      background: transparent;
+      padding: 0;
+      z-index: 9999;
+    }
+    .tony-fab img {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
   </style>
 </head>
+
 <body>
   <div class="learn-shell">
-    <!-- Header matching Loyalty -->
+
     <header class="learn-topbar">
-      <a href="/" class="learn-back">
-        <span>‹</span>Back
-      </a>
+      <a href="/" class="learn-back"><span>‹</span>Back</a>
     </header>
+
     <h1 class="learn-title-main">Learn</h1>
 
-    <!-- Circle-only layout like Home screen -->
     <main>
       <div class="learn-grid">
-        <!-- Ring -->
+
         <a href="/learn/ring/" class="learn-circle-link">
-          <div class="learn-circle">
-            <div class="learn-circle-label">Ring</div>
-          </div>
+          <div class="learn-circle"><div class="learn-circle-label">Ring</div></div>
         </a>
 
-        <!-- Vitolas -->
         <a href="/learn/vitolas/" class="learn-circle-link">
-          <div class="learn-circle">
-            <div class="learn-circle-label">Vitolas</div>
-          </div>
+          <div class="learn-circle"><div class="learn-circle-label">Vitolas</div></div>
         </a>
 
-        <!-- Wrapper Shade -->
         <a href="/learn/wrapper-shade/" class="learn-circle-link">
-          <div class="learn-circle">
-            <div class="learn-circle-label">Wrapper<br/>Shade</div>
-          </div>
+          <div class="learn-circle"><div class="learn-circle-label">Wrapper<br>Shade</div></div>
         </a>
 
-        <!-- Shapes -->
         <a href="/learn/shapes/" class="learn-circle-link">
-          <div class="learn-circle">
-            <div class="learn-circle-label">Shapes</div>
-          </div>
+          <div class="learn-circle"><div class="learn-circle-label">Shapes</div></div>
         </a>
 
-        <!-- Glossary -->
         <a href="/learn/glossary/" class="learn-circle-link">
-          <div class="learn-circle">
-            <div class="learn-circle-label">Glossary</div>
-          </div>
+          <div class="learn-circle"><div class="learn-circle-label">Glossary</div></div>
         </a>
 
-        <!-- Brands -->
         <a href="/learn/brands/" class="learn-circle-link">
-          <div class="learn-circle">
-            <div class="learn-circle-label">Brands</div>
-          </div>
+          <div class="learn-circle"><div class="learn-circle-label">Brands</div></div>
         </a>
 
-        <!-- Lists -->
         <a href="/learn/lists/" class="learn-circle-link">
-          <div class="learn-circle">
-            <div class="learn-circle-label">Lists</div>
-          </div>
+          <div class="learn-circle"><div class="learn-circle-label">Lists</div></div>
         </a>
+
       </div>
     </main>
   </div>
+
+  <!-- Tony icon -->
+  <button class="tony-fab" id="tonyFab">
+    <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
+  </button>
+
+  <script src="/js/tony.js" defer></script>
 </body>
 </html>
