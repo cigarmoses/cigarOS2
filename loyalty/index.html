@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- Disable iOS auto-detected links so emails/phones are not underlined -->
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Loyalty • CigarOS2</title>
 
   <style>
@@ -19,8 +21,6 @@
       --reg-active-text: #8a3a00;
       --lock-active: #e5f0ff;
       --lock-active-text: #003e9f;
-      --blue-pill: #e5f0ff;
-      --peach-pill: #fff3e6;
     }
 
     * { box-sizing: border-box; }
@@ -60,12 +60,6 @@
       margin: 4px 0 0;
     }
 
-    .subtitle {
-      margin-top: 2px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
     /* Mode toggle – iOS segmented control style */
     .mode-toggle {
       display: inline-flex;
@@ -95,18 +89,18 @@
     }
 
     .mode-btn[data-mode="all"].active {
-      background: var(--all-active);
-      color: var(--all-active-text);
+      background: #e5fbe7;
+      color: #034d1b;
     }
 
     .mode-btn[data-mode="regular"].active {
-      background: var(--reg-active);
-      color: var(--reg-active-text);
+      background: #fff2e5;
+      color: #8a3a00;
     }
 
     .mode-btn[data-mode="lockers"].active {
-      background: var(--lock-active);
-      color: var(--lock-active-text);
+      background: #e5f0ff;
+      color: #003e9f;
     }
 
     /* Search bar */
@@ -142,12 +136,13 @@
       margin-top: 10px;
       background: var(--surface);
       border-radius: 14px;
-      padding: 4px 16px 6px;
+      padding: 0; /* so row highlight spans full width of card */
       box-shadow: 0 1px 0 rgba(0,0,0,0.12);
+      overflow: hidden; /* keep rounded corners clean with full-width rows */
     }
 
     .row {
-      padding: 8px 0;
+      padding: 8px 16px; /* moved padding from .list to each row */
       margin: 0;
       display: flex;
       flex-direction: column;
@@ -161,11 +156,11 @@
     }
 
     .row.locker {
-      background: #e5f0ff; /* blue tint */
+      background: #e5f0ff; /* blue tint across full row */
     }
 
     .row.regular {
-      background: #fff3e6; /* orange tint */
+      background: #fff3e6; /* orange tint across full row */
     }
 
     .row-header {
@@ -408,7 +403,6 @@
     </div>
 
     <h1>Loyalty</h1>
-    <div class="subtitle">Lockers, regulars & rewards contacts</div>
 
     <div class="mode-toggle" aria-label="Contact type toggle">
       <button class="mode-btn active" data-mode="all">All</button>
@@ -435,7 +429,7 @@
     </footer>
   </div>
 
-  <!-- Profile dialog -->
+  <!-- Profile dialog (unchanged) -->
   <dialog id="profileDialog">
     <div class="profile-card" id="profileCard">
       <button class="profile-close" type="button" aria-label="Close">&times;</button>
