@@ -14,7 +14,6 @@
       --accent: #7c5cff;
       --accent-soft: #efe8ff;
       --link-blue: #007aff;
-      --pill-yellow-soft: #fff5d6;
       --radius-lg: 24px;
       --radius-md: 18px;
     }
@@ -91,7 +90,7 @@
       font-weight: 600;
     }
     .date-headline .dow {
-      font-size: 52px;        /* bigger MON */
+      font-size: 52px;
       font-weight: 800;
       letter-spacing: 0.02em;
     }
@@ -127,21 +126,14 @@
       line-height: 1.15;
     }
 
-    .card-label-pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 3px 10px;
-      border-radius: 999px;
-      background: var(--pill-yellow-soft);
-      margin-left: -4px;
-      margin-bottom: 6px;
-    }
-    .card-label-pill span {
+    /* Section labels (Vitola / Brand / History header inside card) */
+    .section-label {
       font-size: 12px;
-      letter-spacing: 0.05em;
       text-transform: uppercase;
-      font-weight: 700;       /* bold */
-      color: var(--ink);      /* black */
+      letter-spacing: 0.05em;
+      color: var(--ink);
+      font-weight: 700;
+      margin-bottom: 6px;
     }
 
     /* Top stats row: Cigars / Sales / Avg */
@@ -236,13 +228,16 @@
       width: 46px;
       height: 46px;
       border-radius: 999px;
-      background: #ffffff;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.18);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
+      background: transparent;
+      border: none;
+      padding: 0;
       z-index: 40;
+    }
+    .tony-fab img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: inherit;
     }
 
     @media (max-width: 360px) {
@@ -293,23 +288,19 @@
     <section class="grid">
       <!-- Vitola -->
       <article class="card">
-        <div class="card-label-pill">
-          <span>Vitola</span>
-        </div>
+        <div class="section-label">Vitola</div>
         <ul class="simple-list" id="vitolaList"></ul>
       </article>
 
       <!-- Brand -->
       <article class="card">
-        <div class="card-label-pill">
-          <span>Brand</span>
-        </div>
+        <div class="section-label">Brand</div>
         <ul class="simple-list" id="brandList"></ul>
       </article>
 
       <!-- History -->
       <article class="card history-card full-row">
-        <div class="card-label">History</div>
+        <div class="section-label">History</div>
         <ul class="history-list" id="historyList"></ul>
         <button class="link-btn" id="viewAllBtn">View all transactions</button>
       </article>
@@ -317,7 +308,9 @@
   </div>
 
   <!-- Tony floating icon (bottom-left, same on all pages) -->
-  <button class="tony-fab" id="tonyFab">🧔🏻‍♂️</button>
+  <button class="tony-fab" id="tonyFab">
+    <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
+  </button>
 
   <script>
     /************************************************************
