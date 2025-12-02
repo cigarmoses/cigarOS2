@@ -13,7 +13,6 @@
       --muted: #8e8e93;
       --accent: #7c5cff;
       --accent-soft: #efe8ff;
-      --pill-yellow: #ffd972;
       --pill-yellow-soft: #fff5d6;
       --radius-lg: 24px;
       --radius-md: 18px;
@@ -56,7 +55,7 @@
       display: flex;
       align-items: center;
       gap: 4px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
       color: var(--ink);
     }
@@ -65,13 +64,14 @@
       margin-bottom: 1px;
     }
     .top-title {
-      font-size: 17px;
-      font-weight: 600;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: normal;
     }
     .history-btn {
       border: none;
       background: transparent;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
       color: var(--accent);
       padding: 6px 4px;
@@ -82,19 +82,19 @@
       margin: 10px 2px 14px;
     }
     .date-headline .month {
-      font-size: 12px;
-      letter-spacing: .08em;
+      font-size: 13px;
+      letter-spacing: 0.04em;  /* tighter */
       text-transform: uppercase;
       color: var(--muted);
       font-weight: 600;
     }
     .date-headline .dow {
-      font-size: 40px;
+      font-size: 42px;
       font-weight: 800;
-      letter-spacing: .06em;
+      letter-spacing: 0.02em;  /* tighter */
     }
 
-    /* Hidden date picker used by History button */
+    /* Hidden date picker */
     #datePicker {
       position: absolute;
       opacity: 0;
@@ -107,43 +107,42 @@
     .card {
       background: var(--surface);
       border-radius: var(--radius-lg);
-      padding: 12px 14px;
+      padding: 14px 14px;
       box-shadow: 0 12px 30px rgba(15, 26, 44, 0.08);
     }
 
     .card-label {
-      font-size: 11px;
+      font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: .10em;
+      letter-spacing: 0.05em; /* tighter than before */
       color: var(--muted);
-      font-weight: 600;
+      font-weight: 650;
       margin-bottom: 2px;
     }
     .card-value {
-      font-size: 30px;
+      font-size: 32px;
       font-weight: 800;
-      line-height: 1.1;
+      line-height: 1.15;
     }
 
     .card-label-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 999px;
       background: var(--pill-yellow-soft);
       margin-left: -4px;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
     .card-label-pill span {
-      font-size: 11px;
-      letter-spacing: .10em;
+      font-size: 12px;
+      letter-spacing: 0.05em; /* tighter */
       text-transform: uppercase;
       font-weight: 700;
       color: #b07800;
     }
 
-    /* Top stats row (3 cards) */
+    /* Top stats row: Cigars / Sales / Avg */
     .stats-row {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -151,7 +150,7 @@
       margin-bottom: 14px;
     }
 
-    /* Lower grid: Vitola + Brand side by side, History full width */
+    /* Lower grid */
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -166,19 +165,19 @@
       list-style: none;
       padding: 0;
       margin: 4px 0 0;
-      font-size: 14px;
+      font-size: 15px;
     }
     .simple-list li {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      padding: 2px 0;
+      padding: 3px 0;
     }
     .simple-list .label {
       font-weight: 500;
     }
     .simple-list .meta {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--muted);
       margin-left: 8px;
     }
@@ -192,13 +191,13 @@
       list-style: none;
       padding: 0;
       margin: 4px 0 0;
-      font-size: 14px;
+      font-size: 15px;
     }
     .history-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 4px 0;
+      padding: 5px 0;
       border-radius: 10px;
       cursor: pointer;
     }
@@ -210,17 +209,15 @@
     }
     .history-amount {
       font-variant-numeric: tabular-nums;
-      font-size: 13px;
+      font-size: 14px;
     }
 
-    /* Brand footer */
+    /* Brand footer (Tony only, no text) */
     .brand-card-footer {
       margin-top: 6px;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: flex-end;
-      font-size: 11px;
-      color: var(--muted);
     }
     .tony-avatar {
       width: 34px;
@@ -235,7 +232,8 @@
     }
 
     @media (max-width: 360px) {
-      .card-value { font-size: 26px; }
+      .card-value { font-size: 28px; }
+      .history-list, .simple-list { font-size: 14px; }
     }
   </style>
 </head>
@@ -294,7 +292,6 @@
         </div>
         <ul class="simple-list" id="brandList"></ul>
         <div class="brand-card-footer">
-          <div>Most popular brands of cigars sold today</div>
           <div class="tony-avatar">🧔🏻‍♂️</div>
         </div>
       </article>
@@ -309,7 +306,7 @@
 
   <script>
     /************************************************************
-     * SAMPLE SALES DATA (same concept as before)
+     * SAMPLE SALES DATA
      ************************************************************/
 
     const CUSTOMER_POOL = [
@@ -415,7 +412,6 @@
       return sales;
     }
 
-    // In a real system this becomes shared JSON.
     const SALES_DATA = generateSampleSalesForDay("2025-12-01");
 
     /************************************************************
@@ -493,14 +489,11 @@
         tickets.length > 0 ? totalSales / tickets.length : 0;
 
       cigarsCountEl.textContent = totalCigars;
-
-      // Total sales in thousands (1.6 = $1,600 style)
       const thousands = totalSales / 1000;
       salesTotalEl.textContent = thousands.toFixed(1);
-
       avgSaleEl.textContent = Math.round(avgSale);
 
-      // Vitola list (top 3)
+      // Vitola list (top 3) – counts only
       const vitolaEntries = Object.entries(vitolaCounts)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3);
@@ -510,11 +503,11 @@
         const li = document.createElement("li");
         li.innerHTML =
           `<span class="label">${name}</span>` +
-          `<span class="meta">${count} cigars</span>`;
+          `<span class="meta">${count}</span>`;
         vitolaListEl.appendChild(li);
       });
 
-      // Brand list (top 3)
+      // Brand list (top 3) – counts only
       const brandEntries = Object.entries(brandCounts)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3);
@@ -524,7 +517,7 @@
         const li = document.createElement("li");
         li.innerHTML =
           `<span class="label">${name}</span>` +
-          `<span class="meta">${count} cigars</span>`;
+          `<span class="meta">${count}</span>`;
         brandListEl.appendChild(li);
       });
 
@@ -561,15 +554,15 @@
 
     // Back button
     document.getElementById("backBtn").addEventListener("click", () => {
-      window.location.href = "/"; // point this to your home screen
+      window.location.href = "/"; // home
     });
 
     // History button -> open date picker
     document.getElementById("historyBtn").addEventListener("click", () => {
       try {
-        datePickerEl.showPicker(); // modern browsers
+        datePickerEl.showPicker();
       } catch (e) {
-        datePickerEl.click(); // fallback
+        datePickerEl.click();
       }
     });
 
