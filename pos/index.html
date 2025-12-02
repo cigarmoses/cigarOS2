@@ -21,7 +21,7 @@
     body {
       margin: 0;
       background: var(--bg);
-      font-family: var(--font-text); /* SF Pro Text via type.css */
+      font-family: var(--font-text);
       color: var(--ink);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
@@ -53,14 +53,11 @@
     }
     h1.page-title {
       font-size: 56px;
-      font-weight: 800
+      font-weight: 800;
       margin: 0;
     }
-    .subtitle {
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
+
+    /* Removed subtitle entirely */
 
     /* Category grid */
     .grid {
@@ -98,7 +95,7 @@
     .tile-title {
       font-size: 20px;
       font-weight: 700;
-      font-family: var(--font-display); /* Display Bold */
+      font-family: var(--font-display);
     }
     .tile-sub {
       font-size: 14px;
@@ -333,11 +330,11 @@
   </div>
 
   <header>
-    <h1 class="page-title">CigarOS POS</h1>
-    <div class="subtitle">Select a category</div>
+    <h1 class="page-title">POS</h1>
   </header>
 
   <main class="grid">
+
     <!-- CIGARS -->
     <a class="tile" href="/pos/cigars/">
       <div class="tile-icon">
@@ -391,6 +388,7 @@
       <div class="tile-title">Packs</div>
       <div class="tile-sub">Samplers, fresh packs, and more.</div>
     </a>
+
   </main>
 
   <script>
@@ -532,7 +530,7 @@
     </div>
   </div>
 
-  <!-- Tony floating icon (bottom-left, same on all pages) -->
+  <!-- Tony floating icon -->
   <button class="tony-fab" id="tonyFab">
     <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
   </button>
