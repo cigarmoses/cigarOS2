@@ -1,21 +1,266 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Learn</title>
-<style>
-  :root{--bg:#f5f6fa;--tile:#fff;--radius:20px;--sh:0 4px 10px rgba(0,0,0,.08);--sh2:0 6px 16px rgba(0,0,0,.10)}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:24px 0 60px}
-  header{display:flex;align-items:center;gap:10px;margin-bottom:18px} header img{width:32px;height:32px;border-radius:6px}
-  .grid{display:grid;grid-template-columns:repeat(2,130px);gap:28px;justify-content:center}
-  .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;width:130px;height:130px;background:var(--tile);border-radius:20px;box-shadow:var(--sh);text-decoration:none;color:#111;transition:.15s transform,.2s box-shadow}
-  .tile:hover{transform:translateY(-3px);box-shadow:var(--sh2)} .tile svg{width:40px;height:40px;margin-bottom:10px}
-  .label{font-weight:800;font-size:14px}
-</style></head>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Learn • CigarOS 2</title>
+
+  <style>
+    :root {
+      --bg: #e6edf5;
+      --surface: #ffffff;
+      --ink: #0f1a2c;
+      --muted: #6a7586;
+      --pill: #f3f7fb;
+      --radius-lg: 22px;
+      --shadow-soft: 0 10px 25px rgba(15, 26, 44, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    .learn-shell {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 18px 16px 32px;
+    }
+
+    /* Top bar */
+    .learn-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .learn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .learn-back-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .learn-header-text {
+      flex: 1;
+      text-align: right;
+    }
+
+    .learn-eyebrow {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .learn-title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .learn-subtitle {
+      margin: 4px 0 0;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    /* Grid */
+    .learn-grid {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .learn-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      text-align: center;
+      padding: 14px 10px 16px;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      text-decoration: none;
+      color: var(--ink);
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.12s ease-out, box-shadow 0.12s ease-out,
+        background 0.12s ease-out;
+    }
+
+    .learn-card:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 6px 16px rgba(15, 26, 44, 0.15);
+      background: #f9fbff;
+    }
+
+    .learn-icon-circle {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #ffffff, #d7e4ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      box-shadow: 0 6px 16px rgba(15, 26, 44, 0.18);
+      overflow: hidden;
+    }
+
+    .learn-icon-circle img {
+      width: 30px;
+      height: 30px;
+      display: block;
+    }
+
+    /* If icons aren't set up yet, this initial is a fallback */
+    .learn-icon-initial {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .learn-label {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .learn-caption {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    @media (min-width: 520px) {
+      .learn-shell {
+        padding-top: 26px;
+      }
+      .learn-title {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
 <body>
-  <header><a href="/"><img src="/img/logo-smoke.png" alt="Back"/></a><span>Learn</span></header>
-  <main class="grid">
-    <a href="#" class="tile"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10l9-4 9 4-9 4-9-4z" fill="#3ea3ff"/><path d="M7 12v3c1.8 1.2 4.2 1.2 6 0v-3" stroke="#3ea3ff" stroke-width="1.5"/></svg><div class="label">Library</div></a>
-    <a href="#" class="tile"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="#2f8cff" stroke-width="1.5"/><path d="M7 9h10M7 13h8" stroke="#2f8cff" stroke-width="1.5" stroke-linecap="round"/></svg><div class="label">Glossary</div></a>
-    <a href="#" class="tile"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18l8-12 8 12H4z" stroke="#2f8cff" stroke-width="1.5"/></svg><div class="label">Tutorials</div></a>
-    <a href="#" class="tile"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#2f8cff" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="#2f8cff" stroke-width="1.5" stroke-linecap="round"/></svg><div class="label">Quizzes</div></a>
-  </main>
-</body></html>
+  <div class="learn-shell">
+    <!-- Top bar -->
+    <header class="learn-topbar">
+      <a href="/" class="learn-back">
+        <span class="learn-back-icon">‹</span>
+        <span>Home</span>
+      </a>
+      <div class="learn-header-text">
+        <span class="learn-eyebrow">Learn</span>
+        <h1 class="learn-title">Library</h1>
+        <p class="learn-subtitle">Tap a topic to explore guides, visuals & definitions.</p>
+      </div>
+    </header>
+
+    <!-- Grid of circular icon buttons -->
+    <main>
+      <div class="learn-grid">
+        <!-- Ring -->
+        <a href="/learn/ring/" class="learn-card">
+          <div class="learn-icon-circle">
+            <!-- If you have an icon, swap this line for: <img src="/img/icons/learn-ring.svg" alt="Ring" /> -->
+            <span class="learn-icon-initial">R</span>
+          </div>
+          <div class="learn-label">Ring</div>
+          <div class="learn-caption">Ring gauge sizing guide.</div>
+        </a>
+
+        <!-- Vitolas -->
+        <a href="/learn/vitolas/" class="learn-card">
+          <div class="learn-icon-circle">
+            <!-- <img src="/img/icons/learn-vitolas.svg" alt="Vitolas" /> -->
+            <span class="learn-icon-initial">V</span>
+          </div>
+          <div class="learn-label">Vitolas</div>
+          <div class="learn-caption">Common cigar formats & names.</div>
+        </a>
+
+        <!-- Wrapper Shade -->
+        <a href="/learn/wrapper-shade/" class="learn-card">
+          <div class="learn-icon-circle">
+            <!-- <img src="/img/icons/learn-wrapper.svg" alt="Wrapper Shade" /> -->
+            <span class="learn-icon-initial">W</span>
+          </div>
+          <div class="learn-label">Wrapper Shade</div>
+          <div class="learn-caption">From Claro to Oscuro.</div>
+        </a>
+
+        <!-- Shapes -->
+        <a href="/learn/shapes/" class="learn-card">
+          <div class="learn-icon-circle">
+            <!-- <img src="/img/icons/learn-shapes.svg" alt="Shapes" /> -->
+            <span class="learn-icon-initial">S</span>
+          </div>
+          <div class="learn-label">Shapes</div>
+          <div class="learn-caption">Parejos, figurados & more.</div>
+        </a>
+
+        <!-- Glossary -->
+        <a href="/learn/glossary/" class="learn-card">
+          <div class="learn-icon-circle">
+            <!-- <img src="/img/icons/learn-glossary.svg" alt="Glossary" /> -->
+            <span class="learn-icon-initial">G</span>
+          </div>
+          <div class="learn-label">Glossary</div>
+          <div class="learn-caption">Key cigar terms explained.</div>
+        </a>
+
+        <!-- Brands -->
+        <a href="/learn/brands/" class="learn-card">
+          <div class="learn-icon-circle">
+            <!-- <img src="/img/icons/learn-brands.svg" alt="Brands" /> -->
+            <span class="learn-icon-initial">B</span>
+          </div>
+          <div class="learn-label">Brands</div>
+          <div class="learn-caption">Major families & portfolios.</div>
+        </a>
+
+        <!-- Lists -->
+        <a href="/learn/lists/" class="learn-card">
+          <div class="learn-icon-circle">
+            <!-- <img src="/img/icons/learn-lists.svg" alt="Lists" /> -->
+            <span class="learn-icon-initial">L</span>
+          </div>
+          <div class="learn-label">Lists</div>
+          <div class="learn-caption">Top 25s, rankings & more.</div>
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
