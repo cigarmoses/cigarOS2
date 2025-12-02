@@ -2,719 +2,707 @@
 <html lang="en">
 <head>
   <link rel="stylesheet" href="/pos/pos.css" />
+  <link rel="stylesheet" href="/css/type.css" />
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>POS • Cigars</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>POS</title>
+
   <style>
     :root {
-      --bg: #eaf2f6;
+      --bg: #ffffff;
       --ink: #0f1a2c;
-      --panel: #ffffff;
+      --muted: #6a7586;
+      --pill: #f2f4f7;
+      --pill-active: #3b99ff;
+      --pill-active-text: #ffffff;
+      --outline: #d5dde7;
+      --feature-active: #007aff;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: var(--bg);
       color: var(--ink);
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif);
+      -webkit-font-smoothing: antialiased;
     }
-    .wrap {
-      max-width: 480px;
+
+    .page {
+      padding: 24px 18px 24px;
+      max-width: 900px;
       margin: 0 auto;
-      padding: 12px 12px 110px;
     }
-    .topbar {
+
+    /* Heading */
+    .page-title {
+      font-family: var(--font-display, "SF Pro Display", -apple-system, system-ui, sans-serif);
+      font-size: 40px;
+      line-height: 1.0;
+      font-weight: 800;
+      margin: 0 0 18px;
+    }
+
+    /* Master search bar */
+    .master-search-wrap {
+      margin-bottom: 16px;
+    }
+
+    .master-search {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-top: 4px;
-    }
-    .back {
-      text-decoration: none;
-      color: var(--ink);
-      display: flex;
-      gap: 4px;
-      align-items: center;
-      font-weight: 500;
-    }
-    .star {
-      font-size: 22px;
-      color: #ffcc00;
-    }
-    .title {
-      text-align: center;
-      font-size: 32px;
-      font-weight: 700;
-      margin: 16px 0 14px;
-    }
-    .search-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-    .search-bar {
-      background: #fff;
+      padding: 10px 14px;
       border-radius: 999px;
-      padding: 8px 12px;
-      display: flex;
-      gap: 6px;
-      flex: 1;
-    }
-    .search-bar input {
-      border: none;
-      outline: none;
-      width: 100%;
-      background: transparent;
-    }
-    .filter-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 16px;
-      border: none;
-      background: #0f1a2c;
-      color: #fff;
-      font-size: 14px;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-    }
-    .brand-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px 12px;
-    }
-    .brand-card {
-      text-align: center;
-      cursor: pointer;
-    }
-    .brand-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 22px;
-      background: #dfe7ec;
-      display: grid;
-      place-items: center;
-      margin: 0 auto 5px;
-      overflow: hidden;
-    }
-    .brand-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .brand-name {
-      font-size: 12px;
-      font-weight: 500;
-      color: #243448;
-      line-height: 1.1;
-    }
-    #empty {
-      text-align: center;
-      opacity: .6;
-      margin-top: 18px;
+      border: 1px solid var(--outline);
+      background: #f9fafb;
+      box-shadow: 0 0 0 0 transparent;
     }
 
-    /* filter sheet */
-    #filterSheet {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.3);
-      display: none;
-      z-index: 180;
-    }
-    .filter-panel {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      max-width: 480px;
-      margin: 0 auto;
-      background: #fff;
-      border-top-left-radius: 24px;
-      border-top-right-radius: 24px;
-      padding: 16px 16px 26px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .filter-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .filter-title { font-size: 20px; font-weight: 700; }
-    .filter-close { background:none;border:none;font-size:24px;cursor:pointer;}
-    .filter-section { margin-top: 12px; }
-    .filter-section h3 {
-      font-size: 16px;
-      margin: 10px 0 6px;
-    }
-    .vitola-row, .wrapper-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .vitola-item, .wrapper-item {
-      border: 1px solid #e5e9ee;
-      border-radius: 16px;
-      padding: 6px 10px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .vitola-item.active,
-    .wrapper-item.active {
-      background: #0f1a2c;
-      color: #fff;
-      border-color: #0f1a2c;
-    }
-    .features-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .feature-check {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      font-size: 14px;
-    }
-    .feature-check input {
-      width: 16px;
-      height: 16px;
-    }
-
-    /* ---------- Invoice popup line-item layout ---------- */
-
-    .invoice-body {
-      margin-top: 18px;
-    }
-
-    #invoice-items {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-top: 14px;
-    }
-
-    .invoice-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #e7f0f7;
-      border-radius: 30px;
-      padding: 14px 18px;
-    }
-
-    .invoice-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .invoice-thumb {
-      width: 60px;
-      height: 60px;
-      border-radius: 18px;
-      overflow: hidden;
-      background: #c4d4df;
+    .master-search-icon {
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
       flex-shrink: 0;
     }
 
-    .invoice-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .invoice-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      font-size: 13px;
-    }
-
-    .invoice-name {
-      padding: 0;
-      margin: 0;
+    .master-search-input {
       border: none;
-      background: none;
+      outline: none;
+      background: transparent;
       font-size: 15px;
-      font-weight: 700;
-      color: #0080ff;
-      text-decoration: underline;
-      cursor: pointer;
-      text-align: left;
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      width: 100%;
     }
 
-    .invoice-meta {
-      color: #222222;
-      font-size: 13px;
-      line-height: 1.2;
+    .master-search-input::placeholder {
+      color: #a0acbd;
     }
 
-    .invoice-right {
+    /* Filter rows */
+    .filters {
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-      margin-left: 10px;
-      min-width: 90px;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+
+    .filter-pill {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: var(--pill);
+      text-align: center;
       font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .filter-pill.primary {
+      border-radius: 14px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .filter-pill.has-selection {
+      background: var(--pill-active);
+      color: var(--pill-active-text);
+    }
+
+    /* Features row */
+    .features-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #eef1f6;
+      margin-bottom: 12px;
+    }
+
+    .feature-toggle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 12px;
+      cursor: pointer;
+      flex: 1;
+      gap: 4px;
+    }
+
+    .feature-label {
+      color: var(--ink);
       font-weight: 500;
     }
 
-    .invoice-qty-label {
-      font-size: 13px;
-      letter-spacing: 0.08em;
+    .feature-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 1px solid #c5ceda;
+      background: transparent;
     }
 
-    .invoice-qty-control {
+    .feature-toggle.active .feature-label {
+      color: var(--feature-active);
+      font-weight: 600;
+    }
+
+    .feature-toggle.active .feature-dot {
+      background: var(--feature-active);
+      border-color: var(--feature-active);
+    }
+
+    /* Results list */
+    .results {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .cigar-card {
+      background: #f7f9fc;
+      border-radius: 14px;
+      padding: 12px 12px 10px;
+      border: 1px solid #e0e6f0;
+    }
+
+    .cigar-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .cigar-line {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .cigar-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Popup overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      justify-content: flex-end;
+      z-index: 2000;
+    }
+
+    .overlay.visible {
+      display: flex;
+    }
+
+    .filter-sheet {
+      background: #ffffff;
+      width: 100%;
+      max-width: 900px;
+      max-height: 70vh;
+      border-radius: 18px 18px 0 0;
+      margin: 0 auto;
+      padding: 12px 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sheet-handle {
+      width: 40px;
+      height: 4px;
+      border-radius: 999px;
+      background: #d0d6e0;
+      margin: 4px auto 4px;
+    }
+
+    .sheet-title {
+      font-size: 17px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .sheet-search {
+      border-radius: 999px;
+      border: 1px solid #dde3ef;
+      padding: 7px 11px;
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(15,26,44,0.05);
     }
 
-    .invoice-qty-btn {
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,0.2);
-      background: #ffffff;
-      display: grid;
-      place-items: center;
-      font-size: 16px;
-      line-height: 1;
-      cursor: pointer;
-    }
-
-    .invoice-qty-value {
-      min-width: 14px;
-      text-align: center;
-      font-weight: 600;
-    }
-
-    .invoice-line-total {
-      font-weight: 600;
+    .sheet-search input {
+      border: none;
+      outline: none;
+      flex: 1;
       font-size: 14px;
     }
 
-    .invoice-totals {
-      margin-top: 24px;
-      text-align: right;
+    .sheet-search input::placeholder {
+      color: #a0acbd;
     }
 
-    .invoice-totals .total-row {
+    .sheet-options {
+      flex: 1;
+      overflow-y: auto;
+      margin-top: 6px;
+      padding-right: 2px;
+    }
+
+    .sheet-option {
+      padding: 9px 2px;
+      font-size: 15px;
+      border-bottom: 1px solid #f0f2f7;
       display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      margin-bottom: 4px;
-      font-size: 16px;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
     }
 
-    .invoice-totals .total-bold {
-      font-size: 20px;
-      font-weight: 700;
+    .sheet-option-label {
+      flex: 1;
+    }
+
+    .sheet-option-check {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid #c5ceda;
+      background: #ffffff;
+    }
+
+    .sheet-option.selected .sheet-option-check {
+      background: var(--feature-active);
+      border-color: var(--feature-active);
+    }
+
+    .sheet-footer {
       margin-top: 10px;
+    }
+
+    .sheet-done {
+      width: 100%;
+      padding: 11px 0;
+      border-radius: 11px;
+      background: var(--feature-active);
+      color: #ffffff;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    @media (min-width: 768px) {
+      .page {
+        padding-top: 32px;
+      }
+      .page-title {
+        font-size: 44px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <a href="/pos/" class="back">← POS</a>
-      <div class="star">★</div>
-    </div>
+  <div class="page">
+    <h1 class="page-title">Cigars</h1>
 
-    <h1 class="title">CIGARS</h1>
-
-    <div class="search-row">
-      <div class="search-bar">
-        <input id="searchInput" placeholder="Search…" />
+    <!-- Master search -->
+    <div class="master-search-wrap">
+      <div class="master-search">
+        <svg class="master-search-icon" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="6.5" stroke="#9aa5b6" stroke-width="1.5" fill="none"></circle>
+          <line x1="15.5" y1="15.5" x2="21" y2="21" stroke="#9aa5b6" stroke-width="1.5" stroke-linecap="round"></line>
+        </svg>
+        <input
+          id="masterSearch"
+          class="master-search-input"
+          type="search"
+          placeholder="Search cigars, brands, anything…" />
       </div>
-      <button class="filter-btn" onclick="openFilter()">⌕</button>
     </div>
 
-    <div id="brandGrid" class="brand-grid"></div>
-    <p id="empty" style="display:none;">No brands matched.</p>
+    <!-- Filters -->
+    <div class="filters">
+      <!-- Line 1 -->
+      <div class="filter-row">
+        <div class="filter-pill primary" data-filter="manufacturer">Manufacturer</div>
+        <div class="filter-pill primary" data-filter="brand">Brand</div>
+      </div>
+
+      <!-- Line 2 -->
+      <div class="filter-row">
+        <div class="filter-pill" data-filter="priceRange">Price range</div>
+        <div class="filter-pill" data-filter="vitola">Vitola</div>
+        <div class="filter-pill" data-filter="rg">RG</div>
+        <div class="filter-pill" data-filter="length">Length</div>
+        <div class="filter-pill" data-filter="wrapperShade">Wrapper Shade</div>
+      </div>
+
+      <!-- Line 3 -->
+      <div class="filter-row">
+        <div class="filter-pill" data-filter="wrapper">Wrapper</div>
+        <div class="filter-pill" data-filter="binder">Binder</div>
+        <div class="filter-pill" data-filter="filler">Filler</div>
+        <div class="filter-pill" data-filter="origin">Origin</div>
+        <div class="filter-pill" data-filter="strength">Strength</div>
+        <div class="filter-pill" data-filter="shape">Shape</div>
+      </div>
+    </div>
+
+    <!-- Line 4: Features (single click) -->
+    <div class="features-row">
+      <div class="feature-toggle" data-feature="boxPressed">
+        <span class="feature-label">Box-Pressed</span>
+        <div class="feature-dot"></div>
+      </div>
+      <div class="feature-toggle" data-feature="tubo">
+        <span class="feature-label">Tubo</span>
+        <div class="feature-dot"></div>
+      </div>
+      <div class="feature-toggle" data-feature="flavored">
+        <span class="feature-label">Flavored</span>
+        <div class="feature-dot"></div>
+      </div>
+      <div class="feature-toggle" data-feature="tin">
+        <span class="feature-label">Tin</span>
+        <div class="feature-dot"></div>
+      </div>
+      <div class="feature-toggle" data-feature="pack">
+        <span class="feature-label">Pack</span>
+        <div class="feature-dot"></div>
+      </div>
+      <div class="feature-toggle" data-feature="barberpole">
+        <span class="feature-label">Barberpole</span>
+        <div class="feature-dot"></div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="results"></div>
   </div>
 
-  <!-- filter sheet -->
-  <div id="filterSheet">
-    <div class="filter-panel">
-      <div class="filter-head">
-        <div class="filter-title">Filters</div>
-        <button class="filter-close" onclick="closeFilter()">×</button>
+  <!-- Filter popup sheet -->
+  <div id="filterOverlay" class="overlay">
+    <div class="filter-sheet">
+      <div class="sheet-handle"></div>
+      <div id="sheetTitle" class="sheet-title">Filter</div>
+      <div class="sheet-search">
+        <svg width="16" height="16" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="6.5" stroke="#9aa5b6" stroke-width="1.5" fill="none"></circle>
+          <line x1="15.5" y1="15.5" x2="21" y2="21" stroke="#9aa5b6" stroke-width="1.5" stroke-linecap="round"></line>
+        </svg>
+        <input id="sheetSearchInput" type="search" placeholder="Search in filter…" />
       </div>
-
-      <div class="filter-section">
-        <h3>Vitola</h3>
-        <div id="vitolaList" class="vitola-row"></div>
-      </div>
-
-      <div class="filter-section">
-        <h3>Wrapper Shade</h3>
-        <div id="wrapperList" class="wrapper-row"></div>
-      </div>
-
-      <div class="filter-section">
-        <h3>Features</h3>
-        <div class="features-list">
-          <label class="feature-check"><input type="checkbox" data-feature="Box Pressed"> Box Pressed</label>
-          <label class="feature-check"><input type="checkbox" data-feature="Flavored/Sweet"> Flavored/Sweet</label>
-          <label class="feature-check"><input type="checkbox" data-feature="Pack"> Packs</label>
-          <label class="feature-check"><input type="checkbox" data-feature="Tin"> Tins</label>
-          <label class="feature-check"><input type="checkbox" data-feature="Barberpole"> Barberpole</label>
-        </div>
+      <div id="sheetOptions" class="sheet-options"></div>
+      <div class="sheet-footer">
+        <button id="sheetDone" class="sheet-done">Done</button>
       </div>
     </div>
   </div>
 
-  <!-- main cigars JS -->
   <script>
-    // CSV location
-    const CSV_URL = "/hub/hub_11-5-25.csv";
+    // ---- DATA SOURCE ----
+    // Point this at your hub JSON (all cigars inventory)
+    const DATA_URL = "/pos/pos-hub.json"; // change if your path is different
 
-    const brandGrid = document.getElementById("brandGrid");
-    const emptyMsg = document.getElementById("empty");
-    const searchInput = document.getElementById("searchInput");
+    let allCigars = [];
+    let currentFiltered = [];
 
-    let allRows = [];
-    let allBrands = [];
-    let activeFilters = {
-      vitola: null,
-      wrapper: null,
-      features: []
+    const state = {
+      searchText: "",
+      filters: {
+        manufacturer: [],
+        brand: [],
+        priceRange: [],
+        vitola: [],
+        rg: [],
+        length: [],
+        wrapperShade: [],
+        wrapper: [],
+        binder: [],
+        filler: [],
+        origin: [],
+        strength: [],
+        shape: [],
+        features: {
+          boxPressed: false,
+          tubo: false,
+          flavored: false,
+          tin: false,
+          pack: false,
+          barberpole: false
+        }
+      }
     };
 
-    fetch(CSV_URL)
-      .then(r => r.text())
-      .then(text => {
-        allRows = parseCSV(text);
-        buildFilterLists(allRows);
-        buildBrandList(allRows);
-      })
-      .catch(err => {
-        console.error(err);
-        emptyMsg.style.display = "block";
-        emptyMsg.textContent = "Could not load " + CSV_URL;
-      });
+    const filterConfig = {
+      manufacturer: { label: "Manufacturer", field: "manufacturer" },
+      brand:       { label: "Brand",        field: "brand" },
+      priceRange:  { label: "Price range",  field: "__priceRange" },
+      vitola:      { label: "Vitola",       field: "vitola" },
+      rg:          { label: "RG",           field: "ring" },
+      length:      { label: "Length",       field: "length" },
+      wrapperShade:{ label: "Wrapper Shade",field: "wrapper_shade" },
+      wrapper:     { label: "Wrapper",      field: "wrapper" },
+      binder:      { label: "Binder",       field: "binder" },
+      filler:      { label: "Filler",       field: "filler" },
+      origin:      { label: "Origin",       field: "origin" },
+      strength:    { label: "Strength",     field: "strength" },
+      shape:       { label: "Shape",        field: "shape" }
+    };
 
-    // basic CSV -> objects
-    function parseCSV(text) {
-      const lines = text.trim().split(/\r?\n/);
-      const header = lines.shift().split(",");
-      return lines.map(line => {
-        const cells = line.split(",");
-        const obj = {};
-        header.forEach((h,i) => obj[h.trim()] = (cells[i] || "").trim());
-        return obj;
-      });
-    }
-
-    function normalizeBrandToSvg(name) {
-      return name.toLowerCase().replace(/[^a-z0-9]/g,"");
-    }
-
-    function buildBrandList(rows) {
-      const map = new Map();
-      rows.forEach(r => {
-        const b = (r["Brand"] || r["brand"] || "").trim();
-        if (!b) return;
-        if (!map.has(b)) map.set(b, []);
-        map.get(b).push(r);
-      });
-      allBrands = Array.from(map.entries()).map(([name,rows]) => ({ name, rows }));
-      renderBrands(allBrands);
-    }
-
-    function renderBrands(list) {
-      brandGrid.innerHTML = "";
-      if (!list.length) {
-        emptyMsg.style.display = "block";
-        return;
-      }
-      emptyMsg.style.display = "none";
-
-      list.forEach(b => {
-        const iconName = normalizeBrandToSvg(b.name);
-        const div = document.createElement("div");
-        div.className = "brand-card";
-        div.innerHTML = `
-          <div class="brand-icon">
-            <img src="/img/icons/brands/${iconName}.svg" alt="${b.name}" onerror="this.src='/img/placeholder.svg'">
-          </div>
-          <div class="brand-name">${b.name}</div>
-        `;
-        div.addEventListener("click", () => {
-          window.location.href = "/pos/cigars/brand.html?brand=" + encodeURIComponent(b.name);
-        });
-        brandGrid.appendChild(div);
-      });
-    }
-
-    // search & filters work together
-    searchInput.addEventListener("input", applyFilters);
-
-    function applyFilters() {
-      const term = searchInput.value.toLowerCase();
-      const filtered = allBrands.filter(b => {
-        // text match
-        const matchesText = b.name.toLowerCase().includes(term);
-
-        // filter match: brand must have at least 1 cigar that matches
-        const matchesCigar = b.rows.some(row => {
-          // vitola
-          if (activeFilters.vitola && (row["Vitola"] || "").toLowerCase() !== activeFilters.vitola.toLowerCase()) return false;
-          // wrapper
-          if (activeFilters.wrapper && (row["Wrapper Shade"] || row["WRAPPER SHADE"] || "").toLowerCase() !== activeFilters.wrapper.toLowerCase()) return false;
-          // features
-          for (const ft of activeFilters.features) {
-            const colVal =
-              row[ft] || row[ft.toUpperCase()] || row[ft.replace("/", " or ").toUpperCase()] || "";
-            if (!colVal || colVal === "0" || colVal.toLowerCase() === "false") {
-              return false;
-            }
-          }
-          return true;
-        });
-
-        return matchesText && matchesCigar;
-      });
-
-      renderBrands(filtered);
-    }
-
-    // build lists for filters
-    function buildFilterLists(rows) {
-      const vitolas = new Set();
-      const wrappers = new Set();
-
-      rows.forEach(r => {
-        const v = r["Vitola"] || r["VITOLA"] || "";
-        if (v) vitolas.add(v.trim());
-        const w = r["Wrapper Shade"] || r["WRAPPER SHADE"] || "";
-        if (w) wrappers.add(w.trim());
-      });
-
-      const vList = document.getElementById("vitolaList");
-      Array.from(vitolas).sort().forEach(v => {
-        const btn = document.createElement("div");
-        btn.className = "vitola-item";
-        btn.textContent = v;
-        btn.onclick = () => {
-          if (activeFilters.vitola === v) {
-            activeFilters.vitola = null;
-            btn.classList.remove("active");
-          } else {
-            activeFilters.vitola = v;
-            [...vList.children].forEach(c => c.classList.remove("active"));
-            btn.classList.add("active");
-          }
-          applyFilters();
-        };
-        vList.appendChild(btn);
-      });
-
-      const wList = document.getElementById("wrapperList");
-      Array.from(wrappers).sort().forEach(w => {
-        const btn = document.createElement("div");
-        btn.className = "wrapper-item";
-        btn.textContent = w;
-        btn.onclick = () => {
-          if (activeFilters.wrapper === w) {
-            activeFilters.wrapper = null;
-            btn.classList.remove("active");
-          } else {
-            activeFilters.wrapper = w;
-            [...wList.children].forEach(c => c.classList.remove("active"));
-            btn.classList.add("active");
-          }
-          applyFilters();
-        };
-        wList.appendChild(btn);
-      });
-
-      // features
-      document.querySelectorAll(".feature-check input").forEach(cb => {
-        cb.addEventListener("change", () => {
-          const feat = cb.dataset.feature;
-          if (cb.checked) {
-            if (!activeFilters.features.includes(feat)) activeFilters.features.push(feat);
-          } else {
-            activeFilters.features = activeFilters.features.filter(f => f !== feat);
-          }
-          applyFilters();
-        });
-      });
-    }
-
-    function openFilter(){ document.getElementById("filterSheet").style.display="block"; }
-    function closeFilter(){ document.getElementById("filterSheet").style.display="none"; }
-
-    /* ---------- Demo invoice content & qty adjusters ---------- */
-
-    const POS_TAX_RATE = 0.07;
-
-    const demoCartItems = [
-      {
-        id: "flying-pig",
-        name: "Flying Pig",
-        vitola: "Perfecto",
-        brand: "Pappy Van Winkle",
-        price: 13.99,
-        qty: 1,
-        icon: "/img/icons/categories/cigars.svg"
-      },
-      {
-        id: "padron-3000-maduro",
-        name: "Padron 3000 Maduro",
-        vitola: "Robusto",
-        brand: "Padron",
-        price: 10.25,
-        qty: 2,
-        icon: "/img/icons/categories/cigars.svg"
-      },
-      {
-        id: "sprite-can",
-        name: "Sprite",
-        vitola: "Food and Beverages",
-        brand: "",
-        price: 1.50,
-        qty: 3,
-        icon: "/img/icons/foodandbevs/sprite.svg"
-      }
+    const PRICE_RANGES = [
+      { label: "$0 – $9.99",  min: 0,  max: 9.99 },
+      { label: "$10 – $14.99",min:10,  max:14.99 },
+      { label: "$15 – $19.99",min:15,  max:19.99 },
+      { label: "$20 – $29.99",min:20,  max:29.99 },
+      { label: "$30+",        min:30,  max:9999 }
     ];
 
-    function formatMoney(value) {
-      return value.toFixed(2);
+    // --------- LOAD DATA ---------
+    async function loadData() {
+      try {
+        const res = await fetch(DATA_URL);
+        allCigars = await res.json();
+      } catch (e) {
+        console.error("Error loading cigars data", e);
+        allCigars = [];
+      }
+      applyFilters();
     }
 
-    function renderInvoice() {
-      const container = document.getElementById("invoice-items");
-      if (!container) return;
+    // --------- RENDER RESULTS ---------
+    function renderResults(list) {
+      const container = document.getElementById("results");
+      if (!list.length) {
+        container.innerHTML = '<div style="font-size:13px;color:#8994a5;">No cigars match your filters yet.</div>';
+        return;
+      }
 
-      container.innerHTML = "";
-      let subtotal = 0;
-
-      demoCartItems.forEach((item, index) => {
-        const lineTotal = item.price * item.qty;
-        subtotal += lineTotal;
-
-        const row = document.createElement("div");
-        row.className = "invoice-item";
-        row.dataset.index = String(index);
-        row.innerHTML = `
-          <div class="invoice-left">
-            <div class="invoice-thumb">
-              <img src="${item.icon}" alt="${item.brand || item.name}">
+      container.innerHTML = list.map(c => {
+        const line  = c.line || "";
+        const cigar = c.cigar || c.name || "";
+        const brand = c.brand || "";
+        const vitola = c.vitola || "";
+        const rg = c.ring || c.rg || "";
+        const len = c.length || "";
+        const wrapper = c.wrapper || "";
+        const origin = c.origin || "";
+        return `
+          <div class="cigar-card">
+            <div class="cigar-name">${cigar}</div>
+            <div class="cigar-line">${brand}${line ? " • " + line : ""}</div>
+            <div class="cigar-meta">
+              ${vitola ? vitola + " • " : ""}${len && rg ? `${len} × ${rg}` : ""}
             </div>
-            <div class="invoice-text">
-              <button type="button" class="invoice-name">${item.name}</button>
-              <div class="invoice-meta">${item.vitola}</div>
-              <div class="invoice-meta">${item.brand}</div>
-              <div class="invoice-meta">${formatMoney(item.price)}</div>
+            <div class="cigar-meta">
+              ${wrapper || ""}${wrapper && origin ? " • " : ""}${origin || ""}
             </div>
-          </div>
-          <div class="invoice-right">
-            <div class="invoice-qty-label">QTY</div>
-            <div class="invoice-qty-control">
-              <button class="invoice-qty-btn" data-dir="-1">−</button>
-              <span class="invoice-qty-value">${item.qty}</span>
-              <button class="invoice-qty-btn" data-dir="1">+</button>
-            </div>
-            <div class="invoice-line-total">$${formatMoney(lineTotal)}</div>
           </div>
         `;
-        container.appendChild(row);
+      }).join("");
+    }
+
+    // --------- APPLY FILTERS ---------
+    function applyFilters() {
+      const text = state.searchText.trim().toLowerCase();
+
+      let list = allCigars.filter(c => {
+        // master search
+        if (text) {
+          const haystack = [
+            c.cigar, c.name, c.line, c.brand, c.manufacturer,
+            c.vitola, c.wrapper, c.wrapper_shade, c.binder, c.filler,
+            c.origin, c.strength, c.shape, c.notes, c.size
+          ].filter(Boolean).join(" ").toLowerCase();
+
+          if (!haystack.includes(text)) return false;
+        }
+
+        // normal multi-select filters
+        for (const key of Object.keys(filterConfig)) {
+          const selected = state.filters[key];
+          if (!selected || !selected.length) continue;
+
+          if (key === "priceRange") {
+            const price = parseFloat(c.msrp || c.price || c.retail || "0") || 0;
+            const ok = selected.some(label => {
+              const range = PRICE_RANGES.find(r => r.label === label);
+              return range && price >= range.min && price <= range.max;
+            });
+            if (!ok) return false;
+          } else {
+            const field = filterConfig[key].field;
+            const val = (c[field] != null ? String(c[field]) : "").trim();
+            if (!selected.includes(val)) return false;
+          }
+        }
+
+        // feature toggles
+        const ft = state.filters.features;
+        if (ft.boxPressed && !truthy(c.box_pressed || c.boxpressed)) return false;
+        if (ft.tubo       && !truthy(c.tubo)) return false;
+        if (ft.flavored   && !truthy(c.flavored)) return false;
+        if (ft.tin        && !truthy(c.tin)) return false;
+        if (ft.pack       && !truthy(c.pack)) return false;
+        if (ft.barberpole && !truthy(c.barberpole)) return false;
+
+        return true;
       });
 
-      const subtotalEl = document.getElementById("invoice-subtotal");
-      const taxEl = document.getElementById("invoice-tax");
-      const totalEl = document.getElementById("invoice-total");
+      currentFiltered = list;
+      renderResults(list);
+      refreshFilterPills();
+      refreshFeatureToggles();
+    }
 
-      const tax = subtotal * POS_TAX_RATE;
-      const total = subtotal + tax;
+    function truthy(v) {
+      if (v === true) return true;
+      if (typeof v === "number") return v !== 0;
+      if (!v) return false;
+      const s = String(v).toLowerCase();
+      return ["y","yes","true","1"].includes(s);
+    }
 
-      if (subtotalEl) subtotalEl.textContent = `$${formatMoney(subtotal)}`;
-      if (taxEl) taxEl.textContent = `$${formatMoney(tax)}`;
-      if (totalEl) totalEl.textContent = `$${formatMoney(total)}`;
+    // --------- MASTER SEARCH ---------
+    document.getElementById("masterSearch").addEventListener("input", e => {
+      state.searchText = e.target.value;
+      applyFilters();
+    });
 
-      // bind qty buttons
-      container.querySelectorAll(".invoice-qty-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const row = btn.closest(".invoice-item");
-          if (!row) return;
-          const index = Number(row.dataset.index || "0");
-          const dir = Number(btn.getAttribute("data-dir") || "0");
-          const item = demoCartItems[index];
-          if (!item) return;
-          const newQty = item.qty + dir;
-          if (newQty < 0) return;
-          item.qty = newQty;
-          renderInvoice();
+    // --------- FILTER POPUP SHEET ---------
+    const overlay = document.getElementById("filterOverlay");
+    const sheetTitle = document.getElementById("sheetTitle");
+    const sheetSearchInput = document.getElementById("sheetSearchInput");
+    const sheetOptions = document.getElementById("sheetOptions");
+    const sheetDone = document.getElementById("sheetDone");
+
+    let activeFilterKey = null;
+    let activeOptionsAll = [];
+
+    document.querySelectorAll(".filter-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        const key = pill.getAttribute("data-filter");
+        openFilterSheet(key);
+      });
+    });
+
+    function openFilterSheet(key) {
+      activeFilterKey = key;
+      const cfg = filterConfig[key];
+      if (!cfg) return;
+
+      sheetTitle.textContent = cfg.label;
+      sheetSearchInput.value = "";
+
+      if (key === "priceRange") {
+        activeOptionsAll = PRICE_RANGES.map(r => r.label);
+      } else {
+        const field = cfg.field;
+        const set = new Set();
+        allCigars.forEach(c => {
+          const val = c[field];
+          if (val != null && String(val).trim() !== "") {
+            set.add(String(val).trim());
+          }
+        });
+        activeOptionsAll = Array.from(set).sort((a,b)=>a.localeCompare(b));
+      }
+
+      renderSheetOptions(activeOptionsAll);
+      overlay.classList.add("visible");
+      sheetSearchInput.focus();
+    }
+
+    function renderSheetOptions(list) {
+      const selected = state.filters[activeFilterKey] || [];
+      sheetOptions.innerHTML = list.map(opt => {
+        const isSel = selected.includes(opt);
+        return `
+          <div class="sheet-option ${isSel ? "selected" : ""}" data-value="${opt}">
+            <div class="sheet-option-label">${opt}</div>
+            <div class="sheet-option-check"></div>
+          </div>
+        `;
+      }).join("");
+
+      sheetOptions.querySelectorAll(".sheet-option").forEach(el => {
+        el.addEventListener("click", () => {
+          const val = el.getAttribute("data-value");
+          toggleFilterValue(activeFilterKey, val);
+          el.classList.toggle("selected");
         });
       });
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const dateEl = document.getElementById("invoice-date");
-      if (dateEl) {
-        const d = new Date();
-        const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
-        const dateStr = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
-        const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-        dateEl.textContent = `${weekday}, ${dateStr} — ${timeStr}`;
-      }
-      renderInvoice();
+    sheetSearchInput.addEventListener("input", () => {
+      const q = sheetSearchInput.value.trim().toLowerCase();
+      const filtered = !q
+        ? activeOptionsAll
+        : activeOptionsAll.filter(o => o.toLowerCase().includes(q));
+      renderSheetOptions(filtered);
     });
+
+    sheetDone.addEventListener("click", () => {
+      overlay.classList.remove("visible");
+      applyFilters();
+    });
+
+    overlay.addEventListener("click", e => {
+      if (e.target === overlay) {
+        overlay.classList.remove("visible");
+      }
+    });
+
+    function toggleFilterValue(key, value) {
+      const arr = state.filters[key] || [];
+      const idx = arr.indexOf(value);
+      if (idx === -1) arr.push(value);
+      else arr.splice(idx, 1);
+      state.filters[key] = arr;
+    }
+
+    function refreshFilterPills() {
+      document.querySelectorAll(".filter-pill").forEach(pill => {
+        const key = pill.getAttribute("data-filter");
+        const arr = state.filters[key];
+        pill.classList.toggle("has-selection", Array.isArray(arr) && arr.length > 0);
+      });
+    }
+
+    // --------- FEATURES (single-click) ---------
+    document.querySelectorAll(".feature-toggle").forEach(el => {
+      el.addEventListener("click", () => {
+        const feat = el.getAttribute("data-feature");
+        state.filters.features[feat] = !state.filters.features[feat];
+        applyFilters();
+      });
+    });
+
+    function refreshFeatureToggles() {
+      document.querySelectorAll(".feature-toggle").forEach(el => {
+        const feat = el.getAttribute("data-feature");
+        const on = !!state.filters.features[feat];
+        el.classList.toggle("active", on);
+      });
+    }
+
+    // Init
+    loadData();
   </script>
-
-  <!-- Red receipt pill -->
- <div class="receipt-pill" id="open-receipt">
-  <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
-  <span class="receipt-pill-count" id="receipt-count">0</span>
-</div>
-  <!-- Invoice Popup -->
-  <div id="invoice-popup" class="invoice-popup">
-    <div class="invoice-popup-inner">
-
-      <div class="invoice-header">
-        <h2>Invoice</h2>
-        <p id="invoice-date"></p>
-      </div>
-
-      <div class="invoice-body">
-
-        <div class="loyalty-row">
-          <span>Loyalty customer</span>
-          <span class="dropdown-arrow">▼</span>
-        </div>
-
-        <!-- CART ITEMS -->
-        <div id="invoice-items"></div>
-
-      </div>
-
-      <div class="invoice-totals">
-        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
-        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
-        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
-      </div>
-
-      <div id="close-receipt" class="invoice-close">Close</div>
-    </div>
-  </div>
-
-  <script src="/js/tony.js" defer></script>
-  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
