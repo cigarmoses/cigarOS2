@@ -1,0 +1,101 @@
+/* GLOBAL SF TYPE SYSTEM FOR CIGAROS2 */
+
+/* 1. Font-family tokens */
+:root {
+  /* Use Display for big stuff, Text for body.
+     Browsers will fall back gracefully if SF is not present. */
+  --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-text: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  --weight-display-heavy: 800;
+  --weight-display-bold: 700;
+  --weight-text-semibold: 600;
+  --weight-text-regular: 400;
+}
+
+/* 2. Base body */
+body {
+  font-family: var(--font-text);
+  font-weight: var(--weight-text-regular);
+}
+
+/* 3. HERO TITLES (e.g. MON, big headers on any screen) */
+.date-headline .dow,
+.pos-hero-title,
+.home-hero-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display-heavy); /* Display Heavy */
+}
+
+/* 4. PAGE TITLES (e.g. Today, POS, Loyalty, Learn, etc.) */
+.top-title,
+.pos-screen-title,
+.page-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display-bold);  /* Display Bold */
+}
+
+/* 5. BIG NUMBERS / STATS (133 cigars, 1.6 sales, 30 avg, etc.) */
+.card-value,
+.pos-stat-value,
+.stat-number {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display-bold);  /* Display Bold/Heavy */
+}
+
+/* 6. SECTION LABELS (CIGARS / SALES / AVG / VITOLA / BRAND / HISTORY, etc.) */
+.card-label,
+.section-label,
+.pos-section-label,
+.pill-label {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display-bold);  /* Display Bold */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;                   /* tight but still “UI” */
+}
+
+/* 7. IMPORTANT NAMES (customer names, cigar names in lists, etc.) */
+.history-name,
+.simple-list .label,
+.list-row-title,
+.customer-name,
+.cigar-name {
+  font-family: var(--font-text);
+  font-weight: var(--weight-text-semibold); /* Text Semibold */
+}
+
+/* 8. BODY / META TEXT (amounts, counts, subtitles) */
+.history-amount,
+.simple-list .meta,
+.small-label,
+.meta-text,
+.helper-text {
+  font-family: var(--font-text);
+  font-weight: var(--weight-text-regular);  /* Text Regular */
+}
+
+/* 9. Links (History, View all transactions, etc.) */
+a,
+.link-btn,
+.history-btn {
+  font-family: var(--font-text);
+  font-weight: var(--weight-text-semibold);
+}
+
+/* 10. Fallback for any .display-* utility classes you might add later */
+.display-heavy {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display-heavy);
+}
+.display-bold {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display-bold);
+}
+.text-semibold {
+  font-family: var(--font-text);
+  font-weight: var(--weight-text-semibold);
+}
+.text-regular {
+  font-family: var(--font-text);
+  font-weight: var(--weight-text-regular);
+}
