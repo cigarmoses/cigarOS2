@@ -81,18 +81,18 @@
     .filters {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-bottom: 16px;
+      gap: 4px;
+      margin-bottom: 10px;
     }
 
     .filter-row {
       display: flex;
+      flex-wrap: wrap;           /* ✅ wrap so no horizontal scroll */
       gap: 8px;
-      flex-wrap: nowrap;
     }
 
     .filter-pill {
-      flex: 1;
+      flex: 1 1 calc(50% - 8px); /* ✅ 2 per row on mobile */
       padding: 8px 10px;
       border-radius: 10px;
       background: var(--pill);
@@ -115,6 +115,12 @@
     .filter-pill.has-selection {
       background: var(--pill-active);
       color: var(--pill-active-text);
+    }
+
+    @media (min-width: 768px) {
+      .filter-pill {
+        flex: 1 1 calc(33.333% - 8px);   /* 3 per row on larger screens */
+      }
     }
 
     /* Features row */
@@ -387,7 +393,7 @@
       </div>
     </div>
 
-    <!-- Line 4: Features (single click) -->
+    <!-- Line 4: Features (single click, no popup) -->
     <div class="features-row">
       <div class="feature-toggle" data-feature="boxPressed">
         <span class="feature-label">Box-Pressed</span>
@@ -439,9 +445,8 @@
   </div>
 
   <script>
-    // ---- DATA SOURCE ----
-    // Point this at your hub JSON (full cigars inventory)
-    const DATA_URL = "/pos/pos-hub.json"; // change if needed
+    // ====== DATA SOURCE: CSV HUB ======
+    const DATA_URL = "/hub/hub_11-5-25.csv";
 
     let allCigars = [];
     let currentFiltered = [];
@@ -476,7 +481,7 @@
     const filterConfig = {
       manufacturer: { label: "Manufacturer", field: "manufacturer" },
       brand:       { label: "Brand",        field: "brand" },
-      priceRange:  { label: "Price range",  field: "__priceRange" },
+      priceRange:  { label: "Price range",  field: "msrp" }, // handled separately
       vitola:      { label: "Vitola",       field: "vitola" },
       rg:          { label: "RG",           field: "ring" },
       length:      { label: "Length",       field: "length" },
@@ -497,16 +502,107 @@
       { label: "$30+",        min:30,  max:9999 }
     ];
 
-    // --------- LOAD DATA ---------
+    // ------ CSV PARSER (simple, assumes no quoted commas) ------
+    function parseCSV(text) {
+      const rows = text.trim().split(/\r?\n/);
+      if (!rows.length) return { headers: [], data: [] };
+      const headers = rows[0].split(",").map(h => h.trim());
+      const data = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i].split(",");
+        if (row.length === 1 && row[0].trim() === "") continue;
+        const obj = {};
+        headers.forEach((h, idx) => {
+          obj[h] = (row[idx] || "").trim();
+        });
+        data.push(obj);
+      }
+      return { headers, data };
+    }
+
+    // Build a map of canonical fields -> header index
+    function buildColumnMap(headers) {
+      const norms = headers.map(h => h.toLowerCase().replace(/[^a-z0-9]/g,""));
+
+      function findIndex(candidates) {
+        for (let i = 0; i < norms.length; i++) {
+          for (const c of candidates) {
+            if (norms[i].includes(c)) return i;
+          }
+        }
+        return -1;
+      }
+
+      return {
+        brand:        findIndex(["brand"]),
+        manufacturer: findIndex(["manufacturer","factory"]),
+        cigar:        findIndex(["cigar","cigarname"]),
+        line:         findIndex(["line"]),
+        vitola:       findIndex(["vitola","size"]),
+        ring:         findIndex(["ring","rg","ringgauge"]),
+        length:       findIndex(["length","len"]),
+        wrapper:      findIndex(["wrapper"]),
+        wrapper_shade:findIndex(["wrappershade","shade"]),
+        binder:       findIndex(["binder"]),
+        filler:       findIndex(["filler"]),
+        origin:       findIndex(["origin","country"]),
+        strength:     findIndex(["strength","body"]),
+        shape:        findIndex(["shape"]),
+        msrp:         findIndex(["msrp","price","retail"]),
+        box_pressed:  findIndex(["boxpressed","boxpress"]),
+        tubo:         findIndex(["tubo"]),
+        flavored:     findIndex(["flavored","infused"]),
+        tin:          findIndex(["tin"]),
+        pack:         findIndex(["pack"]),
+        barberpole:   findIndex(["barberpole"])
+      };
+    }
+
+    function makeCigar(row, headers, map) {
+      function pick(key) {
+        const idx = map[key];
+        if (idx == null || idx < 0) return "";
+        const h = headers[idx];
+        return row[h] || "";
+      }
+      return {
+        brand:        pick("brand"),
+        manufacturer: pick("manufacturer"),
+        cigar:        pick("cigar"),
+        line:         pick("line"),
+        vitola:       pick("vitola"),
+        ring:         pick("ring"),
+        length:       pick("length"),
+        wrapper:      pick("wrapper"),
+        wrapper_shade:pick("wrapper_shade"),
+        binder:       pick("binder"),
+        filler:       pick("filler"),
+        origin:       pick("origin"),
+        strength:     pick("strength"),
+        shape:        pick("shape"),
+        msrp:         pick("msrp"),
+        box_pressed:  pick("box_pressed"),
+        tubo:         pick("tubo"),
+        flavored:     pick("flavored"),
+        tin:          pick("tin"),
+        pack:         pick("pack"),
+        barberpole:   pick("barberpole")
+      };
+    }
+
+    // --------- LOAD DATA FROM CSV ---------
     async function loadData() {
       try {
         const res = await fetch(DATA_URL);
-        allCigars = await res.json();
+        const text = await res.text();
+        const { headers, data } = parseCSV(text);
+        const map = buildColumnMap(headers);
+        allCigars = data.map(row => makeCigar(row, headers, map));
       } catch (e) {
         console.error("Error loading cigars data", e);
         allCigars = [];
       }
-      applyFilters();
+      applyFilters();   // with no filters = all brands
     }
 
     // Brand slug for icon filenames
@@ -514,7 +610,7 @@
       return String(brand || "")
         .toLowerCase()
         .replace(/&/g, "and")
-        .replace(/[^a-z0-9]/g, ""); // removes spaces, periods, etc.
+        .replace(/[^a-z0-9]/g, "");
     }
 
     // --------- RENDER BRAND GRID ---------
@@ -551,7 +647,15 @@
       }).join("");
     }
 
-    // --------- APPLY FILTERS (returns cigar list, then we aggregate by brand) ---------
+    // --------- APPLY FILTERS (on canonical cigar objects) ---------
+    function truthy(v) {
+      if (v === true) return true;
+      if (typeof v === "number") return v !== 0;
+      if (!v) return false;
+      const s = String(v).toLowerCase();
+      return ["y","yes","true","1"].includes(s);
+    }
+
     function applyFilters() {
       const text = state.searchText.trim().toLowerCase();
 
@@ -559,36 +663,36 @@
         // master search
         if (text) {
           const haystack = [
-            c.cigar, c.name, c.line, c.brand, c.manufacturer,
+            c.cigar, c.line, c.brand, c.manufacturer,
             c.vitola, c.wrapper, c.wrapper_shade, c.binder, c.filler,
-            c.origin, c.strength, c.shape, c.notes, c.size
+            c.origin, c.strength, c.shape
           ].filter(Boolean).join(" ").toLowerCase();
 
           if (!haystack.includes(text)) return false;
         }
 
-        // normal multi-select filters
+        // multi-select filters
         for (const key of Object.keys(filterConfig)) {
           const selected = state.filters[key];
           if (!selected || !selected.length) continue;
 
           if (key === "priceRange") {
-            const price = parseFloat(c.msrp || c.price || c.retail || "0") || 0;
+            const price = parseFloat(c.msrp || "0") || 0;
             const ok = selected.some(label => {
               const range = PRICE_RANGES.find(r => r.label === label);
               return range && price >= range.min && price <= range.max;
             });
             if (!ok) return false;
           } else {
-            const field = filterConfig[key].field;
-            const val = (c[field] != null ? String(c[field]) : "").trim();
+            const fieldName = filterConfig[key].field;
+            const val = (c[fieldName] != null ? String(c[fieldName]) : "").trim();
             if (!selected.includes(val)) return false;
           }
         }
 
-        // feature toggles
+        // features
         const ft = state.filters.features;
-        if (ft.boxPressed && !truthy(c.box_pressed || c.boxpressed)) return false;
+        if (ft.boxPressed && !truthy(c.box_pressed)) return false;
         if (ft.tubo       && !truthy(c.tubo)) return false;
         if (ft.flavored   && !truthy(c.flavored)) return false;
         if (ft.tin        && !truthy(c.tin)) return false;
@@ -602,14 +706,6 @@
       renderBrandGrid(list);
       refreshFilterPills();
       refreshFeatureToggles();
-    }
-
-    function truthy(v) {
-      if (v === true) return true;
-      if (typeof v === "number") return v !== 0;
-      if (!v) return false;
-      const s = String(v).toLowerCase();
-      return ["y","yes","true","1"].includes(s);
     }
 
     // --------- MASTER SEARCH ---------
@@ -646,10 +742,10 @@
       if (key === "priceRange") {
         activeOptionsAll = PRICE_RANGES.map(r => r.label);
       } else {
-        const field = cfg.field;
+        const fieldName = cfg.field;
         const set = new Set();
         allCigars.forEach(c => {
-          const val = c[field];
+          const val = c[fieldName];
           if (val != null && String(val).trim() !== "") {
             set.add(String(val).trim());
           }
