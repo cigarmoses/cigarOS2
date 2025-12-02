@@ -11,7 +11,6 @@
       --surface: #ffffff;
       --ink: #0f1a2c;
       --muted: #6a7586;
-      --radius-lg: 22px;
       --shadow-soft: 0 10px 25px rgba(15, 26, 44, 0.12);
     }
 
@@ -35,7 +34,7 @@
       padding: 18px 16px 32px;
     }
 
-    /* Top bar to match Loyalty */
+    /* Top bar to match Loyalty ("‹ Back" + big Learn) */
     .learn-topbar {
       display: flex;
       align-items: center;
@@ -61,66 +60,47 @@
       letter-spacing: -0.03em;
     }
 
-    /* Grid */
+    /* Circle grid – mimic home layout */
     .learn-grid {
       margin-top: 8px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 24px 32px; /* row gap / column gap */
     }
 
-    .learn-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      text-align: center;
-      padding: 14px 10px 16px;
-      border-radius: var(--radius-lg);
-      background: var(--surface);
+    .learn-circle-link {
       text-decoration: none;
       color: var(--ink);
-      box-shadow: var(--shadow-soft);
-      transition: transform 0.12s ease-out, box-shadow 0.12s ease-out,
-        background 0.12s ease-out;
     }
 
-    .learn-card:active {
-      transform: translateY(1px) scale(0.98);
-      box-shadow: 0 6px 16px rgba(15, 26, 44, 0.15);
-      background: #f9fbff;
-    }
-
-    .learn-icon-circle {
-      width: 58px;
-      height: 58px;
+    .learn-circle {
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      background: radial-gradient(circle at 30% 20%, #ffffff, #d7e4ff);
+      background: var(--surface);
+      box-shadow: var(--shadow-soft);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 8px;
+      text-align: center;
+      padding: 12px;
+      transition: transform 0.12s ease-out, box-shadow 0.12s ease-out, background 0.12s ease-out;
+    }
+
+    .learn-circle:active {
+      transform: translateY(1px) scale(0.97);
       box-shadow: 0 6px 16px rgba(15, 26, 44, 0.18);
-      overflow: hidden;
+      background: #f9fbff;
     }
 
-    .learn-icon-circle img {
-      width: 30px;
-      height: 30px;
-      display: block;
-    }
-
-    .learn-icon-initial {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-    }
-
-    .learn-label {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.03em;
+    .learn-circle-label {
+      font-size: 14px;
+      font-weight: 700;  /* bold */
       text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #000000;    /* black as requested */
+      line-height: 1.2;
     }
 
     @media (min-width: 520px) {
@@ -130,12 +110,16 @@
       .learn-title-main {
         font-size: 34px;
       }
+      .learn-circle {
+        width: 130px;
+        height: 130px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="learn-shell">
-    <!-- Header matching Loyalty: just Back + Learn -->
+    <!-- Header matching Loyalty -->
     <header class="learn-topbar">
       <a href="/" class="learn-back">
         <span>‹</span>Back
@@ -143,71 +127,56 @@
     </header>
     <h1 class="learn-title-main">Learn</h1>
 
-    <!-- Grid of circular icon buttons (no captions) -->
+    <!-- Circle-only layout like Home screen -->
     <main>
       <div class="learn-grid">
         <!-- Ring -->
-        <a href="/learn/ring/" class="learn-card">
-          <div class="learn-icon-circle">
-            <!-- Replace with icon if you have it:
-            <img src="/img/icons/learn-ring.svg" alt="Ring" /> -->
-            <span class="learn-icon-initial">R</span>
+        <a href="/learn/ring/" class="learn-circle-link">
+          <div class="learn-circle">
+            <div class="learn-circle-label">Ring</div>
           </div>
-          <div class="learn-label">Ring</div>
         </a>
 
         <!-- Vitolas -->
-        <a href="/learn/vitolas/" class="learn-card">
-          <div class="learn-icon-circle">
-            <!-- <img src="/img/icons/learn-vitolas.svg" alt="Vitolas" /> -->
-            <span class="learn-icon-initial">V</span>
+        <a href="/learn/vitolas/" class="learn-circle-link">
+          <div class="learn-circle">
+            <div class="learn-circle-label">Vitolas</div>
           </div>
-          <div class="learn-label">Vitolas</div>
         </a>
 
         <!-- Wrapper Shade -->
-        <a href="/learn/wrapper-shade/" class="learn-card">
-          <div class="learn-icon-circle">
-            <!-- <img src="/img/icons/learn-wrapper.svg" alt="Wrapper Shade" /> -->
-            <span class="learn-icon-initial">W</span>
+        <a href="/learn/wrapper-shade/" class="learn-circle-link">
+          <div class="learn-circle">
+            <div class="learn-circle-label">Wrapper<br/>Shade</div>
           </div>
-          <div class="learn-label">Wrapper Shade</div>
         </a>
 
         <!-- Shapes -->
-        <a href="/learn/shapes/" class="learn-card">
-          <div class="learn-icon-circle">
-            <!-- <img src="/img/icons/learn-shapes.svg" alt="Shapes" /> -->
-            <span class="learn-icon-initial">S</span>
+        <a href="/learn/shapes/" class="learn-circle-link">
+          <div class="learn-circle">
+            <div class="learn-circle-label">Shapes</div>
           </div>
-          <div class="learn-label">Shapes</div>
         </a>
 
         <!-- Glossary -->
-        <a href="/learn/glossary/" class="learn-card">
-          <div class="learn-icon-circle">
-            <!-- <img src="/img/icons/learn-glossary.svg" alt="Glossary" /> -->
-            <span class="learn-icon-initial">G</span>
+        <a href="/learn/glossary/" class="learn-circle-link">
+          <div class="learn-circle">
+            <div class="learn-circle-label">Glossary</div>
           </div>
-          <div class="learn-label">Glossary</div>
         </a>
 
         <!-- Brands -->
-        <a href="/learn/brands/" class="learn-card">
-          <div class="learn-icon-circle">
-            <!-- <img src="/img/icons/learn-brands.svg" alt="Brands" /> -->
-            <span class="learn-icon-initial">B</span>
+        <a href="/learn/brands/" class="learn-circle-link">
+          <div class="learn-circle">
+            <div class="learn-circle-label">Brands</div>
           </div>
-          <div class="learn-label">Brands</div>
         </a>
 
         <!-- Lists -->
-        <a href="/learn/lists/" class="learn-card">
-          <div class="learn-icon-circle">
-            <!-- <img src="/img/icons/learn-lists.svg" alt="Lists" /> -->
-            <span class="learn-icon-initial">L</span>
+        <a href="/learn/lists/" class="learn-circle-link">
+          <div class="learn-circle">
+            <div class="learn-circle-label">Lists</div>
           </div>
-          <div class="learn-label">Lists</div>
         </a>
       </div>
     </main>
