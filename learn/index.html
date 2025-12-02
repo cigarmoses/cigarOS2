@@ -11,7 +11,6 @@
       --surface: #ffffff;
       --ink: #0f1a2c;
       --muted: #6a7586;
-      --pill: #f3f7fb;
       --radius-lg: 22px;
       --shadow-soft: 0 10px 25px rgba(15, 26, 44, 0.12);
     }
@@ -36,65 +35,35 @@
       padding: 18px 16px 32px;
     }
 
-    /* Top bar */
+    /* Top bar to match Loyalty */
     .learn-topbar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
+      justify-content: flex-start;
+      margin-bottom: 4px;
     }
 
     .learn-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: none;
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-      color: var(--ink);
-      font-size: 13px;
-      font-weight: 500;
       text-decoration: none;
-    }
-
-    .learn-back-icon {
+      color: #007aff; /* iOS blue */
       font-size: 16px;
-      line-height: 1;
+      font-weight: 400;
     }
 
-    .learn-header-text {
-      flex: 1;
-      text-align: right;
+    .learn-back span {
+      margin-right: 2px;
     }
 
-    .learn-eyebrow {
-      display: block;
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 2px;
-    }
-
-    .learn-title {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .learn-subtitle {
-      margin: 4px 0 0;
-      font-size: 13px;
-      line-height: 1.4;
-      color: var(--muted);
+    .learn-title-main {
+      margin: 4px 0 16px;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
     }
 
     /* Grid */
     .learn-grid {
-      margin-top: 22px;
+      margin-top: 8px;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 16px;
@@ -141,7 +110,6 @@
       display: block;
     }
 
-    /* If icons aren't set up yet, this initial is a fallback */
     .learn-icon-initial {
       font-size: 22px;
       font-weight: 700;
@@ -155,49 +123,37 @@
       text-transform: uppercase;
     }
 
-    .learn-caption {
-      margin-top: 4px;
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.3;
-    }
-
     @media (min-width: 520px) {
       .learn-shell {
         padding-top: 26px;
       }
-      .learn-title {
-        font-size: 26px;
+      .learn-title-main {
+        font-size: 34px;
       }
     }
   </style>
 </head>
 <body>
   <div class="learn-shell">
-    <!-- Top bar -->
+    <!-- Header matching Loyalty: just Back + Learn -->
     <header class="learn-topbar">
       <a href="/" class="learn-back">
-        <span class="learn-back-icon">‹</span>
-        <span>Home</span>
+        <span>‹</span>Back
       </a>
-      <div class="learn-header-text">
-        <span class="learn-eyebrow">Learn</span>
-        <h1 class="learn-title">Library</h1>
-        <p class="learn-subtitle">Tap a topic to explore guides, visuals & definitions.</p>
-      </div>
     </header>
+    <h1 class="learn-title-main">Learn</h1>
 
-    <!-- Grid of circular icon buttons -->
+    <!-- Grid of circular icon buttons (no captions) -->
     <main>
       <div class="learn-grid">
         <!-- Ring -->
         <a href="/learn/ring/" class="learn-card">
           <div class="learn-icon-circle">
-            <!-- If you have an icon, swap this line for: <img src="/img/icons/learn-ring.svg" alt="Ring" /> -->
+            <!-- Replace with icon if you have it:
+            <img src="/img/icons/learn-ring.svg" alt="Ring" /> -->
             <span class="learn-icon-initial">R</span>
           </div>
           <div class="learn-label">Ring</div>
-          <div class="learn-caption">Ring gauge sizing guide.</div>
         </a>
 
         <!-- Vitolas -->
@@ -207,7 +163,6 @@
             <span class="learn-icon-initial">V</span>
           </div>
           <div class="learn-label">Vitolas</div>
-          <div class="learn-caption">Common cigar formats & names.</div>
         </a>
 
         <!-- Wrapper Shade -->
@@ -217,7 +172,6 @@
             <span class="learn-icon-initial">W</span>
           </div>
           <div class="learn-label">Wrapper Shade</div>
-          <div class="learn-caption">From Claro to Oscuro.</div>
         </a>
 
         <!-- Shapes -->
@@ -227,7 +181,6 @@
             <span class="learn-icon-initial">S</span>
           </div>
           <div class="learn-label">Shapes</div>
-          <div class="learn-caption">Parejos, figurados & more.</div>
         </a>
 
         <!-- Glossary -->
@@ -237,7 +190,6 @@
             <span class="learn-icon-initial">G</span>
           </div>
           <div class="learn-label">Glossary</div>
-          <div class="learn-caption">Key cigar terms explained.</div>
         </a>
 
         <!-- Brands -->
@@ -247,7 +199,6 @@
             <span class="learn-icon-initial">B</span>
           </div>
           <div class="learn-label">Brands</div>
-          <div class="learn-caption">Major families & portfolios.</div>
         </a>
 
         <!-- Lists -->
@@ -257,7 +208,6 @@
             <span class="learn-icon-initial">L</span>
           </div>
           <div class="learn-label">Lists</div>
-          <div class="learn-caption">Top 25s, rankings & more.</div>
         </a>
       </div>
     </main>
