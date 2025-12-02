@@ -141,7 +141,7 @@
       font-size: 22px;
       font-weight: 700;
       margin: 0;
-      font-family: var(--font-display); /* Display Bold */
+      font-family: var(--font-display);
     }
     .invoice-date {
       margin: 0;
@@ -461,4 +461,83 @@
       });
 
       const subtotalEl = document.getElementById("invoice-subtotal");
-      const tax
+      const taxEl = document.getElementById("invoice-tax");
+      const totalEl = document.getElementById("invoice-total");
+
+      const tax = subtotal * POS_TAX_RATE;
+      const total = subtotal + tax;
+
+      if (subtotalEl) subtotalEl.textContent = `$${formatMoney(subtotal)}`;
+      if (taxEl) taxEl.textContent = `$${formatMoney(tax)}`;
+      if (totalEl) totalEl.textContent = `$${formatMoney(total)}`;
+
+      container.querySelectorAll(".invoice-qty-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest(".invoice-item");
+          if (!row) return;
+          const index = Number(row.dataset.index || "0");
+          const dir = Number(btn.getAttribute("data-dir") || "0");
+          const item = demoCartItems[index];
+          if (!item) return;
+          const newQty = item.qty + dir;
+          if (newQty < 0) return;
+          item.qty = newQty;
+          renderInvoice();
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const dateEl = document.getElementById("invoice-date");
+      if (dateEl) {
+        const d = new Date();
+        const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+        const dateStr = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
+        const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+        dateEl.textContent = `${weekday}, ${dateStr} — ${timeStr}`;
+      }
+      renderInvoice();
+    });
+  </script>
+
+  <div class="receipt-pill" id="open-receipt">
+    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
+    <span class="receipt-pill-count" id="receipt-count">0</span>
+  </div>
+
+  <div id="invoice-popup" class="invoice-popup">
+    <div class="invoice-popup-inner">
+
+      <div class="invoice-header">
+        <h2 class="invoice-title">INVOICE</h2>
+        <p class="invoice-date" id="invoice-date"></p>
+      </div>
+
+      <div class="invoice-body">
+        <div class="loyalty-row">
+          <span>Loyalty customer</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+
+        <div id="invoice-items"></div>
+      </div>
+
+      <div class="invoice-totals">
+        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
+        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
+        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
+      </div>
+
+      <div id="close-receipt" class="invoice-close">Close</div>
+    </div>
+  </div>
+
+  <!-- Tony floating icon (bottom-left, same on all pages) -->
+  <button class="tony-fab" id="tonyFab">
+    <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
+  </button>
+
+  <script src="/js/tony.js" defer></script>
+  <script src="/pos/pos.js" defer></script>
+</body>
+</html>
