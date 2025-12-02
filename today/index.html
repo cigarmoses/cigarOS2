@@ -13,6 +13,7 @@
       --muted: #8e8e93;
       --accent: #7c5cff;
       --accent-soft: #efe8ff;
+      --link-blue: #007aff;
       --pill-yellow-soft: #fff5d6;
       --radius-lg: 24px;
       --radius-md: 18px;
@@ -56,7 +57,7 @@
       align-items: center;
       gap: 4px;
       font-size: 15px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--ink);
     }
     .back-arrow {
@@ -72,9 +73,10 @@
       border: none;
       background: transparent;
       font-size: 15px;
-      font-weight: 500;
-      color: var(--accent);
+      font-weight: 600;
+      color: var(--link-blue);
       padding: 6px 4px;
+      text-decoration: underline;
     }
 
     /* Date headline */
@@ -83,15 +85,15 @@
     }
     .date-headline .month {
       font-size: 13px;
-      letter-spacing: 0.04em;  /* tighter */
+      letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--muted);
       font-weight: 600;
     }
     .date-headline .dow {
-      font-size: 42px;
+      font-size: 52px;        /* bigger MON */
       font-weight: 800;
-      letter-spacing: 0.02em;  /* tighter */
+      letter-spacing: 0.02em;
     }
 
     /* Hidden date picker */
@@ -114,9 +116,9 @@
     .card-label {
       font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 0.05em; /* tighter than before */
-      color: var(--muted);
-      font-weight: 650;
+      letter-spacing: 0.05em;
+      color: var(--ink);      /* black */
+      font-weight: 700;       /* bold */
       margin-bottom: 2px;
     }
     .card-value {
@@ -136,10 +138,10 @@
     }
     .card-label-pill span {
       font-size: 12px;
-      letter-spacing: 0.05em; /* tighter */
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      font-weight: 700;
-      color: #b07800;
+      font-weight: 700;       /* bold */
+      color: var(--ink);      /* black */
     }
 
     /* Top stats row: Cigars / Sales / Avg */
@@ -212,23 +214,35 @@
       font-size: 14px;
     }
 
-    /* Brand footer (Tony only, no text) */
-    .brand-card-footer {
-      margin-top: 6px;
-      display: flex;
-      justify-content: flex-end;
-      align-items: flex-end;
+    /* Link-style button (View all transactions) */
+    .link-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 0 0;
+      margin-top: 4px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--link-blue);
+      text-decoration: underline;
+      cursor: pointer;
+      text-align: left;
     }
-    .tony-avatar {
-      width: 34px;
-      height: 34px;
+
+    /* Tony floating icon bottom-left */
+    .tony-fab {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      width: 46px;
+      height: 46px;
       border-radius: 999px;
-      overflow: hidden;
-      background: #f3f3f6;
+      background: #ffffff;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.18);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 26px;
+      z-index: 40;
     }
 
     @media (max-width: 360px) {
@@ -291,18 +305,19 @@
           <span>Brand</span>
         </div>
         <ul class="simple-list" id="brandList"></ul>
-        <div class="brand-card-footer">
-          <div class="tony-avatar">🧔🏻‍♂️</div>
-        </div>
       </article>
 
       <!-- History -->
       <article class="card history-card full-row">
         <div class="card-label">History</div>
         <ul class="history-list" id="historyList"></ul>
+        <button class="link-btn" id="viewAllBtn">View all transactions</button>
       </article>
     </section>
   </div>
+
+  <!-- Tony floating icon (bottom-left, same on all pages) -->
+  <button class="tony-fab" id="tonyFab">🧔🏻‍♂️</button>
 
   <script>
     /************************************************************
@@ -493,7 +508,7 @@
       salesTotalEl.textContent = thousands.toFixed(1);
       avgSaleEl.textContent = Math.round(avgSale);
 
-      // Vitola list (top 3) – counts only
+      // Vitola list (top 3)
       const vitolaEntries = Object.entries(vitolaCounts)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3);
@@ -507,7 +522,7 @@
         vitolaListEl.appendChild(li);
       });
 
-      // Brand list (top 3) – counts only
+      // Brand list (top 3)
       const brandEntries = Object.entries(brandCounts)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3);
@@ -572,6 +587,18 @@
       if (!ds) return;
       currentDate = ds;
       updateSummaryForDate(ds);
+    });
+
+    // View all transactions link
+    document.getElementById("viewAllBtn").addEventListener("click", () => {
+      // Update this path to wherever your full transaction list lives
+      window.location.href = "/reports/transactions/";
+    });
+
+    // Tony FAB – route to Tony / Ask Tony overlay
+    document.getElementById("tonyFab").addEventListener("click", () => {
+      // Update this to your Tony page or overlay trigger
+      window.location.href = "/tony/";
     });
 
     // Initial load
