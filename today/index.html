@@ -5,6 +5,10 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Today • CigarOS 2</title>
+
+  <!-- Global typography system for SF Pro Display/Text -->
+  <link rel="stylesheet" href="/css/type.css" />
+
   <style>
     :root {
       --bg: #f5f5f7;
@@ -24,8 +28,8 @@
       margin: 0;
       background: var(--bg);
       color: var(--ink);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-                   "SF Pro Text", system-ui, sans-serif;
+      /* Base text uses SF Pro Text via global type.css */
+      font-family: var(--font-text);
       -webkit-font-smoothing: antialiased;
     }
 
