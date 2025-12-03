@@ -331,7 +331,6 @@
       color: #fff;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
   <div class="pos-shell">
@@ -463,7 +462,7 @@
   </div>
 
   <script>
-    const HUB_CSV_URL = "/hub/hub_11-5-25.csv";
+    const HUB_URL = "/hub/hub_11-5-25.json";
 
     let hubRows = [];
     let baseCigarRows = [];
@@ -518,24 +517,33 @@
       return "$20+";
     }
 
-    function loadHub() {
-      fetch(HUB_CSV_URL)
-        .then(r => r.text())
-        .then(text => {
-          const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-          hubRows = parsed.data;
+    function normaliseBrandImg(raw) {
+      const v = (raw || "").trim();
+      if (!v) return "";
+      if (v.startsWith("/img/")) return v;
+      if (v.startsWith("/")) return "/img/icons/brands" + v;
+      if (v.startsWith("img/")) return "/" + v;
+      return "/img/icons/brands/" + v;
+    }
 
+    function loadHub() {
+      fetch(HUB_URL)
+        .then(r => {
+          if (!r.ok) throw new Error("Hub JSON failed to load");
+          return r.json();
+        })
+        .then(data => {
+          hubRows = Array.isArray(data) ? data : [];
           baseCigarRows = hubRows.filter(r => r["Cigar"] && r["Cigar"].trim() !== "");
 
-          // Build brand map { Brand -> Brand IMG }
+          // Build brand map { Brand -> Brand IMG path }
           brandMap = new Map();
           baseCigarRows.forEach(r => {
             const brand = (r["Brand"] || "").trim();
             if (!brand) return;
             if (!brandMap.has(brand)) {
-              let imgPath = (r["Brand IMG"] || "").trim();
-              if (imgPath && !imgPath.startsWith("/")) imgPath = "/" + imgPath;
-              brandMap.set(brand, imgPath || "");
+              const imgPath = normaliseBrandImg(r["Brand IMG"]);
+              brandMap.set(brand, imgPath);
             }
           });
 
@@ -544,7 +552,7 @@
           initFilterButtons();
         })
         .catch(err => {
-          console.error("Error loading hub CSV:", err);
+          console.error("Error loading hub JSON:", err);
           document.getElementById("cigarCount").textContent = "Error loading data";
         });
     }
@@ -575,12 +583,7 @@
       }
     }
 
-    function getActivePriceBuckets() {
-      return Array.from(activeFilters.priceRange);
-    }
-
     function rowMatchesFilters(row) {
-      // Master search
       const searchVal = document.getElementById("masterSearch").value.trim().toLowerCase();
       if (searchVal) {
         const haystack = [
@@ -590,7 +593,7 @@
         if (!haystack.includes(searchVal)) return false;
       }
 
-      // Feature filters
+      // Feature filters (columns like "Box Pressed", "Tubo", etc.)
       for (const featureColumn of featureFilters) {
         const val = (row[featureColumn] || "").toString().trim();
         if (!val) return false;
@@ -653,7 +656,6 @@
         filtered.length.toLocaleString() + " cigars";
     }
 
-    // Filter modal logic
     function initFilterButtons() {
       document.querySelectorAll(".filter-pill").forEach(btn => {
         btn.addEventListener("click", () => {
