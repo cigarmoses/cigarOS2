@@ -326,3 +326,148 @@ document.addEventListener("DOMContentLoaded", () => {
     loadContacts();
   }
 });
+
+
+// ===========================
+// GLOBAL FILTER MODAL ENGINE
+// ===========================
+
+(function () {
+  const filterModal = document.getElementById("filter-modal");
+  const filterModalTitle = document.getElementById("filter-modal-title");
+  const filterModalSearch = document.getElementById("filter-modal-search-input");
+  const filterModalList = document.getElementById("filter-modal-list");
+  const filterModalConfirm = document.getElementById("filter-modal-confirm");
+  const filterModalBack = document.querySelector(".filter-modal-back");
+  const filterModalBackdrop = document.querySelector(".filter-modal-backdrop");
+
+  let currentFilterId = null;
+  let currentFilterItems = []; // [{ value, label, iconSlug?, selected }]
+  let currentWithIcons = false;
+  let currentIconBasePath = "/img/icons/brands/"; // default for brand
+  let onFilterConfirm = null;
+
+  function brandSlug(name) {
+    if (!name) return "";
+    return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
+  function openFilterModal(config) {
+    const {
+      id,
+      title,
+      items,
+      withIcons = false,
+      iconBasePath = "/img/icons/brands/",
+      onConfirm,
+    } = config;
+
+    currentFilterId = id;
+    currentFilterItems = (items || []).map((item) => ({ ...item }));
+    currentWithIcons = !!withIcons;
+    currentIconBasePath = iconBasePath;
+    onFilterConfirm = typeof onConfirm === "function" ? onConfirm : null;
+
+    if (!filterModal) return; // safety if modal HTML isn't on this page
+
+    filterModalTitle.textContent = title || "";
+    filterModalSearch.value = "";
+
+    renderFilterModalList();
+    filterModal.classList.remove("filter-modal--hidden");
+    setTimeout(() => filterModalSearch && filterModalSearch.focus(), 0);
+  }
+
+  function closeFilterModal() {
+    if (!filterModal) return;
+    filterModal.classList.add("filter-modal--hidden");
+    currentFilterId = null;
+    currentFilterItems = [];
+    currentWithIcons = false;
+    onFilterConfirm = null;
+  }
+
+  function renderFilterModalList() {
+    if (!filterModalList) return;
+
+    const query = filterModalSearch ? filterModalSearch.value.trim().toLowerCase() : "";
+    filterModalList.innerHTML = "";
+
+    currentFilterItems
+      .filter((item) => {
+        if (!query) return true;
+        const label = (item.label || "").toLowerCase();
+        return label.includes(query);
+      })
+      .forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className =
+          "filter-row" + (item.selected ? " filter-row--selected" : "");
+        row.dataset.index = index.toString();
+
+        // Optional icon (Brands)
+        if (currentWithIcons && item.iconSlug) {
+          const iconWrapper = document.createElement("div");
+          iconWrapper.className = "filter-row-icon";
+
+          const img = document.createElement("img");
+          const slug = brandSlug(item.iconSlug);
+          img.src = currentIconBasePath + slug + ".svg";
+          img.alt = item.label || "";
+          iconWrapper.appendChild(img);
+
+          row.appendChild(iconWrapper);
+        }
+
+        // Checkbox square
+        const check = document.createElement("div");
+        check.className = "filter-row-check";
+        row.appendChild(check);
+
+        // Label
+        const label = document.createElement("div");
+        label.className = "filter-row-label";
+        label.textContent = item.label || "";
+        row.appendChild(label);
+
+        // Toggle selection
+        row.addEventListener("click", () => {
+          item.selected = !item.selected;
+          row.classList.toggle("filter-row--selected", item.selected);
+        });
+
+        filterModalList.appendChild(row);
+      });
+  }
+
+  // Live search
+  if (filterModalSearch) {
+    filterModalSearch.addEventListener("input", renderFilterModalList);
+  }
+
+  // Confirm button
+  if (filterModalConfirm) {
+    filterModalConfirm.addEventListener("click", () => {
+      if (onFilterConfirm) {
+        const selectedValues = currentFilterItems
+          .filter((i) => i.selected)
+          .map((i) => i.value);
+        onFilterConfirm(selectedValues);
+      }
+      closeFilterModal();
+    });
+  }
+
+  // Back button & backdrop click close the modal
+  if (filterModalBack) {
+    filterModalBack.addEventListener("click", closeFilterModal);
+  }
+  if (filterModalBackdrop) {
+    filterModalBackdrop.addEventListener("click", closeFilterModal);
+  }
+
+  // Expose globally
+  window.POSFilters = {
+    openFilterModal,
+  };
+})();
