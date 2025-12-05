@@ -3,825 +3,188 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>POS • Cigars</title>
+
+  <title>Cigars</title>
+
+  <!-- Global type system (SF Pro) + POS styles -->
+  <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-  <style>
-    :root {
-      --bg: #dfeaf0;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --card: #ffffff;
-      --pill: #f3f7fb;
-      --pill-border: #c4d3e6;
-      --accent: #0f7aff;
-      --accent-soft: #e0edff;
-    }
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      min-height: 100vh;
-    }
-
-    .pos-shell {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 12px 16px 40px;
-    }
-
-    /* Topbar */
-    .pos-topbar {
-      padding: 8px 0 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .pos-title {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-    .pos-back-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: var(--card);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-      text-decoration: none;
-    }
-    .pos-back-btn img {
-      width: 18px;
-      height: 18px;
-      display: block;
-    }
-
-    /* Search + filters */
-    .filters-shell {
-      margin-top: 12px;
-      padding: 12px;
-      background: var(--card);
-      border-radius: 18px;
-      box-shadow: 0 6px 14px rgba(9, 30, 66, 0.08);
-    }
-
-    .master-search {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid #cad4e4;
-      font-size: 14px;
-      outline: none;
-    }
-    .master-search::placeholder {
-      color: var(--muted);
-    }
-
-    .filter-lines {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .filter-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .filter-pill {
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--pill-border);
-      background: var(--pill);
-      font-size: 12px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .filter-pill span.label {
-      font-weight: 500;
-    }
-    .filter-pill.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-
-    .features-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 2px;
-    }
-
-    .feature-pill {
-      padding: 5px 9px;
-      border-radius: 999px;
-      border: 1px solid var(--pill-border);
-      background: var(--pill);
-      font-size: 11px;
-      cursor: pointer;
-    }
-    .feature-pill.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-
-    /* Brand grid */
-    .brand-block {
-      margin-top: 16px;
-      padding: 12px;
-      background: var(--card);
-      border-radius: 18px;
-      box-shadow: 0 6px 14px rgba(9, 30, 66, 0.08);
-    }
-    .brand-block-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .brand-block-title {
-      font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-    }
-    .brand-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 10px;
-    }
-    .brand-tile {
-      background: #f5f7fb;
-      border-radius: 14px;
-      padding: 10px 6px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-    }
-    .brand-tile img {
-      max-width: 52px;
-      max-height: 52px;
-      margin-bottom: 6px;
-    }
-    .brand-tile span {
-      font-size: 11px;
-      text-align: center;
-    }
-
-    /* Cigar list */
-    .cigar-list {
-      margin-top: 16px;
-      padding: 12px;
-      background: var(--card);
-      border-radius: 18px;
-      box-shadow: 0 6px 14px rgba(9, 30, 66, 0.08);
-    }
-    .cigar-list-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 8px;
-    }
-    .cigar-list-title {
-      font-size: 15px;
-      font-weight: 600;
-    }
-    .cigar-count {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .cigar-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    .cigar-table th,
-    .cigar-table td {
-      padding: 6px 6px;
-      text-align: left;
-      border-bottom: 1px solid #edf1f7;
-    }
-    .cigar-table th {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-    .cigar-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    @media (max-width: 768px) {
-      .pos-shell {
-        padding: 8px 10px 24px;
-      }
-      .cigar-table th:nth-child(3),
-      .cigar-table td:nth-child(3),
-      .cigar-table th:nth-child(6),
-      .cigar-table td:nth-child(6),
-      .cigar-table th:nth-child(7),
-      .cigar-table td:nth-child(7) {
-        display: none;
-      }
-    }
-
-    /* Filter modal */
-    .filter-modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 24, 46, 0.45);
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      z-index: 40;
-    }
-    .filter-modal-backdrop.active {
-      display: flex;
-    }
-    .filter-modal {
-      width: 100%;
-      max-width: 480px;
-      background: #f8fbff;
-      border-radius: 18px 18px 0 0;
-      padding: 12px 14px 14px;
-      box-shadow: 0 -8px 20px rgba(0,0,0,0.25);
-    }
-    .filter-modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-    .filter-modal-title {
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .filter-modal-close {
-      font-size: 20px;
-      border: none;
-      background: none;
-      cursor: pointer;
-      line-height: 1;
-    }
-    .filter-modal-search {
-      width: 100%;
-      padding: 7px 9px;
-      border-radius: 999px;
-      border: 1px solid #cad4e4;
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-    .filter-options {
-      max-height: 220px;
-      overflow-y: auto;
-      padding-right: 4px;
-      margin-bottom: 8px;
-    }
-    .filter-option {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      padding: 4px 2px;
-    }
-    .filter-option input {
-      cursor: pointer;
-    }
-
-    .filter-modal-actions {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      margin-top: 4px;
-    }
-    .btn-clear,
-    .btn-apply {
-      flex: 1;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .btn-clear {
-      background: #e5edf7;
-      color: var(--muted);
-    }
-    .btn-apply {
-      background: var(--accent);
-      color: #fff;
-    }
-  </style>
+  <link rel="stylesheet" href="/pos/cigars/cigars.css" />
 </head>
-<body>
-  <div class="pos-shell">
-    <header class="pos-topbar">
-      <div class="pos-title">POS • Cigars</div>
-      <a class="pos-back-btn" href="/pos/">
-        <img src="/uxui/back.svg" alt="Back" />
-      </a>
-    </header>
+<body class="cigars-page">
 
-    <section class="filters-shell">
-      <input id="masterSearch" class="master-search" type="search"
-             placeholder="Search manufacturer, brand, line, cigar…" />
+  <!-- Top bar with back button -->
+  <header class="cigars-topbar">
+    <button type="button" class="pos-back" id="cigars-back">
+      <!-- same icon treatment as other back buttons -->
+      <span class="pos-back-icon">←</span>
+      <span class="pos-back-label">Back</span>
+    </button>
+  </header>
 
-      <div class="filter-lines">
-        <!-- Line 1 -->
-        <div class="filter-line">
-          <button class="filter-pill" data-filter-id="manufacturer">
-            <span class="label">Manufacturer</span>
-          </button>
-          <button class="filter-pill" data-filter-id="brand">
-            <span class="label">Brand</span>
-          </button>
-        </div>
+  <main class="cigars-main">
+    <!-- Big page title -->
+    <section class="cigars-header">
+      <h1 class="cigars-title">Cigars</h1>
 
-        <!-- Line 2 -->
-        <div class="filter-line">
-          <button class="filter-pill" data-filter-id="priceRange">
-            <span class="label">Price range</span>
-          </button>
-          <button class="filter-pill" data-filter-id="vitola">
-            <span class="label">Vitola</span>
-          </button>
-          <button class="filter-pill" data-filter-id="rg">
-            <span class="label">RG</span>
-          </button>
-          <button class="filter-pill" data-filter-id="length">
-            <span class="label">Length</span>
-          </button>
-          <button class="filter-pill" data-filter-id="wrapperShade">
-            <span class="label">Wrapper Shade</span>
-          </button>
-        </div>
-
-        <!-- Line 3 -->
-        <div class="filter-line">
-          <button class="filter-pill" data-filter-id="wrapper">
-            <span class="label">Wrapper</span>
-          </button>
-          <button class="filter-pill" data-filter-id="binder">
-            <span class="label">Binder</span>
-          </button>
-          <button class="filter-pill" data-filter-id="filler">
-            <span class="label">Filler</span>
-          </button>
-          <button class="filter-pill" data-filter-id="origin">
-            <span class="label">Origin</span>
-          </button>
-          <button class="filter-pill" data-filter-id="strength">
-            <span class="label">Strength</span>
-          </button>
-          <button class="filter-pill" data-filter-id="shape">
-            <span class="label">Shape</span>
-          </button>
-        </div>
-
-        <!-- Line 4 features -->
-        <div class="features-line">
-          <span style="font-size:11px;color:var(--muted);margin-right:4px;">Features:</span>
-          <button class="feature-pill" data-feature="Box Pressed">Box-pressed</button>
-          <button class="feature-pill" data-feature="Tubo">Tubo</button>
-          <button class="feature-pill" data-feature="Flavored">Flavored</button>
-          <button class="feature-pill" data-feature="Tin">Tin</button>
-          <button class="feature-pill" data-feature="Pack">Pack</button>
-          <button class="feature-pill" data-feature="Barberpole">Barberpole</button>
+      <div class="cigars-search-wrap">
+        <div class="cigars-search-bar">
+          <span class="cigars-search-icon">🔍</span>
+          <input
+            id="cigars-search-input"
+            type="search"
+            placeholder="Search for brand, cigar, vitola, etc..."
+          />
         </div>
       </div>
     </section>
 
-    <section class="brand-block">
-      <div class="brand-block-header">
-        <div class="brand-block-title">Brands</div>
+    <!-- Filters card -->
+    <section class="cigars-filters-section">
+      <div class="cigars-filters-card">
+        <div class="cigars-filters-header">
+          <div class="cigars-filters-title">Filters</div>
+          <button type="button" class="cigars-filters-viewall" id="filters-view-all">
+            view all
+          </button>
+        </div>
+
+        <!-- Filters grid -->
+        <div class="cigars-filters-grid">
+
+          <!-- Row 1 -->
+          <div class="cigars-filters-row">
+            <button class="filter-pill" id="filter-manufacturer" data-filter="manufacturer">
+              Manufacturer
+            </button>
+            <button class="filter-pill" id="filter-brand" data-filter="brand">
+              Brand
+            </button>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="cigars-filters-row">
+            <button class="filter-pill" id="filter-shade" data-filter="shade">
+              Shade
+            </button>
+            <button class="filter-pill" id="filter-vitola" data-filter="vitola">
+              Vitola
+            </button>
+            <button class="filter-pill" id="filter-length" data-filter="length">
+              Length
+            </button>
+            <button class="filter-pill" id="filter-ring" data-filter="ring">
+              Ring
+            </button>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="cigars-filters-row">
+            <button class="filter-pill" id="filter-shape" data-filter="shape">
+              Shape
+            </button>
+            <button class="filter-pill" id="filter-strength" data-filter="strength">
+              Strength
+            </button>
+          </div>
+
+          <!-- Row 4: white outline toggles -->
+          <div class="cigars-filters-row">
+            <button
+              class="filter-pill filter-pill--toggle"
+              id="filter-tubo"
+              data-filter="tubo"
+            >
+              Tubo
+            </button>
+            <button
+              class="filter-pill filter-pill--toggle"
+              id="filter-flavored"
+              data-filter="flavored"
+            >
+              Flavored
+            </button>
+            <button
+              class="filter-pill filter-pill--toggle"
+              id="filter-tin"
+              data-filter="tin"
+            >
+              Tin
+            </button>
+            <button
+              class="filter-pill filter-pill--toggle"
+              id="filter-pack"
+              data-filter="pack"
+            >
+              Pack
+            </button>
+          </div>
+
+          <!-- Row 5: white outline toggles -->
+          <div class="cigars-filters-row">
+            <button
+              class="filter-pill filter-pill--toggle"
+              id="filter-barberpole"
+              data-filter="barberpole"
+            >
+              Barberpole
+            </button>
+            <button
+              class="filter-pill filter-pill--toggle"
+              id="filter-boxpressed"
+              data-filter="boxpressed"
+            >
+              Box-Pressed
+            </button>
+          </div>
+        </div>
       </div>
-      <div id="brandGrid" class="brand-grid"></div>
     </section>
 
-    <section class="cigar-list">
-      <div class="cigar-list-header">
-        <div class="cigar-list-title">All Cigars</div>
-        <div id="cigarCount" class="cigar-count">Loading…</div>
-      </div>
-      <div style="overflow-x:auto;">
-        <table class="cigar-table" id="cigarTable">
-          <thead>
-            <tr>
-              <th>Brand</th>
-              <th>Line</th>
-              <th>Cigar</th>
-              <th>Vitola</th>
-              <th>Size</th>
-              <th>Wrapper</th>
-              <th>Shade</th>
-              <th>Origin</th>
-              <th>Str.</th>
-              <th>MSRP</th>
-            </tr>
-          </thead>
-          <tbody id="cigarTbody"></tbody>
-        </table>
+    <!-- BRAND GRID (existing JS can still populate this container) -->
+    <section class="cigars-brands-section">
+      <h2 class="cigars-brands-title">Brands</h2>
+      <div id="brands-grid" class="brands-grid">
+        <!-- build-cigars.js or your existing cigars JS should populate brand tiles here -->
       </div>
     </section>
-  </div>
+  </main>
 
-  <!-- Filter modal -->
-  <div id="filterModalBackdrop" class="filter-modal-backdrop">
-    <div class="filter-modal">
+  <!-- Global POS + page scripts -->
+  <script src="/pos/pos.js"></script>
+  <script src="/pos/cigars/cigars.js"></script>
+  <!-- If you have a hub/build script, keep it here as well -->
+  <script src="/pos/img/scripts/build-cigars.js"></script>
+
+  <!-- Filter popup HTML (global modal used by POSFilters in pos.js) -->
+  <div id="filter-modal" class="filter-modal filter-modal--hidden">
+    <div class="filter-modal-backdrop"></div>
+
+    <div class="filter-modal-sheet">
       <div class="filter-modal-header">
-        <div id="filterModalTitle" class="filter-modal-title"></div>
-        <button class="filter-modal-close" type="button" id="filterModalClose">&times;</button>
+        <button type="button" class="filter-modal-back">&larr; Back</button>
+        <h2 id="filter-modal-title">Brands</h2>
       </div>
-      <input id="filterModalSearch" class="filter-modal-search" type="search"
-             placeholder="Search options…" />
-      <div id="filterOptions" class="filter-options"></div>
-      <div class="filter-modal-actions">
-        <button class="btn-clear" type="button" id="filterClearBtn">Clear</button>
-        <button class="btn-apply" type="button" id="filterApplyBtn">Apply</button>
+
+      <div class="filter-modal-search-row">
+        <div class="filter-modal-search">
+          <span class="filter-modal-search-icon">&#128269;</span>
+          <input
+            type="search"
+            id="filter-modal-search-input"
+            placeholder="search..."
+          />
+        </div>
+      </div>
+
+      <div class="filter-modal-list" id="filter-modal-list"></div>
+
+      <div class="filter-modal-footer">
+        <button type="button" id="filter-modal-confirm" class="filter-modal-confirm">
+          Confirm
+        </button>
       </div>
     </div>
   </div>
-
-  <script>
-    const HUB_URL = "/hub/hub_11-5-25.json";
-
-    let hubRows = [];
-    let baseCigarRows = [];
-    let brandMap = new Map();
-    let activeFilters = {
-      manufacturer: new Set(),
-      brand: new Set(),
-      vitola: new Set(),
-      rg: new Set(),
-      length: new Set(),
-      wrapperShade: new Set(),
-      wrapper: new Set(),
-      binder: new Set(),
-      filler: new Set(),
-      origin: new Set(),
-      strength: new Set(),
-      shape: new Set(),
-      priceRange: new Set()
-    };
-    let featureFilters = new Set();
-    let currentFilterId = null;
-    let currentFilterOptions = [];
-
-    const FILTER_CONFIG = {
-      manufacturer: { label: "Manufacturer", column: "MANUFACTURER" },
-      brand: { label: "Brand", column: "Brand" },
-      vitola: { label: "Vitola", column: "Vitola" },
-      rg: { label: "Ring gauge", column: "RG" },
-      length: { label: "Length", column: "Length" },
-      wrapperShade: { label: "Wrapper Shade", column: "Wrapper Shade" },
-      wrapper: { label: "Wrapper", column: "Wrapper" },
-      binder: { label: "Binder", column: "Binder" },
-      filler: { label: "Filler", column: "Filler" },
-      origin: { label: "Origin", column: "Origin" },
-      strength: { label: "Strength", column: "Strength" },
-      shape: { label: "Shape", column: "Shape" },
-      priceRange: { label: "Price range", column: "MSRP", type: "price" }
-    };
-
-    function parseNumber(val) {
-      if (!val) return NaN;
-      const num = parseFloat(String(val).replace(/[^0-9.]/g, ""));
-      return isNaN(num) ? NaN : num;
-    }
-
-    function getPriceBucket(msrp) {
-      const n = parseNumber(msrp);
-      if (isNaN(n)) return null;
-      if (n < 8) return "< $8";
-      if (n < 12) return "$8–$12";
-      if (n < 20) return "$12–$20";
-      return "$20+";
-    }
-
-    function normaliseBrandImg(raw) {
-      const v = (raw || "").trim();
-      if (!v) return "";
-      if (v.startsWith("/img/")) return v;
-      if (v.startsWith("/")) return "/img/icons/brands" + v;
-      if (v.startsWith("img/")) return "/" + v;
-      return "/img/icons/brands/" + v;
-    }
-
-    function loadHub() {
-      fetch(HUB_URL)
-        .then(r => {
-          if (!r.ok) throw new Error("Hub JSON failed to load");
-          return r.json();
-        })
-        .then(data => {
-          hubRows = Array.isArray(data) ? data : [];
-          baseCigarRows = hubRows.filter(r => r["Cigar"] && r["Cigar"].trim() !== "");
-
-          // Build brand map { Brand -> Brand IMG path }
-          brandMap = new Map();
-          baseCigarRows.forEach(r => {
-            const brand = (r["Brand"] || "").trim();
-            if (!brand) return;
-            if (!brandMap.has(brand)) {
-              const imgPath = normaliseBrandImg(r["Brand IMG"]);
-              brandMap.set(brand, imgPath);
-            }
-          });
-
-          renderBrandGrid();
-          renderCigars();
-          initFilterButtons();
-        })
-        .catch(err => {
-          console.error("Error loading hub JSON:", err);
-          document.getElementById("cigarCount").textContent = "Error loading data";
-        });
-    }
-
-    function renderBrandGrid() {
-      const grid = document.getElementById("brandGrid");
-      grid.innerHTML = "";
-      const sortedBrands = Array.from(brandMap.keys()).sort((a,b) =>
-        a.toLowerCase().localeCompare(b.toLowerCase())
-      );
-      for (const brand of sortedBrands) {
-        const img = brandMap.get(brand);
-        const tile = document.createElement("a");
-        tile.className = "brand-tile";
-        tile.href = "/pos/cigars/brand.html?brand=" + encodeURIComponent(brand);
-
-        if (img) {
-          const imageEl = document.createElement("img");
-          imageEl.src = img;
-          imageEl.alt = brand;
-          tile.appendChild(imageEl);
-        }
-        const span = document.createElement("span");
-        span.textContent = brand;
-        tile.appendChild(span);
-
-        grid.appendChild(tile);
-      }
-    }
-
-    function rowMatchesFilters(row) {
-      const searchVal = document.getElementById("masterSearch").value.trim().toLowerCase();
-      if (searchVal) {
-        const haystack = [
-          row["MANUFACTURER"], row["Brand"], row["Line"],
-          row["Cigar"], row["Vitola"], row["Wrapper Shade"], row["Origin"]
-        ].join(" ").toLowerCase();
-        if (!haystack.includes(searchVal)) return false;
-      }
-
-      // Feature filters (columns like "Box Pressed", "Tubo", etc.)
-      for (const featureColumn of featureFilters) {
-        const val = (row[featureColumn] || "").toString().trim();
-        if (!val) return false;
-      }
-
-      // Column filters
-      for (const [id, set] of Object.entries(activeFilters)) {
-        if (!set || set.size === 0) continue;
-
-        if (id === "priceRange") {
-          const bucket = getPriceBucket(row["MSRP"]);
-          if (!bucket || !set.has(bucket)) return false;
-        } else {
-          const conf = FILTER_CONFIG[id];
-          if (!conf) continue;
-          const colVal = (row[conf.column] || "").toString().trim();
-          if (!colVal || !set.has(colVal)) return false;
-        }
-      }
-
-      return true;
-    }
-
-    function renderCigars() {
-      const tbody = document.getElementById("cigarTbody");
-      tbody.innerHTML = "";
-
-      const filtered = baseCigarRows.filter(row => rowMatchesFilters(row));
-
-      filtered.forEach(row => {
-        const tr = document.createElement("tr");
-
-        const size = [];
-        if (row["Length"]) size.push(row["Length"]);
-        if (row["RG"]) size.push("× " + row["RG"]);
-
-        const cells = [
-          row["Brand"] || "",
-          row["Line"] || "",
-          row["Cigar"] || "",
-          row["Vitola"] || "",
-          size.join(" ") || "",
-          row["Wrapper"] || "",
-          row["Wrapper Shade"] || "",
-          row["Origin"] || "",
-          row["Strength"] || "",
-          row["MSRP"] || ""
-        ];
-
-        cells.forEach(text => {
-          const td = document.createElement("td");
-          td.textContent = text;
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById("cigarCount").textContent =
-        filtered.length.toLocaleString() + " cigars";
-    }
-
-    function initFilterButtons() {
-      document.querySelectorAll(".filter-pill").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = btn.getAttribute("data-filter-id");
-          openFilterModal(id);
-        });
-      });
-
-      document.querySelectorAll(".feature-pill").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const col = btn.getAttribute("data-feature");
-          if (featureFilters.has(col)) {
-            featureFilters.delete(col);
-            btn.classList.remove("active");
-          } else {
-            featureFilters.add(col);
-            btn.classList.add("active");
-          }
-          renderCigars();
-        });
-      });
-
-      document.getElementById("masterSearch").addEventListener("input", () => {
-        renderCigars();
-      });
-
-      const backdrop = document.getElementById("filterModalBackdrop");
-      document.getElementById("filterModalClose").addEventListener("click", closeFilterModal);
-      backdrop.addEventListener("click", (e) => {
-        if (e.target === backdrop) closeFilterModal();
-      });
-      document.getElementById("filterModalSearch").addEventListener("input", refreshFilterOptionsView);
-      document.getElementById("filterApplyBtn").addEventListener("click", applyFilterSelections);
-      document.getElementById("filterClearBtn").addEventListener("click", clearFilterSelections);
-    }
-
-    function openFilterModal(filterId) {
-      const conf = FILTER_CONFIG[filterId];
-      if (!conf) return;
-      currentFilterId = filterId;
-
-      document.getElementById("filterModalTitle").textContent = conf.label;
-      document.getElementById("filterModalSearch").value = "";
-
-      if (filterId === "priceRange") {
-        currentFilterOptions = ["< $8", "$8–$12", "$12–$20", "$20+"];
-      } else {
-        const values = new Set();
-        baseCigarRows.forEach(r => {
-          const v = (r[conf.column] || "").toString().trim();
-          if (v) values.add(v);
-        });
-        currentFilterOptions = Array.from(values).sort((a,b) =>
-          a.toLowerCase().localeCompare(b.toLowerCase())
-        );
-      }
-
-      refreshFilterOptionsView();
-
-      document.getElementById("filterModalBackdrop").classList.add("active");
-    }
-
-    function closeFilterModal() {
-      currentFilterId = null;
-      currentFilterOptions = [];
-      document.getElementById("filterModalBackdrop").classList.remove("active");
-    }
-
-    function refreshFilterOptionsView() {
-      const container = document.getElementById("filterOptions");
-      container.innerHTML = "";
-      if (!currentFilterId) return;
-
-      const searchTerm = document.getElementById("filterModalSearch").value.trim().toLowerCase();
-      const selectedSet = activeFilters[currentFilterId] || new Set();
-
-      const options = currentFilterOptions.filter(opt =>
-        !searchTerm || opt.toLowerCase().includes(searchTerm)
-      );
-
-      options.forEach(opt => {
-        const row = document.createElement("label");
-        row.className = "filter-option";
-
-        const input = document.createElement("input");
-        input.type = "checkbox";
-        input.value = opt;
-        if (selectedSet.has(opt)) input.checked = true;
-
-        row.appendChild(input);
-        const span = document.createElement("span");
-        span.textContent = opt;
-        row.appendChild(span);
-
-        container.appendChild(row);
-      });
-    }
-
-    function applyFilterSelections() {
-      if (!currentFilterId) return;
-      const container = document.getElementById("filterOptions");
-      const set = new Set();
-      container.querySelectorAll("input[type='checkbox']").forEach(cb => {
-        if (cb.checked) set.add(cb.value);
-      });
-      activeFilters[currentFilterId] = set;
-
-      const pill = document.querySelector(`.filter-pill[data-filter-id="${currentFilterId}"]`);
-      if (pill) {
-        if (set.size > 0) pill.classList.add("active");
-        else pill.classList.remove("active");
-      }
-
-      closeFilterModal();
-      renderCigars();
-    }
-
-    function clearFilterSelections() {
-      if (!currentFilterId) return;
-      activeFilters[currentFilterId] = new Set();
-      const pill = document.querySelector(`.filter-pill[data-filter-id="${currentFilterId}"]`);
-      if (pill) pill.classList.remove("active");
-      closeFilterModal();
-      renderCigars();
-    }
-
-    document.addEventListener("DOMContentLoaded", loadHub);
-  </script>
-  <!-- Global Filter Popup -->
-<div id="filter-modal" class="filter-modal filter-modal--hidden">
-  <div class="filter-modal-backdrop"></div>
-
-  <div class="filter-modal-sheet">
-    <div class="filter-modal-header">
-      <button type="button" class="filter-modal-back">&larr; Back</button>
-      <h2 id="filter-modal-title">Brands</h2>
-    </div>
-
-    <div class="filter-modal-search-row">
-      <div class="filter-modal-search">
-        <span class="filter-modal-search-icon">
-          <!-- simple magnifying glass glyph; replace with svg if you want -->
-          &#128269;
-        </span>
-        <input
-          type="search"
-          id="filter-modal-search-input"
-          placeholder="search..."
-        />
-      </div>
-    </div>
-
-    <div class="filter-modal-list" id="filter-modal-list">
-      <!-- rows injected by JS -->
-    </div>
-
-    <div class="filter-modal-footer">
-      <button
-        type="button"
-        id="filter-modal-confirm"
-        class="filter-modal-confirm"
-      >
-        Confirm
-      </button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
