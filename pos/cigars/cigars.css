@@ -1,34 +1,218 @@
-/* Receipt Pill – bottom right */
-#receipt-pill {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
+/* Cigars page layout – matches middle mockup */
+
+.cigars-page {
+  margin: 0;
+  background: #dfeaf0;
+  color: #0f1a2c;
+  font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+}
+
+/* Top bar with back button */
+
+.cigars-topbar {
+  padding: 12px 16px 0;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+}
+
+.pos-back {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #ff3b30;          /* your red */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  z-index: 9990;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  font-size: 15px;
+  color: #007aff;
   cursor: pointer;
 }
 
-#receipt-icon {
-  width: 20px;
-  height: 20px;
-  display: block;
+.pos-back-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
-#receipt-count {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Helvetica Neue", Arial, sans-serif;
+.pos-back-label {
+  font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+/* Main wrapper */
+
+.cigars-main {
+  padding: 8px 16px 24px;
+}
+
+/* Header & search */
+
+.cigars-header {
+  margin-bottom: 12px;
+}
+
+.cigars-title {
+  margin: 0 0 12px;
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 900; /* Heavy/Black */
+  font-size: 40px;
+  letter-spacing: -0.04em;
+}
+
+.cigars-search-wrap {
+  margin-bottom: 8px;
+}
+
+.cigars-search-bar {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #f2f6fb;
+}
+
+.cigars-search-icon {
+  margin-right: 8px;
   font-size: 14px;
-  font-weight: 700;
+  opacity: 0.6;
+}
+
+#cigars-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 15px;
+}
+
+/* Filters card */
+
+.cigars-filters-section {
+  margin-bottom: 16px;
+}
+
+.cigars-filters-card {
+  background: #f4f8fc;
+  border-radius: 24px;
+  padding: 12px 12px 14px;
+  box-shadow: 0 0 0 1px rgba(15, 26, 44, 0.04);
+}
+
+.cigars-filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cigars-filters-title {
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.cigars-filters-viewall {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: #007aff;
+  cursor: pointer;
+}
+
+/* Filters grid */
+
+.cigars-filters-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cigars-filters-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+/* Default pill */
+
+.filter-pill {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: none;
+  font-size: 13px;
+  background: #edf2f7;
+  color: #111827;
+  text-align: center;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Green active pill (for any filter with selections) */
+
+.filter-pill--active {
+  background: #00d447;
   color: #ffffff;
 }
 
-/* Hide when empty (JS will toggle this) */
-#receipt-pill.hidden {
-  display: none;
+/* Bottom-row toggle style pills (Tubo, Flavored, Tin, Pack, Barberpole, Box-Pressed) */
+
+.filter-pill--toggle {
+  background: #ffffff;
+  border: 1px solid #d3dbe6;
+  color: #111827;
+}
+
+/* When toggled ON they become green like mockup */
+
+.filter-pill--toggle.filter-pill--active {
+  background: #00d447;
+  border-color: #00d447;
+  color: #ffffff;
+}
+
+/* Brands section */
+
+.cigars-brands-section {
+  margin-top: 18px;
+}
+
+.cigars-brands-title {
+  margin: 0 0 8px;
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+/* Brand grid - keep your existing structure, but remove grey background tiles.
+   This assumes existing markup uses .brand-card for each tile. */
+
+.brands-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* remove light grey card box from icons/text */
+.brands-grid .brand-card {
+  background: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* but ensure inner layout still looks tidy */
+.brands-grid .brand-card-inner,
+.brands-grid .brand-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile adjustments */
+
+@media (min-width: 768px) {
+  .cigars-main {
+    max-width: 460px;
+    margin: 0 auto 24px;
+  }
 }
