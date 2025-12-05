@@ -52,8 +52,8 @@
 .cigars-title {
   margin: 0 0 12px;
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-weight: 900; /* Heavy/Black */
-  font-size: 40px;
+  font-weight: 999; /* Heavy/Black */
+  font-size: 52px;
   letter-spacing: -0.04em;
 }
 
@@ -180,13 +180,13 @@
   margin: 0 0 8px;
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 18px;
 }
 /* Brand grid – tiles with icon + name, no grey box behind icon itself */
 
 .brands-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -196,7 +196,6 @@
   justify-content: center;
   text-decoration: none;         /* remove blue underline */
   color: #0f1a2c;                /* dark ink, not link blue */
-  background: #ffffff;           /* soft white tile */
   border-radius: 20px;
   padding: 10px 6px;
 }
@@ -228,7 +227,7 @@
 
 /* brand name under icon */
 .brand-card-name {
-  font-size: 13px;
+  font-size: 14px;
   text-align: center;
   font-weight: 500;
 }
