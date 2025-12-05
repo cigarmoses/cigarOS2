@@ -182,21 +182,55 @@
   font-weight: 800;
   font-size: 16px;
 }
-
-/* Brand grid - keep your existing structure, but remove grey background tiles.
-   This assumes existing markup uses .brand-card for each tile. */
+/* Brand grid – tiles with icon + name, no grey box behind icon itself */
 
 .brands-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
-/* remove light grey card box from icons/text */
-.brands-grid .brand-card {
-  background: none !important;
-  box-shadow: none !important;
-  border: none !important;
+.brand-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;         /* remove blue underline */
+  color: #0f1a2c;                /* dark ink, not link blue */
+  background: #ffffff;           /* soft white tile */
+  border-radius: 20px;
+  padding: 10px 6px;
+}
+
+.brand-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* wrapper for the SVG icon – no background, so no grey box around the icon */
+.brand-card-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  background: none;
+}
+
+.brand-card-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* brand name under icon */
+.brand-card-name {
+  font-size: 13px;
+  text-align: center;
+  font-weight: 500;
 }
 
 /* but ensure inner layout still looks tidy */
