@@ -4,187 +4,313 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 
-  <title>Cigars</title>
-
-  <!-- Global type system (SF Pro) + POS styles -->
-  <link rel="stylesheet" href="/css/type.css" />
+  <!-- Global POS + Type system -->
   <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css" />
+  <link rel="stylesheet" href="/css/type.css" />
+
+  <title>POS • Cigars</title>
+
+  <style>
+    :root {
+      --bg: #dfeaf0;
+      --ink: #0f1a2c;
+      --muted: #6a7586;
+      --card: #ffffff;
+      --pill: #f3f7fb;
+      --radius-lg: 24px;
+      --radius-icon: 124px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-text); /* SF Pro Text via type.css */
+      min-height: 100vh;
+    }
+
+    /* --------- Shell --------- */
+
+    .cigars-shell {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px 16px 32px;
+    }
+
+    .pos-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0 12px;
+      gap: 8px;
+    }
+
+    .pos-back {
+      font-family: var(--font-text);
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pos-back-icon {
+      font-size: 18px;
+      line-height: 1;
+      transform: translateY(-1px);
+    }
+
+    .pos-title {
+      flex: 1;
+      text-align: center;
+      font-family: var(--font-display); /* SF Pro Display Heavy */
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .pos-spacer {
+      width: 48px; /* balances back link */
+      height: 1px;
+    }
+
+    /* --------- Card / Panel --------- */
+
+    .cigars-card {
+      background: var(--card); /* flat white background per your note */
+      border-radius: var(--radius-lg);
+      padding: 14px 14px 20px;
+    }
+
+    .cigars-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .cigars-header-title {
+      font-family: var(--font-display); /* SF Pro Display Heavy */
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .cigars-header-sub {
+      font-family: var(--font-display);
+      font-weight: 600; /* SF Pro Display Bold */
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* --------- Master Search --------- */
+
+    .master-search-wrap {
+      margin-bottom: 12px;
+    }
+
+    .master-search-input {
+      width: 100%;
+      border-radius: 999px;
+      border: none;
+      padding: 9px 12px;
+      font-family: var(--font-text);
+      font-size: 14px;
+      background: var(--pill);
+      color: var(--ink);
+      outline: none;
+    }
+
+    .master-search-input::placeholder {
+      color: var(--muted);
+    }
+
+    /* --------- Filters row (chips) --------- */
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .filter-chip {
+      font-family: var(--font-text);
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--pill);
+      color: var(--muted);
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .filter-chip.is-active {
+      background: #cfe2ff;
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* --------- Brand section --------- */
+
+    .section-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 4px 0 6px;
+    }
+
+    .section-label {
+      font-family: var(--font-display);
+      font-weight: 600; /* SF Pro Display Bold */
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .section-badge {
+      font-family: var(--font-text);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--pill);
+      color: var(--muted);
+    }
+
+    .brand-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 per row */
+      gap: 16px 10px;
+      margin-top: 4px;
+    }
+
+    .brand-item {
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 90px;
+      height: 90px;
+      border-radius: var(--radius-icon); /* rounded corners, 124-style */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: transparent; /* lets SVG decide its own background */
+    }
+
+    .brand-icon img {
+      width: 70%;
+      height: 70%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand-name {
+      font-family: var(--font-display); /* SF Pro Display Regular */
+      font-weight: 400;
+      font-size: 12px;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    /* Small “no results” style */
+    .no-results {
+      margin-top: 12px;
+      font-family: var(--font-text);
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (min-width: 540px) {
+      .cigars-shell {
+        padding-top: 24px;
+      }
+    }
+  </style>
 </head>
-<body class="cigars-page">
+<body>
+  <div class="cigars-shell">
+    <!-- Top bar -->
+    <header class="pos-topbar">
+      <a href="/pos/" class="pos-back">
+        <span class="pos-back-icon">‹</span>
+        <span>Back</span>
+      </a>
+      <div class="pos-title">POS</div>
+      <div class="pos-spacer"></div>
+    </header>
 
-  <!-- Top bar with back button -->
-  <header class="cigars-topbar">
-    <button type="button" class="pos-back" id="cigars-back">
-      <!-- same icon treatment as other back buttons -->
-      <span class="pos-back-icon">←</span>
-      <span class="pos-back-label">Back</span>
-    </button>
-  </header>
-
-  <main class="cigars-main">
-    <!-- Big page title -->
-    <section class="cigars-header">
-      <h1 class="cigars-title">Cigars</h1>
-
-      <div class="cigars-search-wrap">
-        <div class="cigars-search-bar">
-          <span class="cigars-search-icon">🔍</span>
-          <input
-            id="cigars-search-input"
-            type="search"
-            placeholder="Search for brand, cigar, vitola, etc..."
-          />
-        </div>
-      </div>
-    </section>
-
-    <!-- Filters card -->
-    <section class="cigars-filters-section">
-      <div class="cigars-filters-card">
-        <div class="cigars-filters-header">
-          <div class="cigars-filters-title">Filters</div>
-          <button type="button" class="cigars-filters-viewall" id="filters-view-all">
-            view all
-          </button>
-        </div>
-
-        <!-- Filters grid -->
-        <div class="cigars-filters-grid">
-
-          <!-- Row 1 -->
-          <div class="cigars-filters-row">
-            <button class="filter-pill" id="filter-manufacturer" data-filter="manufacturer">
-              Manufacturer
-            </button>
-            <button class="filter-pill" id="filter-brand" data-filter="brand">
-              Brand
-            </button>
-          </div>
-
-          <!-- Row 2 -->
-          <div class="cigars-filters-row">
-            <button class="filter-pill" id="filter-shade" data-filter="shade">
-              Shade
-            </button>
-            <button class="filter-pill" id="filter-vitola" data-filter="vitola">
-              Vitola
-            </button>
-            <button class="filter-pill" id="filter-length" data-filter="length">
-              Length
-            </button>
-            <button class="filter-pill" id="filter-ring" data-filter="ring">
-              Ring
-            </button>
-          </div>
-
-          <!-- Row 3 -->
-          <div class="cigars-filters-row">
-            <button class="filter-pill" id="filter-shape" data-filter="shape">
-              Shape
-            </button>
-            <button class="filter-pill" id="filter-strength" data-filter="strength">
-              Strength
-            </button>
-          </div>
-
-          <!-- Row 4: white outline toggles -->
-          <div class="cigars-filters-row">
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-tubo"
-              data-filter="tubo"
-            >
-              Tubo
-            </button>
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-flavored"
-              data-filter="flavored"
-            >
-              Flavored
-            </button>
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-tin"
-              data-filter="tin"
-            >
-              Tin
-            </button>
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-pack"
-              data-filter="pack"
-            >
-              Pack
-            </button>
-          </div>
-
-          <!-- Row 5: white outline toggles -->
-          <div class="cigars-filters-row">
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-barberpole"
-              data-filter="barberpole"
-            >
-              Barberpole
-            </button>
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-boxpressed"
-              data-filter="boxpressed"
-            >
-              Box-Pressed
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- BRAND GRID (existing JS can still populate this container) -->
-    <section class="cigars-brands-section">
-      <h2 class="cigars-brands-title">Brands</h2>
-      <div id="brands-grid" class="brands-grid">
-        <!-- build-cigars.js or your existing cigars JS should populate brand tiles here -->
-      </div>
-    </section>
-  </main>
-
-  <!-- Global POS + page scripts -->
-  <script src="/pos/pos.js"></script>
-  <script src="/pos/cigars/cigars.js"></script>
-  <!-- If you have a hub/build script, keep it here as well -->
-  <script src="/pos/img/scripts/build-cigars.js"></script>
-
-  <!-- Filter popup HTML (global modal used by POSFilters in pos.js) -->
-  <div id="filter-modal" class="filter-modal filter-modal--hidden">
-    <div class="filter-modal-backdrop"></div>
-
-    <div class="filter-modal-sheet">
-      <div class="filter-modal-header">
-        <button type="button" class="filter-modal-back">&larr; Back</button>
-        <h2 id="filter-modal-title">Brands</h2>
-      </div>
-
-      <div class="filter-modal-search-row">
-        <div class="filter-modal-search">
-          <span class="filter-modal-search-icon">&#128269;</span>
-          <input
-            type="search"
-            id="filter-modal-search-input"
-            placeholder="search..."
-          />
+    <!-- White card panel -->
+    <main class="cigars-card">
+      <div class="cigars-header">
+        <div>
+          <div class="cigars-header-title">Cigars</div>
+          <!-- Optional sublabel; remove if you want it totally clean -->
+          <div class="cigars-header-sub">Search, filter & choose brand</div>
         </div>
       </div>
 
-      <div class="filter-modal-list" id="filter-modal-list"></div>
-
-      <div class="filter-modal-footer">
-        <button type="button" id="filter-modal-confirm" class="filter-modal-confirm">
-          Confirm
-        </button>
+      <!-- Master search bar -->
+      <div class="master-search-wrap">
+        <input
+          id="masterSearch"
+          class="master-search-input"
+          type="search"
+          placeholder="Search by cigar, brand, line, wrapper..."
+          autocomplete="off"
+        />
       </div>
-    </div>
+
+      <!-- Filters row - built/enhanced by JS -->
+      <div id="filterRow" class="filters-row">
+        <!-- Example static chips; your JS can replace/augment these -->
+        <button class="filter-chip" data-filter-id="wrapper">Wrapper</button>
+        <button class="filter-chip" data-filter-id="vitola">Vitola</button>
+        <button class="filter-chip" data-filter-id="strength">Strength</button>
+        <button class="filter-chip" data-filter-id="country">Country</button>
+      </div>
+
+      <!-- Brand section label -->
+      <div class="section-row">
+        <div class="section-label">Brands</div>
+        <div id="brandCount" class="section-badge">0 brands</div>
+      </div>
+
+      <!-- Brand grid: JS will populate #brandGrid with .brand-item tiles -->
+      <div id="brandGrid" class="brand-grid">
+        <!-- Example structure for one item; your JS should create this pattern:
+        <a href="/pos/brand.html?brand=Ashton" class="brand-item">
+          <div class="brand-icon">
+            <img src="/img/icons/brands/ashton.svg" alt="Ashton" loading="lazy" />
+          </div>
+          <div class="brand-name">Ashton</div>
+        </a>
+        -->
+      </div>
+
+      <div id="noResults" class="no-results" style="display:none;">
+        No cigars match your search yet.
+      </div>
+    </main>
   </div>
+
+  <!-- Build / filter logic for cigars + brands -->
+  <script src="/pos/img/scripts/build-cigars.js" defer></script>
 </body>
 </html>
