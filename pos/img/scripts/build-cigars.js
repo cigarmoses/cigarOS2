@@ -61,30 +61,61 @@ function normalizeRow(r) {
   };
 }
 
-// Resolve the correct image src for a brand icon
+/**
+ * Resolve the correct image src for a brand icon.
+ *
+ * Rules:
+ * - If Brand IMG is blank → use brand name → slug → /img/icons/brands/slug.svg
+ *   e.g. "20 Acre Farm" → 20acrefarm.svg
+ * - If Brand IMG looks like a path or URL, respect it:
+ *   - starts with http://, https://, or /
+ *   - or contains a slash → treat as path, add leading / if missing
+ * - If Brand IMG is just a filename or label (no path):
+ *   - if it has an extension, keep that
+ *   - slugify the base
+ *   - prepend /img/icons/brands/
+ */
 function resolveBrandImg(rawImg, brandName) {
-  let file = (rawImg || "").trim();
+  const brand = (brandName || "").trim();
+  let candidate = (rawImg || "").trim();
 
-  // If no explicit file, fall back to slug.svg
-  if (!file) {
-    file = brandSlug(brandName) + ".svg";
+  // If nothing provided, fall back to brand name
+  if (!candidate) {
+    candidate = brand;
   }
 
-  // If it already looks like a URL or absolute path, use as-is
+  // If it's already a full URL or absolute path, use as-is
   if (
-    file.startsWith("http://") ||
-    file.startsWith("https://") ||
-    file.startsWith("/")
+    candidate.startsWith("http://") ||
+    candidate.startsWith("https://") ||
+    candidate.startsWith("/")
   ) {
-    return file;
+    return candidate;
   }
 
-  // Ensure it has a file extension; default to .svg
-  if (!/\.(svg|png|jpg|jpeg|webp)$/i.test(file)) {
-    file = file + ".svg";
+  // If it contains a slash but no leading / or protocol, treat as relative path
+  if (candidate.includes("/")) {
+    // e.g. "img/icons/brands/20acrefarm.svg" -> "/img/icons/brands/20acrefarm.svg"
+    if (!candidate.startsWith("/")) {
+      candidate = "/" + candidate;
+    }
+    return candidate;
   }
 
-  return `/img/icons/brands/${file}`;
+  // At this point, candidate is just a name or filename (no path)
+  // Separate base + extension if present
+  let base = candidate;
+  let ext = ".svg";
+  const dotIndex = candidate.lastIndexOf(".");
+
+  if (dotIndex > 0 && dotIndex < candidate.length - 1) {
+    ext = candidate.slice(dotIndex); // keep original extension
+    base = candidate.slice(0, dotIndex);
+  }
+
+  // Slugify the base to kill spaces and weird chars
+  const slug = brandSlug(base || brand);
+  return `/img/icons/brands/${slug}${ext}`;
 }
 
 // -------------------------------
@@ -173,12 +204,9 @@ function renderBrandsGrid() {
     if (!brandName) return;
 
     if (!brandMap.has(brandName)) {
-      const imgFromHub = (row["Brand IMG"] || "").trim();
-      const imgFile = resolveBrandImg(imgFromHub, brandName);
-
       brandMap.set(brandName, {
         Brand: brandName,
-        imgFile,
+        rawImg: row["Brand IMG"] || "",
       });
     }
   });
@@ -191,7 +219,7 @@ function renderBrandsGrid() {
 
   brands.forEach((b) => {
     const brandName = b.Brand;
-    const src = resolveBrandImg(b.imgFile, brandName);
+    const src = resolveBrandImg(b.rawImg, brandName);
     const href = `/pos/cigars/brand.html?brand=${encodeURIComponent(
       brandName
     )}`;
@@ -225,8 +253,7 @@ function renderCigarsGrid() {
 
   filteredData.forEach((row) => {
     const brandName = row.Brand || "";
-    const imgFromHub = row["Brand IMG"] || "";
-    const src = resolveBrandImg(imgFromHub, brandName);
+    const src = resolveBrandImg(row["Brand IMG"] || "", brandName);
 
     const item = document.createElement("div");
     item.className = "cigar-item";
