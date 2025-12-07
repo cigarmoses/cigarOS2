@@ -1,6 +1,8 @@
 // /pos/img/scripts/build-cigars.js
 
-const HUB_URL = "/hub/hub_11-5-25.json";
+// LIVE GOOGLE SHEETS HUB URL
+const HUB_URL =
+  "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tq=select%20*&tqx=out:json";
 
 let hubData = [];
 let filteredData = [];
@@ -16,37 +18,52 @@ function brandSlug(name) {
 }
 
 // -------------------------------
-// LOAD HUB
+// LOAD HUB (LIVE FROM GOOGLE SHEETS)
 // -------------------------------
 async function loadHub() {
   try {
     const res = await fetch(HUB_URL);
-    if (!res.ok) throw new Error("Hub failed to load");
+    if (!res.ok) throw new Error("Hub failed to load from Google Sheets");
 
-    hubData = await res.json();
+    const text = await res.text();
 
-    // Pre-clean: Ensure all text fields exist
-    hubData = hubData.map((r) => ({
-      Brand: r.Brand || "",
-      Line: r.Line || "",
-      Cigar: r.Cigar || "",
-      Vitola: r.Vitola || "",
-      Wrapper: r.Wrapper || "",
-      Binder: r.Binder || "",
-      Filler: r.Filler || "",
-      WrapperShade: r["Wrapper Shade"] || "",
-      Length: r.Length || "",
-      RG: r.RG || "",
-      MSRP: r.MSRP || "",
-      "Brand IMG": r["Brand IMG"] || "",
-    }));
+    // Strip Google Visualization wrapper safely
+    const jsonStr = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
+    const gviz = JSON.parse(jsonStr);
+
+    const table = gviz.table;
+    const headers = table.cols.map(c => (c.label || c.id || "").trim());
+
+    // Convert rows → clean hub objects
+    hubData = table.rows.map(row => {
+      const obj = {};
+      headers.forEach((h, i) => {
+        const cell = row.c[i];
+        obj[h] = cell ? cell.v : "";
+      });
+
+      return {
+        Brand: obj.Brand || "",
+        Line: obj.Line || "",
+        Cigar: obj.Cigar || "",
+        Vitola: obj.Vitola || "",
+        Wrapper: obj.Wrapper || "",
+        Binder: obj.Binder || "",
+        Filler: obj.Filler || "",
+        WrapperShade: obj["Wrapper Shade"] || "",
+        Length: obj.Length || "",
+        RG: obj.RG || "",
+        MSRP: obj.MSRP || "",
+        "Brand IMG": obj["Brand IMG"] || "",
+      };
+    });
 
     filteredData = [...hubData];
 
-    // New: render brand tiles on the main Cigars page
+    // Render brand icons grid on main Cigars page
     renderBrandsGrid();
 
-    // Existing behavior: render cigar cards when a cigar grid is present
+    // Render cigars if on brand page
     renderCigarsGrid();
   } catch (err) {
     console.error("Error loading hub:", err);
@@ -54,22 +71,20 @@ async function loadHub() {
 }
 
 // -------------------------------
-// RENDER BRAND GRID (main /pos/cigars/ page)
+// RENDER BRAND GRID (main /pos/cigars/)
 // -------------------------------
 function renderBrandsGrid() {
   const container = document.getElementById("brands-grid");
-  if (!container) return; // not on this page
+  if (!container) return;
 
-  // Build a unique brand list with an icon per brand
   const brandMap = new Map();
 
-  hubData.forEach((row) => {
+  hubData.forEach(row => {
     const brandName = (row.Brand || "").trim();
     if (!brandName) return;
 
     if (!brandMap.has(brandName)) {
       const imgFromHub = (row["Brand IMG"] || "").trim();
-      // If Brand IMG is blank, fall back to slugified brand name
       const imgFile = imgFromHub || brandSlug(brandName) + ".svg";
 
       brandMap.set(brandName, {
@@ -85,9 +100,9 @@ function renderBrandsGrid() {
 
   container.innerHTML = "";
 
-  brands.forEach((b) => {
+  brands.forEach(b => {
     const brandName = b.Brand;
-    const imgFile = b.imgFile || brandSlug(brandName) + ".svg";
+    const imgFile = b.imgFile;
     const href = `/pos/cigars/brand.html?brand=${encodeURIComponent(
       brandName
     )}`;
@@ -111,21 +126,19 @@ function renderBrandsGrid() {
 }
 
 // -------------------------------
-// RENDER CIGAR GRID (used on brand pages or others)
+// RENDER CIGAR GRID (brand pages)
 // -------------------------------
 function renderCigarsGrid() {
-  // This is the old behavior: render individual cigars wherever
-  // an element has [data-cigar-grid]. Brand pages can still use this.
   const container = document.querySelector("[data-cigar-grid]");
   if (!container) return;
 
   container.innerHTML = "";
 
-  filteredData.forEach((row) => {
+  filteredData.forEach(row => {
+    const imgFile = row["Brand IMG"] || "_placeholder.svg";
+
     const item = document.createElement("div");
     item.className = "cigar-item";
-
-    const imgFile = row["Brand IMG"] || "_placeholder.svg";
 
     item.innerHTML = `
       <a class="cigar-card">
