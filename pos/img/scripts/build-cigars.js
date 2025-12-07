@@ -1,8 +1,11 @@
 // /pos/img/scripts/build-cigars.js
 
 // LIVE GOOGLE SHEETS HUB URL
-const HUB_URL =
+const GOOGLE_HUB_URL =
   "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tq=select%20*&tqx=out:json";
+
+// LOCAL JSON FALLBACK
+const LOCAL_HUB_URL = "/hub/hub_11-5-25.json";
 
 let hubData = [];
 let filteredData = [];
@@ -17,53 +20,106 @@ function brandSlug(name) {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+function pick(obj, ...keys) {
+  for (const k of keys) {
+    if (obj && Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== null && obj[k] !== undefined && obj[k] !== "") {
+      return obj[k];
+    }
+  }
+  return "";
+}
+
+function normalizeRow(r) {
+  // r is an object from either Google or local JSON
+  return {
+    Brand: pick(r, "Brand", "brand", "BRAND") || "",
+    Line: pick(r, "Line", "line") || "",
+    Cigar: pick(r, "Cigar", "cigar", "Name") || "",
+    Vitola: pick(r, "Vitola", "vitola") || "",
+    Wrapper: pick(r, "Wrapper", "wrapper") || "",
+    Binder: pick(r, "Binder", "binder") || "",
+    Filler: pick(r, "Filler", "filler") || "",
+    WrapperShade:
+      pick(r, "Wrapper Shade", "WrapperShade", "wrapper_shade") || "",
+    Length: pick(r, "Length", "length") || "",
+    RG: pick(r, "RG", "Ring", "ring") || "",
+    MSRP: pick(r, "MSRP", "msrp", "Price") || "",
+    "Brand IMG":
+      pick(r, "Brand IMG", "BrandIMG", "brand_img", "brand icon", "Brand Icon") ||
+      "",
+  };
+}
+
 // -------------------------------
-// LOAD HUB (LIVE FROM GOOGLE SHEETS)
+// Fetch from Google Sheets (GViz)
+// -------------------------------
+async function fetchHubFromGoogle() {
+  console.log("[Hub] Trying Google Sheets...");
+  const res = await fetch(GOOGLE_HUB_URL);
+  if (!res.ok) {
+    throw new Error("Google hub failed to load: " + res.status);
+  }
+
+  const text = await res.text();
+
+  // Strip Google Visualization wrapper
+  const firstBrace = text.indexOf("{");
+  const lastBrace = text.lastIndexOf("}");
+  if (firstBrace === -1 || lastBrace === -1) {
+    throw new Error("Google hub JSON wrapper not found");
+  }
+
+  const jsonStr = text.slice(firstBrace, lastBrace + 1);
+  const gviz = JSON.parse(jsonStr);
+
+  const table = gviz.table;
+  const headers = table.cols.map((c) => (c.label || c.id || "").trim());
+
+  const rows = table.rows.map((row) => {
+    const obj = {};
+    headers.forEach((h, i) => {
+      const cell = row.c[i];
+      obj[h] = cell ? cell.v : "";
+    });
+    return obj;
+  });
+
+  console.log("[Hub] Google Sheets rows:", rows.length);
+  return rows.map(normalizeRow);
+}
+
+// -------------------------------
+// Fetch from local JSON (fallback)
+// -------------------------------
+async function fetchHubFromLocal() {
+  console.log("[Hub] Falling back to local JSON...");
+  const res = await fetch(LOCAL_HUB_URL);
+  if (!res.ok) {
+    throw new Error("Local hub failed to load: " + res.status);
+  }
+  const json = await res.json();
+  console.log("[Hub] Local JSON rows:", json.length);
+  return json.map(normalizeRow);
+}
+
+// -------------------------------
+// LOAD HUB (Google first, then local)
 // -------------------------------
 async function loadHub() {
   try {
-    const res = await fetch(HUB_URL);
-    if (!res.ok) throw new Error("Hub failed to load from Google Sheets");
-
-    const text = await res.text();
-
-    // Strip Google Visualization wrapper safely
-    const jsonStr = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
-    const gviz = JSON.parse(jsonStr);
-
-    const table = gviz.table;
-    const headers = table.cols.map(c => (c.label || c.id || "").trim());
-
-    // Convert rows → clean hub objects
-    hubData = table.rows.map(row => {
-      const obj = {};
-      headers.forEach((h, i) => {
-        const cell = row.c[i];
-        obj[h] = cell ? cell.v : "";
-      });
-
-      return {
-        Brand: obj.Brand || "",
-        Line: obj.Line || "",
-        Cigar: obj.Cigar || "",
-        Vitola: obj.Vitola || "",
-        Wrapper: obj.Wrapper || "",
-        Binder: obj.Binder || "",
-        Filler: obj.Filler || "",
-        WrapperShade: obj["Wrapper Shade"] || "",
-        Length: obj.Length || "",
-        RG: obj.RG || "",
-        MSRP: obj.MSRP || "",
-        "Brand IMG": obj["Brand IMG"] || "",
-      };
-    });
+    try {
+      hubData = await fetchHubFromGoogle();
+    } catch (googleErr) {
+      console.error("[Hub] Google fetch/parse error:", googleErr);
+      hubData = await fetchHubFromLocal();
+    }
 
     filteredData = [...hubData];
 
-    // Render brand icons grid on main Cigars page
+    // Render brand tiles on main Cigars page
     renderBrandsGrid();
 
-    // Render cigars if on brand page
+    // Render cigars grid where present (brand pages etc.)
     renderCigarsGrid();
   } catch (err) {
     console.error("Error loading hub:", err);
@@ -71,15 +127,15 @@ async function loadHub() {
 }
 
 // -------------------------------
-// RENDER BRAND GRID (main /pos/cigars/)
+// RENDER BRAND GRID (main /pos/cigars/ page)
 // -------------------------------
 function renderBrandsGrid() {
   const container = document.getElementById("brands-grid");
-  if (!container) return;
+  if (!container) return; // not on this page
 
   const brandMap = new Map();
 
-  hubData.forEach(row => {
+  hubData.forEach((row) => {
     const brandName = (row.Brand || "").trim();
     if (!brandName) return;
 
@@ -100,9 +156,9 @@ function renderBrandsGrid() {
 
   container.innerHTML = "";
 
-  brands.forEach(b => {
+  brands.forEach((b) => {
     const brandName = b.Brand;
-    const imgFile = b.imgFile;
+    const imgFile = b.imgFile || brandSlug(brandName) + ".svg";
     const href = `/pos/cigars/brand.html?brand=${encodeURIComponent(
       brandName
     )}`;
@@ -126,7 +182,7 @@ function renderBrandsGrid() {
 }
 
 // -------------------------------
-// RENDER CIGAR GRID (brand pages)
+// RENDER CIGAR GRID (used on brand pages or others)
 // -------------------------------
 function renderCigarsGrid() {
   const container = document.querySelector("[data-cigar-grid]");
@@ -134,7 +190,7 @@ function renderCigarsGrid() {
 
   container.innerHTML = "";
 
-  filteredData.forEach(row => {
+  filteredData.forEach((row) => {
     const imgFile = row["Brand IMG"] || "_placeholder.svg";
 
     const item = document.createElement("div");
