@@ -22,7 +22,13 @@ function brandSlug(name) {
 
 function pick(obj, ...keys) {
   for (const k of keys) {
-    if (obj && Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== null && obj[k] !== undefined && obj[k] !== "") {
+    if (
+      obj &&
+      Object.prototype.hasOwnProperty.call(obj, k) &&
+      obj[k] !== null &&
+      obj[k] !== undefined &&
+      obj[k] !== ""
+    ) {
       return obj[k];
     }
   }
@@ -30,7 +36,6 @@ function pick(obj, ...keys) {
 }
 
 function normalizeRow(r) {
-  // r is an object from either Google or local JSON
   return {
     Brand: pick(r, "Brand", "brand", "BRAND") || "",
     Line: pick(r, "Line", "line") || "",
@@ -45,9 +50,41 @@ function normalizeRow(r) {
     RG: pick(r, "RG", "Ring", "ring") || "",
     MSRP: pick(r, "MSRP", "msrp", "Price") || "",
     "Brand IMG":
-      pick(r, "Brand IMG", "BrandIMG", "brand_img", "brand icon", "Brand Icon") ||
-      "",
+      pick(
+        r,
+        "Brand IMG",
+        "BrandIMG",
+        "brand_img",
+        "brand icon",
+        "Brand Icon"
+      ) || "",
   };
+}
+
+// Resolve the correct image src for a brand icon
+function resolveBrandImg(rawImg, brandName) {
+  let file = (rawImg || "").trim();
+
+  // If no explicit file, fall back to slug.svg
+  if (!file) {
+    file = brandSlug(brandName) + ".svg";
+  }
+
+  // If it already looks like a URL or absolute path, use as-is
+  if (
+    file.startsWith("http://") ||
+    file.startsWith("https://") ||
+    file.startsWith("/")
+  ) {
+    return file;
+  }
+
+  // Ensure it has a file extension; default to .svg
+  if (!/\.(svg|png|jpg|jpeg|webp)$/i.test(file)) {
+    file = file + ".svg";
+  }
+
+  return `/img/icons/brands/${file}`;
 }
 
 // -------------------------------
@@ -62,7 +99,6 @@ async function fetchHubFromGoogle() {
 
   const text = await res.text();
 
-  // Strip Google Visualization wrapper
   const firstBrace = text.indexOf("{");
   const lastBrace = text.lastIndexOf("}");
   if (firstBrace === -1 || lastBrace === -1) {
@@ -116,10 +152,7 @@ async function loadHub() {
 
     filteredData = [...hubData];
 
-    // Render brand tiles on main Cigars page
     renderBrandsGrid();
-
-    // Render cigars grid where present (brand pages etc.)
     renderCigarsGrid();
   } catch (err) {
     console.error("Error loading hub:", err);
@@ -131,7 +164,7 @@ async function loadHub() {
 // -------------------------------
 function renderBrandsGrid() {
   const container = document.getElementById("brands-grid");
-  if (!container) return; // not on this page
+  if (!container) return;
 
   const brandMap = new Map();
 
@@ -141,7 +174,7 @@ function renderBrandsGrid() {
 
     if (!brandMap.has(brandName)) {
       const imgFromHub = (row["Brand IMG"] || "").trim();
-      const imgFile = imgFromHub || brandSlug(brandName) + ".svg";
+      const imgFile = resolveBrandImg(imgFromHub, brandName);
 
       brandMap.set(brandName, {
         Brand: brandName,
@@ -158,7 +191,7 @@ function renderBrandsGrid() {
 
   brands.forEach((b) => {
     const brandName = b.Brand;
-    const imgFile = b.imgFile || brandSlug(brandName) + ".svg";
+    const src = resolveBrandImg(b.imgFile, brandName);
     const href = `/pos/cigars/brand.html?brand=${encodeURIComponent(
       brandName
     )}`;
@@ -171,7 +204,7 @@ function renderBrandsGrid() {
     card.innerHTML = `
       <div class="brand-card-inner">
         <div class="brand-card-icon-wrapper">
-          <img class="brand-card-icon" src="/img/icons/brands/${imgFile}" alt="${brandName}">
+          <img class="brand-card-icon" src="${src}" alt="${brandName}">
         </div>
         <div class="brand-card-name">${brandName}</div>
       </div>
@@ -191,14 +224,16 @@ function renderCigarsGrid() {
   container.innerHTML = "";
 
   filteredData.forEach((row) => {
-    const imgFile = row["Brand IMG"] || "_placeholder.svg";
+    const brandName = row.Brand || "";
+    const imgFromHub = row["Brand IMG"] || "";
+    const src = resolveBrandImg(imgFromHub, brandName);
 
     const item = document.createElement("div");
     item.className = "cigar-item";
 
     item.innerHTML = `
       <a class="cigar-card">
-        <img class="brand-icon" src="/img/icons/brands/${imgFile}" alt="${row.Brand}">
+        <img class="brand-icon" src="${src}" alt="${row.Brand}">
         <div class="cigar-name">${row.Line} ${row.Cigar}</div>
         <div class="cigar-vitola">${row.Vitola}</div>
         <div class="cigar-brand">${row.Brand}</div>
