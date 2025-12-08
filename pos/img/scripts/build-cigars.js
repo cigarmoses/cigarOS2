@@ -1,8 +1,8 @@
 // /pos/img/scripts/build-cigars.js
 
-// LIVE GOOGLE SHEETS HUB URL
-const GOOGLE_HUB_URL =
-  "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tq=select%20*&tqx=out:json";
+// Base for LIVE GOOGLE SHEETS HUB URL (we'll add cache-busting query params)
+const GOOGLE_HUB_BASE =
+  "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq";
 
 // LOCAL JSON FALLBACK
 const LOCAL_HUB_URL = "/hub/hub_11-5-25.json";
@@ -63,17 +63,6 @@ function normalizeRow(r) {
 
 /**
  * Resolve the correct image src for a brand icon.
- *
- * Rules:
- * - If Brand IMG is blank → use brand name → slug → /img/icons/brands/slug.svg
- *   e.g. "20 Acre Farm" → 20acrefarm.svg
- * - If Brand IMG looks like a path or URL, respect it:
- *   - starts with http://, https://, or /
- *   - or contains a slash → treat as path, add leading / if missing
- * - If Brand IMG is just a filename or label (no path):
- *   - if it has an extension, keep that
- *   - slugify the base
- *   - prepend /img/icons/brands/
  */
 function resolveBrandImg(rawImg, brandName) {
   const brand = (brandName || "").trim();
@@ -95,7 +84,6 @@ function resolveBrandImg(rawImg, brandName) {
 
   // If it contains a slash but no leading / or protocol, treat as relative path
   if (candidate.includes("/")) {
-    // e.g. "img/icons/brands/20acrefarm.svg" -> "/img/icons/brands/20acrefarm.svg"
     if (!candidate.startsWith("/")) {
       candidate = "/" + candidate;
     }
@@ -103,7 +91,6 @@ function resolveBrandImg(rawImg, brandName) {
   }
 
   // At this point, candidate is just a name or filename (no path)
-  // Separate base + extension if present
   let base = candidate;
   let ext = ".svg";
   const dotIndex = candidate.lastIndexOf(".");
@@ -113,17 +100,28 @@ function resolveBrandImg(rawImg, brandName) {
     base = candidate.slice(0, dotIndex);
   }
 
-  // Slugify the base to kill spaces and weird chars
   const slug = brandSlug(base || brand);
   return `/img/icons/brands/${slug}${ext}`;
+}
+
+// Build a fresh Google URL each time with cache-busting param
+function makeGoogleHubUrl() {
+  const params = new URLSearchParams({
+    tq: "select *",
+    tqx: "out:json",
+    cacheBust: String(Date.now()),
+  });
+  return `${GOOGLE_HUB_BASE}?${params.toString()}`;
 }
 
 // -------------------------------
 // Fetch from Google Sheets (GViz)
 // -------------------------------
 async function fetchHubFromGoogle() {
-  console.log("[Hub] Trying Google Sheets...");
-  const res = await fetch(GOOGLE_HUB_URL);
+  const url = makeGoogleHubUrl();
+  console.log("[Hub] Trying Google Sheets URL:", url);
+
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error("Google hub failed to load: " + res.status);
   }
