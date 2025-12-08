@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <link rel="stylesheet" href="/pos/pos.css" />
-  <!-- Global SF Pro type system -->
-  <link rel="stylesheet" href="/css/type.css" />
-
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS</title>
+
+  <!-- Global SF Pro type system -->
+  <link rel="stylesheet" href="/css/type.css" />
+  <!-- Shared POS styles -->
+  <link rel="stylesheet" href="/pos/pos.css" />
 
   <style>
     :root {
@@ -16,526 +17,187 @@
       --muted: #6a7586;
       --card: #ffffff;
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
       background: var(--bg);
-      font-family: var(--font-text);
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
       color: var(--ink);
       min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
     }
 
-    /* Topbar */
+    .pos-shell {
+      max-width: 960px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 32px;
+    }
+
+    /* Top bar */
+
     .pos-topbar {
-      padding: 14px 16px 4px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      padding: 12px 16px 0;
     }
+
     .pos-back {
-      font-size: 16px;
-      color: var(--ink);
-      text-decoration: none;
-      padding: 6px 10px;
-      border-radius: 6px;
-      background: #ffffff;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
-    }
-    .pos-star {
-      font-size: 22px;
-      color: #ffcc00;
-    }
-
-    header {
-      padding: 10px 16px 10px 16px;
-    }
-    h1.page-title {
-      font-size: 56px;
-      font-weight: 800;
-      margin: 0;
-    }
-
-    /* Removed subtitle entirely */
-
-    /* Category grid */
-    .grid {
-      padding: 10px 16px 110px 16px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 16px;
-    }
-    .tile {
-      background: var(--card);
-      border-radius: 26px;
-      padding: 18px 16px 20px 16px;
-      box-shadow: 0 10px 30px rgba(15,26,44,0.04);
-      text-decoration: none;
-      color: inherit;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .tile-icon {
-      width: 58px;
-      height: 58px;
-      border-radius: 20px;
-      background: #ffffff;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    .tile-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-    .tile-title {
-      font-size: 20px;
-      font-weight: 700;
-      font-family: var(--font-display);
-    }
-    .tile-sub {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.25;
-    }
-
-    /* ================= INVOICE POPUP LAYOUT ================ */
-
-    .invoice-popup {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.35);
-      display: none;
-      z-index: 9999;
-      padding: 20px;
-    }
-    .invoice-popup.open {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .invoice-popup-inner {
-      width: 100%;
-      max-width: 420px;
-      max-height: 88vh;
-      overflow-y: auto;
-      background: #ffffff;
-      border-radius: 36px;
-      padding: 28px 26px 32px;
-      box-shadow: 0 12px 50px rgba(0,0,0,0.20);
-      font-family: var(--font-text);
-    }
-
-    .invoice-header {
-      text-align: center;
-      margin-bottom: 14px;
-    }
-    .invoice-title {
-      font-size: 22px;
-      font-weight: 700;
-      margin: 0;
-      font-family: var(--font-display);
-    }
-    .invoice-date {
-      margin: 0;
-      font-size: 13px;
-      color: #222;
-      font-weight: 500;
-    }
-
-    .invoice-body {
-      margin-top: 18px;
-    }
-
-    .loyalty-row {
-      width: 100%;
-      background: #e8f0f5;
-      border-radius: 999px;
-      padding: 12px 18px;
-      margin-bottom: 20px;
-      font-size: 14px;
-      font-weight: 500;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    #invoice-items {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-top: 14px;
-    }
-
-    .invoice-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #e8f0f5;
-      border-radius: 30px;
-      padding: 14px 18px;
-      box-sizing: border-box;
-    }
-
-    .invoice-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      min-width: 0;
-    }
-
-    .invoice-thumb {
-      width: 62px;
-      height: 62px;
-      border-radius: 18px;
-      background: #cfdde7;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .invoice-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .invoice-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-
-    .invoice-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: #007aff;
-      text-decoration: underline;
-      background: none;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      text-align: left;
-    }
-
-    .invoice-meta {
-      font-size: 13px;
-      color: #111;
-      font-weight: 500;
-      line-height: 1.2;
-    }
-
-    .invoice-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
       gap: 6px;
-      min-width: 90px;
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .invoice-qty-label {
-      font-size: 13px;
-      letter-spacing: 0.08em;
-    }
-
-    .invoice-qty-control {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #f2f6fa;
-      padding: 4px 12px;
-      border-radius: 999px;
-    }
-
-    .invoice-qty-btn {
-      width: 22px;
-      height: 22px;
-      display: grid;
-      place-items: center;
-      background: #fff;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,0.2);
+      border: none;
+      background: none;
+      padding: 4px 0;
+      font-size: 15px;
+      color: #007aff;
       cursor: pointer;
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+    }
+
+    .pos-back-icon {
       font-size: 16px;
       line-height: 1;
     }
 
-    .invoice-qty-value {
-      min-width: 20px;
-      text-align: center;
-      font-weight: 600;
+    .pos-back-label {
+      font-size: 15px;
     }
 
-    .invoice-line-total {
-      font-weight: 700;
-      font-size: 14px;
+    /* Main content */
+
+    .pos-main {
+      padding: 16px;
+      padding-bottom: 40px;
     }
 
-    .invoice-totals {
-      margin-top: 26px;
-      text-align: right;
-      font-size: 16px;
+    .pos-title {
+      margin: 0 0 16px;
+      font-size: 28px;
+      line-height: 1.2;
+      font-family: var(--font-display-heavy, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
     }
-    .invoice-totals .total-row {
+
+    .pos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .pos-card {
       display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      margin-bottom: 4px;
-    }
-    .invoice-totals .total-bold {
-      font-size: 20px;
-      font-weight: 700;
-      margin-top: 10px;
-    }
-
-    .invoice-close {
-      margin-top: 20px;
-      text-align: center;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 16px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 16px 14px;
+      border-radius: 16px;
+      background: var(--card);
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 4px 10px rgba(15, 26, 44, 0.06);
+      transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
     }
 
-    /* Tony floating icon bottom-left */
-    .tony-fab {
-      position: fixed;
-      left: 16px;
-      bottom: 16px;
-      width: 46px;
-      height: 46px;
-      border-radius: 999px;
-      background: transparent;
-      border: none;
-      padding: 0;
-      z-index: 40;
+    .pos-card:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 6px rgba(15, 26, 44, 0.12);
     }
-    .tony-fab img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      border-radius: inherit;
+
+    .pos-card-title {
+      margin: 0 0 4px;
+      font-size: 17px;
+      font-family: var(--font-display-heavy, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+    }
+
+    .pos-card-body {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.4;
+      color: var(--muted);
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+    }
+
+    @media (min-width: 768px) {
+      .pos-main {
+        padding: 20px;
+      }
+
+      .pos-title {
+        font-size: 30px;
+      }
+
+      .pos-card {
+        padding: 18px 16px;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="pos-shell">
+    <!-- Top bar with back button -->
+    <header class="pos-topbar">
+      <button type="button" class="pos-back" id="pos-back">
+        <span class="pos-back-icon">←</span>
+        <span class="pos-back-label">Back</span>
+      </button>
+    </header>
 
-  <div class="pos-topbar">
-    <a class="pos-back" href="/">← Back</a>
-    <div class="pos-star">★</div>
+    <!-- Main POS tiles -->
+    <main class="pos-main">
+      <h1 class="pos-title">POS</h1>
+
+      <section class="pos-grid" aria-label="Point of Sale sections">
+        <a href="/pos/cigars/" class="pos-card">
+          <h2 class="pos-card-title">Cigars</h2>
+          <p class="pos-card-body">Browse all cigars by brand.</p>
+        </a>
+
+        <a href="/pos/food-bevs/" class="pos-card">
+          <h2 class="pos-card-title">Food &amp; Bevs</h2>
+          <p class="pos-card-body">Drinks and snacks for the lounge.</p>
+        </a>
+
+        <a href="/pos/accessories/" class="pos-card">
+          <h2 class="pos-card-title">Accessories</h2>
+          <p class="pos-card-body">Lighters, cutters, and more.</p>
+        </a>
+
+        <a href="/pos/ashtrays/" class="pos-card">
+          <h2 class="pos-card-title">Ashtrays</h2>
+          <p class="pos-card-body">Table and personal ashtrays.</p>
+        </a>
+
+        <a href="/pos/pipes/" class="pos-card">
+          <h2 class="pos-card-title">Pipes</h2>
+          <p class="pos-card-body">Pipes and pipe tobacco.</p>
+        </a>
+
+        <a href="/pos/packs/" class="pos-card">
+          <h2 class="pos-card-title">Packs</h2>
+          <p class="pos-card-body">Samplers, fresh packs, and more.</p>
+        </a>
+      </section>
+    </main>
   </div>
-
-  <header>
-    <h1 class="page-title">POS</h1>
-  </header>
-
-  <main class="grid">
-
-    <!-- CIGARS -->
-    <a class="tile" href="/pos/cigars/">
-      <div class="tile-icon">
-        <img src="/img/icons/categories/cigars.svg" alt="Cigars" />
-      </div>
-      <div class="tile-title">Cigars</div>
-      <div class="tile-sub">Browse all cigars by brand.</div>
-    </a>
-
-    <!-- FOOD & BEVS -->
-    <a class="tile" href="/pos/foodandbevs/">
-      <div class="tile-icon">
-        <img src="/img/icons/categories/foodandbevs.svg" alt="Food & Bevs" />
-      </div>
-      <div class="tile-title">Food &amp; Bevs</div>
-      <div class="tile-sub">Drinks and snacks for the lounge.</div>
-    </a>
-
-    <!-- ACCESSORIES -->
-    <a class="tile" href="/pos/accessories/">
-      <div class="tile-icon">
-        <img src="/img/icons/categories/accessories.svg" alt="Accessories" />
-      </div>
-      <div class="tile-title">Accessories</div>
-      <div class="tile-sub">Lighters, cutters, and more.</div>
-    </a>
-
-    <!-- ASHTRAYS -->
-    <a class="tile" href="/pos/ashtrays/">
-      <div class="tile-icon">
-        <img src="/img/icons/categories/ashtrays.svg" alt="Ashtrays" />
-      </div>
-      <div class="tile-title">Ashtrays</div>
-      <div class="tile-sub">Table and personal ashtrays.</div>
-    </a>
-
-    <!-- PIPES -->
-    <a class="tile" href="/pos/pipes/">
-      <div class="tile-icon">
-        <img src="/img/icons/categories/pipes.svg" alt="Pipes" />
-      </div>
-      <div class="tile-title">Pipes</div>
-      <div class="tile-sub">Pipes and pipe tobacco.</div>
-    </a>
-
-    <!-- PACKS -->
-    <a class="tile" href="/pos/packs/">
-      <div class="tile-icon">
-        <img src="/img/icons/categories/packs.svg" alt="Packs" />
-      </div>
-      <div class="tile-title">Packs</div>
-      <div class="tile-sub">Samplers, fresh packs, and more.</div>
-    </a>
-
-  </main>
 
   <script>
-    const POS_TAX_RATE = 0.07;
-
-    const demoCartItems = [
-      {
-        id: "andalusian-bull",
-        name: "Andalusian Bull",
-        vitola: "Figurado",
-        brand: "La Flor Dominicana",
-        price: 22.00,
-        qty: 1,
-        icon: "/img/icons/categories/cigars.svg"
-      },
-      {
-        id: "sprite-can",
-        name: "Sprite",
-        vitola: "Food & Beverage",
-        brand: "",
-        price: 1.50,
-        qty: 2,
-        icon: "/img/icons/foodandbevs/sprite.svg"
-      }
-    ];
-
-    function formatMoney(value) {
-      return value.toFixed(2);
-    }
-
-    function renderInvoice() {
-      const container = document.getElementById("invoice-items");
-      if (!container) return;
-
-      container.innerHTML = "";
-      let subtotal = 0;
-
-      demoCartItems.forEach((item, index) => {
-        const lineTotal = item.price * item.qty;
-        subtotal += lineTotal;
-
-        const row = document.createElement("div");
-        row.className = "invoice-item";
-        row.dataset.index = String(index);
-        row.innerHTML = `
-          <div class="invoice-left">
-            <div class="invoice-thumb">
-              <img src="${item.icon}" alt="${item.brand || item.name}">
-            </div>
-            <div class="invoice-text">
-              <button type="button" class="invoice-name">${item.name}</button>
-              <div class="invoice-meta">${item.vitola}</div>
-              <div class="invoice-meta">${item.brand}</div>
-              <div class="invoice-meta">$${formatMoney(item.price)}</div>
-            </div>
-          </div>
-          <div class="invoice-right">
-            <div class="invoice-qty-label">QTY</div>
-            <div class="invoice-qty-control">
-              <button class="invoice-qty-btn" data-dir="-1">−</button>
-              <span class="invoice-qty-value">${item.qty}</span>
-              <button class="invoice-qty-btn" data-dir="1">+</button>
-            </div>
-            <div class="invoice-line-total">$${formatMoney(lineTotal)}</div>
-          </div>
-        `;
-        container.appendChild(row);
+    // Simple back behavior matching other pages
+    (function () {
+      const backBtn = document.getElementById('pos-back');
+      if (!backBtn) return;
+      backBtn.addEventListener('click', function () {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = '/';
+        }
       });
-
-      const subtotalEl = document.getElementById("invoice-subtotal");
-      const taxEl = document.getElementById("invoice-tax");
-      const totalEl = document.getElementById("invoice-total");
-
-      const tax = subtotal * POS_TAX_RATE;
-      const total = subtotal + tax;
-
-      if (subtotalEl) subtotalEl.textContent = `$${formatMoney(subtotal)}`;
-      if (taxEl) taxEl.textContent = `$${formatMoney(tax)}`;
-      if (totalEl) totalEl.textContent = `$${formatMoney(total)}`;
-
-      container.querySelectorAll(".invoice-qty-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const row = btn.closest(".invoice-item");
-          if (!row) return;
-          const index = Number(row.dataset.index || "0");
-          const dir = Number(btn.getAttribute("data-dir") || "0");
-          const item = demoCartItems[index];
-          if (!item) return;
-          const newQty = item.qty + dir;
-          if (newQty < 0) return;
-          item.qty = newQty;
-          renderInvoice();
-        });
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const dateEl = document.getElementById("invoice-date");
-      if (dateEl) {
-        const d = new Date();
-        const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
-        const dateStr = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
-        const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-        dateEl.textContent = `${weekday}, ${dateStr} — ${timeStr}`;
-      }
-      renderInvoice();
-    });
+    })();
   </script>
-
-  <div class="receipt-pill" id="open-receipt">
-    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
-    <span class="receipt-pill-count" id="receipt-count">0</span>
-  </div>
-
-  <div id="invoice-popup" class="invoice-popup">
-    <div class="invoice-popup-inner">
-
-      <div class="invoice-header">
-        <h2 class="invoice-title">INVOICE</h2>
-        <p class="invoice-date" id="invoice-date"></p>
-      </div>
-
-      <div class="invoice-body">
-        <div class="loyalty-row">
-          <span>Loyalty customer</span>
-          <span class="dropdown-arrow">▼</span>
-        </div>
-
-        <div id="invoice-items"></div>
-      </div>
-
-      <div class="invoice-totals">
-        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
-        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
-        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
-      </div>
-
-      <div id="close-receipt" class="invoice-close">Close</div>
-    </div>
-  </div>
-
-  <!-- Tony floating icon -->
-  <button class="tony-fab" id="tonyFab">
-    <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
-  </button>
-
-  <script src="/js/tony.js" defer></script>
-  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
