@@ -1,46 +1,36 @@
+// /js/ask-tony.js
 (function () {
   const ICON_SRC = "/uxui/pop-up-ask-tony-grey-border.svg";
 
+  // -----------------------------
+  // Inject styles once
+  // -----------------------------
   function injectStyles() {
     if (document.getElementById("tony-style")) return;
 
     const style = document.createElement("style");
     style.id = "tony-style";
     style.textContent = `
-      /* Floating Tony button (matches POS white-border version) */
-      #tonyFab,
-      .tony-fab {
-        position: fixed;
-        bottom: 16px;
-        left: 16px;
-        width: 46px;
-        height: 46px;
-        border-radius: 999px;
-        background: transparent;
-        border: none;
-        padding: 0;
-        z-index: 9998;
-        cursor: pointer;
+      :root {
+        --tony-bg-scrim: rgba(15, 26, 44, 0.45);
+        --tony-card-bg: #ffffff;
+        --tony-ink: #0f1a2c;
+        --tony-muted: #6c7178;
+        --tony-pill-bg: #ffffff;
+        --tony-pill-border: #d0d3d7;
+        --tony-accent: #007aff;
+        --tony-input-bg: #f2f2f7;
       }
 
-      #tonyFab img,
-      .tony-fab img {
-        width: 100%;
-        height: 100%;
-        display: block;
-        border-radius: inherit;
-      }
-
-      /* Back-compat if any page still uses #tony-button */
       #tony-button {
         position: fixed;
         bottom: 20px;
         left: 20px;
-        width: 54px;
-        height: 54px;
+        width: 56px;
+        height: 56px;
         border-radius: 50%;
         background: #ffffff;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.25);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -55,440 +45,321 @@
         border-radius: 50%;
       }
 
+      /* Overlay */
+
       #tony-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.25);
+        background: var(--tony-bg-scrim);
         display: none;
         align-items: center;
         justify-content: center;
         z-index: 9999;
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
       }
 
-      #tony-overlay.tony-open {
+      #tony-overlay.is-open {
         display: flex;
       }
 
-      #tony-modal {
+      .tony-modal {
         position: relative;
-        background: #ffffff;
-        border-radius: 32px;
-        border: 3px solid #111111;
-        max-width: 480px;
-        width: min(92vw, 480px);
-        max-height: min(560px, 92vh);
-        padding: 26px 24px 18px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+        width: min(600px, 100% - 32px);
+        max-height: calc(100vh - 64px);
+        background: var(--tony-card-bg);
+        border-radius: 28px;
+        box-shadow: 0 18px 45px rgba(0,0,0,0.25);
+        padding: 20px 20px 16px;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
+        font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        color: var(--tony-ink);
+      }
+
+      @media (min-width: 600px) {
+        .tony-modal {
+          padding: 24px 24px 20px;
+        }
+      }
+
+      .tony-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        border: none;
+        background: #f2f2f7;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .tony-close span {
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .tony-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 8px;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+
+      .tony-title {
+        font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        font-weight: 800; /* SF Pro Display Heavy */
+        font-size: 26px;
+        letter-spacing: -0.02em;
+        margin: 4px 0 2px;
+      }
+
+      .tony-subtitle {
+        font-size: 14px;
+        line-height: 1.35;
+        color: var(--tony-muted);
+        margin: 0;
+      }
+
+      .tony-avatar-wrap {
+        margin-top: 12px;
+        margin-bottom: 10px;
+        width: 96px;
+        height: 96px;
+        border-radius: 999px;
+        background: #f2f2f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         overflow: hidden;
       }
 
-      #tony-modal-tail {
-        position: absolute;
-        left: 36px;
-        bottom: -26px;
-        width: 96px;
-        height: 38px;
-        background: #ffffff;
-        border: 3px solid #111111;
-        border-top: none;
-        border-radius: 0 0 32px 32px;
-        transform: skewX(-18deg);
-        box-shadow: 0 18px 32px rgba(0,0,0,0.35);
-      }
-
-      #tony-modal-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        margin-bottom: 8px;
-      }
-
-      #tony-modal-title {
-        flex: 1;
-        text-align: center;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-        font-weight: 800;
-        font-size: 26px;
-        letter-spacing: 0.02em;
-      }
-
-      #tony-close {
-        border: none;
-        background: transparent;
-        font-size: 22px;
-        line-height: 1;
-        cursor: pointer;
-        color: #555555;
-      }
-
-      #tony-modal-avatar {
-        display: flex;
-        justify-content: center;
-        margin: 6px 0 10px;
-      }
-
-      #tony-modal-avatar img {
-        width: 110px;
-        height: 110px;
+      .tony-avatar-wrap img {
+        width: 88px;
+        height: 88px;
         border-radius: 50%;
+        display: block;
       }
 
-      #tony-tagline {
-        text-align: center;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-        font-size: 15px;
-        margin: 0 0 14px;
-        color: #202020;
-      }
+      /* Pills */
 
-      #tony-suggestions {
+      .tony-pills {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
         justify-content: center;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
+        padding: 0 4px;
       }
 
-      .tony-chip {
-        border-radius: 999px;
-        border: 1px solid #d0d0d0;
-        padding: 6px 10px;
-        font-size: 12px;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-        background: #f7f7f7;
-        color: #777777;
+      .tony-pill {
+        border-radius: 9999px;
+        border: 1px solid var(--tony-pill-border);
+        background: var(--tony-pill-bg);
+        padding: 6px 12px;
+        font-size: 13px;
+        line-height: 1.25;
+        color: var(--tony-ink);
+        font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
         cursor: pointer;
         white-space: nowrap;
       }
 
-      #tony-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 4px 2px 0;
-        margin-bottom: 8px;
-        font-family: Georgia, "Times New Roman", serif;
+      .tony-pill:active {
+        background: #f2f2f7;
+      }
+
+      /* Intro text card */
+
+      .tony-body-card {
+        background: #f5f5f8;
+        border-radius: 18px;
+        padding: 12px 14px;
+        margin: 0 4px 10px;
         font-size: 14px;
-        color: #222222;
+        line-height: 1.5;
       }
 
-      .tony-bubble {
-        max-width: 100%;
-        padding: 8px 10px;
-        margin-bottom: 6px;
-        border-radius: 12px;
-        line-height: 1.4;
+      .tony-body-card p {
+        margin: 0;
       }
 
-      .tony-bubble.tony {
-        margin-right: auto;
-        background: #f3f3f3;
-        border: 1px solid #dddddd;
+      .tony-body-card p + p {
+        margin-top: 8px;
       }
 
-      .tony-bubble.user {
-        margin-left: auto;
-        background: #d9e6ff;
-        border: 1px solid #b9cfff;
-      }
+      /* Input row */
 
-      #tony-input {
+      .tony-input-row {
+        margin-top: auto;
+        padding-top: 6px;
         display: flex;
         align-items: center;
         gap: 8px;
-        border-top: 1px solid #eeeeee;
-        padding-top: 8px;
-        margin-top: 4px;
       }
 
-      #tony-query {
+      .tony-input {
         flex: 1;
-        padding: 8px 10px;
-        border-radius: 999px;
-        border: 1px solid #d0d0d0;
-        font-size: 14px;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+        border-radius: 9999px;
+        border: none;
+        background: var(--tony-input-bg);
+        padding: 10px 14px;
+        font-size: 15px;
+        font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        color: var(--tony-ink);
         outline: none;
       }
 
-      #tony-query:focus {
-        border-color: #111111;
+      .tony-input::placeholder {
+        color: #9a9ea6;
       }
 
-      #tony-send {
-        border: none;
+      .tony-send {
+        width: 34px;
+        height: 34px;
         border-radius: 999px;
-        padding: 8px 14px;
-        font-size: 16px;
-        cursor: pointer;
-        background: #111111;
+        border: none;
+        background: var(--tony-ink);
         color: #ffffff;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        cursor: pointer;
       }
 
-      @media (max-width: 480px) {
-        #tony-modal {
-          border-radius: 26px;
-          padding: 22px 18px 14px;
-        }
-
-        #tony-modal-title {
-          font-size: 22px;
-        }
-
-        #tony-modal-avatar img {
-          width: 96px;
-          height: 96px;
-        }
-
-        #tony-modal-tail {
-          left: 28px;
-          width: 80px;
-        }
+      .tony-send span {
+        font-size: 18px;
+        transform: translateX(1px);
       }
     `;
     document.head.appendChild(style);
   }
 
-  function createTonyDOM() {
-    injectStyles();
+  // -----------------------------
+  // Create button + overlay
+  // -----------------------------
+  function createUI() {
+    if (document.getElementById("tony-button")) return;
 
-    // Prefer a pre-existing POS-style button
-    let btn = document.getElementById("tonyFab") || document.querySelector(".tony-fab");
+    // Floating button
+    const btn = document.createElement("button");
+    btn.id = "tony-button";
+    btn.type = "button";
+    btn.setAttribute("aria-label", "Ask Tony");
+    btn.innerHTML = `
+      <img src="${ICON_SRC}" alt="Ask Tony" loading="lazy" />
+    `;
+    document.body.appendChild(btn);
 
-    // If nothing exists, create a standard one
-    if (!btn) {
-      btn = document.createElement("button");
-      btn.id = "tonyFab";
-      btn.className = "tony-fab";
-      const img = document.createElement("img");
-      img.src = ICON_SRC;
-      img.alt = "Ask Tony";
-      btn.appendChild(img);
-      document.body.appendChild(btn);
-    } else {
-      // Force the correct icon on any existing button
-      let img = btn.querySelector("img");
-      if (!img) {
-        img = document.createElement("img");
-        btn.appendChild(img);
-      }
-      img.src = ICON_SRC;
-      img.alt = "Ask Tony";
-    }
+    // Overlay + modal
+    const overlay = document.createElement("div");
+    overlay.id = "tony-overlay";
+    overlay.innerHTML = `
+      <section class="tony-modal" role="dialog" aria-modal="true" aria-labelledby="tony-title">
+        <button type="button" class="tony-close" aria-label="Close Ask Tony">
+          <span>&times;</span>
+        </button>
 
-    // Avoid wiring twice
-    if (btn.dataset.tonyWired === "1") return;
-    btn.dataset.tonyWired = "1";
+        <header class="tony-header">
+          <h2 id="tony-title" class="tony-title">Ask Tony</h2>
+          <p class="tony-subtitle">He knows cigars. And he knows a guy.</p>
+          <div class="tony-avatar-wrap">
+            <img src="${ICON_SRC}" alt="Tony" loading="lazy" />
+          </div>
+        </header>
 
-    // Overlay + modal (create if needed)
-    let overlay = document.getElementById("tony-overlay");
-    let modal;
-
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.id = "tony-overlay";
-
-      modal = document.createElement("div");
-      modal.id = "tony-modal";
-
-      modal.innerHTML = `
-        <div id="tony-modal-header">
-          <span style="width:32px;"></span>
-          <div id="tony-modal-title">Ask Tony…</div>
-          <button id="tony-close" aria-label="Close Tony">×</button>
+        <div class="tony-pills">
+          <button type="button" class="tony-pill">What does vitola mean?</button>
+          <button type="button" class="tony-pill">What are some good Connecticut gordos?</button>
+          <button type="button" class="tony-pill">Top 25 cigars last year?</button>
         </div>
-        <div id="tony-modal-avatar">
-          <img src="${ICON_SRC}" alt="Tony">
+
+        <div class="tony-body-card">
+          <p>Hey, I’m Tony. I help you pick cigars that actually make sense for you. Brands, blends, size, strength—I got you.</p>
+          <p>Ask me something like: “Show me a medium Nicaraguan toro under $15” or “What’s similar to Fuente Hemingway?”</p>
         </div>
-        <p id="tony-tagline">He knows cigars. And he knows a guy.</p>
-        <div id="tony-suggestions">
-          <button class="tony-chip" data-q="What does vitola mean? Show me a picture of one.">What does vitola mean?</button>
-          <button class="tony-chip" data-q="What are some good Connecticut gordos?">What are some good Connecticut gordos?</button>
-          <button class="tony-chip" data-q="What were Cigar Aficionado’s top 25 cigars last year?">Top 25 cigars last year?</button>
-        </div>
-        <div id="tony-messages"></div>
-        <form id="tony-input" autocomplete="off">
-          <input id="tony-query" placeholder="Ask Tony…" />
-          <button id="tony-send" type="submit">➤</button>
+
+        <form class="tony-input-row">
+          <input
+            class="tony-input"
+            type="text"
+            placeholder="Ask Tony..."
+            aria-label="Ask Tony"
+          />
+          <button type="submit" class="tony-send" aria-label="Send question">
+            <span>➤</span>
+          </button>
         </form>
-        <div id="tony-modal-tail"></div>
-      `;
+      </section>
+    `;
+    document.body.appendChild(overlay);
 
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-    } else {
-      modal = document.getElementById("tony-modal");
+    // Wire up interactions
+    const closeBtn = overlay.querySelector(".tony-close");
+    const form = overlay.querySelector(".tony-input-row");
+    const input = overlay.querySelector(".tony-input");
+    const pills = overlay.querySelectorAll(".tony-pill");
+
+    function open() {
+      overlay.classList.add("is-open");
+      setTimeout(() => input && input.focus(), 10);
     }
 
-    wireTony(btn, overlay, modal);
-  }
-
-  function wireTony(btn, overlay, modal) {
-    const form = modal.querySelector("#tony-input");
-    const input = modal.querySelector("#tony-query");
-    const msgs  = modal.querySelector("#tony-messages");
-    const close = modal.querySelector("#tony-close");
-    const chips = modal.querySelectorAll(".tony-chip");
-
-    function addBubble(container, text, fromTony) {
-      const div = document.createElement("div");
-      div.className = "tony-bubble " + (fromTony ? "tony" : "user");
-      div.textContent = text;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
+    function close() {
+      overlay.classList.remove("is-open");
+      input && (input.value = "");
     }
 
-    function addUser(text) {
-      addBubble(msgs, text, false);
-    }
-
-    function addTony(container, text) {
-      addBubble(container, text, true);
-    }
-
-    function openModal() {
-      overlay.classList.add("tony-open");
-      if (!msgs.hasChildNodes()) {
-        addTony(
-          msgs,
-          "Hey, I’m Tony. I help you pick cigars that actually make sense for you. Brands, blends, size, strength—I got you."
-        );
-        addTony(
-          msgs,
-          "Ask me something like: “Show me a medium Nicaraguan toro under $15” or “What’s similar to Fuente Hemingway?”"
-        );
-      }
-      setTimeout(() => input && input.focus(), 150);
-    }
-
-    function closeModal() {
-      overlay.classList.remove("tony-open");
-    }
-
-    // 93% cigar info / 7% Tony attitude
-    function fakeTonyAnswer(q) {
-      const qq = q.toLowerCase();
-
-      if (qq.includes("nicaragua") || qq.includes("nicaraguan")) {
-        return (
-          "You’re talking Nicaraguan, so expect pepper, earth, cocoa — plenty of flavor.\n\n" +
-          "Lines you should look at:\n" +
-          "• Padrón 2000 / 3000 (classic, no nonsense)\n" +
-          "• Oliva Serie V for something richer\n" +
-          "• My Father if you like a little spice\n\n" +
-          "What do you think, I’ve had my fair share of sticks?"
-        );
-      }
-
-      if (qq.includes("cameroon")) {
-        return (
-          "Cameroon wrapper is medium, sweet, and a little toasty — think baking spice, cedar, and a dry sweetness.\n\n" +
-          "If you’re into that profile, look for cigars like:\n" +
-          "• Arturo Fuente Hemingway (classic move)\n" +
-          "• Some of the old-school Oliva and CAO Cameroon blends\n\n" +
-          "You want flavor without getting knocked over? Cameroon’s a good lane."
-        );
-      }
-
-      if (
-        qq.includes("beginner") ||
-        qq.includes("new to cigars") ||
-        qq.includes("first cigar") ||
-        qq.includes("new smoker")
-      ) {
-        return (
-          "First cigar or still figuring it out? No problem.\n\n" +
-          "Here’s where I’d start you:\n" +
-          "• Connecticut-wrapped robusto — mild to medium\n" +
-          "• Smaller ring gauge so you’re not wrestling with it\n" +
-          "• Pair it with coffee or water so you taste the cigar, not just the drink\n\n" +
-          "Everybody started somewhere. I got you."
-        );
-      }
-
-      if (
-        qq.includes("pair") ||
-        qq.includes("pairing") ||
-        qq.includes("drink with") ||
-        qq.includes("go with")
-      ) {
-        return (
-          "Alright, here’s the move on pairings:\n\n" +
-          "• Light / Connecticut cigars → coffee, light rum, champagne\n" +
-          "• Medium cigars → bourbon, aged rum, red wine\n" +
-          "• Full-bodied cigars → peated whisky, espresso, rich stout\n\n" +
-          "Match the strength first, then worry about flavor notes. You do that, you’re already ahead of half the room."
-        );
-      }
-
-      if (
-        qq.includes("strong") ||
-        qq.includes("full body") ||
-        qq.includes("full-bodied") ||
-        qq.includes("full strength")
-      ) {
-        return (
-          "You want something with some horsepower, huh?\n\n" +
-          "Look at cigars like:\n" +
-          "• Joya de Nicaragua Antaño\n" +
-          "• My Father Le Bijou\n" +
-          "• Some of the stronger Nicaraguan maduros\n\n" +
-          "Take it slow, especially if you haven’t danced with the full-strength stuff before."
-        );
-      }
-
-      return (
-        "Good question. Here’s how I think about any cigar:\n\n" +
-        "1) Wrapper — biggest driver of flavor and first impression\n" +
-        "2) Country — Nicaragua, DR, Honduras, Cuba… all have their own character\n" +
-        "3) Size / vitola — how long you’re smoking and how intense it feels\n\n" +
-        "Give me brand, line, and size, and I’ll narrow it down for you. I got you."
-      );
-    }
-
-    // Events
-    btn.addEventListener("click", openModal);
-    close.addEventListener("click", closeModal);
+    btn.addEventListener("click", open);
+    closeBtn.addEventListener("click", close);
 
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeModal();
+      if (e.target === overlay) close();
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeModal();
+      if (e.key === "Escape") close();
+    });
+
+    pills.forEach((pill) => {
+      pill.addEventListener("click", () => {
+        if (!input) return;
+        input.value = pill.textContent.trim();
+        input.focus();
+      });
     });
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const q = (input.value || "").trim();
-      if (!q) return;
-      addUser(q);
-      input.value = "";
-      setTimeout(() => {
-        addTony(msgs, fakeTonyAnswer(q));
-      }, 350);
-    });
+      const value = input.value.trim();
+      if (!value) return;
 
-    chips.forEach((chip) => {
-      chip.addEventListener("click", () => {
-        const q = chip.getAttribute("data-q") || chip.textContent;
-        addUser(q);
-        setTimeout(() => {
-          addTony(msgs, fakeTonyAnswer(q));
-        }, 350);
-      });
+      // Hook this into your real Tony logic
+      console.log("Ask Tony:", value);
+
+      // Optionally clear input or keep it
+      input.value = "";
     });
   }
 
-  if (typeof document !== "undefined") {
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", createTonyDOM);
-    } else {
-      createTonyDOM();
-    }
+  // -----------------------------
+  // Init
+  // -----------------------------
+  function init() {
+    injectStyles();
+    createUI();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
   }
 })();
