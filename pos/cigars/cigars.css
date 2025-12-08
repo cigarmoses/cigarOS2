@@ -147,22 +147,20 @@
   white-space: nowrap;
 }
 
-/* Green active pill (for any filter with selections) */
+/* Green active pill */
 
 .filter-pill--active {
   background: #00d447;
   color: #ffffff;
 }
 
-/* Bottom-row toggle style pills (Tubo, Flavored, Tin, Pack, Barberpole, Box-Pressed) */
+/* Toggle-style pills */
 
 .filter-pill--toggle {
   background: #ffffff;
   border: 1px solid #d3dbe6;
   color: #111827;
 }
-
-/* When toggled ON they become green like mockup */
 
 .filter-pill--toggle.filter-pill--active {
   background: #00d447;
@@ -183,7 +181,7 @@
   font-size: 22px;
 }
 
-/* Brand grid – tiles with icon + name, no grey box behind icon itself */
+/* Brand grid */
 
 .brands-grid {
   display: grid;
@@ -195,8 +193,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  text-decoration: none;         /* remove blue underline */
-  color: #0f1a2c;                /* dark ink, not link blue */
+  text-decoration: none;
+  color: #0f1a2c;
   border-radius: 20px;
   padding: 10px 6px;
 }
@@ -208,11 +206,11 @@
   justify-content: center;
 }
 
-/* wrapper for the SVG icon – no background, so no grey box around the icon */
-/* 20% larger than the previous 56px values */
+/* --- 10% larger icon wrapper (now 75px) --- */
+
 .brand-card-icon-wrapper {
-  width: 68px;
-  height: 68px;
+  width: 75px;
+  height: 75px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,14 +225,12 @@
   display: block;
 }
 
-/* brand name under icon */
 .brand-card-name {
   font-size: 14px;
   text-align: center;
   font-weight: 500;
 }
 
-/* ensure inner layout still looks tidy */
 .brands-grid .brand-card-inner,
 .brands-grid .brand-card-content {
   display: flex;
@@ -243,7 +239,7 @@
   justify-content: center;
 }
 
-/* Mobile / desktop width constraint */
+/* Desktop width constraint */
 
 @media (min-width: 768px) {
   .cigars-main {
