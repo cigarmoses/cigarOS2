@@ -5,199 +5,148 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS</title>
 
-  <!-- Global SF Pro type system -->
+  <!-- Global SF Pro -->
   <link rel="stylesheet" href="/css/type.css" />
-  <!-- Shared POS styles -->
+
+  <!-- POS global styles -->
   <link rel="stylesheet" href="/pos/pos.css" />
 
   <style>
     :root {
-      --bg: #dfeaf0;
+      --bg: #ffffff; /* WHITE like cigars page */
       --ink: #0f1a2c;
       --muted: #6a7586;
-      --card: #ffffff;
-    }
-
-    * {
-      box-sizing: border-box;
+      --card: #f2f4f7; /* Same card color used on Cigars page */
     }
 
     body {
       margin: 0;
       background: var(--bg);
-      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+      font-family: var(--font-text);
       color: var(--ink);
       min-height: 100vh;
     }
 
-    .pos-shell {
-      max-width: 960px;
-      margin: 0 auto;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding-bottom: 32px;
-    }
-
-    /* Top bar */
-
+    /* Top Back Button */
     .pos-topbar {
+      padding: 16px 18px 0;
       display: flex;
       align-items: center;
-      padding: 12px 16px 0;
     }
 
     .pos-back {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      border: none;
-      background: none;
-      padding: 4px 0;
-      font-size: 15px;
       color: #007aff;
-      cursor: pointer;
-      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-    }
-
-    .pos-back-icon {
       font-size: 16px;
-      line-height: 1;
+      background: none;
+      border: none;
+      cursor: pointer;
     }
 
-    .pos-back-label {
-      font-size: 15px;
-    }
-
-    /* Main content */
-
-    .pos-main {
-      padding: 16px;
-      padding-bottom: 40px;
-    }
-
+    /* PAGE TITLE - MATCHES CIGARS PAGE EXACTLY */
     .pos-title {
-      margin: 0 0 16px;
-      font-size: 28px;
-      line-height: 1.2;
-      font-family: var(--font-display-heavy, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+      font-family: var(--font-display);
+      font-weight: 800; /* Heavy */
+      font-size: 34px;
+      letter-spacing: -0.02em;
+      margin: 8px 18px 22px;
     }
 
+    /* GRID OF CATEGORY BOXES */
     .pos-grid {
+      padding: 0 18px 40px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
     }
 
+    /* UPDATED ONLY THIS PART */
     .pos-card {
+      background: var(--card);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06); /* subtle iOS shadow */
+      -webkit-box-shadow: 0 4px 10px rgba(0,0,0,0.06);
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 16px 14px;
-      border-radius: 16px;
-      background: var(--card);
-      text-decoration: none;
-      color: inherit;
-      box-shadow: 0 4px 10px rgba(15, 26, 44, 0.06);
-      transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
-    }
-
-    .pos-card:active {
-      transform: scale(0.98);
-      box-shadow: 0 2px 6px rgba(15, 26, 44, 0.12);
+      cursor: pointer;
     }
 
     .pos-card-title {
-      margin: 0 0 4px;
+      font-family: var(--font-display);
       font-size: 17px;
-      font-family: var(--font-display-heavy, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+      font-weight: 700;
+      margin-bottom: 4px;
     }
 
-    .pos-card-body {
-      margin: 0;
+    .pos-card-desc {
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.35;
       color: var(--muted);
-      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
     }
 
-    @media (min-width: 768px) {
-      .pos-main {
-        padding: 20px;
-      }
-
-      .pos-title {
-        font-size: 30px;
-      }
-
-      .pos-card {
-        padding: 18px 16px;
-      }
+    /* ICON FIX – ensure each card has its image correctly displayed */
+    .pos-card img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      margin-bottom: 10px;
     }
   </style>
 </head>
+
 <body>
-  <div class="pos-shell">
-    <!-- Top bar with back button -->
-    <header class="pos-topbar">
-      <button type="button" class="pos-back" id="pos-back">
-        <span class="pos-back-icon">←</span>
-        <span class="pos-back-label">Back</span>
-      </button>
-    </header>
 
-    <!-- Main POS tiles -->
-    <main class="pos-main">
-      <h1 class="pos-title">POS</h1>
+  <!-- TOP BAR -->
+  <header class="pos-topbar">
+    <button class="pos-back" onclick="history.back()">
+      <span>←</span> <span>Back</span>
+    </button>
+  </header>
 
-      <section class="pos-grid" aria-label="Point of Sale sections">
-        <a href="/pos/cigars/" class="pos-card">
-          <h2 class="pos-card-title">Cigars</h2>
-          <p class="pos-card-body">Browse all cigars by brand.</p>
-        </a>
+  <!-- PAGE TITLE -->
+  <h1 class="pos-title">POS</h1>
 
-        <a href="/pos/food-bevs/" class="pos-card">
-          <h2 class="pos-card-title">Food &amp; Bevs</h2>
-          <p class="pos-card-body">Drinks and snacks for the lounge.</p>
-        </a>
+  <!-- CATEGORY GRID -->
+  <section class="pos-grid">
+    <div class="pos-card" onclick="location.href='/pos/cigars/'">
+      <img src="/pos/icons/cigars.svg" alt="">
+      <div class="pos-card-title">Cigars</div>
+      <div class="pos-card-desc">Browse all cigars by brand.</div>
+    </div>
 
-        <a href="/pos/accessories/" class="pos-card">
-          <h2 class="pos-card-title">Accessories</h2>
-          <p class="pos-card-body">Lighters, cutters, and more.</p>
-        </a>
+    <div class="pos-card" onclick="location.href='/pos/food/'">
+      <img src="/pos/icons/food.svg" alt="">
+      <div class="pos-card-title">Food & Bevs</div>
+      <div class="pos-card-desc">Drinks and snacks for the lounge.</div>
+    </div>
 
-        <a href="/pos/ashtrays/" class="pos-card">
-          <h2 class="pos-card-title">Ashtrays</h2>
-          <p class="pos-card-body">Table and personal ashtrays.</p>
-        </a>
+    <div class="pos-card" onclick="location.href='/pos/accessories/'">
+      <img src="/pos/icons/lighter.svg" alt="">
+      <div class="pos-card-title">Accessories</div>
+      <div class="pos-card-desc">Lighters, cutters, and more.</div>
+    </div>
 
-        <a href="/pos/pipes/" class="pos-card">
-          <h2 class="pos-card-title">Pipes</h2>
-          <p class="pos-card-body">Pipes and pipe tobacco.</p>
-        </a>
+    <div class="pos-card" onclick="location.href='/pos/ashtrays/'">
+      <img src="/pos/icons/ashtray.svg" alt="">
+      <div class="pos-card-title">Ashtrays</div>
+      <div class="pos-card-desc">Table and personal ashtrays.</div>
+    </div>
 
-        <a href="/pos/packs/" class="pos-card">
-          <h2 class="pos-card-title">Packs</h2>
-          <p class="pos-card-body">Samplers, fresh packs, and more.</p>
-        </a>
-      </section>
-    </main>
-  </div>
+    <div class="pos-card" onclick="location.href='/pos/pipes/'">
+      <img src="/pos/icons/pipes.svg" alt="">
+      <div class="pos-card-title">Pipes</div>
+      <div class="pos-card-desc">Pipes and pipe tobacco.</div>
+    </div>
 
-  <script>
-    // Simple back behavior matching other pages
-    (function () {
-      const backBtn = document.getElementById('pos-back');
-      if (!backBtn) return;
-      backBtn.addEventListener('click', function () {
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          window.location.href = '/';
-        }
-      });
-    })();
-  </script>
+    <div class="pos-card" onclick="location.href='/pos/packs/'">
+      <img src="/pos/icons/packs.svg" alt="">
+      <div class="pos-card-title">Packs</div>
+      <div class="pos-card-desc">Samplers, fresh packs, and more.</div>
+    </div>
+  </section>
+
 </body>
 </html>
