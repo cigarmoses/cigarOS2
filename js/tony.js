@@ -7,6 +7,31 @@
     const style = document.createElement("style");
     style.id = "tony-style";
     style.textContent = `
+      /* Floating Tony button (matches POS white-border version) */
+      #tonyFab,
+      .tony-fab {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        width: 46px;
+        height: 46px;
+        border-radius: 999px;
+        background: transparent;
+        border: none;
+        padding: 0;
+        z-index: 9998;
+        cursor: pointer;
+      }
+
+      #tonyFab img,
+      .tony-fab img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: inherit;
+      }
+
+      /* Back-compat if any page still uses #tony-button */
       #tony-button {
         position: fixed;
         bottom: 20px;
@@ -229,50 +254,75 @@
   }
 
   function createTonyDOM() {
-    if (document.getElementById("tony-button")) return;
     injectStyles();
 
-    // Floating button
-    const btn = document.createElement("div");
-    btn.id = "tony-button";
-    const btnImg = document.createElement("img");
-    btnImg.src = ICON_SRC;
-    btnImg.alt = "Ask Tony";
-    btn.appendChild(btnImg);
+    // Prefer a pre-existing POS-style button
+    let btn = document.getElementById("tonyFab") || document.querySelector(".tony-fab");
 
-    // Overlay + modal
-    const overlay = document.createElement("div");
-    overlay.id = "tony-overlay";
+    // If nothing exists, create a standard one
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = "tonyFab";
+      btn.className = "tony-fab";
+      const img = document.createElement("img");
+      img.src = ICON_SRC;
+      img.alt = "Ask Tony";
+      btn.appendChild(img);
+      document.body.appendChild(btn);
+    } else {
+      // Force the correct icon on any existing button
+      let img = btn.querySelector("img");
+      if (!img) {
+        img = document.createElement("img");
+        btn.appendChild(img);
+      }
+      img.src = ICON_SRC;
+      img.alt = "Ask Tony";
+    }
 
-    const modal = document.createElement("div");
-    modal.id = "tony-modal";
+    // Avoid wiring twice
+    if (btn.dataset.tonyWired === "1") return;
+    btn.dataset.tonyWired = "1";
 
-    modal.innerHTML = `
-      <div id="tony-modal-header">
-        <span style="width:32px;"></span>
-        <div id="tony-modal-title">Ask Tony…</div>
-        <button id="tony-close" aria-label="Close Tony">×</button>
-      </div>
-      <div id="tony-modal-avatar">
-        <img src="${ICON_SRC}" alt="Tony">
-      </div>
-      <p id="tony-tagline">He knows cigars. And he knows a guy.</p>
-      <div id="tony-suggestions">
-        <button class="tony-chip" data-q="What does vitola mean? Show me a picture of one.">What does vitola mean?</button>
-        <button class="tony-chip" data-q="What are some good Connecticut gordos?">What are some good Connecticut gordos?</button>
-        <button class="tony-chip" data-q="What were Cigar Aficionado’s top 25 cigars last year?">Top 25 cigars last year?</button>
-      </div>
-      <div id="tony-messages"></div>
-      <form id="tony-input" autocomplete="off">
-        <input id="tony-query" placeholder="Ask Tony…" />
-        <button id="tony-send" type="submit">➤</button>
-      </form>
-      <div id="tony-modal-tail"></div>
-    `;
+    // Overlay + modal (create if needed)
+    let overlay = document.getElementById("tony-overlay");
+    let modal;
 
-    overlay.appendChild(modal);
-    document.body.appendChild(btn);
-    document.body.appendChild(overlay);
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "tony-overlay";
+
+      modal = document.createElement("div");
+      modal.id = "tony-modal";
+
+      modal.innerHTML = `
+        <div id="tony-modal-header">
+          <span style="width:32px;"></span>
+          <div id="tony-modal-title">Ask Tony…</div>
+          <button id="tony-close" aria-label="Close Tony">×</button>
+        </div>
+        <div id="tony-modal-avatar">
+          <img src="${ICON_SRC}" alt="Tony">
+        </div>
+        <p id="tony-tagline">He knows cigars. And he knows a guy.</p>
+        <div id="tony-suggestions">
+          <button class="tony-chip" data-q="What does vitola mean? Show me a picture of one.">What does vitola mean?</button>
+          <button class="tony-chip" data-q="What are some good Connecticut gordos?">What are some good Connecticut gordos?</button>
+          <button class="tony-chip" data-q="What were Cigar Aficionado’s top 25 cigars last year?">Top 25 cigars last year?</button>
+        </div>
+        <div id="tony-messages"></div>
+        <form id="tony-input" autocomplete="off">
+          <input id="tony-query" placeholder="Ask Tony…" />
+          <button id="tony-send" type="submit">➤</button>
+        </form>
+        <div id="tony-modal-tail"></div>
+      `;
+
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+    } else {
+      modal = document.getElementById("tony-modal");
+    }
 
     wireTony(btn, overlay, modal);
   }
@@ -283,6 +333,22 @@
     const msgs  = modal.querySelector("#tony-messages");
     const close = modal.querySelector("#tony-close");
     const chips = modal.querySelectorAll(".tony-chip");
+
+    function addBubble(container, text, fromTony) {
+      const div = document.createElement("div");
+      div.className = "tony-bubble " + (fromTony ? "tony" : "user");
+      div.textContent = text;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function addUser(text) {
+      addBubble(msgs, text, false);
+    }
+
+    function addTony(container, text) {
+      addBubble(container, text, true);
+    }
 
     function openModal() {
       overlay.classList.add("tony-open");
@@ -301,22 +367,6 @@
 
     function closeModal() {
       overlay.classList.remove("tony-open");
-    }
-
-    function addBubble(container, text, fromTony) {
-      const div = document.createElement("div");
-      div.className = "tony-bubble " + (fromTony ? "tony" : "user");
-      div.textContent = text;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function addUser(text) {
-      addBubble(msgs, text, false);
-    }
-
-    function addTony(container, text) {
-      addBubble(container, text, true);
     }
 
     // 93% cigar info / 7% Tony attitude
