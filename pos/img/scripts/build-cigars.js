@@ -1,8 +1,9 @@
 // /pos/img/scripts/build-cigars.js
 
-// Base for LIVE GOOGLE SHEETS HUB URL (we'll add cache-busting query params)
+// LIVE GOOGLE SHEETS HUB URL BASE
+// Note: we include gid=822697742 so we always read from that specific tab.
 const GOOGLE_HUB_BASE =
-  "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq";
+  "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?gid=822697742";
 
 // LOCAL JSON FALLBACK
 const LOCAL_HUB_URL = "/hub/hub_11-5-25.json";
@@ -111,7 +112,8 @@ function makeGoogleHubUrl() {
     tqx: "out:json",
     cacheBust: String(Date.now()),
   });
-  return `${GOOGLE_HUB_BASE}?${params.toString()}`;
+  // GOOGLE_HUB_BASE already has ?gid=..., so we append with &
+  return `${GOOGLE_HUB_BASE}&${params.toString()}`;
 }
 
 // -------------------------------
