@@ -5,7 +5,7 @@
   background: #ffffff;
   color: #0f1a2c;
   font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-} why
+}
 
 /* Top bar with back button */
 
@@ -106,7 +106,7 @@
 .cigars-filters-title {
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-weight: 800;
-  font-size: 20ypx;
+  font-size: 20px;
 }
 
 .cigars-filters-viewall {
@@ -182,6 +182,7 @@
   font-weight: 999;
   font-size: 22px;
 }
+
 /* Brand grid – tiles with icon + name, no grey box behind icon itself */
 
 .brands-grid {
@@ -208,9 +209,10 @@
 }
 
 /* wrapper for the SVG icon – no background, so no grey box around the icon */
+/* 20% larger than the previous 56px values */
 .brand-card-icon-wrapper {
-  width: 56px;
-  height: 56px;
+  width: 68px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -232,7 +234,7 @@
   font-weight: 500;
 }
 
-/* but ensure inner layout still looks tidy */
+/* ensure inner layout still looks tidy */
 .brands-grid .brand-card-inner,
 .brands-grid .brand-card-content {
   display: flex;
@@ -241,7 +243,7 @@
   justify-content: center;
 }
 
-/* Mobile adjustments */
+/* Mobile / desktop width constraint */
 
 @media (min-width: 768px) {
   .cigars-main {
