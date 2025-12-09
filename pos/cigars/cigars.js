@@ -21,6 +21,37 @@ document.addEventListener("DOMContentLoaded", () => {
     pill.classList.toggle("filter-pill--active", !!isActive);
   }
 
+  // ---------------------------------------------
+  // Helper: brand -> SVG slug (for icon filenames)
+  // ---------------------------------------------
+  const BRAND_ICON_OVERRIDES = {
+    // Confirmed mappings
+    "A. Turrent": "aturrent",
+    "A. Flores": "aflores",
+    "Carlos Torano": "torano",
+    "Bruno Del re": "brundelre",
+
+    // The ones you mentioned as "loaded correctly"
+    "Diamond Crown": "diamondcrown",
+    "El Rey del Mundo": "elreydelmundo",
+    "Fonseca": "fonseca",
+  };
+
+  function brandSlug(name) {
+    if (!name) return "";
+    // Exact-name overrides first
+    if (Object.prototype.hasOwnProperty.call(BRAND_ICON_OVERRIDES, name)) {
+      return BRAND_ICON_OVERRIDES[name];
+    }
+
+    // Generic slug: "El Rey del Mundo" -> "elreydelmundo"
+    return name
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "") // drop spaces, punctuation
+      .trim();
+  }
+
   // =====================================================
   // BRAND GRID: collect brand tiles + wire Brand filter
   // =====================================================
@@ -69,7 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const itemsForModal = brandItems.map(({ name }) => ({
         value: name,
         label: name,
-        iconSlug: name, // brandSlug() in engine will generate SVG filename
+        // IMPORTANT: pass the SVG-safe slug, not the raw name
+        iconSlug: brandSlug(name),
         selected: selectedBrandValues.includes(name),
       }));
 
