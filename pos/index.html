@@ -13,10 +13,10 @@
 
   <style>
     :root {
-      --bg: #ffffff; /* WHITE like cigars page */
+      --bg: #ffffff;
       --ink: #0f1a2c;
       --muted: #6a7586;
-      --card: #f2f4f7; /* Same card color used on Cigars page */
+      --card: #f2f4f7;
     }
 
     body {
@@ -37,22 +37,27 @@
     .pos-back {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
       color: #007aff;
-      font-size: 16px;
+      font-size: 22px; /* slightly larger arrow */
       background: none;
       border: none;
       cursor: pointer;
+      padding: 6px;
     }
 
-    /* PAGE TITLE — EXACT MATCH TO CIGARS TITLE */
+    .pos-back span {
+      line-height: 1;
+      font-weight: 500;
+    }
+
+    /* PAGE TITLE — matched to Cigars page but moved down + right */
     .pos-title {
-      margin: 0 0 12px;
+      margin: 18px 0 16px; /* moved DOWN slightly */
+      padding-left: 24px;  /* moved RIGHT slightly */
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-weight: 999; /* Heavy / Black */
       font-size: 64px;
       letter-spacing: -0.04em;
-      padding: 0 18px;
     }
 
     /* GRID OF CATEGORY BOXES */
@@ -67,7 +72,7 @@
       background: var(--card);
       border-radius: 22px;
       padding: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.06); /* subtle iOS shadow */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
       -webkit-box-shadow: 0 4px 10px rgba(0,0,0,0.06);
       display: flex;
       flex-direction: column;
@@ -87,13 +92,13 @@
       color: var(--muted);
     }
 
-    /* ICON FIX – ensure each card has its image correctly displayed */
     .pos-card img {
       width: 42px;
       height: 42px;
       object-fit: contain;
       margin-bottom: 10px;
     }
+
   </style>
 </head>
 
@@ -102,7 +107,7 @@
   <!-- TOP BAR -->
   <header class="pos-topbar">
     <button class="pos-back" onclick="history.back()">
-      <span>←</span> <span>Back</span>
+      <span>←</span>
     </button>
   </header>
 
