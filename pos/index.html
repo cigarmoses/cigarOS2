@@ -38,7 +38,7 @@
       display: inline-flex;
       align-items: center;
       color: #007aff;
-      font-size: 22px; /* slightly larger arrow */
+      font-size: 22px;
       background: none;
       border: none;
       cursor: pointer;
@@ -50,12 +50,12 @@
       font-weight: 500;
     }
 
-    /* PAGE TITLE — matched to Cigars page but moved down + right */
+    /* PAGE TITLE */
     .pos-title {
-      margin: 18px 0 16px; /* moved DOWN slightly */
-      padding-left: 24px;  /* moved RIGHT slightly */
+      margin: 18px 0 16px;
+      padding-left: 24px;
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 999; /* Heavy / Black */
+      font-weight: 999;
       font-size: 64px;
       letter-spacing: -0.04em;
     }
@@ -73,7 +73,6 @@
       border-radius: 22px;
       padding: 16px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-      -webkit-box-shadow: 0 4px 10px rgba(0,0,0,0.06);
       display: flex;
       flex-direction: column;
       cursor: pointer;
@@ -98,7 +97,6 @@
       object-fit: contain;
       margin-bottom: 10px;
     }
-
   </style>
 </head>
 
@@ -116,41 +114,43 @@
 
   <!-- CATEGORY GRID -->
   <section class="pos-grid">
+
     <div class="pos-card" onclick="location.href='/pos/cigars/'">
-      <img src="/pos/icons/cigars.svg" alt="">
+      <img src="/img/icons/categories/cigars.svg" alt="">
       <div class="pos-card-title">Cigars</div>
       <div class="pos-card-desc">Browse all cigars by brand.</div>
     </div>
 
     <div class="pos-card" onclick="location.href='/pos/food/'">
-      <img src="/pos/icons/food.svg" alt="">
+      <img src="/img/icons/categories/food.svg" alt="">
       <div class="pos-card-title">Food & Bevs</div>
       <div class="pos-card-desc">Drinks and snacks for the lounge.</div>
     </div>
 
     <div class="pos-card" onclick="location.href='/pos/accessories/'">
-      <img src="/pos/icons/lighter.svg" alt="">
+      <img src="/img/icons/categories/lighter.svg" alt="">
       <div class="pos-card-title">Accessories</div>
       <div class="pos-card-desc">Lighters, cutters, and more.</div>
     </div>
 
     <div class="pos-card" onclick="location.href='/pos/ashtrays/'">
-      <img src="/pos/icons/ashtray.svg" alt="">
+      <img src="/img/icons/categories/ashtray.svg" alt="">
       <div class="pos-card-title">Ashtrays</div>
       <div class="pos-card-desc">Table and personal ashtrays.</div>
     </div>
 
     <div class="pos-card" onclick="location.href='/pos/pipes/'">
-      <img src="/pos/icons/pipes.svg" alt="">
+      <img src="/img/icons/categories/pipes.svg" alt="">
       <div class="pos-card-title">Pipes</div>
       <div class="pos-card-desc">Pipes and pipe tobacco.</div>
     </div>
 
     <div class="pos-card" onclick="location.href='/pos/packs/'">
-      <img src="/pos/icons/packs.svg" alt="">
+      <img src="/img/icons/categories/packs.svg" alt="">
       <div class="pos-card-title">Packs</div>
       <div class="pos-card-desc">Samplers, fresh packs, and more.</div>
     </div>
+
   </section>
 
 </body>
