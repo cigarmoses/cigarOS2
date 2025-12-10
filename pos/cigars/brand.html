@@ -395,6 +395,45 @@
     </div>
   </div>
 
+  <!-- Global Filter Popup -->
+  <div id="filter-modal" class="filter-modal filter-modal--hidden">
+    <div class="filter-modal-backdrop"></div>
+
+    <div class="filter-modal-sheet">
+      <div class="filter-modal-header">
+        <button type="button" class="filter-modal-back">&larr; Back</button>
+        <h2 id="filter-modal-title">Brands</h2>
+      </div>
+
+      <div class="filter-modal-search-row">
+        <div class="filter-modal-search">
+          <span class="filter-modal-search-icon">
+            &#128269;
+          </span>
+          <input
+            type="search"
+            id="filter-modal-search-input"
+            placeholder="search..."
+          />
+        </div>
+      </div>
+
+      <div class="filter-modal-list" id="filter-modal-list">
+        <!-- rows injected by JS -->
+      </div>
+
+      <div class="filter-modal-footer">
+        <button
+          type="button"
+          id="filter-modal-confirm"
+          class="filter-modal-confirm"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const HUB_CSV_URL = "/hub/hub_11-5-25.csv";
 
@@ -433,6 +472,32 @@
       priceRange: { label: "Price range", column: "MSRP", type: "price" }
     };
 
+    // --- brand slug helper (same logic as cigars.js) ---
+    const BRAND_ICON_OVERRIDES = {
+      aturrent: "aturrent",          // A. Turrent
+      aflores: "aflores",            // A. Flores
+      carlostorano: "torano",        // Carlos Toraño / Torano
+      brundelre: "brundelre",        // Bruno Del Re
+      diamondcrown: "diamondcrown",  // Diamond Crown
+      elreydelmundo: "elreydelmundo",
+      fonseca: "fonseca",
+    };
+
+    function brandSlug(name) {
+      if (!name) return "";
+      const canonical = name
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "")
+        .trim();
+      if (!canonical) return "";
+      if (Object.prototype.hasOwnProperty.call(BRAND_ICON_OVERRIDES, canonical)) {
+        return BRAND_ICON_OVERRIDES[canonical];
+      }
+      return canonical;
+    }
+
     function parseNumber(val) {
       if (!val) return NaN;
       const num = parseFloat(String(val).replace(/[^0-9.]/g, ""));
@@ -449,7 +514,9 @@
     }
 
     function loadBrandData() {
-      document.getElementById("brandName").textContent = brandParam || "Brand";
+      const nameEl = document.getElementById("brandName");
+      if (nameEl) nameEl.textContent = brandParam || "Brand";
+
       fetch(HUB_CSV_URL)
         .then(r => r.text())
         .then(text => {
@@ -461,19 +528,28 @@
             (r["Brand"] || "").trim() === brandParam
           );
 
-          // logo from first row
+          // logo: CSV Brand IMG first, otherwise SVG icon based on slug
+          const logoEl = document.getElementById("brandLogo");
+          let imgPath = "";
+
           if (brandRows.length > 0) {
-            let imgPath = (brandRows[0]["Brand IMG"] || "").trim();
-            if (imgPath && !imgPath.startsWith("/")) imgPath = "/" + imgPath;
-            const logoEl = document.getElementById("brandLogo");
-            if (imgPath) {
-              logoEl.src = imgPath;
-              logoEl.alt = brandParam;
-            } else {
+            imgPath = (brandRows[0]["Brand IMG"] || "").trim();
+          }
+
+          if (!imgPath) {
+            const slug = brandSlug(brandParam);
+            if (slug) imgPath = `/img/icons/brands/${slug}.svg`;
+          }
+
+          if (imgPath) {
+            if (!imgPath.startsWith("/")) imgPath = "/" + imgPath.replace(/^\/+/, "");
+            logoEl.src = imgPath;
+            logoEl.alt = brandParam || "Brand";
+            logoEl.onerror = () => {
               logoEl.style.display = "none";
-            }
+            };
           } else {
-            document.getElementById("brandLogo").style.display = "none";
+            logoEl.style.display = "none";
           }
 
           initFilterButtons();
@@ -682,107 +758,5 @@
 
     document.addEventListener("DOMContentLoaded", loadBrandData);
   </script>
-  <!-- Global Filter Popup -->
-<div id="filter-modal" class="filter-modal filter-modal--hidden">
-  <div class="filter-modal-backdrop"></div>
-
-  <div class="filter-modal-sheet">
-    <div class="filter-modal-header">
-      <button type="button" class="filter-modal-back">&larr; Back</button>
-      <h2 id="filter-modal-title">Brands</h2>
-    </div>
-
-    <div class="filter-modal-search-row">
-      <div class="filter-modal-search">
-        <span class="filter-modal-search-icon">
-          <!-- simple magnifying glass glyph; replace with svg if you want -->
-          &#128269;
-        </span>
-        <input
-          type="search"
-          id="filter-modal-search-input"
-          placeholder="search..."
-        />
-      </div>
-    </div>
-
-    <div class="filter-modal-list" id="filter-modal-list">
-      <!-- rows injected by JS -->
-    </div>
-
-    <div class="filter-modal-footer">
-      <button
-        type="button"
-        id="filter-modal-confirm"
-        class="filter-modal-confirm"
-      >
-        Confirm
-      </button>
-    </div>
-  </div>
-</div>
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // -----------------------------------
-    // Get brand name from URL parameter
-    // -----------------------------------
-    const params = new URLSearchParams(window.location.search);
-    const brand = params.get("brand") || "";
-
-    // -----------------------------------
-    // Same slug logic as /pos/cigars/cigars.js
-    // -----------------------------------
-    const BRAND_ICON_OVERRIDES = {
-      // canonical -> actual filename (without .svg)
-      aturrent: "aturrent",          // A. Turrent
-      aflores: "aflores",            // A. Flores
-      carlostorano: "torano",        // Carlos Toraño / Torano
-      brundelre: "brundelre",        // Bruno Del Re
-      diamondcrown: "diamondcrown",  // Diamond Crown
-      elreydelmundo: "elreydelmundo",
-      fonseca: "fonseca",
-    };
-
-    function brandSlug(name) {
-      if (!name) return "";
-
-      const canonical = name
-        .toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
-        .replace(/&/g, "and")
-        .replace(/[^a-z0-9]+/g, "")  // drop spaces + punctuation (incl. periods)
-        .trim();
-
-      if (!canonical) return "";
-
-      if (Object.prototype.hasOwnProperty.call(BRAND_ICON_OVERRIDES, canonical)) {
-        return BRAND_ICON_OVERRIDES[canonical];
-      }
-
-      return canonical;
-    }
-
-    const slug = brandSlug(brand);
-
-    // -----------------------------------
-    // Apply icon + title
-    // -----------------------------------
-    const iconEl = document.getElementById("brand-icon");
-    if (iconEl && slug) {
-      iconEl.src = `/img/icons/brands/${slug}.svg`;
-      iconEl.alt = brand || "Brand icon";
-
-      // Optional: if file is missing, hide the broken image
-      iconEl.onerror = () => {
-        iconEl.style.display = "none";
-      };
-    }
-
-    const titleEl = document.getElementById("brand-title");
-    if (titleEl && brand) {
-      titleEl.textContent = brand;
-    }
-  });
-</script>
 </body>
 </html>
