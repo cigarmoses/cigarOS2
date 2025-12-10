@@ -721,5 +721,68 @@
     </div>
   </div>
 </div>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // -----------------------------------
+    // Get brand name from URL parameter
+    // -----------------------------------
+    const params = new URLSearchParams(window.location.search);
+    const brand = params.get("brand") || "";
+
+    // -----------------------------------
+    // Same slug logic as /pos/cigars/cigars.js
+    // -----------------------------------
+    const BRAND_ICON_OVERRIDES = {
+      // canonical -> actual filename (without .svg)
+      aturrent: "aturrent",          // A. Turrent
+      aflores: "aflores",            // A. Flores
+      carlostorano: "torano",        // Carlos Toraño / Torano
+      brundelre: "brundelre",        // Bruno Del Re
+      diamondcrown: "diamondcrown",  // Diamond Crown
+      elreydelmundo: "elreydelmundo",
+      fonseca: "fonseca",
+    };
+
+    function brandSlug(name) {
+      if (!name) return "";
+
+      const canonical = name
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "")  // drop spaces + punctuation (incl. periods)
+        .trim();
+
+      if (!canonical) return "";
+
+      if (Object.prototype.hasOwnProperty.call(BRAND_ICON_OVERRIDES, canonical)) {
+        return BRAND_ICON_OVERRIDES[canonical];
+      }
+
+      return canonical;
+    }
+
+    const slug = brandSlug(brand);
+
+    // -----------------------------------
+    // Apply icon + title
+    // -----------------------------------
+    const iconEl = document.getElementById("brand-icon");
+    if (iconEl && slug) {
+      iconEl.src = `/img/icons/brands/${slug}.svg`;
+      iconEl.alt = brand || "Brand icon";
+
+      // Optional: if file is missing, hide the broken image
+      iconEl.onerror = () => {
+        iconEl.style.display = "none";
+      };
+    }
+
+    const titleEl = document.getElementById("brand-title");
+    if (titleEl && brand) {
+      titleEl.textContent = brand;
+    }
+  });
+</script>
 </body>
 </html>
