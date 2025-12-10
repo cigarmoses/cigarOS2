@@ -1,34 +1,159 @@
-/* Shared styling for POS category pages (Food & Bevs, Cigars, Pipes, Packs, Accessories, Ashtrays) */
-:root{
-  --bg:#e9f1f5;
-  --ink:#0f1c2e;
-  --muted:#6b7b8f;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue"}
-.page{max-width:1100px;margin:0 auto}
-header{padding:18px 16px 8px}
-header .title{margin:0;text-align:center;font-weight:900;font-size:28px;letter-spacing:.5px;color:var(--ink)}
+/* POS category pages (Food & Bevs, Packs, Pipes, Ashtrays, Accessories)
+   This does NOT touch the Cigars page. */
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:18px;
-  padding:8px 16px 110px;
+/* Base layout */
+
+.category-page {
+  margin: 0;
+  background: #ffffff;
+  color: #0f1a2c;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
-/* icon tile — no backgrounds/boxes */
-.item{
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  background:transparent !important;box-shadow:none !important;border:0 !important;padding:6px;
+/* Top bar with back arrow only */
+
+.category-topbar {
+  padding: 16px 18px 0;
+  display: flex;
+  align-items: center;
 }
-.item .thumb{width:86px;height:86px}
-.item .thumb img{width:100%;height:100%;object-fit:contain;display:block}
 
-/* unified, smaller, centered labels (if a page shows them) */
-.item .label{font-size:15px;font-weight:800;text-align:center;color:var(--ink);line-height:1.15}
-.item .price{font-size:13px;font-weight:700;color:var(--muted);text-align:center}
+.pos-back {
+  border: none;
+  background: none;
+  padding: 4px 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
 
-/* utility: hide captions on pages that should be icon-only */
-.hide-captions .label,
-.hide-captions .price{display:none !important}
+.pos-back-icon {
+  font-size: 20px;
+  line-height: 1;
+  color: #007aff;
+}
+
+/* Big SF Pro Display Heavy page title */
+
+.category-title {
+  margin: 32px 24px 12px;
+  font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+  font-weight: 900; /* Heavy */
+  font-size: 64px;
+  letter-spacing: -0.04em;
+}
+
+/* Search pill */
+
+.category-search {
+  margin: 0 24px 24px;
+}
+
+.category-search-input {
+  width: 100%;
+  border-radius: 999px;
+  border: none;
+  background: #f4f7fb;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  outline: none;
+}
+
+/* Product grid (3 columns) */
+
+.category-grid {
+  padding: 0 24px 32px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px 18px;
+}
+
+.category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  cursor: pointer; /* taps add to receipt */
+}
+
+/* Square-ish icon tile */
+
+.category-card-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 22px;
+  background: #1f7aff; /* placeholder blue */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.category-card-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Name + price text */
+
+.category-card-name {
+  font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600; /* slightly bolder than price */
+  margin-bottom: 2px;
+}
+
+.category-card-price {
+  font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #6a7586;
+}
+
+/* ============================
+   UNIVERSAL FLOATING RECEIPT ICON
+   ============================ */
+
+.pos-receipt-fab {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: pointer;
+}
+
+.pos-receipt-fab img {
+  width: 46px;
+  height: 46px;
+}
+
+/* Red badge (item count) */
+
+.pos-receipt-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  background: #ff3b30;
+  color: #ffffff;
+  font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+  font-weight: 700;
+  padding: 3px 9px;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  display: none; /* hidden when 0 */
+  text-align: center;
+  line-height: 16px;
+}
