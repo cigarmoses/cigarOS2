@@ -2,239 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>PIPES • POS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>POS • Pipes</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-
-  <style>
-    :root {
-      --bg: #eaf2f6;
-      --ink: #0f1a2c;
-    }
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    }
-
-    .pos-wrap {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 22px 12px 110px;
-    }
-
-    .pos-topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .pos-back {
-      text-decoration: none;
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-weight: 500;
-      font-size: 18px;
-    }
-
-    .pos-star {
-      font-size: 26px;
-      color: #ffcc00;
-    }
-
-    h1.pos-title {
-      text-align: center;
-      font-size: 32px;
-      font-weight: 700;
-      margin: 0 0 18px;
-    }
-
-    .pos-search {
-      display: flex;
-      align-items: center;
-      background: #ffffff;
-      border-radius: 999px;
-      padding: 12px 16px;
-      border: none;
-      margin-bottom: 18px;
-    }
-    .pos-search input {
-      border: 0;
-      outline: 0;
-      width: 100%;
-      background: transparent;
-      font-size: 16px;
-    }
-
-    .pipe-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 22px;
-      margin-top: 10px;
-    }
-
-    .pipe-tile {
-      text-align: center;
-      text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      align-items: center;
-      color: #0f1a2c;
-    }
-
-    .pipe-icon {
-      width: 120px;
-      height: 120px;
-      border-radius: 22px;
-      overflow: hidden;
-      background: #ffffff;
-      display: grid;
-      place-items: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    .pipe-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .pipe-brand {
-      font-size: 13px;
-      font-weight: 500;
-      line-height: 1.2;
-    }
-
-    .pipe-label {
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .pipe-price {
-      font-size: 14px;
-      margin-top: -3px;
-    }
-  </style>
+  <link rel="stylesheet" href="/pos/category.css" />
 </head>
+<body class="category-page">
+  <header class="category-topbar">
+    <button type="button" class="pos-back" id="category-back">
+      <span class="pos-back-icon">←</span>
+    </button>
+  </header>
 
-<body>
-  <div class="pos-wrap">
-    <div class="pos-topbar">
-      <a href="/pos/" class="pos-back">← POS</a>
-      <div class="pos-star">★</div>
-    </div>
+  <main>
+    <h1 class="category-title">Pipes</h1>
 
-    <h1 class="pos-title">PIPES</h1>
+    <section class="category-search">
+      <input type="search" class="category-search-input" placeholder="Search" />
+    </section>
 
-    <div class="pos-search">
-      <input id="pipeSearch" placeholder="Search" />
-    </div>
+    <section class="category-grid">
+      <article class="category-card" data-receipt-item
+        data-brand="Mr. Consul" data-name="Mr. Consul Pipe" data-price="65.00">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Mr. Consul Pipe</div>
+        <div class="category-card-price">$65.00</div>
+      </article>
 
-    <div id="pipeGrid" class="pipe-grid"></div>
+      <article class="category-card" data-receipt-item
+        data-brand="Corn Cob" data-name="Corn Cob Pipe" data-price="10.00">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Corn Cob Pipe</div>
+        <div class="category-card-price">$10.00</div>
+      </article>
+    </section>
+  </main>
+
+  <div class="pos-receipt-fab" id="posReceiptFab">
+    <img src="/pos/assets/receipt-icon.png" alt="Receipt" />
+    <div class="pos-receipt-badge" id="posReceiptBadge">0</div>
   </div>
 
+  <!-- Same JS snippet -->
   <script>
-    // PIPES (from CSV, brand hidden when "n/a")
-    const PIPES = [
-      {
-        brand: "n/a",
-        name: "Pipe Tobacco",
-        file: "pipetobacco.svg",
-        price: "$4.99"
-      },
-      {
-        brand: "n/a",
-        name: "Mr. Consul Pipe",
-        file: "mrconsulpipe.svg",
-        price: "$59.99"
+    (function () {
+      const STORAGE_KEY = "posReceiptItems";
+      function loadItems() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+        catch (e) { return []; }
       }
-    ];
-
-    const grid = document.getElementById("pipeGrid");
-    const search = document.getElementById("pipeSearch");
-
-    function renderPipes(filter = "") {
-      grid.innerHTML = "";
-      const term = filter.toLowerCase();
-
-      PIPES
-        .filter(p => p.name.toLowerCase().includes(term))
-        .forEach(p => {
-          const brandLine =
-            p.brand && p.brand.toLowerCase() !== "n/a"
-              ? `<div class="pipe-brand">${p.brand}</div>`
-              : "";
-
-          const div = document.createElement("a");
-          div.className = "pipe-tile";
-          div.href = "javascript:void(0)";
-          div.innerHTML = `
-            <div class="pipe-icon">
-              <img src="/img/pipes/${p.file}" alt="${p.name}">
-            </div>
-            ${brandLine}
-            <div class="pipe-label">${p.name}</div>
-            <div class="pipe-price">${p.price}</div>
-          `;
-          grid.appendChild(div);
+      function saveItems(items) { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
+      function getCount(items) { return items.reduce((s, i) => s + (i.qty || 0), 0); }
+      function updateReceiptBadge() {
+        const badge = document.getElementById("posReceiptBadge");
+        if (!badge) return;
+        const items = loadItems();
+        const count = getCount(items);
+        if (count === 0) { badge.style.display = "none"; }
+        else { badge.textContent = String(count); badge.style.display = "flex"; }
+      }
+      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const name = card.dataset.name || "Item";
+          const price = Number(card.dataset.price || "0");
+          const brand = card.dataset.brand || "";
+          const vitola = card.dataset.vitola || "";
+          const items = loadItems();
+          const key = brand + "|" + name + "|" + vitola;
+          const existing = items.find((i) => i.key === key);
+          if (existing) {
+            existing.qty += 1;
+            existing.lineTotal = Number((existing.qty * existing.price).toFixed(2));
+          } else {
+            items.push({ key, brand, name, vitola, price, qty: 1, lineTotal: Number(price.toFixed(2)) });
+          }
+          saveItems(items);
+          updateReceiptBadge();
         });
-    }
-
-    renderPipes();
-
-    search.addEventListener("input", (e) => {
-      renderPipes(e.target.value);
-    });
+      });
+      const backBtn = document.getElementById("category-back");
+      if (backBtn) backBtn.addEventListener("click", () => { window.location.href = "/pos/"; });
+      const fab = document.getElementById("posReceiptFab");
+      if (fab) fab.addEventListener("click", () => { window.location.href = "/pos/receipt.html"; });
+      updateReceiptBadge();
+    })();
   </script>
-
-  <!-- Red receipt pill with live count -->
-  <div class="receipt-pill" id="open-receipt">
-    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
-    <span class="receipt-pill-count" id="receipt-count">0</span>
-  </div>
-
-  <!-- Invoice Popup -->
-  <div id="invoice-popup" class="invoice-popup">
-    <div class="invoice-popup-inner">
-      <div class="invoice-header">
-        <h2>Invoice</h2>
-        <p id="invoice-date"></p>
-      </div>
-      <div class="invoice-body">
-        <div class="loyalty-row">
-          <span>Loyalty customer</span>
-          <span class="dropdown-arrow">▼</span>
-        </div>
-        <div id="invoice-items"></div>
-      </div>
-
-      <div class="invoice-totals">
-        <div class="total-row">
-          <span>Subtotal</span>
-          <span id="invoice-subtotal">$0.00</span>
-        </div>
-        <div class="total-row">
-          <span>Tax</span>
-          <span id="invoice-tax">$0.00</span>
-        </div>
-        <div class="total-row total-bold">
-          <span>TOTAL</span>
-          <span id="invoice-total">$0.00</span>
-        </div>
-      </div>
-
-      <div id="close-receipt" class="invoice-close">Close</div>
-    </div>
-  </div>
-
-  <script src="/js/tony.js" defer></script>
-  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
