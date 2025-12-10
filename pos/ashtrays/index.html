@@ -2,260 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ASHTRAYS • POS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>POS • Ashtrays</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-  <style>
-    :root {
-      --bg: #eaf2f6;
-      --ink: #0f1a2c;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    }
-
-    .pos-wrap {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 12px 12px 90px;
-    }
-
-    .pos-topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 4px;
-    }
-
-    .pos-back {
-      text-decoration: none;
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-weight: 500;
-    }
-
-    .pos-star {
-      font-size: 22px;
-      color: #ffcc00;
-    }
-
-    .pos-header-spacer {
-      height: 16px;
-    }
-
-    .pos-title {
-      text-align: center;
-      font-weight: 700;
-      font-size: 30px;
-      margin: 0 0 10px;
-    }
-
-    .pos-search {
-      display: flex;
-      align-items: center;
-      background: #fff;
-      border-radius: 999px;
-      padding: 10px 12px;
-      border: 1px solid rgba(0,0,0,.03);
-      margin-bottom: 14px;
-    }
-    .pos-search input {
-      border: 0;
-      outline: 0;
-      width: 100%;
-      background: transparent;
-      font-size: 14px;
-    }
-
-    .ash-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-
-    .ash-tile {
-      text-align: center;
-      text-decoration: none;
-      color: inherit;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: center;
-      cursor: pointer;
-    }
-
-    .ash-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      background: #d9d9d9;
-      overflow: hidden;
-      display: grid;
-      place-items: center;
-    }
-    .ash-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .ash-brand {
-      font-size: 11px;
-      font-weight: 500;
-      line-height: 1.1;
-    }
-
-    .ash-label {
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1.2;
-    }
-
-    .ash-price {
-      font-size: 12px;
-      margin-top: -2px;
-    }
-  </style>
+  <link rel="stylesheet" href="/pos/category.css" />
 </head>
-<body>
-  <div class="pos-wrap">
-    <div class="pos-topbar">
-      <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
-      <div class="pos-star">★</div>
-    </div>
+<body class="category-page">
+  <header class="category-topbar">
+    <button type="button" class="pos-back" id="category-back">
+      <span class="pos-back-icon">←</span>
+    </button>
+  </header>
 
-    <div class="pos-header-spacer"></div>
-    <h1 class="pos-title">ASHTRAYS</h1>
+  <main>
+    <h1 class="category-title">Ashtrays</h1>
 
-    <div class="pos-search">
-      <input id="ashSearch" placeholder="Search" />
-    </div>
+    <section class="category-search">
+      <input type="search" class="category-search-input" placeholder="Search" />
+    </section>
 
-    <div id="ashGrid" class="ash-grid"></div>
+    <section class="category-grid">
+      <article class="category-card" data-receipt-item
+        data-brand="Rocky Patel" data-name="Rocky Patel Ashtray" data-price="39.99">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Rocky Patel Ashtray</div>
+        <div class="category-card-price">$39.99</div>
+      </article>
+
+      <article class="category-card" data-receipt-item
+        data-brand="Ceramic" data-name="Ceramic Ashtray" data-price="24.00">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Ceramic Ashtray</div>
+        <div class="category-card-price">$24.00</div>
+      </article>
+    </section>
+  </main>
+
+  <div class="pos-receipt-fab" id="posReceiptFab">
+    <img src="/pos/assets/receipt-icon.png" alt="Receipt" />
+    <div class="pos-receipt-badge" id="posReceiptBadge">0</div>
   </div>
 
+  <!-- Same JS snippet -->
   <script>
-    // ------------------------------ DATA ------------------------------
-    const ASHTRAYS = [
-      {
-        brand: "Opus X",
-        name: "Opus X 20th Anniversary Ashtray",
-        price: "$199.99",
-        img: "/img/ashtrays/opusx20thanniversaryashtray.jpg"
-      },
-      {
-        brand: "Rocky Patel",
-        name: "Rocky Patel Luxury Luminoso Ashtray",
-        price: "$59.99",
-        img: "/img/ashtrays/rockypatelluxuryluminosoashtray.jpg"
+    (function () {
+      const STORAGE_KEY = "posReceiptItems";
+      function loadItems() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+        catch (e) { return []; }
       }
-    ];
-
-    const grid = document.getElementById("ashGrid");
-    const search = document.getElementById("ashSearch");
-
-    function slug(str) {
-      return (str || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
-    }
-
-    function parsePriceToNumber(raw) {
-      if (!raw) return 0;
-      const num = parseFloat(String(raw).replace(/[^0-9.]/g, ""));
-      return isNaN(num) ? 0 : num;
-    }
-
-    // -------------------------- RENDER --------------------------
-    function renderAshtrays(filter = "") {
-      grid.innerHTML = "";
-      const term = filter.toLowerCase();
-
-      ASHTRAYS
-        .filter(a => a.name.toLowerCase().includes(term))
-        .forEach(a => {
-          const brandLine =
-            a.brand.toLowerCase() !== "n/a"
-              ? `<div class="ash-brand">${a.brand}</div>`
-              : "";
-
-          const div = document.createElement("div");
-          div.className = "ash-tile";
-
-          div.innerHTML = `
-            <div class="ash-icon">
-              <img src="${a.img}" alt="${a.name}">
-            </div>
-            ${brandLine}
-            <div class="ash-label">${a.name}</div>
-            <div class="ash-price">${a.price}</div>
-          `;
-
-          // CLICK → Add ashtray to the invoice cart
-          div.addEventListener("click", () => {
-            if (typeof window.addToInvoice === "function") {
-              const priceNumber = parsePriceToNumber(a.price);
-              const cartItem = {
-                id: "ash_" + slug(a.name),
-                name: a.name,
-                vitola: "Ashtray",
-                brand: a.brand,
-                price: priceNumber,
-                qty: 1,
-                icon: a.img
-              };
-              window.addToInvoice(cartItem);
-            }
-          });
-
-          grid.appendChild(div);
+      function saveItems(items) { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
+      function getCount(items) { return items.reduce((s, i) => s + (i.qty || 0), 0); }
+      function updateReceiptBadge() {
+        const badge = document.getElementById("posReceiptBadge");
+        if (!badge) return;
+        const items = loadItems();
+        const count = getCount(items);
+        if (count === 0) { badge.style.display = "none"; }
+        else { badge.textContent = String(count); badge.style.display = "flex"; }
+      }
+      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const name = card.dataset.name || "Item";
+          const price = Number(card.dataset.price || "0");
+          const brand = card.dataset.brand || "";
+          const vitola = card.dataset.vitola || "";
+          const items = loadItems();
+          const key = brand + "|" + name + "|" + vitola;
+          const existing = items.find((i) => i.key === key);
+          if (existing) {
+            existing.qty += 1;
+            existing.lineTotal = Number((existing.qty * existing.price).toFixed(2));
+          } else {
+            items.push({ key, brand, name, vitola, price, qty: 1, lineTotal: Number(price.toFixed(2)) });
+          }
+          saveItems(items);
+          updateReceiptBadge();
         });
-    }
-
-    renderAshtrays();
-
-    search.addEventListener("input", e => {
-      renderAshtrays(e.target.value);
-    });
+      });
+      const backBtn = document.getElementById("category-back");
+      if (backBtn) backBtn.addEventListener("click", () => { window.location.href = "/pos/"; });
+      const fab = document.getElementById("posReceiptFab");
+      if (fab) fab.addEventListener("click", () => { window.location.href = "/pos/receipt.html"; });
+      updateReceiptBadge();
+    })();
   </script>
-
-  <!-- ===================== RECEIPT PILL ===================== -->
-  <div class="receipt-pill" id="open-receipt">
-    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
-    <span class="receipt-pill-count" id="receipt-count">0</span>
-  </div>
-
-  <!-- ===================== INVOICE POPUP ===================== -->
-  <div id="invoice-popup" class="invoice-popup">
-    <div class="invoice-popup-inner">
-      <div class="invoice-header">
-        <h2>Invoice</h2>
-        <p id="invoice-date"></p>
-      </div>
-
-      <div class="invoice-body">
-        <div class="loyalty-row">
-          <span>Loyalty customer</span>
-          <span class="dropdown-arrow">▼</span>
-        </div>
-        <div id="invoice-items"></div>
-      </div>
-
-      <div class="invoice-totals">
-        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
-        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
-        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
-      </div>
-
-      <div id="close-receipt" class="invoice-close">Close</div>
-    </div>
-  </div>
-
-  <script src="/js/tony.js" defer></script>
-  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
