@@ -2,212 +2,149 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>FOOD &amp; BEVS • POS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>POS • Food & Bevs</title>
+
+  <!-- Global SF Pro + POS base styles -->
+  <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-  <style>
-    :root {
-      --bg: #eaf2f6;
-      --ink: #0f1a2c;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    }
-    .pos-wrap {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 12px 12px 90px;
-    }
-    .pos-topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 4px;
-    }
-    .pos-back {
-      text-decoration: none;
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-weight: 500;
-    }
-    .pos-star {
-      font-size: 22px;
-      color: #ffcc00;
-    }
-    .pos-header-spacer {
-      height: 16px;
-    }
-    .pos-title {
-      text-align: center;
-      font-weight: 700;
-      font-size: 28px;
-      margin: 0;
-    }
-
-    /* 4-across icon grid */
-    .bev-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-top: 32px; /* extra space you asked for */
-    }
-
-    .bev-tile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      text-align: center;
-      color: var(--ink);
-    }
-
-    .bev-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      overflow: hidden;
-    }
-    .bev-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* 3-line description under the picture */
-    .bev-brand {
-      font-size: 12px;
-      font-weight: 500;
-      line-height: 1.2;
-    }
-    .bev-item {
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1.2;
-    }
-    .bev-price {
-      font-size: 13px;
-      margin-top: -2px;
-    }
-  </style>
+  <!-- Category layout styles -->
+  <link rel="stylesheet" href="/pos/category.css" />
 </head>
-<body>
-  <div class="pos-wrap">
-    <div class="pos-topbar">
-      <a class="pos-back" href="/pos/"><span>←</span><span>POS</span></a>
-      <div class="pos-star">★</div>
-    </div>
-    <div class="pos-header-spacer"></div>
-    <h1 class="pos-title">FOOD &amp; BEVS</h1>
+<body class="category-page">
 
-    <div id="bevGrid" class="bev-grid"></div>
+  <!-- Top bar -->
+  <header class="category-topbar">
+    <button type="button" class="pos-back" id="category-back">
+      <span class="pos-back-icon">←</span>
+    </button>
+  </header>
+
+  <main>
+    <h1 class="category-title">Food &amp; Bevs</h1>
+
+    <section class="category-search">
+      <input
+        type="search"
+        class="category-search-input"
+        placeholder="Search"
+      />
+    </section>
+
+    <section class="category-grid">
+      <!-- Example items — replace with your real products -->
+      <article class="category-card" data-receipt-item
+        data-brand="Coca-Cola" data-name="Coca-Cola" data-price="1.50">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Coca-Cola</div>
+        <div class="category-card-price">$1.50</div>
+      </article>
+
+      <article class="category-card" data-receipt-item
+        data-brand="Pepsi" data-name="Pepsi" data-price="1.50">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Pepsi</div>
+        <div class="category-card-price">$1.50</div>
+      </article>
+
+      <article class="category-card" data-receipt-item
+        data-brand="Monster" data-name="Monster Energy" data-price="3.99">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Monster Energy</div>
+        <div class="category-card-price">$3.99</div>
+      </article>
+
+      <!-- Add as many as you want; layout will wrap automatically -->
+    </section>
+  </main>
+
+  <!-- Floating receipt icon -->
+  <div class="pos-receipt-fab" id="posReceiptFab">
+    <img src="/pos/assets/receipt-icon.png" alt="Receipt" />
+    <div class="pos-receipt-badge" id="posReceiptBadge">0</div>
   </div>
 
+  <!-- Shared category JS (back button + receipt icon + localStorage cart) -->
   <script>
-    // Data aligned with pos-categories-prices.csv
-    // Brand is "n/a" for all, so it's skipped in the UI per your rule.
-    const FOOD_BEVS = [
-      { brand: "n/a", name: "7 Up",                     file: "7up.svg",                     price: "$1.50" },
-      { brand: "n/a", name: "Cocacola",                file: "cocacola.svg",                price: "$1.50" },
-      { brand: "n/a", name: "Coke Zero",               file: "cokezero.svg",                price: "$1.50" },
-      { brand: "n/a", name: "Diet Coke",               file: "dietcoke.svg",                price: "$1.50" },
-      { brand: "n/a", name: "Diet Dr. Pepper",         file: "dietdrpepper.svg",            price: "$1.50" },
-      { brand: "n/a", name: "Dr. Pepper",              file: "drpepper.svg",                price: "$1.50" },
-      { brand: "n/a", name: "Dunkin",                  file: "dunkin.svg",                  price: "$3.50" },
-      { brand: "n/a", name: "Gatorade",                file: "gatorade.svg",                price: "$3.50" },
-      { brand: "n/a", name: "Ginger Ale",              file: "gingerale.svg",               price: "$1.50" },
-      { brand: "n/a", name: "GP Sweet Tea",            file: "gpsweettea.svg",              price: "$1.50" },
-      { brand: "n/a", name: "GP Unsweetened Tea",      file: "gpunsweetenedtea.svg",        price: "$1.50" },
-      { brand: "n/a", name: "GP Zero Sugar Sweet Tea", file: "gpzerosugarsweettea.svg",     price: "$1.50" },
-      { brand: "n/a", name: "Monster Tea",             file: "monstertea.svg",              price: "$3.50" },
-      { brand: "n/a", name: "Mountain Dew",            file: "mountaindew.svg",             price: "$1.50" },
-      { brand: "n/a", name: "Pepsi",                   file: "pepsi.svg",                   price: "$1.50" },
-      { brand: "n/a", name: "Red Bull",                file: "redbull.svg",                 price: "$3.50" },
-      { brand: "n/a", name: "Root Beer",               file: "rootbeer.svg",                price: "$1.50" },
-      { brand: "n/a", name: "Sprite",                  file: "sprite.svg",                  price: "$1.50" },
-      { brand: "n/a", name: "Starbucks",               file: "starbucks.svg",               price: "$3.50" },
-      { brand: "n/a", name: "Water",                   file: "water.svg",                   price: "$1.50" }
-    ];
+    (function () {
+      const STORAGE_KEY = "posReceiptItems";
 
-    const grid = document.getElementById('bevGrid');
+      function loadItems() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        } catch (e) {
+          return [];
+        }
+      }
 
-    function renderFoodBevs() {
-      grid.innerHTML = "";
+      function saveItems(items) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      }
 
-      FOOD_BEVS.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'bev-tile';
+      function getCount(items) {
+        return items.reduce((sum, item) => sum + (item.qty || 0), 0);
+      }
 
-        const brandLine =
-          item.brand &&
-          item.brand.toLowerCase() !== 'n/a'
-            ? `<div class="bev-brand">${item.brand}</div>`
-            : '';
+      function updateReceiptBadge() {
+        const badge = document.getElementById("posReceiptBadge");
+        if (!badge) return;
+        const items = loadItems();
+        const count = getCount(items);
+        if (count === 0) {
+          badge.style.display = "none";
+        } else {
+          badge.textContent = String(count);
+          badge.style.display = "flex";
+        }
+      }
 
-        div.innerHTML = `
-          <div class="bev-icon">
-            <img src="/img/icons/foodandbevs/${item.file}" alt="${item.name}">
-          </div>
-          ${brandLine}
-          <div class="bev-item">${item.name}</div>
-          <div class="bev-price">${item.price}</div>
-        `;
-        grid.appendChild(div);
+      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const name = card.dataset.name || "Item";
+          const price = Number(card.dataset.price || "0");
+          const brand = card.dataset.brand || "";
+          const vitola = card.dataset.vitola || "";
+
+          const items = loadItems();
+          const key = brand + "|" + name + "|" + vitola;
+          const existing = items.find((i) => i.key === key);
+
+          if (existing) {
+            existing.qty += 1;
+            existing.lineTotal = Number((existing.qty * existing.price).toFixed(2));
+          } else {
+            items.push({
+              key,
+              brand,
+              name,
+              vitola,
+              price,
+              qty: 1,
+              lineTotal: Number(price.toFixed(2)),
+            });
+          }
+
+          saveItems(items);
+          updateReceiptBadge();
+        });
       });
-    }
 
-    renderFoodBevs();
+      const backBtn = document.getElementById("category-back");
+      if (backBtn) {
+        backBtn.addEventListener("click", () => {
+          window.location.href = "/pos/";
+        });
+      }
+
+      const fab = document.getElementById("posReceiptFab");
+      if (fab) {
+        fab.addEventListener("click", () => {
+          window.location.href = "/pos/receipt.html";
+        });
+      }
+
+      updateReceiptBadge();
+    })();
   </script>
-
-  <!-- Red receipt pill -->
-<div class="receipt-pill" id="open-receipt">
-  <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
-  <span class="receipt-pill-count" id="receipt-count">0</span>
-</div>
-
-  <!-- Invoice Popup -->
-  <div id="invoice-popup" class="invoice-popup">
-    <div class="invoice-popup-inner">
-      <div class="invoice-header">
-        <h2>Invoice</h2>
-        <p id="invoice-date"></p>
-      </div>
-
-      <div class="invoice-body">
-        <div class="loyalty-row">
-          <span>Loyalty customer</span>
-          <span class="dropdown-arrow">▼</span>
-        </div>
-
-        <!-- CART ITEMS GO HERE -->
-        <div id="invoice-items"></div>
-      </div>
-
-      <div class="invoice-totals">
-        <div class="total-row">
-          <span>Subtotal</span>
-          <span id="invoice-subtotal">$0.00</span>
-        </div>
-        <div class="total-row">
-          <span>Tax</span>
-          <span id="invoice-tax">$0.00</span>
-        </div>
-        <div class="total-row total-bold">
-          <span>TOTAL</span>
-          <span id="invoice-total">$0.00</span>
-        </div>
-      </div>
-
-      <div id="close-receipt" class="invoice-close">Close</div>
-    </div>
-  </div>
-
-  <script src="/js/tony.js" defer></script>
-  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
