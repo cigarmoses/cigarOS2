@@ -1,282 +1,394 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Invoice</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>POS • Receipt</title>
+
+  <!-- Global SF Pro + POS styles -->
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/pos/pos.css" />
+
   <style>
     :root {
-      --ink: #ffffff;
-      --blue: #2da3ff;
+      --ink: #0f1a2c;
+      --muted: #6a7586;
+      --accent: #007aff;
+      --bg-soft: #f5f7fa;
+      --border-subtle: #e3e6ec;
     }
-    * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      background: #000;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+    }
+
+    .receipt-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top bar */
+
+    .receipt-topbar {
+      padding: 16px 18px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .receipt-close {
+      border: none;
+      background: none;
+      padding: 4px 0;
+      font-size: 17px;
+      color: #007aff;
+      cursor: pointer;
+    }
+
+    .receipt-title-block {
+      flex: 1;
+      margin-left: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .receipt-datetime {
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .receipt-customer-btn {
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      padding: 6px 12px;
+      font-size: 13px;
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      background: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .receipt-customer-btn span {
+      color: var(--muted);
+    }
+
+    .receipt-customer-btn strong {
       color: var(--ink);
     }
 
-    /* top bar */
-    .top-bar {
-      height: 70px;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 18px;
-    }
-    .top-left {
-      font-size: 30px;
-      line-height: 1;
-      cursor: pointer;
-    }
-    .top-right {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .dot {
-      width: 8px;
-      height: 8px;
-      background: #ff9d00;
-      border-radius: 999px;
-    }
-    .menu-dots {
-      width: 4px;
-      height: 4px;
-      border-radius: 999px;
-      background: #fff;
-      box-shadow: 0 7px 0 #fff, 0 -7px 0 #fff;
+    /* Main title */
+
+    .receipt-main-title {
+      margin: 0 18px 8px;
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      font-weight: 900; /* Heavy */
+      font-size: 28px;
+      letter-spacing: -0.03em;
     }
 
-    /* main sheet */
-    .sheet {
-      background: #121820;
-      border-top-left-radius: 26px;
-      border-top-right-radius: 26px;
-      padding: 30px 20px 120px;
-      min-height: calc(100vh - 70px);
+    /* Customer search placeholder (gives you room to wire a real search later) */
+
+    .receipt-customer-search {
+      margin: 0 18px 12px;
+      display: none; /* show when Attach Customer is tapped */
     }
 
-    .title {
-      text-align: center;
-      font-size: 26px;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      margin-bottom: 8px;
-    }
-    .date-line {
-      text-align: center;
-      font-size: 14px;
-      color: rgba(255,255,255,.7);
-      margin-bottom: 18px;
-    }
-
-    /* line items */
-    .item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 15px;
-    }
-    .item-icon {
-      width: 58px;
-      height: 58px;
-      border-radius: 16px;
-      overflow: hidden;
-      background: #1f2428;
-      flex: 0 0 58px;
-      display: grid;
-      place-items: center;
-    }
-    .item-icon img {
+    .receipt-customer-search input {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
+      border-radius: 999px;
+      border: none;
+      background: var(--bg-soft);
+      padding: 10px 14px;
+      font-size: 15px;
+      outline: none;
     }
-    .item-body {
-      flex: 1;
-      min-width: 0;
-    }
-    .item-title {
-      font-size: 17px;
-      font-weight: 600;
-      color: #38a8ff;
-      margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .item-sub {
-      font-size: 13px;
-      color: rgba(255,255,255,.65);
-      line-height: 1.25;
-    }
-    .item-sub:last-child { margin-top: 3px; }
 
-    .item-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    /* Items list */
+
+    .receipt-items {
+      margin: 8px 0 0;
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
     }
-    .qty-pill {
-      background: rgba(11,12,13,0.4);
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 4px 8px;
-    }
-    .qty-pill button {
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.2);
-      background: transparent;
-      color: #fff;
-      font-size: 16px;
-      line-height: 1;
+
+    .receipt-row {
       display: grid;
-      place-items: center;
-      cursor: pointer;
-    }
-    .qty-pill span {
-      min-width: 16px;
-      text-align: center;
-      font-weight: 500;
-    }
-    .price-pill {
-      background: #194b66;
-      border-radius: 999px;
-      padding: 9px 18px 9px 16px;
-      font-weight: 600;
-      font-size: 17px;
+      grid-template-columns: 70px 1.6fr auto auto;
+      column-gap: 10px;
+      align-items: center;
+      padding: 10px 18px;
     }
 
-    /* totals */
-    .totals {
-      margin-top: 26px;
-      border-top: 1px solid rgba(255,255,255,.05);
-      padding-top: 18px;
-      max-width: 320px;
-      margin-left: auto;
+    .receipt-row + .receipt-row {
+      border-top: 1px solid var(--border-subtle);
     }
-    .totals-row {
+
+    /* Brand icon + name */
+
+    .receipt-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+
+    .receipt-brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      object-fit: contain;
+      background: #ffffff;
+    }
+
+    .receipt-brand-name {
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Cigar name + vitola */
+
+    .receipt-product {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .receipt-product-name {
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600; /* slightly bolder */
+    }
+
+    .receipt-product-vitola {
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Qty adjuster */
+
+    .receipt-qty {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      background: var(--bg-soft);
+      padding: 2px 8px;
+      gap: 8px;
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    .receipt-qty button {
+      border: none;
+      background: none;
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px;
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    .receipt-qty span {
+      min-width: 14px;
+      text-align: center;
+    }
+
+    /* Line item total */
+
+    .receipt-line-total {
+      text-align: right;
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    /* Summary (subtotal, tax, total) */
+
+    .receipt-summary {
+      padding: 14px 18px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      font-size: 15px;
+    }
+
+    .receipt-summary-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 6px;
-      font-size: 16px;
-      letter-spacing: 0.03em;
-    }
-    .totals-row:last-child {
-      margin-top: 10px;
-      font-size: 20px;
-      font-weight: 600;
+      align-items: center;
     }
 
-    @media (min-width: 520px) {
-      .sheet {
-        max-width: 460px;
-        margin: 0 auto;
-      }
+    .receipt-summary-row.total {
+      margin-top: 4px;
+      font-size: 18px;
+      font-weight: 800; /* Heavy-ish for Total */
+    }
+
+    /* Bottom buttons */
+
+    .receipt-actions {
+      margin-top: 12px;
+      padding: 0 18px 28px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .receipt-btn {
+      flex: 1;
+      height: 44px;
+      border-radius: 12px;
+      font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .receipt-btn-secondary {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      color: var(--ink);
+    }
+
+    .receipt-btn-primary {
+      background: var(--accent);
+      color: #ffffff;
     }
   </style>
 </head>
 <body>
+  <div class="receipt-page">
+    <!-- Top bar -->
+    <header class="receipt-topbar">
+      <button class="receipt-close" type="button">Close</button>
 
-  <!-- top bar -->
-  <div class="top-bar">
-    <!-- let the iframe tell parent to close -->
-    <div class="top-left"
-         onclick="if (window.parent && window.parent.closeBill) window.parent.closeBill();">
-      ×
-    </div>
-    <div class="top-right">
-      <div class="dot"></div>
-      <div class="menu-dots"></div>
-    </div>
-  </div>
-
-  <!-- invoice sheet -->
-  <div class="sheet">
-    <div class="title">INVOICE</div>
-    <div class="date-line" id="invDate">Thursday, 10/23/25 — 11:02 PM</div>
-
-    <!-- ITEM 1 -->
-    <div class="item">
-      <div class="item-icon">
-        <img src="/img/icons/categories/cigars.svg" alt="Cigar">
+      <div class="receipt-title-block">
+        <div class="receipt-datetime" id="receiptDatetime">
+          <!-- JS can overwrite this with real date/time -->
+          Dec 10, 2025 • 4:24 PM
+        </div>
+        <button class="receipt-customer-btn" type="button">
+          <span>Customer:</span>
+          <strong>Attach customer ▾</strong>
+        </button>
       </div>
-      <div class="item-body">
-        <div class="item-title">Fat Bottom Betty</div>
-        <div class="item-sub">Gordo</div>
-        <div class="item-sub">Pappy Van Winkle</div>
-        <div class="item-sub">13.99</div>
-      </div>
-      <div class="item-right">
-        <div class="qty-pill">
-          <button>-</button>
+    </header>
+
+    <h1 class="receipt-main-title">Receipt</h1>
+
+    <!-- Optional customer search field (can show when Attach is tapped) -->
+    <div class="receipt-customer-search" id="receiptCustomerSearch">
+      <input type="search" placeholder="Search or add customer for points…" />
+    </div>
+
+    <!-- Items list -->
+    <section class="receipt-items">
+      <!-- Row 1 -->
+      <div class="receipt-row">
+        <div class="receipt-brand">
+          <img src="/img/icons/brands/padron.svg" alt="Padron" class="receipt-brand-icon" />
+          <div class="receipt-brand-name">Padron</div>
+        </div>
+
+        <div class="receipt-product">
+          <div class="receipt-product-name">1964 Anniversary</div>
+          <div class="receipt-product-vitola">Torcedor • 6 x 52</div>
+        </div>
+
+        <div class="receipt-qty">
+          <button type="button">−</button>
           <span>1</span>
-          <button>+</button>
+          <button type="button">+</button>
         </div>
-        <div class="price-pill">13.99</div>
-      </div>
-    </div>
 
-    <!-- ITEM 2 -->
-    <div class="item">
-      <div class="item-icon">
-        <img src="/img/icons/categories/cigars.svg" alt="Cigar">
+        <div class="receipt-line-total">$18.00</div>
       </div>
-      <div class="item-body">
-        <div class="item-title">Andalusian Bull</div>
-        <div class="item-sub">Figurado</div>
-        <div class="item-sub">La Flor Dominicana</div>
-        <div class="item-sub">32.00</div>
-      </div>
-      <div class="item-right">
-        <div class="qty-pill">
-          <button>-</button>
+
+      <!-- Row 2 -->
+      <div class="receipt-row">
+        <div class="receipt-brand">
+          <img src="/img/icons/brands/arturofuente.svg" alt="Arturo Fuente" class="receipt-brand-icon" />
+          <div class="receipt-brand-name">Arturo Fuente</div>
+        </div>
+
+        <div class="receipt-product">
+          <div class="receipt-product-name">Don Carlos Eye of the Shark</div>
+          <div class="receipt-product-vitola">Figurado • 5.75 x 52</div>
+        </div>
+
+        <div class="receipt-qty">
+          <button type="button">−</button>
           <span>2</span>
-          <button>+</button>
+          <button type="button">+</button>
         </div>
-        <div class="price-pill">64.00</div>
-      </div>
-    </div>
 
-    <!-- totals -->
-    <div class="totals">
-      <div class="totals-row">
-        <span>SUBTOTAL</span>
-        <span id="subTotal">77.99</span>
+        <div class="receipt-line-total">$59.00</div>
       </div>
-      <div class="totals-row">
-        <span>TAX</span>
-        <span id="taxTotal">5.46</span>
+    </section>
+
+    <!-- Summary -->
+    <section class="receipt-summary">
+      <div class="receipt-summary-row">
+        <span>Subtotal</span>
+        <span>$77.00</span>
       </div>
-      <div class="totals-row">
-        <span>TOTAL</span>
-        <span id="grandTotal">83.45</span>
+      <div class="receipt-summary-row">
+        <span>Tax</span>
+        <span>$5.39</span>
       </div>
+      <div class="receipt-summary-row total">
+        <span>Total</span>
+        <span>$82.39</span>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <div class="receipt-actions">
+      <button class="receipt-btn receipt-btn-secondary" type="button">
+        SAVE DRAFT
+      </button>
+      <button class="receipt-btn receipt-btn-primary" type="button">
+        MOCKUP
+      </button>
     </div>
   </div>
 
   <script>
-    // Show current date/time
-    const d = new Date();
-    const dayName = d.toLocaleDateString(undefined, { weekday: "long" });
-    const dateStr = d.toLocaleDateString(undefined, {
-      month: "2-digit",
-      day: "2-digit",
-      year: "2-digit"
-    });
-    const timeStr = d.toLocaleTimeString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-    document.getElementById("invDate").textContent =
-      `${dayName}, ${dateStr} — ${timeStr}`;
+    // Example: set real date/time on load
+    const dtEl = document.getElementById("receiptDatetime");
+    if (dtEl) {
+      const now = new Date();
+      const opts = {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      };
+      dtEl.textContent = now.toLocaleString(undefined, opts);
+    }
+
+    // You can hook this up later so tapping "Attach customer"
+    // reveals the search input or opens a modal.
+    const attachBtn = document.querySelector(".receipt-customer-btn");
+    const searchRow = document.getElementById("receiptCustomerSearch");
+    if (attachBtn && searchRow) {
+      attachBtn.addEventListener("click", () => {
+        const isVisible = searchRow.style.display === "block";
+        searchRow.style.display = isVisible ? "none" : "block";
+      });
+    }
   </script>
 </body>
 </html>
