@@ -2,313 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ACCESSORIES • POS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>POS • Accessories</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-
-  <style>
-    :root {
-      --bg: #eaf2f6;
-      --ink: #0f1a2c;
-    }
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    }
-
-    .pos-wrap {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 22px 12px 110px;
-    }
-
-    .pos-topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .pos-back {
-      text-decoration: none;
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-weight: 500;
-      font-size: 18px;
-    }
-
-    .pos-star {
-      font-size: 26px;
-      color: #ffcc00;
-    }
-
-    h1.pos-title {
-      text-align: center;
-      font-size: 32px;
-      font-weight: 700;
-      margin: 0 0 18px;
-    }
-
-    /* Search bar */
-    .pos-search {
-      display: flex;
-      align-items: center;
-      background: #ffffff;
-      border-radius: 999px;
-      padding: 12px 16px;
-      border: none;
-      margin-bottom: 18px;
-    }
-    .pos-search input {
-      border: 0;
-      outline: 0;
-      width: 100%;
-      background: transparent;
-      font-size: 16px;
-    }
-
-    /* Grid of items */
-    .acc-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 22px;
-      margin-top: 10px;
-    }
-
-    .acc-tile {
-      text-align: center;
-      text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      align-items: center;
-      color: #0f1a2c;
-      cursor: pointer;
-    }
-
-    .acc-icon {
-      width: 120px;
-      height: 120px;
-      border-radius: 22px;
-      overflow: hidden;
-      background: #ffffff;
-      display: grid;
-      place-items: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    .acc-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .acc-brand {
-      font-size: 13px;
-      font-weight: 500;
-      line-height: 1.2;
-    }
-
-    .acc-label {
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.2;
-    }
-
-    .acc-price {
-      font-size: 14px;
-      margin-top: -3px;
-    }
-  </style>
+  <link rel="stylesheet" href="/pos/category.css" />
 </head>
+<body class="category-page">
+  <header class="category-topbar">
+    <button type="button" class="pos-back" id="category-back">
+      <span class="pos-back-icon">←</span>
+    </button>
+  </header>
 
-<body>
-  <div class="pos-wrap">
-    <div class="pos-topbar">
-      <a href="/pos/" class="pos-back">← POS</a>
-      <div class="pos-star">★</div>
-    </div>
+  <main>
+    <h1 class="category-title">Accessories</h1>
 
-    <h1 class="pos-title">ACCESSORIES</h1>
+    <section class="category-search">
+      <input type="search" class="category-search-input" placeholder="Search" />
+    </section>
 
-    <div class="pos-search">
-      <input id="accSearch" placeholder="Search" />
-    </div>
+    <section class="category-grid">
+      <article class="category-card" data-receipt-item
+        data-brand="Vertigo" data-name="Vertigo Triple Torch" data-price="9.99">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Vertigo Triple Torch</div>
+        <div class="category-card-price">$9.99</div>
+      </article>
 
-    <div id="accGrid" class="acc-grid"></div>
+      <article class="category-card" data-receipt-item
+        data-brand="Lotus" data-name="Lotus Lighter" data-price="34.99">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Lotus Lighter</div>
+        <div class="category-card-price">$34.99</div>
+      </article>
+
+      <article class="category-card" data-receipt-item
+        data-brand="Xikar" data-name="Xikar Cutter" data-price="39.99">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Xikar Cutter</div>
+        <div class="category-card-price">$39.99</div>
+      </article>
+    </section>
+  </main>
+
+  <div class="pos-receipt-fab" id="posReceiptFab">
+    <img src="/pos/assets/receipt-icon.png" alt="Receipt" />
+    <div class="pos-receipt-badge" id="posReceiptBadge">0</div>
   </div>
 
+  <!-- Same JS snippet -->
   <script>
-    // ---------------- ACCESSORIES DATA ----------------
-    const ACCESSORIES = [
-      {
-        brand: "Elie Bleu",
-        name: "Elie Bleu Opus X Angel\u2019s Share Lighter",
-        file: "elliebleuopusxangelssharelighter.jpg",
-        price: "$600.00"
-      },
-      {
-        brand: "Elie Bleu",
-        name: "Elie Bleu Opus X Hemingway Lighter",
-        file: "elliebleuopusxhemingwaylighter.jpg",
-        price: "$330.00"
-      },
-      {
-        brand: "Lotus",
-        name: "Excalibur Double Torch V-Cutter Lighter",
-        file: "lotusexcaliburdoubletorchvcutterlighter.jpg",
-        price: "$39.99"
-      },
-      {
-        brand: "Lotus",
-        name: "Vertigo Boxer Triple Torch",
-        file: "vertigoboxertripletorch.jpg",
-        price: "$9.99"
-      },
-      {
-        brand: "Lotus",
-        name: "Vertigo Cyclone Triple Torch",
-        file: "vertigocyclonetripletorch.jpg",
-        price: "$9.99"
-      },
-      {
-        brand: "Lotus",
-        name: "Vertigo Dagger Double Jet",
-        file: "vertigodaggerdoublejet.jpg",
-        price: "$34.99"
-      },
-      {
-        brand: "ST Dupont",
-        name: "ST Dupont Ligne 1 Guilloche Lighter Gold",
-        file: "stdupontligne1guillochelightergold.svg",
-        price: "$1295.00"
-      },
-      {
-        brand: "ST Dupont",
-        name: "ST Dupont Cutter Stand Slim Gold",
-        file: "stdupontcutterstandslimgold.svg",
-        price: "$285.00"
-      },
-      {
-        brand: "ST Dupont",
-        name: "ST Dupont Slim 7 Lacquered Snake Lighter",
-        file: "stdupontslim7lacqueredsnakelighter.svg",
-        price: "$335.00"
-      },
-      {
-        brand: "Lotus",
-        name: "Lotus Cyclops Punch",
-        file: "lotuscyclopspunch.png",
-        price: "$17.99"
+    (function () {
+      const STORAGE_KEY = "posReceiptItems";
+      function loadItems() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+        catch (e) { return []; }
       }
-    ];
-
-    const grid = document.getElementById("accGrid");
-    const search = document.getElementById("accSearch");
-
-    function slug(str) {
-      return (str || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "")
-        .replace(/^\s+|\s+$/g, "");
-    }
-
-    function parsePriceToNumber(raw) {
-      if (!raw) return 0;
-      const num = parseFloat(String(raw).replace(/[^0-9.]/g, ""));
-      return isNaN(num) ? 0 : num;
-    }
-
-    function renderAccessories(filter = "") {
-      grid.innerHTML = "";
-
-      const normalizedFilter = filter.toLowerCase();
-
-      ACCESSORIES
-        .filter(item => {
-          const haystack = (item.brand + " " + item.name).toLowerCase();
-          return haystack.includes(normalizedFilter);
-        })
-        .forEach(item => {
-          const div = document.createElement("div");
-          div.className = "acc-tile";
-
-          div.innerHTML = `
-            <div class="acc-icon">
-              <img src="/img/lighters/${item.file}" alt="${item.name}" />
-            </div>
-            <div class="acc-brand">${item.brand}</div>
-            <div class="acc-label">${item.name}</div>
-            <div class="acc-price">${item.price}</div>
-          `;
-
-          // Click = add to invoice (shared cart)
-          div.addEventListener("click", () => {
-            if (typeof window.addToInvoice === "function") {
-              const priceNumber = parsePriceToNumber(item.price);
-              const cartItem = {
-                id: "acc_" + slug(item.brand + "_" + item.name),
-                name: item.name,
-                vitola: "Accessory",
-                brand: item.brand,
-                price: priceNumber,
-                qty: 1,
-                icon: `/img/lighters/${item.file}`
-              };
-              window.addToInvoice(cartItem);
-            }
-          });
-
-          grid.appendChild(div);
+      function saveItems(items) { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
+      function getCount(items) { return items.reduce((s, i) => s + (i.qty || 0), 0); }
+      function updateReceiptBadge() {
+        const badge = document.getElementById("posReceiptBadge");
+        if (!badge) return;
+        const items = loadItems();
+        const count = getCount(items);
+        if (count === 0) { badge.style.display = "none"; }
+        else { badge.textContent = String(count); badge.style.display = "flex"; }
+      }
+      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const name = card.dataset.name || "Item";
+          const price = Number(card.dataset.price || "0");
+          const brand = card.dataset.brand || "";
+          const vitola = card.dataset.vitola || "";
+          const items = loadItems();
+          const key = brand + "|" + name + "|" + vitola;
+          const existing = items.find((i) => i.key === key);
+          if (existing) {
+            existing.qty += 1;
+            existing.lineTotal = Number((existing.qty * existing.price).toFixed(2));
+          } else {
+            items.push({ key, brand, name, vitola, price, qty: 1, lineTotal: Number(price.toFixed(2)) });
+          }
+          saveItems(items);
+          updateReceiptBadge();
         });
-    }
-
-    renderAccessories();
-
-    search.addEventListener("input", (e) => {
-      renderAccessories(e.target.value);
-    });
+      });
+      const backBtn = document.getElementById("category-back");
+      if (backBtn) backBtn.addEventListener("click", () => { window.location.href = "/pos/"; });
+      const fab = document.getElementById("posReceiptFab");
+      if (fab) fab.addEventListener("click", () => { window.location.href = "/pos/receipt.html"; });
+      updateReceiptBadge();
+    })();
   </script>
-
-  <!-- Receipt Pill (shared across POS) -->
-  <div class="receipt-pill" id="open-receipt">
-    <img src="/uxui/receipt-icon.svg" class="receipt-pill-icon" alt="Receipt" />
-    <span class="receipt-pill-count" id="receipt-count">0</span>
-  </div>
-
-  <!-- Invoice Popup (shared layout) -->
-  <div id="invoice-popup" class="invoice-popup">
-    <div class="invoice-popup-inner">
-      <div class="invoice-header">
-        <h2>Invoice</h2>
-        <p id="invoice-date"></p>
-      </div>
-
-      <div class="invoice-body">
-        <div class="loyalty-row">
-          <span>Loyalty customer</span>
-          <span class="dropdown-arrow">▼</span>
-        </div>
-        <div id="invoice-items"></div>
-      </div>
-
-      <div class="invoice-totals">
-        <div class="total-row"><span>Subtotal</span><span id="invoice-subtotal">$0.00</span></div>
-        <div class="total-row"><span>Tax</span><span id="invoice-tax">$0.00</span></div>
-        <div class="total-row total-bold"><span>TOTAL</span><span id="invoice-total">$0.00</span></div>
-      </div>
-
-      <div id="close-receipt" class="invoice-close">Close</div>
-    </div>
-  </div>
-
-  <script src="/js/tony.js" defer></script>
-  <script src="/pos/pos.js" defer></script>
 </body>
 </html>
