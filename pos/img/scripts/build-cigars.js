@@ -2,125 +2,165 @@
 
 const HUB_URL = "/hub/hub_11-5-25.json";
 
-let hubData = [];
-let filteredData = [];
-let activeFilters = {};
+let allRows = [];
+let filteredRows = [];
 
-// Normalize text helper
-function norm(x) {
-  return (x || "").toString().trim().toLowerCase();
+// Helper: pick a field from multiple possible names
+function getField(row, names) {
+  if (!Array.isArray(names)) names = [names];
+
+  for (const n of names) {
+    // direct key
+    if (row[n] !== undefined && row[n] !== null && row[n] !== "") return row[n];
+
+    // case-insensitive key lookup
+    const key = Object.keys(row).find(k => k.toLowerCase() === n.toLowerCase());
+    if (key && row[key] !== undefined && row[key] !== null && row[key] !== "") {
+      return row[key];
+    }
+  }
+  return "";
 }
 
-// -------------------------------
-// LOAD HUB
-// -------------------------------
-async function loadHub() {
+// Helper: brand text
+function getBrand(row) {
+  return getField(row, ["brand", "Brand", "BRAND"]);
+}
+
+// Build a deduped, sorted brand list from cigar rows
+function buildBrandList(rows) {
+  const map = new Map();
+
+  rows.forEach(row => {
+    const brandRaw = getBrand(row);
+    const brandName = (brandRaw || "").toString().trim();
+    if (!brandName) return;
+
+    const key = brandName.toLowerCase();
+    if (map.has(key)) return;
+
+    // Try to find an explicit icon field
+    let icon = getField(row, [
+      "brandImg300",
+      "Brand Img 300",
+      "BRAND IMG 300",
+      "brandImg",
+      "Brand Img",
+      "BRAND IMG",
+      "brand_icon",
+      "Brand Icon"
+    ]);
+
+    // If none, derive from slug / brand
+    if (!icon) {
+      let slug = getField(row, ["brandSlug", "Brand Slug"]);
+      if (!slug) {
+        slug = brandName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "")
+          .trim();
+      }
+      if (slug) icon = `/img/icons/brands/${slug}.svg`;
+    }
+
+    map.set(key, {
+      brand: brandName,
+      icon
+    });
+  });
+
+  return Array.from(map.values()).sort((a, b) =>
+    a.brand.localeCompare(b.brand, undefined, { sensitivity: "base" })
+  );
+}
+
+// Render brand tiles into #brands-grid
+function renderBrands() {
+  const grid = document.getElementById("brands-grid");
+  if (!grid) return;
+
+  const brands = buildBrandList(filteredRows);
+  grid.innerHTML = "";
+
+  if (!brands.length) {
+    grid.innerHTML = `<p class="cigars-empty">No cigars match your search yet.</p>`;
+    return;
+  }
+
+  brands.forEach(item => {
+    const tile = document.createElement("button");
+    tile.type = "button";
+    tile.className = "brand-tile";
+
+    tile.addEventListener("click", () => {
+      const url = `/pos/cigars/brand.html?brand=${encodeURIComponent(
+        item.brand
+      )}`;
+      window.location.href = url;
+    });
+
+    tile.innerHTML = `
+      <div class="brand-tile-inner">
+        ${
+          item.icon
+            ? `<img src="${item.icon}" alt="${item.brand}" class="brand-tile-img" />`
+            : ""
+        }
+        <div class="brand-tile-name">${item.brand}</div>
+      </div>
+    `;
+
+    grid.appendChild(tile);
+  });
+}
+
+// Wire up the search bar
+function wireSearch() {
+  const input = document.getElementById("cigars-search-input");
+  if (!input) return;
+
+  input.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
+
+    if (!q) {
+      filteredRows = [...allRows];
+    } else {
+      filteredRows = allRows.filter(row => {
+        const brandText = (getBrand(row) || "").toString().toLowerCase();
+        const nameText = getField(row, ["name", "Name", "Cigar", "Cigar Name"])
+          .toString()
+          .toLowerCase();
+        const vitolaText = getField(row, ["vitola", "Vitola"])
+          .toString()
+          .toLowerCase();
+
+        return (
+          brandText.includes(q) ||
+          nameText.includes(q) ||
+          vitolaText.includes(q)
+        );
+      });
+    }
+
+    renderBrands();
+  });
+}
+
+// Load hub → render brands → wire search
+async function loadHubAndRender() {
   try {
     const res = await fetch(HUB_URL);
     if (!res.ok) throw new Error("Hub failed to load");
 
-    hubData = await res.json();
+    const data = await res.json();
+    allRows = Array.isArray(data) ? data : [];
+    filteredRows = [...allRows];
 
-    // PRE-CLEAN each row to match new JSON field names
-    hubData = hubData.map(r => ({
-      brand: norm(r.brand),
-      manufacturer: norm(r.manufacturer),
-      vitola: norm(r.vitola),
-      shape: norm(r.shape),
-      shade: norm(r.shade),
-      strength: norm(r.strength),
-      length: r.length,
-      ring: r.ring,
-      name: norm(r.name),
-      image: r.image
-    }));
-
-    filteredData = [...hubData];
-
-    renderResults();
+    renderBrands();
+    wireSearch();
   } catch (err) {
-    console.error("Hub load error:", err);
+    console.error("Error loading hub:", err);
   }
 }
 
-// -------------------------------
-// SEARCH
-// -------------------------------
-function setupSearch() {
-  const input = document.getElementById("cigars-search");
-  if (!input) return;
-
-  input.addEventListener("input", () => {
-    const q = norm(input.value);
-
-    filteredData = hubData.filter(r =>
-      r.brand.includes(q) ||
-      r.manufacturer.includes(q) ||
-      r.name.includes(q)
-    );
-
-    renderResults();
-  });
-}
-
-// -------------------------------
-// FILTER SYSTEM
-// -------------------------------
-function setupFilters() {
-  document.querySelectorAll(".filter-pill").forEach(pill => {
-    pill.addEventListener("click", () => {
-      const field = pill.dataset.field;
-      const value = pill.dataset.value;
-
-      if (!field) return;
-
-      // Toggle active filter
-      if (activeFilters[field] === value) {
-        delete activeFilters[field];
-      } else {
-        activeFilters[field] = value;
-      }
-
-      applyFilters();
-    });
-  });
-}
-
-function applyFilters() {
-  filteredData = hubData.filter(row => {
-    return Object.entries(activeFilters).every(([field, value]) => {
-      return norm(row[field]) === norm(value);
-    });
-  });
-
-  renderResults();
-}
-
-// -------------------------------
-// RENDER RESULTS
-// -------------------------------
-function renderResults() {
-  const grid = document.getElementById("cigar-results");
-  if (!grid) return;
-
-  grid.innerHTML = "";
-
-  filteredData.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "cigar-card";
-
-    card.innerHTML = `
-      <img src="${item.image}" class="cigar-img" />
-      <div class="cigar-name">${item.name || ""}</div>
-    `;
-
-    grid.appendChild(card);
-  });
-}
-
-// -------------------------------
-document.addEventListener("DOMContentLoaded", () => {
-  loadHub();
-  setupSearch();
-  setupFilters();
-});
+document.addEventListener("DOMContentLoaded", loadHubAndRender);
