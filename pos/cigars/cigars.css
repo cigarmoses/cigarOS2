@@ -33,6 +33,7 @@
   line-height: 1;
 }
 
+/* (No label needed but keep rule harmless) */
 .pos-back-label {
   font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
@@ -181,41 +182,78 @@
   font-size: 22px;
 }
 
-/* Brand grid */
+/* Brand grid – clean layout, no grey cards */
 
 .brands-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  grid-row-gap: 32px;
+  grid-column-gap: 18px;
+  justify-items: center;
 }
 
-.brand-card {
+/* New brand tile style (used by build-cigars.js) */
+
+.brand-tile {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+  cursor: pointer;
+  text-align: center;
+}
+
+.brand-tile-inner {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-decoration: none;
+}
+
+.brand-tile-img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.brand-tile-name {
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.25;
   color: #0f1a2c;
-  border-radius: 20px;
-  padding: 10px 6px;
+  text-align: center;
+}
+
+/* Legacy brand-card classes mapped to same clean style (safe if still referenced anywhere) */
+
+.brand-card {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+  cursor: pointer;
+  text-align: center;
 }
 
 .brand-card-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 }
 
-/* --- 10% larger icon wrapper (now 75px) --- */
-
 .brand-card-icon-wrapper {
-  width: 75px;
-  height: 75px;
+  width: 96px;
+  height: 96px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 6px;
-  background: none;
 }
 
 .brand-card-icon {
@@ -229,14 +267,6 @@
   font-size: 14px;
   text-align: center;
   font-weight: 500;
-}
-
-.brands-grid .brand-card-inner,
-.brands-grid .brand-card-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 
 /* Desktop width constraint */
