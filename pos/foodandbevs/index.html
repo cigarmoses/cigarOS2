@@ -32,29 +32,55 @@
     </section>
 
     <section class="category-grid">
-      <!-- Example items — replace with your real products -->
-      <article class="category-card" data-receipt-item
-        data-brand="Coca-Cola" data-name="Coca-Cola" data-price="1.50">
-        <div class="category-card-icon"></div>
+      <!-- Coke -->
+      <article
+        class="category-card"
+        data-receipt-item
+        data-brand="Coca-Cola"
+        data-name="Coca-Cola"
+        data-price="1.50"
+      >
+        <div class="category-card-icon">
+          <!-- swap src to your real Coke can image -->
+          <img src="/img/foodbevs/coke.png" alt="Coca-Cola" />
+        </div>
         <div class="category-card-name">Coca-Cola</div>
         <div class="category-card-price">$1.50</div>
       </article>
 
-      <article class="category-card" data-receipt-item
-        data-brand="Pepsi" data-name="Pepsi" data-price="1.50">
-        <div class="category-card-icon"></div>
+      <!-- Pepsi -->
+      <article
+        class="category-card"
+        data-receipt-item
+        data-brand="Pepsi"
+        data-name="Pepsi"
+        data-price="1.50"
+      >
+        <div class="category-card-icon">
+          <!-- swap src to your real Pepsi can image -->
+          <img src="/img/foodbevs/pepsi.png" alt="Pepsi" />
+        </div>
         <div class="category-card-name">Pepsi</div>
         <div class="category-card-price">$1.50</div>
       </article>
 
-      <article class="category-card" data-receipt-item
-        data-brand="Monster" data-name="Monster Energy" data-price="3.99">
-        <div class="category-card-icon"></div>
+      <!-- Monster -->
+      <article
+        class="category-card"
+        data-receipt-item
+        data-brand="Monster"
+        data-name="Monster Energy"
+        data-price="3.99"
+      >
+        <div class="category-card-icon">
+          <!-- swap src to your real Monster can image -->
+          <img src="/img/foodbevs/monster.png" alt="Monster Energy" />
+        </div>
         <div class="category-card-name">Monster Energy</div>
         <div class="category-card-price">$3.99</div>
       </article>
 
-      <!-- Add as many as you want; layout will wrap automatically -->
+      <!-- Add more products here following the same pattern -->
     </section>
   </main>
 
@@ -98,6 +124,7 @@
         }
       }
 
+      // Tap card -> add to receipt
       document.querySelectorAll("[data-receipt-item]").forEach((card) => {
         card.addEventListener("click", () => {
           const name = card.dataset.name || "Item";
@@ -111,7 +138,9 @@
 
           if (existing) {
             existing.qty += 1;
-            existing.lineTotal = Number((existing.qty * existing.price).toFixed(2));
+            existing.lineTotal = Number(
+              (existing.qty * existing.price).toFixed(2)
+            );
           } else {
             items.push({
               key,
@@ -129,6 +158,7 @@
         });
       });
 
+      // Back button -> POS home
       const backBtn = document.getElementById("category-back");
       if (backBtn) {
         backBtn.addEventListener("click", () => {
@@ -136,6 +166,7 @@
         });
       }
 
+      // Floating receipt icon -> receipt popup
       const fab = document.getElementById("posReceiptFab");
       if (fab) {
         fab.addEventListener("click", () => {
@@ -143,6 +174,7 @@
         });
       }
 
+      // Initialize badge on load
       updateReceiptBadge();
     })();
   </script>
