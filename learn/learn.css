@@ -1,0 +1,135 @@
+.learn-page {
+  margin: 0;
+  background: #ffffff;
+  color: #0f1a2c;
+  font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+}
+
+/* Top bar */
+
+.learn-topbar {
+  padding: 12px 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Reuse existing .pos-back + .pos-back-icon styles from pos.css */
+/* Just make sure there's no "Back" label in the HTML */
+
+.learn-search-btn {
+  border: none;
+  background: none;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.learn-search-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Main layout */
+
+.learn-main {
+  padding: 0 16px 24px;
+}
+
+.learn-header {
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.learn-title {
+  margin: 0 0 12px;
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 999; /* Heavy/Black */
+  font-size: 34px;
+  letter-spacing: -0.04em;
+}
+
+/* Card grid */
+
+.learn-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.learn-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  border: none;
+  padding: 16px 10px 18px;
+  background: #ffffff;
+  border-radius: 22px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+}
+
+/* Circle image area */
+
+.learn-card-hero {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.learn-card-circle {
+  width: 104px;
+  height: 104px;
+  border-radius: 999px;
+  border: 6px solid #e5e6ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #f7f8fb;
+}
+
+.learn-card-circle img {
+  max-width: 80%;
+  height: auto;
+}
+
+/* Label */
+
+.learn-card-label {
+  margin-top: 10px;
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+/* Certification section */
+
+.learn-cert {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #4a5568;
+  margin-bottom: 32px;
+}
+
+.learn-cert a {
+  color: #007aff;
+  text-decoration: none;
+}
+
+.learn-cert a:hover {
+  text-decoration: underline;
+}
+
+.learn-cert-seal {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.learn-cert-seal img {
+  max-width: 120px;
+  height: auto;
+}
