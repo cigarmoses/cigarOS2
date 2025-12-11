@@ -14,8 +14,19 @@
   justify-content: space-between;
 }
 
-/* Reuse existing .pos-back + .pos-back-icon styles from pos.css */
-/* Just make sure there's no "Back" label in the HTML */
+.learn-back {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.learn-back-icon {
+  font-size: 16px;
+  line-height: 1;
+}
 
 .learn-search-btn {
   border: none;
