@@ -6,16 +6,16 @@
 
   <title>Learn</title>
 
-  <!-- Global type system (SF Pro) + POS styles -->
+  <!-- Global type system (SF Pro) -->
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/learn/learn.css" />
+  <!-- Learn-specific styles -->
+  <link rel="stylesheet" href="/learn/learn.css" />
 </head>
 <body class="learn-page">
   <!-- Top bar with back + search -->
   <header class="learn-topbar">
-    <button type="button" class="pos-back" id="learn-back">
-      <span class="pos-back-icon">←</span>
+    <button type="button" class="learn-back" id="learn-back">
+      <span class="learn-back-icon">←</span>
     </button>
 
     <button type="button" class="learn-search-btn" aria-label="Search">
@@ -31,7 +31,7 @@
 
     <!-- Grid of Learn cards -->
     <section class="learn-grid">
-      <button class="learn-card" data-target="/pos/learn/types/">
+      <button class="learn-card" data-target="/learn/types/">
         <div class="learn-card-hero">
           <div class="learn-card-circle">
             <img src="/img/learn/types.png" alt="Cigar types" />
@@ -40,7 +40,7 @@
         <div class="learn-card-label">Types</div>
       </button>
 
-      <button class="learn-card" data-target="/pos/learn/shapes/">
+      <button class="learn-card" data-target="/learn/shapes/">
         <div class="learn-card-hero">
           <div class="learn-card-circle">
             <img src="/img/learn/shapes.png" alt="Cigar shapes" />
@@ -49,7 +49,7 @@
         <div class="learn-card-label">Shapes</div>
       </button>
 
-      <button class="learn-card" data-target="/pos/learn/color/">
+      <button class="learn-card" data-target="/learn/color/">
         <div class="learn-card-hero">
           <div class="learn-card-circle">
             <img src="/img/learn/color.png" alt="Cigar colors" />
@@ -58,7 +58,7 @@
         <div class="learn-card-label">Color</div>
       </button>
 
-      <button class="learn-card" data-target="/pos/learn/anatomy/">
+      <button class="learn-card" data-target="/learn/anatomy/">
         <div class="learn-card-hero">
           <div class="learn-card-circle">
             <img src="/img/learn/anatomy.png" alt="Cigar anatomy" />
@@ -67,7 +67,7 @@
         <div class="learn-card-label">Anatomy</div>
       </button>
 
-      <button class="learn-card" data-target="/pos/learn/ring/">
+      <button class="learn-card" data-target="/learn/ring/">
         <div class="learn-card-hero">
           <div class="learn-card-circle">
             <img src="/img/learn/ring.png" alt="Cigar ring" />
@@ -76,7 +76,7 @@
         <div class="learn-card-label">Ring</div>
       </button>
 
-      <button class="learn-card" data-target="/pos/learn/glossary/">
+      <button class="learn-card" data-target="/learn/glossary/">
         <div class="learn-card-hero">
           <div class="learn-card-circle">
             <img src="/img/learn/glossary.png" alt="Glossary" />
@@ -102,28 +102,6 @@
     </section>
   </main>
 
-  <!-- Bottom tab bar (reuse whatever you already have for POS) -->
-  <footer class="pos-tabbar">
-    <!-- Example; keep your existing icons/links here -->
-    <nav class="pos-tabbar-inner">
-      <a href="/pos/" class="pos-tabbar-item">
-        <span class="pos-tabbar-icon home-icon"></span>
-      </a>
-      <a href="/pos/cigars/" class="pos-tabbar-item">
-        <span class="pos-tabbar-icon cigar-icon"></span>
-      </a>
-      <a href="/pos/learn/" class="pos-tabbar-item pos-tabbar-item--active">
-        <span class="pos-tabbar-icon learn-icon"></span>
-      </a>
-      <a href="/pos/tools/" class="pos-tabbar-item">
-        <span class="pos-tabbar-icon tools-icon"></span>
-      </a>
-      <a href="/pos/shop/" class="pos-tabbar-item">
-        <span class="pos-tabbar-icon account-icon"></span>
-      </a>
-    </nav>
-  </footer>
-
-  <script src="/pos/learn/learn.js"></script>
+  <script src="/learn/learn.js"></script>
 </body>
 </html>
