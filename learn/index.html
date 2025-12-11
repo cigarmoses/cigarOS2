@@ -2,185 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>LEARN • CigarOS 2</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 
-  <!-- Global POS + type system -->
-  <link rel="stylesheet" href="/pos/pos.css" />
+  <title>Learn</title>
+
+  <!-- Global type system (SF Pro) + POS styles -->
   <link rel="stylesheet" href="/css/type.css" />
-
-  <style>
-    :root {
-      --bg: #e6edf5;
-      --surface: #ffffff;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --shadow-soft: 0 10px 25px rgba(15, 26, 44, 0.12);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      min-height: 100vh;
-      font-family: var(--font-text); /* SF Pro Text */
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .learn-shell {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 18px 16px 32px;
-    }
-
-    /* Topbar (same as Loyalty / News / Hub) */
-    .learn-topbar {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 2px 0 0;
-    }
-
-    .learn-back {
-      color: #007aff;
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 500;
-      letter-spacing: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .learn-title-main {
-      font-family: var(--font-display); /* SF Pro Display Heavy */
-      font-size: 56px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      margin: 14px 0 24px;
-    }
-
-    /* Icon circle grid */
-    .learn-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 24px 32px;
-      margin-top: 4px;
-    }
-
-    .learn-circle-link {
-      text-decoration: none;
-      color: var(--ink);
-    }
-
-    .learn-circle {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      background: var(--surface);
-      box-shadow: var(--shadow-soft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-      transition: transform 0.12s ease-out, box-shadow 0.12s ease-out, background 0.12s ease-out;
-    }
-
-    .learn-circle:active {
-      transform: translateY(1px) scale(0.97);
-      background: #f9fbff;
-      box-shadow: 0 6px 16px rgba(15, 26, 44, 0.18);
-    }
-
-    .learn-circle-label {
-      font-family: var(--font-display); /* Use Display for icon labels */
-      font-size: 14px;
-      font-weight: 700;
-      color: #000;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      text-align: center;
-      line-height: 1.2;
-    }
-
-    @media (min-width: 520px) {
-      .learn-shell { padding-top: 26px; }
-      .learn-title-main { font-size: 34px; }
-      .learn-circle { width: 130px; height: 130px; }
-    }
-
-    /* Tony floating button */
-    .tony-fab {
-      position: fixed;
-      left: 16px;
-      bottom: 16px;
-      width: 46px;
-      height: 46px;
-      border: none;
-      background: transparent;
-      padding: 0;
-      z-index: 9999;
-    }
-    .tony-fab img {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-  </style>
+  <link rel="stylesheet" href="/pos/pos.css" />
+  <link rel="stylesheet" href="/pos/learn/learn.css" />
 </head>
+<body class="learn-page">
+  <!-- Top bar with back + search -->
+  <header class="learn-topbar">
+    <button type="button" class="pos-back" id="learn-back">
+      <span class="pos-back-icon">←</span>
+    </button>
 
-<body>
-  <div class="learn-shell">
+    <button type="button" class="learn-search-btn" aria-label="Search">
+      <span class="learn-search-icon">🔍</span>
+    </button>
+  </header>
 
-    <header class="learn-topbar">
-      <a href="/" class="learn-back"><span>‹</span>Back</a>
-    </header>
+  <main class="learn-main">
+    <!-- Page title -->
+    <section class="learn-header">
+      <h1 class="learn-title">Learn</h1>
+    </section>
 
-    <h1 class="learn-title-main">Learn</h1>
+    <!-- Grid of Learn cards -->
+    <section class="learn-grid">
+      <button class="learn-card" data-target="/pos/learn/types/">
+        <div class="learn-card-hero">
+          <div class="learn-card-circle">
+            <img src="/img/learn/types.png" alt="Cigar types" />
+          </div>
+        </div>
+        <div class="learn-card-label">Types</div>
+      </button>
 
-    <main>
-      <div class="learn-grid">
+      <button class="learn-card" data-target="/pos/learn/shapes/">
+        <div class="learn-card-hero">
+          <div class="learn-card-circle">
+            <img src="/img/learn/shapes.png" alt="Cigar shapes" />
+          </div>
+        </div>
+        <div class="learn-card-label">Shapes</div>
+      </button>
 
-        <a href="/learn/ring/" class="learn-circle-link">
-          <div class="learn-circle"><div class="learn-circle-label">Ring</div></div>
-        </a>
+      <button class="learn-card" data-target="/pos/learn/color/">
+        <div class="learn-card-hero">
+          <div class="learn-card-circle">
+            <img src="/img/learn/color.png" alt="Cigar colors" />
+          </div>
+        </div>
+        <div class="learn-card-label">Color</div>
+      </button>
 
-        <a href="/learn/vitolas/" class="learn-circle-link">
-          <div class="learn-circle"><div class="learn-circle-label">Vitolas</div></div>
-        </a>
+      <button class="learn-card" data-target="/pos/learn/anatomy/">
+        <div class="learn-card-hero">
+          <div class="learn-card-circle">
+            <img src="/img/learn/anatomy.png" alt="Cigar anatomy" />
+          </div>
+        </div>
+        <div class="learn-card-label">Anatomy</div>
+      </button>
 
-        <a href="/learn/wrapper-shade/" class="learn-circle-link">
-          <div class="learn-circle"><div class="learn-circle-label">Wrapper<br>Shade</div></div>
-        </a>
+      <button class="learn-card" data-target="/pos/learn/ring/">
+        <div class="learn-card-hero">
+          <div class="learn-card-circle">
+            <img src="/img/learn/ring.png" alt="Cigar ring" />
+          </div>
+        </div>
+        <div class="learn-card-label">Ring</div>
+      </button>
 
-        <a href="/learn/shapes/" class="learn-circle-link">
-          <div class="learn-circle"><div class="learn-circle-label">Shapes</div></div>
-        </a>
+      <button class="learn-card" data-target="/pos/learn/glossary/">
+        <div class="learn-card-hero">
+          <div class="learn-card-circle">
+            <img src="/img/learn/glossary.png" alt="Glossary" />
+          </div>
+        </div>
+        <div class="learn-card-label">Glossary</div>
+      </button>
+    </section>
 
-        <a href="/learn/glossary/" class="learn-circle-link">
-          <div class="learn-circle"><div class="learn-circle-label">Glossary</div></div>
-        </a>
+    <!-- Certification text -->
+    <section class="learn-cert">
+      <p>
+        All information has been certified by Tobacconist University.
+        For more information, please visit
+        <a href="https://tobacconistuniversity.org" target="_blank" rel="noopener noreferrer">
+          tobacconistuniversity.org
+        </a>.
+      </p>
 
-        <a href="/learn/brands/" class="learn-circle-link">
-          <div class="learn-circle"><div class="learn-circle-label">Brands</div></div>
-        </a>
-
-        <a href="/learn/lists/" class="learn-circle-link">
-          <div class="learn-circle"><div class="learn-circle-label">Lists</div></div>
-        </a>
-
+      <div class="learn-cert-seal">
+        <img src="/img/learn/tu-seal.png" alt="Tobacconist University Certified" />
       </div>
-    </main>
-  </div>
+    </section>
+  </main>
 
-  <!-- Tony icon -->
-  <button class="tony-fab" id="tonyFab">
-    <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
-  </button>
+  <!-- Bottom tab bar (reuse whatever you already have for POS) -->
+  <footer class="pos-tabbar">
+    <!-- Example; keep your existing icons/links here -->
+    <nav class="pos-tabbar-inner">
+      <a href="/pos/" class="pos-tabbar-item">
+        <span class="pos-tabbar-icon home-icon"></span>
+      </a>
+      <a href="/pos/cigars/" class="pos-tabbar-item">
+        <span class="pos-tabbar-icon cigar-icon"></span>
+      </a>
+      <a href="/pos/learn/" class="pos-tabbar-item pos-tabbar-item--active">
+        <span class="pos-tabbar-icon learn-icon"></span>
+      </a>
+      <a href="/pos/tools/" class="pos-tabbar-item">
+        <span class="pos-tabbar-icon tools-icon"></span>
+      </a>
+      <a href="/pos/shop/" class="pos-tabbar-item">
+        <span class="pos-tabbar-icon account-icon"></span>
+      </a>
+    </nav>
+  </footer>
 
-  <script src="/js/tony.js" defer></script>
+  <script src="/pos/learn/learn.js"></script>
 </body>
 </html>
