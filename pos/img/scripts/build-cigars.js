@@ -5,16 +5,26 @@ const HUB_URL = "/hub/hub_11-5-25.json";
 let allRows = [];
 let filteredRows = [];
 
-// Helper: pick a field from multiple possible names
+// -------------------------------------
+// Helpers
+// -------------------------------------
+
+// Safely grab a field by trying multiple possible column names
 function getField(row, names) {
   if (!Array.isArray(names)) names = [names];
 
   for (const n of names) {
-    // direct key
-    if (row[n] !== undefined && row[n] !== null && row[n] !== "") return row[n];
+    if (!n) continue;
 
-    // case-insensitive key lookup
-    const key = Object.keys(row).find(k => k.toLowerCase() === n.toLowerCase());
+    // exact key
+    if (row[n] !== undefined && row[n] !== null && row[n] !== "") {
+      return row[n];
+    }
+
+    // case-insensitive key match
+    const key = Object.keys(row).find(
+      k => k.toLowerCase() === n.toLowerCase()
+    );
     if (key && row[key] !== undefined && row[key] !== null && row[key] !== "") {
       return row[key];
     }
@@ -22,12 +32,35 @@ function getField(row, names) {
   return "";
 }
 
-// Helper: brand text
 function getBrand(row) {
-  return getField(row, ["brand", "Brand", "BRAND"]);
+  return getField(row, ["Brand", "brand", "BRAND"]);
 }
 
-// Build a deduped, sorted brand list from cigar rows
+function getLine(row) {
+  return getField(row, ["Line", "line"]);
+}
+
+function getCigarName(row) {
+  return getField(row, ["Cigar Name", "Cigar", "cigar", "name", "Name"]);
+}
+
+function getVitola(row) {
+  return getField(row, ["Vitola", "vitola"]);
+}
+
+// image coming from your Google Sheets export (300x300 SVG/PNG)
+function getBrandIcon(row) {
+  return getField(row, [
+    "Brand Img 300",
+    "brandImg300",
+    "Brand Img",
+    "brandImg",
+    "Brand Icon",
+    "brand_icon"
+  ]);
+}
+
+// Build a unique brand list from the *filtered* rows
 function buildBrandList(rows) {
   const map = new Map();
 
@@ -39,29 +72,7 @@ function buildBrandList(rows) {
     const key = brandName.toLowerCase();
     if (map.has(key)) return;
 
-    // Try to find an explicit icon field
-    let icon = getField(row, [
-      "brandImg300",
-      "Brand Img 300",
-      "BRAND IMG 300",
-      "brandImg",
-      "Brand Img",
-      "BRAND IMG",
-      "brand_icon",
-      "Brand Icon"
-    ]);
-
-    // If none, derive from slug / brand
-    if (!icon) {
-      let slug = getField(row, ["brandSlug", "Brand Slug"]);
-      if (!slug) {
-        slug = brandName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "")
-          .trim();
-      }
-      if (slug) icon = `/img/icons/brands/${slug}.svg`;
-    }
+    const icon = getBrandIcon(row) || "";
 
     map.set(key, {
       brand: brandName,
@@ -74,7 +85,10 @@ function buildBrandList(rows) {
   );
 }
 
-// Render brand tiles into #brands-grid
+// -------------------------------------
+// Rendering
+// -------------------------------------
+
 function renderBrands() {
   const grid = document.getElementById("brands-grid");
   if (!grid) return;
@@ -114,7 +128,10 @@ function renderBrands() {
   });
 }
 
-// Wire up the search bar
+// -------------------------------------
+// Search logic
+// -------------------------------------
+
 function wireSearch() {
   const input = document.getElementById("cigars-search-input");
   if (!input) return;
@@ -127,18 +144,12 @@ function wireSearch() {
     } else {
       filteredRows = allRows.filter(row => {
         const brandText = (getBrand(row) || "").toString().toLowerCase();
-        const nameText = getField(row, ["name", "Name", "Cigar", "Cigar Name"])
-          .toString()
-          .toLowerCase();
-        const vitolaText = getField(row, ["vitola", "Vitola"])
-          .toString()
-          .toLowerCase();
+        const lineText = (getLine(row) || "").toString().toLowerCase();
+        const cigarText = (getCigarName(row) || "").toString().toLowerCase();
+        const vitolaText = (getVitola(row) || "").toString().toLowerCase();
 
-        return (
-          brandText.includes(q) ||
-          nameText.includes(q) ||
-          vitolaText.includes(q)
-        );
+        const haystack = `${brandText} ${lineText} ${cigarText} ${vitolaText}`;
+        return haystack.includes(q);
       });
     }
 
@@ -146,7 +157,10 @@ function wireSearch() {
   });
 }
 
-// Load hub → render brands → wire search
+// -------------------------------------
+// Init
+// -------------------------------------
+
 async function loadHubAndRender() {
   try {
     const res = await fetch(HUB_URL);
