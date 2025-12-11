@@ -1,107 +1,33 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<div class="learn-grid">
 
-  <title>Learn</title>
+  <div class="learn-tile" onclick="location.href='/learn/types/'">
+    <img src="/img/icons/learn/types.svg" alt="Cigar Types">
+    <div class="learn-label">Types</div>
+  </div>
 
-  <!-- Global type system (SF Pro) -->
-  <link rel="stylesheet" href="/css/type.css" />
-  <!-- Learn-specific styles -->
-  <link rel="stylesheet" href="/learn/learn.css" />
-</head>
-<body class="learn-page">
-  <!-- Top bar with back + search -->
-  <header class="learn-topbar">
-    <button type="button" class="learn-back" id="learn-back">
-      <span class="learn-back-icon">←</span>
-    </button>
+  <div class="learn-tile" onclick="location.href='/learn/shapes/'">
+    <img src="/img/icons/learn/shapes.svg" alt="Cigar Shapes">
+    <div class="learn-label">Shapes</div>
+  </div>
 
-    <button type="button" class="learn-search-btn" aria-label="Search">
-      <span class="learn-search-icon">🔍</span>
-    </button>
-  </header>
+  <div class="learn-tile" onclick="location.href='/learn/color/'">
+    <img src="/img/icons/learn/color.svg" alt="Cigar Colors">
+    <div class="learn-label">Color</div>
+  </div>
 
-  <main class="learn-main">
-    <!-- Page title -->
-    <section class="learn-header">
-      <h1 class="learn-title">Learn</h1>
-    </section>
+  <div class="learn-tile" onclick="location.href='/learn/anatomy/'">
+    <img src="/img/icons/learn/anatomy.svg" alt="Cigar Anatomy">
+    <div class="learn-label">Anatomy</div>
+  </div>
 
-    <!-- Grid of Learn cards -->
-    <section class="learn-grid">
-      <button class="learn-card" data-target="/learn/types/">
-        <div class="learn-card-hero">
-          <div class="learn-card-circle">
-            <img src="/img/learn/types.png" alt="Cigar types" />
-          </div>
-        </div>
-        <div class="learn-card-label">Types</div>
-      </button>
+  <div class="learn-tile" onclick="location.href='/learn/ring/'">
+    <img src="/img/icons/learn/ring.svg" alt="Cigar Ring Gauge">
+    <div class="learn-label">Ring</div>
+  </div>
 
-      <button class="learn-card" data-target="/learn/shapes/">
-        <div class="learn-card-hero">
-          <div class="learn-card-circle">
-            <img src="/img/learn/shapes.png" alt="Cigar shapes" />
-          </div>
-        </div>
-        <div class="learn-card-label">Shapes</div>
-      </button>
+  <div class="learn-tile" onclick="location.href='/learn/glossary/'">
+    <img src="/img/icons/learn/glossary.svg" alt="Glossary">
+    <div class="learn-label">Glossary</div>
+  </div>
 
-      <button class="learn-card" data-target="/learn/color/">
-        <div class="learn-card-hero">
-          <div class="learn-card-circle">
-            <img src="/img/learn/color.png" alt="Cigar colors" />
-          </div>
-        </div>
-        <div class="learn-card-label">Color</div>
-      </button>
-
-      <button class="learn-card" data-target="/learn/anatomy/">
-        <div class="learn-card-hero">
-          <div class="learn-card-circle">
-            <img src="/img/learn/anatomy.png" alt="Cigar anatomy" />
-          </div>
-        </div>
-        <div class="learn-card-label">Anatomy</div>
-      </button>
-
-      <button class="learn-card" data-target="/learn/ring/">
-        <div class="learn-card-hero">
-          <div class="learn-card-circle">
-            <img src="/img/learn/ring.png" alt="Cigar ring" />
-          </div>
-        </div>
-        <div class="learn-card-label">Ring</div>
-      </button>
-
-      <button class="learn-card" data-target="/learn/glossary/">
-        <div class="learn-card-hero">
-          <div class="learn-card-circle">
-            <img src="/img/learn/glossary.png" alt="Glossary" />
-          </div>
-        </div>
-        <div class="learn-card-label">Glossary</div>
-      </button>
-    </section>
-
-    <!-- Certification text -->
-    <section class="learn-cert">
-      <p>
-        All information has been certified by Tobacconist University.
-        For more information, please visit
-        <a href="https://tobacconistuniversity.org" target="_blank" rel="noopener noreferrer">
-          tobacconistuniversity.org
-        </a>.
-      </p>
-
-      <div class="learn-cert-seal">
-        <img src="/img/learn/tu-seal.png" alt="Tobacconist University Certified" />
-      </div>
-    </section>
-  </main>
-
-  <script src="/learn/learn.js"></script>
-</body>
-</html>
+</div>
