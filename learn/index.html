@@ -5,64 +5,204 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Learn</title>
 
+  <!-- If you already load SF Pro globally, keep that and remove this link -->
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/learn/learn.css" />
+
+  <style>
+    :root{
+      --ink:#0f1a2c;
+      --muted:#6a7586;
+      --accent:#007aff;
+      --bg:#ffffff;
+      --card:#ffffff;
+      --shadow1: 0 10px 28px rgba(15,26,44,0.08);
+      --shadow2: 0 2px 6px rgba(15,26,44,0.05);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+      -webkit-font-smoothing: antialiased;
+      min-height:100vh;
+    }
+
+    /* Top bar */
+    .learn-topbar{
+      padding: 14px 16px 0;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+    }
+
+    .icon-btn{
+      border:none;
+      background:none;
+      padding: 6px 4px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+
+    .icon-btn svg{
+      width: 22px;
+      height: 22px;
+      stroke: var(--accent);
+    }
+
+    /* Title (keep consistent with POS spacing system) */
+    .learn-title{
+      margin: 28px 16px 18px; /* POS-consistent gap */
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 800;
+      font-size: 56px;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    /* Grid */
+    .learn-grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      padding: 0 16px 32px;
+    }
+
+    /* Card tiles (RESTORE shaded white blocks) */
+    .learn-card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow1), var(--shadow2);
+      padding: 18px 14px 16px;
+      text-decoration:none;
+      color: inherit;
+      min-height: 150px;
+
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+    }
+
+    /* Icon (NO grey circles / trims) */
+    .learn-icon{
+      width: 84px;
+      height: 84px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .learn-icon img{
+      width: 84px;
+      height: 84px;
+      object-fit: contain;
+      display:block;
+    }
+
+    /* Label (SF Pro Display Regular, black) */
+    .learn-label{
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 400; /* Regular */
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      color: #000000; /* per your instruction */
+      text-align:center;
+      line-height: 1.15;
+    }
+
+    /* Tap feedback (iOS-like) */
+    .learn-card:active{
+      transform: scale(0.99);
+      box-shadow: 0 6px 18px rgba(15,26,44,0.10), 0 1px 3px rgba(15,26,44,0.06);
+    }
+  </style>
 </head>
 
 <body class="learn-page">
-
-  <!-- TOP BAR (POS MATCH) -->
+  <!-- Top bar -->
   <header class="learn-topbar">
-    <div class="learn-topbar-left">
-      <button type="button" class="learn-back" onclick="history.back()">
-        <span class="learn-back-icon">←</span>
-      </button>
-      <h1 class="learn-title">Learn</h1>
-    </div>
+    <button class="icon-btn" id="learn-back" aria-label="Back">
+      <!-- iOS back chevron -->
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
 
-    <!-- Search icon (SVG so it matches iOS blue perfectly) -->
-    <button type="button" class="learn-search" aria-label="Search">
-      <svg class="learn-search-icon" viewBox="0 0 24 24" fill="none">
-        <circle cx="11" cy="11" r="7" stroke-width="2"></circle>
-        <line x1="16.65" y1="16.65" x2="21" y2="21" stroke-width="2" stroke-linecap="round"></line>
+    <button class="icon-btn" id="learn-search" aria-label="Search">
+      <!-- iOS-ish search -->
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke-width="2.2" stroke-linecap="round"></path>
+        <path d="M16.5 16.5 21 21" stroke-width="2.2" stroke-linecap="round"></path>
       </svg>
     </button>
   </header>
 
-  <!-- GRID -->
+  <h1 class="learn-title">Learn</h1>
+
+  <!-- Card grid -->
   <main class="learn-grid">
-
-    <div class="learn-tile" onclick="location.href='/learn/types/'">
-      <img src="/img/icons/learn/types.svg" alt="Cigar vitolas">
+    <a class="learn-card" href="/learn/vitolas/">
+      <div class="learn-icon">
+        <img src="/img/icons/learn/vitolas.png" alt="Vitolas" onerror="this.src='/img/icons/learn/vitolas.svg'">
+      </div>
       <div class="learn-label">Vitolas</div>
-    </div>
+    </a>
 
-    <div class="learn-tile" onclick="location.href='/learn/shapes/'">
-      <img src="/img/icons/learn/shapes.svg" alt="Cigar shapes">
+    <a class="learn-card" href="/learn/shapes/">
+      <div class="learn-icon">
+        <img src="/img/icons/learn/shapes.png" alt="Shapes" onerror="this.src='/img/icons/learn/shapes.svg'">
+      </div>
       <div class="learn-label">Shapes</div>
-    </div>
+    </a>
 
-    <div class="learn-tile" onclick="location.href='/learn/color/'">
-      <img src="/img/icons/learn/color.svg" alt="Cigar colors">
+    <a class="learn-card" href="/learn/color/">
+      <div class="learn-icon">
+        <img src="/img/icons/learn/color.png" alt="Color" onerror="this.src='/img/icons/learn/color.svg'">
+      </div>
       <div class="learn-label">Color</div>
-    </div>
+    </a>
 
-    <div class="learn-tile" onclick="location.href='/learn/anatomy/'">
-      <img src="/img/icons/learn/anatomy.svg" alt="Cigar anatomy">
+    <a class="learn-card" href="/learn/anatomy/">
+      <div class="learn-icon">
+        <img src="/img/icons/learn/anatomy.png" alt="Anatomy" onerror="this.src='/img/icons/learn/anatomy.svg'">
+      </div>
       <div class="learn-label">Anatomy</div>
-    </div>
+    </a>
 
-    <div class="learn-tile" onclick="location.href='/learn/ring/'">
-      <img src="/img/icons/learn/ring.svg" alt="Cigar ring gauge">
+    <a class="learn-card" href="/learn/ring/">
+      <div class="learn-icon">
+        <img src="/img/icons/learn/ring.png" alt="Ring" onerror="this.src='/img/icons/learn/ring.svg'">
+      </div>
       <div class="learn-label">Ring</div>
-    </div>
+    </a>
 
-    <div class="learn-tile" onclick="location.href='/learn/glossary/'">
-      <img src="/img/icons/learn/glossary.svg" alt="Glossary">
+    <a class="learn-card" href="/learn/glossary/">
+      <div class="learn-icon">
+        <img src="/img/icons/learn/glossary.png" alt="Glossary" onerror="this.src='/img/icons/learn/glossary.svg'">
+      </div>
       <div class="learn-label">Glossary</div>
-    </div>
-
+    </a>
   </main>
 
+  <script>
+    // Back -> previous page (or set to / if you prefer)
+    document.getElementById("learn-back")?.addEventListener("click", () => {
+      history.length > 1 ? history.back() : (window.location.href = "/");
+    });
+
+    // Search button (hook to your search page/modal later)
+    document.getElementById("learn-search")?.addEventListener("click", () => {
+      // Update this when your Learn search route exists:
+      // window.location.href = "/learn/search/";
+      alert("Search coming soon.");
+    });
+  </script>
 </body>
 </html>
