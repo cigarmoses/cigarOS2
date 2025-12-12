@@ -1,33 +1,69 @@
-<div class="learn-grid">
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Learn</title>
 
-  <div class="learn-tile" onclick="location.href='/learn/types/'">
-    <img src="/img/icons/learn/types.svg" alt="Cigar Types">
-    <div class="learn-label">Types</div>
-  </div>
+  <!-- Global SF Pro -->
+  <link rel="stylesheet" href="/css/type.css" />
+  <!-- Learn styles -->
+  <link rel="stylesheet" href="/learn/learn.css" />
+</head>
 
-  <div class="learn-tile" onclick="location.href='/learn/shapes/'">
-    <img src="/img/icons/learn/shapes.svg" alt="Cigar Shapes">
-    <div class="learn-label">Shapes</div>
-  </div>
+<body>
 
-  <div class="learn-tile" onclick="location.href='/learn/color/'">
-    <img src="/img/icons/learn/color.svg" alt="Cigar Colors">
-    <div class="learn-label">Color</div>
-  </div>
+<main class="learn-page">
 
-  <div class="learn-tile" onclick="location.href='/learn/anatomy/'">
-    <img src="/img/icons/learn/anatomy.svg" alt="Cigar Anatomy">
-    <div class="learn-label">Anatomy</div>
-  </div>
+  <!-- Top bar -->
+  <header class="learn-topbar">
+    <button class="learn-back" onclick="history.back()">
+      <span class="learn-back-icon">←</span>
+    </button>
 
-  <div class="learn-tile" onclick="location.href='/learn/ring/'">
-    <img src="/img/icons/learn/ring.svg" alt="Cigar Ring Gauge">
-    <div class="learn-label">Ring</div>
-  </div>
+    <h1 class="learn-title">Learn</h1>
 
-  <div class="learn-tile" onclick="location.href='/learn/glossary/'">
-    <img src="/img/icons/learn/glossary.svg" alt="Glossary">
-    <div class="learn-label">Glossary</div>
-  </div>
+    <button class="learn-search">
+      <span class="learn-search-icon">🔍</span>
+    </button>
+  </header>
 
-</div>
+  <!-- Learn grid -->
+  <section class="learn-grid">
+
+    <div class="learn-tile" onclick="location.href='/learn/types/'">
+      <img src="/img/icons/learn/types.svg" alt="Cigar vitolas">
+      <div class="learn-label">Vitolas</div>
+    </div>
+
+    <div class="learn-tile" onclick="location.href='/learn/shapes/'">
+      <img src="/img/icons/learn/shapes.svg" alt="Cigar shapes">
+      <div class="learn-label">Shapes</div>
+    </div>
+
+    <div class="learn-tile" onclick="location.href='/learn/color/'">
+      <img src="/img/icons/learn/color.svg" alt="Cigar colors">
+      <div class="learn-label">Color</div>
+    </div>
+
+    <div class="learn-tile" onclick="location.href='/learn/anatomy/'">
+      <img src="/img/icons/learn/anatomy.svg" alt="Cigar anatomy">
+      <div class="learn-label">Anatomy</div>
+    </div>
+
+    <div class="learn-tile" onclick="location.href='/learn/ring/'">
+      <img src="/img/icons/learn/ring.svg" alt="Cigar ring gauge">
+      <div class="learn-label">Ring</div>
+    </div>
+
+    <div class="learn-tile" onclick="location.href='/learn/glossary/'">
+      <img src="/img/icons/learn/glossary.svg" alt="Cigar glossary">
+      <div class="learn-label">Glossary</div>
+    </div>
+
+  </section>
+
+</main>
+
+</body>
+</html>
