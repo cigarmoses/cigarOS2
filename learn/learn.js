@@ -1,6 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Back arrow -> previous page or home
-  const backBtn = document.getElementById("learn-back");
+
+  /* =========================
+     BACK ARROW (POS BEHAVIOR)
+     ========================= */
+
+  const backBtn = document.querySelector(".learn-back");
+
   if (backBtn) {
     backBtn.addEventListener("click", () => {
       if (window.history.length > 1) {
@@ -11,16 +16,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Card navigation
-  const cards = document.querySelectorAll(".learn-card");
-  cards.forEach((card) => {
-    card.addEventListener("click", () => {
-      const target = card.getAttribute("data-target");
+  /* =========================
+     LEARN TILE NAVIGATION
+     ========================= */
+
+  const tiles = document.querySelectorAll(".learn-tile");
+
+  tiles.forEach((tile) => {
+    tile.addEventListener("click", () => {
+      const target = tile.getAttribute("data-target");
+
       if (target) {
         window.location.href = target;
       }
     });
   });
 
-  // (Optional) hook up search later
+  /* =========================
+     OPTIONAL: iOS TAP FEEDBACK
+     ========================= */
+
+  tiles.forEach((tile) => {
+    tile.addEventListener("touchstart", () => {
+      tile.style.transform = "scale(0.97)";
+    });
+
+    tile.addEventListener("touchend", () => {
+      tile.style.transform = "scale(1)";
+    });
+
+    tile.addEventListener("touchcancel", () => {
+      tile.style.transform = "scale(1)";
+    });
+  });
+
 });
