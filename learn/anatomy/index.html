@@ -3,55 +3,361 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Anatomy</title>
+  <title>Learn • Anatomy</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/learn/learn.css" />
+
+  <style>
+    :root {
+      --ink: #0f1a2c;
+      --muted: #8e8e93; /* iOS gray */
+      --accent: #007aff;
+      --bg: #ffffff;
+
+      --shadow-main: 0 10px 28px rgba(15,26,44,0.08);
+      --shadow-soft: 0 2px 6px rgba(15,26,44,0.05);
+
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ───────── Top bar ───────── */
+    .learn-topbar {
+      padding: 14px 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .icon-btn {
+      border: none;
+      background: none;
+      padding: 6px 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--accent);
+    }
+
+    /* ───────── Title block (POS-matched gap) ───────── */
+    .title-wrap {
+      padding: 0 16px;
+    }
+
+    .page-title {
+      margin: 28px 0 10px; /* POS-consistent gap */
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 800;
+      font-size: 56px;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    /* Subtitle: SF Pro Display Medium, iOS gray */
+    .page-subtitle {
+      margin: 0 0 18px;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 500; /* Medium */
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      color: var(--muted);
+    }
+
+    /* ───────── Main layout ───────── */
+    .anatomy-stage {
+      position: relative;
+      padding: 0 16px 28px;
+    }
+
+    .anatomy-grid {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 14px;
+      align-items: start;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    /* Left labels */
+    .layer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      padding-top: 6px;
+    }
+
+    .layer-btn {
+      border: none;
+      background: transparent;
+      text-align: left;
+      padding: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .layer-title {
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 800;
+      font-size: 44px;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: #000000;
+      margin: 0 0 4px;
+    }
+
+    .layer-sub {
+      margin: 0;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 600;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+      color: var(--muted);
+    }
+
+    /* Cigar image column */
+    .cigar-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 6px;
+      min-height: 520px;
+    }
+
+    .cigar-wrap img {
+      width: min(360px, 58vw);
+      height: auto;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    /* ───────── Popup overlay ───────── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.0); /* keep page visible like your screenshot */
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 9999;
+    }
+
+    .overlay.is-open { display: flex; }
+
+    /* Shaded popup card */
+    .popup {
+      width: min(720px, 92vw);
+      border-radius: 18px;
+      background: rgba(160, 160, 160, 0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-main), var(--shadow-soft);
+      padding: 18px 18px 18px;
+      position: relative;
+      color: #ffffff;
+    }
+
+    .popup-title {
+      margin: 0 40px 10px 0;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+    }
+
+    .popup-text {
+      margin: 0;
+      font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 500;
+      font-size: 18px;
+      line-height: 1.35;
+      color: rgba(255,255,255,0.95);
+    }
+
+    /* Simple X close */
+    .popup-close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      border: none;
+      background: transparent;
+      color: #ffffff;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 6px 8px;
+    }
+
+    .popup-close:active { transform: scale(0.98); }
+
+    /* Mobile tuning */
+    @media (max-width: 560px) {
+      .anatomy-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .layer-list {
+        order: 1;
+        gap: 26px;
+      }
+
+      .cigar-wrap {
+        order: 2;
+        min-height: 440px;
+      }
+
+      .layer-title { font-size: 40px; }
+      .layer-sub { font-size: 18px; }
+
+      .page-title { font-size: 54px; }
+      .page-subtitle { font-size: 20px; }
+    }
+  </style>
 </head>
 
-<body class="learn-detail-page">
-
-  <!-- TOP BAR (POS MATCH) -->
+<body>
+  <!-- Top bar -->
   <header class="learn-topbar">
-    <div class="learn-topbar-left">
-      <button type="button" class="learn-back" onclick="history.back()">
-        <span class="learn-back-icon">←</span>
-      </button>
-      <h1 class="learn-title">Anatomy</h1>
-    </div>
-
-    <button type="button" class="learn-search" aria-label="Search">
-      <svg class="learn-search-icon" viewBox="0 0 24 24" fill="none">
-        <circle cx="11" cy="11" r="7" stroke-width="2"></circle>
-        <line x1="16.65" y1="16.65" x2="21" y2="21" stroke-width="2" stroke-linecap="round"></line>
+    <button class="icon-btn" id="learn-back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M15 18L9 12L15 6"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
       </svg>
     </button>
+
+    <span style="width:22px;height:22px;"></span>
   </header>
 
-  <main class="learn-detail-main">
+  <!-- Title -->
+  <div class="title-wrap">
+    <h1 class="page-title">Anatomy</h1>
+    <p class="page-subtitle">Click for an overview of each layer.</p>
+  </div>
 
-    <!-- Main image -->
-    <article class="learn-card learn-card-image">
-      <!-- swap this png to your final asset path -->
-      <img src="/img/learn/anatomy-diagram.png" alt="Cigar anatomy diagram">
-    </article>
+  <!-- Main -->
+  <main class="anatomy-stage">
+    <div class="anatomy-grid">
+      <!-- Left labels -->
+      <div class="layer-list">
+        <button class="layer-btn" data-layer="wrapper" type="button">
+          <div class="layer-title">Wrapper</div>
+          <p class="layer-sub">Outer most layer</p>
+        </button>
 
-    <article class="learn-card">
-      <h2 class="learn-term">WRAPPER</h2>
-      <p>Exterior leaf — the visible color of the cigar.</p>
-    </article>
+        <button class="layer-btn" data-layer="binder" type="button">
+          <div class="layer-title">Binder</div>
+          <p class="layer-sub">Middle layer</p>
+        </button>
 
-    <article class="learn-card">
-      <h2 class="learn-term">BINDER</h2>
-      <p>Leaf that holds the filler tobacco together.</p>
-    </article>
+        <button class="layer-btn" data-layer="filler" type="button">
+          <div class="layer-title">Filler</div>
+          <p class="layer-sub">Interior layer</p>
+        </button>
+      </div>
 
-    <article class="learn-card">
-      <h2 class="learn-term">FILLER</h2>
-      <p>Tobacco leaves used in the body of the cigar.</p>
-    </article>
-
+      <!-- Cigar SVG -->
+      <div class="cigar-wrap">
+        <!-- tries .svg first; if your file is extensionless, keep it as anatomy1 and remove onerror -->
+        <img
+          src="/img/icons/learn/anatomy1.svg"
+          alt="Cigar Anatomy"
+          onerror="this.onerror=null; this.src='/img/icons/learn/anatomy1';"
+        />
+      </div>
+    </div>
   </main>
 
+  <!-- Popup overlay -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="popup" role="dialog" aria-modal="true" aria-labelledby="popup-title">
+      <button class="popup-close" id="popup-close" aria-label="Close">×</button>
+      <h2 class="popup-title" id="popup-title">Title</h2>
+      <p class="popup-text" id="popup-text">Text</p>
+    </div>
+  </div>
+
+  <script>
+    // Back
+    document.getElementById("learn-back")?.addEventListener("click", () => {
+      history.length > 1 ? history.back() : (window.location.href = "/learn/");
+    });
+
+    // Popup content
+    const COPY = {
+      wrapper: {
+        title: "Wrapper",
+        text:
+          "Wrapper leaves are the most delicate, expensive and [ideally] perfect leaf that is applied to the outside of a cigar. In addition, wrapper leaves contribute significantly to the flavor of the cigar since they will touch the mouth and tongue."
+      },
+      binder: {
+        title: "Binder",
+        text:
+          "Binder leaves are the dense and strong leaves applied to the outside of the filler tobaccos; forming the bunch. The binder protects and helps form the filler tobaccos in the molds and presses."
+      },
+      filler: {
+        title: "Filler",
+        text:
+          "Filler tobacco leaves constitute the 'guts' of the cigar. Filler leaves must be expertly bunched to make a well constructed cigar that will draw and burn in balance."
+      }
+    };
+
+    const overlay = document.getElementById("overlay");
+    const closeBtn = document.getElementById("popup-close");
+    const popupTitle = document.getElementById("popup-title");
+    const popupText = document.getElementById("popup-text");
+
+    function openPopup(key) {
+      const data = COPY[key];
+      if (!data) return;
+      popupTitle.textContent = data.title;
+      popupText.textContent = data.text;
+      overlay.classList.add("is-open");
+      overlay.setAttribute("aria-hidden", "false");
+    }
+
+    function closePopup() {
+      overlay.classList.remove("is-open");
+      overlay.setAttribute("aria-hidden", "true");
+    }
+
+    // Wire buttons
+    document.querySelectorAll(".layer-btn").forEach(btn => {
+      btn.addEventListener("click", () => openPopup(btn.dataset.layer));
+    });
+
+    // Close actions
+    closeBtn?.addEventListener("click", closePopup);
+    overlay?.addEventListener("click", (e) => {
+      // click outside the popup closes
+      if (e.target === overlay) closePopup();
+    });
+
+    // ESC closes
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closePopup();
+    });
+  </script>
 </body>
 </html>
