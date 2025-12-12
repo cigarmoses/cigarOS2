@@ -14,10 +14,8 @@
       --accent: #007aff;
       --bg: #ffffff;
 
-      --shadow-main: 0 10px 28px rgba(15,26,44,0.08);
-      --shadow-soft: 0 2px 6px rgba(15,26,44,0.05);
-
-      --radius: 22px;
+      --shadow-main: 0 10px 28px rgba(15,26,44,0.10);
+      --shadow-soft: 0 2px 6px rgba(15,26,44,0.06);
     }
 
     * { box-sizing: border-box; }
@@ -31,7 +29,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ───────── Top bar ───────── */
+    /* Top bar */
     .learn-topbar {
       padding: 14px 16px 0;
       display: flex;
@@ -55,7 +53,7 @@
       stroke: var(--accent);
     }
 
-    /* ───────── Title block (POS-matched gap) ───────── */
+    /* Title block */
     .title-wrap {
       padding: 0 16px;
     }
@@ -70,7 +68,6 @@
       color: var(--ink);
     }
 
-    /* Subtitle: SF Pro Display Medium, iOS gray */
     .page-subtitle {
       margin: 0 0 18px;
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -80,107 +77,75 @@
       color: var(--muted);
     }
 
-    /* ───────── Main layout ───────── */
-    .anatomy-stage {
+    /* Main stage */
+    .stage {
       position: relative;
-      padding: 0 16px 28px;
-    }
-
-    .anatomy-grid {
-      display: grid;
-      grid-template-columns: 170px 1fr;
-      gap: 14px;
-      align-items: start;
+      padding: 0 16px 40px;
       max-width: 980px;
       margin: 0 auto;
     }
 
-    /* Left labels */
-    .layer-list {
-      display: flex;
-      flex-direction: column;
-      gap: 36px;
-      padding-top: 6px;
-    }
-
-    .layer-btn {
-      border: none;
-      background: transparent;
-      text-align: left;
-      padding: 0;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .layer-title {
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 44px;
-      letter-spacing: -0.03em;
-      line-height: 1.05;
-      color: #000000;
-      margin: 0 0 4px;
-    }
-
-    .layer-sub {
-      margin: 0;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 600;
-      font-size: 20px;
-      letter-spacing: -0.01em;
-      color: var(--muted);
-    }
-
-    /* Cigar image column */
-    .cigar-wrap {
+    /* SVG container */
+    .svg-host {
+      position: relative;
+      width: 100%;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding-top: 6px;
-      min-height: 520px;
     }
 
-    .cigar-wrap img {
-      width: min(360px, 58vw);
+    /* When we inline the SVG, it will live here */
+    .svg-host svg {
+      width: min(900px, 100%);
       height: auto;
       display: block;
       user-select: none;
       -webkit-user-drag: none;
     }
 
-    /* ───────── Popup overlay ───────── */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.0); /* keep page visible like your screenshot */
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      z-index: 9999;
+    /* Make “clickable” parts feel tappable */
+    .is-clickable {
+      cursor: pointer;
+      pointer-events: all;
     }
 
-    .overlay.is-open { display: flex; }
+    /* Popup overlay (over SVG area, not full-screen dim) */
+    .popup-wrap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: none;
+      justify-content: flex-start;
+      z-index: 50;
+      pointer-events: none; /* allow taps through except on popup */
+    }
 
-    /* Shaded popup card */
+    .popup-wrap.is-open { display: flex; }
+
     .popup {
+      pointer-events: auto;
       width: min(720px, 92vw);
+      margin-top: 220px;   /* positions it over the cigar like your screenshot */
+      margin-left: 0;
       border-radius: 18px;
-      background: rgba(160, 160, 160, 0.55);
+
+      background: rgba(160, 160, 160, 0.58);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+
       box-shadow: var(--shadow-main), var(--shadow-soft);
       padding: 18px 18px 18px;
-      position: relative;
       color: #ffffff;
+      position: relative;
     }
 
     .popup-title {
       margin: 0 40px 10px 0;
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-weight: 800;
-      font-size: 24px;
-      letter-spacing: -0.01em;
+      font-size: 28px;
+      letter-spacing: -0.02em;
       color: #ffffff;
     }
 
@@ -193,7 +158,6 @@
       color: rgba(255,255,255,0.95);
     }
 
-    /* Simple X close */
     .popup-close {
       position: absolute;
       top: 10px;
@@ -207,30 +171,24 @@
       padding: 6px 8px;
     }
 
-    .popup-close:active { transform: scale(0.98); }
+    /* Tap outside popup closes */
+    .tap-catcher {
+      position: absolute;
+      inset: 0;
+      display: none;
+      z-index: 40;
+    }
+    .tap-catcher.is-open { display: block; }
 
     /* Mobile tuning */
     @media (max-width: 560px) {
-      .anatomy-grid {
-        grid-template-columns: 1fr;
-        gap: 18px;
-      }
-
-      .layer-list {
-        order: 1;
-        gap: 26px;
-      }
-
-      .cigar-wrap {
-        order: 2;
-        min-height: 440px;
-      }
-
-      .layer-title { font-size: 40px; }
-      .layer-sub { font-size: 18px; }
-
       .page-title { font-size: 54px; }
       .page-subtitle { font-size: 20px; }
+
+      .popup {
+        margin-top: 235px; /* slight bump for iPhone */
+        width: 92vw;
+      }
     }
   </style>
 </head>
@@ -246,7 +204,6 @@
               stroke-linejoin="round"></path>
       </svg>
     </button>
-
     <span style="width:22px;height:22px;"></span>
   </header>
 
@@ -256,47 +213,23 @@
     <p class="page-subtitle">Click for an overview of each layer.</p>
   </div>
 
-  <!-- Main -->
-  <main class="anatomy-stage">
-    <div class="anatomy-grid">
-      <!-- Left labels -->
-      <div class="layer-list">
-        <button class="layer-btn" data-layer="wrapper" type="button">
-          <div class="layer-title">Wrapper</div>
-          <p class="layer-sub">Outer most layer</p>
-        </button>
+  <!-- Stage -->
+  <main class="stage">
+    <!-- Tap catcher (click outside popup to close) -->
+    <div class="tap-catcher" id="tap-catcher" aria-hidden="true"></div>
 
-        <button class="layer-btn" data-layer="binder" type="button">
-          <div class="layer-title">Binder</div>
-          <p class="layer-sub">Middle layer</p>
-        </button>
-
-        <button class="layer-btn" data-layer="filler" type="button">
-          <div class="layer-title">Filler</div>
-          <p class="layer-sub">Interior layer</p>
-        </button>
-      </div>
-
-      <!-- Cigar SVG -->
-      <div class="cigar-wrap">
-        <!-- tries .svg first; if your file is extensionless, keep it as anatomy1 and remove onerror -->
-        <img
-          src="/img/icons/learn/anatomy1.svg"
-          alt="Cigar Anatomy"
-          onerror="this.onerror=null; this.src='/img/icons/learn/anatomy1';"
-        />
+    <!-- Popup -->
+    <div class="popup-wrap" id="popup-wrap" aria-hidden="true">
+      <div class="popup" role="dialog" aria-modal="true" aria-labelledby="popup-title">
+        <button class="popup-close" id="popup-close" aria-label="Close">×</button>
+        <h2 class="popup-title" id="popup-title">Title</h2>
+        <p class="popup-text" id="popup-text">Text</p>
       </div>
     </div>
+
+    <!-- SVG host (we will inline your SVG here so its internal words are clickable) -->
+    <div class="svg-host" id="svg-host" aria-label="Cigar anatomy diagram"></div>
   </main>
-
-  <!-- Popup overlay -->
-  <div class="overlay" id="overlay" aria-hidden="true">
-    <div class="popup" role="dialog" aria-modal="true" aria-labelledby="popup-title">
-      <button class="popup-close" id="popup-close" aria-label="Close">×</button>
-      <h2 class="popup-title" id="popup-title">Title</h2>
-      <p class="popup-text" id="popup-text">Text</p>
-    </div>
-  </div>
 
   <script>
     // Back
@@ -323,7 +256,8 @@
       }
     };
 
-    const overlay = document.getElementById("overlay");
+    const popupWrap = document.getElementById("popup-wrap");
+    const tapCatcher = document.getElementById("tap-catcher");
     const closeBtn = document.getElementById("popup-close");
     const popupTitle = document.getElementById("popup-title");
     const popupText = document.getElementById("popup-text");
@@ -331,33 +265,90 @@
     function openPopup(key) {
       const data = COPY[key];
       if (!data) return;
+
       popupTitle.textContent = data.title;
       popupText.textContent = data.text;
-      overlay.classList.add("is-open");
-      overlay.setAttribute("aria-hidden", "false");
+
+      popupWrap.classList.add("is-open");
+      tapCatcher.classList.add("is-open");
+      popupWrap.setAttribute("aria-hidden", "false");
+      tapCatcher.setAttribute("aria-hidden", "false");
     }
 
     function closePopup() {
-      overlay.classList.remove("is-open");
-      overlay.setAttribute("aria-hidden", "true");
+      popupWrap.classList.remove("is-open");
+      tapCatcher.classList.remove("is-open");
+      popupWrap.setAttribute("aria-hidden", "true");
+      tapCatcher.setAttribute("aria-hidden", "true");
     }
 
-    // Wire buttons
-    document.querySelectorAll(".layer-btn").forEach(btn => {
-      btn.addEventListener("click", () => openPopup(btn.dataset.layer));
-    });
-
-    // Close actions
     closeBtn?.addEventListener("click", closePopup);
-    overlay?.addEventListener("click", (e) => {
-      // click outside the popup closes
-      if (e.target === overlay) closePopup();
-    });
-
-    // ESC closes
+    tapCatcher?.addEventListener("click", closePopup);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closePopup();
     });
+
+    // ------------------------------------------------------------------
+    // INLINE YOUR SVG so we can click the words INSIDE it.
+    //
+    // IMPORTANT:
+    // This script will open the popup when you click any SVG element whose:
+    //  - id includes "wrapper" OR
+    //  - id includes "binder" OR
+    //  - id includes "filler"
+    //
+    // So inside anatomy1.svg, make sure the clickable word/group has an id like:
+    //   id="wrapper"  OR id="wrapperText" OR id="wrapper-hit"
+    //   id="binder"   OR id="binderText"  OR id="binder-hit"
+    //   id="filler"   OR id="fillerText"  OR id="filler-hit"
+    //
+    // If those IDs already exist: you're done.
+    // ------------------------------------------------------------------
+
+    const svgHost = document.getElementById("svg-host");
+
+    fetch("/img/icons/learn/anatomy1.svg?v=2")
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to load anatomy1.svg");
+        return res.text();
+      })
+      .then(svgText => {
+        svgHost.innerHTML = svgText;
+
+        const svg = svgHost.querySelector("svg");
+        if (!svg) return;
+
+        // Make sure SVG allows pointer events
+        svg.style.pointerEvents = "auto";
+
+        // Mark likely clickable nodes for cursor styling (optional)
+        ["wrapper", "binder", "filler"].forEach(key => {
+          const nodes = svg.querySelectorAll(`[id*="${key}" i]`);
+          nodes.forEach(n => n.classList.add("is-clickable"));
+        });
+
+        // Click handling: walk up the DOM tree looking for id match
+        svg.addEventListener("click", (e) => {
+          let el = e.target;
+
+          while (el && el !== svg) {
+            const id = (el.id || "").toLowerCase();
+
+            if (id.includes("wrapper")) return openPopup("wrapper");
+            if (id.includes("binder")) return openPopup("binder");
+            if (id.includes("filler")) return openPopup("filler");
+
+            el = el.parentNode;
+          }
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        // fallback: show a normal <img> if fetch fails
+        svgHost.innerHTML = `
+          <img src="/img/icons/learn/anatomy1.svg?v=2" alt="Cigar anatomy diagram" style="width:100%;height:auto;display:block;" />
+        `;
+      });
   </script>
 </body>
 </html>
