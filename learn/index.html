@@ -5,31 +5,32 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Learn</title>
 
-  <!-- Global SF Pro -->
   <link rel="stylesheet" href="/css/type.css" />
-  <!-- Learn styles -->
   <link rel="stylesheet" href="/learn/learn.css" />
 </head>
 
-<body>
+<body class="learn-page">
 
-<main class="learn-page">
-
-  <!-- Top bar -->
+  <!-- TOP BAR (POS MATCH) -->
   <header class="learn-topbar">
-    <button class="learn-back" onclick="history.back()">
-      <span class="learn-back-icon">←</span>
-    </button>
+    <div class="learn-topbar-left">
+      <button type="button" class="learn-back" onclick="history.back()">
+        <span class="learn-back-icon">←</span>
+      </button>
+      <h1 class="learn-title">Learn</h1>
+    </div>
 
-    <h1 class="learn-title">Learn</h1>
-
-    <button class="learn-search">
-      <span class="learn-search-icon">🔍</span>
+    <!-- Search icon (SVG so it matches iOS blue perfectly) -->
+    <button type="button" class="learn-search" aria-label="Search">
+      <svg class="learn-search-icon" viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="7" stroke-width="2"></circle>
+        <line x1="16.65" y1="16.65" x2="21" y2="21" stroke-width="2" stroke-linecap="round"></line>
+      </svg>
     </button>
   </header>
 
-  <!-- Learn grid -->
-  <section class="learn-grid">
+  <!-- GRID -->
+  <main class="learn-grid">
 
     <div class="learn-tile" onclick="location.href='/learn/types/'">
       <img src="/img/icons/learn/types.svg" alt="Cigar vitolas">
@@ -57,13 +58,11 @@
     </div>
 
     <div class="learn-tile" onclick="location.href='/learn/glossary/'">
-      <img src="/img/icons/learn/glossary.svg" alt="Cigar glossary">
+      <img src="/img/icons/learn/glossary.svg" alt="Glossary">
       <div class="learn-label">Glossary</div>
     </div>
 
-  </section>
-
-</main>
+  </main>
 
 </body>
 </html>
