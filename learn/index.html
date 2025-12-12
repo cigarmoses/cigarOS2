@@ -28,6 +28,7 @@
       color: var(--ink);
       font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ───────── Top Bar ───────── */
@@ -43,6 +44,9 @@
       background: none;
       padding: 6px 4px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .icon-btn svg {
@@ -86,6 +90,8 @@
 
       text-decoration: none;
       color: inherit;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .learn-card:active {
@@ -94,7 +100,7 @@
                   0 1px 3px rgba(15,26,44,0.06);
     }
 
-    /* ───────── Icons (PNG supported) ───────── */
+    /* ───────── Icons ───────── */
     .learn-icon {
       width: 84px;
       height: 84px;
@@ -154,44 +160,44 @@
 
     <a class="learn-card" href="/learn/vitolas/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/vitolas.svg" alt="Vitolas">
+        <img src="/img/icons/learn/vitolas.svg?v=1" alt="Vitolas">
       </div>
       <div class="learn-label">Vitolas</div>
     </a>
 
     <a class="learn-card" href="/learn/shapes/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/shapes.svg" alt="Shapes">
+        <img src="/img/icons/learn/shapes.svg?v=1" alt="Shapes">
       </div>
       <div class="learn-label">Shapes</div>
     </a>
 
-    <!-- COLOR (PNG) -->
+    <!-- ✅ COLORS (plural) -->
     <a class="learn-card" href="/learn/color/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/color.png" alt="Color">
+        <img src="/img/icons/learn/colors.svg?v=1" alt="Color">
       </div>
       <div class="learn-label">Color</div>
     </a>
 
     <a class="learn-card" href="/learn/anatomy/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/anatomy.svg" alt="Anatomy">
+        <img src="/img/icons/learn/anatomy.svg?v=1" alt="Anatomy">
       </div>
       <div class="learn-label">Anatomy</div>
     </a>
 
     <a class="learn-card" href="/learn/ring/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/ring.svg" alt="Ring">
+        <img src="/img/icons/learn/ring.svg?v=1" alt="Ring">
       </div>
       <div class="learn-label">Ring</div>
     </a>
 
-    <!-- GLOSSARY (PNG) -->
+    <!-- ✅ GLOSSARY -->
     <a class="learn-card" href="/learn/glossary/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/glossary.png" alt="Glossary">
+        <img src="/img/icons/learn/glossary.svg?v=1" alt="Glossary">
       </div>
       <div class="learn-label">Glossary</div>
     </a>
