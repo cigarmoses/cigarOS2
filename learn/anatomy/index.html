@@ -9,34 +9,41 @@
   <link rel="stylesheet" href="/learn/learn.css" />
 </head>
 
-<body>
+<body class="learn-detail-page">
 
-<main class="learn-detail-page">
-
+  <!-- TOP BAR (POS MATCH) -->
   <header class="learn-topbar">
-    <button class="learn-back" onclick="history.back()">
-      <span class="learn-back-icon">←</span>
+    <div class="learn-topbar-left">
+      <button type="button" class="learn-back" onclick="history.back()">
+        <span class="learn-back-icon">←</span>
+      </button>
+      <h1 class="learn-title">Anatomy</h1>
+    </div>
+
+    <button type="button" class="learn-search" aria-label="Search">
+      <svg class="learn-search-icon" viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="7" stroke-width="2"></circle>
+        <line x1="16.65" y1="16.65" x2="21" y2="21" stroke-width="2" stroke-linecap="round"></line>
+      </svg>
     </button>
-
-    <h1 class="learn-title">Anatomy</h1>
-
-    <span style="width:24px"></span>
   </header>
 
-  <section class="learn-detail-main">
+  <main class="learn-detail-main">
 
+    <!-- Main image -->
     <article class="learn-card learn-card-image">
-      <img src="/img/learn/anatomy-diagram.png" alt="Cigar anatomy">
+      <!-- swap this png to your final asset path -->
+      <img src="/img/learn/anatomy-diagram.png" alt="Cigar anatomy diagram">
     </article>
 
     <article class="learn-card">
       <h2 class="learn-term">WRAPPER</h2>
-      <p>Exterior leaf, visible color of the cigar.</p>
+      <p>Exterior leaf — the visible color of the cigar.</p>
     </article>
 
     <article class="learn-card">
       <h2 class="learn-term">BINDER</h2>
-      <p>Leaves that hold together the interior filler.</p>
+      <p>Leaf that holds the filler tobacco together.</p>
     </article>
 
     <article class="learn-card">
@@ -44,9 +51,7 @@
       <p>Tobacco leaves used in the body of the cigar.</p>
     </article>
 
-  </section>
-
-</main>
+  </main>
 
 </body>
 </html>
