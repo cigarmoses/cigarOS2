@@ -2,79 +2,59 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
-  <title>Anatomy</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Learn • Anatomy</title>
 
-  <!-- Global SF Pro -->
+  <!-- Global Type -->
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/pos/pos.css" />
 
   <style>
     body {
       margin: 0;
       background: #ffffff;
-      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      color: #0f1a2c;
     }
 
-    /* Top bar */
-    .learn-topbar {
-      padding: 14px 16px 0;
+    .learn-page {
+      padding: 20px 16px 32px;
+    }
+
+    /* iOS-style title */
+    .learn-title {
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 800;
+      font-size: 34px;
+      letter-spacing: -0.03em;
+      margin: 0 0 20px;
+    }
+
+    /* Centered anatomy image */
+    .anatomy-wrap {
       display: flex;
-      align-items: center;
-    }
-
-    .pos-back {
-      border: none;
-      background: none;
-      padding: 0;
-      color: #007aff;
-      font-size: 20px;
-      cursor: pointer;
-    }
-
-    /* Centered container */
-    .anatomy-container {
-      display: flex;
-      align-items: center;
       justify-content: center;
-      height: calc(100vh - 60px);
-      padding: 16px;
+      align-items: center;
+      width: 100%;
     }
 
-    .anatomy-container img {
+    .anatomy-wrap img {
       width: 100%;
-      max-width: 360px;
-      max-height: 100%;
+      max-width: 420px;
       height: auto;
-      object-fit: contain;
-      display: block;
     }
   </style>
 </head>
 
 <body>
-  <!-- Back button -->
-  <header class="learn-topbar">
-    <button
-      type="button"
-      class="pos-back"
-      onclick="window.history.back()"
-      aria-label="Back"
-    >
-      ←
-    </button>
-  </header>
+  <main class="learn-page">
+    <h1 class="learn-title">Anatomy</h1>
 
-  <!-- Centered SVG -->
-  <main class="anatomy-container">
-    <img
-      src="/img/icons/learn/anatomylearn2.svg"
-      alt="Cigar anatomy diagram"
-    />
+    <div class="anatomy-wrap">
+      <img
+        src="/img/icons/learn/anatomylearn2.svg"
+        alt="Cigar Anatomy"
+      />
+    </div>
   </main>
 </body>
 </html>
