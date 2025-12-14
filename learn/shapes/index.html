@@ -9,242 +9,177 @@
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
-    :root{
-      --bg:#ffffff;
-      --ink:#0f1a2c;
-      --muted:#6a7586;
-      --accent:#007aff;
-
-      --card:#ffffff;
-      --radius:22px;
-
-      /* Learn-style soft shadow */
-      --shadow-main: 0 10px 28px rgba(15,26,44,0.08);
-      --shadow-soft: 0 2px 6px rgba(15,26,44,0.05);
+    :root {
+      --bg: #ffffff;
+      --ink: #0f1a2c;
+      --muted: #6a7586;
+      --card: #ffffff;
+      --radius: 22px;
+      --shadow: 0 8px 24px rgba(0,0,0,0.08);
     }
 
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--ink);
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
       font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      -webkit-font-smoothing: antialiased;
-      min-height:100vh;
+      color: var(--ink);
     }
 
-    /* ───────── Top bar (consistent spacing) ───────── */
-    .learn-topbar{
-      padding:14px 16px 0;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .icon-btn{
-      border:none;
-      background:none;
-      padding:6px 4px;
-      cursor:pointer;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .icon-btn svg{
-      width:22px;
-      height:22px;
-      stroke:var(--accent);
+    /* ───────── Top Bar ───────── */
+    .learn-topbar {
+      padding: 14px 16px 0;
+      display: flex;
+      align-items: center;
     }
 
-    /* ───────── Title block ───────── */
-    .learn-title{
-      margin:28px 16px 6px;
-      font-family:"SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight:800;
-      font-size:56px;
-      letter-spacing:-0.04em;
-      line-height:1;
-      color:var(--ink);
-    }
-    .learn-subtitle{
-      margin:0 16px 18px;
-      font-family:"SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight:500; /* Medium */
-      font-size:20px;
-      letter-spacing:-0.01em;
-      color:rgba(15,26,44,0.50);
-      line-height:1.25;
+    .back-btn {
+      border: none;
+      background: none;
+      color: #007aff;
+      font-size: 22px;
+      cursor: pointer;
     }
 
-    /* ───────── List ───────── */
-    .shapes-wrap{
-      padding:0 16px 28px;
-    }
-    .shape-card{
-      background:var(--card);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow-main), var(--shadow-soft);
-      padding:14px;
-      display:flex;
-      gap:14px;
-      align-items:center;
-      margin-bottom:14px;
+    /* ───────── Title ───────── */
+    .learn-title {
+      margin: 20px 16px 20px;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 800;
+      font-size: 42px;
+      letter-spacing: -0.03em;
     }
 
-    /* image */
-    .shape-media{
-      width:120px;
-      flex:0 0 120px;
-      height:72px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .shape-media img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
+    /* ───────── Cards ───────── */
+    .shapes-list {
+      padding: 0 16px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
     }
 
-    /* text */
-    .shape-text{
-      flex:1 1 auto;
-      min-width:0;
-    }
-    .shape-name{
-      margin:0 0 6px;
-      font-family:"SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight:800;
-      font-size:26px;
-      letter-spacing:-0.03em;
-      line-height:1.05;
-      color:var(--ink);
-    }
-    .shape-desc{
-      margin:0;
-      font-family:"SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight:400;
-      font-size:15px;
-      line-height:1.35;
-      color:rgba(15,26,44,0.70);
+    .shape-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
     }
 
-    /* smaller phones */
-    @media (max-width:390px){
-      .learn-title{ font-size:52px; }
-      .shape-media{ width:108px; flex-basis:108px; height:68px; }
-      .shape-name{ font-size:24px; }
+    .shape-image {
+      width: 100%;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .shape-image img {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    /* Vertical image ONLY for Culebra */
+    .shape-image.vertical img {
+      width: auto;
+      max-height: 260px;
+    }
+
+    .shape-title {
+      font-family: "SF Pro Display";
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .shape-desc {
+      font-size: 16px;
+      line-height: 1.4;
+      color: var(--muted);
     }
   </style>
 </head>
 
 <body>
+
   <!-- Top bar -->
-  <header class="learn-topbar">
-    <button class="icon-btn" id="learn-back" aria-label="Back">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M15 18L9 12L15 6"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round" />
-      </svg>
-    </button>
-    <span aria-hidden="true"></span>
-  </header>
+  <div class="learn-topbar">
+    <button class="back-btn" onclick="history.back()">←</button>
+  </div>
 
   <h1 class="learn-title">Shapes</h1>
-  <p class="learn-subtitle">Common cigar shapes and what they mean.</p>
 
-  <main class="shapes-wrap">
+  <section class="shapes-list">
 
     <!-- Parejo -->
-    <section class="shape-card">
-      <div class="shape-media">
-        <img src="/img/icons/learn/parejo.png?v=1" alt="Parejo">
+    <div class="shape-card">
+      <div class="shape-image">
+        <img src="/img/icons/learn/parejo.png" alt="Parejo cigar">
       </div>
-      <div class="shape-text">
-        <h2 class="shape-name">Parejo</h2>
-        <p class="shape-desc">
-          straight sided cigars; aka standard or straight cigars. this is the most common shape
-        </p>
+      <div class="shape-title">Parejo</div>
+      <div class="shape-desc">
+        Straight sided cigars; aka standard or straight cigars. This is the most common shape.
       </div>
-    </section>
+    </div>
 
     <!-- Torpedo -->
-    <section class="shape-card">
-      <div class="shape-media">
-        <img src="/img/icons/learn/torpedo.png?v=1" alt="Torpedo">
+    <div class="shape-card">
+      <div class="shape-image">
+        <img src="/img/icons/learn/torpedo.png" alt="Torpedo cigar">
       </div>
-      <div class="shape-text">
-        <h2 class="shape-name">Torpedo</h2>
-        <p class="shape-desc">
-          tapered at both the head &amp; the foot (pointy head)
-        </p>
+      <div class="shape-title">Torpedo</div>
+      <div class="shape-desc">
+        Tapered at both the head &amp; the foot (pointy head).
       </div>
-    </section>
+    </div>
 
     <!-- Presidente -->
-    <section class="shape-card">
-      <div class="shape-media">
-        <img src="/img/icons/learn/presidente.png?v=1" alt="Presidente">
+    <div class="shape-card">
+      <div class="shape-image">
+        <img src="/img/icons/learn/presidente.png" alt="Presidente cigar">
       </div>
-      <div class="shape-text">
-        <h2 class="shape-name">Presidente</h2>
-        <p class="shape-desc">
-          aka Salomon- taper at the head &amp; the foot (nipple foot)
-        </p>
+      <div class="shape-title">Presidente</div>
+      <div class="shape-desc">
+        Aka Salomon – taper at the head &amp; the foot (nipple foot).
       </div>
-    </section>
+    </div>
 
     <!-- Pyramid -->
-    <section class="shape-card">
-      <div class="shape-media">
-        <img src="/img/icons/learn/pyramid.png?v=1" alt="Pyramid">
+    <div class="shape-card">
+      <div class="shape-image">
+        <img src="/img/icons/learn/pyramid.png" alt="Pyramid cigar">
       </div>
-      <div class="shape-text">
-        <h2 class="shape-name">Pyramid</h2>
-        <p class="shape-desc">
-          aka pyramide, piramide; a cigar that is tapered to a point at the head and blossoms toward the cylindrical foot
-        </p>
+      <div class="shape-title">Pyramid</div>
+      <div class="shape-desc">
+        Aka pyramide, piramide; a cigar that is tapered to a point at the head and blossoms toward the cylindrical foot.
       </div>
-    </section>
+    </div>
 
     <!-- Perfecto -->
-    <section class="shape-card">
-      <div class="shape-media">
-        <img src="/img/icons/learn/perfecto.png?v=1" alt="Perfecto">
+    <div class="shape-card">
+      <div class="shape-image">
+        <img src="/img/icons/learn/perfecto.png" alt="Perfecto cigar">
       </div>
-      <div class="shape-text">
-        <h2 class="shape-name">Perfecto</h2>
-        <p class="shape-desc">
-          approximately 4-6 inches long, tapered at both ends, with a rounded head and bulbous at the center
-        </p>
+      <div class="shape-title">Perfecto</div>
+      <div class="shape-desc">
+        Approximately 4–6 inches long, tapered at both ends, with a rounded head and bulbous at the center.
       </div>
-    </section>
+    </div>
 
     <!-- Culebra -->
-    <section class="shape-card">
-      <div class="shape-media">
-        <img src="/img/icons/learn/culebra.png?v=1" alt="Culebra">
+    <div class="shape-card">
+      <div class="shape-image vertical">
+        <img src="/img/icons/learn/culebra.png" alt="Culebra cigar">
       </div>
-      <div class="shape-text">
-        <h2 class="shape-name">Culebra</h2>
-        <p class="shape-desc">
-          Spanish for “snake”; in this case describes the braiding of 3 loosely filled, thin cigars held together by string.
-          The practice of braiding cigars together originated in Cuba as a means by which factory owners could control the
-          rollers’ cigar smoking. Culebras served as the workers’ daily ration of cigars. As the rollers smoked the culebras,
-          the squirmy look of the cigar signaled the factory managers that the rollers were not smoking premium inventory
-        </p>
+      <div class="shape-title">Culebra</div>
+      <div class="shape-desc">
+        Spanish for “snake”; describes the braiding of 3 loosely filled, thin cigars held together by string. Originated in Cuba to control rollers’ cigar consumption and served as workers’ daily ration.
       </div>
-    </section>
+    </div>
 
-  </main>
+  </section>
 
-  <script>
-    document.getElementById("learn-back")?.addEventListener("click", () => {
-      history.length > 1 ? history.back() : (window.location.href = "/learn/");
-    });
-  </script>
 </body>
 </html>
