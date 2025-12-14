@@ -3,347 +3,128 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Anatomy</title>
+  <title>Anatomy • Learn</title>
 
+  <!-- SF Pro -->
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
-    :root{
-      --ink:#0f1a2c;
-      --muted:#8e8e93;
-      --accent:#007aff;
-      --bg:#ffffff;
-
-      --shadow-main: 0 10px 28px rgba(15,26,44,0.10);
-      --shadow-soft: 0 2px 6px rgba(15,26,44,0.06);
+    :root {
+      --bg: #ffffff;
+      --ink: #0f1a2c;
+      --muted: #6a7586;
+      --accent: #007aff;
     }
 
-    *{ box-sizing:border-box; }
-
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--ink);
+    body {
+      margin: 0;
+      background: var(--bg);
       font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      -webkit-font-smoothing: antialiased;
-      min-height:100vh;
+      color: var(--ink);
+      min-height: 100vh;
     }
 
-    /* ───────── Top bar ───────── */
-    .topbar{
-      padding:14px 16px 0;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+    /* Top bar */
+    .learn-topbar {
+      padding: 12px 16px 0;
     }
 
-    .icon-btn{
-      border:none;
-      background:none;
-      padding:6px 4px;
-      cursor:pointer;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      -webkit-tap-highlight-color: transparent;
+    .learn-back {
+      border: none;
+      background: none;
+      color: var(--accent);
+      font-size: 22px;
+      cursor: pointer;
     }
 
-    .icon-btn svg{
-      width:22px;
-      height:22px;
-      stroke:var(--accent);
-    }
-
-    /* ───────── Title block ───────── */
-    .title-wrap{
-      padding: 0 16px;
-    }
-
-    .page-title{
-      margin: 28px 0 8px;
+    /* Title */
+    .learn-title {
+      margin: 12px 16px 6px;
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-weight: 800;
-      font-size: 56px;
+      font-size: 48px;
       letter-spacing: -0.04em;
-      line-height: 1;
-      color: var(--ink);
     }
 
-    .page-subtitle{
-      margin: 0 0 18px;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 600; /* Medium-ish iOS feel */
-      font-size: 22px;
-      letter-spacing: -0.02em;
+    .learn-subtitle {
+      margin: 0 16px 20px;
+      font-size: 18px;
       color: var(--muted);
-      line-height: 1.2;
     }
 
-    /* ───────── Stage: cigar + aligned click zones ───────── */
-    .stage{
-      padding: 0 16px 28px;
-      display:flex;
-      justify-content:center;
-    }
-
-    /* This box is the anchor for everything */
-    .cigar-shell{
+    /* Layout */
+    .anatomy-wrap {
       position: relative;
-      width: min(420px, 92vw);
-      height: min(640px, 68vh);  /* ⬅️ makes the cigar big again on iPhone */
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      margin: 6px auto 0;
+      padding: 0 16px 40px;
+      display: flex;
+      justify-content: center;
     }
 
-    /* The cigar image itself */
-    .cigar-img{
+    .anatomy-image {
       width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display:block;
-      user-select:none;
-      -webkit-user-drag:none;
+      max-width: 360px;
+      height: auto;
+      display: block;
     }
 
-    /* Click zones aligned to cigar sections (tuned by % for your SVG) */
-    .zone{
-      position:absolute;
+    /* Labels */
+    .label {
+      position: absolute;
       left: 0;
-      right: 0;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
+      width: 160px;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     }
 
-    /* These percentages are the key.
-       They assume your cigar is centered within the contain box.
-       You can fine-tune top/height later if needed. */
-    .zone-wrapper{ top: 10%; height: 26%; }
-    .zone-binder { top: 38%; height: 28%; }
-    .zone-filler { top: 66%; height: 28%; }
-
-    /* Optional: subtle debug outline (turn on if needed)
-    .zone{ outline: 1px dashed rgba(0,122,255,0.25); }
-    */
-
-    /* Left-side labels (iOS style) that align next to cigar */
-    .labels{
-      position:absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 46%;
-      pointer-events:none; /* labels don't block taps; zones handle taps */
+    .label h3 {
+      margin: 0;
+      font-weight: 800;
+      font-size: 28px;
+      line-height: 1;
     }
 
-    .label{
-      position:absolute;
-      left: 0;
-      width: 100%;
-      pointer-events:none;
+    .label p {
+      margin: 4px 0 0;
+      font-size: 16px;
+      color: var(--muted);
     }
 
-    .label h2{
-      margin:0;
-      font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-      font-weight:800;
-      font-size:44px;
-      letter-spacing:-0.03em;
-      line-height:1;
-      color:#000;
-    }
-
-    .label p{
-      margin:6px 0 0;
-      font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-      font-weight:600;
-      font-size:18px;
-      letter-spacing:-0.01em;
-      color:var(--muted);
-      line-height:1.1;
-    }
-
-    /* Position labels vertically to match cigar sections */
-    .label-wrapper{ top: 14%; }
-    .label-binder { top: 44%; }
-    .label-filler { top: 74%; }
-
-    /* ───────── Popup (same iOS shaded style) ───────── */
-    .overlay{
-      position:fixed;
-      inset:0;
-      background: rgba(0,0,0,0.05);
-      display:none;
-      z-index:50;
-    }
-    .overlay.active{ display:block; }
-
-    .popup{
-      position:fixed;
-      left:16px;
-      right:16px;
-      top: 42vh;
-      transform: translateY(-50%);
-      z-index:60;
-
-      display:none;
-      background: rgba(160,160,160,0.60);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius:18px;
-      padding:18px 18px 16px;
-      color:#fff;
-      box-shadow: var(--shadow-main), var(--shadow-soft);
-    }
-    .popup.active{ display:block; }
-
-    .popup h3{
-      margin:0 0 10px;
-      font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-      font-weight:800;
-      font-size:28px;
-      letter-spacing:-0.02em;
-    }
-
-    .popup p{
-      margin:0;
-      font-size:18px;
-      line-height:1.35;
-      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-    }
-
-    .close{
-      position:absolute;
-      top:10px;
-      right:14px;
-      font-size:22px;
-      line-height:1;
-      cursor:pointer;
-      user-select:none;
-    }
-
-    /* Keep it looking right on very small phones */
-    @media (max-width: 390px){
-      .page-title{ font-size:52px; }
-      .cigar-shell{ height: min(620px, 66vh); }
-      .label h2{ font-size:40px; }
-    }
+    .label.wrapper { top: 110px; }
+    .label.binder  { top: 320px; }
+    .label.filler  { top: 520px; }
   </style>
 </head>
 
 <body>
-  <header class="topbar">
-    <button class="icon-btn" id="back" aria-label="Back">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M15 18L9 12L15 6"
-              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
 
-    <span aria-hidden="true"></span>
-  </header>
-
-  <div class="title-wrap">
-    <h1 class="page-title">Anatomy</h1>
-    <p class="page-subtitle">Click for an overview of each layer.</p>
+  <div class="learn-topbar">
+    <button class="learn-back" onclick="history.back()">←</button>
   </div>
 
-  <main class="stage">
-    <div class="cigar-shell" aria-label="Cigar anatomy diagram">
-      <!-- Your SVG (keep this filename exactly as you said) -->
-      <img class="cigar-img" src="/img/icons/learn/anatomy1.svg?v=9" alt="Cigar anatomy" />
+  <h1 class="learn-title">Anatomy</h1>
+  <div class="learn-subtitle">Click for an overview of each layer.</div>
 
-      <!-- Left-side iOS labels (correct font + aligned) -->
-      <div class="labels" aria-hidden="true">
-        <div class="label label-wrapper">
-          <h2>Wrapper</h2>
-          <p>Outer most layer</p>
-        </div>
-
-        <div class="label label-binder">
-          <h2>Binder</h2>
-          <p>Middle layer</p>
-        </div>
-
-        <div class="label label-filler">
-          <h2>Filler</h2>
-          <p>Interior layer</p>
-        </div>
-      </div>
-
-      <!-- Click zones (taps line up with cigar sections) -->
-      <div class="zone zone-wrapper" role="button" tabindex="0" aria-label="Wrapper details"></div>
-      <div class="zone zone-binder"  role="button" tabindex="0" aria-label="Binder details"></div>
-      <div class="zone zone-filler"  role="button" tabindex="0" aria-label="Filler details"></div>
+  <div class="anatomy-wrap">
+    <div class="label wrapper">
+      <h3>Wrapper</h3>
+      <p>Outer most layer</p>
     </div>
-  </main>
 
-  <!-- Popup -->
-  <div class="overlay" id="overlay"></div>
+    <div class="label binder">
+      <h3>Binder</h3>
+      <p>Middle layer</p>
+    </div>
 
-  <div class="popup" id="popup" role="dialog" aria-modal="true">
-    <div class="close" id="close">×</div>
-    <h3 id="popTitle"></h3>
-    <p id="popBody"></p>
+    <div class="label filler">
+      <h3>Filler</h3>
+      <p>Interior layer</p>
+    </div>
+
+    <img
+      src="/img/icons/learn/learnanatomy.svg"
+      alt="Cigar Anatomy"
+      class="anatomy-image"
+    />
   </div>
 
-  <script>
-    // Back behavior (consistent across site)
-    document.getElementById("back")?.addEventListener("click", () => {
-      history.length > 1 ? history.back() : (window.location.href = "/learn/");
-    });
-
-    const copy = {
-      wrapper: {
-        title: "Wrapper",
-        body: "Wrapper leaves are the most delicate, expensive and [ideally] perfect leaf that is applied to the outside of a cigar. In addition, wrapper leaves contribute significantly to the flavor of the cigar since they will touch the mouth and tongue."
-      },
-      binder: {
-        title: "Binder",
-        body: "Binder leaves are the dense and strong leaves applied to the outside of the filler tobaccos; forming the bunch. The binder protects and helps form the filler tobaccos in the molds and presses."
-      },
-      filler: {
-        title: "Filler",
-        body: "Filler tobacco leaves constitute the 'guts' of the cigar. Filler leaves must be expertly bunched to make a well constructed cigar that will draw and burn in balance."
-      }
-    };
-
-    const overlay = document.getElementById("overlay");
-    const popup = document.getElementById("popup");
-    const popTitle = document.getElementById("popTitle");
-    const popBody = document.getElementById("popBody");
-
-    function openPop(key){
-      popTitle.textContent = copy[key].title;
-      popBody.textContent = copy[key].body;
-      overlay.classList.add("active");
-      popup.classList.add("active");
-    }
-
-    function closePop(){
-      overlay.classList.remove("active");
-      popup.classList.remove("active");
-    }
-
-    // Wire zones
-    document.querySelector(".zone-wrapper")?.addEventListener("click", () => openPop("wrapper"));
-    document.querySelector(".zone-binder") ?.addEventListener("click", () => openPop("binder"));
-    document.querySelector(".zone-filler") ?.addEventListener("click", () => openPop("filler"));
-
-    // Close actions
-    overlay?.addEventListener("click", closePop);
-    document.getElementById("close")?.addEventListener("click", closePop);
-
-    // Accessibility: Enter/Space on zones
-    document.querySelectorAll(".zone").forEach(z => {
-      z.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          z.click();
-        }
-      });
-    });
-  </script>
 </body>
 </html>
