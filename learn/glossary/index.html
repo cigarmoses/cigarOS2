@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Learn • Glossary</title>
+
+  <!-- Global SF Pro -->
+  <link rel="stylesheet" href="/css/type.css" />
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="/learn/glossary/glossary.css" />
+</head>
+
+<body class="glossary-page">
+  <!-- Top bar -->
+  <header class="glossary-topbar">
+    <button type="button" class="pos-back" id="glossary-back" aria-label="Back">
+      <span class="pos-back-icon">←</span>
+    </button>
+  </header>
+
+  <main class="glossary-main">
+    <h1 class="glossary-title">Glossary</h1>
+
+    <section class="glossary-search" role="search">
+      <div class="search-pill">
+        <span class="search-icon" aria-hidden="true">􀊫</span>
+        <input
+          id="glossary-search"
+          class="search-input"
+          type="search"
+          placeholder="Search"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button type="button" id="glossary-clear" class="search-clear" aria-label="Clear search">✕</button>
+      </div>
+    </section>
+
+    <section class="glossary-list" id="glossary-list" aria-label="Glossary terms">
+      <!-- injected -->
+    </section>
+
+    <div class="glossary-empty" id="glossary-empty" hidden>
+      <div class="empty-title">No results</div>
+      <div class="empty-sub">Try a different search.</div>
+    </div>
+  </main>
+
+  <!-- Bottom sheet -->
+  <div class="sheet-overlay" id="sheet-overlay" hidden></div>
+
+  <section class="sheet" id="sheet" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="sheet-handle" aria-hidden="true"></div>
+
+    <div class="sheet-header">
+      <div class="sheet-word" id="sheet-word">—</div>
+      <button type="button" class="sheet-close" id="sheet-close" aria-label="Close">Done</button>
+    </div>
+
+    <div class="sheet-meta" id="sheet-meta" hidden>
+      <div class="sheet-chip" id="sheet-language"></div>
+      <div class="sheet-chip" id="sheet-aka"></div>
+    </div>
+
+    <div class="sheet-body">
+      <div class="sheet-definition" id="sheet-definition"></div>
+    </div>
+  </section>
+
+  <script src="/learn/glossary/glossary.js"></script>
+</body>
+</html>
