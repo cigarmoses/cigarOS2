@@ -8,263 +8,342 @@
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
-    :root {
-      --ink: #0f1a2c;
-      --muted: #8e8e93;
-      --accent: #007aff;
-      --bg: #ffffff;
+    :root{
+      --ink:#0f1a2c;
+      --muted:#8e8e93;
+      --accent:#007aff;
+      --bg:#ffffff;
 
       --shadow-main: 0 10px 28px rgba(15,26,44,0.10);
       --shadow-soft: 0 2px 6px rgba(15,26,44,0.06);
     }
 
-    * { box-sizing: border-box; }
+    *{ box-sizing:border-box; }
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
       font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      min-height:100vh;
     }
 
-    /* ───── Top Bar ───── */
-    .topbar {
-      padding: 14px 16px 0;
+    /* ───────── Top bar ───────── */
+    .topbar{
+      padding:14px 16px 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
     }
 
-    .back-btn {
-      border: none;
-      background: none;
-      padding: 6px 4px;
-      cursor: pointer;
+    .icon-btn{
+      border:none;
+      background:none;
+      padding:6px 4px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .back-btn svg {
-      width: 22px;
-      height: 22px;
-      stroke: var(--accent);
+    .icon-btn svg{
+      width:22px;
+      height:22px;
+      stroke:var(--accent);
     }
 
-    /* ───── Title ───── */
-    .title-wrap {
+    /* ───────── Title block ───────── */
+    .title-wrap{
       padding: 0 16px;
     }
 
-    h1 {
+    .page-title{
       margin: 28px 0 8px;
-      font-family: "SF Pro Display";
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-weight: 800;
       font-size: 56px;
       letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--ink);
     }
 
-    .subtitle {
-      margin: 0 0 24px;
-      font-family: "SF Pro Display";
-      font-weight: 500;
+    .page-subtitle{
+      margin: 0 0 18px;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 600; /* Medium-ish iOS feel */
       font-size: 22px;
+      letter-spacing: -0.02em;
       color: var(--muted);
+      line-height: 1.2;
     }
 
-    /* ───── Layout ───── */
-    .stage {
-      padding: 0 16px 32px;
-      display: grid;
-      grid-template-columns: 160px 1fr;
-      gap: 16px;
-      align-items: start;
+    /* ───────── Stage: cigar + aligned click zones ───────── */
+    .stage{
+      padding: 0 16px 28px;
+      display:flex;
+      justify-content:center;
     }
 
-    /* Left labels */
-    .layers {
-      display: flex;
-      flex-direction: column;
-      gap: 36px;
-      padding-top: 8px;
-    }
-
-    .layer {
-      cursor: pointer;
-    }
-
-    .layer-title {
-      font-family: "SF Pro Display";
-      font-weight: 800;
-      font-size: 40px;
-      margin: 0;
-    }
-
-    .layer-sub {
-      font-family: "SF Pro Display";
-      font-weight: 600;
-      font-size: 18px;
-      color: var(--muted);
-      margin: 4px 0 0;
-    }
-
-    /* Cigar */
-    .cigar-wrap {
-      display: flex;
-      justify-content: center;
+    /* This box is the anchor for everything */
+    .cigar-shell{
       position: relative;
+      width: min(420px, 92vw);
+      height: min(640px, 68vh);  /* ⬅️ makes the cigar big again on iPhone */
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin: 6px auto 0;
     }
 
-    /* 🔑 SIZE CONTROL (this fixes your issue) */
-    .cigar {
-      height: min(52vh, 480px);
-      width: auto;
-      max-width: 100%;
+    /* The cigar image itself */
+    .cigar-img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
     }
 
-    /* Popups */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      display: none;
-      z-index: 20;
+    /* Click zones aligned to cigar sections (tuned by % for your SVG) */
+    .zone{
+      position:absolute;
+      left: 0;
+      right: 0;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .overlay.active {
-      display: block;
+    /* These percentages are the key.
+       They assume your cigar is centered within the contain box.
+       You can fine-tune top/height later if needed. */
+    .zone-wrapper{ top: 10%; height: 26%; }
+    .zone-binder { top: 38%; height: 28%; }
+    .zone-filler { top: 66%; height: 28%; }
+
+    /* Optional: subtle debug outline (turn on if needed)
+    .zone{ outline: 1px dashed rgba(0,122,255,0.25); }
+    */
+
+    /* Left-side labels (iOS style) that align next to cigar */
+    .labels{
+      position:absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 46%;
+      pointer-events:none; /* labels don't block taps; zones handle taps */
     }
 
-    .popup {
-      position: fixed;
-      left: 16px;
-      right: 16px;
-      top: 360px;
-      display: none;
-      z-index: 30;
+    .label{
+      position:absolute;
+      left: 0;
+      width: 100%;
+      pointer-events:none;
+    }
 
-      background: rgba(160,160,160,0.6);
-      backdrop-filter: blur(10px);
-      border-radius: 18px;
-      padding: 18px;
-      color: #fff;
+    .label h2{
+      margin:0;
+      font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+      font-weight:800;
+      font-size:44px;
+      letter-spacing:-0.03em;
+      line-height:1;
+      color:#000;
+    }
 
+    .label p{
+      margin:6px 0 0;
+      font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+      font-weight:600;
+      font-size:18px;
+      letter-spacing:-0.01em;
+      color:var(--muted);
+      line-height:1.1;
+    }
+
+    /* Position labels vertically to match cigar sections */
+    .label-wrapper{ top: 14%; }
+    .label-binder { top: 44%; }
+    .label-filler { top: 74%; }
+
+    /* ───────── Popup (same iOS shaded style) ───────── */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,0.05);
+      display:none;
+      z-index:50;
+    }
+    .overlay.active{ display:block; }
+
+    .popup{
+      position:fixed;
+      left:16px;
+      right:16px;
+      top: 42vh;
+      transform: translateY(-50%);
+      z-index:60;
+
+      display:none;
+      background: rgba(160,160,160,0.60);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius:18px;
+      padding:18px 18px 16px;
+      color:#fff;
       box-shadow: var(--shadow-main), var(--shadow-soft);
     }
+    .popup.active{ display:block; }
 
-    .popup.active {
-      display: block;
+    .popup h3{
+      margin:0 0 10px;
+      font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+      font-weight:800;
+      font-size:28px;
+      letter-spacing:-0.02em;
     }
 
-    .popup h2 {
-      margin: 0 0 8px;
-      font-family: "SF Pro Display";
-      font-weight: 800;
-      font-size: 28px;
+    .popup p{
+      margin:0;
+      font-size:18px;
+      line-height:1.35;
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
     }
 
-    .popup p {
-      margin: 0;
-      font-size: 18px;
-      line-height: 1.35;
+    .close{
+      position:absolute;
+      top:10px;
+      right:14px;
+      font-size:22px;
+      line-height:1;
+      cursor:pointer;
+      user-select:none;
     }
 
-    .close {
-      position: absolute;
-      top: 10px;
-      right: 14px;
-      font-size: 22px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 560px) {
-      .stage {
-        grid-template-columns: 1fr;
-      }
-
-      .layers {
-        gap: 28px;
-      }
-
-      .cigar {
-        height: min(48vh, 440px);
-      }
+    /* Keep it looking right on very small phones */
+    @media (max-width: 390px){
+      .page-title{ font-size:52px; }
+      .cigar-shell{ height: min(620px, 66vh); }
+      .label h2{ font-size:40px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="topbar">
-    <button class="back-btn" onclick="history.back()">
+  <header class="topbar">
+    <button class="icon-btn" id="back" aria-label="Back">
       <svg viewBox="0 0 24 24" fill="none">
-        <path d="M15 18L9 12L15 6" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M15 18L9 12L15 6"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
-  </div>
+
+    <span aria-hidden="true"></span>
+  </header>
 
   <div class="title-wrap">
-    <h1>Anatomy</h1>
-    <p class="subtitle">Click for an overview of each layer.</p>
+    <h1 class="page-title">Anatomy</h1>
+    <p class="page-subtitle">Click for an overview of each layer.</p>
   </div>
 
   <main class="stage">
-    <div class="layers">
-      <div class="layer" onclick="openPop('wrapper')">
-        <div class="layer-title">Wrapper</div>
-        <div class="layer-sub">Outer most layer</div>
+    <div class="cigar-shell" aria-label="Cigar anatomy diagram">
+      <!-- Your SVG (keep this filename exactly as you said) -->
+      <img class="cigar-img" src="/img/icons/learn/anatomy1.svg?v=9" alt="Cigar anatomy" />
+
+      <!-- Left-side iOS labels (correct font + aligned) -->
+      <div class="labels" aria-hidden="true">
+        <div class="label label-wrapper">
+          <h2>Wrapper</h2>
+          <p>Outer most layer</p>
+        </div>
+
+        <div class="label label-binder">
+          <h2>Binder</h2>
+          <p>Middle layer</p>
+        </div>
+
+        <div class="label label-filler">
+          <h2>Filler</h2>
+          <p>Interior layer</p>
+        </div>
       </div>
 
-      <div class="layer" onclick="openPop('binder')">
-        <div class="layer-title">Binder</div>
-        <div class="layer-sub">Middle layer</div>
-      </div>
-
-      <div class="layer" onclick="openPop('filler')">
-        <div class="layer-title">Filler</div>
-        <div class="layer-sub">Interior layer</div>
-      </div>
-    </div>
-
-    <div class="cigar-wrap">
-      <!-- ✅ CORRECT SVG + CACHE BUSTER -->
-      <img
-        src="/img/icons/learn/anatomy1.svg?v=6"
-        class="cigar"
-        alt="Cigar anatomy"
-      />
+      <!-- Click zones (taps line up with cigar sections) -->
+      <div class="zone zone-wrapper" role="button" tabindex="0" aria-label="Wrapper details"></div>
+      <div class="zone zone-binder"  role="button" tabindex="0" aria-label="Binder details"></div>
+      <div class="zone zone-filler"  role="button" tabindex="0" aria-label="Filler details"></div>
     </div>
   </main>
 
-  <div class="overlay" id="overlay" onclick="closePop()"></div>
+  <!-- Popup -->
+  <div class="overlay" id="overlay"></div>
 
-  <div class="popup" id="popup">
-    <div class="close" onclick="closePop()">×</div>
-    <h2 id="pop-title"></h2>
-    <p id="pop-text"></p>
+  <div class="popup" id="popup" role="dialog" aria-modal="true">
+    <div class="close" id="close">×</div>
+    <h3 id="popTitle"></h3>
+    <p id="popBody"></p>
   </div>
 
   <script>
+    // Back behavior (consistent across site)
+    document.getElementById("back")?.addEventListener("click", () => {
+      history.length > 1 ? history.back() : (window.location.href = "/learn/");
+    });
+
     const copy = {
       wrapper: {
-        t: "Wrapper",
-        b: "Wrapper leaves are the most delicate, expensive and [ideally] perfect leaf that is applied to the outside of a cigar. In addition, wrapper leaves contribute significantly to the flavor of the cigar since they will touch the mouth and tongue."
+        title: "Wrapper",
+        body: "Wrapper leaves are the most delicate, expensive and [ideally] perfect leaf that is applied to the outside of a cigar. In addition, wrapper leaves contribute significantly to the flavor of the cigar since they will touch the mouth and tongue."
       },
       binder: {
-        t: "Binder",
-        b: "Binder leaves are the dense and strong leaves applied to the outside of the filler tobaccos; forming the bunch. The binder protects and helps form the filler tobaccos in the molds and presses."
+        title: "Binder",
+        body: "Binder leaves are the dense and strong leaves applied to the outside of the filler tobaccos; forming the bunch. The binder protects and helps form the filler tobaccos in the molds and presses."
       },
       filler: {
-        t: "Filler",
-        b: "Filler tobacco leaves constitute the 'guts' of the cigar. Filler leaves must be expertly bunched to make a well constructed cigar that will draw and burn in balance."
+        title: "Filler",
+        body: "Filler tobacco leaves constitute the 'guts' of the cigar. Filler leaves must be expertly bunched to make a well constructed cigar that will draw and burn in balance."
       }
     };
 
-    function openPop(key) {
-      document.getElementById("pop-title").textContent = copy[key].t;
-      document.getElementById("pop-text").textContent = copy[key].b;
-      document.getElementById("overlay").classList.add("active");
-      document.getElementById("popup").classList.add("active");
+    const overlay = document.getElementById("overlay");
+    const popup = document.getElementById("popup");
+    const popTitle = document.getElementById("popTitle");
+    const popBody = document.getElementById("popBody");
+
+    function openPop(key){
+      popTitle.textContent = copy[key].title;
+      popBody.textContent = copy[key].body;
+      overlay.classList.add("active");
+      popup.classList.add("active");
     }
 
-    function closePop() {
-      document.getElementById("overlay").classList.remove("active");
-      document.getElementById("popup").classList.remove("active");
+    function closePop(){
+      overlay.classList.remove("active");
+      popup.classList.remove("active");
     }
+
+    // Wire zones
+    document.querySelector(".zone-wrapper")?.addEventListener("click", () => openPop("wrapper"));
+    document.querySelector(".zone-binder") ?.addEventListener("click", () => openPop("binder"));
+    document.querySelector(".zone-filler") ?.addEventListener("click", () => openPop("filler"));
+
+    // Close actions
+    overlay?.addEventListener("click", closePop);
+    document.getElementById("close")?.addEventListener("click", closePop);
+
+    // Accessibility: Enter/Space on zones
+    document.querySelectorAll(".zone").forEach(z => {
+      z.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          z.click();
+        }
+      });
+    });
   </script>
 </body>
 </html>
