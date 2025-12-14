@@ -3,183 +3,81 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Shapes • Learn</title>
+  <title>Learn • Shapes</title>
 
-  <!-- Global SF Pro -->
+  <!-- Global Type -->
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
-    :root {
-      --bg: #ffffff;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --card: #ffffff;
-      --radius: 22px;
-      --shadow: 0 8px 24px rgba(0,0,0,0.08);
-    }
-
-    * { box-sizing: border-box; }
-
     body {
       margin: 0;
-      background: var(--bg);
-      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      color: var(--ink);
+      background: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      color: #0f1a2c;
     }
 
-    /* ───────── Top Bar ───────── */
-    .learn-topbar {
-      padding: 14px 16px 0;
-      display: flex;
-      align-items: center;
+    .learn-page {
+      padding: 20px 16px 32px;
     }
 
-    .back-btn {
-      border: none;
-      background: none;
-      color: #007aff;
-      font-size: 22px;
-      cursor: pointer;
-    }
-
-    /* ───────── Title ───────── */
+    /* Page Title */
     .learn-title {
-      margin: 20px 16px 20px;
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-weight: 800;
-      font-size: 42px;
+      font-size: 34px;
       letter-spacing: -0.03em;
+      margin: 0 0 20px;
     }
 
-    /* ───────── Cards ───────── */
-    .shapes-list {
-      padding: 0 16px 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
+    /* Shapes grid */
+    .shapes-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
     }
 
     .shape-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
     }
 
-    .shape-image {
+    .shape-card img {
       width: 100%;
-      margin-bottom: 14px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .shape-image img {
-      width: 100%;
-      max-width: 100%;
+      max-width: 120px;
       height: auto;
-      object-fit: contain;
+      margin-bottom: 12px;
     }
 
-    /* Vertical image ONLY for Culebra */
-    .shape-image.vertical img {
-      width: auto;
-      max-height: 260px;
-    }
-
-    .shape-title {
-      font-family: "SF Pro Display";
-      font-weight: 800;
-      font-size: 24px;
+    /* ✅ FIX: iOS SF Pro Display Bold */
+    .shape-name {
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 17px;
       letter-spacing: -0.02em;
-      margin-bottom: 6px;
-    }
-
-    .shape-desc {
-      font-size: 16px;
-      line-height: 1.4;
-      color: var(--muted);
     }
   </style>
 </head>
 
 <body>
+  <main class="learn-page">
+    <h1 class="learn-title">Shapes</h1>
 
-  <!-- Top bar -->
-  <div class="learn-topbar">
-    <button class="back-btn" onclick="history.back()">←</button>
-  </div>
+    <section class="shapes-grid">
+      <div class="shape-card">
+        <img src="/img/icons/learn/robusto.svg" alt="Robusto">
+        <div class="shape-name">Robusto</div>
+      </div>
 
-  <h1 class="learn-title">Shapes</h1>
+      <div class="shape-card">
+        <img src="/img/icons/learn/torpedo.svg" alt="Torpedo">
+        <div class="shape-name">Torpedo</div>
+      </div>
 
-  <section class="shapes-list">
-
-    <!-- Parejo -->
-    <div class="shape-card">
-      <div class="shape-image">
-        <img src="/img/icons/learn/parejo.png" alt="Parejo cigar">
-      </div>
-      <div class="shape-title">Parejo</div>
-      <div class="shape-desc">
-        Straight sided cigars; aka standard or straight cigars. This is the most common shape.
-      </div>
-    </div>
-
-    <!-- Torpedo -->
-    <div class="shape-card">
-      <div class="shape-image">
-        <img src="/img/icons/learn/torpedo.png" alt="Torpedo cigar">
-      </div>
-      <div class="shape-title">Torpedo</div>
-      <div class="shape-desc">
-        Tapered at both the head &amp; the foot (pointy head).
-      </div>
-    </div>
-
-    <!-- Presidente -->
-    <div class="shape-card">
-      <div class="shape-image">
-        <img src="/img/icons/learn/presidente.png" alt="Presidente cigar">
-      </div>
-      <div class="shape-title">Presidente</div>
-      <div class="shape-desc">
-        Aka Salomon – taper at the head &amp; the foot (nipple foot).
-      </div>
-    </div>
-
-    <!-- Pyramid -->
-    <div class="shape-card">
-      <div class="shape-image">
-        <img src="/img/icons/learn/pyramid.png" alt="Pyramid cigar">
-      </div>
-      <div class="shape-title">Pyramid</div>
-      <div class="shape-desc">
-        Aka pyramide, piramide; a cigar that is tapered to a point at the head and blossoms toward the cylindrical foot.
-      </div>
-    </div>
-
-    <!-- Perfecto -->
-    <div class="shape-card">
-      <div class="shape-image">
-        <img src="/img/icons/learn/perfecto.png" alt="Perfecto cigar">
-      </div>
-      <div class="shape-title">Perfecto</div>
-      <div class="shape-desc">
-        Approximately 4–6 inches long, tapered at both ends, with a rounded head and bulbous at the center.
-      </div>
-    </div>
-
-    <!-- Culebra -->
-    <div class="shape-card">
-      <div class="shape-image vertical">
-        <img src="/img/icons/learn/culebra.png" alt="Culebra cigar">
-      </div>
-      <div class="shape-title">Culebra</div>
-      <div class="shape-desc">
-        Spanish for “snake”; describes the braiding of 3 loosely filled, thin cigars held together by string. Originated in Cuba to control rollers’ cigar consumption and served as workers’ daily ration.
-      </div>
-    </div>
-
-  </section>
-
+      <!-- Continue cards as needed -->
+    </section>
+  </main>
 </body>
 </html>
