@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Learn • Anatomy</title>
+  <title>Anatomy</title>
 
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
     :root {
       --ink: #0f1a2c;
-      --muted: #8e8e93; /* iOS gray */
+      --muted: #8e8e93;
       --accent: #007aff;
       --bg: #ffffff;
 
@@ -26,329 +26,245 @@
       color: var(--ink);
       font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
       min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
     }
 
-    /* Top bar */
-    .learn-topbar {
+    /* ───── Top Bar ───── */
+    .topbar {
       padding: 14px 16px 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
     }
 
-    .icon-btn {
+    .back-btn {
       border: none;
       background: none;
       padding: 6px 4px;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
     }
 
-    .icon-btn svg {
+    .back-btn svg {
       width: 22px;
       height: 22px;
       stroke: var(--accent);
     }
 
-    /* Title block */
+    /* ───── Title ───── */
     .title-wrap {
       padding: 0 16px;
     }
 
-    .page-title {
-      margin: 28px 0 10px; /* POS-consistent gap */
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    h1 {
+      margin: 28px 0 8px;
+      font-family: "SF Pro Display";
       font-weight: 800;
       font-size: 56px;
       letter-spacing: -0.04em;
-      line-height: 1;
-      color: var(--ink);
     }
 
-    .page-subtitle {
-      margin: 0 0 18px;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 500; /* Medium */
+    .subtitle {
+      margin: 0 0 24px;
+      font-family: "SF Pro Display";
+      font-weight: 500;
       font-size: 22px;
-      letter-spacing: -0.01em;
       color: var(--muted);
     }
 
-    /* Main stage */
+    /* ───── Layout ───── */
     .stage {
-      position: relative;
-      padding: 0 16px 40px;
-      max-width: 980px;
-      margin: 0 auto;
+      padding: 0 16px 32px;
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 16px;
+      align-items: start;
     }
 
-    /* SVG container */
-    .svg-host {
-      position: relative;
-      width: 100%;
+    /* Left labels */
+    .layers {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      padding-top: 8px;
+    }
+
+    .layer {
+      cursor: pointer;
+    }
+
+    .layer-title {
+      font-family: "SF Pro Display";
+      font-weight: 800;
+      font-size: 40px;
+      margin: 0;
+    }
+
+    .layer-sub {
+      font-family: "SF Pro Display";
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--muted);
+      margin: 4px 0 0;
+    }
+
+    /* Cigar */
+    .cigar-wrap {
       display: flex;
       justify-content: center;
-      align-items: flex-start;
-    }
-
-    /* When we inline the SVG, it will live here */
-    .svg-host svg {
-      width: min(900px, 100%);
-      height: auto;
-      display: block;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-
-    /* Make “clickable” parts feel tappable */
-    .is-clickable {
-      cursor: pointer;
-      pointer-events: all;
-    }
-
-    /* Popup overlay (over SVG area, not full-screen dim) */
-    .popup-wrap {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      display: none;
-      justify-content: flex-start;
-      z-index: 50;
-      pointer-events: none; /* allow taps through except on popup */
-    }
-
-    .popup-wrap.is-open { display: flex; }
-
-    .popup {
-      pointer-events: auto;
-      width: min(720px, 92vw);
-      margin-top: 220px;   /* positions it over the cigar like your screenshot */
-      margin-left: 0;
-      border-radius: 18px;
-
-      background: rgba(160, 160, 160, 0.58);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-
-      box-shadow: var(--shadow-main), var(--shadow-soft);
-      padding: 18px 18px 18px;
-      color: #ffffff;
       position: relative;
     }
 
-    .popup-title {
-      margin: 0 40px 10px 0;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 28px;
-      letter-spacing: -0.02em;
-      color: #ffffff;
+    /* 🔑 SIZE CONTROL (this fixes your issue) */
+    .cigar {
+      height: min(52vh, 480px);
+      width: auto;
+      max-width: 100%;
     }
 
-    .popup-text {
-      margin: 0;
-      font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 500;
-      font-size: 18px;
-      line-height: 1.35;
-      color: rgba(255,255,255,0.95);
-    }
-
-    .popup-close {
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      border: none;
-      background: transparent;
-      color: #ffffff;
-      font-size: 22px;
-      line-height: 1;
-      cursor: pointer;
-      padding: 6px 8px;
-    }
-
-    /* Tap outside popup closes */
-    .tap-catcher {
-      position: absolute;
+    /* Popups */
+    .overlay {
+      position: fixed;
       inset: 0;
       display: none;
-      z-index: 40;
+      z-index: 20;
     }
-    .tap-catcher.is-open { display: block; }
 
-    /* Mobile tuning */
+    .overlay.active {
+      display: block;
+    }
+
+    .popup {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      top: 360px;
+      display: none;
+      z-index: 30;
+
+      background: rgba(160,160,160,0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      padding: 18px;
+      color: #fff;
+
+      box-shadow: var(--shadow-main), var(--shadow-soft);
+    }
+
+    .popup.active {
+      display: block;
+    }
+
+    .popup h2 {
+      margin: 0 0 8px;
+      font-family: "SF Pro Display";
+      font-weight: 800;
+      font-size: 28px;
+    }
+
+    .popup p {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
     @media (max-width: 560px) {
-      .page-title { font-size: 54px; }
-      .page-subtitle { font-size: 20px; }
+      .stage {
+        grid-template-columns: 1fr;
+      }
 
-      .popup {
-        margin-top: 235px; /* slight bump for iPhone */
-        width: 92vw;
+      .layers {
+        gap: 28px;
+      }
+
+      .cigar {
+        height: min(48vh, 440px);
       }
     }
   </style>
 </head>
 
 <body>
-  <!-- Top bar -->
-  <header class="learn-topbar">
-    <button class="icon-btn" id="learn-back" aria-label="Back">
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">
       <svg viewBox="0 0 24 24" fill="none">
-        <path d="M15 18L9 12L15 6"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"></path>
+        <path d="M15 18L9 12L15 6" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
-    <span style="width:22px;height:22px;"></span>
-  </header>
-
-  <!-- Title -->
-  <div class="title-wrap">
-    <h1 class="page-title">Anatomy</h1>
-    <p class="page-subtitle">Click for an overview of each layer.</p>
   </div>
 
-  <!-- Stage -->
-  <main class="stage">
-    <!-- Tap catcher (click outside popup to close) -->
-    <div class="tap-catcher" id="tap-catcher" aria-hidden="true"></div>
+  <div class="title-wrap">
+    <h1>Anatomy</h1>
+    <p class="subtitle">Click for an overview of each layer.</p>
+  </div>
 
-    <!-- Popup -->
-    <div class="popup-wrap" id="popup-wrap" aria-hidden="true">
-      <div class="popup" role="dialog" aria-modal="true" aria-labelledby="popup-title">
-        <button class="popup-close" id="popup-close" aria-label="Close">×</button>
-        <h2 class="popup-title" id="popup-title">Title</h2>
-        <p class="popup-text" id="popup-text">Text</p>
+  <main class="stage">
+    <div class="layers">
+      <div class="layer" onclick="openPop('wrapper')">
+        <div class="layer-title">Wrapper</div>
+        <div class="layer-sub">Outer most layer</div>
+      </div>
+
+      <div class="layer" onclick="openPop('binder')">
+        <div class="layer-title">Binder</div>
+        <div class="layer-sub">Middle layer</div>
+      </div>
+
+      <div class="layer" onclick="openPop('filler')">
+        <div class="layer-title">Filler</div>
+        <div class="layer-sub">Interior layer</div>
       </div>
     </div>
 
-    <!-- SVG host (we will inline your SVG here so its internal words are clickable) -->
-    <div class="svg-host" id="svg-host" aria-label="Cigar anatomy diagram"></div>
+    <div class="cigar-wrap">
+      <!-- ✅ CORRECT SVG + CACHE BUSTER -->
+      <img
+        src="/img/icons/learn/anatomy1.svg?v=6"
+        class="cigar"
+        alt="Cigar anatomy"
+      />
+    </div>
   </main>
 
-  <script>
-    // Back
-    document.getElementById("learn-back")?.addEventListener("click", () => {
-      history.length > 1 ? history.back() : (window.location.href = "/learn/");
-    });
+  <div class="overlay" id="overlay" onclick="closePop()"></div>
 
-    // Popup content
-    const COPY = {
+  <div class="popup" id="popup">
+    <div class="close" onclick="closePop()">×</div>
+    <h2 id="pop-title"></h2>
+    <p id="pop-text"></p>
+  </div>
+
+  <script>
+    const copy = {
       wrapper: {
-        title: "Wrapper",
-        text:
-          "Wrapper leaves are the most delicate, expensive and [ideally] perfect leaf that is applied to the outside of a cigar. In addition, wrapper leaves contribute significantly to the flavor of the cigar since they will touch the mouth and tongue."
+        t: "Wrapper",
+        b: "Wrapper leaves are the most delicate, expensive and [ideally] perfect leaf that is applied to the outside of a cigar. In addition, wrapper leaves contribute significantly to the flavor of the cigar since they will touch the mouth and tongue."
       },
       binder: {
-        title: "Binder",
-        text:
-          "Binder leaves are the dense and strong leaves applied to the outside of the filler tobaccos; forming the bunch. The binder protects and helps form the filler tobaccos in the molds and presses."
+        t: "Binder",
+        b: "Binder leaves are the dense and strong leaves applied to the outside of the filler tobaccos; forming the bunch. The binder protects and helps form the filler tobaccos in the molds and presses."
       },
       filler: {
-        title: "Filler",
-        text:
-          "Filler tobacco leaves constitute the 'guts' of the cigar. Filler leaves must be expertly bunched to make a well constructed cigar that will draw and burn in balance."
+        t: "Filler",
+        b: "Filler tobacco leaves constitute the 'guts' of the cigar. Filler leaves must be expertly bunched to make a well constructed cigar that will draw and burn in balance."
       }
     };
 
-    const popupWrap = document.getElementById("popup-wrap");
-    const tapCatcher = document.getElementById("tap-catcher");
-    const closeBtn = document.getElementById("popup-close");
-    const popupTitle = document.getElementById("popup-title");
-    const popupText = document.getElementById("popup-text");
-
-    function openPopup(key) {
-      const data = COPY[key];
-      if (!data) return;
-
-      popupTitle.textContent = data.title;
-      popupText.textContent = data.text;
-
-      popupWrap.classList.add("is-open");
-      tapCatcher.classList.add("is-open");
-      popupWrap.setAttribute("aria-hidden", "false");
-      tapCatcher.setAttribute("aria-hidden", "false");
+    function openPop(key) {
+      document.getElementById("pop-title").textContent = copy[key].t;
+      document.getElementById("pop-text").textContent = copy[key].b;
+      document.getElementById("overlay").classList.add("active");
+      document.getElementById("popup").classList.add("active");
     }
 
-    function closePopup() {
-      popupWrap.classList.remove("is-open");
-      tapCatcher.classList.remove("is-open");
-      popupWrap.setAttribute("aria-hidden", "true");
-      tapCatcher.setAttribute("aria-hidden", "true");
+    function closePop() {
+      document.getElementById("overlay").classList.remove("active");
+      document.getElementById("popup").classList.remove("active");
     }
-
-    closeBtn?.addEventListener("click", closePopup);
-    tapCatcher?.addEventListener("click", closePopup);
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closePopup();
-    });
-
-    // ------------------------------------------------------------------
-    // INLINE YOUR SVG so we can click the words INSIDE it.
-    //
-    // IMPORTANT:
-    // This script will open the popup when you click any SVG element whose:
-    //  - id includes "wrapper" OR
-    //  - id includes "binder" OR
-    //  - id includes "filler"
-    //
-    // So inside anatomy1.svg, make sure the clickable word/group has an id like:
-    //   id="wrapper"  OR id="wrapperText" OR id="wrapper-hit"
-    //   id="binder"   OR id="binderText"  OR id="binder-hit"
-    //   id="filler"   OR id="fillerText"  OR id="filler-hit"
-    //
-    // If those IDs already exist: you're done.
-    // ------------------------------------------------------------------
-
-    const svgHost = document.getElementById("svg-host");
-
-    fetch("/img/icons/learn/anatomy1.svg?v=2")
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to load anatomy1.svg");
-        return res.text();
-      })
-      .then(svgText => {
-        svgHost.innerHTML = svgText;
-
-        const svg = svgHost.querySelector("svg");
-        if (!svg) return;
-
-        // Make sure SVG allows pointer events
-        svg.style.pointerEvents = "auto";
-
-        // Mark likely clickable nodes for cursor styling (optional)
-        ["wrapper", "binder", "filler"].forEach(key => {
-          const nodes = svg.querySelectorAll(`[id*="${key}" i]`);
-          nodes.forEach(n => n.classList.add("is-clickable"));
-        });
-
-        // Click handling: walk up the DOM tree looking for id match
-        svg.addEventListener("click", (e) => {
-          let el = e.target;
-
-          while (el && el !== svg) {
-            const id = (el.id || "").toLowerCase();
-
-            if (id.includes("wrapper")) return openPopup("wrapper");
-            if (id.includes("binder")) return openPopup("binder");
-            if (id.includes("filler")) return openPopup("filler");
-
-            el = el.parentNode;
-          }
-        });
-      })
-      .catch(err => {
-        console.error(err);
-        // fallback: show a normal <img> if fetch fails
-        svgHost.innerHTML = `
-          <img src="/img/icons/learn/anatomy1.svg?v=2" alt="Cigar anatomy diagram" style="width:100%;height:auto;display:block;" />
-        `;
-      });
   </script>
 </body>
 </html>
