@@ -2,162 +2,106 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Anatomy • Learn</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Learn • Anatomy</title>
 
-  <!-- SF Pro -->
+  <!-- Global SF Pro -->
   <link rel="stylesheet" href="/css/type.css" />
 
+  <!-- POS / Learn shared styles -->
+  <link rel="stylesheet" href="/pos/pos.css" />
+
   <style>
-    :root {
-      --bg: #ffffff;
-      --ink: #0f1a2c;
-      --muted: #8e8e93;
-      --accent: #007aff;
-    }
-
-    * { box-sizing: border-box; }
-
     body {
       margin: 0;
-      background: var(--bg);
-      color: var(--ink);
+      background: #ffffff;
+      color: #0f1a2c;
       font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
     }
 
-    /* ───────── Top bar ───────── */
+    /* Top bar */
     .learn-topbar {
-      padding: 12px 16px 0;
+      padding: 14px 16px 0;
+      display: flex;
+      align-items: center;
     }
 
-    .learn-back {
+    .pos-back {
       border: none;
       background: none;
-      color: var(--accent);
-      font-size: 22px;
-      cursor: pointer;
       padding: 0;
+      color: #007aff;
+      font-size: 20px;
+      cursor: pointer;
     }
 
-    /* ───────── Titles ───────── */
+    /* Page wrapper */
+    .learn-page {
+      padding: 8px 16px 24px;
+    }
+
+    /* Title */
     .learn-title {
-      margin: 12px 16px 4px;
+      margin: 12px 0 4px;
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 48px;
-      letter-spacing: -0.04em;
-      line-height: 1.05;
+      font-weight: 900;
+      font-size: 42px;
+      letter-spacing: -0.03em;
     }
 
     .learn-subtitle {
-      margin: 0 16px 18px;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 500; /* Medium */
-      font-size: 18px;
-      color: var(--muted);
-    }
-
-    /* ───────── Anatomy layout ───────── */
-    .anatomy-wrap {
-      position: relative;
-      max-width: 430px;
-      margin: 0 auto;
-      padding: 0 16px 40px;
-    }
-
-    /* Labels (left side) */
-    .labels {
-      position: absolute;
-      left: 0;
-      top: 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 90px;
-      z-index: 2;
-    }
-
-    .label h3 {
-      margin: 0;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 28px;
-      letter-spacing: -0.02em;
-    }
-
-    .label p {
-      margin: 2px 0 0;
+      margin: 0 0 12px;
       font-size: 15px;
-      color: var(--muted);
+      color: #6a7586;
     }
 
     /* SVG container */
-    .cigar-graphic {
+    .anatomy-graphic {
       display: flex;
       justify-content: center;
-      margin-left: 90px; /* space for labels */
+      align-items: center;
+      width: 100%;
+      margin-top: 8px;
     }
 
-    .cigar-graphic img {
-      width: 220px;          /* ✅ THIS fixes the issue */
-      max-width: 100%;
+    .anatomy-graphic img {
+      width: 100%;
+      max-width: 340px;
+      max-height: calc(100vh - 240px);
       height: auto;
+      object-fit: contain;
       display: block;
-    }
-
-    /* Small phones */
-    @media (max-width: 380px) {
-      .labels {
-        gap: 70px;
-      }
-      .cigar-graphic img {
-        width: 200px;
-      }
     }
   </style>
 </head>
 
 <body>
-
   <!-- Top bar -->
-  <div class="learn-topbar">
-    <button class="learn-back" onclick="history.back()">←</button>
-  </div>
+  <header class="learn-topbar">
+    <button
+      type="button"
+      class="pos-back"
+      onclick="window.history.back()"
+      aria-label="Back"
+    >
+      ←
+    </button>
+  </header>
 
-  <!-- Title -->
-  <h1 class="learn-title">Anatomy</h1>
-  <div class="learn-subtitle">Click for an overview of each layer.</div>
+  <main class="learn-page">
+    <h1 class="learn-title">Anatomy</h1>
+    <p class="learn-subtitle">Click for an overview of each layer.</p>
 
-  <!-- Content -->
-  <section class="anatomy-wrap">
-
-    <!-- Labels -->
-    <div class="labels">
-      <div class="label">
-        <h3>Wrapper</h3>
-        <p>Outer most layer</p>
-      </div>
-
-      <div class="label">
-        <h3>Binder</h3>
-        <p>Middle layer</p>
-      </div>
-
-      <div class="label">
-        <h3>Filler</h3>
-        <p>Interior layer</p>
-      </div>
-    </div>
-
-    <!-- Graphic -->
-    <div class="cigar-graphic">
+    <div class="anatomy-graphic">
       <img
         src="/img/icons/learn/learnanatomy.svg"
-        alt="Cigar Anatomy"
+        alt="Cigar anatomy diagram"
       />
     </div>
-
-  </section>
-
+  </main>
 </body>
 </html>
