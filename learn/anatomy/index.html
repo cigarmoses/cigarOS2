@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   />
-  <title>Learn • Anatomy</title>
+  <title>Anatomy</title>
 
   <!-- Global SF Pro -->
   <link rel="stylesheet" href="/css/type.css" />
@@ -16,7 +16,6 @@
     body {
       margin: 0;
       background: #ffffff;
-      color: #0f1a2c;
       font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
       min-height: 100vh;
     }
@@ -37,66 +36,19 @@
       cursor: pointer;
     }
 
-    /* Page wrapper */
-    .learn-page {
-      padding: 8px 16px 24px;
-    }
-
-    /* Title */
-    .learn-title {
-      margin: 12px 0 4px;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 900;
-      font-size: 42px;
-      letter-spacing: -0.03em;
-    }
-
-    .learn-subtitle {
-      margin: 0 0 12px;
-      font-size: 15px;
-      color: #6a7586;
-    }
-
-    /* Anatomy layout */
-    .anatomy-layout {
-      display: grid;
-      grid-template-columns: 110px 1fr;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    /* Labels */
-    .anatomy-labels {
+    /* Centered container */
+    .anatomy-container {
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: calc(100vh - 260px);
-      max-height: 420px;
-      padding-top: 10px;
-      padding-bottom: 10px;
+      align-items: center;
+      justify-content: center;
+      height: calc(100vh - 60px);
+      padding: 16px;
     }
 
-    .anatomy-label {
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 22px;
-      letter-spacing: -0.02em;
-    }
-
-    .anatomy-label span {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: #6a7586;
-      margin-top: 2px;
-    }
-
-    /* SVG */
-    .anatomy-graphic img {
+    .anatomy-container img {
       width: 100%;
-      max-width: 320px;
-      max-height: calc(100vh - 240px);
+      max-width: 360px;
+      max-height: 100%;
       height: auto;
       object-fit: contain;
       display: block;
@@ -105,7 +57,7 @@
 </head>
 
 <body>
-  <!-- Top bar -->
+  <!-- Back button -->
   <header class="learn-topbar">
     <button
       type="button"
@@ -117,37 +69,12 @@
     </button>
   </header>
 
-  <main class="learn-page">
-    <h1 class="learn-title">Anatomy</h1>
-    <p class="learn-subtitle">Click for an overview of each layer.</p>
-
-    <section class="anatomy-layout">
-      <!-- Labels -->
-      <div class="anatomy-labels">
-        <div class="anatomy-label">
-          Wrapper
-          <span>Outer layer</span>
-        </div>
-
-        <div class="anatomy-label">
-          Binder
-          <span>Middle layer</span>
-        </div>
-
-        <div class="anatomy-label">
-          Filler
-          <span>Interior layer</span>
-        </div>
-      </div>
-
-      <!-- Graphic -->
-      <div class="anatomy-graphic">
-        <img
-          src="/anatomynew2.svg"
-          alt="Cigar anatomy diagram"
-        />
-      </div>
-    </section>
+  <!-- Centered SVG -->
+  <main class="anatomy-container">
+    <img
+      src="/img/icons/learn/anatomylearn2.svg"
+      alt="Cigar anatomy diagram"
+    />
   </main>
 </body>
 </html>
