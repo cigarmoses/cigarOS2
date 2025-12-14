@@ -8,15 +8,17 @@
   <!-- Global SF Pro -->
   <link rel="stylesheet" href="/css/type.css" />
 
-  <!-- Shared POS / Learn styles -->
-  <link rel="stylesheet" href="/pos/pos.css" />
-
   <style>
     :root {
-      --bg: #ffffff;
       --ink: #0f1a2c;
-      --muted: #6a7586;
-      --card: #ffffff;
+      --accent: #007aff;
+      --bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
     }
 
     body {
@@ -24,77 +26,107 @@
       background: var(--bg);
       font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
       color: var(--ink);
-      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden; /* ✅ no page scroll */
     }
 
-    /* Top bar – matches Anatomy */
+    /* ───────── Top bar (match Learn/POS gap style) ───────── */
     .learn-topbar {
-      padding: 12px 16px 0;
+      padding: 14px 16px 0;
       display: flex;
       align-items: center;
+      justify-content: space-between;
     }
 
-    .learn-back {
-      display: inline-flex;
-      align-items: center;
+    .icon-btn {
       border: none;
       background: none;
-      padding: 4px 0;
+      padding: 6px 4px;
       cursor: pointer;
-      color: #007aff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .learn-back-icon {
-      font-size: 20px;
-      line-height: 1;
+    .icon-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--accent);
     }
 
-    /* Title */
+    /* ───────── Title (same spacing system as Learn home) ───────── */
     .learn-title {
-      margin: 12px 16px 16px;
+      margin: 28px 16px 10px;
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-weight: 800;
-      font-size: 42px;
-      letter-spacing: -0.03em;
+      font-size: 56px;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--ink);
     }
 
-    /* Content */
+    /* ───────── Fit-to-screen Graphic Area ───────── */
     .learn-content {
-      padding: 0 16px 32px;
+      height: calc(100vh - 14px - 22px - 28px - 10px - 56px - 16px); 
+      /* Explanation (rough):
+         - topbar padding/top + icon height
+         - title margin-top + title + margin-bottom
+         This leaves remaining height for the SVG.
+         We keep it stable across iPhone sizes. */
+      padding: 0 16px 16px;
       display: flex;
+      align-items: center;
       justify-content: center;
     }
 
-    /* Centered SVG */
     .colors-graphic {
       width: 100%;
-      max-width: 420px;
-      height: auto;
+      height: 100%;
+      max-width: 520px;
+      max-height: 100%;
+      object-fit: contain; /* ✅ fits cleanly, no cropping */
       display: block;
+    }
+
+    /* Slightly tighten on very small screens */
+    @media (max-width: 390px) {
+      .learn-title { font-size: 52px; }
+      .learn-content { padding-bottom: 12px; }
     }
   </style>
 </head>
 
 <body>
-
   <!-- Top bar -->
-  <div class="learn-topbar">
-    <button class="learn-back" onclick="history.back()">
-      <span class="learn-back-icon">←</span>
+  <header class="learn-topbar">
+    <button class="icon-btn" id="learn-back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M15 18L9 12L15 6"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+      </svg>
     </button>
-  </div>
+    <span aria-hidden="true"></span>
+  </header>
 
   <!-- Title -->
   <h1 class="learn-title">Colors</h1>
 
   <!-- Graphic -->
-  <div class="learn-content">
+  <main class="learn-content" aria-label="Cigar Wrapper Colors Graphic">
     <img
-      src="/img/icons/learn/learncolors.svg"
+      src="/img/icons/learn/learncolors.svg?v=1"
       alt="Cigar Wrapper Colors"
       class="colors-graphic"
     />
-  </div>
+  </main>
 
+  <script>
+    document.getElementById("learn-back")?.addEventListener("click", () => {
+      history.length > 1 ? history.back() : (window.location.href = "/learn/");
+    });
+  </script>
 </body>
 </html>
