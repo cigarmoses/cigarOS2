@@ -10,8 +10,6 @@
 
   <!-- Global SF Pro -->
   <link rel="stylesheet" href="/css/type.css" />
-
-  <!-- POS / Learn shared styles -->
   <link rel="stylesheet" href="/pos/pos.css" />
 
   <style>
@@ -59,18 +57,45 @@
       color: #6a7586;
     }
 
-    /* SVG container */
-    .anatomy-graphic {
-      display: flex;
-      justify-content: center;
+    /* Anatomy layout */
+    .anatomy-layout {
+      display: grid;
+      grid-template-columns: 110px 1fr;
       align-items: center;
-      width: 100%;
+      gap: 8px;
       margin-top: 8px;
     }
 
+    /* Labels */
+    .anatomy-labels {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: calc(100vh - 260px);
+      max-height: 420px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .anatomy-label {
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .anatomy-label span {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #6a7586;
+      margin-top: 2px;
+    }
+
+    /* SVG */
     .anatomy-graphic img {
       width: 100%;
-      max-width: 340px;
+      max-width: 320px;
       max-height: calc(100vh - 240px);
       height: auto;
       object-fit: contain;
@@ -96,12 +121,33 @@
     <h1 class="learn-title">Anatomy</h1>
     <p class="learn-subtitle">Click for an overview of each layer.</p>
 
-    <div class="anatomy-graphic">
-      <img
-        src="/img/icons/learn/learnanatomy.svg"
-        alt="Cigar anatomy diagram"
-      />
-    </div>
+    <section class="anatomy-layout">
+      <!-- Labels -->
+      <div class="anatomy-labels">
+        <div class="anatomy-label">
+          Wrapper
+          <span>Outer layer</span>
+        </div>
+
+        <div class="anatomy-label">
+          Binder
+          <span>Middle layer</span>
+        </div>
+
+        <div class="anatomy-label">
+          Filler
+          <span>Interior layer</span>
+        </div>
+      </div>
+
+      <!-- Graphic -->
+      <div class="anatomy-graphic">
+        <img
+          src="/anatomynew2.svg"
+          alt="Cigar anatomy diagram"
+        />
+      </div>
+    </section>
   </main>
 </body>
 </html>
