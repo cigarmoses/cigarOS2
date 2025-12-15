@@ -1,6 +1,6 @@
 // /learn/glossary/glossary.js
 // Sleek iOS-style glossary: grouped list + search + bottom sheet
-// FIX: search now ranks "most likely" matches first (word prefix/exact beats definition matches)
+// + Deep-link support: /learn/glossary/?term=<slug> scrolls + opens the entry
 
 (function () {
   const DATA_URL = "/data/glossary.json";
@@ -49,10 +49,24 @@
   // Helpers
   // ------------------------
   function normalize(s) {
-    return (s || "")
-      .toString()
-      .toLowerCase()
-      .trim();
+    return (s || "").toString().toLowerCase().trim();
+  }
+
+  // slugify must match the global search behavior
+  function toSlug(s) {
+    return normalize(s)
+      .replace(/&|\/+/g, " ")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  function firstLetter(word) {
+    const w = (word || "").toString().trim();
+    if (!w) return "#";
+    const c = w[0].toUpperCase();
+    return /[A-Z]/.test(c) ? c : "#";
   }
 
   function includesQ(hay, q) {
@@ -120,12 +134,10 @@
       const sb = relevanceScore(b, q);
       if (sa !== sb) return sa - sb;
 
-      // If same score, prefer shorter word (e.g., "robusto" beats "robusto extra largo blah")
       const aw = (a.word || "").toString().trim();
       const bw = (b.word || "").toString().trim();
       if (aw.length !== bw.length) return aw.length - bw.length;
 
-      // Final tiebreak: alphabetical by word
       return aw.localeCompare(bw, undefined, { sensitivity: "base" });
     };
   }
@@ -190,10 +202,18 @@
         const row = el("div", "row");
         row.tabIndex = 0;
 
+        // ✅ Deep-link anchors
+        // Each glossary entry row gets an id equal to its slug
+        if (item.slug) row.id = item.slug;
+        if (item.slug) row.setAttribute("data-slug", item.slug);
+
         const left = el("div", "row-left");
         const word = el("div", "row-word", item.word);
 
-        const defPreview = (item.definition || "").toString().replace(/\s+/g, " ").trim();
+        const defPreview = (item.definition || "")
+          .toString()
+          .replace(/\s+/g, " ")
+          .trim();
         const subText = defPreview.length > 96 ? defPreview.slice(0, 96) + "…" : defPreview;
         const sub = el("div", "row-sub", subText);
 
@@ -253,7 +273,6 @@
     sheet.classList.add("is-open");
     sheet.setAttribute("aria-hidden", "false");
 
-    // lock scroll behind sheet
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
   }
@@ -263,7 +282,6 @@
     sheet.setAttribute("aria-hidden", "true");
     overlay.classList.remove("is-open");
 
-    // unlock after animation
     window.setTimeout(() => {
       overlay.hidden = true;
       document.documentElement.style.overflow = "";
@@ -289,17 +307,14 @@
 
     clearBtn.classList.toggle("is-visible", searching);
 
-    // 1) filter
     let filtered = allItems.filter((it) => matches(it, q));
 
-    // 2) rank (MOST IMPORTANT FIX)
     if (searching) {
       filtered = filtered.sort(compareByRelevance(q));
     }
 
     activeItems = filtered;
 
-    // 3) render (when searching, sections appear in relevance order)
     render(activeItems, searching);
   }
 
@@ -312,14 +327,88 @@
   });
 
   // ------------------------
+  // Deep-link support
+  // /learn/glossary/?term=<slug>
+  // ------------------------
+  function getTermParam() {
+    const params = new URLSearchParams(window.location.search);
+    const term = params.get("term");
+    if (!term) return "";
+    return decodeURIComponent(term).trim();
+  }
+
+  function jumpToTerm(termRaw) {
+    if (!termRaw) return;
+
+    // term can be slug or raw word — support both
+    const targetSlug = toSlug(termRaw);
+
+    // Find item in data (prefer exact slug match)
+    const item =
+      allItems.find((it) => (it.slug || "") === termRaw) ||
+      allItems.find((it) => (it.slug || "") === targetSlug) ||
+      allItems.find((it) => normalize(it.word) === normalize(termRaw)) ||
+      null;
+
+    if (!item) return;
+
+    // Ensure list is in "full mode" when jumping
+    // (clear any existing search filter so the row exists)
+    if (searchEl && searchEl.value) {
+      searchEl.value = "";
+    }
+    applySearch();
+
+    // Scroll to row by id
+    const elRow = document.getElementById(item.slug || targetSlug);
+    if (elRow) {
+      elRow.scrollIntoView({ behavior: "smooth", block: "start" });
+      // small delay so the scroll finishes before opening sheet
+      window.setTimeout(() => openSheet(item), 180);
+    } else {
+      // If for any reason row not found, still open sheet
+      openSheet(item);
+    }
+  }
+
+  // ------------------------
   // Init
   // ------------------------
   (async function init() {
     try {
-      allItems = await loadData();
+      const raw = await loadData();
+
+      // Normalize keys + compute slug + letter
+      allItems = raw.map((x) => {
+        const word = x.word ?? x.Word ?? "";
+        const definition = x.definition ?? x.Definition ?? "";
+        const aka = x.aka ?? x.AKA ?? x.Aka ?? "";
+        const language = x.language ?? x.Language ?? "";
+
+        const slug = x.slug || toSlug(word);
+        const letter = x.letter || firstLetter(word);
+
+        return {
+          ...x,
+          word,
+          definition,
+          aka,
+          language,
+          slug,
+          letter,
+        };
+      });
+
       activeItems = allItems.slice();
       render(activeItems, false);
       applySearch();
+
+      // ✅ Handle /learn/glossary/?term=...
+      const term = getTermParam();
+      if (term) {
+        // wait a tick to ensure DOM is painted
+        window.setTimeout(() => jumpToTerm(term), 60);
+      }
     } catch (err) {
       console.error(err);
       listEl.innerHTML = "";
