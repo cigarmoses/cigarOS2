@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Learn • Shapes</title>
 
-  <!-- Global Type -->
+  <!-- Global SF Pro -->
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
@@ -16,68 +16,119 @@
       color: #0f1a2c;
     }
 
-    .learn-page {
-      padding: 20px 16px 32px;
+    /* Page wrapper */
+    .shapes-page {
+      padding: 16px 16px 32px;
     }
 
-    /* Page Title */
-    .learn-title {
+    /* Top bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: #007aff;
+      font-size: 22px;
+      padding: 6px 6px 6px 0;
+      cursor: pointer;
+    }
+
+    /* Title */
+    .page-title {
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-weight: 800;
       font-size: 34px;
       letter-spacing: -0.03em;
-      margin: 0 0 20px;
+      margin: 4px 0 20px;
     }
 
-    /* Shapes grid */
-    .shapes-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-
+    /* Shape cards */
     .shape-card {
       background: #ffffff;
-      border-radius: 16px;
-      padding: 16px;
-      text-align: center;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+      border-radius: 18px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      overflow: hidden;
     }
 
     .shape-card img {
       width: 100%;
-      max-width: 120px;
       height: auto;
-      margin-bottom: 12px;
+      display: block;
     }
 
-    /* ✅ FIX: iOS SF Pro Display Bold */
-    .shape-name {
+    .shape-content {
+      padding: 14px 16px 16px;
+    }
+
+    /* ✅ ONLY INTENTIONAL CHANGE */
+    .shape-title {
       font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 700;
-      font-size: 17px;
+      font-weight: 700; /* Bold */
+      font-size: 22px;
       letter-spacing: -0.02em;
+      margin: 0 0 6px;
+    }
+
+    .shape-desc {
+      font-size: 15px;
+      line-height: 1.4;
+      color: #5f6b7a;
+      margin: 0;
     }
   </style>
 </head>
 
 <body>
-  <main class="learn-page">
-    <h1 class="learn-title">Shapes</h1>
+  <main class="shapes-page">
 
-    <section class="shapes-grid">
-      <div class="shape-card">
-        <img src="/img/icons/learn/robusto.svg" alt="Robusto">
-        <div class="shape-name">Robusto</div>
+    <!-- Back -->
+    <div class="top-bar">
+      <button class="back-btn" onclick="history.back()">←</button>
+    </div>
+
+    <!-- Title -->
+    <h1 class="page-title">Shapes</h1>
+
+    <!-- Parejo -->
+    <section class="shape-card">
+      <img src="/img/learn/shapes/parejo.png" alt="Parejo cigar shape">
+      <div class="shape-content">
+        <h2 class="shape-title">Parejo</h2>
+        <p class="shape-desc">
+          Straight sided cigars; aka standard or straight cigars.
+          This is the most common shape.
+        </p>
       </div>
-
-      <div class="shape-card">
-        <img src="/img/icons/learn/torpedo.svg" alt="Torpedo">
-        <div class="shape-name">Torpedo</div>
-      </div>
-
-      <!-- Continue cards as needed -->
     </section>
+
+    <!-- Torpedo -->
+    <section class="shape-card">
+      <img src="/img/learn/shapes/torpedo.png" alt="Torpedo cigar shape">
+      <div class="shape-content">
+        <h2 class="shape-title">Torpedo</h2>
+        <p class="shape-desc">
+          Tapered at both the head &amp; the foot (pointy head).
+        </p>
+      </div>
+    </section>
+
+    <!-- Presidente -->
+    <section class="shape-card">
+      <img src="/img/learn/shapes/presidente.png" alt="Presidente cigar shape">
+      <div class="shape-content">
+        <h2 class="shape-title">Presidente</h2>
+        <p class="shape-desc">
+          Aka Salomon — tapered at the head &amp; the foot
+          (nipple foot).
+        </p>
+      </div>
+    </section>
+
   </main>
 </body>
 </html>
