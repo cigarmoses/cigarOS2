@@ -5,135 +5,19 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Learn</title>
 
+  <!-- Global typography -->
   <link rel="stylesheet" href="/css/type.css" />
 
-  <style>
-    :root {
-      --ink: #0f1a2c;
-      --accent: #007aff;
-      --bg: #ffffff;
-      --card: #ffffff;
-      --radius: 22px;
-
-      /* soft Learn-style shadow */
-      --shadow-main: 0 10px 28px rgba(15,26,44,0.08);
-      --shadow-soft: 0 2px 6px rgba(15,26,44,0.05);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* ───────── Top Bar ───────── */
-    .learn-topbar {
-      padding: 14px 16px 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .icon-btn {
-      border: none;
-      background: none;
-      padding: 6px 4px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .icon-btn svg {
-      width: 22px;
-      height: 22px;
-      stroke: var(--accent);
-    }
-
-    /* ───────── Title (POS-matched gap) ───────── */
-    .learn-title {
-      margin: 28px 16px 18px;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 56px;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      color: var(--ink);
-    }
-
-    /* ───────── Grid ───────── */
-    .learn-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      padding: 0 16px 32px;
-    }
-
-    /* ───────── Cards ───────── */
-    .learn-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-main), var(--shadow-soft);
-      padding: 18px 14px 16px;
-      min-height: 150px;
-
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-
-      text-decoration: none;
-      color: inherit;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .learn-card:active {
-      transform: scale(0.99);
-      box-shadow: 0 6px 18px rgba(15,26,44,0.10),
-                  0 1px 3px rgba(15,26,44,0.06);
-    }
-
-    /* ───────── Icons ───────── */
-    .learn-icon {
-      width: 84px;
-      height: 84px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .learn-icon img {
-      width: 84px;
-      height: 84px;
-      object-fit: contain;
-      display: block;
-    }
-
-    /* ───────── Labels ───────── */
-    .learn-label {
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 400;
-      font-size: 22px;
-      letter-spacing: -0.01em;
-      color: #000000;
-      text-align: center;
-      line-height: 1.15;
-    }
-  </style>
+  <!-- Learn unified styles (single source of truth) -->
+  <link rel="stylesheet" href="/learn/learn.css" />
 </head>
 
-<body>
+<body class="learn-page">
+
   <!-- Top bar -->
   <header class="learn-topbar">
     <button class="icon-btn" id="learn-back" aria-label="Back">
-      <svg viewBox="0 0 24 24" fill="none">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M15 18L9 12L15 6"
               stroke-width="2.5"
               stroke-linecap="round"
@@ -142,7 +26,7 @@
     </button>
 
     <button class="icon-btn" aria-label="Search">
-      <svg viewBox="0 0 24 24" fill="none">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
               stroke-width="2.2"
               stroke-linecap="round" />
@@ -153,60 +37,57 @@
     </button>
   </header>
 
-  <h1 class="learn-title">Learn</h1>
+  <!-- Title (LOCKED to Learn system) -->
+  <h1 class="learn-page-title">Learn</h1>
 
   <!-- Grid -->
   <main class="learn-grid">
 
     <a class="learn-card" href="/learn/vitolas/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/vitolas.svg?v=1" alt="Vitolas">
+        <img src="/img/icons/learn/vitolas.svg?v=1" alt="Vitolas" />
       </div>
       <div class="learn-label">Vitolas</div>
     </a>
 
     <a class="learn-card" href="/learn/shapes/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/shapes.svg?v=1" alt="Shapes">
+        <img src="/img/icons/learn/shapes.svg?v=1" alt="Shapes" />
       </div>
       <div class="learn-label">Shapes</div>
     </a>
 
-    <!-- ✅ COLORS (plural everywhere) -->
     <a class="learn-card" href="/learn/colors/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/colors.svg?v=2" alt="Colors">
+        <img src="/img/icons/learn/colors.svg?v=2" alt="Colors" />
       </div>
       <div class="learn-label">Colors</div>
     </a>
 
     <a class="learn-card" href="/learn/anatomy/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/anatomy.svg?v=1" alt="Anatomy">
+        <img src="/img/icons/learn/anatomy.svg?v=1" alt="Anatomy" />
       </div>
       <div class="learn-label">Anatomy</div>
     </a>
 
     <a class="learn-card" href="/learn/ring/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/ring.svg?v=1" alt="Ring">
+        <img src="/img/icons/learn/ring.svg?v=1" alt="Ring" />
       </div>
       <div class="learn-label">Ring</div>
     </a>
 
     <a class="learn-card" href="/learn/glossary/">
       <div class="learn-icon">
-        <img src="/img/icons/learn/glossary.svg?v=1" alt="Glossary">
+        <img src="/img/icons/learn/glossary.svg?v=1" alt="Glossary" />
       </div>
       <div class="learn-label">Glossary</div>
     </a>
 
   </main>
 
-  <script>
-    document.getElementById("learn-back")?.addEventListener("click", () => {
-      history.length > 1 ? history.back() : (window.location.href = "/");
-    });
-  </script>
+  <!-- Learn behavior (back button POS logic) -->
+  <script src="/learn/learn.js"></script>
 </body>
 </html>
