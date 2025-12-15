@@ -5,50 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Learn • Vitolas</title>
 
-  <!-- Global typography -->
+  <!-- Global typography + Learn system -->
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/css/learn.css" />
 
   <style>
-    :root {
-      --bg: #ffffff;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --accent: #007aff;
-    }
+    /* =========================
+       Vitolas – page-specific
+       ========================= */
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* Top bar */
-    .learn-topbar {
-      padding: 12px 16px 0;
-    }
-
-    .learn-back {
-      border: none;
-      background: none;
-      color: var(--accent);
-      font-size: 22px;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    /* Scrollable page area */
-    .learn-page {
-      padding: 0 16px 40px;
-      height: calc(100vh - 44px);
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* Cards — matches Shapes */
     .vitola-card {
       background: #ffffff;
       border-radius: 18px;
@@ -69,25 +34,27 @@
 
     .vitola-name {
       margin: 0 0 6px;
-      font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      font-weight: var(--weight-display-bold, 700);
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 700;
       letter-spacing: -0.02em;
     }
 
     .vitola-desc {
       margin: 0;
-      color: var(--muted);
+      color: #6a7586;
       line-height: 1.35;
     }
   </style>
 </head>
 
-<body>
+<body class="learn-page">
 
-  <div class="learn-topbar">
-    <button class="learn-back" onclick="history.back()">←</button>
-  </div>
+  <!-- Top bar -->
+  <header class="learn-topbar">
+    <button class="learn-back" aria-label="Back">←</button>
+  </header>
 
+  <!-- Page content -->
   <main class="learn-page">
     <h1 class="learn-page-title">Vitolas</h1>
 
@@ -107,5 +74,7 @@
 
   </main>
 
+  <!-- Learn behavior (POS-style back) -->
+  <script src="/learn/learn.js"></script>
 </body>
 </html>
