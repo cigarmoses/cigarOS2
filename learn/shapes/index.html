@@ -5,50 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Learn • Shapes</title>
 
-  <!-- Global typography & site styles (already established) -->
+  <!-- Global typography + Learn system -->
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/css/learn.css" />
 
   <style>
-    :root {
-      --bg: #ffffff;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --accent: #007aff;
-    }
+    /* =========================
+       Shapes – page-specific
+       ========================= */
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* Top bar (back arrow) — matches Colors/Anatomy */
-    .learn-topbar {
-      padding: 12px 16px 0;
-    }
-
-    .learn-back {
-      border: none;
-      background: none;
-      color: var(--accent);
-      font-size: 22px;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    /* Page wrapper — matches Learn rhythm */
-    .learn-page {
-      padding: 0 16px 40px;
-      height: calc(100vh - 44px);
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* Cards */
     .shape-card {
       background: #ffffff;
       border-radius: 18px;
@@ -67,31 +32,35 @@
       padding: 14px 16px 16px;
     }
 
-    /* ⚠️ NO font overrides here — uses your existing rules */
     .shape-name {
       margin: 0 0 6px;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
 
     .shape-desc {
       margin: 0;
-      color: var(--muted);
+      color: #6a7586;
+      line-height: 1.35;
     }
   </style>
 </head>
 
-<body>
+<body class="learn-page">
 
-  <div class="learn-topbar">
-    <button class="learn-back" onclick="history.back()">←</button>
-  </div>
+  <!-- Top bar -->
+  <header class="learn-topbar">
+    <button class="learn-back" aria-label="Back">←</button>
+  </header>
 
+  <!-- Page content -->
   <main class="learn-page">
-    <!-- GLOBAL, LOCKED TITLE -->
     <h1 class="learn-page-title">Shapes</h1>
 
     <!-- Parejo -->
     <section class="shape-card">
-      <img src="/img/icons/learn/parejo.png" alt="Parejo cigar shape">
+      <img src="/img/icons/learn/parejo.png" alt="Parejo cigar shape" />
       <div class="shape-body">
         <h2 class="shape-name">Parejo</h2>
         <p class="shape-desc">
@@ -103,7 +72,7 @@
 
     <!-- Torpedo -->
     <section class="shape-card">
-      <img src="/img/icons/learn/torpedo.png" alt="Torpedo cigar shape">
+      <img src="/img/icons/learn/torpedo.png" alt="Torpedo cigar shape" />
       <div class="shape-body">
         <h2 class="shape-name">Torpedo</h2>
         <p class="shape-desc">
@@ -114,7 +83,7 @@
 
     <!-- Presidente -->
     <section class="shape-card">
-      <img src="/img/icons/learn/presidente.png" alt="Presidente cigar shape">
+      <img src="/img/icons/learn/presidente.png" alt="Presidente cigar shape" />
       <div class="shape-body">
         <h2 class="shape-name">Presidente</h2>
         <p class="shape-desc">
@@ -125,7 +94,7 @@
 
     <!-- Perfecto -->
     <section class="shape-card">
-      <img src="/img/icons/learn/perfecto.png" alt="Perfecto cigar shape">
+      <img src="/img/icons/learn/perfecto.png" alt="Perfecto cigar shape" />
       <div class="shape-body">
         <h2 class="shape-name">Perfecto</h2>
         <p class="shape-desc">
@@ -136,7 +105,7 @@
 
     <!-- Pyramid -->
     <section class="shape-card">
-      <img src="/img/icons/learn/pyramid.png" alt="Pyramid cigar shape">
+      <img src="/img/icons/learn/pyramid.png" alt="Pyramid cigar shape" />
       <div class="shape-body">
         <h2 class="shape-name">Pyramid</h2>
         <p class="shape-desc">
@@ -147,7 +116,7 @@
 
     <!-- Culebra -->
     <section class="shape-card">
-      <img src="/img/icons/learn/culebra.png" alt="Culebra cigar shape">
+      <img src="/img/icons/learn/culebra.png" alt="Culebra cigar shape" />
       <div class="shape-body">
         <h2 class="shape-name">Culebra</h2>
         <p class="shape-desc">
@@ -157,5 +126,8 @@
     </section>
 
   </main>
+
+  <!-- Learn behavior (POS-style back) -->
+  <script src="/learn/learn.js"></script>
 </body>
 </html>
