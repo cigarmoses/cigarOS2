@@ -8,47 +8,50 @@
   />
   <title>Learn • Ring</title>
 
-  <!-- Global SF Pro -->
+  <!-- SF Pro (learn-page-title lives here) -->
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
     :root {
+      --bg: #ffffff;
       --ink: #0f1a2c;
       --muted: #6a7586;
+      --accent: #007aff;
     }
 
     body {
       margin: 0;
-      background: #ffffff;
+      background: var(--bg);
       font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
       color: var(--ink);
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
-    /* Top bar */
+    /* Top bar (back arrow) */
     .learn-topbar {
-      padding: 16px 18px 0;
+      padding: 12px 16px 0;
       display: flex;
       align-items: center;
     }
 
-    .pos-back {
+    .learn-back {
       border: none;
       background: none;
-      color: #007aff;
-      font-size: 20px;
+      color: var(--accent);
+      font-size: 22px;
       cursor: pointer;
+      padding: 0;
     }
 
-    /* Title */
-    .learn-title {
-      margin: 8px 18px 0;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 900;
-      font-size: 36px;
-      letter-spacing: -0.03em;
+    /* Page wrapper – matches Learn rhythm */
+    .learn-page {
+      padding: 0 16px 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     /* Image wrapper */
@@ -57,7 +60,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 16px 12px;
     }
 
     .learn-image-wrap img {
@@ -66,25 +69,30 @@
       max-height: 70vh;
       height: auto;
       object-fit: contain;
+      display: block;
     }
   </style>
 </head>
 
 <body>
+
   <!-- Top bar -->
-  <header class="learn-topbar">
-    <button class="pos-back" onclick="history.back()">←</button>
-  </header>
+  <div class="learn-topbar">
+    <button class="learn-back" onclick="history.back()">←</button>
+  </div>
 
-  <!-- Title -->
-  <h1 class="learn-title">Ring</h1>
+  <main class="learn-page">
+    <!-- GLOBAL, LOCKED TITLE -->
+    <h1 class="learn-page-title">Ring</h1>
 
-  <!-- Centered SVG -->
-  <main class="learn-image-wrap">
-    <img
-      src="/img/icons/learn/ringcoins.svg"
-      alt="Cigar Ring Diagram"
-    />
+    <!-- Centered SVG -->
+    <div class="learn-image-wrap">
+      <img
+        src="/img/icons/learn/ringcoins.svg"
+        alt="Cigar Ring Diagram"
+      />
+    </div>
   </main>
+
 </body>
 </html>
