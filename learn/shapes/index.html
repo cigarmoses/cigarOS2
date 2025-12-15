@@ -10,34 +10,42 @@
   <link rel="stylesheet" href="/css/learn.css" />
 
   <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #0f1a2c;
+      --muted: #6a7586;
+      --accent: #007aff;
+    }
+
     body {
       margin: 0;
-      background: #ffffff;
-      color: #0f1a2c;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+      height: 100vh;
+      overflow: hidden;
     }
 
-    .learn-page {
-      padding: 16px 16px 40px;
-    }
-
-    /* Header */
-    .learn-top {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
+    /* Top bar (back arrow) — matches Colors/Anatomy */
+    .learn-topbar {
+      padding: 12px 16px 0;
     }
 
     .learn-back {
       border: none;
       background: none;
-      color: #007aff;
+      color: var(--accent);
       font-size: 22px;
-      padding: 6px 6px 6px 0;
       cursor: pointer;
+      padding: 0;
     }
 
-    .learn-title {
-      margin: 6px 0 18px;
+    /* Page wrapper — matches Learn rhythm */
+    .learn-page {
+      padding: 0 16px 40px;
+      height: calc(100vh - 44px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     /* Cards */
@@ -66,19 +74,20 @@
 
     .shape-desc {
       margin: 0;
-      color: #6a7586;
+      color: var(--muted);
     }
   </style>
 </head>
 
 <body>
+
+  <div class="learn-topbar">
+    <button class="learn-back" onclick="history.back()">←</button>
+  </div>
+
   <main class="learn-page">
-
-    <div class="learn-top">
-      <button class="learn-back" onclick="history.back()">←</button>
-    </div>
-
-    <h1 class="learn-title">Shapes</h1>
+    <!-- GLOBAL, LOCKED TITLE -->
+    <h1 class="learn-page-title">Shapes</h1>
 
     <!-- Parejo -->
     <section class="shape-card">
