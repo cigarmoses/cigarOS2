@@ -7,152 +7,89 @@
 
   <!-- Global SF Pro -->
   <link rel="stylesheet" href="/css/type.css" />
-
   <!-- POS global styles -->
   <link rel="stylesheet" href="/pos/pos.css" />
-
-  <style>
-    :root {
-      --bg: #ffffff;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --card: #f2f4f7;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      font-family: var(--font-text);
-      color: var(--ink);
-      min-height: 100vh;
-    }
-
-    /* Top Back Button */
-    .pos-topbar {
-      padding: 16px 18px 0;
-      display: flex;
-      align-items: center;
-    }
-
-    .pos-back {
-      display: inline-flex;
-      align-items: center;
-      color: #007aff;
-      font-size: 22px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 6px;
-    }
-
-    .pos-back span {
-      line-height: 1;
-      font-weight: 500;
-    }
-
-    /* PAGE TITLE */
-    .pos-title {
-      margin: 18px 0 18px;
-      padding-left: 24px;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 900;
-      font-size: 64px;
-      letter-spacing: -0.04em;
-    }
-
-    /* GRID OF CATEGORY BOXES */
-    .pos-grid {
-      padding: 0 18px 40px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-    }
-
-    .pos-card {
-      background: var(--card);
-      border-radius: 22px;
-      padding: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-      display: flex;
-      flex-direction: column;
-      cursor: pointer;
-    }
-
-    .pos-card-title {
-      font-family: var(--font-display);
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .pos-card-desc {
-      font-size: 14px;
-      line-height: 1.35;
-      color: var(--muted);
-    }
-
-    .pos-card img {
-      width: 42px;
-      height: 42px;
-      object-fit: contain;
-      margin-bottom: 10px;
-    }
-  </style>
 </head>
 
-<body>
+<body class="pos-home">
 
-  <!-- TOP BAR -->
+  <!-- Top bar (back arrow only, no "Back" text) -->
   <header class="pos-topbar">
-    <!-- Back button: icon only, goes to site root -->
-    <button class="pos-back" onclick="window.location.href='/'">
-      <span>←</span>
+    <button type="button" class="pos-back" id="pos-back" aria-label="Back">
+      <span class="pos-back-icon">←</span>
     </button>
   </header>
 
-  <!-- PAGE TITLE -->
-  <h1 class="pos-title">POS</h1>
+  <main class="pos-main">
+    <h1 class="pos-title">POS</h1>
 
-  <!-- CATEGORY GRID -->
-  <section class="pos-grid">
+    <!-- Card grid (Learn-style) -->
+    <section class="pos-grid" aria-label="POS sections">
 
-    <div class="pos-card" onclick="location.href='/pos/cigars/'">
-      <img src="/img/icons/categories/cigars.svg" alt="">
-      <div class="pos-card-title">Cigars</div>
-      <div class="pos-card-desc">Browse all cigars by brand.</div>
-    </div>
+      <button class="pos-card" type="button" data-href="/pos/cigars/">
+        <div class="pos-card-icon">
+          <img src="/img/icons/pos/cigars.svg" alt="" />
+        </div>
+        <div class="pos-card-title">Cigars</div>
+      </button>
 
-    <div class="pos-card" onclick="location.href='/pos/foodandbevs/'">
-      <img src="/img/icons/categories/foodandbevs.svg" alt="">
-      <div class="pos-card-title">Food & Bevs</div>
-      <div class="pos-card-desc">Drinks and snacks for the lounge.</div>
-    </div>
+      <button class="pos-card" type="button" data-href="/pos/food/">
+        <div class="pos-card-icon">
+          <img src="/img/icons/pos/food.svg" alt="" />
+        </div>
+        <div class="pos-card-title">Food &amp; Bevs</div>
+      </button>
 
-    <div class="pos-card" onclick="location.href='/pos/accessories/'">
-      <img src="/img/icons/categories/accessories.svg" alt="">
-      <div class="pos-card-title">Accessories</div>
-      <div class="pos-card-desc">Lighters, cutters, and more.</div>
-    </div>
+      <button class="pos-card" type="button" data-href="/pos/accessories/">
+        <div class="pos-card-icon">
+          <img src="/img/icons/pos/accessories.svg" alt="" />
+        </div>
+        <div class="pos-card-title">Accessories</div>
+      </button>
 
-    <div class="pos-card" onclick="location.href='/pos/ashtrays/'">
-      <img src="/img/icons/categories/ashtrays.svg" alt="">
-      <div class="pos-card-title">Ashtrays</div>
-      <div class="pos-card-desc">Table and personal ashtrays.</div>
-    </div>
+      <button class="pos-card" type="button" data-href="/pos/ashtrays/">
+        <div class="pos-card-icon">
+          <img src="/img/icons/pos/ashtrays.svg" alt="" />
+        </div>
+        <div class="pos-card-title">Ashtrays</div>
+      </button>
 
-    <div class="pos-card" onclick="location.href='/pos/pipes/'">
-      <img src="/img/icons/categories/pipes.svg" alt="">
-      <div class="pos-card-title">Pipes</div>
-      <div class="pos-card-desc">Pipes and pipe tobacco.</div>
-    </div>
+      <button class="pos-card" type="button" data-href="/pos/pipes/">
+        <div class="pos-card-icon">
+          <img src="/img/icons/pos/pipes.svg" alt="" />
+        </div>
+        <div class="pos-card-title">Pipes</div>
+      </button>
 
-    <div class="pos-card" onclick="location.href='/pos/packs/'">
-      <img src="/img/icons/categories/packs.svg" alt="">
-      <div class="pos-card-title">Packs</div>
-      <div class="pos-card-desc">Samplers, fresh packs, and more.</div>
-    </div>
+      <button class="pos-card" type="button" data-href="/pos/packs/">
+        <div class="pos-card-icon">
+          <img src="/img/icons/pos/packs.svg" alt="" />
+        </div>
+        <div class="pos-card-title">Packs</div>
+      </button>
 
-  </section>
+    </section>
+  </main>
 
+  <script>
+    // Back arrow behavior
+    document.addEventListener("DOMContentLoaded", () => {
+      const backBtn = document.getElementById("pos-back");
+      if (backBtn) {
+        backBtn.addEventListener("click", () => {
+          if (window.history.length > 1) window.history.back();
+          else window.location.href = "/";
+        });
+      }
+
+      // Card navigation
+      document.querySelectorAll(".pos-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          const href = card.getAttribute("data-href");
+          if (href) window.location.href = href;
+        });
+      });
+    });
+  </script>
 </body>
 </html>
