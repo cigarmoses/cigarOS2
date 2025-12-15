@@ -1,12 +1,10 @@
 /* =========================================
-   LEARN PAGES – Unified Header + Layout
-   Single source of truth for ALL Learn pages
-   Matches Learn home (font size, thickness, padding)
+   LEARN – Global System Styles
+   - Learn home tiles match screenshot
+   - Subpages keep same title + spacing
    ========================================= */
 
-/* -----------------------------------------
-   Page base
------------------------------------------ */
+/* Base page */
 .learn-page {
   margin: 0;
   background: #ffffff;
@@ -16,14 +14,12 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* -----------------------------------------
-   Top bar (back arrow)
------------------------------------------ */
+/* Top bar */
 .learn-topbar {
   padding: 14px 16px 0;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* supports pages with right-side icon too */
+  justify-content: space-between;
 }
 
 .learn-back,
@@ -39,7 +35,7 @@
 }
 
 .learn-back {
-  padding: 0; /* keeps your arrow tight when used as text button */
+  padding: 0;
 }
 
 .learn-back svg,
@@ -49,16 +45,10 @@
   stroke: #007aff;
 }
 
-/* -----------------------------------------
-   PAGE TITLE – LOCKED (MATCHES LEARN HOME)
-   Use this on EVERY Learn subpage:
-   <h1 class="learn-page-title">Shapes</h1>
------------------------------------------ */
+/* Page title – LOCKED (matches your Learn home spec) */
 .learn-page-title,
 .learn-title {
-  /* Learn home left spacing = 16px */
   margin: 28px 16px 18px;
-
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-weight: 800;
   font-size: 56px;
@@ -67,9 +57,10 @@
   color: #0f1a2c;
 }
 
-/* -----------------------------------------
-   Learn home grid
------------------------------------------ */
+/* =========================
+   LEARN HOME (tile grid)
+   ========================= */
+
 .learn-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -77,9 +68,6 @@
   padding: 0 16px 32px;
 }
 
-/* -----------------------------------------
-   Learn cards – soft iOS shadow
------------------------------------------ */
 .learn-card {
   background: #ffffff;
   border-radius: 22px;
@@ -109,31 +97,27 @@
     0 1px 3px rgba(15, 26, 44, 0.06);
 }
 
-/* -----------------------------------------
-   Learn home icon sizing
------------------------------------------ */
+/* ✅ KEY FIX:
+   Tile images were too big. Lock them smaller like your screenshot. */
 .learn-icon {
-  width: 84px;
-  height: 84px;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .learn-icon img {
-  width: 84px;
-  height: 84px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
   display: block;
 }
 
-/* -----------------------------------------
-   Learn home label styling (tile labels)
------------------------------------------ */
-.learn-label,
-.learn-card-title {
+/* Tile labels */
+.learn-label {
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-weight: 400;
+  font-weight: 600;          /* slightly bolder like the screenshot */
   font-size: 22px;
   letter-spacing: -0.01em;
   color: #000000;
@@ -142,11 +126,10 @@
   margin: 0;
 }
 
-/* -----------------------------------------
-   Subpage wrapper spacing (Shapes/Colors/etc.)
-   If you use <main class="learn-page"> on subpages,
-   keep 16px side padding consistent with Learn home.
------------------------------------------ */
+/* =========================
+   LEARN SUBPAGES wrapper
+   ========================= */
+
 main.learn-page {
   padding: 0 16px 40px;
 }
