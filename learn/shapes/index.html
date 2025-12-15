@@ -5,54 +5,48 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Learn • Shapes</title>
 
-  <!-- Global SF Pro -->
+  <!-- Global typography & site styles (already established) -->
   <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/css/learn.css" />
 
   <style>
     body {
       margin: 0;
       background: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       color: #0f1a2c;
     }
 
-    /* Page wrapper */
-    .shapes-page {
-      padding: 16px 16px 32px;
+    .learn-page {
+      padding: 16px 16px 40px;
     }
 
-    /* Top bar */
-    .top-bar {
+    /* Header */
+    .learn-top {
       display: flex;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
 
-    .back-btn {
-      background: none;
+    .learn-back {
       border: none;
+      background: none;
       color: #007aff;
       font-size: 22px;
       padding: 6px 6px 6px 0;
       cursor: pointer;
     }
 
-    /* Title */
-    .page-title {
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 34px;
-      letter-spacing: -0.03em;
-      margin: 4px 0 20px;
+    .learn-title {
+      margin: 6px 0 18px;
     }
 
-    /* Shape cards */
+    /* Cards */
     .shape-card {
       background: #ffffff;
       border-radius: 18px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
       overflow: hidden;
+      margin-bottom: 20px;
     }
 
     .shape-card img {
@@ -61,44 +55,36 @@
       display: block;
     }
 
-    .shape-content {
+    .shape-body {
       padding: 14px 16px 16px;
     }
 
-    /* ✅ ONLY INTENTIONAL CHANGE */
-    .shape-title {
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 700; /* Bold */
-      font-size: 22px;
-      letter-spacing: -0.02em;
+    /* ⚠️ NO font overrides here — uses your existing rules */
+    .shape-name {
       margin: 0 0 6px;
     }
 
     .shape-desc {
-      font-size: 15px;
-      line-height: 1.4;
-      color: #5f6b7a;
       margin: 0;
+      color: #6a7586;
     }
   </style>
 </head>
 
 <body>
-  <main class="shapes-page">
+  <main class="learn-page">
 
-    <!-- Back -->
-    <div class="top-bar">
-      <button class="back-btn" onclick="history.back()">←</button>
+    <div class="learn-top">
+      <button class="learn-back" onclick="history.back()">←</button>
     </div>
 
-    <!-- Title -->
-    <h1 class="page-title">Shapes</h1>
+    <h1 class="learn-title">Shapes</h1>
 
     <!-- Parejo -->
     <section class="shape-card">
-      <img src="/img/learn/shapes/parejo.png" alt="Parejo cigar shape">
-      <div class="shape-content">
-        <h2 class="shape-title">Parejo</h2>
+      <img src="/img/icons/learn/parejo.png" alt="Parejo cigar shape">
+      <div class="shape-body">
+        <h2 class="shape-name">Parejo</h2>
         <p class="shape-desc">
           Straight sided cigars; aka standard or straight cigars.
           This is the most common shape.
@@ -108,9 +94,9 @@
 
     <!-- Torpedo -->
     <section class="shape-card">
-      <img src="/img/learn/shapes/torpedo.png" alt="Torpedo cigar shape">
-      <div class="shape-content">
-        <h2 class="shape-title">Torpedo</h2>
+      <img src="/img/icons/learn/torpedo.png" alt="Torpedo cigar shape">
+      <div class="shape-body">
+        <h2 class="shape-name">Torpedo</h2>
         <p class="shape-desc">
           Tapered at both the head &amp; the foot (pointy head).
         </p>
@@ -119,12 +105,44 @@
 
     <!-- Presidente -->
     <section class="shape-card">
-      <img src="/img/learn/shapes/presidente.png" alt="Presidente cigar shape">
-      <div class="shape-content">
-        <h2 class="shape-title">Presidente</h2>
+      <img src="/img/icons/learn/presidente.png" alt="Presidente cigar shape">
+      <div class="shape-body">
+        <h2 class="shape-name">Presidente</h2>
         <p class="shape-desc">
-          Aka Salomon — tapered at the head &amp; the foot
-          (nipple foot).
+          Aka Salomon — taper at the head &amp; the foot (nipple foot).
+        </p>
+      </div>
+    </section>
+
+    <!-- Perfecto -->
+    <section class="shape-card">
+      <img src="/img/icons/learn/perfecto.png" alt="Perfecto cigar shape">
+      <div class="shape-body">
+        <h2 class="shape-name">Perfecto</h2>
+        <p class="shape-desc">
+          Closed at both ends with a bulge in the center.
+        </p>
+      </div>
+    </section>
+
+    <!-- Pyramid -->
+    <section class="shape-card">
+      <img src="/img/icons/learn/pyramid.png" alt="Pyramid cigar shape">
+      <div class="shape-body">
+        <h2 class="shape-name">Pyramid</h2>
+        <p class="shape-desc">
+          Tapered head with a wider foot.
+        </p>
+      </div>
+    </section>
+
+    <!-- Culebra -->
+    <section class="shape-card">
+      <img src="/img/icons/learn/culebra.png" alt="Culebra cigar shape">
+      <div class="shape-body">
+        <h2 class="shape-name">Culebra</h2>
+        <p class="shape-desc">
+          Two or three cigars braided together.
         </p>
       </div>
     </section>
