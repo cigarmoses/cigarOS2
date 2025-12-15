@@ -1,101 +1,131 @@
-/* GLOBAL SF TYPE SYSTEM FOR CIGAROS2 */
+/* ======================================================
+   GLOBAL SF TYPE SYSTEM FOR CIGAROS2
+   Source of truth lives in: /uxui/typography.css
+   This file only imports + provides compatibility aliases
+   ====================================================== */
 
-/* 1. Font-family tokens */
-:root {
-  /* Use Display for big stuff, Text for body.
-     Browsers will fall back gracefully if SF is not present. */
-  --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-text: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+/* 0) Import the portable, never-touch-again typography system */
+@import url("/uxui/typography.css");
 
-  --weight-display-heavy: 800;
-  --weight-display-bold: 700;
-  --weight-text-semibold: 600;
-  --weight-text-regular: 400;
+/* ------------------------------------------------------
+   1) Backwards-compatible token aliases
+   (So you don't have to refactor old CSS)
+   ------------------------------------------------------ */
+:root{
+  /* Existing tokens your project may already reference */
+  --weight-display-heavy: var(--fw-heavy);
+  --weight-display-bold: var(--fw-bold);
+  --weight-text-semibold: var(--fw-semibold);
+  --weight-text-regular: var(--fw-regular);
 }
 
-/* 2. Base body */
-body {
+/* ------------------------------------------------------
+   2) Base body (redundant-safe)
+   /uxui/typography.css already enforces this, but keeping
+   it here ensures type.css alone still works if imported
+   elsewhere.
+   ------------------------------------------------------ */
+body{
   font-family: var(--font-text);
   font-weight: var(--weight-text-regular);
 }
 
-/* 3. HERO TITLES (e.g. MON, big headers on any screen) */
+/* ------------------------------------------------------
+   3) HERO TITLES (big headers on any screen)
+   ------------------------------------------------------ */
 .date-headline .dow,
 .pos-hero-title,
-.home-hero-title {
+.home-hero-title{
   font-family: var(--font-display);
   font-weight: var(--weight-display-heavy); /* Display Heavy */
 }
 
-/* 4. PAGE TITLES (e.g. Today, POS, Loyalty, Learn, etc.) */
+/* ------------------------------------------------------
+   4) PAGE TITLES (Today, POS, Loyalty, Learn, etc.)
+   IMPORTANT: now uses Heavy for consistency across app
+   ------------------------------------------------------ */
 .top-title,
 .pos-screen-title,
-.page-title {
+.page-title{
   font-family: var(--font-display);
-  font-weight: var(--weight-display-bold);  /* Display Bold */
+  font-weight: var(--fw-heavy); /* Heavy (locked) */
 }
 
-/* 5. BIG NUMBERS / STATS (133 cigars, 1.6 sales, 30 avg, etc.) */
+/* ------------------------------------------------------
+   5) BIG NUMBERS / STATS
+   ------------------------------------------------------ */
 .card-value,
 .pos-stat-value,
-.stat-number {
+.stat-number{
   font-family: var(--font-display);
-  font-weight: var(--weight-display-bold);  /* Display Bold/Heavy */
+  font-weight: var(--weight-display-bold);
 }
 
-/* 6. SECTION LABELS (CIGARS / SALES / AVG / VITOLA / BRAND / HISTORY, etc.) */
+/* ------------------------------------------------------
+   6) SECTION LABELS
+   (If you still want uppercase labels, keep this;
+    otherwise you can remove transform/spacing later.)
+   ------------------------------------------------------ */
 .card-label,
 .section-label,
 .pos-section-label,
-.pill-label {
+.pill-label{
   font-family: var(--font-display);
-  font-weight: var(--weight-display-bold);  /* Display Bold */
+  font-weight: var(--weight-display-bold);
   text-transform: uppercase;
-  letter-spacing: 0.05em;                   /* tight but still “UI” */
+  letter-spacing: 0.05em;
 }
 
-/* 7. IMPORTANT NAMES (customer names, cigar names in lists, etc.) */
+/* ------------------------------------------------------
+   7) IMPORTANT NAMES (lists, customers, cigars)
+   ------------------------------------------------------ */
 .history-name,
 .simple-list .label,
 .list-row-title,
 .customer-name,
-.cigar-name {
+.cigar-name{
   font-family: var(--font-text);
-  font-weight: var(--weight-text-semibold); /* Text Semibold */
+  font-weight: var(--weight-text-semibold);
 }
 
-/* 8. BODY / META TEXT (amounts, counts, subtitles) */
+/* ------------------------------------------------------
+   8) BODY / META TEXT
+   ------------------------------------------------------ */
 .history-amount,
 .simple-list .meta,
 .small-label,
 .meta-text,
-.helper-text {
+.helper-text{
   font-family: var(--font-text);
-  font-weight: var(--weight-text-regular);  /* Text Regular */
+  font-weight: var(--weight-text-regular);
 }
 
-/* 9. Links (History, View all transactions, etc.) */
+/* ------------------------------------------------------
+   9) LINKS
+   ------------------------------------------------------ */
 a,
 .link-btn,
-.history-btn {
+.history-btn{
   font-family: var(--font-text);
   font-weight: var(--weight-text-semibold);
 }
 
-/* 10. Fallback for any .display-* utility classes you might add later */
-.display-heavy {
+/* ------------------------------------------------------
+   10) Utility classes (kept)
+   ------------------------------------------------------ */
+.display-heavy{
   font-family: var(--font-display);
   font-weight: var(--weight-display-heavy);
 }
-.display-bold {
+.display-bold{
   font-family: var(--font-display);
   font-weight: var(--weight-display-bold);
 }
-.text-semibold {
+.text-semibold{
   font-family: var(--font-text);
   font-weight: var(--weight-text-semibold);
 }
-.text-regular {
+.text-regular{
   font-family: var(--font-text);
   font-weight: var(--weight-text-regular);
 }
