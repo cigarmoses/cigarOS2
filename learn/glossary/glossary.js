@@ -1,5 +1,6 @@
 // /learn/glossary/glossary.js
 // Sleek iOS-style glossary: grouped list + search + bottom sheet
+// FIX: search now ranks "most likely" matches first (word prefix/exact beats definition matches)
 
 (function () {
   const DATA_URL = "/data/glossary.json";
@@ -54,34 +55,109 @@
       .trim();
   }
 
+  function includesQ(hay, q) {
+    if (!hay || !q) return false;
+    return hay.includes(q);
+  }
+
+  function startsWithQ(hay, q) {
+    if (!hay || !q) return false;
+    return hay.startsWith(q);
+  }
+
   function matches(item, q) {
     if (!q) return true;
+
     const word = normalize(item.word);
     const def = normalize(item.definition);
     const aka = normalize(item.aka);
     const lang = normalize(item.language);
+
     return (
-      word.includes(q) ||
-      aka.includes(q) ||
-      lang.includes(q) ||
-      def.includes(q)
+      includesQ(word, q) ||
+      includesQ(aka, q) ||
+      includesQ(lang, q) ||
+      includesQ(def, q)
     );
   }
 
-  function groupByLetter(items) {
+  /**
+   * Lower score = better result
+   * Priority:
+   * 0 exact word
+   * 1 word startsWith
+   * 2 word includes
+   * 3 aka startsWith
+   * 4 aka includes
+   * 5 definition includes
+   * 6 language includes
+   * 9 fallback
+   */
+  function relevanceScore(item, q) {
+    if (!q) return 9;
+
+    const word = normalize(item.word);
+    const aka = normalize(item.aka);
+    const def = normalize(item.definition);
+    const lang = normalize(item.language);
+
+    if (word === q) return 0;
+    if (startsWithQ(word, q)) return 1;
+    if (includesQ(word, q)) return 2;
+
+    if (aka && startsWithQ(aka, q)) return 3;
+    if (aka && includesQ(aka, q)) return 4;
+
+    if (def && includesQ(def, q)) return 5;
+    if (lang && includesQ(lang, q)) return 6;
+
+    return 9;
+  }
+
+  function compareByRelevance(q) {
+    return (a, b) => {
+      const sa = relevanceScore(a, q);
+      const sb = relevanceScore(b, q);
+      if (sa !== sb) return sa - sb;
+
+      // If same score, prefer shorter word (e.g., "robusto" beats "robusto extra largo blah")
+      const aw = (a.word || "").toString().trim();
+      const bw = (b.word || "").toString().trim();
+      if (aw.length !== bw.length) return aw.length - bw.length;
+
+      // Final tiebreak: alphabetical by word
+      return aw.localeCompare(bw, undefined, { sensitivity: "base" });
+    };
+  }
+
+  /**
+   * Groups items by letter.
+   * If keepOrder = true, section order follows first appearance in `items` (best matches bubble up).
+   * If keepOrder = false, sections are A-Z with # first.
+   */
+  function groupByLetter(items, keepOrder) {
     const groups = new Map();
+    const order = [];
+
     items.forEach((it) => {
       const L = (it.letter || "#").toString().toUpperCase();
-      if (!groups.has(L)) groups.set(L, []);
+      if (!groups.has(L)) {
+        groups.set(L, []);
+        order.push(L);
+      }
       groups.get(L).push(it);
     });
 
-    // sort letters with # first, then A-Z
-    const letters = Array.from(groups.keys()).sort((a, b) => {
-      if (a === "#") return -1;
-      if (b === "#") return 1;
-      return a.localeCompare(b);
-    });
+    let letters;
+    if (keepOrder) {
+      letters = order;
+    } else {
+      letters = Array.from(groups.keys()).sort((a, b) => {
+        if (a === "#") return -1;
+        if (b === "#") return 1;
+        return a.localeCompare(b);
+      });
+    }
 
     return letters.map((L) => ({
       letter: L,
@@ -99,11 +175,11 @@
   // ------------------------
   // Render list
   // ------------------------
-  function render(items) {
+  function render(items, searching) {
     listEl.innerHTML = "";
     emptyEl.hidden = items.length > 0;
 
-    const grouped = groupByLetter(items);
+    const grouped = groupByLetter(items, !!searching);
 
     grouped.forEach((group) => {
       const section = el("div", "section");
@@ -209,10 +285,22 @@
   // ------------------------
   function applySearch() {
     const q = normalize(searchEl.value);
-    clearBtn.classList.toggle("is-visible", !!q);
+    const searching = !!q;
 
-    activeItems = allItems.filter((it) => matches(it, q));
-    render(activeItems);
+    clearBtn.classList.toggle("is-visible", searching);
+
+    // 1) filter
+    let filtered = allItems.filter((it) => matches(it, q));
+
+    // 2) rank (MOST IMPORTANT FIX)
+    if (searching) {
+      filtered = filtered.sort(compareByRelevance(q));
+    }
+
+    activeItems = filtered;
+
+    // 3) render (when searching, sections appear in relevance order)
+    render(activeItems, searching);
   }
 
   searchEl.addEventListener("input", applySearch);
@@ -230,7 +318,7 @@
     try {
       allItems = await loadData();
       activeItems = allItems.slice();
-      render(activeItems);
+      render(activeItems, false);
       applySearch();
     } catch (err) {
       console.error(err);
