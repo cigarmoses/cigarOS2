@@ -1,15 +1,19 @@
 /* =========================================
    LEARN PAGES – Unified Header + Layout
-   Matches POS spacing exactly
+   Single source of truth for ALL Learn pages
+   Matches Learn home (font size, thickness, padding)
    ========================================= */
 
-/* Page base */
+/* -----------------------------------------
+   Page base
+----------------------------------------- */
 .learn-page {
   margin: 0;
   background: #ffffff;
   color: #0f1a2c;
   font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* -----------------------------------------
@@ -19,41 +23,56 @@
   padding: 14px 16px 0;
   display: flex;
   align-items: center;
+  justify-content: space-between; /* supports pages with right-side icon too */
+}
+
+.learn-back,
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 6px 4px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .learn-back {
-  display: inline-flex;
-  align-items: center;
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
+  padding: 0; /* keeps your arrow tight when used as text button */
 }
 
-.learn-back svg {
+.learn-back svg,
+.icon-btn svg {
   width: 22px;
   height: 22px;
   stroke: #007aff;
 }
 
 /* -----------------------------------------
-   Page title – MATCHES POS GAP EXACTLY
+   PAGE TITLE – LOCKED (MATCHES LEARN HOME)
+   Use this on EVERY Learn subpage:
+   <h1 class="learn-page-title">Shapes</h1>
 ----------------------------------------- */
+.learn-page-title,
 .learn-title {
-  margin: 28px 16px 20px; /* ← SAME VALUE AS POS */
+  /* Learn home left spacing = 16px */
+  margin: 28px 16px 18px;
+
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-weight: 800;
-  font-size: 42px;
-  letter-spacing: -0.03em;
+  font-size: 56px;
+  letter-spacing: -0.04em;
+  line-height: 1;
   color: #0f1a2c;
 }
 
 /* -----------------------------------------
-   Card grid
+   Learn home grid
 ----------------------------------------- */
 .learn-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   padding: 0 16px 32px;
 }
@@ -63,36 +82,71 @@
 ----------------------------------------- */
 .learn-card {
   background: #ffffff;
-  border-radius: 18px;
-  padding: 18px;
+  border-radius: 22px;
+  padding: 18px 14px 16px;
+  min-height: 150px;
 
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.04);
+    0 10px 28px rgba(15, 26, 44, 0.08),
+    0 2px 6px rgba(15, 26, 44, 0.05);
 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 10px;
+
   text-decoration: none;
+  color: inherit;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.learn-card:active {
+  transform: scale(0.99);
+  box-shadow:
+    0 6px 18px rgba(15, 26, 44, 0.10),
+    0 1px 3px rgba(15, 26, 44, 0.06);
 }
 
 /* -----------------------------------------
-   Icon sizing (Learn standard)
+   Learn home icon sizing
 ----------------------------------------- */
-.learn-card img,
-.learn-card svg {
-  width: 44px;
-  height: 44px;
+.learn-icon {
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.learn-icon img {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  display: block;
 }
 
 /* -----------------------------------------
-   Icon labels
+   Learn home label styling (tile labels)
 ----------------------------------------- */
+.learn-label,
 .learn-card-title {
-  margin-top: 10px;
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-weight: 500;
-  font-size: 15px;
-  color: #0f1a2c;
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  color: #000000;
+  text-align: center;
+  line-height: 1.15;
+  margin: 0;
+}
+
+/* -----------------------------------------
+   Subpage wrapper spacing (Shapes/Colors/etc.)
+   If you use <main class="learn-page"> on subpages,
+   keep 16px side padding consistent with Learn home.
+----------------------------------------- */
+main.learn-page {
+  padding: 0 16px 40px;
 }
