@@ -1,0 +1,64 @@
+/* ======================================================
+   SF PRO TYPOGRAPHY SYSTEM — GLOBAL + PORTABLE
+   Drop this file into any project and import it once.
+   ====================================================== */
+
+:root{
+  /* Font families */
+  --font-display: "SF Pro Display",
+                  -apple-system,
+                  BlinkMacSystemFont,
+                  system-ui,
+                  sans-serif;
+
+  --font-text: "SF Pro Text",
+               -apple-system,
+               BlinkMacSystemFont,
+               system-ui,
+               sans-serif;
+
+  /* Weight tokens */
+  --fw-heavy: 900;
+  --fw-black: 800;
+  --fw-bold: 700;
+  --fw-semibold: 600;
+  --fw-medium: 500;
+  --fw-regular: 400;
+}
+
+/* Enforce globally */
+body{
+  font-family: var(--font-text);
+  font-weight: var(--fw-regular);
+}
+
+body *{
+  font-family: inherit;
+}
+
+/* Title role (your Learn / POS titles) */
+.page-title{
+  font-family: var(--font-display);
+  font-weight: var(--fw-heavy);
+}
+
+/* Optional reusable roles */
+.section-title{
+  font-family: var(--font-display);
+  font-weight: var(--fw-black);
+}
+
+.subhead{
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+}
+
+.ui-label{
+  font-family: var(--font-text);
+  font-weight: var(--fw-semibold);
+}
+
+.body-text{
+  font-family: var(--font-text);
+  font-weight: var(--fw-regular);
+}
