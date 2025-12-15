@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Learn • Vitolas</title>
+
+  <!-- Global typography -->
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/css/learn.css" />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #0f1a2c;
+      --muted: #6a7586;
+      --accent: #007aff;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top bar (back arrow) — matches Shapes/Colors/Anatomy/Ring */
+    .learn-topbar {
+      padding: 12px 16px 0;
+    }
+
+    .learn-back {
+      border: none;
+      background: none;
+      color: var(--accent);
+      font-size: 22px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    /* Scrollable page area */
+    .learn-page {
+      padding: 0 16px 40px;
+      height: calc(100vh - 44px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Cards — matches Shapes vibe */
+    .vitola-card {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .vitola-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .vitola-body {
+      padding: 14px 16px 16px;
+    }
+
+    .vitola-name {
+      margin: 0 0 6px;
+      font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+      font-weight: var(--weight-display-bold, 700);
+      letter-spacing: -0.02em;
+    }
+
+    .vitola-desc {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="learn-topbar">
+    <button class="learn-back" onclick="history.back()">←</button>
+  </div>
+
+  <main class="learn-page">
+    <h1 class="learn-page-title">Vitolas</h1>
+
+    <!-- Robusto -->
+    <section class="vitola-card">
+      <img src="/img/icons/learn/vitolas/robusto.png" alt="Robusto vitola">
+      <div class="vitola-body">
+        <h2 class="vitola-name">Robusto</h2>
+        <p class="vitola-desc">Short, thick, and very common. Great “default” size.</p>
+      </div>
+    </section>
+
+    <!-- Toro -->
+    <section class="vitola-card">
+      <img src="/img/icons/learn/vitolas/toro.png" alt="Toro vitola">
+      <div class="vitola-body">
+        <h2 class="vitola-name">Toro</h2>
+        <p class="vitola-desc">Longer than a Robusto with a similar ring — a balanced smoke.</p>
+      </div>
+    </section>
+
+    <!-- Churchill -->
+    <section class="vitola-card">
+      <img src="/img/icons/learn/vitolas/churchill.png" alt="Churchill vitola">
+      <div class="vitola-body">
+        <h2 class="vitola-name">Churchill</h2>
+        <p class="vitola-desc">Long format cigar for a slower, extended session.</p>
+      </div>
+    </section>
+
+    <!-- Corona -->
+    <section class="vitola-card">
+      <img src="/img/icons/learn/vitolas/corona.png" alt="Corona vitola">
+      <div class="vitola-body">
+        <h2 class="vitola-name">Corona</h2>
+        <p class="vitola-desc">Classic traditional size — slimmer ring, elegant feel.</p>
+      </div>
+    </section>
+
+    <!-- Torpedo -->
+    <section class="vitola-card">
+      <img src="/img/icons/learn/vitolas/torpedo.png" alt="Torpedo vitola">
+      <div class="vitola-body">
+        <h2 class="vitola-name">Torpedo</h2>
+        <p class="vitola-desc">Tapered head for a more focused draw and concentrated flavor.</p>
+      </div>
+    </section>
+
+    <!-- Gordo -->
+    <section class="vitola-card">
+      <img src="/img/icons/learn/vitolas/gordo.png" alt="Gordo vitola">
+      <div class="vitola-body">
+        <h2 class="vitola-name">Gordo</h2>
+        <p class="vitola-desc">Big ring gauge cigar — cooler smoke and lots of volume.</p>
+      </div>
+    </section>
+
+  </main>
+
+</body>
+</html>
