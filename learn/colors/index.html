@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Colors • Learn</title>
 
-  <!-- SF Pro -->
+  <!-- SF Pro (learn-page-title lives here) -->
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
@@ -24,7 +24,7 @@
       overflow: hidden;
     }
 
-    /* Top bar */
+    /* Top bar (back arrow) */
     .learn-topbar {
       padding: 12px 16px 0;
     }
@@ -37,15 +37,9 @@
       cursor: pointer;
     }
 
-    /* ───────── Title (POS-matched gap) ───────── */
-    .learn-title {
-      margin: 28px 16px 18px;
-      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 56px;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      color: var(--ink);
+    /* Page wrapper to match Learn page side padding rhythm */
+    .learn-page {
+      padding: 0 16px 0;
     }
 
     /* Image wrapper */
@@ -72,15 +66,17 @@
     <button class="learn-back" onclick="history.back()">←</button>
   </div>
 
-  <h1 class="learn-page-title">Colors</h1>
+  <main class="learn-page">
+    <h1 class="learn-page-title">Colors</h1>
 
-  <div class="colors-wrap">
-    <img
-      src="/img/icons/learn/learncolors.png"
-      alt="Cigar Wrapper Colors"
-      class="colors-image"
-    />
-  </div>
+    <div class="colors-wrap">
+      <img
+        src="/img/icons/learn/learncolors.png"
+        alt="Cigar Wrapper Colors"
+        class="colors-image"
+      />
+    </div>
+  </main>
 
 </body>
 </html>
