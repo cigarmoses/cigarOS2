@@ -16,8 +16,8 @@
   <!-- Top bar with back button -->
   <header class="cigars-topbar">
     <button type="button" class="pos-back" id="cigars-back">
-  <span class="pos-back-icon">←</span>
-</button>
+      <span class="pos-back-icon">←</span>
+    </button>
   </header>
 
   <main class="cigars-main">
@@ -47,114 +47,56 @@
           </button>
         </div>
 
-        <!-- Filters grid -->
         <div class="cigars-filters-grid">
-
-          <!-- Row 1 -->
           <div class="cigars-filters-row">
-            <button class="filter-pill" id="filter-manufacturer" data-filter="manufacturer">
-              Manufacturer
-            </button>
-            <button class="filter-pill" id="filter-brand" data-filter="brand">
-              Brand
-            </button>
+            <button class="filter-pill" id="filter-manufacturer" data-filter="manufacturer">Manufacturer</button>
+            <button class="filter-pill" id="filter-brand" data-filter="brand">Brand</button>
           </div>
 
-          <!-- Row 2 -->
           <div class="cigars-filters-row">
-            <button class="filter-pill" id="filter-shade" data-filter="shade">
-              Shade
-            </button>
-            <button class="filter-pill" id="filter-vitola" data-filter="vitola">
-              Vitola
-            </button>
-            <button class="filter-pill" id="filter-length" data-filter="length">
-              Length
-            </button>
-            <button class="filter-pill" id="filter-ring" data-filter="ring">
-              Ring
-            </button>
+            <button class="filter-pill" id="filter-shade" data-filter="shade">Shade</button>
+            <button class="filter-pill" id="filter-vitola" data-filter="vitola">Vitola</button>
+            <button class="filter-pill" id="filter-length" data-filter="length">Length</button>
+            <button class="filter-pill" id="filter-ring" data-filter="ring">Ring</button>
           </div>
 
-          <!-- Row 3 -->
           <div class="cigars-filters-row">
-            <button class="filter-pill" id="filter-shape" data-filter="shape">
-              Shape
-            </button>
-            <button class="filter-pill" id="filter-strength" data-filter="strength">
-              Strength
-            </button>
+            <button class="filter-pill" id="filter-shape" data-filter="shape">Shape</button>
+            <button class="filter-pill" id="filter-strength" data-filter="strength">Strength</button>
           </div>
 
-          <!-- Row 4: white outline toggles -->
           <div class="cigars-filters-row">
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-tubo"
-              data-filter="tubo"
-            >
-              Tubo
-            </button>
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-flavored"
-              data-filter="flavored"
-            >
-              Flavored
-            </button>
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-tin"
-              data-filter="tin"
-            >
-              Tin
-            </button>
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-pack"
-              data-filter="pack"
-            >
-              Pack
-            </button>
+            <button class="filter-pill filter-pill--toggle" id="filter-tubo" data-filter="tubo">Tubo</button>
+            <button class="filter-pill filter-pill--toggle" id="filter-flavored" data-filter="flavored">Flavored</button>
+            <button class="filter-pill filter-pill--toggle" id="filter-tin" data-filter="tin">Tin</button>
+            <button class="filter-pill filter-pill--toggle" id="filter-pack" data-filter="pack">Pack</button>
           </div>
 
-          <!-- Row 5: white outline toggles -->
           <div class="cigars-filters-row">
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-barberpole"
-              data-filter="barberpole"
-            >
-              Barberpole
-            </button>
-            <button
-              class="filter-pill filter-pill--toggle"
-              id="filter-boxpressed"
-              data-filter="boxpressed"
-            >
-              Box-Pressed
-            </button>
+            <button class="filter-pill filter-pill--toggle" id="filter-barberpole" data-filter="barberpole">Barberpole</button>
+            <button class="filter-pill filter-pill--toggle" id="filter-boxpressed" data-filter="boxpressed">Box-Pressed</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- BRAND GRID (existing JS can still populate this container) -->
+    <!-- BRAND GRID -->
     <section class="cigars-brands-section">
       <h2 class="cigars-brands-title">Brands</h2>
-      <div id="brands-grid" class="brands-grid">
-        <!-- build-cigars.js or your existing cigars JS should populate brand tiles here -->
-      </div>
+      <div id="brands-grid" class="brands-grid"></div>
     </section>
   </main>
 
-  <!-- Global POS + page scripts -->
-  <script src="/pos/pos.js"></script>
-  <script src="/pos/cigars/cigars.js"></script>
-  <!-- If you have a hub/build script, keep it here as well -->
-  <script src="/pos/img/scripts/build-cigars.js"></script>
+  <!-- Scripts (defer = predictable load) -->
+  <script defer src="/pos/pos.js"></script>
 
-  <!-- Filter popup HTML (global modal used by POSFilters in pos.js) -->
+  <!-- IMPORTANT: this should be the script that actually builds the brand tiles -->
+  <script defer src="/pos/cigars/build-cigars.js"></script>
+
+  <!-- Your page wiring / back button / icon normalizer, etc -->
+  <script defer src="/pos/cigars/cigars.js"></script>
+
+  <!-- Filter popup HTML -->
   <div id="filter-modal" class="filter-modal filter-modal--hidden">
     <div class="filter-modal-backdrop"></div>
 
@@ -167,20 +109,14 @@
       <div class="filter-modal-search-row">
         <div class="filter-modal-search">
           <span class="filter-modal-search-icon">&#128269;</span>
-          <input
-            type="search"
-            id="filter-modal-search-input"
-            placeholder="search..."
-          />
+          <input type="search" id="filter-modal-search-input" placeholder="search..." />
         </div>
       </div>
 
       <div class="filter-modal-list" id="filter-modal-list"></div>
 
       <div class="filter-modal-footer">
-        <button type="button" id="filter-modal-confirm" class="filter-modal-confirm">
-          Confirm
-        </button>
+        <button type="button" id="filter-modal-confirm" class="filter-modal-confirm">Confirm</button>
       </div>
     </div>
   </div>
