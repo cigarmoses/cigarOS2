@@ -1,5 +1,4 @@
 // /pos/cigars/cigars.js
-
 document.addEventListener("DOMContentLoaded", () => {
   const backBtn = document.getElementById("cigars-back");
   if (backBtn) {
@@ -8,9 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Force filter modal hidden on load (prevents the “Brands” sheet showing randomly)
-  const filterModal = document.getElementById("filter-modal");
-  if (filterModal) {
-    filterModal.classList.add("filter-modal--hidden");
-  }
+  // HARD DISABLE filters on cigars page (Dec 10 behavior)
+  window.POS_FILTERS_DISABLED = true;
 });
