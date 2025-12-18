@@ -103,13 +103,15 @@
   grid-auto-columns: 1fr;
 }
 
+/* ✅ make pill labels SF Pro Display Medium (not bold) */
 .filter-pill {
   border: none;
   border-radius: 999px;
   padding: 10px 12px;
   background: #eaf1f9;
   color: #0f1a2c;
-  font-weight: 700;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 500; /* MEDIUM */
   font-size: 15px;
   cursor: pointer;
 }
@@ -117,6 +119,13 @@
 .filter-pill--toggle {
   background: #ffffff;
   border: 1px solid #d7e3f3;
+}
+
+/* ✅ active/selected state */
+.filter-pill.active {
+  background: #e0edff;
+  border: 1px solid #0f7aff;
+  color: #0f7aff;
 }
 
 /* Brands title */
@@ -139,7 +148,6 @@
   padding: 6px 0 22px;
 }
 
-/* Normalize whatever the builder outputs so it doesn't look like POS "cards" */
 .brands-grid > a,
 .brands-grid .brand-card,
 .brands-grid .brand-tile,
@@ -151,74 +159,26 @@
   text-align: center;
   text-decoration: none;
   color: inherit;
-
-  /* Neutralize card styling that might come from pos.css */
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
 }
 
-/* If the builder wraps content in inner blocks, keep it clean */
-.brands-grid .card,
-.brands-grid .card-inner,
-.brands-grid .content,
-.brands-grid .body {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-/* Icon “tile” */
-.brands-grid img,
-.brands-grid .brand-icon,
-.brands-grid .brand-logo {
+/* Logo image */
+.brands-grid img {
   width: 78px;
   height: 78px;
   object-fit: contain;
   display: block;
-
   background: #ffffff;
   border-radius: 18px;
   padding: 10px;
   box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
 }
 
-/* If builder uses a wrapper around the image */
-.brands-grid .icon-wrap,
-.brands-grid .brand-icon-wrap,
-.brands-grid .category-icon-wrap {
-  width: 78px;
-  height: 78px;
-  background: #ffffff;
-  border-radius: 18px;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
-  padding: 10px;
-}
-
-/* Brand label — target ONLY likely name elements (no global span/h3/h4) */
-.brands-grid .brand-name,
+/* Brand label — ✅ SF Pro Display Medium */
 .brands-grid .category-name,
-.brands-grid .name,
-.brands-grid .label,
-.brands-grid .title {
+.brands-grid .brand-name {
   margin-top: 10px;
-  font-weight: 800;
-  font-size: 16px;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  max-width: 120px;
-  word-break: break-word;
-}
-
-/* Fallback: if the builder uses a plain text node inside the anchor, style the FIRST text element */
-.brands-grid > a > :not(img):first-child {
-  margin-top: 10px;
-  font-weight: 800;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 500; /* MEDIUM */
   font-size: 16px;
   line-height: 1.15;
   letter-spacing: -0.01em;
@@ -231,15 +191,126 @@
   .brands-grid {
     gap: 18px 14px;
   }
-
-  .brands-grid img,
-  .brands-grid .brand-icon,
-  .brands-grid .brand-logo,
-  .brands-grid .icon-wrap,
-  .brands-grid .brand-icon-wrap,
-  .brands-grid .category-icon-wrap {
+  .brands-grid img {
     width: 72px;
     height: 72px;
     border-radius: 16px;
   }
+}
+
+/* =========================
+   FILTER MODAL (SHEET)
+   ========================= */
+
+.filter-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.filter-modal--hidden {
+  display: none;
+}
+
+.filter-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 24, 46, 0.45);
+}
+
+.filter-modal-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8fbff;
+  border-radius: 18px 18px 0 0;
+  padding: 12px 14px 14px;
+  box-shadow: 0 -8px 20px rgba(0,0,0,0.25);
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.filter-modal-back {
+  border: none;
+  background: none;
+  color: #007aff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#filter-modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.filter-modal-search-row {
+  margin-top: 10px;
+}
+
+.filter-modal-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #d7e3f3;
+  border-radius: 999px;
+  padding: 10px 12px;
+}
+
+.filter-modal-search-icon {
+  opacity: 0.55;
+}
+
+#filter-modal-search-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+}
+
+.filter-modal-list {
+  margin-top: 10px;
+  overflow: auto;
+  padding-bottom: 10px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px;
+  border-bottom: 1px solid #e8eef7;
+  font-size: 15px;
+}
+
+.filter-row:last-child {
+  border-bottom: none;
+}
+
+.filter-modal-footer {
+  padding-top: 10px;
+}
+
+.filter-modal-confirm {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 14px;
+  background: #0f7aff;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
 }
