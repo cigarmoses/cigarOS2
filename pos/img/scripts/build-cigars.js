@@ -1,11 +1,18 @@
 // /pos/img/scripts/build-cigars.js
-// Builds the Brands grid on /pos/cigars/ from Google Sheets (CSV export).
+// Loads Google Sheets CSV and exposes rows/brands for cigars.js.
+// Builds NO debug UI text.
 
 (function () {
-  const GOOGLE_SHEETS_CSV_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv&gid=822697742";
+  // ✅ Your spreadsheet id
+  const SHEET_ID = "10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM";
 
-  // ----- helpers -----
+  // ✅ IMPORTANT: set this to the sheet/tab gid that contains your hub data
+  // If you’re already getting “Loaded 2,952 rows” then your gid is correct.
+  const GID = "822697742";
+
+  // gviz CSV export (works when sheet is shared “Anyone with link: Viewer”)
+  const GOOGLE_SHEETS_CSV_URL =
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
   function withNoCache(url) {
     const u = new URL(url);
@@ -20,7 +27,7 @@
     );
   }
 
-  // Minimal CSV parser (handles quoted commas)
+  // Robust CSV parser (handles quotes)
   function parseCSV(text) {
     const rows = [];
     let row = [];
@@ -36,15 +43,18 @@
         i++;
         continue;
       }
+
       if (ch === '"') {
         inQuotes = !inQuotes;
         continue;
       }
+
       if (!inQuotes && ch === ",") {
         row.push(cur);
         cur = "";
         continue;
       }
+
       if (!inQuotes && (ch === "\n" || ch === "\r")) {
         if (ch === "\r" && next === "\n") i++;
         row.push(cur);
@@ -53,6 +63,7 @@
         row = [];
         continue;
       }
+
       cur += ch;
     }
 
@@ -73,7 +84,7 @@
     return { headers, data };
   }
 
-  // Header matching: tolerate variations
+  // Header matching helper
   function pick(row, keys) {
     for (const k of keys) {
       if (row[k] != null && String(row[k]).trim() !== "") return String(row[k]).trim();
@@ -105,8 +116,7 @@
     if (!name) return "";
     const canonical = String(name)
       .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "")
       .trim();
@@ -165,35 +175,25 @@
     const grid = getGridEl();
     if (!grid) return;
 
-    grid.innerHTML = "";
-
     try {
-      const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL), { cache: "no-store" });
-      if (!res.ok) throw new Error(`Google CSV fetch failed: ${res.status}`);
+      const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL));
+      if (!res.ok) throw new Error(`Google CSV fetch failed (${res.status})`);
       const text = await res.text();
 
-      const { headers, data } = parseCSV(text);
+      const { data } = parseCSV(text);
 
-      // Visible debug right on the page (so no console needed)
-      const dbg = document.createElement("div");
-      dbg.style.fontSize = "12px";
-      dbg.style.color = "#6a7586";
-      dbg.style.margin = "6px 0 12px";
-      dbg.textContent = `Loaded ${data.length.toLocaleString()} rows from Google Sheets.`;
-      grid.parentElement.insertBefore(dbg, grid);
+      // expose rows globally for cigars.js
+      window.__CIGAR_SHEET_ROWS__ = data;
 
-      // Build unique brand list
+      // Build unique brand list (+ keep Brand IMG when available)
       const map = new Map();
-
       for (const row of data) {
-        const brand = pick(row, ["Brand", "brand", "Cigar Brand", "Cigar brand", "BRAND"]);
+        const brand = pick(row, ["Brand", "brand"]);
         if (!brand) continue;
 
-        const brandImg = pick(row, ["Brand IMG", "Brand Img", "BrandIMG", "Brand Image", "Brand image"]);
-
-        if (!map.has(brand)) {
-          map.set(brand, { brand, brandImg });
-        } else {
+        const brandImg = pick(row, ["Brand IMG", "Brand Img", "brand img", "Brand Image", "BrandImage"]);
+        if (!map.has(brand)) map.set(brand, { brand, brandImg });
+        else {
           const existing = map.get(brand);
           if (!existing.brandImg && brandImg) existing.brandImg = brandImg;
         }
@@ -203,29 +203,25 @@
         a.brand.toLowerCase().localeCompare(b.brand.toLowerCase())
       );
 
-      if (!brands.length) {
-        const msg = document.createElement("div");
-        msg.style.color = "#b00020";
-        msg.style.fontWeight = "700";
-        msg.style.padding = "10px 0";
-        msg.textContent =
-          "No brands found in Google CSV. Check the sheet has a Brand column (Brand / brand / Cigar Brand).";
-        grid.appendChild(msg);
-        return;
-      }
+      window.__CIGAR_BRANDS__ = brands;
 
+      // initial render (cigars.js may re-render when filters/search apply)
+      grid.innerHTML = "";
       const frag = document.createDocumentFragment();
       brands.forEach((b) => frag.appendChild(buildTile(b)));
       grid.appendChild(frag);
+
+      // notify cigars.js that data is ready
+      window.dispatchEvent(new CustomEvent("cigars:data-ready"));
     } catch (err) {
       console.error("[build-cigars] error:", err);
-
+      grid.innerHTML = "";
       const msg = document.createElement("div");
       msg.style.color = "#b00020";
       msg.style.fontWeight = "700";
       msg.style.padding = "10px 0";
       msg.textContent =
-        "Brands failed to load from Google Sheets. (Fetch failed or CORS/permissions issue.)";
+        "Brands failed to load from Google Sheets. Check sharing + the gid.";
       grid.appendChild(msg);
     }
   }
