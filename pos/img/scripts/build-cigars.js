@@ -2,38 +2,8 @@
 // Builds the Brands grid on /pos/cigars/ from Google Sheets (CSV export).
 
 (function () {
-  // Your Google Sheet
-  const SHEET_SHARE_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/edit?usp=drivesdk";
-
-  // If your brands are on a specific sheet tab, set the gid here.
-  // If you leave it null, we’ll try to read gid from the URL; otherwise default to 0.
-  const FORCE_GID = null; // e.g. "822697742"
-
-  function extractSpreadsheetId(url) {
-    const m = String(url).match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    return m ? m[1] : "";
-  }
-
-  function extractGid(url) {
-    try {
-      const u = new URL(url);
-      if (u.searchParams.get("gid")) return u.searchParams.get("gid");
-      // sometimes gid lives in the hash: ...#gid=123
-      if (u.hash && u.hash.includes("gid=")) {
-        const m = u.hash.match(/gid=([0-9]+)/);
-        if (m) return m[1];
-      }
-    } catch (_) {}
-    return "";
-  }
-
-  function googleCsvUrl(sheetId, gid) {
-    // gviz CSV export (works well with CORS)
-    return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${encodeURIComponent(
-      gid
-    )}`;
-  }
+  const GOOGLE_SHEETS_CSV_URL =
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv&gid=822697742";
 
   function withNoCache(url) {
     const u = new URL(url);
@@ -136,7 +106,6 @@
     if (!src) return "";
     let s = src.trim();
     if (!s) return "";
-    // If a sheet path doesn't start with /, normalize to root-relative
     if (!s.startsWith("/") && !s.startsWith("http")) {
       s = "/" + s.replace(/^\/+/, "");
     }
@@ -192,30 +161,14 @@
 
     grid.innerHTML = "";
 
-    const sheetId = extractSpreadsheetId(SHEET_SHARE_URL);
-    const gidFromUrl = extractGid(SHEET_SHARE_URL);
-    const gid = FORCE_GID || gidFromUrl || "0";
-
-    if (!sheetId) {
-      const msg = document.createElement("div");
-      msg.style.color = "#b00020";
-      msg.style.fontWeight = "700";
-      msg.style.padding = "10px 0";
-      msg.textContent = "Google Sheet ID could not be read from SHEET_SHARE_URL.";
-      grid.appendChild(msg);
-      return;
-    }
-
-    const csvUrl = withNoCache(googleCsvUrl(sheetId, gid));
-
     try {
-      const res = await fetch(csvUrl, { cache: "no-store" });
+      const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL), {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error(`Google CSV fetch failed: ${res.status}`);
       const text = await res.text();
 
       const { headers, data } = parseCSV(text);
-
-      // Helpful debug in console
       console.log("[build-cigars] headers:", headers);
       console.log("[build-cigars] rows:", data.length);
 
@@ -225,7 +178,6 @@
         const brand = normalizeBrandName(row["Brand"]);
         if (!brand) continue;
 
-        // accept a few variations just in case
         const brandImg =
           row["Brand IMG"] || row["Brand Img"] || row["BrandIMG"] || "";
 
@@ -247,7 +199,7 @@
         msg.style.fontWeight = "600";
         msg.style.padding = "10px 0";
         msg.textContent =
-          "No brands found. Check that the Google Sheet tab (gid) contains a 'Brand' column.";
+          "No brands found. Your Google Sheet tab must have a 'Brand' column.";
         grid.appendChild(msg);
         return;
       }
@@ -263,7 +215,7 @@
       msg.style.fontWeight = "700";
       msg.style.padding = "10px 0";
       msg.textContent =
-        "Brands failed to load from Google Sheets. Make sure the sheet is accessible and the gid is correct.";
+        "Brands failed to load from Google Sheets. Check sharing/publish + gid.";
       grid.appendChild(msg);
     }
   }
