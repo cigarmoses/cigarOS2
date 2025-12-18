@@ -4,283 +4,276 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS • Brand</title>
+
+  <!-- Global type + POS base -->
+  <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
+
   <style>
-    :root {
-      --bg: #dfeaf0;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --card: #ffffff;
-      --pill: #f3f7fb;
-      --pill-border: #c4d3e6;
-      --accent: #0f7aff;
-      --accent-soft: #e0edff;
+    :root{
+      --bg:#dfeaf0;
+      --ink:#0f1a2c;
+      --muted:#6a7586;
+      --card:#ffffff;
+      --pill:#f3f7fb;
+      --pill-border:#c4d3e6;
+      --accent:#0f7aff;
+      --accent-soft:#e0edff;
     }
-    * { box-sizing: border-box; }
+    *{box-sizing:border-box}
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      min-height: 100vh;
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:var(--font-text,-apple-system,BlinkMacSystemFont,system-ui,sans-serif);
+      color:var(--ink);
+      min-height:100vh;
     }
 
-    .pos-shell {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 12px 16px 40px;
+    .pos-shell{
+      max-width:1200px;
+      margin:0 auto;
+      padding:12px 16px 40px;
     }
 
     /* Topbar */
-    .pos-topbar {
-      padding: 8px 0 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .pos-topbar{
+      padding:8px 0 4px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
     }
-    .pos-title {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
+    .pos-title{
+      font-size:20px;
+      font-weight:700;
+      letter-spacing:0.02em;
     }
-    .pos-back-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: var(--card);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-      text-decoration: none;
+    .pos-back-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      background:var(--card);
+      box-shadow:0 1px 3px rgba(0,0,0,0.12);
+      text-decoration:none;
     }
-    .pos-back-btn img {
-      width: 18px;
-      height: 18px;
-      display: block;
+    .pos-back-btn img{width:18px;height:18px;display:block}
+
+    .brand-header{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:6px;
+      margin-bottom:8px;
+    }
+    .brand-header img{
+      width:56px;
+      height:56px;
+      object-fit:contain;
+    }
+    .brand-name{
+      font-size:18px;
+      font-weight:700;
     }
 
-    .brand-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 6px;
-      margin-bottom: 8px;
+    /* Filters */
+    .filters-shell{
+      margin-top:10px;
+      padding:12px;
+      background:var(--card);
+      border-radius:18px;
+      box-shadow:0 6px 14px rgba(9,30,66,0.08);
     }
-    .brand-header img {
-      width: 56px;
-      height: 56px;
-      object-fit: contain;
+    .master-search{
+      width:100%;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid #cad4e4;
+      font-size:14px;
+      outline:none;
     }
-    .brand-name {
-      font-size: 18px;
-      font-weight: 700;
+    .master-search::placeholder{color:var(--muted)}
+    .filter-lines{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
     }
-
-    /* Filters (same as index) */
-    .filters-shell {
-      margin-top: 10px;
-      padding: 12px;
-      background: var(--card);
-      border-radius: 18px;
-      box-shadow: 0 6px 14px rgba(9, 30, 66, 0.08);
+    .filter-line{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
     }
-    .master-search {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid #cad4e4;
-      font-size: 14px;
-      outline: none;
+    .filter-pill{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--pill-border);
+      background:var(--pill);
+      font-size:12px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
     }
-    .master-search::placeholder { color: var(--muted); }
-    .filter-lines {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .filter-pill span.label{font-weight:500}
+    .filter-pill.active{
+      border-color:var(--accent);
+      background:var(--accent-soft);
+      color:var(--accent);
     }
-    .filter-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+    .features-line{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:2px;
+      align-items:center;
     }
-    .filter-pill {
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--pill-border);
-      background: var(--pill);
-      font-size: 12px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+    .feature-pill{
+      padding:5px 9px;
+      border-radius:999px;
+      border:1px solid var(--pill-border);
+      background:var(--pill);
+      font-size:11px;
+      cursor:pointer;
     }
-    .filter-pill span.label { font-weight: 500; }
-    .filter-pill.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-    .features-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 2px;
-    }
-    .feature-pill {
-      padding: 5px 9px;
-      border-radius: 999px;
-      border: 1px solid var(--pill-border);
-      background: var(--pill);
-      font-size: 11px;
-      cursor: pointer;
-    }
-    .feature-pill.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent);
+    .feature-pill.active{
+      border-color:var(--accent);
+      background:var(--accent-soft);
+      color:var(--accent);
     }
 
     /* Cigar list */
-    .cigar-list {
-      margin-top: 16px;
-      padding: 12px;
-      background: var(--card);
-      border-radius: 18px;
-      box-shadow: 0 6px 14px rgba(9, 30, 66, 0.08);
+    .cigar-list{
+      margin-top:16px;
+      padding:12px;
+      background:var(--card);
+      border-radius:18px;
+      box-shadow:0 6px 14px rgba(9,30,66,0.08);
     }
-    .cigar-list-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 8px;
+    .cigar-list-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      margin-bottom:8px;
     }
-    .cigar-list-title {
-      font-size: 15px;
-      font-weight: 600;
-    }
-    .cigar-count {
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .cigar-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
+    .cigar-list-title{font-size:15px;font-weight:600}
+    .cigar-count{font-size:12px;color:var(--muted)}
+    .cigar-table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
     }
     .cigar-table th,
-    .cigar-table td {
-      padding: 6px 6px;
-      text-align: left;
-      border-bottom: 1px solid #edf1f7;
+    .cigar-table td{
+      padding:6px 6px;
+      text-align:left;
+      border-bottom:1px solid #edf1f7;
     }
-    .cigar-table th {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+    .cigar-table th{
+      font-size:11px;
+      font-weight:600;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:0.06em;
     }
-    .cigar-table tr:last-child td { border-bottom: none; }
+    .cigar-table tr:last-child td{border-bottom:none}
 
-    @media (max-width: 768px) {
-      .pos-shell { padding: 8px 10px 24px; }
+    @media (max-width:768px){
+      .pos-shell{padding:8px 10px 24px}
       .cigar-table th:nth-child(2),
       .cigar-table td:nth-child(2),
       .cigar-table th:nth-child(5),
       .cigar-table td:nth-child(5),
       .cigar-table th:nth-child(6),
-      .cigar-table td:nth-child(6) {
-        display: none;
+      .cigar-table td:nth-child(6){
+        display:none;
       }
     }
 
-    /* Modal */
-    .filter-modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 24, 46, 0.45);
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      z-index: 40;
+    /* Brand filter modal (renamed to avoid collisions) */
+    .brand-filter-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(10,24,46,0.45);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      z-index:1000;
     }
-    .filter-modal-backdrop.active { display: flex; }
-    .filter-modal {
-      width: 100%;
-      max-width: 480px;
-      background: #f8fbff;
-      border-radius: 18px 18px 0 0;
-      padding: 12px 14px 14px;
-      box-shadow: 0 -8px 20px rgba(0,0,0,0.25);
+    .brand-filter-backdrop.active{display:flex}
+
+    .brand-filter-modal{
+      width:100%;
+      max-width:480px;
+      background:#f8fbff;
+      border-radius:18px 18px 0 0;
+      padding:12px 14px 14px;
+      box-shadow:0 -8px 20px rgba(0,0,0,0.25);
     }
-    .filter-modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
+    .brand-filter-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:6px;
     }
-    .filter-modal-title {
-      font-size: 14px;
-      font-weight: 600;
+    .brand-filter-title{
+      font-size:14px;
+      font-weight:600;
     }
-    .filter-modal-close {
-      font-size: 20px;
-      border: none;
-      background: none;
-      cursor: pointer;
-      line-height: 1;
+    .brand-filter-close{
+      font-size:20px;
+      border:none;
+      background:none;
+      cursor:pointer;
+      line-height:1;
     }
-    .filter-modal-search {
-      width: 100%;
-      padding: 7px 9px;
-      border-radius: 999px;
-      border: 1px solid #cad4e4;
-      font-size: 12px;
-      margin-bottom: 8px;
+    .brand-filter-search{
+      width:100%;
+      padding:7px 9px;
+      border-radius:999px;
+      border:1px solid #cad4e4;
+      font-size:12px;
+      margin-bottom:8px;
+      outline:none;
     }
-    .filter-options {
-      max-height: 220px;
-      overflow-y: auto;
-      padding-right: 4px;
-      margin-bottom: 8px;
+    .brand-filter-options{
+      max-height:220px;
+      overflow-y:auto;
+      padding-right:4px;
+      margin-bottom:8px;
     }
-    .filter-option {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      padding: 4px 2px;
+    .brand-filter-option{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      padding:4px 2px;
     }
-    .filter-modal-actions {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      margin-top: 4px;
+    .brand-filter-actions{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      margin-top:4px;
     }
     .btn-clear,
-    .btn-apply {
-      flex: 1;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
+    .btn-apply{
+      flex:1;
+      padding:8px 10px;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
+      font-size:13px;
+      font-weight:600;
     }
-    .btn-clear {
-      background: #e5edf7;
-      color: var(--muted);
-    }
-    .btn-apply {
-      background: var(--accent);
-      color: #fff;
-    }
+    .btn-clear{background:#e5edf7;color:var(--muted)}
+    .btn-apply{background:var(--accent);color:#fff}
   </style>
+
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
+
 <body>
   <div class="pos-shell">
     <header class="pos-topbar">
@@ -296,48 +289,24 @@
     </div>
 
     <section class="filters-shell">
-      <input id="masterSearch" class="master-search" type="search"
-             placeholder="Search line, cigar, vitola…" />
+      <input id="masterSearch" class="master-search" type="search" placeholder="Search line, cigar, vitola…" />
 
       <div class="filter-lines">
-        <!-- Line 2/3 same as main; Brand is fixed by URL so we skip that pill here -->
         <div class="filter-line">
-          <button class="filter-pill" data-filter-id="priceRange">
-            <span class="label">Price range</span>
-          </button>
-          <button class="filter-pill" data-filter-id="vitola">
-            <span class="label">Vitola</span>
-          </button>
-          <button class="filter-pill" data-filter-id="rg">
-            <span class="label">RG</span>
-          </button>
-          <button class="filter-pill" data-filter-id="length">
-            <span class="label">Length</span>
-          </button>
-          <button class="filter-pill" data-filter-id="wrapperShade">
-            <span class="label">Wrapper Shade</span>
-          </button>
+          <button class="filter-pill" data-filter-id="priceRange"><span class="label">Price range</span></button>
+          <button class="filter-pill" data-filter-id="vitola"><span class="label">Vitola</span></button>
+          <button class="filter-pill" data-filter-id="rg"><span class="label">RG</span></button>
+          <button class="filter-pill" data-filter-id="length"><span class="label">Length</span></button>
+          <button class="filter-pill" data-filter-id="wrapperShade"><span class="label">Wrapper Shade</span></button>
         </div>
 
         <div class="filter-line">
-          <button class="filter-pill" data-filter-id="wrapper">
-            <span class="label">Wrapper</span>
-          </button>
-          <button class="filter-pill" data-filter-id="binder">
-            <span class="label">Binder</span>
-          </button>
-          <button class="filter-pill" data-filter-id="filler">
-            <span class="label">Filler</span>
-          </button>
-          <button class="filter-pill" data-filter-id="origin">
-            <span class="label">Origin</span>
-          </button>
-          <button class="filter-pill" data-filter-id="strength">
-            <span class="label">Strength</span>
-          </button>
-          <button class="filter-pill" data-filter-id="shape">
-            <span class="label">Shape</span>
-          </button>
+          <button class="filter-pill" data-filter-id="wrapper"><span class="label">Wrapper</span></button>
+          <button class="filter-pill" data-filter-id="binder"><span class="label">Binder</span></button>
+          <button class="filter-pill" data-filter-id="filler"><span class="label">Filler</span></button>
+          <button class="filter-pill" data-filter-id="origin"><span class="label">Origin</span></button>
+          <button class="filter-pill" data-filter-id="strength"><span class="label">Strength</span></button>
+          <button class="filter-pill" data-filter-id="shape"><span class="label">Shape</span></button>
         </div>
 
         <div class="features-line">
@@ -357,6 +326,7 @@
         <div class="cigar-list-title">Cigars</div>
         <div id="cigarCount" class="cigar-count">Loading…</div>
       </div>
+
       <div style="overflow-x:auto;">
         <table class="cigar-table">
           <thead>
@@ -378,65 +348,24 @@
     </section>
   </div>
 
-  <!-- Filter modal (same pattern) -->
-  <div id="filterModalBackdrop" class="filter-modal-backdrop">
-    <div class="filter-modal">
-      <div class="filter-modal-header">
-        <div id="filterModalTitle" class="filter-modal-title"></div>
-        <button class="filter-modal-close" type="button" id="filterModalClose">&times;</button>
+  <!-- Brand modal -->
+  <div id="brandFilterBackdrop" class="brand-filter-backdrop">
+    <div class="brand-filter-modal">
+      <div class="brand-filter-header">
+        <div id="brandFilterTitle" class="brand-filter-title"></div>
+        <button class="brand-filter-close" type="button" id="brandFilterClose">&times;</button>
       </div>
-      <input id="filterModalSearch" class="filter-modal-search" type="search"
-             placeholder="Search options…" />
-      <div id="filterOptions" class="filter-options"></div>
-      <div class="filter-modal-actions">
-        <button class="btn-clear" type="button" id="filterClearBtn">Clear</button>
-        <button class="btn-apply" type="button" id="filterApplyBtn">Apply</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Global Filter Popup -->
-  <div id="filter-modal" class="filter-modal filter-modal--hidden">
-    <div class="filter-modal-backdrop"></div>
-
-    <div class="filter-modal-sheet">
-      <div class="filter-modal-header">
-        <button type="button" class="filter-modal-back">&larr; Back</button>
-        <h2 id="filter-modal-title">Brands</h2>
-      </div>
-
-      <div class="filter-modal-search-row">
-        <div class="filter-modal-search">
-          <span class="filter-modal-search-icon">
-            &#128269;
-          </span>
-          <input
-            type="search"
-            id="filter-modal-search-input"
-            placeholder="search..."
-          />
-        </div>
-      </div>
-
-      <div class="filter-modal-list" id="filter-modal-list">
-        <!-- rows injected by JS -->
-      </div>
-
-      <div class="filter-modal-footer">
-        <button
-          type="button"
-          id="filter-modal-confirm"
-          class="filter-modal-confirm"
-        >
-          Confirm
-        </button>
+      <input id="brandFilterSearch" class="brand-filter-search" type="search" placeholder="Search options…" />
+      <div id="brandFilterOptions" class="brand-filter-options"></div>
+      <div class="brand-filter-actions">
+        <button class="btn-clear" type="button" id="brandFilterClearBtn">Clear</button>
+        <button class="btn-apply" type="button" id="brandFilterApplyBtn">Apply</button>
       </div>
     </div>
   </div>
 
   <script>
     const HUB_CSV_URL = "/hub/hub_11-5-25.csv";
-
     const params = new URLSearchParams(location.search);
     const brandParam = params.get("brand") || "";
 
@@ -472,13 +401,12 @@
       priceRange: { label: "Price range", column: "MSRP", type: "price" }
     };
 
-    // --- brand slug helper (same logic as cigars.js) ---
     const BRAND_ICON_OVERRIDES = {
-      aturrent: "aturrent",          // A. Turrent
-      aflores: "aflores",            // A. Flores
-      carlostorano: "torano",        // Carlos Toraño / Torano
-      brundelre: "brundelre",        // Bruno Del Re
-      diamondcrown: "diamondcrown",  // Diamond Crown
+      aturrent: "aturrent",
+      aflores: "aflores",
+      carlostorano: "torano",
+      brundelre: "brundelre",
+      diamondcrown: "diamondcrown",
       elreydelmundo: "elreydelmundo",
       fonseca: "fonseca",
     };
@@ -528,14 +456,10 @@
             (r["Brand"] || "").trim() === brandParam
           );
 
-          // logo: CSV Brand IMG first, otherwise SVG icon based on slug
           const logoEl = document.getElementById("brandLogo");
           let imgPath = "";
 
-          if (brandRows.length > 0) {
-            imgPath = (brandRows[0]["Brand IMG"] || "").trim();
-          }
-
+          if (brandRows.length > 0) imgPath = (brandRows[0]["Brand IMG"] || "").trim();
           if (!imgPath) {
             const slug = brandSlug(brandParam);
             if (slug) imgPath = `/img/icons/brands/${slug}.svg`;
@@ -545,9 +469,7 @@
             if (!imgPath.startsWith("/")) imgPath = "/" + imgPath.replace(/^\/+/, "");
             logoEl.src = imgPath;
             logoEl.alt = brandParam || "Brand";
-            logoEl.onerror = () => {
-              logoEl.style.display = "none";
-            };
+            logoEl.onerror = () => { logoEl.style.display = "none"; };
           } else {
             logoEl.style.display = "none";
           }
@@ -557,7 +479,8 @@
         })
         .catch(err => {
           console.error("Error loading brand data:", err);
-          document.getElementById("cigarCount").textContent = "Error loading data";
+          const cc = document.getElementById("cigarCount");
+          if (cc) cc.textContent = "Error loading data";
         });
     }
 
@@ -565,8 +488,7 @@
       const searchVal = document.getElementById("masterSearch").value.trim().toLowerCase();
       if (searchVal) {
         const haystack = [
-          row["Line"], row["Cigar"],
-          row["Vitola"], row["Wrapper Shade"], row["Origin"]
+          row["Line"], row["Cigar"], row["Vitola"], row["Wrapper Shade"], row["Origin"]
         ].join(" ").toLowerCase();
         if (!haystack.includes(searchVal)) return false;
       }
@@ -627,8 +549,8 @@
         tbody.appendChild(tr);
       });
 
-      document.getElementById("cigarCount").textContent =
-        filtered.length.toLocaleString() + " cigars";
+      const cc = document.getElementById("cigarCount");
+      if (cc) cc.textContent = filtered.length.toLocaleString() + " cigars";
     }
 
     function initFilterButtons() {
@@ -653,18 +575,17 @@
         });
       });
 
-      document.getElementById("masterSearch").addEventListener("input", () => {
-        renderCigars();
-      });
+      document.getElementById("masterSearch").addEventListener("input", renderCigars);
 
-      const backdrop = document.getElementById("filterModalBackdrop");
-      document.getElementById("filterModalClose").addEventListener("click", closeFilterModal);
+      const backdrop = document.getElementById("brandFilterBackdrop");
+      document.getElementById("brandFilterClose").addEventListener("click", closeFilterModal);
       backdrop.addEventListener("click", (e) => {
         if (e.target === backdrop) closeFilterModal();
       });
-      document.getElementById("filterModalSearch").addEventListener("input", refreshFilterOptionsView);
-      document.getElementById("filterApplyBtn").addEventListener("click", applyFilterSelections);
-      document.getElementById("filterClearBtn").addEventListener("click", clearFilterSelections);
+
+      document.getElementById("brandFilterSearch").addEventListener("input", refreshFilterOptionsView);
+      document.getElementById("brandFilterApplyBtn").addEventListener("click", applyFilterSelections);
+      document.getElementById("brandFilterClearBtn").addEventListener("click", clearFilterSelections);
     }
 
     function openFilterModal(filterId) {
@@ -672,8 +593,8 @@
       if (!conf) return;
       currentFilterId = filterId;
 
-      document.getElementById("filterModalTitle").textContent = conf.label;
-      document.getElementById("filterModalSearch").value = "";
+      document.getElementById("brandFilterTitle").textContent = conf.label;
+      document.getElementById("brandFilterSearch").value = "";
 
       if (filterId === "priceRange") {
         currentFilterOptions = ["< $8", "$8–$12", "$12–$20", "$20+"];
@@ -689,21 +610,21 @@
       }
 
       refreshFilterOptionsView();
-      document.getElementById("filterModalBackdrop").classList.add("active");
+      document.getElementById("brandFilterBackdrop").classList.add("active");
     }
 
     function closeFilterModal() {
       currentFilterId = null;
       currentFilterOptions = [];
-      document.getElementById("filterModalBackdrop").classList.remove("active");
+      document.getElementById("brandFilterBackdrop").classList.remove("active");
     }
 
     function refreshFilterOptionsView() {
-      const container = document.getElementById("filterOptions");
+      const container = document.getElementById("brandFilterOptions");
       container.innerHTML = "";
       if (!currentFilterId) return;
 
-      const searchTerm = document.getElementById("filterModalSearch").value.trim().toLowerCase();
+      const searchTerm = document.getElementById("brandFilterSearch").value.trim().toLowerCase();
       const selectedSet = activeFilters[currentFilterId] || new Set();
 
       const options = currentFilterOptions.filter(opt =>
@@ -712,7 +633,7 @@
 
       options.forEach(opt => {
         const row = document.createElement("label");
-        row.className = "filter-option";
+        row.className = "brand-filter-option";
 
         const input = document.createElement("input");
         input.type = "checkbox";
@@ -730,7 +651,7 @@
 
     function applyFilterSelections() {
       if (!currentFilterId) return;
-      const container = document.getElementById("filterOptions");
+      const container = document.getElementById("brandFilterOptions");
       const set = new Set();
       container.querySelectorAll("input[type='checkbox']").forEach(cb => {
         if (cb.checked) set.add(cb.value);
