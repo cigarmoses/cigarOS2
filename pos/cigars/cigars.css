@@ -132,7 +132,6 @@
    DEC 10 BRAND GRID LOOK
    ========================= */
 
-/* Grid container */
 .brands-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -140,7 +139,7 @@
   padding: 6px 0 22px;
 }
 
-/* Make whatever tiles the builder creates behave like the Dec 10 look */
+/* Normalize whatever the builder outputs so it doesn't look like POS "cards" */
 .brands-grid > a,
 .brands-grid .brand-card,
 .brands-grid .brand-tile,
@@ -152,9 +151,27 @@
   text-align: center;
   text-decoration: none;
   color: inherit;
+
+  /* Neutralize card styling that might come from pos.css */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
 }
 
-/* Logo image — supports many possible class names */
+/* If the builder wraps content in inner blocks, keep it clean */
+.brands-grid .card,
+.brands-grid .card-inner,
+.brands-grid .content,
+.brands-grid .body {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Icon “tile” */
 .brands-grid img,
 .brands-grid .brand-icon,
 .brands-grid .brand-logo {
@@ -163,14 +180,13 @@
   object-fit: contain;
   display: block;
 
-  /* “Icon tile” feel from Dec 10 */
   background: #ffffff;
   border-radius: 18px;
   padding: 10px;
   box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
 }
 
-/* If builder wraps image in a div, make that div look right too */
+/* If builder uses a wrapper around the image */
 .brands-grid .icon-wrap,
 .brands-grid .brand-icon-wrap,
 .brands-grid .category-icon-wrap {
@@ -181,28 +197,31 @@
   display: grid;
   place-items: center;
   box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
+  padding: 10px;
 }
 
-/* Brand label */
+/* Brand label — target ONLY likely name elements (no global span/h3/h4) */
 .brands-grid .brand-name,
 .brands-grid .category-name,
 .brands-grid .name,
-.brands-grid span,
-.brands-grid h3,
-.brands-grid h4 {
+.brands-grid .label,
+.brands-grid .title {
   margin-top: 10px;
   font-weight: 800;
   font-size: 16px;
   line-height: 1.15;
   letter-spacing: -0.01em;
+  max-width: 120px;
+  word-break: break-word;
 }
 
-/* Long names wrap nicely like your screenshot */
-.brands-grid .brand-name,
-.brands-grid .category-name,
-.brands-grid .name,
-.brands-grid h3,
-.brands-grid h4 {
+/* Fallback: if the builder uses a plain text node inside the anchor, style the FIRST text element */
+.brands-grid > a > :not(img):first-child {
+  margin-top: 10px;
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   max-width: 120px;
   word-break: break-word;
 }
