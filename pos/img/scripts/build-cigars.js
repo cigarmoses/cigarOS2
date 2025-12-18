@@ -1,180 +1,226 @@
 // /pos/img/scripts/build-cigars.js
+// Builds the Brands grid on /pos/cigars/ from the hub CSV.
 
-const HUB_URL = "/hub/hub_11-5-25.json";
+(function () {
+  const HUB_CSV_URL = "/hub/hub_11-5-25.csv";
 
-let allRows = [];
-let filteredRows = [];
-
-// -------------------------------------
-// Helpers
-// -------------------------------------
-
-// Safely grab a field by trying multiple possible column names
-function getField(row, names) {
-  if (!Array.isArray(names)) names = [names];
-
-  for (const n of names) {
-    if (!n) continue;
-
-    // exact key
-    if (row[n] !== undefined && row[n] !== null && row[n] !== "") {
-      return row[n];
-    }
-
-    // case-insensitive key match
-    const key = Object.keys(row).find(
-      k => k.toLowerCase() === n.toLowerCase()
+  // Support either container id (you've used both in different versions)
+  function getGridEl() {
+    return (
+      document.getElementById("category-grid") ||
+      document.getElementById("brands-grid") ||
+      document.getElementById("brands-grid") // harmless duplicate fallback
     );
-    if (key && row[key] !== undefined && row[key] !== null && row[key] !== "") {
-      return row[key];
+  }
+
+  function normalizeBrandName(name) {
+    return (name || "").toString().trim();
+  }
+
+  // Brand slug helper (matches your style elsewhere)
+  const BRAND_ICON_OVERRIDES = {
+    aturrent: "aturrent",
+    aflores: "aflores",
+    carlostorano: "torano",
+    brundelre: "brundelre",
+    diamondcrown: "diamondcrown",
+    elreydelmundo: "elreydelmundo",
+    fonseca: "fonseca",
+  };
+
+  function brandSlug(name) {
+    if (!name) return "";
+    const canonical = name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
+
+    if (!canonical) return "";
+    if (Object.prototype.hasOwnProperty.call(BRAND_ICON_OVERRIDES, canonical)) {
+      return BRAND_ICON_OVERRIDES[canonical];
     }
-  }
-  return "";
-}
-
-function getBrand(row) {
-  return getField(row, ["Brand", "brand", "BRAND"]);
-}
-
-function getLine(row) {
-  return getField(row, ["Line", "line"]);
-}
-
-function getCigarName(row) {
-  return getField(row, ["Cigar Name", "Cigar", "cigar", "name", "Name"]);
-}
-
-function getVitola(row) {
-  return getField(row, ["Vitola", "vitola"]);
-}
-
-// image coming from your Google Sheets export (300x300 SVG/PNG)
-function getBrandIcon(row) {
-  return getField(row, [
-    "Brand Img 300",
-    "brandImg300",
-    "Brand Img",
-    "brandImg",
-    "Brand Icon",
-    "brand_icon"
-  ]);
-}
-
-// Build a unique brand list from the *filtered* rows
-function buildBrandList(rows) {
-  const map = new Map();
-
-  rows.forEach(row => {
-    const brandRaw = getBrand(row);
-    const brandName = (brandRaw || "").toString().trim();
-    if (!brandName) return;
-
-    const key = brandName.toLowerCase();
-    if (map.has(key)) return;
-
-    const icon = getBrandIcon(row) || "";
-
-    map.set(key, {
-      brand: brandName,
-      icon
-    });
-  });
-
-  return Array.from(map.values()).sort((a, b) =>
-    a.brand.localeCompare(b.brand, undefined, { sensitivity: "base" })
-  );
-}
-
-// -------------------------------------
-// Rendering
-// -------------------------------------
-
-function renderBrands() {
-  const grid = document.getElementById("brands-grid");
-  if (!grid) return;
-
-  const brands = buildBrandList(filteredRows);
-  grid.innerHTML = "";
-
-  if (!brands.length) {
-    grid.innerHTML = `<p class="cigars-empty">No cigars match your search yet.</p>`;
-    return;
+    return canonical;
   }
 
-  brands.forEach(item => {
-    const tile = document.createElement("button");
-    tile.type = "button";
-    tile.className = "brand-tile";
+  // Minimal CSV parser (handles quoted commas)
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cur = "";
+    let inQuotes = false;
 
-    tile.addEventListener("click", () => {
-      const url = `/pos/cigars/brand.html?brand=${encodeURIComponent(
-        item.brand
-      )}`;
-      window.location.href = url;
-    });
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i + 1];
 
-    tile.innerHTML = `
-      <div class="brand-tile-inner">
-        ${
-          item.icon
-            ? `<img src="${item.icon}" alt="${item.brand}" class="brand-tile-img" />`
-            : ""
-        }
-        <div class="brand-tile-name">${item.brand}</div>
-      </div>
-    `;
+      if (ch === '"' && inQuotes && next === '"') {
+        cur += '"';
+        i++;
+        continue;
+      }
 
-    grid.appendChild(tile);
-  });
-}
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+        continue;
+      }
 
-// -------------------------------------
-// Search logic
-// -------------------------------------
+      if (!inQuotes && ch === ",") {
+        row.push(cur);
+        cur = "";
+        continue;
+      }
 
-function wireSearch() {
-  const input = document.getElementById("cigars-search-input");
-  if (!input) return;
+      if (!inQuotes && (ch === "\n" || ch === "\r")) {
+        if (ch === "\r" && next === "\n") i++;
+        row.push(cur);
+        cur = "";
+        if (row.length > 1 || row[0] !== "") rows.push(row);
+        row = [];
+        continue;
+      }
 
-  input.addEventListener("input", () => {
-    const q = input.value.trim().toLowerCase();
+      cur += ch;
+    }
 
-    if (!q) {
-      filteredRows = [...allRows];
-    } else {
-      filteredRows = allRows.filter(row => {
-        const brandText = (getBrand(row) || "").toString().toLowerCase();
-        const lineText = (getLine(row) || "").toString().toLowerCase();
-        const cigarText = (getCigarName(row) || "").toString().toLowerCase();
-        const vitolaText = (getVitola(row) || "").toString().toLowerCase();
+    // last cell
+    row.push(cur);
+    if (row.length > 1 || row[0] !== "") rows.push(row);
 
-        const haystack = `${brandText} ${lineText} ${cigarText} ${vitolaText}`;
-        return haystack.includes(q);
+    if (!rows.length) return { headers: [], data: [] };
+
+    const headers = rows[0].map((h) => (h || "").trim());
+    const data = rows.slice(1).map((r) => {
+      const obj = {};
+      headers.forEach((h, idx) => {
+        obj[h] = (r[idx] ?? "").toString().trim();
       });
+      return obj;
+    });
+
+    return { headers, data };
+  }
+
+  function safeSrc(src) {
+    if (!src) return "";
+    let s = src.trim();
+    if (!s) return "";
+    // If a CSV path doesn't start with /, normalize to root-relative
+    if (!s.startsWith("/") && !s.startsWith("http")) {
+      s = "/" + s.replace(/^\/+/, "");
+    }
+    return s;
+  }
+
+  function setBrandImgWithFallback(imgEl, brandName, csvImgPath) {
+    const slug = brandSlug(brandName);
+    const csvSrc = safeSrc(csvImgPath);
+
+    // Candidate sources in order
+    const candidates = [];
+    if (csvSrc) candidates.push(csvSrc);
+    if (slug) candidates.push(`/img/icons/brands/${slug}.svg`);
+    if (slug) candidates.push(`/img/icons/brand/${slug}.svg`);
+
+    let idx = 0;
+
+    function tryNext() {
+      if (idx >= candidates.length) {
+        imgEl.style.display = "none";
+        return;
+      }
+      imgEl.src = candidates[idx++];
     }
 
-    renderBrands();
-  });
-}
-
-// -------------------------------------
-// Init
-// -------------------------------------
-
-async function loadHubAndRender() {
-  try {
-    const res = await fetch(HUB_URL);
-    if (!res.ok) throw new Error("Hub failed to load");
-
-    const data = await res.json();
-    allRows = Array.isArray(data) ? data : [];
-    filteredRows = [...allRows];
-
-    renderBrands();
-    wireSearch();
-  } catch (err) {
-    console.error("Error loading hub:", err);
+    imgEl.onerror = tryNext;
+    tryNext();
   }
-}
 
-document.addEventListener("DOMContentLoaded", loadHubAndRender);
+  function buildTile({ brand, brandImg }) {
+    const a = document.createElement("a");
+    a.className = "category-card"; // your CSS neutralizes card styles
+    a.href = `/pos/cigars/brand.html?brand=${encodeURIComponent(brand)}`;
+    a.setAttribute("aria-label", brand);
+
+    const img = document.createElement("img");
+    img.alt = brand;
+    img.loading = "lazy";
+    img.decoding = "async";
+    setBrandImgWithFallback(img, brand, brandImg);
+
+    const name = document.createElement("div");
+    name.className = "category-name";
+    name.textContent = brand;
+
+    a.appendChild(img);
+    a.appendChild(name);
+
+    return a;
+  }
+
+  async function run() {
+    const grid = getGridEl();
+    if (!grid) return;
+
+    // Clear grid each load
+    grid.innerHTML = "";
+
+    try {
+      const res = await fetch(HUB_CSV_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Hub CSV fetch failed: ${res.status}`);
+      const text = await res.text();
+
+      const { data } = parseCSV(text);
+
+      // Collect unique brands
+      const map = new Map();
+      for (const row of data) {
+        const brand = normalizeBrandName(row["Brand"]);
+        if (!brand) continue;
+
+        // Prefer Brand IMG if present
+        const brandImg = row["Brand IMG"] || row["BrandIMG"] || row["BrandImg"] || "";
+
+        if (!map.has(brand)) {
+          map.set(brand, { brand, brandImg });
+        } else {
+          // If we previously had no image but this row does, upgrade it
+          const existing = map.get(brand);
+          if (!existing.brandImg && brandImg) existing.brandImg = brandImg;
+        }
+      }
+
+      const brands = Array.from(map.values()).sort((a, b) =>
+        a.brand.toLowerCase().localeCompare(b.brand.toLowerCase())
+      );
+
+      // Render
+      const frag = document.createDocumentFragment();
+      brands.forEach((b) => frag.appendChild(buildTile(b)));
+      grid.appendChild(frag);
+
+      // If absolutely nothing, show a soft hint
+      if (!brands.length) {
+        const msg = document.createElement("div");
+        msg.style.color = "#6a7586";
+        msg.style.fontWeight = "600";
+        msg.style.padding = "10px 0";
+        msg.textContent = "No brands found in hub CSV.";
+        grid.appendChild(msg);
+      }
+    } catch (err) {
+      console.error("[build-cigars] error:", err);
+
+      const msg = document.createElement("div");
+      msg.style.color = "#b00020";
+      msg.style.fontWeight = "700";
+      msg.style.padding = "10px 0";
+      msg.textContent = "Brands failed to load. Check hub CSV path and console.";
+      grid.appendChild(msg);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", run);
+})();
