@@ -1,5 +1,6 @@
-/* Cigars page layout – matches middle mockup */
+/* /pos/cigars/cigars.css */
 
+/* Page base */
 .cigars-page {
   margin: 0;
   background: #ffffff;
@@ -7,8 +8,7 @@
   font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
 }
 
-/* Top bar with back button */
-
+/* Top bar */
 .cigars-topbar {
   padding: 12px 16px 0;
   display: flex;
@@ -16,85 +16,57 @@
   justify-content: flex-start;
 }
 
-.pos-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: none;
-  background: none;
-  padding: 4px 0;
-  font-size: 15px;
-  color: #007aff;
-  cursor: pointer;
-}
-
-.pos-back-icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-/* (No label needed but keep rule harmless) */
-.pos-back-label {
-  font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-}
-
-/* Main wrapper */
-
 .cigars-main {
   padding: 8px 16px 24px;
 }
 
-/* Header & search */
-
-.cigars-header {
-  margin-bottom: 12px;
-}
-
+/* Title + search */
 .cigars-title {
-  margin: 0 0 12px;
-  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-weight: 999; /* Heavy/Black */
-  font-size: 64px;
-  letter-spacing: -0.04em;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 56px;
+  line-height: 1.02;
+  margin: 10px 0 14px;
 }
 
 .cigars-search-wrap {
-  margin-bottom: 8px;
+  margin: 0 0 14px;
 }
 
 .cigars-search-bar {
   display: flex;
   align-items: center;
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: #f2f6fb;
+  gap: 10px;
+  background: #f3f7fb;
+  border: 1px solid #e4ecf6;
+  border-radius: 16px;
+  padding: 12px 14px;
 }
 
 .cigars-search-icon {
-  margin-right: 8px;
-  font-size: 14px;
-  opacity: 0.6;
+  opacity: 0.55;
+  font-size: 18px;
 }
 
 #cigars-search-input {
+  width: 100%;
   border: none;
   outline: none;
   background: transparent;
-  width: 100%;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 /* Filters card */
-
 .cigars-filters-section {
-  margin-bottom: 16px;
+  margin: 8px 0 18px;
 }
 
 .cigars-filters-card {
-  background: #f4f8fc;
-  border-radius: 24px;
-  padding: 12px 12px 14px;
-  box-shadow: 0 0 0 1px rgba(15, 26, 44, 0.04);
+  background: #f3f7fb;
+  border: 1px solid #e4ecf6;
+  border-radius: 18px;
+  padding: 14px 14px 12px;
 }
 
 .cigars-filters-header {
@@ -105,175 +77,150 @@
 }
 
 .cigars-filters-title {
-  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-weight: 800;
-  font-size: 20px;
+  font-size: 26px;
+  letter-spacing: -0.01em;
 }
 
 .cigars-filters-viewall {
-  background: none;
   border: none;
-  padding: 0;
-  font-size: 13px;
+  background: transparent;
   color: #007aff;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
 }
 
-/* Filters grid */
-
 .cigars-filters-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  gap: 10px;
 }
 
 .cigars-filters-row {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
+  display: grid;
+  gap: 10px;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
 }
-
-/* Default pill */
 
 .filter-pill {
-  flex: 1;
-  padding: 7px 10px;
-  border-radius: 999px;
   border: none;
-  font-size: 13px;
-  background: #edf2f7;
-  color: #111827;
-  text-align: center;
+  border-radius: 999px;
+  padding: 10px 12px;
+  background: #eaf1f9;
+  color: #0f1a2c;
+  font-weight: 700;
+  font-size: 15px;
   cursor: pointer;
-  white-space: nowrap;
 }
-
-/* Green active pill */
-
-.filter-pill--active {
-  background: #00d447;
-  color: #ffffff;
-}
-
-/* Toggle-style pills */
 
 .filter-pill--toggle {
   background: #ffffff;
-  border: 1px solid #d3dbe6;
-  color: #111827;
+  border: 1px solid #d7e3f3;
 }
 
-.filter-pill--toggle.filter-pill--active {
-  background: #00d447;
-  border-color: #00d447;
-  color: #ffffff;
-}
-
-/* Brands section */
-
-.cigars-brands-section {
-  margin-top: 18px;
-}
-
+/* Brands title */
 .cigars-brands-title {
-  margin: 0 0 8px;
-  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-weight: 999;
-  font-size: 22px;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
+  font-size: 34px;
+  letter-spacing: -0.01em;
+  margin: 14px 0 10px;
 }
 
-/* Brand grid – clean layout, no grey cards */
+/* =========================
+   DEC 10 BRAND GRID LOOK
+   ========================= */
 
+/* Grid container */
 .brands-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-row-gap: 32px;
-  grid-column-gap: 18px;
-  justify-items: center;
+  gap: 22px 18px;
+  padding: 6px 0 22px;
 }
 
-/* New brand tile style (used by build-cigars.js) */
-
-.brand-tile {
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 0;
-  box-shadow: none;
-  border-radius: 0;
-  cursor: pointer;
-  text-align: center;
-}
-
-.brand-tile-inner {
+/* Make whatever tiles the builder creates behave like the Dec 10 look */
+.brands-grid > a,
+.brands-grid .brand-card,
+.brands-grid .brand-tile,
+.brands-grid .category-card,
+.brands-grid .pos-card {
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
 }
 
-.brand-tile-img {
-  width: 96px;
-  height: 96px;
+/* Logo image — supports many possible class names */
+.brands-grid img,
+.brands-grid .brand-icon,
+.brands-grid .brand-logo {
+  width: 78px;
+  height: 78px;
   object-fit: contain;
   display: block;
-  margin-bottom: 6px;
+
+  /* “Icon tile” feel from Dec 10 */
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
 }
 
-.brand-tile-name {
-  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 1.25;
-  color: #0f1a2c;
-  text-align: center;
+/* If builder wraps image in a div, make that div look right too */
+.brands-grid .icon-wrap,
+.brands-grid .brand-icon-wrap,
+.brands-grid .category-icon-wrap {
+  width: 78px;
+  height: 78px;
+  background: #ffffff;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
 }
 
-/* Legacy brand-card classes mapped to same clean style (safe if still referenced anywhere) */
-
-.brand-card {
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 0;
-  box-shadow: none;
-  border-radius: 0;
-  cursor: pointer;
-  text-align: center;
+/* Brand label */
+.brands-grid .brand-name,
+.brands-grid .category-name,
+.brands-grid .name,
+.brands-grid span,
+.brands-grid h3,
+.brands-grid h4 {
+  margin-top: 10px;
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 
-.brand-card-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* Long names wrap nicely like your screenshot */
+.brands-grid .brand-name,
+.brands-grid .category-name,
+.brands-grid .name,
+.brands-grid h3,
+.brands-grid h4 {
+  max-width: 120px;
+  word-break: break-word;
 }
 
-.brand-card-icon-wrapper {
-  width: 96px;
-  height: 96px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 6px;
-}
+/* Mobile tweaks */
+@media (max-width: 390px) {
+  .brands-grid {
+    gap: 18px 14px;
+  }
 
-.brand-card-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
-.brand-card-name {
-  font-size: 14px;
-  text-align: center;
-  font-weight: 500;
-}
-
-/* Desktop width constraint */
-
-@media (min-width: 768px) {
-  .cigars-main {
-    max-width: 460px;
-    margin: 0 auto 24px;
+  .brands-grid img,
+  .brands-grid .brand-icon,
+  .brands-grid .brand-logo,
+  .brands-grid .icon-wrap,
+  .brands-grid .brand-icon-wrap,
+  .brands-grid .category-icon-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
   }
 }
