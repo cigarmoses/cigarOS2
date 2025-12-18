@@ -77,7 +77,9 @@
 }
 
 .cigars-filters-title {
-  font-weight: 800;
+  /* make this Medium (not bold) */
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 500;
   font-size: 26px;
   letter-spacing: -0.01em;
 }
@@ -103,15 +105,17 @@
   grid-auto-columns: 1fr;
 }
 
-/* ✅ make pill labels SF Pro Display Medium (not bold) */
 .filter-pill {
   border: none;
   border-radius: 999px;
   padding: 10px 12px;
+
+  /* make these Medium (not bold) */
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 500;
+
   background: #eaf1f9;
   color: #0f1a2c;
-  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500; /* MEDIUM */
   font-size: 15px;
   cursor: pointer;
 }
@@ -121,11 +125,19 @@
   border: 1px solid #d7e3f3;
 }
 
-/* ✅ active/selected state */
-.filter-pill.active {
-  background: #e0edff;
-  border: 1px solid #0f7aff;
-  color: #0f7aff;
+/* Quick row stays as a single row visually */
+.cigars-filters-row--quick {
+  grid-auto-columns: 1fr;
+}
+
+/* Advanced section spacing (when expanded) */
+.cigars-filters-advanced {
+  margin-top: 10px;
+}
+
+/* “Section below” (keep as-is / no new styling changes) */
+.cigars-filters-features {
+  margin-top: 10px;
 }
 
 /* Brands title */
@@ -134,11 +146,14 @@
   font-weight: 800;
   font-size: 34px;
   letter-spacing: -0.01em;
+
+  /* align with brand tile column */
   margin: 14px 0 10px;
+  padding-left: 2px;
 }
 
 /* =========================
-   DEC 10 BRAND GRID LOOK
+   BRAND GRID LOOK
    ========================= */
 
 .brands-grid {
@@ -146,6 +161,9 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px 18px;
   padding: 6px 0 22px;
+
+  /* match title alignment */
+  padding-left: 2px;
 }
 
 .brands-grid > a,
@@ -161,8 +179,9 @@
   color: inherit;
 }
 
-/* Logo image */
-.brands-grid img {
+.brands-grid img,
+.brands-grid .brand-icon,
+.brands-grid .brand-logo {
   width: 78px;
   height: 78px;
   object-fit: contain;
@@ -173,15 +192,40 @@
   box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
 }
 
-/* Brand label — ✅ SF Pro Display Medium */
+.brands-grid .icon-wrap,
+.brands-grid .brand-icon-wrap,
+.brands-grid .category-icon-wrap {
+  width: 78px;
+  height: 78px;
+  background: #ffffff;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
+}
+
+/* Brand label (Medium, not bold) */
+.brands-grid .brand-name,
 .brands-grid .category-name,
-.brands-grid .brand-name {
+.brands-grid .name,
+.brands-grid span,
+.brands-grid h3,
+.brands-grid h4 {
   margin-top: 10px;
+
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500; /* MEDIUM */
+  font-weight: 500;
+
   font-size: 16px;
   line-height: 1.15;
   letter-spacing: -0.01em;
+}
+
+.brands-grid .brand-name,
+.brands-grid .category-name,
+.brands-grid .name,
+.brands-grid h3,
+.brands-grid h4 {
   max-width: 120px;
   word-break: break-word;
 }
@@ -191,126 +235,15 @@
   .brands-grid {
     gap: 18px 14px;
   }
-  .brands-grid img {
+
+  .brands-grid img,
+  .brands-grid .brand-icon,
+  .brands-grid .brand-logo,
+  .brands-grid .icon-wrap,
+  .brands-grid .brand-icon-wrap,
+  .brands-grid .category-icon-wrap {
     width: 72px;
     height: 72px;
     border-radius: 16px;
   }
-}
-
-/* =========================
-   FILTER MODAL (SHEET)
-   ========================= */
-
-.filter-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-}
-
-.filter-modal--hidden {
-  display: none;
-}
-
-.filter-modal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(10, 24, 46, 0.45);
-}
-
-.filter-modal-sheet {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #f8fbff;
-  border-radius: 18px 18px 0 0;
-  padding: 12px 14px 14px;
-  box-shadow: 0 -8px 20px rgba(0,0,0,0.25);
-  max-height: 72vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.filter-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.filter-modal-back {
-  border: none;
-  background: none;
-  color: #007aff;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-#filter-modal-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.filter-modal-search-row {
-  margin-top: 10px;
-}
-
-.filter-modal-search {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #ffffff;
-  border: 1px solid #d7e3f3;
-  border-radius: 999px;
-  padding: 10px 12px;
-}
-
-.filter-modal-search-icon {
-  opacity: 0.55;
-}
-
-#filter-modal-search-input {
-  width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-}
-
-.filter-modal-list {
-  margin-top: 10px;
-  overflow: auto;
-  padding-bottom: 10px;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 6px;
-  border-bottom: 1px solid #e8eef7;
-  font-size: 15px;
-}
-
-.filter-row:last-child {
-  border-bottom: none;
-}
-
-.filter-modal-footer {
-  padding-top: 10px;
-}
-
-.filter-modal-confirm {
-  width: 100%;
-  border: none;
-  border-radius: 999px;
-  padding: 12px 14px;
-  background: #0f7aff;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
 }
