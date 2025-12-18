@@ -1,7 +1,6 @@
 // /pos/cigars/cigars.js
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Back button: go to main POS page
   const backBtn = document.getElementById("cigars-back");
   if (backBtn) {
     backBtn.addEventListener("click", () => {
@@ -9,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Ensure filter modal is hidden on initial load
+  // Force filter modal hidden on load (prevents the “Brands” sheet showing randomly)
   const filterModal = document.getElementById("filter-modal");
   if (filterModal) {
     filterModal.classList.add("filter-modal--hidden");
