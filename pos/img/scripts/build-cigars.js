@@ -5,6 +5,8 @@
   const GOOGLE_SHEETS_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv&gid=822697742";
 
+  // ----- helpers -----
+
   function withNoCache(url) {
     const u = new URL(url);
     u.searchParams.set("_ts", Date.now().toString());
@@ -16,37 +18,6 @@
       document.getElementById("category-grid") ||
       document.getElementById("brands-grid")
     );
-  }
-
-  function normalizeBrandName(name) {
-    return (name || "").toString().trim();
-  }
-
-  const BRAND_ICON_OVERRIDES = {
-    aturrent: "aturrent",
-    aflores: "aflores",
-    carlostorano: "torano",
-    brundelre: "brundelre",
-    diamondcrown: "diamondcrown",
-    elreydelmundo: "elreydelmundo",
-    fonseca: "fonseca",
-  };
-
-  function brandSlug(name) {
-    if (!name) return "";
-    const canonical = name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "")
-      .trim();
-
-    if (!canonical) return "";
-    if (Object.prototype.hasOwnProperty.call(BRAND_ICON_OVERRIDES, canonical)) {
-      return BRAND_ICON_OVERRIDES[canonical];
-    }
-    return canonical;
   }
 
   // Minimal CSV parser (handles quoted commas)
@@ -102,14 +73,49 @@
     return { headers, data };
   }
 
+  // Header matching: tolerate variations
+  function pick(row, keys) {
+    for (const k of keys) {
+      if (row[k] != null && String(row[k]).trim() !== "") return String(row[k]).trim();
+    }
+    return "";
+  }
+
   function safeSrc(src) {
     if (!src) return "";
-    let s = src.trim();
+    let s = String(src).trim();
     if (!s) return "";
     if (!s.startsWith("/") && !s.startsWith("http")) {
       s = "/" + s.replace(/^\/+/, "");
     }
     return s;
+  }
+
+  const BRAND_ICON_OVERRIDES = {
+    aturrent: "aturrent",
+    aflores: "aflores",
+    carlostorano: "torano",
+    brundelre: "brundelre",
+    diamondcrown: "diamondcrown",
+    elreydelmundo: "elreydelmundo",
+    fonseca: "fonseca",
+  };
+
+  function brandSlug(name) {
+    if (!name) return "";
+    const canonical = String(name)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
+
+    if (!canonical) return "";
+    if (Object.prototype.hasOwnProperty.call(BRAND_ICON_OVERRIDES, canonical)) {
+      return BRAND_ICON_OVERRIDES[canonical];
+    }
+    return canonical;
   }
 
   function setBrandImgWithFallback(imgEl, brandName, csvImgPath) {
@@ -162,24 +168,28 @@
     grid.innerHTML = "";
 
     try {
-      const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL), {
-        cache: "no-store",
-      });
+      const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL), { cache: "no-store" });
       if (!res.ok) throw new Error(`Google CSV fetch failed: ${res.status}`);
       const text = await res.text();
 
       const { headers, data } = parseCSV(text);
-      console.log("[build-cigars] headers:", headers);
-      console.log("[build-cigars] rows:", data.length);
 
+      // Visible debug right on the page (so no console needed)
+      const dbg = document.createElement("div");
+      dbg.style.fontSize = "12px";
+      dbg.style.color = "#6a7586";
+      dbg.style.margin = "6px 0 12px";
+      dbg.textContent = `Loaded ${data.length.toLocaleString()} rows from Google Sheets.`;
+      grid.parentElement.insertBefore(dbg, grid);
+
+      // Build unique brand list
       const map = new Map();
 
       for (const row of data) {
-        const brand = normalizeBrandName(row["Brand"]);
+        const brand = pick(row, ["Brand", "brand", "Cigar Brand", "Cigar brand", "BRAND"]);
         if (!brand) continue;
 
-        const brandImg =
-          row["Brand IMG"] || row["Brand Img"] || row["BrandIMG"] || "";
+        const brandImg = pick(row, ["Brand IMG", "Brand Img", "BrandIMG", "Brand Image", "Brand image"]);
 
         if (!map.has(brand)) {
           map.set(brand, { brand, brandImg });
@@ -195,11 +205,11 @@
 
       if (!brands.length) {
         const msg = document.createElement("div");
-        msg.style.color = "#6a7586";
-        msg.style.fontWeight = "600";
+        msg.style.color = "#b00020";
+        msg.style.fontWeight = "700";
         msg.style.padding = "10px 0";
         msg.textContent =
-          "No brands found. Your Google Sheet tab must have a 'Brand' column.";
+          "No brands found in Google CSV. Check the sheet has a Brand column (Brand / brand / Cigar Brand).";
         grid.appendChild(msg);
         return;
       }
@@ -215,7 +225,7 @@
       msg.style.fontWeight = "700";
       msg.style.padding = "10px 0";
       msg.textContent =
-        "Brands failed to load from Google Sheets. Check sharing/publish + gid.";
+        "Brands failed to load from Google Sheets. (Fetch failed or CORS/permissions issue.)";
       grid.appendChild(msg);
     }
   }
