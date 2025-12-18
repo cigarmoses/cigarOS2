@@ -12,75 +12,46 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ----------------------------------
-  // Asset path normalizer (root-absolute)
+  // Fix relative asset paths on /pos/cigars/
+  // Example bad:  img/icons/brands/padron.svg
+  // Needs to be:  /img/icons/brands/padron.svg
   // ----------------------------------
   function toRootAbsolute(url) {
     if (!url) return url;
-
     const s = String(url).trim();
 
-    // Leave absolute URLs alone
     if (
       s.startsWith("/") ||
       s.startsWith("http://") ||
       s.startsWith("https://") ||
       s.startsWith("data:") ||
       s.startsWith("blob:")
-    ) {
-      return s;
-    }
+    ) return s;
 
-    // Make relative paths root-absolute
     return "/" + s.replace(/^\.?\//, "");
   }
 
-  function fixSrc(img) {
-    const src = img.getAttribute("src");
-    if (!src) return;
-    img.setAttribute("src", toRootAbsolute(src));
-  }
-
-  function fixSrcset(el) {
-    const srcset = el.getAttribute("srcset");
-    if (!srcset) return;
-
-    // srcset format: "url1 1x, url2 2x" OR "url 320w"
-    const fixed = srcset
-      .split(",")
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .map((part) => {
-        const pieces = part.split(/\s+/);
-        const url = pieces.shift();
-        const descriptor = pieces.join(" ");
-        const newUrl = toRootAbsolute(url);
-        return descriptor ? `${newUrl} ${descriptor}` : newUrl;
-      })
-      .join(", ");
-
-    el.setAttribute("srcset", fixed);
-  }
-
-  function fixInlineBackground(el) {
-    const style = el.getAttribute("style");
-    if (!style || !style.includes("url(")) return;
-
-    // Replace url(img/...) or url(./img/...) etc with url(/img/...)
-    const fixed = style.replace(/url\((['"]?)([^'")]+)\1\)/g, (m, q, path) => {
-      const newPath = toRootAbsolute(path);
-      return `url(${q || ""}${newPath}${q || ""})`;
+  function fixAllAssets(root = document) {
+    // <img src="...">
+    root.querySelectorAll?.("img[src]")?.forEach((img) => {
+      const src = img.getAttribute("src");
+      if (src) img.setAttribute("src", toRootAbsolute(src));
     });
 
-    if (fixed !== style) el.setAttribute("style", fixed);
-  }
+    // inline style background-image:url(...)
+    root.querySelectorAll?.("[style*='url(']")?.forEach((el) => {
+      const style = el.getAttribute("style");
+      if (!style) return;
 
-  function fixSvgHrefs(root) {
-    // Handles <use href="...">, <image href="..."> and xlink:href variants
-    const nodes = root.querySelectorAll
-      ? root.querySelectorAll("[href], [xlink\\:href]")
-      : [];
+      const fixed = style.replace(/url\((['"]?)([^'")]+)\1\)/g, (m, q, path) => {
+        return `url(${q || ""}${toRootAbsolute(path)}${q || ""})`;
+      });
 
-    nodes.forEach((n) => {
+      if (fixed !== style) el.setAttribute("style", fixed);
+    });
+
+    // SVG href / xlink:href (for <use> etc)
+    root.querySelectorAll?.("[href], [xlink\\:href]")?.forEach((n) => {
       const href = n.getAttribute("href");
       if (href) n.setAttribute("href", toRootAbsolute(href));
 
@@ -89,59 +60,24 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function fixAllAssets(root = document) {
-    // imgs
-    root.querySelectorAll("img[src]").forEach(fixSrc);
-
-    // srcset on <img> or <source>
-    root.querySelectorAll("[srcset]").forEach(fixSrcset);
-
-    // inline background images
-    root.querySelectorAll("[style*='url(']").forEach(fixInlineBackground);
-
-    // svg href/xlink:href
-    fixSvgHrefs(root);
-  }
-
-  // Run once now
+  // Run immediately (for any server-rendered markup)
   fixAllAssets(document);
 
-  // Run again shortly after (helps when UI paints right after load)
+  // Also run shortly after (helps with quick post-load renders)
   setTimeout(() => fixAllAssets(document), 250);
-  setTimeout(() => fixAllAssets(document), 1000);
+  setTimeout(() => fixAllAssets(document), 1200);
 
-  // ----------------------------------
-  // Watch for dynamically inserted tiles/icons
-  // ----------------------------------
+  // Watch for brand tiles/icons being injected by build-cigars.js
   const mo = new MutationObserver((mutations) => {
     for (const m of mutations) {
-      if (m.type === "childList") {
-        m.addedNodes.forEach((node) => {
-          if (node.nodeType !== 1) return; // ELEMENT_NODE only
-          fixAllAssets(node);
-        });
-      } else if (m.type === "attributes") {
-        const el = m.target;
-        if (!(el && el.getAttribute)) continue;
+      if (m.type !== "childList") continue;
 
-        if (m.attributeName === "src" && el.tagName === "IMG") fixSrc(el);
-        if (m.attributeName === "srcset") fixSrcset(el);
-        if (m.attributeName === "style") fixInlineBackground(el);
-        if (m.attributeName === "href" || m.attributeName === "xlink:href") {
-          // SVG use/image
-          const v =
-            el.getAttribute(m.attributeName) ||
-            el.getAttribute(m.attributeName === "href" ? "xlink:href" : "href");
-          if (v) el.setAttribute(m.attributeName, toRootAbsolute(v));
-        }
-      }
+      m.addedNodes.forEach((node) => {
+        if (node.nodeType !== 1) return; // element only
+        fixAllAssets(node);
+      });
     }
   });
 
-  mo.observe(document.documentElement, {
-    subtree: true,
-    childList: true,
-    attributes: true,
-    attributeFilter: ["src", "srcset", "style", "href", "xlink:href"],
-  });
+  mo.observe(document.documentElement, { subtree: true, childList: true });
 });
