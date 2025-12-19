@@ -12,7 +12,7 @@
 
 <body class="cigars-page">
   <header class="cigars-topbar">
-    <button type="button" class="pos-back" id="cigars-back">
+    <button type="button" class="pos-back" id="cigars-back" aria-label="Back">
       <span class="pos-back-icon">←</span>
     </button>
   </header>
@@ -23,64 +23,62 @@
 
       <div class="cigars-search-wrap">
         <div class="cigars-search-bar">
-          <span class="cigars-search-icon">🔍</span>
+          <span class="cigars-search-icon" aria-hidden="true">🔍</span>
           <input
             id="cigars-search-input"
             type="search"
             placeholder="Search for brand, cigar, vitola, etc..."
+            autocomplete="off"
           />
         </div>
       </div>
     </section>
 
     <section class="cigars-filters-section">
-      <div class="cigars-filters-card">
+      <div class="cigars-filters-card" id="filters-card">
         <div class="cigars-filters-header">
           <div class="cigars-filters-title">Filters</div>
-
-          <!-- view all toggles EXPANDED FILTERS (inline) -->
-          <button type="button" class="cigars-filters-viewall" id="filters-view-all" aria-expanded="false">
+          <button type="button" class="cigars-filters-viewall" id="filters-view-all">
             view all
           </button>
         </div>
 
-        <!-- ONLY ONE ROW UNDER FILTERS TITLE -->
-        <div class="cigars-filters-grid cigars-filters-grid--quick">
-          <div class="cigars-filters-row cigars-filters-row--quick">
-            <button class="filter-pill" id="filter-shade" data-filter="shade">Shade</button>
-            <button class="filter-pill" id="filter-vitola" data-filter="vitola">Vitola</button>
-            <button class="filter-pill" id="filter-ring" data-filter="ring">Ring</button>
-            <button class="filter-pill" id="filter-strength" data-filter="strength">Strength</button>
+        <!-- PRIMARY ROW (always visible) -->
+        <div class="cigars-filters-grid">
+          <div class="cigars-filters-row">
+            <button class="filter-pill" data-filter="shade">Shade</button>
+            <button class="filter-pill" data-filter="vitola">Vitola</button>
+            <button class="filter-pill" data-filter="ring">Ring</button>
+            <button class="filter-pill" data-filter="strength">Strength</button>
           </div>
         </div>
 
-        <!-- EXPANDED FILTERS (hidden until “view all”) -->
-        <div class="cigars-filters-advanced" id="filters-advanced" hidden>
+        <!-- EXPANDED FILTERS (hidden until "view all") -->
+        <div class="cigars-filters-expanded" id="filters-expanded" hidden>
           <div class="cigars-filters-grid">
             <div class="cigars-filters-row">
-              <button class="filter-pill" id="filter-manufacturer" data-filter="manufacturer">Manufacturer</button>
-              <button class="filter-pill" id="filter-brand" data-filter="brand">Brand</button>
+              <button class="filter-pill" data-filter="manufacturer">Manufacturer</button>
+              <button class="filter-pill" data-filter="brand">Brand</button>
             </div>
 
             <div class="cigars-filters-row">
-              <button class="filter-pill" id="filter-length" data-filter="length">Length</button>
-              <button class="filter-pill" id="filter-shape" data-filter="shape">Shape</button>
+              <button class="filter-pill" data-filter="length">Length</button>
+              <button class="filter-pill" data-filter="shape">Shape</button>
             </div>
           </div>
         </div>
 
-        <!-- “SECTION BELOW” (keep as-is / no style changes) -->
-        <div class="cigars-filters-features">
-          <div class="cigars-filters-row cigars-filters-row--features">
-            <button class="filter-pill filter-pill--toggle" id="filter-tubo" data-filter="tubo">Tubo</button>
-            <button class="filter-pill filter-pill--toggle" id="filter-flavored" data-filter="flavored">Flavored</button>
-            <button class="filter-pill filter-pill--toggle" id="filter-tin" data-filter="tin">Tin</button>
-            <button class="filter-pill filter-pill--toggle" id="filter-pack" data-filter="pack">Pack</button>
+        <!-- FEATURE TOGGLES (yellow section — no design changes requested) -->
+        <div class="cigars-features">
+          <div class="cigars-features-row">
+            <button class="filter-pill filter-pill--toggle" data-toggle="tubo">Tubo</button>
+            <button class="filter-pill filter-pill--toggle" data-toggle="flavored">Flavored</button>
+            <button class="filter-pill filter-pill--toggle" data-toggle="tin">Tin</button>
+            <button class="filter-pill filter-pill--toggle" data-toggle="pack">Pack</button>
           </div>
-
-          <div class="cigars-filters-row cigars-filters-row--features">
-            <button class="filter-pill filter-pill--toggle" id="filter-barberpole" data-filter="barberpole">Barberpole</button>
-            <button class="filter-pill filter-pill--toggle" id="filter-boxpressed" data-filter="boxpressed">Box-Pressed</button>
+          <div class="cigars-features-row">
+            <button class="filter-pill filter-pill--toggle" data-toggle="barberpole">Barberpole</button>
+            <button class="filter-pill filter-pill--toggle" data-toggle="boxpressed">Box-Pressed</button>
           </div>
         </div>
       </div>
@@ -89,35 +87,41 @@
     <section class="cigars-brands-section">
       <h2 class="cigars-brands-title">Brands</h2>
 
+      <!-- Builder compatibility -->
       <div id="category-grid" class="brands-grid"></div>
     </section>
   </main>
 
   <script defer src="/pos/pos.js"></script>
+
+  <!-- data + brand grid renderer -->
   <script defer src="/pos/img/scripts/build-cigars.js"></script>
+
+  <!-- UI controller: search + filters + modal -->
   <script defer src="/pos/cigars/cigars.js"></script>
 
-  <!-- Existing modal (leave in place; cigars.js already expects it) -->
-  <div id="filter-modal" class="filter-modal filter-modal--hidden">
-    <div class="filter-modal-backdrop"></div>
+  <!-- Unified Filter Popup -->
+  <div id="filter-modal" class="fm fm--hidden" aria-hidden="true">
+    <div class="fm-backdrop" data-fm-close></div>
 
-    <div class="filter-modal-sheet">
-      <div class="filter-modal-header">
-        <button type="button" class="filter-modal-back">&larr; Back</button>
-        <h2 id="filter-modal-title">Brands</h2>
+    <div class="fm-sheet" role="dialog" aria-modal="true" aria-labelledby="fm-title">
+      <div class="fm-header">
+        <h2 id="fm-title" class="fm-title">Brands</h2>
       </div>
 
-      <div class="filter-modal-search-row">
-        <div class="filter-modal-search">
-          <span class="filter-modal-search-icon">&#128269;</span>
-          <input type="search" id="filter-modal-search-input" placeholder="search..." />
+      <div class="fm-search-row">
+        <div class="fm-search">
+          <span class="fm-search-icon" aria-hidden="true">🔎</span>
+          <input id="fm-search-input" type="search" placeholder="search..." />
         </div>
       </div>
 
-      <div class="filter-modal-list" id="filter-modal-list"></div>
+      <div class="fm-list" id="fm-list">
+        <!-- rows injected by JS -->
+      </div>
 
-      <div class="filter-modal-footer">
-        <button type="button" id="filter-modal-confirm" class="filter-modal-confirm">Confirm</button>
+      <div class="fm-footer">
+        <button type="button" id="fm-confirm" class="fm-confirm">Confirm</button>
       </div>
     </div>
   </div>
