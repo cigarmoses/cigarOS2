@@ -1,14 +1,14 @@
 // /pos/img/scripts/build-cigars.js
-// Builds + filters the Brands grid on /pos/cigars/ from Google Sheets CSV
+// Loads Google Sheets CSV -> builds brand grid on /pos/cigars/
 
 (function () {
   // IMPORTANT:
-  // Use your *published CSV export* URL here.
-  // If you already have it working (Loaded 2,952 rows…), keep your exact URL.
+  // If you ever change the sheet tab, update &gid=...
+  const SHEET_ID = "10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM";
+  const GID = "822697742"; // <-- keep if this is your data tab
   const GOOGLE_SHEETS_CSV_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/export?format=csv";
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
-  // ---- helpers ----
   function withNoCache(url) {
     const u = new URL(url);
     u.searchParams.set("_ts", Date.now().toString());
@@ -22,8 +22,8 @@
     );
   }
 
+  // Minimal CSV parser (supports quotes)
   function parseCSV(text) {
-    // CSV parser that handles quotes safely (no dependency)
     const rows = [];
     let row = [];
     let cur = "";
@@ -77,7 +77,7 @@
 
   function pick(row, keys) {
     for (const k of keys) {
-      if (row[k] != null && String(row[k]).trim() !== "") return String(row[k]).trim();
+      if (row[k] != null && String(row[k]).trim() !== "") return row[k];
     }
     return "";
   }
@@ -106,8 +106,7 @@
     if (!name) return "";
     const canonical = String(name)
       .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "")
       .trim();
@@ -162,297 +161,97 @@
     return a;
   }
 
-  // ---------- FILTER STATE ----------
-  const FILTER_MAP = {
-    manufacturer: { label: "Manufacturer", col: "Manufacturer" },
-    brand: { label: "Brand", col: "Brand" },
-    shade: { label: "Shade", col: "Wrapper Shade" },
-    vitola: { label: "Vitola", col: "Vitola" },
-    ring: { label: "Ring", col: "RG" },
-    strength: { label: "Strength", col: "Strength" },
-    length: { label: "Length", col: "Length" },
-    shape: { label: "Shape", col: "Shape" },
-  };
+  // apply filters/search (state stored in window.__CIGAR_FILTER_STATE__)
+  function rowMatchesState(row, state) {
+    const q = (state.q || "").trim().toLowerCase();
 
-  // Toggle filters read these columns as boolean-y
-  const FEATURE_MAP = {
-    tubo: { label: "Tubo", col: "Tubo" },
-    flavored: { label: "Flavored", col: "Flavored" },
-    tin: { label: "Tin", col: "Tin" },
-    pack: { label: "Pack", col: "Pack" },
-    barberpole: { label: "Barberpole", col: "Barber" },      // your sheet uses Barber
-    boxpressed: { label: "Box-Pressed", col: "Box-Pressed" } // your sheet uses Box-Pressed
-  };
+    if (q) {
+      const hay = [
+        row["Brand"],
+        row["Cigar"],
+        row["Vitola"],
+        row["Line"],
+        row["Manufacturer"],
+        row["Wrapper Shade"],
+        row["Strength"],
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-  const selected = {
-    // multi-select sets
-    manufacturer: new Set(),
-    brand: new Set(),
-    shade: new Set(),
-    vitola: new Set(),
-    ring: new Set(),
-    strength: new Set(),
-    length: new Set(),
-    shape: new Set(),
-    // toggles
-    features: new Set(),
-  };
-
-  let allRows = [];
-
-  // ---------- MODAL (existing #filter-modal in index.html) ----------
-  const modal = {
-    root: null,
-    title: null,
-    list: null,
-    back: null,
-    confirm: null,
-    search: null,
-    backdrop: null,
-
-    currentKey: null,
-    currentOptions: [],
-    tempSelected: new Set(),
-  };
-
-  function modalEls() {
-    if (modal.root) return;
-
-    modal.root = document.getElementById("filter-modal");
-    modal.title = document.getElementById("filter-modal-title");
-    modal.list = document.getElementById("filter-modal-list");
-    modal.back = modal.root?.querySelector(".filter-modal-back");
-    modal.confirm = document.getElementById("filter-modal-confirm");
-    modal.search = document.getElementById("filter-modal-search-input");
-    modal.backdrop = modal.root?.querySelector(".filter-modal-backdrop");
-  }
-
-  function openModal(key) {
-    modalEls();
-    if (!modal.root) return;
-
-    const conf = FILTER_MAP[key];
-    if (!conf) return;
-
-    modal.currentKey = key;
-
-    // Build options from rows
-    const vals = new Set();
-    for (const r of allRows) {
-      const v = (r[conf.col] || "").toString().trim();
-      if (v) vals.add(v);
-    }
-    modal.currentOptions = Array.from(vals).sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
-    );
-
-    // temp selection starts as current
-    modal.tempSelected = new Set(selected[key] || []);
-
-    modal.title.textContent = conf.label;
-    modal.search.value = "";
-    renderModalOptions();
-
-    modal.root.classList.remove("filter-modal--hidden");
-  }
-
-  function closeModal() {
-    modalEls();
-    if (!modal.root) return;
-    modal.root.classList.add("filter-modal--hidden");
-    modal.currentKey = null;
-    modal.currentOptions = [];
-    modal.tempSelected = new Set();
-  }
-
-  function renderModalOptions() {
-    modalEls();
-    if (!modal.list) return;
-
-    const q = (modal.search.value || "").trim().toLowerCase();
-    modal.list.innerHTML = "";
-
-    const options = modal.currentOptions.filter((opt) =>
-      !q ? true : opt.toLowerCase().includes(q)
-    );
-
-    options.forEach((opt) => {
-      const row = document.createElement("button");
-      row.type = "button";
-      row.className = "filter-modal-row";
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.justifyContent = "space-between";
-      row.style.width = "100%";
-
-      const left = document.createElement("div");
-      left.textContent = opt;
-      left.style.fontWeight = "500";
-
-      const right = document.createElement("div");
-      right.textContent = modal.tempSelected.has(opt) ? "✓" : "";
-      right.style.color = "#007aff";
-      right.style.fontWeight = "700";
-
-      row.addEventListener("click", () => {
-        if (modal.tempSelected.has(opt)) modal.tempSelected.delete(opt);
-        else modal.tempSelected.add(opt);
-        right.textContent = modal.tempSelected.has(opt) ? "✓" : "";
-      });
-
-      row.appendChild(left);
-      row.appendChild(right);
-      modal.list.appendChild(row);
-    });
-  }
-
-  function applyModalSelection() {
-    if (!modal.currentKey) return;
-    selected[modal.currentKey] = new Set(modal.tempSelected);
-
-    // active blue state on pill
-    const pill = document.querySelector(`.filter-pill[data-filter="${modal.currentKey}"]`);
-    if (pill) {
-      if (selected[modal.currentKey].size) pill.classList.add("active");
-      else pill.classList.remove("active");
+      if (!hay.includes(q)) return false;
     }
 
-    closeModal();
-    rebuild();
-  }
+    // feature toggles use columns like "Tubo", "Tin", etc.
+    const featureCols = {
+      tubo: ["Tubo", "TUBO"],
+      flavored: ["Flavored", "FLAVORED"],
+      tin: ["Tin", "TIN"],
+      pack: ["Pack", "PACK"],
+      barberpole: ["Barber", "Barberpole", "BARBER", "BARBERPOLE"],
+      boxpressed: ["Box-Pressed", "Box Pressed", "BOX-PRESSED", "BOX PRESSED"],
+    };
 
-  // ---------- SEARCH + FILTERING ----------
-  function rowMatchesSearch(row, q) {
-    if (!q) return true;
-    const hay = [
-      row["Brand"],
-      row["Line"],
-      row["Cigar"],
-      row["Vitola"],
-      row["Wrapper Shade"],
-      row["Wrapper"],
-      row["Origin"],
-      row["Strength"],
-      row["Shape"],
-      row["Manufacturer"],
-    ]
-      .join(" ")
-      .toLowerCase();
+    for (const key of Object.keys(featureCols)) {
+      if (!state.toggles[key]) continue;
+      const colKeys = featureCols[key];
+      const val = pick(row, colKeys).toString().trim();
+      if (!val) return false;
+    }
 
-    return hay.includes(q);
-  }
+    // multi-select filters
+    const map = {
+      manufacturer: ["Manufacturer"],
+      brand: ["Brand"],
+      shade: ["Wrapper Shade", "Shade"],
+      vitola: ["Vitola"],
+      length: ["Length"],
+      ring: ["RG", "Ring"],
+      shape: ["Shape"],
+      strength: ["Strength"],
+    };
 
-  function rowMatchesSets(row) {
-    // normal multi-select filters
-    for (const key of Object.keys(FILTER_MAP)) {
-      const set = selected[key];
+    for (const filterKey of Object.keys(map)) {
+      const set = state.filters[filterKey];
       if (!set || set.size === 0) continue;
 
-      const col = FILTER_MAP[key].col;
-      const val = (row[col] || "").toString().trim();
-      if (!val || !set.has(val)) return false;
-    }
-
-    // feature toggles: require the column to be truthy/non-empty
-    for (const feat of selected.features) {
-      const conf = FEATURE_MAP[feat];
-      if (!conf) continue;
-      const v = (row[conf.col] || "").toString().trim();
-      if (!v) return false;
+      const colVal = pick(row, map[filterKey]).toString().trim();
+      if (!colVal || !set.has(colVal)) return false;
     }
 
     return true;
   }
 
-  function rebuild() {
-    const grid = getGridEl();
-    if (!grid) return;
+  function brandsFromRows(rows, state) {
+    const brandMap = new Map();
 
-    const searchInput = document.getElementById("cigars-search-input");
-    const q = (searchInput?.value || "").trim().toLowerCase();
-
-    // filter rows down
-    const filteredRows = allRows.filter((r) => rowMatchesSearch(r, q) && rowMatchesSets(r));
-
-    // build unique brands from filtered rows
-    const map = new Map();
-    for (const row of filteredRows) {
-      const brand = pick(row, ["Brand", "brand"]);
+    for (const row of rows) {
+      const brand = (row["Brand"] || "").trim();
       if (!brand) continue;
 
-      const brandImg = pick(row, ["Brand IMG", "Brand Img", "Brand Image", "brandImg"]);
-      if (!map.has(brand)) {
-        map.set(brand, { brand, brandImg });
+      if (state && !rowMatchesState(row, state)) continue;
+
+      const brandImg = (row["Brand IMG"] || row["Brand Img"] || "").trim();
+
+      if (!brandMap.has(brand)) {
+        brandMap.set(brand, { brand, brandImg });
       } else {
-        // keep first non-empty image
-        const existing = map.get(brand);
+        const existing = brandMap.get(brand);
         if (!existing.brandImg && brandImg) existing.brandImg = brandImg;
       }
     }
 
-    const brands = Array.from(map.values()).sort((a, b) =>
+    return Array.from(brandMap.values()).sort((a, b) =>
       a.brand.toLowerCase().localeCompare(b.brand.toLowerCase())
     );
-
-    grid.innerHTML = "";
-
-    if (!brands.length) {
-      const msg = document.createElement("div");
-      msg.style.color = "#6a7586";
-      msg.style.fontWeight = "500";
-      msg.style.padding = "10px 2px";
-      msg.textContent = "No brands found.";
-      grid.appendChild(msg);
-      return;
-    }
-
-    const frag = document.createDocumentFragment();
-    brands.forEach((b) => frag.appendChild(buildTile(b)));
-    grid.appendChild(frag);
   }
 
-  // ---------- WIRING ----------
-  function wireUI() {
-    // search
-    const search = document.getElementById("cigars-search-input");
-    if (search) {
-      search.addEventListener("input", rebuild);
-    }
-
-    // modal wiring
-    modalEls();
-    if (modal.back) modal.back.addEventListener("click", closeModal);
-    if (modal.backdrop) modal.backdrop.addEventListener("click", closeModal);
-    if (modal.search) modal.search.addEventListener("input", renderModalOptions);
-    if (modal.confirm) modal.confirm.addEventListener("click", applyModalSelection);
-
-    // filter pills that open modal
-    document.querySelectorAll(".filter-pill[data-filter]").forEach((btn) => {
-      const key = btn.getAttribute("data-filter");
-      if (!key) return;
-
-      // feature toggles handled separately
-      if (FEATURE_MAP[key]) return;
-
-      btn.addEventListener("click", () => openModal(key));
-    });
-
-    // feature toggles (yellow section)
-    Object.keys(FEATURE_MAP).forEach((feat) => {
-      const btn = document.querySelector(`.filter-pill[data-filter="${feat}"]`);
-      if (!btn) return;
-
-      btn.addEventListener("click", () => {
-        if (selected.features.has(feat)) {
-          selected.features.delete(feat);
-          btn.classList.remove("active");
-        } else {
-          selected.features.add(feat);
-          btn.classList.add("active");
-        }
-        rebuild();
-      });
-    });
+  async function loadSheet() {
+    const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL));
+    if (!res.ok) throw new Error("Google Sheets CSV fetch failed: " + res.status);
+    const text = await res.text();
+    const parsed = parseCSV(text);
+    return parsed.data;
   }
 
   async function run() {
@@ -460,29 +259,68 @@
     if (!grid) return;
 
     try {
-      const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL));
-      if (!res.ok) throw new Error("Google CSV fetch failed: " + res.status);
-      const text = await res.text();
+      const rows = await loadSheet();
 
-      const { data } = parseCSV(text);
+      // store globally so cigars.js can build filter option lists
+      window.__CIGAR_SHEET_ROWS__ = rows;
 
-      // Keep only rows that have a Brand
-      allRows = data.filter((r) => (r["Brand"] || "").trim() !== "");
+      // create default state if missing
+      if (!window.__CIGAR_FILTER_STATE__) {
+        window.__CIGAR_FILTER_STATE__ = {
+          q: "",
+          filters: {
+            manufacturer: new Set(),
+            brand: new Set(),
+            shade: new Set(),
+            vitola: new Set(),
+            length: new Set(),
+            ring: new Set(),
+            shape: new Set(),
+            strength: new Set(),
+          },
+          toggles: {
+            tubo: false,
+            flavored: false,
+            tin: false,
+            pack: false,
+            barberpole: false,
+            boxpressed: false,
+          },
+        };
+      }
 
-      // Remove any old debug “Loaded X rows…” (you asked to delete it)
-      // (If you had a previous debug node injected, it won’t be added now.)
+      // expose render function for cigars.js
+      window.buildCigarsRender = function () {
+        const state = window.__CIGAR_FILTER_STATE__;
+        const brands = brandsFromRows(rows, state);
 
-      wireUI();
-      rebuild();
+        grid.innerHTML = "";
+        if (!brands.length) {
+          const msg = document.createElement("div");
+          msg.style.color = "#6a7586";
+          msg.style.fontWeight = "600";
+          msg.style.padding = "10px 0";
+          msg.textContent = "No brands match your filters.";
+          grid.appendChild(msg);
+          return;
+        }
+
+        const frag = document.createDocumentFragment();
+        brands.forEach((b) => frag.appendChild(buildTile(b)));
+        grid.appendChild(frag);
+      };
+
+      // initial paint
+      window.buildCigarsRender();
     } catch (err) {
       console.error("[build-cigars] error:", err);
       grid.innerHTML = "";
       const msg = document.createElement("div");
       msg.style.color = "#b00020";
       msg.style.fontWeight = "700";
-      msg.style.padding = "10px 2px";
+      msg.style.padding = "10px 0";
       msg.textContent =
-        "Brands failed to load from Google Sheets. (Check published CSV access + URL.)";
+        "Brands failed to load from Google Sheets. Check the sheet sharing + CSV access.";
       grid.appendChild(msg);
     }
   }
