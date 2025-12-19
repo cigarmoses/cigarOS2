@@ -30,9 +30,7 @@
   margin: 10px 0 14px;
 }
 
-.cigars-search-wrap {
-  margin: 0 0 14px;
-}
+.cigars-search-wrap { margin: 0 0 14px; }
 
 .cigars-search-bar {
   display: flex;
@@ -44,10 +42,7 @@
   padding: 12px 14px;
 }
 
-.cigars-search-icon {
-  opacity: 0.55;
-  font-size: 18px;
-}
+.cigars-search-icon { opacity: 0.55; font-size: 18px; }
 
 #cigars-search-input {
   width: 100%;
@@ -58,9 +53,7 @@
 }
 
 /* Filters card */
-.cigars-filters-section {
-  margin: 8px 0 18px;
-}
+.cigars-filters-section { margin: 8px 0 18px; }
 
 .cigars-filters-card {
   background: #f3f7fb;
@@ -77,9 +70,8 @@
 }
 
 .cigars-filters-title {
-  /* make this Medium (not bold) */
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500;
+  font-weight: 800;
   font-size: 26px;
   letter-spacing: -0.01em;
 }
@@ -93,10 +85,7 @@
   cursor: pointer;
 }
 
-.cigars-filters-grid {
-  display: grid;
-  gap: 10px;
-}
+.cigars-filters-grid { display: grid; gap: 10px; }
 
 .cigars-filters-row {
   display: grid;
@@ -105,72 +94,71 @@
   grid-auto-columns: 1fr;
 }
 
+/* pills — MEDIUM (not bold) */
 .filter-pill {
   border: none;
   border-radius: 999px;
   padding: 10px 12px;
-
-  /* make these Medium (not bold) */
-  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500;
-
   background: #eaf1f9;
   color: #0f1a2c;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 500; /* SF Pro Display Medium feel */
   font-size: 15px;
   cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
-.filter-pill--toggle {
-  background: #ffffff;
-  border: 1px solid #d7e3f3;
+/* active blue */
+.filter-pill.is-active {
+  background: #e0edff;
+  color: #007aff;
+  outline: 1px solid rgba(0,122,255,0.25);
 }
 
-/* Quick row stays as a single row visually */
-.cigars-filters-row--quick {
+/* Toggle pills (yellow section stays) */
+.cigars-features { margin-top: 12px; display: grid; gap: 10px; }
+
+.cigars-features-row {
+  display: grid;
+  gap: 10px;
+  grid-auto-flow: column;
   grid-auto-columns: 1fr;
 }
 
-/* Advanced section spacing (when expanded) */
-.cigars-filters-advanced {
-  margin-top: 10px;
+.filter-pill--toggle {
+  background: #f3efc8;               /* yellow */
+  border: 1px solid #e6dda2;
 }
 
-/* “Section below” (keep as-is / no new styling changes) */
-.cigars-filters-features {
-  margin-top: 10px;
+.filter-pill--toggle.is-active {
+  background: #e0edff;
+  color: #007aff;
+  border-color: rgba(0,122,255,0.25);
 }
 
-/* Brands title */
+/* expanded filters area */
+.cigars-filters-expanded { margin-top: 12px; }
+
+/* Brands title — align with grid content (match left padding of tiles) */
 .cigars-brands-title {
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-weight: 800;
   font-size: 34px;
   letter-spacing: -0.01em;
-
-  /* align with brand tile column */
   margin: 14px 0 10px;
-  padding-left: 2px;
 }
 
-/* =========================
-   BRAND GRID LOOK
-   ========================= */
-
+/* Brand grid */
 .brands-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px 18px;
   padding: 6px 0 22px;
-
-  /* match title alignment */
-  padding-left: 2px;
 }
 
+/* tiles */
 .brands-grid > a,
-.brands-grid .brand-card,
-.brands-grid .brand-tile,
-.brands-grid .category-card,
-.brands-grid .pos-card {
+.brands-grid .category-card {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -179,71 +167,184 @@
   color: inherit;
 }
 
-.brands-grid img,
-.brands-grid .brand-icon,
-.brands-grid .brand-logo {
+.brands-grid img {
   width: 78px;
   height: 78px;
   object-fit: contain;
   display: block;
+
   background: #ffffff;
   border-radius: 18px;
   padding: 10px;
   box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
 }
 
-.brands-grid .icon-wrap,
-.brands-grid .brand-icon-wrap,
-.brands-grid .category-icon-wrap {
-  width: 78px;
-  height: 78px;
-  background: #ffffff;
-  border-radius: 18px;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
-}
-
-/* Brand label (Medium, not bold) */
-.brands-grid .brand-name,
-.brands-grid .category-name,
-.brands-grid .name,
-.brands-grid span,
-.brands-grid h3,
-.brands-grid h4 {
+.brands-grid .category-name {
   margin-top: 10px;
-
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500;
-
+  font-weight: 500; /* medium */
   font-size: 16px;
   line-height: 1.15;
   letter-spacing: -0.01em;
-}
-
-.brands-grid .brand-name,
-.brands-grid .category-name,
-.brands-grid .name,
-.brands-grid h3,
-.brands-grid h4 {
   max-width: 120px;
   word-break: break-word;
 }
 
 /* Mobile tweaks */
 @media (max-width: 390px) {
-  .brands-grid {
-    gap: 18px 14px;
-  }
+  .brands-grid { gap: 18px 14px; }
 
-  .brands-grid img,
-  .brands-grid .brand-icon,
-  .brands-grid .brand-logo,
-  .brands-grid .icon-wrap,
-  .brands-grid .brand-icon-wrap,
-  .brands-grid .category-icon-wrap {
+  .brands-grid img {
     width: 72px;
     height: 72px;
     border-radius: 16px;
   }
+}
+
+/* ---------- Unified Filter Modal ---------- */
+.fm { position: fixed; inset: 0; z-index: 9999; }
+.fm--hidden { display: none; }
+
+.fm-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(10, 24, 46, 0.45);
+}
+
+.fm-sheet{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 48px));
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.25);
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.fm-title{
+  margin: 0;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+}
+
+.fm-search-row{ margin-top: 10px; }
+
+.fm-search{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #f3f6fb;
+  border: 1px solid #e3eaf4;
+}
+
+.fm-search-icon{ font-size: 16px; opacity: .55; }
+
+#fm-search-input{
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  color: #0f1a2c;
+}
+#fm-search-input::placeholder{ color: rgba(15,26,44,.35); }
+
+.fm-list{
+  margin-top: 12px;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid #edf1f7;
+  padding: 6px;
+  overflow: auto;
+  flex: 1;
+}
+
+/* visible right-side scroll bar */
+.fm-list::-webkit-scrollbar { width: 10px; }
+.fm-list::-webkit-scrollbar-track { background: transparent; }
+.fm-list::-webkit-scrollbar-thumb {
+  background: rgba(15,26,44,.18);
+  border-radius: 999px;
+}
+
+.fm-row{
+  display: grid;
+  grid-template-columns: 44px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.fm-row:hover { background: #f6f9ff; }
+
+.fm-icon{
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.fm-icon img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.fm-label{
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 500;
+  font-size: 20px;
+  color: #0f1a2c;
+  letter-spacing: -0.01em;
+}
+
+.fm-check{
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: #f1f5fb;
+  border: 1px solid #e3eaf4;
+}
+
+.fm-row.is-selected .fm-check{
+  background: #5aa9ff;
+  border-color: rgba(0,122,255,.25);
+}
+
+.fm-row.is-selected .fm-label{
+  color: #5aa9ff;
+}
+
+.fm-footer{
+  padding-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.fm-confirm{
+  min-width: 180px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: none;
+  background: #fff;
+  color: #007aff;
+  font-weight: 600;
+  font-size: 18px;
+  box-shadow: 0 10px 22px rgba(0,122,255,.25);
+  cursor: pointer;
 }
