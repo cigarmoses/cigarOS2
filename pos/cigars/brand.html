@@ -3,38 +3,138 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Brand</title>
+  <title>POS • Brand</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
 </head>
 
 <body class="brand-page">
   <header class="brand-topbar">
-    <button type="button" class="pos-back" id="brand-back" aria-label="Back">
-      <span class="pos-back-icon">←</span>
+    <button class="brand-back" id="brand-back" type="button" aria-label="Back">
+      <span class="brand-back-icon">←</span>
     </button>
+
+    <div class="brand-topbar-title">
+      <div class="brand-title-row">
+        <div class="brand-title" id="brandTitle">Brand</div>
+        <div class="brand-corner-icon" id="brandCornerIcon" aria-hidden="true"></div>
+      </div>
+    </div>
   </header>
 
   <main class="brand-main">
-    <section class="brand-header">
-      <div class="brand-header-left">
-        <div class="brand-badge" id="brand-badge">
-          <img id="brand-badge-img" alt="" />
-        </div>
-        <div class="brand-headings">
-          <h1 class="brand-title" id="brand-title">Brand</h1>
-          <div class="brand-sub" id="brand-sub">Cigars</div>
-        </div>
+    <!-- SEARCH (top) -->
+    <section class="brand-search">
+      <div class="brand-search-bar">
+        <span class="brand-search-icon" aria-hidden="true">🔎</span>
+        <input id="brandSearchInput" type="search" placeholder="Search..." />
       </div>
     </section>
 
+    <!-- ONE FILTERS BUTTON -->
+    <section class="brand-controls">
+      <button class="filters-btn" id="openFilters" type="button">
+        <span class="filters-icon" aria-hidden="true">≡</span>
+        <span>Filters</span>
+        <span class="filters-count" id="filtersCount" hidden>0</span>
+      </button>
+
+      <!-- PADRON ONLY: Maduro / Natural -->
+      <div class="padron-toggles" id="padronToggles" hidden>
+        <div class="toggle-group">
+          <span class="toggle-label">Maduro</span>
+          <label class="switch">
+            <input type="checkbox" id="toggleMaduro" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-group">
+          <span class="toggle-label">Natural</span>
+          <label class="switch">
+            <input type="checkbox" id="toggleNatural" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Band artwork toggle -->
+      <button class="bandart-btn" id="toggleBandArtwork" type="button" aria-pressed="false">
+        Band artwork
+      </button>
+    </section>
+
+    <!-- LIST -->
     <section class="brand-list-wrap">
-      <div id="brand-list" class="brand-list" aria-live="polite"></div>
+      <div class="brand-list" id="brandList" aria-live="polite"></div>
+      <div class="brand-empty" id="brandEmpty" hidden>No cigars found.</div>
+      <div class="brand-error" id="brandError" hidden>Couldn’t load cigar data.</div>
     </section>
   </main>
 
-  <script defer src="/pos/cigars/brand.js"></script>
+  <!-- FILTERS MODAL (single entry point) -->
+  <div class="modal-backdrop" id="filtersBackdrop" hidden></div>
+
+  <div class="modal" id="filtersModal" role="dialog" aria-modal="true" aria-labelledby="filtersTitle" hidden>
+    <div class="modal-header">
+      <div class="modal-title" id="filtersTitle">Filters</div>
+      <button class="modal-close" id="closeFilters" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-row">
+        <div class="modal-row-title">Band artwork</div>
+        <label class="switch">
+          <input type="checkbox" id="modalBandArtwork" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="modal-row">
+        <div class="modal-row-title">Only show cigars with artwork</div>
+        <label class="switch">
+          <input type="checkbox" id="modalArtworkOnly" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="modal-divider"></div>
+
+      <!-- These are the brand-specific filters (no Manufacturer/Brand) -->
+      <div class="filters-grid" id="filtersGrid"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-btn ghost" id="clearFilters" type="button">Clear</button>
+      <button class="modal-btn primary" id="applyFilters" type="button">Confirm</button>
+    </div>
+  </div>
+
+  <!-- OPTION PICKER MODAL (used when tapping a filter) -->
+  <div class="modal-backdrop" id="pickerBackdrop" hidden></div>
+
+  <div class="modal picker" id="pickerModal" role="dialog" aria-modal="true" aria-labelledby="pickerTitle" hidden>
+    <div class="modal-header">
+      <div class="modal-title" id="pickerTitle">Pick</div>
+      <button class="modal-close" id="closePicker" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="picker-search">
+        <span class="brand-search-icon" aria-hidden="true">🔎</span>
+        <input id="pickerSearchInput" type="search" placeholder="search..." />
+      </div>
+
+      <div class="picker-list" id="pickerList"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-btn ghost" id="pickerCancel" type="button">Cancel</button>
+      <button class="modal-btn primary" id="pickerConfirm" type="button">Confirm</button>
+    </div>
+  </div>
+
+  <script src="/pos/cigars/brand.js"></script>
 </body>
 </html>
