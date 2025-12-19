@@ -1,0 +1,193 @@
+/* /pos/cigars/brand.css */
+
+.brand-page{
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(1200px 900px at 20% -10%, rgba(90,169,255,.18), transparent 60%),
+              radial-gradient(900px 700px at 110% 10%, rgba(0,122,255,.14), transparent 55%),
+              #050b16;
+  color: #ffffff;
+  font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+}
+
+.brand-topbar{
+  padding: 14px 16px 6px;
+  display: flex;
+  align-items: center;
+}
+
+.pos-back{
+  border: none;
+  background: none;
+  color: #5aa9ff;
+  font-size: 18px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.pos-back-icon{
+  font-size: 22px;
+  line-height: 1;
+}
+
+.brand-main{
+  padding: 6px 0 18px;
+}
+
+.brand-header{
+  padding: 8px 16px 10px;
+}
+
+.brand-header-left{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-badge{
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.10);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.brand-badge img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.brand-title{
+  margin: 0;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.brand-sub{
+  margin-top: 2px;
+  color: rgba(255,255,255,.62);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.brand-list-wrap{
+  padding: 6px 0 0;
+}
+
+.brand-list{
+  display: flex;
+  flex-direction: column;
+}
+
+/* each row like your screenshot */
+.brand-row{
+  display: grid;
+  grid-template-columns: 68px 1fr 130px 58px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+.brand-row-left{
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.brand-row-left img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.brand-row-mid{
+  min-width: 0;
+}
+
+.brand-cigar{
+  margin: 0;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  font-size: 20px;
+  line-height: 1.05;
+  color: #ffffff;
+  white-space: normal;
+}
+
+.brand-brand{
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255,255,255,.62);
+}
+
+.brand-row-right{
+  padding-left: 14px;
+  border-left: 2px solid rgba(255,255,255,.12); /* the vertical divider */
+  justify-self: stretch;
+}
+
+.brand-price{
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  color: rgba(255,255,255,.92);
+}
+
+.brand-vitola{
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255,255,255,.60);
+}
+
+.brand-add{
+  justify-self: end;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: none;
+  background: #6bb56b; /* green circle */
+  color: #ffffff;
+  font-size: 28px;
+  line-height: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+}
+
+.brand-add:active{
+  transform: scale(0.98);
+}
+
+.brand-empty{
+  padding: 18px 16px;
+  color: rgba(255,255,255,.70);
+  font-weight: 600;
+}
+
+@media (max-width: 390px){
+  .brand-row{
+    grid-template-columns: 64px 1fr 118px 56px;
+  }
+  .brand-cigar{ font-size: 19px; }
+  .brand-price{ font-size: 21px; }
+}
