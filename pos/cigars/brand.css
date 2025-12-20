@@ -158,9 +158,9 @@ body.brand-page{
 }
 
 .cigar-name{
-  font-size:17px;        /* ⬅️ MAIN CHANGE */
+  font-size:16px;        /* ⬅️ MAIN CHANGE */
   line-height:1.2;      /* slightly looser like football app */
-  font-weight:700;      /* slightly lighter */
+  font-weight:600;      /* slightly lighter */
   letter-spacing:-.005em;
 
   display:-webkit-box;
@@ -173,8 +173,8 @@ body.brand-page{
 
 .cigar-sub{
   margin-top:4px;
-  font-size:14px;       /* ⬅️ smaller */
-  font-weight:600;
+  font-size:12px;       /* ⬅️ smaller */
+  font-weight:500;
   color:rgba(255,255,255,.55);
 }
 
@@ -196,16 +196,16 @@ body.brand-page{
   width:48px;           /* ⬅️ narrower */
   text-align:right;
   font-size:15px;       /* ⬅️ smaller */
-  font-weight:700;
+  font-weight:500;
 }
 
 .cigar-plus{
-  width:32px; height:32px;          /* smaller */
+  width:22px; height:22px;          /* smaller */
   border-radius:999px;
   border:none;
   background:var(--green);
   color:#fff;
-  font-size:22px;                   /* smaller plus glyph */
+  font-size:15px;                   /* smaller plus glyph */
   line-height:0;
   display:grid;
   place-items:center;
