@@ -5,23 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS • Brand</title>
 
-  <!-- Global typography + POS base -->
-  <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-
-  <!-- Brand page styles -->
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
 </head>
 
 <body class="brand-page">
   <!-- Top bar -->
   <header class="brand-topbar">
-    <button class="brand-back icon-btn" id="brand-back" aria-label="Back">
+    <button class="icon-btn" id="brand-back" aria-label="Back">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M15 18L9 12L15 6"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round" />
+        <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
 
@@ -37,103 +30,98 @@
     <section class="brand-search">
       <div class="search-wrap">
         <span class="search-ico" aria-hidden="true">🔎</span>
-        <input
-          id="search-input"
-          type="search"
-          class="search-input"
-          placeholder="Search..."
-          autocomplete="off"
-        />
+        <input id="brand-search" type="search" placeholder="Search..." autocomplete="off" />
       </div>
     </section>
 
-    <!-- Controls row (4 buttons) -->
-    <section class="brand-controls" aria-label="Brand controls">
-      <button type="button" class="ctrl-btn" id="btn-filters">
-        <span class="ctrl-ico" aria-hidden="true">≡</span>
-        <span>Filters</span>
+    <!-- Controls row: Filters | Band Art | Maduro | Natural -->
+    <section class="brand-controls">
+      <button class="pill-btn" id="btn-filters" type="button">
+        <span class="pill-ico" aria-hidden="true">≡</span>
+        Filters
       </button>
 
-      <button type="button" class="ctrl-btn" id="btn-bandart">
-        <span class="ctrl-ico" aria-hidden="true">🖼️</span>
-        <span>Band Art</span>
+      <button class="pill-btn" id="btn-bandart" type="button">
+        <span class="pill-ico" aria-hidden="true">🖼</span>
+        Band Art
       </button>
 
-      <button type="button" class="ctrl-toggle" id="toggle-maduro" aria-pressed="false">
+      <!-- Padron-only toggles -->
+      <button class="pill-toggle" id="tgl-maduro" type="button" aria-pressed="false">
         <span class="dot" aria-hidden="true"></span>
-        <span>Maduro</span>
+        Maduro
       </button>
 
-      <button type="button" class="ctrl-toggle" id="toggle-natural" aria-pressed="false">
+      <button class="pill-toggle" id="tgl-natural" type="button" aria-pressed="false">
         <span class="dot" aria-hidden="true"></span>
-        <span>Natural</span>
+        Natural
       </button>
     </section>
 
     <!-- List -->
-    <section class="brand-list" aria-label="Cigars list">
-      <div id="list" class="cigar-list"></div>
-
-      <div id="empty" class="empty-state" hidden>
-        No cigars found.
-      </div>
+    <section class="brand-list">
+      <div id="brand-list"></div>
     </section>
   </main>
 
-  <!-- Filters Modal -->
-  <div class="modal" id="filters-modal" aria-hidden="true">
-    <div class="modal-scrim" data-close="filters-modal"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="filters-title">
+  <!-- Filters modal -->
+  <div class="modal" id="modal-filters" aria-hidden="true">
+    <div class="modal-scrim" data-close="1"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Filters">
       <div class="modal-head">
-        <h2 id="filters-title">Filters</h2>
-        <button class="modal-x" type="button" data-close="filters-modal" aria-label="Close">×</button>
+        <div class="modal-title">Filters</div>
+        <button class="modal-x" type="button" data-close="1" aria-label="Close">✕</button>
       </div>
 
       <div class="modal-body">
-        <div class="modal-search">
-          <span class="search-ico" aria-hidden="true">🔎</span>
-          <input id="filters-search" type="search" placeholder="search..." />
+        <div class="modal-note">
+          (Brand page filters exclude Manufacturer/Brand automatically.)
         </div>
 
-        <div class="segmented" role="tablist" aria-label="Filter type">
-          <button class="seg-btn is-on" type="button" data-filter-type="Vitola" role="tab" aria-selected="true">Vitola</button>
-          <button class="seg-btn" type="button" data-filter-type="Wrapper Shade" role="tab" aria-selected="false">Shade</button>
-          <button class="seg-btn" type="button" data-filter-type="Shape" role="tab" aria-selected="false">Shape</button>
-          <button class="seg-btn" type="button" data-filter-type="Strength" role="tab" aria-selected="false">Strength</button>
-          <button class="seg-btn" type="button" data-filter-type="RG" role="tab" aria-selected="false">Ring</button>
-          <button class="seg-btn" type="button" data-filter-type="Length" role="tab" aria-selected="false">Length</button>
-        </div>
-
-        <div class="picklist" id="filters-list" aria-label="Filter values">
-          <!-- built by JS -->
+        <!-- minimal placeholder – you can expand later -->
+        <div class="modal-empty">
+          Filters popup is wired and ready — tell me which fields you want inside first (vitola, ring, length, strength, etc.)
         </div>
       </div>
 
       <div class="modal-foot">
-        <button class="btn-secondary" type="button" data-close="filters-modal">Cancel</button>
-        <button class="btn-primary" type="button" id="filters-confirm">Confirm</button>
+        <button class="modal-btn ghost" type="button" data-close="1">Cancel</button>
+        <button class="modal-btn primary" type="button" data-close="1">Confirm</button>
       </div>
     </div>
   </div>
 
-  <!-- Band Art Modal (Padron only) -->
-  <div class="modal" id="bandart-modal" aria-hidden="true">
-    <div class="modal-scrim" data-close="bandart-modal"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bandart-title">
+  <!-- Band Art modal -->
+  <div class="modal" id="modal-bandart" aria-hidden="true">
+    <div class="modal-scrim" data-close="1"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Band Art">
       <div class="modal-head">
-        <h2 id="bandart-title">Band Art</h2>
-        <button class="modal-x" type="button" data-close="bandart-modal" aria-label="Close">×</button>
+        <div class="modal-title">Band Art</div>
+        <button class="modal-x" type="button" data-close="1" aria-label="Close">✕</button>
       </div>
 
       <div class="modal-body">
-        <div class="picklist" id="bandart-list" aria-label="Band art options">
-          <!-- built by JS -->
+        <div class="modal-note">Select one:</div>
+
+        <div class="bandart-list">
+          <label class="bandart-item">
+            <input type="radio" name="bandart" value="1964" />
+            <span>1964 Anniversary Series</span>
+          </label>
+          <label class="bandart-item">
+            <input type="radio" name="bandart" value="1926" />
+            <span>1926 Serie</span>
+          </label>
+          <label class="bandart-item">
+            <input type="radio" name="bandart" value="damaso" />
+            <span>Damaso</span>
+          </label>
         </div>
       </div>
 
       <div class="modal-foot">
-        <button class="btn-secondary" type="button" data-close="bandart-modal">Cancel</button>
-        <button class="btn-primary" type="button" id="bandart-confirm">Confirm</button>
+        <button class="modal-btn ghost" type="button" id="bandart-clear">Clear</button>
+        <button class="modal-btn primary" type="button" id="bandart-confirm">Confirm</button>
       </div>
     </div>
   </div>
