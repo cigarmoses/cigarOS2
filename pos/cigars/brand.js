@@ -1,28 +1,38 @@
-// /pos/cigars/brand.js
-(() => {
-  // ===== CONFIG =====
-  const SHEET_ID = "10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM";
-  const SHEET_NAME = ""; // optional: put your tab name if needed
+/* /pos/cigars/brand.js
+   Brand page (Google Sheets CSV)
+   Requirements:
+   - Search bar filters rows live
+   - Controls row: Filters modal, Band Art modal, Maduro toggle, Natural toggle
+   - Maduro/Natural ONLY shown for Padron (otherwise hidden)
+   - Subtitle: Wrapper SHADE – Vitola (NOT wrapper type)
+   - MSRP comes from column header "MSRP"
+*/
 
-  function googleCsvUrl() {
-    if (SHEET_NAME) {
-      return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+(function () {
+  // ✅ Use the SAME sheet ID you already use elsewhere
+  const SHEET_ID = "10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM";
+
+  // ✅ If you know the gid for your main hub tab, set it here.
+  // If you don't, leave null and we'll use the "first sheet" export endpoint.
+  // (Recommended: set to your cigars data gid once confirmed.)
+  const SHEET_GID = null; // e.g. "822697742"
+
+  function csvUrl() {
+    if (SHEET_GID) {
+      return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
     }
     return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
   }
 
-  function googleExportUrl() {
-    return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-  }
-
+  // --- helpers ---
   function withNoCache(url) {
     const u = new URL(url);
     u.searchParams.set("_ts", String(Date.now()));
     return u.toString();
   }
 
-  // ===== CSV parser =====
   function parseCSV(text) {
+    // RFC-ish CSV parser (handles quotes, commas, newlines)
     const rows = [];
     let row = [];
     let cur = "";
@@ -32,28 +42,19 @@
       const ch = text[i];
       const next = text[i + 1];
 
-      if (ch === '"' && inQuotes && next === '"') {
-        cur += '"';
-        i++;
-        continue;
-      }
-      if (ch === '"') {
-        inQuotes = !inQuotes;
-        continue;
-      }
-      if (!inQuotes && ch === ",") {
-        row.push(cur);
-        cur = "";
-        continue;
-      }
+      if (ch === '"' && inQuotes && next === '"') { cur += '"'; i++; continue; }
+      if (ch === '"') { inQuotes = !inQuotes; continue; }
+
+      if (!inQuotes && ch === ",") { row.push(cur); cur = ""; continue; }
+
       if (!inQuotes && (ch === "\n" || ch === "\r")) {
         if (ch === "\r" && next === "\n") i++;
-        row.push(cur);
-        cur = "";
+        row.push(cur); cur = "";
         if (row.length > 1 || row[0] !== "") rows.push(row);
         row = [];
         continue;
       }
+
       cur += ch;
     }
 
@@ -74,7 +75,6 @@
     return { headers, data };
   }
 
-  // ===== helpers =====
   function pick(row, keys) {
     for (const k of keys) {
       if (row[k] != null && String(row[k]).trim() !== "") return String(row[k]).trim();
@@ -82,17 +82,15 @@
     return "";
   }
 
-  function parseMoney(val) {
-    const n = parseFloat(String(val || "").replace(/[^0-9.]/g, ""));
-    return Number.isFinite(n) ? n : NaN;
-  }
-
-  function formatMoney(val) {
-    const n = parseMoney(val);
+  function money(val) {
+    const s = String(val || "").replace(/[^\d.]/g, "");
+    if (!s) return "";
+    const n = Number(s);
     if (!Number.isFinite(n)) return "";
     return n.toFixed(2);
   }
 
+  // brand icon slug logic (matches your brands icons folder patterns)
   const BRAND_ICON_OVERRIDES = {
     aturrent: "aturrent",
     aflores: "aflores",
@@ -107,7 +105,8 @@
     if (!name) return "";
     const canonical = String(name)
       .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "")
       .trim();
@@ -127,9 +126,9 @@
     return s;
   }
 
-  function setImgWithFallback(imgEl, brandName, csvBrandImgPath) {
+  function setBrandImgWithFallback(imgEl, brandName, csvImgPath) {
     const slug = brandSlug(brandName);
-    const csvSrc = safeSrc(csvBrandImgPath);
+    const csvSrc = safeSrc(csvImgPath);
 
     const candidates = [];
     if (csvSrc) candidates.push(csvSrc);
@@ -144,598 +143,519 @@
       }
       imgEl.src = candidates[idx++];
     }
-
     imgEl.onerror = tryNext;
     tryNext();
   }
 
-  function shadeBucket(row) {
-    const s = pick(row, ["Wrapper Shade", "Shade", "wrapper shade", "shade"]).toLowerCase();
-    if (s.includes("maduro")) return "maduro";
-    if (s.includes("natural")) return "natural";
-    return "";
+  function getParam(name) {
+    const u = new URL(window.location.href);
+    return u.searchParams.get(name) || "";
   }
 
-  // ===== DOM =====
-  const params = new URLSearchParams(location.search);
-  const brandParam = (params.get("brand") || "").trim();
-  const isPadron = brandParam.toLowerCase() === "padron";
-
-  const brandTitle = document.getElementById("brandTitle");
-  const brandCornerIcon = document.getElementById("brandCornerIcon");
-
-  const listEl = document.getElementById("brandList");
-  const emptyEl = document.getElementById("brandEmpty");
-  const errorEl = document.getElementById("brandError");
-
-  const searchInput = document.getElementById("brandSearchInput");
-
-  const openFiltersBtn = document.getElementById("openFilters");
-  const filtersCountEl = document.getElementById("filtersCount");
-
-  const padronToggles = document.getElementById("padronToggles");
-  const toggleMaduro = document.getElementById("toggleMaduro");
-  const toggleNatural = document.getElementById("toggleNatural");
-
-  const bandArtworkBtn = document.getElementById("toggleBandArtwork");
-
-  // filters modal
-  const filtersBackdrop = document.getElementById("filtersBackdrop");
-  const filtersModal = document.getElementById("filtersModal");
-  const closeFilters = document.getElementById("closeFilters");
-  const applyFiltersBtn = document.getElementById("applyFilters");
-  const clearFiltersBtn = document.getElementById("clearFilters");
-  const filtersGrid = document.getElementById("filtersGrid");
-
-  const modalBandArtwork = document.getElementById("modalBandArtwork");
-  const modalArtworkOnly = document.getElementById("modalArtworkOnly");
-
-  // picker modal
-  const pickerBackdrop = document.getElementById("pickerBackdrop");
-  const pickerModal = document.getElementById("pickerModal");
-  const pickerTitle = document.getElementById("pickerTitle");
-  const pickerList = document.getElementById("pickerList");
-  const pickerSearchInput = document.getElementById("pickerSearchInput");
-  const closePicker = document.getElementById("closePicker");
-  const pickerCancel = document.getElementById("pickerCancel");
-  const pickerConfirm = document.getElementById("pickerConfirm");
-
-  // Back
+  // --- UI refs ---
   const backBtn = document.getElementById("brand-back");
-  if (backBtn) {
-    backBtn.addEventListener("click", () => {
-      if (history.length > 1) history.back();
-      else location.href = "/pos/cigars/";
+  const titleEl = document.getElementById("brand-title");
+  const brandIconEl = document.getElementById("brand-icon");
+  const listEl = document.getElementById("list");
+  const emptyEl = document.getElementById("empty");
+
+  const searchInput = document.getElementById("search-input");
+
+  const btnFilters = document.getElementById("btn-filters");
+  const btnBandArt = document.getElementById("btn-bandart");
+  const toggleMaduro = document.getElementById("toggle-maduro");
+  const toggleNatural = document.getElementById("toggle-natural");
+
+  const filtersModal = document.getElementById("filters-modal");
+  const bandartModal = document.getElementById("bandart-modal");
+
+  const filtersSearch = document.getElementById("filters-search");
+  const filtersList = document.getElementById("filters-list");
+  const filtersConfirm = document.getElementById("filters-confirm");
+
+  const bandartList = document.getElementById("bandart-list");
+  const bandartConfirm = document.getElementById("bandart-confirm");
+
+  // --- state ---
+  let ALL_ROWS = [];
+  let BRAND_ROWS = [];
+  let VIEW_ROWS = [];
+
+  const state = {
+    q: "",
+    // filters modal selections (multi-select)
+    activeFilterType: "Vitola",
+    selected: {
+      Vitola: new Set(),
+      "Wrapper Shade": new Set(),
+      Shape: new Set(),
+      Strength: new Set(),
+      RG: new Set(),
+      Length: new Set(),
+    },
+    // Band art (single select)
+    bandArt: "", // "1964 Anniversary Series" | "1926 Serie" | "Damaso"
+    // Padron toggles
+    maduro: false,
+    natural: false,
+  };
+
+  // --- modal helpers ---
+  function openModal(id) {
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal(id) {
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  function wireModalClose() {
+    document.querySelectorAll("[data-close]").forEach((el) => {
+      el.addEventListener("click", () => closeModal(el.getAttribute("data-close")));
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (filtersModal.getAttribute("aria-hidden") === "false") closeModal("filters-modal");
+        if (bandartModal.getAttribute("aria-hidden") === "false") closeModal("bandart-modal");
+      }
     });
   }
 
-  if (brandTitle) brandTitle.textContent = brandParam || "Brand";
+  // --- build list row ---
+  function buildRow(row, brandName) {
+    const cigarName = pick(row, ["Cigar", "Cigar Name", "Name"]);
+    const wrapperShade = pick(row, ["Wrapper Shade", "Wrapper shade", "Shade"]);
+    const vitola = pick(row, ["Vitola", "Style"]);
+    const msrp = money(pick(row, ["MSRP"])); // ✅ user requirement
+    const cigarImg = pick(row, ["Cigar IMG", "Cigar Image", "CigarIMG", "Image", "IMG"]);
+    const brandImg = pick(row, ["Brand IMG", "Brand Image", "BrandIMG", "brand_img"]);
 
-  // show padron toggles only for Padron
-  if (padronToggles) padronToggles.hidden = !isPadron;
-
-  // ===== state =====
-  let allRows = [];
-  let filteredRows = [];
-
-  let useBandArtwork = false;      // show cigar artwork (Cigar IMG) in rows when available
-  let artworkOnly = false;         // only show rows with cigar artwork
-  let padronMaduro = false;
-  let padronNatural = false;
-
-  // brand filters (no manufacturer/brand)
-  const FILTER_DEFS = [
-    { key: "Vitola", label: "Vitola", type: "multi" },
-    { key: "Ring", label: "Ring", type: "multi", aliases: ["RG", "Ring Gauge"] },
-    { key: "Strength", label: "Strength", type: "multi" },
-    { key: "Shape", label: "Shape", type: "multi" },
-    { key: "Tubo", label: "Tubo", type: "bool" },
-    { key: "Flavored", label: "Flavored", type: "bool" },
-    { key: "Tin", label: "Tin", type: "bool" },
-    { key: "Pack", label: "Pack", type: "bool" },
-    { key: "Barber", label: "Barberpole", type: "bool", aliases: ["Barberpole", "Barber Pole"] },
-    { key: "Box-Pressed", label: "Box-Pressed", type: "bool", aliases: ["Box Pressed", "BoxPressed"] },
-  ];
-
-  const active = {}; // multi selects: key -> Set
-  FILTER_DEFS.forEach((d) => { if (d.type === "multi") active[d.key] = new Set(); });
-
-  // ===== filtering =====
-  function getVal(row, def) {
-    const keys = [def.key].concat(def.aliases || []);
-    return pick(row, keys);
-  }
-
-  function isTruthy(val) {
-    const s = String(val || "").trim().toLowerCase();
-    if (!s) return false;
-    return s === "true" || s === "yes" || s === "y" || s === "1" || s === "x" || s === "checked";
-  }
-
-  function rowMatchesSearch(row, q) {
-    if (!q) return true;
-    const hay = [
-      row["Cigar"],
-      row["Line"],
-      row["Vitola"],
-      row["Shape"],
-      row["Strength"],
-      row["Wrapper Shade"],
-      row["Wrapper"],
-      row["Origin"],
-    ].filter(Boolean).join(" ").toLowerCase();
-    return hay.includes(q);
-  }
-
-  function applyAllFilters() {
-    const q = (searchInput?.value || "").trim().toLowerCase();
-
-    filteredRows = allRows.filter((row) => {
-      // search text
-      if (!rowMatchesSearch(row, q)) return false;
-
-      // band artwork only
-      if (artworkOnly) {
-        const cigarImg = pick(row, ["Cigar IMG", "Cigar Image", "CigarImg", "CigarIMG"]);
-        if (!cigarImg) return false;
-      }
-
-      // padron only maduro/natural
-      if (isPadron) {
-        const sb = shadeBucket(row);
-        if (padronMaduro && !padronNatural) {
-          if (sb !== "maduro") return false;
-        }
-        if (!padronMaduro && padronNatural) {
-          if (sb !== "natural") return false;
-        }
-        if (padronMaduro && padronNatural) {
-          // allow both (no filter)
-        }
-      }
-
-      // other filters
-      for (const def of FILTER_DEFS) {
-        if (def.type === "multi") {
-          const set = active[def.key];
-          if (set && set.size) {
-            const v = getVal(row, def);
-            if (!v || !set.has(v)) return false;
-          }
-        } else if (def.type === "bool") {
-          const set = active[def.key]; // (not used)
-          // bool filters are stored as Set with one item "true" by our UI, or we handle separately:
-          // We'll store bool state on def._on in runtime:
-          if (def._on) {
-            const v = getVal(row, def);
-            if (!isTruthy(v)) return false;
-          }
-        }
-      }
-
-      return true;
-    });
-
-    // sort: cigar then vitola
-    filteredRows.sort((a, b) => {
-      const an = (a["Cigar"] || "").toLowerCase();
-      const bn = (b["Cigar"] || "").toLowerCase();
-      if (an !== bn) return an.localeCompare(bn);
-      const av = (a["Vitola"] || "").toLowerCase();
-      const bv = (b["Vitola"] || "").toLowerCase();
-      return av.localeCompare(bv);
-    });
-
-    updateFiltersCount();
-    render();
-  }
-
-  function updateFiltersCount() {
-    let count = 0;
-
-    // multi
-    for (const def of FILTER_DEFS) {
-      if (def.type === "multi") count += (active[def.key]?.size || 0) ? 1 : 0;
-      if (def.type === "bool" && def._on) count += 1;
-    }
-
-    // artworkOnly counts as a filter
-    if (artworkOnly) count += 1;
-
-    // padron toggles count if only one is active
-    if (isPadron) {
-      if (padronMaduro && !padronNatural) count += 1;
-      if (!padronMaduro && padronNatural) count += 1;
-    }
-
-    if (!filtersCountEl) return;
-    if (count > 0) {
-      filtersCountEl.hidden = false;
-      filtersCountEl.textContent = String(count);
-    } else {
-      filtersCountEl.hidden = true;
-      filtersCountEl.textContent = "0";
-    }
-  }
-
-  // ===== rendering =====
-  function setCornerIconFromData(rows) {
-    if (!brandCornerIcon) return;
-    brandCornerIcon.innerHTML = "";
-
-    // try brand image from first matching row
-    const brandImg = pick(rows[0] || {}, ["Brand IMG", "Brand Image", "BrandIMG"]);
-    const img = document.createElement("img");
-    img.alt = brandParam || "Brand";
-    img.loading = "lazy";
-    img.decoding = "async";
-    setImgWithFallback(img, brandParam, brandImg);
-    brandCornerIcon.appendChild(img);
-  }
-
-  function buildRow(row) {
-    const cigar = (row["Cigar"] || "").trim();
-    const vitola = (row["Vitola"] || "").trim();
-
-    // price ALWAYS MSRP
-    const price = formatMoney(row["MSRP"]);
-
-    const wrapperShade = pick(row, ["Wrapper Shade", "Shade"]).trim();
-    const shapeOrVitola = vitola || pick(row, ["Shape"]).trim();
-
-    const brandImg = pick(row, ["Brand IMG", "Brand Image", "BrandIMG"]);
-    const cigarImg = pick(row, ["Cigar IMG", "Cigar Image", "CigarIMG"]);
-
-    const wrap = document.createElement("div");
-    wrap.className = "cigar-row";
-
-    const icon = document.createElement("div");
-    icon.className = "cigar-icon";
+    const card = document.createElement("div");
+    card.className = "cigar-row";
 
     const img = document.createElement("img");
-    img.alt = brandParam;
+    img.className = "row-icon";
+    img.alt = brandName;
+    // Prefer cigar image; fallback to brand image; then brand icon slug svg
+    const candidates = [];
+    if (cigarImg) candidates.push(safeSrc(cigarImg));
+    if (brandImg) candidates.push(safeSrc(brandImg));
+    const slug = brandSlug(brandName);
+    if (slug) candidates.push(`/img/icons/brands/${slug}.svg`);
+    if (slug) candidates.push(`/img/icons/brand/${slug}.svg`);
 
-    // Band artwork mode: prefer cigar image; else fallback to brand icon
-    if (useBandArtwork && cigarImg) {
-      img.src = safeSrc(cigarImg);
-      img.onerror = () => setImgWithFallback(img, brandParam, brandImg);
-    } else {
-      setImgWithFallback(img, brandParam, brandImg);
-    }
-
-    icon.appendChild(img);
-
-    const main = document.createElement("div");
-    main.className = "cigar-main";
-
-    const name = document.createElement("div");
-    name.className = "cigar-name";
-    name.textContent = cigar || "(Unnamed cigar)";
-
-    const sub = document.createElement("div");
-    sub.className = "cigar-sub";
-
-    // show "Natural - Torpedo" style
-    const parts = [];
-    if (wrapperShade) parts.push(wrapperShade);
-    if (shapeOrVitola) parts.push(shapeOrVitola);
-    sub.textContent = parts.join(" - ");
-
-    main.appendChild(name);
-    main.appendChild(sub);
-
-    const meta = document.createElement("div");
-    meta.className = "cigar-meta";
-
-    const metaBlock = document.createElement("div");
-    metaBlock.className = "cigar-meta-block";
-
-    const priceEl = document.createElement("div");
-    priceEl.className = "cigar-price";
-    priceEl.textContent = price || "";
-
-    const vitolaEl = document.createElement("div");
-    vitolaEl.className = "cigar-vitola";
-    vitolaEl.textContent = shapeOrVitola || "";
-
-    metaBlock.appendChild(priceEl);
-    metaBlock.appendChild(vitolaEl);
-
-    const addBtn = document.createElement("button");
-    addBtn.className = "cigar-add";
-    addBtn.type = "button";
-    addBtn.setAttribute("aria-label", "Add to bill");
-    addBtn.innerHTML = "<span>+</span>";
-
-    addBtn.addEventListener("click", () => {
-      const payload = {
-        brand: brandParam,
-        cigar,
-        vitola,
-        msrp: row["MSRP"] || "",
-        row
-      };
-
-      if (typeof window.addToBill === "function") {
-        window.addToBill(payload);
+    let i = 0;
+    const tryNext = () => {
+      if (i >= candidates.length) {
+        img.style.display = "none";
         return;
       }
-      window.dispatchEvent(new CustomEvent("pos:add", { detail: payload }));
+      img.src = candidates[i++];
+    };
+    img.onerror = tryNext;
+    tryNext();
+
+    const main = document.createElement("div");
+    main.className = "row-main";
+
+    const nm = document.createElement("div");
+    nm.className = "row-name";
+    nm.textContent = cigarName || "(Unnamed)";
+
+    // ✅ Subtitle: Wrapper SHADE – Vitola (NOT wrapper type)
+    const sub = document.createElement("div");
+    sub.className = "row-sub";
+    const shade = wrapperShade || "";
+    const vito = vitola || "";
+    sub.textContent = [shade, vito].filter(Boolean).join(" – ");
+
+    main.appendChild(nm);
+    main.appendChild(sub);
+
+    const price = document.createElement("div");
+    price.className = "row-price";
+    const ms = document.createElement("div");
+    ms.className = "row-msrp" + (msrp ? "" : " muted");
+    ms.textContent = msrp ? msrp : "0.00";
+    price.appendChild(ms);
+
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "row-add";
+    add.textContent = "+";
+    add.setAttribute("aria-label", "Add to bill");
+
+    // If/when you wire billing later, listen for this event:
+    // window.addEventListener("pos:addItem", (e)=>console.log(e.detail))
+    add.addEventListener("click", () => {
+      const payload = {
+        brand: brandName,
+        cigar: cigarName,
+        msrp: msrp ? Number(msrp) : 0,
+        vitola,
+        wrapperShade,
+        row
+      };
+      window.dispatchEvent(new CustomEvent("pos:addItem", { detail: payload }));
     });
 
-    meta.appendChild(metaBlock);
-    meta.appendChild(addBtn);
+    card.appendChild(img);
+    card.appendChild(main);
+    card.appendChild(price);
+    card.appendChild(add);
 
-    wrap.appendChild(icon);
-    wrap.appendChild(main);
-    wrap.appendChild(meta);
-
-    return wrap;
+    return card;
   }
 
-  function render() {
-    listEl.innerHTML = "";
-    emptyEl.hidden = true;
-    errorEl.hidden = true;
+  // --- apply all filtering + render ---
+  function matchesSearch(row, q) {
+    if (!q) return true;
+    const hay = [
+      pick(row, ["Cigar", "Cigar Name", "Name"]),
+      pick(row, ["Vitola", "Style"]),
+      pick(row, ["Wrapper Shade", "Shade"]),
+      pick(row, ["Line"]),
+      pick(row, ["Shape"]),
+      pick(row, ["Strength"]),
+    ].join(" ").toLowerCase();
+    return hay.includes(q.toLowerCase());
+  }
 
-    if (!filteredRows.length) {
+  function matchesPadronToggles(row, isPadron) {
+    if (!isPadron) return true;
+
+    const shade = pick(row, ["Wrapper Shade", "Shade"]).toLowerCase();
+
+    const mad = state.maduro;
+    const nat = state.natural;
+
+    // If neither selected: show all
+    if (!mad && !nat) return true;
+
+    // If both selected: show union (effectively all shade rows)
+    if (mad && nat) return true;
+
+    if (mad) return shade.includes("maduro");
+    if (nat) return shade.includes("natural");
+    return true;
+  }
+
+  function matchesBandArt(row, isPadron) {
+    if (!isPadron) return true;
+    if (!state.bandArt) return true;
+
+    const line = pick(row, ["Line", "Series", "Collection"]).toLowerCase();
+    const cigar = pick(row, ["Cigar", "Cigar Name", "Name"]).toLowerCase();
+
+    const needle = state.bandArt.toLowerCase();
+
+    // robust matching by keywords too
+    if (needle.includes("1964")) return line.includes("1964") || cigar.includes("1964");
+    if (needle.includes("1926")) return line.includes("1926") || cigar.includes("1926");
+    if (needle.includes("damaso")) return line.includes("damaso") || cigar.includes("damaso");
+
+    // fallback exact-ish
+    return line.includes(needle) || cigar.includes(needle);
+  }
+
+  function matchesSelections(row) {
+    // Apply multi-select only if there are selected values for that filter type
+    for (const [type, set] of Object.entries(state.selected)) {
+      if (!set.size) continue;
+
+      let val = "";
+      if (type === "RG") val = pick(row, ["RG", "Ring", "Ring Gauge"]);
+      else if (type === "Length") val = pick(row, ["Length"]);
+      else if (type === "Wrapper Shade") val = pick(row, ["Wrapper Shade", "Shade"]);
+      else val = pick(row, [type]);
+
+      if (!val) return false;
+
+      // exact match in set (case-insensitive)
+      const lower = val.toLowerCase();
+      const ok = Array.from(set).some((s) => s.toLowerCase() === lower);
+      if (!ok) return false;
+    }
+    return true;
+  }
+
+  function applyAndRender(brandName) {
+    const isPadron = brandName.trim().toLowerCase() === "padron";
+
+    VIEW_ROWS = BRAND_ROWS
+      .filter((r) => matchesSearch(r, state.q))
+      .filter((r) => matchesSelections(r))
+      .filter((r) => matchesBandArt(r, isPadron))
+      .filter((r) => matchesPadronToggles(r, isPadron));
+
+    listEl.innerHTML = "";
+
+    if (!VIEW_ROWS.length) {
       emptyEl.hidden = false;
       return;
     }
 
+    emptyEl.hidden = true;
+
     const frag = document.createDocumentFragment();
-    filteredRows.forEach((row) => frag.appendChild(buildRow(row)));
+    VIEW_ROWS.forEach((row) => frag.appendChild(buildRow(row, brandName)));
     listEl.appendChild(frag);
   }
 
-  // ===== modal helpers =====
-  function openModal(backdropEl, modalEl) {
-    backdropEl.hidden = false;
-    modalEl.hidden = false;
-    document.body.style.overflow = "hidden";
-  }
+  // --- Filters modal build ---
+  function uniqueValues(rows, field) {
+    const set = new Set();
+    rows.forEach((r) => {
+      let v = "";
+      if (field === "RG") v = pick(r, ["RG", "Ring", "Ring Gauge"]);
+      else if (field === "Length") v = pick(r, ["Length"]);
+      else if (field === "Wrapper Shade") v = pick(r, ["Wrapper Shade", "Shade"]);
+      else v = pick(r, [field]);
 
-  function closeModal(backdropEl, modalEl) {
-    backdropEl.hidden = true;
-    modalEl.hidden = true;
-    document.body.style.overflow = "";
-  }
-
-  function buildFiltersGrid() {
-    filtersGrid.innerHTML = "";
-
-    FILTER_DEFS.forEach((def) => {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "filter-chip";
-      chip.dataset.key = def.key;
-
-      const left = document.createElement("strong");
-      left.textContent = def.label;
-
-      const right = document.createElement("span");
-      right.textContent = "Any";
-
-      // set initial state text
-      if (def.type === "multi") {
-        const set = active[def.key];
-        if (set && set.size) {
-          chip.classList.add("active");
-          right.textContent = `${set.size} selected`;
-        }
-      } else if (def.type === "bool") {
-        if (def._on) {
-          chip.classList.add("active");
-          right.textContent = "On";
-        } else {
-          right.textContent = "Off";
-        }
-      }
-
-      chip.appendChild(left);
-      chip.appendChild(right);
-
-      chip.addEventListener("click", () => {
-        if (def.type === "bool") {
-          def._on = !def._on;
-          buildFiltersGrid();
-          return;
-        }
-        openPicker(def);
-      });
-
-      filtersGrid.appendChild(chip);
-    });
-  }
-
-  // ===== picker =====
-  let pickerDef = null;
-  let pickerSelected = new Set();
-  let pickerOptions = [];
-
-  function uniqueOptions(def) {
-    const map = new Map();
-    allRows.forEach((row) => {
-      const v = getVal(row, def);
-      if (!v) return;
-      if (!map.has(v)) map.set(v, 1);
-      else map.set(v, map.get(v) + 1);
+      if (v) set.add(v.trim());
     });
 
-    return Array.from(map.entries())
-      .sort((a, b) => a[0].toLowerCase().localeCompare(b[0].toLowerCase()))
-      .map(([val, count]) => ({ val, count }));
+    // Sort numeric fields numerically
+    const arr = Array.from(set);
+    if (field === "RG" || field === "Length") {
+      arr.sort((a, b) => (Number(a) || 0) - (Number(b) || 0));
+    } else {
+      arr.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    }
+    return arr;
   }
 
-  function renderPickerList(query = "") {
-    const q = query.trim().toLowerCase();
-    pickerList.innerHTML = "";
-
-    const list = pickerOptions.filter((o) => !q || o.val.toLowerCase().includes(q));
+  function buildPickList(container, values, selectedSet, searchTerm = "") {
+    container.innerHTML = "";
+    const q = (searchTerm || "").toLowerCase();
 
     const frag = document.createDocumentFragment();
-    list.forEach((opt) => {
-      const item = document.createElement("div");
-      item.className = "picker-item";
-      if (pickerSelected.has(opt.val)) item.classList.add("selected");
+
+    values
+      .filter((v) => !q || v.toLowerCase().includes(q))
+      .forEach((v) => {
+        const row = document.createElement("div");
+        row.className = "pickrow" + (selectedSet.has(v) ? " is-on" : "");
+
+        const box = document.createElement("div");
+        box.className = "pickbox";
+
+        const label = document.createElement("div");
+        label.className = "picklabel";
+        label.textContent = v;
+
+        const meta = document.createElement("div");
+        meta.className = "pickmeta";
+        meta.textContent = selectedSet.has(v) ? "✓" : "";
+
+        row.appendChild(box);
+        row.appendChild(label);
+        row.appendChild(meta);
+
+        row.addEventListener("click", () => {
+          if (selectedSet.has(v)) selectedSet.delete(v);
+          else selectedSet.add(v);
+          buildPickList(container, values, selectedSet, filtersSearch.value || "");
+        });
+
+        frag.appendChild(row);
+      });
+
+    container.appendChild(frag);
+  }
+
+  function wireFilterTabs(brandName) {
+    const tabBtns = document.querySelectorAll(".seg-btn");
+    tabBtns.forEach((b) => {
+      b.addEventListener("click", () => {
+        tabBtns.forEach((x) => {
+          x.classList.remove("is-on");
+          x.setAttribute("aria-selected", "false");
+        });
+        b.classList.add("is-on");
+        b.setAttribute("aria-selected", "true");
+        state.activeFilterType = b.getAttribute("data-filter-type") || "Vitola";
+        rebuildFiltersList(brandName);
+      });
+    });
+  }
+
+  function rebuildFiltersList(brandName) {
+    const type = state.activeFilterType;
+    const values = uniqueValues(BRAND_ROWS, type);
+    const set = state.selected[type] || new Set();
+
+    buildPickList(filtersList, values, set, filtersSearch.value || "");
+  }
+
+  function wireFiltersModal(brandName) {
+    wireFilterTabs(brandName);
+
+    filtersSearch.addEventListener("input", () => rebuildFiltersList(brandName));
+
+    filtersConfirm.addEventListener("click", () => {
+      closeModal("filters-modal");
+      applyAndRender(brandName);
+    });
+  }
+
+  // --- Band Art modal (Padron only) ---
+  const PADRON_BAND_OPTIONS = [
+    "1964 Anniversary Series",
+    "1926 Serie",
+    "Damaso"
+  ];
+
+  function buildBandArtList() {
+    bandartList.innerHTML = "";
+    const frag = document.createDocumentFragment();
+
+    PADRON_BAND_OPTIONS.forEach((opt) => {
+      const row = document.createElement("div");
+      row.className = "pickrow" + (state.bandArt === opt ? " is-on" : "");
 
       const box = document.createElement("div");
-      box.className = "picker-box";
+      box.className = "pickbox";
 
       const label = document.createElement("div");
-      label.className = "picker-label";
-      label.textContent = opt.val;
+      label.className = "picklabel";
+      label.textContent = opt;
 
-      item.appendChild(box);
-      item.appendChild(label);
+      const meta = document.createElement("div");
+      meta.className = "pickmeta";
+      meta.textContent = state.bandArt === opt ? "✓" : "";
 
-      item.addEventListener("click", () => {
-        if (pickerSelected.has(opt.val)) pickerSelected.delete(opt.val);
-        else pickerSelected.add(opt.val);
-        item.classList.toggle("selected");
+      row.appendChild(box);
+      row.appendChild(label);
+      row.appendChild(meta);
+
+      row.addEventListener("click", () => {
+        // single select (toggle off if clicking same)
+        state.bandArt = (state.bandArt === opt) ? "" : opt;
+        buildBandArtList();
       });
 
-      frag.appendChild(item);
+      frag.appendChild(row);
     });
 
-    pickerList.appendChild(frag);
+    bandartList.appendChild(frag);
   }
 
-  function openPicker(def) {
-    pickerDef = def;
-    pickerTitle.textContent = def.label;
+  function wireBandArtModal(brandName) {
+    buildBandArtList();
 
-    pickerSelected = new Set(active[def.key] || []);
-    pickerOptions = uniqueOptions(def);
-
-    pickerSearchInput.value = "";
-    renderPickerList("");
-
-    openModal(pickerBackdrop, pickerModal);
-    pickerSearchInput.focus();
-  }
-
-  function closePickerModal() {
-    closeModal(pickerBackdrop, pickerModal);
-    pickerDef = null;
-  }
-
-  // ===== events =====
-  searchInput.addEventListener("input", applyAllFilters);
-
-  // band artwork quick button (outside modal)
-  bandArtworkBtn.addEventListener("click", () => {
-    useBandArtwork = !useBandArtwork;
-    bandArtworkBtn.setAttribute("aria-pressed", useBandArtwork ? "true" : "false");
-
-    // keep modal toggle in sync
-    modalBandArtwork.checked = useBandArtwork;
-
-    applyAllFilters();
-  });
-
-  // padron toggles (outside modal)
-  if (isPadron) {
-    toggleMaduro.addEventListener("change", () => {
-      padronMaduro = !!toggleMaduro.checked;
-      applyAllFilters();
-    });
-
-    toggleNatural.addEventListener("change", () => {
-      padronNatural = !!toggleNatural.checked;
-      applyAllFilters();
+    bandartConfirm.addEventListener("click", () => {
+      closeModal("bandart-modal");
+      applyAndRender(brandName);
     });
   }
 
-  // open filters modal
-  openFiltersBtn.addEventListener("click", () => {
-    // sync modal toggles
-    modalBandArtwork.checked = useBandArtwork;
-    modalArtworkOnly.checked = artworkOnly;
+  // --- toggles ---
+  function setPressed(btn, on) {
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+  }
 
-    buildFiltersGrid();
-    openModal(filtersBackdrop, filtersModal);
-  });
+  function wireToggles(brandName) {
+    const isPadron = brandName.trim().toLowerCase() === "padron";
 
-  closeFilters.addEventListener("click", () => closeModal(filtersBackdrop, filtersModal));
-  filtersBackdrop.addEventListener("click", () => closeModal(filtersBackdrop, filtersModal));
+    // show/hide toggles + band art button
+    toggleMaduro.style.display = isPadron ? "" : "none";
+    toggleNatural.style.display = isPadron ? "" : "none";
+    btnBandArt.style.display = isPadron ? "" : "none";
 
-  // apply in modal
-  applyFiltersBtn.addEventListener("click", () => {
-    useBandArtwork = !!modalBandArtwork.checked;
-    artworkOnly = !!modalArtworkOnly.checked;
-
-    bandArtworkBtn.setAttribute("aria-pressed", useBandArtwork ? "true" : "false");
-
-    closeModal(filtersBackdrop, filtersModal);
-    applyAllFilters();
-  });
-
-  clearFiltersBtn.addEventListener("click", () => {
-    // clear all multi selects
-    FILTER_DEFS.forEach((d) => {
-      if (d.type === "multi") active[d.key].clear();
-      if (d.type === "bool") d._on = false;
-    });
-
-    artworkOnly = false;
-    modalArtworkOnly.checked = false;
-
-    // do NOT force band artwork off; leave it as user set with the button
-    buildFiltersGrid();
-    applyAllFilters();
-  });
-
-  // picker events
-  closePicker.addEventListener("click", closePickerModal);
-  pickerBackdrop.addEventListener("click", closePickerModal);
-  pickerCancel.addEventListener("click", closePickerModal);
-
-  pickerSearchInput.addEventListener("input", () => {
-    renderPickerList(pickerSearchInput.value);
-  });
-
-  pickerConfirm.addEventListener("click", () => {
-    if (pickerDef && pickerDef.type === "multi") {
-      active[pickerDef.key] = new Set(pickerSelected);
+    // If not Padron, also clear Padron-only state
+    if (!isPadron) {
+      state.maduro = false;
+      state.natural = false;
+      state.bandArt = "";
+      setPressed(toggleMaduro, false);
+      setPressed(toggleNatural, false);
     }
-    closePickerModal();
-    buildFiltersGrid();
-  });
 
-  // ===== load data =====
-  async function fetchSheetCSV() {
-    let res = await fetch(withNoCache(googleCsvUrl()), { cache: "no-store" });
-    if (!res.ok) res = await fetch(withNoCache(googleExportUrl()), { cache: "no-store" });
-    if (!res.ok) throw new Error("CSV fetch failed");
-    return await res.text();
+    toggleMaduro.addEventListener("click", () => {
+      state.maduro = !state.maduro;
+      setPressed(toggleMaduro, state.maduro);
+      applyAndRender(brandName);
+    });
+
+    toggleNatural.addEventListener("click", () => {
+      state.natural = !state.natural;
+      setPressed(toggleNatural, state.natural);
+      applyAndRender(brandName);
+    });
   }
 
-  async function load() {
+  // --- main ---
+  async function init() {
+    const brandName = getParam("brand") || "Brand";
+    titleEl.textContent = brandName;
+
+    // back
+    backBtn?.addEventListener("click", () => {
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = "/pos/cigars/";
+    });
+
+    // brand icon (top right)
+    setBrandImgWithFallback(brandIconEl, brandName, "");
+
+    wireModalClose();
+
+    // fetch sheet csv
     try {
-      const text = await fetchSheetCSV();
+      const res = await fetch(withNoCache(csvUrl()), { cache: "no-store" });
+      if (!res.ok) throw new Error(`CSV fetch failed (${res.status})`);
+      const text = await res.text();
       const { data } = parseCSV(text);
 
-      // only this brand
-      allRows = data.filter((r) => {
-        const b = (r["Brand"] || "").trim();
-        const c = (r["Cigar"] || "").trim();
-        return c && b === brandParam;
+      ALL_ROWS = data;
+
+      // Filter to this brand from the sheet
+      BRAND_ROWS = ALL_ROWS.filter((r) => {
+        const b = pick(r, ["Brand", "brand"]);
+        return b && b.toLowerCase() === brandName.toLowerCase();
       });
 
-      setCornerIconFromData(allRows);
+      // Wire search
+      searchInput.addEventListener("input", () => {
+        state.q = searchInput.value || "";
+        applyAndRender(brandName);
+      });
 
-      // defaults for padron: allow both (no filtering unless user checks one)
-      padronMaduro = false;
-      padronNatural = false;
+      // Wire controls
+      btnFilters.addEventListener("click", () => {
+        // build list for current type before opening
+        filtersSearch.value = "";
+        rebuildFiltersList(brandName);
+        openModal("filters-modal");
+      });
 
-      // initial render
-      applyAllFilters();
-    } catch (e) {
-      console.error("[brand] load error:", e);
-      errorEl.hidden = false;
+      btnBandArt.addEventListener("click", () => {
+        buildBandArtList();
+        openModal("bandart-modal");
+      });
+
+      wireToggles(brandName);
+      wireFiltersModal(brandName);
+      wireBandArtModal(brandName);
+
+      // Initial render
+      applyAndRender(brandName);
+
+    } catch (err) {
+      console.error("[brand] error:", err);
+      listEl.innerHTML = "";
+      emptyEl.hidden = false;
+      emptyEl.textContent = "Failed to load brand cigars.";
     }
   }
 
-  document.addEventListener("DOMContentLoaded", load);
+  document.addEventListener("DOMContentLoaded", init);
 })();
