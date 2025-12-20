@@ -13,6 +13,16 @@
     return u.toString();
   }
 
+  // ✅ Make relative "img/..." become "/img/..." so it doesn't resolve under /pos/cigars/
+  function safeSrc(src) {
+    if (!src) return "";
+    let s = String(src).trim();
+    if (!s) return "";
+    if (s.startsWith("http://") || s.startsWith("https://")) return s;
+    if (!s.startsWith("/")) s = "/" + s.replace(/^\/+/, "");
+    return s;
+  }
+
   function parseCSV(text) {
     const rows = [];
     let row = [];
@@ -92,13 +102,14 @@
       .trim();
   }
 
+  // ✅ Prefer /img/icons/brands/ first, and normalize any CSV paths
   function setBrandIcon(imgEl, brandName, csvBrandImgPath) {
     const slug = brandSlug(brandName);
 
     const candidates = [];
-    if (csvBrandImgPath) candidates.push(csvBrandImgPath);
     if (slug) candidates.push(`/img/icons/brands/${slug}.svg`);
     if (slug) candidates.push(`/img/icons/brand/${slug}.svg`);
+    if (csvBrandImgPath) candidates.push(safeSrc(csvBrandImgPath));
 
     let idx = 0;
     function tryNext() {
@@ -106,6 +117,7 @@
         imgEl.style.display = "none";
         return;
       }
+      imgEl.style.display = "";
       imgEl.src = candidates[idx++];
     }
     imgEl.onerror = tryNext;
@@ -151,7 +163,7 @@
 
     const cigarImg = pick(item, ["Cigar IMG", "Cigar Img", "Cigar Image", "Image", "IMG"]);
     // fallback: brand icon if cigar image missing
-    if (cigarImg) img.src = cigarImg;
+    if (cigarImg) img.src = safeSrc(cigarImg);
     else img.src = qs("brand-icon")?.src || "";
 
     img.alt = pick(item, ["Cigar", "Name", "Cigar Name"]) || "Cigar";
@@ -256,10 +268,9 @@
     if (!bandArt) return true;
     // This assumes you’ll add a column later like "Band Art" or "Band Artwork"
     // For now we match against line/name text:
-    const txt = [
-      pick(item, ["Line"]),
-      pick(item, ["Cigar", "Cigar Name", "Name"]),
-    ].join(" ").toLowerCase();
+    const txt = [pick(item, ["Line"]), pick(item, ["Cigar", "Cigar Name", "Name"])]
+      .join(" ")
+      .toLowerCase();
 
     if (bandArt === "1964") return txt.includes("1964");
     if (bandArt === "1926") return txt.includes("1926");
@@ -271,10 +282,7 @@
     const list = qs("brand-list");
     list.innerHTML = "";
 
-    const filtered = BRAND_ONLY
-      .filter(passesSearch)
-      .filter(passesPadronToggles)
-      .filter(passesBandArt);
+    const filtered = BRAND_ONLY.filter(passesSearch).filter(passesPadronToggles).filter(passesBandArt);
 
     const frag = document.createDocumentFragment();
     filtered.forEach((item) => frag.appendChild(buildRow(item)));
@@ -304,7 +312,7 @@
     // Filter to current brand
     BRAND_ONLY = ALL.filter((r) => pick(r, ["Brand", "brand"]) === BRAND);
 
-    // Top-right brand icon (prefer Brand IMG column)
+    // Top-right brand icon (prefer /img/icons/brands/{slug}.svg)
     const brandImgFromRow = pick(BRAND_ONLY[0] || {}, ["Brand IMG", "Brand Img", "brand img"]);
     setBrandIcon(qs("brand-icon"), BRAND, brandImgFromRow);
 
