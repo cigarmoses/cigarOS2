@@ -134,7 +134,7 @@ body.brand-page{
   display:flex;
   align-items:center;
   gap:14px;
-  padding:14px;
+  padding:11px;
   border-radius:18px;
   background:rgba(0,0,0,.12);
   border:1px solid rgba(255,255,255,.08);
@@ -158,27 +158,24 @@ body.brand-page{
 }
 
 .cigar-name{
-  /* MATCH “football app” feel: bigger + bold */
-  font-size:22px;
-  line-height:1.08;
-  font-weight:800;
-  letter-spacing:-.01em;
+  font-size:17px;        /* ⬅️ MAIN CHANGE */
+  line-height:1.2;      /* slightly looser like football app */
+  font-weight:700;      /* slightly lighter */
+  letter-spacing:-.005em;
 
   display:-webkit-box;
   -webkit-line-clamp:2;
   -webkit-box-orient:vertical;
   overflow:hidden;
 }
+  
+}
 
 .cigar-sub{
-  margin-top:6px;
-  font-size:16px;
-  font-weight:700;
-  color:rgba(255,255,255,.60);
-  display:-webkit-box;
-  -webkit-line-clamp:1;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
+  margin-top:4px;
+  font-size:14px;       /* ⬅️ smaller */
+  font-weight:600;
+  color:rgba(255,255,255,.55);
 }
 
 .cigar-right{
@@ -195,22 +192,20 @@ body.brand-page{
   margin-right:2px;
 }
 
-/* Smaller MSRP + smaller plus so name has more width */
 .cigar-price{
-  width:54px;           /* smaller right block */
+  width:48px;           /* ⬅️ narrower */
   text-align:right;
-  font-size:18px;       /* smaller than before */
-  font-weight:800;
-  letter-spacing:-.01em;
+  font-size:15px;       /* ⬅️ smaller */
+  font-weight:700;
 }
 
 .cigar-plus{
-  width:38px; height:38px;          /* smaller */
+  width:32px; height:32px;          /* smaller */
   border-radius:999px;
   border:none;
   background:var(--green);
   color:#fff;
-  font-size:26px;                   /* smaller plus glyph */
+  font-size:22px;                   /* smaller plus glyph */
   line-height:0;
   display:grid;
   place-items:center;
