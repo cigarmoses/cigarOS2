@@ -5,133 +5,136 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS • Brand</title>
 
+  <!-- Global typography + POS base -->
   <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/pos/pos.css" />
+
+  <!-- Brand page styles -->
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
 </head>
 
 <body class="brand-page">
+  <!-- Top bar -->
   <header class="brand-topbar">
-    <button class="brand-back" id="brand-back" type="button" aria-label="Back">
-      <span class="brand-back-icon">←</span>
+    <button class="brand-back icon-btn" id="brand-back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M15 18L9 12L15 6"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+      </svg>
     </button>
 
-    <div class="brand-topbar-title">
-      <div class="brand-title-row">
-        <div class="brand-title" id="brandTitle">Brand</div>
-        <div class="brand-corner-icon" id="brandCornerIcon" aria-hidden="true"></div>
-      </div>
+    <div class="brand-topbar-right">
+      <img id="brand-icon" class="brand-icon" alt="" />
     </div>
   </header>
 
   <main class="brand-main">
-    <!-- SEARCH (top) -->
+    <h1 class="brand-title" id="brand-title">Brand</h1>
+
+    <!-- Search -->
     <section class="brand-search">
-      <div class="brand-search-bar">
-        <span class="brand-search-icon" aria-hidden="true">🔎</span>
-        <input id="brandSearchInput" type="search" placeholder="Search..." />
+      <div class="search-wrap">
+        <span class="search-ico" aria-hidden="true">🔎</span>
+        <input
+          id="search-input"
+          type="search"
+          class="search-input"
+          placeholder="Search..."
+          autocomplete="off"
+        />
       </div>
     </section>
 
-    <!-- ONE FILTERS BUTTON -->
-    <section class="brand-controls">
-      <button class="filters-btn" id="openFilters" type="button">
-        <span class="filters-icon" aria-hidden="true">≡</span>
+    <!-- Controls row (4 buttons) -->
+    <section class="brand-controls" aria-label="Brand controls">
+      <button type="button" class="ctrl-btn" id="btn-filters">
+        <span class="ctrl-ico" aria-hidden="true">≡</span>
         <span>Filters</span>
-        <span class="filters-count" id="filtersCount" hidden>0</span>
       </button>
 
-      <!-- PADRON ONLY: Maduro / Natural -->
-      <div class="padron-toggles" id="padronToggles" hidden>
-        <div class="toggle-group">
-          <span class="toggle-label">Maduro</span>
-          <label class="switch">
-            <input type="checkbox" id="toggleMaduro" />
-            <span class="slider"></span>
-          </label>
-        </div>
+      <button type="button" class="ctrl-btn" id="btn-bandart">
+        <span class="ctrl-ico" aria-hidden="true">🖼️</span>
+        <span>Band Art</span>
+      </button>
 
-        <div class="toggle-group">
-          <span class="toggle-label">Natural</span>
-          <label class="switch">
-            <input type="checkbox" id="toggleNatural" />
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
+      <button type="button" class="ctrl-toggle" id="toggle-maduro" aria-pressed="false">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Maduro</span>
+      </button>
 
-      <!-- Band artwork toggle -->
-      <button class="bandart-btn" id="toggleBandArtwork" type="button" aria-pressed="false">
-        Band artwork
+      <button type="button" class="ctrl-toggle" id="toggle-natural" aria-pressed="false">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Natural</span>
       </button>
     </section>
 
-    <!-- LIST -->
-    <section class="brand-list-wrap">
-      <div class="brand-list" id="brandList" aria-live="polite"></div>
-      <div class="brand-empty" id="brandEmpty" hidden>No cigars found.</div>
-      <div class="brand-error" id="brandError" hidden>Couldn’t load cigar data.</div>
+    <!-- List -->
+    <section class="brand-list" aria-label="Cigars list">
+      <div id="list" class="cigar-list"></div>
+
+      <div id="empty" class="empty-state" hidden>
+        No cigars found.
+      </div>
     </section>
   </main>
 
-  <!-- FILTERS MODAL (single entry point) -->
-  <div class="modal-backdrop" id="filtersBackdrop" hidden></div>
-
-  <div class="modal" id="filtersModal" role="dialog" aria-modal="true" aria-labelledby="filtersTitle" hidden>
-    <div class="modal-header">
-      <div class="modal-title" id="filtersTitle">Filters</div>
-      <button class="modal-close" id="closeFilters" type="button" aria-label="Close">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="modal-row">
-        <div class="modal-row-title">Band artwork</div>
-        <label class="switch">
-          <input type="checkbox" id="modalBandArtwork" />
-          <span class="slider"></span>
-        </label>
+  <!-- Filters Modal -->
+  <div class="modal" id="filters-modal" aria-hidden="true">
+    <div class="modal-scrim" data-close="filters-modal"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="filters-title">
+      <div class="modal-head">
+        <h2 id="filters-title">Filters</h2>
+        <button class="modal-x" type="button" data-close="filters-modal" aria-label="Close">×</button>
       </div>
 
-      <div class="modal-row">
-        <div class="modal-row-title">Only show cigars with artwork</div>
-        <label class="switch">
-          <input type="checkbox" id="modalArtworkOnly" />
-          <span class="slider"></span>
-        </label>
+      <div class="modal-body">
+        <div class="modal-search">
+          <span class="search-ico" aria-hidden="true">🔎</span>
+          <input id="filters-search" type="search" placeholder="search..." />
+        </div>
+
+        <div class="segmented" role="tablist" aria-label="Filter type">
+          <button class="seg-btn is-on" type="button" data-filter-type="Vitola" role="tab" aria-selected="true">Vitola</button>
+          <button class="seg-btn" type="button" data-filter-type="Wrapper Shade" role="tab" aria-selected="false">Shade</button>
+          <button class="seg-btn" type="button" data-filter-type="Shape" role="tab" aria-selected="false">Shape</button>
+          <button class="seg-btn" type="button" data-filter-type="Strength" role="tab" aria-selected="false">Strength</button>
+          <button class="seg-btn" type="button" data-filter-type="RG" role="tab" aria-selected="false">Ring</button>
+          <button class="seg-btn" type="button" data-filter-type="Length" role="tab" aria-selected="false">Length</button>
+        </div>
+
+        <div class="picklist" id="filters-list" aria-label="Filter values">
+          <!-- built by JS -->
+        </div>
       </div>
 
-      <div class="modal-divider"></div>
-
-      <!-- These are the brand-specific filters (no Manufacturer/Brand) -->
-      <div class="filters-grid" id="filtersGrid"></div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="modal-btn ghost" id="clearFilters" type="button">Clear</button>
-      <button class="modal-btn primary" id="applyFilters" type="button">Confirm</button>
+      <div class="modal-foot">
+        <button class="btn-secondary" type="button" data-close="filters-modal">Cancel</button>
+        <button class="btn-primary" type="button" id="filters-confirm">Confirm</button>
+      </div>
     </div>
   </div>
 
-  <!-- OPTION PICKER MODAL (used when tapping a filter) -->
-  <div class="modal-backdrop" id="pickerBackdrop" hidden></div>
-
-  <div class="modal picker" id="pickerModal" role="dialog" aria-modal="true" aria-labelledby="pickerTitle" hidden>
-    <div class="modal-header">
-      <div class="modal-title" id="pickerTitle">Pick</div>
-      <button class="modal-close" id="closePicker" type="button" aria-label="Close">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="picker-search">
-        <span class="brand-search-icon" aria-hidden="true">🔎</span>
-        <input id="pickerSearchInput" type="search" placeholder="search..." />
+  <!-- Band Art Modal (Padron only) -->
+  <div class="modal" id="bandart-modal" aria-hidden="true">
+    <div class="modal-scrim" data-close="bandart-modal"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bandart-title">
+      <div class="modal-head">
+        <h2 id="bandart-title">Band Art</h2>
+        <button class="modal-x" type="button" data-close="bandart-modal" aria-label="Close">×</button>
       </div>
 
-      <div class="picker-list" id="pickerList"></div>
-    </div>
+      <div class="modal-body">
+        <div class="picklist" id="bandart-list" aria-label="Band art options">
+          <!-- built by JS -->
+        </div>
+      </div>
 
-    <div class="modal-footer">
-      <button class="modal-btn ghost" id="pickerCancel" type="button">Cancel</button>
-      <button class="modal-btn primary" id="pickerConfirm" type="button">Confirm</button>
+      <div class="modal-foot">
+        <button class="btn-secondary" type="button" data-close="bandart-modal">Cancel</button>
+        <button class="btn-primary" type="button" id="bandart-confirm">Confirm</button>
+      </div>
     </div>
   </div>
 
