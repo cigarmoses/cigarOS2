@@ -144,7 +144,8 @@ body.brand-page{
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.cigar-row + .cigar-row{ margin-top:12px; }
+/* ✅ CHANGED: remove the gap between rows */
+.cigar-row + .cigar-row{ margin-top:0; }
 
 .cigar-img{
   width:58px;height:58px;
@@ -161,7 +162,7 @@ body.brand-page{
 }
 
 .cigar-name{
-  font-size:16px;        /* ⬅️ MAIN CHANGE */
+  font-size:14px;        /* ⬅️ MAIN CHANGE */
   line-height:1.2;      /* slightly looser like football app */
   font-weight:600;      /* slightly lighter */
   letter-spacing:-.005em;
@@ -171,131 +172,7 @@ body.brand-page{
   -webkit-box-orient:vertical;
   overflow:hidden;
 }
-  
-}
 
 .cigar-sub{
   margin-top:4px;
-  font-size:12px;       /* ⬅️ smaller */
-  font-weight:500;
-  color:rgba(255,255,255,.55);
-}
-
-.cigar-right{
-  flex:0 0 auto;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.cigar-divider{
-  width:1px;
-  height:40px;
-  background:rgba(255,255,255,.14);
-  margin-right:2px;
-}
-
-.cigar-price{
-  width:48px;           /* ⬅️ narrower */
-  text-align:right;
-  font-size:15px;       /* ⬅️ smaller */
-  font-weight:500;
-}
-
-.cigar-plus{
-  width:22px; height:22px;          /* smaller */
-  border-radius:999px;
-  border:none;
-  background:var(--green);
-  color:#fff;
-  font-size:15px;                   /* smaller plus glyph */
-  line-height:0;
-  display:grid;
-  place-items:center;
-  box-shadow: 0 10px 18px rgba(0,0,0,.25);
-}
-
-/* --- Modals --- */
-.modal{ position:fixed; inset:0; display:none; z-index:50; }
-.modal[aria-hidden="false"]{ display:block; }
-
-.modal-scrim{
-  position:absolute; inset:0;
-  background:rgba(0,0,0,.45);
-  backdrop-filter: blur(6px);
-}
-
-.modal-card{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:min(520px, calc(100vw - 28px));
-  border-radius:22px;
-  background:rgba(20,30,55,.94);
-  border:1px solid rgba(255,255,255,.10);
-  overflow:hidden;
-  box-shadow: 0 24px 70px rgba(0,0,0,.55);
-}
-
-.modal-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:16px 16px 12px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-
-.modal-title{
-  font-size:22px;
-  font-weight:900;
-  letter-spacing:-.01em;
-}
-
-.modal-x{
-  width:38px;height:38px;border-radius:12px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.9);
-  font-size:18px;
-}
-
-.modal-body{ padding:14px 16px; }
-.modal-note{ color:rgba(255,255,255,.65); font-weight:700; margin-bottom:10px; }
-.modal-empty{ color:rgba(255,255,255,.55); font-weight:700; padding:10px 0; }
-
-.modal-foot{
-  display:flex;
-  gap:10px;
-  padding:14px 16px 16px;
-  border-top:1px solid rgba(255,255,255,.08);
-}
-
-.modal-btn{
-  flex:1;
-  height:48px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
-  font-weight:900;
-  font-size:18px;
-}
-.modal-btn.ghost{
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.88);
-}
-.modal-btn.primary{
-  background:rgba(15,122,255,.85);
-  border-color:rgba(15,122,255,.90);
-  color:#fff;
-}
-
-.bandart-list{ display:grid; gap:10px; }
-.bandart-item{
-  display:flex; align-items:center; gap:10px;
-  padding:12px 12px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.05);
-  font-weight:800;
-}
-.bandart-item input{ transform:scale(1.15); }
+  font-size:10
