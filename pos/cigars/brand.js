@@ -1,5 +1,7 @@
 // /pos/cigars/brand.js
 (function () {
+  // ✅ Pulls live from Google Sheets via CSV export
+  // If your data is on a specific tab, add: &gid=XXXX
   const GOOGLE_SHEETS_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
@@ -89,9 +91,11 @@
   }
 
   function setBrandIcon(imgEl, brandName, csvBrandImgPath) {
+    if (!imgEl) return;
+
     const slug = brandSlug(brandName);
 
-    // ✅ Always prefer /img/icons/brands/ first (your confirmed correct path)
+    // ✅ IMPORTANT: ALWAYS try /img/icons/brands/ FIRST (your correct path)
     const candidates = [];
     if (slug) candidates.push(`/img/icons/brands/${slug}.svg`);
     if (csvBrandImgPath) candidates.push(csvBrandImgPath);
@@ -103,6 +107,7 @@
         imgEl.style.display = "none";
         return;
       }
+      imgEl.style.display = "";
       imgEl.src = candidates[idx++];
     }
     imgEl.onerror = tryNext;
@@ -113,14 +118,16 @@
     return document.getElementById(id);
   }
 
-  // --- Modal helpers
   function openModal(modal) {
+    if (!modal) return;
     modal.setAttribute("aria-hidden", "false");
   }
   function closeModal(modal) {
+    if (!modal) return;
     modal.setAttribute("aria-hidden", "true");
   }
   function wireModal(modal) {
+    if (!modal) return;
     modal.addEventListener("click", (e) => {
       const t = e.target;
       if (t && t.getAttribute && t.getAttribute("data-close") === "1") {
@@ -138,6 +145,10 @@
   let padronNatural = false;
   let bandArt = ""; // "1964" | "1926" | "damaso" | ""
 
+  function normalizeBrand(s) {
+    return String(s || "").trim().toLowerCase();
+  }
+
   // --- Render
   function buildRow(item) {
     const row = document.createElement("div");
@@ -147,15 +158,12 @@
     img.className = "cigar-img";
 
     const cigarImg = pick(item, ["Cigar IMG", "Cigar Img", "Cigar Image", "Image", "IMG"]);
-
-    // ✅ If cigar image missing, fallback to brand icon from /img/icons/brands/{slug}.svg
     if (cigarImg) {
       img.src = cigarImg;
     } else {
-      const slug = brandSlug(BRAND);
-      img.src = slug ? `/img/icons/brands/${slug}.svg` : "";
+      // fallback: brand icon (absolute path already set by setBrandIcon)
+      img.src = (qs("brand-icon") && qs("brand-icon").src) ? qs("brand-icon").src : "";
     }
-
     img.alt = pick(item, ["Cigar", "Name", "Cigar Name"]) || "Cigar";
 
     const mid = document.createElement("div");
@@ -201,7 +209,7 @@
     plus.textContent = "+";
     plus.addEventListener("click", () => {
       plus.blur();
-      // hook into cart/bill logic later
+      // hook your POS add-to-bill later
     });
 
     right.appendChild(divider);
@@ -231,7 +239,7 @@
   }
 
   function passesPadronToggles(item) {
-    if (BRAND !== "Padron") return true;
+    if (normalizeBrand(BRAND) !== "padron") return true;
 
     // If neither selected, show all
     if (!padronMaduro && !padronNatural) return true;
@@ -256,7 +264,7 @@
   function passesBandArt(item) {
     if (!bandArt) return true;
 
-    // Matching against line/name text for now
+    // best effort until you add a dedicated column
     const txt = [
       pick(item, ["Line"]),
       pick(item, ["Cigar", "Cigar Name", "Name"]),
@@ -270,6 +278,8 @@
 
   function render() {
     const list = qs("brand-list");
+    if (!list) return;
+
     list.innerHTML = "";
 
     const filtered = BRAND_ONLY
@@ -283,55 +293,14 @@
   }
 
   async function run() {
+    // ✅ Robust brand param read
     const params = new URLSearchParams(location.search);
-    BRAND = params.get("brand") || "Brand";
-    qs("brand-title").textContent = BRAND;
+    BRAND = params.get("brand") || params.get("Brand") || "";
 
-    // ✅ Button label: “Bands” (no emoji) and no default “selected” look
-    const bandsBtn = qs("btn-bandart");
-    if (bandsBtn) {
-      bandsBtn.textContent = "Bands";
-      bandsBtn.blur();
-    }
+    // If somehow missing, default label but still try to render nothing gracefully
+    const titleEl = qs("brand-title");
+    if (titleEl) titleEl.textContent = BRAND || "Brand";
 
     // Padron-only toggles visible ONLY for Padron
-    const showPadron = BRAND === "Padron";
-    qs("tgl-maduro").style.display = showPadron ? "" : "none";
-    qs("tgl-natural").style.display = showPadron ? "" : "none";
-
-    // Fetch CSV
-    const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL));
-    const text = await res.text();
-    const { data } = parseCSV(text);
-
-    ALL = data;
-
-    // Filter to current brand
-    BRAND_ONLY = ALL.filter((r) => pick(r, ["Brand", "brand"]) === BRAND);
-
-    // Top-right brand icon
-    const brandImgFromRow = pick(BRAND_ONLY[0] || {}, ["Brand IMG", "Brand Img", "brand img"]);
-    setBrandIcon(qs("brand-icon"), BRAND, brandImgFromRow);
-
-    // Search
-    qs("brand-search").addEventListener("input", (e) => {
-      searchTerm = e.target.value || "";
-      render();
-    });
-
-    // Toggles
-    qs("tgl-maduro").addEventListener("click", () => {
-      padronMaduro = !padronMaduro;
-      qs("tgl-maduro").setAttribute("aria-pressed", padronMaduro ? "true" : "false");
-      qs("tgl-maduro").blur();
-      render();
-    });
-
-    qs("tgl-natural").addEventListener("click", () => {
-      padronNatural = !padronNatural;
-      qs("tgl-natural").setAttribute("aria-pressed", padronNatural ? "true" : "false");
-      qs("tgl-natural").blur();
-      render();
-    });
-
-   
+    const showPadron = normalizeBrand(BRAND) === "padron";
+    const tMad = qs
