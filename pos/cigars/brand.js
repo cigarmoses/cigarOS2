@@ -2,8 +2,6 @@
 (function () {
   // ✅ Pulls live from Google Sheets via CSV export
   // NOTE: if your data is on a specific tab, add &gid=XXXX
-  // Example:
-  // https://docs.google.com/spreadsheets/d/<ID>/gviz/tq?tqx=out:csv&gid=822697742
   const GOOGLE_SHEETS_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
@@ -11,16 +9,6 @@
     const u = new URL(url);
     u.searchParams.set("_ts", Date.now().toString());
     return u.toString();
-  }
-
-  // ✅ Make relative "img/..." become "/img/..." so it doesn't resolve under /pos/cigars/
-  function safeSrc(src) {
-    if (!src) return "";
-    let s = String(src).trim();
-    if (!s) return "";
-    if (s.startsWith("http://") || s.startsWith("https://")) return s;
-    if (!s.startsWith("/")) s = "/" + s.replace(/^\/+/, "");
-    return s;
   }
 
   function parseCSV(text) {
@@ -102,14 +90,26 @@
       .trim();
   }
 
-  // ✅ Prefer /img/icons/brands/ first, and normalize any CSV paths
+  function absolutizeMaybe(path) {
+    if (!path) return "";
+    const p = String(path).trim();
+    if (!p) return "";
+    if (p.startsWith("http://") || p.startsWith("https://")) return p;
+    if (p.startsWith("/")) return p;
+    return "/" + p; // ✅ prevent relative like /pos/cigars/img/...
+  }
+
   function setBrandIcon(imgEl, brandName, csvBrandImgPath) {
     const slug = brandSlug(brandName);
 
     const candidates = [];
+
+    // Prefer CSV Brand IMG if provided
+    const csv = absolutizeMaybe(csvBrandImgPath);
+    if (csv) candidates.push(csv);
+
+    // ✅ Primary path you want
     if (slug) candidates.push(`/img/icons/brands/${slug}.svg`);
-    if (slug) candidates.push(`/img/icons/brand/${slug}.svg`);
-    if (csvBrandImgPath) candidates.push(safeSrc(csvBrandImgPath));
 
     let idx = 0;
     function tryNext() {
@@ -117,7 +117,6 @@
         imgEl.style.display = "none";
         return;
       }
-      imgEl.style.display = "";
       imgEl.src = candidates[idx++];
     }
     imgEl.onerror = tryNext;
@@ -162,9 +161,12 @@
     img.className = "cigar-img";
 
     const cigarImg = pick(item, ["Cigar IMG", "Cigar Img", "Cigar Image", "Image", "IMG"]);
+
     // fallback: brand icon if cigar image missing
-    if (cigarImg) img.src = safeSrc(cigarImg);
-    else img.src = qs("brand-icon")?.src || "";
+    const brandIconSrc = qs("brand-icon")?.getAttribute("src") || qs("brand-icon")?.src || "";
+
+    if (cigarImg) img.src = cigarImg;
+    else img.src = brandIconSrc;
 
     img.alt = pick(item, ["Cigar", "Name", "Cigar Name"]) || "Cigar";
 
@@ -183,7 +185,7 @@
     const sub = document.createElement("div");
     sub.className = "cigar-sub";
 
-    // ✅ Subtitle: Wrapper SHADE – Vitola (NOT wrapper type)
+    // ✅ Subtitle: Wrapper SHADE – Vitola
     const shade = pick(item, ["Wrapper Shade", "Wrapper shade", "Shade"]);
     const vitola = pick(item, ["Vitola", "Style", "Vitola/Style"]);
     const subText = [shade, vitola].filter(Boolean).join(" – ");
@@ -192,16 +194,14 @@
     mid.appendChild(name);
     mid.appendChild(sub);
 
+    // ✅ Right side: price over + pill (no divider)
     const right = document.createElement("div");
     right.className = "cigar-right";
-
-    const divider = document.createElement("div");
-    divider.className = "cigar-divider";
 
     const price = document.createElement("div");
     price.className = "cigar-price";
 
-    // ✅ MSRP comes from column titled "MSRP" (your column S)
+    // ✅ MSRP comes from column titled "MSRP"
     const msrp = safeNum(pick(item, ["MSRP", "Cigar MSRP", "Price"]));
     price.textContent = fmtMoney(msrp);
 
@@ -210,12 +210,10 @@
     plus.type = "button";
     plus.textContent = "+";
     plus.addEventListener("click", () => {
-      // hook into your cart/bill logic later
-      // example: window.dispatchEvent(new CustomEvent("pos:add", { detail: item }))
       plus.blur();
+      // hook later: window.dispatchEvent(new CustomEvent("pos:add", { detail: item }))
     });
 
-    right.appendChild(divider);
     right.appendChild(price);
     right.appendChild(plus);
 
@@ -266,11 +264,11 @@
 
   function passesBandArt(item) {
     if (!bandArt) return true;
-    // This assumes you’ll add a column later like "Band Art" or "Band Artwork"
-    // For now we match against line/name text:
-    const txt = [pick(item, ["Line"]), pick(item, ["Cigar", "Cigar Name", "Name"])]
-      .join(" ")
-      .toLowerCase();
+
+    const txt = [
+      pick(item, ["Line"]),
+      pick(item, ["Cigar", "Cigar Name", "Name"]),
+    ].join(" ").toLowerCase();
 
     if (bandArt === "1964") return txt.includes("1964");
     if (bandArt === "1926") return txt.includes("1926");
@@ -282,7 +280,10 @@
     const list = qs("brand-list");
     list.innerHTML = "";
 
-    const filtered = BRAND_ONLY.filter(passesSearch).filter(passesPadronToggles).filter(passesBandArt);
+    const filtered = BRAND_ONLY
+      .filter(passesSearch)
+      .filter(passesPadronToggles)
+      .filter(passesBandArt);
 
     const frag = document.createDocumentFragment();
     filtered.forEach((item) => frag.appendChild(buildRow(item)));
@@ -296,6 +297,15 @@
     BRAND = params.get("brand") || "Brand";
 
     qs("brand-title").textContent = BRAND;
+
+    // ✅ Force Bands button label + remove emoji/icon by overwriting text
+    const bandBtn = qs("btn-bandart");
+    if (bandBtn) {
+      bandBtn.textContent = "Bands";
+      // Also ensure it does NOT look active by default
+      bandBtn.classList.remove("active");
+      bandBtn.removeAttribute("aria-pressed");
+    }
 
     // Padron-only toggles visible ONLY for Padron
     const showPadron = BRAND === "Padron";
@@ -312,8 +322,10 @@
     // Filter to current brand
     BRAND_ONLY = ALL.filter((r) => pick(r, ["Brand", "brand"]) === BRAND);
 
-    // Top-right brand icon (prefer /img/icons/brands/{slug}.svg)
+    // Top-right brand icon (prefer Brand IMG column)
     const brandImgFromRow = pick(BRAND_ONLY[0] || {}, ["Brand IMG", "Brand Img", "brand img"]);
+
+    // ✅ Always try /img/icons/brands/{slug}.svg (Padron fix)
     setBrandIcon(qs("brand-icon"), BRAND, brandImgFromRow);
 
     // Search
