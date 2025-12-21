@@ -1,5 +1,9 @@
 // /pos/cigars/brand.js
 (function () {
+  // ✅ Pulls live from Google Sheets via CSV export
+  // NOTE: if your data is on a specific tab, add &gid=XXXX
+  // Example:
+  // https://docs.google.com/spreadsheets/d/<ID>/gviz/tq?tqx=out:csv&gid=822697742
   const GOOGLE_SHEETS_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
@@ -93,8 +97,6 @@
 
     const candidates = [];
     if (csvBrandImgPath) candidates.push(csvBrandImgPath);
-
-    // prefer /img/icons/brands/ first
     if (slug) candidates.push(`/img/icons/brands/${slug}.svg`);
     if (slug) candidates.push(`/img/icons/brand/${slug}.svg`);
 
@@ -135,14 +137,37 @@
   let BRAND = "";
   let BRAND_ONLY = [];
   let searchTerm = "";
+  let padronMaduro = false;
+  let padronNatural = false;
+  let bandArt = ""; // "1964" | "1926" | "damaso" | ""
 
-  // ✅ tri-state toggle: "all" | "maduro" | "natural"
-  let shadeState = "all";
+  // ✅ Stable brand fallback (does not depend on #brand-icon loading)
+  function brandFallbackSrc() {
+    const slug = brandSlug(BRAND);
+    return slug ? `/img/icons/brands/${slug}.svg` : "";
+  }
 
-  // ✅ multi-select bands
-  let bandArts = new Set(); // values: "1964" | "1926" | "damaso"
+  // ✅ Robust row image setter: cigar image -> brand svg -> hide
+  function setRowImage(imgEl, cigarImg) {
+    const candidates = [];
+    if (cigarImg) candidates.push(cigarImg);
+    const bf = brandFallbackSrc();
+    if (bf) candidates.push(bf);
 
-  // --- Render row
+    let idx = 0;
+    function tryNext() {
+      if (idx >= candidates.length) {
+        imgEl.style.display = "none";
+        return;
+      }
+      imgEl.style.display = "";
+      imgEl.src = candidates[idx++];
+    }
+    imgEl.onerror = tryNext;
+    tryNext();
+  }
+
+  // --- Render
   function buildRow(item) {
     const row = document.createElement("div");
     row.className = "cigar-row";
@@ -151,8 +176,8 @@
     img.className = "cigar-img";
 
     const cigarImg = pick(item, ["Cigar IMG", "Cigar Img", "Cigar Image", "Image", "IMG"]);
-    if (cigarImg) img.src = cigarImg;
-    else img.src = qs("brand-icon")?.src || "";
+    // ✅ FIX: never rely on #brand-icon for fallback (it may not be loaded yet)
+    setRowImage(img, cigarImg);
 
     img.alt = pick(item, ["Cigar", "Name", "Cigar Name"]) || "Cigar";
 
@@ -171,7 +196,7 @@
     const sub = document.createElement("div");
     sub.className = "cigar-sub";
 
-    // Subtitle: Wrapper SHADE – Vitola
+    // ✅ Subtitle: Wrapper SHADE – Vitola (NOT wrapper type)
     const shade = pick(item, ["Wrapper Shade", "Wrapper shade", "Shade"]);
     const vitola = pick(item, ["Vitola", "Style", "Vitola/Style"]);
     const subText = [shade, vitola].filter(Boolean).join(" – ");
@@ -189,6 +214,7 @@
     const price = document.createElement("div");
     price.className = "cigar-price";
 
+    // ✅ MSRP comes from column titled "MSRP" (your column S)
     const msrp = safeNum(pick(item, ["MSRP", "Cigar MSRP", "Price"]));
     price.textContent = fmtMoney(msrp);
 
@@ -196,7 +222,11 @@
     plus.className = "cigar-plus";
     plus.type = "button";
     plus.textContent = "+";
-    plus.addEventListener("click", () => plus.blur());
+    plus.addEventListener("click", () => {
+      // hook into your cart/bill logic later
+      // example: window.dispatchEvent(new CustomEvent("pos:add", { detail: item }))
+      plus.blur();
+    });
 
     right.appendChild(divider);
     right.appendChild(price);
@@ -224,10 +254,11 @@
     return hay.includes(searchTerm.toLowerCase());
   }
 
-  // ✅ tri-state shade toggle filtering (Padron only)
-  function passesShadeState(item) {
+  function passesPadronToggles(item) {
     if (BRAND !== "Padron") return true;
-    if (shadeState === "all") return true;
+
+    // If neither selected, show all
+    if (!padronMaduro && !padronNatural) return true;
 
     const txt = [
       pick(item, ["Cigar", "Cigar Name", "Name"]),
@@ -240,34 +271,25 @@
     const isMaduro = txt.includes("maduro");
     const isNatural = txt.includes("natural");
 
-    if (shadeState === "maduro") return isMaduro;
-    if (shadeState === "natural") return isNatural;
+    if (padronMaduro && padronNatural) return isMaduro || isNatural;
+    if (padronMaduro) return isMaduro;
+    if (padronNatural) return isNatural;
     return true;
   }
 
-  // ✅ multi-select bands filter
-  function passesBands(item) {
-    if (BRAND !== "Padron") return true;
-    if (!bandArts.size) return true;
-
+  function passesBandArt(item) {
+    if (!bandArt) return true;
+    // This assumes you’ll add a column later like "Band Art" or "Band Artwork"
+    // For now we match against line/name text:
     const txt = [
       pick(item, ["Line"]),
       pick(item, ["Cigar", "Cigar Name", "Name"]),
     ].join(" ").toLowerCase();
 
-    const wants1964 = bandArts.has("1964");
-    const wants1926 = bandArts.has("1926");
-    const wantsDamaso = bandArts.has("damaso");
-
-    const match1964 = txt.includes("1964");
-    const match1926 = txt.includes("1926");
-    const matchDamaso = txt.includes("damaso");
-
-    return (
-      (wants1964 && match1964) ||
-      (wants1926 && match1926) ||
-      (wantsDamaso && matchDamaso)
-    );
+    if (bandArt === "1964") return txt.includes("1964");
+    if (bandArt === "1926") return txt.includes("1926");
+    if (bandArt === "damaso") return txt.includes("damaso");
+    return true;
   }
 
   function render() {
@@ -276,72 +298,26 @@
 
     const filtered = BRAND_ONLY
       .filter(passesSearch)
-      .filter(passesShadeState)
-      .filter(passesBands);
+      .filter(passesPadronToggles)
+      .filter(passesBandArt);
 
     const frag = document.createDocumentFragment();
     filtered.forEach((item) => frag.appendChild(buildRow(item)));
     list.appendChild(frag);
   }
 
-  // --- Shade toggle behavior (exact rules you requested)
-  function setShadeState(next) {
-    shadeState = next;
-
-    const seg = qs("seg-wrap");
-    const btnM = qs("seg-maduro");
-    const btnN = qs("seg-natural");
-
-    seg.dataset.state = shadeState;
-
-    btnM.setAttribute("aria-pressed", shadeState === "maduro" ? "true" : "false");
-    btnN.setAttribute("aria-pressed", shadeState === "natural" ? "true" : "false");
-
-    render();
-  }
-
-  function wireShadeToggle() {
-    const seg = qs("seg-wrap");
-    const btnM = qs("seg-maduro");
-    const btnN = qs("seg-natural");
-    const sw = qs("seg-switch");
-
-    // Tap Maduro
-    btnM.addEventListener("click", () => {
-      if (shadeState === "maduro") setShadeState("all");  // tap active again -> All
-      else setShadeState("maduro");
-    });
-
-    // Tap Natural
-    btnN.addEventListener("click", () => {
-      if (shadeState === "natural") setShadeState("all"); // tap active again -> All
-      else setShadeState("natural");
-    });
-
-    // Tap the switch itself:
-    sw.addEventListener("click", () => {
-      if (shadeState === "maduro") setShadeState("natural");
-      else if (shadeState === "natural") setShadeState("maduro");
-      else {
-        // if in All -> goes to Natural and stays standard color
-        setShadeState("natural");
-      }
-    });
-
-    // default
-    setShadeState("all");
-  }
-
   // --- Init
   async function run() {
+    // read brand from query param
     const params = new URLSearchParams(location.search);
     BRAND = params.get("brand") || "Brand";
 
     qs("brand-title").textContent = BRAND;
 
-    // only show shade toggle for Padron
+    // Padron-only toggles visible ONLY for Padron
     const showPadron = BRAND === "Padron";
-    qs("seg-wrap").style.display = showPadron ? "" : "none";
+    qs("tgl-maduro").style.display = showPadron ? "" : "none";
+    qs("tgl-natural").style.display = showPadron ? "" : "none";
 
     // Fetch CSV
     const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL));
@@ -353,13 +329,26 @@
     // Filter to current brand
     BRAND_ONLY = ALL.filter((r) => pick(r, ["Brand", "brand"]) === BRAND);
 
-    // Top-right brand icon
+    // Top-right brand icon (prefer Brand IMG column)
     const brandImgFromRow = pick(BRAND_ONLY[0] || {}, ["Brand IMG", "Brand Img", "brand img"]);
     setBrandIcon(qs("brand-icon"), BRAND, brandImgFromRow);
 
     // Search
     qs("brand-search").addEventListener("input", (e) => {
       searchTerm = e.target.value || "";
+      render();
+    });
+
+    // Toggles
+    qs("tgl-maduro").addEventListener("click", () => {
+      padronMaduro = !padronMaduro;
+      qs("tgl-maduro").setAttribute("aria-pressed", padronMaduro ? "true" : "false");
+      render();
+    });
+
+    qs("tgl-natural").addEventListener("click", () => {
+      padronNatural = !padronNatural;
+      qs("tgl-natural").setAttribute("aria-pressed", padronNatural ? "true" : "false");
       render();
     });
 
@@ -372,20 +361,17 @@
     qs("btn-filters").addEventListener("click", () => openModal(modalFilters));
     qs("btn-bandart").addEventListener("click", () => openModal(modalBandart));
 
-    // Bands: Clear + Confirm (multi-select)
+    // Bandart actions
     qs("bandart-clear").addEventListener("click", () => {
-      bandArts = new Set();
-      document.querySelectorAll('input[name="bandpick"]').forEach((c) => (c.checked = false));
+      bandArt = "";
+      document.querySelectorAll('input[name="bandart"]').forEach((r) => (r.checked = false));
       render();
       closeModal(modalBandart);
     });
 
     qs("bandart-confirm").addEventListener("click", () => {
-      const next = new Set();
-      document.querySelectorAll('input[name="bandpick"]:checked').forEach((c) => {
-        next.add(String(c.value));
-      });
-      bandArts = next;
+      const checked = document.querySelector('input[name="bandart"]:checked');
+      bandArt = checked ? checked.value : "";
       render();
       closeModal(modalBandart);
     });
@@ -396,7 +382,7 @@
       else location.href = "/pos/cigars/";
     });
 
-    if (showPadron) wireShadeToggle();
+    // ✅ First render (now row images always have a stable fallback)
     render();
   }
 
