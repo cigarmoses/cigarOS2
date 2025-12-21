@@ -13,18 +13,20 @@
   <header class="brand-topbar">
     <button class="icon-btn" id="brand-back" aria-label="Back">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
-
-    <img id="brand-icon" class="brand-icon" alt="Brand icon" />
   </header>
 
   <main class="brand-main">
-    <h1 class="brand-title" id="brand-title">Brand</h1>
+    <!-- Title row: title left, icon right (same row) -->
+    <div class="brand-title-row">
+      <h1 class="brand-title" id="brand-title">Brand</h1>
+      <img class="brand-icon" id="brand-icon" alt="Brand icon" />
+    </div>
 
     <!-- Search -->
-    <section class="brand-search">
+    <section class="brand-search" aria-label="Search">
       <div class="search-wrap">
         <span class="search-ico" aria-hidden="true">🔎</span>
         <input id="brand-search" type="search" placeholder="Search..." autocomplete="off" />
@@ -32,58 +34,64 @@
     </section>
 
     <!-- Controls -->
-    <section class="brand-controls" aria-label="Brand controls">
-      <button class="pill-btn" id="btn-filters" type="button">
-        <span class="pill-ico" aria-hidden="true">≡</span>
+    <section class="brand-controls" aria-label="Controls">
+      <button class="pill-btn" id="btn-filters" type="button" aria-haspopup="dialog">
+        <span class="pill-ico" aria-hidden="true">
+          <!-- 3 lines, different widths -->
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 7h14" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M5 12h10" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M5 17h12" stroke-width="2.6" stroke-linecap="round"/>
+          </svg>
+        </span>
         Filters
       </button>
 
-      <!-- ✅ Bands button (no emoji, no default highlight) -->
-      <button class="pill-btn" id="btn-bandart" type="button">
+      <button class="pill-btn" id="btn-bands" type="button" aria-haspopup="dialog">
         Bands
       </button>
 
-      <!-- ✅ Padron-only toggles (JS hides for non-Padron) -->
-      <button class="pill-toggle" id="tgl-maduro" type="button" aria-pressed="false">
-        <span class="dot" aria-hidden="true"></span>
-        Maduro
-      </button>
-
-      <button class="pill-toggle" id="tgl-natural" type="button" aria-pressed="false">
-        <span class="dot" aria-hidden="true"></span>
-        Natural
-      </button>
+      <!-- Padron-only segmented control -->
+      <div class="seg" id="padron-seg" aria-label="Padron wrapper selector">
+        <button class="seg-btn" id="seg-maduro" type="button" aria-pressed="false">
+          Maduro
+        </button>
+        <div class="seg-dot" aria-hidden="true"></div>
+        <button class="seg-btn" id="seg-natural" type="button" aria-pressed="false">
+          Natural
+        </button>
+      </div>
     </section>
 
     <!-- List -->
     <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
   </main>
 
-  <!-- Filters modal (placeholder for now) -->
-  <div class="modal" id="modal-filters" aria-hidden="true">
+  <!-- Filters Modal -->
+  <div class="modal" id="modal-filters" aria-hidden="true" role="dialog" aria-label="Filters">
     <div class="modal-scrim" data-close="1"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Filters">
+    <div class="modal-card">
       <div class="modal-head">
         <div class="modal-title">Filters</div>
-        <button class="modal-x" type="button" data-close="1" aria-label="Close">×</button>
+        <button class="modal-x" type="button" data-close="1" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
-        <div class="modal-empty">No additional filters yet.</div>
+        <div class="modal-empty">Filters coming next.</div>
       </div>
       <div class="modal-foot">
         <button class="modal-btn ghost" type="button" data-close="1">Close</button>
-        <button class="modal-btn primary" type="button" data-close="1">Confirm</button>
+        <button class="modal-btn primary" type="button" data-close="1">OK</button>
       </div>
     </div>
   </div>
 
-  <!-- Bands modal -->
-  <div class="modal" id="modal-bandart" aria-hidden="true">
+  <!-- Bands Modal -->
+  <div class="modal" id="modal-bands" aria-hidden="true" role="dialog" aria-label="Bands">
     <div class="modal-scrim" data-close="1"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Bands">
+    <div class="modal-card">
       <div class="modal-head">
         <div class="modal-title">Bands</div>
-        <button class="modal-x" type="button" data-close="1" aria-label="Close">×</button>
+        <button class="modal-x" type="button" data-close="1" aria-label="Close">✕</button>
       </div>
 
       <div class="modal-body">
@@ -108,13 +116,13 @@
       </div>
 
       <div class="modal-foot">
-        <button class="modal-btn ghost" id="bandart-clear" type="button">Clear</button>
-        <button class="modal-btn primary" id="bandart-confirm" type="button">Confirm</button>
+        <button class="modal-btn ghost" id="bands-clear" type="button">Clear</button>
+        <button class="modal-btn primary" id="bands-confirm" type="button">Confirm</button>
       </div>
     </div>
   </div>
 
-  <!-- ✅ Script should be inside body, right before closing body -->
+  <!-- Script BEFORE closing body ✅ -->
   <script src="/pos/cigars/brand.js"></script>
 </body>
 </html>
