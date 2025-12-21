@@ -1,7 +1,5 @@
 // /pos/cigars/brand.js
 (function () {
-  // ✅ Pulls live from Google Sheets via CSV export
-  // NOTE: if your data is on a specific tab, add &gid=XXXX
   const GOOGLE_SHEETS_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
@@ -90,26 +88,14 @@
       .trim();
   }
 
-  function absolutizeMaybe(path) {
-    if (!path) return "";
-    const p = String(path).trim();
-    if (!p) return "";
-    if (p.startsWith("http://") || p.startsWith("https://")) return p;
-    if (p.startsWith("/")) return p;
-    return "/" + p; // ✅ prevent relative like /pos/cigars/img/...
-  }
-
   function setBrandIcon(imgEl, brandName, csvBrandImgPath) {
     const slug = brandSlug(brandName);
 
+    // ✅ Always prefer /img/icons/brands/ first (your confirmed correct path)
     const candidates = [];
-
-    // Prefer CSV Brand IMG if provided
-    const csv = absolutizeMaybe(csvBrandImgPath);
-    if (csv) candidates.push(csv);
-
-    // ✅ Primary path you want
     if (slug) candidates.push(`/img/icons/brands/${slug}.svg`);
+    if (csvBrandImgPath) candidates.push(csvBrandImgPath);
+    if (slug) candidates.push(`/img/icons/brand/${slug}.svg`);
 
     let idx = 0;
     function tryNext() {
@@ -162,11 +148,13 @@
 
     const cigarImg = pick(item, ["Cigar IMG", "Cigar Img", "Cigar Image", "Image", "IMG"]);
 
-    // fallback: brand icon if cigar image missing
-    const brandIconSrc = qs("brand-icon")?.getAttribute("src") || qs("brand-icon")?.src || "";
-
-    if (cigarImg) img.src = cigarImg;
-    else img.src = brandIconSrc;
+    // ✅ If cigar image missing, fallback to brand icon from /img/icons/brands/{slug}.svg
+    if (cigarImg) {
+      img.src = cigarImg;
+    } else {
+      const slug = brandSlug(BRAND);
+      img.src = slug ? `/img/icons/brands/${slug}.svg` : "";
+    }
 
     img.alt = pick(item, ["Cigar", "Name", "Cigar Name"]) || "Cigar";
 
@@ -194,9 +182,11 @@
     mid.appendChild(name);
     mid.appendChild(sub);
 
-    // ✅ Right side: price over + pill (no divider)
     const right = document.createElement("div");
     right.className = "cigar-right";
+
+    const divider = document.createElement("div");
+    divider.className = "cigar-divider";
 
     const price = document.createElement("div");
     price.className = "cigar-price";
@@ -211,9 +201,10 @@
     plus.textContent = "+";
     plus.addEventListener("click", () => {
       plus.blur();
-      // hook later: window.dispatchEvent(new CustomEvent("pos:add", { detail: item }))
+      // hook into cart/bill logic later
     });
 
+    right.appendChild(divider);
     right.appendChild(price);
     right.appendChild(plus);
 
@@ -265,6 +256,7 @@
   function passesBandArt(item) {
     if (!bandArt) return true;
 
+    // Matching against line/name text for now
     const txt = [
       pick(item, ["Line"]),
       pick(item, ["Cigar", "Cigar Name", "Name"]),
@@ -290,21 +282,16 @@
     list.appendChild(frag);
   }
 
-  // --- Init
   async function run() {
-    // read brand from query param
     const params = new URLSearchParams(location.search);
     BRAND = params.get("brand") || "Brand";
-
     qs("brand-title").textContent = BRAND;
 
-    // ✅ Force Bands button label + remove emoji/icon by overwriting text
-    const bandBtn = qs("btn-bandart");
-    if (bandBtn) {
-      bandBtn.textContent = "Bands";
-      // Also ensure it does NOT look active by default
-      bandBtn.classList.remove("active");
-      bandBtn.removeAttribute("aria-pressed");
+    // ✅ Button label: “Bands” (no emoji) and no default “selected” look
+    const bandsBtn = qs("btn-bandart");
+    if (bandsBtn) {
+      bandsBtn.textContent = "Bands";
+      bandsBtn.blur();
     }
 
     // Padron-only toggles visible ONLY for Padron
@@ -322,10 +309,8 @@
     // Filter to current brand
     BRAND_ONLY = ALL.filter((r) => pick(r, ["Brand", "brand"]) === BRAND);
 
-    // Top-right brand icon (prefer Brand IMG column)
+    // Top-right brand icon
     const brandImgFromRow = pick(BRAND_ONLY[0] || {}, ["Brand IMG", "Brand Img", "brand img"]);
-
-    // ✅ Always try /img/icons/brands/{slug}.svg (Padron fix)
     setBrandIcon(qs("brand-icon"), BRAND, brandImgFromRow);
 
     // Search
@@ -338,54 +323,15 @@
     qs("tgl-maduro").addEventListener("click", () => {
       padronMaduro = !padronMaduro;
       qs("tgl-maduro").setAttribute("aria-pressed", padronMaduro ? "true" : "false");
+      qs("tgl-maduro").blur();
       render();
     });
 
     qs("tgl-natural").addEventListener("click", () => {
       padronNatural = !padronNatural;
       qs("tgl-natural").setAttribute("aria-pressed", padronNatural ? "true" : "false");
+      qs("tgl-natural").blur();
       render();
     });
 
-    // Modals
-    const modalFilters = qs("modal-filters");
-    const modalBandart = qs("modal-bandart");
-    wireModal(modalFilters);
-    wireModal(modalBandart);
-
-    qs("btn-filters").addEventListener("click", () => openModal(modalFilters));
-    qs("btn-bandart").addEventListener("click", () => openModal(modalBandart));
-
-    // Bandart actions
-    qs("bandart-clear").addEventListener("click", () => {
-      bandArt = "";
-      document.querySelectorAll('input[name="bandart"]').forEach((r) => (r.checked = false));
-      render();
-      closeModal(modalBandart);
-    });
-
-    qs("bandart-confirm").addEventListener("click", () => {
-      const checked = document.querySelector('input[name="bandart"]:checked');
-      bandArt = checked ? checked.value : "";
-      render();
-      closeModal(modalBandart);
-    });
-
-    // Back
-    qs("brand-back").addEventListener("click", () => {
-      if (history.length > 1) history.back();
-      else location.href = "/pos/cigars/";
-    });
-
-    render();
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    run().catch((err) => {
-      console.error("[brand] failed:", err);
-      const list = qs("brand-list");
-      list.innerHTML =
-        '<div style="padding:14px;color:#ffb4b4;font-weight:800;">Brand failed to load from Google Sheets.</div>';
-    });
-  });
-})();
+   
