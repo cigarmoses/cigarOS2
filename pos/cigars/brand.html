@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS • Brand</title>
 
-  <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
 </head>
 
@@ -14,13 +13,11 @@
   <header class="brand-topbar">
     <button class="icon-btn" id="brand-back" aria-label="Back">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </button>
 
-    <div class="brand-topbar-right">
-      <img id="brand-icon" class="brand-icon" alt="" />
-    </div>
+    <img id="brand-icon" class="brand-icon" alt="Brand icon" />
   </header>
 
   <main class="brand-main">
@@ -34,17 +31,19 @@
       </div>
     </section>
 
-    <!-- Controls row: Filters | Band Art | Maduro | Natural -->
-    <section class="brand-controls">
+    <!-- Controls -->
+    <section class="brand-controls" aria-label="Brand controls">
       <button class="pill-btn" id="btn-filters" type="button">
         <span class="pill-ico" aria-hidden="true">≡</span>
         Filters
       </button>
-     <button id="btn-bandart">
-      Bands
-     </button>
 
-      <!-- Padron-only toggles -->
+      <!-- ✅ Bands button (no emoji, no default highlight) -->
+      <button class="pill-btn" id="btn-bandart" type="button">
+        Bands
+      </button>
+
+      <!-- ✅ Padron-only toggles (JS hides for non-Padron) -->
       <button class="pill-toggle" id="tgl-maduro" type="button" aria-pressed="false">
         <span class="dot" aria-hidden="true"></span>
         Maduro
@@ -57,73 +56,65 @@
     </section>
 
     <!-- List -->
-    <section class="brand-list">
-      <div id="brand-list"></div>
-    </section>
+    <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
   </main>
 
-  <!-- Filters modal -->
+  <!-- Filters modal (placeholder for now) -->
   <div class="modal" id="modal-filters" aria-hidden="true">
     <div class="modal-scrim" data-close="1"></div>
     <div class="modal-card" role="dialog" aria-modal="true" aria-label="Filters">
       <div class="modal-head">
         <div class="modal-title">Filters</div>
-        <button class="modal-x" type="button" data-close="1" aria-label="Close">✕</button>
+        <button class="modal-x" type="button" data-close="1" aria-label="Close">×</button>
       </div>
-
       <div class="modal-body">
-        <div class="modal-note">
-          (Brand page filters exclude Manufacturer/Brand automatically.)
-        </div>
-
-        <!-- minimal placeholder – you can expand later -->
-        <div class="modal-empty">
-          Filters popup is wired and ready — tell me which fields you want inside first (vitola, ring, length, strength, etc.)
-        </div>
+        <div class="modal-empty">No additional filters yet.</div>
       </div>
-
       <div class="modal-foot">
-        <button class="modal-btn ghost" type="button" data-close="1">Cancel</button>
+        <button class="modal-btn ghost" type="button" data-close="1">Close</button>
         <button class="modal-btn primary" type="button" data-close="1">Confirm</button>
       </div>
     </div>
   </div>
 
-  <!-- Band Art modal -->
+  <!-- Bands modal -->
   <div class="modal" id="modal-bandart" aria-hidden="true">
     <div class="modal-scrim" data-close="1"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Band Art">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Bands">
       <div class="modal-head">
-        <div class="modal-title">Band Art</div>
-        <button class="modal-x" type="button" data-close="1" aria-label="Close">✕</button>
+        <div class="modal-title">Bands</div>
+        <button class="modal-x" type="button" data-close="1" aria-label="Close">×</button>
       </div>
 
       <div class="modal-body">
-        <div class="modal-note">Select one:</div>
+        <div class="modal-note">Pick</div>
 
         <div class="bandart-list">
           <label class="bandart-item">
             <input type="radio" name="bandart" value="1964" />
-            <span>1964 Anniversary Series</span>
+            1964 Anniversary Series
           </label>
+
           <label class="bandart-item">
             <input type="radio" name="bandart" value="1926" />
-            <span>1926 Serie</span>
+            1926 Serie
           </label>
+
           <label class="bandart-item">
             <input type="radio" name="bandart" value="damaso" />
-            <span>Damaso</span>
+            Damaso
           </label>
         </div>
       </div>
 
       <div class="modal-foot">
-        <button class="modal-btn ghost" type="button" id="bandart-clear">Clear</button>
-        <button class="modal-btn primary" type="button" id="bandart-confirm">Confirm</button>
+        <button class="modal-btn ghost" id="bandart-clear" type="button">Clear</button>
+        <button class="modal-btn primary" id="bandart-confirm" type="button">Confirm</button>
       </div>
     </div>
   </div>
 
+  <!-- ✅ Script should be inside body, right before closing body -->
   <script src="/pos/cigars/brand.js"></script>
 </body>
 </html>
