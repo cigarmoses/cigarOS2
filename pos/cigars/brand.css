@@ -135,7 +135,7 @@ body.brand-page{
   border:1px solid var(--pill-border);
   background:var(--pill);
   display:grid;
-  grid-template-columns: 1fr 74px 1fr; /* ✅ single pill toggle in the middle */
+  grid-template-columns: 1fr 70px 1fr; /* ✅ single pill toggle in the middle */
   align-items:center;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
   overflow:hidden;
@@ -153,12 +153,12 @@ body.brand-page{
 /* ✅ active side = bold + blue */
 .seg-btn[aria-pressed="true"]{
   color: rgba(15,122,255,.95);
-  font-weight:900;
+  font-weight:700;
 }
 
 /* ✅ middle switch track + thumb */
 .seg-dot{
-  width:74px;height:30px;
+  width:70px;height:30px;
   border-radius:999px;
   border:2px solid rgba(255,255,255,.22);
   margin:0 auto;
@@ -172,7 +172,7 @@ body.brand-page{
   position:absolute;
   top:50%;
   transform:translateY(-50%);
-  width:26px;height:26px;
+  width:22px;height:22px;
   border-radius:999px;
   background: rgba(15,122,255,.85);
   left:4px; /* default (maduro) */
