@@ -1,7 +1,5 @@
 // /pos/cigars/brand.js
 (function () {
-  // ✅ Pulls live from Google Sheets via CSV export
-  // If your data lives on a specific tab, add &gid=XXXX to this URL.
   const GOOGLE_SHEETS_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
@@ -9,10 +7,6 @@
     const u = new URL(url);
     u.searchParams.set("_ts", Date.now().toString());
     return u.toString();
-  }
-
-  function qs(id) {
-    return document.getElementById(id);
   }
 
   function parseCSV(text) {
@@ -94,19 +88,30 @@
       .trim();
   }
 
-  function setBrandIcon(imgEl, brandName) {
+  function setBrandIcon(imgEl, brandName, csvBrandImgPath) {
     const slug = brandSlug(brandName);
-    if (!imgEl || !slug) return;
 
-    // ✅ Correct path (your requirement)
-    const src = `/img/icons/brands/${slug}.svg`;
-    imgEl.onerror = () => {
-      // If missing, keep a subtle placeholder instead of broken image icon
-      imgEl.removeAttribute("src");
-      imgEl.style.opacity = "0.15";
-    };
-    imgEl.src = src;
-    imgEl.style.opacity = "1";
+    const candidates = [];
+    if (csvBrandImgPath) candidates.push(csvBrandImgPath);
+
+    // prefer /img/icons/brands/ first
+    if (slug) candidates.push(`/img/icons/brands/${slug}.svg`);
+    if (slug) candidates.push(`/img/icons/brand/${slug}.svg`);
+
+    let idx = 0;
+    function tryNext() {
+      if (idx >= candidates.length) {
+        imgEl.style.display = "none";
+        return;
+      }
+      imgEl.src = candidates[idx++];
+    }
+    imgEl.onerror = tryNext;
+    tryNext();
+  }
+
+  function qs(id) {
+    return document.getElementById(id);
   }
 
   // --- Modal helpers
@@ -130,70 +135,26 @@
   let BRAND = "";
   let BRAND_ONLY = [];
   let searchTerm = "";
-  let padronMode = ""; // "", "maduro", "natural"
-  let bandPick = "";   // "", "1964", "1926", "damaso"
 
-  function norm(s) {
-    return String(s || "").trim().toLowerCase();
-  }
+  // ✅ tri-state toggle: "all" | "maduro" | "natural"
+  let shadeState = "all";
 
-  // --- Filters
-  function passesSearch(item) {
-    if (!searchTerm) return true;
-    const hay = [
-      pick(item, ["Brand"]),
-      pick(item, ["Line"]),
-      pick(item, ["Cigar", "Cigar Name", "Name"]),
-      pick(item, ["Vitola", "Style"]),
-      pick(item, ["Wrapper Shade", "Shade"]),
-    ].join(" ").toLowerCase();
-    return hay.includes(searchTerm.toLowerCase());
-  }
+  // ✅ multi-select bands
+  let bandArts = new Set(); // values: "1964" | "1926" | "damaso"
 
-  function passesPadronMode(item) {
-    if (BRAND !== "Padron") return true;
-    if (!padronMode) return true;
-
-    const txt = [
-      pick(item, ["Cigar", "Cigar Name", "Name"]),
-      pick(item, ["Wrapper Shade", "Shade"]),
-      pick(item, ["Line"]),
-    ].join(" ").toLowerCase();
-
-    if (padronMode === "maduro") return txt.includes("maduro");
-    if (padronMode === "natural") return txt.includes("natural");
-    return true;
-  }
-
-  function passesBands(item) {
-    if (!bandPick) return true;
-
-    const txt = [
-      pick(item, ["Line"]),
-      pick(item, ["Cigar", "Cigar Name", "Name"]),
-    ].join(" ").toLowerCase();
-
-    if (bandPick === "1964") return txt.includes("1964");
-    if (bandPick === "1926") return txt.includes("1926");
-    if (bandPick === "damaso") return txt.includes("damaso");
-    return true;
-  }
-
-  // --- Render
+  // --- Render row
   function buildRow(item) {
     const row = document.createElement("div");
     row.className = "cigar-row";
 
     const img = document.createElement("img");
     img.className = "cigar-img";
-    img.alt = "Brand icon";
 
-    // ✅ Row icon: brand icon (Padron shows again)
-    img.src = qs("brand-icon")?.src || "";
-    img.onerror = () => {
-      img.removeAttribute("src");
-      img.style.opacity = "0.15";
-    };
+    const cigarImg = pick(item, ["Cigar IMG", "Cigar Img", "Cigar Image", "Image", "IMG"]);
+    if (cigarImg) img.src = cigarImg;
+    else img.src = qs("brand-icon")?.src || "";
+
+    img.alt = pick(item, ["Cigar", "Name", "Cigar Name"]) || "Cigar";
 
     const mid = document.createElement("div");
     mid.className = "cigar-mid";
@@ -205,13 +166,12 @@
       pick(item, ["Cigar", "Cigar Name", "Name"]) ||
       pick(item, ["Vitola", "Style"]) ||
       "Cigar";
-
     name.textContent = cigarName;
 
     const sub = document.createElement("div");
     sub.className = "cigar-sub";
 
-    // ✅ Subtitle: Wrapper SHADE – Vitola
+    // Subtitle: Wrapper SHADE – Vitola
     const shade = pick(item, ["Wrapper Shade", "Wrapper shade", "Shade"]);
     const vitola = pick(item, ["Vitola", "Style", "Vitola/Style"]);
     const subText = [shade, vitola].filter(Boolean).join(" – ");
@@ -229,18 +189,14 @@
     const price = document.createElement("div");
     price.className = "cigar-price";
 
-    // ✅ MSRP comes from column titled "MSRP"
-    const msrp = safeNum(pick(item, ["MSRP"]));
+    const msrp = safeNum(pick(item, ["MSRP", "Cigar MSRP", "Price"]));
     price.textContent = fmtMoney(msrp);
 
     const plus = document.createElement("button");
     plus.className = "cigar-plus";
     plus.type = "button";
     plus.textContent = "+";
-    plus.addEventListener("click", () => {
-      plus.blur();
-      // hook cart later
-    });
+    plus.addEventListener("click", () => plus.blur());
 
     right.appendChild(divider);
     right.appendChild(price);
@@ -253,15 +209,74 @@
     return row;
   }
 
+  function passesSearch(item) {
+    if (!searchTerm) return true;
+    const hay = [
+      pick(item, ["Brand", "brand"]),
+      pick(item, ["Line", "line"]),
+      pick(item, ["Cigar", "Cigar Name", "Name"]),
+      pick(item, ["Vitola", "Style"]),
+      pick(item, ["Wrapper Shade", "Shade"]),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return hay.includes(searchTerm.toLowerCase());
+  }
+
+  // ✅ tri-state shade toggle filtering (Padron only)
+  function passesShadeState(item) {
+    if (BRAND !== "Padron") return true;
+    if (shadeState === "all") return true;
+
+    const txt = [
+      pick(item, ["Cigar", "Cigar Name", "Name"]),
+      pick(item, ["Wrapper Shade", "Shade"]),
+      pick(item, ["Line"]),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    const isMaduro = txt.includes("maduro");
+    const isNatural = txt.includes("natural");
+
+    if (shadeState === "maduro") return isMaduro;
+    if (shadeState === "natural") return isNatural;
+    return true;
+  }
+
+  // ✅ multi-select bands filter
+  function passesBands(item) {
+    if (BRAND !== "Padron") return true;
+    if (!bandArts.size) return true;
+
+    const txt = [
+      pick(item, ["Line"]),
+      pick(item, ["Cigar", "Cigar Name", "Name"]),
+    ].join(" ").toLowerCase();
+
+    const wants1964 = bandArts.has("1964");
+    const wants1926 = bandArts.has("1926");
+    const wantsDamaso = bandArts.has("damaso");
+
+    const match1964 = txt.includes("1964");
+    const match1926 = txt.includes("1926");
+    const matchDamaso = txt.includes("damaso");
+
+    return (
+      (wants1964 && match1964) ||
+      (wants1926 && match1926) ||
+      (wantsDamaso && matchDamaso)
+    );
+  }
+
   function render() {
     const list = qs("brand-list");
-    if (!list) return;
-
     list.innerHTML = "";
 
     const filtered = BRAND_ONLY
       .filter(passesSearch)
-      .filter(passesPadronMode)
+      .filter(passesShadeState)
       .filter(passesBands);
 
     const frag = document.createDocumentFragment();
@@ -269,19 +284,52 @@
     list.appendChild(frag);
   }
 
-  function setSegState() {
+  // --- Shade toggle behavior (exact rules you requested)
+  function setShadeState(next) {
+    shadeState = next;
+
+    const seg = qs("seg-wrap");
     const btnM = qs("seg-maduro");
     const btnN = qs("seg-natural");
-    const dot = document.querySelector(".seg-dot");
 
-    if (!btnM || !btnN || !dot) return;
+    seg.dataset.state = shadeState;
 
-    btnM.setAttribute("aria-pressed", padronMode === "maduro" ? "true" : "false");
-    btnN.setAttribute("aria-pressed", padronMode === "natural" ? "true" : "false");
+    btnM.setAttribute("aria-pressed", shadeState === "maduro" ? "true" : "false");
+    btnN.setAttribute("aria-pressed", shadeState === "natural" ? "true" : "false");
 
-    // dot active if either side active
-    if (padronMode) dot.classList.add("active");
-    else dot.classList.remove("active");
+    render();
+  }
+
+  function wireShadeToggle() {
+    const seg = qs("seg-wrap");
+    const btnM = qs("seg-maduro");
+    const btnN = qs("seg-natural");
+    const sw = qs("seg-switch");
+
+    // Tap Maduro
+    btnM.addEventListener("click", () => {
+      if (shadeState === "maduro") setShadeState("all");  // tap active again -> All
+      else setShadeState("maduro");
+    });
+
+    // Tap Natural
+    btnN.addEventListener("click", () => {
+      if (shadeState === "natural") setShadeState("all"); // tap active again -> All
+      else setShadeState("natural");
+    });
+
+    // Tap the switch itself:
+    sw.addEventListener("click", () => {
+      if (shadeState === "maduro") setShadeState("natural");
+      else if (shadeState === "natural") setShadeState("maduro");
+      else {
+        // if in All -> goes to Natural and stays standard color
+        setShadeState("natural");
+      }
+    });
+
+    // default
+    setShadeState("all");
   }
 
   // --- Init
@@ -289,101 +337,66 @@
     const params = new URLSearchParams(location.search);
     BRAND = params.get("brand") || "Brand";
 
-    // Title
-    const titleEl = qs("brand-title");
-    if (titleEl) titleEl.textContent = BRAND;
+    qs("brand-title").textContent = BRAND;
 
-    // Icon
-    setBrandIcon(qs("brand-icon"), BRAND);
-
-    // Padron-only segmented control
-    const seg = qs("padron-seg");
-    if (seg) seg.style.display = (BRAND === "Padron") ? "" : "none";
+    // only show shade toggle for Padron
+    const showPadron = BRAND === "Padron";
+    qs("seg-wrap").style.display = showPadron ? "" : "none";
 
     // Fetch CSV
     const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL));
     const text = await res.text();
     const { data } = parseCSV(text);
+
     ALL = data;
 
-    // Filter to current brand (case-insensitive)
-    BRAND_ONLY = ALL.filter((r) => norm(pick(r, ["Brand"])) === norm(BRAND));
+    // Filter to current brand
+    BRAND_ONLY = ALL.filter((r) => pick(r, ["Brand", "brand"]) === BRAND);
+
+    // Top-right brand icon
+    const brandImgFromRow = pick(BRAND_ONLY[0] || {}, ["Brand IMG", "Brand Img", "brand img"]);
+    setBrandIcon(qs("brand-icon"), BRAND, brandImgFromRow);
 
     // Search
-    const search = qs("brand-search");
-    if (search) {
-      search.addEventListener("input", (e) => {
-        searchTerm = e.target.value || "";
-        render();
-      });
-    }
+    qs("brand-search").addEventListener("input", (e) => {
+      searchTerm = e.target.value || "";
+      render();
+    });
 
     // Modals
     const modalFilters = qs("modal-filters");
-    const modalBands = qs("modal-bands");
-    if (modalFilters) wireModal(modalFilters);
-    if (modalBands) wireModal(modalBands);
+    const modalBandart = qs("modal-bandart");
+    wireModal(modalFilters);
+    wireModal(modalBandart);
 
-    const btnFilters = qs("btn-filters");
-    const btnBands = qs("btn-bands");
+    qs("btn-filters").addEventListener("click", () => openModal(modalFilters));
+    qs("btn-bandart").addEventListener("click", () => openModal(modalBandart));
 
-    if (btnFilters && modalFilters) btnFilters.addEventListener("click", () => openModal(modalFilters));
-    if (btnBands && modalBands) btnBands.addEventListener("click", () => openModal(modalBands));
+    // Bands: Clear + Confirm (multi-select)
+    qs("bandart-clear").addEventListener("click", () => {
+      bandArts = new Set();
+      document.querySelectorAll('input[name="bandpick"]').forEach((c) => (c.checked = false));
+      render();
+      closeModal(modalBandart);
+    });
 
-    // Bands modal actions
-    const bandsClear = qs("bands-clear");
-    const bandsConfirm = qs("bands-confirm");
-
-    if (bandsClear) {
-      bandsClear.addEventListener("click", () => {
-        bandPick = "";
-        document.querySelectorAll('input[name="bandart"]').forEach((r) => (r.checked = false));
-        render();
-        if (modalBands) closeModal(modalBands);
+    qs("bandart-confirm").addEventListener("click", () => {
+      const next = new Set();
+      document.querySelectorAll('input[name="bandpick"]:checked').forEach((c) => {
+        next.add(String(c.value));
       });
-    }
-
-    if (bandsConfirm) {
-      bandsConfirm.addEventListener("click", () => {
-        const checked = document.querySelector('input[name="bandart"]:checked');
-        bandPick = checked ? checked.value : "";
-        render();
-        if (modalBands) closeModal(modalBands);
-      });
-    }
-
-    // Segmented Padron control
-    const segM = qs("seg-maduro");
-    const segN = qs("seg-natural");
-
-    if (segM) {
-      segM.addEventListener("click", () => {
-        // tap again clears (show all)
-        padronMode = (padronMode === "maduro") ? "" : "maduro";
-        setSegState();
-        render();
-      });
-    }
-
-    if (segN) {
-      segN.addEventListener("click", () => {
-        padronMode = (padronMode === "natural") ? "" : "natural";
-        setSegState();
-        render();
-      });
-    }
-
-    setSegState();
+      bandArts = next;
+      render();
+      closeModal(modalBandart);
+    });
 
     // Back
-    const back = qs("brand-back");
-    if (back) {
-      back.addEventListener("click", () => {
-        if (history.length > 1) history.back();
-        else location.href = "/pos/cigars/";
-      });
-    }
+    qs("brand-back").addEventListener("click", () => {
+      if (history.length > 1) history.back();
+      else location.href = "/pos/cigars/";
+    });
 
+    if (showPadron) wireShadeToggle();
     render();
   }
 
@@ -391,10 +404,8 @@
     run().catch((err) => {
       console.error("[brand] failed:", err);
       const list = qs("brand-list");
-      if (list) {
-        list.innerHTML =
-          '<div style="padding:14px;color:#ffb4b4;font-weight:900;">Brand failed to load from Google Sheets.</div>';
-      }
+      list.innerHTML =
+        '<div style="padding:14px;color:#ffb4b4;font-weight:800;">Brand failed to load from Google Sheets.</div>';
     });
   });
 })();
