@@ -102,7 +102,7 @@ body.brand-page{
 /* Controls */
 .brand-controls{
   display:grid;
-  grid-template-columns: 1.05fr 0.95fr 1.2fr;
+  grid-template-columns: 1.05fr 0.72fr 1.7fr;
   gap:10px;
   margin-top:12px;
   align-items:center;
