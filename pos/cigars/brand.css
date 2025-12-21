@@ -104,8 +104,8 @@ body.brand-page{
   display:grid;
   grid-template-columns: 1.05fr 0.72fr 1.7fr;
   gap:10px;
-  margin-top:12px;
-  align-items:center;
+  margin-top:10px;
+  align-items:left;
 }
 
 .pill-btn{
@@ -114,8 +114,8 @@ body.brand-page{
   border:1px solid var(--pill-border);
   background:var(--pill);
   color:rgba(255,255,255,.92);
-  font-weight:800;
-  font-size:12px;
+  font-weight:600;
+  font-size:13px;
   display:flex;
   align-items:center;
   justify-content:center;
