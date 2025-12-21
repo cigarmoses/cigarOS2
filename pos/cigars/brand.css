@@ -17,6 +17,7 @@
 
 *{ box-sizing:border-box; }
 
+
 body.brand-page{
   margin:0;
   min-height:100vh;
@@ -135,7 +136,7 @@ body.brand-page{
   border:1px solid var(--pill-border);
   background:var(--pill);
   display:grid;
-  grid-template-columns: 1fr 70px 1fr; /* ✅ single pill toggle in the middle */
+  grid-template-columns: 1fr 56px 1fr; /* ✅ single pill toggle in the middle */
   align-items:center;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
   overflow:hidden;
@@ -158,7 +159,7 @@ body.brand-page{
 
 /* ✅ middle switch track + thumb */
 .seg-dot{
-  width:70px;height:30px;
+  width:56px;height:30px;
   border-radius:999px;
   border:2px solid rgba(255,255,255,.22);
   margin:0 auto;
@@ -182,8 +183,8 @@ body.brand-page{
 
 /* ✅ positions controlled by data-state on .seg: maduro | all | natural */
 .seg[data-state="maduro"] .seg-dot::after{ left:4px; opacity:1; }
-.seg[data-state="all"] .seg-dot::after{ left:24px; opacity:.55; }     /* centered */
-.seg[data-state="natural"] .seg-dot::after{ left:44px; opacity:1; }
+.seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }     /* centered */
+.seg[data-state="natural"] .seg-dot::after{ left:30px; opacity:1; }
 
 /* List — Sleeper/Yahoo style: no radius, tight rows, divider lines */
 .brand-list{
@@ -344,14 +345,58 @@ body.brand-page{
   color:#fff;
 }
 
-.bandart-list{ display:grid; gap:10px; }
+/* ✅ Band images grid for the Bands popup */
+.bandart-list{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
 .bandart-item{
-  display:flex; align-items:center; gap:10px;
-  padding:12px 12px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.05);
+  border:none;
+  background:transparent;
+  padding:0;
+  border-radius:0;
   font-weight:800;
+}
+
+.bandart-grid{
+  display:grid;
+  gap:18px;
+}
+
+.bandart-card{
+  appearance:none;
+  border:none;
+  background:transparent;
+  padding:0;
+  width:100%;
+  text-align:center;
+  cursor:pointer;
+}
+
+.bandart-card img{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius:22px;
+  background:rgba(0,0,0,.10);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow: 0 24px 70px rgba(0,0,0,.35);
+}
+
+.bandart-card .cap{
+  margin-top:10px;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.01em;
+  color:rgba(255,255,255,.92);
+}
+
+/* selected state */
+.bandart-card[aria-pressed="true"] img{
+  border-color: rgba(15,122,255,.85);
+  box-shadow: 0 24px 70px rgba(15,122,255,.18);
 }
 
 .bandart-item input{ transform:scale(1.15); }
