@@ -5,14 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS • Brand</title>
 
-  <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
 </head>
 
 <body class="brand-page">
   <!-- Top bar -->
   <header class="brand-topbar">
-    <button type="button" class="icon-btn" id="brand-back" aria-label="Back">
+    <button class="icon-btn" id="brand-back" aria-label="Back">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -22,7 +21,7 @@
   <main class="brand-main">
     <div class="brand-title-row">
       <h1 class="brand-title" id="brand-title">Brand</h1>
-      <img id="brand-icon" class="brand-icon" alt="" />
+      <img class="brand-icon" id="brand-icon" alt="" />
     </div>
 
     <!-- Search -->
@@ -35,90 +34,105 @@
 
     <!-- Controls -->
     <section class="brand-controls">
-      <button type="button" class="pill-btn" id="btn-filters">
+      <button class="pill-btn" id="filters-btn" type="button" aria-label="Filters">
         <span class="pill-ico" aria-hidden="true">
           <!-- 3 lines icon (different widths) -->
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M4 7H18" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M4 12H14" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M4 17H20" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M4 12H20" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M4 17H14" stroke-width="2.5" stroke-linecap="round"/>
           </svg>
         </span>
         Filters
       </button>
 
-      <button type="button" class="pill-btn" id="btn-bandart">
+      <button class="pill-btn" id="bands-btn" type="button">
         Bands
       </button>
 
-      <!-- ✅ Single segmented toggle area (Padron only) -->
-      <div class="seg" id="seg-wrap" data-state="all" aria-label="Wrapper shade toggle">
-        <button type="button" class="seg-btn" id="seg-maduro" aria-pressed="false">Maduro</button>
-        <button type="button" class="seg-dot" id="seg-switch" aria-label="Toggle Maduro/Natural"></button>
-        <button type="button" class="seg-btn" id="seg-natural" aria-pressed="false">Natural</button>
+      <!-- Maduro / Natural 3-state segmented -->
+      <div class="seg" id="wrapper-seg" data-state="all" aria-label="Wrapper Filter">
+        <button class="seg-btn" id="seg-maduro" type="button" aria-pressed="false">Maduro</button>
+
+        <button class="seg-dot" id="seg-toggle" type="button" aria-label="Toggle Maduro/Natural"></button>
+
+        <button class="seg-btn" id="seg-natural" type="button" aria-pressed="false">Natural</button>
       </div>
     </section>
 
     <!-- List -->
     <section class="brand-list" id="brand-list"></section>
+
+    <p id="brand-error" style="display:none; margin-top:14px; font-weight:900; color:#ff9aa0;">
+      Brand failed to load from Google Sheets.
+    </p>
   </main>
 
-  <!-- Filters modal (placeholder / unchanged) -->
-  <div class="modal" id="modal-filters" aria-hidden="true">
-    <div class="modal-scrim" data-close="1"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Filters">
+  <!-- Receipt FAB -->
+  <button class="receipt-fab" id="receipt-fab" type="button" aria-label="Receipt">
+    <img class="receipt-ico" src="/img/icons/receipt.svg" alt="" />
+    <span class="receipt-badge" id="receipt-badge" style="display:none;">0</span>
+  </button>
+
+  <!-- Receipt Modal -->
+  <div class="modal" id="receipt-modal" aria-hidden="true">
+    <div class="modal-scrim" data-close="receipt"></div>
+    <div class="modal-card">
       <div class="modal-head">
-        <div class="modal-title">Filters</div>
-        <button class="modal-x" type="button" data-close="1" aria-label="Close">×</button>
+        <div class="modal-title">Receipt</div>
+        <button class="modal-x" type="button" data-close="receipt">×</button>
       </div>
+
       <div class="modal-body">
-        <div class="modal-empty">No filters yet.</div>
+        <div class="modal-note" id="receipt-note">Items</div>
+        <div id="receipt-items"></div>
+        <div class="receipt-total" id="receipt-total" style="margin-top:12px; font-weight:900;"></div>
       </div>
+
       <div class="modal-foot">
-        <button class="modal-btn ghost" type="button" data-close="1">Close</button>
-        <button class="modal-btn primary" type="button" data-close="1">Confirm</button>
+        <button class="modal-btn ghost" type="button" id="receipt-clear">Clear</button>
+        <button class="modal-btn primary" type="button" data-close="receipt">Close</button>
       </div>
     </div>
   </div>
 
-  <!-- ✅ Bands modal (UPDATED) -->
-  <div class="modal" id="modal-bandart" aria-hidden="true">
-    <div class="modal-scrim" data-close="1"></div>
-
-    <div class="modal-card bandart-card" role="dialog" aria-modal="true" aria-label="Bands">
+  <!-- Bands Modal -->
+  <div class="modal" id="bands-modal" aria-hidden="true">
+    <div class="modal-scrim" data-close="bands"></div>
+    <div class="modal-card">
       <div class="modal-head">
         <div class="modal-title">Bands</div>
-        <!-- ✅ X close top-right -->
-        <button class="modal-x" type="button" data-close="1" aria-label="Close">×</button>
+        <button class="modal-x" type="button" data-close="bands">×</button>
       </div>
 
       <div class="modal-body">
-        <!-- ✅ image pick list -->
-        <div class="bandpick-grid" id="bandpick-grid">
-          <label class="bandpick-item">
-            <input type="checkbox" value="1926" name="bandpick" />
-            <img src="/img/icons/padron1926serieband.svg" alt="1926" />
-            <div class="bandpick-label">1926</div>
-          </label>
-
-          <label class="bandpick-item">
-            <input type="checkbox" value="1964" name="bandpick" />
-            <img src="/img/icons/padron1964anniversaryband.svg" alt="1964" />
-            <div class="bandpick-label">1964</div>
-          </label>
-
-          <label class="bandpick-item">
-            <input type="checkbox" value="damaso" name="bandpick" />
-            <img src="/img/icons/padrondamasoband.svg" alt="Damaso" />
-            <div class="bandpick-label">Damaso</div>
-          </label>
-        </div>
+        <div class="bandgrid" id="bandgrid"></div>
       </div>
 
       <div class="modal-foot">
-        <button class="modal-btn ghost" id="bandart-clear" type="button">Clear</button>
-        <!-- ✅ Confirm button bottom -->
-        <button class="modal-btn primary" id="bandart-confirm" type="button">Confirm</button>
+        <button class="modal-btn ghost" type="button" id="bands-clear">Clear</button>
+        <button class="modal-btn primary" type="button" id="bands-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Modal -->
+  <div class="modal" id="filters-modal" aria-hidden="true">
+    <div class="modal-scrim" data-close="filters"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Filters</div>
+        <button class="modal-x" type="button" data-close="filters">×</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Placeholder container (brand.js injects chips like main cigars page) -->
+        <div id="filters-body"></div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="modal-btn ghost" type="button" id="filters-close" data-close="filters">Close</button>
+        <button class="modal-btn primary" type="button" id="filters-confirm">Confirm</button>
       </div>
     </div>
   </div>
