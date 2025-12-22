@@ -17,7 +17,6 @@
 
 *{ box-sizing:border-box; }
 
-
 body.brand-page{
   margin:0;
   min-height:100vh;
@@ -45,9 +44,7 @@ body.brand-page{
 
 .icon-btn svg{ width:24px;height:24px; stroke:rgba(255,255,255,.85); }
 
-.brand-main{
-  padding:0 14px 24px;
-}
+.brand-main{ padding:0 14px 24px; }
 
 .brand-title-row{
   display:flex;
@@ -70,8 +67,7 @@ body.brand-page{
   border-radius:14px;
   object-fit:cover;
   background:rgba(255,255,255,.08);
-  box-shadow: 0 10px 24px rgba(0,0,0,.25);
-  flex:0 0 auto;
+  box-shadow:0 10px 24px rgba(0,0,0,.25);
   margin-top:10px;
 }
 
@@ -80,14 +76,11 @@ body.brand-page{
   display:flex;
   align-items:center;
   gap:10px;
-  padding:10px 10px;
+  padding:10px;
   border-radius:18px;
   background:rgba(255,255,255,.07);
   border:1px solid rgba(255,255,255,.12);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
-
-.search-ico{ opacity:.65; font-size:18px; }
 
 #brand-search{
   width:100%;
@@ -98,15 +91,13 @@ body.brand-page{
   font-size:16px;
   font-weight:600;
 }
-#brand-search::placeholder{ color:rgba(255,255,255,.38); }
 
 /* Controls */
 .brand-controls{
   display:grid;
-  grid-template-columns: 1.05fr 0.72fr 1.7fr;
+  grid-template-columns:1.05fr .72fr 1.7fr;
   gap:10px;
   margin-top:10px;
-  align-items:left;
 }
 
 .pill-btn{
@@ -114,58 +105,43 @@ body.brand-page{
   border-radius:16px;
   border:1px solid var(--pill-border);
   background:var(--pill);
-  color:rgba(255,255,255,.92);
-  font-weight:600;
   font-size:13px;
+  font-weight:600;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:10px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
 }
 
-.pill-btn .pill-ico svg{
-  width:18px;height:18px;
-  stroke:rgba(255,255,255,.9);
-}
-
-/* ✅ Segmented Maduro/Natural (Padron only) */
+/* Maduro / Natural toggle */
 .seg{
   height:40px;
   border-radius:16px;
   border:1px solid var(--pill-border);
   background:var(--pill);
   display:grid;
-  grid-template-columns: 1fr 56px 1fr; /* ✅ single pill toggle in the middle */
+  grid-template-columns:1fr 56px 1fr;
   align-items:center;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
-  overflow:hidden;
 }
 
 .seg-btn{
-  height:40px;
   border:none;
   background:transparent;
-  color:rgba(255,255,255,.45); /* ✅ muted when not active */
-  font-weight:800;
   font-size:12px;
+  font-weight:800;
+  color:rgba(255,255,255,.45);
 }
 
-/* ✅ active side = bold + blue */
 .seg-btn[aria-pressed="true"]{
-  color: rgba(15,122,255,.95);
-  font-weight:700;
+  color:rgba(15,122,255,.95);
 }
 
-/* ✅ middle switch track + thumb */
 .seg-dot{
-  width:56px;height:30px;
+  width:56px;
+  height:30px;
   border-radius:999px;
   border:2px solid rgba(255,255,255,.22);
-  margin:0 auto;
-  background: rgba(0,0,0,.18);
+  background:rgba(0,0,0,.18);
   position:relative;
-  display:block;
 }
 
 .seg-dot::after{
@@ -173,230 +149,34 @@ body.brand-page{
   position:absolute;
   top:50%;
   transform:translateY(-50%);
-  width:22px;height:22px;
+  width:22px;
+  height:22px;
   border-radius:999px;
-  background: rgba(15,122,255,.85);
-  left:4px; /* default (maduro) */
-  transition:left .18s ease, opacity .18s ease;
-  box-shadow: 0 10px 18px rgba(0,0,0,.35);
-}
-
-/* ✅ positions controlled by data-state on .seg: maduro | all | natural */
-.seg[data-state="maduro"] .seg-dot::after{ left:4px; opacity:1; }
-.seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }     /* centered */
-.seg[data-state="natural"] .seg-dot::after{ left:30px; opacity:1; }
-
-/* List — Sleeper/Yahoo style: no radius, tight rows, divider lines */
-.brand-list{
-  margin-top:14px;
-  border-top:1px solid var(--divider);
-}
-
-.cigar-row{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:12px 0;
-  border-bottom:1px solid var(--divider);
-}
-
-.cigar-img{
-  width:46px;height:46px;
-  border-radius:12px;
-  object-fit:cover;
-  background:rgba(255,255,255,.07);
-  flex:0 0 auto;
-}
-
-.cigar-mid{
-  min-width:0;
-  flex:1 1 auto;
-}
-
-.cigar-name{
-  font-size:15px;
-  line-height:1.2;
-  font-weight:700;
-  letter-spacing:-.005em;
-
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-}
-
-.cigar-sub{
-  margin-top:4px;
-  font-size:12px;
-  font-weight:600;
-  color:rgba(255,255,255,.55);
-
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.cigar-right{
-  flex:0 0 auto;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.cigar-divider{
-  width:1px;
-  height:38px;
-  background:rgba(255,255,255,.14);
-}
-
-.cigar-price{
-  width:54px;
-  text-align:right;
-  font-size:15px;
-  font-weight:600;
-}
-
-.cigar-plus{
-  width:22px; height:22px;
-  border-radius:999px;
-  border:none;
-  background:var(--green);
-  color:#fff;
-  font-size:15px;
-  line-height:0;
-  display:grid;
-  place-items:center;
-  box-shadow: 0 10px 18px rgba(0,0,0,.25);
-}
-
-/* --- Modals --- */
-.modal{ position:fixed; inset:0; display:none; z-index:50; }
-.modal[aria-hidden="false"]{ display:block; }
-
-.modal-scrim{
-  position:absolute; inset:0;
-  background:rgba(0,0,0,.45);
-  backdrop-filter: blur(6px);
-}
-
-.modal-card{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:min(520px, calc(100vw - 28px));
-  border-radius:22px;
-  background:rgba(20,30,55,.94);
-  border:1px solid rgba(255,255,255,.10);
-  overflow:hidden;
-  box-shadow: 0 24px 70px rgba(0,0,0,.55);
-}
-
-.modal-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:16px 16px 12px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-
-.modal-title{
-  font-size:22px;
-  font-weight:900;
-  letter-spacing:-.01em;
-}
-
-.modal-x{
-  width:38px;height:38px;border-radius:12px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.9);
-  font-size:18px;
-}
-
-.modal-body{ padding:14px 16px; }
-.modal-note{ color:rgba(255,255,255,.65); font-weight:800; margin-bottom:10px; }
-.modal-empty{ color:rgba(255,255,255,.55); font-weight:800; padding:10px 0; }
-
-.modal-foot{
-  display:flex;
-  gap:10px;
-  padding:14px 16px 16px;
-  border-top:1px solid rgba(255,255,255,.08);
-}
-
-.modal-btn{
-  flex:1;
-  height:48px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
-  font-weight:900;
-  font-size:18px;
-}
-
-.modal-btn.ghost{
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.88);
-}
-
-.modal-btn.primary{
   background:rgba(15,122,255,.85);
-  border-color:rgba(15,122,255,.90);
-  color:#fff;
+  left:4px;
+  transition:left .18s ease,opacity .18s ease;
 }
 
-/* ✅ Band images grid for the Bands popup */
+.seg[data-state="maduro"] .seg-dot::after{ left:4px; }
+.seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }
+.seg[data-state="natural"] .seg-dot::after{ left:30px; }
+
+/* Bands modal */
 .bandart-list{
   display:flex;
   flex-direction:column;
   gap:16px;
 }
 
-.bandart-item{
-  border:none;
-  background:transparent;
-  padding:0;
-  border-radius:0;
-  font-weight:800;
-}
-
-.bandart-grid{
-  display:grid;
-  gap:18px;
-}
-
-.bandart-card{
-  appearance:none;
-  border:none;
-  background:transparent;
-  padding:0;
-  width:100%;
-  text-align:center;
-  cursor:pointer;
-}
+.bandart-grid{ display:grid; gap:18px; }
 
 .bandart-card img{
   width:100%;
-  height:auto;
-  display:block;
   border-radius:22px;
-  background:rgba(0,0,0,.10);
   border:1px solid rgba(255,255,255,.10);
-  box-shadow: 0 24px 70px rgba(0,0,0,.35);
+  box-shadow:0 24px 70px rgba(0,0,0,.35);
 }
 
-.bandart-card .cap{
-  margin-top:10px;
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:-.01em;
-  color:rgba(255,255,255,.92);
-}
-
-/* selected state */
 .bandart-card[aria-pressed="true"] img{
-  border-color: rgba(15,122,255,.85);
-  box-shadow: 0 24px 70px rgba(15,122,255,.18);
+  border-color:rgba(15,122,255,.85);
 }
-
-.bandart-item input{ transform:scale(1.15); }
