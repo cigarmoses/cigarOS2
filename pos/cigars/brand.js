@@ -3,7 +3,7 @@
    - Loads cigars for the brand from Google Sheets (CSV)
    - Fixes initial brand icon rendering
    - Adds working Maduro/Natural tri-state toggle (maduro / all / natural)
-   - Adds Bands modal with image tiles + multi-select + X close + Confirm
+   - Adds Bands modal with image tiles + multi-select + X close + Confirm (mobile-safe)
    - Adds Filters modal (same concept as main POS, excluding Manufacturer/Brand)
    - Adds working + (add to bill) and a receipt icon bottom-right
 */
@@ -12,25 +12,21 @@
   // =========================
   // 1) CONFIG (SET THIS)
   // =========================
-  // Paste the SAME CSV export URL you use on the main POS cigars page.
-  // Example formats:
-  // - https://docs.google.com/spreadsheets/d/<ID>/gviz/tq?tqx=out:csv&gid=<GID>
-  // - https://docs.google.com/spreadsheets/d/<ID>/export?format=csv&gid=<GID>
-const SHEET_CSV_URL =
-  "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+  // ✅ MUST be the *CSV export* URL (not the /edit link)
+  const SHEET_CSV_URL =
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv&gid=822697742";
 
   // Storage keys
   const CART_KEY = "cigaros_pos_cart_v1";
 
   // Brand band art assets (Padron example)
-  // If you want this dynamic per brand later, we can move this to a mapping file.
   const PADRON_BANDS = [
     { key: "1926", label: "1926", img: "/img/icons/padron1926serieband.svg" },
     { key: "1964", label: "1964", img: "/img/icons/padron1964anniversaryband.svg" },
     { key: "Damaso", label: "Damaso", img: "/img/icons/padrondamasoband.svg" },
   ];
 
-  // Receipt icon path (adjust if your repo uses a different file)
+  // Receipt icon path
   const RECEIPT_ICON_SRC = "/img/icons/pos/receipt.png";
 
   // =========================
@@ -44,14 +40,8 @@ const SHEET_CSV_URL =
     return u.searchParams.get(name) || "";
   }
 
-  function slugBrand(name) {
-    return String(name || "")
-      .trim()
-      .toLowerCase()
-      .replace(/&/g, "and")
-      .replace(/['".]/g, "")
-      .replace(/\s+/g, "")
-      .replace(/[^a-z0-9]/g, "");
+  function safeText(v) {
+    return (v == null ? "" : String(v)).trim();
   }
 
   function money(n) {
@@ -60,12 +50,27 @@ const SHEET_CSV_URL =
     return x.toFixed(2);
   }
 
-  function safeText(v) {
-    return (v == null ? "" : String(v)).trim();
+  function slugBrand(name) {
+    return String(name || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // strip accents
+      .replace(/&/g, "and")
+      .replace(/['".]/g, "")
+      .replace(/\s+/g, "")
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function normalizeBrandCompare(s) {
+    return safeText(s)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
   }
 
   function parseCSV(csvText) {
-    // Robust CSV parser (handles commas/quotes/newlines)
     const rows = [];
     let row = [];
     let cur = "";
@@ -100,13 +105,11 @@ const SHEET_CSV_URL =
       cur += ch;
     }
 
-    // last cell
     if (cur.length || row.length) {
       row.push(cur);
       rows.push(row);
     }
 
-    // remove empty trailing rows
     return rows.filter(r => r.some(c => String(c || "").trim() !== ""));
   }
 
@@ -124,9 +127,6 @@ const SHEET_CSV_URL =
 
   function resolveBrandIcon(brandName) {
     const slug = slugBrand(brandName);
-    // Try both folder conventions you’ve used in the project
-    // 1) /img/icons/brands/
-    // 2) /img/icons/brand/
     return {
       primary: `/img/icons/brands/${slug}.svg`,
       fallback: `/img/icons/brand/${slug}.svg`,
@@ -144,7 +144,6 @@ const SHEET_CSV_URL =
     shadeState: "all", // "maduro" | "natural" | "all"
     selectedBands: new Set(),
     filters: {
-      // multi-select sets (chips) — excluding manufacturer/brand by design
       Vitola: new Set(),
       Ring: new Set(),
       Strength: new Set(),
@@ -156,7 +155,7 @@ const SHEET_CSV_URL =
       Pack: new Set(),
       Barberpole: new Set(),
       "Box-Pressed": new Set(),
-      Shade: new Set(), // optional extra, separate from Maduro/Natural toggle
+      Shade: new Set(),
     },
   };
 
@@ -165,18 +164,24 @@ const SHEET_CSV_URL =
   // =========================
   const el = {
     title: $(".brand-title"),
-    titleRow: $(".brand-title-row"),
     brandIcon: $(".brand-icon"),
     search: $("#brand-search"),
     list: $(".brand-list"),
-    // Controls
+
     btnBands: $("#bands-btn") || $(".pill-btn[data-action='bands']") || $(".pill-btn.bands"),
     btnFilters: $("#filters-btn") || $(".pill-btn[data-action='filters']") || $(".pill-btn.filters"),
+
     seg: $(".seg"),
-    segMaduro: $(".seg [data-side='maduro']") || $(".seg .seg-btn[data-value='maduro']") || $(".seg .seg-btn.maduro"),
-    segNatural: $(".seg [data-side='natural']") || $(".seg .seg-btn[data-value='natural']") || $(".seg .seg-btn.natural"),
+    segMaduro:
+      $(".seg [data-side='maduro']") ||
+      $(".seg .seg-btn[data-value='maduro']") ||
+      $(".seg .seg-btn.maduro"),
+    segNatural:
+      $(".seg [data-side='natural']") ||
+      $(".seg .seg-btn[data-value='natural']") ||
+      $(".seg .seg-btn.natural"),
     segDot: $(".seg .seg-dot"),
-    // Status line
+
     error: $("#brand-error") || $(".brand-error"),
   };
 
@@ -186,7 +191,6 @@ const SHEET_CSV_URL =
   function initHeader() {
     if (el.title) el.title.textContent = state.brand || "Brand";
 
-    // Ensure brand icon aligns across title (your CSS already does this with .brand-title-row)
     if (el.brandIcon) {
       const { primary, fallback } = resolveBrandIcon(state.brand);
       el.brandIcon.src = primary;
@@ -204,7 +208,6 @@ const SHEET_CSV_URL =
       el.error.style.display = "block";
       return;
     }
-    // fallback inject
     const p = document.createElement("p");
     p.id = "brand-error";
     p.style.margin = "18px 0 0";
@@ -241,12 +244,11 @@ const SHEET_CSV_URL =
   // =========================
   function renderList(rows) {
     if (!el.list) return;
-
     el.list.innerHTML = "";
 
-    // top divider is handled by CSS via border-top on .brand-list
+    const { primary, fallback } = resolveBrandIcon(state.brand);
+
     rows.forEach(c => {
-      // Columns vary by your sheet; we normalize best-effort.
       const cigarName = safeText(c.Cigar || c.CIGAR || c.Name || c["Cigar Name"] || "");
       const vitola = safeText(c.Vitola || c.VITOLA || c.Style || "");
       const shade = safeText(c["Wrapper Shade"] || c.Shade || c.WrapperShade || "");
@@ -258,7 +260,6 @@ const SHEET_CSV_URL =
 
       const img = document.createElement("img");
       img.className = "cigar-img";
-      const { primary, fallback } = resolveBrandIcon(state.brand);
       img.src = primary;
       img.onerror = () => {
         img.onerror = null;
@@ -294,7 +295,9 @@ const SHEET_CSV_URL =
       plus.className = "cigar-plus";
       plus.type = "button";
       plus.textContent = "+";
-      plus.addEventListener("click", () => {
+      plus.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         addToCart({
           brand: state.brand,
           cigar: cigarName,
@@ -321,26 +324,37 @@ const SHEET_CSV_URL =
   function normalizeShade(s) {
     const x = safeText(s).toLowerCase();
     if (!x) return "";
-    // Best-effort: treat these as natural/maduro keywords
     if (x.includes("maduro")) return "maduro";
     if (x.includes("natural")) return "natural";
-    // many “natural” wrappers may be listed as colorado, claro, rosado, etc.
-    // keep it as-is for optional Shade chip filter
     return x;
+  }
+
+  function getRowBrand(r) {
+    // be forgiving: different headers across versions
+    return safeText(
+      r.Brand ||
+      r.BRAND ||
+      r["Brand Name"] ||
+      r["brand"] ||
+      r.Manufacturer || // last resort if sheet was mapped strangely
+      ""
+    );
   }
 
   function applyAllFilters() {
     const q = state.search.toLowerCase();
-    const shadeState = state.shadeState; // maduro | natural | all
+    const shadeState = state.shadeState;
 
     let out = state.allRows.slice();
 
-    // Brand filter (hard)
-    out = out.filter(r => {
-      const b = safeText(r.Brand || r.BRAND || r.Manufacturer || r["Brand Name"] || state.brand);
-      // brand page is already for a brand; still keep tolerant matching:
-      return !state.brand || b.toLowerCase() === state.brand.toLowerCase();
-    });
+    // Brand filter (hard, but tolerant)
+    if (state.brand) {
+      const want = normalizeBrandCompare(state.brand);
+      out = out.filter(r => {
+        const have = normalizeBrandCompare(getRowBrand(r));
+        return have === want; // strict equality once normalized
+      });
+    }
 
     // Search
     if (q) {
@@ -351,7 +365,7 @@ const SHEET_CSV_URL =
       });
     }
 
-    // Maduro/Natural tri-state toggle
+    // Maduro/Natural toggle
     if (shadeState !== "all") {
       out = out.filter(r => {
         const shade = safeText(r["Wrapper Shade"] || r.Shade || r.WrapperShade || "");
@@ -359,11 +373,10 @@ const SHEET_CSV_URL =
       });
     }
 
-    // Band filters (multi-select): expects a "Line" or "Band" style column.
+    // Bands filter
     if (state.selectedBands.size) {
       out = out.filter(r => {
         const line = safeText(r.Line || r.Band || r.Series || r["Band Art"] || "");
-        // match any selected band key
         for (const k of state.selectedBands) {
           if (line.toLowerCase().includes(String(k).toLowerCase())) return true;
         }
@@ -371,8 +384,7 @@ const SHEET_CSV_URL =
       });
     }
 
-    // Chip filters (multi-select)
-    // If a filter Set has values, row must match at least one of them.
+    // Chip filters
     const map = [
       ["Vitola", ["Vitola", "Style"]],
       ["Ring", ["RG", "Ring", "Ring Gauge"]],
@@ -402,7 +414,6 @@ const SHEET_CSV_URL =
         }
         if (!val) return false;
 
-        // normalize booleans
         const v = val.toLowerCase();
         for (const wanted of set) {
           const w = String(wanted).toLowerCase();
@@ -418,13 +429,12 @@ const SHEET_CSV_URL =
   }
 
   // =========================
-  // 9) MADURO/NATURAL TOGGLE (TRI-STATE)
+  // 9) MADURO/NATURAL TOGGLE
   // =========================
   function setShadeState(next) {
-    state.shadeState = next; // "maduro" | "natural" | "all"
+    state.shadeState = next;
     if (el.seg) el.seg.dataset.state = next;
 
-    // Update aria-pressed on labels
     if (el.segMaduro) el.segMaduro.setAttribute("aria-pressed", next === "maduro" ? "true" : "false");
     if (el.segNatural) el.segNatural.setAttribute("aria-pressed", next === "natural" ? "true" : "false");
 
@@ -434,35 +444,41 @@ const SHEET_CSV_URL =
   function initShadeToggle() {
     if (!el.seg) return;
 
-    // Default = ALL (center)
     if (!el.seg.dataset.state) el.seg.dataset.state = "all";
     setShadeState(el.seg.dataset.state);
 
-    // Tap Maduro label
+    // labels
     el.segMaduro?.addEventListener("click", () => {
       if (state.shadeState === "maduro") setShadeState("all");
       else setShadeState("maduro");
     });
 
-    // Tap Natural label
     el.segNatural?.addEventListener("click", () => {
       if (state.shadeState === "natural") setShadeState("all");
       else setShadeState("natural");
     });
 
-    // Tap the switch itself
+    // ✅ center dot (kept)
     el.segDot?.addEventListener("click", () => {
       if (state.shadeState === "all") {
-        // per your rule: from All → go to Natural and keep “standard color” (we still set state)
         setShadeState("natural");
         return;
       }
       setShadeState(state.shadeState === "maduro" ? "natural" : "maduro");
     });
+
+    // ✅ NEW: tapping anywhere on the segmented control toggles (except labels)
+    el.seg.addEventListener("click", (e) => {
+      if (e.target.closest(".seg-btn")) return; // ignore label clicks
+      if (e.target.closest(".seg-dot")) return; // dot already handled
+
+      if (state.shadeState === "all") return setShadeState("natural");
+      setShadeState(state.shadeState === "maduro" ? "natural" : "maduro");
+    });
   }
 
   // =========================
-  // 10) MODALS (BANDS + FILTERS + RECEIPT)
+  // 10) MODALS
   // =========================
   function ensureModalShell(id, titleText) {
     let modal = document.getElementById(id);
@@ -490,7 +506,19 @@ const SHEET_CSV_URL =
 
     document.body.appendChild(modal);
 
-    // close handlers
+    // ✅ enforce mobile-safe sizing without needing extra CSS edits
+    const card = $(".modal-card", modal);
+    const body = $(".modal-body", modal);
+    if (card) {
+      card.style.maxHeight = "78vh";
+      card.style.width = "min(520px, calc(100vw - 28px))";
+    }
+    if (body) {
+      body.style.maxHeight = "52vh";
+      body.style.overflow = "auto";
+      body.style.webkitOverflowScrolling = "touch";
+    }
+
     const close = () => setModalOpen(modal, false);
     $(".modal-scrim", modal).addEventListener("click", close);
     $(".modal-x", modal).addEventListener("click", close);
@@ -501,45 +529,44 @@ const SHEET_CSV_URL =
 
   function setModalOpen(modalEl, open) {
     modalEl.setAttribute("aria-hidden", open ? "false" : "true");
-    // iOS-like blur background
     document.documentElement.style.overflow = open ? "hidden" : "";
     document.body.style.overflow = open ? "hidden" : "";
   }
 
-  // ---- Bands modal (image tiles, multi-select, confirm applies filter)
   function openBandsModal() {
     const modal = ensureModalShell("bands-modal", "Bands");
     const body = $(".modal-body", modal);
 
-    // Make it a scrollable modal with proper sizing on mobile
+    // ✅ smaller tiles + scroll body
     body.innerHTML = `
-      <div class="bandgrid" style="display:grid; gap:14px;">
+      <div style="display:grid; gap:12px;">
         ${PADRON_BANDS.map(b => {
           const checked = state.selectedBands.has(b.key);
           return `
-            <label class="bandtile" style="
+            <label style="
               display:grid; gap:8px; justify-items:center;
-              padding:10px 10px;
+              padding:10px;
               border-radius:18px;
               border:1px solid rgba(255,255,255,.10);
               background:rgba(255,255,255,.05);
             ">
               <img src="${b.img}" alt="${b.label}" style="
-                width:min(100%, 360px);
-                max-height:120px;
+                width:100%;
+                max-width:420px;
+                max-height:96px;
                 object-fit:contain;
                 border-radius:14px;
                 background:rgba(0,0,0,.10);
+                border:1px solid rgba(255,255,255,.10);
               "/>
-              <div style="font-weight:900; font-size:18px;">${b.label}</div>
-              <input type="checkbox" data-band="${b.key}" ${checked ? "checked" : ""} style="transform:scale(1.2);" />
+              <div style="font-weight:900; font-size:16px;">${b.label}</div>
+              <input type="checkbox" data-band="${b.key}" ${checked ? "checked" : ""} style="transform:scale(1.15);" />
             </label>
           `;
         }).join("")}
       </div>
     `;
 
-    // Replace footer "Close" label for bands modal if you prefer, keep as-is per your UI
     const confirmBtn = $("[data-action='confirm']", modal);
     confirmBtn.onclick = () => {
       const checks = $$("input[type='checkbox'][data-band]", modal);
@@ -551,16 +578,13 @@ const SHEET_CSV_URL =
     setModalOpen(modal, true);
   }
 
-  // ---- Filters modal (chips, excluding Manufacturer/Brand)
   function openFiltersModal() {
     const modal = ensureModalShell("filters-modal", "Filters");
     const body = $(".modal-body", modal);
 
-    // Build options from current data (brand-scoped)
-    const scoped = state.allRows.filter(r => {
-      const b = safeText(r.Brand || r.BRAND || r["Brand Name"] || "");
-      return !state.brand || b.toLowerCase() === state.brand.toLowerCase();
-    });
+    const scoped = state.brand
+      ? state.allRows.filter(r => normalizeBrandCompare(getRowBrand(r)) === normalizeBrandCompare(state.brand))
+      : state.allRows.slice();
 
     const optionSets = {
       Vitola: new Set(),
@@ -616,7 +640,7 @@ const SHEET_CSV_URL =
           <div style="font-weight:900; font-size:16px; color:rgba(255,255,255,.85); margin:0 0 8px;">
             ${title}
           </div>
-          <div class="chipwrap" style="display:flex; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
             ${opts.map(v => {
               const on = selected.has(v);
               return `
@@ -644,7 +668,7 @@ const SHEET_CSV_URL =
     }
 
     body.innerHTML = `
-      <div style="max-height:52vh; overflow:auto; padding-right:2px;">
+      <div style="display:block;">
         ${chipGroup("Shade", "Shade")}
         ${chipGroup("Vitola", "Vitola")}
         ${chipGroup("Ring", "Ring")}
@@ -661,7 +685,7 @@ const SHEET_CSV_URL =
     `;
 
     // chip toggle handler
-    body.addEventListener("click", (e) => {
+    body.onclick = (e) => {
       const btn = e.target.closest("button.chip");
       if (!btn) return;
       const key = btn.dataset.filter;
@@ -669,9 +693,8 @@ const SHEET_CSV_URL =
       if (!state.filters[key]) state.filters[key] = new Set();
       if (state.filters[key].has(val)) state.filters[key].delete(val);
       else state.filters[key].add(val);
-      // re-open to refresh visual states
-      openFiltersModal();
-    }, { once: true });
+      openFiltersModal(); // refresh
+    };
 
     const confirmBtn = $("[data-action='confirm']", modal);
     confirmBtn.onclick = () => {
@@ -818,7 +841,6 @@ const SHEET_CSV_URL =
       `;
     }
 
-    // Change footer left button to "Clear"
     const closeBtn = $("[data-action='close']", modal);
     closeBtn.textContent = "Clear";
     closeBtn.onclick = () => {
@@ -838,21 +860,13 @@ const SHEET_CSV_URL =
   // 12) EVENTS
   // =========================
   function initControls() {
-    // Search
     el.search?.addEventListener("input", (e) => {
       state.search = e.target.value || "";
       applyAllFilters();
     });
 
-    // Bands modal button
-    if (el.btnBands) {
-      el.btnBands.addEventListener("click", openBandsModal);
-    }
-
-    // Filters modal button
-    if (el.btnFilters) {
-      el.btnFilters.addEventListener("click", openFiltersModal);
-    }
+    el.btnBands?.addEventListener("click", openBandsModal);
+    el.btnFilters?.addEventListener("click", openFiltersModal);
   }
 
   // =========================
@@ -864,17 +878,13 @@ const SHEET_CSV_URL =
     initControls();
     ensureReceiptButton();
 
-    // Load sheet rows
     const rows = await loadSheet();
     state.allRows = rows;
 
-    // If load failed, keep UI but avoid crashing
     if (!rows.length) return;
 
-    // Fix: initial icons should show — we render immediately on load
     applyAllFilters();
   }
 
-  // go
   boot();
 })();
