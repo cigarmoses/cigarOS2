@@ -5,469 +5,221 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS • Brand</title>
 
-  <!-- Global SF Pro (your site-wide typography) -->
+  <!-- Global SF Pro + POS base styles -->
   <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/pos/pos.css" />
 
-  <!-- Existing page styles -->
+  <!-- If you already have a brand css, keep it. If not, pos.css will carry. -->
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
 
-  <!-- Popup styles (kept here so it works immediately without needing your CSS file) -->
-  <style>
-    /* Font helpers */
-    .sf-heavy{
-      font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      font-weight: 800; /* SF Pro Display Heavy */
-      letter-spacing: -0.02em;
-    }
-    .sf-medium{
-      font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      font-weight: 500; /* SF Pro Display Medium */
-      letter-spacing: -0.01em;
-    }
-
-    /* ===== Cigar Detail Popup ===== */
-    .cigar-pop {
-      position: fixed;
-      inset: 0;
-      display: none;
-      z-index: 9999;
-    }
-    .cigar-pop[aria-hidden="false"] { display: block; }
-
-    .cigar-pop-scrim{
-      position: absolute;
-      inset: 0;
-      background: rgba(2, 10, 28, 0.68);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-
-    .cigar-pop-sheet{
-      position: absolute;
-      left: 50%;
-      top: env(safe-area-inset-top, 14px);
-      transform: translateX(-50%);
-      width: min(420px, calc(100vw - 22px));
-      max-height: calc(100vh - 28px);
-      overflow: auto;
-      border-radius: 18px;
-      background: #ffffff;
-      box-shadow: 0 24px 70px rgba(0,0,0,0.35);
-      padding: 14px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .cigar-pop-close{
-      position: sticky;
-      top: 0;
-      margin-left: auto;
-      display: grid;
-      place-items: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      border: 1px solid rgba(15,26,44,0.10);
-      background: rgba(255,255,255,0.9);
-      cursor: pointer;
-      z-index: 2;
-    }
-    .cigar-pop-close:active { transform: scale(0.98); }
-
-    .cigar-pop-head{
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      background: #f5f5f5;
-      border-radius: 18px;
-      padding: 14px 14px;
-      margin-top: 10px;
-    }
-    .cigar-pop-head-txt{
-      flex: 1;
-      min-width: 0;
-    }
-    .cigar-pop-brand{
-      font-size: 42px;
-      line-height: 1.05;
-      margin: 0;
-      color: #0f1a2c;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .cigar-pop-sub{
-      margin: 4px 0 0 0;
-      color: rgba(15,26,44,0.55);
-      font-size: 18px;
-      line-height: 1.2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-      font-weight: 500;
-    }
-    .cigar-pop-brandico{
-      width: 70px;
-      height: 70px;
-      border-radius: 18px;
-      object-fit: contain;
-      background: transparent;
-      flex: 0 0 auto;
-    }
-
-    .cigar-pop-grid{
-      margin-top: 14px;
-      display: grid;
-      grid-template-columns: 1.05fr 1fr;
-      gap: 12px;
-      align-items: start;
-    }
-
-    .cigar-pop-imgbox{
-      background: #ffffff;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 0;
-    }
-    .cigar-pop-img{
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    .cigar-pop-right{
-      display: grid;
-      gap: 12px;
-    }
-
-    .spec-row2{
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .spec{
-      background: #f6f6f6;
-      border-radius: 16px;
-      padding: 10px 12px 12px;
-      position: relative;
-    }
-    .spec .label{
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      color: rgba(15,26,44,0.55);
-      font-size: 12px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-    .spec .value-big{
-      margin-top: 14px;
-      font-size: 58px;
-      line-height: 1;
-      color: #000;
-    }
-    .spec .value-mid{
-      margin-top: 20px;
-      font-size: 22px;
-      line-height: 1.1;
-      color: #000;
-    }
-
-    .spec-stack{
-      background: #f6f6f6;
-      border-radius: 16px;
-      padding: 12px;
-      display: grid;
-      gap: 10px;
-    }
-    .spec-stack .row{
-      display: grid;
-      grid-template-columns: 86px 1fr;
-      gap: 10px;
-      align-items: baseline;
-    }
-    .spec-stack .k{
-      color: rgba(15,26,44,0.55);
-      font-size: 12px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      text-align: right;
-      padding-right: 6px;
-    }
-    .spec-stack .v{
-      color: #000;
-      font-size: 20px;
-      line-height: 1.12;
-    }
-
-    .spec-wide{
-      background: #f6f6f6;
-      border-radius: 16px;
-      padding: 12px;
-      position: relative;
-    }
-    .spec-wide .label{
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      color: rgba(15,26,44,0.55);
-      font-size: 12px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-    .spec-wide .value{
-      margin-top: 18px;
-      font-size: 20px;
-      line-height: 1.12;
-      color: #000;
-    }
-
-    .rank-row{
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .rank{
-      background: #f6f6f6;
-      border-radius: 16px;
-      padding: 18px 12px;
-      font-size: 58px;
-      line-height: 1;
-      color: #000;
-      display: grid;
-      place-items: center;
-      min-height: 100px;
-    }
-
-    .cigar-pop-actions{
-      margin-top: 12px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding-bottom: 6px;
-    }
-    .cigar-pop-actions button{
-      border-radius: 999px;
-      padding: 12px 12px;
-      border: 2px solid rgba(15,26,44,0.10);
-      background: transparent;
-      color: rgba(15,26,44,0.25);
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-  </style>
 </head>
+<body class="pos-brand-page">
 
-<body class="brand-page">
   <!-- Top bar -->
-  <header class="brand-topbar">
-    <button class="icon-btn" id="brand-back" aria-label="Back">
+  <header class="pos-topbar">
+    <button type="button" class="icon-btn" id="brand-back" aria-label="Back">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
+
+    <div class="pos-topbar-spacer"></div>
   </header>
 
-  <main class="brand-main">
-    <div class="brand-title-row">
-      <h1 class="brand-title sf-heavy" id="brand-title">Brand</h1>
-      <img class="brand-icon" id="brand-icon" alt="" />
-    </div>
+  <main class="pos-brand">
+
+    <!-- Brand header -->
+    <section class="brand-header">
+      <h1 class="brand-title" id="brand-title">Brand</h1>
+
+      <!-- brand icon -->
+      <div class="brand-icon" id="brand-icon" aria-hidden="true"></div>
+    </section>
 
     <!-- Search -->
     <section class="brand-search">
       <div class="search-wrap">
-        <span class="search-ico">🔎</span>
-        <input id="brand-search" type="search" placeholder="Search..." autocomplete="off" />
+        <span class="search-ico" aria-hidden="true">🔎</span>
+        <input id="brand-search" type="search" placeholder="Search…" autocomplete="off" />
       </div>
     </section>
 
-    <!-- Controls -->
-    <section class="brand-controls">
-      <button class="pill-btn" id="filters-btn" type="button" aria-label="Filters">
-        <span class="pill-ico" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M4 7H18" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M4 12H20" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M4 17H14" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        </span>
-        Filters
-      </button>
+    <!-- Pills row -->
+    <section class="brand-controls" aria-label="Brand controls">
+      <div class="pill-row">
 
-      <button class="pill-btn" id="bands-btn" type="button">
-        Bands
-      </button>
+        <button class="pill" id="btn-filters" type="button" aria-haspopup="dialog">
+          Filters
+        </button>
 
-      <!-- Maduro / Natural 3-state segmented -->
-      <div class="seg" id="wrapper-seg" data-state="all" aria-label="Wrapper Filter">
-        <button class="seg-btn" id="seg-maduro" type="button" aria-pressed="false">Maduro</button>
-        <button class="seg-dot" id="seg-toggle" type="button" aria-label="Toggle Maduro/Natural"></button>
-        <button class="seg-btn" id="seg-natural" type="button" aria-pressed="false">Natural</button>
+        <button class="pill" id="btn-bands" type="button" aria-haspopup="dialog">
+          Bands
+        </button>
+
+        <div class="pill pill-toggle" role="group" aria-label="Wrapper toggle">
+          <button class="pill-seg" id="seg-maduro" type="button" aria-pressed="false">Maduro</button>
+
+          <button class="pill-switch" id="seg-switch" type="button" aria-label="Toggle Maduro/Natural">
+            <span class="switch-knob" aria-hidden="true"></span>
+          </button>
+
+          <button class="pill-seg" id="seg-natural" type="button" aria-pressed="false">Natural</button>
+        </div>
+
       </div>
     </section>
 
     <!-- List -->
-    <section class="brand-list" id="brand-list"></section>
+    <section class="brand-list" id="brand-list" aria-label="Cigars list">
+      <!-- rows injected -->
+    </section>
 
-    <p id="brand-error" style="display:none; margin-top:14px; font-weight:900; color:#ff9aa0;">
-      Brand failed to load from Google Sheets.
-    </p>
+    <!-- Load / error -->
+    <p class="brand-status" id="brand-status" hidden></p>
+
   </main>
 
-  <!-- Receipt FAB -->
-  <button class="receipt-fab" id="receipt-fab" type="button" aria-label="Receipt">
-    <img class="receipt-ico" src="/img/icons/receipt.svg" alt="" />
-    <span class="receipt-badge" id="receipt-badge" style="display:none;">0</span>
+  <!-- Receipt button (bottom-right) -->
+  <button type="button" class="receipt-fab" id="receipt-open" aria-label="Receipt">
+    <img src="/img/icons/receipt.png" alt="" />
+    <span class="receipt-badge" id="receipt-count" hidden>0</span>
   </button>
 
-  <!-- Receipt Modal -->
-  <div class="modal" id="receipt-modal" aria-hidden="true">
-    <div class="modal-scrim" data-close="receipt"></div>
-    <div class="modal-card">
-      <div class="modal-head">
-        <div class="modal-title sf-heavy">Receipt</div>
-        <button class="modal-x" type="button" data-close="receipt">×</button>
-      </div>
+  <!-- Bottom sheet: Receipt -->
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
 
-      <div class="modal-body">
-        <div class="modal-note" id="receipt-note">Items</div>
-        <div id="receipt-items"></div>
-        <div class="receipt-total" id="receipt-total" style="margin-top:12px; font-weight:900;"></div>
-      </div>
+  <section class="sheet" id="sheet-receipt" role="dialog" aria-modal="true" aria-label="Receipt" hidden>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <header class="sheet-header">
+      <h2>Receipt</h2>
+      <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+    </header>
 
-      <div class="modal-foot">
-        <button class="modal-btn ghost" type="button" id="receipt-clear">Clear</button>
-        <button class="modal-btn primary" type="button" data-close="receipt">Close</button>
-      </div>
+    <div class="sheet-body">
+      <div class="receipt-items" id="receipt-items"></div>
     </div>
-  </div>
 
-  <!-- Bands Modal -->
-  <div class="modal" id="bands-modal" aria-hidden="true">
-    <div class="modal-scrim" data-close="bands"></div>
-    <div class="modal-card">
-      <div class="modal-head">
-        <div class="modal-title sf-heavy">Bands</div>
-        <button class="modal-x" type="button" data-close="bands">×</button>
-      </div>
+    <footer class="sheet-footer">
+      <button class="sheet-btn" type="button" id="receipt-clear">Clear</button>
+      <button class="sheet-btn primary" type="button" data-sheet-close>Close</button>
+    </footer>
+  </section>
 
-      <div class="modal-body">
-        <div class="bandgrid" id="bandgrid"></div>
-      </div>
+  <!-- Bottom sheet: Bands -->
+  <section class="sheet" id="sheet-bands" role="dialog" aria-modal="true" aria-label="Bands" hidden>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <header class="sheet-header">
+      <h2>Bands</h2>
+      <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+    </header>
 
-      <div class="modal-foot">
-        <button class="modal-btn ghost" type="button" id="bands-clear">Clear</button>
-        <button class="modal-btn primary" type="button" id="bands-confirm">Confirm</button>
-      </div>
+    <div class="sheet-body">
+      <div class="chip-grid" id="bands-options"></div>
     </div>
-  </div>
 
-  <!-- Filters Modal -->
-  <div class="modal" id="filters-modal" aria-hidden="true">
-    <div class="modal-scrim" data-close="filters"></div>
-    <div class="modal-card">
-      <div class="modal-head">
-        <div class="modal-title sf-heavy">Filters</div>
-        <button class="modal-x" type="button" data-close="filters">×</button>
-      </div>
+    <footer class="sheet-footer">
+      <button class="sheet-btn" type="button" id="bands-clear">Clear</button>
+      <button class="sheet-btn primary" type="button" id="bands-confirm">Confirm</button>
+    </footer>
+  </section>
 
-      <div class="modal-body">
-        <div id="filters-body"></div>
-      </div>
+  <!-- Bottom sheet: Filters -->
+  <section class="sheet" id="sheet-filters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <header class="sheet-header">
+      <h2>Filters</h2>
+      <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+    </header>
 
-      <div class="modal-foot">
-        <button class="modal-btn ghost" type="button" id="filters-close" data-close="filters">Close</button>
-        <button class="modal-btn primary" type="button" id="filters-confirm">Confirm</button>
-      </div>
+    <div class="sheet-body">
+      <div class="chip-grid" id="filters-options"></div>
     </div>
-  </div>
 
-  <!-- ===== CIGAR DETAIL POPUP (ONE GLOBAL REUSABLE OVERLAY) ===== -->
-  <div class="cigar-pop" id="cigar-pop" aria-hidden="true">
-    <div class="cigar-pop-scrim" id="cigar-pop-scrim"></div>
+    <footer class="sheet-footer">
+      <button class="sheet-btn" type="button" data-sheet-close>Close</button>
+      <button class="sheet-btn primary" type="button" id="filters-confirm">Confirm</button>
+    </footer>
+  </section>
 
-    <div class="cigar-pop-sheet" role="dialog" aria-modal="true" aria-label="Cigar details">
-      <button class="cigar-pop-close" id="cigar-pop-close" type="button" aria-label="Close">×</button>
+  <!-- Cigar Detail Modal (full overlay like your mockup) -->
+  <section class="modal" id="cigar-modal" role="dialog" aria-modal="true" aria-label="Cigar details" hidden>
+    <div class="modal-backdrop" id="cigar-modal-backdrop"></div>
 
-      <div class="cigar-pop-head">
-        <div class="cigar-pop-head-txt">
-          <h2 class="cigar-pop-brand sf-heavy" id="pop-brand">Brand</h2>
-          <p class="cigar-pop-sub" id="pop-sub">Line + Cigar</p>
+    <div class="modal-card" role="document">
+      <button class="modal-close" type="button" id="cigar-modal-close" aria-label="Close">×</button>
+
+      <div class="modal-top">
+        <div class="modal-title-wrap">
+          <h2 class="modal-brand" id="modal-brand">Brand</h2>
+          <p class="modal-line" id="modal-line">Line + Cigar</p>
         </div>
-        <img class="cigar-pop-brandico" id="pop-brand-ico" alt="" />
+        <div class="modal-brand-icon" id="modal-brand-icon" aria-hidden="true"></div>
       </div>
 
-      <div class="cigar-pop-grid">
-        <div class="cigar-pop-imgbox">
-          <img class="cigar-pop-img" id="pop-img" alt="" />
+      <div class="modal-main">
+        <div class="modal-img">
+          <img id="modal-cigar-img" alt="" />
         </div>
 
-        <div class="cigar-pop-right">
-          <div class="spec-row2">
-            <div class="spec">
-              <div class="label sf-medium">RING</div>
-              <div class="value-big sf-heavy" id="pop-ring">—</div>
+        <div class="modal-info">
+          <div class="stat-row">
+            <div class="stat">
+              <div class="stat-label">RING</div>
+              <div class="stat-value" id="modal-rg">—</div>
             </div>
-            <div class="spec">
-              <div class="label sf-medium">LENGTH</div>
-              <div class="value-big sf-heavy" id="pop-length">—</div>
-            </div>
-          </div>
-
-          <div class="spec-row2">
-            <div class="spec">
-              <div class="label sf-medium">STRENGTH</div>
-              <div class="value-mid sf-heavy" id="pop-strength">—</div>
-            </div>
-            <div class="spec">
-              <div class="label sf-medium">VITOLA</div>
-              <div class="value-mid sf-heavy" id="pop-vitola">—</div>
+            <div class="stat">
+              <div class="stat-label">LENGTH</div>
+              <div class="stat-value" id="modal-len">—</div>
             </div>
           </div>
 
-          <div class="spec-stack">
-            <div class="row">
-              <div class="k sf-medium">WRAPPER</div>
-              <div class="v sf-heavy" id="pop-wrapper">—</div>
+          <div class="stat-row small">
+            <div class="stat">
+              <div class="stat-label">STRENGTH</div>
+              <div class="stat-value" id="modal-strength">—</div>
             </div>
-            <div class="row">
-              <div class="k sf-medium">BINDER</div>
-              <div class="v sf-heavy" id="pop-binder">—</div>
-            </div>
-            <div class="row">
-              <div class="k sf-medium">FILLER</div>
-              <div class="v sf-heavy" id="pop-filler">—</div>
+            <div class="stat">
+              <div class="stat-label">VITOLA</div>
+              <div class="stat-value" id="modal-vitola">—</div>
             </div>
           </div>
 
-          <div class="spec-wide">
-            <div class="label sf-medium">ORIGIN</div>
-            <div class="value sf-heavy" id="pop-origin">—</div>
+          <div class="stack">
+            <div class="stack-label">WRAPPER</div>
+            <div class="stack-value" id="modal-wrapper">—</div>
+            <div class="stack-label">BINDER</div>
+            <div class="stack-value" id="modal-binder">—</div>
+            <div class="stack-label">FILLER</div>
+            <div class="stack-value" id="modal-filler">—</div>
           </div>
 
-          <div class="spec-wide">
-            <div class="label sf-medium">WRAPPER SHADE</div>
-            <div class="value sf-heavy" id="pop-wshade">—</div>
+          <div class="stack">
+            <div class="stack-label">ORIGIN</div>
+            <div class="stack-value" id="modal-origin">—</div>
           </div>
 
-          <div class="rank-row" id="pop-ranks" style="display:none;">
-            <div class="rank sf-heavy" id="pop-rank-1">#1</div>
-            <div class="rank sf-heavy" id="pop-rank-2">#2</div>
+          <div class="stack">
+            <div class="stack-label">WRAPPER SHADE</div>
+            <div class="stack-value" id="modal-shade">—</div>
           </div>
 
-          <div class="cigar-pop-actions">
-            <button type="button" disabled>FAVORITE</button>
-            <button type="button" disabled>COMPARE</button>
-            <button type="button" disabled>WISHLIST</button>
-            <button type="button" disabled>CONNECT</button>
+          <div class="rank-row">
+            <div class="rank" id="modal-rank1">#1</div>
+            <div class="rank" id="modal-rank2">#2</div>
           </div>
+
+          <div class="modal-actions">
+            <button type="button" class="ghost-btn">FAVORITE</button>
+            <button type="button" class="ghost-btn">COMPARE</button>
+            <button type="button" class="ghost-btn">WISHLIST</button>
+            <button type="button" class="ghost-btn">CONNECT</button>
+          </div>
+
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <script src="/pos/cigars/brand.js"></script>
+  <script src="/pos/cigars/brand.js" defer></script>
 </body>
 </html>
