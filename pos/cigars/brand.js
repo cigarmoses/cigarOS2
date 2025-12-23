@@ -1,1091 +1,793 @@
 /* /pos/cigars/brand.js
-   Brand POS page controller (FINAL)
+   Brand POS controller (single source of truth)
    Fixes:
-   - Stable DOM boot (waits for DOMContentLoaded)
-   - Robust Google Sheets CSV fetch (detects HTML login response)
-   - Brand matching (Brand column vs Manufacturer column confusion)
-   - Proper row layout (forces flex layout if CSS missing)
-   - Bands modal: works + images fit + Close + Confirm (no null errors)
-   - Filters modal: populates like main POS page (minus Manufacturer/Brand)
-   - Maduro/Natural toggle: words + middle switch all clickable
-   - Add-to-bill works + Receipt FAB bottom-right
+   - Filters + Bands buttons work (open sheets, select chips, confirm)
+   - Maduro/Natural toggle works + clicking words works
+   - Wrapper filtering is correct (Maduro hides Natural and vice versa)
+   - Natural no longer “only 3” (no accidental truncation; full dataset)
+   - Clicking cigar row opens full overlay detail modal
+   - + button adds to receipt + receipt badge updates + receipt sheet renders
 */
 
 (() => {
   // =========================
-  // 1) CONFIG (SET THIS)
+  // CONFIG — SET THESE ONCE
   // =========================
-  // Use the SAME CSV export URL as your main cigars page.
-  // IMPORTANT: Use a CSV endpoint, NOT the /edit link.
+
+  // OPTION A (recommended): publish your Google Sheet as CSV
+  // Example format:
+  // https://docs.google.com/spreadsheets/d/e/<PUB_ID>/pub?output=csv&gid=<GID>
   //
-  // Recommended formats:
-  // 1) https://docs.google.com/spreadsheets/d/<ID>/export?format=csv&gid=<GID>
-  // 2) https://docs.google.com/spreadsheets/d/<ID>/gviz/tq?tqx=out:csv&gid=<GID>
-  const SHEET_CSV_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv&gid=822697742";
+  // If you already have this in another file, paste the exact same URL here.
+  const SHEET_CSV_URL = window.POS_SHEET_CSV_URL || ""; // you can set window.POS_SHEET_CSV_URL globally
 
-  const CART_KEY = "cigaros_pos_cart_v1";
+  // OPTION B fallback: a local CSV endpoint you host in the repo
+  // (Use this as a safety net so brand pages never hard-fail.)
+  const FALLBACK_CSV_URL = "/pos/cigars/cigars.csv";
 
-  // Padron band art assets
-  const PADRON_BANDS = [
-    { key: "1926", label: "1926", img: "/img/icons/padron1926serieband.svg" },
-    { key: "1964", label: "1964", img: "/img/icons/padron1964anniversaryband.svg" },
-    { key: "Damaso", label: "Damaso", img: "/img/icons/padrondamasoband.svg" },
-  ];
-
-  // Receipt icon
-  const RECEIPT_ICON_SRC = "/img/icons/pos/receipt.png";
+  // LocalStorage keys
+  const LS_RECEIPT = "pos_receipt_items_v1";
+  const LS_BANDS   = "pos_brand_bands_v1";
+  const LS_FILTERS = "pos_brand_filters_v1";
+  const LS_WRAP    = "pos_brand_wrap_v1";
 
   // =========================
-  // 2) HELPERS
+  // DOM
   // =========================
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const safeText = (v) => (v == null ? "" : String(v)).trim();
+  const $ = (s, root = document) => root.querySelector(s);
 
-  function money(n) {
-    const x = Number(n);
-    if (Number.isNaN(x)) return "0.00";
-    return x.toFixed(2);
-  }
+  const elTitle = $("#brand-title");
+  const elIcon = $("#brand-icon");
+  const elList = $("#brand-list");
+  const elStatus = $("#brand-status");
+  const elSearch = $("#brand-search");
 
-  function getQueryParam(name) {
+  const btnFilters = $("#btn-filters");
+  const btnBands = $("#btn-bands");
+
+  const segMaduro = $("#seg-maduro");
+  const segNatural = $("#seg-natural");
+  const segSwitch = $("#seg-switch");
+
+  const backdrop = $("#sheet-backdrop");
+  const sheetReceipt = $("#sheet-receipt");
+  const sheetBands = $("#sheet-bands");
+  const sheetFilters = $("#sheet-filters");
+
+  const receiptOpen = $("#receipt-open");
+  const receiptCount = $("#receipt-count");
+  const receiptItems = $("#receipt-items");
+  const receiptClear = $("#receipt-clear");
+
+  const bandsOptions = $("#bands-options");
+  const bandsClear = $("#bands-clear");
+  const bandsConfirm = $("#bands-confirm");
+
+  const filtersOptions = $("#filters-options");
+  const filtersConfirm = $("#filters-confirm");
+
+  const modal = $("#cigar-modal");
+  const modalBackdrop = $("#cigar-modal-backdrop");
+  const modalClose = $("#cigar-modal-close");
+
+  const modalBrand = $("#modal-brand");
+  const modalLine = $("#modal-line");
+  const modalBrandIcon = $("#modal-brand-icon");
+  const modalImg = $("#modal-cigar-img");
+  const modalRG = $("#modal-rg");
+  const modalLen = $("#modal-len");
+  const modalStrength = $("#modal-strength");
+  const modalVitola = $("#modal-vitola");
+  const modalWrapper = $("#modal-wrapper");
+  const modalBinder = $("#modal-binder");
+  const modalFiller = $("#modal-filler");
+  const modalOrigin = $("#modal-origin");
+  const modalShade = $("#modal-shade");
+  const modalRank1 = $("#modal-rank1");
+  const modalRank2 = $("#modal-rank2");
+
+  // =========================
+  // STATE
+  // =========================
+
+  const state = {
+    brandName: "",
+    brandSlug: "",
+    all: [],
+    view: [],
+    wrap: "all",       // "all" | "maduro" | "natural"
+    search: "",
+    selectedBands: new Set(),
+    selectedFilters: new Set(),
+    pendingBands: new Set(),
+    pendingFilters: new Set(),
+    receipt: []
+  };
+
+  // =========================
+  // HELPERS
+  // =========================
+
+  function getBrandFromURL() {
     const u = new URL(window.location.href);
-    return u.searchParams.get(name) || "";
+    const b = (u.searchParams.get("brand") || "").trim();
+    return b || "Brand";
   }
 
-  function slugBrand(name) {
-    return String(name || "")
-      .trim()
+  function slugifyBrand(name) {
+    return name
       .toLowerCase()
+      .trim()
       .replace(/&/g, "and")
-      .replace(/['".]/g, "")
-      .replace(/\s+/g, "")
-      .replace(/[^a-z0-9]/g, "");
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
   }
 
-  function resolveBrandIcon(brandName) {
-    const slug = slugBrand(brandName);
-    return {
-      primary: `/img/icons/brands/${slug}.svg`,
-      fallback: `/img/icons/brand/${slug}.svg`,
-    };
+  function safeText(v) {
+    return (v == null) ? "" : String(v).trim();
   }
 
-  // Normalize header keys so we can match columns even if naming varies
-  function normKey(k) {
-    return String(k || "")
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "")
-      .replace(/[^a-z0-9]/g, "");
+  function money(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "0.00";
+    return n.toFixed(2);
   }
 
-  function getField(obj, keys) {
-    // keys = array of possible header names (raw); we match by normalized header
-    if (!obj) return "";
-    const map = obj.__keymap || null;
-    if (!map) {
-      // build on-demand
-      const km = {};
-      Object.keys(obj).forEach((k) => (km[normKey(k)] = k));
-      obj.__keymap = km;
+  function getLS(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
     }
-    for (const k of keys) {
-      const nk = normKey(k);
-      const real = obj.__keymap[nk];
-      if (real && safeText(obj[real])) return safeText(obj[real]);
-    }
-    return "";
   }
 
-  // Robust CSV parse
-  function parseCSV(csvText) {
+  function setLS(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  }
+
+  function normalizeWrapperShade(shade) {
+    const s = safeText(shade).toLowerCase();
+    // your data uses "Colorado Maduro" etc — this makes filtering reliable
+    if (s.includes("maduro")) return "maduro";
+    if (s.includes("natural")) return "natural";
+    // sometimes natural isn’t written; treat “claro / colorado / rosado / connecticut” as natural-ish
+    if (s.includes("claro") || s.includes("rosado") || s.includes("connecticut") || s.includes("colorado")) return "natural";
+    return ""; // unknown
+  }
+
+  function buildBrandIconHTML(brandSlug) {
+    // Matches your rule: img/icons/brand/{brandname lowercase no spaces}.svg
+    // (Your repo uses both /img/icons/brand and /img/icons/brands in places — this picks /img/icons/brand)
+    const src = `/img/icons/brand/${brandSlug}.svg`;
+    return `<img src="${src}" alt="" onerror="this.style.display='none'">`;
+  }
+
+  function cigarImageFor(item) {
+    // Priority:
+    // 1) CSV column "Cigar IMG" if it’s a URL/path
+    // 2) Convention: /pos/cigars/imgs/{brandSlug}/{key}.png
+    const img = safeText(item["Cigar IMG"] || item["CigarIMG"] || item["Image"] || "");
+    if (img) return img;
+
+    const key = safeText(item["key"] || item["Key"] || item["Slug"] || "");
+    if (key) return `/pos/cigars/imgs/${state.brandSlug}/${key}.png`;
+
+    return "/img/icons/cigar-placeholder.png";
+  }
+
+  function computeBandLabel(item) {
+    // Bands “selector” should be meaningful.
+    // Prefer Line; fallback to Wrapper Shade bucket.
+    const line = safeText(item["Line"]);
+    if (line) return line;
+
+    const shade = safeText(item["Wrapper Shade"] || item["WrapperShade"] || "");
+    if (shade) return shade;
+
+    return "Other";
+  }
+
+  function computeFilterLabel(item) {
+    // Filters “selector” - use Vitola/Shape depending on your data.
+    const vitola = safeText(item["Vitola"]);
+    if (vitola) return vitola;
+
+    const shape = safeText(item["Shape"]);
+    if (shape) return shape;
+
+    return "Other";
+  }
+
+  // Robust CSV parser (handles quoted commas)
+  function parseCSV(text) {
     const rows = [];
     let row = [];
     let cur = "";
     let inQuotes = false;
 
-    for (let i = 0; i < csvText.length; i++) {
-      const ch = csvText[i];
-      const next = csvText[i + 1];
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      const n = text[i + 1];
 
-      if (ch === '"' && inQuotes && next === '"') {
+      if (c === '"' && inQuotes && n === '"') {
         cur += '"';
         i++;
         continue;
       }
-      if (ch === '"') {
+      if (c === '"') {
         inQuotes = !inQuotes;
         continue;
       }
-      if (ch === "," && !inQuotes) {
+      if (c === "," && !inQuotes) {
         row.push(cur);
         cur = "";
         continue;
       }
-      if ((ch === "\n" || ch === "\r") && !inQuotes) {
-        if (ch === "\r" && next === "\n") i++;
+      if ((c === "\n" || c === "\r") && !inQuotes) {
+        if (c === "\r" && n === "\n") i++;
         row.push(cur);
         rows.push(row);
         row = [];
         cur = "";
         continue;
       }
-      cur += ch;
+      cur += c;
     }
-
     if (cur.length || row.length) {
       row.push(cur);
       rows.push(row);
     }
-
-    return rows.filter((r) => r.some((c) => String(c || "").trim() !== ""));
+    return rows;
   }
 
-  function rowsToObjects(rows) {
+  function rowsToObjects(csvText) {
+    const rows = parseCSV(csvText).filter(r => r.some(cell => String(cell || "").trim() !== ""));
     if (!rows.length) return [];
-    const headers = rows[0].map((h) => safeText(h));
-    return rows.slice(1).map((r) => {
+
+    const headers = rows[0].map(h => safeText(h));
+    const out = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
       const obj = {};
-      headers.forEach((h, idx) => (obj[h] = r[idx] ?? ""));
-      return obj;
-    });
+      headers.forEach((h, idx) => { obj[h] = safeText(r[idx] ?? ""); });
+      out.push(obj);
+    }
+    return out;
+  }
+
+  async function fetchCSV() {
+    // Try sheet first, then fallback.
+    const tried = [];
+
+    async function tryURL(url) {
+      if (!url) return null;
+      tried.push(url);
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    }
+
+    let text = null;
+
+    if (SHEET_CSV_URL) {
+      try { text = await tryURL(SHEET_CSV_URL); }
+      catch (e) { /* continue */ }
+    }
+
+    if (!text) {
+      text = await tryURL(FALLBACK_CSV_URL);
+    }
+
+    return { text, tried };
   }
 
   // =========================
-  // 3) STATE
+  // RECEIPT
   // =========================
-  const state = {
-    brand: safeText(getQueryParam("brand")),
-    allRows: [],
-    viewRows: [],
-    search: "",
-    shadeState: "all", // "maduro" | "natural" | "all"
-    selectedBands: new Set(),
-    filters: {
-      Shade: new Set(),
-      Vitola: new Set(),
-      Ring: new Set(),
-      Strength: new Set(),
-      Length: new Set(),
-      Shape: new Set(),
-      Tubo: new Set(),
-      Flavored: new Set(),
-      Tin: new Set(),
-      Pack: new Set(),
-      Barberpole: new Set(),
-      "Box-Pressed": new Set(),
-    },
-  };
 
-  // =========================
-  // 4) DOM (with strong fallbacks)
-  // =========================
-  function findButtonByText(rx) {
-    const btns = $$("button");
-    return btns.find((b) => rx.test((b.textContent || "").trim()));
+  function loadReceipt() {
+    const arr = getLS(LS_RECEIPT, []);
+    state.receipt = Array.isArray(arr) ? arr : [];
+    updateReceiptBadge();
   }
 
-  function refreshEls() {
-    return {
-      title: $(".brand-title"),
-      brandIcon: $(".brand-icon"),
-      search: $("#brand-search") || $("input[type='search']"),
-      list: $(".brand-list") || $("#brand-list") || $("main") || document.body,
-
-      // Controls (fallback: match by text)
-      btnBands:
-        $("#bands-btn") ||
-        $(".pill-btn[data-action='bands']") ||
-        $(".pill-btn.bands") ||
-        findButtonByText(/^bands$/i),
-
-      btnFilters:
-        $("#filters-btn") ||
-        $(".pill-btn[data-action='filters']") ||
-        $(".pill-btn.filters") ||
-        findButtonByText(/^filters$/i),
-
-      seg: $(".seg"),
-      segDot: $(".seg .seg-dot"),
-      segMaduro:
-        $(".seg [data-side='maduro']") ||
-        $(".seg .seg-btn[data-value='maduro']") ||
-        $(".seg .seg-btn.maduro") ||
-        (() => {
-          const s = $(".seg");
-          if (!s) return null;
-          const btns = $$("button", s).filter((b) => !b.classList.contains("seg-dot"));
-          return btns[0] || null;
-        })(),
-      segNatural:
-        $(".seg [data-side='natural']") ||
-        $(".seg .seg-btn[data-value='natural']") ||
-        $(".seg .seg-btn.natural") ||
-        (() => {
-          const s = $(".seg");
-          if (!s) return null;
-          const btns = $$("button", s).filter((b) => !b.classList.contains("seg-dot"));
-          return btns[btns.length - 1] || null;
-        })(),
-
-      error: $("#brand-error") || $(".brand-error"),
-    };
-  }
-
-  let el = null;
-
-  // =========================
-  // 5) HEADER
-  // =========================
-  function initHeader() {
-    if (el.title) el.title.textContent = state.brand || "Brand";
-
-    if (el.brandIcon) {
-      const { primary, fallback } = resolveBrandIcon(state.brand);
-      el.brandIcon.src = primary;
-      el.brandIcon.onerror = () => {
-        el.brandIcon.onerror = null;
-        el.brandIcon.src = fallback;
-      };
-      el.brandIcon.alt = state.brand || "Brand";
+  function updateReceiptBadge() {
+    const count = state.receipt.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
+    if (count > 0) {
+      receiptCount.hidden = false;
+      receiptCount.textContent = String(count);
+    } else {
+      receiptCount.hidden = true;
+      receiptCount.textContent = "0";
     }
   }
 
-  function showError(msg) {
-    if (el.error) {
-      el.error.textContent = msg;
-      el.error.style.display = "block";
+  function addToReceipt(item) {
+    const id =
+      safeText(item["key"]) ||
+      safeText(item["Product #"]) ||
+      safeText(item["Cigar"]) + "::" + safeText(item["Vitola"]) + "::" + safeText(item["Wrapper Shade"]);
+
+    const price = Number(item["MSRP"] || item["Price"] || 0) || 0;
+
+    const existing = state.receipt.find(r => r.id === id);
+    if (existing) {
+      existing.qty += 1;
+    } else {
+      state.receipt.push({
+        id,
+        name: safeText(item["Cigar"]) || safeText(item["Line"]) || "(Unnamed cigar)",
+        vitola: safeText(item["Vitola"]),
+        price,
+        qty: 1,
+        brand: state.brandName
+      });
+    }
+
+    setLS(LS_RECEIPT, state.receipt);
+    updateReceiptBadge();
+    renderReceipt();
+  }
+
+  function renderReceipt() {
+    if (!receiptItems) return;
+
+    if (!state.receipt.length) {
+      receiptItems.innerHTML = `<p class="muted">No items yet.</p>`;
       return;
     }
-    const p = document.createElement("p");
-    p.id = "brand-error";
-    p.style.margin = "18px 14px 0";
-    p.style.color = "rgba(255,120,120,.95)";
-    p.style.fontWeight = "800";
-    p.textContent = msg;
-    document.body.appendChild(p);
+
+    const rows = state.receipt.map(r => {
+      const sub = (Number(r.price) || 0) * (Number(r.qty) || 0);
+      return `
+        <div class="receipt-row">
+          <div class="receipt-left">
+            <div class="receipt-name">${escapeHTML(r.name)}</div>
+            <div class="receipt-sub">${escapeHTML(r.brand)}${r.vitola ? ` • ${escapeHTML(r.vitola)}` : ""}</div>
+          </div>
+          <div class="receipt-right">
+            <div class="receipt-qty">x${r.qty}</div>
+            <div class="receipt-price">$${money(sub)}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    const total = state.receipt.reduce((sum, r) => sum + (Number(r.price) || 0) * (Number(r.qty) || 0), 0);
+
+    receiptItems.innerHTML = `
+      <div class="receipt-list">${rows}</div>
+      <div class="receipt-total">
+        <span>Total</span>
+        <strong>$${money(total)}</strong>
+      </div>
+    `;
+  }
+
+  function clearReceipt() {
+    state.receipt = [];
+    setLS(LS_RECEIPT, state.receipt);
+    updateReceiptBadge();
+    renderReceipt();
   }
 
   // =========================
-  // 6) LOAD SHEET
+  // UI — SHEETS / MODAL
   // =========================
-  async function loadSheet() {
-    if (!SHEET_CSV_URL) {
-      showError("Missing SHEET_CSV_URL.");
-      return [];
+
+  function openSheet(sheetEl) {
+    backdrop.hidden = false;
+    sheetEl.hidden = false;
+    document.body.classList.add("no-scroll");
+  }
+
+  function closeAllSheets() {
+    backdrop.hidden = true;
+    sheetReceipt.hidden = true;
+    sheetBands.hidden = true;
+    sheetFilters.hidden = true;
+    document.body.classList.remove("no-scroll");
+  }
+
+  function openModal() {
+    modal.hidden = false;
+    document.body.classList.add("no-scroll");
+  }
+
+  function closeModal() {
+    modal.hidden = true;
+    document.body.classList.remove("no-scroll");
+  }
+
+  function escapeHTML(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  // =========================
+  // FILTERING + RENDER
+  // =========================
+
+  function setWrap(next) {
+    state.wrap = next;
+    setLS(LS_WRAP, next);
+    syncWrapUI();
+    applyAndRender();
+  }
+
+  function syncWrapUI() {
+    const w = state.wrap;
+
+    const maduroOn = (w === "maduro");
+    const naturalOn = (w === "natural");
+
+    segMaduro.setAttribute("aria-pressed", maduroOn ? "true" : "false");
+    segNatural.setAttribute("aria-pressed", naturalOn ? "true" : "false");
+
+    // Move knob (CSS should interpret data-state; but we set a class for safety)
+    segSwitch.dataset.state = w;
+  }
+
+  function applyFilters(items) {
+    let out = items.slice();
+
+    // Wrapper toggle
+    if (state.wrap === "maduro") {
+      out = out.filter(it => normalizeWrapperShade(it["Wrapper Shade"] || it["WrapperShade"]) === "maduro");
+    } else if (state.wrap === "natural") {
+      out = out.filter(it => normalizeWrapperShade(it["Wrapper Shade"] || it["WrapperShade"]) === "natural");
     }
 
-    try {
-      const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const txt = await res.text();
+    // Search
+    const q = state.search.trim().toLowerCase();
+    if (q) {
+      out = out.filter(it => {
+        const cigar = safeText(it["Cigar"]).toLowerCase();
+        const line = safeText(it["Line"]).toLowerCase();
+        const vitola = safeText(it["Vitola"]).toLowerCase();
+        const shade = safeText(it["Wrapper Shade"] || it["WrapperShade"]).toLowerCase();
+        return cigar.includes(q) || line.includes(q) || vitola.includes(q) || shade.includes(q);
+      });
+    }
 
-      // If Google returns an HTML page (not CSV), your sheet isn’t published / accessible.
-      const head = txt.slice(0, 300).toLowerCase();
-      if (head.includes("<!doctype html") || head.includes("<html")) {
-        throw new Error("Google returned HTML (not CSV). Publish the sheet or use export?format=csv.");
+    // Bands selection (Line-based)
+    if (state.selectedBands.size) {
+      out = out.filter(it => state.selectedBands.has(computeBandLabel(it)));
+    }
+
+    // Filters selection (Vitola/Shape-based)
+    if (state.selectedFilters.size) {
+      out = out.filter(it => state.selectedFilters.has(computeFilterLabel(it)));
+    }
+
+    return out;
+  }
+
+  function applyAndRender() {
+    state.view = applyFilters(state.all);
+    renderList();
+  }
+
+  function renderList() {
+    if (!elList) return;
+
+    if (!state.view.length) {
+      elList.innerHTML = `<div class="empty">No cigars match.</div>`;
+      return;
+    }
+
+    const iconHTML = buildBrandIconHTML(state.brandSlug);
+
+    elList.innerHTML = state.view.map((it, idx) => {
+      const cigar = safeText(it["Cigar"]) || "(Unnamed cigar)";
+      const vitola = safeText(it["Vitola"]);
+      const price = money(it["MSRP"] || it["Price"] || 0);
+
+      // Data index for click -> open modal
+      return `
+        <div class="cigar-row" data-row-index="${idx}">
+          <div class="cigar-left">
+            <div class="cigar-brand-ico">${iconHTML}</div>
+            <div class="cigar-text">
+              <div class="cigar-name">${escapeHTML(cigar)}</div>
+              <div class="cigar-sub">${escapeHTML(vitola)}</div>
+            </div>
+          </div>
+
+          <div class="cigar-right">
+            <div class="cigar-price">${price}</div>
+            <button class="cigar-add" type="button" data-add-index="${idx}" aria-label="Add to receipt">
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderBandsSheet() {
+    const labels = Array.from(new Set(state.all.map(computeBandLabel))).sort((a,b)=>a.localeCompare(b));
+    state.pendingBands = new Set(state.selectedBands);
+
+    bandsOptions.innerHTML = labels.map(label => {
+      const on = state.pendingBands.has(label);
+      return `
+        <button type="button" class="chip ${on ? "on" : ""}" data-band="${escapeHTML(label)}">
+          ${escapeHTML(label)}
+        </button>
+      `;
+    }).join("");
+  }
+
+  function renderFiltersSheet() {
+    const labels = Array.from(new Set(state.all.map(computeFilterLabel))).sort((a,b)=>a.localeCompare(b));
+    state.pendingFilters = new Set(state.selectedFilters);
+
+    filtersOptions.innerHTML = labels.map(label => {
+      const on = state.pendingFilters.has(label);
+      return `
+        <button type="button" class="chip ${on ? "on" : ""}" data-filter="${escapeHTML(label)}">
+          ${escapeHTML(label)}
+        </button>
+      `;
+    }).join("");
+  }
+
+  // =========================
+  // MODAL POPULATION
+  // =========================
+
+  function openCigarDetail(item) {
+    modalBrand.textContent = state.brandName;
+    modalBrandIcon.innerHTML = buildBrandIconHTML(state.brandSlug);
+
+    const line = safeText(item["Line"]);
+    const cigar = safeText(item["Cigar"]) || "(Unnamed cigar)";
+    modalLine.textContent = line ? `${line} ${cigar}` : cigar;
+
+    modalRG.textContent = safeText(item["RG"] || item["Ring"] || item["Ring Size"] || "—") || "—";
+    modalLen.textContent = safeText(item["Length"] || "—") || "—";
+    modalStrength.textContent = safeText(item["Strength"] || "—") || "—";
+    modalVitola.textContent = safeText(item["Vitola"] || item["Shape"] || "—") || "—";
+
+    modalWrapper.textContent = safeText(item["Wrapper"] || "—") || "—";
+    modalBinder.textContent = safeText(item["Binder"] || "—") || "—";
+    modalFiller.textContent = safeText(item["Filler"] || "—") || "—";
+
+    modalOrigin.textContent = safeText(item["Origin"] || "—") || "—";
+    modalShade.textContent = safeText(item["Wrapper Shade"] || item["WrapperShade"] || "—") || "—";
+
+    // Optional ranking fields if you have them
+    const rank1 = safeText(item["Rank"] || item["CA Rank"] || "");
+    const year1 = safeText(item["Year"] || item["CA Year"] || "");
+    modalRank1.textContent = rank1 ? `#${rank1}${year1 ? ` • ${year1}` : ""}` : "#1";
+
+    const r2 = safeText(item["CJ Rank"] || "");
+    const y2 = safeText(item["CJ Year"] || "");
+    modalRank2.textContent = r2 ? `#${r2}${y2 ? ` • ${y2}` : ""}` : "#2";
+
+    const src = cigarImageFor(item);
+    modalImg.src = src;
+    modalImg.alt = `${state.brandName} ${cigar}`;
+    modalImg.onerror = () => { modalImg.src = "/img/icons/cigar-placeholder.png"; };
+
+    openModal();
+  }
+
+  // =========================
+  // LOAD DATA
+  // =========================
+
+  function brandMatchRow(row) {
+    const b = safeText(row["Brand"]);
+    return b.toLowerCase() === state.brandName.toLowerCase();
+  }
+
+  async function load() {
+    state.brandName = getBrandFromURL();
+    state.brandSlug = slugifyBrand(state.brandName);
+
+    elTitle.textContent = state.brandName;
+    elIcon.innerHTML = buildBrandIconHTML(state.brandSlug);
+
+    // Restore saved UI selections
+    state.wrap = getLS(LS_WRAP, "all") || "all";
+    const savedBands = getLS(LS_BANDS, []);
+    const savedFilters = getLS(LS_FILTERS, []);
+    state.selectedBands = new Set(Array.isArray(savedBands) ? savedBands : []);
+    state.selectedFilters = new Set(Array.isArray(savedFilters) ? savedFilters : []);
+    syncWrapUI();
+
+    // Load receipt
+    loadReceipt();
+    renderReceipt();
+
+    // Fetch CSV and parse
+    elStatus.hidden = false;
+    elStatus.textContent = "Loading…";
+
+    try {
+      const { text } = await fetchCSV();
+      const objs = rowsToObjects(text);
+
+      // Brand filtering
+      const brandRows = objs.filter(brandMatchRow);
+
+      state.all = brandRows;
+
+      if (!state.all.length) {
+        elStatus.hidden = false;
+        elStatus.textContent = `No rows found for brand "${state.brandName}".`;
+      } else {
+        elStatus.hidden = true;
       }
 
-      const rows = parseCSV(txt);
-      return rowsToObjects(rows);
+      // Prepare sheets options
+      renderBandsSheet();
+      renderFiltersSheet();
+
+      // Render list
+      applyAndRender();
+
     } catch (err) {
-      console.error("Sheet load error:", err);
-      showError("Brand failed to load from Google Sheets CSV. (Sheet may not be published / CORS / wrong URL)");
-      return [];
+      elStatus.hidden = false;
+      elStatus.textContent = "Brand failed to load from Google Sheets.";
+      elList.innerHTML = "";
+      // keep UI alive though (receipt still works)
+      console.error(err);
     }
   }
 
   // =========================
-  // 7) ROW RENDER (forces layout)
+  // EVENTS
   // =========================
-  function forceRowStyles(row, img, mid, right, priceEl, plus, divider) {
-    // If your brand.css loads, it will override these. If it doesn't, the page still looks correct.
-    row.style.display = "flex";
-    row.style.alignItems = "center";
-    row.style.gap = "12px";
-    row.style.padding = "12px 14px";
-    row.style.borderBottom = "1px solid rgba(255,255,255,.10)";
 
-    img.style.width = "46px";
-    img.style.height = "46px";
-    img.style.borderRadius = "12px";
-    img.style.objectFit = "cover";
-    img.style.flex = "0 0 auto";
-    img.style.background = "rgba(255,255,255,.07)";
-
-    mid.style.flex = "1 1 auto";
-    mid.style.minWidth = "0";
-
-    right.style.display = "flex";
-    right.style.alignItems = "center";
-    right.style.gap = "10px";
-    right.style.flex = "0 0 auto";
-
-    divider.style.width = "1px";
-    divider.style.height = "38px";
-    divider.style.background = "rgba(255,255,255,.14)";
-
-    priceEl.style.width = "60px";
-    priceEl.style.textAlign = "right";
-    priceEl.style.fontWeight = "700";
-
-    plus.style.width = "28px";
-    plus.style.height = "28px";
-    plus.style.borderRadius = "999px";
-    plus.style.border = "none";
-    plus.style.background = "#34c759";
-    plus.style.color = "#fff";
-    plus.style.fontWeight = "900";
-    plus.style.display = "grid";
-    plus.style.placeItems = "center";
-  }
-
-  function renderList(rows) {
-    if (!el.list) return;
-
-    // Ensure list container exists and isn’t polluted by modal HTML
-    // If the page has .brand-list, use it. Otherwise, create one after the controls.
-    let listRoot = $(".brand-list");
-    if (!listRoot) {
-      const main = $(".brand-main") || $("main") || document.body;
-      listRoot = document.createElement("div");
-      listRoot.className = "brand-list";
-      listRoot.style.marginTop = "14px";
-      listRoot.style.borderTop = "1px solid rgba(255,255,255,.10)";
-      main.appendChild(listRoot);
-    }
-    el.list = listRoot;
-
-    el.list.innerHTML = "";
-
-    rows.forEach((c) => {
-      const cigarName =
-        getField(c, ["Cigar", "Cigar Name", "Name"]) ||
-        "(Unnamed cigar)";
-
-      const vitola = getField(c, ["Vitola", "Style"]);
-      const shade = getField(c, ["Wrapper Shade", "Shade"]);
-      const sub = vitola || shade || "";
-
-      const priceRaw = getField(c, ["MSRP", "Price", "Cigar MSRP", "MSRP ($)"]);
-      const priceNum = Number(priceRaw) || 0;
-
-      const row = document.createElement("div");
-      row.className = "cigar-row";
-
-      const img = document.createElement("img");
-      img.className = "cigar-img";
-      const { primary, fallback } = resolveBrandIcon(state.brand);
-      img.src = primary;
-      img.onerror = () => {
-        img.onerror = null;
-        img.src = fallback;
-      };
-      img.alt = state.brand;
-
-      const mid = document.createElement("div");
-      mid.className = "cigar-mid";
-
-      const nameEl = document.createElement("div");
-      nameEl.className = "cigar-name";
-      nameEl.textContent = cigarName;
-
-      const subEl = document.createElement("div");
-      subEl.className = "cigar-sub";
-      subEl.textContent = sub;
-
-      // minimal text styling fallback
-      nameEl.style.fontWeight = "800";
-      nameEl.style.letterSpacing = "-0.01em";
-      subEl.style.marginTop = "4px";
-      subEl.style.opacity = "0.70";
-      subEl.style.fontWeight = "700";
-      subEl.style.fontSize = "12px";
-      nameEl.style.fontSize = "15px";
-
-      mid.appendChild(nameEl);
-      mid.appendChild(subEl);
-
-      const right = document.createElement("div");
-      right.className = "cigar-right";
-
-      const divider = document.createElement("div");
-      divider.className = "cigar-divider";
-
-      const priceEl = document.createElement("div");
-      priceEl.className = "cigar-price";
-      priceEl.textContent = money(priceNum);
-
-      const plus = document.createElement("button");
-      plus.className = "cigar-plus";
-      plus.type = "button";
-      plus.textContent = "+";
-      plus.addEventListener("click", () => {
-        addToCart({
-          brand: state.brand,
-          cigar: cigarName,
-          vitola,
-          price: priceNum,
-        });
-      });
-
-      right.appendChild(divider);
-      right.appendChild(priceEl);
-      right.appendChild(plus);
-
-      row.appendChild(img);
-      row.appendChild(mid);
-      row.appendChild(right);
-
-      // force layout so we always get “rows back”
-      forceRowStyles(row, img, mid, right, priceEl, plus, divider);
-
-      el.list.appendChild(row);
-    });
-  }
-
-  // =========================
-  // 8) FILTER LOGIC
-  // =========================
-  function normalizeShade(s) {
-    const x = safeText(s).toLowerCase();
-    if (!x) return "";
-    if (x.includes("maduro")) return "maduro";
-    if (x.includes("natural")) return "natural";
-    return x;
-  }
-
-  function rowBrandValue(r) {
-    // Your sheet: Brand is column C; Manufacturer is column A.
-    // We prioritize Brand matches first.
-    return (
-      getField(r, ["Brand"]) ||
-      getField(r, ["Brand Name"]) ||
-      getField(r, ["Manufacturer"]) ||
-      safeText(state.brand)
-    );
-  }
-
-  function applyAllFilters() {
-    const q = state.search.toLowerCase();
-    const shadeState = state.shadeState;
-
-    let out = state.allRows.slice();
-
-    // Brand filter (strict against Brand column)
-    out = out.filter((r) => {
-      const b = rowBrandValue(r).toLowerCase();
-      return !state.brand || b === state.brand.toLowerCase();
-    });
-
-    // Search
-    if (q) {
-      out = out.filter((r) => {
-        const cigarName = (getField(r, ["Cigar", "Cigar Name", "Name"]) || "").toLowerCase();
-        const vitola = (getField(r, ["Vitola", "Style"]) || "").toLowerCase();
-        return (cigarName + " " + vitola).includes(q);
-      });
-    }
-
-    // Maduro/Natural tri-state
-    if (shadeState !== "all") {
-      out = out.filter((r) => {
-        const shade = getField(r, ["Wrapper Shade", "Shade"]);
-        return normalizeShade(shade) === shadeState;
-      });
-    }
-
-    // Bands filter (matches Line/Series columns)
-    if (state.selectedBands.size) {
-      out = out.filter((r) => {
-        const line = (
-          getField(r, ["Line"]) ||
-          getField(r, ["Series"]) ||
-          getField(r, ["Band"]) ||
-          getField(r, ["Band Art"]) ||
-          ""
-        ).toLowerCase();
-
-        for (const k of state.selectedBands) {
-          if (line.includes(String(k).toLowerCase())) return true;
-        }
-        return false;
-      });
-    }
-
-    // Chips filter map
-    const filterMap = [
-      ["Shade", ["Wrapper Shade", "Shade"]],
-      ["Vitola", ["Vitola", "Style"]],
-      ["Ring", ["RG", "Ring", "Ring Gauge"]],
-      ["Strength", ["Strength"]],
-      ["Length", ["Length"]],
-      ["Shape", ["Shape"]],
-      ["Tubo", ["Tubo"]],
-      ["Flavored", ["Flavored"]],
-      ["Tin", ["Tin"]],
-      ["Pack", ["Pack"]],
-      ["Barberpole", ["Barber", "Barberpole"]],
-      ["Box-Pressed", ["Box-Pressed", "Box Pressed", "BoxPressed"]],
-    ];
-
-    for (const [filterKey, cols] of filterMap) {
-      const set = state.filters[filterKey];
-      if (!set || set.size === 0) continue;
-
-      out = out.filter((r) => {
-        const val = getField(r, cols) || "";
-        if (!val) return false;
-
-        const v = val.toLowerCase();
-        for (const wanted of set) {
-          const w = String(wanted).toLowerCase();
-          if (v === w) return true;
-          if (v.includes(w)) return true;
-        }
-        return false;
-      });
-    }
-
-    state.viewRows = out;
-    renderList(out);
-  }
-
-  // =========================
-  // 9) TOGGLE (tri-state) — words + pill clickable
-  // =========================
-  function setShadeState(next) {
-    state.shadeState = next;
-    if (el.seg) el.seg.dataset.state = next;
-
-    // aria states (if markup supports it)
-    if (el.segMaduro) el.segMaduro.setAttribute("aria-pressed", next === "maduro" ? "true" : "false");
-    if (el.segNatural) el.segNatural.setAttribute("aria-pressed", next === "natural" ? "true" : "false");
-
-    applyAllFilters();
-  }
-
-  function initShadeToggle() {
-    if (!el.seg) return;
-
-    if (!el.seg.dataset.state) el.seg.dataset.state = "all";
-    setShadeState(el.seg.dataset.state);
-
-    // Click "Maduro" word
-    el.segMaduro?.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setShadeState(state.shadeState === "maduro" ? "all" : "maduro");
-    });
-
-    // Click "Natural" word
-    el.segNatural?.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setShadeState(state.shadeState === "natural" ? "all" : "natural");
-    });
-
-    // Click the switch itself (dot)
-    el.segDot?.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (state.shadeState === "all") return setShadeState("natural");
-      setShadeState(state.shadeState === "maduro" ? "natural" : "maduro");
-    });
-
-    // Click anywhere on the segmented control (except label buttons)
-    el.seg.addEventListener("click", (e) => {
-      if (e.target.closest(".seg-btn")) return; // labels already handled
-      if (e.target.closest(".seg-dot")) return; // handled above
-      if (state.shadeState === "all") return setShadeState("natural");
-      setShadeState(state.shadeState === "maduro" ? "natural" : "maduro");
-    });
-  }
-
-  // =========================
-  // 10) MODALS (guaranteed hidden even if CSS fails)
-  // =========================
-  function ensureModalShell(id, titleText) {
-    let modal = document.getElementById(id);
-    if (modal) return modal;
-
-    modal = document.createElement("div");
-    modal.id = id;
-
-    // HARD hide by default (prevents the “stacked Receipt/Bands/Filters on page” problem)
-    modal.style.position = "fixed";
-    modal.style.inset = "0";
-    modal.style.zIndex = "9999";
-    modal.style.display = "none";
-
-    modal.innerHTML = `
-      <div class="modal-scrim" style="
-        position:absolute; inset:0;
-        background: rgba(0,0,0,.45);
-        backdrop-filter: blur(10px);
-      "></div>
-
-      <div class="modal-card" style="
-        position:absolute;
-        left:50%; top:50%;
-        transform: translate(-50%, -50%);
-        width: min(520px, calc(100vw - 28px));
-        max-height: min(72vh, 640px);
-        border-radius: 22px;
-        background: rgba(20,30,55,.94);
-        border: 1px solid rgba(255,255,255,.10);
-        overflow: hidden;
-        box-shadow: 0 24px 70px rgba(0,0,0,.55);
-        display:flex;
-        flex-direction:column;
-      ">
-        <div class="modal-head" style="
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          padding: 16px 16px 12px;
-          border-bottom: 1px solid rgba(255,255,255,.08);
-        ">
-          <div class="modal-title" style="font-size:22px; font-weight:900; letter-spacing:-.01em;">
-            ${titleText}
-          </div>
-          <button class="modal-x" type="button" aria-label="Close" style="
-            width:38px; height:38px;
-            border-radius:12px;
-            border:1px solid rgba(255,255,255,.12);
-            background: rgba(255,255,255,.06);
-            color: rgba(255,255,255,.9);
-            font-size:18px;
-          ">×</button>
-        </div>
-
-        <div class="modal-body" style="
-          padding: 14px 16px;
-          overflow:auto;
-          -webkit-overflow-scrolling: touch;
-          flex: 1 1 auto;
-        "></div>
-
-        <div class="modal-foot" style="
-          display:flex;
-          gap:10px;
-          padding: 14px 16px 16px;
-          border-top: 1px solid rgba(255,255,255,.08);
-        ">
-          <button class="modal-btn ghost" type="button" data-action="close" style="
-            flex:1; height:48px;
-            border-radius:16px;
-            border:1px solid rgba(255,255,255,.12);
-            background: rgba(255,255,255,.06);
-            color: rgba(255,255,255,.88);
-            font-weight:900; font-size:18px;
-          ">Close</button>
-
-          <button class="modal-btn primary" type="button" data-action="confirm" style="
-            flex:1; height:48px;
-            border-radius:16px;
-            border:1px solid rgba(15,122,255,.90);
-            background: rgba(15,122,255,.85);
-            color:#fff;
-            font-weight:900; font-size:18px;
-          ">Confirm</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    const close = () => setModalOpen(modal, false);
-    $(".modal-scrim", modal).addEventListener("click", close);
-    $(".modal-x", modal).addEventListener("click", close);
-    $("[data-action='close']", modal).addEventListener("click", close);
-
-    return modal;
-  }
-
-  function setModalOpen(modalEl, open) {
-    modalEl.style.display = open ? "block" : "none";
-    document.documentElement.style.overflow = open ? "hidden" : "";
-    document.body.style.overflow = open ? "hidden" : "";
-  }
-
-  // Bands modal
-  function openBandsModal() {
-    const modal = ensureModalShell("bands-modal", "Bands");
-    const body = $(".modal-body", modal);
-
-    body.innerHTML = `
-      <div style="display:grid; gap:14px;">
-        ${PADRON_BANDS.map((b) => {
-          const checked = state.selectedBands.has(b.key);
-          return `
-            <label style="
-              display:grid; gap:10px;
-              padding:12px;
-              border-radius:18px;
-              border:1px solid rgba(255,255,255,.10);
-              background: rgba(255,255,255,.05);
-            ">
-              <img src="${b.img}" alt="${b.label}" style="
-                width: 100%;
-                height: auto;
-                max-height: 140px;
-                object-fit: contain;
-                border-radius: 16px;
-                background: rgba(0,0,0,.10);
-                border:1px solid rgba(255,255,255,.10);
-              " />
-              <div style="display:flex; align-items:center; justify-content:space-between;">
-                <div style="font-weight:900; font-size:18px;">${b.label}</div>
-                <input type="checkbox" data-band="${b.key}" ${checked ? "checked" : ""} style="transform:scale(1.25);" />
-              </div>
-            </label>
-          `;
-        }).join("")}
-      </div>
-    `;
-
-    const closeBtn = $("[data-action='close']", modal);
-    const confirmBtn = $("[data-action='confirm']", modal);
-
-    closeBtn.textContent = "Close";
-    confirmBtn.textContent = "Confirm";
-
-    confirmBtn.onclick = () => {
-      const checks = $$("input[type='checkbox'][data-band]", modal);
-      state.selectedBands = new Set(checks.filter((c) => c.checked).map((c) => c.dataset.band));
-      setModalOpen(modal, false);
-      applyAllFilters();
-    };
-
-    setModalOpen(modal, true);
-  }
-
-  // Filters modal
-  function openFiltersModal() {
-    const modal = ensureModalShell("filters-modal", "Filters");
-    const body = $(".modal-body", modal);
-
-    const scoped = state.allRows.filter((r) => rowBrandValue(r).toLowerCase() === state.brand.toLowerCase());
-
-    const optionSets = {
-      Shade: new Set(),
-      Vitola: new Set(),
-      Ring: new Set(),
-      Strength: new Set(),
-      Length: new Set(),
-      Shape: new Set(),
-      Tubo: new Set(),
-      Flavored: new Set(),
-      Tin: new Set(),
-      Pack: new Set(),
-      Barberpole: new Set(),
-      "Box-Pressed": new Set(),
-    };
-
-    for (const r of scoped) {
-      const add = (k, v) => {
-        const t = safeText(v);
-        if (t) optionSets[k].add(t);
-      };
-
-      add("Shade", getField(r, ["Wrapper Shade", "Shade"]));
-      add("Vitola", getField(r, ["Vitola", "Style"]));
-      add("Ring", getField(r, ["RG", "Ring", "Ring Gauge"]));
-      add("Strength", getField(r, ["Strength"]));
-      add("Length", getField(r, ["Length"]));
-      add("Shape", getField(r, ["Shape"]));
-      add("Tubo", getField(r, ["Tubo"]));
-      add("Flavored", getField(r, ["Flavored"]));
-      add("Tin", getField(r, ["Tin"]));
-      add("Pack", getField(r, ["Pack"]));
-      add("Barberpole", getField(r, ["Barber", "Barberpole"]));
-      add("Box-Pressed", getField(r, ["Box-Pressed", "Box Pressed", "BoxPressed"]));
-    }
-
-    function chipGroup(title, key) {
-      const opts = Array.from(optionSets[key]).sort((a, b) => String(a).localeCompare(String(b)));
-      if (!opts.length) return "";
-
-      const selected = state.filters[key];
-
-      return `
-        <div style="margin:0 0 16px;">
-          <div style="font-weight:900; font-size:16px; color:rgba(255,255,255,.85); margin:0 0 8px;">
-            ${title}
-          </div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            ${opts.map((v) => {
-              const on = selected.has(v);
-              return `
-                <button type="button"
-                  data-filter="${key}"
-                  data-value="${encodeURIComponent(v)}"
-                  style="
-                    height:36px;
-                    padding:0 12px;
-                    border-radius:999px;
-                    border:1px solid rgba(255,255,255,.12);
-                    background:${on ? "rgba(15,122,255,.20)" : "rgba(255,255,255,.06)"};
-                    color:${on ? "rgba(15,122,255,.95)" : "rgba(255,255,255,.86)"};
-                    font-weight:${on ? "900" : "750"};
-                    font-size:13px;
-                  ">
-                  ${v}
-                </button>
-              `;
-            }).join("")}
-          </div>
-        </div>
-      `;
-    }
-
-    body.innerHTML = `
-      ${chipGroup("Shade", "Shade")}
-      ${chipGroup("Vitola", "Vitola")}
-      ${chipGroup("Ring", "Ring")}
-      ${chipGroup("Strength", "Strength")}
-      ${chipGroup("Length", "Length")}
-      ${chipGroup("Shape", "Shape")}
-      ${chipGroup("Tubo", "Tubo")}
-      ${chipGroup("Flavored", "Flavored")}
-      ${chipGroup("Tin", "Tin")}
-      ${chipGroup("Pack", "Pack")}
-      ${chipGroup("Barberpole", "Barberpole")}
-      ${chipGroup("Box-Pressed", "Box-Pressed")}
-    `;
-
-    // chip toggle (event delegation)
-    body.onclick = (e) => {
-      const btn = e.target.closest("button[data-filter]");
-      if (!btn) return;
-      const key = btn.dataset.filter;
-      const val = decodeURIComponent(btn.dataset.value || "");
-      if (!state.filters[key]) state.filters[key] = new Set();
-      if (state.filters[key].has(val)) state.filters[key].delete(val);
-      else state.filters[key].add(val);
-
-      // refresh UI in-place
-      openFiltersModal();
-    };
-
-    const closeBtn = $("[data-action='close']", modal);
-    const confirmBtn = $("[data-action='confirm']", modal);
-
-    closeBtn.textContent = "Close";
-    confirmBtn.textContent = "Confirm";
-
-    confirmBtn.onclick = () => {
-      setModalOpen(modal, false);
-      applyAllFilters();
-    };
-
-    setModalOpen(modal, true);
-  }
-
-  // =========================
-  // 11) CART + RECEIPT
-  // =========================
-  function readCart() {
-    try {
-      const raw = localStorage.getItem(CART_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function writeCart(items) {
-    localStorage.setItem(CART_KEY, JSON.stringify(items));
-  }
-
-  function addToCart(item) {
-    const cart = readCart();
-    cart.push({
-      ...item,
-      id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
-      qty: 1,
-    });
-    writeCart(cart);
-    bumpReceiptCount();
-  }
-
-  function ensureReceiptButton() {
-    let btn = $("#receipt-fab");
-    if (btn) return btn;
-
-    btn = document.createElement("button");
-    btn.id = "receipt-fab";
-    btn.type = "button";
-    btn.setAttribute("aria-label", "Receipt");
-    btn.style.position = "fixed";
-    btn.style.right = "14px";
-    btn.style.bottom = "16px";
-    btn.style.width = "58px";
-    btn.style.height = "58px";
-    btn.style.borderRadius = "18px";
-    btn.style.border = "1px solid rgba(255,255,255,.14)";
-    btn.style.background = "rgba(255,255,255,.10)";
-    btn.style.backdropFilter = "blur(10px)";
-    btn.style.boxShadow = "0 18px 40px rgba(0,0,0,.35)";
-    btn.style.display = "grid";
-    btn.style.placeItems = "center";
-    btn.style.zIndex = "60";
-
-    const img = document.createElement("img");
-    img.src = RECEIPT_ICON_SRC;
-    img.alt = "";
-    img.style.width = "28px";
-    img.style.height = "28px";
-    img.style.opacity = "0.95";
-    img.onerror = () => {
-      img.style.display = "none";
-      btn.textContent = "🧾";
-      btn.style.fontSize = "22px";
-    };
-
-    const badge = document.createElement("div");
-    badge.id = "receipt-badge";
-    badge.style.position = "absolute";
-    badge.style.top = "8px";
-    badge.style.right = "8px";
-    badge.style.minWidth = "18px";
-    badge.style.height = "18px";
-    badge.style.padding = "0 6px";
-    badge.style.borderRadius = "999px";
-    badge.style.background = "rgba(52,199,89,.95)";
-    badge.style.color = "#fff";
-    badge.style.fontWeight = "900";
-    badge.style.fontSize = "12px";
-    badge.style.display = "none";
-    badge.style.alignItems = "center";
-    badge.style.justifyContent = "center";
-
-    btn.appendChild(img);
-    btn.appendChild(badge);
-    document.body.appendChild(btn);
-
-    btn.addEventListener("click", openReceiptModal);
-    bumpReceiptCount();
-
-    return btn;
-  }
-
-  function bumpReceiptCount() {
-    const cart = readCart();
-    const badge = $("#receipt-badge");
-    if (!badge) return;
-    if (!cart.length) {
-      badge.style.display = "none";
-      badge.textContent = "";
+  // Back
+  const backBtn = $("#brand-back");
+  if (backBtn) backBtn.addEventListener("click", () => history.back());
+
+  // Search
+  elSearch.addEventListener("input", (e) => {
+    state.search = e.target.value || "";
+    applyAndRender();
+  });
+
+  // Toggle: clicking words must work
+  segMaduro.addEventListener("click", () => setWrap(state.wrap === "maduro" ? "all" : "maduro"));
+  segNatural.addEventListener("click", () => setWrap(state.wrap === "natural" ? "all" : "natural"));
+
+  // Toggle switch button
+  segSwitch.addEventListener("click", () => {
+    if (state.wrap === "maduro") setWrap("natural");
+    else if (state.wrap === "natural") setWrap("maduro");
+    else setWrap("maduro"); // default first click
+  });
+
+  // Filters / Bands open
+  btnFilters.addEventListener("click", () => {
+    renderFiltersSheet();
+    openSheet(sheetFilters);
+  });
+
+  btnBands.addEventListener("click", () => {
+    renderBandsSheet();
+    openSheet(sheetBands);
+  });
+
+  // Receipt open
+  receiptOpen.addEventListener("click", () => {
+    renderReceipt();
+    openSheet(sheetReceipt);
+  });
+
+  // Clear receipt
+  receiptClear.addEventListener("click", clearReceipt);
+
+  // Close sheets (X, Close buttons)
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+
+    // Backdrop closes
+    if (t === backdrop) {
+      closeAllSheets();
       return;
     }
-    badge.style.display = "flex";
-    badge.textContent = String(cart.length);
-  }
 
-  function openReceiptModal() {
-    const modal = ensureModalShell("receipt-modal", "Receipt");
-    const body = $(".modal-body", modal);
-    const cart = readCart();
+    // Any [data-sheet-close]
+    if (t && t.closest && t.closest("[data-sheet-close]")) {
+      closeAllSheets();
+      return;
+    }
+  });
 
-    if (!cart.length) {
-      body.innerHTML = `<div style="opacity:.70; font-weight:900;">No items yet.</div>`;
-    } else {
-      const total = cart.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 1), 0);
-      body.innerHTML = `
-        <div style="display:grid; gap:10px;">
-          ${cart.map((it) => `
-            <div style="
-              display:grid; gap:4px;
-              padding:12px;
-              border-radius:16px;
-              border:1px solid rgba(255,255,255,.10);
-              background:rgba(255,255,255,.05);
-            ">
-              <div style="font-weight:900;">${it.cigar}</div>
-              <div style="opacity:.70; font-weight:800; font-size:13px;">
-                ${it.vitola || ""} ${it.vitola ? "•" : ""} ${it.brand || ""}
-              </div>
-              <div style="font-weight:900; text-align:right;">$${money(it.price)}</div>
-            </div>
-          `).join("")}
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-            <div style="font-weight:900; font-size:18px;">Total</div>
-            <div style="font-weight:900; font-size:18px;">$${money(total)}</div>
-          </div>
-        </div>
-      `;
+  // Bands chip clicks (delegated)
+  bandsOptions.addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip[data-band]");
+    if (!btn) return;
+    const label = btn.getAttribute("data-band");
+    if (!label) return;
+
+    if (state.pendingBands.has(label)) state.pendingBands.delete(label);
+    else state.pendingBands.add(label);
+
+    btn.classList.toggle("on");
+  });
+
+  bandsClear.addEventListener("click", () => {
+    state.pendingBands.clear();
+    renderBandsSheet();
+  });
+
+  bandsConfirm.addEventListener("click", () => {
+    state.selectedBands = new Set(state.pendingBands);
+    setLS(LS_BANDS, Array.from(state.selectedBands));
+    closeAllSheets();
+    applyAndRender();
+  });
+
+  // Filters chip clicks (delegated)
+  filtersOptions.addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip[data-filter]");
+    if (!btn) return;
+    const label = btn.getAttribute("data-filter");
+    if (!label) return;
+
+    if (state.pendingFilters.has(label)) state.pendingFilters.delete(label);
+    else state.pendingFilters.add(label);
+
+    btn.classList.toggle("on");
+  });
+
+  filtersConfirm.addEventListener("click", () => {
+    state.selectedFilters = new Set(state.pendingFilters);
+    setLS(LS_FILTERS, Array.from(state.selectedFilters));
+    closeAllSheets();
+    applyAndRender();
+  });
+
+  // List click handling:
+  // - clicking the row opens modal
+  // - clicking the + adds to receipt
+  elList.addEventListener("click", (e) => {
+    const addBtn = e.target.closest("[data-add-index]");
+    if (addBtn) {
+      const idx = Number(addBtn.getAttribute("data-add-index"));
+      const item = state.view[idx];
+      if (item) addToReceipt(item);
+      return;
     }
 
-    const closeBtn = $("[data-action='close']", modal);
-    const confirmBtn = $("[data-action='confirm']", modal);
-
-    closeBtn.textContent = "Clear";
-    closeBtn.onclick = () => {
-      writeCart([]);
-      bumpReceiptCount();
-      setModalOpen(modal, false);
-    };
-
-    confirmBtn.textContent = "Close";
-    confirmBtn.onclick = () => setModalOpen(modal, false);
-
-    setModalOpen(modal, true);
-  }
-
-  // =========================
-  // 12) EVENTS
-  // =========================
-  function initControls() {
-    // Search
-    el.search?.addEventListener("input", (e) => {
-      state.search = e.target.value || "";
-      applyAllFilters();
-    });
-
-    // Bands
-    if (el.btnBands) {
-      el.btnBands.addEventListener("click", (e) => {
-        e.preventDefault();
-        openBandsModal();
-      });
+    const row = e.target.closest(".cigar-row[data-row-index]");
+    if (row) {
+      const idx = Number(row.getAttribute("data-row-index"));
+      const item = state.view[idx];
+      if (item) openCigarDetail(item);
+      return;
     }
+  });
 
-    // Filters
-    if (el.btnFilters) {
-      el.btnFilters.addEventListener("click", (e) => {
-        e.preventDefault();
-        openFiltersModal();
-      });
-    }
-  }
+  // Modal close
+  modalClose.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", closeModal);
+
+  // Esc closes modal/sheets
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!modal.hidden) closeModal();
+    else closeAllSheets();
+  });
 
   // =========================
-  // 13) BOOT
+  // BOOT
   // =========================
-  async function boot() {
-    el = refreshEls();
-    initHeader();
-    initShadeToggle();
-    initControls();
-    ensureReceiptButton();
+  load();
 
-    const rows = await loadSheet();
-    state.allRows = rows;
-
-    if (!rows.length) return;
-
-    applyAllFilters();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
 })();
