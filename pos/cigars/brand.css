@@ -188,7 +188,7 @@ body.brand-page{
 #wrapper-seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }
 #wrapper-seg[data-state="natural"] .seg-dot::after{ left:30px; opacity:1; }
 
-/* ========== LIST ROWS (THIS IS THE BIG FIX) ========== */
+/* ========== LIST ROWS (LEFT ICON FIX) ========== */
 .brand-list{
   margin-top:14px;
   display:flex;
@@ -197,7 +197,7 @@ body.brand-page{
 
 .brand-row{
   display:grid;
-  grid-template-columns:1fr auto auto;
+  grid-template-columns:52px 1fr auto auto; /* LEFT ICON | TEXT | PRICE | + */
   align-items:center;
   gap:12px;
   padding:14px 10px;
@@ -206,6 +206,27 @@ body.brand-page{
 
 .brand-row:first-child{
   border-top:1px solid rgba(255,255,255,.10);
+}
+
+/* LEFT brand icon per row (locks the SVG size) */
+.row-icon{
+  width:52px;
+  height:52px;
+  border-radius:14px;
+  overflow:hidden;
+  background:rgba(255,255,255,.10);
+  box-shadow:0 10px 24px rgba(0,0,0,.20);
+  display:grid;
+  place-items:center;
+}
+
+.row-icon-img{
+  width:100% !important;
+  height:100% !important;
+  max-width:100%;
+  max-height:100%;
+  object-fit:cover;
+  display:block;
 }
 
 .row-main{
