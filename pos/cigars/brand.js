@@ -93,7 +93,6 @@
   }
 
   function wrapperBucket(row) {
-    // Try multiple fields because the sheet isn’t always consistent.
     const s = norm(
       row["Wrapper Shade"] ||
         row["Wrapper"] ||
@@ -102,11 +101,9 @@
         ""
     );
 
-    // Maduro signals
     if (s.includes("maduro") || s.includes("oscuro") || s.includes("negro"))
       return "maduro";
 
-    // Natural signals
     if (
       s.includes("natural") ||
       s.includes("claro") ||
@@ -116,7 +113,6 @@
     )
       return "natural";
 
-    // If unknown, treat as "either" so it can show in ALL view.
     return "either";
   }
 
@@ -130,8 +126,8 @@
     view: [],
     search: "",
     wrapper: "all", // all | maduro | natural
-    bands: new Set(), // holds selected Line values
-    receipt: []
+    bands: new Set(), // selected Line values
+    receipt: [],
   };
 
   /* ===============================
@@ -149,6 +145,7 @@
     btnFilters: $("#btn-filters"),
     btnBands: $("#btn-bands"),
 
+    segWrap: $("#wrapper-seg"),
     segMaduro: $("#seg-maduro"),
     segNatural: $("#seg-natural"),
     segSwitch: $("#seg-switch"),
@@ -184,13 +181,49 @@
     modalBinder: $("#modal-binder"),
     modalFiller: $("#modal-filler"),
     modalOrigin: $("#modal-origin"),
-    modalShade: $("#modal-shade")
+    modalShade: $("#modal-shade"),
   };
 
-  function requireEl(name, node) {
-    if (!node) console.warn("[brand.js] Missing element:", name);
+  /* ===============================
+     ICON PATHS (brands)
+     - Primary folder is /img/icons/brands (plural)
+     - Fallback to /img/icons/brand (singular) if needed
+  =============================== */
+  function brandIconCandidates(brandName) {
+    const slug = slugBrand(brandName || "");
+    const a = `/img/icons/brands/${slug}.svg`;
+    const b = `/img/icons/brand/${slug}.svg`;
+    const c = `/img/icons/brands/${slug}.png`;
+    const d = `/img/icons/brand/${slug}.png`;
+    return [a, b, c, d];
   }
-  Object.entries(el).forEach(([k, v]) => requireEl(k, v));
+
+  function mountBrandIcon(target, brandName) {
+    if (!target) return;
+
+    // If it's a div, we inject an <img>. If it's already an <img>, we set src.
+    const candidates = brandIconCandidates(brandName);
+    const img =
+      target.tagName && target.tagName.toLowerCase() === "img"
+        ? target
+        : (() => {
+            target.innerHTML = "";
+            const im = document.createElement("img");
+            im.alt = "";
+            target.appendChild(im);
+            return im;
+          })();
+
+    let idx = 0;
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = candidates[idx];
+
+    img.onerror = () => {
+      idx += 1;
+      if (idx < candidates.length) img.src = candidates[idx];
+    };
+  }
 
   /* ===============================
      SHEETS (bottom sheets)
@@ -246,7 +279,7 @@
   function addToReceipt(row) {
     state.receipt.push({
       name: row["Cigar"] || row["Line"] || "Cigar",
-      price: money(row["MSRP"])
+      price: money(row["MSRP"]),
     });
     updateReceiptUI();
   }
@@ -257,26 +290,11 @@
   function setBrandHeader() {
     if (el.title) el.title.textContent = state.brandRaw || "Brand";
 
-    // Brand icon: try both /img/icons/brand/ and /img/icons/brands/
-    const slug = slugBrand(state.brandRaw || state.brand || "");
-    const try1 = `/img/icons/brand/${slug}.svg`;
-    const try2 = `/img/icons/brands/${slug}.svg`;
+    // Top-right brand icon
+    mountBrandIcon(el.iconBox, state.brandRaw || state.brand);
 
-    function mountIcon(target, src1, src2) {
-      if (!target) return;
-      target.innerHTML = "";
-      const img = document.createElement("img");
-      img.alt = "";
-      img.src = src1;
-      img.onerror = () => {
-        if (img.src.endsWith(src2)) return;
-        img.src = src2;
-      };
-      target.appendChild(img);
-    }
-
-    mountIcon(el.iconBox, try1, try2);
-    mountIcon(el.modalBrandIcon, try1, try2);
+    // Modal top-right brand icon
+    mountBrandIcon(el.modalBrandIcon, state.brandRaw || state.brand);
   }
 
   /* ===============================
@@ -292,7 +310,6 @@
     el.bandsGrid.innerHTML = lines
       .map((line) => {
         const checked = state.bands.has(line) ? "checked" : "";
-        // class names kept generic so your CSS can style label/input
         return `<label class="chip"><input type="checkbox" value="${line}" ${checked}>${line}</label>`;
       })
       .join("");
@@ -339,7 +356,8 @@
   }
 
   /* ===============================
-     LIST RENDER (must match your blue UI CSS)
+     LIST RENDER
+     FIX: Restore LEFT brand SVG icon per cigar row
   =============================== */
   function renderList() {
     if (!el.list) return;
@@ -363,14 +381,36 @@
       const vitola = txt(row["Vitola"]) || "";
       const price = money(row["MSRP"]);
 
+      // LEFT ICON:
+      // Use brand param (page brand) so every row uses the same brand SVG (matches your screenshot).
+      // If you later want per-row overrides, we can swap to row["Brand"].
+      const iconCandidates = brandIconCandidates(state.brandRaw || row["Brand"] || "");
+      const iconSrc = iconCandidates[0];
+
       item.innerHTML = `
+        <div class="row-icon" aria-hidden="true">
+          <img class="row-icon-img" alt="" src="${iconSrc}">
+        </div>
+
         <div class="row-main" role="button" tabindex="0" aria-label="${cigarName}">
           <div class="row-title">${cigarName}</div>
           <div class="row-sub">${vitola}</div>
         </div>
+
         <div class="row-price">${price}</div>
+
         <button class="row-add" type="button" aria-label="Add ${cigarName}">+</button>
       `;
+
+      // Fallback icon cycling if .svg missing
+      const rowImg = item.querySelector(".row-icon-img");
+      if (rowImg) {
+        let idx = 0;
+        rowImg.onerror = () => {
+          idx += 1;
+          if (idx < iconCandidates.length) rowImg.src = iconCandidates[idx];
+        };
+      }
 
       const main = item.querySelector(".row-main");
       const addBtn = item.querySelector(".row-add");
@@ -398,9 +438,14 @@
   function openModal(row) {
     if (!el.modal) return;
 
-    if (el.modalBrand) el.modalBrand.textContent = txt(row["Brand"]) || state.brandRaw || "Brand";
-    if (el.modalLine)
-      el.modalLine.textContent = `${txt(row["Line"])} ${txt(row["Cigar"])}`.trim() || txt(row["Cigar"]) || "Cigar";
+    if (el.modalBrand)
+      el.modalBrand.textContent =
+        txt(row["Brand"]) || state.brandRaw || "Brand";
+
+    if (el.modalLine) {
+      const lineCigar = `${txt(row["Line"])} ${txt(row["Cigar"])}`.trim();
+      el.modalLine.textContent = lineCigar || txt(row["Cigar"]) || "Cigar";
+    }
 
     if (el.modalRG) el.modalRG.textContent = txt(row["RG"]) || "—";
     if (el.modalLen) el.modalLen.textContent = txt(row["Length"]) || "—";
@@ -420,6 +465,9 @@
       el.modalImg.style.visibility = src ? "visible" : "hidden";
     }
 
+    // Ensure modal brand icon is correct
+    mountBrandIcon(el.modalBrandIcon, state.brandRaw || row["Brand"] || "");
+
     el.modal.hidden = false;
   }
 
@@ -428,19 +476,21 @@
   }
 
   /* ===============================
-     TOGGLE UI STATE (Maduro / Natural)
+     TOGGLE UI STATE (Maduro / Natural / All)
   =============================== */
   function syncToggleUI() {
-    // aria-pressed on words
-    if (el.segMaduro) el.segMaduro.setAttribute("aria-pressed", state.wrapper === "maduro" ? "true" : "false");
-    if (el.segNatural) el.segNatural.setAttribute("aria-pressed", state.wrapper === "natural" ? "true" : "false");
+    if (el.segMaduro)
+      el.segMaduro.setAttribute(
+        "aria-pressed",
+        state.wrapper === "maduro" ? "true" : "false"
+      );
+    if (el.segNatural)
+      el.segNatural.setAttribute(
+        "aria-pressed",
+        state.wrapper === "natural" ? "true" : "false"
+      );
 
-    // If your CSS uses a data-state attribute on a wrapper element, you can optionally set it here.
-    // (We can't assume the wrapper element exists, so this is safe.)
-    const segWrap = el.segSwitch ? el.segSwitch.closest(".pill-toggle, .seg") : null;
-    if (segWrap) {
-      segWrap.setAttribute("data-state", state.wrapper === "maduro" ? "maduro" : state.wrapper === "natural" ? "natural" : "all");
-    }
+    if (el.segWrap) el.segWrap.setAttribute("data-state", state.wrapper);
   }
 
   function setWrapper(next) {
@@ -465,12 +515,13 @@
     safeOn(el.segMaduro, "click", () => setWrapper("maduro"));
     safeOn(el.segNatural, "click", () => setWrapper("natural"));
 
-    // Toggle: switch flips between maduro/natural (no “all”)
+    // Toggle: switch flips between maduro/natural when not ALL; if ALL, first click -> maduro
     safeOn(el.segSwitch, "click", () => {
+      if (state.wrapper === "all") return setWrapper("maduro");
       setWrapper(state.wrapper === "maduro" ? "natural" : "maduro");
     });
 
-    // Bands / Filters buttons
+    // Bands / Filters buttons (open their sheets)
     safeOn(el.btnBands, "click", () => openSheet(el.sheetBands));
     safeOn(el.btnFilters, "click", () => openSheet(el.sheetFilters));
 
@@ -478,9 +529,7 @@
     safeOn(el.sheetBackdrop, "click", closeAllSheets);
 
     // Close buttons (any element with data-sheet-close)
-    $$("[data-sheet-close]").forEach((btn) =>
-      safeOn(btn, "click", closeAllSheets)
-    );
+    $$("[data-sheet-close]").forEach((btn) => safeOn(btn, "click", closeAllSheets));
 
     // Bands confirm/clear
     safeOn(el.bandsConfirm, "click", () => {
@@ -491,7 +540,6 @@
 
     safeOn(el.bandsClear, "click", () => {
       state.bands.clear();
-      // uncheck UI too
       $$("#bands-options input[type='checkbox']").forEach((i) => (i.checked = false));
       closeAllSheets();
       applyFilters();
@@ -546,19 +594,17 @@
 
         if (!state.all.length) {
           setStatus(`No rows found for brand "${state.brandRaw}".`);
-          renderBandsOptions(); // empty
-          renderList();         // empty
+          renderBandsOptions();
+          renderList();
           return;
         }
 
-        // Build bands list from Line column
         renderBandsOptions();
 
-        // Default: show ALL (matches your blue screenshot)
+        // Default: show ALL (matches your screenshot)
         state.wrapper = "all";
         syncToggleUI();
 
-        // Hide status and render
         if (el.status) el.status.hidden = true;
         applyFilters();
       })
