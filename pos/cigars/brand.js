@@ -43,7 +43,6 @@
   }
 
   function csvToObjects(csv) {
-    // Robust-ish CSV parser (handles quoted commas)
     const rows = [];
     let row = [],
       cur = "",
@@ -116,6 +115,42 @@
     return "either";
   }
 
+  function brandIconCandidates(brandName) {
+    const slug = slugBrand(brandName || "");
+    // Canonical per your repo: /img/icons/brands (plural)
+    const a = `/img/icons/brands/${slug}.svg`;
+    const b = `/img/icons/brand/${slug}.svg`; // fallback if any legacy
+    const c = `/img/icons/brands/${slug}.png`;
+    const d = `/img/icons/brand/${slug}.png`;
+    return [a, b, c, d];
+  }
+
+  function mountBrandIcon(target, brandName) {
+    if (!target) return;
+
+    const candidates = brandIconCandidates(brandName);
+    const img =
+      target.tagName && target.tagName.toLowerCase() === "img"
+        ? target
+        : (() => {
+            target.innerHTML = "";
+            const im = document.createElement("img");
+            im.alt = "";
+            target.appendChild(im);
+            return im;
+          })();
+
+    let idx = 0;
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = candidates[idx];
+
+    img.onerror = () => {
+      idx += 1;
+      if (idx < candidates.length) img.src = candidates[idx];
+    };
+  }
+
   /* ===============================
      STATE
   =============================== */
@@ -128,6 +163,21 @@
     wrapper: "all", // all | maduro | natural
     bands: new Set(), // selected Line values
     receipt: [],
+    // multi-select filters (each Set holds selected values)
+    filters: {
+      Shade: new Set(),
+      Vitola: new Set(),
+      Ring: new Set(),
+      Strength: new Set(),
+      Length: new Set(),
+      Shape: new Set(),
+      Tubo: new Set(),
+      Flavored: new Set(),
+      Tin: new Set(),
+      Pack: new Set(),
+      Barberpole: new Set(),
+      "Box-Pressed": new Set()
+    }
   };
 
   /* ===============================
@@ -159,6 +209,9 @@
     bandsClear: $("#bands-clear"),
     bandsConfirm: $("#bands-confirm"),
 
+    filtersGrid: $("#filters-options"),
+    filtersConfirm: $("#filters-confirm"),
+
     receiptFab: $("#receipt-open"),
     receiptBadge: $("#receipt-count"),
     receiptItems: $("#receipt-items"),
@@ -181,49 +234,8 @@
     modalBinder: $("#modal-binder"),
     modalFiller: $("#modal-filler"),
     modalOrigin: $("#modal-origin"),
-    modalShade: $("#modal-shade"),
+    modalShade: $("#modal-shade")
   };
-
-  /* ===============================
-     ICON PATHS (brands)
-     - Primary folder is /img/icons/brands (plural)
-     - Fallback to /img/icons/brand (singular) if needed
-  =============================== */
-  function brandIconCandidates(brandName) {
-    const slug = slugBrand(brandName || "");
-    const a = `/img/icons/brands/${slug}.svg`;
-    const b = `/img/icons/brand/${slug}.svg`;
-    const c = `/img/icons/brands/${slug}.png`;
-    const d = `/img/icons/brand/${slug}.png`;
-    return [a, b, c, d];
-  }
-
-  function mountBrandIcon(target, brandName) {
-    if (!target) return;
-
-    // If it's a div, we inject an <img>. If it's already an <img>, we set src.
-    const candidates = brandIconCandidates(brandName);
-    const img =
-      target.tagName && target.tagName.toLowerCase() === "img"
-        ? target
-        : (() => {
-            target.innerHTML = "";
-            const im = document.createElement("img");
-            im.alt = "";
-            target.appendChild(im);
-            return im;
-          })();
-
-    let idx = 0;
-    img.decoding = "async";
-    img.loading = "eager";
-    img.src = candidates[idx];
-
-    img.onerror = () => {
-      idx += 1;
-      if (idx < candidates.length) img.src = candidates[idx];
-    };
-  }
 
   /* ===============================
      SHEETS (bottom sheets)
@@ -232,12 +244,14 @@
     if (!sheetEl || !el.sheetBackdrop) return;
     el.sheetBackdrop.hidden = false;
     sheetEl.hidden = false;
+    document.body.classList.add("sheet-open");
   }
 
   function closeAllSheets() {
     if (!el.sheetBackdrop) return;
     el.sheetBackdrop.hidden = true;
     $$(".sheet").forEach((s) => (s.hidden = true));
+    document.body.classList.remove("sheet-open");
   }
 
   /* ===============================
@@ -279,7 +293,7 @@
   function addToReceipt(row) {
     state.receipt.push({
       name: row["Cigar"] || row["Line"] || "Cigar",
-      price: money(row["MSRP"]),
+      price: money(row["MSRP"])
     });
     updateReceiptUI();
   }
@@ -289,11 +303,7 @@
   =============================== */
   function setBrandHeader() {
     if (el.title) el.title.textContent = state.brandRaw || "Brand";
-
-    // Top-right brand icon
     mountBrandIcon(el.iconBox, state.brandRaw || state.brand);
-
-    // Modal top-right brand icon
     mountBrandIcon(el.modalBrandIcon, state.brandRaw || state.brand);
   }
 
@@ -323,13 +333,169 @@
   }
 
   /* ===============================
-     FILTERING
+     FILTERS UI (2-level)
   =============================== */
+  const FILTER_DEFS = [
+    { key: "Shade", label: "Shade", col: "Wrapper Shade" },
+    { key: "Vitola", label: "Vitola", col: "Vitola" },
+    { key: "Ring", label: "Ring", col: "RG" },
+    { key: "Strength", label: "Strength", col: "Strength" },
+    { key: "Length", label: "Length", col: "Length" },
+    { key: "Shape", label: "Shape", col: "Shape" },
+    { key: "Tubo", label: "Tubo", col: "Tubo" },
+    { key: "Flavored", label: "Flavored", col: "Flavored" },
+    { key: "Tin", label: "Tin", col: "Tin" },
+    { key: "Pack", label: "Pack", col: "Pack" },
+    { key: "Barberpole", label: "Barberpole", col: "Barber" },
+    { key: "Box-Pressed", label: "Box-Pressed", col: "Box-Pressed" }
+  ];
+
+  // Build a secondary sheet dynamically (so you don't need to edit brand.html)
+  let filterDetail = null;
+
+  function ensureFilterDetailSheet() {
+    if (filterDetail) return filterDetail;
+
+    const wrap = document.createElement("section");
+    wrap.className = "sheet";
+    wrap.id = "sheet-filter-detail";
+    wrap.setAttribute("role", "dialog");
+    wrap.setAttribute("aria-modal", "true");
+    wrap.setAttribute("aria-label", "Filter options");
+    wrap.hidden = true;
+
+    wrap.innerHTML = `
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <header class="sheet-header">
+        <h2 id="filter-detail-title">Filter</h2>
+        <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+      </header>
+
+      <div class="sheet-body">
+        <div class="chip-grid" id="filter-detail-options"></div>
+      </div>
+
+      <footer class="sheet-footer">
+        <button class="sheet-btn" type="button" id="filter-detail-clear">Clear</button>
+        <button class="sheet-btn primary" type="button" id="filter-detail-confirm">Confirm</button>
+      </footer>
+    `;
+
+    document.body.appendChild(wrap);
+
+    filterDetail = {
+      sheet: wrap,
+      title: $("#filter-detail-title", wrap),
+      grid: $("#filter-detail-options", wrap),
+      clear: $("#filter-detail-clear", wrap),
+      confirm: $("#filter-detail-confirm", wrap)
+    };
+
+    // close buttons should work
+    $$("[data-sheet-close]", wrap).forEach((btn) =>
+      safeOn(btn, "click", closeAllSheets)
+    );
+
+    return filterDetail;
+  }
+
+  function filterValues(def) {
+    const values = uniq(
+      state.all
+        .map((r) => txt(r[def.col]))
+        .filter((v) => v.length > 0 && v.toLowerCase() !== "x")
+    ).sort((a, b) => a.localeCompare(b));
+    return values;
+  }
+
+  function renderFiltersHome() {
+    if (!el.filtersGrid) return;
+
+    el.filtersGrid.innerHTML = FILTER_DEFS.map((d) => {
+      const count = state.filters[d.key]?.size || 0;
+      const active = count ? " active" : "";
+      const sub = count ? `<span class="chip-sub">${count}</span>` : "";
+      return `
+        <button type="button" class="chip chip-btn${active}" data-filter-key="${d.key}">
+          ${d.label}
+          ${sub}
+        </button>
+      `;
+    }).join("");
+
+    // tap a filter => open second-level picker
+    $$("#filters-options [data-filter-key]").forEach((btn) => {
+      safeOn(btn, "click", () => openFilterDetail(btn.dataset.filterKey));
+    });
+  }
+
+  function openFilterDetail(key) {
+    const def = FILTER_DEFS.find((d) => d.key === key);
+    if (!def) return;
+
+    const fd = ensureFilterDetailSheet();
+    if (fd.title) fd.title.textContent = def.label;
+
+    const values = filterValues(def);
+    const selected = state.filters[key] || new Set();
+
+    fd.grid.innerHTML = values
+      .map((v) => {
+        const checked = selected.has(v) ? "checked" : "";
+        return `<label class="chip"><input type="checkbox" value="${v}" ${checked}>${v}</label>`;
+      })
+      .join("");
+
+    // Clear (only this filter)
+    safeOn(fd.clear, "click", () => {
+      (state.filters[key] || new Set()).clear();
+      // uncheck UI
+      $$("#filter-detail-options input[type='checkbox']", fd.sheet).forEach(
+        (i) => (i.checked = false)
+      );
+    });
+
+    // Confirm (apply)
+    safeOn(fd.confirm, "click", () => {
+      const set = (state.filters[key] = state.filters[key] || new Set());
+      set.clear();
+      $$("#filter-detail-options input[type='checkbox']:checked", fd.sheet).forEach(
+        (i) => set.add(i.value)
+      );
+      // return to filters home
+      renderFiltersHome();
+      applyFilters();
+      // close detail sheet only (leave home open? your UX shows single sheet at a time)
+      // We'll close all sheets to keep it clean:
+      closeAllSheets();
+    });
+
+    openSheet(fd.sheet);
+  }
+
+  /* ===============================
+     FILTERING LOGIC
+  =============================== */
+  function anyFilterActive() {
+    return Object.values(state.filters).some((s) => s && s.size);
+  }
+
+  function matchMultiFilter(row) {
+    for (const def of FILTER_DEFS) {
+      const set = state.filters[def.key];
+      if (!set || set.size === 0) continue;
+
+      const value = txt(row[def.col]);
+      if (!set.has(value)) return false;
+    }
+    return true;
+  }
+
   function applyFilters() {
     const q = norm(state.search);
 
     state.view = state.all.filter((r) => {
-      // Wrapper
+      // Wrapper toggle (maduro/natural)
       if (state.wrapper !== "all") {
         const wb = wrapperBucket(r);
         if (wb !== state.wrapper) return false;
@@ -349,6 +515,9 @@
         if (!state.bands.has(line)) return false;
       }
 
+      // Advanced Filters (multi-select per filter)
+      if (anyFilterActive() && !matchMultiFilter(r)) return false;
+
       return true;
     });
 
@@ -357,7 +526,6 @@
 
   /* ===============================
      LIST RENDER
-     FIX: Restore LEFT brand SVG icon per cigar row
   =============================== */
   function renderList() {
     if (!el.list) return;
@@ -373,6 +541,9 @@
 
     if (el.status) el.status.hidden = true;
 
+    const iconCandidates = brandIconCandidates(state.brandRaw || state.brand);
+    const primaryIconSrc = iconCandidates[0];
+
     state.view.forEach((row) => {
       const item = document.createElement("div");
       item.className = "brand-row";
@@ -381,15 +552,9 @@
       const vitola = txt(row["Vitola"]) || "";
       const price = money(row["MSRP"]);
 
-      // LEFT ICON:
-      // Use brand param (page brand) so every row uses the same brand SVG (matches your screenshot).
-      // If you later want per-row overrides, we can swap to row["Brand"].
-      const iconCandidates = brandIconCandidates(state.brandRaw || row["Brand"] || "");
-      const iconSrc = iconCandidates[0];
-
       item.innerHTML = `
         <div class="row-icon" aria-hidden="true">
-          <img class="row-icon-img" alt="" src="${iconSrc}">
+          <img class="row-icon-img" alt="" src="${primaryIconSrc}">
         </div>
 
         <div class="row-main" role="button" tabindex="0" aria-label="${cigarName}">
@@ -398,11 +563,10 @@
         </div>
 
         <div class="row-price">${price}</div>
-
         <button class="row-add" type="button" aria-label="Add ${cigarName}">+</button>
       `;
 
-      // Fallback icon cycling if .svg missing
+      // fallback icon cycling
       const rowImg = item.querySelector(".row-icon-img");
       if (rowImg) {
         let idx = 0;
@@ -439,8 +603,7 @@
     if (!el.modal) return;
 
     if (el.modalBrand)
-      el.modalBrand.textContent =
-        txt(row["Brand"]) || state.brandRaw || "Brand";
+      el.modalBrand.textContent = txt(row["Brand"]) || state.brandRaw || "Brand";
 
     if (el.modalLine) {
       const lineCigar = `${txt(row["Line"])} ${txt(row["Cigar"])}`.trim();
@@ -458,21 +621,21 @@
     if (el.modalOrigin) el.modalOrigin.textContent = txt(row["Origin"]) || "—";
     if (el.modalShade) el.modalShade.textContent = txt(row["Wrapper Shade"]) || "—";
 
-    // Image (optional)
     if (el.modalImg) {
       const src = txt(row["Cigar IMG"]);
       el.modalImg.src = src || "";
       el.modalImg.style.visibility = src ? "visible" : "hidden";
     }
 
-    // Ensure modal brand icon is correct
     mountBrandIcon(el.modalBrandIcon, state.brandRaw || row["Brand"] || "");
 
     el.modal.hidden = false;
+    document.body.classList.add("modal-open");
   }
 
   function closeModal() {
     if (el.modal) el.modal.hidden = true;
+    document.body.classList.remove("modal-open");
   }
 
   /* ===============================
@@ -484,6 +647,7 @@
         "aria-pressed",
         state.wrapper === "maduro" ? "true" : "false"
       );
+
     if (el.segNatural)
       el.segNatural.setAttribute(
         "aria-pressed",
@@ -511,25 +675,27 @@
       applyFilters();
     });
 
-    // Toggle: clicking words MUST work
+    // Toggle: clicking words must work
     safeOn(el.segMaduro, "click", () => setWrapper("maduro"));
     safeOn(el.segNatural, "click", () => setWrapper("natural"));
 
-    // Toggle: switch flips between maduro/natural when not ALL; if ALL, first click -> maduro
+    // Toggle: switch flips between maduro/natural; if ALL, first click -> maduro
     safeOn(el.segSwitch, "click", () => {
       if (state.wrapper === "all") return setWrapper("maduro");
       setWrapper(state.wrapper === "maduro" ? "natural" : "maduro");
     });
 
-    // Bands / Filters buttons (open their sheets)
+    // Bands / Filters buttons (open sheets)
     safeOn(el.btnBands, "click", () => openSheet(el.sheetBands));
     safeOn(el.btnFilters, "click", () => openSheet(el.sheetFilters));
 
     // Backdrop closes sheets
     safeOn(el.sheetBackdrop, "click", closeAllSheets);
 
-    // Close buttons (any element with data-sheet-close)
-    $$("[data-sheet-close]").forEach((btn) => safeOn(btn, "click", closeAllSheets));
+    // Close buttons anywhere
+    $$("[data-sheet-close]").forEach((btn) =>
+      safeOn(btn, "click", closeAllSheets)
+    );
 
     // Bands confirm/clear
     safeOn(el.bandsConfirm, "click", () => {
@@ -541,6 +707,12 @@
     safeOn(el.bandsClear, "click", () => {
       state.bands.clear();
       $$("#bands-options input[type='checkbox']").forEach((i) => (i.checked = false));
+      closeAllSheets();
+      applyFilters();
+    });
+
+    // Filters confirm (just close + apply)
+    safeOn(el.filtersConfirm, "click", () => {
       closeAllSheets();
       applyFilters();
     });
@@ -579,7 +751,7 @@
     wireEvents();
 
     if (!state.brand) {
-      setStatus('Missing ?brand= in URL.');
+      setStatus("Missing ?brand= in URL.");
       return;
     }
 
@@ -589,19 +761,21 @@
       .then((r) => r.text())
       .then(csvToObjects)
       .then((rows) => {
-        // Filter by Brand column
         state.all = rows.filter((r) => norm(r["Brand"]) === state.brand);
 
         if (!state.all.length) {
           setStatus(`No rows found for brand "${state.brandRaw}".`);
           renderBandsOptions();
+          renderFiltersHome();
           renderList();
           return;
         }
 
+        // Build UI
         renderBandsOptions();
+        renderFiltersHome();
 
-        // Default: show ALL (matches your screenshot)
+        // Default view shows ALL
         state.wrapper = "all";
         syncToggleUI();
 
