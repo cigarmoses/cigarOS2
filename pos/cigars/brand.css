@@ -238,7 +238,7 @@ body.brand-page{
 }
 
 .row-title{
-  font-size:18px;
+  font-size:16px;
   font-weight:700;
   letter-spacing:-.01em;
   line-height:1.05;
@@ -249,7 +249,7 @@ body.brand-page{
 }
 
 .row-sub{
-  font-size:13px;
+  font-size:12px;
   font-weight:700;
   color:rgba(255,255,255,.55);
   white-space:nowrap;
@@ -258,7 +258,7 @@ body.brand-page{
 }
 
 .row-price{
-  font-size:18px;
+  font-size:16px;
   font-weight:700;
   color:rgba(255,255,255,.92);
   padding-left:10px;
