@@ -1,89 +1,137 @@
-/* /pos/cigars/brand.js */
+/* /pos/cigars/brand.js — FINAL FIX */
 
 (() => {
+  /* ===============================
+     HELPERS
+  =============================== */
   const qs = (s, p = document) => p.querySelector(s);
   const qsa = (s, p = document) => [...p.querySelectorAll(s)];
+
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cur = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      const n = text[i + 1];
+
+      if (c === '"' && inQuotes && n === '"') {
+        cur += '"';
+        i++;
+      } else if (c === '"') {
+        inQuotes = !inQuotes;
+      } else if (c === ',' && !inQuotes) {
+        row.push(cur);
+        cur = '';
+      } else if ((c === '\n' || c === '\r') && !inQuotes) {
+        if (cur || row.length) {
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = '';
+        }
+      } else {
+        cur += c;
+      }
+    }
+
+    if (cur || row.length) {
+      row.push(cur);
+      rows.push(row);
+    }
+
+    return rows;
+  }
 
   /* ===============================
      ELEMENTS
   =============================== */
   const listEl = qs('#brand-list');
-  const statusEl = qs('#brand-status');
+  const titleEl = qs('#brand-title');
+  const brandIconEl = qs('#brand-icon');
 
   const btnFilters = qs('#btn-filters');
   const btnBands = qs('#btn-bands');
   const receiptFab = qs('#receipt-open');
 
   const backdrop = qs('#sheet-backdrop');
-
   const sheetFilters = qs('#sheet-filters');
   const sheetBands = qs('#sheet-bands');
   const sheetReceipt = qs('#sheet-receipt');
 
-  const filtersClose = qsa('[data-sheet-close]', sheetFilters);
-  const bandsClose = qsa('[data-sheet-close]', sheetBands);
-  const receiptClose = qsa('[data-sheet-close]', sheetReceipt);
-
-  const bandsGrid = qs('#bands-options');
   const receiptItems = qs('#receipt-items');
   const receiptBadge = qs('#receipt-count');
+  const bandsGrid = qs('#bands-options');
 
   /* ===============================
      STATE
   =============================== */
   let cigars = [];
   let receipt = [];
-  let activeBands = new Set();
 
   /* ===============================
-     SHEET CONTROLS (FIXED)
+     SHEETS
   =============================== */
-  function openSheet(sheet) {
+  function openSheet(s) {
     backdrop.hidden = false;
-    sheet.hidden = false;
+    s.hidden = false;
   }
 
-  function closeAllSheets() {
+  function closeSheets() {
     backdrop.hidden = true;
     sheetFilters.hidden = true;
     sheetBands.hidden = true;
     sheetReceipt.hidden = true;
   }
 
-  backdrop.addEventListener('click', closeAllSheets);
+  backdrop.onclick = closeSheets;
+  qsa('[data-sheet-close]').forEach(b => b.onclick = closeSheets);
 
-  btnFilters.addEventListener('click', () => openSheet(sheetFilters));
-  btnBands.addEventListener('click', () => openSheet(sheetBands));
-  receiptFab.addEventListener('click', () => openSheet(sheetReceipt));
-
-  filtersClose.forEach(b => b.addEventListener('click', closeAllSheets));
-  bandsClose.forEach(b => b.addEventListener('click', closeAllSheets));
-  receiptClose.forEach(b => b.addEventListener('click', closeAllSheets));
+  btnFilters.onclick = () => openSheet(sheetFilters);
+  btnBands.onclick = () => openSheet(sheetBands);
+  receiptFab.onclick = () => openSheet(sheetReceipt);
 
   /* ===============================
-     DATA LOAD
+     BAND SVG MATCHING
+  =============================== */
+  function bandSVG(c) {
+    const s = `${c.line} ${c.cigar}`.toLowerCase();
+    if (s.includes('1926')) return '/img/icons/padron1926serieband.svg';
+    if (s.includes('1964')) return '/img/icons/padron1964anniversaryband.svg';
+    if (s.includes('damaso')) return '/img/icons/padrondamasoband.svg';
+    return c.brandImg;
+  }
+
+  /* ===============================
+     LOAD BRAND
   =============================== */
   async function loadBrand() {
     const brand = new URLSearchParams(location.search).get('brand');
     if (!brand) return;
 
+    titleEl.textContent = brand;
+    brandIconEl.innerHTML = `<img src="/img/icons/brands/${brand.toLowerCase()}.svg">`;
+
     const res = await fetch(
       'https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv'
     );
 
-    const csv = await res.text();
-    const rows = csv.split('\n').slice(1);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    const header = rows.shift();
+
+    const idx = name => header.indexOf(name);
 
     cigars = rows
-      .map(r => r.split(','))
-      .filter(r => r[2]?.toLowerCase() === brand.toLowerCase())
+      .filter(r => r[idx('Brand')]?.toLowerCase() === brand.toLowerCase())
       .map(r => ({
-        manufacturerImg: r[1],
-        brandImg: r[4],
-        line: r[6] || '',
-        cigar: r[7] || '',
-        vitola: r[8] || '',
-        price: r[18] || '0.00'
+        brandImg: r[idx('Brand IMG')],
+        line: r[idx('Line')],
+        cigar: r[idx('Cigar')],
+        vitola: r[idx('Vitola')],
+        price: r[idx('MSRP')] || '0.00'
       }));
 
     renderList();
@@ -91,25 +139,7 @@
   }
 
   /* ===============================
-     BAND SVG LOGIC (FINAL)
-  =============================== */
-  function getBandSVG(c) {
-    const source = `${c.line} ${c.cigar}`.toLowerCase();
-
-    if (source.includes('1926'))
-      return '/img/icons/padron1926serieband.svg';
-
-    if (source.includes('1964'))
-      return '/img/icons/padron1964anniversaryband.svg';
-
-    if (source.includes('damaso'))
-      return '/img/icons/padrondamasoband.svg';
-
-    return null;
-  }
-
-  /* ===============================
-     LIST RENDER
+     RENDER LIST
   =============================== */
   function renderList() {
     listEl.innerHTML = '';
@@ -118,10 +148,8 @@
       const row = document.createElement('div');
       row.className = 'brand-row';
 
-      const band = getBandSVG(c);
-
       row.innerHTML = `
-        <img src="${c.brandImg}" width="42" height="42" />
+        <img src="${bandSVG(c)}" width="42" height="42" />
         <div class="row-main">
           <div class="row-title">${c.cigar}</div>
           <div class="row-sub">${c.vitola}</div>
@@ -130,57 +158,33 @@
         <button class="row-add">+</button>
       `;
 
-      qs('.row-add', row).addEventListener('click', () => addToReceipt(c));
+      qs('.row-add', row).onclick = () => addToReceipt(c);
       listEl.appendChild(row);
     });
   }
 
   /* ===============================
-     BANDS POPUP (WORKING)
+     BANDS POPUP (VISUAL)
   =============================== */
   function renderBands() {
-    const bands = [
-      { id: '1926', label: '1926 Serie' },
-      { id: '1964', label: '1964 Anniversary' },
-      { id: 'damaso', label: 'Damaso' }
-    ];
-
-    bandsGrid.innerHTML = '';
-
-    bands.forEach(b => {
-      const chip = document.createElement('button');
-      chip.className = 'chip';
-      chip.textContent = b.label;
-
-      chip.addEventListener('click', () => {
-        chip.classList.toggle('active');
-        activeBands.has(b.id)
-          ? activeBands.delete(b.id)
-          : activeBands.add(b.id);
-      });
-
-      bandsGrid.appendChild(chip);
-    });
+    bandsGrid.innerHTML = `
+      <img src="/img/icons/padron1926serieband.svg" height="48">
+      <img src="/img/icons/padron1964anniversaryband.svg" height="48">
+      <img src="/img/icons/padrondamasoband.svg" height="48">
+    `;
   }
 
   /* ===============================
-     RECEIPT (WORKING)
+     RECEIPT
   =============================== */
   function addToReceipt(c) {
     receipt.push(c);
-    updateReceipt();
-  }
-
-  function updateReceipt() {
-    receiptItems.innerHTML = '';
+    receiptBadge.hidden = false;
     receiptBadge.textContent = receipt.length;
-    receiptBadge.hidden = receipt.length === 0;
 
-    receipt.forEach(c => {
-      const div = document.createElement('div');
-      div.textContent = `${c.cigar} — ${c.price}`;
-      receiptItems.appendChild(div);
-    });
+    const div = document.createElement('div');
+    div.textContent = `${c.cigar} — ${c.price}`;
+    receiptItems.appendChild(div);
   }
 
   /* ===============================
