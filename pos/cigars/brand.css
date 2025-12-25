@@ -238,8 +238,8 @@ body.brand-page{
 }
 
 .row-title{
-  font-size:20px;
-  font-weight:900;
+  font-size:18px;
+  font-weight:700;
   letter-spacing:-.01em;
   line-height:1.05;
   color:rgba(255,255,255,.92);
@@ -249,8 +249,8 @@ body.brand-page{
 }
 
 .row-sub{
-  font-size:14px;
-  font-weight:800;
+  font-size:13px;
+  font-weight:700;
   color:rgba(255,255,255,.55);
   white-space:nowrap;
   overflow:hidden;
@@ -258,24 +258,24 @@ body.brand-page{
 }
 
 .row-price{
-  font-size:20px;
-  font-weight:900;
+  font-size:18px;
+  font-weight:700;
   color:rgba(255,255,255,.92);
   padding-left:10px;
-  border-left:1px solid rgba(255,255,255,.10);
-  min-width:86px;
+  border-left:1px solid rgba(255,255,255,.08);
+  min-width:78px;
   text-align:right;
 }
 
 .row-add{
-  width:34px;
-  height:34px;
+  width:30px;
+  height:30px;
   border-radius:999px;
   border:none;
   background:var(--green);
   color:#073018;
   font-weight:1000;
-  font-size:18px;
+  font-size:16px;
   display:grid;
   place-items:center;
   cursor:pointer;
