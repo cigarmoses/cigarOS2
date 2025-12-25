@@ -197,7 +197,7 @@ body.brand-page{
 
 .brand-row{
   display:grid;
-  grid-template-columns:52px 1fr auto auto; /* LEFT ICON | TEXT | PRICE | + */
+  grid-template-columns:44px 1fr auto auto; /* LEFT ICON | TEXT | PRICE | + */
   align-items:center;
   gap:12px;
   padding:14px 10px;
@@ -210,12 +210,12 @@ body.brand-page{
 
 /* LEFT brand icon per row (locks the SVG size) */
 .row-icon{
-  width:52px;
-  height:52px;
-  border-radius:14px;
+  width:44px;
+  height:44px;
+  border-radius:12px;
   overflow:hidden;
-  background:rgba(255,255,255,.10);
-  box-shadow:0 10px 24px rgba(0,0,0,.20);
+  background:rgba(255,255,255,.08);
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
   display:grid;
   place-items:center;
 }
