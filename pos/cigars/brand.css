@@ -1,4 +1,3 @@
-
 /* /pos/cigars/brand.css */
 
 /* ========== THEME ========== */
@@ -334,6 +333,7 @@ body.brand-page{
   font-size:12px;
   border:2px solid rgba(7,16,36,.85);
 }
+
 /* ===============================
    HARD FIX — SHEETS & BACKDROP
    =============================== */
@@ -366,6 +366,7 @@ body.brand-page{
 .receipt-fab {
   z-index: 20;
 }
+
 /* ====== ROW LEFT ICON (brand/cigar icon) ====== */
 .brand-row .row-ico{
   width:54px;
@@ -467,6 +468,18 @@ body.pos-modal-open{
   letter-spacing:.01em;
 }
 
+/* ✅ NEW: green confirm button (Bands modal uses this) */
+.pos-btn-green{
+  height:64px;
+  border-radius:18px;
+  border:1px solid rgba(46, 204, 113, .55);
+  background:rgba(46, 204, 113, .95);
+  color:#fff;
+  font-weight:1000;
+  letter-spacing:.01em;
+  font-size:18px;
+}
+
 /* Filters chips */
 .filter-grid{
   display:flex;
@@ -509,19 +522,51 @@ body.pos-modal-open{
   color:#fff;
 }
 
-/* Bands modal extra sizing */
+/* ============================================================
+   ✅ NEW: BANDS MODAL = majority of screen (centered card),
+   stacked large band cards, checkbox right, green confirm
+   ============================================================ */
+.bands-modal{
+  padding:18px; /* space around the modal like your screenshot */
+}
+
+/* override base modal sizing for the Bands modal */
 .bands-modal .pos-modal-card{
-  width:min(860px, 96vw);
+  width:min(420px, 92vw);
+  max-height:78vh; /* majority but not full-screen */
+  border-radius:26px;
 }
 
-.bands-grid{
-  display:grid;
-  grid-template-columns:1fr;
+/* body scroll if needed */
+.bands-modal .pos-modal-card-body{
+  padding:14px;
+  overflow:auto;
+}
+
+/* footer = single big green confirm */
+.bands-modal .pos-modal-card-foot{
+  display:block;
+  padding:14px;
+}
+
+.bands-modal .pos-modal-card-foot [data-clear]{
+  display:none !important; /* no Clear button in bands modal */
+}
+
+.bands-modal .pos-modal-card-foot [data-confirm]{
+  width:100%;
+}
+
+/* stacked big cards */
+.bands-modal .bands-grid{
+  display:flex;
+  flex-direction:column;
   gap:14px;
-  padding-bottom:14px;
+  padding-bottom:6px;
 }
 
-.band-card{
+.bands-modal .band-card{
+  width:100%;
   border:none;
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.12);
@@ -530,11 +575,12 @@ body.pos-modal-open{
   text-align:left;
   color:#fff;
 }
-.band-card.on{
-  outline:3px solid rgba(15,122,255,.55);
+
+.bands-modal .band-card.on{
+  outline:3px solid rgba(15,122,255,.45);
 }
 
-.band-imgwrap{
+.bands-modal .band-imgwrap{
   width:100%;
   border-radius:18px;
   overflow:hidden;
@@ -542,34 +588,39 @@ body.pos-modal-open{
   border:1px solid rgba(255,255,255,.10);
 }
 
-.band-imgwrap img{
+.bands-modal .band-imgwrap img{
   width:100%;
   height:auto;
   display:block;
 }
 
-.band-foot{
+.bands-modal .band-foot{
   display:flex;
   align-items:center;
   justify-content:space-between;
   margin-top:10px;
 }
 
-.band-label{
+.bands-modal .band-label{
   font-size:22px;
   font-weight:1000;
   letter-spacing:-.02em;
 }
 
-.band-check{
-  width:32px;
-  height:32px;
-  border-radius:10px;
-  background:rgba(15,122,255,.85);
+/* checkbox on right */
+.bands-modal .band-check{
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  border:2px solid rgba(255,255,255,.55);
+  background:rgba(255,255,255,.10);
   display:grid;
   place-items:center;
   font-weight:1000;
+  color:#fff;
 }
 
-/* Keep your existing receipt-fab styles; this just guarantees z-index above list */
-.receipt-fab{ z-index:2500; }
+.bands-modal .band-card.on .band-check{
+  background:rgba(15,122,255,.85);
+  border-color:rgba(15,122,255,.85);
+}
