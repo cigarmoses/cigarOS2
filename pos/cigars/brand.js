@@ -4,22 +4,13 @@
    - Renders rows
    - Filters + Bands modals (working close/confirm)
    - Uses shared /pos/cart.js for receipt + badge + persistence
-
-   FIXES IN THIS VERSION:
-   ✅ SVGs/images render again by normalizing paths:
-      - ensures leading "/" for local assets
-      - auto-fixes /img/icons/brand/  -> /img/icons/brands/ (plural)
-      - auto-fixes img/icons/...     -> /img/icons/...
-   ✅ Row icon now falls back correctly if a cigar image fails:
-      Cigar IMG -> Brand IMG -> Manufacturer IMG -> hidden
-   ✅ Prevents duplicate modal button listeners stacking on repeated opens
+   - FIX: normalizes icon paths to remove legacy /img/icons/brands/<letter>/... (ex: /s/)
 */
 
 (() => {
   const CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
-  // --- DOM ---
   const $ = (sel) => document.querySelector(sel);
 
   const brandTitleEl = $("#brand-title");
@@ -31,26 +22,21 @@
   const btnFilters = $("#btn-filters");
   const btnBands = $("#btn-bands");
 
-  // wrapper toggle (maduro/all/natural)
   const wrapperSeg = $("#wrapper-seg");
   const btnMaduro = $("#seg-maduro");
   const btnNatural = $("#seg-natural");
   const segDot = $("#seg-dot");
 
-  // --- State ---
   let ALL = [];
   let VIEW = [];
 
-  // modal state
   let pendingFilters = {};
   let activeFilters = {};
   let pendingBands = new Set();
   let activeBands = new Set();
 
-  // wrapper state
   let wrapperState = "all"; // maduro | natural | all
 
-  // ---------- helpers ----------
   const qp = (k) => new URLSearchParams(location.search).get(k) || "";
   const norm = (s) => (s || "").toString().trim().toLowerCase();
   const money = (n) =>
@@ -61,54 +47,42 @@
     return Number.isFinite(x) ? x : 0;
   };
 
-  // Match "Source column is line OR cigar name" rule for band filtering
-  function matchBandSource(row) {
-    return `${row.Line || ""} ${row.Cigar || ""}`.toLowerCase();
-  }
-
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg || "";
   }
 
-  // ---------- PATH / IMAGE NORMALIZATION (FIX FOR SVGs NOT SHOWING) ----------
-  function normalizeAssetPath(p) {
+  // ✅ FIX: normalize any icon path coming from the sheet / legacy logic
+  function normalizeIconPath(p) {
     let s = (p || "").toString().trim();
     if (!s) return "";
 
-    // Leave full URLs alone
+    // If already a full URL (https://...), leave it alone
     if (/^https?:\/\//i.test(s)) return s;
 
-    // If it starts with "img/..." make it "/img/..."
+    // Ensure leading slash for site-relative paths
+    if (s.startsWith("img/")) s = "/" + s;
     if (!s.startsWith("/")) s = "/" + s;
 
-    // Fix your known folder naming issue: brand vs brands
-    // (you told me icons live under /img/icons/brands plural)
+    // Normalize brand icon folder paths
+    // old: /img/icons/brand/...  -> new: /img/icons/brands/...
     s = s.replace(/^\/img\/icons\/brand\//i, "/img/icons/brands/");
-    s = s.replace(/^\/img\/icons\/brand\/?/i, "/img/icons/brands/");
 
-    // Some old rows might store "img/icons/brand/..." without leading slash
-    s = s.replace(/^\/img\/icons\/brand\//i, "/img/icons/brands/");
+    // old: /img/icons/brands/s/padron.svg -> new: /img/icons/brands/padron.svg
+    s = s.replace(/^\/img\/icons\/brands\/[a-z0-9]\/+/i, "/img/icons/brands/");
+
+    // Collapse any accidental double slashes
+    s = s.replace(/\/{2,}/g, "/");
 
     return s;
   }
 
-  function bestIconForRow(row) {
-    // prefer Cigar IMG, else Brand IMG, else Manufacturer IMG
-    const raw = row["Cigar IMG"] || row["Brand IMG"] || row["Manufacturer IMG"] || "";
-    return normalizeAssetPath(raw);
-  }
-
-  function brandIconForRow(row) {
-    return normalizeAssetPath(row?.["Brand IMG"] || "");
-  }
-
-  function manufacturerIconForRow(row) {
-    return normalizeAssetPath(row?.["Manufacturer IMG"] || "");
+  // "Source column is line OR cigar name" rule for band filtering
+  function matchBandSource(row) {
+    return `${row.Line || ""} ${row.Cigar || ""}`.toLowerCase();
   }
 
   // ---------- CSV parsing by HEADER ----------
   function parseCSV(text) {
-    // Robust CSV parser for quoted commas
     const rows = [];
     let i = 0,
       field = "",
@@ -164,7 +138,6 @@
     row.push(field);
     rows.push(row);
 
-    // Trim empty tail
     while (rows.length && rows[rows.length - 1].every((x) => !x || !x.trim())) rows.pop();
     return rows;
   }
@@ -186,14 +159,19 @@
     return out;
   }
 
+  // ---------- image resolution for cigar icon ----------
+  function bestIconForRow(row) {
+    // prefer Cigar IMG, else Brand IMG, else Manufacturer IMG
+    const raw = row["Cigar IMG"] || row["Brand IMG"] || row["Manufacturer IMG"] || "";
+    return normalizeIconPath(raw);
+  }
+
   // ---------- brand header ----------
   function applyBrandHeader(brandName, firstRow) {
     if (brandTitleEl) brandTitleEl.textContent = brandName || "Brand";
-
     if (brandIconEl) {
       const raw = firstRow?.["Brand IMG"] || firstRow?.["Manufacturer IMG"] || "";
-      const img = normalizeAssetPath(raw);
-
+      const img = normalizeIconPath(raw);
       if (img) {
         brandIconEl.src = img;
         brandIconEl.style.display = "block";
@@ -205,16 +183,6 @@
   }
 
   // ---------- list render ----------
-  function stableRowId(row) {
-    // prefer key, else make a stable string
-    const k = (row.key || "").trim();
-    if (k) return k;
-    const b = (row.Brand || "").trim();
-    const c = (row.Cigar || "").trim();
-    const v = (row.Vitola || "").trim();
-    return `${b}__${c}__${v}`.replace(/\s+/g, " ").trim();
-  }
-
   function renderList(rows) {
     if (!listEl) return;
 
@@ -231,63 +199,33 @@
         const name = row.Cigar || "";
         const sub = row.Vitola || "";
         const price = money(toNum(row.MSRP));
+        const icon = bestIconForRow(row);
 
-        const icon0 = bestIconForRow(row);
-        const icon1 = brandIconForRow(row);
-        const icon2 = manufacturerIconForRow(row);
-
-        const id = stableRowId(row);
+        const id = row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}`;
 
         return `
-          <div class="brand-row" data-id="${escapeHTML(id)}">
-            <img
-              class="row-ico"
-              src="${escapeAttr(icon0)}"
-              data-fallback1="${escapeAttr(icon1)}"
-              data-fallback2="${escapeAttr(icon2)}"
-              alt=""
-            />
-            <div class="row-main" data-open>
-              <div class="row-title">${escapeHTML(name)}</div>
-              <div class="row-sub">${escapeHTML(sub)}</div>
-            </div>
-            <div class="row-price">${price}</div>
-            <button class="row-add" type="button" aria-label="Add" data-add>+</button>
+        <div class="brand-row" data-id="${escapeHTML(id)}">
+          <img class="row-ico" src="${escapeAttr(icon)}" alt="" onerror="this.style.opacity='0';this.style.pointerEvents='none';"/>
+          <div class="row-main" data-open>
+            <div class="row-title">${escapeHTML(name)}</div>
+            <div class="row-sub">${escapeHTML(sub)}</div>
           </div>
-        `;
+          <div class="row-price">${price}</div>
+          <button class="row-add" type="button" aria-label="Add" data-add>+</button>
+        </div>
+      `;
       })
       .join("");
 
-    // icon fallback behavior (fixes "blank icons" when one path is wrong)
-    listEl.querySelectorAll("img.row-ico").forEach((img) => {
-      img.addEventListener(
-        "error",
-        () => {
-          const cur = img.getAttribute("src") || "";
-          const fb1 = img.getAttribute("data-fallback1") || "";
-          const fb2 = img.getAttribute("data-fallback2") || "";
-
-          if (fb1 && cur !== fb1) {
-            img.src = fb1;
-            return;
-          }
-          if (fb2 && cur !== fb2) {
-            img.src = fb2;
-            return;
-          }
-          img.style.visibility = "hidden";
-        },
-        { once: false }
-      );
-    });
-
-    // bind add buttons
     listEl.querySelectorAll("[data-add]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         const rowEl = e.currentTarget.closest(".brand-row");
         const id = rowEl?.getAttribute("data-id") || "";
 
-        const row = rows.find((x) => stableRowId(x) === id);
+        const row = rows.find((x) => {
+          const rid = x.key || `${x.Brand || ""}-${x.Cigar || ""}-${x.Vitola || ""}`;
+          return rid === id;
+        });
         if (!row) return;
 
         window.CigarOSCart?.add({
@@ -312,7 +250,6 @@
         if (!hay.includes(q)) return false;
       }
 
-      // Wrapper toggle (maduro/natural/all)
       if (wrapperState === "maduro") {
         const shade = norm(row["Wrapper Shade"] || row.Wrapper || "");
         if (!shade.includes("maduro")) return false;
@@ -321,14 +258,12 @@
         if (shade.includes("maduro") && !shade.includes("natural")) return false;
       }
 
-      // Active filters (chips)
       for (const [k, set] of Object.entries(activeFilters)) {
         if (!set || !set.size) continue;
         const v = norm(row[k] || "");
         if (!set.has(v)) return false;
       }
 
-      // Active bands (match against Line OR Cigar)
       if (activeBands.size) {
         const src = matchBandSource(row);
         let ok = false;
@@ -344,9 +279,9 @@
     renderList(VIEW);
   }
 
-  // ---------- wrapper toggle behavior (click words OR dot) ----------
+  // ---------- wrapper toggle behavior ----------
   function setWrapperState(state) {
-    wrapperState = state; // maduro | all | natural
+    wrapperState = state;
     if (wrapperSeg) wrapperSeg.dataset.state = state;
 
     if (btnMaduro) btnMaduro.setAttribute("aria-pressed", String(state === "maduro"));
@@ -394,7 +329,6 @@
       </div>
     `;
 
-    // close when tapping backdrop
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) hideModal(overlay);
     });
@@ -420,15 +354,7 @@
     document.body.classList.remove("pos-modal-open");
   }
 
-  function cloneFilterSets(obj) {
-    const out = {};
-    for (const [k, set] of Object.entries(obj || {})) {
-      out[k] = new Set(set ? [...set] : []);
-    }
-    return out;
-  }
-
-  // ---------- Filters modal (chips) ----------
+  // ---------- Filters modal ----------
   function openFilters() {
     const overlay = ensureModalBase("filters-modal", "Filters");
     const body = overlay.querySelector(".pos-modal-card-body");
@@ -449,7 +375,6 @@
       "Favorite",
     ];
 
-    // Build available options from ALL (brand scoped)
     const options = {};
     FIELDS.forEach((f) => (options[f] = new Set()));
     ALL.forEach((row) => {
@@ -463,27 +388,27 @@
 
     body.innerHTML = `
       <div class="filter-grid">
-        ${FIELDS.map((f) => {
-          const vals = [...options[f]].sort();
-          if (!vals.length) return "";
-          return `
+        ${FIELDS
+          .map((f) => {
+            const vals = [...options[f]].sort();
+            if (!vals.length) return "";
+            return `
             <div class="filter-block">
               <div class="filter-label">${escapeHTML(f)}</div>
               <div class="chip-wrap">
                 ${vals
                   .map((v) => {
                     const on = pendingFilters[f]?.has(v);
-                    return `<button type="button" class="chip ${
-                      on ? "on" : ""
-                    }" data-field="${escapeAttr(f)}" data-val="${escapeAttr(v)}">${escapeHTML(
-                      v
-                    )}</button>`;
+                    return `<button type="button" class="chip ${on ? "on" : ""}" data-field="${escapeAttr(
+                      f
+                    )}" data-val="${escapeAttr(v)}">${escapeHTML(v)}</button>`;
                   })
                   .join("")}
               </div>
             </div>
           `;
-        }).join("")}
+          })
+          .join("")}
       </div>
     `;
 
@@ -504,32 +429,50 @@
       });
     });
 
-    // IMPORTANT: use .onclick so we don't stack listeners every time you open modal
+    // IMPORTANT: bind once per open (fresh overlay each time) by replacing nodes
     const clearBtn = overlay.querySelector("[data-clear]");
     const confirmBtn = overlay.querySelector("[data-confirm]");
-
     if (clearBtn) {
-      clearBtn.onclick = () => {
+      const clone = clearBtn.cloneNode(true);
+      clearBtn.replaceWith(clone);
+      clone.addEventListener("click", () => {
         pendingFilters = {};
-        openFilters(); // rerender
-      };
+        openFilters();
+      });
     }
-
     if (confirmBtn) {
-      confirmBtn.onclick = () => {
+      const clone = confirmBtn.cloneNode(true);
+      confirmBtn.replaceWith(clone);
+      clone.addEventListener("click", () => {
         activeFilters = cloneFilterSets(pendingFilters);
         hideModal(overlay);
         applyAllFilters();
-      };
+      });
     }
 
     showModal(overlay);
   }
 
-  // ---------- Bands modal (centered with large images) ----------
+  function cloneFilterSets(obj) {
+    const out = {};
+    for (const [k, set] of Object.entries(obj || {})) {
+      out[k] = new Set(set ? [...set] : []);
+    }
+    return out;
+  }
+
+  // ---------- Bands modal ----------
   function openBands() {
     const overlay = ensureModalBase("bands-modal", "Bands");
     overlay.classList.add("bands-modal");
+
+    // Make confirm green (CSS provides .pos-btn-green)
+    const confirmBtn = overlay.querySelector("[data-confirm]");
+    if (confirmBtn) {
+      confirmBtn.classList.remove("pos-btn-blue");
+      confirmBtn.classList.add("pos-btn-green");
+    }
+
     const body = overlay.querySelector(".pos-modal-card-body");
 
     const brand = (qp("brand") || "").trim();
@@ -544,7 +487,6 @@
     };
 
     const bands = BAND_LIBRARY[b] || [];
-
     pendingBands = new Set(activeBands);
 
     body.innerHTML = `
@@ -553,18 +495,18 @@
           .map((x) => {
             const on = pendingBands.has(x.token);
             return `
-              <button type="button" class="band-card ${on ? "on" : ""}" data-token="${escapeAttr(
+            <button type="button" class="band-card ${on ? "on" : ""}" data-token="${escapeAttr(
               x.token
             )}">
-                <div class="band-imgwrap">
-                  <img src="${escapeAttr(x.src)}" alt="${escapeAttr(x.label)}" />
-                </div>
-                <div class="band-foot">
-                  <div class="band-label">${escapeHTML(x.label)}</div>
-                  <div class="band-check">${on ? "✓" : ""}</div>
-                </div>
-              </button>
-            `;
+              <div class="band-imgwrap">
+                <img src="${escapeAttr(x.src)}" alt="${escapeAttr(x.label)}" />
+              </div>
+              <div class="band-foot">
+                <div class="band-label">${escapeHTML(x.label)}</div>
+                <div class="band-check">${on ? "✓" : ""}</div>
+              </div>
+            </button>
+          `;
           })
           .join("")}
       </div>
@@ -576,6 +518,7 @@
         if (!token) return;
 
         const check = card.querySelector(".band-check");
+
         if (pendingBands.has(token)) {
           pendingBands.delete(token);
           card.classList.remove("on");
@@ -588,22 +531,27 @@
       });
     });
 
+    // Rebind buttons safely (avoid stacking listeners)
     const clearBtn = overlay.querySelector("[data-clear]");
-    const confirmBtn = overlay.querySelector("[data-confirm]");
+    const confirmBtn2 = overlay.querySelector("[data-confirm]");
 
     if (clearBtn) {
-      clearBtn.onclick = () => {
+      const clone = clearBtn.cloneNode(true);
+      clearBtn.replaceWith(clone);
+      clone.addEventListener("click", () => {
         pendingBands = new Set();
         openBands();
-      };
+      });
     }
 
-    if (confirmBtn) {
-      confirmBtn.onclick = () => {
+    if (confirmBtn2) {
+      const clone = confirmBtn2.cloneNode(true);
+      confirmBtn2.replaceWith(clone);
+      clone.addEventListener("click", () => {
         activeBands = new Set(pendingBands);
         hideModal(overlay);
         applyAllFilters();
-      };
+      });
     }
 
     showModal(overlay);
@@ -619,12 +567,11 @@
 
     setStatus("Loading…");
 
-    const url = `${CSV_URL}&_=${Date.now()}`; // bust cache
+    const url = `${CSV_URL}&_=${Date.now()}`;
     const res = await fetch(url, { cache: "no-store" });
     const text = await res.text();
     const table = tableFromCSV(text);
 
-    // Filter rows by Brand column (exact match)
     const brandNorm = norm(brand);
     ALL = table.filter((r) => norm(r.Brand) === brandNorm);
 
@@ -638,7 +585,6 @@
     applyAllFilters();
   }
 
-  // ---------- init ----------
   function init() {
     btnFilters?.addEventListener("click", openFilters);
     btnBands?.addEventListener("click", openBands);
