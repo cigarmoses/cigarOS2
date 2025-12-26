@@ -51,7 +51,7 @@ body.brand-page{
 .icon-btn svg{ width:24px;height:24px; stroke:rgba(255,255,255,.85); }
 
 /* ========== MAIN ========== */
-.brand-main{ padding:0 14px 120px; } /* extra bottom room for receipt button */
+.brand-main{ padding:0 14px 120px; }
 
 .brand-title-row{
   display:flex;
@@ -183,12 +183,11 @@ body.brand-page{
   transition:left .18s ease, opacity .18s ease;
 }
 
-/* knob states driven by JS via data-state */
 #wrapper-seg[data-state="maduro"] .seg-dot::after{ left:4px; opacity:1; }
 #wrapper-seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }
 #wrapper-seg[data-state="natural"] .seg-dot::after{ left:30px; opacity:1; }
 
-/* ========== LIST ROWS (LEFT ICON FIX) ========== */
+/* ========== LIST ROWS ========== */
 .brand-list{
   margin-top:14px;
   display:flex;
@@ -197,36 +196,20 @@ body.brand-page{
 
 .brand-row{
   display:grid;
-  grid-template-columns:44px 1fr auto auto; /* LEFT ICON | TEXT | PRICE | + */
+  grid-template-columns:54px 1fr auto auto; /* ICON | TEXT | PRICE | + */
   align-items:center;
   gap:12px;
   padding:14px 10px;
   border-top:1px solid rgba(255,255,255,.10);
 }
 
-.brand-row:first-child{
-  border-top:1px solid rgba(255,255,255,.10);
-}
-
-/* LEFT brand icon per row (locks the SVG size) */
-.row-icon{
-  width:44px;
-  height:44px;
-  border-radius:12px;
-  overflow:hidden;
-  background:rgba(255,255,255,.08);
-  box-shadow:0 8px 18px rgba(0,0,0,.18);
-  display:grid;
-  place-items:center;
-}
-
-.row-icon-img{
-  width:100% !important;
-  height:100% !important;
-  max-width:100%;
-  max-height:100%;
+.row-ico{
+  width:54px;
+  height:54px;
+  border-radius:14px;
   object-fit:cover;
-  display:block;
+  box-shadow:0 10px 24px rgba(0,0,0,.20);
+  background:rgba(255,255,255,.08);
 }
 
 .row-main{
@@ -307,7 +290,7 @@ body.brand-page{
   display:grid;
   place-items:center;
   padding:0;
-  z-index:50;
+  z-index:50; /* BELOW MODALS */
 }
 
 .receipt-fab img{
@@ -335,52 +318,12 @@ body.brand-page{
 }
 
 /* ===============================
-   HARD FIX — SHEETS & BACKDROP
+   MODAL SYSTEM (Filters / Bands)
    =============================== */
 
-/* iOS SAFARI: hidden MUST mean hidden */
-[hidden] {
-  display: none !important;
-}
+[hidden]{ display:none !important; }
 
-/* Backdrop must be above everything */
-.sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.35);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  z-index: 90;
-}
-
-/* All sheets must sit above FAB */
-.sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 100;
-}
-
-/* Receipt FAB must be BELOW sheets */
-.receipt-fab {
-  z-index: 20;
-}
-
-/* ====== ROW LEFT ICON (brand/cigar icon) ====== */
-.brand-row .row-ico{
-  width:54px;
-  height:54px;
-  border-radius:14px;
-  object-fit:cover;
-  box-shadow:0 10px 24px rgba(0,0,0,.20);
-  background:rgba(255,255,255,.08);
-}
-
-/* ====== MODAL SYSTEM (Filters / Bands) ====== */
-body.pos-modal-open{
-  overflow:hidden;
-}
+body.pos-modal-open{ overflow:hidden; }
 
 .pos-modal-overlay{
   position:fixed;
@@ -468,16 +411,15 @@ body.pos-modal-open{
   letter-spacing:.01em;
 }
 
-/* ✅ NEW: green confirm button (Bands modal uses this) */
+/* ✅ green confirm (Bands) */
 .pos-btn-green{
-  height:64px;
+  height:54px;
   border-radius:18px;
-  border:1px solid rgba(46, 204, 113, .55);
-  background:rgba(46, 204, 113, .95);
-  color:#fff;
-  font-weight:1000;
+  border:1px solid rgba(52,199,89,.55);
+  background:rgba(52,199,89,.95);
+  color:#ffffff;
+  font-weight:900;
   letter-spacing:.01em;
-  font-size:18px;
 }
 
 /* Filters chips */
@@ -522,51 +464,19 @@ body.pos-modal-open{
   color:#fff;
 }
 
-/* ============================================================
-   ✅ NEW: BANDS MODAL = majority of screen (centered card),
-   stacked large band cards, checkbox right, green confirm
-   ============================================================ */
-.bands-modal{
-  padding:18px; /* space around the modal like your screenshot */
-}
-
-/* override base modal sizing for the Bands modal */
+/* Bands modal sizing */
 .bands-modal .pos-modal-card{
-  width:min(420px, 92vw);
-  max-height:78vh; /* majority but not full-screen */
-  border-radius:26px;
+  width:min(860px, 96vw);
 }
 
-/* body scroll if needed */
-.bands-modal .pos-modal-card-body{
-  padding:14px;
-  overflow:auto;
-}
-
-/* footer = single big green confirm */
-.bands-modal .pos-modal-card-foot{
-  display:block;
-  padding:14px;
-}
-
-.bands-modal .pos-modal-card-foot [data-clear]{
-  display:none !important; /* no Clear button in bands modal */
-}
-
-.bands-modal .pos-modal-card-foot [data-confirm]{
-  width:100%;
-}
-
-/* stacked big cards */
-.bands-modal .bands-grid{
-  display:flex;
-  flex-direction:column;
+.bands-grid{
+  display:grid;
+  grid-template-columns:1fr;
   gap:14px;
-  padding-bottom:6px;
+  padding-bottom:14px;
 }
 
-.bands-modal .band-card{
-  width:100%;
+.band-card{
   border:none;
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.12);
@@ -575,12 +485,11 @@ body.pos-modal-open{
   text-align:left;
   color:#fff;
 }
-
-.bands-modal .band-card.on{
-  outline:3px solid rgba(15,122,255,.45);
+.band-card.on{
+  outline:3px solid rgba(15,122,255,.55);
 }
 
-.bands-modal .band-imgwrap{
+.band-imgwrap{
   width:100%;
   border-radius:18px;
   overflow:hidden;
@@ -588,39 +497,31 @@ body.pos-modal-open{
   border:1px solid rgba(255,255,255,.10);
 }
 
-.bands-modal .band-imgwrap img{
+.band-imgwrap img{
   width:100%;
   height:auto;
   display:block;
 }
 
-.bands-modal .band-foot{
+.band-foot{
   display:flex;
   align-items:center;
   justify-content:space-between;
   margin-top:10px;
 }
 
-.bands-modal .band-label{
+.band-label{
   font-size:22px;
   font-weight:1000;
   letter-spacing:-.02em;
 }
 
-/* checkbox on right */
-.bands-modal .band-check{
-  width:28px;
-  height:28px;
-  border-radius:8px;
-  border:2px solid rgba(255,255,255,.55);
-  background:rgba(255,255,255,.10);
+.band-check{
+  width:32px;
+  height:32px;
+  border-radius:10px;
+  background:rgba(15,122,255,.85);
   display:grid;
   place-items:center;
   font-weight:1000;
-  color:#fff;
-}
-
-.bands-modal .band-card.on .band-check{
-  background:rgba(15,122,255,.85);
-  border-color:rgba(15,122,255,.85);
 }
