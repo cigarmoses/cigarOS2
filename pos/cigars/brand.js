@@ -416,7 +416,12 @@
   function openBands() {
     const overlay = ensureModalBase("bands-modal", "Bands");
     overlay.classList.add("bands-modal"); // used by CSS to make bigger
-
+  // Make confirm button green + full width (like screenshot)
+const confirmBtn = overlay.querySelector("[data-confirm]");
+if (confirmBtn) {
+  confirmBtn.classList.remove("pos-btn-blue");
+  confirmBtn.classList.add("pos-btn-green");
+}
     const body = overlay.querySelector(".pos-modal-card-body");
 
     const brand = (qp("brand") || "").trim();
