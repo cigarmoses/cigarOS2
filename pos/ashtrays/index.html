@@ -11,7 +11,7 @@
 </head>
 <body class="category-page">
   <header class="category-topbar">
-    <button type="button" class="pos-back" id="category-back">
+    <button type="button" class="pos-back" id="category-back" aria-label="Back">
       <span class="pos-back-icon">←</span>
     </button>
   </header>
@@ -40,53 +40,42 @@
     </section>
   </main>
 
-  <div class="pos-receipt-fab" id="posReceiptFab">
-    <img src="/pos/assets/receipt-icon.png" alt="Receipt" />
-    <div class="pos-receipt-badge" id="posReceiptBadge">0</div>
-  </div>
+  <!-- Universal cart + receipt modal + universal receipt FAB -->
+  <script src="/pos/cart.js" defer></script>
 
-  <!-- Same JS snippet -->
+  <!-- Page behavior: add items to the universal cart, and back nav -->
   <script>
     (function () {
-      const STORAGE_KEY = "posReceiptItems";
-      function loadItems() {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-        catch (e) { return []; }
-      }
-      function saveItems(items) { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
-      function getCount(items) { return items.reduce((s, i) => s + (i.qty || 0), 0); }
-      function updateReceiptBadge() {
-        const badge = document.getElementById("posReceiptBadge");
-        if (!badge) return;
-        const items = loadItems();
-        const count = getCount(items);
-        if (count === 0) { badge.style.display = "none"; }
-        else { badge.textContent = String(count); badge.style.display = "flex"; }
-      }
-      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
-        card.addEventListener("click", () => {
-          const name = card.dataset.name || "Item";
-          const price = Number(card.dataset.price || "0");
-          const brand = card.dataset.brand || "";
-          const vitola = card.dataset.vitola || "";
-          const items = loadItems();
-          const key = brand + "|" + name + "|" + vitola;
-          const existing = items.find((i) => i.key === key);
-          if (existing) {
-            existing.qty += 1;
-            existing.lineTotal = Number((existing.qty * existing.price).toFixed(2));
-          } else {
-            items.push({ key, brand, name, vitola, price, qty: 1, lineTotal: Number(price.toFixed(2)) });
-          }
-          saveItems(items);
-          updateReceiptBadge();
+      function addFromCard(card) {
+        if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
+
+        const brand = card.dataset.brand || "";
+        const name = card.dataset.name || "Item";
+        const price = Number(card.dataset.price || "0");
+        const vitola = card.dataset.vitola || "";
+
+        const id = (brand + "|" + name + "|" + vitola).toLowerCase();
+
+        window.CigarOSCart.add({
+          id,
+          name,
+          brand,
+          sub: vitola,
+          price,
+          img: ""
         });
+      }
+
+      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
+        card.addEventListener("click", () => addFromCard(card));
       });
+
       const backBtn = document.getElementById("category-back");
-      if (backBtn) backBtn.addEventListener("click", () => { window.location.href = "/pos/"; });
-      const fab = document.getElementById("posReceiptFab");
-      if (fab) fab.addEventListener("click", () => { window.location.href = "/pos/receipt.html"; });
-      updateReceiptBadge();
+      if (backBtn) {
+        backBtn.addEventListener("click", () => {
+          window.location.href = "/pos/";
+        });
+      }
     })();
   </script>
 </body>
