@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/category.css" />
 
-  <!-- Receipt popup (local to this page) -->
+  <!-- Receipt popup + receipt list styling (local to this page) -->
   <style>
     .receipt-modal {
       position: fixed;
@@ -33,8 +33,8 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: min(420px, 92vw);
-      height: min(760px, 86vh);
+      width: min(520px, 94vw);
+      height: min(820px, 88vh);
       background: #fff;
       border-radius: 18px;
       overflow: hidden;
@@ -51,27 +51,221 @@
       border-bottom: 1px solid rgba(0,0,0,.06);
       background: #fff;
     }
+
     .receipt-modal-close {
       appearance: none;
       border: 0;
       background: transparent;
       color: #0f1a2c;
       font: inherit;
-      font-weight: 600;
+      font-weight: 700;
       padding: 6px 10px;
       border-radius: 10px;
     }
 
-    .receipt-modal-iframe {
+    .receipt-modal-title {
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-size: 20px;
+    }
+
+    .receipt-body {
+      padding: 16px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .receipt-head-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .receipt-date {
+      color: #6a7586;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .receipt-customer-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(15,26,44,.12);
+      background: #fff;
+      color: #0f1a2c;
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .receipt-customer-pill .label {
+      color: #6a7586;
+      font-weight: 700;
+    }
+
+    .receipt-h1 {
+      font-size: 44px;
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+      margin: 10px 0 14px;
+      font-weight: 900;
+      color: #0f1a2c;
+    }
+
+    .receipt-list {
+      border-top: 1px solid rgba(15,26,44,.10);
+      border-bottom: 1px solid rgba(15,26,44,.10);
+    }
+
+    .receipt-row {
+      display: grid;
+      grid-template-columns: 64px 1fr auto auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 0;
+      border-top: 1px solid rgba(15,26,44,.10);
+    }
+    .receipt-row:first-child { border-top: 0; }
+
+    .r-ico {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #eef2f6;
+      display: grid;
+      place-items: center;
+      flex: none;
+    }
+    .r-ico img {
       width: 100%;
       height: 100%;
-      border: 0;
+      object-fit: cover;
       display: block;
+    }
+
+    .r-text {
+      min-width: 0;
+    }
+    .r-cat {
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      color: #0f1a2c;
+      line-height: 1.12;
+      margin-bottom: 2px;
+    }
+    .r-name {
+      font-weight: 700;
+      font-size: 18px;
+      color: #0f1a2c;
+      line-height: 1.12;
+      margin-bottom: 2px;
+    }
+    .r-sub {
+      font-weight: 650;
+      font-size: 16px;
+      color: #6a7586;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .qty {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      background: #f2f4f7;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 900;
+      color: #0f1a2c;
+    }
+    .qty button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-weight: 900;
+      font-size: 22px;
+      line-height: 1;
+      padding: 0 6px;
+      color: #0f1a2c;
+    }
+    .qty .num {
+      min-width: 18px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .r-total {
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+      color: #0f1a2c;
+      white-space: nowrap;
+    }
+
+    .totals {
+      padding: 16px 0 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .tot-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 22px;
+      font-weight: 850;
+      color: #0f1a2c;
+    }
+    .tot-line span:last-child { font-weight: 900; }
+    .tot-line.total {
+      font-size: 34px;
+      font-weight: 950;
+      margin-top: 4px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    .btn-light, .btn-blue {
+      height: 58px;
+      border-radius: 16px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      font-size: 18px;
+    }
+    .btn-light {
+      border: 2px solid rgba(15,26,44,.10);
+      background: #fff;
+      color: #0f1a2c;
+    }
+    .btn-blue {
+      border: 0;
+      background: #0f7aff;
+      color: #fff;
+    }
+
+    .empty {
+      padding: 18px 0;
+      color: #6a7586;
+      font-weight: 700;
+      font-size: 16px;
     }
   </style>
 </head>
-<body class="category-page">
 
+<body class="category-page">
   <!-- Top bar -->
   <header class="category-topbar">
     <button type="button" class="pos-back" id="category-back">
@@ -90,7 +284,10 @@
 
       <!-- Row 1 -->
       <article class="category-card" data-receipt-item
-        data-brand="7up" data-name="7up" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/7up.svg"
+        data-brand=""
+        data-name="7up" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/7up.svg" alt="7up" />
         </div>
@@ -99,7 +296,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Coca-Cola" data-name="Coca-Cola" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/cocacola.svg"
+        data-brand=""
+        data-name="Coca-Cola" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/cocacola.svg" alt="Coca-Cola" />
         </div>
@@ -108,7 +308,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Coca-Cola" data-name="Coke Zero" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/cokezero.svg"
+        data-brand=""
+        data-name="Coke Zero" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/cokezero.svg" alt="Coke Zero" />
         </div>
@@ -117,7 +320,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Coca-Cola" data-name="Diet Coke" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/dietcoke.svg"
+        data-brand=""
+        data-name="Diet Coke" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/dietcoke.svg" alt="Diet Coke" />
         </div>
@@ -127,7 +333,10 @@
 
       <!-- Row 2 -->
       <article class="category-card" data-receipt-item
-        data-brand="Dr Pepper" data-name="Dr Pepper" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/drpepper.svg"
+        data-brand=""
+        data-name="Dr Pepper" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/drpepper.svg" alt="Dr Pepper" />
         </div>
@@ -136,7 +345,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Dr Pepper" data-name="Diet Dr Pepper" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/dietdrpepper.svg"
+        data-brand=""
+        data-name="Diet Dr Pepper" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/dietdrpepper.svg" alt="Diet Dr Pepper" />
         </div>
@@ -145,7 +357,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Dunkin" data-name="Dunkin Iced Coffee" data-price="3.99">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/dunkin.svg"
+        data-brand=""
+        data-name="Dunkin Iced Coffee" data-price="3.99">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/dunkin.svg" alt="Dunkin Iced Coffee" />
         </div>
@@ -154,7 +369,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Gatorade" data-name="Gatorade" data-price="2.99">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/gatorade.svg"
+        data-brand=""
+        data-name="Gatorade" data-price="2.99">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/gatorade.svg" alt="Gatorade" />
         </div>
@@ -164,7 +382,10 @@
 
       <!-- Row 3 -->
       <article class="category-card" data-receipt-item
-        data-brand="Canada Dry" data-name="Ginger Ale" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/gingerale.svg"
+        data-brand=""
+        data-name="Ginger Ale" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/gingerale.svg" alt="Ginger Ale" />
         </div>
@@ -173,7 +394,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Gold Peak" data-name="Sweet Tea" data-price="2.49">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/gpsweettea.svg"
+        data-brand=""
+        data-name="Sweet Tea" data-price="2.49">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/gpsweettea.svg" alt="Gold Peak Sweet Tea" />
         </div>
@@ -182,7 +406,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Gold Peak" data-name="Unsweet Tea" data-price="2.49">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/gpunsweetenedtea.svg"
+        data-brand=""
+        data-name="Unsweet Tea" data-price="2.49">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/gpunsweetenedtea.svg" alt="Gold Peak Unsweet Tea" />
         </div>
@@ -191,7 +418,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Gold Peak" data-name="Zero Sugar Tea" data-price="2.49">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/gpzerosugarsweettea.svg"
+        data-brand=""
+        data-name="Zero Sugar Tea" data-price="2.49">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/gpzerosugarsweettea.svg" alt="Gold Peak Zero Sugar Sweet Tea" />
         </div>
@@ -201,7 +431,10 @@
 
       <!-- Row 4 -->
       <article class="category-card" data-receipt-item
-        data-brand="Monster" data-name="Monster Rehab" data-price="3.99">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/monstertea.svg"
+        data-brand=""
+        data-name="Monster Rehab" data-price="3.99">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/monstertea.svg" alt="Monster Rehab" />
         </div>
@@ -210,7 +443,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Mountain Dew" data-name="Mountain Dew" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/mountaindew.svg"
+        data-brand=""
+        data-name="Mountain Dew" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/mountaindew.svg" alt="Mountain Dew" />
         </div>
@@ -219,7 +455,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Pepsi" data-name="Pepsi" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/pepsi.svg"
+        data-brand=""
+        data-name="Pepsi" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/pepsi.svg" alt="Pepsi" />
         </div>
@@ -228,7 +467,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Red Bull" data-name="Red Bull" data-price="3.99">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/redbull.svg"
+        data-brand=""
+        data-name="Red Bull" data-price="3.99">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/redbull.svg" alt="Red Bull" />
         </div>
@@ -238,7 +480,10 @@
 
       <!-- Row 5 -->
       <article class="category-card" data-receipt-item
-        data-brand="A&W" data-name="Root Beer" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/rootbeer.svg"
+        data-brand=""
+        data-name="Root Beer" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/rootbeer.svg" alt="Root Beer" />
         </div>
@@ -247,7 +492,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Sprite" data-name="Sprite" data-price="1.50">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/sprite.svg"
+        data-brand=""
+        data-name="Sprite" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/sprite.svg" alt="Sprite" />
         </div>
@@ -256,7 +504,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Starbucks" data-name="Starbucks Coffee" data-price="3.99">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/starbucks.svg"
+        data-brand=""
+        data-name="Starbucks Coffee" data-price="3.99">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/starbucks.svg" alt="Starbucks Coffee" />
         </div>
@@ -265,7 +516,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Water" data-name="Water Bottle" data-price="1.00">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/water.svg"
+        data-brand=""
+        data-name="Water Bottle" data-price="1.00">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/water.svg" alt="Water Bottle" />
         </div>
@@ -274,7 +528,10 @@
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="McDonald's" data-name="McDonald's" data-price="1.99">
+        data-category="Food and Bevs"
+        data-img="/img/icons/foodandbevs/mcdonalds.svg"
+        data-brand=""
+        data-name="McDonald's" data-price="1.99">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/mcdonalds.svg" alt="McDonald's" />
         </div>
@@ -285,49 +542,144 @@
     </section>
   </main>
 
-  <!-- Floating receipt icon (FIXED to correct icon paths) -->
+  <!-- Floating receipt icon (correct icon paths) -->
   <div class="pos-receipt-fab" id="posReceiptFab">
     <img id="posReceiptIcon" src="/img/icons/receipt.png" alt="Receipt" />
     <div class="pos-receipt-badge" id="posReceiptBadge">0</div>
   </div>
 
-  <!-- Receipt popup modal -->
+  <!-- Receipt popup modal (renders cart directly) -->
   <div class="receipt-modal" id="receiptModal" aria-hidden="true">
     <div class="receipt-modal-backdrop" id="receiptModalBackdrop"></div>
     <div class="receipt-modal-sheet" role="dialog" aria-modal="true" aria-label="Receipt">
       <div class="receipt-modal-topbar">
         <button type="button" class="receipt-modal-close" id="receiptModalClose">Close</button>
-        <div style="font-weight:700;">Receipt</div>
+        <div class="receipt-modal-title">Receipt</div>
         <div style="width:56px;"></div>
       </div>
-      <iframe class="receipt-modal-iframe" id="receiptModalFrame" src="/pos/receipt.html" title="Receipt"></iframe>
+
+      <div class="receipt-body">
+        <div class="receipt-head-row">
+          <div class="receipt-date" id="receiptDate"></div>
+          <button type="button" class="receipt-customer-pill">
+            <span class="label">Customer:</span>
+            <span>Attach customer</span>
+            <span style="font-weight:900;">▾</span>
+          </button>
+        </div>
+
+        <div class="receipt-h1">Receipt</div>
+
+        <div class="receipt-list" id="receiptList"></div>
+
+        <div class="totals" id="receiptTotals"></div>
+
+        <div class="actions">
+          <button type="button" class="btn-light">SAVE DRAFT</button>
+          <button type="button" class="btn-blue">MOCKUP</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Shared category JS -->
   <script>
     (function () {
-      const STORAGE_KEY = "posReceiptItems";
+      const CART_KEY = "cigaros_cart_v1";
+      const TAX_RATE = 0.07;
+
       const ICON_GREEN = "/img/icons/receipt.png";
       const ICON_RED = "/img/icons/receiptred.png";
 
-      function loadItems() {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-        catch { return []; }
+      const $ = (sel) => document.querySelector(sel);
+
+      function safeJSON(s, fallback) {
+        try { return JSON.parse(s); } catch { return fallback; }
       }
 
-      function saveItems(items) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      function readCart() {
+        return safeJSON(localStorage.getItem(CART_KEY), { items: [] });
       }
 
-      function getCount(items) {
-        return items.reduce((sum, item) => sum + (item.qty || 0), 0);
+      function writeCart(cart) {
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
       }
 
-      function updateReceiptBadgeAndIcon() {
-        const badge = document.getElementById("posReceiptBadge");
-        const icon = document.getElementById("posReceiptIcon");
-        const count = getCount(loadItems());
+      function normalizeId(s) {
+        return (s || "").toString().trim().toLowerCase();
+      }
+
+      function money(n) {
+        const x = Number(n || 0);
+        return x.toFixed(2);
+      }
+
+      function nowStamp() {
+        try {
+          return new Date().toLocaleString(undefined, {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          });
+        } catch {
+          return new Date().toString();
+        }
+      }
+
+      function cartCount(cart) {
+        return (cart.items || []).reduce((sum, it) => sum + Number(it.qty || 0), 0);
+      }
+
+      function setQty(id, qty) {
+        const cart = readCart();
+        const idx = (cart.items || []).findIndex((x) => normalizeId(x.id) === normalizeId(id));
+        if (idx < 0) return;
+
+        const q = Math.max(0, Number(qty || 0));
+        if (q === 0) cart.items.splice(idx, 1);
+        else cart.items[idx].qty = q;
+
+        writeCart(cart);
+        updateFab();
+        renderReceipt();
+      }
+
+      function addItem(payload) {
+        const cart = readCart();
+        const id = normalizeId(payload.id || payload.key || payload.name);
+        if (!id) return;
+
+        const idx = (cart.items || []).findIndex((x) => normalizeId(x.id) === id);
+
+        if (idx >= 0) {
+          cart.items[idx].qty = Number(cart.items[idx].qty || 0) + 1;
+        } else {
+          cart.items.push({
+            id,
+            name: payload.name || "Item",
+            brand: payload.brand || "",   // used by cigars
+            sub: payload.sub || "",       // used by cigars
+            price: Number(payload.price || 0),
+            img: payload.img || "",
+            qty: 1,
+
+            // extras for non-cigar category styling
+            category: payload.category || "",
+            unitPrice: payload.unitPrice ?? payload.price ?? 0
+          });
+        }
+
+        writeCart(cart);
+        updateFab();
+      }
+
+      function updateFab() {
+        const cart = readCart();
+        const count = cartCount(cart);
+
+        const badge = $("#posReceiptBadge");
+        const icon = $("#posReceiptIcon");
 
         if (badge) {
           if (count > 0) {
@@ -340,60 +692,148 @@
 
         if (icon) {
           icon.src = count > 0 ? ICON_RED : ICON_GREEN;
-          icon.onerror = () => { icon.src = ICON_GREEN; }; // never show "?"
+          icon.onerror = () => { icon.src = ICON_GREEN; };
         }
       }
 
-      // Add items to receipt
-      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
-        card.addEventListener("click", () => {
-          const name = card.dataset.name || "Item";
-          const price = Number(card.dataset.price || "0");
-          const brand = card.dataset.brand || "";
-          const vitola = card.dataset.vitola || "";
+      function escapeHTML(s) {
+        return (s ?? "").toString()
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
 
-          const items = loadItems();
-          const key = `${brand}|${name}|${vitola}`;
-          const existing = items.find((i) => i.key === key);
+      function renderReceipt() {
+        const cart = readCart();
+        const items = cart.items || [];
 
-          if (existing) {
-            existing.qty += 1;
-            existing.lineTotal = Number((existing.qty * existing.price).toFixed(2));
-          } else {
-            items.push({
-              key,
-              brand,
-              name,
-              vitola,
-              price,
-              qty: 1,
-              lineTotal: Number(price.toFixed(2)),
-            });
+        const list = $("#receiptList");
+        const totals = $("#receiptTotals");
+        const dateEl = $("#receiptDate");
+        if (dateEl) dateEl.textContent = nowStamp();
+
+        if (!list || !totals) return;
+
+        if (!items.length) {
+          list.innerHTML = `<div class="empty">No items yet.</div>`;
+          totals.innerHTML = "";
+          return;
+        }
+
+        list.innerHTML = items.map((it) => {
+          const isNonCigar = !!it.category; // your non-cigar POS categories use this
+          const leftImg = it.img
+            ? `<img src="${escapeHTML(it.img)}" alt="" />`
+            : ``;
+
+          const lineTotal = Number(it.price || 0) * Number(it.qty || 0);
+
+          // NON-CIGAR format (your requested 7up layout)
+          if (isNonCigar) {
+            return `
+              <div class="receipt-row" data-id="${escapeHTML(it.id)}">
+                <div class="r-ico">${leftImg}</div>
+                <div class="r-text">
+                  <div class="r-cat">${escapeHTML(it.category)}</div>
+                  <div class="r-name">${escapeHTML(it.name)}</div>
+                  <div class="r-sub">${money(it.unitPrice)} </div>
+                </div>
+                <div class="qty">
+                  <button type="button" data-dec aria-label="Decrease">−</button>
+                  <div class="num">${Number(it.qty || 0)}</div>
+                  <button type="button" data-inc aria-label="Increase">+</button>
+                </div>
+                <div class="r-total">$${money(lineTotal)}</div>
+              </div>
+            `;
           }
 
-          saveItems(items);
-          updateReceiptBadgeAndIcon();
+          // CIGAR format (keep your existing cigar-style)
+          const subLine = `${escapeHTML(it.brand || "")}${it.sub ? ` • ${escapeHTML(it.sub)}` : ""}`;
+          return `
+            <div class="receipt-row" data-id="${escapeHTML(it.id)}">
+              <div class="r-ico">${leftImg}</div>
+              <div class="r-text">
+                <div class="r-name">${escapeHTML(it.name)}</div>
+                <div class="r-sub">${subLine}</div>
+              </div>
+              <div class="qty">
+                <button type="button" data-dec aria-label="Decrease">−</button>
+                <div class="num">${Number(it.qty || 0)}</div>
+                <button type="button" data-inc aria-label="Increase">+</button>
+              </div>
+              <div class="r-total">$${money(lineTotal)}</div>
+            </div>
+          `;
+        }).join("");
+
+        // Bind qty buttons
+        list.querySelectorAll(".receipt-row").forEach((row) => {
+          const id = row.getAttribute("data-id");
+          row.querySelector("[data-dec]")?.addEventListener("click", () => {
+            const c = readCart();
+            const item = c.items.find((x) => normalizeId(x.id) === normalizeId(id));
+            if (!item) return;
+            setQty(id, Number(item.qty || 0) - 1);
+          });
+          row.querySelector("[data-inc]")?.addEventListener("click", () => {
+            const c = readCart();
+            const item = c.items.find((x) => normalizeId(x.id) === normalizeId(id));
+            if (!item) return;
+            setQty(id, Number(item.qty || 0) + 1);
+          });
+        });
+
+        const subtotal = items.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.qty || 0)), 0);
+        const tax = subtotal * TAX_RATE;
+        const total = subtotal + tax;
+
+        totals.innerHTML = `
+          <div class="tot-line"><span>Subtotal</span><span>$${money(subtotal)}</span></div>
+          <div class="tot-line"><span>Tax</span><span>$${money(tax)}</span></div>
+          <div class="tot-line total"><span>Total</span><span>$${money(total)}</span></div>
+        `;
+      }
+
+      // Add items (NOW goes into cigaros_cart_v1 so it shows in receipt)
+      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const category = card.dataset.category || "Food and Bevs";
+          const name = card.dataset.name || "Item";
+          const unitPrice = Number(card.dataset.price || "0");
+          const img = card.dataset.img || "";
+
+          // ID ensures stacking
+          const id = `${category}|${name}`.toLowerCase();
+
+          addItem({
+            id,
+            name,
+            price: unitPrice,      // price is per unit
+            img,
+            category,
+            unitPrice
+          });
         });
       });
 
       // Back nav
-      const backBtn = document.getElementById("category-back");
-      if (backBtn) {
-        backBtn.addEventListener("click", () => {
-          window.location.href = "/pos/";
-        });
-      }
+      const backBtn = $("#category-back");
+      if (backBtn) backBtn.addEventListener("click", () => { window.location.href = "/pos/"; });
 
       // Receipt popup open/close
-      const modal = document.getElementById("receiptModal");
-      const backdrop = document.getElementById("receiptModalBackdrop");
-      const closeBtn = document.getElementById("receiptModalClose");
-      const fab = document.getElementById("posReceiptFab");
+      const modal = $("#receiptModal");
+      const backdrop = $("#receiptModalBackdrop");
+      const closeBtn = $("#receiptModalClose");
+      const fab = $("#posReceiptFab");
 
       function openModal() {
         if (!modal) return;
         modal.classList.add("open");
         modal.setAttribute("aria-hidden", "false");
+        renderReceipt();
       }
       function closeModal() {
         if (!modal) return;
@@ -401,24 +841,20 @@
         modal.setAttribute("aria-hidden", "true");
       }
 
-      if (fab) {
-        fab.addEventListener("click", (e) => {
-          e.preventDefault();
-          openModal();
-        });
-      }
+      if (fab) fab.addEventListener("click", (e) => { e.preventDefault(); openModal(); });
       if (backdrop) backdrop.addEventListener("click", closeModal);
       if (closeBtn) closeBtn.addEventListener("click", closeModal);
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeModal();
-      });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
-      // Keep in sync if another page/tab modifies receipt
+      // Keep sync when other pages change the cart (cigars page, brand page, etc.)
       window.addEventListener("storage", (e) => {
-        if (e.key === STORAGE_KEY) updateReceiptBadgeAndIcon();
+        if (e.key === CART_KEY) {
+          updateFab();
+          if (modal && modal.classList.contains("open")) renderReceipt();
+        }
       });
 
-      updateReceiptBadgeAndIcon();
+      updateFab();
     })();
   </script>
 </body>
