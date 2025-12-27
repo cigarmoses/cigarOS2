@@ -2,10 +2,6 @@
    Shared cart + bottom-right invoice FAB + invoice modal + product "Add to invoice" confirm popup.
    Single source of truth across all POS pages.
 
-   Storage:
-   - CART_KEY: active open invoice (persists across pages until saved/confirmed)
-   - (sales + customers can be wired next; this file focuses on the cart/invoice UX)
-
    Icon logic:
    - Green icon when cart empty: /img/icons/receipt.png
    - Red icon when cart has items: /img/icons/receiptred.png
@@ -36,11 +32,7 @@
   };
 
   const safeJSON = (s, fallback) => {
-    try {
-      return JSON.parse(s);
-    } catch {
-      return fallback;
-    }
+    try { return JSON.parse(s); } catch { return fallback; }
   };
 
   const norm = (s) => (s || "").toString().trim().toLowerCase();
@@ -72,10 +64,10 @@
   function addItem(payload) {
     const cart = readCart();
 
-    // stable id (category|brand|name|sub)
     const id =
       payload.id ||
       `${payload.kind || ""}|${payload.category || ""}|${payload.brand || ""}|${payload.name || ""}|${payload.sub || ""}`;
+
     const key = norm(id);
     if (!key) return;
 
@@ -90,15 +82,14 @@
         kind: payload.kind || "product", // "product" | "cigar"
         category: payload.category || "",
 
-        // product fields
         name: payload.name || "Item",
         price: Number(payload.price || 0),
         img: payload.img || "",
 
-        // cigar-ish fields (optional)
+        // cigar-ish optional fields
         brand: payload.brand || "",
-        sub: payload.sub || "", // vitola/size line
-        href: payload.href || "", // optional link for cigar name row
+        sub: payload.sub || "",
+        href: payload.href || "",
 
         qty: 1,
       });
@@ -132,14 +123,13 @@
     money,
   };
 
-  // ---------- styles (injected so every page gets correct FAB + modals) ----------
+  // ---------- styles ----------
   function ensureStyles() {
     if (document.getElementById("cigaros-cart-styles")) return;
 
     const css = document.createElement("style");
     css.id = "cigaros-cart-styles";
     css.textContent = `
-      /* Bottom-right invoice icon */
       .receipt-fab{
         position:fixed;
         right:16px;
@@ -180,7 +170,6 @@
         box-shadow:0 8px 16px rgba(0,0,0,0.22);
       }
 
-      /* Dimmed overlay */
       .pos-modal-overlay{
         position:fixed;
         inset:0;
@@ -192,7 +181,6 @@
         z-index:1000;
       }
 
-      /* Sheet */
       .pos-modal-sheet{
         width:min(520px, 100%);
         max-height:calc(100vh - 28px);
@@ -225,9 +213,7 @@
         font-size:12px;
         line-height:1.2;
       }
-      .pos-modal-meta .pos-modal-date{
-        font-weight:600;
-      }
+      .pos-modal-meta .pos-modal-date{ font-weight:600; }
       .pos-modal-customer{
         margin-top:6px;
         display:flex;
@@ -235,10 +221,7 @@
         align-items:center;
         justify-content:flex-end;
       }
-      .pos-modal-customer .label{
-        color:#6a7586;
-        font-weight:600;
-      }
+      .pos-modal-customer .label{ color:#6a7586; font-weight:600; }
       .pos-modal-pill{
         border:1px solid #d1d7e2;
         background:#fff;
@@ -257,7 +240,6 @@
         color:#0f1a2c;
       }
 
-      /* Invoice list */
       .pos-invoice-list{
         padding:0 0 6px;
         overflow:auto;
@@ -356,10 +338,7 @@
         white-space:nowrap;
       }
 
-      /* Totals + actions */
-      .pos-totals{
-        padding:12px 16px 8px;
-      }
+      .pos-totals{ padding:12px 16px 8px; }
       .tot-line{
         display:flex;
         justify-content:space-between;
@@ -401,18 +380,36 @@
 
       /* Add-to-invoice confirm popup */
       .pos-confirm-card{
-        width:min(360px, 100%);
-        background:#e9e9ea;
+        width:min(380px, 100%);
+        background:#ffffff;
         border-radius:18px;
-        padding:18px 18px 16px;
+        padding:16px 18px 16px;
         box-shadow:0 24px 60px rgba(0,0,0,0.35);
         text-align:center;
+        position:relative;
+      }
+      .pos-confirm-close{
+        position:absolute;
+        top:10px;
+        right:12px;
+        width:32px;
+        height:32px;
+        border-radius:999px;
+        border:none;
+        background:rgba(0,0,0,0.06);
+        color:#6a7586;
+        font-size:18px;
+        font-weight:900;
+        cursor:pointer;
+        display:flex;
+        align-items:center;
+        justify-content:center;
       }
       .pos-confirm-ico{
-        width:72px;
-        height:72px;
+        width:76px;
+        height:76px;
         border-radius:18px;
-        margin:0 auto 10px;
+        margin:8px auto 10px;
         overflow:hidden;
         background:#dbe8f8;
       }
@@ -422,10 +419,10 @@
         object-fit:cover;
       }
       .pos-confirm-title{
-        font-size:28px;
+        font-size:30px;
         font-weight:900;
-        margin:0 0 12px;
-        color:#222;
+        margin:0 0 14px;
+        color:#0f1a2c;
       }
       .pos-confirm-btn{
         width:100%;
@@ -434,7 +431,8 @@
         padding:14px 14px;
         font-weight:900;
         font-size:18px;
-        background:#fff;
+        background:#f2f2f7;
+        color:#007aff;
         cursor:pointer;
       }
       .pos-confirm-btn:disabled{
@@ -447,9 +445,18 @@
     document.head.appendChild(css);
   }
 
+  // ---------- kill legacy receipt FABs ----------
+  function removeLegacyReceiptFabs() {
+    // These are from older pages: <div class="pos-receipt-fab" id="posReceiptFab"> ... </div>
+    document.querySelectorAll(".pos-receipt-fab, #posReceiptFab").forEach((el) => {
+      try { el.remove(); } catch {}
+    });
+  }
+
   // ---------- Invoice FAB ----------
   function ensureFab() {
     ensureStyles();
+    removeLegacyReceiptFabs();
 
     let fab = document.querySelector(".receipt-fab");
     if (!fab) {
@@ -481,7 +488,7 @@
     if (img) img.src = n > 0 ? "/img/icons/receiptred.png" : "/img/icons/receipt.png";
     if (badge) {
       badge.textContent = String(n);
-      badge.hidden = n <= 0;
+      badge.hidden = n <= 0; // IMPORTANT: never show 0
     }
   }
 
@@ -523,7 +530,6 @@
       </div>
     `;
 
-    // close behaviors
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) closeInvoiceModal();
     });
@@ -534,12 +540,10 @@
       if (!overlay.hidden && e.key === "Escape") closeInvoiceModal();
     });
 
-    // TODO: wire real customer dropdown later
     overlay.querySelector("#invoice-customer-pill")?.addEventListener("click", () => {
       alert("Customer attach UI will be wired next (loyalty points).");
     });
 
-    // TODO: wire save/confirm later
     overlay.querySelector("#invoice-save")?.addEventListener("click", () => {
       alert("Save Draft will be wired next.");
     });
@@ -567,55 +571,23 @@
       return;
     }
 
-    list.innerHTML = items
-      .map((it) => {
-        const unit = Number(it.price || 0);
-        const qty = Number(it.qty || 0);
-        const lineTotal = unit * qty;
+    list.innerHTML = items.map((it) => {
+      const unit = Number(it.price || 0);
+      const qty = Number(it.qty || 0);
+      const lineTotal = unit * qty;
 
-        const ico = it.img
-          ? `<div class="pos-invoice-ico"><img src="${escapeHTML(it.img)}" alt="" /></div>`
-          : `<div class="pos-invoice-ico"></div>`;
+      const ico = it.img
+        ? `<div class="pos-invoice-ico"><img src="${escapeHTML(it.img)}" alt="" /></div>`
+        : `<div class="pos-invoice-ico"></div>`;
 
-        // PRODUCT (Food & Bevs, Accessories, Ashtrays, Pipes, Packs):
-        // 1) img
-        // 2) category (bold), name, price
-        // 3) qty adjuster
-        // 4) line item total
-        if ((it.kind || "product") !== "cigar") {
-          return `
-            <div class="pos-invoice-row" data-id="${escapeHTML(it.id)}">
-              ${ico}
-              <div class="pos-invoice-main">
-                <div class="pos-invoice-cat">${escapeHTML(it.category || "Item")}</div>
-                <div class="pos-invoice-name">${escapeHTML(it.name || "Item")}</div>
-                <div class="pos-invoice-sub">${escapeHTML(money(unit))}</div>
-              </div>
-              <div class="pos-qty">
-                <button type="button" class="qty-btn" data-dec aria-label="Decrease">−</button>
-                <div class="qty-num">${qty}</div>
-                <button type="button" class="qty-btn" data-inc aria-label="Increase">+</button>
-              </div>
-              <div class="pos-line-total">$${money(lineTotal)}</div>
-            </div>
-          `;
-        }
-
-        // CIGAR (kept compatible; you’ll refine later):
-        // line1: cigar name (link if href)
-        // line2: brand
-        // line3: vitola/sub + MSRP (unit)
-        const cigarName = it.href
-          ? `<a href="${escapeHTML(it.href)}">${escapeHTML(it.name || "Cigar")}</a>`
-          : escapeHTML(it.name || "Cigar");
-
+      if ((it.kind || "product") !== "cigar") {
         return `
           <div class="pos-invoice-row" data-id="${escapeHTML(it.id)}">
             ${ico}
             <div class="pos-invoice-main">
-              <div class="pos-invoice-name">${cigarName}</div>
-              <div class="pos-invoice-sub">${escapeHTML(it.brand || "")}</div>
-              <div class="pos-invoice-sub">${escapeHTML(it.sub || "")}${it.sub ? " • " : ""}${escapeHTML(money(unit))}</div>
+              <div class="pos-invoice-cat">${escapeHTML(it.category || "Item")}</div>
+              <div class="pos-invoice-name">${escapeHTML(it.name || "Item")}</div>
+              <div class="pos-invoice-sub">${escapeHTML(money(unit))}</div>
             </div>
             <div class="pos-qty">
               <button type="button" class="qty-btn" data-dec aria-label="Decrease">−</button>
@@ -625,10 +597,30 @@
             <div class="pos-line-total">$${money(lineTotal)}</div>
           </div>
         `;
-      })
-      .join("");
+      }
 
-    // bind qty buttons
+      const cigarName = it.href
+        ? `<a href="${escapeHTML(it.href)}">${escapeHTML(it.name || "Cigar")}</a>`
+        : escapeHTML(it.name || "Cigar");
+
+      return `
+        <div class="pos-invoice-row" data-id="${escapeHTML(it.id)}">
+          ${ico}
+          <div class="pos-invoice-main">
+            <div class="pos-invoice-name">${cigarName}</div>
+            <div class="pos-invoice-sub">${escapeHTML(it.brand || "")}</div>
+            <div class="pos-invoice-sub">${escapeHTML(it.sub || "")}${it.sub ? " • " : ""}${escapeHTML(money(unit))}</div>
+          </div>
+          <div class="pos-qty">
+            <button type="button" class="qty-btn" data-dec aria-label="Decrease">−</button>
+            <div class="qty-num">${qty}</div>
+            <button type="button" class="qty-btn" data-inc aria-label="Increase">+</button>
+          </div>
+          <div class="pos-line-total">$${money(lineTotal)}</div>
+        </div>
+      `;
+    }).join("");
+
     list.querySelectorAll(".pos-invoice-row").forEach((row) => {
       const id = row.getAttribute("data-id");
       row.querySelector("[data-dec]")?.addEventListener("click", () => {
@@ -647,10 +639,7 @@
       });
     });
 
-    const subtotal = items.reduce(
-      (sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0),
-      0
-    );
+    const subtotal = items.reduce((sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0), 0);
     const tax = subtotal * TAX_RATE;
     const total = subtotal + tax;
 
@@ -689,6 +678,7 @@
 
     overlay.innerHTML = `
       <div class="pos-confirm-card" role="dialog" aria-modal="true" aria-label="Add to invoice">
+        <button type="button" class="pos-confirm-close" id="addconfirm-x" aria-label="Close">×</button>
         <div class="pos-confirm-ico" id="addconfirm-ico"></div>
         <div class="pos-confirm-title" id="addconfirm-title">Item</div>
         <button type="button" class="pos-confirm-btn" id="addconfirm-btn">Add to invoice</button>
@@ -698,6 +688,9 @@
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) closeAddConfirm();
     });
+
+    overlay.querySelector("#addconfirm-x")?.addEventListener("click", closeAddConfirm);
+
     document.addEventListener("keydown", (e) => {
       if (!overlay.hidden && e.key === "Escape") closeAddConfirm();
     });
@@ -722,20 +715,21 @@
     if (title) title.textContent = `${name} - ${price}`;
 
     if (ico) {
-      ico.innerHTML = payload?.img
-        ? `<img src="${escapeHTML(payload.img)}" alt="" />`
-        : ``;
+      ico.innerHTML = payload?.img ? `<img src="${escapeHTML(payload.img)}" alt="" />` : ``;
     }
 
     if (btn) {
       btn.disabled = false;
       btn.onclick = () => {
-        if (!pendingPayload) return;
+        // IMPORTANT: Always close the popup even if something unexpected throws.
         btn.disabled = true;
-
-        addItem(pendingPayload);
-        updateFab();
-        closeAddConfirm();
+        try {
+          if (!pendingPayload) return;
+          addItem(pendingPayload);
+          updateFab();
+        } finally {
+          closeAddConfirm();
+        }
       };
     }
 
@@ -752,7 +746,6 @@
   }
 
   // ---------- click wiring for non-cigar product pages ----------
-  // Any element with [data-invoice-product] will trigger the add-confirm popup.
   function bindProductClicks() {
     document.querySelectorAll("[data-invoice-product]").forEach((el) => {
       el.addEventListener("click", () => {
@@ -768,7 +761,7 @@
     });
   }
 
-  // keep synced across pages/tabs
+  // keep synced across tabs/pages
   window.addEventListener("storage", (e) => {
     if (e.key === CART_KEY) updateFab();
   });
