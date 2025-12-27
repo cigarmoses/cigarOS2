@@ -9,6 +9,66 @@
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/category.css" />
+
+  <!-- Receipt popup (local to this page) -->
+  <style>
+    .receipt-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+    }
+    .receipt-modal.open { display: block; }
+
+    .receipt-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .receipt-modal-sheet {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(420px, 92vw);
+      height: min(760px, 86vh);
+      background: #fff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 70px rgba(0,0,0,.30);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .receipt-modal-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      background: #fff;
+    }
+    .receipt-modal-close {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: #0f1a2c;
+      font: inherit;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 10px;
+    }
+
+    .receipt-modal-iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+  </style>
 </head>
 <body class="category-page">
 
@@ -212,7 +272,8 @@
         <div class="category-card-name">Water Bottle</div>
         <div class="category-card-price">$1.00</div>
       </article>
-       <article class="category-card" data-receipt-item
+
+      <article class="category-card" data-receipt-item
         data-brand="McDonald's" data-name="McDonald's" data-price="1.99">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/mcdonalds.svg" alt="McDonald's" />
@@ -224,16 +285,31 @@
     </section>
   </main>
 
-  <!-- Floating receipt icon -->
+  <!-- Floating receipt icon (FIXED to correct icon paths) -->
   <div class="pos-receipt-fab" id="posReceiptFab">
-    <img src="/pos/assets/receipt-icon.png" alt="Receipt" />
+    <img id="posReceiptIcon" src="/img/icons/receipt.png" alt="Receipt" />
     <div class="pos-receipt-badge" id="posReceiptBadge">0</div>
+  </div>
+
+  <!-- Receipt popup modal -->
+  <div class="receipt-modal" id="receiptModal" aria-hidden="true">
+    <div class="receipt-modal-backdrop" id="receiptModalBackdrop"></div>
+    <div class="receipt-modal-sheet" role="dialog" aria-modal="true" aria-label="Receipt">
+      <div class="receipt-modal-topbar">
+        <button type="button" class="receipt-modal-close" id="receiptModalClose">Close</button>
+        <div style="font-weight:700;">Receipt</div>
+        <div style="width:56px;"></div>
+      </div>
+      <iframe class="receipt-modal-iframe" id="receiptModalFrame" src="/pos/receipt.html" title="Receipt"></iframe>
+    </div>
   </div>
 
   <!-- Shared category JS -->
   <script>
     (function () {
       const STORAGE_KEY = "posReceiptItems";
+      const ICON_GREEN = "/img/icons/receipt.png";
+      const ICON_RED = "/img/icons/receiptred.png";
 
       function loadItems() {
         try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
@@ -248,18 +324,27 @@
         return items.reduce((sum, item) => sum + (item.qty || 0), 0);
       }
 
-      function updateReceiptBadge() {
+      function updateReceiptBadgeAndIcon() {
         const badge = document.getElementById("posReceiptBadge");
-        if (!badge) return;
+        const icon = document.getElementById("posReceiptIcon");
         const count = getCount(loadItems());
-        if (count > 0) {
-          badge.textContent = count;
-          badge.style.display = "flex";
-        } else {
-          badge.style.display = "none";
+
+        if (badge) {
+          if (count > 0) {
+            badge.textContent = String(count);
+            badge.style.display = "flex";
+          } else {
+            badge.style.display = "none";
+          }
+        }
+
+        if (icon) {
+          icon.src = count > 0 ? ICON_RED : ICON_GREEN;
+          icon.onerror = () => { icon.src = ICON_GREEN; }; // never show "?"
         }
       }
 
+      // Add items to receipt
       document.querySelectorAll("[data-receipt-item]").forEach((card) => {
         card.addEventListener("click", () => {
           const name = card.dataset.name || "Item";
@@ -287,10 +372,11 @@
           }
 
           saveItems(items);
-          updateReceiptBadge();
+          updateReceiptBadgeAndIcon();
         });
       });
 
+      // Back nav
       const backBtn = document.getElementById("category-back");
       if (backBtn) {
         backBtn.addEventListener("click", () => {
@@ -298,14 +384,41 @@
         });
       }
 
+      // Receipt popup open/close
+      const modal = document.getElementById("receiptModal");
+      const backdrop = document.getElementById("receiptModalBackdrop");
+      const closeBtn = document.getElementById("receiptModalClose");
       const fab = document.getElementById("posReceiptFab");
-      if (fab) {
-        fab.addEventListener("click", () => {
-          window.location.href = "/pos/receipt.html";
-        });
+
+      function openModal() {
+        if (!modal) return;
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+      }
+      function closeModal() {
+        if (!modal) return;
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
       }
 
-      updateReceiptBadge();
+      if (fab) {
+        fab.addEventListener("click", (e) => {
+          e.preventDefault();
+          openModal();
+        });
+      }
+      if (backdrop) backdrop.addEventListener("click", closeModal);
+      if (closeBtn) closeBtn.addEventListener("click", closeModal);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+
+      // Keep in sync if another page/tab modifies receipt
+      window.addEventListener("storage", (e) => {
+        if (e.key === STORAGE_KEY) updateReceiptBadgeAndIcon();
+      });
+
+      updateReceiptBadgeAndIcon();
     })();
   </script>
 </body>
