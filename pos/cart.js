@@ -1,40 +1,56 @@
 /* /pos/cart.js
-   Shared cart + INVOICE FAB + INVOICE modal + "Add to Bill" confirm modal
+   Shared cart + INVOICE FAB + INVOICE modal
+   + Add-to-bill confirm modal (non-cigar categories)
+   + Customer attach (search by first/last/phone/email)
+   + Confirm Sale -> awards loyalty points + saves sale + clears cart
+   + Save Draft -> saves draft invoice
 
-   Storage key: cigaros_cart_v1
-   Receipt icon:
-     /img/icons/receipt.png (empty)
-     /img/icons/receiptred.png (has open items)
-
-   Exposes:
-     window.CigarOSCart.add(payload)        // direct add (cigars can use this)
-     window.CigarOSCart.promptAdd(payload)  // shows Add-to-Bill confirm modal (non-cigar categories)
-
-   Optional page-level meta override:
-     window.CigarOSInvoiceMeta = {
-       shopName: "Smoke Cigar Shop",
-       invoiceNumber: "INV# 123456"
-     }
+   Storage:
+     Cart:         cigaros_cart_v1
+     Invoice meta: cigaros_invoice_meta_v1 (customer attachment)
+     Customers:    cigaros_customers_v1
+     Sales:        cigaros_sales_v1
+     Drafts:       cigaros_invoice_drafts_v1
 */
 
 (() => {
+  // ---------- config ----------
   const CART_KEY = "cigaros_cart_v1";
+  const META_KEY = "cigaros_invoice_meta_v1";
+  const CUSTOMERS_KEY = "cigaros_customers_v1";
+  const SALES_KEY = "cigaros_sales_v1";
+  const DRAFTS_KEY = "cigaros_invoice_drafts_v1";
+
   const TAX_RATE = 0.07;
 
   const ICON_GREEN = "/img/icons/receipt.png";
   const ICON_RED = "/img/icons/receiptred.png";
 
-  // ---------- utils ----------
-  const $ = (sel) => document.querySelector(sel);
-
-  const money = (n) => Number(n || 0).toFixed(2);
-
-  const safeJSON = (s, fallback) => {
-    try { return JSON.parse(s); } catch { return fallback; }
+  // Points config (override per shop if you want)
+  // Example:
+  // window.CigarOSLoyalty = { pointsPerDollar: 1, basis: "subtotal" } // or "total"
+  const loyaltyCfg = () => {
+    const cfg = window.CigarOSLoyalty || {};
+    return {
+      pointsPerDollar: Number(cfg.pointsPerDollar ?? 1),
+      basis: (cfg.basis === "total" ? "total" : "subtotal"),
+    };
   };
 
-  const normalizeId = (s) => (s || "").toString().trim().toLowerCase();
+  // Optional invoice header meta override:
+  // window.CigarOSInvoiceMeta = { shopName:"Smoke Cigar Shop", invoiceNumber:"INV# 123456" }
+  function getInvoiceHeaderMeta() {
+    const meta = window.CigarOSInvoiceMeta || {};
+    return {
+      shopName: meta.shopName || "Smoke Cigar Shop",
+      invoiceNumber: meta.invoiceNumber || "INV# 123456",
+    };
+  }
 
+  // ---------- utils ----------
+  const money = (n) => Number(n || 0).toFixed(2);
+  const safeJSON = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
+  const normalizeId = (s) => (s || "").toString().trim().toLowerCase();
   const escapeHTML = (s) => (s ?? "").toString()
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -44,7 +60,6 @@
 
   const nowStamp = () => {
     try {
-      // "Wednesday 10/22/25 11:02 PM"
       const d = new Date();
       const weekday = d.toLocaleString(undefined, { weekday: "long" });
       const date = d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "2-digit" });
@@ -55,24 +70,26 @@
     }
   };
 
-  function getInvoiceMeta() {
-    const meta = window.CigarOSInvoiceMeta || {};
-    return {
-      shopName: meta.shopName || "Smoke Cigar Shop",
-      invoiceNumber: meta.invoiceNumber || "INV# 123456",
-    };
+  const uid = () => {
+    // short-ish unique id
+    return (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toUpperCase();
+  };
+
+  function readKey(key, fallback) {
+    return safeJSON(localStorage.getItem(key), fallback);
+  }
+  function writeKey(key, val) {
+    localStorage.setItem(key, JSON.stringify(val));
   }
 
   // ---------- cart state ----------
   function readCart() {
-    return safeJSON(localStorage.getItem(CART_KEY), { items: [] });
+    return readKey(CART_KEY, { items: [] });
   }
-
   function writeCart(cart) {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    writeKey(CART_KEY, cart);
     window.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: cart }));
   }
-
   function cartCount(cart) {
     return (cart.items || []).reduce((sum, it) => sum + Number(it.qty || 0), 0);
   }
@@ -83,8 +100,6 @@
     if (!id) return;
 
     const idx = (cart.items || []).findIndex((x) => normalizeId(x.id) === id);
-
-    // Store unit price in `price`
     const unitPrice = Number(payload.price ?? 0);
 
     if (idx >= 0) {
@@ -93,8 +108,6 @@
       cart.items.push({
         id,
         qty: 1,
-
-        // shared fields
         img: payload.img || "",
 
         // NON-CIGAR
@@ -103,13 +116,13 @@
         price: unitPrice, // unit price
 
         // CIGAR (optional)
-        cigarName: payload.cigarName || "",     // display name (optional)
-        cigarLine: payload.cigarLine || "",     // line (optional)
-        brand: payload.brand || "",             // brand name
-        vitola: payload.vitola || "",           // vitola string
-        msrp: payload.msrp ?? "",               // msrp number/string
-        url: payload.url || "",                 // hyperlink for cigar line+name
-        isCigar: !!payload.isCigar,             // bool
+        cigarName: payload.cigarName || "",
+        cigarLine: payload.cigarLine || "",
+        brand: payload.brand || "",
+        vitola: payload.vitola || "",
+        msrp: payload.msrp ?? "",
+        url: payload.url || "",
+        isCigar: !!payload.isCigar,
       });
     }
 
@@ -132,6 +145,66 @@
     writeCart({ items: [] });
   }
 
+  // ---------- invoice meta (attached customer) ----------
+  function readInvoiceMeta() {
+    return readKey(META_KEY, { customerId: "", customerLabel: "" });
+  }
+  function writeInvoiceMeta(meta) {
+    writeKey(META_KEY, meta);
+    window.dispatchEvent(new CustomEvent("cigaros:invoice-meta-changed", { detail: meta }));
+  }
+  function detachCustomer() {
+    writeInvoiceMeta({ customerId: "", customerLabel: "" });
+  }
+
+  // ---------- customers + loyalty ----------
+  function readCustomers() {
+    return readKey(CUSTOMERS_KEY, []);
+  }
+  function writeCustomers(list) {
+    writeKey(CUSTOMERS_KEY, list);
+    window.dispatchEvent(new CustomEvent("cigaros:customers-changed", { detail: list }));
+  }
+
+  function computePoints(subtotal, total) {
+    const cfg = loyaltyCfg();
+    const basisVal = cfg.basis === "total" ? total : subtotal;
+    const pts = Math.floor(Number(basisVal || 0) * Number(cfg.pointsPerDollar || 1));
+    return Math.max(0, pts);
+  }
+
+  function awardPointsToCustomer(customerId, points) {
+    const pts = Number(points || 0);
+    if (!customerId || pts <= 0) return { ok: false };
+
+    const customers = readCustomers();
+    const idx = customers.findIndex((c) => String(c.id) === String(customerId));
+    if (idx < 0) return { ok: false };
+
+    customers[idx].points = Number(customers[idx].points || 0) + pts;
+    customers[idx].updatedAt = new Date().toISOString();
+    writeCustomers(customers);
+
+    return { ok: true, customer: customers[idx] };
+  }
+
+  // ---------- sales + drafts ----------
+  function readSales() {
+    return readKey(SALES_KEY, []);
+  }
+  function writeSales(list) {
+    writeKey(SALES_KEY, list);
+    window.dispatchEvent(new CustomEvent("cigaros:sales-changed", { detail: list }));
+  }
+
+  function readDrafts() {
+    return readKey(DRAFTS_KEY, []);
+  }
+  function writeDrafts(list) {
+    writeKey(DRAFTS_KEY, list);
+    window.dispatchEvent(new CustomEvent("cigaros:drafts-changed", { detail: list }));
+  }
+
   // ---------- expose API ----------
   window.CigarOSCart = {
     read: readCart,
@@ -140,6 +213,17 @@
     clear: clearCart,
     money,
     promptAdd: (payload) => openAddConfirm(payload),
+
+    // loyalty/customer helpers
+    customers: {
+      read: readCustomers,
+      write: writeCustomers,
+    },
+    invoiceMeta: {
+      read: readInvoiceMeta,
+      write: writeInvoiceMeta,
+      detach: detachCustomer,
+    },
   };
 
   // ---------- styles ----------
@@ -270,6 +354,11 @@
         align-items: center;
         justify-content: center;
         gap: 10px;
+        cursor: pointer;
+        user-select: none;
+      }
+      #invoice-overlay .inv-customer.is-attached {
+        color: rgba(15,26,44,.85);
       }
       #invoice-overlay .inv-customer .chev {
         width: 0; height: 0;
@@ -421,6 +510,12 @@
         border: 2px solid rgba(15,26,44,.18);
         background: #fff;
         color: rgba(15,26,44,.55);
+        cursor: pointer;
+      }
+      #invoice-overlay .inv-btn.primary {
+        background: #0f7aff;
+        border-color: #0f7aff;
+        color: #fff;
       }
 
       #invoice-overlay .inv-totals {
@@ -430,7 +525,6 @@
         font-weight: 950;
         color: rgba(15,26,44,.75);
       }
-
       #invoice-overlay .inv-totals .line {
         width: 100%;
         display: flex;
@@ -441,7 +535,6 @@
       #invoice-overlay .inv-totals .line strong {
         color: rgba(15,26,44,.85);
       }
-
       #invoice-overlay .inv-totals .grand {
         margin-top: 10px;
         font-size: 28px;
@@ -515,23 +608,136 @@
         height: 58px;
         border-radius: 18px;
         border: 0;
-        background: rgba(255,255,255,.80);
-        color: rgba(15,26,44,.45);
+        background: #ffffff;
+        color: #0f1a2c;
         font-weight: 950;
         font-size: 24px;
         letter-spacing: -0.01em;
+        cursor: pointer;
       }
-      #addbill-overlay .addbill-btn.is-active {
-        background: #ffffff;
+
+      /* ===== Customer picker modal ===== */
+      #cust-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 10001;
+        display: none;
+      }
+      #cust-overlay.open { display: block; }
+
+      #cust-overlay .cust-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,.35);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      #cust-overlay .cust-sheet {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: min(560px, 94vw);
+        height: min(760px, 86vh);
+        background: #fff;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 20px 80px rgba(0,0,0,.35);
+        display: flex;
+        flex-direction: column;
+      }
+
+      #cust-overlay .cust-head {
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid rgba(15,26,44,.10);
+        display: grid;
+        gap: 10px;
+      }
+      #cust-overlay .cust-toprow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      #cust-overlay .cust-title {
+        font-weight: 950;
+        font-size: 22px;
         color: #0f1a2c;
+      }
+      #cust-overlay .cust-close {
+        border: 0;
+        background: rgba(15,26,44,.06);
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        font-weight: 950;
+        color: rgba(15,26,44,.55);
+        cursor: pointer;
+      }
+
+      #cust-overlay .cust-search {
+        width: 100%;
+        height: 46px;
+        border-radius: 14px;
+        border: 2px solid rgba(15,26,44,.12);
+        padding: 0 14px;
+        font-weight: 900;
+        font-size: 16px;
+        outline: none;
+      }
+
+      #cust-overlay .cust-body {
+        padding: 10px 16px 16px;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+        flex: 1;
+      }
+
+      #cust-overlay .cust-card {
+        padding: 12px 12px;
+        border: 1px solid rgba(15,26,44,.10);
+        border-radius: 14px;
+        display: grid;
+        gap: 4px;
+        margin-bottom: 10px;
+        cursor: pointer;
+      }
+      #cust-overlay .cust-name {
+        font-weight: 950;
+        font-size: 18px;
+        color: #0f1a2c;
+      }
+      #cust-overlay .cust-sub {
+        font-weight: 850;
+        font-size: 14px;
+        color: rgba(15,26,44,.55);
+      }
+
+      #cust-overlay .cust-actions {
+        padding: 12px 16px 16px;
+        border-top: 1px solid rgba(15,26,44,.10);
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #cust-overlay .cust-btn {
+        height: 44px;
+        border-radius: 14px;
+        border: 2px solid rgba(15,26,44,.14);
+        background: #fff;
+        color: rgba(15,26,44,.65);
+        font-weight: 950;
+        padding: 0 14px;
+        cursor: pointer;
       }
     `;
     document.head.appendChild(style);
   }
 
-  // ---------- invoice FAB ----------
+  // ---------- receipt/invoice FAB ----------
   function ensureFab() {
-    // reuse any old fab if present
     let fab = document.querySelector(".receipt-fab") || document.querySelector(".pos-receipt-fab");
     if (!fab) {
       fab = document.createElement("button");
@@ -632,7 +838,7 @@
         <div class="inv-foot">
           <div class="inv-actions">
             <button type="button" class="inv-btn" id="inv-save">Save Draft</button>
-            <button type="button" class="inv-btn" id="inv-confirm">Confirm Sale</button>
+            <button type="button" class="inv-btn primary" id="inv-confirm">Confirm</button>
           </div>
 
           <div class="inv-totals" id="inv-totals"></div>
@@ -644,12 +850,10 @@
       if (e.target?.matches("[data-close]")) closeInvoiceModal();
     });
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        if (overlay.classList.contains("open")) closeInvoiceModal();
-        if (isAddOpen()) closeAddConfirm();
-      }
-    });
+    overlay.querySelector("#inv-customer")?.addEventListener("click", () => openCustomerPicker());
+
+    overlay.querySelector("#inv-save")?.addEventListener("click", () => saveDraft());
+    overlay.querySelector("#inv-confirm")?.addEventListener("click", () => confirmSale());
 
     document.body.appendChild(overlay);
     return overlay;
@@ -664,10 +868,23 @@
     const totalsEl = overlay.querySelector("#inv-totals");
 
     // header meta
-    const meta = getInvoiceMeta();
+    const head = getInvoiceHeaderMeta();
     overlay.querySelector("#inv-datetime").textContent = nowStamp();
-    overlay.querySelector("#inv-shop").textContent = meta.shopName;
-    overlay.querySelector("#inv-number").textContent = meta.invoiceNumber;
+    overlay.querySelector("#inv-shop").textContent = head.shopName;
+    overlay.querySelector("#inv-number").textContent = head.invoiceNumber;
+
+    // customer label
+    const meta = readInvoiceMeta();
+    const custBtn = overlay.querySelector("#inv-customer");
+    if (custBtn) {
+      if (meta.customerId && meta.customerLabel) {
+        custBtn.classList.add("is-attached");
+        custBtn.innerHTML = `${escapeHTML(meta.customerLabel)} <span class="chev"></span>`;
+      } else {
+        custBtn.classList.remove("is-attached");
+        custBtn.innerHTML = `Attach Saved Customer <span class="chev"></span>`;
+      }
+    }
 
     if (!listEl || !totalsEl) return;
 
@@ -683,16 +900,13 @@
       const unit = Number(it.price || 0);
       const lineTotal = unit * qty;
 
-      // image
       const imgHTML = it.img
         ? `<div class="inv-ico"><img src="${escapeHTML(it.img)}" alt=""></div>`
         : `<div class="inv-ico"></div>`;
 
-      // cigar?
       const isCigar = !!it.isCigar;
 
       if (!isCigar) {
-        // NON-CIGAR: 3 lines = category, name, unit price
         return `
           <div class="inv-row" data-id="${id}">
             ${imgHTML}
@@ -713,7 +927,6 @@
         `;
       }
 
-      // CIGAR: line1 = hyperlink cigar line+name, line2 = brand, line3 = vitola + MSRP
       const cigarLine = (it.cigarLine || "").trim();
       const cigarName = (it.cigarName || it.name || "").trim();
       const linkText = escapeHTML([cigarLine, cigarName].filter(Boolean).join(" "));
@@ -805,7 +1018,7 @@
       <div class="addbill-card" role="dialog" aria-modal="true" aria-label="Add to bill">
         <div class="addbill-ico" id="addbill-ico"></div>
         <div class="addbill-title" id="addbill-title"></div>
-        <button type="button" class="addbill-btn is-active" id="addbill-btn">Add to bill</button>
+        <button type="button" class="addbill-btn" id="addbill-btn">Add to bill</button>
       </div>
     `;
 
@@ -817,15 +1030,9 @@
     return overlay;
   }
 
-  function isAddOpen() {
-    const o = document.getElementById("addbill-overlay");
-    return !!o && o.classList.contains("open");
-  }
-
   let pendingAdd = null;
 
   function openAddConfirm(payload) {
-    // expected payload: { id, category, name, price, img }
     pendingAdd = payload || null;
 
     const overlay = ensureAddConfirm();
@@ -863,12 +1070,231 @@
     });
 
     updateFab();
-
     const inv = document.getElementById("invoice-overlay");
     if (inv && inv.classList.contains("open")) renderInvoice();
 
     closeAddConfirm();
   }
+
+  // ---------- customer picker ----------
+  function ensureCustomerPicker() {
+    let overlay = document.getElementById("cust-overlay");
+    if (overlay) return overlay;
+
+    overlay = document.createElement("div");
+    overlay.id = "cust-overlay";
+    overlay.innerHTML = `
+      <div class="cust-backdrop" data-close></div>
+
+      <div class="cust-sheet" role="dialog" aria-modal="true" aria-label="Select Customer">
+        <div class="cust-head">
+          <div class="cust-toprow">
+            <div class="cust-title">Attach Customer</div>
+            <button class="cust-close" type="button" data-close aria-label="Close">X</button>
+          </div>
+          <input class="cust-search" id="cust-search" type="search"
+                 placeholder="Search first, last, phone, or email" />
+        </div>
+
+        <div class="cust-body" id="cust-list"></div>
+
+        <div class="cust-actions">
+          <button type="button" class="cust-btn" id="cust-detach">Detach</button>
+          <button type="button" class="cust-btn" id="cust-closebtn">Close</button>
+        </div>
+      </div>
+    `;
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target?.matches("[data-close]")) closeCustomerPicker();
+    });
+
+    overlay.querySelector("#cust-closebtn")?.addEventListener("click", closeCustomerPicker);
+    overlay.querySelector("#cust-detach")?.addEventListener("click", () => {
+      detachCustomer();
+      closeCustomerPicker();
+      const inv = document.getElementById("invoice-overlay");
+      if (inv && inv.classList.contains("open")) renderInvoice();
+    });
+
+    const input = overlay.querySelector("#cust-search");
+    input?.addEventListener("input", () => renderCustomerList(input.value || ""));
+
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function openCustomerPicker() {
+    const overlay = ensureCustomerPicker();
+    overlay.classList.add("open");
+    document.body.classList.add("pos-modal-open");
+
+    const input = overlay.querySelector("#cust-search");
+    if (input) {
+      input.value = "";
+      setTimeout(() => input.focus(), 50);
+    }
+
+    renderCustomerList("");
+  }
+
+  function closeCustomerPicker() {
+    const overlay = document.getElementById("cust-overlay");
+    if (!overlay) return;
+    overlay.classList.remove("open");
+    document.body.classList.remove("pos-modal-open");
+  }
+
+  function renderCustomerList(query) {
+    const overlay = ensureCustomerPicker();
+    const listEl = overlay.querySelector("#cust-list");
+    if (!listEl) return;
+
+    const q = (query || "").trim().toLowerCase();
+    const customers = readCustomers();
+
+    const filtered = !q ? customers : customers.filter((c) => {
+      const hay = [
+        c.firstName, c.lastName, c.phone, c.email,
+        `${c.firstName || ""} ${c.lastName || ""}`.trim(),
+      ].join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+
+    if (!filtered.length) {
+      listEl.innerHTML = `<div class="inv-empty">No customers found.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map((c) => {
+      const name = `${c.firstName || ""} ${c.lastName || ""}`.trim() || c.email || c.phone || "Customer";
+      const sub = [
+        c.phone ? `Phone: ${c.phone}` : "",
+        c.email ? `Email: ${c.email}` : "",
+        `Points: ${Number(c.points || 0)}`,
+      ].filter(Boolean).join(" • ");
+
+      return `
+        <div class="cust-card" data-cust="${escapeHTML(c.id)}">
+          <div class="cust-name">${escapeHTML(name)}</div>
+          <div class="cust-sub">${escapeHTML(sub)}</div>
+        </div>
+      `;
+    }).join("");
+
+    listEl.querySelectorAll(".cust-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        const id = card.getAttribute("data-cust");
+        const cust = customers.find((x) => String(x.id) === String(id));
+        if (!cust) return;
+
+        const label = `${(cust.firstName || "").trim()} ${(cust.lastName || "").trim()}`.trim()
+          || cust.email || cust.phone || "Customer";
+
+        writeInvoiceMeta({ customerId: cust.id, customerLabel: label });
+
+        closeCustomerPicker();
+
+        const inv = document.getElementById("invoice-overlay");
+        if (inv && inv.classList.contains("open")) renderInvoice();
+      });
+    });
+  }
+
+  // ---------- draft + confirm ----------
+  function getTotalsFromCart() {
+    const items = readCart().items || [];
+    const subtotal = items.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.qty || 0)), 0);
+    const tax = subtotal * TAX_RATE;
+    const total = subtotal + tax;
+    return { subtotal, tax, total };
+  }
+
+  function saveDraft() {
+    const cart = readCart();
+    const items = cart.items || [];
+    if (!items.length) return;
+
+    const head = getInvoiceHeaderMeta();
+    const meta = readInvoiceMeta();
+    const totals = getTotalsFromCart();
+
+    const drafts = readDrafts();
+    drafts.unshift({
+      id: uid(),
+      createdAt: new Date().toISOString(),
+      shopName: head.shopName,
+      invoiceNumber: head.invoiceNumber,
+      customerId: meta.customerId || "",
+      customerLabel: meta.customerLabel || "",
+      items,
+      totals,
+      status: "draft",
+    });
+    writeDrafts(drafts);
+
+    // keep active cart (your call). If you want it cleared on draft, uncomment:
+    // clearCart(); detachCustomer();
+
+    // small UX: close invoice after saving
+    closeInvoiceModal();
+  }
+
+  function confirmSale() {
+    const cart = readCart();
+    const items = cart.items || [];
+    if (!items.length) return;
+
+    const head = getInvoiceHeaderMeta();
+    const meta = readInvoiceMeta();
+    const totals = getTotalsFromCart();
+
+    const pts = computePoints(totals.subtotal, totals.total);
+
+    // award points if customer attached
+    let awarded = null;
+    if (meta.customerId) {
+      awarded = awardPointsToCustomer(meta.customerId, pts);
+    }
+
+    // save sale record
+    const sales = readSales();
+    sales.unshift({
+      id: uid(),
+      createdAt: new Date().toISOString(),
+      shopName: head.shopName,
+      invoiceNumber: head.invoiceNumber,
+      customerId: meta.customerId || "",
+      customerLabel: meta.customerLabel || "",
+      pointsEarned: meta.customerId ? pts : 0,
+      items,
+      totals,
+      status: "paid",
+    });
+    writeSales(sales);
+
+    // clear active bill
+    clearCart();
+    detachCustomer();
+    updateFab();
+    renderInvoice();
+
+    // close modal
+    closeInvoiceModal();
+  }
+
+  // ---------- global close behaviors ----------
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const inv = document.getElementById("invoice-overlay");
+    if (inv && inv.classList.contains("open")) closeInvoiceModal();
+
+    const add = document.getElementById("addbill-overlay");
+    if (add && add.classList.contains("open")) closeAddConfirm();
+
+    const cust = document.getElementById("cust-overlay");
+    if (cust && cust.classList.contains("open")) closeCustomerPicker();
+  });
 
   // ---------- sync across pages/tabs ----------
   window.addEventListener("storage", (e) => {
@@ -876,6 +1302,10 @@
   });
   window.addEventListener("cigaros:cart-changed", () => {
     updateFab();
+    const inv = document.getElementById("invoice-overlay");
+    if (inv && inv.classList.contains("open")) renderInvoice();
+  });
+  window.addEventListener("cigaros:invoice-meta-changed", () => {
     const inv = document.getElementById("invoice-overlay");
     if (inv && inv.classList.contains("open")) renderInvoice();
   });
