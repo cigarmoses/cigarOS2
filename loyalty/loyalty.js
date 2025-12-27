@@ -1,539 +1,574 @@
-// loyalty/loyalty.js
+/* /loyalty/loyalty.js
+   Loyalty page controller (SF Pro / iOS style)
+   - Reads customers from localStorage: cigaros_customers_v1
+   - Reads confirmed sales from localStorage: cigaros_sales_v1
+   - Search + segmented modes (All / Regulars / Lockers)
+   - Customer profile dialog with purchase history from sales
+   - Simple inline edit mode for key fields, persisted back to customers
 
-const CONTACTS_URL = "/pos/pos-contacts.json";
+   Storage Keys (must match /pos/cart.js):
+     CUSTOMERS_KEY = "cigaros_customers_v1"
+     SALES_KEY     = "cigaros_sales_v1"
+*/
 
-let allContacts = [];
-let lockerData = [];
-let regularData = [];
-let currentMode = "all";
-let searchTerm = "";
-let lastRenderedList = [];
-let selectedContact = null;
+(() => {
+  const CUSTOMERS_KEY = "cigaros_customers_v1";
+  const SALES_KEY = "cigaros_sales_v1";
 
-// visit history in the modal
-let currentVisitHistory = [];
-let showAllVisits = false;
+  // ---------- DOM ----------
+  const $ = (sel) => document.querySelector(sel);
 
-function safeLower(v) {
-  if (v === null || v === undefined) return "";
-  return String(v).toLowerCase();
-}
+  const listEl = $("#list");
+  const summaryEl = $("#summary");
+  const searchEl = $("#search");
 
-function formatDate(iso) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (isNaN(d)) return "—";
-  return d.toLocaleDateString();
-}
+  const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
 
-function formatPoints(raw) {
-  if (raw === null || raw === undefined || raw === "") return "0 pts";
-  const num = Number(raw);
-  if (isNaN(num)) return String(raw);
-  return num.toLocaleString() + " pts";
-}
+  const dialog = $("#profileDialog");
+  const profileCard = $("#profileCard");
 
-function buildDisplayName(c) {
-  const first = c["First Name"] || "";
-  const last = c["Last Name"] || "";
-  const base = (first + " " + last).trim();
-  return base || c["Nickname AKA"] || "Unknown";
-}
+  const pName = $("#pName");
+  const pSub = $("#pSub");
+  const pPoints = $("#pPoints");
 
-function isLocker(c) {
-  const ln = (c["Locker number"] ?? "").toString().trim();
-  return ln !== "" && ln !== "0";
-}
+  const pLastPurchase = $("#pLastPurchase");
+  const pVisitList = $("#pVisitList");
+  const viewAllVisitsBtn = $("#viewAllVisitsBtn");
 
-// Regulars: based on "Regular" column
-function isRegular(c) {
-  const v = safeLower(c["Regular"]);
-  if (!v) return false;
-  if (v.includes("regular")) return true;
-  if (["reg", "r", "yes", "y", "1", "true"].includes(v)) return true;
-  return false;
-}
+  const pPhone = $("#pPhone");
+  const pEmail = $("#pEmail");
+  const pBirthday = $("#pBirthday");
 
-function buildMetaPills(c, lockerFlag, regularFlag) {
-  const pills = [];
+  const pFavBrands = $("#pFavBrands");
+  const pFavCigars = $("#pFavCigars");
+  const pRingPref = $("#pRingPref");
 
-  if (lockerFlag) {
-    const ln = c["Locker number"];
-    if (ln) pills.push("Locker " + ln);
-  }
+  const pWishlist = $("#pWishlist");
 
-  if (regularFlag) {
-    pills.push("Regular");
-  }
+  const pStatYtd = $("#pStatYtd");
+  const pStatVisits90 = $("#pStatVisits90");
+  const pStatGift = $("#pStatGift");
 
-  const lastPurchase = c["Last Purchase"];
-  if (lastPurchase) {
-    pills.push("Last visit " + formatDate(lastPurchase));
-  }
+  const editBtn = $("#editProfileBtn");
+  const closeBtn = profileCard?.querySelector(".profile-close");
 
-  const visits90 = c["90-day visits"];
-  if (visits90 !== null && visits90 !== undefined && visits90 !== "") {
-    pills.push("90-day visits: " + visits90);
-  }
+  const tonyFab = $("#tonyFab");
 
-  const favBrand = c["Fav brand 1"];
-  if (favBrand) {
-    pills.push("Fav brand: " + favBrand);
-  }
+  // ---------- state ----------
+  let state = {
+    mode: "all", // all | regular | lockers
+    query: "",
+    customers: [],
+    sales: [],
+    activeCustomerId: null,
+    showAllVisits: false,
+    editing: false,
+  };
 
-  return pills;
-}
+  // ---------- utils ----------
+  const safeJSON = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
+  const writeJSON = (key, val) => localStorage.setItem(key, JSON.stringify(val));
 
-/* ---------- STATUS ICONS (MILITARY / FIRST RESPONDERS) ---------- */
+  const norm = (s) => (s || "").toString().trim().toLowerCase();
 
-function hasFlagValue(value) {
-  const v = safeLower(value);
-  if (!v) return false;
-  if (["yes", "y", "1", "true"].includes(v)) return true;
-  // also treat the label itself as truthy if present
-  if (v.includes("military") || v.includes("first responder")) return true;
-  return false;
-}
+  const money = (n) => Number(n || 0).toFixed(2);
 
-function buildStatusIcons(c) {
-  const icons = [];
-
-  if (hasFlagValue(c["Military"])) {
-    icons.push({
-      src: "/img/icons/military.svg",
-      alt: "Military",
-    });
-  }
-
-  if (hasFlagValue(c["First Responders"])) {
-    icons.push({
-      src: "/img/icons/firstresponders.svg",
-      alt: "First responder",
-    });
-  }
-
-  if (!icons.length) return "";
-
-  return `
-    <div class="status-icons">
-      ${icons
-        .map(
-          (i) =>
-            `<img src="${i.src}" alt="${i.alt}" class="status-icon" loading="lazy">`
-        )
-        .join("")}
-    </div>
-  `;
-}
-
-/* ---------- LIST RENDER ---------- */
-
-function renderList() {
-  const listEl = document.getElementById("list");
-  const summaryEl = document.getElementById("summary");
-  if (!listEl || !summaryEl) return;
-
-  let base;
-  if (currentMode === "lockers") {
-    base = lockerData;
-  } else if (currentMode === "regular") {
-    base = regularData;
-  } else {
-    base = allContacts;
-  }
-
-  const term = searchTerm.trim().toLowerCase();
-  let filtered = base;
-
-  if (term) {
-    filtered = base.filter((c) => {
-      const haystack =
-        safeLower(c["First Name"]) +
-        " " +
-        safeLower(c["Last Name"]) +
-        " " +
-        safeLower(c["Nickname AKA"]) +
-        " " +
-        safeLower(c["Phone"]) +
-        " " +
-        safeLower(c["Email"]) +
-        " " +
-        safeLower(c["Locker number"]);
-      return haystack.includes(term);
-    });
-  }
-
-  filtered = [...filtered].sort((a, b) => {
-    if (currentMode === "lockers") {
-      const la = safeLower(a["Locker number"]);
-      const lb = safeLower(b["Locker number"]);
-      if (la && lb && la !== lb) {
-        return la.localeCompare(lb, undefined, { numeric: true });
-      }
+  const fmtDate = (isoOrDate) => {
+    try {
+      const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
+      return d.toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    } catch {
+      return "—";
     }
-    const lastA = safeLower(a["Last Name"]);
-    const lastB = safeLower(b["Last Name"]);
-    if (lastA !== lastB) return lastA.localeCompare(lastB);
-    const firstA = safeLower(a["First Name"]);
-    const firstB = safeLower(b["First Name"]);
-    return firstA.localeCompare(firstB);
-  });
+  };
 
-  lastRenderedList = filtered;
+  const fmtDateTime = (isoOrDate) => {
+    try {
+      const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
+      return d.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    } catch {
+      return "—";
+    }
+  };
 
-  let label = "customers";
-  if (currentMode === "lockers") label = "locker customers";
-  if (currentMode === "regular") label = "regular customers";
-
-  summaryEl.textContent = `${filtered.length.toLocaleString()} of ${base.length.toLocaleString()} ${label} shown`;
-
-  if (!filtered.length) {
-    listEl.innerHTML = `<div class="empty-state">No matching customers.</div>`;
-    return;
+  function escapeHTML(s) {
+    return (s ?? "")
+      .toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
-  const rowsHtml = filtered
-    .map((c, idx) => {
-      const lockerFlag = isLocker(c);
-      const regularFlag = isRegular(c);
+  // “locker vs regular” — you can tune this mapping later
+  function customerType(c) {
+    const t = norm(c.type || c.tier || c.segment || "");
+    if (t.includes("locker")) return "locker";
+    if (t.includes("regular")) return "regular";
+    // fallback: if they have a “locker number” or “locker” field
+    if (c.locker || c.lockerNumber) return "locker";
+    return "regular";
+  }
 
-      let rowClass = "neutral";
-      if (lockerFlag) rowClass = "locker";
-      else if (regularFlag) rowClass = "regular";
+  function displayName(c) {
+    const first = (c.firstName || "").trim();
+    const last = (c.lastName || "").trim();
+    const full = `${first} ${last}`.trim();
+    return full || c.name || c.email || c.phone || "Customer";
+  }
 
-      const displayName = buildDisplayName(c);
-      const email = c["Email"] || "";
-      const phone = c["Phone"] || "";
-      const birthday = c["Birthday"] ? formatDate(c["Birthday"]) : "";
-      const company = c["Company"] || "";
+  function nickname(c) {
+    return (c.nickname || c.nick || "").trim();
+  }
 
-      const metaPills = buildMetaPills(c, lockerFlag, regularFlag);
-      const statusIcons = buildStatusIcons(c);
+  // ---------- data access ----------
+  function readCustomers() {
+    const list = safeJSON(localStorage.getItem(CUSTOMERS_KEY), []);
+    return Array.isArray(list) ? list : [];
+  }
 
-      const contactPieces = [];
-      if (phone) contactPieces.push(phone);
-      if (email) contactPieces.push(email);
-      if (birthday) contactPieces.push("Birthday " + birthday);
-      if (company) contactPieces.push(company);
+  function writeCustomers(list) {
+    writeJSON(CUSTOMERS_KEY, list);
+  }
 
-      const contactsLine = contactPieces.join(" • ");
+  function readSales() {
+    const list = safeJSON(localStorage.getItem(SALES_KEY), []);
+    return Array.isArray(list) ? list : [];
+  }
 
-      return `
-        <div class="row ${rowClass}" data-idx="${idx}">
-          <div class="row-header">
-            <div class="name-block">
-              <div class="name-row">
-                <div class="name">${displayName}</div>
-                ${statusIcons}
-              </div>
-              ${
-                c["Nickname AKA"]
-                  ? `<div class="nickname">AKA ${c["Nickname AKA"]}</div>`
-                  : ""
-              }
-            </div>
-            <div class="points-pill">
-              ${formatPoints(c["Rewards"])}
-            </div>
-          </div>
-          ${
-            metaPills.length
-              ? `<div class="meta-line">
-                  ${metaPills.map((p) => `<span class="meta-pill">${p}</span>`).join("")}
-                 </div>`
-              : ""
-          }
-          ${
-            contactsLine
-              ? `<div class="contact-line">${contactsLine}</div>`
-              : ""
-          }
-        </div>
-      `;
-    })
-    .join("");
+  // sales for a given customer
+  function salesForCustomer(customerId) {
+    const id = String(customerId || "");
+    return (state.sales || [])
+      .filter((s) => String(s.customerId || "") === id)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
 
-  listEl.innerHTML = rowsHtml;
+  function lastSale(customerId) {
+    const s = salesForCustomer(customerId);
+    return s[0] || null;
+  }
 
-  // attach row click handlers
-  listEl.querySelectorAll(".row").forEach((rowEl) => {
-    rowEl.addEventListener("click", () => {
-      const idx = Number(rowEl.getAttribute("data-idx"));
-      const contact = lastRenderedList[idx];
-      if (contact) openProfile(contact);
+  function ytdSpend(customerId) {
+    const year = new Date().getFullYear();
+    const s = salesForCustomer(customerId);
+    return s.reduce((sum, sale) => {
+      const d = new Date(sale.createdAt);
+      if (d.getFullYear() !== year) return sum;
+      return sum + Number(sale.totals?.total || 0);
+    }, 0);
+  }
+
+  function visits90(customerId) {
+    const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    const s = salesForCustomer(customerId);
+    return s.filter((sale) => +new Date(sale.createdAt) >= cutoff).length;
+  }
+
+  // ---------- filtering ----------
+  function filteredCustomers() {
+    const q = norm(state.query);
+
+    let list = (state.customers || []).slice();
+
+    if (state.mode === "regular") {
+      list = list.filter((c) => customerType(c) === "regular");
+    } else if (state.mode === "lockers") {
+      list = list.filter((c) => customerType(c) === "locker");
+    }
+
+    if (q) {
+      list = list.filter((c) => {
+        const hay = [
+          displayName(c),
+          nickname(c),
+          c.firstName,
+          c.lastName,
+          c.phone,
+          c.email,
+        ].map(norm).join(" ");
+        return hay.includes(q);
+      });
+    }
+
+    // Sort: lockers first in all-mode, then by points desc, then name
+    list.sort((a, b) => {
+      if (state.mode === "all") {
+        const ta = customerType(a);
+        const tb = customerType(b);
+        if (ta !== tb) return ta === "locker" ? -1 : 1;
+      }
+      const pa = Number(a.points || 0);
+      const pb = Number(b.points || 0);
+      if (pb !== pa) return pb - pa;
+      return displayName(a).localeCompare(displayName(b));
     });
-  });
-}
 
-/* ---------- DATA LOAD ---------- */
+    return list;
+  }
 
-async function loadContacts() {
-  try {
-    const res = await fetch(CONTACTS_URL);
-    if (!res.ok) {
-      console.error("Failed to load contacts:", res.status, res.statusText);
+  // ---------- render list ----------
+  function render() {
+    const list = filteredCustomers();
+
+    if (summaryEl) {
+      const total = state.customers.length;
+      const showing = list.length;
+      summaryEl.textContent = `${showing} of ${total} customers`;
+    }
+
+    if (!listEl) return;
+
+    if (!list.length) {
+      listEl.innerHTML = `<div class="empty-state">No customers found</div>`;
       return;
     }
-    const data = await res.json();
 
-    allContacts = Array.isArray(data) ? data : [];
-    lockerData = allContacts.filter(isLocker);
-    regularData = allContacts.filter(isRegular);
+    listEl.innerHTML = list.map((c) => {
+      const type = customerType(c);
+      const rowClass = type === "locker" ? "row locker" : "row regular";
 
-    renderList();
-  } catch (err) {
-    console.error("Error loading contacts:", err);
-  }
-}
+      const name = escapeHTML(displayName(c));
+      const nick = escapeHTML(nickname(c));
+      const pts = Number(c.points || 0);
 
-function setMode(mode) {
-  currentMode = mode;
+      const phone = (c.phone || "").trim();
+      const email = (c.email || "").trim();
 
-  document
-    .querySelectorAll(".mode-btn")
-    .forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.mode === mode);
+      const last = lastSale(c.id);
+      const lastTxt = last ? `${fmtDate(last.createdAt)} • $${money(last.totals?.total || 0)}` : "—";
+
+      const tagType = type === "locker" ? "Locker" : "Regular";
+      const tagPts = `${pts} pts`;
+
+      return `
+        <div class="${rowClass}" data-id="${escapeHTML(c.id)}">
+          <div class="row-header">
+            <div class="name customer-name">${name}</div>
+            <div class="points-pill">${escapeHTML(tagPts)}</div>
+          </div>
+          ${nick ? `<div class="nickname">${nick}</div>` : ``}
+          <div class="meta-line">
+            <span class="meta-pill">${tagType}</span>
+            <span class="meta-pill">Last: ${escapeHTML(lastTxt)}</span>
+          </div>
+          <div class="contact-line">
+            ${escapeHTML([phone, email].filter(Boolean).join(" • ") || "")}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    listEl.querySelectorAll(".row").forEach((row) => {
+      row.addEventListener("click", () => {
+        const id = row.getAttribute("data-id");
+        openProfile(id);
+      });
     });
-
-  renderList();
-}
-
-/* ---------- VISIT HISTORY HELPERS ---------- */
-
-function getVisitHistory(contact) {
-  const arr =
-    contact.purchase_history ||
-    contact.purchaseHistory ||
-    contact.PurchaseHistory;
-  return Array.isArray(arr) ? arr : [];
-}
-
-function renderVisitHistory() {
-  const container = document.getElementById("pVisitList");
-  container.innerHTML = "";
-
-  if (!currentVisitHistory || !currentVisitHistory.length) {
-    container.innerHTML =
-      '<div class="visit-item"><span class="visit-date">No visit history yet</span></div>';
-    return;
   }
 
-  const items = showAllVisits
-    ? currentVisitHistory
-    : currentVisitHistory.slice(0, 6);
+  // ---------- profile dialog ----------
+  function openProfile(customerId) {
+    state.activeCustomerId = customerId;
+    state.showAllVisits = false;
+    state.editing = false;
+    profileCard?.classList.remove("editing");
 
-  items.forEach((v) => {
-    const row = document.createElement("div");
-    row.className = "visit-item";
-    const date = v.date ? formatDate(v.date) : "—";
-    const amount = v.amount != null ? `$${v.amount}` : "";
-    row.innerHTML = `
-      <span class="visit-date">${date}</span>
-      <span class="visit-amount">${amount}</span>
-    `;
-    container.appendChild(row);
-  });
+    const c = state.customers.find((x) => String(x.id) === String(customerId));
+    if (!c) return;
 
-  const btn = document.getElementById("viewAllVisitsBtn");
-  if (!btn) return;
-  if (!currentVisitHistory.length || currentVisitHistory.length <= 6) {
-    btn.disabled = true;
-    btn.textContent = "View all";
-  } else {
-    btn.disabled = false;
-    btn.textContent = showAllVisits ? "View less" : "View all";
-  }
-}
+    // header
+    if (pName) pName.textContent = displayName(c);
 
-/* ---------- PROFILE DIALOG ---------- */
+    const type = customerType(c) === "locker" ? "Locker" : "Regular";
+    const contact = [c.phone, c.email].filter(Boolean).join(" • ") || "Contact";
+    if (pSub) pSub.textContent = `${type} • ${contact}`;
 
-function fillChips(container, items) {
-  container.innerHTML = "";
-  if (!items.length) {
-    const span = document.createElement("span");
-    span.textContent = "None";
-    span.className = "chip";
-    container.appendChild(span);
-    return;
-  }
-  items.forEach((item) => {
-    const span = document.createElement("span");
-    span.textContent = item;
-    span.className = "chip";
-    container.appendChild(span);
-  });
-}
+    if (pPoints) pPoints.textContent = `${Number(c.points || 0)} pts`;
 
-function openProfile(c) {
-  selectedContact = c;
+    // purchase history
+    const sales = salesForCustomer(c.id);
+    const last = sales[0] || null;
+    if (pLastPurchase) pLastPurchase.textContent = last ? fmtDateTime(last.createdAt) : "—";
 
-  const profileDialog = document.getElementById("profileDialog");
-  const card = document.getElementById("profileCard");
+    renderVisitsList(c.id);
 
-  const name = buildDisplayName(c);
-  document.getElementById("pName").textContent = name;
+    // contact
+    if (pPhone) pPhone.textContent = c.phone || "—";
+    if (pEmail) pEmail.textContent = c.email || "—";
+    if (pBirthday) pBirthday.textContent = c.birthday || "—";
 
-  const lockerInfo = isLocker(c) ? `Locker ${c["Locker number"]}` : "No locker";
-  const email = c["Email"] || "";
-  const phone = c["Phone"] || "";
-  const subPieces = [lockerInfo];
-  if (email) subPieces.push(email);
-  else if (phone) subPieces.push(phone);
-  document.getElementById("pSub").textContent = subPieces.join(" • ");
+    // favorites
+    renderChips(pFavBrands, c.favBrands || c.favoriteBrands || []);
+    renderChips(pFavCigars, c.favCigars || c.favoriteCigars || []);
 
-  document.getElementById("pPoints").textContent = formatPoints(c["Rewards"]);
+    if (pRingPref) pRingPref.textContent = c.ringPref || c.ringPreference || "—";
 
-  // purchase history summary
-  document.getElementById("pLastPurchase").textContent =
-    c["Last Purchase"] ? formatDate(c["Last Purchase"]) : "—";
+    // wishlist (chips)
+    renderChips(pWishlist, c.wishlist || []);
 
-  currentVisitHistory = getVisitHistory(c);
-  showAllVisits = false;
-  renderVisitHistory();
+    // stats
+    if (pStatYtd) pStatYtd.textContent = `YTD spend: $${money(ytdSpend(c.id))}`;
+    if (pStatVisits90) pStatVisits90.textContent = `90-day visits: ${visits90(c.id)}`;
+    if (pStatGift) pStatGift.textContent = `Gift card balance: ${c.giftBalance != null ? `$${money(c.giftBalance)}` : "—"}`;
 
-  // contact section
-  document.getElementById("pPhone").textContent = phone || "—";
-  document.getElementById("pEmail").textContent = email || "—";
-  document.getElementById("pBirthday").textContent =
-    c["Birthday"] ? formatDate(c["Birthday"]) : "—";
-
-  // favorites
-  const favBrands = [
-    c["Fav brand 1"],
-    c["Fav brand 2"],
-    c["Fav brand 3"],
-  ].filter(Boolean);
-  fillChips(document.getElementById("pFavBrands"), favBrands);
-
-  const favCigars = [
-    c["Fav cigar"],
-    c["Fav cigar 2"],
-    c["Fav cigar 3"],
-  ].filter(Boolean);
-  fillChips(document.getElementById("pFavCigars"), favCigars);
-
-  document.getElementById("pRingPref").textContent =
-    c["Ring Pref"] || "—";
-
-  // wishlist
-  const wishlistItems = Object.keys(c)
-    .filter((k) => k.toLowerCase().startsWith("wishlist"))
-    .map((k) => c[k])
-    .filter(Boolean);
-  const wishlistEl = document.getElementById("pWishlist");
-  if (!wishlistItems.length) {
-    wishlistEl.textContent = "None";
-  } else {
-    wishlistEl.textContent = wishlistItems.join(", ");
+    // dialog open
+    if (dialog && !dialog.open) dialog.showModal();
   }
 
-  // loyalty stats pills
-  document.getElementById("pStatYtd").textContent =
-    c["YTD spend"] || "YTD: —";
-  document.getElementById("pStatVisits90").textContent =
-    c["90-day visits"] || "90-day visits: —";
-  document.getElementById("pStatGift").textContent =
-    c["Gift card balance"] || "Gift card: —";
+  function renderVisitsList(customerId) {
+    const sales = salesForCustomer(customerId);
 
-  // reset editing state
-  card.classList.remove("editing");
-  document
-    .querySelectorAll("#profileDialog .profile-editable")
-    .forEach((el) => {
-      el.contentEditable = "false";
-    });
-  const editBtn = document.getElementById("editProfileBtn");
-  editBtn.textContent = "Edit";
+    const max = state.showAllVisits ? sales.length : Math.min(5, sales.length);
+    const slice = sales.slice(0, max);
 
-  profileDialog.showModal();
-}
+    if (!pVisitList) return;
 
-function initProfileDialog() {
-  const profileDialog = document.getElementById("profileDialog");
-  const card = document.getElementById("profileCard");
-  const closeBtn = document.querySelector(".profile-close");
-  const editBtn = document.getElementById("editProfileBtn");
-  const viewAllBtn = document.getElementById("viewAllVisitsBtn");
-
-  closeBtn.addEventListener("click", () => {
-    profileDialog.close();
-  });
-
-  profileDialog.addEventListener("click", (e) => {
-    if (e.target === profileDialog) {
-      profileDialog.close();
-    }
-  });
-
-  viewAllBtn.addEventListener("click", () => {
-    if (!currentVisitHistory.length || currentVisitHistory.length <= 6) return;
-    showAllVisits = !showAllVisits;
-    renderVisitHistory();
-  });
-
-  editBtn.addEventListener("click", () => {
-    const isEditing = card.classList.toggle("editing");
-    const editables = document.querySelectorAll(
-      "#profileDialog .profile-editable"
-    );
-
-    editables.forEach((el) => {
-      el.contentEditable = isEditing ? "true" : "false";
-    });
-
-    if (!isEditing) {
-      if (!selectedContact) return;
-
-      const changes = {
-        "Last Purchase":
-          document.getElementById("pLastPurchase").textContent === "—"
-            ? null
-            : document.getElementById("pLastPurchase").textContent,
-        Phone: document.getElementById("pPhone").textContent || null,
-        Email: document.getElementById("pEmail").textContent || null,
-        Birthday: document.getElementById("pBirthday").textContent || null,
-        "Ring Pref": document.getElementById("pRingPref").textContent || null,
-        "YTD spend":
-          document.getElementById("pStatYtd").textContent || null,
-        "90-day visits":
-          document.getElementById("pStatVisits90").textContent || null,
-        "Gift card balance":
-          document.getElementById("pStatGift").textContent || null,
-        Wishlist: document.getElementById("pWishlist").innerText.trim() || null,
-      };
-
-      Object.assign(selectedContact, changes);
-      renderList();
-      // later: send `changes` to a write API so it persists
+    if (!slice.length) {
+      pVisitList.innerHTML = `<div class="empty-state" style="padding:8px 0;">No purchases yet</div>`;
+      return;
     }
 
-    editBtn.textContent = isEditing ? "Done" : "Edit";
-  });
-}
+    pVisitList.innerHTML = slice.map((s) => {
+      const dt = fmtDate(s.createdAt);
+      const amt = `$${money(s.totals?.total || 0)}`;
+      return `
+        <div class="visit-item">
+          <div class="visit-date">${escapeHTML(dt)}</div>
+          <div class="visit-amount">${escapeHTML(amt)}</div>
+        </div>
+      `;
+    }).join("");
 
-/* ---------- INIT ---------- */
+    if (viewAllVisitsBtn) {
+      viewAllVisitsBtn.textContent = state.showAllVisits ? "View less" : "View all";
+      viewAllVisitsBtn.disabled = sales.length <= 5;
+    }
+  }
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".mode-btn").forEach((btn) => {
-    btn.addEventListener("click", () => setMode(btn.dataset.mode));
-  });
+  function renderChips(container, arr) {
+    if (!container) return;
+    const list = Array.isArray(arr) ? arr : [];
 
-  const searchEl = document.getElementById("search");
-  searchEl.addEventListener("input", (e) => {
-    searchTerm = e.target.value || "";
-    renderList();
-  });
+    if (!list.length) {
+      // keep placeholder look consistent
+      container.innerHTML = `<span class="chip">—</span>`;
+      return;
+    }
 
-  // Add CSS for the new icon layout (keeps everything aligned)
-  const style = document.createElement("style");
-  style.textContent = `
-    .name-block { display:flex; flex-direction:column; gap:2px; }
-    .name-row { display:flex; align-items:center; gap:4px; }
-    .status-icons { display:flex; align-items:center; gap:4px; }
-    .status-icon { width:16px; height:16px; }
-  `;
-  document.head.appendChild(style);
+    container.innerHTML = list.map((x) => `<span class="chip">${escapeHTML(x)}</span>`).join("");
+  }
 
-  initProfileDialog();
-  loadContacts();
-});
+  function closeProfile() {
+    if (!dialog) return;
+    if (dialog.open) dialog.close();
+    state.activeCustomerId = null;
+    state.editing = false;
+    profileCard?.classList.remove("editing");
+  }
+
+  // ---------- editing ----------
+  function setEditable(on) {
+    state.editing = !!on;
+
+    if (!profileCard) return;
+    profileCard.classList.toggle("editing", state.editing);
+
+    // These are safe to edit as plain text
+    const editableIds = [
+      "pPhone",
+      "pEmail",
+      "pBirthday",
+      "pRingPref",
+      "pStatYtd",
+      "pStatVisits90",
+      "pStatGift",
+      "pLastPurchase",
+    ];
+
+    editableIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.contentEditable = state.editing ? "true" : "false";
+      el.spellcheck = false;
+    });
+
+    // Wishlist: allow simple comma-separated edit when in edit mode
+    if (pWishlist) {
+      if (state.editing) {
+        pWishlist.contentEditable = "true";
+        pWishlist.spellcheck = false;
+        // convert chips -> text
+        const c = getActiveCustomer();
+        const w = (c?.wishlist || []).join(", ");
+        pWishlist.innerHTML = escapeHTML(w || "");
+      } else {
+        pWishlist.contentEditable = "false";
+      }
+    }
+
+    // Fav Brands / Fav Cigars: same approach
+    if (pFavBrands) {
+      if (state.editing) {
+        pFavBrands.contentEditable = "true";
+        const c = getActiveCustomer();
+        const v = (c?.favBrands || c?.favoriteBrands || []).join(", ");
+        pFavBrands.innerHTML = escapeHTML(v || "");
+      } else {
+        pFavBrands.contentEditable = "false";
+      }
+    }
+
+    if (pFavCigars) {
+      if (state.editing) {
+        pFavCigars.contentEditable = "true";
+        const c = getActiveCustomer();
+        const v = (c?.favCigars || c?.favoriteCigars || []).join(", ");
+        pFavCigars.innerHTML = escapeHTML(v || "");
+      } else {
+        pFavCigars.contentEditable = "false";
+      }
+    }
+
+    if (editBtn) editBtn.textContent = state.editing ? "Save" : "Edit";
+  }
+
+  function getActiveCustomer() {
+    if (!state.activeCustomerId) return null;
+    return state.customers.find((x) => String(x.id) === String(state.activeCustomerId)) || null;
+  }
+
+  function saveProfileEdits() {
+    const c = getActiveCustomer();
+    if (!c) return;
+
+    // Pull edited fields
+    const phone = (pPhone?.textContent || "").trim();
+    const email = (pEmail?.textContent || "").trim();
+    const birthday = (pBirthday?.textContent || "").trim();
+    const ringPref = (pRingPref?.textContent || "").trim();
+
+    c.phone = phone && phone !== "—" ? phone : "";
+    c.email = email && email !== "—" ? email : "";
+    c.birthday = birthday && birthday !== "—" ? birthday : "";
+    c.ringPref = ringPref && ringPref !== "—" ? ringPref : "";
+
+    // Chips edited as comma-separated text
+    const parseCSV = (txt) =>
+      (txt || "")
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+
+    if (pWishlist) {
+      const w = (pWishlist.textContent || "").trim();
+      c.wishlist = parseCSV(w);
+    }
+    if (pFavBrands) {
+      const v = (pFavBrands.textContent || "").trim();
+      c.favBrands = parseCSV(v);
+    }
+    if (pFavCigars) {
+      const v = (pFavCigars.textContent || "").trim();
+      c.favCigars = parseCSV(v);
+    }
+
+    c.updatedAt = new Date().toISOString();
+
+    // persist
+    writeCustomers(state.customers);
+
+    // re-render dialog content from saved customer object
+    setEditable(false);
+    openProfile(c.id);
+    render();
+  }
+
+  // ---------- events ----------
+  function bindEvents() {
+    // segmented control
+    modeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        modeButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.mode = btn.getAttribute("data-mode") || "all";
+        render();
+      });
+    });
+
+    // search
+    searchEl?.addEventListener("input", () => {
+      state.query = searchEl.value || "";
+      render();
+    });
+
+    // profile close
+    closeBtn?.addEventListener("click", closeProfile);
+    dialog?.addEventListener("click", (e) => {
+      // click outside to close
+      const rect = dialog.getBoundingClientRect();
+      const inside =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
+      if (!inside) closeProfile();
+    });
+
+    // view all visits
+    viewAllVisitsBtn?.addEventListener("click", () => {
+      if (!state.activeCustomerId) return;
+      state.showAllVisits = !state.showAllVisits;
+      renderVisitsList(state.activeCustomerId);
+    });
+
+    // edit toggle
+    editBtn?.addEventListener("click", () => {
+      if (!state.activeCustomerId) return;
+      if (!state.editing) setEditable(true);
+      else saveProfileEdits();
+    });
+
+    // Tony (optional — keep harmless for now)
+    tonyFab?.addEventListener("click", () => {
+      // You can route this wherever you want later.
+      // For now, just go to Learn home.
+      window.location.href = "/learn/";
+    });
+
+    // live updates from POS confirms (storage changes)
+    window.addEventListener("storage", (e) => {
+      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) {
+        loadAndRender(true);
+      }
+    });
+
+    // if you ever dispatch these custom events, we listen too
+    window.addEventListener("cigaros:customers-changed", () => loadAndRender(true));
+    window.addEventListener("cigaros:sales-changed", () => loadAndRender(true));
+  }
+
+  // ---------- load ----------
+  function loadAndRender(keepDialog) {
+    state.customers = readCustomers();
+    state.sales = readSales();
+
+    render();
+
+    // keep profile open and refreshed if it’s currently open
+    if (keepDialog && dialog?.open && state.activeCustomerId) {
+      openProfile(state.activeCustomerId);
+    }
+  }
+
+  // ---------- init ----------
+  bindEvents();
+  loadAndRender(false);
+})();
