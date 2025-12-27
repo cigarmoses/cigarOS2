@@ -2,11 +2,15 @@
    Shared cart + receipt FAB + receipt modal
    Used across all POS pages so the same active receipt persists.
 
-   Updates in this version:
-   - Receipt FAB icon is universal across ALL POS pages:
-     - Green icon when no open items: /img/icons/receipt.png
-     - Red icon when open items exist: /img/icons/receiptred.png
-   - Badge still works (optional) but icon color is the primary “open receipt” indicator.
+   Fixes in this version:
+   - Universal receipt FAB icon everywhere (bottom-right):
+     - GREEN when cart is empty: /img/icons/receipt.png
+     - RED when cart has items: /img/icons/receiptred.png
+   - Removes/neutralizes legacy receipt buttons/links that:
+     - show giant receipt art
+     - show broken “?” image icon
+     - navigate to /pos/receipt.html
+   - Fixes wrong relative icon src like "img/icons/receipt.png" → "/img/icons/receipt.png"
 */
 
 (() => {
@@ -37,12 +41,12 @@
   };
 
   const safeJSON = (s, fallback) => {
-    try {
-      return JSON.parse(s);
-    } catch {
-      return fallback;
-    }
+    try { return JSON.parse(s); } catch { return fallback; }
   };
+
+  function normalizeId(s) {
+    return (s || "").toString().trim().toLowerCase();
+  }
 
   // ---------- cart state ----------
   function readCart() {
@@ -52,10 +56,6 @@
   function writeCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
     window.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: cart }));
-  }
-
-  function normalizeId(s) {
-    return (s || "").toString().trim().toLowerCase();
   }
 
   function cartCount(cart) {
@@ -75,9 +75,9 @@
         id,
         name: payload.name || "Item",
         brand: payload.brand || "",
-        sub: payload.sub || "", // vitola/size line
+        sub: payload.sub || "",
         price: Number(payload.price || 0),
-        img: payload.img || "", // icon path
+        img: payload.img || "",
         qty: 1,
       });
     }
@@ -90,11 +90,9 @@
     if (idx < 0) return;
 
     const q = Math.max(0, Number(qty || 0));
-    if (q === 0) {
-      cart.items.splice(idx, 1);
-    } else {
-      cart.items[idx].qty = q;
-    }
+    if (q === 0) cart.items.splice(idx, 1);
+    else cart.items[idx].qty = q;
+
     writeCart(cart);
   }
 
@@ -111,9 +109,52 @@
     money,
   };
 
+  // ---------- legacy cleanup (kills the “?” button + receipt.html nav) ----------
+  function cleanupLegacyReceiptUI() {
+    // 1) Remove any links to /pos/receipt.html (these cause full-page receipt)
+    document
+      .querySelectorAll('a[href*="/pos/receipt.html"], a[href$="pos/receipt.html"]')
+      .forEach((a) => a.remove());
+
+    // 2) Remove inline onclick navigations to receipt.html
+    document.querySelectorAll("[onclick]").forEach((el) => {
+      const v = (el.getAttribute("onclick") || "").toLowerCase();
+      if (v.includes("receipt.html")) el.remove();
+    });
+
+    // 3) Fix wrong relative icon src that causes Safari “?” placeholder
+    //    (common mistake: "img/icons/receipt.png" instead of "/img/icons/receipt.png")
+    document.querySelectorAll("img[src]").forEach((img) => {
+      const src = img.getAttribute("src") || "";
+      const lower = src.toLowerCase();
+
+      const isReceiptIcon =
+        lower.includes("img/icons/receipt.png") ||
+        lower.includes("img/icons/receiptred.png");
+
+      const isWrongRelative =
+        (lower.startsWith("img/icons/receipt") || lower.includes("/pos/") && lower.includes("img/icons/receipt")) &&
+        !lower.startsWith("/img/icons/");
+
+      if (isReceiptIcon && isWrongRelative) {
+        img.setAttribute(
+          "src",
+          lower.includes("receiptred") ? ICON_RED : ICON_GREEN
+        );
+      }
+    });
+
+    // 4) Remove known “extra floating buttons” some pages add (safe targeted list)
+    document
+      .querySelectorAll(
+        ".help-fab, .pos-help-fab, .receipt-float, .receipt-button, .receipt-shortcut, #receipt-fab, #receiptFab, #help-fab, #helpFab"
+      )
+      .forEach((el) => el.remove());
+  }
+
   // ---------- receipt FAB ----------
   function ensureFab() {
-    // If page already has a receipt-fab, reuse it.
+    // Only ONE universal FAB: .receipt-fab
     let fab = document.querySelector(".receipt-fab");
 
     if (!fab) {
@@ -127,15 +168,14 @@
       `;
       document.body.appendChild(fab);
     } else {
-      // Ensure the structure is correct (img + badge)
+      // ensure img exists
       let img = fab.querySelector("img");
       if (!img) {
         img = document.createElement("img");
         img.alt = "";
         fab.prepend(img);
       }
-
-      // Ensure badge exists
+      // ensure badge exists
       if (!fab.querySelector(".receipt-badge")) {
         const b = document.createElement("span");
         b.className = "receipt-badge";
@@ -145,9 +185,9 @@
       }
     }
 
-    // Bind click once (avoid stacking handlers if hot-reloaded)
+    // bind click once
     if (!fab.dataset.bound) {
-      fab.addEventListener("click", () => openReceiptModal());
+      fab.addEventListener("click", openReceiptModal);
       fab.dataset.bound = "1";
     }
 
@@ -164,12 +204,14 @@
     const img = fab.querySelector("img");
     const badge = fab.querySelector(".receipt-badge");
 
-    // icon color logic:
-    // - Green when no items
-    // - Red when items exist (open receipt / not paid)
-    if (img) img.src = n > 0 ? ICON_RED : ICON_GREEN;
+    if (img) {
+      img.src = n > 0 ? ICON_RED : ICON_GREEN;
+      // safety: if the image fails, force back to GREEN so you never see "?"
+      img.onerror = () => {
+        img.src = ICON_GREEN;
+      };
+    }
 
-    // badge is optional; keep it as quantity indicator
     if (badge) {
       badge.textContent = String(n);
       badge.hidden = n <= 0;
@@ -212,7 +254,6 @@
       </div>
     `;
 
-    // close behaviors
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) closeReceiptModal();
     });
@@ -226,6 +267,15 @@
 
     document.body.appendChild(overlay);
     return overlay;
+  }
+
+  function escapeHTML(s) {
+    return (s ?? "").toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function renderReceipt() {
@@ -244,35 +294,28 @@
       return;
     }
 
-    list.innerHTML = items
-      .map((it) => {
-        const img = it.img
-          ? `<img class="pos-receipt-ico" src="${it.img}" alt="" />`
-          : `<div class="pos-receipt-ico ph"></div>`;
+    list.innerHTML = items.map((it) => {
+      const ico = it.img
+        ? `<img class="pos-receipt-ico" src="${it.img}" alt="" />`
+        : `<div class="pos-receipt-ico ph"></div>`;
 
-        return `
+      return `
         <div class="pos-receipt-row" data-id="${it.id}">
-          ${img}
+          ${ico}
           <div class="pos-receipt-main">
             <div class="pos-receipt-name">${escapeHTML(it.name)}</div>
-            <div class="pos-receipt-sub">${escapeHTML(it.brand || "")}${
-          it.sub ? ` • ${escapeHTML(it.sub)}` : ""
-        }</div>
+            <div class="pos-receipt-sub">${escapeHTML(it.brand || "")}${it.sub ? ` • ${escapeHTML(it.sub)}` : ""}</div>
           </div>
           <div class="pos-receipt-qty">
             <button type="button" class="qty-btn" data-dec aria-label="Decrease">−</button>
             <div class="qty-num">${Number(it.qty || 0)}</div>
             <button type="button" class="qty-btn" data-inc aria-label="Increase">+</button>
           </div>
-          <div class="pos-receipt-price">$${money(
-            Number(it.price || 0) * Number(it.qty || 0)
-          )}</div>
+          <div class="pos-receipt-price">$${money((Number(it.price || 0) * Number(it.qty || 0)))}</div>
         </div>
       `;
-      })
-      .join("");
+    }).join("");
 
-    // bind qty buttons
     list.querySelectorAll(".pos-receipt-row").forEach((row) => {
       const id = row.getAttribute("data-id");
 
@@ -294,7 +337,7 @@
     });
 
     const subtotal = items.reduce(
-      (sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0),
+      (sum, it) => sum + (Number(it.price || 0) * Number(it.qty || 0)),
       0
     );
     const tax = subtotal * TAX_RATE;
@@ -329,24 +372,14 @@
     document.body.classList.remove("pos-modal-open");
   }
 
-  function escapeHTML(s) {
-    return (s ?? "")
-      .toString()
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  // keep badge + icon synced across pages/tabs
+  // keep UI synced across pages/tabs
   window.addEventListener("storage", (e) => {
     if (e.key === CART_KEY) updateFabUI();
   });
   window.addEventListener("cigaros:cart-changed", updateFabUI);
 
-  // initialize on every page that loads this file
   window.addEventListener("DOMContentLoaded", () => {
+    cleanupLegacyReceiptUI(); // kills the “?” + receipt.html full page links
     ensureFab();
     updateFabUI();
   });
