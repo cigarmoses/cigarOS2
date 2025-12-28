@@ -25,21 +25,33 @@
 
     <section class="category-grid">
       <article class="category-card" data-receipt-item
-        data-brand="Vertigo" data-name="Vertigo Triple Torch" data-price="9.99">
+        data-type="product"
+        data-category="Accessories"
+        data-brand="Vertigo"
+        data-name="Vertigo Triple Torch"
+        data-price="9.99">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Vertigo Triple Torch</div>
         <div class="category-card-price">$9.99</div>
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Lotus" data-name="Lotus Lighter" data-price="34.99">
+        data-type="product"
+        data-category="Accessories"
+        data-brand="Lotus"
+        data-name="Lotus Lighter"
+        data-price="34.99">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Lotus Lighter</div>
         <div class="category-card-price">$34.99</div>
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Xikar" data-name="Xikar Cutter" data-price="39.99">
+        data-type="product"
+        data-category="Accessories"
+        data-brand="Xikar"
+        data-name="Xikar Cutter"
+        data-price="39.99">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Xikar Cutter</div>
         <div class="category-card-price">$39.99</div>
@@ -47,43 +59,12 @@
     </section>
   </main>
 
-  <!-- Universal cart + receipt modal + universal receipt FAB -->
   <script src="/pos/cart.js" defer></script>
 
-  <!-- Page behavior: add items to the universal cart, and back nav -->
   <script>
     (function () {
-      function addFromCard(card) {
-        if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
-
-        const brand = card.dataset.brand || "";
-        const name = card.dataset.name || "Item";
-        const price = Number(card.dataset.price || "0");
-        const vitola = card.dataset.vitola || "";
-
-        // Build a stable id so identical items stack
-        const id = (brand + "|" + name + "|" + vitola).toLowerCase();
-
-        window.CigarOSCart.add({
-          id,
-          name,
-          brand,
-          sub: vitola,   // shows as the small grey line in the receipt
-          price,
-          img: ""        // optional: add an icon path later if you want
-        });
-      }
-
-      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
-        card.addEventListener("click", () => addFromCard(card));
-      });
-
       const backBtn = document.getElementById("category-back");
-      if (backBtn) {
-        backBtn.addEventListener("click", () => {
-          window.location.href = "/pos/";
-        });
-      }
+      if (backBtn) backBtn.addEventListener("click", () => window.location.href = "/pos/");
     })();
   </script>
 </body>
