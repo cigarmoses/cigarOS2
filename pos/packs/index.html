@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>POS • Pipes</title>
+  <title>POS • Packs</title>
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
@@ -17,7 +17,7 @@
   </header>
 
   <main>
-    <h1 class="category-title">Pipes</h1>
+    <h1 class="category-title">Packs</h1>
 
     <section class="category-search">
       <input type="search" class="category-search-input" placeholder="Search" />
@@ -26,24 +26,24 @@
     <section class="category-grid">
       <article class="category-card" data-receipt-item
         data-type="product"
-        data-category="Pipes"
-        data-brand="Mr. Consul"
-        data-name="Mr. Consul Pipe"
-        data-price="65.00">
+        data-category="Packs"
+        data-brand="Arturo Fuente"
+        data-name="Shark Pack"
+        data-price="71.00">
         <div class="category-card-icon"></div>
-        <div class="category-card-name">Mr. Consul Pipe</div>
-        <div class="category-card-price">$65.00</div>
+        <div class="category-card-name">Shark Pack</div>
+        <div class="category-card-price">$71.00</div>
       </article>
 
       <article class="category-card" data-receipt-item
         data-type="product"
-        data-category="Pipes"
-        data-brand="Corn Cob"
-        data-name="Corn Cob Pipe"
-        data-price="10.00">
+        data-category="Packs"
+        data-brand="Padron"
+        data-name="Padron Sample Pack"
+        data-price="89.00">
         <div class="category-card-icon"></div>
-        <div class="category-card-name">Corn Cob Pipe</div>
-        <div class="category-card-price">$10.00</div>
+        <div class="category-card-name">Padron Sample Pack</div>
+        <div class="category-card-price">$89.00</div>
       </article>
     </section>
   </main>
@@ -78,7 +78,7 @@
         window.CigarOSCart.add({
           id,
           type,
-          category,   // <-- bold title line in invoice for products (Pipes)
+          category,   // <-- this becomes the bold “title” line in the invoice for products
           brand,
           name,
           price,
@@ -87,7 +87,7 @@
           sub: ""     // optional extra line if you ever want it
         });
 
-        // Open invoice immediately
+        // Open invoice immediately (feels like “Add to Invoice” flow)
         if (typeof window.CigarOSCart.openInvoice === "function") {
           window.CigarOSCart.openInvoice();
         }
