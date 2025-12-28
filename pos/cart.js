@@ -1,15 +1,22 @@
 /* /pos/cart.js
-   Shared cart + bottom-right invoice FAB + invoice modal + product "Add to invoice" confirm popup.
-   Single source of truth across all POS pages.
-
-   Icon logic:
-   - Green icon when cart empty: /img/icons/receipt.png
-   - Red icon when cart has items: /img/icons/receiptred.png
+   Shared cart + invoice FAB + invoice modal
+   Used across all POS pages so the same active invoice persists.
 */
 
 (() => {
   const CART_KEY = "cigaros_cart_v1";
   const TAX_RATE = 0.07;
+
+  // Drafts + sales (basic persistence)
+  const DRAFTS_KEY = "cigaros_invoice_drafts_v1";
+  const SALES_KEY = "cigaros_sales_v1";
+
+  // Loyalty (simple wiring; can be aligned to your existing loyalty.js later)
+  const LOYALTY_CUSTOMERS_KEY = "cigaros_loyalty_customers_v1";
+  const SELECTED_CUSTOMER_KEY = "cigaros_invoice_customer_v1";
+
+  const ICON_EMPTY = "/img/icons/receipt.png";
+  const ICON_ACTIVE = "/img/icons/receiptred.png";
 
   // ---------- utils ----------
   const money = (n) => {
@@ -32,12 +39,24 @@
   };
 
   const safeJSON = (s, fallback) => {
-    try { return JSON.parse(s); } catch { return fallback; }
+    try {
+      return JSON.parse(s);
+    } catch {
+      return fallback;
+    }
   };
 
-  const norm = (s) => (s || "").toString().trim().toLowerCase();
+  const uid = () => {
+    // simple unique-ish id
+    return (
+      "inv_" +
+      Math.random().toString(16).slice(2) +
+      "_" +
+      Date.now().toString(16)
+    );
+  };
 
-  const escapeHTML = (s) => {
+  function escapeHTML(s) {
     return (s ?? "")
       .toString()
       .replaceAll("&", "&amp;")
@@ -45,7 +64,7 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
-  };
+  }
 
   // ---------- cart state ----------
   function readCart() {
@@ -54,59 +73,64 @@
 
   function writeCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    window.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: cart }));
+    window.dispatchEvent(
+      new CustomEvent("cigaros:cart-changed", { detail: cart })
+    );
+  }
+
+  function normalizeId(s) {
+    return (s || "").toString().trim().toLowerCase();
   }
 
   function cartCount(cart) {
     return (cart.items || []).reduce((sum, it) => sum + Number(it.qty || 0), 0);
   }
 
+  // payload supports:
+  // { id, type: "product"|"cigar", category, name, brand, sub, price, img, link }
   function addItem(payload) {
     const cart = readCart();
+    const id = normalizeId(payload.id || payload.key || payload.name);
+    if (!id) return;
 
-    const id =
-      payload.id ||
-      `${payload.kind || ""}|${payload.category || ""}|${payload.brand || ""}|${payload.name || ""}|${payload.sub || ""}`;
-
-    const key = norm(id);
-    if (!key) return;
-
-    const idx = cart.items.findIndex((x) => norm(x.id) === key);
-
+    const idx = cart.items.findIndex((x) => normalizeId(x.id) === id);
     if (idx >= 0) {
       cart.items[idx].qty = Number(cart.items[idx].qty || 0) + 1;
     } else {
       cart.items.push({
-        id: key,
-
-        kind: payload.kind || "product", // "product" | "cigar"
+        id,
+        type: payload.type || "product",
         category: payload.category || "",
 
+        // shared fields
         name: payload.name || "Item",
         price: Number(payload.price || 0),
         img: payload.img || "",
 
-        // cigar-ish optional fields
+        // cigar-ish fields
         brand: payload.brand || "",
-        sub: payload.sub || "",
-        href: payload.href || "",
+        sub: payload.sub || "", // vitola/size line or product details
+        link: payload.link || "",
 
         qty: 1,
       });
     }
-
     writeCart(cart);
   }
 
   function setQty(id, qty) {
     const cart = readCart();
-    const idx = cart.items.findIndex((x) => norm(x.id) === norm(id));
+    const idx = cart.items.findIndex(
+      (x) => normalizeId(x.id) === normalizeId(id)
+    );
     if (idx < 0) return;
 
     const q = Math.max(0, Number(qty || 0));
-    if (q === 0) cart.items.splice(idx, 1);
-    else cart.items[idx].qty = q;
-
+    if (q === 0) {
+      cart.items.splice(idx, 1);
+    } else {
+      cart.items[idx].qty = q;
+    }
     writeCart(cart);
   }
 
@@ -121,381 +145,365 @@
     setQty,
     clear: clearCart,
     money,
+    openInvoice: () => openInvoiceModal(),
   };
 
-  // ---------- styles ----------
-  function ensureStyles() {
-    if (document.getElementById("cigaros-cart-styles")) return;
+  // ---------- receipt/invoice FAB ----------
+  function getOrCreateFab() {
+    // Try to reuse whatever the page already has
+    let fab =
+      document.querySelector(".receipt-fab") ||
+      document.getElementById("posReceiptFab") ||
+      document.querySelector(".pos-receipt-fab");
 
-    const css = document.createElement("style");
-    css.id = "cigaros-cart-styles";
-    css.textContent = `
-      .receipt-fab{
-        position:fixed;
-        right:16px;
-        bottom:16px;
-        width:56px;
-        height:56px;
-        border:none;
-        padding:0;
-        border-radius:16px;
-        background:transparent;
-        z-index:999;
-        cursor:pointer;
-        -webkit-tap-highlight-color:transparent;
-      }
-      .receipt-fab img{
-        width:56px;
-        height:56px;
-        display:block;
-        border-radius:16px;
-        box-shadow:0 10px 22px rgba(0,0,0,0.18);
-        background:#fff;
-      }
-      .receipt-badge{
-        position:absolute;
-        right:-6px;
-        top:-6px;
-        min-width:22px;
-        height:22px;
-        padding:0 6px;
-        border-radius:999px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:12px;
-        font-weight:800;
-        color:#fff;
-        background:#ff3b30;
-        box-shadow:0 8px 16px rgba(0,0,0,0.22);
-      }
-
-      .pos-modal-overlay{
-        position:fixed;
-        inset:0;
-        background:rgba(0,0,0,0.35);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        padding:14px;
-        z-index:1000;
-      }
-
-      .pos-modal-sheet{
-        width:min(520px, 100%);
-        max-height:calc(100vh - 28px);
-        background:#fff;
-        border-radius:18px;
-        overflow:hidden;
-        box-shadow:0 24px 60px rgba(0,0,0,0.35);
-        display:flex;
-        flex-direction:column;
-      }
-
-      .pos-modal-head{
-        display:flex;
-        justify-content:space-between;
-        align-items:flex-start;
-        padding:14px 16px 6px;
-      }
-      .pos-modal-x{
-        border:none;
-        background:transparent;
-        color:#007aff;
-        font-size:16px;
-        font-weight:600;
-        cursor:pointer;
-        padding:0;
-      }
-      .pos-modal-meta{
-        text-align:right;
-        color:#6a7586;
-        font-size:12px;
-        line-height:1.2;
-      }
-      .pos-modal-meta .pos-modal-date{ font-weight:600; }
-      .pos-modal-customer{
-        margin-top:6px;
-        display:flex;
-        gap:8px;
-        align-items:center;
-        justify-content:flex-end;
-      }
-      .pos-modal-customer .label{ color:#6a7586; font-weight:600; }
-      .pos-modal-pill{
-        border:1px solid #d1d7e2;
-        background:#fff;
-        border-radius:999px;
-        padding:6px 10px;
-        font-size:12px;
-        font-weight:700;
-        cursor:pointer;
-      }
-
-      .pos-modal-title{
-        font-size:44px;
-        font-weight:900;
-        margin:0;
-        padding:0 16px 10px;
-        color:#0f1a2c;
-      }
-
-      .pos-invoice-list{
-        padding:0 0 6px;
-        overflow:auto;
-        -webkit-overflow-scrolling:touch;
-        border-top:1px solid #e6ebf2;
-        border-bottom:1px solid #e6ebf2;
-      }
-
-      .pos-invoice-row{
-        display:grid;
-        grid-template-columns:64px 1fr auto auto;
-        gap:12px;
-        align-items:center;
-        padding:12px 16px;
-        border-bottom:1px solid #eef2f7;
-      }
-      .pos-invoice-row:last-child{ border-bottom:none; }
-
-      .pos-invoice-ico{
-        width:56px;
-        height:56px;
-        border-radius:12px;
-        background:#dbe8f8;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        overflow:hidden;
-      }
-      .pos-invoice-ico img{
-        width:100%;
-        height:100%;
-        object-fit:cover;
-      }
-
-      .pos-invoice-main{ min-width:0; }
-      .pos-invoice-cat{
-        font-size:14px;
-        font-weight:900;
-        color:#0f1a2c;
-        line-height:1.1;
-      }
-      .pos-invoice-name{
-        font-size:14px;
-        font-weight:700;
-        color:#0f1a2c;
-        line-height:1.2;
-        margin-top:2px;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-      .pos-invoice-name a{
-        color:#0a84ff;
-        text-decoration:none;
-        font-weight:900;
-      }
-      .pos-invoice-sub{
-        font-size:12px;
-        color:#6a7586;
-        margin-top:2px;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-
-      .pos-qty{
-        display:flex;
-        align-items:center;
-        gap:8px;
-        background:#f2f4f8;
-        border-radius:999px;
-        padding:6px 10px;
-      }
-      .qty-btn{
-        border:none;
-        background:transparent;
-        font-size:18px;
-        font-weight:900;
-        color:#0f1a2c;
-        cursor:pointer;
-        width:22px;
-        height:22px;
-        line-height:22px;
-      }
-      .qty-num{
-        font-size:14px;
-        font-weight:900;
-        width:18px;
-        text-align:center;
-      }
-
-      .pos-line-total{
-        font-size:16px;
-        font-weight:900;
-        color:#0f1a2c;
-        white-space:nowrap;
-      }
-
-      .pos-totals{ padding:12px 16px 8px; }
-      .tot-line{
-        display:flex;
-        justify-content:space-between;
-        font-size:14px;
-        margin-top:6px;
-        color:#0f1a2c;
-        font-weight:700;
-      }
-      .tot-line.total{
-        font-size:18px;
-        font-weight:900;
-        margin-top:10px;
-      }
-
-      .pos-actions{
-        display:flex;
-        gap:12px;
-        padding:12px 16px 16px;
-      }
-      .pos-btn-light{
-        flex:1;
-        border-radius:14px;
-        border:1px solid #d1d7e2;
-        background:#fff;
-        font-weight:900;
-        padding:14px 12px;
-        cursor:pointer;
-      }
-      .pos-btn-blue{
-        flex:1;
-        border-radius:14px;
-        border:none;
-        background:#0a84ff;
-        color:#fff;
-        font-weight:900;
-        padding:14px 12px;
-        cursor:pointer;
-      }
-
-      /* Add-to-invoice confirm popup */
-      .pos-confirm-card{
-        width:min(380px, 100%);
-        background:#ffffff;
-        border-radius:18px;
-        padding:16px 18px 16px;
-        box-shadow:0 24px 60px rgba(0,0,0,0.35);
-        text-align:center;
-        position:relative;
-      }
-      .pos-confirm-close{
-        position:absolute;
-        top:10px;
-        right:12px;
-        width:32px;
-        height:32px;
-        border-radius:999px;
-        border:none;
-        background:rgba(0,0,0,0.06);
-        color:#6a7586;
-        font-size:18px;
-        font-weight:900;
-        cursor:pointer;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      }
-      .pos-confirm-ico{
-        width:76px;
-        height:76px;
-        border-radius:18px;
-        margin:8px auto 10px;
-        overflow:hidden;
-        background:#dbe8f8;
-      }
-      .pos-confirm-ico img{
-        width:100%;
-        height:100%;
-        object-fit:cover;
-      }
-      .pos-confirm-title{
-        font-size:30px;
-        font-weight:900;
-        margin:0 0 14px;
-        color:#0f1a2c;
-      }
-      .pos-confirm-btn{
-        width:100%;
-        border:none;
-        border-radius:999px;
-        padding:14px 14px;
-        font-weight:900;
-        font-size:18px;
-        background:#f2f2f7;
-        color:#007aff;
-        cursor:pointer;
-      }
-      .pos-confirm-btn:disabled{
-        opacity:.55;
-        cursor:not-allowed;
-      }
-
-      body.pos-modal-open { overflow:hidden; }
-    `;
-    document.head.appendChild(css);
-  }
-
-  // ---------- kill legacy receipt FABs ----------
-  function removeLegacyReceiptFabs() {
-    // These are from older pages: <div class="pos-receipt-fab" id="posReceiptFab"> ... </div>
-    document.querySelectorAll(".pos-receipt-fab, #posReceiptFab").forEach((el) => {
-      try { el.remove(); } catch {}
-    });
-  }
-
-  // ---------- Invoice FAB ----------
-  function ensureFab() {
-    ensureStyles();
-    removeLegacyReceiptFabs();
-
-    let fab = document.querySelector(".receipt-fab");
     if (!fab) {
       fab = document.createElement("button");
-      fab.className = "receipt-fab";
       fab.type = "button";
-      fab.setAttribute("aria-label", "Invoice");
-      fab.innerHTML = `
-        <img src="/img/icons/receipt.png" alt="" />
-        <span class="receipt-badge" hidden>0</span>
-      `;
       document.body.appendChild(fab);
     }
 
+    // Normalize
+    fab.classList.add("receipt-fab");
+    fab.removeAttribute("id");
+
+    // Ensure structure
+    let img = fab.querySelector("img");
+    if (!img) {
+      img = document.createElement("img");
+      img.alt = "";
+      fab.appendChild(img);
+    }
+
+    let badge = fab.querySelector(".receipt-badge");
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "receipt-badge";
+      badge.hidden = true;
+      badge.textContent = "0";
+      fab.appendChild(badge);
+    }
+
+    // Force icon paths
+    img.src = ICON_EMPTY;
+
+    // Prevent double-binding
+    fab.onclick = null;
     fab.addEventListener("click", () => openInvoiceModal());
-    updateFab();
+
+    return fab;
   }
 
   function updateFab() {
     const cart = readCart();
     const n = cartCount(cart);
 
-    const fab = document.querySelector(".receipt-fab");
+    const fab =
+      document.querySelector(".receipt-fab") ||
+      document.getElementById("posReceiptFab") ||
+      document.querySelector(".pos-receipt-fab");
+
     if (!fab) return;
 
     const img = fab.querySelector("img");
     const badge = fab.querySelector(".receipt-badge");
 
-    if (img) img.src = n > 0 ? "/img/icons/receiptred.png" : "/img/icons/receipt.png";
+    if (img) img.src = n > 0 ? ICON_ACTIVE : ICON_EMPTY;
+
     if (badge) {
       badge.textContent = String(n);
-      badge.hidden = n <= 0; // IMPORTANT: never show 0
+      badge.hidden = n <= 0;
     }
   }
 
-  // ---------- Invoice modal ----------
-  function ensureInvoiceModal() {
-    ensureStyles();
+  function ensureFabStyles() {
+    if (document.getElementById("cigaros-fab-styles")) return;
 
+    const style = document.createElement("style");
+    style.id = "cigaros-fab-styles";
+    style.textContent = `
+      .receipt-fab{
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        width: 58px;
+        height: 58px;
+        border: none;
+        background: transparent;
+        padding: 0;
+        border-radius: 16px;
+        z-index: 60;
+        cursor: pointer;
+      }
+      .receipt-fab img{
+        width: 58px;
+        height: 58px;
+        display: block;
+      }
+      .receipt-fab .receipt-badge{
+        position:absolute;
+        right: -2px;
+        bottom: -2px;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 6px;
+        border-radius: 999px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size: 12px;
+        font-weight: 700;
+        background: #ff3b30;
+        color: #fff;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      }
+
+      /* modal base */
+      .pos-modal-open{ overflow:hidden; }
+      .pos-modal-overlay{
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.35);
+        z-index: 80;
+        display:flex;
+        align-items:flex-end;
+        justify-content:center;
+        padding: 14px;
+      }
+      .pos-modal-sheet{
+        width: min(560px, 100%);
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+        overflow: hidden;
+      }
+      .pos-modal-topbar{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(0,0,0,0.08);
+      }
+      .pos-modal-topbar .left,
+      .pos-modal-topbar .center,
+      .pos-modal-topbar .right{
+        min-width: 80px;
+      }
+      .pos-modal-topbar .center{
+        text-align:center;
+        font-weight: 800;
+        font-size: 18px;
+      }
+      .pos-link{
+        border:none;
+        background:transparent;
+        color:#007aff;
+        font-size: 16px;
+        font-weight: 600;
+        cursor:pointer;
+      }
+      .pos-meta{
+        padding: 10px 14px 0;
+        color: #6a7586;
+        font-size: 13px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 10px;
+      }
+      .pos-customer-pill{
+        border: 1px solid rgba(0,0,0,0.12);
+        background: #fff;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 14px;
+        cursor:pointer;
+        display:flex;
+        gap: 8px;
+        align-items:center;
+        white-space: nowrap;
+      }
+      .pos-title{
+        padding: 6px 14px 10px;
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: #0f1a2c;
+      }
+      .pos-list{
+        padding: 6px 0;
+        max-height: 54vh;
+        overflow:auto;
+      }
+      .pos-empty{
+        padding: 18px 14px;
+        color:#6a7586;
+        font-weight:600;
+      }
+      .inv-row{
+        display:flex;
+        gap: 12px;
+        align-items:center;
+        padding: 12px 14px;
+        border-top: 1px solid rgba(0,0,0,0.08);
+      }
+      .inv-ico{
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        overflow:hidden;
+        background: #e8f1ff;
+        flex: 0 0 auto;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+      .inv-ico img{ width:100%; height:100%; object-fit:cover; display:block; }
+      .inv-main{
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .inv-line1{
+        font-weight: 800;
+        font-size: 18px;
+        color:#0f1a2c;
+        white-space: nowrap;
+        overflow:hidden;
+        text-overflow: ellipsis;
+      }
+      .inv-line2, .inv-line3{
+        font-size: 14px;
+        color:#6a7586;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow:hidden;
+        text-overflow: ellipsis;
+      }
+      .inv-line1 a{
+        color:#007aff;
+        text-decoration:none;
+        font-weight: 800;
+      }
+      .inv-qty{
+        display:flex;
+        align-items:center;
+        gap: 10px;
+        background: #f2f2f7;
+        border-radius: 999px;
+        padding: 6px 10px;
+        flex: 0 0 auto;
+      }
+      .qty-btn{
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        border:none;
+        background: transparent;
+        font-size: 22px;
+        font-weight: 700;
+        color:#0f1a2c;
+        cursor:pointer;
+      }
+      .qty-num{
+        min-width: 16px;
+        text-align:center;
+        font-weight: 700;
+        color:#0f1a2c;
+      }
+      .inv-total{
+        font-weight: 800;
+        font-size: 22px;
+        color:#0f1a2c;
+        flex: 0 0 auto;
+        min-width: 86px;
+        text-align:right;
+      }
+
+      .totals{
+        padding: 10px 14px 0;
+        border-top: 1px solid rgba(0,0,0,0.08);
+      }
+      .tot-line{
+        display:flex;
+        justify-content:space-between;
+        font-size: 18px;
+        padding: 4px 0;
+        color:#0f1a2c;
+      }
+      .tot-line.total{
+        font-size: 34px;
+        font-weight: 900;
+        padding-top: 8px;
+      }
+      .inv-actions{
+        display:flex;
+        gap: 12px;
+        padding: 12px 14px 16px;
+      }
+      .btn-light{
+        flex: 1 1 50%;
+        border-radius: 16px;
+        border: 2px solid rgba(0,0,0,0.12);
+        background: #fff;
+        padding: 16px 14px;
+        font-weight: 900;
+        font-size: 16px;
+        cursor:pointer;
+      }
+      .btn-blue{
+        flex: 1 1 50%;
+        border-radius: 16px;
+        border: none;
+        background: #007aff;
+        color:#fff;
+        padding: 16px 14px;
+        font-weight: 900;
+        font-size: 16px;
+        cursor:pointer;
+      }
+
+      /* customer picker */
+      .cust-sheet{
+        width: min(560px, 100%);
+        background: #fff;
+        border-radius: 18px;
+        overflow:hidden;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      }
+      .cust-body{ padding: 12px 14px 14px; }
+      .cust-search{
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,0.12);
+        font-size: 15px;
+        outline:none;
+      }
+      .cust-list{
+        margin-top: 10px;
+        max-height: 52vh;
+        overflow:auto;
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,0.10);
+      }
+      .cust-row{
+        padding: 10px 12px;
+        border-top: 1px solid rgba(0,0,0,0.08);
+        cursor:pointer;
+      }
+      .cust-row:first-child{ border-top:none; }
+      .cust-row .n{ font-weight: 800; color:#0f1a2c; }
+      .cust-row .m{ font-size: 13px; color:#6a7586; margin-top:2px; }
+      .cust-empty{
+        padding: 12px;
+        color:#6a7586;
+        font-weight: 600;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ---------- invoice modal ----------
+  function ensureInvoiceModal() {
     let overlay = document.getElementById("invoice-overlay");
     if (overlay) return overlay;
 
@@ -506,151 +514,65 @@
 
     overlay.innerHTML = `
       <div class="pos-modal-sheet" role="dialog" aria-modal="true" aria-label="Invoice">
-        <div class="pos-modal-head">
-          <button type="button" class="pos-modal-x" data-close aria-label="Close">Close</button>
-          <div class="pos-modal-meta">
-            <div class="pos-modal-date" id="invoice-date"></div>
-            <div class="pos-modal-customer">
-              <span class="label">Customer:</span>
-              <button type="button" class="pos-modal-pill" id="invoice-customer-pill">Attach customer ▾</button>
-            </div>
-          </div>
+        <div class="pos-modal-topbar">
+          <div class="left"><button type="button" class="pos-link" data-close>Close</button></div>
+          <div class="center">Receipt</div>
+          <div class="right"></div>
         </div>
 
-        <h2 class="pos-modal-title">Invoice</h2>
+        <div class="pos-meta">
+          <div id="inv-date"></div>
+          <button type="button" class="pos-customer-pill" id="inv-customer-btn">
+            <span style="color:#6a7586;font-weight:700;">Customer:</span>
+            <span id="inv-customer-name" style="font-weight:900;color:#0f1a2c;">Attach customer</span>
+            <span style="color:#6a7586;">▾</span>
+          </button>
+        </div>
 
-        <div class="pos-invoice-list" id="invoice-list"></div>
+        <div class="pos-title">Invoice</div>
 
-        <div class="pos-totals" id="invoice-totals"></div>
+        <div class="pos-list" id="inv-list"></div>
 
-        <div class="pos-actions">
-          <button type="button" class="pos-btn-light" id="invoice-save">SAVE DRAFT</button>
-          <button type="button" class="pos-btn-blue" id="invoice-confirm">CONFIRM</button>
+        <div class="totals" id="inv-totals"></div>
+
+        <div class="inv-actions">
+          <button type="button" class="btn-light" id="inv-save">SAVE DRAFT</button>
+          <button type="button" class="btn-blue" id="inv-confirm">CONFIRM</button>
         </div>
       </div>
     `;
 
+    // close behaviors
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) closeInvoiceModal();
     });
     overlay.querySelectorAll("[data-close]").forEach((btn) => {
       btn.addEventListener("click", closeInvoiceModal);
     });
+
     document.addEventListener("keydown", (e) => {
       if (!overlay.hidden && e.key === "Escape") closeInvoiceModal();
     });
 
-    overlay.querySelector("#invoice-customer-pill")?.addEventListener("click", () => {
-      alert("Customer attach UI will be wired next (loyalty points).");
+    // attach customer picker
+    overlay.querySelector("#inv-customer-btn")?.addEventListener("click", () => {
+      openCustomerPicker();
     });
 
-    overlay.querySelector("#invoice-save")?.addEventListener("click", () => {
-      alert("Save Draft will be wired next.");
+    // save/confirm
+    overlay.querySelector("#inv-save")?.addEventListener("click", () => {
+      saveDraft();
     });
-    overlay.querySelector("#invoice-confirm")?.addEventListener("click", () => {
-      alert("Confirm will be wired next (points + sales).");
+    overlay.querySelector("#inv-confirm")?.addEventListener("click", () => {
+      confirmSale();
     });
 
     document.body.appendChild(overlay);
     return overlay;
   }
 
-  function renderInvoice() {
-    const cart = readCart();
-    const list = document.getElementById("invoice-list");
-    const totals = document.getElementById("invoice-totals");
-    const dateEl = document.getElementById("invoice-date");
-
-    if (dateEl) dateEl.textContent = nowStamp();
-    if (!list || !totals) return;
-
-    const items = cart.items || [];
-    if (!items.length) {
-      list.innerHTML = `<div style="padding:16px;color:#6a7586;font-weight:800;">No items yet.</div>`;
-      totals.innerHTML = "";
-      return;
-    }
-
-    list.innerHTML = items.map((it) => {
-      const unit = Number(it.price || 0);
-      const qty = Number(it.qty || 0);
-      const lineTotal = unit * qty;
-
-      const ico = it.img
-        ? `<div class="pos-invoice-ico"><img src="${escapeHTML(it.img)}" alt="" /></div>`
-        : `<div class="pos-invoice-ico"></div>`;
-
-      if ((it.kind || "product") !== "cigar") {
-        return `
-          <div class="pos-invoice-row" data-id="${escapeHTML(it.id)}">
-            ${ico}
-            <div class="pos-invoice-main">
-              <div class="pos-invoice-cat">${escapeHTML(it.category || "Item")}</div>
-              <div class="pos-invoice-name">${escapeHTML(it.name || "Item")}</div>
-              <div class="pos-invoice-sub">${escapeHTML(money(unit))}</div>
-            </div>
-            <div class="pos-qty">
-              <button type="button" class="qty-btn" data-dec aria-label="Decrease">−</button>
-              <div class="qty-num">${qty}</div>
-              <button type="button" class="qty-btn" data-inc aria-label="Increase">+</button>
-            </div>
-            <div class="pos-line-total">$${money(lineTotal)}</div>
-          </div>
-        `;
-      }
-
-      const cigarName = it.href
-        ? `<a href="${escapeHTML(it.href)}">${escapeHTML(it.name || "Cigar")}</a>`
-        : escapeHTML(it.name || "Cigar");
-
-      return `
-        <div class="pos-invoice-row" data-id="${escapeHTML(it.id)}">
-          ${ico}
-          <div class="pos-invoice-main">
-            <div class="pos-invoice-name">${cigarName}</div>
-            <div class="pos-invoice-sub">${escapeHTML(it.brand || "")}</div>
-            <div class="pos-invoice-sub">${escapeHTML(it.sub || "")}${it.sub ? " • " : ""}${escapeHTML(money(unit))}</div>
-          </div>
-          <div class="pos-qty">
-            <button type="button" class="qty-btn" data-dec aria-label="Decrease">−</button>
-            <div class="qty-num">${qty}</div>
-            <button type="button" class="qty-btn" data-inc aria-label="Increase">+</button>
-          </div>
-          <div class="pos-line-total">$${money(lineTotal)}</div>
-        </div>
-      `;
-    }).join("");
-
-    list.querySelectorAll(".pos-invoice-row").forEach((row) => {
-      const id = row.getAttribute("data-id");
-      row.querySelector("[data-dec]")?.addEventListener("click", () => {
-        const c = readCart();
-        const item = (c.items || []).find((x) => norm(x.id) === norm(id));
-        if (!item) return;
-        setQty(id, Number(item.qty || 0) - 1);
-        renderInvoice();
-      });
-      row.querySelector("[data-inc]")?.addEventListener("click", () => {
-        const c = readCart();
-        const item = (c.items || []).find((x) => norm(x.id) === norm(id));
-        if (!item) return;
-        setQty(id, Number(item.qty || 0) + 1);
-        renderInvoice();
-      });
-    });
-
-    const subtotal = items.reduce((sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0), 0);
-    const tax = subtotal * TAX_RATE;
-    const total = subtotal + tax;
-
-    totals.innerHTML = `
-      <div class="tot-line"><span>SUBTOTAL</span><span>${money(subtotal)}</span></div>
-      <div class="tot-line"><span>TAX</span><span>${money(tax)}</span></div>
-      <div class="tot-line total"><span>TOTAL</span><span>${money(total)}</span></div>
-    `;
-  }
-
   function openInvoiceModal() {
+    ensureFabStyles();
     const overlay = ensureInvoiceModal();
     overlay.hidden = false;
     document.body.classList.add("pos-modal-open");
@@ -664,113 +586,335 @@
     document.body.classList.remove("pos-modal-open");
   }
 
-  // ---------- product "Add to invoice" confirm popup ----------
-  function ensureAddConfirm() {
-    ensureStyles();
+  function selectedCustomerId() {
+    return (localStorage.getItem(SELECTED_CUSTOMER_KEY) || "").trim();
+  }
 
-    let overlay = document.getElementById("addconfirm-overlay");
-    if (overlay) return overlay;
+  function setSelectedCustomer(id) {
+    localStorage.setItem(SELECTED_CUSTOMER_KEY, String(id || ""));
+    renderCustomerChip();
+  }
+
+  function getCustomers() {
+    return safeJSON(localStorage.getItem(LOYALTY_CUSTOMERS_KEY), []);
+  }
+
+  function setCustomers(list) {
+    localStorage.setItem(LOYALTY_CUSTOMERS_KEY, JSON.stringify(list || []));
+  }
+
+  function renderCustomerChip() {
+    const nameEl = document.getElementById("inv-customer-name");
+    if (!nameEl) return;
+
+    const id = selectedCustomerId();
+    if (!id) {
+      nameEl.textContent = "Attach customer";
+      return;
+    }
+
+    const customers = getCustomers();
+    const c = customers.find((x) => String(x.id) === String(id));
+    nameEl.textContent = c?.name || "Attach customer";
+  }
+
+  function openCustomerPicker() {
+    // build a second overlay to pick a customer
+    let overlay = document.getElementById("cust-overlay");
+    if (overlay) {
+      overlay.hidden = false;
+      return;
+    }
 
     overlay = document.createElement("div");
-    overlay.id = "addconfirm-overlay";
+    overlay.id = "cust-overlay";
     overlay.className = "pos-modal-overlay";
-    overlay.hidden = true;
+    overlay.hidden = false;
 
     overlay.innerHTML = `
-      <div class="pos-confirm-card" role="dialog" aria-modal="true" aria-label="Add to invoice">
-        <button type="button" class="pos-confirm-close" id="addconfirm-x" aria-label="Close">×</button>
-        <div class="pos-confirm-ico" id="addconfirm-ico"></div>
-        <div class="pos-confirm-title" id="addconfirm-title">Item</div>
-        <button type="button" class="pos-confirm-btn" id="addconfirm-btn">Add to invoice</button>
+      <div class="cust-sheet" role="dialog" aria-modal="true" aria-label="Select customer">
+        <div class="pos-modal-topbar">
+          <div class="left"><button type="button" class="pos-link" data-cust-close>Close</button></div>
+          <div class="center">Customer</div>
+          <div class="right"></div>
+        </div>
+        <div class="cust-body">
+          <input class="cust-search" id="cust-search" type="search" placeholder="Search name, phone, email" autocomplete="off" />
+          <div class="cust-list" id="cust-list"></div>
+        </div>
       </div>
     `;
 
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeAddConfirm();
+      if (e.target === overlay) overlay.hidden = true;
     });
-
-    overlay.querySelector("#addconfirm-x")?.addEventListener("click", closeAddConfirm);
-
-    document.addEventListener("keydown", (e) => {
-      if (!overlay.hidden && e.key === "Escape") closeAddConfirm();
-    });
+    overlay
+      .querySelector("[data-cust-close]")
+      ?.addEventListener("click", () => (overlay.hidden = true));
 
     document.body.appendChild(overlay);
-    return overlay;
+
+    const input = overlay.querySelector("#cust-search");
+    const list = overlay.querySelector("#cust-list");
+
+    const render = (filter = "") => {
+      const customers = getCustomers();
+      const q = (filter || "").toLowerCase().trim();
+
+      const filtered = !q
+        ? customers
+        : customers.filter((c) => {
+            const blob = `${c.name || ""} ${c.phone || ""} ${c.email || ""}`.toLowerCase();
+            return blob.includes(q);
+          });
+
+      if (!filtered.length) {
+        list.innerHTML = `<div class="cust-empty">${
+          customers.length
+            ? "No matches."
+            : "No customers found yet. Add customers in Loyalty first."
+        }</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered
+        .map((c) => {
+          const meta = [
+            c.phone ? `📞 ${c.phone}` : "",
+            c.email ? `✉️ ${c.email}` : "",
+            typeof c.points === "number" ? `${c.points} pts` : "",
+          ]
+            .filter(Boolean)
+            .join(" • ");
+
+          return `
+            <div class="cust-row" data-id="${escapeHTML(String(c.id))}">
+              <div class="n">${escapeHTML(c.name || "Customer")}</div>
+              <div class="m">${escapeHTML(meta)}</div>
+            </div>
+          `;
+        })
+        .join("");
+
+      list.querySelectorAll(".cust-row").forEach((row) => {
+        row.addEventListener("click", () => {
+          setSelectedCustomer(row.getAttribute("data-id"));
+          overlay.hidden = true;
+        });
+      });
+    };
+
+    input?.addEventListener("input", () => render(input.value));
+    render(input?.value || "");
   }
 
-  let pendingPayload = null;
+  function renderInvoice() {
+    const cart = readCart();
+    const list = document.getElementById("inv-list");
+    const totals = document.getElementById("inv-totals");
+    const dateEl = document.getElementById("inv-date");
 
-  function openAddConfirm(payload) {
-    pendingPayload = payload;
+    if (dateEl) dateEl.textContent = nowStamp();
+    renderCustomerChip();
 
-    const overlay = ensureAddConfirm();
-    const ico = overlay.querySelector("#addconfirm-ico");
-    const title = overlay.querySelector("#addconfirm-title");
-    const btn = overlay.querySelector("#addconfirm-btn");
+    if (!list || !totals) return;
 
-    const name = payload?.name || "Item";
-    const price = money(payload?.price || 0);
-
-    if (title) title.textContent = `${name} - ${price}`;
-
-    if (ico) {
-      ico.innerHTML = payload?.img ? `<img src="${escapeHTML(payload.img)}" alt="" />` : ``;
+    const items = cart.items || [];
+    if (!items.length) {
+      list.innerHTML = `<div class="pos-empty">No items yet.</div>`;
+      totals.innerHTML = "";
+      return;
     }
 
-    if (btn) {
-      btn.disabled = false;
-      btn.onclick = () => {
-        // IMPORTANT: Always close the popup even if something unexpected throws.
-        btn.disabled = true;
-        try {
-          if (!pendingPayload) return;
-          addItem(pendingPayload);
-          updateFab();
-        } finally {
-          closeAddConfirm();
+    list.innerHTML = items
+      .map((it) => {
+        const isCigar = String(it.type || "").toLowerCase() === "cigar";
+
+        // Left image
+        const imgHTML = it.img
+          ? `<div class="inv-ico"><img src="${escapeHTML(it.img)}" alt="" /></div>`
+          : `<div class="inv-ico"></div>`;
+
+        // 3 lines of detail
+        let line1 = "";
+        let line2 = "";
+        let line3 = "";
+
+        if (isCigar) {
+          // line 1: cigar line+name as hyperlink (if link exists)
+          const title = escapeHTML(it.name);
+          line1 = it.link
+            ? `<div class="inv-line1"><a href="${escapeHTML(it.link)}" target="_blank" rel="noopener">${title}</a></div>`
+            : `<div class="inv-line1">${title}</div>`;
+          // line 2: brand
+          line2 = `<div class="inv-line2">${escapeHTML(it.brand || "")}</div>`;
+          // line 3: vitola/sub + MSRP price
+          const sub = it.sub ? escapeHTML(it.sub) : "";
+          line3 = `<div class="inv-line3">${sub}${sub ? " • " : ""}$${money(it.price)}</div>`;
+        } else {
+          // product row
+          line1 = `<div class="inv-line1">${escapeHTML(it.category || "Product")}</div>`;
+          line2 = `<div class="inv-line2">${escapeHTML(it.name || "")}</div>`;
+          line3 = `<div class="inv-line3">${money(it.price)}</div>`;
         }
-      };
-    }
 
-    overlay.hidden = false;
-    document.body.classList.add("pos-modal-open");
-  }
+        return `
+          <div class="inv-row" data-id="${escapeHTML(it.id)}">
+            ${imgHTML}
+            <div class="inv-main">
+              ${line1}
+              ${line2}
+              ${line3}
+            </div>
+            <div class="inv-qty">
+              <button type="button" class="qty-btn" data-dec aria-label="Decrease">−</button>
+              <div class="qty-num">${Number(it.qty || 0)}</div>
+              <button type="button" class="qty-btn" data-inc aria-label="Increase">+</button>
+            </div>
+            <div class="inv-total">$${money(Number(it.price || 0) * Number(it.qty || 0))}</div>
+          </div>
+        `;
+      })
+      .join("");
 
-  function closeAddConfirm() {
-    const overlay = document.getElementById("addconfirm-overlay");
-    if (!overlay) return;
-    overlay.hidden = true;
-    document.body.classList.remove("pos-modal-open");
-    pendingPayload = null;
-  }
-
-  // ---------- click wiring for non-cigar product pages ----------
-  function bindProductClicks() {
-    document.querySelectorAll("[data-invoice-product]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const payload = {
-          kind: "product",
-          category: el.getAttribute("data-category") || "",
-          name: el.getAttribute("data-name") || "Item",
-          price: Number(el.getAttribute("data-price") || 0),
-          img: el.getAttribute("data-img") || "",
-        };
-        openAddConfirm(payload);
+    // bind qty buttons
+    list.querySelectorAll(".inv-row").forEach((row) => {
+      const id = row.getAttribute("data-id");
+      row.querySelector("[data-dec]")?.addEventListener("click", () => {
+        const c = readCart();
+        const item = (c.items || []).find(
+          (x) => normalizeId(x.id) === normalizeId(id)
+        );
+        if (!item) return;
+        setQty(id, Number(item.qty || 0) - 1);
+        renderInvoice();
+      });
+      row.querySelector("[data-inc]")?.addEventListener("click", () => {
+        const c = readCart();
+        const item = (c.items || []).find(
+          (x) => normalizeId(x.id) === normalizeId(id)
+        );
+        if (!item) return;
+        setQty(id, Number(item.qty || 0) + 1);
+        renderInvoice();
       });
     });
+
+    const subtotal = items.reduce(
+      (sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0),
+      0
+    );
+    const tax = subtotal * TAX_RATE;
+    const total = subtotal + tax;
+
+    totals.innerHTML = `
+      <div class="tot-line"><span>Subtotal</span><span>$${money(subtotal)}</span></div>
+      <div class="tot-line"><span>Tax</span><span>$${money(tax)}</span></div>
+      <div class="tot-line total"><span>Total</span><span>$${money(total)}</span></div>
+    `;
   }
 
-  // keep synced across tabs/pages
+  function computeTotals(items) {
+    const subtotal = (items || []).reduce(
+      (sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0),
+      0
+    );
+    const tax = subtotal * TAX_RATE;
+    const total = subtotal + tax;
+    return { subtotal, tax, total };
+  }
+
+  function saveDraft() {
+    const cart = readCart();
+    const items = cart.items || [];
+    if (!items.length) return;
+
+    const totals = computeTotals(items);
+
+    const draft = {
+      id: uid(),
+      createdAt: new Date().toISOString(),
+      stamp: nowStamp(),
+      customerId: selectedCustomerId() || "",
+      items,
+      totals,
+    };
+
+    const drafts = safeJSON(localStorage.getItem(DRAFTS_KEY), []);
+    drafts.unshift(draft);
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+
+    // clear + close
+    clearCart();
+    closeInvoiceModal();
+  }
+
+  function confirmSale() {
+    const cart = readCart();
+    const items = cart.items || [];
+    if (!items.length) return;
+
+    const totals = computeTotals(items);
+
+    const sale = {
+      id: uid(),
+      createdAt: new Date().toISOString(),
+      stamp: nowStamp(),
+      customerId: selectedCustomerId() || "",
+      items,
+      totals,
+    };
+
+    const sales = safeJSON(localStorage.getItem(SALES_KEY), []);
+    sales.unshift(sale);
+    localStorage.setItem(SALES_KEY, JSON.stringify(sales));
+
+    // Loyalty points (simple: 1 point per $1 total, rounded down)
+    const custId = selectedCustomerId();
+    if (custId) {
+      const customers = getCustomers();
+      const idx = customers.findIndex((c) => String(c.id) === String(custId));
+      if (idx >= 0) {
+        const pts = Math.floor(Number(totals.total || 0));
+        customers[idx].points = Number(customers[idx].points || 0) + pts;
+
+        // basic purchase history
+        customers[idx].visits = Array.isArray(customers[idx].visits)
+          ? customers[idx].visits
+          : [];
+        customers[idx].visits.unshift({
+          saleId: sale.id,
+          stamp: sale.stamp,
+          total: Number(totals.total || 0),
+          points: pts,
+        });
+
+        setCustomers(customers);
+      }
+    }
+
+    // clear + close
+    clearCart();
+    closeInvoiceModal();
+  }
+
+  // keep badge synced across pages/tabs
   window.addEventListener("storage", (e) => {
     if (e.key === CART_KEY) updateFab();
   });
-  window.addEventListener("cigaros:cart-changed", () => updateFab());
-
-  // initialize
-  window.addEventListener("DOMContentLoaded", () => {
-    ensureFab();
-    bindProductClicks();
+  window.addEventListener("cigaros:cart-changed", () => {
     updateFab();
+    // if invoice open, re-render
+    const inv = document.getElementById("invoice-overlay");
+    if (inv && !inv.hidden) renderInvoice();
+  });
+
+  // initialize on every page that loads this file
+  window.addEventListener("DOMContentLoaded", () => {
+    ensureFabStyles();
+    getOrCreateFab();
+    updateFab();
+    // ensure invoice modal exists so buttons never fail
+    ensureInvoiceModal();
   });
 })();
