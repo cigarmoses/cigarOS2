@@ -1,17 +1,20 @@
 /* /pos/cart.js
-   Shared cart + invoice FAB + invoice modal
-   Used across all POS pages so the same active invoice persists.
+   SINGLE source of truth for:
+   - Cart state (localStorage)
+   - Receipt FAB (bottom-right)
+   - Add-to-Invoice modal (opens on every product click)
+   - Invoice modal + Customer picker
 */
 
 (() => {
-  const CART_KEY = "cigaros_cart_v1";
+  const CART_KEY = "cigaros_cart_v2";
   const TAX_RATE = 0.07;
 
   // Drafts + sales (basic persistence)
-  const DRAFTS_KEY = "cigaros_invoice_drafts_v1";
-  const SALES_KEY = "cigaros_sales_v1";
+  const DRAFTS_KEY = "cigaros_invoice_drafts_v2";
+  const SALES_KEY = "cigaros_sales_v2";
 
-  // Loyalty (simple wiring; can be aligned to your existing loyalty.js later)
+  // Loyalty customers bucket (we will align to your loyalty.js after)
   const LOYALTY_CUSTOMERS_KEY = "cigaros_loyalty_customers_v1";
   const SELECTED_CUSTOMER_KEY = "cigaros_invoice_customer_v1";
 
@@ -23,6 +26,26 @@
     const x = Number(n || 0);
     return x.toFixed(2);
   };
+
+  const safeJSON = (s, fallback) => {
+    try {
+      return JSON.parse(s);
+    } catch {
+      return fallback;
+    }
+  };
+
+  const normalizeId = (s) => (s || "").toString().trim().toLowerCase();
+
+  function escapeHTML(s) {
+    return (s ?? "")
+      .toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
   const nowStamp = () => {
     try {
@@ -38,32 +61,22 @@
     }
   };
 
-  const safeJSON = (s, fallback) => {
-    try {
-      return JSON.parse(s);
-    } catch {
-      return fallback;
+  const uid = () =>
+    "inv_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+
+  function inferCategory() {
+    // Prefer H1 on page
+    const h1 = document.querySelector("h1");
+    const h1Text = h1?.textContent?.trim();
+    if (h1Text) return h1Text;
+
+    // Fallback to title like "POS • Packs"
+    const t = (document.title || "").trim();
+    if (t.includes("•")) {
+      const right = t.split("•").slice(1).join("•").trim();
+      if (right) return right;
     }
-  };
-
-  const uid = () => {
-    // simple unique-ish id
-    return (
-      "inv_" +
-      Math.random().toString(16).slice(2) +
-      "_" +
-      Date.now().toString(16)
-    );
-  };
-
-  function escapeHTML(s) {
-    return (s ?? "")
-      .toString()
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    return "Product";
   }
 
   // ---------- cart state ----------
@@ -73,13 +86,7 @@
 
   function writeCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    window.dispatchEvent(
-      new CustomEvent("cigaros:cart-changed", { detail: cart })
-    );
-  }
-
-  function normalizeId(s) {
-    return (s || "").toString().trim().toLowerCase();
+    window.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: cart }));
   }
 
   function cartCount(cart) {
@@ -88,14 +95,14 @@
 
   // payload supports:
   // { id, type: "product"|"cigar", category, name, brand, sub, price, img, link }
-  function addItem(payload) {
+  function addItem(payload, qty = 1) {
     const cart = readCart();
     const id = normalizeId(payload.id || payload.key || payload.name);
     if (!id) return;
 
     const idx = cart.items.findIndex((x) => normalizeId(x.id) === id);
     if (idx >= 0) {
-      cart.items[idx].qty = Number(cart.items[idx].qty || 0) + 1;
+      cart.items[idx].qty = Number(cart.items[idx].qty || 0) + Number(qty || 1);
     } else {
       cart.items.push({
         id,
@@ -109,10 +116,10 @@
 
         // cigar-ish fields
         brand: payload.brand || "",
-        sub: payload.sub || "", // vitola/size line or product details
+        sub: payload.sub || "",
         link: payload.link || "",
 
-        qty: 1,
+        qty: Math.max(1, Number(qty || 1)),
       });
     }
     writeCart(cart);
@@ -120,17 +127,13 @@
 
   function setQty(id, qty) {
     const cart = readCart();
-    const idx = cart.items.findIndex(
-      (x) => normalizeId(x.id) === normalizeId(id)
-    );
+    const idx = cart.items.findIndex((x) => normalizeId(x.id) === normalizeId(id));
     if (idx < 0) return;
 
     const q = Math.max(0, Number(qty || 0));
-    if (q === 0) {
-      cart.items.splice(idx, 1);
-    } else {
-      cart.items[idx].qty = q;
-    }
+    if (q === 0) cart.items.splice(idx, 1);
+    else cart.items[idx].qty = q;
+
     writeCart(cart);
   }
 
@@ -138,88 +141,22 @@
     writeCart({ items: [] });
   }
 
-  // expose API
+  // expose API (safe, minimal)
   window.CigarOSCart = {
     read: readCart,
-    add: addItem,
+    add: (payload, qty) => addItem(payload, qty),
     setQty,
     clear: clearCart,
     money,
     openInvoice: () => openInvoiceModal(),
   };
 
-  // ---------- receipt/invoice FAB ----------
-  function getOrCreateFab() {
-    // Try to reuse whatever the page already has
-    let fab =
-      document.querySelector(".receipt-fab") ||
-      document.getElementById("posReceiptFab") ||
-      document.querySelector(".pos-receipt-fab");
-
-    if (!fab) {
-      fab = document.createElement("button");
-      fab.type = "button";
-      document.body.appendChild(fab);
-    }
-
-    // Normalize
-    fab.classList.add("receipt-fab");
-    fab.removeAttribute("id");
-
-    // Ensure structure
-    let img = fab.querySelector("img");
-    if (!img) {
-      img = document.createElement("img");
-      img.alt = "";
-      fab.appendChild(img);
-    }
-
-    let badge = fab.querySelector(".receipt-badge");
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.className = "receipt-badge";
-      badge.hidden = true;
-      badge.textContent = "0";
-      fab.appendChild(badge);
-    }
-
-    // Force icon paths
-    img.src = ICON_EMPTY;
-
-    // Prevent double-binding
-    fab.onclick = null;
-    fab.addEventListener("click", () => openInvoiceModal());
-
-    return fab;
-  }
-
-  function updateFab() {
-    const cart = readCart();
-    const n = cartCount(cart);
-
-    const fab =
-      document.querySelector(".receipt-fab") ||
-      document.getElementById("posReceiptFab") ||
-      document.querySelector(".pos-receipt-fab");
-
-    if (!fab) return;
-
-    const img = fab.querySelector("img");
-    const badge = fab.querySelector(".receipt-badge");
-
-    if (img) img.src = n > 0 ? ICON_ACTIVE : ICON_EMPTY;
-
-    if (badge) {
-      badge.textContent = String(n);
-      badge.hidden = n <= 0;
-    }
-  }
-
-  function ensureFabStyles() {
-    if (document.getElementById("cigaros-fab-styles")) return;
+  // ---------- styles ----------
+  function ensureStyles() {
+    if (document.getElementById("cigaros-cart-styles")) return;
 
     const style = document.createElement("style");
-    style.id = "cigaros-fab-styles";
+    style.id = "cigaros-cart-styles";
     style.textContent = `
       .receipt-fab{
         position: fixed;
@@ -234,11 +171,7 @@
         z-index: 60;
         cursor: pointer;
       }
-      .receipt-fab img{
-        width: 58px;
-        height: 58px;
-        display: block;
-      }
+      .receipt-fab img{ width: 58px; height: 58px; display:block; }
       .receipt-fab .receipt-badge{
         position:absolute;
         right: -2px;
@@ -257,9 +190,8 @@
         box-shadow: 0 6px 18px rgba(0,0,0,0.18);
       }
 
-      /* modal base */
       .pos-modal-open{ overflow:hidden; }
-      .pos-modal-overlay{
+      .pos-overlay{
         position: fixed;
         inset: 0;
         background: rgba(0,0,0,0.35);
@@ -269,29 +201,25 @@
         justify-content:center;
         padding: 14px;
       }
-      .pos-modal-sheet{
+      .pos-sheet{
         width: min(560px, 100%);
         background: #fff;
         border-radius: 18px;
         box-shadow: 0 20px 50px rgba(0,0,0,0.35);
         overflow: hidden;
       }
-      .pos-modal-topbar{
+      .pos-topbar{
         display:flex;
         align-items:center;
         justify-content:space-between;
         padding: 12px 14px;
         border-bottom: 1px solid rgba(0,0,0,0.08);
       }
-      .pos-modal-topbar .left,
-      .pos-modal-topbar .center,
-      .pos-modal-topbar .right{
-        min-width: 80px;
-      }
-      .pos-modal-topbar .center{
+      .pos-topbar .center{
         text-align:center;
         font-weight: 800;
         font-size: 18px;
+        flex: 1 1 auto;
       }
       .pos-link{
         border:none;
@@ -301,6 +229,96 @@
         font-weight: 600;
         cursor:pointer;
       }
+
+      /* Add-to-invoice sheet */
+      .add-body{ padding: 14px; }
+      .add-card{
+        display:flex;
+        gap: 12px;
+        align-items:center;
+        padding: 12px;
+        border: 1px solid rgba(0,0,0,0.10);
+        border-radius: 16px;
+        background: #fff;
+      }
+      .add-ico{
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: #e8f1ff;
+        overflow:hidden;
+        flex: 0 0 auto;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+      .add-ico img{ width:100%; height:100%; object-fit:cover; display:block; }
+      .add-main{ flex: 1 1 auto; min-width: 0; }
+      .add-cat{ font-weight: 900; font-size: 18px; color:#0f1a2c; }
+      .add-name{ font-size: 15px; color:#6a7586; margin-top:2px; }
+      .add-price{ font-size: 15px; color:#0f1a2c; font-weight: 800; margin-top:2px; }
+
+      .add-qty{
+        margin-top: 12px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 12px;
+      }
+      .qty-pill{
+        display:flex;
+        align-items:center;
+        gap: 10px;
+        background: #f2f2f7;
+        border-radius: 999px;
+        padding: 10px 12px;
+      }
+      .qty-btn{
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border:none;
+        background: transparent;
+        font-size: 24px;
+        font-weight: 800;
+        color:#0f1a2c;
+        cursor:pointer;
+      }
+      .qty-num{
+        min-width: 24px;
+        text-align:center;
+        font-weight: 900;
+        font-size: 18px;
+        color:#0f1a2c;
+      }
+      .add-actions{
+        margin-top: 14px;
+        display:flex;
+        gap: 12px;
+      }
+      .btn-light{
+        flex: 1 1 50%;
+        border-radius: 16px;
+        border: 2px solid rgba(0,0,0,0.12);
+        background: #fff;
+        padding: 16px 14px;
+        font-weight: 900;
+        font-size: 16px;
+        cursor:pointer;
+      }
+      .btn-blue{
+        flex: 1 1 50%;
+        border-radius: 16px;
+        border: none;
+        background: #007aff;
+        color:#fff;
+        padding: 16px 14px;
+        font-weight: 900;
+        font-size: 16px;
+        cursor:pointer;
+      }
+
+      /* Invoice */
       .pos-meta{
         padding: 10px 14px 0;
         color: #6a7586;
@@ -358,12 +376,9 @@
         justify-content:center;
       }
       .inv-ico img{ width:100%; height:100%; object-fit:cover; display:block; }
-      .inv-main{
-        flex: 1 1 auto;
-        min-width: 0;
-      }
+      .inv-main{ flex: 1 1 auto; min-width: 0; }
       .inv-line1{
-        font-weight: 800;
+        font-weight: 900;
         font-size: 18px;
         color:#0f1a2c;
         white-space: nowrap;
@@ -378,11 +393,7 @@
         overflow:hidden;
         text-overflow: ellipsis;
       }
-      .inv-line1 a{
-        color:#007aff;
-        text-decoration:none;
-        font-weight: 800;
-      }
+      .inv-line1 a{ color:#007aff; text-decoration:none; font-weight: 900; }
       .inv-qty{
         display:flex;
         align-items:center;
@@ -392,32 +403,14 @@
         padding: 6px 10px;
         flex: 0 0 auto;
       }
-      .qty-btn{
-        width: 28px;
-        height: 28px;
-        border-radius: 999px;
-        border:none;
-        background: transparent;
-        font-size: 22px;
-        font-weight: 700;
-        color:#0f1a2c;
-        cursor:pointer;
-      }
-      .qty-num{
-        min-width: 16px;
-        text-align:center;
-        font-weight: 700;
-        color:#0f1a2c;
-      }
       .inv-total{
-        font-weight: 800;
+        font-weight: 900;
         font-size: 22px;
         color:#0f1a2c;
         flex: 0 0 auto;
         min-width: 86px;
         text-align:right;
       }
-
       .totals{
         padding: 10px 14px 0;
         border-top: 1px solid rgba(0,0,0,0.08);
@@ -439,36 +432,8 @@
         gap: 12px;
         padding: 12px 14px 16px;
       }
-      .btn-light{
-        flex: 1 1 50%;
-        border-radius: 16px;
-        border: 2px solid rgba(0,0,0,0.12);
-        background: #fff;
-        padding: 16px 14px;
-        font-weight: 900;
-        font-size: 16px;
-        cursor:pointer;
-      }
-      .btn-blue{
-        flex: 1 1 50%;
-        border-radius: 16px;
-        border: none;
-        background: #007aff;
-        color:#fff;
-        padding: 16px 14px;
-        font-weight: 900;
-        font-size: 16px;
-        cursor:pointer;
-      }
 
-      /* customer picker */
-      .cust-sheet{
-        width: min(560px, 100%);
-        background: #fff;
-        border-radius: 18px;
-        overflow:hidden;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-      }
+      /* Customer picker */
       .cust-body{ padding: 12px 14px 14px; }
       .cust-search{
         width: 100%;
@@ -491,39 +456,207 @@
         cursor:pointer;
       }
       .cust-row:first-child{ border-top:none; }
-      .cust-row .n{ font-weight: 800; color:#0f1a2c; }
+      .cust-row .n{ font-weight: 900; color:#0f1a2c; }
       .cust-row .m{ font-size: 13px; color:#6a7586; margin-top:2px; }
-      .cust-empty{
-        padding: 12px;
-        color:#6a7586;
-        font-weight: 600;
-      }
+      .cust-empty{ padding: 12px; color:#6a7586; font-weight: 700; }
     `;
     document.head.appendChild(style);
   }
 
-  // ---------- invoice modal ----------
+  // ---------- FAB ----------
+  function getOrCreateFab() {
+    let fab =
+      document.querySelector(".receipt-fab") ||
+      document.getElementById("posReceiptFab") ||
+      document.querySelector(".pos-receipt-fab");
+
+    if (!fab) {
+      fab = document.createElement("button");
+      fab.type = "button";
+      document.body.appendChild(fab);
+    }
+
+    fab.classList.add("receipt-fab");
+    fab.removeAttribute("id");
+
+    let img = fab.querySelector("img");
+    if (!img) {
+      img = document.createElement("img");
+      img.alt = "";
+      fab.appendChild(img);
+    }
+
+    let badge = fab.querySelector(".receipt-badge");
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "receipt-badge";
+      badge.hidden = true;
+      badge.textContent = "0";
+      fab.appendChild(badge);
+    }
+
+    img.src = ICON_EMPTY;
+
+    fab.onclick = null;
+    fab.addEventListener("click", () => openInvoiceModal());
+
+    return fab;
+  }
+
+  function updateFab() {
+    const cart = readCart();
+    const n = cartCount(cart);
+
+    const fab =
+      document.querySelector(".receipt-fab") ||
+      document.getElementById("posReceiptFab") ||
+      document.querySelector(".pos-receipt-fab");
+
+    if (!fab) return;
+
+    const img = fab.querySelector("img");
+    const badge = fab.querySelector(".receipt-badge");
+
+    if (img) img.src = n > 0 ? ICON_ACTIVE : ICON_EMPTY;
+    if (badge) {
+      badge.textContent = String(n);
+      badge.hidden = n <= 0;
+    }
+  }
+
+  // ---------- Add-to-Invoice modal ----------
+  function ensureAddModal() {
+    let overlay = document.getElementById("add-overlay");
+    if (overlay) return overlay;
+
+    overlay = document.createElement("div");
+    overlay.id = "add-overlay";
+    overlay.className = "pos-overlay";
+    overlay.hidden = true;
+
+    overlay.innerHTML = `
+      <div class="pos-sheet" role="dialog" aria-modal="true" aria-label="Add to invoice">
+        <div class="pos-topbar">
+          <button type="button" class="pos-link" data-add-cancel>Cancel</button>
+          <div class="center">Add to Invoice</div>
+          <div style="width:80px;"></div>
+        </div>
+        <div class="add-body">
+          <div class="add-card">
+            <div class="add-ico" id="add-ico"></div>
+            <div class="add-main">
+              <div class="add-cat" id="add-cat"></div>
+              <div class="add-name" id="add-name"></div>
+              <div class="add-price" id="add-price"></div>
+            </div>
+          </div>
+
+          <div class="add-qty">
+            <div style="font-weight:900;color:#0f1a2c;">Quantity</div>
+            <div class="qty-pill">
+              <button type="button" class="qty-btn" data-add-dec aria-label="Decrease">−</button>
+              <div class="qty-num" id="add-qty">1</div>
+              <button type="button" class="qty-btn" data-add-inc aria-label="Increase">+</button>
+            </div>
+          </div>
+
+          <div class="add-actions">
+            <button type="button" class="btn-light" data-add-view>VIEW INVOICE</button>
+            <button type="button" class="btn-blue" data-add-confirm>ADD</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // backdrop click closes
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeAddModal();
+    });
+
+    overlay.querySelector("[data-add-cancel]")?.addEventListener("click", closeAddModal);
+
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  let pendingPayload = null;
+  let pendingQty = 1;
+
+  function openAddModal(payload) {
+    ensureStyles();
+    const overlay = ensureAddModal();
+
+    pendingPayload = payload;
+    pendingQty = 1;
+
+    overlay.querySelector("#add-cat").textContent = payload.category || inferCategory();
+    overlay.querySelector("#add-name").textContent = payload.name || "Item";
+    overlay.querySelector("#add-price").textContent = `$${money(payload.price)}`;
+
+    const ico = overlay.querySelector("#add-ico");
+    ico.innerHTML = payload.img
+      ? `<img src="${escapeHTML(payload.img)}" alt="" />`
+      : "";
+
+    const qtyEl = overlay.querySelector("#add-qty");
+    qtyEl.textContent = String(pendingQty);
+
+    overlay.querySelector("[data-add-dec]")?.addEventListener("click", () => {
+      pendingQty = Math.max(1, pendingQty - 1);
+      qtyEl.textContent = String(pendingQty);
+    });
+
+    overlay.querySelector("[data-add-inc]")?.addEventListener("click", () => {
+      pendingQty = pendingQty + 1;
+      qtyEl.textContent = String(pendingQty);
+    });
+
+    overlay.querySelector("[data-add-confirm]")?.addEventListener("click", () => {
+      if (!pendingPayload) return;
+      addItem(pendingPayload, pendingQty);
+      closeAddModal();
+      // keep user on page; badge updates automatically
+    });
+
+    overlay.querySelector("[data-add-view]")?.addEventListener("click", () => {
+      if (pendingPayload) addItem(pendingPayload, pendingQty);
+      closeAddModal();
+      openInvoiceModal();
+    });
+
+    overlay.hidden = false;
+    document.body.classList.add("pos-modal-open");
+  }
+
+  function closeAddModal() {
+    const overlay = document.getElementById("add-overlay");
+    if (!overlay) return;
+    overlay.hidden = true;
+    document.body.classList.remove("pos-modal-open");
+  }
+
+  // ---------- Invoice modal ----------
   function ensureInvoiceModal() {
     let overlay = document.getElementById("invoice-overlay");
     if (overlay) return overlay;
 
     overlay = document.createElement("div");
     overlay.id = "invoice-overlay";
-    overlay.className = "pos-modal-overlay";
+    overlay.className = "pos-overlay";
     overlay.hidden = true;
 
     overlay.innerHTML = `
-      <div class="pos-modal-sheet" role="dialog" aria-modal="true" aria-label="Invoice">
-        <div class="pos-modal-topbar">
-          <div class="left"><button type="button" class="pos-link" data-close>Close</button></div>
+      <div class="pos-sheet" role="dialog" aria-modal="true" aria-label="Invoice">
+        <div class="pos-topbar">
+          <button type="button" class="pos-link" data-inv-close>Close</button>
           <div class="center">Receipt</div>
-          <div class="right"></div>
+          <div style="width:80px;"></div>
         </div>
 
         <div class="pos-meta">
           <div id="inv-date"></div>
           <button type="button" class="pos-customer-pill" id="inv-customer-btn">
-            <span style="color:#6a7586;font-weight:700;">Customer:</span>
+            <span style="color:#6a7586;font-weight:800;">Customer:</span>
             <span id="inv-customer-name" style="font-weight:900;color:#0f1a2c;">Attach customer</span>
             <span style="color:#6a7586;">▾</span>
           </button>
@@ -532,7 +665,6 @@
         <div class="pos-title">Invoice</div>
 
         <div class="pos-list" id="inv-list"></div>
-
         <div class="totals" id="inv-totals"></div>
 
         <div class="inv-actions">
@@ -542,37 +674,27 @@
       </div>
     `;
 
-    // close behaviors
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) closeInvoiceModal();
     });
-    overlay.querySelectorAll("[data-close]").forEach((btn) => {
-      btn.addEventListener("click", closeInvoiceModal);
-    });
+
+    overlay.querySelector("[data-inv-close]")?.addEventListener("click", closeInvoiceModal);
 
     document.addEventListener("keydown", (e) => {
       if (!overlay.hidden && e.key === "Escape") closeInvoiceModal();
     });
 
-    // attach customer picker
-    overlay.querySelector("#inv-customer-btn")?.addEventListener("click", () => {
-      openCustomerPicker();
-    });
+    overlay.querySelector("#inv-customer-btn")?.addEventListener("click", openCustomerPicker);
 
-    // save/confirm
-    overlay.querySelector("#inv-save")?.addEventListener("click", () => {
-      saveDraft();
-    });
-    overlay.querySelector("#inv-confirm")?.addEventListener("click", () => {
-      confirmSale();
-    });
+    overlay.querySelector("#inv-save")?.addEventListener("click", saveDraft);
+    overlay.querySelector("#inv-confirm")?.addEventListener("click", confirmSale);
 
     document.body.appendChild(overlay);
     return overlay;
   }
 
   function openInvoiceModal() {
-    ensureFabStyles();
+    ensureStyles();
     const overlay = ensureInvoiceModal();
     overlay.hidden = false;
     document.body.classList.add("pos-modal-open");
@@ -618,96 +740,6 @@
     nameEl.textContent = c?.name || "Attach customer";
   }
 
-  function openCustomerPicker() {
-    // build a second overlay to pick a customer
-    let overlay = document.getElementById("cust-overlay");
-    if (overlay) {
-      overlay.hidden = false;
-      return;
-    }
-
-    overlay = document.createElement("div");
-    overlay.id = "cust-overlay";
-    overlay.className = "pos-modal-overlay";
-    overlay.hidden = false;
-
-    overlay.innerHTML = `
-      <div class="cust-sheet" role="dialog" aria-modal="true" aria-label="Select customer">
-        <div class="pos-modal-topbar">
-          <div class="left"><button type="button" class="pos-link" data-cust-close>Close</button></div>
-          <div class="center">Customer</div>
-          <div class="right"></div>
-        </div>
-        <div class="cust-body">
-          <input class="cust-search" id="cust-search" type="search" placeholder="Search name, phone, email" autocomplete="off" />
-          <div class="cust-list" id="cust-list"></div>
-        </div>
-      </div>
-    `;
-
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) overlay.hidden = true;
-    });
-    overlay
-      .querySelector("[data-cust-close]")
-      ?.addEventListener("click", () => (overlay.hidden = true));
-
-    document.body.appendChild(overlay);
-
-    const input = overlay.querySelector("#cust-search");
-    const list = overlay.querySelector("#cust-list");
-
-    const render = (filter = "") => {
-      const customers = getCustomers();
-      const q = (filter || "").toLowerCase().trim();
-
-      const filtered = !q
-        ? customers
-        : customers.filter((c) => {
-            const blob = `${c.name || ""} ${c.phone || ""} ${c.email || ""}`.toLowerCase();
-            return blob.includes(q);
-          });
-
-      if (!filtered.length) {
-        list.innerHTML = `<div class="cust-empty">${
-          customers.length
-            ? "No matches."
-            : "No customers found yet. Add customers in Loyalty first."
-        }</div>`;
-        return;
-      }
-
-      list.innerHTML = filtered
-        .map((c) => {
-          const meta = [
-            c.phone ? `📞 ${c.phone}` : "",
-            c.email ? `✉️ ${c.email}` : "",
-            typeof c.points === "number" ? `${c.points} pts` : "",
-          ]
-            .filter(Boolean)
-            .join(" • ");
-
-          return `
-            <div class="cust-row" data-id="${escapeHTML(String(c.id))}">
-              <div class="n">${escapeHTML(c.name || "Customer")}</div>
-              <div class="m">${escapeHTML(meta)}</div>
-            </div>
-          `;
-        })
-        .join("");
-
-      list.querySelectorAll(".cust-row").forEach((row) => {
-        row.addEventListener("click", () => {
-          setSelectedCustomer(row.getAttribute("data-id"));
-          overlay.hidden = true;
-        });
-      });
-    };
-
-    input?.addEventListener("input", () => render(input.value));
-    render(input?.value || "");
-  }
-
   function renderInvoice() {
     const cart = readCart();
     const list = document.getElementById("inv-list");
@@ -730,32 +762,28 @@
       .map((it) => {
         const isCigar = String(it.type || "").toLowerCase() === "cigar";
 
-        // Left image
         const imgHTML = it.img
           ? `<div class="inv-ico"><img src="${escapeHTML(it.img)}" alt="" /></div>`
           : `<div class="inv-ico"></div>`;
 
-        // 3 lines of detail
         let line1 = "";
         let line2 = "";
         let line3 = "";
 
         if (isCigar) {
-          // line 1: cigar line+name as hyperlink (if link exists)
           const title = escapeHTML(it.name);
           line1 = it.link
             ? `<div class="inv-line1"><a href="${escapeHTML(it.link)}" target="_blank" rel="noopener">${title}</a></div>`
             : `<div class="inv-line1">${title}</div>`;
-          // line 2: brand
           line2 = `<div class="inv-line2">${escapeHTML(it.brand || "")}</div>`;
-          // line 3: vitola/sub + MSRP price
           const sub = it.sub ? escapeHTML(it.sub) : "";
           line3 = `<div class="inv-line3">${sub}${sub ? " • " : ""}$${money(it.price)}</div>`;
         } else {
-          // product row
-          line1 = `<div class="inv-line1">${escapeHTML(it.category || "Product")}</div>`;
+          // IMPORTANT: category as the title (your requirement)
+          const cat = (it.category || inferCategory()).trim() || "Product";
+          line1 = `<div class="inv-line1">${escapeHTML(cat)}</div>`;
           line2 = `<div class="inv-line2">${escapeHTML(it.name || "")}</div>`;
-          line3 = `<div class="inv-line3">${money(it.price)}</div>`;
+          line3 = `<div class="inv-line3">$${money(it.price)}</div>`;
         }
 
         return `
@@ -782,18 +810,14 @@
       const id = row.getAttribute("data-id");
       row.querySelector("[data-dec]")?.addEventListener("click", () => {
         const c = readCart();
-        const item = (c.items || []).find(
-          (x) => normalizeId(x.id) === normalizeId(id)
-        );
+        const item = (c.items || []).find((x) => normalizeId(x.id) === normalizeId(id));
         if (!item) return;
         setQty(id, Number(item.qty || 0) - 1);
         renderInvoice();
       });
       row.querySelector("[data-inc]")?.addEventListener("click", () => {
         const c = readCart();
-        const item = (c.items || []).find(
-          (x) => normalizeId(x.id) === normalizeId(id)
-        );
+        const item = (c.items || []).find((x) => normalizeId(x.id) === normalizeId(id));
         if (!item) return;
         setQty(id, Number(item.qty || 0) + 1);
         renderInvoice();
@@ -844,7 +868,6 @@
     drafts.unshift(draft);
     localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
 
-    // clear + close
     clearCart();
     closeInvoiceModal();
   }
@@ -869,7 +892,7 @@
     sales.unshift(sale);
     localStorage.setItem(SALES_KEY, JSON.stringify(sales));
 
-    // Loyalty points (simple: 1 point per $1 total, rounded down)
+    // basic loyalty add (if customer exists in this bucket)
     const custId = selectedCustomerId();
     if (custId) {
       const customers = getCustomers();
@@ -877,44 +900,176 @@
       if (idx >= 0) {
         const pts = Math.floor(Number(totals.total || 0));
         customers[idx].points = Number(customers[idx].points || 0) + pts;
-
-        // basic purchase history
-        customers[idx].visits = Array.isArray(customers[idx].visits)
-          ? customers[idx].visits
-          : [];
+        customers[idx].visits = Array.isArray(customers[idx].visits) ? customers[idx].visits : [];
         customers[idx].visits.unshift({
           saleId: sale.id,
           stamp: sale.stamp,
           total: Number(totals.total || 0),
           points: pts,
         });
-
         setCustomers(customers);
       }
     }
 
-    // clear + close
     clearCart();
     closeInvoiceModal();
   }
 
-  // keep badge synced across pages/tabs
+  // ---------- Customer picker ----------
+  function ensureCustomerOverlay() {
+    let overlay = document.getElementById("cust-overlay");
+    if (overlay) return overlay;
+
+    overlay = document.createElement("div");
+    overlay.id = "cust-overlay";
+    overlay.className = "pos-overlay";
+    overlay.hidden = true;
+
+    overlay.innerHTML = `
+      <div class="pos-sheet" role="dialog" aria-modal="true" aria-label="Select customer">
+        <div class="pos-topbar">
+          <button type="button" class="pos-link" data-cust-close>Close</button>
+          <div class="center">Customer</div>
+          <div style="width:80px;"></div>
+        </div>
+        <div class="cust-body">
+          <input class="cust-search" id="cust-search" type="search" placeholder="Search name, phone, email" autocomplete="off" />
+          <div class="cust-list" id="cust-list"></div>
+        </div>
+      </div>
+    `;
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) overlay.hidden = true;
+    });
+    overlay.querySelector("[data-cust-close]")?.addEventListener("click", () => {
+      overlay.hidden = true;
+    });
+
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function openCustomerPicker() {
+    const overlay = ensureCustomerOverlay();
+    overlay.hidden = false;
+
+    const input = overlay.querySelector("#cust-search");
+    const list = overlay.querySelector("#cust-list");
+
+    const render = (filter = "") => {
+      const customers = getCustomers();
+      const q = (filter || "").toLowerCase().trim();
+
+      const filtered = !q
+        ? customers
+        : customers.filter((c) => {
+            const blob = `${c.name || ""} ${c.phone || ""} ${c.email || ""}`.toLowerCase();
+            return blob.includes(q);
+          });
+
+      if (!filtered.length) {
+        list.innerHTML = `<div class="cust-empty">${
+          customers.length ? "No matches." : "No customers found yet."
+        }</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered
+        .map((c) => {
+          const meta = [
+            c.phone ? `📞 ${c.phone}` : "",
+            c.email ? `✉️ ${c.email}` : "",
+            typeof c.points === "number" ? `${c.points} pts` : "",
+          ]
+            .filter(Boolean)
+            .join(" • ");
+
+          return `
+            <div class="cust-row" data-id="${escapeHTML(String(c.id))}">
+              <div class="n">${escapeHTML(c.name || "Customer")}</div>
+              <div class="m">${escapeHTML(meta)}</div>
+            </div>
+          `;
+        })
+        .join("");
+
+      list.querySelectorAll(".cust-row").forEach((row) => {
+        row.addEventListener("click", () => {
+          setSelectedCustomer(row.getAttribute("data-id"));
+          overlay.hidden = true;
+        });
+      });
+    };
+
+    input?.addEventListener("input", () => render(input.value));
+    render(input?.value || "");
+    input?.focus?.();
+  }
+
+  // ---------- Product card wiring (NO more page-specific cart scripts) ----------
+  function payloadFromCard(card) {
+    const category = card.dataset.category || inferCategory();
+    const name = card.dataset.name || "Item";
+    const price = Number(card.dataset.price || "0");
+    const img = card.dataset.img || "";
+
+    const brand = card.dataset.brand || "";
+    const vitola = card.dataset.vitola || "";
+    const type = card.dataset.type || "product";
+    const link = card.dataset.link || "";
+
+    // stable id so it stacks
+    const id = normalizeId(`${type}|${category}|${brand}|${name}|${vitola}`);
+
+    return {
+      id,
+      type,
+      category,
+      name,
+      price,
+      img,
+      brand,
+      sub: vitola,
+      link,
+    };
+  }
+
+  function bindProductClicks() {
+    // Event delegation: works even if cards are injected later
+    document.addEventListener("click", (e) => {
+      const card = e.target.closest?.("[data-receipt-item]");
+      if (!card) return;
+
+      // Prevent old inline handlers from also firing (if any were missed)
+      e.preventDefault();
+      e.stopPropagation();
+
+      const payload = payloadFromCard(card);
+      openAddModal(payload);
+    }, true);
+  }
+
+  // sync badge across tabs
   window.addEventListener("storage", (e) => {
     if (e.key === CART_KEY) updateFab();
   });
   window.addEventListener("cigaros:cart-changed", () => {
     updateFab();
-    // if invoice open, re-render
     const inv = document.getElementById("invoice-overlay");
     if (inv && !inv.hidden) renderInvoice();
   });
 
-  // initialize on every page that loads this file
+  // init
   window.addEventListener("DOMContentLoaded", () => {
-    ensureFabStyles();
+    ensureStyles();
     getOrCreateFab();
     updateFab();
-    // ensure invoice modal exists so buttons never fail
+
+    ensureAddModal();
     ensureInvoiceModal();
+    ensureCustomerOverlay();
+
+    bindProductClicks();
   });
 })();
