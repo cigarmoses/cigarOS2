@@ -8,9 +8,76 @@
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/category.css" />
-</head>
-<body class="category-page">
 
+  <style>
+    /* Add-to-invoice popup (product confirm) */
+    .add-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 90;
+    }
+    .add-sheet{
+      width: min(420px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      padding: 18px 18px 16px;
+      position: relative;
+    }
+    .add-x{
+      position:absolute;
+      top: 10px;
+      right: 10px;
+      width: 34px;
+      height: 34px;
+      border:none;
+      border-radius: 999px;
+      background: #f2f2f7;
+      color: #6a7586;
+      font-size: 20px;
+      font-weight: 800;
+      cursor:pointer;
+    }
+    .add-ico{
+      width: 74px;
+      height: 74px;
+      border-radius: 18px;
+      overflow:hidden;
+      margin: 4px auto 10px;
+      background: #e8f1ff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .add-ico img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .add-title{
+      text-align:center;
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin: 4px 0 12px;
+      color: #0f1a2c;
+    }
+    .add-btn{
+      width: 100%;
+      border-radius: 16px;
+      border: none;
+      background: #f2f2f7;
+      padding: 16px 14px;
+      font-weight: 900;
+      font-size: 18px;
+      color: #007aff;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body class="category-page">
   <header class="category-topbar">
     <button type="button" class="pos-back" id="category-back">
       <span class="pos-back-icon">←</span>
@@ -26,16 +93,8 @@
 
     <section class="category-grid">
 
-      <!-- Each card uses data-invoice-product so /pos/cart.js can show:
-           click -> confirm popup -> Add to invoice -> badge turns red -> invoice popup shows item
-      -->
-
-      <article class="category-card"
-        data-invoice-product
-        data-category="Food & Bevs"
-        data-name="7up"
-        data-price="1.50"
-        data-img="/img/icons/foodandbevs/7up.svg">
+      <!-- Row 1 -->
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="7up" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/7up.svg" alt="7up" />
         </div>
@@ -43,12 +102,7 @@
         <div class="category-card-price">$1.50</div>
       </article>
 
-      <article class="category-card"
-        data-invoice-product
-        data-category="Food & Bevs"
-        data-name="Coca-Cola"
-        data-price="1.50"
-        data-img="/img/icons/foodandbevs/cocacola.svg">
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Coca-Cola" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/cocacola.svg" alt="Coca-Cola" />
         </div>
@@ -56,12 +110,7 @@
         <div class="category-card-price">$1.50</div>
       </article>
 
-      <article class="category-card"
-        data-invoice-product
-        data-category="Food & Bevs"
-        data-name="Coke Zero"
-        data-price="1.50"
-        data-img="/img/icons/foodandbevs/cokezero.svg">
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Coke Zero" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/cokezero.svg" alt="Coke Zero" />
         </div>
@@ -69,12 +118,7 @@
         <div class="category-card-price">$1.50</div>
       </article>
 
-      <article class="category-card"
-        data-invoice-product
-        data-category="Food & Bevs"
-        data-name="Diet Coke"
-        data-price="1.50"
-        data-img="/img/icons/foodandbevs/dietcoke.svg">
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Diet Coke" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/dietcoke.svg" alt="Diet Coke" />
         </div>
@@ -82,12 +126,8 @@
         <div class="category-card-price">$1.50</div>
       </article>
 
-      <article class="category-card"
-        data-invoice-product
-        data-category="Food & Bevs"
-        data-name="Dr Pepper"
-        data-price="1.50"
-        data-img="/img/icons/foodandbevs/drpepper.svg">
+      <!-- Row 2 -->
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Dr Pepper" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/drpepper.svg" alt="Dr Pepper" />
         </div>
@@ -95,12 +135,7 @@
         <div class="category-card-price">$1.50</div>
       </article>
 
-      <article class="category-card"
-        data-invoice-product
-        data-category="Food & Bevs"
-        data-name="Diet Dr Pepper"
-        data-price="1.50"
-        data-img="/img/icons/foodandbevs/dietdrpepper.svg">
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Diet Dr Pepper" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/dietdrpepper.svg" alt="Diet Dr Pepper" />
         </div>
@@ -108,12 +143,7 @@
         <div class="category-card-price">$1.50</div>
       </article>
 
-      <article class="category-card"
-        data-invoice-product
-        data-category="Food & Bevs"
-        data-name="Dunkin Iced Coffee"
-        data-price="3.99"
-        data-img="/img/icons/foodandbevs/dunkin.svg">
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Dunkin Iced Coffee" data-price="3.99">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/dunkin.svg" alt="Dunkin Iced Coffee" />
         </div>
@@ -121,12 +151,7 @@
         <div class="category-card-price">$3.99</div>
       </article>
 
-      <article class="category-card"
-        data-invoice-product
-        data-category="Food & Bevs"
-        data-name="Gatorade"
-        data-price="2.99"
-        data-img="/img/icons/foodandbevs/gatorade.svg">
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Gatorade" data-price="2.99">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/gatorade.svg" alt="Gatorade" />
         </div>
@@ -134,12 +159,8 @@
         <div class="category-card-price">$2.99</div>
       </article>
 
-      <article class="category-card"
-        data-invoice-product
-        data-category="Food & Bevs"
-        data-name="Ginger Ale"
-        data-price="1.50"
-        data-img="/img/icons/foodandbevs/gingerale.svg">
+      <!-- Row 3 -->
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Ginger Ale" data-price="1.50">
         <div class="category-card-icon">
           <img src="/img/icons/foodandbevs/gingerale.svg" alt="Ginger Ale" />
         </div>
@@ -147,20 +168,182 @@
         <div class="category-card-price">$1.50</div>
       </article>
 
-      <!-- keep adding your remaining cards the same way -->
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Sweet Tea" data-price="2.49">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/gpsweettea.svg" alt="Sweet Tea" />
+        </div>
+        <div class="category-card-name">Sweet Tea</div>
+        <div class="category-card-price">$2.49</div>
+      </article>
+
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Unsweet Tea" data-price="2.49">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/gpunsweetenedtea.svg" alt="Unsweet Tea" />
+        </div>
+        <div class="category-card-name">Unsweet Tea</div>
+        <div class="category-card-price">$2.49</div>
+      </article>
+
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Zero Sugar Tea" data-price="2.49">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/gpzerosugarsweettea.svg" alt="Zero Sugar Tea" />
+        </div>
+        <div class="category-card-name">Zero Sugar Tea</div>
+        <div class="category-card-price">$2.49</div>
+      </article>
+
+      <!-- Row 4 -->
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Monster Rehab" data-price="3.99">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/monstertea.svg" alt="Monster Rehab" />
+        </div>
+        <div class="category-card-name">Monster Rehab</div>
+        <div class="category-card-price">$3.99</div>
+      </article>
+
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Mountain Dew" data-price="1.50">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/mountaindew.svg" alt="Mountain Dew" />
+        </div>
+        <div class="category-card-name">Mountain Dew</div>
+        <div class="category-card-price">$1.50</div>
+      </article>
+
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Pepsi" data-price="1.50">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/pepsi.svg" alt="Pepsi" />
+        </div>
+        <div class="category-card-name">Pepsi</div>
+        <div class="category-card-price">$1.50</div>
+      </article>
+
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Red Bull" data-price="3.99">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/redbull.svg" alt="Red Bull" />
+        </div>
+        <div class="category-card-name">Red Bull</div>
+        <div class="category-card-price">$3.99</div>
+      </article>
+
+      <!-- Row 5 -->
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Root Beer" data-price="1.50">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/rootbeer.svg" alt="Root Beer" />
+        </div>
+        <div class="category-card-name">Root Beer</div>
+        <div class="category-card-price">$1.50</div>
+      </article>
+
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Sprite" data-price="1.50">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/sprite.svg" alt="Sprite" />
+        </div>
+        <div class="category-card-name">Sprite</div>
+        <div class="category-card-price">$1.50</div>
+      </article>
+
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Starbucks Coffee" data-price="3.99">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/starbucks.svg" alt="Starbucks Coffee" />
+        </div>
+        <div class="category-card-name">Starbucks Coffee</div>
+        <div class="category-card-price">$3.99</div>
+      </article>
+
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="Water Bottle" data-price="1.00">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/water.svg" alt="Water Bottle" />
+        </div>
+        <div class="category-card-name">Water Bottle</div>
+        <div class="category-card-price">$1.00</div>
+      </article>
+
+      <article class="category-card" data-pos-item data-category="Food & Bevs" data-name="McDonald's" data-price="1.99">
+        <div class="category-card-icon">
+          <img src="/img/icons/foodandbevs/mcdonalds.svg" alt="McDonald's" />
+        </div>
+        <div class="category-card-name">McDonald's</div>
+        <div class="category-card-price">$1.99</div>
+      </article>
 
     </section>
   </main>
 
+  <!-- Add-to-invoice popup -->
+  <div class="add-overlay" id="addOverlay" aria-hidden="true">
+    <div class="add-sheet" role="dialog" aria-modal="true" aria-label="Add to invoice">
+      <button class="add-x" type="button" id="addClose" aria-label="Close">×</button>
+      <div class="add-ico"><img id="addImg" alt="" /></div>
+      <div class="add-title" id="addTitle">Item - 0.00</div>
+      <button class="add-btn" type="button" id="addConfirm">Add to invoice</button>
+    </div>
+  </div>
+
+  <!-- Shared cart/invoice system -->
+  <script src="/pos/cart.js"></script>
+
   <script>
-    // back button
     (function () {
       const backBtn = document.getElementById("category-back");
       if (backBtn) backBtn.addEventListener("click", () => (window.location.href = "/pos/"));
+
+      const overlay = document.getElementById("addOverlay");
+      const addClose = document.getElementById("addClose");
+      const addConfirm = document.getElementById("addConfirm");
+      const addImg = document.getElementById("addImg");
+      const addTitle = document.getElementById("addTitle");
+
+      let pending = null;
+
+      function openAddModal(item) {
+        pending = item;
+        addImg.src = item.img || "";
+        addTitle.textContent = `${item.name} - ${Number(item.price).toFixed(2)}`;
+        overlay.style.display = "flex";
+        overlay.setAttribute("aria-hidden", "false");
+      }
+
+      function closeAddModal() {
+        pending = null;
+        overlay.style.display = "none";
+        overlay.setAttribute("aria-hidden", "true");
+      }
+
+      // close on background click
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeAddModal();
+      });
+      addClose.addEventListener("click", closeAddModal);
+
+      // confirm add
+      addConfirm.addEventListener("click", () => {
+        if (!pending || !window.CigarOSCart) return;
+
+        window.CigarOSCart.add({
+          id: `foodandbevs|${pending.name}`,
+          type: "product",
+          category: pending.category,
+          name: pending.name,
+          price: pending.price,
+          img: pending.img
+        });
+
+        closeAddModal();
+      });
+
+      // bind product taps
+      document.querySelectorAll("[data-pos-item]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const name = card.dataset.name || "Item";
+          const price = Number(card.dataset.price || "0");
+          const category = card.dataset.category || "Food & Bevs";
+          const imgEl = card.querySelector(".category-card-icon img");
+          const img = imgEl ? imgEl.getAttribute("src") : "";
+
+          openAddModal({ category, name, price, img });
+        });
+      });
     })();
   </script>
-
-  <!-- Single source of truth for invoice/cart UX -->
-  <script src="/pos/cart.js"></script>
 </body>
 </html>
