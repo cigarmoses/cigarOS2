@@ -11,7 +11,7 @@
 </head>
 <body class="category-page">
   <header class="category-topbar">
-    <button type="button" class="pos-back" id="category-back">
+    <button type="button" class="pos-back" id="category-back" aria-label="Back">
       <span class="pos-back-icon">←</span>
     </button>
   </header>
@@ -25,14 +25,22 @@
 
     <section class="category-grid">
       <article class="category-card" data-receipt-item
-        data-brand="Mr. Consul" data-name="Mr. Consul Pipe" data-price="65.00">
+        data-type="product"
+        data-category="Pipes"
+        data-brand="Mr. Consul"
+        data-name="Mr. Consul Pipe"
+        data-price="65.00">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Mr. Consul Pipe</div>
         <div class="category-card-price">$65.00</div>
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Corn Cob" data-name="Corn Cob Pipe" data-price="10.00">
+        data-type="product"
+        data-category="Pipes"
+        data-brand="Corn Cob"
+        data-name="Corn Cob Pipe"
+        data-price="10.00">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Corn Cob Pipe</div>
         <div class="category-card-price">$10.00</div>
@@ -40,53 +48,11 @@
     </section>
   </main>
 
-  <div class="pos-receipt-fab" id="posReceiptFab">
-    <img src="/pos/assets/receipt-icon.png" alt="Receipt" />
-    <div class="pos-receipt-badge" id="posReceiptBadge">0</div>
-  </div>
-
-  <!-- Same JS snippet -->
+  <script src="/pos/cart.js" defer></script>
   <script>
     (function () {
-      const STORAGE_KEY = "posReceiptItems";
-      function loadItems() {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-        catch (e) { return []; }
-      }
-      function saveItems(items) { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
-      function getCount(items) { return items.reduce((s, i) => s + (i.qty || 0), 0); }
-      function updateReceiptBadge() {
-        const badge = document.getElementById("posReceiptBadge");
-        if (!badge) return;
-        const items = loadItems();
-        const count = getCount(items);
-        if (count === 0) { badge.style.display = "none"; }
-        else { badge.textContent = String(count); badge.style.display = "flex"; }
-      }
-      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
-        card.addEventListener("click", () => {
-          const name = card.dataset.name || "Item";
-          const price = Number(card.dataset.price || "0");
-          const brand = card.dataset.brand || "";
-          const vitola = card.dataset.vitola || "";
-          const items = loadItems();
-          const key = brand + "|" + name + "|" + vitola;
-          const existing = items.find((i) => i.key === key);
-          if (existing) {
-            existing.qty += 1;
-            existing.lineTotal = Number((existing.qty * existing.price).toFixed(2));
-          } else {
-            items.push({ key, brand, name, vitola, price, qty: 1, lineTotal: Number(price.toFixed(2)) });
-          }
-          saveItems(items);
-          updateReceiptBadge();
-        });
-      });
       const backBtn = document.getElementById("category-back");
-      if (backBtn) backBtn.addEventListener("click", () => { window.location.href = "/pos/"; });
-      const fab = document.getElementById("posReceiptFab");
-      if (fab) fab.addEventListener("click", () => { window.location.href = "/pos/receipt.html"; });
-      updateReceiptBadge();
+      if (backBtn) backBtn.addEventListener("click", () => window.location.href = "/pos/");
     })();
   </script>
 </body>
