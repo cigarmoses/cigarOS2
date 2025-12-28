@@ -1,5 +1,6 @@
 /* =========================================================
    POS (Learn-style home)
+   + Global Invoice / Receipt FAB sizing (ALL POS pages)
    ========================================================= */
 
 :root{
@@ -117,6 +118,68 @@ body.pos-home{
   line-height: 1.15;
 }
 
+/* =========================================================
+   GLOBAL: Force Invoice/Receipt button to be SMALL bottom-right
+   (Fixes the giant full-screen icon on non-brand pages)
+   ========================================================= */
+
+/* The container element injected by cart.js (covers common ids/classes) */
+.pos-invoice-fab,
+.pos-receipt-fab,
+.receipt-fab,
+#posInvoiceFab,
+#posReceiptFab,
+#receipt-open{
+  position: fixed !important;
+  right: 16px !important;
+  bottom: 16px !important;
+  width: 56px !important;
+  height: 56px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  z-index: 9999 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  /* Optional: keep it from inheriting weird layout styles */
+  max-width: 56px !important;
+  max-height: 56px !important;
+  overflow: hidden !important;
+}
+
+/* The image inside the FAB */
+.pos-invoice-fab img,
+.pos-receipt-fab img,
+.receipt-fab img,
+#posInvoiceFab img,
+#posReceiptFab img,
+#receipt-open img{
+  width: 28px !important;
+  height: 28px !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+/* If the badge exists, keep it in the corner */
+.pos-receipt-badge,
+.receipt-badge,
+#posReceiptBadge,
+#receipt-count{
+  position: absolute !important;
+  right: -4px !important;
+  bottom: -4px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  border-radius: 999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10000 !important;
+}
+
 /* Mobile tightening */
 @media (max-width: 380px){
   .pos-title{ font-size: 58px; }
@@ -127,4 +190,28 @@ body.pos-home{
     height: 88px;
   }
   .pos-card-title{ font-size: 21px; }
+
+  /* Slightly smaller FAB on tiny screens */
+  .pos-invoice-fab,
+  .pos-receipt-fab,
+  .receipt-fab,
+  #posInvoiceFab,
+  #posReceiptFab,
+  #receipt-open{
+    width: 52px !important;
+    height: 52px !important;
+    right: 14px !important;
+    bottom: 14px !important;
+    max-width: 52px !important;
+    max-height: 52px !important;
+  }
+  .pos-invoice-fab img,
+  .pos-receipt-fab img,
+  .receipt-fab img,
+  #posInvoiceFab img,
+  #posReceiptFab img,
+  #receipt-open img{
+    width: 26px !important;
+    height: 26px !important;
+  }
 }
