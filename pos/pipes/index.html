@@ -48,11 +48,54 @@
     </section>
   </main>
 
-  <script src="/pos/cart.js" defer></script>
+  <!-- ONE shared cart controller for all POS pages -->
+  <script src="/pos/cart.js"></script>
+
+  <!-- Page behavior -->
   <script>
     (function () {
+      // Back
       const backBtn = document.getElementById("category-back");
-      if (backBtn) backBtn.addEventListener("click", () => window.location.href = "/pos/");
+      if (backBtn) backBtn.addEventListener("click", () => {
+        window.location.href = "/pos/";
+      });
+
+      // Add-to-invoice flow: click product -> add -> open invoice modal
+      function addFromCard(card) {
+        if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
+
+        const type = (card.dataset.type || "product").toLowerCase();
+        const category = card.dataset.category || "Product";
+        const brand = card.dataset.brand || "";
+        const name = card.dataset.name || "Item";
+        const price = Number(card.dataset.price || "0");
+        const img = card.dataset.img || "";     // optional later
+        const link = card.dataset.link || "";   // optional later
+
+        // Stable stacking id
+        const id = (category + "|" + brand + "|" + name).toLowerCase();
+
+        window.CigarOSCart.add({
+          id,
+          type,
+          category,   // <-- bold title line in invoice for products (Pipes)
+          brand,
+          name,
+          price,
+          img,
+          link,
+          sub: ""     // optional extra line if you ever want it
+        });
+
+        // Open invoice immediately
+        if (typeof window.CigarOSCart.openInvoice === "function") {
+          window.CigarOSCart.openInvoice();
+        }
+      }
+
+      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
+        card.addEventListener("click", () => addFromCard(card));
+      });
     })();
   </script>
 </body>
