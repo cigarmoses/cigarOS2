@@ -115,7 +115,19 @@
   outline: 1px solid rgba(0,122,255,0.25);
 }
 
-/* Toggle pills (yellow section stays) */
+/* Toggle pills — MATCH BLUE STYLE (no yellow) */
+.filter-pill--toggle {
+  background: #eaf1f9;               /* match regular pill */
+  border: none;                       /* match regular pill */
+}
+
+.filter-pill--toggle.is-active {
+  background: #e0edff;
+  color: #007aff;
+  outline: 1px solid rgba(0,122,255,0.25);
+}
+
+/* (legacy container - ok if unused) */
 .cigars-features { margin-top: 12px; display: grid; gap: 10px; }
 
 .cigars-features-row {
@@ -123,17 +135,6 @@
   gap: 10px;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-}
-
-.filter-pill--toggle {
-  background: #f3efc8;               /* yellow */
-  border: 1px solid #e6dda2;
-}
-
-.filter-pill--toggle.is-active {
-  background: #e0edff;
-  color: #007aff;
-  border-color: rgba(0,122,255,0.25);
 }
 
 /* expanded filters area */
