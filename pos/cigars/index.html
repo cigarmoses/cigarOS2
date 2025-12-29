@@ -46,10 +46,17 @@
         <!-- PRIMARY ROW (always visible) -->
         <div class="cigars-filters-grid">
           <div class="cigars-filters-row">
-            <button class="filter-pill" data-filter="shade">Shade</button>
+            <button class="filter-pill" data-filter="shade">Wrapper Shade</button>
             <button class="filter-pill" data-filter="vitola">Vitola</button>
             <button class="filter-pill" data-filter="ring">Ring</button>
             <button class="filter-pill" data-filter="strength">Strength</button>
+          </div>
+
+          <!-- SECOND ROW (always visible) -->
+          <div class="cigars-filters-row">
+            <button class="filter-pill filter-pill--toggle" data-toggle="boxpressed">Box-Pressed</button>
+            <button class="filter-pill filter-pill--toggle" data-toggle="tubo">Tubos</button>
+            <button class="filter-pill filter-pill--toggle" data-toggle="flavored">Flavored</button>
           </div>
         </div>
 
@@ -65,22 +72,20 @@
               <button class="filter-pill" data-filter="length">Length</button>
               <button class="filter-pill" data-filter="shape">Shape</button>
             </div>
+
+            <!-- MOVED HERE (view all only): Tin / Pack / Barberpole -->
+            <div class="cigars-filters-row">
+              <button class="filter-pill filter-pill--toggle" data-toggle="tin">Tin</button>
+              <button class="filter-pill filter-pill--toggle" data-toggle="pack">Pack</button>
+            </div>
+
+            <div class="cigars-filters-row">
+              <button class="filter-pill filter-pill--toggle" data-toggle="barberpole">Barberpole</button>
+            </div>
           </div>
         </div>
 
-        <!-- FEATURE TOGGLES (yellow section — no design changes requested) -->
-        <div class="cigars-features">
-          <div class="cigars-features-row">
-            <button class="filter-pill filter-pill--toggle" data-toggle="tubo">Tubo</button>
-            <button class="filter-pill filter-pill--toggle" data-toggle="flavored">Flavored</button>
-            <button class="filter-pill filter-pill--toggle" data-toggle="tin">Tin</button>
-            <button class="filter-pill filter-pill--toggle" data-toggle="pack">Pack</button>
-          </div>
-          <div class="cigars-features-row">
-            <button class="filter-pill filter-pill--toggle" data-toggle="barberpole">Barberpole</button>
-            <button class="filter-pill filter-pill--toggle" data-toggle="boxpressed">Box-Pressed</button>
-          </div>
-        </div>
+        <!-- Removed the old yellow "features" section from the main card -->
       </div>
     </section>
 
