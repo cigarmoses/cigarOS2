@@ -94,6 +94,25 @@
   grid-auto-columns: 1fr;
 }
 
+/* row column-count helpers (for the new layout) */
+.cigars-filters-row--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+}
+
+.cigars-filters-row--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+}
+
+.cigars-filters-row--5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+}
+
 /* pills — MEDIUM (not bold) */
 .filter-pill {
   border: none;
@@ -115,10 +134,10 @@
   outline: 1px solid rgba(0,122,255,0.25);
 }
 
-/* Toggle pills — MATCH BLUE STYLE (no yellow) */
+/* Toggle pills — match regular pills (no yellow) */
 .filter-pill--toggle {
-  background: #eaf1f9;               /* match regular pill */
-  border: none;                       /* match regular pill */
+  background: #eaf1f9;
+  border: none;
 }
 
 .filter-pill--toggle.is-active {
@@ -127,7 +146,23 @@
   outline: 1px solid rgba(0,122,255,0.25);
 }
 
-/* (legacy container - ok if unused) */
+/* Make the 5-up row fit on phones without looking cramped */
+.cigars-filters-row--5 .filter-pill {
+  padding: 10px 10px;
+  font-size: 14px;
+}
+
+/* expanded filters area */
+.cigars-filters-expanded { margin-top: 12px; }
+
+/* If the 5-up row is too tight on very small screens, allow it to wrap to 3 columns */
+@media (max-width: 390px) {
+  .cigars-filters-row--5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* (legacy container - safe if unused) */
 .cigars-features { margin-top: 12px; display: grid; gap: 10px; }
 
 .cigars-features-row {
@@ -136,9 +171,6 @@
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
 }
-
-/* expanded filters area */
-.cigars-filters-expanded { margin-top: 12px; }
 
 /* Brands title — align with grid content (match left padding of tiles) */
 .cigars-brands-title {
