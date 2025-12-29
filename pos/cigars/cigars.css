@@ -87,13 +87,12 @@
 
 .cigars-filters-grid { display: grid; gap: 10px; }
 
-/* Base row (used for the locked top 3 rows) */
 .cigars-filters-row {
   display: grid;
   gap: 10px;
 }
 
-/* Column-count helpers (locked top 3 rows match screenshot) */
+/* Column-count helpers */
 .cigars-filters-row--2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -102,14 +101,20 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-/* View-all row: wraps cleanly into multiple rows when needed */
+/* Special row to keep "Wrapper Shade" on ONE line
+   and shrink Ring/Vitolas slightly */
+.cigars-filters-row--shade3 {
+  grid-template-columns: 0.92fr 1.20fr 0.92fr;
+}
+
+/* View-all row wraps cleanly */
 .cigars-filters-row--wrap {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-/* 3-per-row feel on mobile for wrapped view-all pills */
+/* 3-per-row feel for view-all pills */
 .cigars-filters-row--wrap .filter-pill {
   flex: 1 1 calc(33.333% - 10px);
 }
@@ -148,15 +153,23 @@
   outline: 1px solid rgba(0,122,255,0.25);
 }
 
+/* Wrapper Shade: force single line */
+.pill-nowrap {
+  white-space: nowrap;
+}
+
+/* Ring/Vitolas slightly tighter so center fits clean */
+.pill-compact {
+  padding: 10px 10px;
+}
+
 /* expanded filters area */
 .cigars-filters-expanded { margin-top: 12px; }
 
-/* Small screens: slightly tighter so the top rows stay “exact as pictured” */
+/* Small screens: tighten just a touch */
 @media (max-width: 390px) {
-  .filter-pill {
-    padding: 10px 10px;
-    font-size: 14px;
-  }
+  .filter-pill { font-size: 14px; }
+  .cigars-filters-row--shade3 { grid-template-columns: 0.90fr 1.20fr 0.90fr; }
 }
 
 /* Brands title */
@@ -210,10 +223,8 @@
   word-break: break-word;
 }
 
-/* Mobile tweaks */
 @media (max-width: 390px) {
   .brands-grid { gap: 18px 14px; }
-
   .brands-grid img {
     width: 72px;
     height: 72px;
@@ -289,7 +300,6 @@
   flex: 1;
 }
 
-/* visible right-side scroll bar */
 .fm-list::-webkit-scrollbar { width: 10px; }
 .fm-list::-webkit-scrollbar-track { background: transparent; }
 .fm-list::-webkit-scrollbar-thumb {
@@ -316,13 +326,6 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-}
-
-.fm-icon img{
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
 }
 
 .fm-label{
