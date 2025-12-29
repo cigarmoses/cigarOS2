@@ -87,30 +87,31 @@
 
 .cigars-filters-grid { display: grid; gap: 10px; }
 
+/* Base row (used for the locked top 3 rows) */
 .cigars-filters-row {
   display: grid;
   gap: 10px;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
 }
 
-/* row column-count helpers (for the new layout) */
+/* Column-count helpers (locked top 3 rows match screenshot) */
 .cigars-filters-row--2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-flow: unset;
-  grid-auto-columns: unset;
 }
 
 .cigars-filters-row--3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-flow: unset;
-  grid-auto-columns: unset;
 }
 
-.cigars-filters-row--5 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-auto-flow: unset;
-  grid-auto-columns: unset;
+/* View-all row: wraps cleanly into multiple rows when needed */
+.cigars-filters-row--wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 3-per-row feel on mobile for wrapped view-all pills */
+.cigars-filters-row--wrap .filter-pill {
+  flex: 1 1 calc(33.333% - 10px);
 }
 
 /* pills — MEDIUM (not bold) */
@@ -121,10 +122,11 @@
   background: #eaf1f9;
   color: #0f1a2c;
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500; /* SF Pro Display Medium feel */
+  font-weight: 500;
   font-size: 15px;
   cursor: pointer;
   transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+  min-height: 40px;
 }
 
 /* active blue */
@@ -146,33 +148,18 @@
   outline: 1px solid rgba(0,122,255,0.25);
 }
 
-/* Make the 5-up row fit on phones without looking cramped */
-.cigars-filters-row--5 .filter-pill {
-  padding: 10px 10px;
-  font-size: 14px;
-}
-
 /* expanded filters area */
 .cigars-filters-expanded { margin-top: 12px; }
 
-/* If the 5-up row is too tight on very small screens, allow it to wrap to 3 columns */
+/* Small screens: slightly tighter so the top rows stay “exact as pictured” */
 @media (max-width: 390px) {
-  .cigars-filters-row--5 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .filter-pill {
+    padding: 10px 10px;
+    font-size: 14px;
   }
 }
 
-/* (legacy container - safe if unused) */
-.cigars-features { margin-top: 12px; display: grid; gap: 10px; }
-
-.cigars-features-row {
-  display: grid;
-  gap: 10px;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-}
-
-/* Brands title — align with grid content (match left padding of tiles) */
+/* Brands title */
 .cigars-brands-title {
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-weight: 800;
@@ -215,7 +202,7 @@
 .brands-grid .category-name {
   margin-top: 10px;
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500; /* medium */
+  font-weight: 500;
   font-size: 16px;
   line-height: 1.15;
   letter-spacing: -0.01em;
