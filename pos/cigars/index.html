@@ -43,49 +43,43 @@
           </button>
         </div>
 
-        <!-- PRIMARY ROW (always visible) -->
+        <!-- TOP 3 ROWS (always visible) -->
         <div class="cigars-filters-grid">
-          <div class="cigars-filters-row">
-            <button class="filter-pill" data-filter="shade">Wrapper Shade</button>
-            <button class="filter-pill" data-filter="vitola">Vitola</button>
-            <button class="filter-pill" data-filter="ring">Ring</button>
-            <button class="filter-pill" data-filter="strength">Strength</button>
+          <!-- Row 1 (2) -->
+          <div class="cigars-filters-row cigars-filters-row--2">
+            <button class="filter-pill" data-filter="manufacturer">Manufacturer</button>
+            <button class="filter-pill" data-filter="brand">Brand</button>
           </div>
 
-          <!-- SECOND ROW (always visible) -->
-          <div class="cigars-filters-row">
-            <button class="filter-pill filter-pill--toggle" data-toggle="boxpressed">Box-Pressed</button>
-            <button class="filter-pill filter-pill--toggle" data-toggle="tubo">Tubos</button>
+          <!-- Row 2 (3) -->
+          <div class="cigars-filters-row cigars-filters-row--3">
+            <button class="filter-pill" data-filter="shade">Wrapper Shade</button>
+            <button class="filter-pill" data-filter="ring">Ring</button>
+            <button class="filter-pill" data-filter="vitola">Vitola</button>
+          </div>
+
+          <!-- Row 3 (3) -->
+          <div class="cigars-filters-row cigars-filters-row--3">
             <button class="filter-pill filter-pill--toggle" data-toggle="flavored">Flavored</button>
+            <button class="filter-pill" data-filter="strength">Strength</button>
+            <button class="filter-pill filter-pill--toggle" data-toggle="boxpressed">Box-Pressed</button>
           </div>
         </div>
 
-        <!-- EXPANDED FILTERS (hidden until "view all") -->
+        <!-- VIEW ALL (everything else) -->
         <div class="cigars-filters-expanded" id="filters-expanded" hidden>
           <div class="cigars-filters-grid">
-            <div class="cigars-filters-row">
-              <button class="filter-pill" data-filter="manufacturer">Manufacturer</button>
-              <button class="filter-pill" data-filter="brand">Brand</button>
-            </div>
-
-            <div class="cigars-filters-row">
+            <!-- Row 4 (5) -->
+            <div class="cigars-filters-row cigars-filters-row--5">
               <button class="filter-pill" data-filter="length">Length</button>
               <button class="filter-pill" data-filter="shape">Shape</button>
-            </div>
-
-            <!-- MOVED HERE (view all only): Tin / Pack / Barberpole -->
-            <div class="cigars-filters-row">
               <button class="filter-pill filter-pill--toggle" data-toggle="tin">Tin</button>
-              <button class="filter-pill filter-pill--toggle" data-toggle="pack">Pack</button>
-            </div>
-
-            <div class="cigars-filters-row">
+              <button class="filter-pill filter-pill--toggle" data-toggle="pack">Packs</button>
               <button class="filter-pill filter-pill--toggle" data-toggle="barberpole">Barberpole</button>
             </div>
           </div>
         </div>
 
-        <!-- Removed the old yellow "features" section from the main card -->
       </div>
     </section>
 
