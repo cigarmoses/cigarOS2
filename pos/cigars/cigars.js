@@ -1,349 +1,344 @@
-// /pos/cigars/cigars.js
-(function () {
-  const state = () => window.__CIGAR_FILTER_STATE__;
-  const rows = () => window.__CIGAR_SHEET_ROWS__ || [];
+/* /pos/cigars/cigars.js
+   UI controller:
+   - Back button
+   - View all expand/collapse
+   - Filter modal open/close
+   - Wrapper Shade: title + custom ordered list (extras appended)
+   - Dispatches "cigars:filters-changed" for other scripts if needed
+*/
 
-  // ---------- helpers ----------
-  function pick(row, keys) {
-    for (const k of keys) {
-      if (row[k] != null && String(row[k]).trim() !== "") return row[k];
-    }
-    return "";
-  }
+(() => {
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-  const BRAND_ICON_OVERRIDES = {
-    aturrent: "aturrent",
-    aflores: "aflores",
-    carlostorano: "torano",
-    brundelre: "brundelre",
-    diamondcrown: "diamondcrown",
-    elreydelmundo: "elreydelmundo",
-    fonseca: "fonseca",
+  const backBtn = $("#cigars-back");
+  const viewAllBtn = $("#filters-view-all");
+  const expandedEl = $("#filters-expanded");
+
+  const modal = $("#filter-modal");
+  const modalBackdrop = modal?.querySelector("[data-fm-close]");
+  const modalTitle = $("#fm-title");
+  const modalList = $("#fm-list");
+  const modalSearch = $("#fm-search-input");
+  const modalConfirm = $("#fm-confirm");
+
+  // --- state ---
+  const state = {
+    // multi-select values per filter key
+    selected: {
+      manufacturer: new Set(),
+      brand: new Set(),
+      ring: new Set(),
+      vitola: new Set(),
+      strength: new Set(),
+      shade: new Set(),
+      length: new Set(),
+      shape: new Set(),
+    },
+    // toggles
+    toggles: {
+      flavored: false,
+      boxpressed: false,
+      tin: false,
+      pack: false,
+      barberpole: false,
+    },
+    currentModalKey: null,
+    currentModalValues: [],
   };
 
-  function brandSlug(name) {
-    if (!name) return "";
-    const canonical = String(name)
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "")
-      .trim();
+  // --- Back ---
+  backBtn?.addEventListener("click", () => history.back());
 
-    if (!canonical) return "";
-    if (Object.prototype.hasOwnProperty.call(BRAND_ICON_OVERRIDES, canonical)) {
-      return BRAND_ICON_OVERRIDES[canonical];
+  // --- View all toggle ---
+  viewAllBtn?.addEventListener("click", () => {
+    const isHidden = expandedEl.hasAttribute("hidden");
+    if (isHidden) expandedEl.removeAttribute("hidden");
+    else expandedEl.setAttribute("hidden", "");
+  });
+
+  // --- helpers: attempt to locate cigar rows from whatever global the builder uses ---
+  function getAllCigarRows() {
+    const candidates = [
+      window.CIGAR_ROWS,
+      window.CIGARS_ROWS,
+      window.CIGAR_DATA,
+      window.CIGARS_DATA,
+      window.cigarRows,
+      window.cigarsRows,
+      window.cigarData,
+      window.cigarsData,
+      window.__CIGARS__,
+      window.__CIGAR_ROWS__,
+      window.__CIGAR_DATA__,
+    ];
+
+    for (const c of candidates) {
+      if (Array.isArray(c) && c.length) return c;
+      // sometimes wrapped like {rows:[...]}
+      if (c && Array.isArray(c.rows) && c.rows.length) return c.rows;
+      if (c && Array.isArray(c.data) && c.data.length) return c.data;
     }
-    return canonical;
+    return [];
   }
 
-  function safeSrc(src) {
-    if (!src) return "";
-    let s = String(src).trim();
-    if (!s) return "";
-    if (!s.startsWith("/") && !s.startsWith("http")) s = "/" + s.replace(/^\/+/, "");
-    return s;
+  // normalize string (for comparisons)
+  function norm(v) {
+    return String(v ?? "")
+      .trim()
+      .replace(/\s+/g, " ");
   }
 
-  function buildIconCandidates(kind, label, csvImg) {
-    const candidates = [];
-    const csv = safeSrc(csvImg);
-    if (csv) candidates.push(csv);
-
-    if (kind === "brand") {
-      const slug = brandSlug(label);
-      if (slug) candidates.push(`/img/icons/brands/${slug}.svg`);
-      if (slug) candidates.push(`/img/icons/brand/${slug}.svg`);
-    }
-
-    // manufacturer icons are optional; if you later add a folder, this starts working automatically
-    if (kind === "manufacturer") {
-      const slug = brandSlug(label);
-      if (slug) candidates.push(`/img/icons/manufacturers/${slug}.svg`);
-      if (slug) candidates.push(`/img/icons/manufacturer/${slug}.svg`);
-    }
-
-    return candidates;
-  }
-
-  function setImgFallback(imgEl, candidates) {
-    let idx = 0;
-    function tryNext() {
-      if (idx >= candidates.length) {
-        imgEl.style.display = "none";
-        return;
-      }
-      imgEl.src = candidates[idx++];
-    }
-    imgEl.onerror = tryNext;
-    tryNext();
-  }
-
-  function uniqueOptionsForFilter(filterKey) {
-    const data = rows();
+  function uniqSorted(values) {
     const set = new Set();
+    values.forEach((v) => {
+      const s = norm(v);
+      if (s) set.add(s);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }
 
-    const colMap = {
-      manufacturer: ["Manufacturer"],
-      brand: ["Brand"],
-      shade: ["Wrapper Shade", "Shade"],
-      vitola: ["Vitola"],
-      length: ["Length"],
-      ring: ["RG", "Ring"],
-      shape: ["Shape"],
-      strength: ["Strength"],
+  // Extract unique values for a filter key from dataset.
+  // We try common field names without breaking if structure is different.
+  function getValuesForKey(key) {
+    const rows = getAllCigarRows();
+    if (!rows.length) return [];
+
+    const fieldMap = {
+      manufacturer: ["Manufacturer", "manufacturer"],
+      brand: ["Brand", "brand"],
+      ring: ["RG", "Ring", "ring", "ringGauge"],
+      vitola: ["Vitola", "vitola", "Style", "style"],
+      strength: ["Strength", "strength"],
+      shade: ["Wrapper Shade", "WrapperShade", "shade", "wrapperShade", "Wrapper"],
+      length: ["Length", "length"],
+      shape: ["Shape", "shape"],
     };
 
-    const keys = colMap[filterKey] || [];
-    for (const r of data) {
-      const v = pick(r, keys).toString().trim();
-      if (v) set.add(v);
+    const keysToTry = fieldMap[key] || [key];
+
+    const vals = [];
+    for (const r of rows) {
+      if (!r) continue;
+
+      // object row
+      if (typeof r === "object" && !Array.isArray(r)) {
+        for (const k of keysToTry) {
+          if (r[k] != null && r[k] !== "") {
+            vals.push(r[k]);
+            break;
+          }
+        }
+        continue;
+      }
+
+      // array row (unknown column order) - can't safely parse without a header map
+      // so we skip to avoid nonsense values
     }
 
-    return Array.from(set).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    return uniqSorted(vals);
   }
 
-  function firstImgForLabel(filterKey, label) {
-    const data = rows();
-    if (!label) return "";
+  // --- Wrapper Shade custom ordering ---
+  const WRAPPER_SHADE_ORDER = [
+    "Natural",
+    "Connecticut",
+    "Maduro",
+    "Oscuro",
+    "Connecticut Shade",
+    "EMS",
+    "Claro",
+    "Colorado",
+    "Colorado Claro",
+    "Colorado Maduro",
+    "Mixed",
+    "Candela",
+  ];
 
-    if (filterKey === "brand") {
-      for (const r of data) {
-        if ((r["Brand"] || "").trim() === label) {
-          const img = (r["Brand IMG"] || r["Brand Img"] || "").trim();
-          if (img) return img;
-        }
+  function orderWrapperShades(values) {
+    const list = uniqSorted(values);
+
+    const seen = new Set();
+    const ordered = [];
+
+    // requested items first (if present OR even if not present; we still show them)
+    for (const item of WRAPPER_SHADE_ORDER) {
+      const match = list.find((v) => v.toLowerCase() === item.toLowerCase());
+      if (match) {
+        ordered.push(match);
+        seen.add(match.toLowerCase());
+      } else {
+        // show requested options even if not in data yet (use exact casing)
+        ordered.push(item);
+        seen.add(item.toLowerCase());
       }
     }
 
-    if (filterKey === "manufacturer") {
-      for (const r of data) {
-        if ((r["Manufacturer"] || "").trim() === label) {
-          const img = (r["Manufacturer IMG"] || r["Manufacturer Img"] || "").trim();
-          if (img) return img;
-        }
-      }
+    // leftovers appended after requested list (per your instruction)
+    for (const v of list) {
+      const k = v.toLowerCase();
+      if (!seen.has(k)) ordered.push(v);
     }
 
-    return "";
+    return ordered;
   }
 
-  // ---------- modal ----------
-  const modal = () => document.getElementById("filter-modal");
-  const modalTitle = () => document.getElementById("fm-title");
-  const modalSearch = () => document.getElementById("fm-search-input");
-  const modalList = () => document.getElementById("fm-list");
-  const modalConfirm = () => document.getElementById("fm-confirm");
+  // --- Modal open/close ---
+  function openModal(key) {
+    state.currentModalKey = key;
 
-  let currentFilter = null;
-  let workingSet = new Set();
-
-  function openModal(filterKey) {
-    currentFilter = filterKey;
-
-    const labelMap = {
-      manufacturer: "Manufacturers",
-      brand: "Brands",
-      shade: "Shade",
-      vitola: "Vitolas",
-      length: "Length",
+    // Title mapping
+    const titles = {
+      manufacturer: "Manufacturer",
+      brand: "Brand",
       ring: "Ring",
-      shape: "Shapes",
+      vitola: "Vitolas",
       strength: "Strength",
+      shade: "Wrapper Shade",
+      length: "Length",
+      shape: "Shape",
     };
 
-    modalTitle().textContent = labelMap[filterKey] || "Filter";
-    modalSearch().value = "";
-    workingSet = new Set(state().filters[filterKey] || []);
+    modalTitle.textContent = titles[key] || "Filter";
 
-    renderModalList();
-    modal().classList.remove("fm--hidden");
-    modal().setAttribute("aria-hidden", "false");
-    setTimeout(() => modalSearch().focus(), 50);
+    // Values
+    let values = getValuesForKey(key);
+
+    if (key === "shade") {
+      values = orderWrapperShades(values);
+    }
+
+    state.currentModalValues = values;
+
+    // Reset search + render
+    modalSearch.value = "";
+    renderModalList(values);
+
+    modal.classList.remove("fm--hidden");
+    modal.setAttribute("aria-hidden", "false");
+
+    // focus
+    setTimeout(() => modalSearch?.focus(), 50);
   }
 
   function closeModal() {
-    modal().classList.add("fm--hidden");
-    modal().setAttribute("aria-hidden", "true");
-    currentFilter = null;
-    workingSet = new Set();
+    modal.classList.add("fm--hidden");
+    modal.setAttribute("aria-hidden", "true");
+    state.currentModalKey = null;
+    state.currentModalValues = [];
   }
 
-  function renderModalList() {
-    const q = modalSearch().value.trim().toLowerCase();
-    const options = uniqueOptionsForFilter(currentFilter).filter((o) =>
-      !q ? true : o.toLowerCase().includes(q)
-    );
+  function renderModalList(values) {
+    const key = state.currentModalKey;
+    if (!modalList || !key) return;
 
-    modalList().innerHTML = "";
-    const frag = document.createDocumentFragment();
+    const selectedSet = state.selected[key] || new Set();
 
-    options.forEach((opt) => {
-      const row = document.createElement("div");
-      row.className = "fm-row" + (workingSet.has(opt) ? " is-selected" : "");
-      row.setAttribute("role", "option");
-      row.setAttribute("aria-selected", workingSet.has(opt) ? "true" : "false");
+    modalList.innerHTML = values
+      .map((v) => {
+        const label = norm(v);
+        const isSelected = selectedSet.has(label);
+        return `
+          <div class="fm-row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(label)}">
+            <div></div>
+            <div class="fm-label">${escapeHtml(label)}</div>
+            <div class="fm-check" aria-hidden="true"></div>
+          </div>
+        `;
+      })
+      .join("");
 
-      const icon = document.createElement("div");
-      icon.className = "fm-icon";
-
-      const img = document.createElement("img");
-      img.alt = "";
-      img.loading = "lazy";
-      img.decoding = "async";
-
-      const csvImg = firstImgForLabel(currentFilter, opt);
-      const candidates = buildIconCandidates(currentFilter, opt, csvImg);
-
-      if (candidates.length) setImgFallback(img, candidates);
-      else img.style.display = "none";
-
-      icon.appendChild(img);
-
-      const label = document.createElement("div");
-      label.className = "fm-label";
-      label.textContent = opt;
-
-      const check = document.createElement("div");
-      check.className = "fm-check";
-
-      row.appendChild(icon);
-      row.appendChild(label);
-      row.appendChild(check);
-
+    // click handlers
+    $$(".fm-row").forEach((row) => {
       row.addEventListener("click", () => {
-        if (workingSet.has(opt)) workingSet.delete(opt);
-        else workingSet.add(opt);
+        const val = row.getAttribute("data-value") || "";
+        if (!val) return;
+
+        if (selectedSet.has(val)) selectedSet.delete(val);
+        else selectedSet.add(val);
+
         row.classList.toggle("is-selected");
       });
-
-      frag.appendChild(row);
     });
-
-    modalList().appendChild(frag);
   }
 
-  function applyModal() {
-    if (!currentFilter) return;
+  // search filter inside modal
+  modalSearch?.addEventListener("input", () => {
+    const q = norm(modalSearch.value).toLowerCase();
+    const all = state.currentModalValues || [];
+    const filtered = !q ? all : all.filter((v) => norm(v).toLowerCase().includes(q));
+    renderModalList(filtered);
+  });
 
-    state().filters[currentFilter] = new Set(workingSet);
-
-    // update pill blue state
-    document.querySelectorAll(`.filter-pill[data-filter="${currentFilter}"]`)
-      .forEach((btn) => {
-        btn.classList.toggle("is-active", state().filters[currentFilter].size > 0);
-      });
-
+  // confirm (keeps selection; just closes + updates pill active state)
+  modalConfirm?.addEventListener("click", () => {
+    syncPillActiveStates();
+    dispatchFiltersChanged();
     closeModal();
-    if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
-  }
+  });
 
-  // ---------- UI wiring ----------
-  function initBack() {
-    const back = document.getElementById("cigars-back");
-    if (!back) return;
+  // backdrop close
+  modalBackdrop?.addEventListener("click", closeModal);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal && !modal.classList.contains("fm--hidden")) closeModal();
+  });
 
-    back.addEventListener("click", () => {
-      if (window.history.length > 1) window.history.back();
-      else window.location.href = "/pos/";
+  // --- Pill click wiring ---
+  function syncPillActiveStates() {
+    // normal filter pills: active if selection set has anything
+    $$(".filter-pill[data-filter]").forEach((btn) => {
+      const key = btn.getAttribute("data-filter");
+      const set = state.selected[key];
+      btn.classList.toggle("is-active", !!set && set.size > 0);
+    });
+
+    // toggles: active if true
+    $$(".filter-pill[data-toggle]").forEach((btn) => {
+      const t = btn.getAttribute("data-toggle");
+      btn.classList.toggle("is-active", !!state.toggles[t]);
     });
   }
 
-  function initSearch() {
-    const input = document.getElementById("cigars-search-input");
-    if (!input) return;
-
-    input.addEventListener("input", () => {
-      state().q = input.value || "";
-      if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
-    });
+  function dispatchFiltersChanged() {
+    const detail = {
+      selected: Object.fromEntries(
+        Object.entries(state.selected).map(([k, set]) => [k, Array.from(set)])
+      ),
+      toggles: { ...state.toggles },
+    };
+    document.dispatchEvent(new CustomEvent("cigars:filters-changed", { detail }));
   }
 
-  function initFilterPills() {
-    document.querySelectorAll(".filter-pill[data-filter]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const key = btn.getAttribute("data-filter");
-        openModal(key);
-      });
-    });
-  }
-
-  function initTogglePills() {
-    document.querySelectorAll(".filter-pill[data-toggle]").forEach((btn) => {
-      const key = btn.getAttribute("data-toggle");
-
-      btn.addEventListener("click", () => {
-        state().toggles[key] = !state().toggles[key];
-        btn.classList.toggle("is-active", state().toggles[key]);
-
-        if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
-      });
-    });
-  }
-
-  function initViewAll() {
-    const btn = document.getElementById("filters-view-all");
-    const expanded = document.getElementById("filters-expanded");
-    if (!btn || !expanded) return;
-
+  // open modal on data-filter pills
+  $$(".filter-pill[data-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const isHidden = expanded.hasAttribute("hidden");
-      if (isHidden) {
-        expanded.removeAttribute("hidden");
-        btn.textContent = "hide";
-      } else {
-        expanded.setAttribute("hidden", "");
-        btn.textContent = "view all";
-      }
+      const key = btn.getAttribute("data-filter");
+      if (!key) return;
+      openModal(key);
     });
+  });
+
+  // toggles
+  $$(".filter-pill[data-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const t = btn.getAttribute("data-toggle");
+      if (!t) return;
+      state.toggles[t] = !state.toggles[t];
+      btn.classList.toggle("is-active", state.toggles[t]);
+      dispatchFiltersChanged();
+    });
+  });
+
+  // --- tiny util ---
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
-  function initModalEvents() {
-    // close on backdrop click
-    document.querySelectorAll("[data-fm-close]").forEach((el) => {
-      el.addEventListener("click", closeModal);
-    });
-
-    // search inside modal
-    modalSearch().addEventListener("input", renderModalList);
-
-    // confirm
-    modalConfirm().addEventListener("click", applyModal);
-
-    // escape key
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !modal().classList.contains("fm--hidden")) {
-        closeModal();
-      }
-    });
-  }
-
-  function bootWhenDataReady() {
-    // build-cigars loads async; wait until rows exist
-    let tries = 0;
-    const t = setInterval(() => {
-      tries++;
-      if (rows().length) {
-        clearInterval(t);
-
-        initBack();
-        initSearch();
-        initFilterPills();
-        initTogglePills();
-        initViewAll();
-        initModalEvents();
-
-        // paint pill active states if any persisted
-        const s = state();
-        for (const k of Object.keys(s.filters)) {
-          const on = s.filters[k] && s.filters[k].size > 0;
-          document.querySelectorAll(`.filter-pill[data-filter="${k}"]`)
-            .forEach((btn) => btn.classList.toggle("is-active", on));
-        }
-      }
-      if (tries > 80) clearInterval(t);
-    }, 50);
-  }
-
-  document.addEventListener("DOMContentLoaded", bootWhenDataReady);
+  // initial
+  syncPillActiveStates();
 })();
