@@ -8,6 +8,21 @@
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/category.css" />
+
+  <style>
+    /* Ensure the icon area displays the resolved image nicely */
+    .category-card-icon{
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+    }
+    .category-card-icon img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+  </style>
 </head>
 <body class="category-page">
   <header class="category-topbar">
@@ -43,9 +58,93 @@
   <!-- Universal cart + receipt modal + universal receipt FAB -->
   <script src="/pos/cart.js" defer></script>
 
-  <!-- Page behavior: add items to the universal cart, and back nav -->
+  <!-- Page behavior: add items to the universal cart, icons, and back nav -->
   <script>
-    (function () {
+    document.addEventListener("DOMContentLoaded", () => {
+      const IMAGE_DIR = "/img/ashtrays"; // <-- Ashtrays folder
+
+      // ---------------------------------------
+      // Product image resolving (.svg/.png/.jpg)
+      // ---------------------------------------
+      const existsCache = new Map();
+
+      function normalizeProductName(name) {
+        return String(name || "")
+          .toLowerCase()
+          .replace(/[\s-]+/g, "")     // remove spaces + dashes
+          .replace(/[^a-z0-9]/g, ""); // remove punctuation/special chars
+      }
+
+      async function urlExists(url) {
+        if (existsCache.has(url)) return existsCache.get(url);
+
+        let ok = false;
+
+        // Try HEAD first (fast)
+        try {
+          const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+          ok = res.ok;
+        } catch (_) {
+          ok = false;
+        }
+
+        // Fallback to GET if needed
+        if (!ok) {
+          try {
+            const res = await fetch(url, { method: "GET", cache: "no-store" });
+            ok = res.ok;
+          } catch (_) {
+            ok = false;
+          }
+        }
+
+        existsCache.set(url, ok);
+        return ok;
+      }
+
+      async function resolveProductImage(productName, baseDir) {
+        const key = normalizeProductName(productName);
+        const exts = ["svg", "png", "jpg"];
+
+        for (const ext of exts) {
+          const url = `${baseDir}/${key}.${ext}`;
+          if (await urlExists(url)) return url;
+        }
+        return "";
+      }
+
+      async function applyCardIcons() {
+        const cards = Array.from(document.querySelectorAll("[data-receipt-item]"));
+
+        await Promise.all(cards.map(async (card) => {
+          const iconBox = card.querySelector(".category-card-icon");
+          if (!iconBox) return;
+
+          // Optional manual override later:
+          // data-img="/img/ashtrays/rockypatelluxuryluminosoashtray.jpg"
+          const manual = card.dataset.img || "";
+          const name = card.dataset.name || "";
+
+          const src = manual || await resolveProductImage(name, IMAGE_DIR);
+
+          iconBox.innerHTML = "";
+          if (!src) return;
+
+          const img = document.createElement("img");
+          img.alt = name;
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.src = src;
+          iconBox.appendChild(img);
+        }));
+      }
+
+      // Apply icons on load
+      applyCardIcons();
+
+      // ---------------------------------------
+      // Add-to-invoice flow (your existing logic)
+      // ---------------------------------------
       function addFromCard(card) {
         if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
 
@@ -76,7 +175,7 @@
           window.location.href = "/pos/";
         });
       }
-    })();
+    });
   </script>
 </body>
 </html>
