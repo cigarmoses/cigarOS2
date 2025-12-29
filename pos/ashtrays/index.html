@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="/pos/category.css" />
 
   <style>
-    /* Ensure the icon area displays the resolved image nicely */
     .category-card-icon{
       display:grid;
       place-items:center;
@@ -40,111 +39,36 @@
 
     <section class="category-grid">
       <article class="category-card" data-receipt-item
-        data-brand="Rocky Patel" data-name="Rocky Patel Ashtray" data-price="39.99">
+        data-brand="Rocky Patel"
+        data-name="Rocky Patel Ashtray"
+        data-img-key="rockypatelluxuryluminosoashtray"
+        data-price="39.99">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Rocky Patel Ashtray</div>
         <div class="category-card-price">$39.99</div>
       </article>
 
       <article class="category-card" data-receipt-item
-        data-brand="Ceramic" data-name="Ceramic Ashtray" data-price="24.00">
+        data-brand="Arturo Fuente"
+        data-name="Opus X 20th Anniversary Ashtray"
+        data-img-key="opusx20thanniversaryashtray"
+        data-price="24.00">
         <div class="category-card-icon"></div>
-        <div class="category-card-name">Ceramic Ashtray</div>
+        <div class="category-card-name">Opus X 20th Anniversary Ashtray</div>
         <div class="category-card-price">$24.00</div>
       </article>
     </section>
   </main>
 
-  <!-- Universal cart + receipt modal + universal receipt FAB -->
   <script src="/pos/cart.js" defer></script>
 
-  <!-- Page behavior: add items to the universal cart, icons, and back nav -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const IMAGE_DIR = "/img/ashtrays"; // <-- Ashtrays folder
+      const IMAGE_DIR = "/img/ashtrays";
 
-      // ---------------------------------------
-      // Product image resolving (.svg/.png/.jpg)
-      // ---------------------------------------
-      const existsCache = new Map();
-
-      function normalizeProductName(name) {
-        return String(name || "")
-          .toLowerCase()
-          .replace(/[\s-]+/g, "")     // remove spaces + dashes
-          .replace(/[^a-z0-9]/g, ""); // remove punctuation/special chars
-      }
-
-      async function urlExists(url) {
-        if (existsCache.has(url)) return existsCache.get(url);
-
-        let ok = false;
-
-        // Try HEAD first (fast)
-        try {
-          const res = await fetch(url, { method: "HEAD", cache: "no-store" });
-          ok = res.ok;
-        } catch (_) {
-          ok = false;
-        }
-
-        // Fallback to GET if needed
-        if (!ok) {
-          try {
-            const res = await fetch(url, { method: "GET", cache: "no-store" });
-            ok = res.ok;
-          } catch (_) {
-            ok = false;
-          }
-        }
-
-        existsCache.set(url, ok);
-        return ok;
-      }
-
-      async function resolveProductImage(productName, baseDir) {
-        const key = normalizeProductName(productName);
-        const exts = ["svg", "png", "jpg"];
-
-        for (const ext of exts) {
-          const url = `${baseDir}/${key}.${ext}`;
-          if (await urlExists(url)) return url;
-        }
-        return "";
-      }
-
-      async function applyCardIcons() {
-        const cards = Array.from(document.querySelectorAll("[data-receipt-item]"));
-
-        await Promise.all(cards.map(async (card) => {
-          const iconBox = card.querySelector(".category-card-icon");
-          if (!iconBox) return;
-
-          // Optional manual override later:
-          // data-img="/img/ashtrays/rockypatelluxuryluminosoashtray.jpg"
-          const manual = card.dataset.img || "";
-          const name = card.dataset.name || "";
-
-          const src = manual || await resolveProductImage(name, IMAGE_DIR);
-
-          iconBox.innerHTML = "";
-          if (!src) return;
-
-          const img = document.createElement("img");
-          img.alt = name;
-          img.loading = "lazy";
-          img.decoding = "async";
-          img.src = src;
-          iconBox.appendChild(img);
-        }));
-      }
-
-      // Apply icons on load
-      applyCardIcons();
-
-      // ---------------------------------------
-      // Add-to-invoice flow (your existing logic)
-      // ---------------------------------------
+      // -----------------------------
+      // Existing add-to-cart behavior
+      // -----------------------------
       function addFromCard(card) {
         if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
 
@@ -170,11 +94,90 @@
       });
 
       const backBtn = document.getElementById("category-back");
-      if (backBtn) {
-        backBtn.addEventListener("click", () => {
-          window.location.href = "/pos/";
-        });
+      if (backBtn) backBtn.addEventListener("click", () => (window.location.href = "/pos/"));
+
+      // ---------------------------------------
+      // Image resolver: img-key → name normalize
+      // Ext order: .svg → .png → .jpg
+      // ---------------------------------------
+      const existsCache = new Map();
+
+      function normalizeKey(str) {
+        return String(str || "")
+          .toLowerCase()
+          .replace(/[\s-]+/g, "")
+          .replace(/[^a-z0-9]/g, "");
       }
+
+      async function urlExists(url) {
+        if (existsCache.has(url)) return existsCache.get(url);
+
+        let ok = false;
+        try {
+          const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+          ok = res.ok;
+        } catch (_) { ok = false; }
+
+        if (!ok) {
+          try {
+            const res = await fetch(url, { method: "GET", cache: "no-store" });
+            ok = res.ok;
+          } catch (_) { ok = false; }
+        }
+
+        existsCache.set(url, ok);
+        return ok;
+      }
+
+      async function resolveByKey(key, baseDir) {
+        const exts = ["svg", "png", "jpg"];
+        for (const ext of exts) {
+          const url = `${baseDir}/${key}.${ext}`;
+          if (await urlExists(url)) return url;
+        }
+        return "";
+      }
+
+      async function resolveProductImage(card) {
+        const manual = card.dataset.img || "";
+        if (manual) return manual;
+
+        const keyRaw = card.dataset.imgKey || "";
+        const key = normalizeKey(keyRaw);
+        if (key) {
+          const hit = await resolveByKey(key, IMAGE_DIR);
+          if (hit) return hit;
+        }
+
+        const name = card.dataset.name || "";
+        const nameKey = normalizeKey(name);
+        if (nameKey) return await resolveByKey(nameKey, IMAGE_DIR);
+
+        return "";
+      }
+
+      async function applyCardIcons() {
+        const cards = Array.from(document.querySelectorAll("[data-receipt-item]"));
+
+        await Promise.all(cards.map(async (card) => {
+          const iconBox = card.querySelector(".category-card-icon");
+          if (!iconBox) return;
+
+          const src = await resolveProductImage(card);
+
+          iconBox.innerHTML = "";
+          if (!src) return;
+
+          const img = document.createElement("img");
+          img.alt = card.dataset.name || "Product";
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.src = src;
+          iconBox.appendChild(img);
+        }));
+      }
+
+      applyCardIcons();
     });
   </script>
 </body>
