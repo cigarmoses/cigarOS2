@@ -43,7 +43,7 @@
           </button>
         </div>
 
-        <!-- TOP 3 ROWS (always visible) — EXACT ORDER AS PICTURED -->
+        <!-- TOP 3 ROWS (always visible) — EXACT ORDER AS YOUR SCREENSHOT -->
         <div class="cigars-filters-grid">
           <!-- Row 1 (2): Manufacturer, Brand -->
           <div class="cigars-filters-row cigars-filters-row--2">
@@ -51,11 +51,11 @@
             <button class="filter-pill" data-filter="brand">Brand</button>
           </div>
 
-          <!-- Row 2 (3): Ring, Wrapper Shade, Vitolas -->
-          <div class="cigars-filters-row cigars-filters-row--3">
-            <button class="filter-pill" data-filter="ring">Ring</button>
-            <button class="filter-pill" data-filter="shade">Wrapper Shade</button>
-            <button class="filter-pill" data-filter="vitola">Vitolas</button>
+          <!-- Row 2 (3): Ring, Wrapper Shade, Vitolas (Wrapper Shade one line) -->
+          <div class="cigars-filters-row cigars-filters-row--shade3">
+            <button class="filter-pill pill-compact" data-filter="ring">Ring</button>
+            <button class="filter-pill pill-nowrap" data-filter="shade">Wrapper Shade</button>
+            <button class="filter-pill pill-compact" data-filter="vitola">Vitolas</button>
           </div>
 
           <!-- Row 3 (3): Flavored, Box-Pressed, Strength -->
@@ -69,21 +69,16 @@
         <!-- VIEW ALL (everything else) -->
         <div class="cigars-filters-expanded" id="filters-expanded" hidden>
           <div class="cigars-filters-grid">
-
-            <!-- Requested 4th row items (these will wrap cleanly as needed) -->
             <div class="cigars-filters-row cigars-filters-row--wrap">
               <button class="filter-pill" data-filter="length">Length</button>
               <button class="filter-pill" data-filter="shape">Shape</button>
               <button class="filter-pill filter-pill--toggle" data-toggle="tin">Tin</button>
               <button class="filter-pill filter-pill--toggle" data-toggle="pack">Packs</button>
               <button class="filter-pill filter-pill--toggle" data-toggle="barberpole">Barberpole</button>
-
-              <!-- If your JS injects any additional filter buttons into #filters-expanded later,
-                   they should be appended AFTER these. -->
             </div>
-
           </div>
         </div>
+
       </div>
     </section>
 
@@ -103,7 +98,7 @@
 
     <div class="fm-sheet" role="dialog" aria-modal="true" aria-labelledby="fm-title">
       <div class="fm-header">
-        <h2 id="fm-title" class="fm-title">Brands</h2>
+        <h2 id="fm-title" class="fm-title">Filter</h2>
       </div>
 
       <div class="fm-search-row">
