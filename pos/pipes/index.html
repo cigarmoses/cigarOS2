@@ -8,6 +8,21 @@
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/category.css" />
+
+  <style>
+    /* Ensure the icon area displays the resolved image nicely */
+    .category-card-icon {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .category-card-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+  </style>
 </head>
 <body class="category-page">
   <header class="category-topbar">
@@ -54,13 +69,98 @@
   <!-- Page behavior -->
   <script>
     (function () {
+      // -----------------------------
+      // Config for this category page
+      // -----------------------------
+      const IMAGE_DIR = "/img/pipes"; // <-- Pipes folder
+
       // Back
       const backBtn = document.getElementById("category-back");
       if (backBtn) backBtn.addEventListener("click", () => {
         window.location.href = "/pos/";
       });
 
-      // Add-to-invoice flow: click product -> add -> open invoice modal
+      // ---------------------------------------
+      // Product image resolving (.svg/.png/.jpg)
+      // ---------------------------------------
+      const existsCache = new Map();
+
+      function normalizeProductName(name) {
+        return String(name || "")
+          .toLowerCase()
+          // remove spaces + dashes
+          .replace(/[\s-]+/g, "")
+          // remove remaining punctuation/special chars
+          .replace(/[^a-z0-9]/g, "");
+      }
+
+      async function urlExists(url) {
+        if (existsCache.has(url)) return existsCache.get(url);
+
+        // Try HEAD first (fast). If blocked, fallback to GET.
+        let ok = false;
+        try {
+          const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+          ok = res.ok;
+        } catch (_) {
+          ok = false;
+        }
+
+        if (!ok) {
+          try {
+            const res = await fetch(url, { method: "GET", cache: "no-store" });
+            ok = res.ok;
+          } catch (_) {
+            ok = false;
+          }
+        }
+
+        existsCache.set(url, ok);
+        return ok;
+      }
+
+      async function resolveProductImage(productName, baseDir) {
+        const key = normalizeProductName(productName);
+        const exts = ["svg", "png", "jpg"];
+
+        for (const ext of exts) {
+          const url = `${baseDir}/${key}.${ext}`;
+          if (await urlExists(url)) return url;
+        }
+
+        // Optional: leave blank if nothing exists
+        return "";
+      }
+
+      async function applyCardIcons() {
+        const cards = Array.from(document.querySelectorAll("[data-receipt-item]"));
+
+        await Promise.all(cards.map(async (card) => {
+          const iconBox = card.querySelector(".category-card-icon");
+          if (!iconBox) return;
+
+          // Manual override (optional later): data-img="/img/pipes/mrconsulpipe.svg"
+          const manual = card.dataset.img || "";
+          const name = card.dataset.name || "";
+
+          const src = manual || await resolveProductImage(name, IMAGE_DIR);
+
+          // Clear and render
+          iconBox.innerHTML = "";
+          if (!src) return;
+
+          const img = document.createElement("img");
+          img.alt = name;
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.src = src;
+          iconBox.appendChild(img);
+        }));
+      }
+
+      // ---------------------------------------
+      // Add-to-invoice flow: click product card
+      // ---------------------------------------
       function addFromCard(card) {
         if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
 
@@ -78,13 +178,13 @@
         window.CigarOSCart.add({
           id,
           type,
-          category,   // <-- bold title line in invoice for products (Pipes)
+          category,   // bold title line in invoice for products (Pipes)
           brand,
           name,
           price,
           img,
           link,
-          sub: ""     // optional extra line if you ever want it
+          sub: ""     // optional extra line
         });
 
         // Open invoice immediately
@@ -96,6 +196,9 @@
       document.querySelectorAll("[data-receipt-item]").forEach((card) => {
         card.addEventListener("click", () => addFromCard(card));
       });
+
+      // Apply icons on load
+      applyCardIcons();
     })();
   </script>
 </body>
