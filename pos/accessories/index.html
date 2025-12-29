@@ -38,16 +38,16 @@
     </section>
 
     <section class="category-grid">
-      <!-- Use data-img-key to map to actual filenames (no ext) -->
+      <!-- data-img-key should match the filename (no extension), normalized -->
       <article class="category-card" data-receipt-item
         data-type="product"
         data-category="Accessories"
         data-brand="Vertigo"
-        data-name="Vertigo Triple Torch"
+        data-name="Vertigo Boxer Triple Torch"
         data-img-key="vertigoboxertripletorch"
         data-price="9.99">
         <div class="category-card-icon"></div>
-        <div class="category-card-name">Vertigo Triple Torch</div>
+        <div class="category-card-name">Vertigo Boxer Triple Torch</div>
         <div class="category-card-price">$9.99</div>
       </article>
 
@@ -55,23 +55,23 @@
         data-type="product"
         data-category="Accessories"
         data-brand="Lotus"
-        data-name="Lotus Lighter"
+        data-name="Lotus Excalibur Double Torch V-Cutter Lighter"
         data-img-key="lotusexcaliburdoubletorchvcutterlighter"
         data-price="34.99">
         <div class="category-card-icon"></div>
-        <div class="category-card-name">Lotus Lighter</div>
+        <div class="category-card-name">Lotus Excalibur Double Torch</div>
         <div class="category-card-price">$34.99</div>
       </article>
 
       <article class="category-card" data-receipt-item
         data-type="product"
         data-category="Accessories"
-        data-brand="Xikar"
-        data-name="Xikar Cutter"
-        data-img-key="stdupontcutterstandslimgold"
+        data-brand="Vertigo"
+        data-name="Vertigo Oculus"
+        data-img-key="vertigooculus"
         data-price="39.99">
         <div class="category-card-icon"></div>
-        <div class="category-card-name">Xikar Cutter</div>
+        <div class="category-card-name">Vertigo Oculus</div>
         <div class="category-card-price">$39.99</div>
       </article>
     </section>
@@ -81,14 +81,48 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const IMAGE_DIR = "/img/lighters";
+      const IMAGE_DIR = "/img/lighters"; // Accessories folder
 
       // Back
       const backBtn = document.getElementById("category-back");
       if (backBtn) backBtn.addEventListener("click", () => (window.location.href = "/pos/"));
 
+      // -----------------------------
+      // Add-to-cart (tap card)
+      // -----------------------------
+      function addFromCard(card) {
+        if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
+
+        const type = (card.dataset.type || "product").toLowerCase();
+        const category = card.dataset.category || "Product";
+        const brand = card.dataset.brand || "";
+        const name = card.dataset.name || "Item";
+        const price = Number(card.dataset.price || "0");
+
+        const id = (category + "|" + brand + "|" + name).toLowerCase();
+
+        window.CigarOSCart.add({
+          id,
+          type,
+          category,
+          brand,
+          name,
+          price,
+          img: "",
+          link: "",
+          sub: ""
+        });
+
+        // Optional auto-open:
+        // window.CigarOSCart.openInvoice?.();
+      }
+
+      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
+        card.addEventListener("click", () => addFromCard(card));
+      });
+
       // ---------------------------------------
-      // Image resolver: img-key → name normalize
+      // Image resolver: img-key → name fallback
       // Ext order: .svg → .png → .jpg
       // ---------------------------------------
       const existsCache = new Map();
@@ -104,16 +138,21 @@
         if (existsCache.has(url)) return existsCache.get(url);
 
         let ok = false;
+
         try {
           const res = await fetch(url, { method: "HEAD", cache: "no-store" });
           ok = res.ok;
-        } catch (_) { ok = false; }
+        } catch (_) {
+          ok = false;
+        }
 
         if (!ok) {
           try {
             const res = await fetch(url, { method: "GET", cache: "no-store" });
             ok = res.ok;
-          } catch (_) { ok = false; }
+          } catch (_) {
+            ok = false;
+          }
         }
 
         existsCache.set(url, ok);
@@ -130,6 +169,8 @@
       }
 
       async function resolveProductImage(card) {
+        // Manual override if you ever want:
+        // data-img="/img/lighters/vertigoboxertripletorch.jpg"
         const manual = card.dataset.img || "";
         if (manual) return manual;
 
