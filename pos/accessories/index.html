@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="/pos/category.css" />
 
   <style>
-    /* Ensure the icon area displays the resolved image nicely */
     .category-card-icon{
       display:grid;
       place-items:center;
@@ -39,11 +38,13 @@
     </section>
 
     <section class="category-grid">
+      <!-- Use data-img-key to map to actual filenames (no ext) -->
       <article class="category-card" data-receipt-item
         data-type="product"
         data-category="Accessories"
         data-brand="Vertigo"
         data-name="Vertigo Triple Torch"
+        data-img-key="vertigoboxertripletorch"
         data-price="9.99">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Vertigo Triple Torch</div>
@@ -55,6 +56,7 @@
         data-category="Accessories"
         data-brand="Lotus"
         data-name="Lotus Lighter"
+        data-img-key="lotusexcaliburdoubletorchvcutterlighter"
         data-price="34.99">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Lotus Lighter</div>
@@ -66,6 +68,7 @@
         data-category="Accessories"
         data-brand="Xikar"
         data-name="Xikar Cutter"
+        data-img-key="stdupontcutterstandslimgold"
         data-price="39.99">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Xikar Cutter</div>
@@ -78,59 +81,71 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const IMAGE_DIR = "/img/lighters"; // <-- Accessories folder
+      const IMAGE_DIR = "/img/lighters";
 
       // Back
       const backBtn = document.getElementById("category-back");
       if (backBtn) backBtn.addEventListener("click", () => (window.location.href = "/pos/"));
 
       // ---------------------------------------
-      // Product image resolving (.svg/.png/.jpg)
+      // Image resolver: img-key → name normalize
+      // Ext order: .svg → .png → .jpg
       // ---------------------------------------
       const existsCache = new Map();
 
-      function normalizeProductName(name) {
-        return String(name || "")
+      function normalizeKey(str) {
+        return String(str || "")
           .toLowerCase()
-          .replace(/[\s-]+/g, "")     // remove spaces + dashes
-          .replace(/[^a-z0-9]/g, ""); // remove punctuation/special chars
+          .replace(/[\s-]+/g, "")
+          .replace(/[^a-z0-9]/g, "");
       }
 
       async function urlExists(url) {
         if (existsCache.has(url)) return existsCache.get(url);
 
         let ok = false;
-
-        // Try HEAD first (fast)
         try {
           const res = await fetch(url, { method: "HEAD", cache: "no-store" });
           ok = res.ok;
-        } catch (_) {
-          ok = false;
-        }
+        } catch (_) { ok = false; }
 
-        // Fallback to GET if needed
         if (!ok) {
           try {
             const res = await fetch(url, { method: "GET", cache: "no-store" });
             ok = res.ok;
-          } catch (_) {
-            ok = false;
-          }
+          } catch (_) { ok = false; }
         }
 
         existsCache.set(url, ok);
         return ok;
       }
 
-      async function resolveProductImage(productName, baseDir) {
-        const key = normalizeProductName(productName);
+      async function resolveByKey(key, baseDir) {
         const exts = ["svg", "png", "jpg"];
-
         for (const ext of exts) {
           const url = `${baseDir}/${key}.${ext}`;
           if (await urlExists(url)) return url;
         }
+        return "";
+      }
+
+      async function resolveProductImage(card) {
+        const manual = card.dataset.img || "";
+        if (manual) return manual;
+
+        // 1) data-img-key (preferred)
+        const keyRaw = card.dataset.imgKey || "";
+        const key = normalizeKey(keyRaw);
+        if (key) {
+          const hit = await resolveByKey(key, IMAGE_DIR);
+          if (hit) return hit;
+        }
+
+        // 2) fallback: normalized product name
+        const name = card.dataset.name || "";
+        const nameKey = normalizeKey(name);
+        if (nameKey) return await resolveByKey(nameKey, IMAGE_DIR);
+
         return "";
       }
 
@@ -141,18 +156,13 @@
           const iconBox = card.querySelector(".category-card-icon");
           if (!iconBox) return;
 
-          // Optional manual override later:
-          // data-img="/img/lighters/vertigoboxertripletorch.jpg"
-          const manual = card.dataset.img || "";
-          const name = card.dataset.name || "";
-
-          const src = manual || await resolveProductImage(name, IMAGE_DIR);
+          const src = await resolveProductImage(card);
 
           iconBox.innerHTML = "";
           if (!src) return;
 
           const img = document.createElement("img");
-          img.alt = name;
+          img.alt = card.dataset.name || "Product";
           img.loading = "lazy";
           img.decoding = "async";
           img.src = src;
@@ -160,7 +170,6 @@
         }));
       }
 
-      // Apply icons on load
       applyCardIcons();
     });
   </script>
