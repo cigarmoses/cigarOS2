@@ -1,772 +1,941 @@
 /* /pos/cart.js
-   ONE shared cart + invoice controller for all POS pages
+   Shared POS Cart + Invoice (single controller for ALL POS pages)
 
-   Includes:
-   - Product-tap opens Quick Add modal (no auto-add) — prevents double-add
-   - Floating invoice button + badge count
-   - Invoice UI matches your "RIGHT" screenshot
-   - Customer dropdown with "Add new customer…" (stored in localStorage)
+   Fixes included:
+   ✅ Uses /img/icons/receipt.png when cart is empty
+   ✅ Uses /img/icons/receiptred.png when cart has items
+   ✅ Shows item-count badge on top of the icon
+   ✅ Receipt button stays SMALL bottom-right (does not take over screen)
+   ✅ Invoice modal: blurred/dimmed backdrop, ~75% height, centered higher
+   ✅ Close (X) always works
+   ✅ Qty adjuster tightened
+   ✅ Category label smaller + regular weight (not bold)
+   ✅ "INVOICE" header uses SF Pro Display-ish bold + tighter tracking
+   ✅ Save Draft / Confirm buttons side-by-side under totals
+   ✅ Customer dropdown includes “Add new customer…” as 2nd option (above Walk-in)
+   ✅ Prevents DOUBLE-ADD on category pages by intercepting clicks on [data-receipt-item]
+      and showing “Add to invoice” popup — adds only when you tap that button.
+
+   Public API:
+     window.CigarOSCart.add(item)
+     window.CigarOSCart.openInvoice()
+     window.CigarOSCart.closeInvoice()
+     window.CigarOSCart.clear()
 */
 
 (() => {
+  "use strict";
+
+  // -------------------------
+  // Config
+  // -------------------------
+  const STORAGE_KEY = "cigaros_pos_cart_v1";
+  const STORAGE_CUSTOMER_KEY = "cigaros_pos_customer_v1";
+
+  const ICON_EMPTY = "/img/icons/receipt.png";
+  const ICON_FULL = "/img/icons/receiptred.png";
+
+  // per your memory: 7% tax
   const TAX_RATE = 0.07;
 
-  const STORAGE_CART = "cigaros_cart_v2";
-  const STORAGE_CUSTOMERS = "cigaros_customers_v1";
-  const STORAGE_SELECTED_CUSTOMER = "cigaros_selected_customer_v1";
+  // If you want “Add new customer…” to go somewhere specific, change this:
+  const ADD_NEW_CUSTOMER_URL = "/pos/loyalty/";
 
-  // ---------- State ----------
-  const state = {
-    items: loadItems(),
-    isInvoiceOpen: false,
-    isQuickAddOpen: false,
-    pendingItem: null
+  // -------------------------
+  // State
+  // -------------------------
+  let state = {
+    items: [], // [{id,type,category,brand,name,price,img,link,sub,qty}]
+    customer: "Walk-in",
+    lastInvNumber: "123456",
+    shopName: "Smoke Cigar Shop",
   };
 
-  function loadItems() {
-    try {
-      const raw = localStorage.getItem(STORAGE_CART);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveItems() {
-    try {
-      localStorage.setItem(STORAGE_CART, JSON.stringify(state.items));
-    } catch {}
-  }
-
-  // ---------- Customers ----------
-  function loadCustomers() {
-    try {
-      const raw = localStorage.getItem(STORAGE_CUSTOMERS);
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (Array.isArray(parsed) && parsed.length) return parsed;
-    } catch {}
-    // Seed defaults (safe placeholders; you can replace later)
-    return ["Walk-in", "Michael Test", "John Smith"];
-  }
-
-  function saveCustomers(list) {
-    try {
-      localStorage.setItem(STORAGE_CUSTOMERS, JSON.stringify(list));
-    } catch {}
-  }
-
-  function getSelectedCustomer() {
-    try {
-      return localStorage.getItem(STORAGE_SELECTED_CUSTOMER) || "";
-    } catch {
-      return "";
-    }
-  }
-
-  function setSelectedCustomer(name) {
-    try {
-      localStorage.setItem(STORAGE_SELECTED_CUSTOMER, name || "");
-    } catch {}
-  }
-
-  // ---------- Utils ----------
-  function money(n) {
-    const x = Number(n || 0);
-    return x.toFixed(2);
-  }
-
-  function cartCount() {
-    return state.items.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
-  }
-
-  function subtotal() {
-    return state.items.reduce((sum, it) => {
-      const qty = Number(it.qty) || 0;
-      const price = Number(it.price) || 0;
-      return sum + qty * price;
-    }, 0);
-  }
-
-  function taxAmount() {
-    return subtotal() * TAX_RATE;
-  }
-
-  function total() {
-    return subtotal() + taxAmount();
-  }
-
-  // ---------- DOM helpers ----------
+  // -------------------------
+  // Utilities
+  // -------------------------
   const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  function el(tag, attrs = {}, children = []) {
-    const node = document.createElement(tag);
-    Object.entries(attrs).forEach(([k, v]) => {
-      if (k === "class") node.className = v;
-      else if (k === "html") node.innerHTML = v;
-      else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2), v);
-      else node.setAttribute(k, v);
-    });
-    children.forEach((c) => node.appendChild(typeof c === "string" ? document.createTextNode(c) : c));
-    return node;
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+
+  const money = (n) => {
+    const v = Number(n || 0);
+    return v.toFixed(2);
+  };
+
+  const nowStamp = () => {
+    // Example: Dec 29, 2025 at 10:51 AM (local)
+    const d = new Date();
+    const optsDate = { month: "short", day: "2-digit", year: "numeric" };
+    const optsTime = { hour: "numeric", minute: "2-digit" };
+    const date = d.toLocaleDateString(undefined, optsDate);
+    const time = d.toLocaleTimeString(undefined, optsTime);
+    return `${date} at ${time}`;
+  };
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.items)) {
+          state.items = parsed.items.map((it) => ({
+            ...it,
+            qty: clamp(Number(it.qty || 1), 1, 999),
+            price: Number(it.price || 0),
+          }));
+        }
+      }
+    } catch (e) {}
+    try {
+      const rawC = localStorage.getItem(STORAGE_CUSTOMER_KEY);
+      if (rawC) state.customer = rawC;
+    } catch (e) {}
   }
 
-  // ---------- Styles (one place, all pages) ----------
-  const STYLE_ID = "cigaros-cart-styles-v3";
-  function injectStylesOnce() {
-    if (document.getElementById(STYLE_ID)) return;
-
-    const css = `
-/* Floating invoice button */
-.pos-invoice-fab{
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  border: none;
-  background: rgba(255,255,255,0.92);
-  box-shadow: 0 10px 26px rgba(15,26,44,0.18), 0 2px 8px rgba(15,26,44,0.10);
-  display: grid;
-  place-items: center;
-  z-index: 9999;
-  -webkit-tap-highlight-color: transparent;
-}
-.pos-invoice-fab img{
-  width: 30px;
-  height: 30px;
-  display: block;
-}
-.pos-invoice-badge{
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: #ff3b30;
-  color: #fff;
-  font: 800 12px/20px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  text-align: center;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-}
-
-/* Overlay */
-.pos-overlay{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.28);
-  z-index: 10000;
-}
-
-/* Quick Add modal (product tap -> Add to invoice) */
-.pos-quickadd{
-  position: fixed;
-  left: 50%;
-  top: 52%;
-  transform: translate(-50%, -50%);
-  width: min(560px, calc(100% - 24px));
-  background: #fff;
-  border-radius: 22px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
-  overflow: hidden;
-  z-index: 10001;
-}
-.pos-quickadd-inner{
-  padding: 18px 18px 16px;
-  display: grid;
-  gap: 12px;
-  justify-items: center;
-  text-align: center;
-}
-.pos-quickadd-x{
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  border: none;
-  background: #eef1f5;
-  font-size: 22px;
-  line-height: 1;
-}
-.pos-quickadd-icon{
-  width: 72px;
-  height: 72px;
-  border-radius: 18px;
-  background: #e9eef6;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-.pos-quickadd-icon img{
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-}
-.pos-quickadd-title{
-  font: 900 34px/1.05 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  letter-spacing: -0.02em;
-  color: #0f1a2c;
-}
-.pos-quickadd-btn{
-  width: 100%;
-  border: none;
-  border-radius: 14px;
-  padding: 14px 14px;
-  background: #f2f4f8;
-  color: #007aff;
-  font: 800 20px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-}
-
-/* Invoice modal (matches your RIGHT screenshot) */
-.pos-invoice{
-  position: fixed;
-  left: 50%;
-  top: 52%;
-  transform: translate(-50%, -50%);
-  width: min(760px, calc(100% - 18px));
-  max-height: calc(100% - 22px);
-  background: #fff;
-  border-radius: 24px;
-  box-shadow: 0 20px 70px rgba(0,0,0,0.28);
-  overflow: hidden;
-  z-index: 10002;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-}
-.pos-invoice-top{
-  padding: 14px 18px 10px;
-  border-bottom: 1px solid #eef1f5;
-  position: relative;
-  text-align: center;
-}
-.pos-invoice-top h2{
-  margin: 0;
-  font: 900 18px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  letter-spacing: 0.10em;
-  color: #111;
-}
-.pos-invoice-sub{
-  margin-top: 6px;
-  font: 600 13px/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color: rgba(15,26,44,0.55);
-}
-.pos-invoice-close{
-  position: absolute;
-  right: 14px;
-  top: 12px;
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  border: none;
-  background: #eef1f5;
-  font-size: 22px;
-  line-height: 1;
-}
-
-/* Customer select row */
-.pos-customer-row{
-  margin-top: 12px;
-  display: grid;
-  place-items: center;
-}
-.pos-customer-select{
-  width: min(420px, 92%);
-  appearance: none;
-  border: 1px solid rgba(15,26,44,0.14);
-  background: #fff;
-  border-radius: 999px;
-  padding: 10px 14px;
-  font: 700 14px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color: rgba(15,26,44,0.72);
-}
-
-/* Invoice rows */
-.pos-invoice-body{
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 10px 14px 10px;
-}
-.pos-invoice-row{
-  display: grid;
-  grid-template-columns: 54px 1fr 120px 70px;
-  gap: 12px;
-  padding: 14px 6px;
-  border-bottom: 1px solid #eef1f5;
-  align-items: center;
-}
-.pos-invoice-thumb{
-  width: 54px;
-  height: 54px;
-  border-radius: 16px;
-  background: #dbe8ff;
-  overflow: hidden;
-}
-.pos-invoice-thumb img{
-  width: 54px;
-  height: 54px;
-  object-fit: cover;
-  display: block;
-}
-.pos-invoice-meta{
-  display: grid;
-  gap: 4px;
-}
-.pos-invoice-cat{
-  font: 700 13px/1.1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color: rgba(15,26,44,0.62);
-}
-.pos-invoice-name{
-  font: 900 16px/1.15 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color: #0f1a2c;
-}
-.pos-invoice-subline{
-  font: 700 13px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color: rgba(15,26,44,0.35);
-}
-
-/* Stepper: - 1 + (no circles) */
-.pos-stepper{
-  justify-self: end;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  color: rgba(15,26,44,0.55);
-  font: 800 18px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-}
-.pos-stepper button{
-  border: none;
-  background: transparent;
-  padding: 6px 6px;
-  font: 900 22px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color: rgba(15,26,44,0.40);
-}
-.pos-stepper .qty{
-  min-width: 18px;
-  text-align: center;
-  font: 900 18px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color: rgba(15,26,44,0.35);
-}
-
-/* Line total (plain right) */
-.pos-line-total{
-  justify-self: end;
-  font: 900 20px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color: #0f1a2c;
-}
-
-/* Bottom: actions stacked left, totals right */
-.pos-invoice-bottom{
-  border-top: 1px solid #eef1f5;
-  padding: 12px 14px 14px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  align-items: end;
-}
-.pos-actions{
-  display: grid;
-  gap: 10px;
-  width: min(240px, 100%);
-}
-.pos-btn{
-  border-radius: 999px;
-  padding: 12px 16px;
-  font: 800 16px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  border: 1.5px solid rgba(0,122,255,0.55);
-  background: #fff;
-  color: #007aff;
-}
-.pos-totals{
-  justify-self: end;
-  text-align: right;
-  display: grid;
-  gap: 8px;
-  font: 800 18px/1.1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color: #0f1a2c;
-}
-.pos-totals .row{
-  display: grid;
-  grid-template-columns: auto 110px;
-  gap: 14px;
-}
-.pos-totals .label{
-  justify-self: start;
-  color: rgba(15,26,44,0.55);
-  font-weight: 800;
-}
-.pos-totals .value{
-  justify-self: end;
-}
-
-/* Mobile sheet feel */
-@media (max-width: 560px){
-  .pos-invoice, .pos-quickadd{
-    left: 50%;
-    top: auto;
-    bottom: 10px;
-    transform: translateX(-50%);
-    width: calc(100% - 14px);
-    max-height: calc(100% - 24px);
-    border-radius: 22px;
-  }
-  .pos-invoice-row{
-    grid-template-columns: 54px 1fr 110px 64px;
-  }
-}
-    `.trim();
-
-    const style = document.createElement("style");
-    style.id = STYLE_ID;
-    style.textContent = css;
-    document.head.appendChild(style);
+  function saveState() {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          items: state.items,
+        })
+      );
+    } catch (e) {}
+    try {
+      localStorage.setItem(STORAGE_CUSTOMER_KEY, state.customer);
+    } catch (e) {}
   }
 
-  injectStylesOnce();
-
-  // ---------- Floating invoice button ----------
-  const fab = el("button", { class: "pos-invoice-fab", type: "button", "aria-label": "Invoice" });
-  const fabImg = el("img", { src: "/img/icons/pos/invoice.png", alt: "Invoice" });
-  const badge = el("div", { class: "pos-invoice-badge" }, ["0"]);
-  fab.appendChild(fabImg);
-  fab.appendChild(badge);
-  document.body.appendChild(fab);
-
-  fab.addEventListener("click", () => openInvoice());
-
-  function setBadge() {
-    const n = cartCount();
-    badge.textContent = String(n);
-    badge.style.display = n > 0 ? "block" : "none";
+  function getItemCount() {
+    return state.items.reduce((sum, it) => sum + Number(it.qty || 0), 0);
   }
-  setBadge();
 
-  // ---------- Invoice modal ----------
-  let overlayEl = null;
-  let invoiceEl = null;
+  function getSubtotal() {
+    return state.items.reduce((sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0), 0);
+  }
 
-  function buildInvoice() {
-    const now = new Date();
-    const dateStr = now.toLocaleString(undefined, {
-      month: "short",
-      day: "2-digit",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
+  function getTax(subtotal) {
+    return subtotal * TAX_RATE;
+  }
+
+  // -------------------------
+  // UI: Floating receipt button + badge
+  // -------------------------
+  let receiptBtn, receiptImg, receiptBadge;
+  let invoiceOverlay, invoiceSheet;
+  let productOverlay, productSheet;
+
+  function ensureReceiptButton() {
+    if (receiptBtn) return;
+
+    receiptBtn = document.createElement("button");
+    receiptBtn.type = "button";
+    receiptBtn.className = "pos-receipt-btn";
+    receiptBtn.setAttribute("aria-label", "Open Invoice");
+
+    receiptImg = document.createElement("img");
+    receiptImg.className = "pos-receipt-img";
+    receiptImg.alt = "Receipt";
+
+    receiptBadge = document.createElement("span");
+    receiptBadge.className = "pos-receipt-badge";
+    receiptBadge.textContent = "";
+
+    receiptBtn.appendChild(receiptImg);
+    receiptBtn.appendChild(receiptBadge);
+
+    receiptBtn.addEventListener("click", () => openInvoice());
+
+    document.body.appendChild(receiptBtn);
+    injectStyles();
+    updateReceiptButton();
+  }
+
+  function updateReceiptButton() {
+    const count = getItemCount();
+    receiptImg.src = count === 0 ? ICON_EMPTY : ICON_FULL;
+
+    if (count > 0) {
+      receiptBadge.textContent = String(count);
+      receiptBadge.style.display = "grid";
+    } else {
+      receiptBadge.textContent = "";
+      receiptBadge.style.display = "none";
+    }
+  }
+
+  // -------------------------
+  // UI: Invoice modal
+  // -------------------------
+  function ensureInvoiceModal() {
+    if (invoiceOverlay) return;
+
+    invoiceOverlay = document.createElement("div");
+    invoiceOverlay.className = "pos-invoice-overlay";
+    invoiceOverlay.setAttribute("aria-hidden", "true");
+
+    // close when tapping backdrop
+    invoiceOverlay.addEventListener("click", (e) => {
+      if (e.target === invoiceOverlay) closeInvoice();
     });
 
-    const top = el("div", { class: "pos-invoice-top" }, [
-      el("button", { class: "pos-invoice-close", type: "button" }, ["×"]),
-      el("h2", {}, ["INVOICE"]),
-      el("div", { class: "pos-invoice-sub" }, [
-        el("div", {}, [dateStr]),
-        el("div", {}, ["Smoke Cigar Shop"]),
-        el("div", {}, ["INV# 123456"])
-      ]),
-      el("div", { class: "pos-customer-row" }, [
-        buildCustomerSelect()
-      ])
-    ]);
+    invoiceSheet = document.createElement("div");
+    invoiceSheet.className = "pos-invoice-sheet";
+    invoiceSheet.setAttribute("role", "dialog");
+    invoiceSheet.setAttribute("aria-modal", "true");
 
-    const body = el("div", { class: "pos-invoice-body" });
+    invoiceSheet.innerHTML = `
+      <div class="pos-invoice-header">
+        <div class="pos-invoice-title">INVOICE</div>
+        <button type="button" class="pos-invoice-close" aria-label="Close Invoice">×</button>
+      </div>
 
-    const bottom = el("div", { class: "pos-invoice-bottom" }, [
-      el("div", { class: "pos-actions" }, [
-        el("button", { class: "pos-btn", type: "button", id: "pos-save-draft" }, ["Save Draft"]),
-        el("button", { class: "pos-btn", type: "button", id: "pos-confirm" }, ["Confirm"])
-      ]),
-      el("div", { class: "pos-totals" }, [
-        el("div", { class: "row" }, [
-          el("div", { class: "label" }, ["Subtotal"]),
-          el("div", { class: "value", id: "pos-subtotal" }, [money(subtotal())])
-        ]),
-        el("div", { class: "row" }, [
-          el("div", { class: "label" }, ["Tax"]),
-          el("div", { class: "value", id: "pos-tax" }, [money(taxAmount())])
-        ]),
-        el("div", { class: "row" }, [
-          el("div", { class: "label" }, ["TOTAL"]),
-          el("div", { class: "value", id: "pos-total" }, [money(total())])
-        ])
-      ])
-    ]);
+      <div class="pos-invoice-meta">
+        <div class="pos-invoice-meta-line pos-invoice-date">${nowStamp()}</div>
+        <div class="pos-invoice-meta-line pos-invoice-shop">${escapeHtml(state.shopName)}</div>
+        <div class="pos-invoice-meta-line pos-invoice-inv">INV# ${escapeHtml(state.lastInvNumber)}</div>
+      </div>
 
-    const wrap = el("div", { class: "pos-invoice" }, [top, body, bottom]);
+      <div class="pos-invoice-customer">
+        <select class="pos-invoice-select" aria-label="Attach Saved Customer">
+          <option value="" disabled>Attach Saved Customer</option>
+          <option value="__add_new__">Add new customer...</option>
+          <option value="Walk-in">Walk-in</option>
+          <option value="Michael Test">Michael Test</option>
+          <option value="John Smith">John Smith</option>
+        </select>
+      </div>
 
-    $(".pos-invoice-close", wrap).addEventListener("click", () => closeInvoice());
+      <div class="pos-invoice-list" role="list"></div>
 
-    return { wrap, body };
-  }
+      <div class="pos-invoice-footer">
+        <div class="pos-invoice-totals">
+          <div class="row"><span>Subtotal</span><strong class="pos-subtotal">$0.00</strong></div>
+          <div class="row"><span>Tax</span><strong class="pos-tax">$0.00</strong></div>
+          <div class="row total"><span>TOTAL</span><strong class="pos-total">$0.00</strong></div>
+        </div>
 
-  function buildCustomerSelect() {
-    const customers = loadCustomers();
-    const selected = getSelectedCustomer();
+        <div class="pos-invoice-actions">
+          <button type="button" class="pos-action secondary" data-action="draft">Save Draft</button>
+          <button type="button" class="pos-action primary" data-action="confirm">Confirm</button>
+        </div>
+      </div>
+    `;
 
-    const select = el("select", { class: "pos-customer-select", "aria-label": "Attach Saved Customer" });
+    invoiceOverlay.appendChild(invoiceSheet);
+    document.body.appendChild(invoiceOverlay);
 
-    // Placeholder header option
-    select.appendChild(el("option", { value: "" }, ["Attach Saved Customer"]));
+    // Close X
+    $(".pos-invoice-close", invoiceSheet).addEventListener("click", closeInvoice);
 
-    customers.forEach((name) => {
-      const opt = el("option", { value: name }, [name]);
-      if (selected && selected === name) opt.selected = true;
-      select.appendChild(opt);
-    });
-
-    // Special action
-    select.appendChild(el("option", { value: "__add_new__" }, ["Add new customer…"]));
+    // Customer select
+    const select = $(".pos-invoice-select", invoiceSheet);
+    // set initial selected
+    select.value = state.customer || "Walk-in";
+    // if placeholder is shown, pick Walk-in
+    if (!select.value) select.value = "Walk-in";
 
     select.addEventListener("change", () => {
-      const val = select.value;
-
-      if (val === "__add_new__") {
-        // reset selection visually before prompt (so it doesn't stay on the action item)
-        select.value = "";
-        const name = window.prompt("New customer name:");
-        const cleaned = (name || "").trim();
-        if (!cleaned) return;
-
-        const list = loadCustomers();
-        if (!list.includes(cleaned)) {
-          list.push(cleaned);
-          saveCustomers(list);
-        }
-        setSelectedCustomer(cleaned);
-
-        // Rebuild select in place
-        const fresh = buildCustomerSelect();
-        select.replaceWith(fresh);
+      const v = select.value;
+      if (v === "__add_new__") {
+        // reset to Walk-in before navigating
+        select.value = state.customer || "Walk-in";
+        window.location.href = ADD_NEW_CUSTOMER_URL;
         return;
       }
-
-      setSelectedCustomer(val);
+      state.customer = v;
+      saveState();
     });
 
-    return select;
+    // Action buttons
+    $$(".pos-action", invoiceSheet).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const action = btn.getAttribute("data-action");
+        if (action === "draft") {
+          // placeholder: keep state, close
+          closeInvoice();
+        } else if (action === "confirm") {
+          // placeholder: clear + close
+          clear();
+          closeInvoice();
+        }
+      });
+    });
+
+    // ESC closes
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && invoiceOverlay?.classList.contains("open")) closeInvoice();
+    });
   }
 
-  function renderInvoiceRows(body) {
-    body.innerHTML = "";
+  function renderInvoice() {
+    ensureInvoiceModal();
 
-    if (!state.items.length) {
-      body.appendChild(
-        el("div", {
-          style:
-            "padding: 16px 10px; color: rgba(15,26,44,0.55); font: 700 16px/1.3 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;"
-        }, ["No items yet."])
-      );
-      updateTotals();
-      return;
-    }
+    // Refresh timestamp each open/render
+    $(".pos-invoice-date", invoiceSheet).textContent = nowStamp();
+    $(".pos-invoice-shop", invoiceSheet).textContent = state.shopName;
+    $(".pos-invoice-inv", invoiceSheet).textContent = `INV# ${state.lastInvNumber}`;
+
+    const list = $(".pos-invoice-list", invoiceSheet);
+    list.innerHTML = "";
 
     state.items.forEach((it) => {
-      const qty = Number(it.qty) || 0;
-      const price = Number(it.price) || 0;
-      const lineTotal = qty * price;
+      const row = document.createElement("div");
+      row.className = "pos-line";
+      row.setAttribute("role", "listitem");
 
-      const thumb = el("div", { class: "pos-invoice-thumb" });
-      if (it.img) thumb.appendChild(el("img", { src: it.img, alt: it.name || "Item" }));
+      const imgSrc = it.img || ""; // optional per-item
+      row.innerHTML = `
+        <div class="pos-line-left">
+          <div class="pos-line-thumb">
+            ${imgSrc ? `<img src="${escapeAttr(imgSrc)}" alt="">` : `<div class="pos-line-thumb-fallback"></div>`}
+          </div>
+        </div>
 
-      const meta = el("div", { class: "pos-invoice-meta" }, [
-        el("div", { class: "pos-invoice-cat" }, [it.category || "Product"]),
-        el("div", { class: "pos-invoice-name" }, [it.name || "Item"]),
-        // third line: show unit price (like your right screenshot)
-        el("div", { class: "pos-invoice-subline" }, [money(it.price)])
-      ]);
+        <div class="pos-line-mid">
+          <div class="pos-line-cat">${escapeHtml(it.category || "")}</div>
+          <div class="pos-line-name">${escapeHtml(it.name || "")}</div>
+          <div class="pos-line-sub">${escapeHtml(it.price != null ? money(it.price) : "")}</div>
+        </div>
 
-      const minusBtn = el("button", { type: "button", "aria-label": "Decrease" }, ["−"]);
-      const plusBtn = el("button", { type: "button", "aria-label": "Increase" }, ["+"]);
-      const qtyEl = el("div", { class: "qty" }, [String(qty)]);
+        <div class="pos-line-right">
+          <div class="pos-qty">
+            <button type="button" class="qty-btn" data-qty="-1" aria-label="Decrease">−</button>
+            <div class="qty-num">${escapeHtml(String(it.qty || 1))}</div>
+            <button type="button" class="qty-btn" data-qty="+1" aria-label="Increase">+</button>
+          </div>
+          <div class="pos-line-price">$${escapeHtml(money((it.price || 0) * (it.qty || 1)))}</div>
+        </div>
+      `;
 
-      minusBtn.addEventListener("click", () => changeQty(it.id, -1));
-      plusBtn.addEventListener("click", () => changeQty(it.id, +1));
+      // Qty controls (tight)
+      $$(".qty-btn", row).forEach((b) => {
+        b.addEventListener("click", () => {
+          const dir = b.getAttribute("data-qty");
+          if (dir === "+1") setQty(it.id, (it.qty || 1) + 1);
+          if (dir === "-1") setQty(it.id, (it.qty || 1) - 1);
+        });
+      });
 
-      const stepper = el("div", { class: "pos-stepper" }, [minusBtn, qtyEl, plusBtn]);
-      const totalEl = el("div", { class: "pos-line-total" }, [money(lineTotal)]);
-
-      const row = el("div", { class: "pos-invoice-row" }, [thumb, meta, stepper, totalEl]);
-      body.appendChild(row);
+      list.appendChild(row);
     });
 
-    updateTotals();
-  }
+    const subtotal = getSubtotal();
+    const tax = getTax(subtotal);
+    const total = subtotal + tax;
 
-  function updateTotals() {
-    const subEl = $("#pos-subtotal", invoiceEl);
-    const taxEl = $("#pos-tax", invoiceEl);
-    const totEl = $("#pos-total", invoiceEl);
-    if (subEl) subEl.textContent = money(subtotal());
-    if (taxEl) taxEl.textContent = money(taxAmount());
-    if (totEl) totEl.textContent = money(total());
+    $(".pos-subtotal", invoiceSheet).textContent = `$${money(subtotal)}`;
+    $(".pos-tax", invoiceSheet).textContent = `$${money(tax)}`;
+    $(".pos-total", invoiceSheet).textContent = `$${money(total)}`;
   }
 
   function openInvoice() {
-    if (state.isInvoiceOpen) return;
-    state.isInvoiceOpen = true;
+    ensureReceiptButton();
+    ensureInvoiceModal();
+    renderInvoice();
 
-    overlayEl = el("div", { class: "pos-overlay" });
-    overlayEl.addEventListener("click", (e) => {
-      if (e.target === overlayEl) closeInvoice();
-    });
-    document.body.appendChild(overlayEl);
-
-    const built = buildInvoice();
-    invoiceEl = built.wrap;
-    document.body.appendChild(invoiceEl);
-
-    renderInvoiceRows(built.body);
+    invoiceOverlay.classList.add("open");
+    invoiceOverlay.setAttribute("aria-hidden", "false");
+    document.documentElement.classList.add("pos-lock");
   }
 
   function closeInvoice() {
-    state.isInvoiceOpen = false;
-    if (invoiceEl) invoiceEl.remove();
-    if (overlayEl) overlayEl.remove();
-    invoiceEl = null;
-    overlayEl = null;
+    if (!invoiceOverlay) return;
+    invoiceOverlay.classList.remove("open");
+    invoiceOverlay.setAttribute("aria-hidden", "true");
+    document.documentElement.classList.remove("pos-lock");
   }
 
-  // ---------- Quick Add popup ----------
-  let quickEl = null;
+  // -------------------------
+  // UI: Product “Add to invoice” popup (prevents double-add)
+  // -------------------------
+  function ensureProductPopup() {
+    if (productOverlay) return;
 
-  function openQuickAdd(item) {
-    if (!item) return;
-    state.pendingItem = item;
+    productOverlay = document.createElement("div");
+    productOverlay.className = "pos-product-overlay";
+    productOverlay.setAttribute("aria-hidden", "true");
 
-    if (!overlayEl) {
-      overlayEl = el("div", { class: "pos-overlay" });
-      overlayEl.addEventListener("click", (e) => {
-        if (e.target === overlayEl) closeQuickAdd();
-      });
-      document.body.appendChild(overlayEl);
-    }
-
-    quickEl = el("div", { class: "pos-quickadd" }, [
-      el("button", { class: "pos-quickadd-x", type: "button" }, ["×"]),
-      el("div", { class: "pos-quickadd-inner" }, [
-        el("div", { class: "pos-quickadd-icon" }, [
-          item.img ? el("img", { src: item.img, alt: item.name || "Item" }) : el("div")
-        ]),
-        el("div", { class: "pos-quickadd-title" }, [`${item.name || "Item"} - ${money(item.price)}`]),
-        el("button", { class: "pos-quickadd-btn", type: "button" }, ["Add to invoice"])
-      ])
-    ]);
-
-    $(".pos-quickadd-x", quickEl).addEventListener("click", () => closeQuickAdd());
-    $(".pos-quickadd-btn", quickEl).addEventListener("click", () => {
-      add(item);
-      closeQuickAdd();
-      // stays closed: user taps invoice icon to view (your desired flow)
+    productOverlay.addEventListener("click", (e) => {
+      if (e.target === productOverlay) closeProductPopup();
     });
 
-    document.body.appendChild(quickEl);
-    state.isQuickAddOpen = true;
+    productSheet = document.createElement("div");
+    productSheet.className = "pos-product-sheet";
+    productSheet.setAttribute("role", "dialog");
+    productSheet.setAttribute("aria-modal", "true");
+
+    productOverlay.appendChild(productSheet);
+    document.body.appendChild(productOverlay);
   }
 
-  function closeQuickAdd() {
-    state.isQuickAddOpen = false;
-    state.pendingItem = null;
-    if (quickEl) quickEl.remove();
-    quickEl = null;
+  function openProductPopup(payload) {
+    ensureProductPopup();
 
-    if (!state.isInvoiceOpen && overlayEl) {
-      overlayEl.remove();
-      overlayEl = null;
-    }
+    const { img, title, priceLabel } = payload;
+
+    productSheet.innerHTML = `
+      <button type="button" class="pos-product-close" aria-label="Close">×</button>
+      <div class="pos-product-inner">
+        <div class="pos-product-icon">
+          ${img ? `<img src="${escapeAttr(img)}" alt="">` : `<div class="pos-product-fallback"></div>`}
+        </div>
+        <div class="pos-product-title">${escapeHtml(title)}</div>
+        <button type="button" class="pos-product-add">Add to invoice</button>
+      </div>
+    `;
+
+    $(".pos-product-close", productSheet).addEventListener("click", closeProductPopup);
+    $(".pos-product-add", productSheet).addEventListener("click", () => {
+      // add only HERE (prevents double add)
+      add(payload.item);
+      closeProductPopup();
+    });
+
+    productOverlay.classList.add("open");
+    productOverlay.setAttribute("aria-hidden", "false");
   }
 
-  // ---------- Cart ops ----------
+  function closeProductPopup() {
+    if (!productOverlay) return;
+    productOverlay.classList.remove("open");
+    productOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  // -------------------------
+  // Core cart operations
+  // -------------------------
   function add(item) {
-    if (!item || !item.id) return;
+    if (!item) return;
 
-    const existing = state.items.find((x) => x.id === item.id);
-    if (existing) {
-      existing.qty = (Number(existing.qty) || 0) + 1;
+    const normalized = {
+      id: String(item.id || "").trim() || makeStableId(item),
+      type: (item.type || "product").toLowerCase(),
+      category: item.category || "Product",
+      brand: item.brand || "",
+      name: item.name || "Item",
+      price: Number(item.price || 0),
+      img: item.img || "",
+      link: item.link || "",
+      sub: item.sub || "",
+      qty: clamp(Number(item.qty || 1), 1, 999),
+    };
+
+    const idx = state.items.findIndex((x) => x.id === normalized.id);
+    if (idx >= 0) {
+      state.items[idx].qty = clamp((state.items[idx].qty || 1) + normalized.qty, 1, 999);
     } else {
-      state.items.push({
-        id: item.id,
-        type: item.type || "product",
-        category: item.category || "Product",
-        brand: item.brand || "",
-        name: item.name || "Item",
-        price: Number(item.price) || 0,
-        img: item.img || "",
-        link: item.link || "",
-        qty: 1
-      });
+      state.items.push(normalized);
     }
 
-    saveItems();
-    setBadge();
+    saveState();
+    updateReceiptButton();
 
-    if (state.isInvoiceOpen && invoiceEl) {
-      const body = $(".pos-invoice-body", invoiceEl);
-      if (body) renderInvoiceRows(body);
-    }
+    // if invoice is open, live-render
+    if (invoiceOverlay?.classList.contains("open")) renderInvoice();
   }
 
-  function changeQty(id, delta) {
-    const it = state.items.find((x) => x.id === id);
-    if (!it) return;
+  function setQty(id, qty) {
+    const idx = state.items.findIndex((x) => x.id === id);
+    if (idx < 0) return;
 
-    it.qty = (Number(it.qty) || 0) + delta;
-    if (it.qty <= 0) state.items = state.items.filter((x) => x.id !== id);
-
-    saveItems();
-    setBadge();
-
-    if (state.isInvoiceOpen && invoiceEl) {
-      const body = $(".pos-invoice-body", invoiceEl);
-      if (body) renderInvoiceRows(body);
+    const q = Number(qty || 0);
+    if (q <= 0) {
+      state.items.splice(idx, 1);
+    } else {
+      state.items[idx].qty = clamp(q, 1, 999);
     }
+
+    saveState();
+    updateReceiptButton();
+    renderInvoice();
   }
 
   function clear() {
     state.items = [];
-    saveItems();
-    setBadge();
-    if (state.isInvoiceOpen && invoiceEl) {
-      const body = $(".pos-invoice-body", invoiceEl);
-      if (body) renderInvoiceRows(body);
-    }
+    saveState();
+    updateReceiptButton();
+    if (invoiceOverlay?.classList.contains("open")) renderInvoice();
   }
 
-  // ---------- THE KEY: intercept product-card taps (capture phase) ----------
-  document.addEventListener(
-    "click",
-    (e) => {
-      const card = e.target?.closest?.("[data-receipt-item]");
-      if (!card) return;
+  function makeStableId(item) {
+    const category = (item.category || "product").toLowerCase();
+    const brand = (item.brand || "").toLowerCase();
+    const name = (item.name || "item").toLowerCase();
+    return `${category}|${brand}|${name}`.replace(/\s+/g, " ").trim();
+  }
 
-      // Stop any old per-page "auto add on click" handlers
-      e.preventDefault();
-      e.stopPropagation();
-      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+  // -------------------------
+  // Prevent double add on category pages (single change, no page edits)
+  // -------------------------
+  function installGlobalClickIntercept() {
+    // Capture phase so we can stop page-level handlers that auto-add.
+    document.addEventListener(
+      "click",
+      (e) => {
+        const target = e.target;
 
-      const type = (card.dataset.type || "product").toLowerCase();
-      const category = card.dataset.category || "Product";
-      const brand = card.dataset.brand || "";
-      const name = card.dataset.name || "Item";
-      const price = Number(card.dataset.price || "0");
-      const img = card.dataset.img || "";
-      const link = card.dataset.link || "";
+        // If click is on an “explicit add button” (brand pages likely), don’t intercept.
+        // (You can add selectors here if needed.)
+        if (target.closest("[data-direct-add], .pos-row-add, .pos-plus, .row-plus, .add-plus, .green-plus")) {
+          return;
+        }
 
-      const id = (category + "|" + brand + "|" + name).toLowerCase();
+        const card = target.closest("[data-receipt-item]");
+        if (!card) return;
 
-      openQuickAdd({ id, type, category, brand, name, price, img, link });
-    },
-    true
-  );
+        // Intercept and STOP other handlers to prevent “auto add on first click”
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
-  // ---------- API (brand pages use this for + button) ----------
-  window.CigarOSCart = {
-    add,
-    clear,
-    openInvoice,
-    closeInvoice,
-    getItems: () => [...state.items]
+        const type = (card.dataset.type || "product").toLowerCase();
+        const category = card.dataset.category || "Product";
+        const brand = card.dataset.brand || "";
+        const name = card.dataset.name || "Item";
+        const price = Number(card.dataset.price || "0");
+        const img = card.dataset.img || ""; // optional
+        const link = card.dataset.link || ""; // optional
+
+        const id = (category + "|" + brand + "|" + name).toLowerCase();
+
+        openProductPopup({
+          img,
+          title: `${name} - ${money(price)}`,
+          priceLabel: money(price),
+          item: {
+            id,
+            type,
+            category,
+            brand,
+            name,
+            price,
+            img,
+            link,
+            sub: "",
+            qty: 1,
+          },
+        });
+      },
+      true
+    );
+  }
+
+  // -------------------------
+  // Minimal HTML escaping helpers
+  // -------------------------
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+  function escapeAttr(str) {
+    return escapeHtml(str).replaceAll("`", "&#096;");
+  }
+
+  // -------------------------
+  // Styles (injected once)
+  // -------------------------
+  let stylesInjected = false;
+  function injectStyles() {
+    if (stylesInjected) return;
+    stylesInjected = true;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      /* lock background scroll when invoice open */
+      .pos-lock { overflow: hidden; }
+      html.pos-lock, body { overscroll-behavior: none; }
+
+      /* Floating receipt button (small, bottom-right) */
+      .pos-receipt-btn{
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        width: 56px;
+        height: 56px;
+        border: none;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        z-index: 9999;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .pos-receipt-img{
+        width: 56px;
+        height: 56px;
+        display: block;
+        border-radius: 14px;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+      }
+      .pos-receipt-badge{
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #ff3b30;
+        color: #fff;
+        font: 700 12px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        display: none;
+        place-items: center;
+        box-shadow: 0 10px 18px rgba(0,0,0,0.18);
+      }
+
+      /* Invoice overlay backdrop (blur + dim) */
+      .pos-invoice-overlay{
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 10000;
+        background: rgba(10, 22, 40, 0.38);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 18px 14px 18px;
+      }
+      .pos-invoice-overlay.open{ display: flex; }
+
+      /* Invoice sheet (~75% height, moved up more) */
+      .pos-invoice-sheet{
+        width: min(720px, 96vw);
+        height: 75vh;
+        background: rgba(255,255,255,0.96);
+        border-radius: 22px;
+        box-shadow: 0 18px 60px rgba(0,0,0,0.25);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(-10vh); /* moves it up / centered more */
+      }
+
+      /* Header */
+      .pos-invoice-header{
+        position: relative;
+        padding: 14px 16px 6px;
+        text-align: center;
+      }
+      .pos-invoice-title{
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+        font-weight: 800;
+        letter-spacing: -0.03em; /* tighter tracking */
+        font-size: 17px;
+        color: #0f1a2c;
+      }
+      .pos-invoice-close{
+        position: absolute;
+        right: 12px;
+        top: 10px;
+        width: 34px;
+        height: 34px;
+        border: none;
+        border-radius: 999px;
+        background: rgba(0,0,0,0.06);
+        color: #0f1a2c;
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      /* Meta */
+      .pos-invoice-meta{
+        text-align: center;
+        padding: 2px 16px 10px;
+        color: rgba(15,26,44,0.60);
+        font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      }
+      .pos-invoice-meta-line{
+        font-size: 13px;
+        line-height: 1.25;
+      }
+
+      /* Customer dropdown */
+      .pos-invoice-customer{
+        padding: 6px 16px 12px;
+        display: flex;
+        justify-content: center;
+      }
+      .pos-invoice-select{
+        width: min(520px, 100%);
+        height: 40px;
+        border-radius: 999px;
+        border: 1px solid rgba(15,26,44,0.12);
+        background: #fff;
+        padding: 0 14px;
+        font: 600 15px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        color: #0f1a2c;
+        outline: none;
+      }
+
+      /* List */
+      .pos-invoice-list{
+        flex: 1;
+        overflow: auto;
+        padding: 4px 16px 10px;
+      }
+      .pos-line{
+        display: grid;
+        grid-template-columns: 54px 1fr auto;
+        gap: 12px;
+        padding: 12px 0;
+        border-top: 1px solid rgba(15,26,44,0.08);
+      }
+      .pos-line:first-child{ border-top: none; }
+
+      .pos-line-thumb{
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+      }
+      .pos-line-thumb img{
+        width: 54px;
+        height: 54px;
+        object-fit: cover;
+      }
+      .pos-line-thumb-fallback{
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        background: rgba(0,122,255,0.12);
+      }
+
+      .pos-line-mid{
+        min-width: 0;
+      }
+      /* Category label: smaller, regular weight (NOT bold) */
+      .pos-line-cat{
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+        font-weight: 500;
+        font-size: 13px;
+        color: rgba(15,26,44,0.55);
+        margin-bottom: 2px;
+      }
+      .pos-line-name{
+        font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font-weight: 800;
+        font-size: 18px;
+        letter-spacing: -0.02em;
+        color: #0f1a2c;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .pos-line-sub{
+        font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font-weight: 600;
+        font-size: 14px;
+        color: rgba(15,26,44,0.45);
+        margin-top: 2px;
+      }
+
+      .pos-line-right{
+        display: grid;
+        grid-auto-rows: min-content;
+        justify-items: end;
+        gap: 8px;
+      }
+
+      /* Qty adjuster tightened */
+      .pos-qty{
+        display: inline-flex;
+        align-items: center;
+        gap: 6px; /* tighter */
+        color: rgba(15,26,44,0.70);
+        font: 700 16px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      }
+      .qty-btn{
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(0,0,0,0.06);
+        color: rgba(15,26,44,0.70);
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .qty-num{
+        min-width: 18px;
+        text-align: center;
+      }
+
+      .pos-line-price{
+        font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font-weight: 900;
+        font-size: 20px;
+        color: #0f1a2c;
+      }
+
+      /* Footer: totals + actions */
+      .pos-invoice-footer{
+        border-top: 1px solid rgba(15,26,44,0.10);
+        padding: 12px 16px 14px;
+        background: rgba(255,255,255,0.98);
+      }
+      .pos-invoice-totals{
+        display: grid;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .pos-invoice-totals .row{
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font: 700 16px/1.2 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        color: rgba(15,26,44,0.70);
+      }
+      .pos-invoice-totals .row strong{
+        color: #0f1a2c;
+        font-weight: 900;
+      }
+      .pos-invoice-totals .row.total{
+        margin-top: 2px;
+        font: 900 18px/1.2 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        color: #0f1a2c;
+      }
+
+      /* Actions: side-by-side, centered, under totals */
+      .pos-invoice-actions{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .pos-action{
+        height: 44px;
+        border-radius: 999px;
+        font: 800 17px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        cursor: pointer;
+      }
+      .pos-action.secondary{
+        background: #fff;
+        color: #007aff;
+        border: 1px solid rgba(0,122,255,0.35);
+      }
+      .pos-action.primary{
+        background: #007aff;
+        color: #fff;
+        border: none;
+      }
+
+      /* Product popup overlay */
+      .pos-product-overlay{
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        background: rgba(10, 22, 40, 0.28);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 18px;
+      }
+      .pos-product-overlay.open{ display: flex; }
+
+      .pos-product-sheet{
+        width: min(520px, 92vw);
+        background: rgba(255,255,255,0.96);
+        border-radius: 20px;
+        box-shadow: 0 18px 60px rgba(0,0,0,0.25);
+        position: relative;
+        padding: 18px 18px 16px;
+      }
+      .pos-product-close{
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(0,0,0,0.06);
+        font-size: 20px;
+        cursor: pointer;
+      }
+      .pos-product-inner{
+        display: grid;
+        justify-items: center;
+        gap: 10px;
+        padding-top: 6px;
+      }
+      .pos-product-icon{
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+      }
+      .pos-product-icon img{
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+      }
+      .pos-product-fallback{
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: rgba(0,122,255,0.18);
+      }
+      .pos-product-title{
+        font: 900 34px/1.05 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        letter-spacing: -0.03em;
+        color: #0f1a2c;
+        text-align: center;
+      }
+      .pos-product-add{
+        width: 100%;
+        height: 44px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(0,122,255,0.12);
+        color: #007aff;
+        font: 800 18px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        cursor: pointer;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // -------------------------
+  // Init
+  // -------------------------
+  loadState();
+
+  // Create UI once DOM exists
+  const boot = () => {
+    ensureReceiptButton();
+    ensureInvoiceModal();
+    ensureProductPopup();
+    installGlobalClickIntercept();
+
+    // Expose global API
+    window.CigarOSCart = {
+      add,
+      openInvoice,
+      closeInvoice,
+      clear,
+      getCount: () => getItemCount(),
+      getItems: () => [...state.items],
+    };
   };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
 })();
