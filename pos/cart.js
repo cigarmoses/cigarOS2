@@ -6,21 +6,21 @@
    ✅ Uses /img/icons/receiptred.png when cart has items
    ✅ Shows item-count badge on top of the icon
    ✅ Receipt button stays SMALL bottom-right (does not take over screen)
-   ✅ Invoice modal: blurred/dimmed backdrop, ~75% height, centered higher
+   ✅ Invoice modal: blurred/dimmed backdrop, ~75% height
    ✅ Close (X) always works
    ✅ Qty adjuster tightened
    ✅ Category label smaller + regular weight (not bold)
    ✅ "INVOICE" header uses SF Pro Display-ish bold + tighter tracking
    ✅ Save Draft / Confirm buttons side-by-side under totals
-   ✅ Customer dropdown includes “Attach loyalty profile…” placeholder
+   ✅ Customer dropdown centered + normal weight
    ✅ Prevents DOUBLE-ADD on category pages by intercepting clicks on [data-receipt-item]
       and showing “Add to invoice” popup — adds only when you tap that button.
 
-   Latest UI tweaks:
-   ✅ Date format: "Monday, Dec 29, 2025 - 12:13 PM"
-   ✅ Customer dropdown centered + normal weight
-   ✅ Totals labels closer to amounts
-   ✅ Line item totals (e.g., $1.50) regular weight (not bold)
+   Latest UI tweaks (per screenshot):
+   ✅ Add GAP between iOS bar and invoice (sheet moved DOWN slightly)
+   ✅ Line item totals centered under (- 1 +) and regular weight
+   ✅ Subtotal/Tax/TOTAL labels + amounts regular weight (not bold)
+   ✅ Bottom area more white space + tighter button widths (less cramped)
 
    Public API:
      window.CigarOSCart.add(item)
@@ -44,14 +44,13 @@
   // per your memory: 7% tax
   const TAX_RATE = 0.07;
 
-  // If you want “Attach loyalty profile…” to go somewhere specific, change this:
   const ADD_NEW_CUSTOMER_URL = "/pos/loyalty/";
 
   // -------------------------
   // State
   // -------------------------
   let state = {
-    items: [], // [{id,type,category,brand,name,price,img,link,sub,qty}]
+    items: [],
     customer: "Walk-in",
     lastInvNumber: "123456",
     shopName: "Smoke Cigar Shop",
@@ -71,7 +70,6 @@
   };
 
   const nowStamp = () => {
-    // Format: Monday, Dec 29, 2025 - 12:13 PM
     const d = new Date();
     const date = d.toLocaleDateString(undefined, {
       weekday: "long",
@@ -191,7 +189,6 @@
     invoiceOverlay.className = "pos-invoice-overlay";
     invoiceOverlay.setAttribute("aria-hidden", "true");
 
-    // close when tapping backdrop
     invoiceOverlay.addEventListener("click", (e) => {
       if (e.target === invoiceOverlay) closeInvoice();
     });
@@ -242,15 +239,9 @@
     invoiceOverlay.appendChild(invoiceSheet);
     document.body.appendChild(invoiceOverlay);
 
-    // Close X
     $(".pos-invoice-close", invoiceSheet).addEventListener("click", closeInvoice);
 
-    // Customer select
     const select = $(".pos-invoice-select", invoiceSheet);
-
-    // Preferred behavior:
-    // - If there is a saved selection, show it.
-    // - Otherwise, show the placeholder (“Attach loyalty profile...”).
     const saved = state.customer || "";
     if (saved && saved !== "Walk-in") {
       select.value = saved;
@@ -261,7 +252,6 @@
     select.addEventListener("change", () => {
       const v = select.value;
       if (v === "__add_new__") {
-        // Keep dropdown clean: revert to placeholder then navigate
         select.value = "";
         window.location.href = ADD_NEW_CUSTOMER_URL;
         return;
@@ -270,7 +260,6 @@
       saveState();
     });
 
-    // Action buttons
     $$(".pos-action", invoiceSheet).forEach((btn) => {
       btn.addEventListener("click", () => {
         const action = btn.getAttribute("data-action");
@@ -283,7 +272,6 @@
       });
     });
 
-    // ESC closes
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && invoiceOverlay?.classList.contains("open")) closeInvoice();
     });
@@ -328,7 +316,9 @@
             <div class="qty-num">${escapeHtml(String(it.qty || 1))}</div>
             <button type="button" class="qty-btn" data-qty="+1" aria-label="Increase">+</button>
           </div>
-          <div class="pos-line-price">$${escapeHtml(money((it.price || 0) * (it.qty || 1)))}</div>
+          <div class="pos-line-price">$${escapeHtml(
+            money((it.price || 0) * (it.qty || 1))
+          )}</div>
         </div>
       `;
 
@@ -370,7 +360,7 @@
   }
 
   // -------------------------
-  // UI: Product “Add to invoice” popup (prevents double-add)
+  // UI: Product “Add to invoice” popup
   // -------------------------
   function ensureProductPopup() {
     if (productOverlay) return;
@@ -487,7 +477,7 @@
   }
 
   // -------------------------
-  // Prevent double add on category pages (single change, no page edits)
+  // Prevent double add on category pages
   // -------------------------
   function installGlobalClickIntercept() {
     document.addEventListener(
@@ -495,7 +485,6 @@
       (e) => {
         const target = e.target;
 
-        // If click is on an explicit add control (brand pages), don’t intercept.
         if (
           target.closest(
             "[data-direct-add], .pos-row-add, .pos-plus, .row-plus, .add-plus, .green-plus"
@@ -570,7 +559,6 @@
       .pos-lock { overflow: hidden; }
       html.pos-lock, body { overscroll-behavior: none; }
 
-      /* Floating receipt button */
       .pos-receipt-btn{
         position: fixed;
         right: 16px;
@@ -608,7 +596,6 @@
         box-shadow: 0 10px 18px rgba(0,0,0,0.18);
       }
 
-      /* Invoice overlay backdrop */
       .pos-invoice-overlay{
         position: fixed;
         inset: 0;
@@ -623,7 +610,7 @@
       }
       .pos-invoice-overlay.open{ display: flex; }
 
-      /* Invoice sheet */
+      /* KEY CHANGE: move sheet DOWN a bit to create gap under iOS bar */
       .pos-invoice-sheet{
         width: min(720px, 96vw);
         height: 75vh;
@@ -633,7 +620,8 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        transform: translateY(-10vh);
+        transform: translateY(0); /* was moved up; now neutral */
+        margin-top: 14px; /* ensures visible gap */
       }
 
       .pos-invoice-header{
@@ -674,7 +662,6 @@
         line-height: 1.25;
       }
 
-      /* Customer dropdown (centered, normal weight) */
       .pos-invoice-customer{
         padding: 6px 16px 12px;
         display: flex;
@@ -688,11 +675,11 @@
         background: #fff;
         padding: 0 14px;
         font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
-        font-weight: 500; /* not bold */
+        font-weight: 500;
         font-size: 15px;
         color: #0f1a2c;
         outline: none;
-        text-align: center; /* iOS needs this explicitly */
+        text-align: center;
         text-align-last: center;
         -webkit-appearance: none;
         appearance: none;
@@ -761,11 +748,14 @@
         margin-top: 2px;
       }
 
+      /* KEY CHANGE: right block becomes fixed-width grid so price can center under qty */
       .pos-line-right{
+        width: 118px; /* consistent block width */
         display: grid;
-        grid-auto-rows: min-content;
-        justify-items: end;
-        gap: 8px;
+        grid-template-rows: auto auto;
+        justify-items: center; /* center both rows */
+        align-items: start;
+        row-gap: 8px;
       }
 
       .pos-qty{
@@ -791,56 +781,62 @@
         text-align: center;
       }
 
-      /* Line item total: regular weight (not bold) */
+      /* KEY CHANGE: line item total centered under qty and regular weight */
       .pos-line-price{
         font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-        font-weight: 600;
+        font-weight: 500;
         font-size: 20px;
         color: #0f1a2c;
+        text-align: center;
+        width: 100%;
       }
 
       .pos-invoice-footer{
         border-top: 1px solid rgba(15,26,44,0.10);
-        padding: 12px 16px 14px;
+        padding: 16px 16px 18px; /* more white space */
         background: rgba(255,255,255,0.98);
       }
 
-      /* Totals: bring labels closer to values */
+      /* KEY CHANGE: totals regular weight, not bold */
       .pos-invoice-totals{
         display: grid;
         gap: 6px;
-        margin-bottom: 10px;
+        margin-bottom: 14px; /* more breathing room */
         width: fit-content;
-        margin-left: auto; /* keep the totals block aligned right, but labels close */
+        margin-left: auto;
       }
       .pos-invoice-totals .row{
         display: grid;
         grid-template-columns: auto auto;
-        column-gap: 16px; /* tighter than full-width space-between */
+        column-gap: 16px;
         align-items: baseline;
         justify-content: end;
-        font: 700 16px/1.2 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font: 500 16px/1.2 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; /* regular */
         color: rgba(15,26,44,0.70);
       }
       .pos-invoice-totals .row strong{
         color: #0f1a2c;
-        font-weight: 900;
+        font-weight: 500; /* regular */
         text-align: right;
         min-width: 84px;
       }
       .pos-invoice-totals .row.total{
         margin-top: 2px;
-        font: 900 18px/1.2 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font: 600 18px/1.2 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; /* slightly stronger but not bold */
         color: #0f1a2c;
       }
 
+      /* KEY CHANGE: buttons less cramped: tighter widths + more padding area */
       .pos-invoice-actions{
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        padding-top: 2px;
       }
       .pos-action{
         height: 44px;
+        width: 44%;
+        max-width: 260px;
         border-radius: 999px;
         font: 800 17px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
         cursor: pointer;
