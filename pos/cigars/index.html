@@ -43,60 +43,58 @@
           </button>
         </div>
 
-        <!-- TOP 3 ROWS (always visible) -->
+        <!-- TOP 3 ROWS (always visible) — EXACT ORDER AS PICTURED -->
         <div class="cigars-filters-grid">
-          <!-- Row 1 (2) -->
+          <!-- Row 1 (2): Manufacturer, Brand -->
           <div class="cigars-filters-row cigars-filters-row--2">
             <button class="filter-pill" data-filter="manufacturer">Manufacturer</button>
             <button class="filter-pill" data-filter="brand">Brand</button>
           </div>
 
-          <!-- Row 2 (3) -->
+          <!-- Row 2 (3): Ring, Wrapper Shade, Vitolas -->
           <div class="cigars-filters-row cigars-filters-row--3">
-            <button class="filter-pill" data-filter="shade">Wrapper Shade</button>
             <button class="filter-pill" data-filter="ring">Ring</button>
-            <button class="filter-pill" data-filter="vitola">Vitola</button>
+            <button class="filter-pill" data-filter="shade">Wrapper Shade</button>
+            <button class="filter-pill" data-filter="vitola">Vitolas</button>
           </div>
 
-          <!-- Row 3 (3) -->
+          <!-- Row 3 (3): Flavored, Box-Pressed, Strength -->
           <div class="cigars-filters-row cigars-filters-row--3">
             <button class="filter-pill filter-pill--toggle" data-toggle="flavored">Flavored</button>
-            <button class="filter-pill" data-filter="strength">Strength</button>
             <button class="filter-pill filter-pill--toggle" data-toggle="boxpressed">Box-Pressed</button>
+            <button class="filter-pill" data-filter="strength">Strength</button>
           </div>
         </div>
 
         <!-- VIEW ALL (everything else) -->
         <div class="cigars-filters-expanded" id="filters-expanded" hidden>
           <div class="cigars-filters-grid">
-            <!-- Row 4 (5) -->
-            <div class="cigars-filters-row cigars-filters-row--5">
+
+            <!-- Requested 4th row items (these will wrap cleanly as needed) -->
+            <div class="cigars-filters-row cigars-filters-row--wrap">
               <button class="filter-pill" data-filter="length">Length</button>
               <button class="filter-pill" data-filter="shape">Shape</button>
               <button class="filter-pill filter-pill--toggle" data-toggle="tin">Tin</button>
               <button class="filter-pill filter-pill--toggle" data-toggle="pack">Packs</button>
               <button class="filter-pill filter-pill--toggle" data-toggle="barberpole">Barberpole</button>
+
+              <!-- If your JS injects any additional filter buttons into #filters-expanded later,
+                   they should be appended AFTER these. -->
             </div>
+
           </div>
         </div>
-
       </div>
     </section>
 
     <section class="cigars-brands-section">
       <h2 class="cigars-brands-title">Brands</h2>
-
-      <!-- Builder compatibility -->
       <div id="category-grid" class="brands-grid"></div>
     </section>
   </main>
 
   <script defer src="/pos/pos.js"></script>
-
-  <!-- data + brand grid renderer -->
   <script defer src="/pos/img/scripts/build-cigars.js"></script>
-
-  <!-- UI controller: search + filters + modal -->
   <script defer src="/pos/cigars/cigars.js"></script>
 
   <!-- Unified Filter Popup -->
@@ -115,9 +113,7 @@
         </div>
       </div>
 
-      <div class="fm-list" id="fm-list">
-        <!-- rows injected by JS -->
-      </div>
+      <div class="fm-list" id="fm-list"></div>
 
       <div class="fm-footer">
         <button type="button" id="fm-confirm" class="fm-confirm">Confirm</button>
