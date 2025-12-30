@@ -3,13 +3,17 @@
    - Back button
    - View all expand/collapse
    - Filter modal open/close
+   - Loads canonical CSV (so Manufacturer/Brand lists populate)
    - Wrapper Shade: title + custom ordered list (extras appended)
-   - Dispatches "cigars:filters-changed" for other scripts if needed
+   - Dispatches "cigars:filters-changed"
 */
 
 (() => {
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const backBtn = $("#cigars-back");
   const viewAllBtn = $("#filters-view-all");
@@ -22,9 +26,10 @@
   const modalSearch = $("#fm-search-input");
   const modalConfirm = $("#fm-confirm");
 
-  // --- state ---
+  // dataset (fix)
+  let DATA_ROWS = [];
+
   const state = {
-    // multi-select values per filter key
     selected: {
       manufacturer: new Set(),
       brand: new Set(),
@@ -35,7 +40,6 @@
       length: new Set(),
       shape: new Set(),
     },
-    // toggles
     toggles: {
       flavored: false,
       boxpressed: false,
@@ -47,46 +51,17 @@
     currentModalValues: [],
   };
 
-  // --- Back ---
   backBtn?.addEventListener("click", () => history.back());
 
-  // --- View all toggle ---
   viewAllBtn?.addEventListener("click", () => {
-    const isHidden = expandedEl.hasAttribute("hidden");
+    const isHidden = expandedEl?.hasAttribute("hidden");
+    if (!expandedEl) return;
     if (isHidden) expandedEl.removeAttribute("hidden");
     else expandedEl.setAttribute("hidden", "");
   });
 
-  // --- helpers: attempt to locate cigar rows from whatever global the builder uses ---
-  function getAllCigarRows() {
-    const candidates = [
-      window.CIGAR_ROWS,
-      window.CIGARS_ROWS,
-      window.CIGAR_DATA,
-      window.CIGARS_DATA,
-      window.cigarRows,
-      window.cigarsRows,
-      window.cigarData,
-      window.cigarsData,
-      window.__CIGARS__,
-      window.__CIGAR_ROWS__,
-      window.__CIGAR_DATA__,
-    ];
-
-    for (const c of candidates) {
-      if (Array.isArray(c) && c.length) return c;
-      // sometimes wrapped like {rows:[...]}
-      if (c && Array.isArray(c.rows) && c.rows.length) return c.rows;
-      if (c && Array.isArray(c.data) && c.data.length) return c.data;
-    }
-    return [];
-  }
-
-  // normalize string (for comparisons)
   function norm(v) {
-    return String(v ?? "")
-      .trim()
-      .replace(/\s+/g, " ");
+    return String(v ?? "").trim().replace(/\s+/g, " ");
   }
 
   function uniqSorted(values) {
@@ -98,19 +73,79 @@
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
 
-  // Extract unique values for a filter key from dataset.
-  // We try common field names without breaking if structure is different.
-  function getValuesForKey(key) {
-    const rows = getAllCigarRows();
+  // --- CSV parsing ---
+  function parseCSV(text) {
+    const rows = [];
+    let i = 0;
+    let field = "";
+    let row = [];
+    let inQuotes = false;
+
+    while (i < text.length) {
+      const c = text[i];
+
+      if (c === '"') {
+        if (inQuotes && text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        }
+        inQuotes = !inQuotes;
+        i += 1;
+        continue;
+      }
+
+      if (!inQuotes && (c === "," || c === "\n" || c === "\r")) {
+        row.push(field);
+        field = "";
+
+        if (c === ",") {
+          i += 1;
+          continue;
+        }
+
+        if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+        row = [];
+
+        if (c === "\r" && text[i + 1] === "\n") i += 2;
+        else i += 1;
+
+        continue;
+      }
+
+      field += c;
+      i += 1;
+    }
+
+    if (field.length || row.length) {
+      row.push(field);
+      if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+    }
+
+    return rows;
+  }
+
+  function rowsToObjects(rows) {
     if (!rows.length) return [];
+    const headers = rows[0].map((h) => String(h || "").trim());
+    return rows.slice(1).map((r) => {
+      const obj = {};
+      headers.forEach((h, idx) => (obj[h] = r[idx] ?? ""));
+      return obj;
+    });
+  }
+
+  // Extract values for filter key from DATA_ROWS
+  function getValuesForKey(key) {
+    if (!DATA_ROWS.length) return [];
 
     const fieldMap = {
       manufacturer: ["Manufacturer", "manufacturer"],
       brand: ["Brand", "brand"],
-      ring: ["RG", "Ring", "ring", "ringGauge"],
+      ring: ["RG", "Ring", "ring"],
       vitola: ["Vitola", "vitola", "Style", "style"],
       strength: ["Strength", "strength"],
-      shade: ["Wrapper Shade", "WrapperShade", "shade", "wrapperShade", "Wrapper"],
+      shade: ["Wrapper Shade", "WrapperShade", "wrapperShade", "shade"],
       length: ["Length", "length"],
       shape: ["Shape", "shape"],
     };
@@ -118,22 +153,14 @@
     const keysToTry = fieldMap[key] || [key];
 
     const vals = [];
-    for (const r of rows) {
+    for (const r of DATA_ROWS) {
       if (!r) continue;
-
-      // object row
-      if (typeof r === "object" && !Array.isArray(r)) {
-        for (const k of keysToTry) {
-          if (r[k] != null && r[k] !== "") {
-            vals.push(r[k]);
-            break;
-          }
+      for (const k of keysToTry) {
+        if (r[k] != null && r[k] !== "") {
+          vals.push(r[k]);
+          break;
         }
-        continue;
       }
-
-      // array row (unknown column order) - can't safely parse without a header map
-      // so we skip to avoid nonsense values
     }
 
     return uniqSorted(vals);
@@ -157,24 +184,20 @@
 
   function orderWrapperShades(values) {
     const list = uniqSorted(values);
-
     const seen = new Set();
     const ordered = [];
 
-    // requested items first (if present OR even if not present; we still show them)
     for (const item of WRAPPER_SHADE_ORDER) {
       const match = list.find((v) => v.toLowerCase() === item.toLowerCase());
       if (match) {
         ordered.push(match);
         seen.add(match.toLowerCase());
       } else {
-        // show requested options even if not in data yet (use exact casing)
         ordered.push(item);
         seen.add(item.toLowerCase());
       }
     }
 
-    // leftovers appended after requested list (per your instruction)
     for (const v of list) {
       const k = v.toLowerCase();
       if (!seen.has(k)) ordered.push(v);
@@ -183,11 +206,9 @@
     return ordered;
   }
 
-  // --- Modal open/close ---
   function openModal(key) {
     state.currentModalKey = key;
 
-    // Title mapping
     const titles = {
       manufacturer: "Manufacturer",
       brand: "Brand",
@@ -199,31 +220,29 @@
       shape: "Shape",
     };
 
-    modalTitle.textContent = titles[key] || "Filter";
+    if (modalTitle) modalTitle.textContent = titles[key] || "Filter";
 
-    // Values
     let values = getValuesForKey(key);
-
-    if (key === "shade") {
-      values = orderWrapperShades(values);
-    }
+    if (key === "shade") values = orderWrapperShades(values);
 
     state.currentModalValues = values;
 
-    // Reset search + render
-    modalSearch.value = "";
+    if (modalSearch) modalSearch.value = "";
     renderModalList(values);
 
-    modal.classList.remove("fm--hidden");
-    modal.setAttribute("aria-hidden", "false");
+    if (modal) {
+      modal.classList.remove("fm--hidden");
+      modal.setAttribute("aria-hidden", "false");
+    }
 
-    // focus
     setTimeout(() => modalSearch?.focus(), 50);
   }
 
   function closeModal() {
-    modal.classList.add("fm--hidden");
-    modal.setAttribute("aria-hidden", "true");
+    if (modal) {
+      modal.classList.add("fm--hidden");
+      modal.setAttribute("aria-hidden", "true");
+    }
     state.currentModalKey = null;
     state.currentModalValues = [];
   }
@@ -248,7 +267,6 @@
       })
       .join("");
 
-    // click handlers
     $$(".fm-row").forEach((row) => {
       row.addEventListener("click", () => {
         const val = row.getAttribute("data-value") || "";
@@ -262,7 +280,6 @@
     });
   }
 
-  // search filter inside modal
   modalSearch?.addEventListener("input", () => {
     const q = norm(modalSearch.value).toLowerCase();
     const all = state.currentModalValues || [];
@@ -270,29 +287,24 @@
     renderModalList(filtered);
   });
 
-  // confirm (keeps selection; just closes + updates pill active state)
   modalConfirm?.addEventListener("click", () => {
     syncPillActiveStates();
     dispatchFiltersChanged();
     closeModal();
   });
 
-  // backdrop close
   modalBackdrop?.addEventListener("click", closeModal);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal && !modal.classList.contains("fm--hidden")) closeModal();
   });
 
-  // --- Pill click wiring ---
   function syncPillActiveStates() {
-    // normal filter pills: active if selection set has anything
     $$(".filter-pill[data-filter]").forEach((btn) => {
       const key = btn.getAttribute("data-filter");
       const set = state.selected[key];
       btn.classList.toggle("is-active", !!set && set.size > 0);
     });
 
-    // toggles: active if true
     $$(".filter-pill[data-toggle]").forEach((btn) => {
       const t = btn.getAttribute("data-toggle");
       btn.classList.toggle("is-active", !!state.toggles[t]);
@@ -309,7 +321,6 @@
     document.dispatchEvent(new CustomEvent("cigars:filters-changed", { detail }));
   }
 
-  // open modal on data-filter pills
   $$(".filter-pill[data-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const key = btn.getAttribute("data-filter");
@@ -318,7 +329,6 @@
     });
   });
 
-  // toggles
   $$(".filter-pill[data-toggle]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const t = btn.getAttribute("data-toggle");
@@ -329,9 +339,8 @@
     });
   });
 
-  // --- tiny util ---
   function escapeHtml(str) {
-    return String(str)
+    return String(str ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -339,6 +348,23 @@
       .replaceAll("'", "&#039;");
   }
 
-  // initial
-  syncPillActiveStates();
+  // ---- init: load CSV so filters populate ----
+  async function init() {
+    try {
+      const res = await fetch(CSV_URL, { cache: "no-store" });
+      const text = await res.text();
+      const parsed = parseCSV(text);
+      DATA_ROWS = rowsToObjects(parsed);
+
+      // optional: expose for other scripts
+      window.__CIGARS__ = DATA_ROWS;
+
+      syncPillActiveStates();
+    } catch (err) {
+      console.error("cigars.js CSV load error:", err);
+      syncPillActiveStates();
+    }
+  }
+
+  init();
 })();
