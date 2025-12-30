@@ -44,6 +44,7 @@
         data-category="Packs"
         data-brand="Arturo Fuente"
         data-name="Shark Pack"
+        data-img-key="sharkpack"
         data-price="71.00">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Shark Pack</div>
@@ -55,10 +56,35 @@
         data-category="Packs"
         data-brand="Padron"
         data-name="Padron Sample Pack"
+        data-img-key="padronsamplepack"
         data-price="89.00">
         <div class="category-card-icon"></div>
         <div class="category-card-name">Padron Sample Pack</div>
         <div class="category-card-price">$89.00</div>
+      </article>
+
+      <article class="category-card" data-receipt-item
+        data-type="product"
+        data-category="Packs"
+        data-brand="Perdomo"
+        data-name="Perdomo Fresh Pack Champagne"
+        data-img-key="perdomofreshpackchampagne"
+        data-price="34.99">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Perdomo Fresh Pack Champagne</div>
+        <div class="category-card-price">$34.99</div>
+      </article>
+
+      <article class="category-card" data-receipt-item
+        data-type="product"
+        data-category="Packs"
+        data-brand="Perdomo"
+        data-name="Perdomo Fresh Pack Maduro"
+        data-img-key="perdomofreshpackmaduro"
+        data-price="34.99">
+        <div class="category-card-icon"></div>
+        <div class="category-card-name">Perdomo Fresh Pack Maduro</div>
+        <div class="category-card-price">$34.99</div>
       </article>
     </section>
   </main>
@@ -68,22 +94,22 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const IMAGE_DIR = "/img/packs"; // <-- Packs folder
+      const IMAGE_DIR = "/img/packs";
 
-      // Back
       const backBtn = document.getElementById("category-back");
       if (backBtn) backBtn.addEventListener("click", () => (window.location.href = "/pos/"));
 
       // ---------------------------------------
-      // Product image resolving (.svg/.png/.jpg)
+      // Image resolver: img-key → name fallback
+      // Ext order: .svg → .png → .jpg
       // ---------------------------------------
       const existsCache = new Map();
 
-      function normalizeProductName(name) {
-        return String(name || "")
+      function normalizeKey(str) {
+        return String(str || "")
           .toLowerCase()
-          .replace(/[\s-]+/g, "")   // remove spaces + dashes
-          .replace(/[^a-z0-9]/g, ""); // remove punctuation/special chars
+          .replace(/[\s-]+/g, "")
+          .replace(/[^a-z0-9]/g, "");
       }
 
       async function urlExists(url) {
@@ -91,7 +117,6 @@
 
         let ok = false;
 
-        // Try HEAD first (fast)
         try {
           const res = await fetch(url, { method: "HEAD", cache: "no-store" });
           ok = res.ok;
@@ -99,7 +124,6 @@
           ok = false;
         }
 
-        // Fallback to GET if needed
         if (!ok) {
           try {
             const res = await fetch(url, { method: "GET", cache: "no-store" });
@@ -113,14 +137,34 @@
         return ok;
       }
 
-      async function resolveProductImage(productName, baseDir) {
-        const key = normalizeProductName(productName);
+      async function resolveByKey(key, baseDir) {
         const exts = ["svg", "png", "jpg"];
-
         for (const ext of exts) {
           const url = `${baseDir}/${key}.${ext}`;
           if (await urlExists(url)) return url;
         }
+        return "";
+      }
+
+      async function resolveProductImage(card) {
+        // Optional manual override:
+        // data-img="/img/packs/perdomofreshpackmaduro.png"
+        const manual = card.dataset.img || "";
+        if (manual) return manual;
+
+        // 1) data-img-key (preferred)
+        const keyRaw = card.dataset.imgKey || "";
+        const key = normalizeKey(keyRaw);
+        if (key) {
+          const hit = await resolveByKey(key, IMAGE_DIR);
+          if (hit) return hit;
+        }
+
+        // 2) fallback: normalized product name
+        const name = card.dataset.name || "";
+        const nameKey = normalizeKey(name);
+        if (nameKey) return await resolveByKey(nameKey, IMAGE_DIR);
+
         return "";
       }
 
@@ -131,18 +175,13 @@
           const iconBox = card.querySelector(".category-card-icon");
           if (!iconBox) return;
 
-          // Optional manual override later:
-          // data-img="/img/packs/sharkpack.jpg"
-          const manual = card.dataset.img || "";
-          const name = card.dataset.name || "";
-
-          const src = manual || await resolveProductImage(name, IMAGE_DIR);
+          const src = await resolveProductImage(card);
 
           iconBox.innerHTML = "";
           if (!src) return;
 
           const img = document.createElement("img");
-          img.alt = name;
+          img.alt = card.dataset.name || "Product";
           img.loading = "lazy";
           img.decoding = "async";
           img.src = src;
@@ -150,7 +189,6 @@
         }));
       }
 
-      // Apply icons on load
       applyCardIcons();
 
       // Click product => add item (invoice does NOT auto-open)
@@ -167,7 +205,7 @@
           window.CigarOSCart?.add({
             id,
             type,
-            category,  // <- bold title line in invoice
+            category,
             brand,
             name,
             price,
