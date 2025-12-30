@@ -2,638 +2,420 @@
    Brand POS page controller (Cigars)
    - Loads canonical CSV
    - Renders rows
-   - Filters + Bands modals (working close/confirm)
+   - Filters + Bands modals
    - Uses shared /pos/cart.js for receipt + badge + persistence
-   - FIXES:
-     1) Back button not working (binds #brand-back and .pos-back safely)
-     2) Top-right brand icon not showing (more robust header detection + fallbacks)
-     3) Normalizes legacy brand icon paths (/img/icons/brands/s/padron.svg -> /img/icons/brands/padron.svg)
 */
 
 (() => {
+  // Canonical data source
   const CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
+  // --- DOM helpers ---
   const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-  // ---------- DOM ----------
+  // --- page elements (must exist in brand.html) ---
   const brandTitleEl = $("#brand-title");
+  const brandIconEl = $("#brand-icon-img");
   const listEl = $("#brand-list");
-  const statusEl = $("#brand-status");
-  const searchEl = $("#brand-search");
 
-  const btnFilters = $("#btn-filters");
-  const btnBands = $("#btn-bands");
+  // modal elements (bands)
+  const bandsBtn = $("#btn-bands");
+  const bandsModal = $("#bands-modal");
+  const bandsCloseBtn = $("#bands-close");
+  const bandsClearBtn = $("#bands-clear");
+  const bandsConfirmBtn = $("#bands-confirm");
+  const bandsListEl = $("#bands-list");
 
-  // back button(s) (support multiple ids/classes across versions)
-  const backBtn =
-    $("#brand-back") ||
-    $("#pos-back") ||
-    $("#category-back") ||
-    $(".pos-back") ||
-    $(".icon-btn.pos-back");
-
-  // wrapper toggle (maduro/all/natural)
-  const wrapperSeg = $("#wrapper-seg");
-  const btnMaduro = $("#seg-maduro");
-  const btnNatural = $("#seg-natural");
-  const segDot = $("#seg-dot");
-
-  // brand header image (support multiple ids/classes across versions)
-  const brandIconImg =
-    $("#brand-icon-img") ||
-    $("#brand-icon") ||
-    document.querySelector(".brand-icon img") ||
-    $("#brand-icon-el img");
-
-  // ---------- State ----------
-  let ALL = [];
-  let VIEW = [];
-
-  let pendingFilters = {};
-  let activeFilters = {};
-  let pendingBands = new Set();
-  let activeBands = new Set();
-
-  let wrapperState = "all"; // maduro | natural | all
-
-  // ---------- helpers ----------
-  const qp = (k) => new URLSearchParams(location.search).get(k) || "";
-  const norm = (s) => (s || "").toString().trim().toLowerCase();
-  const money = (n) =>
-    window.CigarOSCart?.money ? window.CigarOSCart.money(n) : Number(n || 0).toFixed(2);
-
-  const toNum = (v) => {
-    const x = Number((v ?? "").toString().replace(/[^\d.]/g, ""));
-    return Number.isFinite(x) ? x : 0;
+  // --- state ---
+  const urlBrand = new URLSearchParams(window.location.search).get("brand") || "";
+  const BRAND = decodeURIComponent(urlBrand).trim();
+  const state = {
+    allRows: [],
+    filteredRows: [],
+    // selected band keys (lowercase)
+    selectedBands: new Set(),
   };
 
-  function setStatus(msg) {
-    if (statusEl) statusEl.textContent = msg || "";
+  // --- Padron Bands (additions included) ---
+  // NOTE: band keys are what we store in state.selectedBands
+  // display text can be whatever you want users to see
+  const PADRON_BANDS = [
+    {
+      key: "1926",
+      label: "1926",
+      img: "/img/icons/padron1926band.svg",
+    },
+    {
+      key: "1964",
+      label: "1964",
+      img: "/img/icons/padron1964band.svg",
+    },
+    {
+      key: "damaso",
+      label: "Damaso",
+      img: "/img/icons/padrondamasoband.svg",
+    },
+
+    // ✅ NEW (your 3 requested)
+    {
+      key: "black series",
+      label: "Black Series",
+      img: "/img/icons/padronblackseriesband.svg",
+    },
+    {
+      key: "series",
+      label: "Series",
+      img: "/img/icons/padronseriesband.svg",
+    },
+    {
+      key: "family reserve",
+      label: "Family Reserve",
+      img: "/img/icons/padronfamilyreserveband.svg",
+    },
+  ];
+
+  // If you ever want brand-specific band sets:
+  function getBandOptionsForBrand(brandName) {
+    if (!brandName) return [];
+    const b = brandName.toLowerCase();
+    if (b === "padron" || b === "padrón") return PADRON_BANDS;
+    return [];
   }
 
-  // ✅ Fix legacy /brands/<letter>/ paths and /brand/ singular folder
-  function normalizeIconPath(p) {
-    let s = (p || "").toString().trim();
-    if (!s) return "";
-
-    if (/^https?:\/\//i.test(s)) return s;
-
-    if (s.startsWith("img/")) s = "/" + s;
-    if (!s.startsWith("/")) s = "/" + s;
-
-    s = s.replace(/^\/img\/icons\/brand\//i, "/img/icons/brands/");
-    s = s.replace(/^\/img\/icons\/brands\/[a-z0-9]\/+/i, "/img/icons/brands/");
-    s = s.replace(/\/{2,}/g, "/");
-
-    return s;
-  }
-
-  function matchBandSource(row) {
-    return `${row.Line || ""} ${row.Cigar || ""}`.toLowerCase();
-  }
-
-  // ---------- CSV parsing ----------
+  // --- CSV parsing ---
   function parseCSV(text) {
+    // minimal CSV parser (handles quoted commas)
     const rows = [];
-    let i = 0,
-      field = "",
-      row = [],
-      inQuotes = false;
+    let i = 0;
+    let field = "";
+    let row = [];
+    let inQuotes = false;
 
     while (i < text.length) {
       const c = text[i];
 
-      if (inQuotes) {
-        if (c === '"' && text[i + 1] === '"') {
+      if (c === '"') {
+        if (inQuotes && text[i + 1] === '"') {
           field += '"';
           i += 2;
           continue;
         }
-        if (c === '"') {
-          inQuotes = false;
-          i++;
-          continue;
-        }
-        field += c;
-        i++;
+        inQuotes = !inQuotes;
+        i += 1;
         continue;
-      } else {
-        if (c === '"') {
-          inQuotes = true;
-          i++;
-          continue;
-        }
-        if (c === ",") {
-          row.push(field);
-          field = "";
-          i++;
-          continue;
-        }
-        if (c === "\n") {
-          row.push(field);
-          rows.push(row);
-          row = [];
-          field = "";
-          i++;
-          continue;
-        }
-        if (c === "\r") {
-          i++;
-          continue;
-        }
-        field += c;
-        i++;
       }
-    }
-    row.push(field);
-    rows.push(row);
 
-    while (rows.length && rows[rows.length - 1].every((x) => !x || !x.trim())) rows.pop();
+      if (!inQuotes && (c === "," || c === "\n" || c === "\r")) {
+        row.push(field);
+        field = "";
+
+        if (c === ",") {
+          i += 1;
+          continue;
+        }
+
+        // newline (\r\n or \n)
+        // finalize row if it has any data
+        if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+        row = [];
+
+        // skip \r\n pair
+        if (c === "\r" && text[i + 1] === "\n") i += 2;
+        else i += 1;
+
+        continue;
+      }
+
+      field += c;
+      i += 1;
+    }
+
+    // last field
+    if (field.length || row.length) {
+      row.push(field);
+      if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+    }
+
     return rows;
   }
 
-  function tableFromCSV(text) {
-    const rows = parseCSV(text);
+  function rowsToObjects(rows) {
     if (!rows.length) return [];
-
-    const header = rows[0].map((h) => (h || "").trim());
-    const out = [];
-
-    for (let r = 1; r < rows.length; r++) {
+    const headers = rows[0].map((h) => (h || "").trim());
+    return rows.slice(1).map((r) => {
       const obj = {};
-      for (let c = 0; c < header.length; c++) {
-        obj[header[c]] = (rows[r][c] ?? "").trim();
-      }
-      out.push(obj);
-    }
-    return out;
+      headers.forEach((h, idx) => (obj[h] = r[idx] ?? ""));
+      return obj;
+    });
   }
 
-  // ---------- images ----------
-  function bestIconForRow(row) {
-    const raw = row["Cigar IMG"] || row["Brand IMG"] || row["Manufacturer IMG"] || "";
-    return normalizeIconPath(raw);
-  }
-
-  function bestBrandHeaderIcon(firstRow) {
-    // prefer Brand IMG, then Manufacturer IMG, then fallback to row icon
-    const raw = firstRow?.["Brand IMG"] || firstRow?.["Manufacturer IMG"] || "";
-    const primary = normalizeIconPath(raw);
-    if (primary) return primary;
-
-    // fallback if sheet doesn't have Brand IMG populated:
-    return bestIconForRow(firstRow || {});
-  }
-
-  function applyBrandHeader(brandName, firstRow) {
+  // --- brand icon ---
+  function setBrandHeader(brandName) {
     if (brandTitleEl) brandTitleEl.textContent = brandName || "Brand";
 
-    if (brandIconImg) {
-      const img = bestBrandHeaderIcon(firstRow);
-      if (img) {
-        brandIconImg.src = img;
-        brandIconImg.style.display = "block";
-        brandIconImg.style.visibility = "visible";
-        brandIconImg.style.opacity = "1";
-      } else {
-        brandIconImg.removeAttribute("src");
-        brandIconImg.style.display = "none";
-      }
+    // you said icons live in /img/icons/brands (plural) in repo
+    // but your cigar rows use img/icons/brand/{...}.svg in older code sometimes.
+    // For the header, try the plural path first, then fallback to legacy.
+    const safe = (brandName || "").toLowerCase().replace(/\s+/g, "");
+    const plural = `/img/icons/brands/${safe}.svg`;
+    const legacy = `/img/icons/brand/${safe}.svg`;
+
+    if (brandIconEl) {
+      brandIconEl.onerror = () => {
+        brandIconEl.onerror = null;
+        brandIconEl.src = legacy;
+      };
+      brandIconEl.src = plural;
+      brandIconEl.alt = brandName;
     }
   }
 
-  // ---------- list render ----------
-  function renderList(rows) {
-    if (!listEl) return;
+  // --- filtering ---
+  function normalize(s) {
+    return (s || "").toString().trim().toLowerCase();
+  }
 
+  function applyFilters() {
+    let rows = state.allRows.slice();
+
+    // Filter to this brand page
+    if (BRAND) {
+      rows = rows.filter((r) => normalize(r.Brand) === normalize(BRAND));
+    }
+
+    // Bands filter (only if selections exist)
+    if (state.selectedBands.size) {
+      rows = rows.filter((r) => {
+        // We try to match against:
+        // - Line
+        // - Cigar name
+        // - any "Band" column if you add one later
+        const line = normalize(r.Line);
+        const cigar = normalize(r.Cigar);
+        const bandCol = normalize(r.Band);
+
+        for (const sel of state.selectedBands) {
+          const k = normalize(sel);
+          if (line.includes(k) || cigar.includes(k) || (bandCol && bandCol.includes(k))) {
+            return true;
+          }
+        }
+        return false;
+      });
+    }
+
+    state.filteredRows = rows;
+    renderList();
+  }
+
+  // --- list render (minimal, keep your existing HTML expectations) ---
+  function renderList() {
+    if (!listEl) return;
+    listEl.innerHTML = "";
+
+    const rows = state.filteredRows;
     if (!rows.length) {
-      listEl.innerHTML = "";
-      setStatus("No results.");
+      const empty = document.createElement("div");
+      empty.className = "brand-empty";
+      empty.textContent = "No cigars match your filters.";
+      listEl.appendChild(empty);
       return;
     }
 
-    setStatus("");
+    const frag = document.createDocumentFragment();
 
-    listEl.innerHTML = rows
-      .map((row) => {
-        const name = row.Cigar || "";
-        const sub = row.Vitola || "";
-        const price = money(toNum(row.MSRP));
-        const icon = bestIconForRow(row);
-        const id = row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}`;
+    rows.forEach((r) => {
+      const item = document.createElement("div");
+      item.className = "brand-row";
 
-        return `
-        <div class="brand-row" data-id="${escapeHTML(id)}">
-          <img class="row-ico" src="${escapeAttr(icon)}" alt=""
-               onerror="this.style.opacity='0';this.style.pointerEvents='none';" />
-          <div class="row-main" data-open>
-            <div class="row-title">${escapeHTML(name)}</div>
-            <div class="row-sub">${escapeHTML(sub)}</div>
+      // expected columns (based on your sheet structure)
+      const cigarName = r.Cigar || "";
+      const brandName = r.Brand || "";
+      const vitola = r.Vitola || "";
+      const msrp = r.MSRP || "";
+
+      // image (if you have Cigar IMG column)
+      const img = r["Cigar IMG"] || r.CigarIMG || "";
+
+      item.innerHTML = `
+        <div class="brand-row-left">
+          <div class="brand-row-img">
+            ${
+              img
+                ? `<img src="${img}" alt="${cigarName}" loading="lazy" />`
+                : `<div class="brand-row-img-fallback"></div>`
+            }
           </div>
-          <div class="row-price">${price}</div>
-          <button class="row-add" type="button" aria-label="Add" data-add>+</button>
+          <div class="brand-row-text">
+            <div class="brand-row-title">${escapeHtml(cigarName)}</div>
+            <div class="brand-row-sub">${escapeHtml(brandName)}</div>
+          </div>
+        </div>
+
+        <div class="brand-row-mid">
+          <div class="brand-row-vitola">${escapeHtml(vitola)}</div>
+          <div class="brand-row-msrp">${escapeHtml(msrp)}</div>
+        </div>
+
+        <div class="brand-row-right">
+          <button class="brand-add-btn" type="button" aria-label="Add to receipt">+</button>
         </div>
       `;
-      })
-      .join("");
 
-    listEl.querySelectorAll("[data-add]").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const rowEl = e.currentTarget.closest(".brand-row");
-        const id = rowEl?.getAttribute("data-id") || "";
-
-        const row = rows.find((x) => {
-          const rid = x.key || `${x.Brand || ""}-${x.Cigar || ""}-${x.Vitola || ""}`;
-          return rid === id;
+      // Add-to-cart hookup (shared cart.js)
+      const addBtn = item.querySelector(".brand-add-btn");
+      if (addBtn && window.POS_CART && typeof window.POS_CART.addItem === "function") {
+        addBtn.addEventListener("click", () => {
+          window.POS_CART.addItem({
+            name: cigarName,
+            brand: brandName,
+            price: parseMoney(msrp),
+            meta: {
+              vitola,
+              rg: r.RG || "",
+              length: r.Length || "",
+              origin: r.Origin || "",
+            },
+          });
         });
-        if (!row) return;
+      }
 
-        window.CigarOSCart?.add({
-          id: row.key || id,
-          name: row.Cigar,
-          brand: row.Brand,
-          sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
-          price: toNum(row.MSRP),
-          img: bestIconForRow(row) || "",
-        });
-      });
+      frag.appendChild(item);
+    });
+
+    listEl.appendChild(frag);
+  }
+
+  function parseMoney(v) {
+    const s = (v || "").toString().replace(/[^0-9.]/g, "");
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function escapeHtml(str) {
+    return (str || "").toString().replace(/[&<>"']/g, (m) => {
+      switch (m) {
+        case "&":
+          return "&amp;";
+        case "<":
+          return "&lt;";
+        case ">":
+          return "&gt;";
+        case '"':
+          return "&quot;";
+        case "'":
+          return "&#039;";
+        default:
+          return m;
+      }
     });
   }
 
-  // ---------- filtering ----------
-  function applyAllFilters() {
-    const q = norm(searchEl?.value || "");
-
-    VIEW = ALL.filter((row) => {
-      if (q) {
-        const hay = norm(`${row.Cigar || ""} ${row.Vitola || ""} ${row.Line || ""}`);
-        if (!hay.includes(q)) return false;
-      }
-
-      if (wrapperState === "maduro") {
-        const shade = norm(row["Wrapper Shade"] || row.Wrapper || "");
-        if (!shade.includes("maduro")) return false;
-      } else if (wrapperState === "natural") {
-        const shade = norm(row["Wrapper Shade"] || row.Wrapper || "");
-        if (shade.includes("maduro") && !shade.includes("natural")) return false;
-      }
-
-      for (const [k, set] of Object.entries(activeFilters)) {
-        if (!set || !set.size) continue;
-        const v = norm(row[k] || "");
-        if (!set.has(v)) return false;
-      }
-
-      if (activeBands.size) {
-        const src = matchBandSource(row);
-        let ok = false;
-        activeBands.forEach((token) => {
-          if (src.includes(token)) ok = true;
-        });
-        if (!ok) return false;
-      }
-
-      return true;
-    });
-
-    renderList(VIEW);
+  // --- Bands Modal UI ---
+  function openBandsModal() {
+    if (!bandsModal) return;
+    bandsModal.classList.add("open");
+    document.body.classList.add("modal-open");
+    renderBandsOptions();
   }
 
-  // ---------- wrapper toggle ----------
-  function setWrapperState(state) {
-    wrapperState = state;
-    if (wrapperSeg) wrapperSeg.dataset.state = state;
-
-    if (btnMaduro) btnMaduro.setAttribute("aria-pressed", String(state === "maduro"));
-    if (btnNatural) btnNatural.setAttribute("aria-pressed", String(state === "natural"));
-
-    applyAllFilters();
+  function closeBandsModal() {
+    if (!bandsModal) return;
+    bandsModal.classList.remove("open");
+    document.body.classList.remove("modal-open");
   }
 
-  function initWrapperSeg() {
-    if (!wrapperSeg) return;
+  function renderBandsOptions() {
+    if (!bandsListEl) return;
 
-    setWrapperState("all");
+    const opts = getBandOptionsForBrand(BRAND);
+    bandsListEl.innerHTML = "";
 
-    btnMaduro?.addEventListener("click", () => setWrapperState("maduro"));
-    btnNatural?.addEventListener("click", () => setWrapperState("natural"));
+    const frag = document.createDocumentFragment();
 
-    segDot?.addEventListener("click", () => {
-      if (wrapperState === "maduro") setWrapperState("all");
-      else if (wrapperState === "all") setWrapperState("natural");
-      else setWrapperState("maduro");
-    });
-  }
+    opts.forEach((opt) => {
+      const selected = state.selectedBands.has(opt.key);
 
-  // ---------- MODALS ----------
-  function ensureModalBase(id, title) {
-    let overlay = document.getElementById(id);
-    if (overlay) return overlay;
+      const card = document.createElement("div");
+      card.className = "band-card";
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
 
-    overlay = document.createElement("div");
-    overlay.id = id;
-    overlay.className = "pos-modal-overlay";
-    overlay.hidden = true;
-
-    overlay.innerHTML = `
-      <div class="pos-modal-card" role="dialog" aria-modal="true" aria-label="${escapeAttr(title)}">
-        <div class="pos-modal-card-head">
-          <h3 class="pos-modal-card-title">${escapeHTML(title)}</h3>
-          <button class="pos-modal-card-x" type="button" data-close aria-label="Close">×</button>
+      card.innerHTML = `
+        <div class="band-card-img">
+          <img src="${opt.img}" alt="${escapeHtml(opt.label)}" loading="lazy" />
         </div>
-        <div class="pos-modal-card-body"></div>
-        <div class="pos-modal-card-foot">
-          <button type="button" class="pos-btn-light" data-clear>Clear</button>
-          <button type="button" class="pos-btn-blue" data-confirm>Confirm</button>
+
+        <div class="band-card-footer">
+          <div class="band-card-label">${escapeHtml(opt.label)}</div>
+          <div class="band-card-toggle ${selected ? "on" : ""}">
+            <div class="band-card-toggle-knob"></div>
+          </div>
         </div>
-      </div>
-    `;
+      `;
 
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) hideModal(overlay);
-    });
+      const toggle = () => {
+        if (state.selectedBands.has(opt.key)) state.selectedBands.delete(opt.key);
+        else state.selectedBands.add(opt.key);
+        renderBandsOptions();
+      };
 
-    overlay.querySelectorAll("[data-close]").forEach((b) =>
-      b.addEventListener("click", () => hideModal(overlay))
-    );
-
-    document.addEventListener("keydown", (e) => {
-      if (!overlay.hidden && e.key === "Escape") hideModal(overlay);
-    });
-
-    document.body.appendChild(overlay);
-    return overlay;
-  }
-
-  function showModal(overlay) {
-    overlay.hidden = false;
-    document.body.classList.add("pos-modal-open");
-  }
-  function hideModal(overlay) {
-    overlay.hidden = true;
-    document.body.classList.remove("pos-modal-open");
-  }
-
-  function cloneFilterSets(obj) {
-    const out = {};
-    for (const [k, set] of Object.entries(obj || {})) out[k] = new Set(set ? [...set] : []);
-    return out;
-  }
-
-  function openFilters() {
-    const overlay = ensureModalBase("filters-modal", "Filters");
-    const body = overlay.querySelector(".pos-modal-card-body");
-
-    const FIELDS = [
-      "Wrapper Shade",
-      "Vitola",
-      "RG",
-      "Strength",
-      "Length",
-      "Shape",
-      "Tubo",
-      "Tin",
-      "Pack",
-      "Barber",
-      "Box-Pressed",
-      "Cuban",
-      "Favorite",
-    ];
-
-    const options = {};
-    FIELDS.forEach((f) => (options[f] = new Set()));
-    ALL.forEach((row) => {
-      FIELDS.forEach((f) => {
-        const v = norm(row[f] || "");
-        if (v) options[f].add(v);
-      });
-    });
-
-    pendingFilters = cloneFilterSets(activeFilters);
-
-    body.innerHTML = `
-      <div class="filter-grid">
-        ${FIELDS.map((f) => {
-          const vals = [...options[f]].sort();
-          if (!vals.length) return "";
-          return `
-            <div class="filter-block">
-              <div class="filter-label">${escapeHTML(f)}</div>
-              <div class="chip-wrap">
-                ${vals.map((v) => {
-                  const on = pendingFilters[f]?.has(v);
-                  return `<button type="button" class="chip ${on ? "on" : ""}" data-field="${escapeAttr(f)}" data-val="${escapeAttr(v)}">${escapeHTML(v)}</button>`;
-                }).join("")}
-              </div>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    `;
-
-    body.querySelectorAll(".chip").forEach((chip) => {
-      chip.addEventListener("click", () => {
-        const field = chip.getAttribute("data-field");
-        const val = chip.getAttribute("data-val");
-        if (!field || !val) return;
-
-        pendingFilters[field] ||= new Set();
-        if (pendingFilters[field].has(val)) {
-          pendingFilters[field].delete(val);
-          chip.classList.remove("on");
-        } else {
-          pendingFilters[field].add(val);
-          chip.classList.add("on");
+      card.addEventListener("click", toggle);
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggle();
         }
       });
+
+      frag.appendChild(card);
     });
 
-    // rebind buttons safely
-    const clearBtn = overlay.querySelector("[data-clear]");
-    const confirmBtn = overlay.querySelector("[data-confirm]");
-    if (clearBtn) {
-      const clone = clearBtn.cloneNode(true);
-      clearBtn.replaceWith(clone);
-      clone.addEventListener("click", () => {
-        pendingFilters = {};
-        openFilters();
-      });
-    }
-    if (confirmBtn) {
-      const clone = confirmBtn.cloneNode(true);
-      confirmBtn.replaceWith(clone);
-      clone.addEventListener("click", () => {
-        activeFilters = cloneFilterSets(pendingFilters);
-        hideModal(overlay);
-        applyAllFilters();
-      });
-    }
-
-    showModal(overlay);
+    bandsListEl.appendChild(frag);
   }
 
-  function openBands() {
-    const overlay = ensureModalBase("bands-modal", "Bands");
-    overlay.classList.add("bands-modal");
-
-    const confirmBtn = overlay.querySelector("[data-confirm]");
-    if (confirmBtn) {
-      confirmBtn.classList.remove("pos-btn-blue");
-      confirmBtn.classList.add("pos-btn-green");
-    }
-
-    const body = overlay.querySelector(".pos-modal-card-body");
-
-    const brand = (qp("brand") || "").trim();
-    const b = norm(brand);
-
-    const BAND_LIBRARY = {
-      padron: [
-        { token: "1926", label: "1926", src: "/img/icons/padron1926serieband.svg" },
-        { token: "1964", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
-        { token: "damaso", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
-      ],
-    };
-
-    const bands = BAND_LIBRARY[b] || [];
-    pendingBands = new Set(activeBands);
-
-    body.innerHTML = `
-      <div class="bands-grid">
-        ${bands.map((x) => {
-          const on = pendingBands.has(x.token);
-          return `
-            <button type="button" class="band-card ${on ? "on" : ""}" data-token="${escapeAttr(x.token)}">
-              <div class="band-imgwrap">
-                <img src="${escapeAttr(x.src)}" alt="${escapeAttr(x.label)}" />
-              </div>
-              <div class="band-foot">
-                <div class="band-label">${escapeHTML(x.label)}</div>
-                <div class="band-check">${on ? "✓" : ""}</div>
-              </div>
-            </button>
-          `;
-        }).join("")}
-      </div>
-    `;
-
-    body.querySelectorAll(".band-card").forEach((card) => {
-      card.addEventListener("click", () => {
-        const token = card.getAttribute("data-token");
-        if (!token) return;
-
-        const check = card.querySelector(".band-check");
-
-        if (pendingBands.has(token)) {
-          pendingBands.delete(token);
-          card.classList.remove("on");
-          if (check) check.textContent = "";
-        } else {
-          pendingBands.add(token);
-          card.classList.add("on");
-          if (check) check.textContent = "✓";
-        }
-      });
-    });
-
-    const clearBtn = overlay.querySelector("[data-clear]");
-    const confirmBtn2 = overlay.querySelector("[data-confirm]");
-
-    if (clearBtn) {
-      const clone = clearBtn.cloneNode(true);
-      clearBtn.replaceWith(clone);
-      clone.addEventListener("click", () => {
-        pendingBands = new Set();
-        openBands();
-      });
-    }
-
-    if (confirmBtn2) {
-      const clone = confirmBtn2.cloneNode(true);
-      confirmBtn2.replaceWith(clone);
-      clone.addEventListener("click", () => {
-        activeBands = new Set(pendingBands);
-        hideModal(overlay);
-        applyAllFilters();
-      });
-    }
-
-    showModal(overlay);
+  function clearBands() {
+    state.selectedBands.clear();
+    renderBandsOptions();
   }
 
-  // ---------- load ----------
-  async function load() {
-    const brand = (qp("brand") || "").trim();
-    if (!brand) {
-      setStatus("Missing brand.");
-      return;
-    }
+  function confirmBands() {
+    closeBandsModal();
+    applyFilters();
+  }
 
-    setStatus("Loading…");
+  // --- init ---
+  async function init() {
+    setBrandHeader(BRAND || "Brand");
 
-    const url = `${CSV_URL}&_=${Date.now()}`;
-    const res = await fetch(url, { cache: "no-store" });
+    // wire modal buttons
+    if (bandsBtn) bandsBtn.addEventListener("click", openBandsModal);
+    if (bandsCloseBtn) bandsCloseBtn.addEventListener("click", closeBandsModal);
+    if (bandsClearBtn) bandsClearBtn.addEventListener("click", clearBands);
+    if (bandsConfirmBtn) bandsConfirmBtn.addEventListener("click", confirmBands);
+
+    // close when tapping overlay (if your modal uses an overlay element)
+    const overlay = $("#bands-overlay");
+    if (overlay) overlay.addEventListener("click", closeBandsModal);
+
+    // load CSV
+    const res = await fetch(CSV_URL, { cache: "no-store" });
     const text = await res.text();
-    const table = tableFromCSV(text);
 
-    const brandNorm = norm(brand);
-    ALL = table.filter((r) => norm(r.Brand) === brandNorm);
+    const parsed = parseCSV(text);
+    const objs = rowsToObjects(parsed);
 
-    if (!ALL.length) ALL = table.filter((r) => norm(r["Brand aka"]) === brandNorm);
-
-    applyBrandHeader(brand, ALL[0]);
-    VIEW = [...ALL];
-    applyAllFilters();
+    state.allRows = objs;
+    applyFilters();
   }
 
-  // ✅ Back button handler
-  function initBackButton() {
-    if (!backBtn) return;
-
-    backBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // if user came from another page, go back
-      if (window.history.length > 1) {
-        window.history.back();
-        return;
-      }
-
-      // fallback
-      window.location.href = "/pos/cigars/";
-    });
-  }
-
-  function init() {
-    initBackButton();
-
-    btnFilters?.addEventListener("click", openFilters);
-    btnBands?.addEventListener("click", openBands);
-
-    searchEl?.addEventListener("input", () => applyAllFilters());
-
-    initWrapperSeg();
-
-    load().catch((err) => {
-      console.error(err);
-      setStatus("Failed to load cigars.");
-    });
-  }
-
-  function escapeHTML(s) {
-    return (s ?? "")
-      .toString()
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-  function escapeAttr(s) {
-    return escapeHTML(s).replaceAll("`", "");
-  }
-
-  window.addEventListener("DOMContentLoaded", init);
+  // go
+  init().catch((err) => {
+    console.error("brand.js init error:", err);
+    if (listEl) {
+      listEl.innerHTML = `<div class="brand-empty">Error loading cigars.</div>`;
+    }
+  });
 })();
