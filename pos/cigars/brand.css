@@ -4,10 +4,14 @@
   --rowLine: rgba(255,255,255,.08);
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.55);
-  --chipBg: rgba(255,255,255,.10);
-  --chipBg2: rgba(255,255,255,.13);
-  --accent: #f2c84b; /* your yellow separator */
-  --confirm: #63d7a1; /* your green confirm */
+
+  /* IMPORTANT:
+     Separator should NOT be yellow.
+     This is the original subtle divider tone (gray/blue-ish). */
+  --sepColor: rgba(255,255,255,.18);
+
+  /* Confirm button green (your screenshot) */
+  --confirm: #63d7a1;
 }
 
 .brand-page{
@@ -120,7 +124,7 @@
   border: 1px solid rgba(255,255,255,.10);
 }
 
-/* This is the key fix: no ellipsis; allow wrapping */
+/* Name + vitola stack */
 .cigar-main{
   min-width: 0;
   display: flex;
@@ -128,13 +132,12 @@
   gap: 4px;
 }
 
+/* No more ellipsis — wrap to next line */
 .cigar-name{
   font-size: 18px;
   line-height: 22px;
   font-weight: 850;
   letter-spacing: .2px;
-
-  /* allow wrap, never truncate */
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
@@ -146,20 +149,18 @@
   line-height: 18px;
   font-weight: 650;
   color: var(--muted);
-
-  /* also allow wrap just in case */
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
   word-break: break-word;
 }
 
-/* Shorter vertical separator (your yellow guide) */
+/* ✅ Separator: same original subtle color, just taller */
 .cigar-sep{
-  width: 3px;
-  height: 44px;           /* <— adjust here if you want slightly taller/shorter */
+  width: 2px;
+  height: 44px;          /* <-- this is the "extended" height you wanted */
   border-radius: 2px;
-  background: var(--accent);
+  background: var(--sepColor);
   justify-self: center;
   align-self: center;
   opacity: .95;
@@ -278,7 +279,7 @@
 }
 
 .filter-chip.is-active{
-  background: rgba(0, 122, 255, .16);  /* iOS blue selected feel */
+  background: rgba(0, 122, 255, .16);
   color: rgba(0,0,0,.80);
   box-shadow: inset 0 0 0 1px rgba(0, 122, 255, .28);
 }
@@ -289,7 +290,7 @@
   justify-content: center;
 }
 
-/* Confirm button style (matches your screenshot) */
+/* Confirm button style (your screenshot) */
 .btn-confirm{
   width: min(320px, 100%);
   height: 74px;
