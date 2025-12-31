@@ -318,210 +318,162 @@ body.brand-page{
 }
 
 /* ===============================
-   MODAL SYSTEM (Filters / Bands)
+   GENERIC MODAL UTILITIES
    =============================== */
 
 [hidden]{ display:none !important; }
 
 body.pos-modal-open{ overflow:hidden; }
 
-.pos-modal-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.35);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-  z-index:2000;
-}
+/* (You can keep pos-modal-* classes here if used elsewhere) */
 
-.pos-modal-card{
-  width:min(720px, 96vw);
-  max-height:min(86vh, 760px);
-  overflow:hidden;
-  border-radius:26px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(10,18,40,.72);
-  box-shadow:0 24px 80px rgba(0,0,0,.55);
+/* ===============================
+   BANDS POPUP (white centered card)
+   =============================== */
+
+.bands-sheet{
+  /* override bottom-sheet style to be a centered popup */
+  position:fixed;
+  left:50%;
+  top:50%;
+  right:auto;
+  bottom:auto;
+  transform:translate(-50%, -50%);
+  width:min(630px, 90vw);
+  max-height:76vh;
+  border-radius:32px;
+  background:#ffffff;
+  color:#0b1220;
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.55),
+    0 0 0 1px rgba(0,0,0,.04);
   display:flex;
   flex-direction:column;
+  overflow:hidden;
 }
 
-.pos-modal-card-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:16px 16px 10px;
-  border-bottom:1px solid rgba(255,255,255,.10);
+/* header */
+
+.bands-header{
+  position:relative;
+  text-align:center;
+  padding:18px 20px 10px;
+  border-bottom:none;
 }
 
-.pos-modal-card-title{
+.bands-header h2{
   margin:0;
-  font-size:26px;
-  font-weight:900;
-  letter-spacing:-.02em;
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:.01em;
 }
 
-.pos-modal-card-x{
-  width:44px;
-  height:44px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.08);
-  color:#fff;
-  font-size:28px;
-  font-weight:900;
-  line-height:0;
+.bands-x{
+  position:absolute;
+  top:14px;
+  right:16px;
+  width:32px;
+  height:32px;
+  border-radius:16px;
+  border:none;
+  background:rgba(15,23,42,.06);
+  font-size:20px;
+  font-weight:700;
+  line-height:1;
   cursor:pointer;
 }
 
-.pos-modal-card-body{
-  padding:14px 14px 0;
-  overflow:auto;
+/* body */
+
+.bands-body{
+  flex:1 1 auto;
+  overflow-y:auto;
+  padding:6px 18px 10px;
 }
 
-.pos-modal-card-foot{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-  padding:14px;
-  border-top:1px solid rgba(255,255,255,.10);
-}
-
-.pos-btn-light{
-  height:54px;
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.10);
-  color:#fff;
-  font-weight:900;
-  letter-spacing:.01em;
-}
-
-.pos-btn-blue{
-  height:54px;
-  border-radius:18px;
-  border:1px solid rgba(15,122,255,.40);
-  background:rgba(15,122,255,.95);
-  color:#fff;
-  font-weight:900;
-  letter-spacing:.01em;
-}
-
-/* ✅ green confirm (Bands) */
-.pos-btn-green{
-  height:54px;
-  border-radius:18px;
-  border:1px solid rgba(52,199,89,.55);
-  background:rgba(52,199,89,.95);
-  color:#ffffff;
-  font-weight:900;
-  letter-spacing:.01em;
-}
-
-/* Filters chips */
-.filter-grid{
+.bands-list{
   display:flex;
   flex-direction:column;
   gap:14px;
-  padding-bottom:14px;
 }
 
-.filter-block{
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.06);
-  border-radius:20px;
-  padding:12px;
-}
+/* each band row (art + title + checkbox) */
 
-.filter-label{
-  font-weight:900;
-  opacity:.9;
-  margin-bottom:10px;
-}
-
-.chip-wrap{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-}
-
-.chip{
-  border:none;
-  height:36px;
-  padding:0 14px;
-  border-radius:999px;
-  background:rgba(255,255,255,.10);
-  color:rgba(255,255,255,.85);
-  font-weight:900;
-  text-transform:none;
-}
-.chip.on{
-  background:rgba(15,122,255,.92);
-  color:#fff;
-}
-
-/* Bands modal sizing */
-.bands-modal .pos-modal-card{
-  width:min(860px, 96vw);
-}
-
-.bands-grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:14px;
-  padding-bottom:14px;
-}
-
-.band-card{
-  border:none;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:22px;
-  padding:14px;
-  text-align:left;
-  color:#fff;
-}
-.band-card.on{
-  outline:3px solid rgba(15,122,255,.55);
-}
-
-.band-imgwrap{
-  width:100%;
-  border-radius:18px;
-  overflow:hidden;
-  background:rgba(0,0,0,.20);
-  border:1px solid rgba(255,255,255,.10);
-}
-
-.band-imgwrap img{
-  width:100%;
-  height:auto;
+.band-row{
   display:block;
 }
 
-.band-foot{
+.band-art{
+  width:100%;
+  aspect-ratio:16 / 7;   /* controls height like your mockup */
+  border-radius:24px;
+  overflow:hidden;
+  background:transparent; /* band logos themselves are transparent */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.band-art img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+
+.band-meta{
+  margin-top:8px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-top:10px;
 }
 
-.band-label{
-  font-size:22px;
-  font-weight:1000;
-  letter-spacing:-.02em;
+.band-name{
+  font-size:15px;
+  font-weight:600;
+  color:#0b1220;
 }
+
+/* checkbox */
 
 .band-check{
-  width:32px;
-  height:32px;
-  border-radius:10px;
-  background:rgba(15,122,255,.85);
-  display:grid;
-  place-items:center;
-  font-weight:1000;
+  width:22px;
+  height:22px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  background:#f3f4f6;
+  appearance:none;
+  outline:none;
+  cursor:pointer;
+  position:relative;
+}
+
+.band-check:checked{
+  background:#0f7aff;
+  border-color:#0f7aff;
+}
+
+.band-check:checked::after{
+  content:"";
+  position:absolute;
+  inset:4px;
+  border-radius:4px;
+  background:#ffffff;
+}
+
+/* footer */
+
+.bands-footer{
+  padding:10px 18px 18px;
+  border-top:none;
+}
+
+.bands-footer .bands-confirm{
+  width:100%;
+}
+
+/* make sure primary button text is white inside white card */
+.bands-footer .sheet-btn.primary{
+  width:100%;
+  color:#ffffff;
 }
