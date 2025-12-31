@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS • Brand</title>
 
-  <!-- Global SF Pro + POS base styles -->
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-
-  <!-- Brand styles -->
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
 </head>
 
@@ -23,8 +20,8 @@
       </svg>
     </button>
 
-    <div class="brand-topbar-center">
-      <h1 class="brand-title" id="brand-title">Brand</h1>
+    <div class="brand-topbar-title">
+      <div class="brand-name" id="brand-title">Brand</div>
     </div>
 
     <div class="brand-topbar-right">
@@ -34,37 +31,72 @@
         </svg>
       </button>
 
-      <div class="brand-icon-wrap" aria-hidden="true">
-        <img id="brand-icon-img" class="brand-icon" alt="" />
+      <div class="brand-badge">
+        <img id="brand-icon-img" alt="" />
       </div>
     </div>
   </header>
+
+  <!-- Controls (SEARCH + BUTTONS + TOGGLE) -->
+  <section class="brand-controls">
+    <div class="search-wrap">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input id="brand-search" type="search" placeholder="Search..." autocomplete="off" />
+    </div>
+
+    <div class="control-row">
+      <button class="pill-btn" id="btn-filters" type="button">Filters</button>
+      <button class="pill-btn" id="btn-bands" type="button">Bands</button>
+
+      <div class="shade-toggle" role="group" aria-label="Maduro Natural toggle">
+        <span class="shade-label shade-left" id="shade-maduro-label">Maduro</span>
+        <button class="shade-switch" id="shade-toggle" type="button" aria-label="Toggle shade"></button>
+        <span class="shade-label shade-right" id="shade-natural-label">Natural</span>
+      </div>
+    </div>
+  </section>
 
   <!-- List -->
   <main class="brand-main">
     <ul class="brand-list" id="brand-list" aria-label="Cigars list"></ul>
   </main>
 
-  <!-- Filters Modal (matches Cigars page style) -->
-  <div class="pos-modal" id="filters-modal" aria-hidden="true">
-    <div class="pos-modal__backdrop" data-close="filters"></div>
-
-    <section class="pos-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="filters-title">
-      <header class="pos-modal__header">
-        <div class="pos-modal__title" id="filters-title">Filters</div>
-        <button class="pos-modal__close" type="button" aria-label="Close filters" data-close="filters">×</button>
-      </header>
-
-      <div class="pos-modal__content">
-        <div class="filters-grid" id="filters-grid">
-          <!-- Buttons injected by JS to keep ordering consistent -->
-        </div>
+  <!-- Filters Modal (kept simple; you can wire your existing filter logic later) -->
+  <div class="modal" id="filters-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="filters"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="filters-title">
+      <div class="modal-head">
+        <div class="modal-title" id="filters-title">Filters</div>
+        <button class="modal-x" type="button" data-close="filters" aria-label="Close">×</button>
       </div>
 
-      <footer class="pos-modal__footer">
-        <button type="button" class="btn-confirm" id="filters-confirm">Confirm</button>
-      </footer>
-    </section>
+      <div class="modal-body">
+        <div class="filters-grid" id="filters-grid"></div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn-confirm" id="filters-confirm" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bands Modal (placeholder; preserves your UI button) -->
+  <div class="modal" id="bands-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="bands"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bands-title">
+      <div class="modal-head">
+        <div class="modal-title" id="bands-title">Bands</div>
+        <button class="modal-x" type="button" data-close="bands" aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="bands-note">Bands UI goes here (kept intact so your page isn’t missing buttons).</div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn-confirm" id="bands-confirm" type="button">Confirm</button>
+      </div>
+    </div>
   </div>
 
   <script src="/pos/cart.js"></script>
