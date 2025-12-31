@@ -3,9 +3,9 @@
    - Back button
    - View all expand/collapse
    - Filter modal open/close
-   - Loads canonical CSV (so Manufacturer/Brand lists populate)
-   - Wrapper Shade: title + custom ordered list (extras appended)
-   - Dispatches "cigars:filters-changed"
+   - Populates filter lists using the SAME data that build-cigars.js loads
+   - Writes to window.__CIGAR_FILTER_STATE__ and calls window.buildCigarsRender()
+   - Wrapper Shade: custom ordered list (extras appended)
 */
 
 (() => {
@@ -19,6 +19,8 @@
   const viewAllBtn = $("#filters-view-all");
   const expandedEl = $("#filters-expanded");
 
+  const searchInput = $("#cigars-search-input");
+
   const modal = $("#filter-modal");
   const modalBackdrop = modal?.querySelector("[data-fm-close]");
   const modalTitle = $("#fm-title");
@@ -26,9 +28,44 @@
   const modalSearch = $("#fm-search-input");
   const modalConfirm = $("#fm-confirm");
 
-  // dataset (fix)
-  let DATA_ROWS = [];
+  // Prefer the rows already loaded by build-cigars.js
+  let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__)
+    ? window.__CIGAR_SHEET_ROWS__
+    : [];
 
+  // Ensure global filter state exists (build-cigars.js creates it, but be safe)
+  function ensureGlobalState() {
+    if (!window.__CIGAR_FILTER_STATE__) {
+      window.__CIGAR_FILTER_STATE__ = {
+        q: "",
+        filters: {
+          manufacturer: new Set(),
+          brand: new Set(),
+          shade: new Set(),
+          vitola: new Set(),
+          length: new Set(),
+          ring: new Set(),
+          shape: new Set(),
+          strength: new Set(),
+        },
+        toggles: {
+          tubo: false,
+          flavored: false,
+          tin: false,
+          pack: false,
+          barberpole: false,
+          boxpressed: false,
+        },
+      };
+    }
+  }
+
+  function renderBrands() {
+    // Only build-cigars.js knows how to re-render the grid correctly
+    if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
+  }
+
+  // Local UI state mirrors global state
   const state = {
     selected: {
       manufacturer: new Set(),
@@ -46,6 +83,7 @@
       tin: false,
       pack: false,
       barberpole: false,
+      tubo: false, // ✅ include tubo so mapping is consistent
     },
     currentModalKey: null,
     currentModalValues: [],
@@ -54,8 +92,8 @@
   backBtn?.addEventListener("click", () => history.back());
 
   viewAllBtn?.addEventListener("click", () => {
-    const isHidden = expandedEl?.hasAttribute("hidden");
     if (!expandedEl) return;
+    const isHidden = expandedEl.hasAttribute("hidden");
     if (isHidden) expandedEl.removeAttribute("hidden");
     else expandedEl.setAttribute("hidden", "");
   });
@@ -73,7 +111,7 @@
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
 
-  // --- CSV parsing ---
+  // --- CSV parsing (fallback if build-cigars.js hasn't loaded yet) ---
   function parseCSV(text) {
     const rows = [];
     let i = 0;
@@ -289,7 +327,10 @@
 
   modalConfirm?.addEventListener("click", () => {
     syncPillActiveStates();
-    dispatchFiltersChanged();
+
+    // ✅ push local UI state into global state used by build-cigars.js
+    pushStateToGlobal();
+
     closeModal();
   });
 
@@ -311,16 +352,33 @@
     });
   }
 
-  function dispatchFiltersChanged() {
-    const detail = {
-      selected: Object.fromEntries(
-        Object.entries(state.selected).map(([k, set]) => [k, Array.from(set)])
-      ),
-      toggles: { ...state.toggles },
-    };
-    document.dispatchEvent(new CustomEvent("cigars:filters-changed", { detail }));
+  // ✅ KEY FIX: write into __CIGAR_FILTER_STATE__ then re-render brands
+  function pushStateToGlobal() {
+    ensureGlobalState();
+    const g = window.__CIGAR_FILTER_STATE__;
+
+    // filters: copy sets
+    for (const k of Object.keys(g.filters)) {
+      if (state.selected[k]) {
+        g.filters[k] = new Set([...state.selected[k]]);
+      }
+    }
+
+    // toggles: align names (your build-cigars.js uses these exact keys)
+    g.toggles.flavored = !!state.toggles.flavored;
+    g.toggles.boxpressed = !!state.toggles.boxpressed;
+    g.toggles.tin = !!state.toggles.tin;
+    g.toggles.pack = !!state.toggles.pack;
+    g.toggles.barberpole = !!state.toggles.barberpole;
+    g.toggles.tubo = !!state.toggles.tubo;
+
+    // search
+    g.q = (searchInput?.value || "").toString();
+
+    renderBrands();
   }
 
+  // click handlers
   $$(".filter-pill[data-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const key = btn.getAttribute("data-filter");
@@ -335,8 +393,15 @@
       if (!t) return;
       state.toggles[t] = !state.toggles[t];
       btn.classList.toggle("is-active", state.toggles[t]);
-      dispatchFiltersChanged();
+
+      // ✅ update global + re-render on toggle
+      pushStateToGlobal();
     });
+  });
+
+  // ✅ Search binds here
+  searchInput?.addEventListener("input", () => {
+    pushStateToGlobal();
   });
 
   function escapeHtml(str) {
@@ -351,17 +416,35 @@
   // ---- init: load CSV so filters populate ----
   async function init() {
     try {
-      const res = await fetch(CSV_URL, { cache: "no-store" });
-      const text = await res.text();
-      const parsed = parseCSV(text);
-      DATA_ROWS = rowsToObjects(parsed);
+      ensureGlobalState();
 
-      // optional: expose for other scripts
-      window.__CIGARS__ = DATA_ROWS;
+      // If build-cigars.js already loaded rows, use them (no second fetch)
+      if (Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length) {
+        DATA_ROWS = window.__CIGAR_SHEET_ROWS__;
+      } else {
+        const res = await fetch(CSV_URL, { cache: "no-store" });
+        const text = await res.text();
+        const parsed = parseCSV(text);
+        DATA_ROWS = rowsToObjects(parsed);
+        window.__CIGAR_SHEET_ROWS__ = DATA_ROWS; // ✅ unify datasets
+      }
+
+      // pull global into local so UI shows active states if needed
+      const g = window.__CIGAR_FILTER_STATE__;
+      for (const k of Object.keys(state.selected)) {
+        const set = g.filters?.[k];
+        state.selected[k] = set instanceof Set ? new Set([...set]) : new Set();
+      }
+      for (const k of Object.keys(state.toggles)) {
+        state.toggles[k] = !!g.toggles?.[k];
+      }
+
+      if (searchInput) searchInput.value = g.q || "";
 
       syncPillActiveStates();
+      renderBrands();
     } catch (err) {
-      console.error("cigars.js CSV load error:", err);
+      console.error("cigars.js init error:", err);
       syncPillActiveStates();
     }
   }
