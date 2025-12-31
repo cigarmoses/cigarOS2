@@ -1,19 +1,25 @@
 // /pos/img/scripts/build-cigars.js
-// Loads Google Sheets CSV -> builds brand grid on /pos/cigars/
+// Loads Google Sheets CSV (HUB) -> builds brand grid on /pos/cigars/
+// Exposes:
+//   - window.__CIGAR_SHEET_ROWS__
+//   - window.__CIGAR_HUB_CSV_URL__
+//   - window.buildCigarsRender()
+// Dispatches:
+//   - window event "cigars:hub-ready" when data + renderer are ready
 
 (function () {
-  // IMPORTANT:
-  // If you ever change the sheet tab, update &gid=...
   const SHEET_ID = "10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM";
-  const GID = "822697742"; // <-- keep if this is your data tab
-  const GOOGLE_SHEETS_CSV_URL =
-    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
+  const GID = "822697742"; // HUB tab gid (your data tab)
+  const HUB_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
   function withNoCache(url) {
     const u = new URL(url);
     u.searchParams.set("_ts", Date.now().toString());
     return u.toString();
   }
+
+  // Make HUB url globally available so other scripts NEVER guess tabs
+  window.__CIGAR_HUB_CSV_URL__ = HUB_CSV_URL;
 
   function getGridEl() {
     return (
@@ -106,7 +112,8 @@
     if (!name) return "";
     const canonical = String(name)
       .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "")
       .trim();
@@ -182,7 +189,6 @@
       if (!hay.includes(q)) return false;
     }
 
-    // feature toggles use columns like "Tubo", "Tin", etc.
     const featureCols = {
       tubo: ["Tubo", "TUBO"],
       flavored: ["Flavored", "FLAVORED"],
@@ -199,7 +205,6 @@
       if (!val) return false;
     }
 
-    // multi-select filters
     const map = {
       manufacturer: ["Manufacturer"],
       brand: ["Brand"],
@@ -247,7 +252,7 @@
   }
 
   async function loadSheet() {
-    const res = await fetch(withNoCache(GOOGLE_SHEETS_CSV_URL));
+    const res = await fetch(withNoCache(HUB_CSV_URL), { cache: "no-store" });
     if (!res.ok) throw new Error("Google Sheets CSV fetch failed: " + res.status);
     const text = await res.text();
     const parsed = parseCSV(text);
@@ -312,6 +317,9 @@
 
       // initial paint
       window.buildCigarsRender();
+
+      // ✅ Signal to cigars.js: HUB + renderer are ready
+      window.dispatchEvent(new Event("cigars:hub-ready"));
     } catch (err) {
       console.error("[build-cigars] error:", err);
       grid.innerHTML = "";
@@ -320,7 +328,7 @@
       msg.style.fontWeight = "700";
       msg.style.padding = "10px 0";
       msg.textContent =
-        "Brands failed to load from Google Sheets. Check the sheet sharing + CSV access.";
+        "Brands failed to load from the Hub (Google Sheets). Check sharing + CSV access.";
       grid.appendChild(msg);
     }
   }
