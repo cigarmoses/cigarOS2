@@ -1,7 +1,14 @@
 /* /pos/cigars/cigars.js
-   Updates:
-   - Manufacturer modal shows icons from /img/icons/manufacturers/(slug).svg
-   - Brand modal shows icons from /img/icons/brands/(slug).svg
+   UI controller:
+   - Back button
+   - View all expand/collapse
+   - Filter modal open/close
+   - Populates filter lists using the SAME data that build-cigars.js loads
+   - Writes to window.__CIGAR_FILTER_STATE__ and calls window.buildCigarsRender()
+   - Wrapper Shade: custom ordered list (extras appended)
+   - ✅ Adds small icons for Manufacturer + Brand in the modal:
+     img/icons/manufacturers/(slug).svg
+     img/icons/brands/(slug).svg
 */
 
 (() => {
@@ -103,24 +110,7 @@
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
 
-  // ✅ slugify for icon filenames
-  function slugify(name) {
-    return String(name || "")
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "")
-      .trim();
-  }
-
-  function iconForModalRow(key, label) {
-    const s = slugify(label);
-    if (!s) return "";
-    if (key === "manufacturer") return `/img/icons/manufacturers/${s}.svg`;
-    if (key === "brand") return `/img/icons/brands/${s}.svg`;
-    return "";
-  }
-
+  // --- CSV parsing (fallback if build-cigars.js hasn't loaded yet) ---
   function parseCSV(text) {
     const rows = [];
     let i = 0;
@@ -212,6 +202,7 @@
     return uniqSorted(vals);
   }
 
+  // --- Wrapper Shade custom ordering ---
   const WRAPPER_SHADE_ORDER = [
     "Natural",
     "Connecticut",
@@ -249,6 +240,24 @@
     }
 
     return ordered;
+  }
+
+  // ✅ icon slug helper
+  function slugify(name) {
+    return String(name || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
+  }
+
+  function iconPathForModalItem(key, label) {
+    const slug = slugify(label);
+    if (!slug) return "";
+    if (key === "manufacturer") return `/img/icons/manufacturers/${slug}.svg`;
+    if (key === "brand") return `/img/icons/brands/${slug}.svg`;
+    return "";
   }
 
   function openModal(key) {
@@ -292,34 +301,38 @@
     state.currentModalValues = [];
   }
 
-  function escapeHtml(str) {
-    return String(str ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  // ✅ render rows with icons for manufacturer/brand
   function renderModalList(values) {
     const key = state.currentModalKey;
     if (!modalList || !key) return;
 
     const selectedSet = state.selected[key] || new Set();
+    const showIcons = key === "manufacturer" || key === "brand";
 
     modalList.innerHTML = values
       .map((v) => {
         const label = norm(v);
         const isSelected = selectedSet.has(label);
+        const iconSrc = showIcons ? iconPathForModalItem(key, label) : "";
 
-        const iconSrc = iconForModalRow(key, label);
-        const iconHtml = iconSrc
-          ? `<img class="fm-ico" src="${escapeHtml(iconSrc)}" alt="" onerror="this.style.opacity='0';" />`
+        // ✅ small icon (text-height) – never massive
+        const iconHtml = showIcons
+          ? `<img
+              class="fm-ico"
+              src="${escapeHtml(iconSrc)}"
+              alt=""
+              loading="lazy"
+              decoding="async"
+              onerror="this.style.display='none';"
+              style="
+                width:22px;height:22px;max-width:22px;max-height:22px;
+                border-radius:6px;object-fit:contain;flex:0 0 22px;
+              "
+            />`
           : `<div></div>`;
 
         return `
-          <div class="fm-row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(label)}">
+          <div class="fm-row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(label)}"
+               style="display:grid;grid-template-columns:${showIcons ? "26px" : "0px"} 1fr 28px;align-items:center;column-gap:12px;">
             ${iconHtml}
             <div class="fm-label">${escapeHtml(label)}</div>
             <div class="fm-check" aria-hidden="true"></div>
@@ -346,6 +359,17 @@
     const all = state.currentModalValues || [];
     const filtered = !q ? all : all.filter((v) => norm(v).toLowerCase().includes(q));
     renderModalList(filtered);
+  });
+
+  modalConfirm?.addEventListener("click", () => {
+    syncPillActiveStates();
+    pushStateToGlobal();
+    closeModal();
+  });
+
+  modalBackdrop?.addEventListener("click", closeModal);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal && !modal.classList.contains("fm--hidden")) closeModal();
   });
 
   function syncPillActiveStates() {
@@ -383,17 +407,6 @@
     renderBrands();
   }
 
-  modalConfirm?.addEventListener("click", () => {
-    syncPillActiveStates();
-    pushStateToGlobal();
-    closeModal();
-  });
-
-  modalBackdrop?.addEventListener("click", closeModal);
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal && !modal.classList.contains("fm--hidden")) closeModal();
-  });
-
   $$(".filter-pill[data-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const key = btn.getAttribute("data-filter");
@@ -414,6 +427,15 @@
   searchInput?.addEventListener("input", () => {
     pushStateToGlobal();
   });
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
   async function init() {
     try {
