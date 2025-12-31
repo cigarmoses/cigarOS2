@@ -2,12 +2,13 @@
    Brand POS page controller (Cigars)
    - Loads canonical CSV
    - Renders rows
-   - Filters + Bands modals (working close/confirm)
+   - Filters + Bands modals
    - Uses shared /pos/cart.js for receipt + badge + persistence
    - FIXES:
-     1) Back button not working (binds #brand-back and .pos-back safely)
-     2) Top-right brand icon not showing (more robust header detection + fallbacks)
-     3) Normalizes legacy brand icon paths (/img/icons/brands/s/padron.svg -> /img/icons/brands/padron.svg)
+     1) Filters/Bands buttons not opening (robust button selector fallbacks)
+     2) Back button safe binding + fallback route
+     3) Brand header icon robust + legacy path normalization
+     4) Padron bands only on Padron page; other brands show "not configured" message
 */
 
 (() => {
@@ -15,36 +16,54 @@
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-  // ---------- DOM ----------
+  // ---------- DOM (core) ----------
   const brandTitleEl = $("#brand-title");
   const listEl = $("#brand-list");
   const statusEl = $("#brand-status");
-  const searchEl = $("#brand-search");
+  const searchEl =
+    $("#brand-search") ||
+    $("#search") ||
+    document.querySelector('input[type="search"]');
 
-  const btnFilters = $("#btn-filters");
-  const btnBands = $("#btn-bands");
+  // Buttons: use MANY fallbacks so you can rename HTML freely
+  const btnFilters =
+    $("#btn-filters") ||
+    $("#filters-btn") ||
+    document.querySelector('[data-action="filters"]') ||
+    document.querySelector('[data-open="filters"]') ||
+    document.querySelector(".btn-filters") ||
+    document.querySelector(".filters-btn");
 
-  // back button(s) (support multiple ids/classes across versions)
+  const btnBands =
+    $("#btn-bands") ||
+    $("#bands-btn") ||
+    document.querySelector('[data-action="bands"]') ||
+    document.querySelector('[data-open="bands"]') ||
+    document.querySelector(".btn-bands") ||
+    document.querySelector(".bands-btn");
+
+  // Back button(s)
   const backBtn =
     $("#brand-back") ||
     $("#pos-back") ||
     $("#category-back") ||
-    $(".pos-back") ||
-    $(".icon-btn.pos-back");
+    document.querySelector(".pos-back") ||
+    document.querySelector(".icon-btn.pos-back");
 
-  // wrapper toggle (maduro/all/natural)
+  // Wrapper toggle (maduro/all/natural) — optional (won’t break if missing)
   const wrapperSeg = $("#wrapper-seg");
   const btnMaduro = $("#seg-maduro");
   const btnNatural = $("#seg-natural");
   const segDot = $("#seg-dot");
 
-  // brand header image (support multiple ids/classes across versions)
+  // Brand header icon (optional)
   const brandIconImg =
     $("#brand-icon-img") ||
     $("#brand-icon") ||
     document.querySelector(".brand-icon img") ||
-    $("#brand-icon-el img");
+    document.querySelector("#brand-icon-el img");
 
   // ---------- State ----------
   let ALL = [];
@@ -60,8 +79,11 @@
   // ---------- helpers ----------
   const qp = (k) => new URLSearchParams(location.search).get(k) || "";
   const norm = (s) => (s || "").toString().trim().toLowerCase();
+
   const money = (n) =>
-    window.CigarOSCart?.money ? window.CigarOSCart.money(n) : Number(n || 0).toFixed(2);
+    window.CigarOSCart?.money
+      ? window.CigarOSCart.money(n)
+      : Number(n || 0).toFixed(2);
 
   const toNum = (v) => {
     const x = Number((v ?? "").toString().replace(/[^\d.]/g, ""));
@@ -72,20 +94,27 @@
     if (statusEl) statusEl.textContent = msg || "";
   }
 
-  // ✅ Fix legacy /brands/<letter>/ paths and /brand/ singular folder
+  // Normalize icon paths:
+  // - fixes /img/icons/brands/s/padron.svg -> /img/icons/brands/padron.svg
+  // - fixes /img/icons/brand/... -> /img/icons/brands/...
   function normalizeIconPath(p) {
     let s = (p || "").toString().trim();
     if (!s) return "";
 
+    // allow absolute urls
     if (/^https?:\/\//i.test(s)) return s;
 
     if (s.startsWith("img/")) s = "/" + s;
     if (!s.startsWith("/")) s = "/" + s;
 
+    // singular -> plural folder
     s = s.replace(/^\/img\/icons\/brand\//i, "/img/icons/brands/");
-    s = s.replace(/^\/img\/icons\/brands\/[a-z0-9]\/+/i, "/img/icons/brands/");
-    s = s.replace(/\/{2,}/g, "/");
 
+    // strip /brands/<letter>/ prefix if present
+    s = s.replace(/^\/img\/icons\/brands\/[a-z0-9]\/+/i, "/img/icons/brands/");
+
+    // collapse ////
+    s = s.replace(/\/{2,}/g, "/");
     return s;
   }
 
@@ -177,12 +206,9 @@
   }
 
   function bestBrandHeaderIcon(firstRow) {
-    // prefer Brand IMG, then Manufacturer IMG, then fallback to row icon
     const raw = firstRow?.["Brand IMG"] || firstRow?.["Manufacturer IMG"] || "";
     const primary = normalizeIconPath(raw);
     if (primary) return primary;
-
-    // fallback if sheet doesn't have Brand IMG populated:
     return bestIconForRow(firstRow || {});
   }
 
@@ -414,27 +440,23 @@
 
     body.innerHTML = `
       <div class="filter-grid">
-        ${FIELDS
-          .map((f) => {
-            const vals = [...options[f]].sort();
-            if (!vals.length) return "";
-            return `
+        ${FIELDS.map((f) => {
+          const vals = [...options[f]].sort();
+          if (!vals.length) return "";
+          return `
             <div class="filter-block">
               <div class="filter-label">${escapeHTML(f)}</div>
               <div class="chip-wrap">
-                ${vals
-                  .map((v) => {
-                    const on = pendingFilters[f]?.has(v);
-                    return `<button type="button" class="chip ${on ? "on" : ""}" data-field="${escapeAttr(
-                      f
-                    )}" data-val="${escapeAttr(v)}">${escapeHTML(v)}</button>`;
-                  })
-                  .join("")}
+                ${vals.map((v) => {
+                  const on = pendingFilters[f]?.has(v);
+                  return `<button type="button" class="chip ${on ? "on" : ""}" data-field="${escapeAttr(
+                    f
+                  )}" data-val="${escapeAttr(v)}">${escapeHTML(v)}</button>`;
+                }).join("")}
               </div>
             </div>
           `;
-          })
-          .join("")}
+        }).join("")}
       </div>
     `;
 
@@ -458,6 +480,7 @@
     // rebind buttons safely
     const clearBtn = overlay.querySelector("[data-clear]");
     const confirmBtn = overlay.querySelector("[data-confirm]");
+
     if (clearBtn) {
       const clone = clearBtn.cloneNode(true);
       clearBtn.replaceWith(clone);
@@ -466,6 +489,7 @@
         openFilters();
       });
     }
+
     if (confirmBtn) {
       const clone = confirmBtn.cloneNode(true);
       confirmBtn.replaceWith(clone);
@@ -477,6 +501,22 @@
     }
 
     showModal(overlay);
+  }
+
+  function getBandLibraryForBrand(brandKey) {
+    // Padron-only for now, others can be added later
+    const LIB = {
+      padron: [
+        { token: "1926", label: "1926", src: "/img/icons/padron1926serieband.svg" },
+        { token: "1964", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
+        { token: "damaso", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
+        { token: "black series", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
+        { token: "series", label: "Series", src: "/img/icons/padronseriesband.svg" },
+        { token: "family reserve", label: "Family Reserve", src: "/img/icons/padronfamilyreserveband.svg" },
+      ],
+    };
+
+    return LIB[brandKey] || [];
   }
 
   function openBands() {
@@ -494,64 +534,54 @@
     const brand = (qp("brand") || "").trim();
     const b = norm(brand);
 
-    // ✅ UPDATED: matches your actual filenames in img/icons/
-    // ✅ ADDED: 3 new bands (black series, series, family reserve)
-    const BAND_LIBRARY = {
-      padron: [
-        { token: "1926", label: "1926", src: "/img/icons/padron1926serieband.svg" },
-        { token: "1964", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
-        { token: "damaso", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
-
-        { token: "black series", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
-        { token: "series", label: "Series", src: "/img/icons/padronseriesband.svg" },
-        { token: "family reserve", label: "Family Reserve", src: "/img/icons/padronfamilyreserveband.svg" },
-      ],
-    };
-
-    const bands = BAND_LIBRARY[b] || [];
+    const bands = getBandLibraryForBrand(b);
     pendingBands = new Set(activeBands);
 
-    body.innerHTML = `
-      <div class="bands-grid">
-        ${bands
-          .map((x) => {
+    if (!bands.length) {
+      body.innerHTML = `
+        <div style="padding:12px 4px; font-size:16px; opacity:.7;">
+          No bands configured for <b>${escapeHTML(brand || "this brand")}</b> yet.
+        </div>
+      `;
+    } else {
+      body.innerHTML = `
+        <div class="bands-grid">
+          ${bands.map((x) => {
             const on = pendingBands.has(x.token);
             return `
-            <button type="button" class="band-card ${on ? "on" : ""}" data-token="${escapeAttr(
-              x.token
-            )}">
-              <div class="band-imgwrap">
-                <img src="${escapeAttr(x.src)}" alt="${escapeAttr(x.label)}" />
-              </div>
-              <div class="band-foot">
-                <div class="band-label">${escapeHTML(x.label)}</div>
-                <div class="band-check">${on ? "✓" : ""}</div>
-              </div>
-            </button>
-          `;
-          })
-          .join("")}
-      </div>
-    `;
+              <button type="button" class="band-card ${on ? "on" : ""}" data-token="${escapeAttr(x.token)}">
+                <div class="band-imgwrap">
+                  <img src="${escapeAttr(x.src)}" alt="${escapeAttr(x.label)}" />
+                </div>
+                <div class="band-foot">
+                  <div class="band-label">${escapeHTML(x.label)}</div>
+                  <div class="band-check">${on ? "✓" : ""}</div>
+                </div>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      `;
 
-    body.querySelectorAll(".band-card").forEach((card) => {
-      card.addEventListener("click", () => {
-        const token = card.getAttribute("data-token");
-        if (!token) return;
+      body.querySelectorAll(".band-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          const token = card.getAttribute("data-token");
+          if (!token) return;
 
-        const check = card.querySelector(".band-check");
+          const check = card.querySelector(".band-check");
 
-        if (pendingBands.has(token)) {
-          pendingBands.delete(token);
-          card.classList.remove("on");
-          if (check) check.textContent = "";
-        } else {
-          pendingBands.add(token);
-          card.classList.add("on");
-          if (check) check.textContent = "✓";
-        }
+          if (pendingBands.has(token)) {
+            pendingBands.delete(token);
+            card.classList.remove("on");
+            if (check) check.textContent = "";
+          } else {
+            pendingBands.add(token);
+            card.classList.add("on");
+            if (check) check.textContent = "✓";
+          }
+        });
       });
-    });
+    }
 
     const clearBtn = overlay.querySelector("[data-clear]");
     const confirmBtn2 = overlay.querySelector("[data-confirm]");
@@ -603,7 +633,7 @@
     applyAllFilters();
   }
 
-  // ✅ Back button handler
+  // Back button handler
   function initBackButton() {
     if (!backBtn) return;
 
@@ -611,25 +641,40 @@
       e.preventDefault();
       e.stopPropagation();
 
-      // if user came from another page, go back
       if (window.history.length > 1) {
         window.history.back();
         return;
       }
-
-      // fallback
       window.location.href = "/pos/cigars/";
     });
   }
 
+  // IMPORTANT: bind click handlers even if the buttons were renamed
+  function initButtons() {
+    if (btnFilters) {
+      btnFilters.addEventListener("click", (e) => {
+        e.preventDefault();
+        openFilters();
+      });
+    } else {
+      console.warn("brand.js: Filters button not found (no #btn-filters / fallback selector matched).");
+    }
+
+    if (btnBands) {
+      btnBands.addEventListener("click", (e) => {
+        e.preventDefault();
+        openBands();
+      });
+    } else {
+      console.warn("brand.js: Bands button not found (no #btn-bands / fallback selector matched).");
+    }
+  }
+
   function init() {
     initBackButton();
-
-    btnFilters?.addEventListener("click", openFilters);
-    btnBands?.addEventListener("click", openBands);
+    initButtons();
 
     searchEl?.addEventListener("input", () => applyAllFilters());
-
     initWrapperSeg();
 
     load().catch((err) => {
