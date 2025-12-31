@@ -56,9 +56,7 @@
     </section>
 
     <!-- List -->
-    <section class="brand-list" id="brand-list" aria-label="Cigars list">
-      <!-- rows injected -->
-    </section>
+    <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
 
     <!-- Load / error -->
     <p class="brand-status" id="brand-status" hidden></p>
@@ -99,20 +97,7 @@
     </header>
 
     <div class="sheet-body bands-body">
-      <!-- JS will inject band rows into this container -->
-      <div class="bands-list" id="bands-options">
-        <!-- Example static rows (optional, can be removed if fully dynamic):
-        <label class="band-row" data-band-id="1964">
-          <div class="band-art">
-            <img src="/img/bands/padron-1964.png" alt="1964 Anniversary Series band" />
-          </div>
-          <div class="band-meta">
-            <span class="band-name">1964 Anniversary Series</span>
-            <input type="checkbox" class="band-check" />
-          </div>
-        </label>
-        -->
-      </div>
+      <div class="bands-list" id="bands-options"></div>
     </div>
 
     <footer class="sheet-footer bands-footer">
@@ -120,100 +105,20 @@
     </footer>
   </section>
 
-  <!-- Bottom sheet: Filters -->
-  <section class="sheet" id="sheet-filters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
-    <div class="sheet-handle" aria-hidden="true"></div>
-    <header class="sheet-header">
+  <!-- ✅ CHANGED: Filters is now a centered popup like Bands -->
+  <section class="sheet filters-sheet" id="sheet-filters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
+    <header class="sheet-header filters-header">
       <h2>Filters</h2>
-      <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+      <button class="sheet-x filters-x" type="button" data-sheet-close aria-label="Close">×</button>
     </header>
 
-    <div class="sheet-body">
+    <div class="sheet-body filters-body">
       <div class="chip-grid" id="filters-options"></div>
     </div>
 
-    <footer class="sheet-footer">
-      <button class="sheet-btn" type="button" data-sheet-close>Close</button>
+    <footer class="sheet-footer filters-footer">
       <button class="sheet-btn primary" type="button" id="filters-confirm">Confirm</button>
     </footer>
-  </section>
-
-  <!-- Cigar Detail Modal -->
-  <section class="modal" id="cigar-modal" role="dialog" aria-modal="true" aria-label="Cigar details" hidden>
-    <div class="modal-backdrop" id="cigar-modal-backdrop"></div>
-
-    <div class="modal-card" role="document">
-      <button class="modal-close" type="button" id="cigar-modal-close" aria-label="Close">×</button>
-
-      <div class="modal-top">
-        <div class="modal-title-wrap">
-          <h2 class="modal-brand" id="modal-brand">Brand</h2>
-          <p class="modal-line" id="modal-line">Line + Cigar</p>
-        </div>
-        <div class="modal-brand-icon" id="modal-brand-icon" aria-hidden="true"></div>
-      </div>
-
-      <div class="modal-main">
-        <div class="modal-img">
-          <img id="modal-cigar-img" alt="" />
-        </div>
-
-        <div class="modal-info">
-          <div class="stat-row">
-            <div class="stat">
-              <div class="stat-label">RING</div>
-              <div class="stat-value" id="modal-rg">—</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">LENGTH</div>
-              <div class="stat-value" id="modal-len">—</div>
-            </div>
-          </div>
-
-          <div class="stat-row small">
-            <div class="stat">
-              <div class="stat-label">STRENGTH</div>
-              <div class="stat-value" id="modal-strength">—</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">VITOLA</div>
-              <div class="stat-value" id="modal-vitola">—</div>
-            </div>
-          </div>
-
-          <div class="stack">
-            <div class="stack-label">WRAPPER</div>
-            <div class="stack-value" id="modal-wrapper">—</div>
-            <div class="stack-label">BINDER</div>
-            <div class="stack-value" id="modal-binder">—</div>
-            <div class="stack-label">FILLER</div>
-            <div class="stack-value" id="modal-filler">—</div>
-          </div>
-
-          <div class="stack">
-            <div class="stack-label">ORIGIN</div>
-            <div class="stack-value" id="modal-origin">—</div>
-          </div>
-
-          <div class="stack">
-            <div class="stack-label">WRAPPER SHADE</div>
-            <div class="stack-value" id="modal-shade">—</div>
-          </div>
-
-          <div class="rank-row">
-            <div class="rank" id="modal-rank1">#1</div>
-            <div class="rank" id="modal-rank2">#2</div>
-          </div>
-
-          <div class="modal-actions">
-            <button type="button" class="ghost-btn">FAVORITE</button>
-            <button type="button" class="ghost-btn">COMPARE</button>
-            <button type="button" class="ghost-btn">WISHLIST</button>
-            <button type="button" class="ghost-btn">CONNECT</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <script src="/pos/cart.js"></script>
