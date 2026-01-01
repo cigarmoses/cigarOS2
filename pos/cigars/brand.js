@@ -1,18 +1,10 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   Uses existing HTML sheets:
-   - #sheet-backdrop
-   - #sheet-filters (chip grid)
-   - #sheet-bands (Padron-only band art)
-   - (receipt sheet stays owned by /pos/cart.js)
-
-   Fixes:
-   1) Filters/Bands buttons now open the REAL sheets in brand.html
-   2) Close buttons (data-sheet-close) + backdrop click close sheets
-   3) Wrapper toggle dot id fixed (#seg-switch)
-   4) Brand header icon works with <div id="brand-icon"> (injects <img>)
-   5) Padron band art uses /img/icons/*.svg (your current placement)
+   Updates:
+   - Filters sheet is now centered popup (matches bands) via brand.html + brand.css
+   - Bands popup: handled in CSS (center title/regular/scroll hint bar)
+   - Maduro/Natural toggle now filters by CIGAR NAME ONLY (not wrapper shade)
 */
 
 (() => {
@@ -25,7 +17,7 @@
 
   // ---------- DOM (core) ----------
   const brandTitleEl = $("#brand-title");
-  const brandIconWrap = $("#brand-icon"); // NOTE: this is a DIV in your HTML
+  const brandIconWrap = $("#brand-icon");
   const listEl = $("#brand-list");
   const statusEl = $("#brand-status");
   const searchEl = $("#brand-search");
@@ -39,7 +31,7 @@
   const wrapperSeg = $("#wrapper-seg");
   const btnMaduro = $("#seg-maduro");
   const btnNatural = $("#seg-natural");
-  const segDot = $("#seg-switch"); // ✅ matches your HTML
+  const segDot = $("#seg-switch");
 
   // Sheets
   const backdrop = $("#sheet-backdrop");
@@ -56,16 +48,12 @@
   let ALL = [];
   let VIEW = [];
 
-  // Filter model:
-  // activeFilters: { fieldName -> Set(normalizedValue) }
   let pendingFilters = {};
   let activeFilters = {};
 
-  // Bands model:
   let pendingBands = new Set();
   let activeBands = new Set();
 
-  // wrapper
   let wrapperState = "all"; // maduro | natural | all
 
   // ---------- helpers ----------
@@ -96,9 +84,6 @@
     return escapeHTML(s).replaceAll("`", "");
   }
 
-  // Normalize icon paths:
-  // - /img/icons/brand/... -> /img/icons/brands/...
-  // - /img/icons/brands/s/padron.svg -> /img/icons/brands/padron.svg
   function normalizeIconPath(p) {
     let s = (p || "").toString().trim();
     if (!s) return "";
@@ -128,7 +113,6 @@
   function applyBrandHeader(brandName, firstRow) {
     if (brandTitleEl) brandTitleEl.textContent = brandName || "Brand";
 
-    // brandIconWrap is a DIV, so inject an IMG
     if (brandIconWrap) {
       const src = bestBrandHeaderIcon(firstRow);
       if (!src) {
@@ -248,7 +232,6 @@
       })
       .join("");
 
-    // Add-to-cart
     listEl.querySelectorAll("[data-add]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         const rowEl = e.currentTarget.closest(".brand-row");
@@ -277,6 +260,17 @@
     return `${row.Line || ""} ${row.Cigar || ""}`.toLowerCase();
   }
 
+  // ✅ Maduro/Natural now based ONLY on cigar name
+  function cigarNameHasMaduroOrNatural(cigarName, mode) {
+    const n = norm(cigarName);
+    const hasMaduro = n.includes("maduro");
+    const hasNatural = n.includes("natural");
+
+    if (mode === "maduro") return hasMaduro && !hasNatural;
+    if (mode === "natural") return hasNatural && !hasMaduro;
+    return true; // "all"
+  }
+
   function applyAllFilters() {
     const q = norm(searchEl?.value || "");
 
@@ -286,13 +280,10 @@
         if (!hay.includes(q)) return false;
       }
 
-      // wrapper toggle
-      const shade = norm(row["Wrapper Shade"] || row.Wrapper || "");
-      if (wrapperState === "maduro") {
-        if (!shade.includes("maduro")) return false;
-      } else if (wrapperState === "natural") {
-        // allow "natural" / "connecticut" / "claro" etc — just exclude explicit maduro-only
-        if (shade.includes("maduro") && !shade.includes("natural")) return false;
+      // ✅ wrapper toggle uses CIGAR NAME ONLY
+      if (wrapperState !== "all") {
+        const name = row.Cigar || "";
+        if (!cigarNameHasMaduroOrNatural(name, wrapperState)) return false;
       }
 
       // field filters
@@ -355,11 +346,12 @@
   function closeSheet(sheetEl) {
     if (!sheetEl) return;
     sheetEl.setAttribute("hidden", "");
-    // if no other sheets are open, hide backdrop
+
     const anyOpen =
       !($("#sheet-filters")?.hasAttribute("hidden")) ||
       !($("#sheet-bands")?.hasAttribute("hidden")) ||
       !($("#sheet-receipt")?.hasAttribute("hidden"));
+
     if (!anyOpen) backdrop?.setAttribute("hidden", "");
     document.body.classList.remove("pos-modal-open");
   }
@@ -367,13 +359,11 @@
   function closeAllSheets() {
     closeSheet(sheetFilters);
     closeSheet(sheetBands);
-    // receipt is owned by cart.js, but we can safely close if present
     const receipt = $("#sheet-receipt");
     if (receipt) closeSheet(receipt);
   }
 
   function initSheetCloseHandlers() {
-    // any [data-sheet-close] inside the page closes its nearest .sheet
     $$("[data-sheet-close]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const sheet = btn.closest(".sheet");
@@ -396,7 +386,6 @@
   }
 
   function buildFilterOptions() {
-    // these are CSV column names
     const FIELDS = [
       "Wrapper Shade",
       "Vitola",
@@ -425,6 +414,7 @@
     return { FIELDS, options };
   }
 
+  // ✅ Render filter chips for a WHITE popup (no dark inline styles)
   function renderFiltersSheet() {
     if (!filtersOptions) return;
 
@@ -436,9 +426,9 @@
       if (!vals.length) return "";
       return `
         <div class="filter-block" style="margin-bottom:14px;">
-          <div class="filter-label" style="font-weight:900;opacity:.85;margin:6px 2px 8px;">${escapeHTML(
-            f
-          )}</div>
+          <div class="filter-label" style="font-weight:800;opacity:.85;margin:6px 2px 8px;color:#0b1220;">
+            ${escapeHTML(f)}
+          </div>
           <div class="chip-wrap" style="display:flex;flex-wrap:wrap;gap:10px;">
             ${vals
               .map((v) => {
@@ -449,9 +439,9 @@
                   data-val="${escapeAttr(v)}"
                   style="
                     padding:10px 12px;border-radius:999px;
-                    border:1px solid rgba(255,255,255,.14);
-                    background:rgba(255,255,255,.07);
-                    color:rgba(255,255,255,.85);
+                    border:1px solid rgba(15,23,42,.12);
+                    background:${on ? "rgba(15,122,255,.12)" : "rgba(15,23,42,.06)"};
+                    color:${on ? "rgba(15,122,255,.95)" : "rgba(15,23,42,.88)"};
                     font-weight:800;font-size:13px;
                   "
                 >${escapeHTML(v)}</button>`;
@@ -472,12 +462,12 @@
         if (pendingFilters[field].has(val)) {
           pendingFilters[field].delete(val);
           chip.classList.remove("on");
-          chip.style.background = "rgba(255,255,255,.07)";
-          chip.style.color = "rgba(255,255,255,.85)";
+          chip.style.background = "rgba(15,23,42,.06)";
+          chip.style.color = "rgba(15,23,42,.88)";
         } else {
           pendingFilters[field].add(val);
           chip.classList.add("on");
-          chip.style.background = "rgba(15,122,255,.22)";
+          chip.style.background = "rgba(15,122,255,.12)";
           chip.style.color = "rgba(15,122,255,.95)";
         }
       });
@@ -491,10 +481,9 @@
 
   // ---------- Bands sheet (Padron only) ----------
   function getBandLibraryForBrand(brandKey) {
-    // Padron-only for now
     const LIB = {
       padron: [
-        { token: "1926", label: "1926", src: "/img/icons/padron1926seriebank.svg" }, // (typo-safe below)
+        { token: "1926", label: "1926", src: "/img/icons/padron1926seriebank.svg" },
         { token: "1964", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
         { token: "damaso", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
         { token: "black series", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
@@ -503,8 +492,6 @@
       ],
     };
 
-    // IMPORTANT: fix the 1926 filename if needed (your screenshot shows padron1926serieb**and**.svg)
-    // We’ll auto-correct common typo "bank" -> "band"
     const list = LIB[brandKey] || [];
     return list.map((x) => ({
       ...x,
@@ -542,8 +529,8 @@
             <div class="band-meta">
               <span class="band-name">${escapeHTML(x.label)}</span>
               <input type="checkbox" class="band-check" data-token="${escapeAttr(x.token)}" ${
-          checked ? "checked" : ""
-        } />
+                checked ? "checked" : ""
+              } />
             </div>
           </label>
         `;
@@ -610,7 +597,6 @@
       openBandsSheet();
     });
 
-    // confirm buttons
     filtersConfirm?.addEventListener("click", () => {
       activeFilters = cloneFilterSets(pendingFilters);
       closeSheet(sheetFilters);
