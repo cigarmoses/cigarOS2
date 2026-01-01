@@ -566,6 +566,11 @@ body.brand-page{
   gap:14px;
 }
 
+/* restore base visibility for generated band rows */
+.band-row{
+  display:block;
+}
+
 /* each band row – now scoped to bands-sheet */
 .bands-sheet .band-row{
   display:block;
