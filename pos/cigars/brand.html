@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS • Brand</title>
 
+  <!-- Global SF Pro + POS base styles -->
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/cigars/brand.css?v=20251231-1" />
+
+  <!-- Brand styles -->
+  <link rel="stylesheet" href="/pos/cigars/brand.css" />
 </head>
 
 <body class="brand-page">
@@ -19,87 +22,106 @@
         <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
-
-    <div class="brand-topbar-title">
-      <div class="brand-name" id="brand-title">Brand</div>
-    </div>
-
-    <div class="brand-topbar-right">
-      <button type="button" class="icon-btn" id="brand-filters" aria-label="Filters">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 6h16M7 12h10M10 18h4" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-      </button>
-
-      <div class="brand-badge">
-        <img id="brand-icon-img" alt="" />
-      </div>
-    </div>
   </header>
 
-  <!-- Controls (SEARCH + BUTTONS + TOGGLE) -->
-  <section class="brand-controls">
-    <div class="search-wrap">
-      <span class="search-icon" aria-hidden="true">🔍</span>
-      <input id="brand-search" type="search" placeholder="Search..." autocomplete="off" />
-    </div>
-
-    <div class="control-row">
-      <button class="pill-btn" id="btn-filters" type="button">Filters</button>
-      <button class="pill-btn" id="btn-bands" type="button">Bands</button>
-
-      <div class="shade-toggle" role="group" aria-label="Maduro Natural toggle">
-        <span class="shade-label shade-left" id="shade-maduro-label">Maduro</span>
-        <button class="shade-switch" id="shade-toggle" type="button" aria-label="Toggle shade"></button>
-        <span class="shade-label shade-right" id="shade-natural-label">Natural</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- List -->
   <main class="brand-main">
-    <ul class="brand-list" id="brand-list" aria-label="Cigars list"></ul>
+
+    <!-- Brand header -->
+    <section class="brand-title-row">
+      <h1 class="brand-title" id="brand-title">Brand</h1>
+
+      <!-- brand icon -->
+      <div class="brand-icon" id="brand-icon" aria-hidden="true"></div>
+    </section>
+
+    <!-- Search -->
+    <section class="brand-search">
+      <div class="search-wrap">
+        <span class="search-ico" aria-hidden="true">🔎</span>
+        <input id="brand-search" type="search" placeholder="Search…" autocomplete="off" />
+      </div>
+    </section>
+
+    <!-- Controls -->
+    <section class="brand-controls" aria-label="Brand controls">
+      <button class="pill-btn" id="btn-filters" type="button" aria-haspopup="dialog">Filters</button>
+      <button class="pill-btn" id="btn-bands" type="button" aria-haspopup="dialog">Bands</button>
+
+      <!-- Maduro / Natural toggle -->
+      <div class="seg" id="wrapper-seg" data-state="all" role="group" aria-label="Wrapper toggle">
+        <button class="seg-btn" id="seg-maduro" type="button" aria-pressed="false">Maduro</button>
+        <button class="seg-dot" id="seg-switch" type="button" aria-label="Toggle Maduro/Natural"></button>
+        <button class="seg-btn" id="seg-natural" type="button" aria-pressed="false">Natural</button>
+      </div>
+    </section>
+
+    <!-- List -->
+    <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
+
+    <!-- Load / error -->
+    <p class="brand-status" id="brand-status" hidden></p>
   </main>
 
-  <!-- Filters Modal -->
-  <div class="modal" id="filters-modal" aria-hidden="true">
-    <div class="modal-backdrop" data-close="filters"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="filters-title">
-      <div class="modal-head">
-        <div class="modal-title" id="filters-title">Filters</div>
-        <button class="modal-x" type="button" data-close="filters" aria-label="Close">×</button>
-      </div>
+  <!-- Receipt button (bottom-right) -->
+  <button type="button" class="receipt-fab" id="receipt-open" aria-label="Receipt">
+    <img src="/img/icons/receipt.png" alt="" />
+    <span class="receipt-badge" id="receipt-count" hidden>0</span>
+  </button>
 
-      <div class="modal-body">
-        <div class="filters-grid" id="filters-grid"></div>
-      </div>
+  <!-- Bottom sheet backdrop -->
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
 
-      <div class="modal-foot">
-        <button class="btn-confirm" id="filters-confirm" type="button">Confirm</button>
-      </div>
+  <!-- Bottom sheet: Receipt -->
+  <section class="sheet" id="sheet-receipt" role="dialog" aria-modal="true" aria-label="Receipt" hidden>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <header class="sheet-header">
+      <h2>Receipt</h2>
+      <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+    </header>
+
+    <div class="sheet-body">
+      <div class="receipt-items" id="receipt-items"></div>
     </div>
-  </div>
 
-  <!-- Bands Modal (placeholder) -->
-  <div class="modal" id="bands-modal" aria-hidden="true">
-    <div class="modal-backdrop" data-close="bands"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bands-title">
-      <div class="modal-head">
-        <div class="modal-title" id="bands-title">Bands</div>
-        <button class="modal-x" type="button" data-close="bands" aria-label="Close">×</button>
-      </div>
+    <footer class="sheet-footer">
+      <button class="sheet-btn" type="button" id="receipt-clear">Clear</button>
+      <button class="sheet-btn primary" type="button" data-sheet-close>Close</button>
+    </footer>
+  </section>
 
-      <div class="modal-body">
-        <div class="bands-note">Bands UI goes here (kept intact so your page isn’t missing buttons).</div>
-      </div>
+  <!-- Centered popup: Bands (white card) -->
+  <section class="sheet bands-sheet" id="sheet-bands" role="dialog" aria-modal="true" aria-label="Bands" hidden>
+    <header class="sheet-header bands-header">
+      <h2>Filter by band art</h2>
+      <button class="sheet-x bands-x" type="button" data-sheet-close aria-label="Close">×</button>
+    </header>
 
-      <div class="modal-foot">
-        <button class="btn-confirm" id="bands-confirm" type="button">Confirm</button>
-      </div>
+    <div class="sheet-body bands-body">
+      <div class="bands-list" id="bands-options"></div>
     </div>
-  </div>
+
+    <footer class="sheet-footer bands-footer">
+      <button class="sheet-btn primary bands-confirm" type="button" id="bands-confirm">Confirm</button>
+    </footer>
+  </section>
+
+  <!-- ✅ CHANGED: Filters is now a centered popup like Bands -->
+  <section class="sheet filters-sheet" id="sheet-filters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
+    <header class="sheet-header filters-header">
+      <h2>Filters</h2>
+      <button class="sheet-x filters-x" type="button" data-sheet-close aria-label="Close">×</button>
+    </header>
+
+    <div class="sheet-body filters-body">
+      <div class="chip-grid" id="filters-options"></div>
+    </div>
+
+    <footer class="sheet-footer filters-footer">
+      <button class="sheet-btn primary" type="button" id="filters-confirm">Confirm</button>
+    </footer>
+  </section>
 
   <script src="/pos/cart.js"></script>
-  <script src="/pos/cigars/brand.js?v=20251231-1"></script>
+  <script src="/pos/cigars/brand.js"></script>
 </body>
 </html>
