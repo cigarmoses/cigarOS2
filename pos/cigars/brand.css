@@ -51,10 +51,11 @@
   stroke: rgba(255,255,255,.90);
 }
 
-.brand-topbar-center{
+.brand-topbar-title{
   min-width: 0;
 }
 
+.brand-name,
 .brand-title{
   margin: 0;
   font-size: 20px;
@@ -72,6 +73,7 @@
   gap: 10px;
 }
 
+.brand-badge,
 .brand-icon-wrap{
   width: 38px;
   height: 38px;
@@ -81,6 +83,7 @@
   border: 1px solid rgba(255,255,255,.10);
 }
 
+.brand-badge img,
 .brand-icon{
   width: 100%;
   height: 100%;
@@ -130,7 +133,8 @@
   gap: 4px;
 }
 
-/* ✅ FIX #1 — allow wrapping, NO ellipsis */
+/* ✅ Cigar name wraps (NO ellipsis).
+   IMPORTANT: do NOT use overflow: visible (that caused layout weirdness earlier). */
 .cigar-name{
   font-size: 18px;
   line-height: 22px;
@@ -138,9 +142,9 @@
   letter-spacing: .2px;
 
   white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  overflow-wrap: anywhere;
+  overflow: hidden;          /* safe */
+  text-overflow: clip;       /* no "..." */
+  overflow-wrap: anywhere;   /* iOS-friendly wrapping */
 }
 
 .cigar-vitola{
@@ -148,12 +152,16 @@
   line-height: 18px;
   font-weight: 650;
   color: var(--muted);
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
 }
 
-/* ✅ FIX #2 — same color, just taller */
+/* ✅ Separator: same subtle color, just taller */
 .cigar-sep{
   width: 2px;
-  height: 44px; /* taller than original */
+  height: 44px;
   border-radius: 2px;
   background: var(--sepColor);
   justify-self: center;
@@ -191,26 +199,29 @@
   justify-content: center;
 }
 
-/* ---------- Modal (Filters) ---------- */
-.pos-modal{
+/* ---------- Modal (Filters / Bands) ----------
+   Your HTML uses .modal / .modal-backdrop / .modal-card,
+   so the CSS must target those (NOT .pos-modal…).
+*/
+.modal{
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: none;
 }
 
-.pos-modal.is-open{
+.modal.is-open{
   display: block;
 }
 
-.pos-modal__backdrop{
+.modal-backdrop{
   position: absolute;
   inset: 0;
   background: rgba(0,0,0,.55);
   backdrop-filter: blur(6px);
 }
 
-.pos-modal__sheet{
+.modal-card{
   position: absolute;
   left: 50%;
   top: 50%;
@@ -222,21 +233,21 @@
   overflow: hidden;
 }
 
-.pos-modal__header{
+.modal-head{
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 16px 10px;
 }
 
-.pos-modal__title{
+.modal-title{
   font-size: 26px;
   line-height: 30px;
   font-weight: 900;
   color: rgba(0,0,0,.82);
 }
 
-.pos-modal__close{
+.modal-x{
   width: 42px;
   height: 42px;
   border-radius: 14px;
@@ -247,7 +258,7 @@
   line-height: 1;
 }
 
-.pos-modal__content{
+.modal-body{
   padding: 8px 16px 14px;
 }
 
@@ -275,7 +286,7 @@
   box-shadow: inset 0 0 0 1px rgba(0,122,255,.28);
 }
 
-.pos-modal__footer{
+.modal-foot{
   padding: 16px 16px 18px;
   display: flex;
   justify-content: center;
