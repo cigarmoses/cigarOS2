@@ -1,10 +1,9 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
    - Loads canonical CSV
-   - Renders rows (name wraps; no ellipsis)
-   - Filters modal UI matches Cigars page style
-   - Confirm button uses .btn-confirm styling
-   - Uses shared /pos/cart.js for receipt + badge + persistence (unchanged)
+   - Renders rows
+   - Filters modal UI (visual only)
+   - Uses shared /pos/cart.js if available
 */
 
 (() => {
@@ -18,11 +17,19 @@
   const listEl = $("#brand-list");
 
   const backBtn = $("#brand-back");
-  const filtersBtn = $("#brand-filters");
+
+  // Two possible filters buttons exist in your HTML:
+  const topFiltersBtn = $("#brand-filters");
+  const controlsFiltersBtn = $("#btn-filters");
+
+  const bandsBtn = $("#btn-bands");
 
   const filtersModal = $("#filters-modal");
   const filtersGrid = $("#filters-grid");
   const filtersConfirm = $("#filters-confirm");
+
+  const bandsModal = $("#bands-modal");
+  const bandsConfirm = $("#bands-confirm");
 
   // --- helpers ---
   const qp = new URLSearchParams(location.search);
@@ -42,7 +49,7 @@
     document.body.style.overflow = "";
   };
 
-  // Very small CSV parser (handles quoted commas)
+  // CSV parser (handles quoted commas)
   const parseCSV = (text) => {
     const rows = [];
     let row = [];
@@ -98,12 +105,10 @@
 
   const money = (v) => {
     const n = Number(v);
-    if (!Number.isFinite(n)) return "";
-    return n.toFixed(2);
+    return Number.isFinite(n) ? n.toFixed(2) : "";
   };
 
-  // --- Filters UI (visual only; wire logic later if you want) ---
-  // Order copied from your mockups / Cigars page style intent
+  // --- Filters UI (visual only) ---
   const FILTER_BUTTONS = [
     "Ring",
     "Wrapper Shade",
@@ -138,6 +143,7 @@
 
   // --- Rendering ---
   const render = (items) => {
+    if (!listEl) return;
     listEl.innerHTML = "";
 
     items.forEach((it) => {
@@ -155,7 +161,7 @@
       img.src = it.brandImg || it.manufacturerImg || "";
       left.appendChild(img);
 
-      // Middle text (name wraps; vitola below)
+      // Middle text
       const main = document.createElement("div");
       main.className = "cigar-main";
 
@@ -170,12 +176,12 @@
       main.appendChild(name);
       main.appendChild(vitola);
 
-      // Separator (shorter height handled by CSS)
+      // Separator
       const sep = document.createElement("div");
       sep.className = "cigar-sep";
       sep.setAttribute("aria-hidden", "true");
 
-      // Right (price + add)
+      // Right
       const right = document.createElement("div");
       right.className = "cigar-right";
 
@@ -189,10 +195,7 @@
       add.textContent = "+";
       add.setAttribute("aria-label", "Add to receipt");
 
-      // Hook into your existing cart.js if it exposes a handler
       add.addEventListener("click", () => {
-        // If your cart.js defines window.POS_CART.addItem, this will work.
-        // Otherwise it safely no-ops.
         try {
           if (window.POS_CART && typeof window.POS_CART.addItem === "function") {
             window.POS_CART.addItem({
@@ -203,7 +206,7 @@
               meta: it,
             });
           }
-        } catch (e) {}
+        } catch (_) {}
       });
 
       right.appendChild(price);
@@ -227,9 +230,7 @@
     const rows = parseCSV(text);
     const headers = rows[0] || [];
     const idx = indexByHeader(headers);
-
-    // Expected headers from your canonical sheet (best-effort)
-    const get = (r, key) => r[idx[key]] ?? "";
+    const get = (r, key) => (idx[key] != null ? r[idx[key]] : "");
 
     const all = rows.slice(1).map((r) => ({
       manufacturer: get(r, "Manufacturer"),
@@ -249,13 +250,11 @@
       ? all.filter((x) => (x.brand || "").toLowerCase() === brandParam.toLowerCase())
       : all;
 
-    // Topbar
     const title = brandParam || (filtered[0]?.brand ?? "Brand");
-    brandTitleEl.textContent = title;
+    if (brandTitleEl) brandTitleEl.textContent = title;
 
-    // Brand icon (top-right) – uses first row’s Brand IMG if present
     const topImg = filtered[0]?.brandImg || filtered[0]?.manufacturerImg || "";
-    if (topImg) brandIconEl.src = topImg;
+    if (brandIconEl && topImg) brandIconEl.src = topImg;
 
     render(filtered);
   };
@@ -263,28 +262,36 @@
   // --- Events ---
   backBtn?.addEventListener("click", () => history.back());
 
-  filtersBtn?.addEventListener("click", () => {
+  const openFilters = () => {
     buildFiltersUI();
     openModal(filtersModal);
-  });
+  };
 
-  // Close modal clicks
-  filtersModal?.addEventListener("click", (e) => {
+  topFiltersBtn?.addEventListener("click", openFilters);
+  controlsFiltersBtn?.addEventListener("click", openFilters);
+
+  bandsBtn?.addEventListener("click", () => openModal(bandsModal));
+
+  // Close modal clicks (filters + bands)
+  const modalClickClose = (e) => {
     const t = e.target;
-    if (t && t.dataset && t.dataset.close === "filters") {
-      closeModal(filtersModal);
-    }
-  });
+    const closeKey = t?.dataset?.close;
+    if (!closeKey) return;
 
-  filtersConfirm?.addEventListener("click", () => {
-    // Visual confirm closes modal (wire filtering later if desired)
-    closeModal(filtersModal);
-  });
+    if (closeKey === "filters") closeModal(filtersModal);
+    if (closeKey === "bands") closeModal(bandsModal);
+  };
 
-  // ESC closes
+  filtersModal?.addEventListener("click", modalClickClose);
+  bandsModal?.addEventListener("click", modalClickClose);
+
+  filtersConfirm?.addEventListener("click", () => closeModal(filtersModal));
+  bandsConfirm?.addEventListener("click", () => closeModal(bandsModal));
+
   window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && filtersModal?.classList.contains("is-open")) {
-      closeModal(filtersModal);
+    if (e.key === "Escape") {
+      if (filtersModal?.classList.contains("is-open")) closeModal(filtersModal);
+      if (bandsModal?.classList.contains("is-open")) closeModal(bandsModal);
     }
   });
 
