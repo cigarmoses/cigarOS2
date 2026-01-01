@@ -1,15 +1,22 @@
 /* /pos/cigars/cigars.js
-   UI controller (MAIN cigars page):
-   - Controls filter pills + unified popup modal
-   - Writes to window.__CIGAR_FILTER_STATE__
-   - Calls window.buildCigarsRender()
-   - WAITS for HUB loader (build-cigars.js) to be ready
-   - Wrapper Shade uses your custom order
+   UI controller:
+   - Back button
+   - View all expand/collapse
+   - Filter modal open/close
+   - Populates filter lists using the SAME data that build-cigars.js loads
+   - Writes to window.__CIGAR_FILTER_STATE__ and calls window.buildCigarsRender()
+   - Wrapper Shade: custom ordered list (extras appended)
+   - ✅ Adds small icons for Manufacturer + Brand in the modal:
+     img/icons/manufacturers/(slug).svg
+     img/icons/brands/(slug).svg
 */
 
 (() => {
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const backBtn = $("#cigars-back");
   const viewAllBtn = $("#filters-view-all");
@@ -24,7 +31,6 @@
   const modalSearch = $("#fm-search-input");
   const modalConfirm = $("#fm-confirm");
 
-  // Prefer the rows already loaded by build-cigars.js (HUB)
   let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__)
     ? window.__CIGAR_SHEET_ROWS__
     : [];
@@ -59,38 +65,6 @@
     if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
   }
 
-  // ---- wait for HUB loader to be ready ----
-  function waitForHubReady() {
-    return new Promise((resolve) => {
-      const already =
-        Array.isArray(window.__CIGAR_SHEET_ROWS__) &&
-        window.__CIGAR_SHEET_ROWS__.length &&
-        typeof window.buildCigarsRender === "function";
-
-      if (already) return resolve();
-
-      const onReady = () => {
-        window.removeEventListener("cigars:hub-ready", onReady);
-        resolve();
-      };
-
-      window.addEventListener("cigars:hub-ready", onReady);
-
-      // If event was missed but globals are now present, resolve on next tick
-      setTimeout(() => {
-        const ok =
-          Array.isArray(window.__CIGAR_SHEET_ROWS__) &&
-          window.__CIGAR_SHEET_ROWS__.length &&
-          typeof window.buildCigarsRender === "function";
-        if (ok) {
-          window.removeEventListener("cigars:hub-ready", onReady);
-          resolve();
-        }
-      }, 0);
-    });
-  }
-
-  // Local UI state mirrors global state
   const state = {
     selected: {
       manufacturer: new Set(),
@@ -136,19 +110,80 @@
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
 
-  // Extract values for filter key from DATA_ROWS
+  // --- CSV parsing (fallback if build-cigars.js hasn't loaded yet) ---
+  function parseCSV(text) {
+    const rows = [];
+    let i = 0;
+    let field = "";
+    let row = [];
+    let inQuotes = false;
+
+    while (i < text.length) {
+      const c = text[i];
+
+      if (c === '"') {
+        if (inQuotes && text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        }
+        inQuotes = !inQuotes;
+        i += 1;
+        continue;
+      }
+
+      if (!inQuotes && (c === "," || c === "\n" || c === "\r")) {
+        row.push(field);
+        field = "";
+
+        if (c === ",") {
+          i += 1;
+          continue;
+        }
+
+        if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+        row = [];
+
+        if (c === "\r" && text[i + 1] === "\n") i += 2;
+        else i += 1;
+
+        continue;
+      }
+
+      field += c;
+      i += 1;
+    }
+
+    if (field.length || row.length) {
+      row.push(field);
+      if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+    }
+
+    return rows;
+  }
+
+  function rowsToObjects(rows) {
+    if (!rows.length) return [];
+    const headers = rows[0].map((h) => String(h || "").trim());
+    return rows.slice(1).map((r) => {
+      const obj = {};
+      headers.forEach((h, idx) => (obj[h] = r[idx] ?? ""));
+      return obj;
+    });
+  }
+
   function getValuesForKey(key) {
     if (!DATA_ROWS.length) return [];
 
     const fieldMap = {
-      manufacturer: ["Manufacturer"],
-      brand: ["Brand"],
-      ring: ["RG", "Ring"],
-      vitola: ["Vitola", "Style"],
-      strength: ["Strength"],
-      shade: ["Wrapper Shade", "Shade"],
-      length: ["Length"],
-      shape: ["Shape"],
+      manufacturer: ["Manufacturer", "manufacturer"],
+      brand: ["Brand", "brand"],
+      ring: ["RG", "Ring", "ring"],
+      vitola: ["Vitola", "vitola", "Style", "style"],
+      strength: ["Strength", "strength"],
+      shade: ["Wrapper Shade", "WrapperShade", "wrapperShade", "shade"],
+      length: ["Length", "length"],
+      shape: ["Shape", "shape"],
     };
 
     const keysToTry = fieldMap[key] || [key];
@@ -207,6 +242,24 @@
     return ordered;
   }
 
+  // ✅ icon slug helper
+  function slugify(name) {
+    return String(name || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
+  }
+
+  function iconPathForModalItem(key, label) {
+    const slug = slugify(label);
+    if (!slug) return "";
+    if (key === "manufacturer") return `/img/icons/manufacturers/${slug}.svg`;
+    if (key === "brand") return `/img/icons/brands/${slug}.svg`;
+    return "";
+  }
+
   function openModal(key) {
     state.currentModalKey = key;
 
@@ -248,39 +301,49 @@
     state.currentModalValues = [];
   }
 
-  // ✅ DOM-build list so values are exact (no HTML escaping issues)
   function renderModalList(values) {
     const key = state.currentModalKey;
     if (!modalList || !key) return;
 
     const selectedSet = state.selected[key] || new Set();
-    modalList.innerHTML = "";
+    const showIcons = key === "manufacturer" || key === "brand";
 
-    const frag = document.createDocumentFragment();
+    modalList.innerHTML = values
+      .map((v) => {
+        const label = norm(v);
+        const isSelected = selectedSet.has(label);
+        const iconSrc = showIcons ? iconPathForModalItem(key, label) : "";
 
-    values.forEach((v) => {
-      const label = norm(v);
-      if (!label) return;
+        // ✅ small icon (text-height) – never massive
+        const iconHtml = showIcons
+          ? `<img
+              class="fm-ico"
+              src="${escapeHtml(iconSrc)}"
+              alt=""
+              loading="lazy"
+              decoding="async"
+              onerror="this.style.display='none';"
+              style="
+                width:22px;height:22px;max-width:22px;max-height:22px;
+                border-radius:6px;object-fit:contain;flex:0 0 22px;
+              "
+            />`
+          : `<div></div>`;
 
-      const row = document.createElement("div");
-      row.className = "fm-row" + (selectedSet.has(label) ? " is-selected" : "");
-      row.dataset.value = label;
+        return `
+          <div class="fm-row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(label)}"
+               style="display:grid;grid-template-columns:${showIcons ? "26px" : "0px"} 1fr 28px;align-items:center;column-gap:12px;">
+            ${iconHtml}
+            <div class="fm-label">${escapeHtml(label)}</div>
+            <div class="fm-check" aria-hidden="true"></div>
+          </div>
+        `;
+      })
+      .join("");
 
-      const left = document.createElement("div");
-      const mid = document.createElement("div");
-      mid.className = "fm-label";
-      mid.textContent = label;
-
-      const right = document.createElement("div");
-      right.className = "fm-check";
-      right.setAttribute("aria-hidden", "true");
-
-      row.appendChild(left);
-      row.appendChild(mid);
-      row.appendChild(right);
-
+    $$(".fm-row").forEach((row) => {
       row.addEventListener("click", () => {
-        const val = row.dataset.value || "";
+        const val = row.getAttribute("data-value") || "";
         if (!val) return;
 
         if (selectedSet.has(val)) selectedSet.delete(val);
@@ -288,11 +351,7 @@
 
         row.classList.toggle("is-selected");
       });
-
-      frag.appendChild(row);
     });
-
-    modalList.appendChild(frag);
   }
 
   modalSearch?.addEventListener("input", () => {
@@ -300,6 +359,17 @@
     const all = state.currentModalValues || [];
     const filtered = !q ? all : all.filter((v) => norm(v).toLowerCase().includes(q));
     renderModalList(filtered);
+  });
+
+  modalConfirm?.addEventListener("click", () => {
+    syncPillActiveStates();
+    pushStateToGlobal();
+    closeModal();
+  });
+
+  modalBackdrop?.addEventListener("click", closeModal);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal && !modal.classList.contains("fm--hidden")) closeModal();
   });
 
   function syncPillActiveStates() {
@@ -315,17 +385,16 @@
     });
   }
 
-  // ✅ Write into global state + rerender brand grid
   function pushStateToGlobal() {
     ensureGlobalState();
     const g = window.__CIGAR_FILTER_STATE__;
 
-    // filters: copy sets
     for (const k of Object.keys(g.filters)) {
-      if (state.selected[k]) g.filters[k] = new Set([...state.selected[k]]);
+      if (state.selected[k]) {
+        g.filters[k] = new Set([...state.selected[k]]);
+      }
     }
 
-    // toggles
     g.toggles.flavored = !!state.toggles.flavored;
     g.toggles.boxpressed = !!state.toggles.boxpressed;
     g.toggles.tin = !!state.toggles.tin;
@@ -333,25 +402,11 @@
     g.toggles.barberpole = !!state.toggles.barberpole;
     g.toggles.tubo = !!state.toggles.tubo;
 
-    // search
     g.q = (searchInput?.value || "").toString();
 
     renderBrands();
   }
 
-  modalConfirm?.addEventListener("click", () => {
-    syncPillActiveStates();
-    pushStateToGlobal();
-    closeModal();
-  });
-
-  modalBackdrop?.addEventListener("click", closeModal);
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal && !modal.classList.contains("fm--hidden")) closeModal();
-  });
-
-  // click handlers
   $$(".filter-pill[data-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const key = btn.getAttribute("data-filter");
@@ -363,42 +418,57 @@
   $$(".filter-pill[data-toggle]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const t = btn.getAttribute("data-toggle");
-      if (!t) return;
       state.toggles[t] = !state.toggles[t];
       btn.classList.toggle("is-active", state.toggles[t]);
       pushStateToGlobal();
     });
   });
 
-  searchInput?.addEventListener("input", pushStateToGlobal);
+  searchInput?.addEventListener("input", () => {
+    pushStateToGlobal();
+  });
 
-  // ---- init ----
-  async function init() {
-    ensureGlobalState();
-
-    // ✅ wait for Hub rows + renderer
-    await waitForHubReady();
-
-    // ✅ pull Hub rows
-    DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__) ? window.__CIGAR_SHEET_ROWS__ : [];
-
-    // pull global -> local so UI shows active states
-    const g = window.__CIGAR_FILTER_STATE__;
-    for (const k of Object.keys(state.selected)) {
-      const set = g.filters?.[k];
-      state.selected[k] = set instanceof Set ? new Set([...set]) : new Set();
-    }
-    for (const k of Object.keys(state.toggles)) {
-      state.toggles[k] = !!g.toggles?.[k];
-    }
-
-    if (searchInput) searchInput.value = g.q || "";
-
-    syncPillActiveStates();
-    renderBrands();
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
-  init().catch((err) => {
-    console.error("cigars.js init error:", err);
-  });
+  async function init() {
+    try {
+      ensureGlobalState();
+
+      if (Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length) {
+        DATA_ROWS = window.__CIGAR_SHEET_ROWS__;
+      } else {
+        const res = await fetch(CSV_URL, { cache: "no-store" });
+        const text = await res.text();
+        const parsed = parseCSV(text);
+        DATA_ROWS = rowsToObjects(parsed);
+        window.__CIGAR_SHEET_ROWS__ = DATA_ROWS;
+      }
+
+      const g = window.__CIGAR_FILTER_STATE__;
+      for (const k of Object.keys(state.selected)) {
+        const set = g.filters?.[k];
+        state.selected[k] = set instanceof Set ? new Set([...set]) : new Set();
+      }
+      for (const k of Object.keys(state.toggles)) {
+        state.toggles[k] = !!g.toggles?.[k];
+      }
+
+      if (searchInput) searchInput.value = g.q || "";
+
+      syncPillActiveStates();
+      renderBrands();
+    } catch (err) {
+      console.error("cigars.js init error:", err);
+      syncPillActiveStates();
+    }
+  }
+
+  init();
 })();
