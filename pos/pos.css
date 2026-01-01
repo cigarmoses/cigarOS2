@@ -215,3 +215,33 @@ body.pos-home{
     height: 26px !important;
   }
 }
+/* ================================
+   GLOBAL CONFIRM BUTTON OVERRIDE
+   (safe – does NOT affect cigar rows)
+   ================================ */
+
+.btn-confirm{
+  width: min(320px, 100%);
+  height: 74px;
+  border-radius: 999px;
+  border: none;
+  background: #63d7a1;
+  color: rgba(255,255,255,.95);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+
+/* Fallbacks if other confirm class names are used */
+button.confirm,
+.confirm-btn{
+  width: min(320px, 100%);
+  height: 74px;
+  border-radius: 999px;
+  border: none;
+  background: #63d7a1;
+  color: rgba(255,255,255,.95);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: .2px;
+}
