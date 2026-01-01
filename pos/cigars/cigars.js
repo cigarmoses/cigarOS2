@@ -1,23 +1,21 @@
 /* /pos/cigars/cigars.js
-   UI controller:
-   - Back button
-   - View all expand/collapse
-   - Filter modal open/close
-   - Loads canonical CSV (so Manufacturer/Brand lists populate)
-   - Wrapper Shade: title + custom ordered list (extras appended)
-   - Dispatches "cigars:filters-changed"
+   UI controller (MAIN cigars page):
+   - Controls filter pills + unified popup modal
+   - Writes to window.__CIGAR_FILTER_STATE__
+   - Calls window.buildCigarsRender()
+   - WAITS for HUB loader (build-cigars.js) to be ready
+   - Wrapper Shade uses your custom order
 */
 
 (() => {
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-  const CSV_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
-
   const backBtn = $("#cigars-back");
   const viewAllBtn = $("#filters-view-all");
   const expandedEl = $("#filters-expanded");
+
+  const searchInput = $("#cigars-search-input");
 
   const modal = $("#filter-modal");
   const modalBackdrop = modal?.querySelector("[data-fm-close]");
@@ -26,9 +24,73 @@
   const modalSearch = $("#fm-search-input");
   const modalConfirm = $("#fm-confirm");
 
-  // dataset (fix)
-  let DATA_ROWS = [];
+  // Prefer the rows already loaded by build-cigars.js (HUB)
+  let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__)
+    ? window.__CIGAR_SHEET_ROWS__
+    : [];
 
+  function ensureGlobalState() {
+    if (!window.__CIGAR_FILTER_STATE__) {
+      window.__CIGAR_FILTER_STATE__ = {
+        q: "",
+        filters: {
+          manufacturer: new Set(),
+          brand: new Set(),
+          shade: new Set(),
+          vitola: new Set(),
+          length: new Set(),
+          ring: new Set(),
+          shape: new Set(),
+          strength: new Set(),
+        },
+        toggles: {
+          tubo: false,
+          flavored: false,
+          tin: false,
+          pack: false,
+          barberpole: false,
+          boxpressed: false,
+        },
+      };
+    }
+  }
+
+  function renderBrands() {
+    if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
+  }
+
+  // ---- wait for HUB loader to be ready ----
+  function waitForHubReady() {
+    return new Promise((resolve) => {
+      const already =
+        Array.isArray(window.__CIGAR_SHEET_ROWS__) &&
+        window.__CIGAR_SHEET_ROWS__.length &&
+        typeof window.buildCigarsRender === "function";
+
+      if (already) return resolve();
+
+      const onReady = () => {
+        window.removeEventListener("cigars:hub-ready", onReady);
+        resolve();
+      };
+
+      window.addEventListener("cigars:hub-ready", onReady);
+
+      // If event was missed but globals are now present, resolve on next tick
+      setTimeout(() => {
+        const ok =
+          Array.isArray(window.__CIGAR_SHEET_ROWS__) &&
+          window.__CIGAR_SHEET_ROWS__.length &&
+          typeof window.buildCigarsRender === "function";
+        if (ok) {
+          window.removeEventListener("cigars:hub-ready", onReady);
+          resolve();
+        }
+      }, 0);
+    });
+  }
+
+  // Local UI state mirrors global state
   const state = {
     selected: {
       manufacturer: new Set(),
@@ -46,6 +108,7 @@
       tin: false,
       pack: false,
       barberpole: false,
+      tubo: false,
     },
     currentModalKey: null,
     currentModalValues: [],
@@ -54,8 +117,8 @@
   backBtn?.addEventListener("click", () => history.back());
 
   viewAllBtn?.addEventListener("click", () => {
-    const isHidden = expandedEl?.hasAttribute("hidden");
     if (!expandedEl) return;
+    const isHidden = expandedEl.hasAttribute("hidden");
     if (isHidden) expandedEl.removeAttribute("hidden");
     else expandedEl.setAttribute("hidden", "");
   });
@@ -73,81 +136,19 @@
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
 
-  // --- CSV parsing ---
-  function parseCSV(text) {
-    const rows = [];
-    let i = 0;
-    let field = "";
-    let row = [];
-    let inQuotes = false;
-
-    while (i < text.length) {
-      const c = text[i];
-
-      if (c === '"') {
-        if (inQuotes && text[i + 1] === '"') {
-          field += '"';
-          i += 2;
-          continue;
-        }
-        inQuotes = !inQuotes;
-        i += 1;
-        continue;
-      }
-
-      if (!inQuotes && (c === "," || c === "\n" || c === "\r")) {
-        row.push(field);
-        field = "";
-
-        if (c === ",") {
-          i += 1;
-          continue;
-        }
-
-        if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
-        row = [];
-
-        if (c === "\r" && text[i + 1] === "\n") i += 2;
-        else i += 1;
-
-        continue;
-      }
-
-      field += c;
-      i += 1;
-    }
-
-    if (field.length || row.length) {
-      row.push(field);
-      if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
-    }
-
-    return rows;
-  }
-
-  function rowsToObjects(rows) {
-    if (!rows.length) return [];
-    const headers = rows[0].map((h) => String(h || "").trim());
-    return rows.slice(1).map((r) => {
-      const obj = {};
-      headers.forEach((h, idx) => (obj[h] = r[idx] ?? ""));
-      return obj;
-    });
-  }
-
   // Extract values for filter key from DATA_ROWS
   function getValuesForKey(key) {
     if (!DATA_ROWS.length) return [];
 
     const fieldMap = {
-      manufacturer: ["Manufacturer", "manufacturer"],
-      brand: ["Brand", "brand"],
-      ring: ["RG", "Ring", "ring"],
-      vitola: ["Vitola", "vitola", "Style", "style"],
-      strength: ["Strength", "strength"],
-      shade: ["Wrapper Shade", "WrapperShade", "wrapperShade", "shade"],
-      length: ["Length", "length"],
-      shape: ["Shape", "shape"],
+      manufacturer: ["Manufacturer"],
+      brand: ["Brand"],
+      ring: ["RG", "Ring"],
+      vitola: ["Vitola", "Style"],
+      strength: ["Strength"],
+      shade: ["Wrapper Shade", "Shade"],
+      length: ["Length"],
+      shape: ["Shape"],
     };
 
     const keysToTry = fieldMap[key] || [key];
@@ -247,29 +248,39 @@
     state.currentModalValues = [];
   }
 
+  // ✅ DOM-build list so values are exact (no HTML escaping issues)
   function renderModalList(values) {
     const key = state.currentModalKey;
     if (!modalList || !key) return;
 
     const selectedSet = state.selected[key] || new Set();
+    modalList.innerHTML = "";
 
-    modalList.innerHTML = values
-      .map((v) => {
-        const label = norm(v);
-        const isSelected = selectedSet.has(label);
-        return `
-          <div class="fm-row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(label)}">
-            <div></div>
-            <div class="fm-label">${escapeHtml(label)}</div>
-            <div class="fm-check" aria-hidden="true"></div>
-          </div>
-        `;
-      })
-      .join("");
+    const frag = document.createDocumentFragment();
 
-    $$(".fm-row").forEach((row) => {
+    values.forEach((v) => {
+      const label = norm(v);
+      if (!label) return;
+
+      const row = document.createElement("div");
+      row.className = "fm-row" + (selectedSet.has(label) ? " is-selected" : "");
+      row.dataset.value = label;
+
+      const left = document.createElement("div");
+      const mid = document.createElement("div");
+      mid.className = "fm-label";
+      mid.textContent = label;
+
+      const right = document.createElement("div");
+      right.className = "fm-check";
+      right.setAttribute("aria-hidden", "true");
+
+      row.appendChild(left);
+      row.appendChild(mid);
+      row.appendChild(right);
+
       row.addEventListener("click", () => {
-        const val = row.getAttribute("data-value") || "";
+        const val = row.dataset.value || "";
         if (!val) return;
 
         if (selectedSet.has(val)) selectedSet.delete(val);
@@ -277,7 +288,11 @@
 
         row.classList.toggle("is-selected");
       });
+
+      frag.appendChild(row);
     });
+
+    modalList.appendChild(frag);
   }
 
   modalSearch?.addEventListener("input", () => {
@@ -285,17 +300,6 @@
     const all = state.currentModalValues || [];
     const filtered = !q ? all : all.filter((v) => norm(v).toLowerCase().includes(q));
     renderModalList(filtered);
-  });
-
-  modalConfirm?.addEventListener("click", () => {
-    syncPillActiveStates();
-    dispatchFiltersChanged();
-    closeModal();
-  });
-
-  modalBackdrop?.addEventListener("click", closeModal);
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal && !modal.classList.contains("fm--hidden")) closeModal();
   });
 
   function syncPillActiveStates() {
@@ -311,16 +315,43 @@
     });
   }
 
-  function dispatchFiltersChanged() {
-    const detail = {
-      selected: Object.fromEntries(
-        Object.entries(state.selected).map(([k, set]) => [k, Array.from(set)])
-      ),
-      toggles: { ...state.toggles },
-    };
-    document.dispatchEvent(new CustomEvent("cigars:filters-changed", { detail }));
+  // ✅ Write into global state + rerender brand grid
+  function pushStateToGlobal() {
+    ensureGlobalState();
+    const g = window.__CIGAR_FILTER_STATE__;
+
+    // filters: copy sets
+    for (const k of Object.keys(g.filters)) {
+      if (state.selected[k]) g.filters[k] = new Set([...state.selected[k]]);
+    }
+
+    // toggles
+    g.toggles.flavored = !!state.toggles.flavored;
+    g.toggles.boxpressed = !!state.toggles.boxpressed;
+    g.toggles.tin = !!state.toggles.tin;
+    g.toggles.pack = !!state.toggles.pack;
+    g.toggles.barberpole = !!state.toggles.barberpole;
+    g.toggles.tubo = !!state.toggles.tubo;
+
+    // search
+    g.q = (searchInput?.value || "").toString();
+
+    renderBrands();
   }
 
+  modalConfirm?.addEventListener("click", () => {
+    syncPillActiveStates();
+    pushStateToGlobal();
+    closeModal();
+  });
+
+  modalBackdrop?.addEventListener("click", closeModal);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal && !modal.classList.contains("fm--hidden")) closeModal();
+  });
+
+  // click handlers
   $$(".filter-pill[data-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const key = btn.getAttribute("data-filter");
@@ -335,36 +366,39 @@
       if (!t) return;
       state.toggles[t] = !state.toggles[t];
       btn.classList.toggle("is-active", state.toggles[t]);
-      dispatchFiltersChanged();
+      pushStateToGlobal();
     });
   });
 
-  function escapeHtml(str) {
-    return String(str ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
+  searchInput?.addEventListener("input", pushStateToGlobal);
 
-  // ---- init: load CSV so filters populate ----
+  // ---- init ----
   async function init() {
-    try {
-      const res = await fetch(CSV_URL, { cache: "no-store" });
-      const text = await res.text();
-      const parsed = parseCSV(text);
-      DATA_ROWS = rowsToObjects(parsed);
+    ensureGlobalState();
 
-      // optional: expose for other scripts
-      window.__CIGARS__ = DATA_ROWS;
+    // ✅ wait for Hub rows + renderer
+    await waitForHubReady();
 
-      syncPillActiveStates();
-    } catch (err) {
-      console.error("cigars.js CSV load error:", err);
-      syncPillActiveStates();
+    // ✅ pull Hub rows
+    DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__) ? window.__CIGAR_SHEET_ROWS__ : [];
+
+    // pull global -> local so UI shows active states
+    const g = window.__CIGAR_FILTER_STATE__;
+    for (const k of Object.keys(state.selected)) {
+      const set = g.filters?.[k];
+      state.selected[k] = set instanceof Set ? new Set([...set]) : new Set();
     }
+    for (const k of Object.keys(state.toggles)) {
+      state.toggles[k] = !!g.toggles?.[k];
+    }
+
+    if (searchInput) searchInput.value = g.q || "";
+
+    syncPillActiveStates();
+    renderBrands();
   }
 
-  init();
+  init().catch((err) => {
+    console.error("cigars.js init error:", err);
+  });
 })();
