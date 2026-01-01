@@ -1,10 +1,20 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   Updates:
-   - Filters sheet is now centered popup (matches bands) via brand.html + brand.css
-   - Bands popup: handled in CSS (center title/regular/scroll hint bar)
-   - Maduro/Natural toggle now filters by CIGAR NAME ONLY (not wrapper shade)
+   Uses existing HTML sheets:
+   - #sheet-backdrop
+   - #sheet-filters (chip grid)
+   - #sheet-bands (Padron-only band art)
+   - (receipt sheet stays owned by /pos/cart.js)
+
+   Fixes:
+   - Filters sheet now behaves like a centered popup (CSS handles layout)
+   - Bands titles centered + checkbox aligned (HTML tweak)
+   - Adds scroll hint bar (CSS)
+   - Wrapper toggle filters ONLY by row.Cigar text:
+     * Maduro => cigar name contains "maduro"
+     * Natural => cigar name contains "natural"
+     * All => no filter
 */
 
 (() => {
@@ -17,7 +27,7 @@
 
   // ---------- DOM (core) ----------
   const brandTitleEl = $("#brand-title");
-  const brandIconWrap = $("#brand-icon");
+  const brandIconWrap = $("#brand-icon"); // DIV in your HTML
   const listEl = $("#brand-list");
   const statusEl = $("#brand-status");
   const searchEl = $("#brand-search");
@@ -260,17 +270,6 @@
     return `${row.Line || ""} ${row.Cigar || ""}`.toLowerCase();
   }
 
-  // ✅ Maduro/Natural now based ONLY on cigar name
-  function cigarNameHasMaduroOrNatural(cigarName, mode) {
-    const n = norm(cigarName);
-    const hasMaduro = n.includes("maduro");
-    const hasNatural = n.includes("natural");
-
-    if (mode === "maduro") return hasMaduro && !hasNatural;
-    if (mode === "natural") return hasNatural && !hasMaduro;
-    return true; // "all"
-  }
-
   function applyAllFilters() {
     const q = norm(searchEl?.value || "");
 
@@ -280,10 +279,12 @@
         if (!hay.includes(q)) return false;
       }
 
-      // ✅ wrapper toggle uses CIGAR NAME ONLY
-      if (wrapperState !== "all") {
-        const name = row.Cigar || "";
-        if (!cigarNameHasMaduroOrNatural(name, wrapperState)) return false;
+      // ✅ Wrapper toggle MUST filter by CIGAR NAME ONLY
+      const cigarName = norm(row.Cigar || "");
+      if (wrapperState === "maduro") {
+        if (!cigarName.includes("maduro")) return false;
+      } else if (wrapperState === "natural") {
+        if (!cigarName.includes("natural")) return false;
       }
 
       // field filters
@@ -346,12 +347,10 @@
   function closeSheet(sheetEl) {
     if (!sheetEl) return;
     sheetEl.setAttribute("hidden", "");
-
     const anyOpen =
       !($("#sheet-filters")?.hasAttribute("hidden")) ||
       !($("#sheet-bands")?.hasAttribute("hidden")) ||
       !($("#sheet-receipt")?.hasAttribute("hidden"));
-
     if (!anyOpen) backdrop?.setAttribute("hidden", "");
     document.body.classList.remove("pos-modal-open");
   }
@@ -366,7 +365,7 @@
   function initSheetCloseHandlers() {
     $$("[data-sheet-close]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const sheet = btn.closest(".sheet");
+        const sheet = btn.closest(".sheet") || btn.closest("#sheet-filters") || btn.closest("#sheet-bands");
         if (sheet) closeSheet(sheet);
       });
     });
@@ -414,7 +413,6 @@
     return { FIELDS, options };
   }
 
-  // ✅ Render filter chips for a WHITE popup (no dark inline styles)
   function renderFiltersSheet() {
     if (!filtersOptions) return;
 
@@ -426,9 +424,7 @@
       if (!vals.length) return "";
       return `
         <div class="filter-block" style="margin-bottom:14px;">
-          <div class="filter-label" style="font-weight:800;opacity:.85;margin:6px 2px 8px;color:#0b1220;">
-            ${escapeHTML(f)}
-          </div>
+          <div class="filter-label" style="font-weight:900;opacity:.85;margin:6px 2px 8px;">${escapeHTML(f)}</div>
           <div class="chip-wrap" style="display:flex;flex-wrap:wrap;gap:10px;">
             ${vals
               .map((v) => {
@@ -439,9 +435,9 @@
                   data-val="${escapeAttr(v)}"
                   style="
                     padding:10px 12px;border-radius:999px;
-                    border:1px solid rgba(15,23,42,.12);
-                    background:${on ? "rgba(15,122,255,.12)" : "rgba(15,23,42,.06)"};
-                    color:${on ? "rgba(15,122,255,.95)" : "rgba(15,23,42,.88)"};
+                    border:1px solid rgba(255,255,255,.14);
+                    background:${on ? "rgba(15,122,255,.22)" : "rgba(255,255,255,.07)"};
+                    color:${on ? "rgba(15,122,255,.95)" : "rgba(255,255,255,.85)"};
                     font-weight:800;font-size:13px;
                   "
                 >${escapeHTML(v)}</button>`;
@@ -462,12 +458,12 @@
         if (pendingFilters[field].has(val)) {
           pendingFilters[field].delete(val);
           chip.classList.remove("on");
-          chip.style.background = "rgba(15,23,42,.06)";
-          chip.style.color = "rgba(15,23,42,.88)";
+          chip.style.background = "rgba(255,255,255,.07)";
+          chip.style.color = "rgba(255,255,255,.85)";
         } else {
           pendingFilters[field].add(val);
           chip.classList.add("on");
-          chip.style.background = "rgba(15,122,255,.12)";
+          chip.style.background = "rgba(15,122,255,.22)";
           chip.style.color = "rgba(15,122,255,.95)";
         }
       });
@@ -527,10 +523,11 @@
                    onerror="this.style.opacity='0.15';" />
             </div>
             <div class="band-meta">
+              <span class="band-spacer" aria-hidden="true"></span>
               <span class="band-name">${escapeHTML(x.label)}</span>
               <input type="checkbox" class="band-check" data-token="${escapeAttr(x.token)}" ${
-                checked ? "checked" : ""
-              } />
+          checked ? "checked" : ""
+        } />
             </div>
           </label>
         `;
