@@ -538,49 +538,67 @@ body.pos-modal-open{ overflow:hidden; }
   display:block;
 }
 
-/* row under each band: [☐] [Band Name] */
+/* row under each band: [Band Name] [checkbox] */
 .band-meta{
   margin-top:10px;
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:12px;
   padding:0 4px;
 }
 
-/* band name text */
 .band-name{
+  flex:1 1 auto;          /* takes remaining space */
   font-size:15px;
-  font-weight:500; /* regular (not bold) */
+  font-weight:500;        /* regular */
   color:#0b1220;
 }
 
+/* checkbox to the RIGHT of the text */
 .band-check{
   flex:0 0 auto;
+  margin-left:auto;       /* pushes it to the far right */
   width:22px;
   height:22px;
   border-radius:6px;
   border:1px solid #d1d5db;
   background:#f3f4f6;
+  -webkit-appearance:none;
   appearance:none;
   outline:none;
+  box-shadow:none;
   cursor:pointer;
   position:relative;
+  -webkit-tap-highlight-color:transparent;
 }
 
+/* kill iOS blue focus ring/shadow */
+.band-check:focus,
+.band-check:focus-visible{
+  outline:none !important;
+  box-shadow:none !important;
+}
+
+/* checked state: BLUE BOX + WHITE CHECKMARK */
 .band-check:checked{
-  background:#0f7aff;
-  border-color:#0f7aff;
+  background:var(--accent);
+  border-color:var(--accent);
 }
 
 .band-check:checked::after{
   content:"";
   position:absolute;
-  inset:4px;
-  border-radius:4px;
-  background:#ffffff;
+  left:7px;
+  top:3px;
+  width:6px;
+  height:12px;
+  border:2px solid #ffffff;
+  border-top:0;
+  border-left:0;
+  transform:rotate(45deg);
 }
 
-/* footer */
+/* footer confirm button */
 .bands-footer{
   padding:16px 18px 22px;
   border-top:none;
@@ -592,16 +610,27 @@ body.pos-modal-open{ overflow:hidden; }
 
 .bands-footer .sheet-btn.primary{
   width:100%;
-  height:44px;           /* iOS standard tap height */
+  height:44px;
   border-radius:22px;
   font-size:16px;
   font-weight:600;
   padding:0 16px;
+  border:none;
+}
+
+/* disabled (default) */
+.bands-footer .sheet-btn.primary:disabled{
+  background:#e5e7eb;
+  color:#9ca3af;
+}
+
+/* enabled (when JS removes disabled) */
+.bands-footer .sheet-btn.primary:not(:disabled){
+  background:var(--accent);
   color:#ffffff;
 }
 
-.bands-footer .sheet-btn.primary:active{
+.bands-footer .sheet-btn.primary:not(:disabled):active{
   transform:scale(.98);
   opacity:.92;
 }
-
