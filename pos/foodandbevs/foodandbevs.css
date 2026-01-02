@@ -1,4 +1,14 @@
 /* Food & Beverages page-specific overrides */
 /* we keep grid + tile rules in ../category.css ; here we simply ensure captions stay hidden */
 .page.hide-captions .label,
-.page.hide-captions .price{display:none !important}
+.page.hide-captions .price {
+  display: none !important;
+}
+
+/* Center grid on Food & Bevs + add bottom white space */
+.category-grid-foodbevs {
+  max-width: 880px;
+  margin: 0 auto;          /* visually centers rows */
+  padding: 0 12px 96px;    /* adds breathing room under last row */
+  box-sizing: border-box;
+}
