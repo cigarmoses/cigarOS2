@@ -261,7 +261,7 @@ body.brand-page{
   top:50%;
   transform:translateY(-50%);
   width:1px;
-  height:26px; /* ⬅️ 2× the previous visual height */
+  height:30px; /* ⬅️ 2× the previous visual height */
   background:rgba(255,255,255,.20);
   opacity:.9;
 }
