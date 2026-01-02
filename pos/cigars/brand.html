@@ -1,4 +1,3 @@
-<!-- /pos/cigars/brand.html (FULL FILE REPLACEMENT) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -38,7 +37,7 @@
     <!-- Search -->
     <section class="brand-search">
       <div class="search-wrap">
-        <span class="search-ico" aria-hidden="true">🔎</span>
+        <span class="search-ico" aria-hidden_subject="true">🔎</span>
         <input id="brand-search" type="search" placeholder="Search…" autocomplete="off" />
       </div>
     </section>
@@ -56,8 +55,10 @@
       </div>
     </section>
 
-    <!-- ✅ Applied filters row (shows on page, with X buttons) -->
-    <section class="brand-applied" id="brand-applied" hidden aria-label="Applied filters"></section>
+    <!-- ✅ Applied filters row (shows chips under the controls) -->
+    <section class="brand-applied" id="brand-applied" aria-label="Applied filters" hidden>
+      <div class="applied-row" id="brand-applied-row"></div>
+    </section>
 
     <!-- List -->
     <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
@@ -109,70 +110,86 @@
     </footer>
   </section>
 
-  <!-- ✅ NEW FILTERS POPUP (mirrors Cigars home layout + drilldown + back) -->
+  <!-- ✅ Filters popup -->
   <section class="sheet filters-sheet" id="sheet-filters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
-    <header class="filters-top">
+    <header class="sheet-header filters-header">
       <button type="button" class="filters-back" id="filters-back" aria-label="Back" hidden>←</button>
-      <h2 class="filters-title" id="filters-title">Filters</h2>
-      <button class="filters-x" type="button" data-sheet-close aria-label="Close">×</button>
+      <h2 id="filters-title">Filters</h2>
+      <button class="sheet-x filters-x" type="button" data-sheet-close aria-label="Close">×</button>
     </header>
 
-    <!-- applied chips inside modal -->
-    <div class="filters-applied" id="filters-applied" hidden></div>
+    <div class="sheet-body filters-body">
 
-    <!-- main menu (grid) -->
-    <div class="filters-main" id="filters-main">
-      <div class="filters-card">
+      <!-- ✅ Applied chips inside popup -->
+      <div class="filters-applied" id="filters-applied" hidden>
+        <div class="filters-applied-row" id="filters-applied-row"></div>
+      </div>
+
+      <!-- ✅ HOME VIEW (grid) -->
+      <div class="filters-home" id="filters-home">
         <div class="filters-grid">
-
-          <!-- Row 1 (3): Ring, Wrapper Shade, Vitolas -->
-          <div class="filters-row filters-row--shade3">
-            <button class="filter-pill pill-compact" type="button" data-fm-open="ring">Ring</button>
-            <button class="filter-pill pill-nowrap" type="button" data-fm-open="shade">Wrapper Shade</button>
-            <button class="filter-pill pill-compact" type="button" data-fm-open="vitola">Vitolas</button>
-          </div>
-
-          <!-- Row 2 (3): Flavored, Box-Pressed, Strength -->
+          <!-- Row 1 -->
           <div class="filters-row filters-row--3">
-            <button class="filter-pill filter-pill--toggle" type="button" data-fm-toggle="flavored">Flavored</button>
-            <button class="filter-pill filter-pill--toggle" type="button" data-fm-toggle="boxpressed">Box-Pressed</button>
-            <button class="filter-pill" type="button" data-fm-open="strength">Strength</button>
+            <button class="filter-pill" type="button" data-open-filter="RG">Ring</button>
+            <button class="filter-pill" type="button" data-open-filter="Length">Length</button>
+            <button class="filter-pill pill-nowrap" type="button" data-open-filter="Wrapper Shade">Wrapper Shade</button>
+          </div>
+          <!-- Row 2 -->
+          <div class="filters-row filters-row--3">
+            <button class="filter-pill" type="button" data-open-filter="Shape">Shape</button>
+            <button class="filter-pill" type="button" data-open-filter="Vitola">Vitolas</button>
+            <button class="filter-pill" type="button" data-open-filter="Strength">Strength</button>
+          </div>
+        </div>
+
+        <!-- ✅ Toggle list (two rows of three) -->
+        <div class="filters-toggles">
+          <div class="tog-row">
+            <button class="tog" type="button" data-toggle-key="Flavored">
+              <span class="tog-dot" aria-hidden="true"></span>
+              <span class="tog-label">Flavored</span>
+            </button>
+            <button class="tog" type="button" data-toggle-key="Tubo">
+              <span class="tog-dot" aria-hidden="true"></span>
+              <span class="tog-label">Tubo</span>
+            </button>
+            <button class="tog" type="button" data-toggle-key="Tin">
+              <span class="tog-dot" aria-hidden="true"></span>
+              <span class="tog-label">Tin</span>
+            </button>
           </div>
 
-          <!-- VIEW ALL -->
-          <div class="filters-viewall">
-            <button type="button" class="filters-viewall-btn" id="filters-viewall">view all</button>
+          <div class="tog-row">
+            <button class="tog" type="button" data-toggle-key="Box-Pressed">
+              <span class="tog-dot" aria-hidden="true"></span>
+              <span class="tog-label">Box-pressed</span>
+            </button>
+            <button class="tog" type="button" data-toggle-key="Pack">
+              <span class="tog-dot" aria-hidden="true"></span>
+              <span class="tog-label">Packs</span>
+            </button>
+            <button class="tog" type="button" data-toggle-key="Barber">
+              <span class="tog-dot" aria-hidden="true"></span>
+              <span class="tog-label">Barberpole</span>
+            </button>
           </div>
-
-          <div class="filters-expanded" id="filters-expanded" hidden>
-            <div class="filters-row filters-row--wrap">
-              <button class="filter-pill" type="button" data-fm-open="length">Length</button>
-              <button class="filter-pill" type="button" data-fm-open="shape">Shape</button>
-              <button class="filter-pill filter-pill--toggle" type="button" data-fm-toggle="tin">Tin</button>
-              <button class="filter-pill filter-pill--toggle" type="button" data-fm-toggle="pack">Packs</button>
-              <button class="filter-pill filter-pill--toggle" type="button" data-fm-toggle="barberpole">Barberpole</button>
-              <button class="filter-pill filter-pill--toggle" type="button" data-fm-toggle="tubo">Tubo</button>
-              <button class="filter-pill filter-pill--toggle" type="button" data-fm-toggle="favorite">Favorite</button>
-            </div>
-          </div>
-
         </div>
       </div>
-    </div>
 
-    <!-- drilldown list view -->
-    <div class="filters-sub" id="filters-sub" hidden>
-      <div class="filters-search-row">
+      <!-- ✅ DETAIL VIEW (list with checkboxes) -->
+      <div class="filters-detail" id="filters-detail" hidden>
         <div class="filters-search">
           <span class="filters-search-ico" aria-hidden="true">🔎</span>
           <input id="filters-search" type="search" placeholder="search..." autocomplete="off" />
         </div>
+
+        <div class="filters-list" id="filters-list"></div>
       </div>
-      <div class="filters-list" id="filters-list"></div>
+
     </div>
 
-    <footer class="filters-footer">
-      <button class="filters-confirm" type="button" id="filters-confirm">Confirm</button>
+    <footer class="sheet-footer filters-footer">
+      <button class="sheet-btn primary" type="button" id="filters-confirm">Confirm</button>
     </footer>
   </section>
 
