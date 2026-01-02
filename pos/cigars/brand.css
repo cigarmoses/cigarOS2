@@ -241,13 +241,26 @@ body.brand-page{
 }
 
 .row-price{
+  position:relative;
+  padding-left:10px;
   font-size:16px;
   font-weight:700;
   color:rgba(255,255,255,.92);
-  padding-left:10px;
-  border-left:1px solid rgba(255,255,255,.08);
   min-width:78px;
   text-align:right;
+}
+
+/* taller divider line */
+.row-price::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:50%;
+  transform:translateY(-50%);
+  width:1px;
+  height:26px; /* ⬅️ 2× the previous visual height */
+  background:rgba(255,255,255,.20);
+  opacity:.9;
 }
 
 .row-add{
