@@ -542,24 +542,20 @@ body.pos-modal-open{ overflow:hidden; }
 
 /* row under each band: [Band Name] [checkbox] */
 .band-meta{
-  margin-top:10px;
   display:flex;
   align-items:center;
-  gap:12px;
-  padding:0 4px;
+  justify-content:space-between;
+  padding-right:28px; /* pulls checkbox inward from edge */
 }
 
 .band-name{
-  flex:1 1 auto;          /* takes remaining space */
-  font-size:15px;
-  font-weight:500;        /* regular */
-  color:#0b1220;
+  flex:1 1 auto;
+  margin-right:12px;
 }
 
 /* checkbox to the RIGHT of the text */
 .band-check{
   flex:0 0 auto;
-  margin-left:auto;       /* pushes it to the far right */
   width:22px;
   height:22px;
   border-radius:6px;
