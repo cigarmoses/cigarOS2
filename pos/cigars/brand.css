@@ -491,10 +491,18 @@ body.pos-modal-open{ overflow:hidden; }
   position:absolute;
   top:14px;
   right:8px;
-  width:4px;
+  width:3px;
   height:calc(100% - 28px);
   border-radius:999px;
-  background:rgba(255, 60, 60, .22);
+
+  /* iOS style muted scroll indicator */
+  background:rgba(0,0,0,.10);
+
+  /* soft inner gloss */
+  box-shadow:
+    inset 0 0 4px rgba(255,255,255,.35),
+    0 0 0 1px rgba(255,255,255,.25);
+
   pointer-events:none;
 }
 
