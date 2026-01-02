@@ -1,14 +1,27 @@
-/* Food & Beverages page-specific overrides */
-/* we keep grid + tile rules in ../category.css ; here we simply ensure captions stay hidden */
+/* Food & Beverages page-specific overrides
+   Base grid + tile rules live in ../category.css; this file only
+   tweaks behavior for the Food & Bevs category screen.
+*/
+
+/* Legacy: hide captions when .page.hide-captions is present */
 .page.hide-captions .label,
 .page.hide-captions .price {
   display: none !important;
 }
 
-/* Center grid on Food & Bevs + add bottom white space */
+/* Layout: Food & Bevs grid-specific tweaks */
 .category-grid-foodbevs {
-  max-width: 880px;
-  margin: 0 auto;          /* visually centers rows */
-  padding: 0 12px 96px;    /* adds breathing room under last row */
+  /* keep 3-across grid from category.css, just adjust spacing */
+  padding: 0 16px 160px;   /* left/right padding + ~2 rows of white space at bottom */
   box-sizing: border-box;
+  justify-items: center;   /* center each tile within its column */
+}
+
+/* Tiles: micro white stroke on all icons (all tiles on this page) */
+.category-grid-foodbevs .category-card-icon img {
+  display: block;
+  border-radius: 22px;                   /* match card rounding */
+  background: #ffffff;                   /* solid canvas to remove halo */
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.95); /* hairline white outline */
+  outline: none;
 }
