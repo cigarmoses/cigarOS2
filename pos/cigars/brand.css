@@ -267,21 +267,29 @@ body.brand-page{
 }
 
 .row-add{
-  width:25px;
-  height:25px;
+  width:26px;
+  height:26px;
   border-radius:999px;
+
+  /* keep the + large + centered */
+  font-size:16px;
+  font-weight:1000;
+  line-height:1;
+  display:grid;
+  place-items:center;
+
   border:none;
   background:var(--green);
   color:#073018;
-  font-weight:700;
-  font-size:15px;
-  display:grid;
-  place-items:center;
   cursor:pointer;
-  box-shadow:0 10px 22px rgba(0,0,0,.25);
+
+  box-shadow:0 10px 18px rgba(0,0,0,.25);
   -webkit-tap-highlight-color:transparent;
 }
-.row-add:active{ transform:scale(.98); }
+
+.row-add:active{
+  transform:scale(.98);
+}
 
 /* ========== STATUS TEXT ========== */
 .brand-status{
