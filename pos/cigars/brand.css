@@ -536,7 +536,7 @@ body.pos-modal-open{ overflow:hidden; }
   display:block;
 }
 
-/* meta row under each band: [☐] [Band Name] */
+/* row under each band: [☐] [Band Name] */
 .band-meta{
   margin-top:10px;
   display:flex;
@@ -552,7 +552,6 @@ body.pos-modal-open{ overflow:hidden; }
   color:#0b1220;
 }
 
-/* checkbox to the LEFT of the text */
 .band-check{
   flex:0 0 auto;
   width:22px;
