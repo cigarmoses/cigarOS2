@@ -224,11 +224,14 @@ body.brand-page{
   font-size:16px;
   font-weight:700;
   letter-spacing:-.01em;
-  line-height:1.05;
+  line-height:1.1;
   color:rgba(255,255,255,.92);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+
+  display:-webkit-box;
+  -webkit-line-clamp:2;   /* allow up to 2 lines */
+  -webkit-box-orient:vertical;
+  overflow:hidden;        /* hide anything past 2 lines */
+  white-space:normal;     /* allow wrapping */
 }
 
 .row-sub{
