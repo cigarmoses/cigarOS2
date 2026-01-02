@@ -83,7 +83,8 @@
   width: 88px;
   height: 88px;
   border-radius: 22px;
-  background: #1f7aff; /* placeholder blue */
+  /* no strong background here – the img itself carries the tile look */
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,6 +96,12 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+
+  /* Micro white stroke on all icons */
+  background: #ffffff;                          /* solid canvas to kill the halo */
+  border-radius: 22px;                          /* match container rounding */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.95); /* hairline white outline */
+  outline: none;
 }
 
 /* Name + price text */
