@@ -28,6 +28,7 @@ const ITEMS = [
   { name: "Illy", price: 2.99, slug: "illy" },
   { name: "Fanta", price: 1.50, slug: "fanta" },
   { name: "Doritos", price: 1.50, slug: "doritos" }
+  { name: "Fritos", price: 1.50, slug: "fritos" }
 
 
 ];
