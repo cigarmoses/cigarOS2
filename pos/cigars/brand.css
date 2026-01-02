@@ -269,10 +269,10 @@ body.brand-page{
 .row-add{
   width:20px;
   height:20px;
-  border-radius:999px;
+  border-radius:899px;
 
   /* keep the + large + centered */
-  font-size:16px;
+  font-size:12px;
   font-weight:700;
   line-height:1;
   display:grid;
