@@ -1,7 +1,5 @@
-/* Food & Beverages page-specific overrides
-   Base grid + tile rules live in ../category.css; this file only
-   tweaks behavior for the Food & Bevs category screen.
-*/
+/* Food & Beverages page-specific overrides */
+/* Base grid + tile rules live in ../category.css */
 
 /* Legacy: hide captions when .page.hide-captions is present */
 .page.hide-captions .label,
@@ -9,19 +7,12 @@
   display: none !important;
 }
 
-/* Layout: Food & Bevs grid-specific tweaks */
+/* Food & Bevs layout tweaks */
 .category-grid-foodbevs {
-  /* keep 3-across grid from category.css, just adjust spacing */
-  padding: 0 16px 160px;   /* left/right padding + ~2 rows of white space at bottom */
+  /* Shift grid slightly right and add extra bottom space */
+  padding-top: 0;
+  padding-right: 16px;
+  padding-bottom: 160px;  /* ~2 rows of white space under Doritos/Fritos */
+  padding-left: 32px;     /* moves entire 3-column block a bit to the right */
   box-sizing: border-box;
-  justify-items: center;   /* center each tile within its column */
-}
-
-/* Tiles: micro white stroke on all icons (all tiles on this page) */
-.category-grid-foodbevs .category-card-icon img {
-  display: block;
-  border-radius: 22px;                   /* match card rounding */
-  background: #ffffff;                   /* solid canvas to remove halo */
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.95); /* hairline white outline */
-  outline: none;
 }
