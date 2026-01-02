@@ -29,7 +29,7 @@ const ITEMS = [
   { name: "Fanta", price: 1.50, slug: "fanta" },
   { name: "Doritos", price: 1.50, slug: "doritos" }
   { name: "Fritos", price: 1.50, slug: "fritos" }
-
+  { name: "Oreos", price: 1.50, slug: "oreos" }
 
 ];
 
