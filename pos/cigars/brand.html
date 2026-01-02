@@ -55,7 +55,7 @@
       </div>
     </section>
 
-    <!-- ✅ Applied filters row (shows chips under the controls) -->
+    <!-- Applied filters row -->
     <section class="brand-applied" id="brand-applied" aria-label="Applied filters" hidden>
       <div class="applied-row" id="brand-applied-row"></div>
     </section>
@@ -110,7 +110,7 @@
     </footer>
   </section>
 
-  <!-- ✅ Filters popup -->
+  <!-- Filters popup -->
   <section class="sheet filters-sheet" id="sheet-filters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
     <header class="sheet-header filters-header">
       <button type="button" class="filters-back" id="filters-back" aria-label="Back" hidden>←</button>
@@ -120,19 +120,20 @@
 
     <div class="sheet-body filters-body">
 
-      <!-- ✅ Applied chips inside popup -->
+      <!-- Applied chips inside popup -->
       <div class="filters-applied" id="filters-applied" hidden>
         <div class="filters-applied-row" id="filters-applied-row"></div>
       </div>
 
-      <!-- ✅ HOME VIEW (grid) -->
+      <!-- HOME VIEW -->
       <div class="filters-home" id="filters-home">
         <div class="filters-grid">
           <!-- Row 1 -->
           <div class="filters-row filters-row--3">
             <button class="filter-pill" type="button" data-open-filter="RG">Ring</button>
             <button class="filter-pill" type="button" data-open-filter="Length">Length</button>
-            <button class="filter-pill pill-nowrap" type="button" data-open-filter="Wrapper Shade">Wrapper Shade</button>
+            <!-- ✅ make Wrapper Shade always one line + a bit wider -->
+            <button class="filter-pill pill-nowrap pill-wide" type="button" data-open-filter="Wrapper Shade">Wrapper Shade</button>
           </div>
           <!-- Row 2 -->
           <div class="filters-row filters-row--3">
@@ -142,7 +143,7 @@
           </div>
         </div>
 
-        <!-- ✅ Toggle list (two rows of three) -->
+        <!-- Toggle list -->
         <div class="filters-toggles">
           <div class="tog-row">
             <button class="tog" type="button" data-toggle-key="Flavored">
@@ -176,7 +177,7 @@
         </div>
       </div>
 
-      <!-- ✅ DETAIL VIEW (list with checkboxes) -->
+      <!-- DETAIL VIEW -->
       <div class="filters-detail" id="filters-detail" hidden>
         <div class="filters-search">
           <span class="filters-search-ico" aria-hidden="true">🔎</span>
