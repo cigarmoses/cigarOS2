@@ -531,7 +531,9 @@ body.pos-modal-open{ overflow:hidden; }
 
 .band-art img{
   width:100%;
-  height:100%;
+  height:auto;
+  max-width:320px;   /* match 1964/Damaso width */
+  margin:0 auto;     /* center all bands */
   object-fit:contain;      /* always show the whole band art */
   display:block;
 }
