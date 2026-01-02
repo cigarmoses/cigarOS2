@@ -1,11 +1,19 @@
-/* /pos/cigars/brand.js (FULL FILE REPLACEMENT)
+/* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   ✅ Filters popup now mirrors Cigars home layout:
-   - Main grid (Ring / Wrapper Shade / Vitolas / Strength + toggles + view all)
-   - Tap a filter => drilldown list view with Back button + search
-   - Shows applied filters at top of popup + under controls on page (with X)
-   - Bands filter logic remains additive (AND) with Filters & Wrapper toggle
+   ✅ Updates in this version:
+   - Filters popup now matches Cigars home layout (no Manufacturer/Brand)
+   - Top pill order: Ring, Length, Wrapper Shade, Shape, Vitolas, Strength
+   - Toggles are NOT pills anymore:
+     Flavored / Tubo / Tin
+     Box-Pressed / Packs / Barberpole
+     -> white text + circle, blue when selected
+   - Applied filters chips:
+     * inside filters popup (top)
+     * under the controls row on the main brand page
+     * X removes immediately
+   - Detail list view with Back button inside popup
+   - Logic stacks with Bands + Wrapper toggle + Search as requested
 */
 
 (() => {
@@ -22,8 +30,6 @@
   const listEl = $("#brand-list");
   const statusEl = $("#brand-status");
   const searchEl = $("#brand-search");
-  const appliedRowEl = $("#brand-applied");
-
   const backBtn = $("#brand-back");
 
   const btnFilters = $("#btn-filters");
@@ -35,23 +41,26 @@
   const btnNatural = $("#seg-natural");
   const segDot = $("#seg-switch");
 
+  // applied filters row under controls
+  const brandAppliedWrap = $("#brand-applied");
+  const brandAppliedRow = $("#brand-applied-row");
+
   // Sheets
   const backdrop = $("#sheet-backdrop");
 
-  // Filters popup (new)
   const sheetFilters = $("#sheet-filters");
-  const filtersTitle = $("#filters-title");
-  const filtersBack = $("#filters-back");
-  const filtersApplied = $("#filters-applied");
-  const filtersMain = $("#filters-main");
-  const filtersSub = $("#filters-sub");
-  const filtersList = $("#filters-list");
-  const filtersSearch = $("#filters-search");
   const filtersConfirm = $("#filters-confirm");
-  const filtersViewAllBtn = $("#filters-viewall");
-  const filtersExpanded = $("#filters-expanded");
+  const filtersBack = $("#filters-back");
+  const filtersTitle = $("#filters-title");
 
-  // Bands popup
+  const filtersHome = $("#filters-home");
+  const filtersDetail = $("#filters-detail");
+  const filtersSearch = $("#filters-search");
+  const filtersList = $("#filters-list");
+
+  const filtersAppliedWrap = $("#filters-applied");
+  const filtersAppliedRow = $("#filters-applied-row");
+
   const sheetBands = $("#sheet-bands");
   const bandsOptions = $("#bands-options");
   const bandsConfirm = $("#bands-confirm");
@@ -60,39 +69,41 @@
   let ALL = [];
   let VIEW = [];
 
-  // Field filters
-  let activeFilters = {};     // { fieldName: Set(lowercased) }
+  // Multi-select field filters (Sets)
+  let activeFilters = {};   // { "Vitola": Set(["robusto"]) ... }
   let pendingFilters = {};
 
-  // Toggle filters (truthy fields)
+  // Boolean toggles (single on/off)
   let activeToggles = {
-    flavored:false,
-    boxpressed:false,
-    tin:false,
-    pack:false,
-    barberpole:false,
-    tubo:false,
-    favorite:false,
+    "Flavored": false,
+    "Tubo": false,
+    "Tin": false,
+    "Box-Pressed": false,
+    "Pack": false,
+    "Barber": false,
   };
   let pendingToggles = { ...activeToggles };
 
-  // Bands
+  // Band filters
   let pendingBands = new Set();
   let activeBands = new Set();
 
-  // wrapper toggle state
   let wrapperState = "all"; // maduro | natural | all
 
-  // Filters UI state
-  let currentKey = null;
-  let currentValues = [];
+  // Filters popup view state
+  let filtersMode = "home"; // home | detail
+  let currentField = "";    // which pill opened (e.g., "Vitola")
+  let currentFieldValues = [];
 
   // ---------- helpers ----------
-  const norm = (s) => (s || "").toString().trim().toLowerCase().replace(/\s+/g, " ");
+  const norm = (s) => (s || "").toString().trim().toLowerCase();
+  const normKeepCase = (s) => (s || "").toString().trim();
+
   const toNum = (v) => {
     const x = Number((v ?? "").toString().replace(/[^\d.]/g, ""));
     return Number.isFinite(x) ? x : 0;
   };
+
   const money = (n) =>
     window.CigarOSCart?.money ? window.CigarOSCart.money(n) : Number(n || 0).toFixed(2);
 
@@ -113,13 +124,6 @@
   }
   function escapeAttr(s) {
     return escapeHTML(s).replaceAll("`", "");
-  }
-
-  function isTruthyCell(v) {
-    const s = (v ?? "").toString().trim().toLowerCase();
-    if (!s) return false;
-    if (s === "0" || s === "false" || s === "no" || s === "n") return false;
-    return true;
   }
 
   function normalizeIconPath(p) {
@@ -298,16 +302,24 @@
     return `${row.Line || ""} ${row.Cigar || ""}`.toLowerCase();
   }
 
+  function isTruthyToggleCell(v) {
+    const s = norm(v);
+    if (!s) return false;
+    if (s === "0" || s === "false" || s === "no" || s === "n") return false;
+    return true;
+  }
+
   function applyAllFilters() {
     const q = norm(searchEl?.value || "");
 
     VIEW = ALL.filter((row) => {
+      // search
       if (q) {
         const hay = norm(`${row.Cigar || ""} ${row.Vitola || ""} ${row.Line || ""}`);
         if (!hay.includes(q)) return false;
       }
 
-      // ✅ Wrapper toggle MUST filter by CIGAR NAME ONLY
+      // wrapper toggle (by cigar name only)
       const cigarName = norm(row.Cigar || "");
       if (wrapperState === "maduro") {
         if (!cigarName.includes("maduro")) return false;
@@ -315,23 +327,20 @@
         if (!cigarName.includes("natural")) return false;
       }
 
-      // field filters (activeFilters)
+      // field filters (multi-select)
       for (const [field, set] of Object.entries(activeFilters)) {
         if (!set || !set.size) continue;
         const v = norm(row[field] || "");
         if (!set.has(v)) return false;
       }
 
-      // toggle filters (truthy fields)
-      if (activeToggles.flavored && !isTruthyCell(row["Flavored"])) return false;
-      if (activeToggles.boxpressed && !isTruthyCell(row["Box-Pressed"])) return false;
-      if (activeToggles.tin && !isTruthyCell(row["Tin"])) return false;
-      if (activeToggles.pack && !isTruthyCell(row["Pack"])) return false;
-      if (activeToggles.barberpole && !isTruthyCell(row["Barber"])) return false;
-      if (activeToggles.tubo && !isTruthyCell(row["Tubo"])) return false;
-      if (activeToggles.favorite && !isTruthyCell(row["Favorite"])) return false;
+      // toggles (boolean)
+      for (const [tKey, on] of Object.entries(activeToggles)) {
+        if (!on) continue;
+        if (!isTruthyToggleCell(row[tKey])) return false;
+      }
 
-      // bands filter
+      // bands
       if (activeBands.size) {
         const src = matchBandSource(row);
         let ok = false;
@@ -345,7 +354,7 @@
     });
 
     renderList(VIEW);
-    renderAppliedRows(); // ✅ keep UI in sync
+    renderAppliedChipsEverywhere(); // keep chips synced
   }
 
   // ---------- wrapper toggle ----------
@@ -403,7 +412,7 @@
   function initSheetCloseHandlers() {
     $$("[data-sheet-close]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const sheet = btn.closest(".sheet") || btn.closest("#sheet-filters") || btn.closest("#sheet-bands");
+        const sheet = btn.closest(".sheet");
         if (sheet) closeSheet(sheet);
       });
     });
@@ -415,16 +424,23 @@
     });
   }
 
-  // ---------- Filters system (new) ----------
-  const FILTER_MAP = {
-    ring:   { title: "Ring",         field: "RG" },
-    shade:  { title: "Wrapper Shade",field: "Wrapper Shade" },
-    vitola: { title: "Vitolas",      field: "Vitola" },
-    strength:{title: "Strength",     field: "Strength" },
-    length: { title: "Length",       field: "Length" },
-    shape:  { title: "Shape",        field: "Shape" },
-  };
+  // ---------- Filters popup data ----------
+  function cloneFilterSets(obj) {
+    const out = {};
+    for (const [k, set] of Object.entries(obj || {})) out[k] = new Set(set ? [...set] : []);
+    return out;
+  }
 
+  function uniqSorted(values) {
+    const set = new Set();
+    values.forEach((v) => {
+      const s = normKeepCase(v);
+      if (s) set.add(s);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }
+
+  // Wrapper shade custom order (same as cigars.js)
   const WRAPPER_SHADE_ORDER = [
     "Natural",
     "Connecticut",
@@ -460,345 +476,279 @@
       const k = v.toLowerCase();
       if (!seen.has(k)) ordered.push(v);
     }
+
     return ordered;
   }
 
-  function uniqSorted(values) {
-    const set = new Set();
-    values.forEach((v) => {
-      const s = (v ?? "").toString().trim().replace(/\s+/g, " ");
-      if (s) set.add(s);
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }
+  function getValuesForField(field) {
+    const vals = [];
+    for (const r of ALL) {
+      if (!r) continue;
+      const v = r[field];
+      if (v != null && v !== "") vals.push(v);
+    }
+    let out = uniqSorted(vals);
 
-  function cloneFilterSets(obj) {
-    const out = {};
-    for (const [k, set] of Object.entries(obj || {})) out[k] = new Set(set ? [...set] : []);
+    if (field === "Wrapper Shade") out = orderWrapperShades(out);
+    if (field === "RG") {
+      // numeric-ish sort, but keep original strings
+      out = out.sort((a, b) => (Number(a) || 0) - (Number(b) || 0));
+    }
     return out;
   }
 
-  function buildValuesForField(fieldName) {
-    const vals = [];
-    ALL.forEach((row) => {
-      const v = (row[fieldName] ?? "").toString().trim();
-      if (v) vals.push(v);
+  // ---------- Filters popup view switching ----------
+  function setFiltersMode(mode) {
+    filtersMode = mode;
+
+    const isDetail = mode === "detail";
+    filtersHome?.toggleAttribute("hidden", isDetail);
+    filtersDetail?.toggleAttribute("hidden", !isDetail);
+
+    filtersBack?.toggleAttribute("hidden", !isDetail);
+
+    if (filtersTitle) filtersTitle.textContent = isDetail ? (currentField || "Filters") : "Filters";
+    if (!isDetail && filtersSearch) filtersSearch.value = "";
+  }
+
+  function openFiltersSheet() {
+    // clone current actives into pending when opening
+    pendingFilters = cloneFilterSets(activeFilters);
+    pendingToggles = { ...activeToggles };
+
+    // ensure toggles UI reflects current
+    syncToggleButtons();
+
+    // chips in popup
+    renderFiltersPopupAppliedChips();
+
+    // show home grid by default
+    currentField = "";
+    currentFieldValues = [];
+    setFiltersMode("home");
+
+    openSheet(sheetFilters);
+  }
+
+  function openDetailForField(field) {
+    currentField = field;
+    currentFieldValues = getValuesForField(field);
+
+    setFiltersMode("detail");
+    renderDetailList(currentFieldValues);
+
+    setTimeout(() => filtersSearch?.focus(), 50);
+  }
+
+  function closeDetailToHome() {
+    currentField = "";
+    currentFieldValues = [];
+    setFiltersMode("home");
+    renderFiltersPopupAppliedChips();
+    syncToggleButtons();
+  }
+
+  // ---------- Toggles (text + circle) ----------
+  function syncToggleButtons() {
+    $$("#sheet-filters .tog").forEach((btn) => {
+      const key = btn.getAttribute("data-toggle-key");
+      if (!key) return;
+      const on = !!pendingToggles[key];
+      btn.classList.toggle("is-on", on);
     });
-    return uniqSorted(vals);
   }
 
-  function showFiltersMain() {
-    currentKey = null;
-    currentValues = [];
-    filtersBack?.setAttribute("hidden", "");
-    if (filtersTitle) filtersTitle.textContent = "Filters";
-    filtersSub?.setAttribute("hidden", "");
-    filtersMain?.removeAttribute("hidden");
-    if (filtersSearch) filtersSearch.value = "";
-    syncFilterPillsActive();
-    renderFiltersAppliedChips();
+  function initToggleButtons() {
+    $$("#sheet-filters .tog").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-toggle-key");
+        if (!key) return;
+        pendingToggles[key] = !pendingToggles[key]; // clicking again toggles off ✅
+        syncToggleButtons();
+        // apply immediately
+        activeToggles = { ...pendingToggles };
+        renderAppliedChipsEverywhere();
+        applyAllFilters();
+      });
+    });
   }
 
-  function showFiltersSub(key) {
-    currentKey = key;
-    const meta = FILTER_MAP[key];
-    if (!meta) return;
+  // ---------- Detail list rendering (checkbox style) ----------
+  function renderDetailList(values) {
+    if (!filtersList) return;
+    const field = currentField;
+    if (!field) return;
 
-    if (filtersTitle) filtersTitle.textContent = meta.title || "Filter";
-    filtersBack?.removeAttribute("hidden");
-    filtersMain?.setAttribute("hidden", "");
-    filtersSub?.removeAttribute("hidden");
-
-    let vals = buildValuesForField(meta.field);
-    if (key === "shade") vals = orderWrapperShades(vals);
-
-    currentValues = vals;
-
-    if (filtersSearch) filtersSearch.value = "";
-    renderFiltersList(vals);
-    setTimeout(() => filtersSearch?.focus(), 40);
-  }
-
-  function renderFiltersList(values) {
-    if (!filtersList || !currentKey) return;
-    const meta = FILTER_MAP[currentKey];
-    if (!meta) return;
-
-    const field = meta.field;
-    const selectedSet = pendingFilters[field] || new Set();
+    const set = pendingFilters[field] || new Set();
 
     filtersList.innerHTML = values
       .map((v) => {
-        const label = (v ?? "").toString().trim().replace(/\s+/g, " ");
-        const isSelected = selectedSet.has(norm(label));
+        const label = normKeepCase(v);
+        const on = set.has(norm(label));
         return `
-          <div class="fl-row ${isSelected ? "is-selected" : ""}" data-val="${escapeAttr(label)}">
-            <div class="fl-label">${escapeHTML(label)}</div>
-            <div class="fl-check" aria-hidden="true"></div>
+          <div class="filters-item ${on ? "is-on" : ""}" data-val="${escapeAttr(label)}">
+            <div class="label">${escapeHTML(label)}</div>
+            <div class="check" aria-hidden="true"></div>
           </div>
         `;
       })
       .join("");
 
-    $$(".fl-row").forEach((rowEl) => {
-      rowEl.addEventListener("click", () => {
-        const raw = rowEl.getAttribute("data-val") || "";
-        const keyNorm = norm(raw);
-        if (!keyNorm) return;
+    $$("#sheet-filters .filters-item").forEach((row) => {
+      row.addEventListener("click", () => {
+        const raw = row.getAttribute("data-val") || "";
+        const key = norm(raw);
+        if (!key) return;
 
         pendingFilters[field] ||= new Set();
 
-        if (pendingFilters[field].has(keyNorm)) {
-          pendingFilters[field].delete(keyNorm);
-          rowEl.classList.remove("is-selected");
+        if (pendingFilters[field].has(key)) {
+          pendingFilters[field].delete(key);
+          row.classList.remove("is-on");
         } else {
-          pendingFilters[field].add(keyNorm);
-          rowEl.classList.add("is-selected");
+          pendingFilters[field].add(key);
+          row.classList.add("is-on");
         }
 
-        renderFiltersAppliedChips();
+        // apply immediately
+        activeFilters = cloneFilterSets(pendingFilters);
+        renderAppliedChipsEverywhere();
+        applyAllFilters();
       });
     });
   }
 
-  function syncFilterPillsActive() {
-    // field pills
-    $$("[data-fm-open]").forEach((btn) => {
-      const key = btn.getAttribute("data-fm-open");
-      const meta = FILTER_MAP[key];
-      if (!meta) return;
-      const set = pendingFilters[meta.field];
-      btn.classList.toggle("is-active", !!set && set.size > 0);
-    });
-
-    // toggle pills
-    $$("[data-fm-toggle]").forEach((btn) => {
-      const t = btn.getAttribute("data-fm-toggle");
-      if (!t) return;
-      btn.classList.toggle("is-active", !!pendingToggles[t]);
-    });
+  function filterDetailListBySearch() {
+    const q = norm(filtersSearch?.value || "");
+    const all = currentFieldValues || [];
+    const filtered = !q ? all : all.filter((v) => norm(v).includes(q));
+    renderDetailList(filtered);
   }
 
-  function renderFiltersAppliedChips() {
-    if (!filtersApplied) return;
-
-    const chips = buildAppliedChipModel(pendingFilters, pendingToggles, pendingBands ? new Set(pendingBands) : new Set());
-    if (!chips.length) {
-      filtersApplied.setAttribute("hidden", "");
-      filtersApplied.innerHTML = "";
-      return;
-    }
-
-    filtersApplied.removeAttribute("hidden");
-    filtersApplied.innerHTML = chips
-      .map((c) => {
-        return `
-          <span class="ap-chip" data-chip="${escapeAttr(c.id)}">
-            ${escapeHTML(c.label)}
-            <button type="button" aria-label="Remove">×</button>
-          </span>
-        `;
-      })
-      .join("");
-
-    // bind remove
-    filtersApplied.querySelectorAll(".ap-chip").forEach((chipEl) => {
-      const id = chipEl.getAttribute("data-chip") || "";
-      const btn = chipEl.querySelector("button");
-      btn?.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        removeChipById(id, pendingFilters, pendingToggles, pendingBands);
-        syncFilterPillsActive();
-        renderFiltersAppliedChips();
-        if (currentKey) renderFiltersList(currentValues);
-      });
-    });
-  }
-
-  function buildAppliedChipModel(filtersObj, togglesObj, bandsSet) {
+  // ---------- Applied chips (popup + main page) ----------
+  function buildAppliedChipData() {
     const chips = [];
 
-    // field chips
-    for (const [field, set] of Object.entries(filtersObj || {})) {
+    // field filters
+    for (const [field, set] of Object.entries(activeFilters)) {
       if (!set || !set.size) continue;
-      [...set].forEach((v) => {
-        const prettyField = field;
-        const prettyVal = v;
-        const id = `f|${field}|${v}`;
-        chips.push({ id, label: `${prettyField}: ${prettyVal}` });
-      });
+      for (const v of set.values()) {
+        // v is stored normalized (lowercase)
+        // show as “field: value”
+        chips.push({
+          type: "field",
+          field,
+          value: v,
+          label: `${field}: ${v}`,
+        });
+      }
     }
 
-    // toggle chips
-    const toggleLabels = {
-      flavored: "Flavored",
-      boxpressed: "Box-Pressed",
-      tin: "Tin",
-      pack: "Packs",
-      barberpole: "Barberpole",
-      tubo: "Tubo",
-      favorite: "Favorite",
-    };
-    for (const [k, on] of Object.entries(togglesObj || {})) {
+    // toggles
+    for (const [tKey, on] of Object.entries(activeToggles)) {
       if (!on) continue;
-      chips.push({ id: `t|${k}`, label: toggleLabels[k] || k });
-    }
-
-    // bands chips (show as Band: 1964 etc)
-    if (bandsSet && bandsSet.size) {
-      [...bandsSet].forEach((b) => {
-        chips.push({ id: `b|${b}`, label: `Band: ${b}` });
+      // label cases for display
+      const pretty =
+        tKey === "Box-Pressed" ? "Box-pressed" :
+        tKey === "Pack" ? "Packs" :
+        tKey === "Barber" ? "Barberpole" :
+        tKey;
+      chips.push({
+        type: "toggle",
+        field: tKey,
+        value: "true",
+        label: pretty,
       });
     }
 
     return chips;
   }
 
-  function removeChipById(id, filtersObj, togglesObj, bandsSet) {
-    const parts = (id || "").split("|");
-    if (parts.length < 2) return;
+  function removeAppliedChip(chip) {
+    if (!chip) return;
 
-    const type = parts[0];
-    if (type === "f" && parts.length >= 3) {
-      const field = parts[1];
-      const val = parts.slice(2).join("|");
-      const set = filtersObj[field];
-      if (set) set.delete(val);
-      if (set && set.size === 0) delete filtersObj[field];
-      return;
+    if (chip.type === "toggle") {
+      activeToggles[chip.field] = false;
+      pendingToggles[chip.field] = false;
+      syncToggleButtons();
+    } else {
+      const field = chip.field;
+      const v = chip.value; // normalized
+      if (activeFilters[field]) {
+        activeFilters[field].delete(v);
+        if (activeFilters[field].size === 0) delete activeFilters[field];
+      }
+      if (pendingFilters[field]) {
+        pendingFilters[field].delete(v);
+        if (pendingFilters[field].size === 0) delete pendingFilters[field];
+      }
     }
 
-    if (type === "t" && parts.length >= 2) {
-      const k = parts[1];
-      if (k in togglesObj) togglesObj[k] = false;
-      return;
-    }
-
-    if (type === "b" && parts.length >= 2) {
-      const token = parts.slice(1).join("|");
-      bandsSet?.delete(token);
-      return;
-    }
+    renderAppliedChipsEverywhere();
+    applyAllFilters();
   }
 
-  function renderAppliedRows() {
-    // on-page chips from ACTIVE state (not pending)
-    if (!appliedRowEl) return;
+  function renderChipsInto(el) {
+    if (!el) return;
+    const chips = buildAppliedChipData();
 
-    const chips = buildAppliedChipModel(activeFilters, activeToggles, activeBands);
     if (!chips.length) {
-      appliedRowEl.setAttribute("hidden", "");
-      appliedRowEl.innerHTML = "";
+      el.innerHTML = "";
       return;
     }
 
-    appliedRowEl.removeAttribute("hidden");
-    appliedRowEl.innerHTML = chips
-      .map((c) => {
+    el.innerHTML = chips
+      .map((c, idx) => {
         return `
-          <span class="ap-chip" data-chip="${escapeAttr(c.id)}">
-            ${escapeHTML(c.label)}
-            <button type="button" aria-label="Remove">×</button>
-          </span>
+          <button type="button" class="applied-chip" data-chip-idx="${idx}">
+            <span class="t">${escapeHTML(c.label)}</span>
+            <span class="x" aria-hidden="true">×</span>
+          </button>
         `;
       })
       .join("");
 
-    appliedRowEl.querySelectorAll(".ap-chip").forEach((chipEl) => {
-      const id = chipEl.getAttribute("data-chip") || "";
-      const btn = chipEl.querySelector("button");
-      btn?.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // remove from ACTIVE, then re-apply
-        if (id.startsWith("b|")) {
-          const token = id.slice(2);
-          activeBands.delete(token);
-        } else if (id.startsWith("t|")) {
-          const k = id.slice(2);
-          if (k in activeToggles) activeToggles[k] = false;
-        } else if (id.startsWith("f|")) {
-          const parts = id.split("|");
-          const field = parts[1];
-          const val = parts.slice(2).join("|");
-          const set = activeFilters[field];
-          if (set) set.delete(val);
-          if (set && set.size === 0) delete activeFilters[field];
-        }
-
-        applyAllFilters();
+    el.querySelectorAll(".applied-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.getAttribute("data-chip-idx"));
+        const chipsNow = buildAppliedChipData();
+        const chip = chipsNow[idx];
+        removeAppliedChip(chip);
       });
     });
   }
 
-  function openFiltersSheet() {
-    // clone active into pending
-    pendingFilters = cloneFilterSets(activeFilters);
-    pendingToggles = { ...activeToggles };
-    pendingBands = new Set(activeBands);
+  function renderFiltersPopupAppliedChips() {
+    const chips = buildAppliedChipData();
+    if (!filtersAppliedWrap || !filtersAppliedRow) return;
 
-    // reset views
-    showFiltersMain();
+    if (!chips.length) {
+      filtersAppliedWrap.setAttribute("hidden", "");
+      filtersAppliedRow.innerHTML = "";
+      return;
+    }
 
-    // expanded collapsed default
-    filtersExpanded?.setAttribute("hidden", "");
-    openSheet(sheetFilters);
+    filtersAppliedWrap.removeAttribute("hidden");
+    renderChipsInto(filtersAppliedRow);
   }
 
-  // bindings
-  function initFiltersUI() {
-    // open drilldown
-    $$("[data-fm-open]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const key = btn.getAttribute("data-fm-open");
-        if (!key) return;
-        showFiltersSub(key);
-      });
-    });
+  function renderMainPageAppliedChips() {
+    const chips = buildAppliedChipData();
+    if (!brandAppliedWrap || !brandAppliedRow) return;
 
-    // toggle pills
-    $$("[data-fm-toggle]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const t = btn.getAttribute("data-fm-toggle");
-        if (!t) return;
-        pendingToggles[t] = !pendingToggles[t];
-        btn.classList.toggle("is-active", pendingToggles[t]);
-        renderFiltersAppliedChips();
-      });
-    });
+    if (!chips.length) {
+      brandAppliedWrap.setAttribute("hidden", "");
+      brandAppliedRow.innerHTML = "";
+      return;
+    }
 
-    // back
-    filtersBack?.addEventListener("click", () => {
-      showFiltersMain();
-    });
+    brandAppliedWrap.removeAttribute("hidden");
+    renderChipsInto(brandAppliedRow);
+  }
 
-    // view all
-    filtersViewAllBtn?.addEventListener("click", () => {
-      if (!filtersExpanded) return;
-      const isHidden = filtersExpanded.hasAttribute("hidden");
-      if (isHidden) filtersExpanded.removeAttribute("hidden");
-      else filtersExpanded.setAttribute("hidden", "");
-    });
-
-    // search in subview
-    filtersSearch?.addEventListener("input", () => {
-      const q = norm(filtersSearch.value);
-      if (!q) return renderFiltersList(currentValues);
-      const filtered = (currentValues || []).filter((v) => norm(v).includes(q));
-      renderFiltersList(filtered);
-    });
-
-    // confirm => commit pending to active
-    filtersConfirm?.addEventListener("click", () => {
-      activeFilters = cloneFilterSets(pendingFilters);
-      activeToggles = { ...pendingToggles };
-      activeBands = new Set(pendingBands);
-
-      closeSheet(sheetFilters);
-      applyAllFilters();
-    });
+  function renderAppliedChipsEverywhere() {
+    renderFiltersPopupAppliedChips();
+    renderMainPageAppliedChips();
   }
 
   // ---------- Bands sheet (Padron only) ----------
@@ -821,7 +771,6 @@
     }));
   }
 
-  // ✅ confirm button should be GREY by default, BLUE only if at least 1 selection
   function updateBandsConfirmState() {
     if (!bandsConfirm) return;
     bandsConfirm.disabled = pendingBands.size === 0;
@@ -859,7 +808,9 @@
             <div class="band-meta">
               <span class="band-spacer" aria-hidden="true"></span>
               <span class="band-name">${escapeHTML(x.label)}</span>
-              <input type="checkbox" class="band-check" data-token="${escapeAttr(x.token)}" ${checked ? "checked" : ""} />
+              <input type="checkbox" class="band-check" data-token="${escapeAttr(x.token)}" ${
+                checked ? "checked" : ""
+              } />
             </div>
           </label>
         `;
@@ -920,6 +871,17 @@
     });
   }
 
+  function initFilterPillButtons() {
+    // pills inside filters popup
+    $$("#sheet-filters [data-open-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const field = btn.getAttribute("data-open-filter");
+        if (!field) return;
+        openDetailForField(field);
+      });
+    });
+  }
+
   function initButtons() {
     btnFilters?.addEventListener("click", (e) => {
       e.preventDefault();
@@ -929,6 +891,19 @@
     btnBands?.addEventListener("click", (e) => {
       e.preventDefault();
       openBandsSheet();
+    });
+
+    // back inside filters popup
+    filtersBack?.addEventListener("click", () => {
+      closeDetailToHome();
+    });
+
+    // search inside detail view
+    filtersSearch?.addEventListener("input", filterDetailListBySearch);
+
+    // confirm just closes popup (filters already applied live)
+    filtersConfirm?.addEventListener("click", () => {
+      closeSheet(sheetFilters);
     });
 
     bandsConfirm?.addEventListener("click", () => {
@@ -944,7 +919,9 @@
     initButtons();
     initSheetCloseHandlers();
     initWrapperSeg();
-    initFiltersUI();
+
+    initFilterPillButtons();
+    initToggleButtons();
 
     searchEl?.addEventListener("input", applyAllFilters);
 
