@@ -106,7 +106,7 @@ body.brand-page{
   outline:none;
   color:var(--ink);
   font-size:16px;
-  font-weight:700;
+  font-weight:600;
 }
 #brand-search::placeholder{ color:rgba(255,255,255,.45); }
 
@@ -125,7 +125,7 @@ body.brand-page{
   background:var(--pill);
   color:rgba(255,255,255,.80);
   font-size:13px;
-  font-weight:800;
+  font-weight:650; /* less bold */
   display:flex;
   align-items:center;
   justify-content:center;
@@ -150,7 +150,7 @@ body.brand-page{
   border:none;
   background:transparent;
   font-size:12px;
-  font-weight:900;
+  font-weight:650; /* less bold */
   color:rgba(255,255,255,.45);
 }
 
@@ -187,10 +187,8 @@ body.brand-page{
 #wrapper-seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }
 #wrapper-seg[data-state="natural"] .seg-dot::after{ left:30px; opacity:1; }
 
-/* ========== APPLIED FILTERS ROW (UNDER CONTROLS) ========== */
-.brand-applied{
-  margin-top:10px;
-}
+/* ========== APPLIED FILTERS ROW ========== */
+.brand-applied{ margin-top:10px; }
 
 .applied-row{
   display:flex;
@@ -207,14 +205,13 @@ body.brand-page{
   border:1px solid rgba(255,255,255,.14);
   background:rgba(255,255,255,.07);
   color:rgba(255,255,255,.90);
-  font-weight:800;
+  font-weight:600; /* less bold */
   font-size:13px;
   -webkit-tap-highlight-color:transparent;
 }
 
 .applied-chip .x{
-  width:20px;
-  height:20px;
+  width:20px;height:20px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.18);
   background:rgba(0,0,0,.14);
@@ -234,7 +231,7 @@ body.brand-page{
 
 .brand-row{
   display:grid;
-  grid-template-columns:54px 1fr auto auto; /* ICON | TEXT | PRICE | + */
+  grid-template-columns:54px 1fr auto auto;
   align-items:center;
   gap:12px;
   padding:14px 10px;
@@ -242,8 +239,7 @@ body.brand-page{
 }
 
 .row-ico{
-  width:54px;
-  height:54px;
+  width:54px;height:54px;
   border-radius:14px;
   object-fit:cover;
   box-shadow:0 10px 24px rgba(0,0,0,.20);
@@ -260,7 +256,7 @@ body.brand-page{
 
 .row-title{
   font-size:16px;
-  font-weight:700;
+  font-weight:650; /* less bold */
   letter-spacing:-.01em;
   line-height:1.1;
   color:rgba(255,255,255,.92);
@@ -274,7 +270,7 @@ body.brand-page{
 
 .row-sub{
   font-size:12px;
-  font-weight:700;
+  font-weight:600; /* less bold */
   color:rgba(255,255,255,.55);
   white-space:nowrap;
   overflow:hidden;
@@ -304,8 +300,7 @@ body.brand-page{
 }
 
 .row-add{
-  width:20px;
-  height:20px;
+  width:20px;height:20px;
   border-radius:899px;
   font-size:12px;
   font-weight:600;
@@ -326,7 +321,7 @@ body.brand-page{
 .brand-status{
   margin:16px 0 0;
   color:rgba(255,255,255,.75);
-  font-weight:700;
+  font-weight:600;
 }
 
 /* ========== RECEIPT FAB ========== */
@@ -334,8 +329,7 @@ body.brand-page{
   position:fixed;
   right:16px;
   bottom:18px;
-  width:56px;
-  height:56px;
+  width:56px;height:56px;
   border-radius:18px;
   border:1px solid rgba(255,255,255,.12);
   background:rgba(255,255,255,.08);
@@ -345,12 +339,11 @@ body.brand-page{
   display:grid;
   place-items:center;
   padding:0;
-  z-index:50; /* BELOW MODALS */
+  z-index:50;
 }
 
 .receipt-fab img{
-  width:26px;
-  height:26px;
+  width:26px;height:26px;
   display:block;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
 }
@@ -359,27 +352,24 @@ body.brand-page{
   position:absolute;
   top:-6px;
   right:-6px;
-  min-width:22px;
-  height:22px;
+  min-width:22px;height:22px;
   padding:0 6px;
   border-radius:999px;
   background:var(--green);
   color:#05210f;
   display:grid;
   place-items:center;
-  font-weight:900;
+  font-weight:800;
   font-size:12px;
   border:2px solid rgba(7,16,36,.85);
 }
 
 /* ===============================
-   GENERIC MODAL UTILITIES
+   MODAL UTILITIES
    =============================== */
-
 [hidden]{ display:none !important; }
 body.pos-modal-open{ overflow:hidden; }
 
-/* Backdrop */
 #sheet-backdrop{
   position:fixed;
   inset:0;
@@ -424,7 +414,7 @@ body.pos-modal-open{ overflow:hidden; }
 .filters-header h2{
   margin:0;
   font-size:20px;
-  font-weight:900;
+  font-weight:600; /* ✅ regular, not bold */
   letter-spacing:.01em;
 }
 
@@ -432,19 +422,17 @@ body.pos-modal-open{ overflow:hidden; }
   position:absolute;
   top:14px;
   right:16px;
-  width:32px;
-  height:32px;
+  width:32px;height:32px;
   border-radius:16px;
   border:none;
   background:rgba(255,255,255,.12);
   color:rgba(255,255,255,.95);
   font-size:20px;
-  font-weight:800;
+  font-weight:600; /* less bold */
   line-height:1;
   cursor:pointer;
 }
 
-/* back button for detail view */
 .filters-back{
   position:absolute;
   left:14px;
@@ -456,23 +444,22 @@ body.pos-modal-open{ overflow:hidden; }
   border:1px solid rgba(255,255,255,.14);
   background:rgba(255,255,255,.08);
   color:rgba(255,255,255,.92);
-  font-weight:900;
+  font-weight:600;
   font-size:16px;
   line-height:1;
   cursor:pointer;
 }
 
-/* body scroll area */
 #sheet-filters .filters-body{
   flex:1 1 auto;
   overflow-y:auto;
   padding:16px 18px 10px;
 }
 
-/* footer confirm */
 #sheet-filters .filters-footer{
   padding:12px 18px 18px;
 }
+
 #sheet-filters #filters-confirm{
   width:100%;
   height:44px;
@@ -481,14 +468,12 @@ body.pos-modal-open{ overflow:hidden; }
   background:var(--accent);
   color:#fff;
   font-size:16px;
-  font-weight:700;
+  font-weight:600; /* ✅ regular */
 }
 #sheet-filters #filters-confirm:active{ transform:scale(.99); opacity:.92; }
 
-/* applied chips area inside popup */
-.filters-applied{
-  margin-bottom:14px;
-}
+/* Applied chips area inside popup */
+.filters-applied{ margin-bottom:14px; }
 .filters-applied-row{
   display:flex;
   flex-wrap:wrap;
@@ -508,8 +493,10 @@ body.pos-modal-open{ overflow:hidden; }
   gap:10px;
   margin-bottom:10px;
 }
+
+/* ✅ make Wrapper Shade column a bit wider so it stays one line */
 .filters-row--3{
-  grid-template-columns:repeat(3, minmax(0, 1fr));
+  grid-template-columns:1fr 1fr 1.35fr;
 }
 .filters-row:last-child{ margin-bottom:0; }
 
@@ -520,17 +507,21 @@ body.pos-modal-open{ overflow:hidden; }
   background:rgba(255,255,255,.07);
   color:rgba(255,255,255,.92);
   font-size:15px;
-  font-weight:800;
+  font-weight:600; /* ✅ regular */
   letter-spacing:-.01em;
   display:flex;
   align-items:center;
   justify-content:center;
   -webkit-tap-highlight-color:transparent;
+  white-space:nowrap; /* ✅ never wrap */
+  padding:0 14px;
 }
 .filter-pill:active{ transform:scale(.99); }
-.pill-nowrap{ white-space:nowrap; }
 
-/* toggles list (no pill outlines) */
+.pill-nowrap{ white-space:nowrap; }
+.pill-wide{ padding:0 16px; } /* small help */
+
+/* toggles list */
 .filters-toggles{
   margin-top:16px;
   padding:6px 2px 0;
@@ -542,11 +533,12 @@ body.pos-modal-open{ overflow:hidden; }
 .tog-row{
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:16px;
+  gap:14px; /* slightly tighter so text fits */
 }
 
 .tog{
   width:100%;
+  min-width:0;
   border:none;
   background:transparent;
   color:rgba(255,255,255,.92);
@@ -554,25 +546,24 @@ body.pos-modal-open{ overflow:hidden; }
   align-items:center;
   gap:12px;
   justify-content:flex-start;
-  padding:10px 6px;
+  padding:10px 4px;
   -webkit-tap-highlight-color:transparent;
 }
 
+/* ✅ force true circles (never squish into lines/ovals) */
 .tog-dot{
   width:18px;
   height:18px;
   border-radius:999px;
-  border:2px solid rgba(255,255,255,.75);
+  border:2px solid rgba(255,255,255,.85);
   display:inline-block;
+  flex:0 0 18px;     /* ✅ prevents flex squish */
+  line-height:0;
   position:relative;
 }
 
-.tog.is-on{
-  color:rgba(15,122,255,.95);
-}
-.tog.is-on .tog-dot{
-  border-color:rgba(15,122,255,.95);
-}
+.tog.is-on{ color:rgba(15,122,255,.95); }
+.tog.is-on .tog-dot{ border-color:rgba(15,122,255,.95); }
 .tog.is-on .tog-dot::after{
   content:"";
   position:absolute;
@@ -581,10 +572,14 @@ body.pos-modal-open{ overflow:hidden; }
   background:rgba(15,122,255,.95);
 }
 
+/* ✅ make all labels one line and less bold */
 .tog-label{
-  font-size:18px;
-  font-weight:700;
+  font-size:16px;
+  font-weight:500;     /* ✅ regular */
   letter-spacing:-.01em;
+  white-space:nowrap;  /* ✅ Box-pressed / Barberpole never wrap */
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 /* DETAIL VIEW */
@@ -608,7 +603,7 @@ body.pos-modal-open{ overflow:hidden; }
   outline:none;
   color:var(--ink);
   font-size:16px;
-  font-weight:700;
+  font-weight:500; /* less bold */
 }
 #filters-search::placeholder{ color:rgba(255,255,255,.45); }
 
@@ -633,7 +628,7 @@ body.pos-modal-open{ overflow:hidden; }
 
 .filters-item .label{
   font-size:18px;
-  font-weight:800;
+  font-weight:500; /* ✅ regular */
   color:rgba(255,255,255,.92);
 }
 
@@ -646,10 +641,12 @@ body.pos-modal-open{ overflow:hidden; }
   background:rgba(255,255,255,.08);
   position:relative;
 }
+
 .filters-item.is-on .check{
   border-color:rgba(15,122,255,.95);
   background:rgba(15,122,255,.95);
 }
+
 .filters-item.is-on .check::after{
   content:"";
   position:absolute;
@@ -697,7 +694,7 @@ body.pos-modal-open{ overflow:hidden; }
 .bands-header h2{
   margin:0;
   font-size:20px;
-  font-weight:800;
+  font-weight:600; /* ✅ regular */
   letter-spacing:.01em;
 }
 
@@ -705,13 +702,12 @@ body.pos-modal-open{ overflow:hidden; }
   position:absolute;
   top:14px;
   right:16px;
-  width:32px;
-  height:32px;
+  width:32px;height:32px;
   border-radius:16px;
   border:none;
   background:rgba(15,23,42,.06);
   font-size:20px;
-  font-weight:700;
+  font-weight:600;
   line-height:1;
   cursor:pointer;
 }
@@ -795,12 +791,6 @@ body.pos-modal-open{ overflow:hidden; }
   cursor:pointer;
   position:relative;
   -webkit-tap-highlight-color:transparent;
-}
-
-.band-check:focus,
-.band-check:focus-visible{
-  outline:none !important;
-  box-shadow:none !important;
 }
 
 .band-check:checked{
