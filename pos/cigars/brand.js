@@ -495,6 +495,12 @@
     }));
   }
 
+  // ✅ confirm button should be GREY by default, BLUE only if at least 1 selection
+  function updateBandsConfirmState() {
+    if (!bandsConfirm) return;
+    bandsConfirm.disabled = pendingBands.size === 0;
+  }
+
   function renderBandsSheet() {
     if (!bandsOptions) return;
 
@@ -503,6 +509,7 @@
     const bands = getBandLibraryForBrand(b);
 
     pendingBands = new Set(activeBands);
+    updateBandsConfirmState(); // default grey unless something already active
 
     if (!bands.length) {
       bandsOptions.innerHTML = `
@@ -510,6 +517,7 @@
           No bands configured for <b>${escapeHTML(brand || "this brand")}</b> yet.
         </div>
       `;
+      updateBandsConfirmState();
       return;
     }
 
@@ -538,10 +546,15 @@
       cb.addEventListener("change", () => {
         const token = cb.getAttribute("data-token");
         if (!token) return;
+
         if (cb.checked) pendingBands.add(token);
         else pendingBands.delete(token);
+
+        updateBandsConfirmState(); // ✅ live reinforces grey/blue state
       });
     });
+
+    updateBandsConfirmState(); // ✅ safety after render
   }
 
   function openBandsSheet() {
@@ -601,6 +614,9 @@
     });
 
     bandsConfirm?.addEventListener("click", () => {
+      // If disabled, ignore (keeps grey behavior)
+      if (bandsConfirm.disabled) return;
+
       activeBands = new Set(pendingBands);
       closeSheet(sheetBands);
       applyAllFilters();
