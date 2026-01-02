@@ -25,6 +25,11 @@ const ITEMS = [
   { name: "Sprite", price: 1.50, slug: "sprite" },
   { name: "Starbucks", price: 3.50, slug: "starbucks" },
   { name: "Water", price: 1.50, slug: "water" }
+  { name: "Illy", price: 2.99, slug: "illy" },
+  { name: "Fanta", price: 1.50, slug: "fanta" },
+  { name: "Doritos", price: 1.50, slug: "doritos" }
+
+
 ];
 
 const grid = document.getElementById("grid");
