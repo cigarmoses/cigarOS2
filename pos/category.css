@@ -67,13 +67,19 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px 18px;
+
+  /* center the 3-column block inside the red area */
+  justify-content: center;
 }
 
 .category-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
+
+  /* center tiles inside each column */
+  align-items: center;
+  text-align: center;
+
   cursor: pointer; /* taps add to receipt */
 }
 
@@ -83,7 +89,6 @@
   width: 88px;
   height: 88px;
   border-radius: 22px;
-  /* no strong background here – the img itself carries the tile look */
   background: transparent;
   display: flex;
   align-items: center;
@@ -98,7 +103,7 @@
   object-fit: contain;
 
   /* Micro white stroke on all icons */
-  background: #ffffff;                          /* solid canvas to kill the halo */
+  background: #ffffff;                          /* solid canvas to kill halo */
   border-radius: 22px;                          /* match container rounding */
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.95); /* hairline white outline */
   outline: none;
