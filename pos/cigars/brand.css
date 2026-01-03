@@ -47,6 +47,7 @@ body.brand-page{
   border:none;background:transparent;
   color:var(--ink);
 }
+
 .icon-btn svg{ width:24px;height:24px; stroke:rgba(255,255,255,.85); }
 
 /* ========== MAIN ========== */
@@ -95,6 +96,7 @@ body.brand-page{
   background:rgba(255,255,255,.07);
   border:1px solid rgba(255,255,255,.12);
 }
+
 .search-ico{ opacity:.75; }
 
 #brand-search{
@@ -104,7 +106,7 @@ body.brand-page{
   outline:none;
   color:var(--ink);
   font-size:16px;
-  font-weight:600;
+  font-weight:700;
 }
 #brand-search::placeholder{ color:rgba(255,255,255,.45); }
 
@@ -123,7 +125,7 @@ body.brand-page{
   background:var(--pill);
   color:rgba(255,255,255,.80);
   font-size:13px;
-  font-weight:650;
+  font-weight:800;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -148,10 +150,13 @@ body.brand-page{
   border:none;
   background:transparent;
   font-size:12px;
-  font-weight:650;
+  font-weight:900;
   color:rgba(255,255,255,.45);
 }
-.seg-btn[aria-pressed="true"]{ color:rgba(15,122,255,.95); }
+
+.seg-btn[aria-pressed="true"]{
+  color:rgba(15,122,255,.95);
+}
 
 .seg-dot{
   width:56px;
@@ -164,6 +169,7 @@ body.brand-page{
   margin:0 auto;
   -webkit-tap-highlight-color:transparent;
 }
+
 .seg-dot::after{
   content:"";
   position:absolute;
@@ -176,6 +182,7 @@ body.brand-page{
   left:4px;
   transition:left .18s ease, opacity .18s ease;
 }
+
 #wrapper-seg[data-state="maduro"] .seg-dot::after{ left:4px; opacity:1; }
 #wrapper-seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }
 #wrapper-seg[data-state="natural"] .seg-dot::after{ left:30px; opacity:1; }
@@ -189,7 +196,7 @@ body.brand-page{
 
 .brand-row{
   display:grid;
-  grid-template-columns:54px 1fr auto auto;
+  grid-template-columns:54px 1fr auto auto; /* ICON | TEXT | PRICE | + */
   align-items:center;
   gap:12px;
   padding:14px 10px;
@@ -197,30 +204,39 @@ body.brand-page{
 }
 
 .row-ico{
-  width:54px;height:54px;
+  width:54px;
+  height:54px;
   border-radius:14px;
   object-fit:cover;
   box-shadow:0 10px 24px rgba(0,0,0,.20);
   background:rgba(255,255,255,.08);
 }
 
+.row-main{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+  cursor:pointer;
+}
+
 .row-title{
   font-size:16px;
-  font-weight:650;
+  font-weight:700;
   letter-spacing:-.01em;
   line-height:1.1;
   color:rgba(255,255,255,.92);
 
   display:-webkit-box;
-  -webkit-line-clamp:2;
+  -webkit-line-clamp:2;   /* allow up to 2 lines */
   -webkit-box-orient:vertical;
-  overflow:hidden;
-  white-space:normal;
+  overflow:hidden;        /* hide anything past 2 lines */
+  white-space:normal;     /* allow wrapping */
 }
 
 .row-sub{
   font-size:12px;
-  font-weight:600;
+  font-weight:700;
   color:rgba(255,255,255,.55);
   white-space:nowrap;
   overflow:hidden;
@@ -236,6 +252,8 @@ body.brand-page{
   min-width:78px;
   text-align:right;
 }
+
+/* taller divider line */
 .row-price::before{
   content:"";
   position:absolute;
@@ -249,38 +267,92 @@ body.brand-page{
 }
 
 .row-add{
-  width:20px;height:20px;
+  width:20px;
+  height:20px;
   border-radius:899px;
+
+  /* keep the + large + centered */
   font-size:12px;
   font-weight:600;
+  line-height:1;
   display:grid;
   place-items:center;
+
   border:none;
   background:var(--green);
   color:#073018;
+  cursor:pointer;
+
   box-shadow:0 10px 18px rgba(0,0,0,.25);
   -webkit-tap-highlight-color:transparent;
 }
-.row-add:active{ transform:scale(.98); }
 
-/* ===============================
-   MODAL UTILITIES
-   =============================== */
-[hidden]{ display:none !important; }
-body.pos-modal-open{ overflow:hidden; }
+.row-add:active{
+  transform:scale(.98);
+}
 
-#sheet-backdrop{
+/* ========== STATUS TEXT ========== */
+.brand-status{
+  margin:16px 0 0;
+  color:rgba(255,255,255,.75);
+  font-weight:700;
+}
+
+/* ========== RECEIPT FAB ========== */
+.receipt-fab{
   position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.35);
+  right:16px;
+  bottom:18px;
+  width:56px;
+  height:56px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.08);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  z-index:70;
+  box-shadow:0 14px 40px rgba(0,0,0,.35);
+  display:grid;
+  place-items:center;
+  padding:0;
+  z-index:50; /* BELOW MODALS */
+}
+
+.receipt-fab img{
+  width:26px;
+  height:26px;
+  display:block;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
+}
+
+.receipt-badge{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  border-radius:999px;
+  background:var(--green);
+  color:#05210f;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+  font-size:12px;
+  border:2px solid rgba(7,16,36,.85);
 }
 
 /* ===============================
-   FILTERS POPUP
+   GENERIC MODAL UTILITIES
    =============================== */
+
+[hidden]{ display:none !important; }
+
+body.pos-modal-open{ overflow:hidden; }
+
+/* ===============================
+   BRAND FILTERS SHEET (centered popup, same size as bands)
+   =============================== */
+
 #sheet-filters{
   position:fixed;
   left:50%;
@@ -299,169 +371,286 @@ body.pos-modal-open{ overflow:hidden; }
   display:flex;
   flex-direction:column;
   overflow:hidden;
-  z-index:80;
+  z-index:110;
 }
 
-.filters-header{
-  position:relative;
-  padding:18px 20px 10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.filters-header h2{
-  margin:0;
-  font-size:20px;
-  font-weight:600;
-  letter-spacing:.01em;
+/* force backdrop above page content */
+#sheet-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index:100;
 }
 
+/* Close button inside filters sheet */
 #sheet-filters [data-sheet-close]{
   position:absolute;
   top:14px;
   right:16px;
-  width:32px;height:32px;
+  width:32px;
+  height:32px;
   border-radius:16px;
   border:none;
   background:rgba(255,255,255,.12);
   color:rgba(255,255,255,.95);
   font-size:20px;
-  font-weight:600;
+  font-weight:800;
   line-height:1;
   cursor:pointer;
 }
 
+/* Body scroll area for filter chips */
+#sheet-filters .sheet-body,
 #sheet-filters .filters-body{
   flex:1 1 auto;
   overflow-y:auto;
   padding:16px 18px 10px;
 }
 
+/* Confirm footer */
+#sheet-filters .sheet-footer,
 #sheet-filters .filters-footer{
-  padding:12px 18px 18px;
+  padding:10px 18px 18px;
 }
 
-/* ✅ Confirm OFF by default (disabled) */
-#sheet-filters #filters-confirm{
+/* make confirm button full width if it exists */
+#sheet-filters #filters-confirm,
+#sheet-filters .filters-confirm,
+#sheet-filters .sheet-btn.primary{
   width:100%;
-  height:44px;
-  border-radius:22px;
-  border:none;
-  font-size:16px;
-  font-weight:600;
-  transition: transform .08s ease, opacity .12s ease, background .12s ease, color .12s ease;
-}
-#sheet-filters #filters-confirm:disabled{
-  background:rgba(255,255,255,.14);
-  color:rgba(255,255,255,.55);
-}
-#sheet-filters #filters-confirm:not(:disabled){
-  background:var(--accent);
-  color:#fff;
-}
-#sheet-filters #filters-confirm:not(:disabled):active{
-  transform:scale(.99);
-  opacity:.92;
 }
 
-/* HOME GRID */
-.filters-grid{
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.10);
-  border-radius:24px;
-  padding:14px;
+/* ===============================
+   ✅ HARD OVERRIDE: BANDS POPUP MUST SHOW ABOVE BACKDROP
+   (prevents pos.css .sheet styles from hiding/collapsing it)
+   =============================== */
+
+#sheet-bands[hidden]{ display:none !important; }
+#sheet-bands:not([hidden]){
+  display:flex !important;
+  opacity:1 !important;
+  transform:translate(-50%, -50%) !important;
+  pointer-events:auto !important;
 }
 
-.filters-row{
-  display:grid;
-  gap:10px;
-  margin-bottom:10px;
-}
-.filters-row--3{
-  grid-template-columns:1fr 1fr 1.35fr; /* Wrapper Shade wider */
-}
-.filters-row:last-child{ margin-bottom:0; }
+#sheet-bands{
+  position:fixed !important;
+  left:50% !important;
+  top:50% !important;
+  right:auto !important;
+  bottom:auto !important;
 
-.filter-pill{
-  height:44px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.07);
-  color:rgba(255,255,255,.92);
-  font-size:15px;
-  font-weight:600;
-  letter-spacing:-.01em;
+  width:min(630px, 90vw) !important;
+  max-height:76vh !important;
+
+  border-radius:32px !important;
+  background:#ffffff !important;
+  color:#0b1220 !important;
+
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.55),
+    0 0 0 1px rgba(0,0,0,.04) !important;
+
+  flex-direction:column !important;
+  overflow:hidden !important;
+
+  z-index:120 !important;
+}
+
+/* ===============================
+   BANDS POPUP (white centered card) – internal layout
+   =============================== */
+
+.bands-sheet{
   display:flex;
-  align-items:center;
-  justify-content:center;
-  -webkit-tap-highlight-color:transparent;
-  white-space:nowrap;
-  padding:0 14px;
+  flex-direction:column;
+  overflow:hidden;
 }
-.filter-pill:active{ transform:scale(.99); }
 
-.pill-nowrap{ white-space:nowrap; }
-.pill-wide{ padding:0 16px; }
+/* header */
+.bands-header{
+  position:relative;
+  text-align:center;
+  padding:18px 20px 10px;
+  border-bottom:none;
+}
 
-/* toggles */
-.filters-toggles{
-  margin-top:16px;
-  padding:6px 2px 0;
+.bands-header h2{
+  margin:0;
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:.01em;
+}
+
+.bands-x{
+  position:absolute;
+  top:14px;
+  right:16px;
+  width:32px;
+  height:32px;
+  border-radius:16px;
+  border:none;
+  background:rgba(15,23,42,.06);
+  font-size:20px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+}
+
+/* body */
+.bands-body{
+  flex:1 1 auto;
+  overflow-y:auto;
+  padding:6px 18px 10px;
+  position:relative; /* for scroll hint */
+}
+
+/* visible "scroll hint" bar (like your red markup) */
+.bands-body::after{
+  content:"";
+  position:absolute;
+  top:14px;
+  right:8px;
+  width:3px;
+  height:calc(100% - 28px);
+  border-radius:999px;
+
+  /* iOS style muted scroll indicator */
+  background:rgba(0,0,0,.10);
+
+  /* soft inner gloss */
+  box-shadow:
+    inset 0 0 4px rgba(255,255,255,.35),
+    0 0 0 1px rgba(255,255,255,.25);
+
+  pointer-events:none;
+}
+
+.bands-list{
   display:flex;
   flex-direction:column;
   gap:14px;
 }
 
-/* ✅ give more room so labels can fit */
-.tog-row{
-  display:grid;
-  grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:10px;
+/* each band row */
+.band-row{
+  display:block;
 }
 
-.tog{
+.band-art{
   width:100%;
-  min-width:0;
-  border:none;
+  height:140px;                 /* container stays the same size for every band */
+  border-radius:24px;
+  overflow:hidden;
   background:transparent;
-  color:rgba(255,255,255,.92);
+
   display:flex;
   align-items:center;
-  gap:10px;              /* tighter */
-  justify-content:flex-start;
-  padding:10px 2px;      /* tighter */
+  justify-content:center;
+
+  padding:12px 14px;            /* buffer around SVG */
+}
+
+.band-art img{
+  max-width:100%;
+  max-height:100%;
+  width:auto;                   /* IMPORTANT: don’t force width:100% */
+  height:auto;                  /* IMPORTANT: don’t force height:100% */
+  object-fit:contain;           /* always show full band */
+  display:block;
+}
+
+/* row under each band: [Band Name] [checkbox] */
+.band-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding-right:28px; /* pulls checkbox inward from edge */
+}
+
+.band-name{
+  flex:1 1 auto;
+  margin-right:12px;
+}
+
+/* checkbox to the RIGHT of the text */
+.band-check{
+  flex:0 0 auto;
+  width:22px;
+  height:22px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  background:#f3f4f6;
+  -webkit-appearance:none;
+  appearance:none;
+  outline:none;
+  box-shadow:none;
+  cursor:pointer;
+  position:relative;
   -webkit-tap-highlight-color:transparent;
 }
 
-/* ✅ circles never squish */
-.tog-dot{
-  width:18px;
-  height:18px;
-  border-radius:999px;
-  border:2px solid rgba(255,255,255,.85);
-  display:inline-block;
-  flex:0 0 18px;
-  position:relative;
+/* kill iOS blue focus ring/shadow */
+.band-check:focus,
+.band-check:focus-visible{
+  outline:none !important;
+  box-shadow:none !important;
 }
 
-.tog.is-on{ color:rgba(15,122,255,.95); }
-.tog.is-on .tog-dot{ border-color:rgba(15,122,255,.95); }
-.tog.is-on .tog-dot::after{
+/* checked state: BLUE BOX + WHITE CHECKMARK */
+.band-check:checked{
+  background:var(--accent);
+  border-color:var(--accent);
+}
+
+.band-check:checked::after{
   content:"";
   position:absolute;
-  inset:3px;
-  border-radius:999px;
-  background:rgba(15,122,255,.95);
+  left:7px;
+  top:3px;
+  width:6px;
+  height:12px;
+  border:2px solid #ffffff;
+  border-top:0;
+  border-left:0;
+  transform:rotate(45deg);
 }
 
-/* ✅ shrink + tighten tracking so Box-pressed / Barberpole fit on one line */
-.tog-label{
-  font-size:14px;          /* smaller */
-  font-weight:500;
-  letter-spacing:-0.03em;  /* tighter */
-  white-space:nowrap;      /* always one line */
-  overflow:visible;        /* NO truncation */
-  text-overflow:clip;      /* NO ellipsis */
+/* footer confirm button */
+.bands-footer{
+  padding:16px 18px 22px;
+  border-top:none;
 }
 
-/* (keep Bands styles etc below if you already had them — unchanged) */
+.bands-footer .bands-confirm{
+  width:100%;
+}
+
+.bands-footer .sheet-btn.primary{
+  width:100%;
+  height:44px;
+  border-radius:22px;
+  font-size:16px;
+  font-weight:600;
+  padding:0 16px;
+  border:none;
+}
+
+/* disabled (default) */
+.bands-footer .sheet-btn.primary:disabled{
+  background:#e5e7eb;
+  color:#9ca3af;
+}
+
+/* enabled (when JS removes disabled) */
+.bands-footer .sheet-btn.primary:not(:disabled){
+  background:var(--accent);
+  color:#ffffff;
+}
+
+.bands-footer .sheet-btn.primary:not(:disabled):active{
+  transform:scale(.98);
+  opacity:.92;
+}
