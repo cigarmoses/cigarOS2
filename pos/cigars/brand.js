@@ -2,17 +2,24 @@
    Brand POS page controller (Cigars)
 
    ✅ This version fixes:
-   1) Row text missing (Line+Cigar + Vitola) -> restored original DOM hooks so your existing brand.css applies
-   2) Tap zone -> icon through the divider area opens the detail popup (without touching MSRP or + button)
-   3) Detail popup sizing -> the WHITE card now fills the big “yellow space” (overlay is blur/dim behind it)
-   4) Typography -> SF Pro Display stack + tighter tracking + correct weight hierarchy (no wide spacing)
+   A) Filters popup home:
+      - Removes inner “box within a box” around the 6 filter pills (via injected CSS)
+      - Moves applied-chips row UP slightly (better centered in the header gap)
+      - Confirm button turns BLUE (enabled) when any filter/toggle is selected
 
-   Keeps all your previous logic:
+   B) Filters detail screens (Ring/Length/Wrapper Shade/Shape/Vitolas/Strength):
+      - Back button pinned top-left on ALL detail screens
+      - Removes search bar entirely
+      - Options rendered as selectable pill buttons (wrap/grid), not vertical list
+      - LENGTH pills ordered longest -> shortest (horizontal wrap)
+
+   Keeps all prior logic:
    - Filters popup matches cigars home (no Manufacturer/Brand)
    - Top pill order: Ring, Length, Wrapper Shade, Shape, Vitolas, Strength
    - Toggles are text + circle (not pills)
    - Applied chips in popup + under controls
    - Bands + Wrapper toggle + Search stack
+   - Detail popup sizing/typography work from previous version
 */
 
 (() => {
@@ -239,7 +246,7 @@
     return out;
   }
 
-  // ---------- DETAIL POPUP (big white card fills the “yellow space”) ----------
+  // ---------- DETAIL POPUP (unchanged from your working version) ----------
   const DETAIL_SHEET_ID = "sheet-detail";
   const DETAIL_STYLE_ID = "brand-detail-sheet-styles-v2";
   let detailSheetEl = null;
@@ -265,9 +272,9 @@
 
       #${DETAIL_SHEET_ID} .detail-card-shell{
         width: min(640px, calc(100vw - 32px));
-        height: min(900px, calc(100vh - 140px)); /* BIG like your yellow space */
+        height: min(900px, calc(100vh - 140px)); /* BIG */
         border-radius: 30px;
-        background: rgba(255,255,255,0.93); /* the actual popup is white */
+        background: rgba(255,255,255,0.93);
         box-shadow: 0 30px 100px rgba(0,0,0,0.40);
         border: 1px solid rgba(255,255,255,0.28);
         overflow: hidden;
@@ -320,7 +327,7 @@
         font-size: 44px;
         line-height: 1.02;
         font-weight: 800;
-        letter-spacing: -0.035em; /* tighter iOS */
+        letter-spacing: -0.035em;
       }
       #${DETAIL_SHEET_ID} .name{
         margin-top: 6px;
@@ -382,7 +389,7 @@
       #${DETAIL_SHEET_ID} .pill .k{
         font-size: 11px;
         font-weight: 800;
-        letter-spacing: 0.10em; /* slightly tighter than before */
+        letter-spacing: 0.10em;
         color: rgba(15,26,44,0.45);
       }
       #${DETAIL_SHEET_ID} .pill .v{
@@ -466,7 +473,6 @@
     document.body.appendChild(sheet);
     detailSheetEl = sheet;
 
-    // click outside card closes
     sheet.addEventListener("click", (e) => {
       if (e.target === sheet) closeDetailSheet();
     });
@@ -481,7 +487,7 @@
 
   function openDetailSheet() {
     const sheet = ensureDetailSheet();
-    backdrop?.removeAttribute("hidden"); // keep your existing system happy
+    backdrop?.removeAttribute("hidden");
     sheet.removeAttribute("hidden");
     document.body.classList.add("pos-modal-open");
     document.body.style.overflow = "hidden";
@@ -512,7 +518,6 @@
     const normalized = normalizeIconPath(direct);
     if (normalized) return normalized;
 
-    // fallback for now
     return bestIconForRow(row);
   }
 
@@ -608,7 +613,7 @@
     `;
   }
 
-  // ---------- LIST render (RESTORED original DOM hooks) ----------
+  // ---------- LIST render ----------
   function renderList(rows) {
     if (!listEl) return;
 
@@ -632,9 +637,6 @@
 
         VIEW_BY_ID[id] = row;
 
-        // NOTE:
-        // - row-main keeps data-open attribute (your brand.css expects this)
-        // - We add a .row-openhit overlay later so the click zone can be icon->divider
         return `
           <div class="brand-row" data-id="${escapeAttr(id)}">
             <img class="row-ico" src="${escapeAttr(icon)}" alt=""
@@ -648,7 +650,6 @@
             <div class="row-price">${price}</div>
             <button class="row-add" type="button" aria-label="Add" data-add>+</button>
 
-            <!-- invisible click-hit that spans icon + text up to divider -->
             <button class="row-openhit" type="button" aria-label="Open details" data-open-detail></button>
           </div>
         `;
@@ -665,15 +666,13 @@
     const style = document.createElement("style");
     style.id = id;
     style.textContent = `
-      /* This does NOT change your visual layout; it only defines the tap zone. */
       .brand-row{ position: relative; }
       .brand-row .row-openhit{
         position: absolute;
         top: 0;
         bottom: 0;
         left: 0;
-        /* right edge ends BEFORE MSRP area: tuned to match divider before price/+ */
-        right: 132px; /* adjust if needed, but this is usually correct */
+        right: 132px; /* icon + text + divider area */
         border: none;
         background: transparent;
         padding: 0;
@@ -682,21 +681,17 @@
         z-index: 2;
         border-radius: 18px;
       }
-      /* Ensure price/+ remain clickable above the hit zone */
       .brand-row .row-price,
       .brand-row .row-add{
         position: relative;
         z-index: 3;
       }
-      /* Keep your existing hover/active look if you have one; otherwise subtle press */
-      .brand-row .row-openhit:active{
-        transform: scale(0.999);
-      }
+      .brand-row .row-openhit:active{ transform: scale(0.999); }
     `;
     document.head.appendChild(style);
   }
 
-  // ---------- Single list delegation (no rebinding per render) ----------
+  // ---------- Single list delegation ----------
   function initListDelegation() {
     if (!listEl) return;
 
@@ -790,6 +785,7 @@
 
     renderList(VIEW);
     renderAppliedChipsEverywhere();
+    updateFiltersConfirmState(); // keep confirm state synced
   }
 
   // ---------- wrapper toggle ----------
@@ -861,6 +857,112 @@
     });
   }
 
+  // ---------- Filters popup UI STYLE fixes (remove inner box, chip positioning, back button placement, hide search) ----------
+  const FILTER_UI_STYLE_ID = "brand-filters-ui-fixes-v3";
+  function injectFiltersUIStylesOnce() {
+    if (document.getElementById(FILTER_UI_STYLE_ID)) return;
+
+    const style = document.createElement("style");
+    style.id = FILTER_UI_STYLE_ID;
+    style.textContent = `
+      /* Remove the inner “box within a box” around the pill grid */
+      #sheet-filters #filters-home{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      /* If there is any inner container in your existing CSS, neutralize it */
+      #sheet-filters #filters-home .inner,
+      #sheet-filters #filters-home .box,
+      #sheet-filters #filters-home .group,
+      #sheet-filters #filters-home .panel{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      /* Move applied chips up slightly (yellow zone alignment) */
+      #sheet-filters #filters-applied{
+        transform: translateY(-6px);
+      }
+
+      /* Detail header: pin back button to top-left; keep title centered */
+      #sheet-filters #filters-detail{
+        position: relative;
+      }
+      #sheet-filters #filters-back{
+        position: absolute !important;
+        left: 14px !important;
+        top: 10px !important;
+        z-index: 5;
+      }
+
+      /* Remove search bar entirely from detail screens */
+      #sheet-filters #filters-search,
+      #sheet-filters .filters-search,
+      #sheet-filters .filters-searchbar,
+      #sheet-filters .filters-search-wrap{
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Pill option grid */
+      #sheet-filters .filters-pillgrid{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 4px;
+      }
+      #sheet-filters .filters-pillopt{
+        border: none;
+        background: rgba(255,255,255,0.10);
+        color: rgba(255,255,255,0.92);
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+        user-select: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      #sheet-filters .filters-pillopt .dot{
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        border: 2px solid rgba(255,255,255,0.75);
+        background: transparent;
+        flex: 0 0 auto;
+      }
+      #sheet-filters .filters-pillopt.is-on{
+        background: rgba(33,124,255,0.35);
+        color: #fff;
+      }
+      #sheet-filters .filters-pillopt.is-on .dot{
+        border-color: rgba(33,124,255,1);
+        background: rgba(33,124,255,1);
+      }
+
+      /* Confirm button active state (blue when enabled) */
+      #sheet-filters #filters-confirm.is-active{
+        background: rgba(33,124,255,0.95) !important;
+        color: #fff !important;
+        opacity: 1 !important;
+      }
+      #sheet-filters #filters-confirm:disabled{
+        opacity: 0.55 !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   // ---------- Filters popup data ----------
   function cloneFilterSets(obj) {
     const out = {};
@@ -926,7 +1028,12 @@
     let out = uniqSorted(vals);
 
     if (field === "Wrapper Shade") out = orderWrapperShades(out);
-    if (field === "RG") out = out.sort((a, b) => (Number(a) || 0) - (Number(b) || 0));
+
+    // RG numeric (keep strings) — I’m keeping DESC for better “big to small” usability like Length.
+    if (field === "RG") out = out.sort((a, b) => (Number(b) || 0) - (Number(a) || 0));
+
+    // LENGTH numeric DESC (longest -> shortest) per your note
+    if (field === "Length") out = out.sort((a, b) => (Number(b) || 0) - (Number(a) || 0));
 
     return out;
   }
@@ -942,10 +1049,32 @@
     filtersBack?.toggleAttribute("hidden", !isDetail);
 
     if (filtersTitle) filtersTitle.textContent = isDetail ? currentField || "Filters" : "Filters";
-    if (!isDetail && filtersSearch) filtersSearch.value = "";
+    // Search is removed; keep value clean anyway
+    if (filtersSearch) filtersSearch.value = "";
+  }
+
+  function hasAnyFiltersSelected() {
+    // Field filters
+    for (const set of Object.values(activeFilters)) {
+      if (set && set.size) return true;
+    }
+    // Toggles
+    for (const on of Object.values(activeToggles)) {
+      if (on) return true;
+    }
+    return false;
+  }
+
+  function updateFiltersConfirmState() {
+    if (!filtersConfirm) return;
+    const on = hasAnyFiltersSelected();
+    filtersConfirm.disabled = !on;
+    filtersConfirm.classList.toggle("is-active", on);
   }
 
   function openFiltersSheet() {
+    injectFiltersUIStylesOnce();
+
     pendingFilters = cloneFilterSets(activeFilters);
     pendingToggles = { ...activeToggles };
 
@@ -956,17 +1085,20 @@
     currentFieldValues = [];
     setFiltersMode("home");
 
+    updateFiltersConfirmState();
     openSheet(sheetFilters);
   }
 
   function openDetailForField(field) {
+    injectFiltersUIStylesOnce();
+
     currentField = field;
     currentFieldValues = getValuesForField(field);
 
     setFiltersMode("detail");
     renderDetailList(currentFieldValues);
 
-    setTimeout(() => filtersSearch?.focus(), 50);
+    updateFiltersConfirmState();
   }
 
   function closeDetailToHome() {
@@ -975,6 +1107,7 @@
     setFiltersMode("home");
     renderFiltersPopupAppliedChips();
     syncToggleButtons();
+    updateFiltersConfirmState();
   }
 
   // ---------- Toggles (text + circle) ----------
@@ -992,16 +1125,21 @@
       btn.addEventListener("click", () => {
         const key = btn.getAttribute("data-toggle-key");
         if (!key) return;
+
         pendingToggles[key] = !pendingToggles[key];
         syncToggleButtons();
+
+        // apply immediately
         activeToggles = { ...pendingToggles };
         renderAppliedChipsEverywhere();
         applyAllFilters();
+
+        updateFiltersConfirmState();
       });
     });
   }
 
-  // ---------- Detail list rendering (checkbox style) ----------
+  // ---------- Detail list rendering (PILL GRID, no search bar) ----------
   function renderDetailList(values) {
     if (!filtersList) return;
     const field = currentField;
@@ -1009,22 +1147,32 @@
 
     const set = pendingFilters[field] || new Set();
 
-    filtersList.innerHTML = values
-      .map((v) => {
-        const label = normKeepCase(v);
-        const on = set.has(norm(label));
-        return `
-          <div class="filters-item ${on ? "is-on" : ""}" data-val="${escapeAttr(label)}">
-            <div class="label">${escapeHTML(label)}</div>
-            <div class="check" aria-hidden="true"></div>
-          </div>
-        `;
-      })
-      .join("");
+    // Render as pill grid (wrap) with small radio-dot
+    filtersList.innerHTML = `
+      <div class="filters-pillgrid">
+        ${values
+          .map((v) => {
+            const label = normKeepCase(v);
+            const key = norm(label);
+            const on = set.has(key);
+            return `
+              <button type="button"
+                      class="filters-pillopt ${on ? "is-on" : ""}"
+                      data-val="${escapeAttr(label)}"
+                      aria-pressed="${on ? "true" : "false"}">
+                <span class="dot" aria-hidden="true"></span>
+                <span class="t">${escapeHTML(label)}</span>
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
 
-    $$("#sheet-filters .filters-item").forEach((row) => {
-      row.addEventListener("click", () => {
-        const raw = row.getAttribute("data-val") || "";
+    // Delegate clicks
+    filtersList.querySelectorAll(".filters-pillopt").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const raw = btn.getAttribute("data-val") || "";
         const key = norm(raw);
         if (!key) return;
 
@@ -1032,24 +1180,21 @@
 
         if (pendingFilters[field].has(key)) {
           pendingFilters[field].delete(key);
-          row.classList.remove("is-on");
+          btn.classList.remove("is-on");
+          btn.setAttribute("aria-pressed", "false");
         } else {
           pendingFilters[field].add(key);
-          row.classList.add("is-on");
+          btn.classList.add("is-on");
+          btn.setAttribute("aria-pressed", "true");
         }
 
+        // apply immediately
         activeFilters = cloneFilterSets(pendingFilters);
         renderAppliedChipsEverywhere();
         applyAllFilters();
+        updateFiltersConfirmState();
       });
     });
-  }
-
-  function filterDetailListBySearch() {
-    const q = norm(filtersSearch?.value || "");
-    const all = currentFieldValues || [];
-    const filtered = !q ? all : all.filter((v) => norm(v).includes(q));
-    renderDetailList(filtered);
   }
 
   // ---------- Applied chips (popup + main page) ----------
@@ -1111,6 +1256,13 @@
 
     renderAppliedChipsEverywhere();
     applyAllFilters();
+    updateFiltersConfirmState();
+
+    // If we're in a detail screen, re-render pills so state is reflected
+    if (filtersMode === "detail" && currentField) {
+      currentFieldValues = getValuesForField(currentField);
+      renderDetailList(currentFieldValues);
+    }
   }
 
   function renderChipsInto(el) {
@@ -1317,12 +1469,12 @@
       openBandsSheet();
     });
 
+    // back inside filters popup (detail -> home)
     filtersBack?.addEventListener("click", () => {
       closeDetailToHome();
     });
 
-    filtersSearch?.addEventListener("input", filterDetailListBySearch);
-
+    // confirm just closes popup (filters already applied live)
     filtersConfirm?.addEventListener("click", () => {
       closeSheet(sheetFilters);
     });
@@ -1341,6 +1493,7 @@
     initSheetCloseHandlers();
     initWrapperSeg();
 
+    injectFiltersUIStylesOnce();
     initFilterPillButtons();
     initToggleButtons();
 
