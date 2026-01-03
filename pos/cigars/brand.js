@@ -1,25 +1,19 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   ✅ This version fixes:
-   A) Filters popup home:
-      - Removes inner “box within a box” around the 6 filter pills (via injected CSS)
-      - Moves applied-chips row UP slightly (better centered in the header gap)
-      - Confirm button turns BLUE (enabled) when any filter/toggle is selected
-
-   B) Filters detail screens (Ring/Length/Wrapper Shade/Shape/Vitolas/Strength):
-      - Back button pinned top-left on ALL detail screens
-      - Removes search bar entirely
-      - Options rendered as selectable pill buttons (wrap/grid), not vertical list
-      - LENGTH pills ordered longest -> shortest (horizontal wrap)
-
-   Keeps all prior logic:
-   - Filters popup matches cigars home (no Manufacturer/Brand)
-   - Top pill order: Ring, Length, Wrapper Shade, Shape, Vitolas, Strength
-   - Toggles are text + circle (not pills)
-   - Applied chips in popup + under controls
-   - Bands + Wrapper toggle + Search stack
-   - Detail popup sizing/typography work from previous version
+   ✅ Fixes in this version:
+   1) Filters popup: remove inner “box within box”, nudge applied chips up
+   2) Filters confirm button: turns BLUE/enabled when any selection exists
+   3) Filters detail screens:
+      - Back button pinned top-left
+      - NO search bars on any filter detail screen
+      - Options rendered as selectable pill buttons (wrap grid)
+      - Length pills sorted longest → shortest
+   4) Cigar detail popup:
+      - Remove back arrow; use small “X” text close (no rectangle)
+      - Move all content UP
+      - Add bottom action bar with: Favorite / Wishlist / Compare / Connections
+   5) Keeps your existing logic + DOM hooks for your brand.css list rows
 */
 
 (() => {
@@ -61,7 +55,7 @@
 
   const filtersHome = $("#filters-home");
   const filtersDetail = $("#filters-detail");
-  const filtersSearch = $("#filters-search");
+  const filtersSearch = $("#filters-search"); // will be hidden/unused
   const filtersList = $("#filters-list");
 
   const filtersAppliedWrap = $("#filters-applied");
@@ -246,9 +240,96 @@
     return out;
   }
 
-  // ---------- DETAIL POPUP (unchanged from your working version) ----------
+  // ---------- FILTERS UI STYLE OVERRIDES (box-within-box removal, confirm blue, back positioning, no search) ----------
+  const FILTERS_UX_STYLE_ID = "brand-filters-ux-overrides-v3";
+  function injectFiltersUXStylesOnce() {
+    if (document.getElementById(FILTERS_UX_STYLE_ID)) return;
+
+    const css = `
+      /* ===== Filters popup clean-up ===== */
+
+      /* Remove inner box styling (box within box) */
+      #sheet-filters #filters-home,
+      #sheet-filters #filters-detail{
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+
+      /* Nudge applied filters chips UP slightly */
+      #sheet-filters #filters-applied{
+        margin-top: 6px !important;
+        margin-bottom: 10px !important;
+      }
+
+      /* Back button pinned top-left on detail screens */
+      #sheet-filters #filters-back{
+        position: absolute !important;
+        top: 14px !important;
+        left: 14px !important;
+        z-index: 5 !important;
+      }
+
+      /* Keep title centered visually */
+      #sheet-filters #filters-title{
+        text-align: center !important;
+        width: 100% !important;
+      }
+
+      /* REMOVE / HIDE any search bar row inside filter detail */
+      #sheet-filters #filters-search,
+      #sheet-filters .filters-search,
+      #sheet-filters .filters-searchwrap,
+      #sheet-filters .filters-search-row{
+        display: none !important;
+      }
+
+      /* Confirm button states (blue when ready) */
+      #sheet-filters #filters-confirm{
+        transition: background .15s ease, opacity .15s ease, transform .05s ease;
+      }
+      #sheet-filters #filters-confirm.is-ready{
+        background: #2f7cf6 !important;
+        opacity: 1 !important;
+        color: #fff !important;
+      }
+      #sheet-filters #filters-confirm:disabled{
+        opacity: 0.55 !important;
+      }
+
+      /* Pill option grid for detail selections */
+      #sheet-filters #filters-list{
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        padding-top: 8px !important;
+      }
+      #sheet-filters .opt-pill{
+        border: none;
+        cursor: pointer;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.14);
+        color: rgba(255,255,255,0.95);
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+      }
+      #sheet-filters .opt-pill.is-on{
+        background: rgba(47,124,246,0.95);
+        color: #fff;
+      }
+    `;
+
+    const style = document.createElement("style");
+    style.id = FILTERS_UX_STYLE_ID;
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  // ---------- DETAIL POPUP (no back arrow; X text; moved up; bottom action bar) ----------
   const DETAIL_SHEET_ID = "sheet-detail";
-  const DETAIL_STYLE_ID = "brand-detail-sheet-styles-v2";
+  const DETAIL_STYLE_ID = "brand-detail-sheet-styles-v3";
   let detailSheetEl = null;
 
   function injectDetailStylesOnce() {
@@ -264,7 +345,7 @@
         align-items: center;
         justify-content: center;
         padding: 18px 16px; /* gap to iOS bars */
-        background: rgba(0,0,0,0.28); /* dim overlay */
+        background: rgba(0,0,0,0.28);
         -webkit-backdrop-filter: blur(14px);
         backdrop-filter: blur(14px);
       }
@@ -272,7 +353,7 @@
 
       #${DETAIL_SHEET_ID} .detail-card-shell{
         width: min(640px, calc(100vw - 32px));
-        height: min(900px, calc(100vh - 140px)); /* BIG */
+        height: min(900px, calc(100vh - 140px));
         border-radius: 30px;
         background: rgba(255,255,255,0.93);
         box-shadow: 0 30px 100px rgba(0,0,0,0.40);
@@ -283,36 +364,36 @@
         color: #0f1a2c;
       }
 
+      /* Top close (X text) */
       #${DETAIL_SHEET_ID} .detail-topbar{
         position: absolute;
-        top: 14px;
-        left: 12px;
-        right: 12px;
-        height: 44px;
+        top: 12px;
+        left: 14px;
+        right: 14px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        z-index: 2;
-        pointer-events: none;
+        z-index: 3;
       }
-      #${DETAIL_SHEET_ID} .detail-back{
-        pointer-events: auto;
-        width: 44px;
-        height: 44px;
+      #${DETAIL_SHEET_ID} .detail-x{
         border: none;
-        border-radius: 16px;
-        background: rgba(0,0,0,0.08);
-        display: grid;
-        place-items: center;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: rgba(15,26,44,0.65);
         cursor: pointer;
       }
-      #${DETAIL_SHEET_ID} .detail-back svg{ width: 22px; height: 22px; }
-      #${DETAIL_SHEET_ID} .detail-back:active{ transform: scale(0.98); }
+      #${DETAIL_SHEET_ID} .detail-x:active{ transform: scale(0.98); }
 
+      /* Scroll area moved UP */
       #${DETAIL_SHEET_ID} .detail-scroll{
         height: 100%;
         overflow: auto;
-        padding: 64px 18px 18px;
+        padding: 42px 18px 92px; /* bottom padding for action bar */
       }
 
       /* Header */
@@ -321,7 +402,7 @@
         grid-template-columns: 1fr auto;
         gap: 14px;
         align-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
       }
       #${DETAIL_SHEET_ID} .brand{
         font-size: 44px;
@@ -333,7 +414,7 @@
         margin-top: 6px;
         font-size: 20px;
         line-height: 1.2;
-        font-weight: 600;
+        font-weight: 650;
         letter-spacing: -0.02em;
         color: rgba(15,26,44,0.62);
       }
@@ -365,13 +446,28 @@
         padding: 12px;
         display: grid;
         place-items: center;
+        min-height: 520px;
       }
       #${DETAIL_SHEET_ID} .imgpanel img{
         width: 100%;
         height: auto;
-        max-height: 620px;
+        max-height: 640px;
         object-fit: contain;
         border-radius: 16px;
+      }
+      #${DETAIL_SHEET_ID} .imgplaceholder{
+        width: 100%;
+        height: 100%;
+        min-height: 520px;
+        border-radius: 16px;
+        background: rgba(0,0,0,0.06);
+        display: grid;
+        place-items: center;
+        text-align: center;
+        color: rgba(15,26,44,0.45);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        padding: 18px;
       }
 
       /* Pills + blocks (right) */
@@ -435,9 +531,41 @@
         text-align: right;
       }
 
+      /* Bottom action bar */
+      #${DETAIL_SHEET_ID} .detail-actions{
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 74px;
+        padding: 10px 14px 14px;
+        background: rgba(255,255,255,0.88);
+        border-top: 1px solid rgba(0,0,0,0.06);
+        display: grid;
+        align-items: end;
+      }
+      #${DETAIL_SHEET_ID} .detail-actions .bar{
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+      #${DETAIL_SHEET_ID} .detail-actions button{
+        border: none;
+        border-radius: 18px;
+        background: rgba(0,0,0,0.06);
+        padding: 12px 10px;
+        font-weight: 750;
+        letter-spacing: -0.01em;
+        color: rgba(15,26,44,0.85);
+        cursor: pointer;
+      }
+      #${DETAIL_SHEET_ID} .detail-actions button:active{ transform: scale(0.98); }
+
       @media (max-width: 420px){
         #${DETAIL_SHEET_ID} .grid{ grid-template-columns: 1fr; }
         #${DETAIL_SHEET_ID} .brand{ font-size: 40px; }
+        #${DETAIL_SHEET_ID} .imgpanel{ min-height: 420px; }
+        #${DETAIL_SHEET_ID} .imgplaceholder{ min-height: 420px; }
       }
     `;
 
@@ -459,20 +587,27 @@
     sheet.innerHTML = `
       <div class="detail-card-shell" role="dialog" aria-modal="true" aria-label="Cigar details">
         <div class="detail-topbar">
-          <button type="button" class="detail-back" data-detail-close aria-label="Back">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 18L9 12L15 6" stroke="rgba(15,26,44,0.85)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <button type="button" class="detail-x" data-detail-close aria-label="Close">X</button>
           <div></div>
         </div>
+
         <div class="detail-scroll" id="detail-body"></div>
+
+        <div class="detail-actions" aria-label="Actions">
+          <div class="bar">
+            <button type="button" data-act="favorite">Favorite</button>
+            <button type="button" data-act="wishlist">Wishlist</button>
+            <button type="button" data-act="compare">Compare</button>
+            <button type="button" data-act="connect">Connections</button>
+          </div>
+        </div>
       </div>
     `;
 
     document.body.appendChild(sheet);
     detailSheetEl = sheet;
 
+    // click outside card closes
     sheet.addEventListener("click", (e) => {
       if (e.target === sheet) closeDetailSheet();
     });
@@ -480,6 +615,15 @@
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeDetailSheet();
+    });
+
+    // action buttons (placeholder hooks for now)
+    sheet.querySelectorAll("[data-act]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        // You can wire these into real app logic later
+        btn.style.transform = "scale(0.98)";
+        setTimeout(() => (btn.style.transform = ""), 80);
+      });
     });
 
     return sheet;
@@ -518,7 +662,7 @@
     const normalized = normalizeIconPath(direct);
     if (normalized) return normalized;
 
-    return bestIconForRow(row);
+    return ""; // if missing, show placeholder panel
   }
 
   function renderDetailForRow(row) {
@@ -559,7 +703,11 @@
 
       <div class="grid">
         <div class="imgpanel">
-          ${cigarImg ? `<img src="${escapeAttr(cigarImg)}" alt="">` : ""}
+          ${
+            cigarImg
+              ? `<img src="${escapeAttr(cigarImg)}" alt="">`
+              : `<div class="imgplaceholder">Image<br/>Coming<br/>Soon</div>`
+          }
         </div>
 
         <div>
@@ -613,7 +761,7 @@
     `;
   }
 
-  // ---------- LIST render ----------
+  // ---------- LIST render (RESTORED original DOM hooks) ----------
   function renderList(rows) {
     if (!listEl) return;
 
@@ -672,7 +820,7 @@
         top: 0;
         bottom: 0;
         left: 0;
-        right: 132px; /* icon + text + divider area */
+        right: 132px;
         border: none;
         background: transparent;
         padding: 0;
@@ -686,7 +834,9 @@
         position: relative;
         z-index: 3;
       }
-      .brand-row .row-openhit:active{ transform: scale(0.999); }
+      .brand-row .row-openhit:active{
+        transform: scale(0.999);
+      }
     `;
     document.head.appendChild(style);
   }
@@ -743,13 +893,11 @@
     const q = norm(searchEl?.value || "");
 
     VIEW = ALL.filter((row) => {
-      // search
       if (q) {
         const hay = norm(`${row.Cigar || ""} ${row.Vitola || ""} ${row.Line || ""}`);
         if (!hay.includes(q)) return false;
       }
 
-      // wrapper toggle (by cigar name only)
       const cigarName = norm(row.Cigar || "");
       if (wrapperState === "maduro") {
         if (!cigarName.includes("maduro")) return false;
@@ -757,20 +905,17 @@
         if (!cigarName.includes("natural")) return false;
       }
 
-      // field filters (multi-select)
       for (const [field, set] of Object.entries(activeFilters)) {
         if (!set || !set.size) continue;
         const v = norm(row[field] || "");
         if (!set.has(v)) return false;
       }
 
-      // toggles (boolean)
       for (const [tKey, on] of Object.entries(activeToggles)) {
         if (!on) continue;
         if (!isTruthyToggleCell(row[tKey])) return false;
       }
 
-      // bands
       if (activeBands.size) {
         const src = matchBandSource(row);
         let ok = false;
@@ -785,7 +930,6 @@
 
     renderList(VIEW);
     renderAppliedChipsEverywhere();
-    updateFiltersConfirmState(); // keep confirm state synced
   }
 
   // ---------- wrapper toggle ----------
@@ -857,112 +1001,6 @@
     });
   }
 
-  // ---------- Filters popup UI STYLE fixes (remove inner box, chip positioning, back button placement, hide search) ----------
-  const FILTER_UI_STYLE_ID = "brand-filters-ui-fixes-v3";
-  function injectFiltersUIStylesOnce() {
-    if (document.getElementById(FILTER_UI_STYLE_ID)) return;
-
-    const style = document.createElement("style");
-    style.id = FILTER_UI_STYLE_ID;
-    style.textContent = `
-      /* Remove the inner “box within a box” around the pill grid */
-      #sheet-filters #filters-home{
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-      }
-      /* If there is any inner container in your existing CSS, neutralize it */
-      #sheet-filters #filters-home .inner,
-      #sheet-filters #filters-home .box,
-      #sheet-filters #filters-home .group,
-      #sheet-filters #filters-home .panel{
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-      }
-
-      /* Move applied chips up slightly (yellow zone alignment) */
-      #sheet-filters #filters-applied{
-        transform: translateY(-6px);
-      }
-
-      /* Detail header: pin back button to top-left; keep title centered */
-      #sheet-filters #filters-detail{
-        position: relative;
-      }
-      #sheet-filters #filters-back{
-        position: absolute !important;
-        left: 14px !important;
-        top: 10px !important;
-        z-index: 5;
-      }
-
-      /* Remove search bar entirely from detail screens */
-      #sheet-filters #filters-search,
-      #sheet-filters .filters-search,
-      #sheet-filters .filters-searchbar,
-      #sheet-filters .filters-search-wrap{
-        display: none !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      /* Pill option grid */
-      #sheet-filters .filters-pillgrid{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding-top: 4px;
-      }
-      #sheet-filters .filters-pillopt{
-        border: none;
-        background: rgba(255,255,255,0.10);
-        color: rgba(255,255,255,0.92);
-        padding: 10px 14px;
-        border-radius: 999px;
-        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-        font-weight: 700;
-        letter-spacing: -0.01em;
-        font-size: 16px;
-        line-height: 1;
-        cursor: pointer;
-        user-select: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-      }
-      #sheet-filters .filters-pillopt .dot{
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        border: 2px solid rgba(255,255,255,0.75);
-        background: transparent;
-        flex: 0 0 auto;
-      }
-      #sheet-filters .filters-pillopt.is-on{
-        background: rgba(33,124,255,0.35);
-        color: #fff;
-      }
-      #sheet-filters .filters-pillopt.is-on .dot{
-        border-color: rgba(33,124,255,1);
-        background: rgba(33,124,255,1);
-      }
-
-      /* Confirm button active state (blue when enabled) */
-      #sheet-filters #filters-confirm.is-active{
-        background: rgba(33,124,255,0.95) !important;
-        color: #fff !important;
-        opacity: 1 !important;
-      }
-      #sheet-filters #filters-confirm:disabled{
-        opacity: 0.55 !important;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
   // ---------- Filters popup data ----------
   function cloneFilterSets(obj) {
     const out = {};
@@ -1025,15 +1063,24 @@
       const v = r[field];
       if (v != null && v !== "") vals.push(v);
     }
+
     let out = uniqSorted(vals);
 
     if (field === "Wrapper Shade") out = orderWrapperShades(out);
 
-    // RG numeric (keep strings) — I’m keeping DESC for better “big to small” usability like Length.
-    if (field === "RG") out = out.sort((a, b) => (Number(b) || 0) - (Number(a) || 0));
+    // Length: sort longest -> shortest (numeric)
+    if (field === "Length") {
+      out = out
+        .slice()
+        .sort((a, b) => (Number(b) || 0) - (Number(a) || 0));
+    }
 
-    // LENGTH numeric DESC (longest -> shortest) per your note
-    if (field === "Length") out = out.sort((a, b) => (Number(b) || 0) - (Number(a) || 0));
+    // Ring: keep numeric ascending (you can flip later if you want)
+    if (field === "RG") {
+      out = out
+        .slice()
+        .sort((a, b) => (Number(a) || 0) - (Number(b) || 0));
+    }
 
     return out;
   }
@@ -1049,55 +1096,38 @@
     filtersBack?.toggleAttribute("hidden", !isDetail);
 
     if (filtersTitle) filtersTitle.textContent = isDetail ? currentField || "Filters" : "Filters";
-    // Search is removed; keep value clean anyway
-    if (filtersSearch) filtersSearch.value = "";
-  }
 
-  function hasAnyFiltersSelected() {
-    // Field filters
-    for (const set of Object.values(activeFilters)) {
-      if (set && set.size) return true;
+    // search is removed for all detail screens
+    if (filtersSearch) {
+      filtersSearch.value = "";
+      filtersSearch.setAttribute("hidden", "");
+      filtersSearch.style.display = "none";
     }
-    // Toggles
-    for (const on of Object.values(activeToggles)) {
-      if (on) return true;
-    }
-    return false;
-  }
-
-  function updateFiltersConfirmState() {
-    if (!filtersConfirm) return;
-    const on = hasAnyFiltersSelected();
-    filtersConfirm.disabled = !on;
-    filtersConfirm.classList.toggle("is-active", on);
   }
 
   function openFiltersSheet() {
-    injectFiltersUIStylesOnce();
+    injectFiltersUXStylesOnce();
 
     pendingFilters = cloneFilterSets(activeFilters);
     pendingToggles = { ...activeToggles };
 
     syncToggleButtons();
     renderFiltersPopupAppliedChips();
+    updateFiltersConfirmState();
 
     currentField = "";
     currentFieldValues = [];
     setFiltersMode("home");
 
-    updateFiltersConfirmState();
     openSheet(sheetFilters);
   }
 
   function openDetailForField(field) {
-    injectFiltersUIStylesOnce();
-
     currentField = field;
     currentFieldValues = getValuesForField(field);
 
     setFiltersMode("detail");
     renderDetailList(currentFieldValues);
-
     updateFiltersConfirmState();
   }
 
@@ -1108,6 +1138,24 @@
     renderFiltersPopupAppliedChips();
     syncToggleButtons();
     updateFiltersConfirmState();
+  }
+
+  // ---------- Confirm button state (BLUE when any selection exists) ----------
+  function hasAnySelection(filtersObj, togglesObj) {
+    for (const set of Object.values(filtersObj || {})) {
+      if (set && set.size) return true;
+    }
+    for (const on of Object.values(togglesObj || {})) {
+      if (on) return true;
+    }
+    return false;
+  }
+
+  function updateFiltersConfirmState() {
+    if (!filtersConfirm) return;
+    const ready = hasAnySelection(activeFilters, activeToggles);
+    filtersConfirm.disabled = !ready;
+    filtersConfirm.classList.toggle("is-ready", ready);
   }
 
   // ---------- Toggles (text + circle) ----------
@@ -1126,20 +1174,19 @@
         const key = btn.getAttribute("data-toggle-key");
         if (!key) return;
 
+        // Toggle immediately applies (like your current behavior)
         pendingToggles[key] = !pendingToggles[key];
         syncToggleButtons();
 
-        // apply immediately
         activeToggles = { ...pendingToggles };
         renderAppliedChipsEverywhere();
         applyAllFilters();
-
         updateFiltersConfirmState();
       });
     });
   }
 
-  // ---------- Detail list rendering (PILL GRID, no search bar) ----------
+  // ---------- Detail list rendering (PILL buttons, no search, wraps) ----------
   function renderDetailList(values) {
     if (!filtersList) return;
     const field = currentField;
@@ -1147,30 +1194,23 @@
 
     const set = pendingFilters[field] || new Set();
 
-    // Render as pill grid (wrap) with small radio-dot
-    filtersList.innerHTML = `
-      <div class="filters-pillgrid">
-        ${values
-          .map((v) => {
-            const label = normKeepCase(v);
-            const key = norm(label);
-            const on = set.has(key);
-            return `
-              <button type="button"
-                      class="filters-pillopt ${on ? "is-on" : ""}"
-                      data-val="${escapeAttr(label)}"
-                      aria-pressed="${on ? "true" : "false"}">
-                <span class="dot" aria-hidden="true"></span>
-                <span class="t">${escapeHTML(label)}</span>
-              </button>
-            `;
-          })
-          .join("")}
-      </div>
-    `;
+    filtersList.innerHTML = values
+      .map((v) => {
+        const label = normKeepCase(v);
+        const key = norm(label);
+        const on = set.has(key);
+        return `
+          <button type="button"
+                  class="opt-pill ${on ? "is-on" : ""}"
+                  data-val="${escapeAttr(label)}"
+                  aria-pressed="${on ? "true" : "false"}">
+            ${escapeHTML(label)}
+          </button>
+        `;
+      })
+      .join("");
 
-    // Delegate clicks
-    filtersList.querySelectorAll(".filters-pillopt").forEach((btn) => {
+    filtersList.querySelectorAll(".opt-pill").forEach((btn) => {
       btn.addEventListener("click", () => {
         const raw = btn.getAttribute("data-val") || "";
         const key = norm(raw);
@@ -1188,7 +1228,6 @@
           btn.setAttribute("aria-pressed", "true");
         }
 
-        // apply immediately
         activeFilters = cloneFilterSets(pendingFilters);
         renderAppliedChipsEverywhere();
         applyAllFilters();
@@ -1257,12 +1296,6 @@
     renderAppliedChipsEverywhere();
     applyAllFilters();
     updateFiltersConfirmState();
-
-    // If we're in a detail screen, re-render pills so state is reflected
-    if (filtersMode === "detail" && currentField) {
-      currentFieldValues = getValuesForField(currentField);
-      renderDetailList(currentFieldValues);
-    }
   }
 
   function renderChipsInto(el) {
@@ -1435,6 +1468,7 @@
 
     applyBrandHeader(brand, ALL[0]);
     applyAllFilters();
+    updateFiltersConfirmState();
   }
 
   // ---------- init ----------
@@ -1449,6 +1483,7 @@
   }
 
   function initFilterPillButtons() {
+    // These are the main filter-type pills inside the filters sheet
     $$("#sheet-filters [data-open-filter]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const field = btn.getAttribute("data-open-filter");
@@ -1469,12 +1504,11 @@
       openBandsSheet();
     });
 
-    // back inside filters popup (detail -> home)
     filtersBack?.addEventListener("click", () => {
       closeDetailToHome();
     });
 
-    // confirm just closes popup (filters already applied live)
+    // Confirm just closes; state reflects whether anything is selected
     filtersConfirm?.addEventListener("click", () => {
       closeSheet(sheetFilters);
     });
@@ -1488,12 +1522,13 @@
   }
 
   function init() {
+    injectFiltersUXStylesOnce();
+
     initBackButton();
     initButtons();
     initSheetCloseHandlers();
     initWrapperSeg();
 
-    injectFiltersUIStylesOnce();
     initFilterPillButtons();
     initToggleButtons();
 
