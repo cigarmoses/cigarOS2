@@ -654,3 +654,231 @@ body.pos-modal-open{ overflow:hidden; }
   transform:scale(.98);
   opacity:.92;
 }
+/* =========================
+   CIGAR DETAIL POPUP (SHEET)
+   ========================= */
+
+/* Tap zone = icon -> divider (before MSRP) */
+.cigar-tapzone {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+  padding: 14px 14px;
+  border-radius: 18px;
+}
+
+/* Make tap feedback subtle */
+.cigar-tapzone:active {
+  transform: scale(0.99);
+}
+
+/* Overlay */
+.cigar-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 16px; /* creates the top/bottom gap like your yellow mock */
+  background: rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.cigar-detail-overlay.is-open {
+  display: flex;
+}
+
+/* Big “yellow area” sheet */
+.cigar-detail-sheet {
+  width: min(560px, 94vw);
+  height: min(820px, 86vh);
+  border-radius: 28px;
+  background: rgba(188, 167, 113, 0.35); /* warm tinted glass like your mock */
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Close / back arrow */
+.cigar-detail-close {
+  position: absolute;
+  top: 14px;
+  left: 12px;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.cigar-detail-close:active {
+  transform: scale(0.98);
+}
+
+/* Scrollable content area */
+.cigar-detail-body {
+  height: 100%;
+  overflow: auto;
+  padding: 62px 18px 18px;
+}
+
+/* The white “card” inside (your detailed mockup) */
+.cigar-detail-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  padding: 18px;
+}
+
+/* Header row */
+.cigar-detail-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.cigar-detail-brand {
+  font-size: 36px;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.cigar-detail-name {
+  margin-top: 4px;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 500;
+  color: rgba(15, 26, 44, 0.6);
+}
+
+.cigar-detail-brandicon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.06);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.cigar-detail-brandicon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Main grid (image left, stats right) */
+.cigar-detail-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.cigar-detail-imgwrap {
+  background: rgba(0,0,0,0.04);
+  border-radius: 20px;
+  padding: 12px;
+  display: grid;
+  place-items: center;
+}
+
+.cigar-detail-imgwrap img {
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+/* Stat pills */
+.cigar-detail-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.detail-pill {
+  background: rgba(0,0,0,0.04);
+  border-radius: 18px;
+  padding: 12px 12px;
+  text-align: center;
+}
+
+.detail-pill .k {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: rgba(15, 26, 44, 0.45);
+}
+
+.detail-pill .v {
+  margin-top: 4px;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: rgba(15, 26, 44, 0.92);
+}
+
+/* Larger text pills (Strength/Vitola) */
+.detail-pill.small .v {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Text blocks (wrapper/binder/filler/origin) */
+.detail-block {
+  grid-column: 1 / -1;
+  background: rgba(0,0,0,0.04);
+  border-radius: 18px;
+  padding: 12px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 2px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.detail-row:first-child {
+  border-top: none;
+}
+
+.detail-row .k {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  color: rgba(15, 26, 44, 0.45);
+}
+
+.detail-row .v {
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(15, 26, 44, 0.92);
+  text-align: right;
+}
+
+/* Mobile: stack for smaller screens */
+@media (max-width: 420px) {
+  .cigar-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .cigar-detail-brand {
+    font-size: 34px;
+  }
+}
