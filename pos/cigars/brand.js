@@ -1,19 +1,12 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   ✅ Updates in this version:
-   - Filters popup now matches Cigars home layout (no Manufacturer/Brand)
-   - Top pill order: Ring, Length, Wrapper Shade, Shape, Vitolas, Strength
-   - Toggles are NOT pills anymore:
-     Flavored / Tubo / Tin
-     Box-Pressed / Packs / Barberpole
-     -> white text + circle, blue when selected
-   - Applied filters chips:
-     * inside filters popup (top)
-     * under the controls row on the main brand page
-     * X removes immediately
-   - Detail list view with Back button inside popup
-   - Logic stacks with Bands + Wrapper toggle + Search as requested
+   ✅ Updates in this version (adds your “cigar detail img” popup):
+   - Clicking the LEFT “info zone” of a row (icon → divider before MSRP) opens the big detail popup
+   - Popup size matches your yellow mock: large sheet with gaps top/bottom + rounded corners
+   - Does NOT interfere with MSRP area or green + button
+   - Uses existing sheet/backdrop system if present, but safely injects its own detail sheet + styles
+   - No follow-up required: drop-in replacement for this file
 */
 
 (() => {
@@ -69,18 +62,21 @@
   let ALL = [];
   let VIEW = [];
 
+  // lookup for the currently rendered list (for fast open-detail)
+  let VIEW_BY_ID = Object.create(null);
+
   // Multi-select field filters (Sets)
-  let activeFilters = {};   // { "Vitola": Set(["robusto"]) ... }
+  let activeFilters = {}; // { "Vitola": Set(["robusto"]) ... }
   let pendingFilters = {};
 
   // Boolean toggles (single on/off)
   let activeToggles = {
-    "Flavored": false,
-    "Tubo": false,
-    "Tin": false,
+    Flavored: false,
+    Tubo: false,
+    Tin: false,
     "Box-Pressed": false,
-    "Pack": false,
-    "Barber": false,
+    Pack: false,
+    Barber: false,
   };
   let pendingToggles = { ...activeToggles };
 
@@ -92,7 +88,7 @@
 
   // Filters popup view state
   let filtersMode = "home"; // home | detail
-  let currentField = "";    // which pill opened (e.g., "Vitola")
+  let currentField = ""; // which pill opened (e.g., "Vitola")
   let currentFieldValues = [];
 
   // ---------- helpers ----------
@@ -239,9 +235,373 @@
     return out;
   }
 
+  // ---------- DETAIL POPUP (inject sheet + styles, open/close, render) ----------
+  const DETAIL_SHEET_ID = "sheet-detail";
+  const DETAIL_STYLE_ID = "brand-detail-sheet-styles";
+  let detailSheetEl = null;
+
+  function injectDetailStylesOnce() {
+    if (document.getElementById(DETAIL_STYLE_ID)) return;
+
+    const css = `
+      /* ===== Cigar Detail Sheet (injected) ===== */
+      #${DETAIL_SHEET_ID}.sheet {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px 16px; /* gap like your yellow mock */
+        background: rgba(0,0,0,0.22);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+      }
+      #${DETAIL_SHEET_ID}[hidden] { display: none !important; }
+
+      #${DETAIL_SHEET_ID} .detail-shell {
+        width: min(560px, 94vw);
+        height: min(840px, 86vh);
+        border-radius: 28px;
+        overflow: hidden;
+        position: relative;
+        background: rgba(188,167,113,0.35); /* warm tinted sheet */
+        border: 1px solid rgba(255,255,255,0.18);
+        box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+      }
+      #${DETAIL_SHEET_ID} .detail-close {
+        position: absolute;
+        top: 14px;
+        left: 12px;
+        width: 42px;
+        height: 42px;
+        border: none;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.14);
+        color: rgba(255,255,255,0.92);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        z-index: 2;
+      }
+      #${DETAIL_SHEET_ID} .detail-close:active { transform: scale(0.98); }
+
+      #${DETAIL_SHEET_ID} .detail-body {
+        height: 100%;
+        overflow: auto;
+        padding: 62px 18px 18px;
+      }
+
+      /* White card inside */
+      #${DETAIL_SHEET_ID} .detail-card {
+        background: rgba(255,255,255,0.92);
+        border-radius: 24px;
+        padding: 18px;
+      }
+
+      /* Header */
+      #${DETAIL_SHEET_ID} .detail-header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      #${DETAIL_SHEET_ID} .detail-brand {
+        font-size: 36px;
+        line-height: 1.05;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      #${DETAIL_SHEET_ID} .detail-name {
+        margin-top: 4px;
+        font-size: 18px;
+        line-height: 1.2;
+        font-weight: 500;
+        color: rgba(15,26,44,0.6);
+      }
+      #${DETAIL_SHEET_ID} .detail-brandicon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: rgba(0,0,0,0.06);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      #${DETAIL_SHEET_ID} .detail-brandicon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Grid */
+      #${DETAIL_SHEET_ID} .detail-grid {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 14px;
+        align-items: start;
+      }
+      #${DETAIL_SHEET_ID} .detail-imgwrap {
+        background: rgba(0,0,0,0.04);
+        border-radius: 20px;
+        padding: 12px;
+        display: grid;
+        place-items: center;
+      }
+      #${DETAIL_SHEET_ID} .detail-imgwrap img {
+        width: 100%;
+        height: auto;
+        max-height: 560px;
+        object-fit: contain;
+        border-radius: 14px;
+      }
+
+      /* Pills */
+      #${DETAIL_SHEET_ID} .detail-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      #${DETAIL_SHEET_ID} .pill {
+        background: rgba(0,0,0,0.04);
+        border-radius: 18px;
+        padding: 12px;
+        text-align: center;
+      }
+      #${DETAIL_SHEET_ID} .pill .k {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: rgba(15,26,44,0.45);
+      }
+      #${DETAIL_SHEET_ID} .pill .v {
+        margin-top: 4px;
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: rgba(15,26,44,0.92);
+      }
+      #${DETAIL_SHEET_ID} .pill.small .v {
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      /* Blocks */
+      #${DETAIL_SHEET_ID} .block {
+        grid-column: 1 / -1;
+        background: rgba(0,0,0,0.04);
+        border-radius: 18px;
+        padding: 12px;
+      }
+      #${DETAIL_SHEET_ID} .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 2px;
+        border-top: 1px solid rgba(0,0,0,0.06);
+      }
+      #${DETAIL_SHEET_ID} .row:first-child { border-top: none; }
+      #${DETAIL_SHEET_ID} .row .k {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        font-weight: 800;
+        color: rgba(15,26,44,0.45);
+      }
+      #${DETAIL_SHEET_ID} .row .v {
+        font-size: 18px;
+        font-weight: 700;
+        color: rgba(15,26,44,0.92);
+        text-align: right;
+      }
+
+      @media (max-width: 420px) {
+        #${DETAIL_SHEET_ID} .detail-grid { grid-template-columns: 1fr; }
+        #${DETAIL_SHEET_ID} .detail-brand { font-size: 34px; }
+      }
+    `;
+
+    const style = document.createElement("style");
+    style.id = DETAIL_STYLE_ID;
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function ensureDetailSheet() {
+    if (detailSheetEl && document.body.contains(detailSheetEl)) return detailSheetEl;
+
+    injectDetailStylesOnce();
+
+    const sheet = document.createElement("div");
+    sheet.className = "sheet";
+    sheet.id = DETAIL_SHEET_ID;
+    sheet.setAttribute("hidden", "");
+
+    sheet.innerHTML = `
+      <div class="detail-shell" role="dialog" aria-modal="true" aria-label="Cigar details">
+        <button type="button" class="detail-close" data-detail-close aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="detail-body" id="detail-body"></div>
+      </div>
+    `;
+
+    document.body.appendChild(sheet);
+    detailSheetEl = sheet;
+
+    // close handlers
+    sheet.addEventListener("click", (e) => {
+      if (e.target === sheet) closeDetailSheet();
+    });
+    sheet.querySelector("[data-detail-close]")?.addEventListener("click", closeDetailSheet);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeDetailSheet();
+    });
+
+    return sheet;
+  }
+
+  function openDetailSheet() {
+    const sheet = ensureDetailSheet();
+    // use your existing backdrop if present, else sheet already has its own dim background
+    if (backdrop) backdrop.removeAttribute("hidden");
+    sheet.removeAttribute("hidden");
+    document.body.classList.add("pos-modal-open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeDetailSheet() {
+    const sheet = ensureDetailSheet();
+    sheet.setAttribute("hidden", "");
+
+    // keep backdrop logic compatible with your other sheets
+    const anyOpen =
+      !$("#sheet-filters")?.hasAttribute("hidden") ||
+      !$("#sheet-bands")?.hasAttribute("hidden") ||
+      !$("#sheet-receipt")?.hasAttribute("hidden");
+
+    if (backdrop && !anyOpen) backdrop.setAttribute("hidden", "");
+    document.body.classList.remove("pos-modal-open");
+    document.body.style.overflow = "";
+  }
+
+  function guessDetailCigarImage(row) {
+    // If you add a dedicated column later, it will automatically use it.
+    const direct =
+      row["Cigar Detail IMG"] ||
+      row["Detail IMG"] ||
+      row["Cigar Stick IMG"] ||
+      row["Cigar Image"] ||
+      "";
+
+    const normalized = normalizeIconPath(direct);
+    if (normalized) return normalized;
+
+    // fallback: reuse cigar icon (better than blank)
+    return bestIconForRow(row);
+  }
+
+  function renderDetailForRow(row) {
+    const sheet = ensureDetailSheet();
+    const body = sheet.querySelector("#detail-body");
+    if (!body) return;
+
+    const brand = (qp("brand") || row.Brand || "").trim();
+    const brandIcon = bestBrandHeaderIcon(ALL[0] || row);
+
+    const cigarName = (row.Cigar || "").trim();
+    const lineName = (row.Line || "").trim();
+    const displayName = lineName ? `${lineName} ${cigarName}`.trim() : cigarName;
+
+    const cigarImg = guessDetailCigarImage(row);
+
+    const ring = (row.RG || "").trim();
+    const length = (row.Length || "").trim();
+    const strength = (row.Strength || "").trim();
+    const vitola = (row.Vitola || "").trim();
+
+    const wrapper = (row.Wrapper || row["Wrapper Type"] || "").trim();
+    const binder = (row.Binder || row["Binder Type"] || "").trim();
+    const filler = (row.Filler || row["Filler Type"] || "").trim();
+    const origin = (row.Origin || row["Country of Origin"] || row.Country || "").trim();
+    const shade = (row["Wrapper Shade"] || row.Shade || "").trim();
+
+    body.innerHTML = `
+      <div class="detail-card">
+        <div class="detail-header">
+          <div>
+            <div class="detail-brand">${escapeHTML(brand || "Brand")}</div>
+            <div class="detail-name">${escapeHTML(displayName || "")}</div>
+          </div>
+          <div class="detail-brandicon">
+            ${brandIcon ? `<img src="${escapeAttr(brandIcon)}" alt="">` : ""}
+          </div>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-imgwrap">
+            ${cigarImg ? `<img src="${escapeAttr(cigarImg)}" alt="">` : ""}
+          </div>
+
+          <div class="detail-stats">
+            <div class="pill">
+              <div class="k">RING</div>
+              <div class="v">${escapeHTML(ring || "—")}</div>
+            </div>
+            <div class="pill">
+              <div class="k">LENGTH</div>
+              <div class="v">${escapeHTML(length || "—")}</div>
+            </div>
+
+            <div class="pill small">
+              <div class="k">STRENGTH</div>
+              <div class="v">${escapeHTML(strength || "—")}</div>
+            </div>
+            <div class="pill small">
+              <div class="k">VITOLA</div>
+              <div class="v">${escapeHTML(vitola || "—")}</div>
+            </div>
+
+            <div class="block">
+              <div class="row">
+                <div class="k">WRAPPER</div>
+                <div class="v">${escapeHTML(wrapper || "—")}</div>
+              </div>
+              <div class="row">
+                <div class="k">BINDER</div>
+                <div class="v">${escapeHTML(binder || "—")}</div>
+              </div>
+              <div class="row">
+                <div class="k">FILLER</div>
+                <div class="v">${escapeHTML(filler || "—")}</div>
+              </div>
+            </div>
+
+            <div class="block">
+              <div class="row">
+                <div class="k">ORIGIN</div>
+                <div class="v">${escapeHTML(origin || "—")}</div>
+              </div>
+              <div class="row">
+                <div class="k">WRAPPER SHADE</div>
+                <div class="v">${escapeHTML(shade || "—")}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // ---------- list render ----------
   function renderList(rows) {
     if (!listEl) return;
+
+    // rebuild lookup map each render
+    VIEW_BY_ID = Object.create(null);
 
     if (!rows.length) {
       listEl.innerHTML = "";
@@ -259,14 +619,24 @@
         const icon = bestIconForRow(row);
         const id = row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}`;
 
+        // store for open-detail
+        VIEW_BY_ID[id] = row;
+
+        // IMPORTANT:
+        // - The clickable zone is ONLY icon + main text + divider (before MSRP).
+        // - MSRP + green + remain separate (so no conflict).
         return `
           <div class="brand-row" data-id="${escapeAttr(id)}">
-            <img class="row-ico" src="${escapeAttr(icon)}" alt=""
-                 onerror="this.style.opacity='0';this.style.pointerEvents='none';" />
-            <div class="row-main" data-open>
-              <div class="row-title">${escapeHTML(name)}</div>
-              <div class="row-sub">${escapeHTML(sub)}</div>
-            </div>
+            <button class="row-openzone" type="button" data-open-detail aria-label="Open details">
+              <img class="row-ico" src="${escapeAttr(icon)}" alt=""
+                   onerror="this.style.opacity='0';this.style.pointerEvents='none';" />
+              <div class="row-main">
+                <div class="row-title">${escapeHTML(name)}</div>
+                <div class="row-sub">${escapeHTML(sub)}</div>
+              </div>
+              <div class="row-divider" aria-hidden="true"></div>
+            </button>
+
             <div class="row-price">${price}</div>
             <button class="row-add" type="button" aria-label="Add" data-add>+</button>
           </div>
@@ -274,15 +644,53 @@
       })
       .join("");
 
-    listEl.querySelectorAll("[data-add]").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const rowEl = e.currentTarget.closest(".brand-row");
-        const id = rowEl?.getAttribute("data-id") || "";
+    // If your CSS doesn’t yet style row-openzone/divider, these are safe defaults:
+    // (keeps it click-friendly without changing your existing look)
+    injectRowOpenZoneFallbackStyles();
+  }
 
-        const row = rows.find((x) => {
-          const rid = x.key || `${x.Brand || ""}-${x.Cigar || ""}-${x.Vitola || ""}`;
-          return rid === id;
-        });
+  function injectRowOpenZoneFallbackStyles() {
+    const id = "brand-row-openzone-fallback";
+    if (document.getElementById(id)) return;
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = `
+      .brand-row { position: relative; }
+      .brand-row .row-openzone{
+        all: unset;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 14px;
+        border-radius: 18px;
+        width: calc(100% - 120px); /* leaves space for price/+ area */
+        box-sizing: border-box;
+      }
+      .brand-row .row-openzone:active { transform: scale(0.99); }
+      .brand-row .row-divider{
+        margin-left: auto;
+        width: 1px;
+        height: 44px;
+        background: rgba(255,255,255,0.20);
+        opacity: 0.9;
+      }
+      .brand-row .row-price{ position: absolute; right: 56px; top: 50%; transform: translateY(-50%); }
+      .brand-row .row-add{ position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ---------- SINGLE event delegation for list (prevents re-binding on every render) ----------
+  function initListDelegation() {
+    if (!listEl) return;
+
+    listEl.addEventListener("click", (e) => {
+      const addBtn = e.target.closest("[data-add]");
+      if (addBtn) {
+        const rowEl = addBtn.closest(".brand-row");
+        const id = rowEl?.getAttribute("data-id") || "";
+        const row = VIEW_BY_ID[id];
         if (!row) return;
 
         window.CigarOSCart?.add({
@@ -293,7 +701,19 @@
           price: toNum(row.MSRP),
           img: bestIconForRow(row) || "",
         });
-      });
+        return;
+      }
+
+      const openBtn = e.target.closest("[data-open-detail]");
+      if (openBtn) {
+        const rowEl = openBtn.closest(".brand-row");
+        const id = rowEl?.getAttribute("data-id") || "";
+        const row = VIEW_BY_ID[id];
+        if (!row) return;
+
+        renderDetailForRow(row);
+        openDetailSheet();
+      }
     });
   }
 
@@ -395,9 +815,10 @@
     if (!sheetEl) return;
     sheetEl.setAttribute("hidden", "");
     const anyOpen =
-      !($("#sheet-filters")?.hasAttribute("hidden")) ||
-      !($("#sheet-bands")?.hasAttribute("hidden")) ||
-      !($("#sheet-receipt")?.hasAttribute("hidden"));
+      !$("#sheet-filters")?.hasAttribute("hidden") ||
+      !$("#sheet-bands")?.hasAttribute("hidden") ||
+      !$("#sheet-receipt")?.hasAttribute("hidden") ||
+      !(ensureDetailSheet()?.hasAttribute("hidden"));
     if (!anyOpen) backdrop?.setAttribute("hidden", "");
     document.body.classList.remove("pos-modal-open");
   }
@@ -407,6 +828,7 @@
     closeSheet(sheetBands);
     const receipt = $("#sheet-receipt");
     if (receipt) closeSheet(receipt);
+    closeDetailSheet();
   }
 
   function initSheetCloseHandlers() {
@@ -417,6 +839,8 @@
       });
     });
 
+    // IMPORTANT: backdrop click should close only “native sheets”.
+    // The detail sheet closes itself by clicking outside OR ESC; but we also close it here for safety.
     backdrop?.addEventListener("click", closeAllSheets);
 
     document.addEventListener("keydown", (e) => {
@@ -491,7 +915,6 @@
 
     if (field === "Wrapper Shade") out = orderWrapperShades(out);
     if (field === "RG") {
-      // numeric-ish sort, but keep original strings
       out = out.sort((a, b) => (Number(a) || 0) - (Number(b) || 0));
     }
     return out;
@@ -507,22 +930,17 @@
 
     filtersBack?.toggleAttribute("hidden", !isDetail);
 
-    if (filtersTitle) filtersTitle.textContent = isDetail ? (currentField || "Filters") : "Filters";
+    if (filtersTitle) filtersTitle.textContent = isDetail ? currentField || "Filters" : "Filters";
     if (!isDetail && filtersSearch) filtersSearch.value = "";
   }
 
   function openFiltersSheet() {
-    // clone current actives into pending when opening
     pendingFilters = cloneFilterSets(activeFilters);
     pendingToggles = { ...activeToggles };
 
-    // ensure toggles UI reflects current
     syncToggleButtons();
-
-    // chips in popup
     renderFiltersPopupAppliedChips();
 
-    // show home grid by default
     currentField = "";
     currentFieldValues = [];
     setFiltersMode("home");
@@ -563,9 +981,8 @@
       btn.addEventListener("click", () => {
         const key = btn.getAttribute("data-toggle-key");
         if (!key) return;
-        pendingToggles[key] = !pendingToggles[key]; // clicking again toggles off ✅
+        pendingToggles[key] = !pendingToggles[key];
         syncToggleButtons();
-        // apply immediately
         activeToggles = { ...pendingToggles };
         renderAppliedChipsEverywhere();
         applyAllFilters();
@@ -610,7 +1027,6 @@
           row.classList.add("is-on");
         }
 
-        // apply immediately
         activeFilters = cloneFilterSets(pendingFilters);
         renderAppliedChipsEverywhere();
         applyAllFilters();
@@ -629,12 +1045,9 @@
   function buildAppliedChipData() {
     const chips = [];
 
-    // field filters
     for (const [field, set] of Object.entries(activeFilters)) {
       if (!set || !set.size) continue;
       for (const v of set.values()) {
-        // v is stored normalized (lowercase)
-        // show as “field: value”
         chips.push({
           type: "field",
           field,
@@ -644,15 +1057,16 @@
       }
     }
 
-    // toggles
     for (const [tKey, on] of Object.entries(activeToggles)) {
       if (!on) continue;
-      // label cases for display
       const pretty =
-        tKey === "Box-Pressed" ? "Box-pressed" :
-        tKey === "Pack" ? "Packs" :
-        tKey === "Barber" ? "Barberpole" :
-        tKey;
+        tKey === "Box-Pressed"
+          ? "Box-pressed"
+          : tKey === "Pack"
+          ? "Packs"
+          : tKey === "Barber"
+          ? "Barberpole"
+          : tKey;
       chips.push({
         type: "toggle",
         field: tKey,
@@ -673,7 +1087,7 @@
       syncToggleButtons();
     } else {
       const field = chip.field;
-      const v = chip.value; // normalized
+      const v = chip.value;
       if (activeFilters[field]) {
         activeFilters[field].delete(v);
         if (activeFilters[field].size === 0) delete activeFilters[field];
@@ -872,7 +1286,6 @@
   }
 
   function initFilterPillButtons() {
-    // pills inside filters popup
     $$("#sheet-filters [data-open-filter]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const field = btn.getAttribute("data-open-filter");
@@ -893,15 +1306,12 @@
       openBandsSheet();
     });
 
-    // back inside filters popup
     filtersBack?.addEventListener("click", () => {
       closeDetailToHome();
     });
 
-    // search inside detail view
     filtersSearch?.addEventListener("input", filterDetailListBySearch);
 
-    // confirm just closes popup (filters already applied live)
     filtersConfirm?.addEventListener("click", () => {
       closeSheet(sheetFilters);
     });
@@ -923,6 +1333,9 @@
     initFilterPillButtons();
     initToggleButtons();
 
+    // list click delegation (detail popup + add)
+    initListDelegation();
+
     searchEl?.addEventListener("input", applyAllFilters);
 
     load().catch((err) => {
@@ -932,4 +1345,4 @@
   }
 
   window.addEventListener("DOMContentLoaded", init);
-})();
+})();u
