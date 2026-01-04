@@ -30,7 +30,9 @@ const ITEMS = [
   { name: "Doritos", price: 1.50, slug: "doritos" }
   { name: "Fritos", price: 1.50, slug: "fritos" }
   { name: "Oreos", price: 1.50, slug: "oreos" }
-
+  { name: "Lays", price: 1.50, slug: "lays" }
+  { name: "Rold Gold Pretzels", price: 1.50, slug: "roldgoldpretzels" }
+  { name: "Flamin Hot Cheetos", price: 1.50, slug: "flaminhotcheetos" }
 ];
 
 const grid = document.getElementById("grid");
