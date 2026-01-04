@@ -882,3 +882,13 @@ body.pos-modal-open{ overflow:hidden; }
     font-size: 34px;
   }
 }
+/* ===============================
+   FORCE GLOBAL TYPE SYSTEM
+   Cigar Detail Popup
+   =============================== */
+
+.cigar-detail-sheet,
+.cigar-detail-sheet * {
+  font-family: var(--font-display) !important;
+  letter-spacing: -0.02em;
+}
