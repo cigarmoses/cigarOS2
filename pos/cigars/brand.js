@@ -1,15 +1,17 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   ✅ Filters Sheet v3 (your locked spec)
+   ✅ Filters Sheet v3.1 (your locked spec)
    - Bottom sheet slides up/down
-   - Price Range under title
+   - Sheet height = 75vh (≈25% background visible at top)
+   - Price Range: ONE visual slider bar (dual-thumb, appears as one) + two number inputs
+   - Remove "Any" from section meta (show nothing when empty)
    - 6 accordion sections with + / −
    - Pills grid (4 per row)
    - Only Show = single-select radio grid (2x3) with circle left
-   - Apply Filters button: light grey default, iOS blue when changed/selected
+   - Apply Filters button: light grey default, iOS blue when selections/changes made
    - 3-color system: blue selected, grey/white text
-   - SF Pro Display + tight tracking (-0.02em)
+   - SF Pro Display + tight tracking (-0.02em), weight 500/600
 */
 
 (() => {
@@ -17,7 +19,6 @@
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
   const qp = (k) => new URLSearchParams(location.search).get(k) || "";
 
   // ---------- DOM (core) ----------
@@ -47,12 +48,11 @@
   const bandsOptions = $("#bands-options");
   const bandsConfirm = $("#bands-confirm");
 
-  // We will REBUILD the filters sheet UI inside #sheet-filters
+  // Filters sheet
   const sheetFilters = $("#sheet-filters");
 
   // ---------- State ----------
   let ALL = [];
-  let VIEW = [];
   let VIEW_BY_ID = Object.create(null);
 
   // Band filters
@@ -78,14 +78,14 @@
       Strength: new Set(),
       Shape: new Set(),
     },
-    onlyShow: "", // one of: Barberpole, Box-Pressed, Flavored, Tins, Packs, Tubos
+    onlyShow: "", // Barberpole, Box-Pressed, Flavored, Tins, Packs, Tubos
   };
 
   // Filters (PENDING = in open sheet)
   let pending = null;
 
-  // Accordion open section key (pending UI state only)
-  let openSection = ""; // "Vitola" | "RG" | "Length" | "Wrapper Shade" | "Strength" | "Shape"
+  // Accordion open section key
+  let openSection = "";
 
   // ---------- helpers ----------
   const norm = (s) => (s || "").toString().trim().toLowerCase();
@@ -212,7 +212,6 @@
     }
     row.push(field);
     rows.push(row);
-
     while (rows.length && rows[rows.length - 1].every((x) => !x || !x.trim())) rows.pop();
     return rows;
   }
@@ -232,6 +231,37 @@
   }
 
   // ---------- LIST render ----------
+  function injectRowOpenHitStylesOnce() {
+    const id = "brand-row-openhit-style";
+    if (document.getElementById(id)) return;
+
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = `
+      .brand-row{ position: relative; }
+      .brand-row .row-openhit{
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 132px;
+        border: none;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        z-index: 2;
+        border-radius: 18px;
+      }
+      .brand-row .row-price,
+      .brand-row .row-add{
+        position: relative;
+        z-index: 3;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function renderList(rows) {
     if (!listEl) return;
 
@@ -268,7 +298,6 @@
             <div class="row-price">${price}</div>
             <button class="row-add" type="button" aria-label="Add" data-add>+</button>
 
-            <!-- tap zone: icon -> divider (before MSRP) -->
             <button class="row-openhit" type="button" aria-label="Open details" data-open-detail></button>
           </div>
         `;
@@ -278,38 +307,6 @@
     injectRowOpenHitStylesOnce();
   }
 
-  function injectRowOpenHitStylesOnce() {
-    const id = "brand-row-openhit-style";
-    if (document.getElementById(id)) return;
-
-    const style = document.createElement("style");
-    style.id = id;
-    style.textContent = `
-      .brand-row{ position: relative; }
-      .brand-row .row-openhit{
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 132px; /* keeps MSRP/+ clickable */
-        border: none;
-        background: transparent;
-        padding: 0;
-        margin: 0;
-        cursor: pointer;
-        z-index: 2;
-        border-radius: 18px;
-      }
-      .brand-row .row-price,
-      .brand-row .row-add{
-        position: relative;
-        z-index: 3;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // ---------- list delegation ----------
   function initListDelegation() {
     if (!listEl) return;
 
@@ -330,14 +327,6 @@
           img: bestIconForRow(row) || "",
         });
         return;
-      }
-
-      const openBtn = e.target.closest("[data-open-detail]");
-      if (openBtn) {
-        // Your detail popup is already working in your current build.
-        // Keep existing behavior: if you’re rendering details elsewhere, hook it here.
-        // For now: do nothing to avoid breaking your current working detail sheet.
-        // (If you want me to wire this to your detail overlay, say so and I’ll connect it.)
       }
     });
   }
@@ -371,7 +360,7 @@
   function applyAllFilters() {
     const q = norm(searchEl?.value || "");
 
-    VIEW = ALL.filter((row) => {
+    const out = ALL.filter((row) => {
       // search
       if (q) {
         const hay = norm(`${row.Cigar || ""} ${row.Vitola || ""} ${row.Line || ""}`);
@@ -416,7 +405,7 @@
       return true;
     });
 
-    renderList(VIEW);
+    renderList(out);
     renderMainAppliedChips();
   }
 
@@ -454,13 +443,12 @@
   function closeBackdropIfNoSheets() {
     const anyOpen =
       (sheetFilters && sheetFilters.classList.contains("is-open")) ||
-      !(sheetBands?.hasAttribute("hidden")) ||
-      !(($("#sheet-receipt") || null)?.hasAttribute?.("hidden"));
+      !(sheetBands?.hasAttribute("hidden"));
     if (!anyOpen) backdrop?.setAttribute("hidden", "");
     document.body.classList.remove("pos-modal-open");
   }
 
-  // ---------- Filters data: values + ordering ----------
+  // ---------- Filters value ordering ----------
   const ORDER_VITOLA = [
     "Robusto",
     "Toro",
@@ -515,7 +503,6 @@
       }
     });
 
-    // append any extras (alpha by display)
     const extras = values
       .filter((x) => !used.has(x.k))
       .sort((a, b) => a.d.localeCompare(b.d));
@@ -539,32 +526,33 @@
     if (field === "Shape") return orderedWithAppend(base, ORDER_SHAPE);
 
     if (field === "Length") {
-      // numeric descending, display as-is
       return base.sort((a, b) => (Number(b.d) || 0) - (Number(a.d) || 0));
     }
     if (field === "RG") {
-      // numeric ascending
       return base.sort((a, b) => (Number(a.d) || 0) - (Number(b.d) || 0));
     }
 
     return base.sort((a, b) => a.d.localeCompare(b.d));
   }
 
-  // ---------- Filters sheet: build + render ----------
-  const FILTERS_STYLE_ID = "brand-filters-sheet-v3-style";
+  // ---------- Filters sheet build + render ----------
+  const FILTERS_STYLE_ID = "brand-filters-sheet-v31-style";
 
   function injectFiltersSheetStylesOnce() {
     if (document.getElementById(FILTERS_STYLE_ID)) return;
     const style = document.createElement("style");
     style.id = FILTERS_STYLE_ID;
     style.textContent = `
-      /* ===== Filters Bottom Sheet v3 ===== */
+      /* ===== Filters Bottom Sheet v3.1 ===== */
       #sheet-filters{
         position: fixed;
         left: 0; right: 0; bottom: 0;
         margin: 0 auto;
         width: min(720px, 100vw);
-        height: min(86vh, 820px);
+
+        /* ✅ Leave ~25% background visible at top */
+        height: 75vh;
+
         border-radius: 34px 34px 0 0;
         background:
           radial-gradient(900px 520px at 20% 10%, rgba(65,110,200,.22), transparent 55%),
@@ -572,11 +560,14 @@
         color: rgba(255,255,255,.92);
         box-shadow: 0 -24px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.08);
         z-index: 110;
+
         transform: translateY(110%);
         transition: transform .28s ease;
+
         display: flex;
         flex-direction: column;
         overflow: hidden;
+
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
         letter-spacing: -0.02em;
       }
@@ -594,7 +585,7 @@
 
       .fsh-head{
         position: relative;
-        padding: 10px 18px 8px;
+        padding: 10px 18px 10px;
       }
       .fsh-grab{
         width: 42px; height: 5px;
@@ -607,7 +598,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        padding-bottom: 6px;
+        padding-bottom: 10px;
       }
       .fsh-title{
         font-size: 22px;
@@ -632,56 +623,107 @@
       .fsh-body{
         flex: 1 1 auto;
         overflow: auto;
-        padding: 10px 18px 14px;
+        padding: 0 18px 14px;
       }
 
-      .fsh-secTitle{
-        margin: 6px 0 10px;
-        font-size: 13px;
-        font-weight: 600;
-        color: rgba(255,255,255,.72);
-      }
-
-      /* Price range */
+      /* Price range: inputs + one visual slider */
       .priceBox{
         border-radius: 18px;
         background: rgba(255,255,255,.07);
         border: 1px solid rgba(255,255,255,.12);
-        padding: 12px 12px 10px;
+        padding: 12px;
       }
       .priceTop{
         display:flex;
         align-items:center;
         justify-content:space-between;
         gap: 10px;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
       }
       .priceLbl{
         font-size: 13px;
         font-weight: 600;
         color: rgba(255,255,255,.78);
       }
-      .priceVal{
-        font-size: 13px;
-        font-weight: 600;
-        color: rgba(255,255,255,.85);
-      }
-      .rangeWrap{
-        display:grid;
-        grid-template-columns: 1fr;
-        gap: 8px;
-      }
-      .rangeRow{
+      .priceInputs{
         display:flex;
         gap: 10px;
         align-items:center;
       }
-      .rangeRow input[type="range"]{
-        width: 100%;
-        accent-color: var(--accent, #0f7aff);
+      .numInp{
+        width: 92px;
+        height: 34px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.06);
+        color: rgba(255,255,255,.92);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        padding: 0 10px;
+        outline: none;
+      }
+      .numInp::placeholder{ color: rgba(255,255,255,.45); }
+      .dash{
+        opacity: .6;
+        font-weight: 600;
       }
 
-      /* Accordion rows */
+      .dualWrap{
+        position: relative;
+        height: 26px;
+        margin-top: 6px;
+      }
+      .dualTrack{
+        position:absolute;
+        left: 0; right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.30);
+        overflow:hidden;
+      }
+      .dualFill{
+        position:absolute;
+        top:0; bottom:0;
+        border-radius: 999px;
+        background: var(--accent, #0f7aff);
+      }
+
+      .dualRange{
+        position:absolute;
+        inset: 0;
+        pointer-events: none; /* enable only thumbs */
+      }
+      .dualRange input[type="range"]{
+        position:absolute;
+        left:0; right:0;
+        top:0; bottom:0;
+        width:100%;
+        height:26px;
+        background: transparent;
+        -webkit-appearance: none;
+        appearance: none;
+        pointer-events: auto;
+      }
+      .dualRange input[type="range"]::-webkit-slider-runnable-track{
+        height: 26px;
+        background: transparent;
+      }
+      .dualRange input[type="range"]::-webkit-slider-thumb{
+        -webkit-appearance: none;
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: #fff;
+        border: 2px solid rgba(0,0,0,.08);
+        box-shadow: 0 6px 14px rgba(0,0,0,.22);
+        margin-top: 2px;
+      }
+
+      /* Accordion */
       .accList{
         margin-top: 12px;
         border-radius: 20px;
@@ -734,7 +776,7 @@
       }
       .accPanel.is-open{ display:block; }
 
-      /* Pills grid (4 per row) */
+      /* Pills grid */
       .pillGrid{
         display:grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -767,12 +809,13 @@
       }
       .optPill:active{ transform: scale(.99); }
 
-      /* Only show radio grid */
+      /* Only show */
       .radioGrid{
         border-radius: 18px;
         background: rgba(255,255,255,.06);
         border: 1px solid rgba(255,255,255,.10);
         padding: 10px 12px 12px;
+        margin-top: 14px;
       }
       .radioTitle{
         font-size: 13px;
@@ -845,11 +888,6 @@
         color: #fff;
       }
       .applyBtn:active{ transform: scale(.99); }
-
-      @media (max-width: 420px){
-        .pillGrid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
-        .accLabel{ font-size: 15px; }
-      }
     `;
     document.head.appendChild(style);
   }
@@ -867,7 +905,7 @@
     return p;
   }
 
-  function pendingIsDefaultOrSameAsActive() {
+  function pendingIsSameAsActive() {
     if (!pending) return true;
 
     const aMin = active.priceMin ?? null;
@@ -890,15 +928,14 @@
 
   function pendingHasAnySelection() {
     if (!pending) return false;
+
+    // price differs from full range
+    const pMin = pending.priceMin ?? PRICE_MIN;
+    const pMax = pending.priceMax ?? PRICE_MAX;
+    if (pMin !== PRICE_MIN || pMax !== PRICE_MAX) return true;
+
     if (pending.onlyShow) return true;
-    if (pending.priceMin != null || pending.priceMax != null) {
-      // If price range differs from full range, count as selection
-      if (PRICE_MIN !== PRICE_MAX) {
-        const min = pending.priceMin ?? PRICE_MIN;
-        const max = pending.priceMax ?? PRICE_MAX;
-        if (min !== PRICE_MIN || max !== PRICE_MAX) return true;
-      }
-    }
+
     for (const set of Object.values(pending.fields)) {
       if (set && set.size) return true;
     }
@@ -913,7 +950,6 @@
       openBackdrop();
     } else {
       sheetFilters.classList.remove("is-open");
-      // allow transition to finish
       setTimeout(() => {
         sheetFilters.setAttribute("hidden", "");
         closeBackdropIfNoSheets();
@@ -921,10 +957,35 @@
     }
   }
 
+  // ✅ Remove "Any" text entirely
   function buildSectionMeta(fieldKey) {
     const set = pending?.fields?.[fieldKey];
-    if (!set || !set.size) return "Any";
+    if (!set || !set.size) return ""; // ← no "Any"
     return `${set.size} selected`;
+  }
+
+  function clampPrice(minV, maxV) {
+    let a = Number(minV);
+    let b = Number(maxV);
+
+    if (!Number.isFinite(a)) a = PRICE_MIN;
+    if (!Number.isFinite(b)) b = PRICE_MAX;
+
+    // clamp to global range
+    a = Math.max(PRICE_MIN, Math.min(PRICE_MAX, a));
+    b = Math.max(PRICE_MIN, Math.min(PRICE_MAX, b));
+
+    // ensure order
+    if (a > b) {
+      const t = a;
+      a = b;
+      b = t;
+    }
+
+    // quarter-dollar snapping (consistent with earlier)
+    const snap = (x) => Math.round(x * 4) / 4;
+
+    return [snap(a), snap(b)];
   }
 
   function renderFiltersSheet() {
@@ -932,15 +993,23 @@
 
     injectFiltersSheetStylesOnce();
 
-    // init pending when sheet opens
     if (!pending) pending = cloneActiveToPending();
-    if (!openSection) openSection = ""; // closed by default
+    if (!openSection) openSection = "";
 
-    const priceMin = pending.priceMin ?? PRICE_MIN;
-    const priceMax = pending.priceMax ?? PRICE_MAX;
+    const [pMin, pMax] = clampPrice(
+      pending.priceMin ?? PRICE_MIN,
+      pending.priceMax ?? PRICE_MAX
+    );
+    pending.priceMin = pMin;
+    pending.priceMax = pMax;
 
-    const applyEnabled = !pendingIsDefaultOrSameAsActive() || pendingHasAnySelection();
+    const applyEnabled = pendingHasAnySelection() || !pendingIsSameAsActive();
     const applyClass = applyEnabled ? "is-on" : "is-off";
+
+    const minPct =
+      PRICE_MAX === PRICE_MIN ? 0 : ((pMin - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
+    const maxPct =
+      PRICE_MAX === PRICE_MIN ? 100 : ((pMax - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
 
     sheetFilters.innerHTML = `
       <div class="fsh-head">
@@ -950,19 +1019,31 @@
           <button class="fsh-x" type="button" aria-label="Close" data-fsh-close>×</button>
         </div>
 
-        <div class="priceBox" style="margin-top:8px;">
+        <div class="priceBox">
           <div class="priceTop">
             <div class="priceLbl">Price Range</div>
-            <div class="priceVal">$${money(priceMin)} – $${money(priceMax)}</div>
-          </div>
-          <div class="rangeWrap">
-            <div class="rangeRow">
-              <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="0.25"
-                     value="${priceMin}" data-price-min />
+            <div class="priceInputs">
+              <input class="numInp" type="number" inputmode="decimal" step="0.25"
+                     min="${PRICE_MIN}" max="${PRICE_MAX}" value="${pMin}"
+                     data-price-min-input />
+              <span class="dash">–</span>
+              <input class="numInp" type="number" inputmode="decimal" step="0.25"
+                     min="${PRICE_MIN}" max="${PRICE_MAX}" value="${pMax}"
+                     data-price-max-input />
             </div>
-            <div class="rangeRow">
+          </div>
+
+          <div class="dualWrap" aria-label="Price slider">
+            <div class="dualTrack">
+              <div class="dualFill" style="left:${minPct}%; width:${Math.max(0, maxPct - minPct)}%;"></div>
+            </div>
+
+            <!-- two ranges, but visually ONE bar -->
+            <div class="dualRange">
               <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="0.25"
-                     value="${priceMax}" data-price-max />
+                     value="${pMin}" data-price-min-range />
+              <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="0.25"
+                     value="${pMax}" data-price-max-range />
             </div>
           </div>
         </div>
@@ -977,8 +1058,6 @@
           ${renderAccRow("Strength", "Strength")}
           ${renderAccRow("Shape", "Shape")}
         </div>
-
-        <div style="height:14px;"></div>
 
         <div class="radioGrid">
           <div class="radioTitle">Only Show</div>
@@ -1000,49 +1079,42 @@
       </div>
     `;
 
-    // Wire events
+    // ---- close behavior (discard pending) ----
     sheetFilters.querySelector("[data-fsh-close]")?.addEventListener("click", () => {
-      // discard pending changes if you close
       pending = null;
       openSection = "";
       setFiltersSheetOpen(false);
     });
 
-    // price sliders
-    const minEl = sheetFilters.querySelector("[data-price-min]");
-    const maxEl = sheetFilters.querySelector("[data-price-max]");
+    // ---- price controls ----
+    const minInp = sheetFilters.querySelector("[data-price-min-input]");
+    const maxInp = sheetFilters.querySelector("[data-price-max-input]");
+    const minRng = sheetFilters.querySelector("[data-price-min-range]");
+    const maxRng = sheetFilters.querySelector("[data-price-max-range]");
 
-    const clampPrice = () => {
-      if (!minEl || !maxEl) return;
-      let minV = Number(minEl.value);
-      let maxV = Number(maxEl.value);
-
-      if (minV > maxV) {
-        // keep handles from crossing
-        const t = minV;
-        minV = maxV;
-        maxV = t;
-        minEl.value = String(minV);
-        maxEl.value = String(maxV);
-      }
-      pending.priceMin = minV;
-      pending.priceMax = maxV;
-      renderFiltersSheet(); // re-render to update values + button state
+    const syncFrom = (minVal, maxVal) => {
+      const [a, b] = clampPrice(minVal, maxVal);
+      pending.priceMin = a;
+      pending.priceMax = b;
+      renderFiltersSheet();
     };
 
-    minEl?.addEventListener("input", clampPrice);
-    maxEl?.addEventListener("input", clampPrice);
+    minInp?.addEventListener("change", () => syncFrom(minInp.value, maxInp?.value));
+    maxInp?.addEventListener("change", () => syncFrom(minInp?.value, maxInp.value));
 
-    // accordion rows
+    minRng?.addEventListener("input", () => syncFrom(minRng.value, maxRng?.value));
+    maxRng?.addEventListener("input", () => syncFrom(minRng?.value, maxRng.value));
+
+    // ---- accordion rows ----
     sheetFilters.querySelectorAll("[data-acc]").forEach((row) => {
       row.addEventListener("click", () => {
         const key = row.getAttribute("data-acc") || "";
-        openSection = openSection === key ? "" : key; // collapse if open
+        openSection = openSection === key ? "" : key;
         renderFiltersSheet();
       });
     });
 
-    // pills (multi-select)
+    // ---- pills (multi-select) ----
     sheetFilters.querySelectorAll("[data-pill-field]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -1058,16 +1130,16 @@
       });
     });
 
-    // Only Show radios (single)
+    // ---- Only Show radios (single) ----
     sheetFilters.querySelectorAll("[data-onlyshow]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const k = btn.getAttribute("data-onlyshow") || "";
-        pending.onlyShow = pending.onlyShow === k ? "" : k; // allow deselect
+        pending.onlyShow = pending.onlyShow === k ? "" : k;
         renderFiltersSheet();
       });
     });
 
-    // Apply
+    // ---- Apply ----
     sheetFilters.querySelector("[data-apply-filters]")?.addEventListener("click", () => {
       if (!pending) return;
 
@@ -1112,10 +1184,6 @@
     const values = getFieldValues(fieldKey);
     const set = pending?.fields?.[fieldKey] || new Set();
 
-    // Special case: user wants Ring and Length “full numeric ranges”
-    // We still use your dataset’s values so we never show options that don’t exist.
-    // (If you want forced 40–90 even when missing in data, say so.)
-
     return `
       <div class="pillGrid">
         ${values
@@ -1145,28 +1213,24 @@
     `;
   }
 
-  // ---------- applied chips under controls (optional, simple) ----------
+  // ---------- applied chips under controls ----------
   function renderMainAppliedChips() {
     if (!brandAppliedWrap || !brandAppliedRow) return;
 
     const chips = [];
 
     // price chip if not full range
-    if (PRICE_MIN !== PRICE_MAX) {
-      const min = active.priceMin ?? PRICE_MIN;
-      const max = active.priceMax ?? PRICE_MAX;
-      if (min !== PRICE_MIN || max !== PRICE_MAX) {
-        chips.push({ type: "price", label: `Price: $${money(min)}–$${money(max)}` });
-      }
+    const min = active.priceMin ?? PRICE_MIN;
+    const max = active.priceMax ?? PRICE_MAX;
+    if (min !== PRICE_MIN || max !== PRICE_MAX) {
+      chips.push({ type: "price", label: `Price: $${money(min)}–$${money(max)}` });
     }
 
-    // fields
     for (const [field, set] of Object.entries(active.fields)) {
       if (!set || !set.size) continue;
       set.forEach((k) => chips.push({ type: "field", field, k, label: `${field}: ${k}` }));
     }
 
-    // only show
     if (active.onlyShow) chips.push({ type: "only", label: `Only: ${active.onlyShow}` });
 
     if (!chips.length) {
@@ -1194,8 +1258,8 @@
         if (!c) return;
 
         if (c.type === "price") {
-          active.priceMin = null;
-          active.priceMax = null;
+          active.priceMin = PRICE_MIN;
+          active.priceMax = PRICE_MAX;
         } else if (c.type === "only") {
           active.onlyShow = "";
         } else if (c.type === "field") {
@@ -1214,9 +1278,6 @@
         { token: "1926", label: "1926", src: "/img/icons/padron1926seriebank.svg" },
         { token: "1964", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
         { token: "damaso", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
-        { token: "black series", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
-        { token: "series", label: "Series", src: "/img/icons/padronseriesband.svg" },
-        { token: "family reserve", label: "Family Reserve", src: "/img/icons/padronfamilyreserveband.svg" },
       ],
     };
     const list = LIB[brandKey] || [];
@@ -1280,7 +1341,6 @@
 
   function openBandsSheet() {
     renderBandsSheet();
-    // keep your existing bands modal open method:
     backdrop?.removeAttribute("hidden");
     sheetBands?.removeAttribute("hidden");
     document.body.classList.add("pos-modal-open");
@@ -1299,14 +1359,12 @@
 
   function initBackdropHandlers() {
     backdrop?.addEventListener("click", () => {
-      // close filters sheet
       if (sheetFilters?.classList.contains("is-open")) {
         pending = null;
         openSection = "";
         setFiltersSheetOpen(false);
       }
 
-      // close bands (if open)
       if (sheetBands && !sheetBands.hasAttribute("hidden")) {
         sheetBands.setAttribute("hidden", "");
         closeBackdropIfNoSheets();
@@ -1369,14 +1427,13 @@
     if (!Number.isFinite(min)) min = 0;
     if (!Number.isFinite(max)) max = 0;
 
-    // round to quarter dollars for sliders
     const roundDown = (x) => Math.floor(x * 4) / 4;
     const roundUp = (x) => Math.ceil(x * 4) / 4;
 
     PRICE_MIN = roundDown(min);
     PRICE_MAX = roundUp(max);
 
-    // default active range = full range (nulls = treat as full)
+    // Default: full range
     active.priceMin = PRICE_MIN;
     active.priceMax = PRICE_MAX;
   }
@@ -1400,7 +1457,6 @@
     if (!ALL.length) ALL = table.filter((r) => norm(r["Brand aka"]) === brandNorm);
 
     applyBrandHeader(brand, ALL[0]);
-
     computePriceRangeFromAll();
 
     setStatus("");
