@@ -892,3 +892,30 @@ body.pos-modal-open{ overflow:hidden; }
   font-family: var(--font-display) !important;
   letter-spacing: -0.02em;
 }
+/* =====================================================
+   FILTERS SHEET v3 OVERRIDES (bottom sheet)
+   Add this at the VERY END of brand.css
+   ===================================================== */
+
+/* Kill old centered-popup rules so the injected sheet styles win */
+#sheet-filters{
+  left: 0 !important;
+  top: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+#sheet-filters .sheet-body,
+#sheet-filters .filters-body,
+#sheet-filters .sheet-footer,
+#sheet-filters .filters-footer{
+  padding: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: none !important;
+}
