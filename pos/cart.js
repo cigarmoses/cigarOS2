@@ -1,29 +1,12 @@
 /* /pos/cart.js
    Shared POS Cart + Invoice (single controller for ALL POS pages)
 
-   ✅ If #receipt-open exists in the page (brand.html), bind to it.
-   ✅ Otherwise, create the floating receipt button (for pages without one).
-   ✅ Uses /img/icons/receipt.png (empty) + /img/icons/receiptred.png (has items)
-   ✅ Updates badge: uses #receipt-count if present, else injected badge
-   ✅ Invoice modal centered, blurred backdrop, ~75% height
-   ✅ Close (X) always works
-   ✅ Prevents double-add on category pages by intercepting clicks on [data-receipt-item]
-      and showing “Add to invoice” popup — adds only when you tap that button.
-
-   Public API:
-     window.CigarOSCart.add(item)
-     window.CigarOSCart.openInvoice()
-     window.CigarOSCart.closeInvoice()
-     window.CigarOSCart.clear()
-     window.CigarOSCart.money(n)
+   ✅ FIX: If page already has #receipt-open, use it instead of injecting a second button.
 */
 
 (() => {
   "use strict";
 
-  // -------------------------
-  // Config
-  // -------------------------
   const STORAGE_KEY = "cigaros_pos_cart_v1";
   const STORAGE_CUSTOMER_KEY = "cigaros_pos_customer_v1";
 
@@ -33,9 +16,6 @@
   const TAX_RATE = 0.07;
   const ADD_NEW_CUSTOMER_URL = "/pos/loyalty/";
 
-  // -------------------------
-  // State
-  // -------------------------
   let state = {
     items: [],
     customer: "Walk-in",
@@ -43,17 +23,11 @@
     shopName: "Smoke Cigar Shop",
   };
 
-  // -------------------------
-  // Utilities
-  // -------------------------
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
-  const money = (n) => {
-    const v = Number(n || 0);
-    return v.toFixed(2);
-  };
+  const money = (n) => Number(n || 0).toFixed(2);
 
   const nowStamp = () => {
     const d = new Date();
@@ -83,27 +57,20 @@
           }));
         }
       }
-    } catch (_) {}
-
+    } catch (e) {}
     try {
       const rawC = localStorage.getItem(STORAGE_CUSTOMER_KEY);
       if (rawC) state.customer = rawC;
-    } catch (_) {}
+    } catch (e) {}
   }
 
   function saveState() {
     try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          items: state.items,
-        })
-      );
-    } catch (_) {}
-
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: state.items }));
+    } catch (e) {}
     try {
       localStorage.setItem(STORAGE_CUSTOMER_KEY, state.customer);
-    } catch (_) {}
+    } catch (e) {}
   }
 
   function getItemCount() {
@@ -111,10 +78,7 @@
   }
 
   function getSubtotal() {
-    return state.items.reduce(
-      (sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0),
-      0
-    );
+    return state.items.reduce((sum, it) => sum + Number(it.price || 0) * Number(it.qty || 0), 0);
   }
 
   function getTax(subtotal) {
@@ -122,59 +86,40 @@
   }
 
   // -------------------------
-  // UI: Receipt button + badge
+  // UI: Receipt button + badge (use existing if present)
   // -------------------------
-  let receiptBtn;        // either existing #receipt-open, or injected
-  let receiptImg;        // img inside the receipt button
-  let receiptBadge;      // badge element (existing #receipt-count or injected span)
-  let usingExisting = false;
-
-  // Invoice modal
+  let receiptBtn, receiptImg, receiptBadge;
   let invoiceOverlay, invoiceSheet;
-
-  // Product popup
   let productOverlay, productSheet;
 
   function ensureReceiptButton() {
     if (receiptBtn) return;
 
-    // Prefer existing button from the page (brand.html)
-    const existingBtn = document.getElementById("receipt-open");
-    if (existingBtn) {
-      usingExisting = true;
-      receiptBtn = existingBtn;
+    const existing = $("#receipt-open");
+    if (existing) {
+      receiptBtn = existing;
+      receiptBtn.classList.add("pos-receipt-btn");
 
-      // Find existing image + badge
-      receiptImg = receiptBtn.querySelector("img") || null;
-      receiptBadge = document.getElementById("receipt-count") || null;
+      receiptImg = $("img", receiptBtn) || document.createElement("img");
+      receiptImg.classList.add("pos-receipt-img");
+      receiptImg.alt = "Receipt";
+      if (!receiptImg.parentElement) receiptBtn.appendChild(receiptImg);
 
-      // If missing, create them (but your brand.html has them)
-      if (!receiptImg) {
-        receiptImg = document.createElement("img");
-        receiptImg.alt = "";
-        receiptBtn.appendChild(receiptImg);
-      }
-      if (!receiptBadge) {
-        receiptBadge = document.createElement("span");
-        receiptBadge.className = "receipt-badge";
-        receiptBadge.hidden = true;
-        receiptBtn.appendChild(receiptBadge);
+      receiptBadge = $("#receipt-count") || document.createElement("span");
+      receiptBadge.classList.add("pos-receipt-badge");
+      if (!receiptBadge.parentElement) receiptBtn.appendChild(receiptBadge);
+
+      if (!receiptBtn.dataset.bound) {
+        receiptBtn.dataset.bound = "1";
+        receiptBtn.addEventListener("click", () => openInvoice());
       }
 
-      // IMPORTANT: bind click
-      receiptBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openInvoice();
-      });
-
-      // Make sure it stays clickable above page content
-      injectStyles(); // includes z-index boost for .receipt-fab
+      injectStyles();
       updateReceiptButton();
       return;
     }
 
-    // Otherwise, inject our own receipt button for pages without it
+    // fallback: inject if not present
     receiptBtn = document.createElement("button");
     receiptBtn.type = "button";
     receiptBtn.className = "pos-receipt-btn";
@@ -186,16 +131,11 @@
 
     receiptBadge = document.createElement("span");
     receiptBadge.className = "pos-receipt-badge";
-    receiptBadge.textContent = "";
 
     receiptBtn.appendChild(receiptImg);
     receiptBtn.appendChild(receiptBadge);
 
-    receiptBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      openInvoice();
-    });
+    receiptBtn.addEventListener("click", () => openInvoice());
 
     document.body.appendChild(receiptBtn);
     injectStyles();
@@ -203,29 +143,16 @@
   }
 
   function updateReceiptButton() {
+    if (!receiptImg || !receiptBadge) return;
     const count = getItemCount();
+    receiptImg.src = count === 0 ? ICON_EMPTY : ICON_FULL;
 
-    // icon
-    if (receiptImg) {
-      receiptImg.src = count === 0 ? ICON_EMPTY : ICON_FULL;
-    }
-
-    // badge
-    if (receiptBadge) {
-      if (count > 0) {
-        receiptBadge.textContent = String(count);
-        receiptBadge.hidden = false;
-        // if injected badge (not hidden-based), also ensure visible
-        receiptBadge.style.display = receiptBadge.classList.contains("pos-receipt-badge")
-          ? "grid"
-          : "";
-      } else {
-        receiptBadge.textContent = "";
-        receiptBadge.hidden = true;
-        if (receiptBadge.classList.contains("pos-receipt-badge")) {
-          receiptBadge.style.display = "none";
-        }
-      }
+    if (count > 0) {
+      receiptBadge.textContent = String(count);
+      receiptBadge.style.display = "grid";
+    } else {
+      receiptBadge.textContent = "";
+      receiptBadge.style.display = "none";
     }
   }
 
@@ -352,9 +279,7 @@
         <div class="pos-line-mid">
           <div class="pos-line-cat">${escapeHtml(it.category || "")}</div>
           <div class="pos-line-name">${escapeHtml(it.name || "")}</div>
-          <div class="pos-line-sub">${escapeHtml(
-            it.price != null ? `$${money(it.price)}` : ""
-          )}</div>
+          <div class="pos-line-sub">${escapeHtml(it.price != null ? `$${money(it.price)}` : "")}</div>
         </div>
 
         <div class="pos-line-right">
@@ -405,7 +330,7 @@
   }
 
   // -------------------------
-  // UI: Product “Add to invoice” popup
+  // Product “Add to invoice” popup
   // -------------------------
   function ensureProductPopup() {
     if (productOverlay) return;
@@ -479,11 +404,8 @@
     };
 
     const idx = state.items.findIndex((x) => x.id === normalized.id);
-    if (idx >= 0) {
-      state.items[idx].qty = clamp((state.items[idx].qty || 1) + normalized.qty, 1, 999);
-    } else {
-      state.items.push(normalized);
-    }
+    if (idx >= 0) state.items[idx].qty = clamp((state.items[idx].qty || 1) + normalized.qty, 1, 999);
+    else state.items.push(normalized);
 
     saveState();
     updateReceiptButton();
@@ -496,11 +418,8 @@
     if (idx < 0) return;
 
     const q = Number(qty || 0);
-    if (q <= 0) {
-      state.items.splice(idx, 1);
-    } else {
-      state.items[idx].qty = clamp(q, 1, 999);
-    }
+    if (q <= 0) state.items.splice(idx, 1);
+    else state.items[idx].qty = clamp(q, 1, 999);
 
     saveState();
     updateReceiptButton();
@@ -530,14 +449,7 @@
       (e) => {
         const target = e.target;
 
-        // allow explicit add buttons through
-        if (
-          target.closest(
-            "[data-direct-add], .pos-row-add, .pos-plus, .row-plus, .add-plus, .green-plus, [data-add]"
-          )
-        ) {
-          return;
-        }
+        if (target.closest("[data-direct-add], .pos-row-add, .pos-plus, .row-plus, .add-plus, .green-plus")) return;
 
         const card = target.closest("[data-receipt-item]");
         if (!card) return;
@@ -553,24 +465,12 @@
         const price = Number(card.dataset.price || "0");
         const img = card.dataset.img || "";
         const link = card.dataset.link || "";
-
         const id = (category + "|" + brand + "|" + name).toLowerCase();
 
         openProductPopup({
           img,
           title: `${name} - ${money(price)}`,
-          item: {
-            id,
-            type,
-            category,
-            brand,
-            name,
-            price,
-            img,
-            link,
-            sub: "",
-            qty: 1,
-          },
+          item: { id, type, category, brand, name, price, img, link, sub: "", qty: 1 },
         });
       },
       true
@@ -605,14 +505,7 @@
       .pos-lock { overflow: hidden; }
       html.pos-lock, body { overscroll-behavior: none; }
 
-      /* If the page already has the receipt-fab (brand.html), ensure it's on top and clickable */
-      .receipt-fab{
-        z-index: 9999 !important;
-        pointer-events: auto !important;
-      }
-      .receipt-fab img{ width:26px; height:26px; }
-
-      /* Injected receipt button (for pages without #receipt-open) */
+      /* Receipt button (works for injected OR existing #receipt-open) */
       .pos-receipt-btn{
         position: fixed;
         right: 16px;
@@ -624,7 +517,7 @@
         padding: 0;
         margin: 0;
         cursor: pointer;
-        z-index: 9999;
+        z-index: 10000;
         -webkit-tap-highlight-color: transparent;
       }
       .pos-receipt-img{
@@ -657,7 +550,7 @@
         display: none;
         align-items: center;
         justify-content: center;
-        z-index: 10000;
+        z-index: 10001;
         background: rgba(10, 22, 40, 0.38);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
@@ -679,11 +572,7 @@
         flex-direction: column;
       }
 
-      .pos-invoice-header{
-        position: relative;
-        padding: 14px 16px 6px;
-        text-align: center;
-      }
+      .pos-invoice-header{ position: relative; padding: 14px 16px 6px; text-align: center; }
       .pos-invoice-title{
         font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
         font-weight: 800;
@@ -712,17 +601,9 @@
         color: rgba(15,26,44,0.60);
         font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       }
-      .pos-invoice-meta-line{
-        font-size: 13px;
-        line-height: 1.25;
-      }
+      .pos-invoice-meta-line{ font-size: 13px; line-height: 1.25; }
 
-      .pos-invoice-customer{
-        padding: 6px 16px 12px;
-        display: flex;
-        justify-content: center;
-      }
-
+      .pos-invoice-customer{ padding: 6px 16px 12px; display: flex; justify-content: center; }
       .pos-invoice-select{
         width: min(520px, 100%);
         height: 40px;
@@ -745,11 +626,7 @@
         background-size: 18px 18px;
       }
 
-      .pos-invoice-list{
-        flex: 1;
-        overflow: auto;
-        padding: 4px 16px 10px;
-      }
+      .pos-invoice-list{ flex: 1; overflow: auto; padding: 4px 16px 10px; }
 
       .pos-line{
         display: grid;
@@ -768,19 +645,8 @@
         display: grid;
         place-items: center;
       }
-      .pos-line-thumb img{
-        width: 54px;
-        height: 54px;
-        object-fit: cover;
-      }
-      .pos-line-thumb-fallback{
-        width: 54px;
-        height: 54px;
-        border-radius: 14px;
-        background: rgba(0,122,255,0.12);
-      }
-
-      .pos-line-mid{ min-width: 0; }
+      .pos-line-thumb img{ width: 54px; height: 54px; object-fit: cover; }
+      .pos-line-thumb-fallback{ width: 54px; height: 54px; border-radius: 14px; background: rgba(0,122,255,0.12); }
 
       .pos-line-cat{
         font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
@@ -816,7 +682,6 @@
         align-items: start;
         row-gap: 8px;
       }
-
       .pos-qty{
         display: inline-flex;
         align-items: center;
@@ -835,10 +700,7 @@
         line-height: 1;
         cursor: pointer;
       }
-      .qty-num{
-        min-width: 18px;
-        text-align: center;
-      }
+      .qty-num{ min-width: 18px; text-align: center; }
 
       .pos-line-price{
         font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -854,7 +716,6 @@
         padding: 16px 16px 18px;
         background: rgba(255,255,255,0.98);
       }
-
       .pos-invoice-totals{
         display: grid;
         gap: 6px;
@@ -914,7 +775,7 @@
         display: none;
         align-items: center;
         justify-content: center;
-        z-index: 10001;
+        z-index: 10002;
         background: rgba(10, 22, 40, 0.28);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
@@ -956,17 +817,8 @@
         display: grid;
         place-items: center;
       }
-      .pos-product-icon img{
-        width: 64px;
-        height: 64px;
-        object-fit: cover;
-      }
-      .pos-product-fallback{
-        width: 64px;
-        height: 64px;
-        border-radius: 16px;
-        background: rgba(0,122,255,0.18);
-      }
+      .pos-product-icon img{ width: 64px; height: 64px; object-fit: cover; }
+      .pos-product-fallback{ width: 64px; height: 64px; border-radius: 16px; background: rgba(0,122,255,0.18); }
       .pos-product-title{
         font: 900 34px/1.05 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
         letter-spacing: -0.03em;
@@ -1003,18 +855,12 @@
       openInvoice,
       closeInvoice,
       clear,
-      money,
       getCount: () => getItemCount(),
       getItems: () => [...state.items],
+      money,
     };
-
-    // ensure correct icon/badge on load
-    updateReceiptButton();
   };
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
 })();
