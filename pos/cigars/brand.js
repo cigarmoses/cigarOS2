@@ -1,11 +1,7 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   FIXES in this version:
-   ✅ Removes injected Filters sheet CSS (was overriding brand.css and breaking iOS layout)
-   ✅ Uses brand.css for sheet positioning (centered popup)
-   ✅ Bulletproof modal/backdrop open/close (prevents "stuck" pos-modal-open)
-   ✅ Adds receipt click fallback handler
+   ✅ Filters Sheet v3.1 (locked spec)
 */
 
 (() => {
@@ -44,9 +40,6 @@
 
   // Filters sheet
   const sheetFilters = $("#sheet-filters");
-
-  // Receipt (fallback click binding)
-  const receiptBtn = document.querySelector("#receipt-fab, .receipt-fab");
 
   // ---------- State ----------
   let ALL = [];
@@ -123,7 +116,6 @@
     if (s.startsWith("img/")) s = "/" + s;
     if (!s.startsWith("/")) s = "/" + s;
 
-    // normalize to /img/icons/brands/
     s = s.replace(/^\/img\/icons\/brand\//i, "/img/icons/brands/");
     s = s.replace(/^\/img\/icons\/brands\/[a-z0-9]\/+/i, "/img/icons/brands/");
     s = s.replace(/\/{2,}/g, "/");
@@ -320,6 +312,7 @@
           id: row.key || id,
           name: row.Cigar,
           brand: row.Brand,
+          category: "Cigars",
           sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
           price: toNum(row.MSRP),
           img: bestIconForRow(row) || "",
@@ -432,20 +425,16 @@
     });
   }
 
-  // ---------- backdrop + sheet open/close (bulletproof) ----------
+  // ---------- backdrop + sheet open/close ----------
   function openBackdrop() {
-    if (backdrop) backdrop.removeAttribute("hidden");
+    backdrop?.removeAttribute("hidden");
     document.body.classList.add("pos-modal-open");
   }
-
-  function anySheetOpen() {
-    const filtersOpen = sheetFilters && !sheetFilters.hasAttribute("hidden");
-    const bandsOpen = sheetBands && !sheetBands.hasAttribute("hidden");
-    return Boolean(filtersOpen || bandsOpen);
-  }
-
   function closeBackdropIfNoSheets() {
-    if (!anySheetOpen()) {
+    const anyOpen =
+      (sheetFilters && sheetFilters.classList.contains("is-open")) ||
+      (sheetBands && !sheetBands.hasAttribute("hidden"));
+    if (!anyOpen) {
       backdrop?.setAttribute("hidden", "");
       document.body.classList.remove("pos-modal-open");
     }
@@ -453,33 +442,12 @@
 
   // ---------- Filters value ordering ----------
   const ORDER_VITOLA = [
-    "Robusto",
-    "Toro",
-    "Gordo",
-    "Churchill",
-    "Corona",
-    "Corona Extra",
-    "Corona Gorda",
-    "Lancero",
-    "Pyramid",
-    "Belicoso",
-    "Gigante",
+    "Robusto","Toro","Gordo","Churchill","Corona","Corona Extra","Corona Gorda",
+    "Lancero","Pyramid","Belicoso","Gigante",
   ];
-
-  const ORDER_SHADE = [
-    "Natural",
-    "Connecticut",
-    "Colorado",
-    "Colorado Maduro",
-    "Maduro",
-    "Oscuro",
-    "Candela",
-    "EMS",
-  ];
-
-  const ORDER_STRENGTH = ["Mellow", "Mild", "Medium", "Medium-Full", "Full"];
-
-  const ORDER_SHAPE = ["Parejo", "Perfecto", "Pyramid", "Torpedo", "Figurado", "Belicoso"];
+  const ORDER_SHADE = ["Natural","Connecticut","Colorado","Colorado Maduro","Maduro","Oscuro","Candela","EMS"];
+  const ORDER_STRENGTH = ["Mellow","Mild","Medium","Medium-Full","Full"];
+  const ORDER_SHAPE = ["Parejo","Perfecto","Pyramid","Torpedo","Figurado","Belicoso"];
 
   function uniqSorted(list) {
     const seen = new Map(); // norm -> display
@@ -494,7 +462,6 @@
 
   function orderedWithAppend(values, preferredOrder) {
     const map = new Map(values.map((x) => [x.k, x.d]));
-
     const out = [];
     const used = new Set();
 
@@ -510,7 +477,6 @@
       .filter((x) => !used.has(x.k))
       .sort((a, b) => a.d.localeCompare(b.d));
     out.push(...extras);
-
     return out;
   }
 
@@ -534,7 +500,274 @@
     return base.sort((a, b) => a.d.localeCompare(b.d));
   }
 
-  // ---------- Filters sheet (NO injected CSS anymore) ----------
+  // ---------- Filters sheet build + render ----------
+  const FILTERS_STYLE_ID = "brand-filters-sheet-v31-style";
+
+  function injectFiltersSheetStylesOnce() {
+    if (document.getElementById(FILTERS_STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = FILTERS_STYLE_ID;
+    style.textContent = `
+      /* ===== Filters Bottom Sheet v3.1 ===== */
+      #sheet-filters{
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        margin: 0 auto;
+        width: min(720px, 100vw);
+
+        height: 75vh;
+
+        border-radius: 34px 34px 0 0;
+        background:
+          radial-gradient(900px 520px at 20% 10%, rgba(65,110,200,.22), transparent 55%),
+          linear-gradient(180deg, rgba(11,28,58,.98), rgba(7,16,36,.98));
+        color: rgba(255,255,255,.92);
+        box-shadow: 0 -24px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.08);
+        z-index: 9999;
+
+        transform: translateY(110%);
+        transition: transform .28s ease;
+
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+        letter-spacing: -0.02em;
+      }
+      #sheet-filters.is-open{ transform: translateY(0); }
+      #sheet-filters[hidden]{ display:none !important; }
+
+      .fsh-head{ position: relative; padding: 10px 18px 10px; }
+      .fsh-grab{
+        width: 42px; height: 5px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.22);
+        margin: 6px auto 10px;
+      }
+      .fsh-titleRow{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 10px;
+      }
+      .fsh-title{ font-size: 22px; font-weight: 600; color: rgba(255,255,255,.92); }
+      .fsh-x{
+        width: 34px; height: 34px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(255,255,255,.10);
+        color: rgba(255,255,255,.92);
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 1;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+
+      .fsh-body{ flex: 1 1 auto; overflow: auto; padding: 0 18px 14px; }
+
+      /* Price range */
+      .priceBox{
+        border-radius: 18px;
+        background: rgba(255,255,255,.07);
+        border: 1px solid rgba(255,255,255,.12);
+        padding: 12px;
+      }
+      .priceTop{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .priceLbl{ font-size: 13px; font-weight: 600; color: rgba(255,255,255,.78); }
+      .priceInputs{ display:flex; gap: 10px; align-items:center; }
+      .numInp{
+        width: 92px;
+        height: 34px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.06);
+        color: rgba(255,255,255,.92);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        padding: 0 10px;
+        outline: none;
+      }
+      .dash{ opacity: .6; font-weight: 600; }
+
+      .dualWrap{ position: relative; height: 26px; margin-top: 6px; }
+      .dualTrack{
+        position:absolute;
+        left: 0; right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.30);
+        overflow:hidden;
+      }
+      .dualFill{
+        position:absolute;
+        top:0; bottom:0;
+        border-radius: 999px;
+        background: var(--accent, #0f7aff);
+      }
+      .dualRange{ position:absolute; inset: 0; pointer-events: none; }
+      .dualRange input[type="range"]{
+        position:absolute;
+        left:0; right:0;
+        top:0; bottom:0;
+        width:100%;
+        height:26px;
+        background: transparent;
+        -webkit-appearance: none;
+        appearance: none;
+        pointer-events: auto;
+      }
+      .dualRange input[type="range"]::-webkit-slider-runnable-track{ height: 26px; background: transparent; }
+      .dualRange input[type="range"]::-webkit-slider-thumb{
+        -webkit-appearance: none;
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: #fff;
+        border: 2px solid rgba(0,0,0,.08);
+        box-shadow: 0 6px 14px rgba(0,0,0,.22);
+        margin-top: 2px;
+      }
+
+      /* Accordion */
+      .accList{
+        margin-top: 12px;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.06);
+      }
+      .accRow{
+        padding: 14px 14px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 12px;
+        border-top: 1px solid rgba(255,255,255,.10);
+        cursor: pointer;
+        user-select:none;
+      }
+      .accRow:first-child{ border-top: none; }
+      .accLeft{ display:flex; align-items:center; gap: 10px; min-width: 0; }
+      .accPlus{ width: 22px; font-size: 18px; font-weight: 600; color: rgba(255,255,255,.82); line-height: 1; text-align:center; }
+      .accLabel{ font-size: 16px; font-weight: 600; color: rgba(255,255,255,.90); }
+      .accMeta{ font-size: 13px; font-weight: 500; color: rgba(255,255,255,.55); white-space: nowrap; }
+
+      .accPanel{
+        display: none;
+        padding: 12px 14px 14px;
+        border-top: 1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.10);
+      }
+      .accPanel.is-open{ display:block; }
+
+      /* Pills grid */
+      .pillGrid{ display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+      .optPill{
+        height: 34px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.07);
+        color: rgba(255,255,255,.82);
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding: 0 10px;
+        cursor:pointer;
+        -webkit-tap-highlight-color: transparent;
+        user-select:none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .optPill.is-on{
+        background: var(--accent, #0f7aff);
+        border-color: var(--accent, #0f7aff);
+        color: #fff;
+      }
+
+      /* Only show */
+      .radioGrid{
+        border-radius: 18px;
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.10);
+        padding: 10px 12px 12px;
+        margin-top: 14px;
+      }
+      .radioTitle{ font-size: 13px; font-weight: 600; color: rgba(255,255,255,.72); margin-bottom: 10px; }
+      .radioRows{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 10px; }
+      .radioOpt{
+        display:flex;
+        align-items:center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 8px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.05);
+        color: rgba(255,255,255,.82);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: -0.03em; /* tighter so Box-Pressed/Barberpole fit */
+        cursor:pointer;
+        user-select:none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .radioTxt{ white-space: nowrap; font-size: 12px; letter-spacing: -0.03em; }
+      .radioDot{
+        width: 14px; height: 14px;
+        border-radius: 999px;
+        border: 2px solid rgba(255,255,255,.40);
+        position: relative;
+        flex: 0 0 auto;
+      }
+      .radioOpt.is-on .radioDot{ border-color: var(--accent, #0f7aff); }
+      .radioOpt.is-on .radioDot::after{
+        content:"";
+        position:absolute;
+        inset: 3px;
+        border-radius: 999px;
+        background: var(--accent, #0f7aff);
+      }
+
+      /* Footer apply button */
+      .fsh-foot{
+        padding: 12px 18px 18px;
+        border-top: 1px solid rgba(255,255,255,.08);
+        background: rgba(0,0,0,.10);
+      }
+      .applyBtn{
+        width: 100%;
+        height: 46px;
+        border-radius: 22px;
+        border: none;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        cursor: pointer;
+      }
+      .applyBtn.is-off{ background: rgba(255,255,255,.22); color: rgba(255,255,255,.55); }
+      .applyBtn.is-on{ background: var(--accent, #0f7aff); color: #fff; }
+    `;
+    document.head.appendChild(style);
+  }
+
   function cloneActiveToPending() {
     const p = {
       priceMin: active.priceMin,
@@ -542,9 +775,7 @@
       fields: {},
       onlyShow: active.onlyShow,
     };
-    for (const [k, set] of Object.entries(active.fields)) {
-      p.fields[k] = new Set(set ? [...set] : []);
-    }
+    for (const [k, set] of Object.entries(active.fields)) p.fields[k] = new Set(set ? [...set] : []);
     return p;
   }
 
@@ -572,16 +803,13 @@
   function pendingHasAnySelection() {
     if (!pending) return false;
 
-    // price differs from full range
     const pMin = pending.priceMin ?? PRICE_MIN;
     const pMax = pending.priceMax ?? PRICE_MAX;
     if (pMin !== PRICE_MIN || pMax !== PRICE_MAX) return true;
 
     if (pending.onlyShow) return true;
 
-    for (const set of Object.values(pending.fields)) {
-      if (set && set.size) return true;
-    }
+    for (const set of Object.values(pending.fields)) if (set && set.size) return true;
     return false;
   }
 
@@ -589,14 +817,17 @@
     if (!sheetFilters) return;
     if (open) {
       sheetFilters.removeAttribute("hidden");
+      requestAnimationFrame(() => sheetFilters.classList.add("is-open"));
       openBackdrop();
     } else {
-      sheetFilters.setAttribute("hidden", "");
-      closeBackdropIfNoSheets();
+      sheetFilters.classList.remove("is-open");
+      setTimeout(() => {
+        sheetFilters.setAttribute("hidden", "");
+        closeBackdropIfNoSheets();
+      }, 220);
     }
   }
 
-  // ✅ Remove "Any" text entirely
   function buildSectionMeta(fieldKey) {
     const set = pending?.fields?.[fieldKey];
     if (!set || !set.size) return "";
@@ -613,11 +844,7 @@
     a = Math.max(PRICE_MIN, Math.min(PRICE_MAX, a));
     b = Math.max(PRICE_MIN, Math.min(PRICE_MAX, b));
 
-    if (a > b) {
-      const t = a;
-      a = b;
-      b = t;
-    }
+    if (a > b) { const t = a; a = b; b = t; }
 
     const snap = (x) => Math.round(x * 4) / 4;
     return [snap(a), snap(b)];
@@ -626,23 +853,19 @@
   function renderFiltersSheet() {
     if (!sheetFilters) return;
 
-    if (!pending) pending = cloneActiveToPending();
-    if (!openSection) openSection = "";
+    injectFiltersSheetStylesOnce();
 
-    const [pMin, pMax] = clampPrice(
-      pending.priceMin ?? PRICE_MIN,
-      pending.priceMax ?? PRICE_MAX
-    );
+    if (!pending) pending = cloneActiveToPending();
+
+    const [pMin, pMax] = clampPrice(pending.priceMin ?? PRICE_MIN, pending.priceMax ?? PRICE_MAX);
     pending.priceMin = pMin;
     pending.priceMax = pMax;
 
     const applyEnabled = pendingHasAnySelection() || !pendingIsSameAsActive();
     const applyClass = applyEnabled ? "is-on" : "is-off";
 
-    const minPct =
-      PRICE_MAX === PRICE_MIN ? 0 : ((pMin - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
-    const maxPct =
-      PRICE_MAX === PRICE_MIN ? 100 : ((pMax - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
+    const minPct = PRICE_MAX === PRICE_MIN ? 0 : ((pMin - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
+    const maxPct = PRICE_MAX === PRICE_MIN ? 100 : ((pMax - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
 
     sheetFilters.innerHTML = `
       <div class="fsh-head">
@@ -657,12 +880,10 @@
             <div class="priceLbl">Price Range</div>
             <div class="priceInputs">
               <input class="numInp" type="number" inputmode="decimal" step="0.25"
-                     min="${PRICE_MIN}" max="${PRICE_MAX}" value="${pMin}"
-                     data-price-min-input />
+                     min="${PRICE_MIN}" max="${PRICE_MAX}" value="${pMin}" data-price-min-input />
               <span class="dash">–</span>
               <input class="numInp" type="number" inputmode="decimal" step="0.25"
-                     min="${PRICE_MIN}" max="${PRICE_MAX}" value="${pMax}"
-                     data-price-max-input />
+                     min="${PRICE_MIN}" max="${PRICE_MAX}" value="${pMax}" data-price-max-input />
             </div>
           </div>
 
@@ -670,7 +891,6 @@
             <div class="dualTrack">
               <div class="dualFill" style="left:${minPct}%; width:${Math.max(0, maxPct - minPct)}%;"></div>
             </div>
-
             <div class="dualRange">
               <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="0.25"
                      value="${pMin}" data-price-min-range />
@@ -711,14 +931,12 @@
       </div>
     `;
 
-    // close
     sheetFilters.querySelector("[data-fsh-close]")?.addEventListener("click", () => {
       pending = null;
       openSection = "";
       setFiltersSheetOpen(false);
     });
 
-    // price controls
     const minInp = sheetFilters.querySelector("[data-price-min-input]");
     const maxInp = sheetFilters.querySelector("[data-price-max-input]");
     const minRng = sheetFilters.querySelector("[data-price-min-range]");
@@ -736,7 +954,6 @@
     minRng?.addEventListener("input", () => syncFrom(minRng.value, maxRng?.value));
     maxRng?.addEventListener("input", () => syncFrom(minRng?.value, maxRng.value));
 
-    // accordion
     sheetFilters.querySelectorAll("[data-acc]").forEach((row) => {
       row.addEventListener("click", () => {
         const key = row.getAttribute("data-acc") || "";
@@ -745,7 +962,6 @@
       });
     });
 
-    // pills
     sheetFilters.querySelectorAll("[data-pill-field]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -761,7 +977,6 @@
       });
     });
 
-    // Only Show radios
     sheetFilters.querySelectorAll("[data-onlyshow]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const k = btn.getAttribute("data-onlyshow") || "";
@@ -770,7 +985,6 @@
       });
     });
 
-    // Apply
     sheetFilters.querySelector("[data-apply-filters]")?.addEventListener("click", () => {
       if (!pending) return;
 
@@ -903,12 +1117,13 @@
   function getBandLibraryForBrand(brandKey) {
     const LIB = {
       padron: [
-        { token: "1926", label: "1926", src: "/img/icons/padron1926serieband.svg" },
+        { token: "1926", label: "1926", src: "/img/icons/padron1926seriebank.svg" },
         { token: "1964", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
         { token: "damaso", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
       ],
     };
-    return LIB[brandKey] || [];
+    const list = LIB[brandKey] || [];
+    return list.map((x) => ({ ...x, src: (x.src || "").replace("seriebank", "serieband") }));
   }
 
   function updateBandsConfirmState() {
@@ -942,13 +1157,11 @@
         return `
           <label class="band-row">
             <div class="band-art">
-              <img src="${escapeAttr(x.src)}" alt="${escapeAttr(x.label)}"
-                   onerror="this.style.opacity='0.15';" />
+              <img src="${escapeAttr(x.src)}" alt="${escapeAttr(x.label)}" onerror="this.style.opacity='0.15';" />
             </div>
             <div class="band-meta">
               <span class="band-name">${escapeHTML(x.label)}</span>
-              <input type="checkbox" class="band-check" data-token="${escapeAttr(x.token)}"
-                     ${checked ? "checked" : ""} />
+              <input type="checkbox" class="band-check" data-token="${escapeAttr(x.token)}" ${checked ? "checked" : ""} />
             </div>
           </label>
         `;
@@ -970,13 +1183,8 @@
 
   function openBandsSheet() {
     renderBandsSheet();
-    sheetBands?.removeAttribute("hidden");
     openBackdrop();
-  }
-
-  function closeBandsSheet() {
-    sheetBands?.setAttribute("hidden", "");
-    closeBackdropIfNoSheets();
+    sheetBands?.removeAttribute("hidden");
   }
 
   // ---------- init ----------
@@ -993,27 +1201,42 @@
   function initBackdropHandlers() {
     backdrop?.addEventListener("click", () => {
       // close filters
-      if (sheetFilters && !sheetFilters.hasAttribute("hidden")) {
+      if (sheetFilters?.classList.contains("is-open")) {
         pending = null;
         openSection = "";
         setFiltersSheetOpen(false);
       }
+
       // close bands
       if (sheetBands && !sheetBands.hasAttribute("hidden")) {
-        closeBandsSheet();
+        sheetBands.setAttribute("hidden", "");
+        closeBackdropIfNoSheets();
       }
     });
 
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
 
-      if (sheetFilters && !sheetFilters.hasAttribute("hidden")) {
+      if (sheetFilters?.classList.contains("is-open")) {
         pending = null;
         openSection = "";
         setFiltersSheetOpen(false);
       }
+
       if (sheetBands && !sheetBands.hasAttribute("hidden")) {
-        closeBandsSheet();
+        sheetBands.setAttribute("hidden", "");
+        closeBackdropIfNoSheets();
+      }
+    });
+
+    // also close on any [data-sheet-close] click (your HTML uses these)
+    document.addEventListener("click", (e) => {
+      const closeBtn = e.target.closest("[data-sheet-close]");
+      if (!closeBtn) return;
+
+      if (sheetBands && !sheetBands.hasAttribute("hidden")) {
+        sheetBands.setAttribute("hidden", "");
+        closeBackdropIfNoSheets();
       }
     });
   }
@@ -1035,26 +1258,9 @@
     bandsConfirm?.addEventListener("click", () => {
       if (bandsConfirm.disabled) return;
       activeBands = new Set(pendingBands);
-      closeBandsSheet();
+      sheetBands?.setAttribute("hidden", "");
+      closeBackdropIfNoSheets();
       applyAllFilters();
-    });
-  }
-
-  function initReceiptFallback() {
-    if (!receiptBtn) return;
-
-    receiptBtn.addEventListener("click", () => {
-      // If cart.js already handles this, no harm.
-      // If it doesn't, try common APIs:
-      const c = window.CigarOSCart;
-      if (!c) return;
-
-      if (typeof c.toggleReceipt === "function") return c.toggleReceipt();
-      if (typeof c.openReceipt === "function") return c.openReceipt();
-      if (typeof c.open === "function") return c.open("receipt");
-
-      // last resort: emit event (if your cart listens to it)
-      window.dispatchEvent(new CustomEvent("cigaros:receipt:toggle"));
     });
   }
 
@@ -1081,7 +1287,6 @@
     PRICE_MIN = roundDown(min);
     PRICE_MAX = roundUp(max);
 
-    // Default: full range
     active.priceMin = PRICE_MIN;
     active.priceMax = PRICE_MAX;
   }
@@ -1117,7 +1322,6 @@
     initButtons();
     initWrapperSeg();
     initListDelegation();
-    initReceiptFallback();
 
     searchEl?.addEventListener("input", applyAllFilters);
 
