@@ -228,10 +228,10 @@ body.brand-page{
   color:rgba(255,255,255,.92);
 
   display:-webkit-box;
-  -webkit-line-clamp:2;   /* allow up to 2 lines */
+  -webkit-line-clamp:2;
   -webkit-box-orient:vertical;
-  overflow:hidden;        /* hide anything past 2 lines */
-  white-space:normal;     /* allow wrapping */
+  overflow:hidden;
+  white-space:normal;
 }
 
 .row-sub{
@@ -253,7 +253,6 @@ body.brand-page{
   text-align:right;
 }
 
-/* taller divider line */
 .row-price::before{
   content:"";
   position:absolute;
@@ -270,8 +269,6 @@ body.brand-page{
   width:20px;
   height:20px;
   border-radius:899px;
-
-  /* keep the + large + centered */
   font-size:12px;
   font-weight:600;
   line-height:1;
@@ -287,9 +284,7 @@ body.brand-page{
   -webkit-tap-highlight-color:transparent;
 }
 
-.row-add:active{
-  transform:scale(.98);
-}
+.row-add:active{ transform:scale(.98); }
 
 /* ========== STATUS TEXT ========== */
 .brand-status{
@@ -299,6 +294,7 @@ body.brand-page{
 }
 
 /* ========== RECEIPT FAB ========== */
+/* IMPORTANT: keep it BELOW any modals so it blurs/dims behind the overlay */
 .receipt-fab{
   position:fixed;
   right:16px;
@@ -314,7 +310,7 @@ body.brand-page{
   display:grid;
   place-items:center;
   padding:0;
-  z-index:50; /* BELOW MODALS */
+  z-index:20; /* LOWER than any sheet/backdrop */
 }
 
 .receipt-fab img{
@@ -346,42 +342,47 @@ body.brand-page{
    =============================== */
 
 [hidden]{ display:none !important; }
-
 body.pos-modal-open{ overflow:hidden; }
 
 /* ===============================
-   BRAND FILTERS SHEET (centered popup, same size as bands)
+   FILTERS SHEET + BACKDROP (FIXED)
    =============================== */
 
-#sheet-filters{
-  position:fixed;
-  left:50%;
-  top:50%;
-  transform:translate(-50%, -50%);
-  width:min(630px, 90vw);
-  max-height:76vh;
-  border-radius:32px;
-  background:
-    radial-gradient(900px 520px at 20% 10%, rgba(65,110,200,.22), transparent 55%),
-    linear-gradient(180deg, rgba(11,28,58,.98), rgba(7,16,36,.98));
-  color:var(--ink);
-  box-shadow:
-    0 24px 60px rgba(0,0,0,.55),
-    0 0 0 1px rgba(255,255,255,.08);
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  z-index:110;
-}
-
-/* force backdrop above page content */
+/* Backdrop sits above the page and receipt (so receipt is blurred/dimmed behind it) */
 #sheet-backdrop{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.35);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index:100;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index:900;
+}
+
+/* Filters sheet above the backdrop */
+#sheet-filters{
+  position:fixed;
+  left:50%;
+  top:calc(50% - 48px);            /* ✅ move UP ~0.5" safely (no transform calc) */
+  transform:translate(-50%, -50%); /* ✅ stable centering on iOS */
+  width:min(630px, calc(100vw - 28px)); /* ✅ prevents left clipping */
+  max-height:76vh;
+  border-radius:32px;
+
+  /* ✅ solid navy (no transparency) */
+  background: var(--bg2);
+
+  color:var(--ink);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.55),
+    0 0 0 1px rgba(255,255,255,.08);
+
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  z-index:950;
+
+  /* helps iOS Safari rendering stability */
+  will-change: transform;
 }
 
 /* Close button inside filters sheet */
@@ -424,7 +425,6 @@ body.pos-modal-open{ overflow:hidden; }
 
 /* ===============================
    ✅ HARD OVERRIDE: BANDS POPUP MUST SHOW ABOVE BACKDROP
-   (prevents pos.css .sheet styles from hiding/collapsing it)
    =============================== */
 
 #sheet-bands[hidden]{ display:none !important; }
@@ -442,7 +442,7 @@ body.pos-modal-open{ overflow:hidden; }
   right:auto !important;
   bottom:auto !important;
 
-  width:min(630px, 90vw) !important;
+  width:min(630px, calc(100vw - 28px)) !important;
   max-height:76vh !important;
 
   border-radius:32px !important;
@@ -456,20 +456,15 @@ body.pos-modal-open{ overflow:hidden; }
   flex-direction:column !important;
   overflow:hidden !important;
 
-  z-index:120 !important;
+  z-index:980 !important;
 }
 
 /* ===============================
    BANDS POPUP (white centered card) – internal layout
    =============================== */
 
-.bands-sheet{
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
+.bands-sheet{ display:flex; flex-direction:column; overflow:hidden; }
 
-/* header */
 .bands-header{
   position:relative;
   text-align:center;
@@ -499,15 +494,13 @@ body.pos-modal-open{ overflow:hidden; }
   cursor:pointer;
 }
 
-/* body */
 .bands-body{
   flex:1 1 auto;
   overflow-y:auto;
   padding:6px 18px 10px;
-  position:relative; /* for scroll hint */
+  position:relative;
 }
 
-/* visible "scroll hint" bar (like your red markup) */
 .bands-body::after{
   content:"";
   position:absolute;
@@ -516,66 +509,46 @@ body.pos-modal-open{ overflow:hidden; }
   width:3px;
   height:calc(100% - 28px);
   border-radius:999px;
-
-  /* iOS style muted scroll indicator */
   background:rgba(0,0,0,.10);
-
-  /* soft inner gloss */
   box-shadow:
     inset 0 0 4px rgba(255,255,255,.35),
     0 0 0 1px rgba(255,255,255,.25);
-
   pointer-events:none;
 }
 
-.bands-list{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
-/* each band row */
-.band-row{
-  display:block;
-}
+.bands-list{ display:flex; flex-direction:column; gap:14px; }
+.band-row{ display:block; }
 
 .band-art{
   width:100%;
-  height:140px;                 /* container stays the same size for every band */
+  height:140px;
   border-radius:24px;
   overflow:hidden;
   background:transparent;
-
   display:flex;
   align-items:center;
   justify-content:center;
-
-  padding:12px 14px;            /* buffer around SVG */
+  padding:12px 14px;
 }
 
 .band-art img{
   max-width:100%;
   max-height:100%;
-  width:auto;                   /* IMPORTANT: don’t force width:100% */
-  height:auto;                  /* IMPORTANT: don’t force height:100% */
-  object-fit:contain;           /* always show full band */
+  width:auto;
+  height:auto;
+  object-fit:contain;
   display:block;
 }
 
-/* row under each band: [Band Name] [checkbox] */
 .band-meta{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding-right:28px; /* pulls checkbox inward from edge */
+  padding-right:28px;
 }
 
-.band-name{
-  flex:1 1 auto;
-  margin-right:12px;
-}
+.band-name{ flex:1 1 auto; margin-right:12px; }
 
-/* checkbox to the RIGHT of the text */
 .band-check{
   flex:0 0 auto;
   width:22px;
@@ -592,14 +565,12 @@ body.pos-modal-open{ overflow:hidden; }
   -webkit-tap-highlight-color:transparent;
 }
 
-/* kill iOS blue focus ring/shadow */
 .band-check:focus,
 .band-check:focus-visible{
   outline:none !important;
   box-shadow:none !important;
 }
 
-/* checked state: BLUE BOX + WHITE CHECKMARK */
 .band-check:checked{
   background:var(--accent);
   border-color:var(--accent);
@@ -618,15 +589,12 @@ body.pos-modal-open{ overflow:hidden; }
   transform:rotate(45deg);
 }
 
-/* footer confirm button */
 .bands-footer{
   padding:16px 18px 22px;
   border-top:none;
 }
 
-.bands-footer .bands-confirm{
-  width:100%;
-}
+.bands-footer .bands-confirm{ width:100%; }
 
 .bands-footer .sheet-btn.primary{
   width:100%;
@@ -638,13 +606,11 @@ body.pos-modal-open{ overflow:hidden; }
   border:none;
 }
 
-/* disabled (default) */
 .bands-footer .sheet-btn.primary:disabled{
   background:#e5e7eb;
   color:#9ca3af;
 }
 
-/* enabled (when JS removes disabled) */
 .bands-footer .sheet-btn.primary:not(:disabled){
   background:var(--accent);
   color:#ffffff;
@@ -654,12 +620,12 @@ body.pos-modal-open{ overflow:hidden; }
   transform:scale(.98);
   opacity:.92;
 }
+
 /* =========================
    CIGAR DETAIL POPUP (SHEET)
    ========================= */
 
-/* Tap zone = icon -> divider (before MSRP) */
-.cigar-tapzone {
+.cigar-tapzone{
   all: unset;
   cursor: pointer;
   display: flex;
@@ -671,43 +637,35 @@ body.pos-modal-open{ overflow:hidden; }
   border-radius: 18px;
 }
 
-/* Make tap feedback subtle */
-.cigar-tapzone:active {
-  transform: scale(0.99);
-}
+.cigar-tapzone:active{ transform: scale(0.99); }
 
-/* Overlay */
-.cigar-detail-overlay {
+.cigar-detail-overlay{
   position: fixed;
   inset: 0;
   z-index: 9999;
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 18px 16px; /* creates the top/bottom gap like your yellow mock */
+  padding: 18px 16px;
   background: rgba(0, 0, 0, 0.35);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
-.cigar-detail-overlay.is-open {
-  display: flex;
-}
+.cigar-detail-overlay.is-open{ display: flex; }
 
-/* Big “yellow area” sheet */
-.cigar-detail-sheet {
+.cigar-detail-sheet{
   width: min(560px, 94vw);
   height: min(820px, 86vh);
   border-radius: 28px;
-  background: rgba(188, 167, 113, 0.35); /* warm tinted glass like your mock */
+  background: rgba(188, 167, 113, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
   overflow: hidden;
   position: relative;
 }
 
-/* Close / back arrow */
-.cigar-detail-close {
+.cigar-detail-close{
   position: absolute;
   top: 14px;
   left: 12px;
@@ -722,26 +680,21 @@ body.pos-modal-open{ overflow:hidden; }
   cursor: pointer;
 }
 
-.cigar-detail-close:active {
-  transform: scale(0.98);
-}
+.cigar-detail-close:active{ transform: scale(0.98); }
 
-/* Scrollable content area */
-.cigar-detail-body {
+.cigar-detail-body{
   height: 100%;
   overflow: auto;
   padding: 62px 18px 18px;
 }
 
-/* The white “card” inside (your detailed mockup) */
-.cigar-detail-card {
+.cigar-detail-card{
   background: rgba(255, 255, 255, 0.92);
   border-radius: 24px;
   padding: 18px;
 }
 
-/* Header row */
-.cigar-detail-header {
+.cigar-detail-header{
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
@@ -749,14 +702,14 @@ body.pos-modal-open{ overflow:hidden; }
   margin-bottom: 14px;
 }
 
-.cigar-detail-brand {
+.cigar-detail-brand{
   font-size: 36px;
   line-height: 1.05;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-.cigar-detail-name {
+.cigar-detail-name{
   margin-top: 4px;
   font-size: 18px;
   line-height: 1.2;
@@ -764,7 +717,7 @@ body.pos-modal-open{ overflow:hidden; }
   color: rgba(15, 26, 44, 0.6);
 }
 
-.cigar-detail-brandicon {
+.cigar-detail-brandicon{
   width: 64px;
   height: 64px;
   border-radius: 16px;
@@ -774,21 +727,20 @@ body.pos-modal-open{ overflow:hidden; }
   overflow: hidden;
 }
 
-.cigar-detail-brandicon img {
+.cigar-detail-brandicon img{
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* Main grid (image left, stats right) */
-.cigar-detail-grid {
+.cigar-detail-grid{
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
   gap: 14px;
   align-items: start;
 }
 
-.cigar-detail-imgwrap {
+.cigar-detail-imgwrap{
   background: rgba(0,0,0,0.04);
   border-radius: 20px;
   padding: 12px;
@@ -796,7 +748,7 @@ body.pos-modal-open{ overflow:hidden; }
   place-items: center;
 }
 
-.cigar-detail-imgwrap img {
+.cigar-detail-imgwrap img{
   width: 100%;
   height: auto;
   max-height: 520px;
@@ -804,28 +756,27 @@ body.pos-modal-open{ overflow:hidden; }
   border-radius: 14px;
 }
 
-/* Stat pills */
-.cigar-detail-stats {
+.cigar-detail-stats{
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.detail-pill {
+.detail-pill{
   background: rgba(0,0,0,0.04);
   border-radius: 18px;
   padding: 12px 12px;
   text-align: center;
 }
 
-.detail-pill .k {
+.detail-pill .k{
   font-size: 10px;
   letter-spacing: -0.02em;
   font-weight: 500;
   color: rgba(15, 26, 44, 0.45);
 }
 
-.detail-pill .v {
+.detail-pill .v{
   margin-top: 4px;
   font-size: 34px;
   font-weight: 800;
@@ -833,21 +784,19 @@ body.pos-modal-open{ overflow:hidden; }
   color: rgba(15, 26, 44, 0.92);
 }
 
-/* Larger text pills (Strength/Vitola) */
-.detail-pill.small .v {
+.detail-pill.small .v{
   font-size: 20px;
   font-weight: 700;
 }
 
-/* Text blocks (wrapper/binder/filler/origin) */
-.detail-block {
+.detail-block{
   grid-column: 1 / -1;
   background: rgba(0,0,0,0.04);
   border-radius: 18px;
   padding: 12px;
 }
 
-.detail-row {
+.detail-row{
   display: flex;
   justify-content: space-between;
   gap: 10px;
@@ -855,71 +804,30 @@ body.pos-modal-open{ overflow:hidden; }
   border-top: 1px solid rgba(0,0,0,0.06);
 }
 
-.detail-row:first-child {
-  border-top: none;
-}
+.detail-row:first-child{ border-top: none; }
 
-.detail-row .k {
+.detail-row .k{
   font-size: 12px;
   letter-spacing: -0.02em;
   font-weight: 800;
   color: rgba(15, 26, 44, 0.45);
 }
 
-.detail-row .v {
+.detail-row .v{
   font-size: 18px;
   font-weight: 700;
   color: rgba(15, 26, 44, 0.92);
   text-align: right;
 }
 
-/* Mobile: stack for smaller screens */
-@media (max-width: 420px) {
-  .cigar-detail-grid {
-    grid-template-columns: 1fr;
-  }
-  .cigar-detail-brand {
-    font-size: 34px;
-  }
+@media (max-width: 420px){
+  .cigar-detail-grid{ grid-template-columns: 1fr; }
+  .cigar-detail-brand{ font-size: 34px; }
 }
-/* ===============================
-   FORCE GLOBAL TYPE SYSTEM
-   Cigar Detail Popup
-   =============================== */
 
+/* type system */
 .cigar-detail-sheet,
-.cigar-detail-sheet * {
+.cigar-detail-sheet *{
   font-family: var(--font-display) !important;
   letter-spacing: -0.02em;
-}
-/* =====================================================
-   FILTERS SHEET — FINAL OVERRIDES (uses your real IDs)
-   ===================================================== */
-
-#sheet-backdrop{
-  z-index: 9998 !important;
-}
-
-#sheet-filters{
-  z-index: 9999 !important;
-  background: var(--bg2) !important;
-  transform: translate(-50%, calc(-50% - 48px)) !important;
-  overflow: hidden !important;
-}
-
-#sheet-filters .sheet-body,
-#sheet-filters .filters-body,
-#sheet-filters .sheet-footer,
-#sheet-filters .filters-footer{
-  background: transparent !important;
-}
-
-.receipt-fab{
-  z-index: 50 !important;
-}
-
-/* ✅ bulletproof */
-body.pos-modal-open .receipt-fab{
-  opacity: 0 !important;
-  pointer-events: none !important;
 }
