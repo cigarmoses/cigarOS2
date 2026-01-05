@@ -34,6 +34,10 @@ const ITEMS = [
   { name: "Rold Gold Pretzels", price: 1.50, slug: "roldgoldpretzels" }
   { name: "Flamin Hot Cheetos", price: 1.50, slug: "flaminhotcheetos" }
   { name: "Lays BBQ", price: 1.50, slug: "laysbbq" }
+  { name: "Skittles", price: 1.50, slug: "skittles" }
+  { name: "M & M's", price: 1.50, slug: "mandms" }
+  { name: "McDonald's Coffee", price: 1.50, slug: "mcdonalds" }
+  { name: "Reese's", price: 1.50, slug: "reeses" }
 ];
 
 const grid = document.getElementById("grid");
