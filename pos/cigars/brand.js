@@ -573,7 +573,7 @@
       .priceBox{
         border-radius: 18px;
         background: rgba(255,255,255,.07);
-        border: 1px solid rgba(255,255,255,.12);
+        border: none;
         padding: 12px;
       }
       .priceTop{
@@ -647,7 +647,7 @@
         margin-top: 12px;
         border-radius: 20px;
         overflow: hidden;
-        border: 1px solid rgba(255,255,255,.10);
+        border: none;
         background: rgba(255,255,255,.06);
       }
       .accRow{
@@ -706,7 +706,7 @@
       .radioGrid{
         border-radius: 18px;
         background: rgba(255,255,255,.06);
-        border: 1px solid rgba(255,255,255,.10);
+        border: none;
         padding: 10px 12px 12px;
         margin-top: 14px;
       }
