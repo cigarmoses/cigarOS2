@@ -515,7 +515,7 @@
         margin: 0 auto;
         width: min(720px, 100vw);
 
-        height: 75vh;
+        height: 90vh;
 
         border-radius: 34px 34px 0 0;
         background:
@@ -745,6 +745,11 @@
         border-radius: 999px;
         background: var(--accent, #0f7aff);
       }
+     .radioOpt.is-on{
+        background: var(--accent, #0f7aff);
+        border-color: var(--accent, #0f7aff);
+        color: #fff;
+      }      
 
       /* Footer apply button */
       .fsh-foot{
