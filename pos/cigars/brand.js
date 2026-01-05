@@ -557,7 +557,7 @@
         width: 34px; height: 34px;
         border-radius: 999px;
         border: none;
-        background: rgba(255,255,255,.10);
+        background: transparent;
         color: rgba(255,255,255,.92);
         font-size: 20px;
         font-weight: 600;
