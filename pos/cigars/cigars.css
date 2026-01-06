@@ -309,7 +309,7 @@
 
 .fm-row{
   display: grid;
-  grid-template-columns: 44px 1fr 28px;
+  grid-template-columns: 60px 1fr 28px;
   align-items: center;
   gap: 10px;
   padding: 10px 10px;
@@ -320,8 +320,8 @@
 .fm-row:hover { background: #f6f9ff; }
 
 .fm-icon{
-  width: 56px; height: 56px;
-  border-radius: 14px;
+  width: 64px; height: 64px;
+  border-radius: 16px;
   background: #fff;
   display: grid;
   place-items: center;
