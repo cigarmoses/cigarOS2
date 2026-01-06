@@ -320,8 +320,8 @@
 .fm-row:hover { background: #f6f9ff; }
 
 .fm-icon{
-  width: 40px; height: 40px;
-  border-radius: 10px;
+  width: 56px; height: 56px;
+  border-radius: 14px;
   background: #fff;
   display: grid;
   place-items: center;
@@ -331,7 +331,7 @@
 .fm-label{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-weight: 500;
-  font-size: 20px;
+  font-size: 22px;
   color: #0f1a2c;
   letter-spacing: -0.01em;
 }
