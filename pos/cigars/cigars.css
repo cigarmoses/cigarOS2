@@ -201,8 +201,8 @@
 }
 
 .brands-grid img {
-  width: 82px;
-  height: 82px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
   display: block;
 
@@ -216,7 +216,7 @@
   margin-top: 10px;
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-weight: 500;
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.15;
   letter-spacing: -0.01em;
   max-width: 120px;
