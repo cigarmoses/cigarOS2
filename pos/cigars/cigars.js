@@ -9,6 +9,8 @@
    - ✅ Adds small icons for Manufacturer + Brand in the modal:
      img/icons/manufacturers/(slug).svg
      img/icons/brands/(slug).svg
+
+   ✅ NEW: Confirm button lights up iOS blue when selections are made
 */
 
 (() => {
@@ -246,7 +248,8 @@
   function slugify(name) {
     return String(name || "")
       .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "")
       .trim();
@@ -258,6 +261,59 @@
     if (key === "manufacturer") return `/img/icons/manufacturers/${slug}.svg`;
     if (key === "brand") return `/img/icons/brands/${slug}.svg`;
     return "";
+  }
+
+  // ✅ NEW: Confirm (iOS blue) styling injected once
+  const FM_CONFIRM_STYLE_ID = "fm-confirm-iosblue-style";
+  function injectModalConfirmStylesOnce() {
+    if (document.getElementById(FM_CONFIRM_STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = FM_CONFIRM_STYLE_ID;
+    style.textContent = `
+      /* Modal Confirm button (iOS behavior) */
+      #fm-confirm{
+        width: 100%;
+        height: 48px;
+        border-radius: 24px;
+        border: none;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+        transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #fm-confirm.is-off{
+        background: rgba(15,26,44,.10);
+        color: rgba(15,26,44,.45);
+        box-shadow: none;
+      }
+      #fm-confirm.is-on{
+        background: #007AFF;
+        color: #fff;
+        box-shadow: 0 8px 18px rgba(0,122,255,.25);
+      }
+      #fm-confirm:disabled{
+        cursor: not-allowed;
+        opacity: 1; /* keep iOS look (not washed out) */
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ✅ NEW: updates Confirm disabled + class based on current modal selections
+  function updateModalConfirmState() {
+    if (!modalConfirm) return;
+    injectModalConfirmStylesOnce();
+
+    const key = state.currentModalKey;
+    const set = key ? state.selected[key] : null;
+    const hasSelections = !!set && set.size > 0;
+
+    modalConfirm.disabled = !hasSelections;
+    modalConfirm.classList.toggle("is-on", hasSelections);
+    modalConfirm.classList.toggle("is-off", !hasSelections);
+    modalConfirm.setAttribute("aria-disabled", String(!hasSelections));
   }
 
   function openModal(key) {
@@ -289,6 +345,9 @@
       modal.setAttribute("aria-hidden", "false");
     }
 
+    // ✅ ensure button state is correct on open
+    updateModalConfirmState();
+
     setTimeout(() => modalSearch?.focus(), 50);
   }
 
@@ -299,6 +358,9 @@
     }
     state.currentModalKey = null;
     state.currentModalValues = [];
+
+    // optional: reset visual state to off when closed
+    updateModalConfirmState();
   }
 
   function renderModalList(values) {
@@ -314,7 +376,6 @@
         const isSelected = selectedSet.has(label);
         const iconSrc = showIcons ? iconPathForModalItem(key, label) : "";
 
-        // ✅ small icon (text-height) – never massive
         const iconHtml = showIcons
           ? `<img
               class="fm-ico"
@@ -350,8 +411,14 @@
         else selectedSet.add(val);
 
         row.classList.toggle("is-selected");
+
+        // ✅ live-update confirm button iOS blue state
+        updateModalConfirmState();
       });
     });
+
+    // ✅ also update after any re-render (search filtering)
+    updateModalConfirmState();
   }
 
   modalSearch?.addEventListener("input", () => {
@@ -361,7 +428,9 @@
     renderModalList(filtered);
   });
 
+  // ✅ NEW: prevent click when disabled (matches iOS behavior)
   modalConfirm?.addEventListener("click", () => {
+    if (modalConfirm?.disabled) return;
     syncPillActiveStates();
     pushStateToGlobal();
     closeModal();
@@ -464,9 +533,13 @@
 
       syncPillActiveStates();
       renderBrands();
+
+      // ✅ ensure confirm styling exists even before first open
+      updateModalConfirmState();
     } catch (err) {
       console.error("cigars.js init error:", err);
       syncPillActiveStates();
+      updateModalConfirmState();
     }
   }
 
