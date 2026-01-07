@@ -724,7 +724,7 @@
         color: rgba(255,255,255,.82);
         font-size: 12px;
         font-weight: 500;
-        letter-spacing: -0.03em; /* tighter so Box-Pressed/Barberpole fit */
+        letter-spacing: -0.03em;
         cursor:pointer;
         user-select:none;
         -webkit-tap-highlight-color: transparent;
@@ -745,11 +745,11 @@
         border-radius: 999px;
         background: var(--accent, #0f7aff);
       }
-     .radioOpt.is-on{
+      .radioOpt.is-on{
         background: var(--accent, #0f7aff);
         border-color: var(--accent, #0f7aff);
         color: #fff;
-      }      
+      }
 
       /* Footer apply button */
       .fsh-foot{
@@ -849,7 +849,11 @@
     a = Math.max(PRICE_MIN, Math.min(PRICE_MAX, a));
     b = Math.max(PRICE_MIN, Math.min(PRICE_MAX, b));
 
-    if (a > b) { const t = a; a = b; b = t; }
+    if (a > b) {
+      const t = a;
+      a = b;
+      b = t;
+    }
 
     const snap = (x) => Math.round(x * 4) / 4;
     return [snap(a), snap(b)];
@@ -1131,9 +1135,55 @@
     return list.map((x) => ({ ...x, src: (x.src || "").replace("seriebank", "serieband") }));
   }
 
+  // ✅ NEW: ensure the Bands Confirm button has iOS-blue enabled styling even if CSS is missing
+  const BANDS_CONFIRM_STYLE_ID = "bands-confirm-iosblue-style";
+  function injectBandsConfirmStylesOnce() {
+    if (document.getElementById(BANDS_CONFIRM_STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = BANDS_CONFIRM_STYLE_ID;
+    style.textContent = `
+      /* Bands Confirm (iOS) */
+      #bands-confirm{
+        width: 100%;
+        height: 48px;
+        border-radius: 24px;
+        border: none;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+        transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+      }
+      #bands-confirm.is-off{
+        background: rgba(15,26,44,.10);
+        color: rgba(15,26,44,.45);
+        box-shadow: none;
+      }
+      #bands-confirm.is-on{
+        background: #007AFF;
+        color: #fff;
+        box-shadow: 0 8px 18px rgba(0,122,255,.25);
+      }
+      #bands-confirm:disabled{
+        cursor: not-allowed;
+        opacity: 1; /* keep iOS look (not faded) */
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ✅ UPDATED: toggle disabled + iOS blue class
   function updateBandsConfirmState() {
     if (!bandsConfirm) return;
-    bandsConfirm.disabled = pendingBands.size === 0;
+
+    injectBandsConfirmStylesOnce();
+
+    const hasSelections = pendingBands.size > 0;
+
+    bandsConfirm.disabled = !hasSelections;
+    bandsConfirm.classList.toggle("is-on", hasSelections);
+    bandsConfirm.classList.toggle("is-off", !hasSelections);
+    bandsConfirm.setAttribute("aria-disabled", String(!hasSelections));
   }
 
   function renderBandsSheet() {
@@ -1261,6 +1311,7 @@
     });
 
     bandsConfirm?.addEventListener("click", () => {
+      // ✅ keep this guard, but now it matches visual state too
       if (bandsConfirm.disabled) return;
       activeBands = new Set(pendingBands);
       sheetBands?.setAttribute("hidden", "");
