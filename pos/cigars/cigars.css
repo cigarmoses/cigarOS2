@@ -1,763 +1,373 @@
-/* /pos/cigars/brand.css */
+/* /pos/cigars/cigars.css */
 
-/* ========== THEME ========== */
-:root{
-  --bg1:#071024;
-  --bg2:#0b1c3a;
-
-  --ink:#ffffff;
-  --muted:rgba(255,255,255,.65);
-  --hair:rgba(255,255,255,.10);
-
-  --card:rgba(255,255,255,.06);
-  --card-border:rgba(255,255,255,.12);
-
-  --pill:rgba(255,255,255,.07);
-  --pill-border:rgba(255,255,255,.14);
-
-  --accent:#0f7aff;
-  --green:#34c759;
+/* Page base */
+.cigars-page {
+  margin: 0;
+  background: #ffffff;
+  color: #0f1a2c;
+  font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
 }
 
-*{ box-sizing:border-box; }
-
-/* ========== PAGE BACKGROUND ========== */
-body.brand-page{
-  margin:0;
-  min-height:100vh;
-  color:var(--ink);
-  background:
-    radial-gradient(1200px 700px at 15% 5%, rgba(65,110,200,.35), transparent 55%),
-    radial-gradient(900px 600px at 90% 10%, rgba(0,190,255,.16), transparent 55%),
-    linear-gradient(180deg, var(--bg2), var(--bg1));
-  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
-}
-
-/* ========== TOP BAR ========== */
-.brand-topbar{
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  padding:14px 14px 0;
-}
-
-.icon-btn{
-  width:44px;height:44px;
-  display:grid;place-items:center;
-  border:none;background:transparent;
-  color:var(--ink);
-}
-
-.icon-btn svg{ width:24px;height:24px; stroke:rgba(255,255,255,.85); }
-
-/* ========== MAIN ========== */
-.brand-main{ padding:0 14px 120px; }
-
-.brand-title-row{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  margin-top:2px;
-}
-
-.brand-title{
-  margin:8px 0 12px;
-  font-size:56px;
-  line-height:.92;
-  letter-spacing:-.02em;
-  font-weight:800;
-}
-
-.brand-icon{
-  width:54px;height:54px;
-  border-radius:14px;
-  background:rgba(255,255,255,.10);
-  box-shadow:0 10px 24px rgba(0,0,0,.25);
-  margin-top:10px;
-  overflow:hidden;
-  display:grid;
-  place-items:center;
-}
-.brand-icon img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
-
-/* ========== SEARCH ========== */
-.brand-search .search-wrap{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
-  border-radius:18px;
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.12);
-}
-
-.search-ico{ opacity:.75; }
-
-#brand-search{
-  width:100%;
-  border:none;
-  background:transparent;
-  outline:none;
-  color:var(--ink);
-  font-size:16px;
-  font-weight:700;
-}
-#brand-search::placeholder{ color:rgba(255,255,255,.45); }
-
-/* ========== CONTROLS ========== */
-.brand-controls{
-  display:grid;
-  grid-template-columns:1.05fr .72fr 1.7fr;
-  gap:10px;
-  margin-top:10px;
-}
-
-.pill-btn{
-  height:40px;
-  border-radius:16px;
-  border:1px solid var(--pill-border);
-  background:var(--pill);
-  color:rgba(255,255,255,.80);
-  font-size:13px;
-  font-weight:800;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  -webkit-tap-highlight-color:transparent;
-}
-.pill-btn:active{ transform:scale(.99); }
-
-/* ========== MADURO/NATURAL TOGGLE ========== */
-.seg{
-  height:40px;
-  border-radius:16px;
-  border:1px solid var(--pill-border);
-  background:var(--pill);
-  display:grid;
-  grid-template-columns:1fr 56px 1fr;
-  align-items:center;
-  padding:0 6px;
-}
-
-.seg-btn{
-  height:40px;
-  border:none;
-  background:transparent;
-  font-size:12px;
-  font-weight:900;
-  color:rgba(255,255,255,.45);
-}
-
-.seg-btn[aria-pressed="true"]{
-  color:rgba(15,122,255,.95);
-}
-
-.seg-dot{
-  width:56px;
-  height:30px;
-  border-radius:999px;
-  border:2px solid rgba(255,255,255,.22);
-  background:rgba(0,0,0,.18);
-  position:relative;
-  display:block;
-  margin:0 auto;
-  -webkit-tap-highlight-color:transparent;
-}
-
-.seg-dot::after{
-  content:"";
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  width:22px;
-  height:22px;
-  border-radius:999px;
-  background:rgba(15,122,255,.90);
-  left:4px;
-  transition:left .18s ease, opacity .18s ease;
-}
-
-#wrapper-seg[data-state="maduro"] .seg-dot::after{ left:4px; opacity:1; }
-#wrapper-seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }
-#wrapper-seg[data-state="natural"] .seg-dot::after{ left:30px; opacity:1; }
-
-/* ========== LIST ROWS ========== */
-.brand-list{
-  margin-top:14px;
-  display:flex;
-  flex-direction:column;
-}
-
-.brand-row{
-  display:grid;
-  grid-template-columns:54px 1fr auto auto; /* ICON | TEXT | PRICE | + */
-  align-items:center;
-  gap:12px;
-  padding:14px 10px;
-  border-top:1px solid rgba(255,255,255,.10);
-}
-
-.row-ico{
-  width:54px;
-  height:54px;
-  border-radius:14px;
-  object-fit:cover;
-  box-shadow:0 10px 24px rgba(0,0,0,.20);
-  background:rgba(255,255,255,.08);
-}
-
-.row-main{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  min-width:0;
-  cursor:pointer;
-}
-
-.row-title{
-  font-size:16px;
-  font-weight:700;
-  letter-spacing:-.01em;
-  line-height:1.1;
-  color:rgba(255,255,255,.92);
-
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-  white-space:normal;
-}
-
-.row-sub{
-  font-size:12px;
-  font-weight:700;
-  color:rgba(255,255,255,.55);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.row-price{
-  position:relative;
-  padding-left:10px;
-  font-size:16px;
-  font-weight:600;
-  color:rgba(255,255,255,.92);
-  min-width:78px;
-  text-align:right;
-}
-
-.row-price::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:50%;
-  transform:translateY(-50%);
-  width:1px;
-  height:44px;
-  background:rgba(255,255,255,.20);
-  opacity:.9;
-}
-
-.row-add{
-  width:20px;
-  height:20px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:600;
-  line-height:1;
-  display:grid;
-  place-items:center;
-  border:none;
-  background:var(--green);
-  color:#073018;
-  cursor:pointer;
-  box-shadow:0 10px 18px rgba(0,0,0,.25);
-  -webkit-tap-highlight-color:transparent;
-}
-.row-add:active{ transform:scale(.98); }
-
-/* ========== STATUS TEXT ========== */
-.brand-status{
-  margin:16px 0 0;
-  color:rgba(255,255,255,.75);
-  font-weight:700;
-}
-
-/* ===============================
-   GENERIC MODAL UTILITIES
-   =============================== */
-[hidden]{ display:none !important; }
-body.pos-modal-open{ overflow:hidden; }
-
-/* ===============================
-   BACKDROP (shared)
-   =============================== */
-#sheet-backdrop{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.35);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: 9998;
-}
-
-/* ===============================
-   ✅ BANDS POPUP must be above backdrop
-   =============================== */
-#sheet-bands[hidden]{ display:none !important; }
-#sheet-bands:not([hidden]){
-  display:flex !important;
-  opacity:1 !important;
-  transform:translate(-50%, -50%) !important;
-  pointer-events:auto !important;
-}
-
-#sheet-bands{
-  position:fixed !important;
-  left:50% !important;
-  top:50% !important;
-
-  width:min(630px, 90vw) !important;
-  max-height:76vh !important;
-
-  border-radius:32px !important;
-  background:#ffffff !important;
-  color:#0b1220 !important;
-
-  box-shadow:
-    0 24px 60px rgba(0,0,0,.55),
-    0 0 0 1px rgba(0,0,0,.04) !important;
-
-  flex-direction:column !important;
-  overflow:hidden !important;
-
-  z-index:9999 !important;
-}
-
-/* BANDS internal layout */
-.bands-sheet{ display:flex; flex-direction:column; overflow:hidden; }
-
-.bands-header{
-  position:relative;
-  text-align:center;
-  padding:18px 20px 10px;
-  border-bottom:none;
-}
-.bands-header h2{
-  margin:0;
-  font-size:20px;
-  font-weight:800;
-  letter-spacing:.01em;
-}
-.bands-x{
-  position:absolute;
-  top:14px;
-  right:16px;
-  width:32px;
-  height:32px;
-  border-radius:16px;
-  border:none;
-  background:rgba(15,23,42,.06);
-  font-size:20px;
-  font-weight:700;
-  line-height:1;
-  cursor:pointer;
-}
-
-.bands-body{
-  flex:1 1 auto;
-  overflow-y:auto;
-  padding:6px 18px 10px;
-  position:relative;
-}
-
-.bands-body::after{
-  content:"";
-  position:absolute;
-  top:14px;
-  right:8px;
-  width:3px;
-  height:calc(100% - 28px);
-  border-radius:999px;
-  background:rgba(0,0,0,.10);
-  box-shadow:
-    inset 0 0 4px rgba(255,255,255,.35),
-    0 0 0 1px rgba(255,255,255,.25);
-  pointer-events:none;
-}
-
-.bands-list{ display:flex; flex-direction:column; gap:14px; }
-
-.band-row{ display:block; }
-
-.band-art{
-  width:100%;
-  height:140px;
-  border-radius:24px;
-  overflow:hidden;
-  background:transparent;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:12px 14px;
-}
-.band-art img{
-  max-width:100%;
-  max-height:100%;
-  width:auto;
-  height:auto;
-  object-fit:contain;
-  display:block;
-}
-
-.band-meta{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding-right:28px;
-}
-
-.band-check{
-  width:22px;
-  height:22px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-  background:#f3f4f6;
-  -webkit-appearance:none;
-  appearance:none;
-  outline:none;
-  box-shadow:none;
-  cursor:pointer;
-  position:relative;
-  -webkit-tap-highlight-color:transparent;
-}
-.band-check:focus,
-.band-check:focus-visible{
-  outline:none !important;
-  box-shadow:none !important;
-}
-.band-check:checked{
-  background:var(--accent);
-  border-color:var(--accent);
-}
-.band-check:checked::after{
-  content:"";
-  position:absolute;
-  left:7px;
-  top:3px;
-  width:6px;
-  height:12px;
-  border:2px solid #ffffff;
-  border-top:0;
-  border-left:0;
-  transform:rotate(45deg);
-}
-
-.bands-footer{
-  padding:16px 18px 22px;
-  border-top:none;
-}
-.bands-footer .sheet-btn.primary{
-  width:100%;
-  height:44px;
-  border-radius:22px;
-  font-size:16px;
-  font-weight:600;
-  padding:0 16px;
-  border:none;
-}
-.bands-footer .sheet-btn.primary:disabled{
-  background:#e5e7eb;
-  color:#9ca3af;
-}
-.bands-footer .sheet-btn.primary:not(:disabled){
-  background:var(--accent);
-  color:#ffffff;
-}
-
-/* =========================================================
-   ✅ CIGAR DETAIL POPUP (MOCKUP MATCH — UPDATED FIXES)
-   - popup height restored smaller (like last correct live version)
-   - cigar nudged RIGHT a bit more
-   - right-side details scaled down to fit inside
-   - 3 action buttons MUCH smaller
-   ========================================================= */
-
-/* Hide receipt/invoice FAB while cigar detail is open */
-body.cigar-detail-open .pos-invoice-fab,
-body.cigar-detail-open .pos-receipt-fab,
-body.cigar-detail-open .receipt-fab,
-body.cigar-detail-open #posInvoiceFab,
-body.cigar-detail-open #posReceiptFab,
-body.cigar-detail-open #receipt-open,
-body.cigar-detail-open .pos-receipt-badge,
-body.cigar-detail-open .receipt-badge,
-body.cigar-detail-open #posReceiptBadge,
-body.cigar-detail-open #receipt-count{
-  display:none !important;
-}
-
-/* Overlay */
-.cigar-detail-overlay{
-  position: fixed;
-  inset: 0;
-  display: none;
+/* Top bar */
+.cigars-topbar {
+  padding: 12px 16px 0;
+  display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+}
 
-  z-index: 10003;
-  background: rgba(10, 22, 40, 0.38);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+.cigars-main {
+  padding: 8px 16px 24px;
+}
 
-  padding:
-    calc(22px + env(safe-area-inset-top))
-    14px
-    calc(22px + env(safe-area-inset-bottom));
-
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+/* Title + search */
+.cigars-title {
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
   letter-spacing: -0.02em;
-}
-.cigar-detail-overlay.open{ display:flex; }
-
-.cigar-detail-sheet{
-  width: min(720px, 94vw);
-  height: min(820px, 90svh);
-  max-height: 90svh;   /* ✅ recommended */
-  background: rgba(255,255,255,0.96);
-  border-radius: 22px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
-  overflow: hidden;
-  position: relative;
+  font-size: 56px;
+  line-height: 1.02;
+  margin: 10px 0 14px;
 }
 
-/* Close button — bottom left, white circle, red X */
-.cigar-detail-x{
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-  width: 40px;
-  height: 40px;
+.cigars-search-wrap { margin: 0 0 14px; }
+
+.cigars-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f3f7fb;
+  border: 1px solid #e4ecf6;
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
+.cigars-search-icon { opacity: 0.55; font-size: 18px; }
+
+#cigars-search-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+}
+
+/* Filters card */
+.cigars-filters-section { margin: 8px 0 18px; }
+
+.cigars-filters-card {
+  background: #f3f7fb;
+  border: 1px solid #e4ecf6;
+  border-radius: 18px;
+  padding: 14px 14px 12px;
+}
+
+.cigars-filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cigars-filters-title {
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+}
+
+.cigars-filters-viewall {
+  border: none;
+  background: transparent;
+  color: #007aff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cigars-filters-grid { display: grid; gap: 10px; }
+
+.cigars-filters-row {
+  display: grid;
+  gap: 10px;
+}
+
+/* Column-count helpers */
+.cigars-filters-row--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cigars-filters-row--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Special row to keep "Wrapper Shade" on ONE line
+   and shrink Ring/Vitolas slightly */
+.cigars-filters-row--shade3 {
+  grid-template-columns: 0.92fr 1.20fr 0.92fr;
+}
+
+/* View-all row wraps cleanly */
+.cigars-filters-row--wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 3-per-row feel for view-all pills */
+.cigars-filters-row--wrap .filter-pill {
+  flex: 1 1 calc(33.333% - 10px);
+}
+
+/* pills — MEDIUM (not bold) */
+.filter-pill {
   border: none;
   border-radius: 999px;
-  background: #ffffff;
-  color: #ff3b30;
-  font-size: 16px;
-  line-height: 1;
+  padding: 10px 12px;
+  background: #eaf1f9;
+  color: #0f1a2c;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 500;
+  font-size: 15px;
   cursor: pointer;
-  box-shadow:
-    0 10px 20px rgba(0,0,0,0.20),
-    0 2px 6px rgba(0,0,0,0.14);
-  z-index: 10;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+  min-height: 40px;
 }
 
-.cigar-detail-body{
-  height: 100%;
-  overflow: hidden;
-  padding: 14px 16px 16px;
+/* active blue */
+.filter-pill.is-active {
+  background: #e0edff;
+  color: #007aff;
+  outline: 1px solid rgba(0,122,255,0.25);
+}
+
+/* Toggle pills — match regular pills (no yellow) */
+.filter-pill--toggle {
+  background: #eaf1f9;
+  border: none;
+}
+
+.filter-pill--toggle.is-active {
+  background: #e0edff;
+  color: #007aff;
+  outline: 1px solid rgba(0,122,255,0.25);
+}
+
+/* Wrapper Shade: force single line */
+.pill-nowrap {
+  white-space: nowrap;
+}
+
+/* Ring/Vitolas slightly tighter so center fits clean */
+.pill-compact {
+  padding: 10px 10px;
+}
+
+/* expanded filters area */
+.cigars-filters-expanded { margin-top: 12px; }
+
+/* Small screens: tighten just a touch */
+@media (max-width: 390px) {
+  .filter-pill { font-size: 14px; }
+  .cigars-filters-row--shade3 { grid-template-columns: 0.90fr 1.20fr 0.90fr; }
+}
+
+/* Brands title */
+.cigars-brands-title {
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
+  font-size: 34px;
+  letter-spacing: -0.01em;
+  margin: 14px 0 10px;
+}
+
+/* Brand grid */
+.brands-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px 18px;
+  padding: 6px 0 22px;
+}
+
+/* tiles */
+.brands-grid > a,
+.brands-grid .category-card {
   display: flex;
   flex-direction: column;
-  gap: 12px; /* slightly tighter */
+  align-items: center;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
 }
 
-/* Header card */
-.cd-headercard{
+.brands-grid img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  display: block;
+
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(15, 26, 44, 0.10);
+}
+
+.brands-grid .category-name {
+  margin-top: 10px;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  max-width: 120px;
+  word-break: break-word;
+}
+
+@media (max-width: 390px) {
+  .brands-grid { gap: 18px 14px; }
+  .brands-grid img {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+  }
+}
+
+/* ---------- Unified Filter Modal ---------- */
+.fm { position: fixed; inset: 0; z-index: 9999; }
+.fm--hidden { display: none; }
+
+.fm-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(10, 24, 46, 0.45);
+}
+
+.fm-sheet{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 48px));
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.25);
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.fm-title{
+  margin: 0;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+}
+
+.fm-search-row{ margin-top: 10px; }
+
+.fm-search{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #f3f6fb;
+  border: 1px solid #e3eaf4;
+}
+
+.fm-search-icon{ font-size: 16px; opacity: .55; }
+
+#fm-search-input{
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  color: #0f1a2c;
+}
+#fm-search-input::placeholder{ color: rgba(15,26,44,.35); }
+
+.fm-list{
+  margin-top: 12px;
   background: #fff;
   border-radius: 18px;
-  padding: 12px 14px; /* ✅ tightened */
+  border: 1px solid #edf1f7;
+  padding: 6px;
+  overflow: auto;
+  flex: 1;
+}
+
+.fm-list::-webkit-scrollbar { width: 10px; }
+.fm-list::-webkit-scrollbar-track { background: transparent; }
+.fm-list::-webkit-scrollbar-thumb {
+  background: rgba(15,26,44,.18);
+  border-radius: 999px;
+}
+
+.fm-row{
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px; /* ✅ tightened */
+  grid-template-columns: 60px 1fr 28px;
   align-items: center;
-  box-shadow: 0 10px 26px rgba(15,26,44,0.08), 0 2px 8px rgba(15,26,44,0.05);
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 14px;
+  cursor: pointer;
 }
 
-.cd-brand{
-  font-weight: 800;
-  font-size: 44px;
-  line-height: 1.0;
-  letter-spacing: -0.02em;
-  color: #0f1a2c;
-}
-.cd-name{
-  margin-top: 4px;
-  font-weight: 400;
-  font-size: 18px;           /* ✅ slightly smaller */
-  line-height: 1.15;         /* ✅ tighter */
-  letter-spacing: -0.02em;
-  color: rgba(15,26,44,0.60);
+.fm-row:hover { background: #f6f9ff; }
 
-  white-space: nowrap;       /* ✅ force single line */
-  overflow: hidden;          /* ✅ no wrap */
-  text-overflow: ellipsis;   /* ✅ safe fallback */
-}
-.cd-h-icon{
-  width: 64px;               /* ✅ slightly smaller */
-  height: 64px;              /* ✅ slightly smaller */
-  border-radius: 18px;
-  background: rgba(0,0,0,0.06);
-  overflow: hidden;
+.fm-icon{
+  width: 64px; height: 64px;
+  border-radius: 16px;
+  background: #fff;
   display: grid;
   place-items: center;
-}
-.cd-h-icon img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display:block;
-}
-
-/* Main under header */
-.cd-main{
-  flex: 1 1 auto;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 0.46fr 0.54fr;
-  gap: 12px;
-  align-items: stretch;
-}
-
-/* ✅ Cigar column — move right a little more */
-.cigar-detail-sheet .cd-img{
-  display: flex;
-  align-items: center;
-  justify-content: flex-start !important;
-  padding-left: 28px; /* ✅ was 18px */
-  min-height: 0;
   overflow: hidden;
 }
 
-.cigar-detail-sheet .cd-img img.cigar-detail-stick{
-  height: 100% !important;
-  max-height: 48svh !important; /* ✅ slightly smaller so it fits comfortably */
-  width: auto !important;
-  max-width: none !important;
-  object-fit: contain !important;
-  display: block !important;
-  margin: 0 !important;
-}
-
-/* ✅ RIGHT: left aligned + NO SCROLL */
-.cd-right{
-  min-height: 0;
-  overflow: hidden;          /* ✅ no scrolling */
-  padding-right: 2px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px; /* tighter */
-  align-items: stretch;
-  text-align: left;
-}
-
-/* Stats grid (smaller cards) */
-.cd-grid2{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.cd-stat{
-  background: rgba(0,0,0,0.04);
-  border-radius: 14px;
-  padding: 8px 10px; /* ✅ slightly adjusted */
-  text-align: left;  /* ✅ left aligned */
-}
-.cd-stat .k{
+.fm-label{
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-weight: 500;
-  font-size: 10px;
-  letter-spacing: -0.02em;
-  color: rgba(15,26,44,0.42);
-  text-align: left; /* ✅ */
-}
-.cd-stat .v{
-  margin-top: 5px;
-  font-weight: 800;
-  font-size: 40px; /* ✅ smaller */
-  letter-spacing: -0.02em;
+  font-size: 22px;
   color: #0f1a2c;
-  text-align: left; /* ✅ */
-}
-.cd-stat.small .v{
-  font-size: 17px; /* ✅ smaller */
-  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
-/* Wrapper/Binder/Filler blocks (smaller) */
-.cd-block{
-  background: rgba(0,0,0,0.04);
-  border-radius: 14px;
-  padding: 6px 8px;
-}
-.cd-block.single{
-  padding: 8px 8px;
-}
-.cd-kv{
-  display: grid;
-  grid-template-columns: 1fr;
-  padding: 6px 2px;
-  border-top: 1px solid rgba(0,0,0,0.06);
-}
-.cd-kv:first-child{ border-top: none; }
-.cd-kv .k{
-  text-align: left;          /* ✅ left aligned */
-  font-weight: 500;
-  font-size: 10px;
-  letter-spacing: -0.02em;
-  color: rgba(15,26,44,0.40);
-}
-.cd-kv .v{
-  margin-top: 3px;
-  text-align: left;
-  font-weight: 800;
-  font-size: 18px; /* ✅ smaller */
-  letter-spacing: -0.02em;
-  color: #0f1a2c;
+.fm-check{
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: #f1f5fb;
+  border: 1px solid #e3eaf4;
 }
 
-/* ✅ Action buttons MUCH smaller */
-.cd-actions{
+.fm-row.is-selected .fm-check{
+  background: #5aa9ff;
+  border-color: rgba(0,122,255,.25);
+}
+
+.fm-row.is-selected .fm-label{
+  color: #5aa9ff;
+}
+
+.fm-footer{
+  padding-top: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 2px;
-  padding-bottom: 6px;
+  justify-content: center;
 }
 
-.cd-btn{
-  height: 28px;              /* ✅ was 34px */
+.fm-confirm{
+  min-width: 180px;
+  height: 46px;
+  padding: 0 22px;
   border-radius: 999px;
-  border: 1px solid rgba(15,26,44,0.10);
-  background: rgba(255,255,255,0.52);
-  color: rgba(15,26,44,0.26);
+  border: none;
+  background: #fff;
+  color: #007aff;
   font-weight: 600;
-  font-size: 11px;           /* ✅ smaller */
-  letter-spacing: -0.02em;
+  font-size: 18px;
+  box-shadow: 0 10px 22px rgba(0,122,255,.25);
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  padding: 0 10px;           /* ✅ tighter */
-}
-
-.cd-btn[disabled]{
-  cursor: not-allowed;
-  opacity: 1;
-}
-
-.cd-btn.is-live{
-  border-color: rgba(15,26,44,0.14);
-  background: rgba(255,255,255,0.66);
-  color: rgba(15,26,44,0.28);
-}
-.cd-btn:active{ transform: scale(.99); opacity: .92; }
-
-/* Mobile */
-@media (max-width: 520px){
-  .cd-main{ grid-template-columns: 1fr 1fr; }
-  .cigar-detail-sheet .cd-img{ padding-left: 26px !important; }
-  .cigar-detail-sheet .cd-img img.cigar-detail-stick{ max-height: 50svh !important; }
 }
