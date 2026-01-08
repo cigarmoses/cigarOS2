@@ -864,25 +864,23 @@ img.cigar-detail-img{
   display: block;
 }
 /* =========================================================
-   CIGAR DETAIL POPUP — FORCE STICK IMAGE TO FIT HEIGHT
+   CIGAR DETAIL POPUP — SCALE IMAGE DOWN TO FIT
    ========================================================= */
 
-.cigar-detail-stick{
-  max-height: 52vh !important;
+.cigar-detail-sheet .cd-img{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  max-height: 44vh;          /* adjust: 40–52vh */
+  overflow: hidden;
+}
+
+.cigar-detail-sheet .cd-img img.cigar-detail-stick{
+  max-height: 44vh !important;
   width: auto !important;
   height: auto !important;
   object-fit: contain !important;
   display: block !important;
   margin: 0 auto !important;
 }
-
-.cigar-detail-left,
-.cigar-detail-image,
-.cigar-detail-photo,
-.cigar-img-wrap{
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 0;
-}
-
