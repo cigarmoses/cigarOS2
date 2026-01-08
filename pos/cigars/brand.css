@@ -828,3 +828,38 @@ body.cigar-detail-open #receipt-count{
   .cd-img{ min-height: 440px; height: auto; }
   .cd-stat .v{ font-size: 48px; }
 }
+
+/* =========================================
+   CIGAR DETAIL POPUP — IMAGE SCALE FIX
+   Goal: never exceed available sheet height
+   ========================================= */
+
+/* 1) If your image is inside a left column wrapper */
+.cigar-detail-left,
+.cigar-detail-photo,
+.cigar-photo,
+.detail-photo,
+.cigar-img-wrap{
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+/* 2) The cigar image itself */
+.cigar-detail-left img,
+.cigar-detail-photo img,
+.cigar-photo img,
+.detail-photo img,
+.cigar-img-wrap img,
+img.cigar-detail-img{
+  width: auto !important;
+  height: 100% !important;
+
+  /* ✅ THIS is the key: cap it to the visible sheet area */
+  max-height: calc(75vh - 150px) !important;
+
+  /* ✅ preserve full cigar, no cropping */
+  object-fit: contain !important;
+
+  display: block;
+}
