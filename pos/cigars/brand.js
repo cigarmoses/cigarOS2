@@ -1336,10 +1336,9 @@
 
         <!-- Main layout -->
         <div class="cd-main">
-          <div class="cd-img">
-            ${cigarImg ? `<img src="${escapeAttr(cigarImg)}" alt="">` : ``}
+        <div class="cd-img">
+          ${cigarImg ? `<img class="cigar-detail-stick" src="${escapeAttr(cigarImg)}" alt="">` : ``}
           </div>
-
           <div class="cd-right">
             <div class="cd-grid2">
               <div class="cd-stat">
