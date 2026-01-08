@@ -484,9 +484,12 @@ body.pos-modal-open{ overflow:hidden; }
 }
 
 /* =========================================================
-   CIGAR DETAIL POPUP (Mockup matched) — FINAL
-   - Uses brand.js classes: .cigar-detail-overlay.open / .cigar-detail-sheet / .cd-img
-   - Fix: cigar image can NEVER exceed available height
+   CIGAR DETAIL POPUP (FINAL, SINGLE SOURCE OF TRUTH)
+   - Popup size matches your "blank white popup" on all devices
+   - Header stays EXACTLY as-is (title/subtitle/icon)
+   - Cigar LEFT, info RIGHT
+   - Image always scales to fit (no overflow)
+   - Close X moved to BOTTOM RIGHT
    ========================================================= */
 
 /* Hide receipt/invoice FAB while cigar detail is open */
@@ -510,58 +513,67 @@ body.cigar-detail-open #receipt-count{
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 10003; /* above invoice + product popups */
+
+  z-index: 10003;
   background: rgba(10, 22, 40, 0.38);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+
   padding:
     calc(18px + env(safe-area-inset-top))
     14px
     calc(18px + env(safe-area-inset-bottom));
-  letter-spacing: -0.02em;
+
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 .cigar-detail-overlay.open{ display:flex; }
 
-/* Sheet */
+/* Sheet size = your “blank popup” target */
 .cigar-detail-sheet{
-  width: min(720px, 96vw);
-  height: 75vh;
+  width: min(720px, 94vw);
+  height: min(860px, 86vh);
+
   background: rgba(255,255,255,0.96);
   border-radius: 22px;
   box-shadow: 0 18px 60px rgba(0,0,0,0.25);
   overflow: hidden;
   position: relative;
-  display: flex;             /* ✅ lets body layout be predictable */
-  flex-direction: column;    /* ✅ */
 }
 
-/* Simple X */
+/* Move X to BOTTOM RIGHT */
 .cigar-detail-x{
   position: absolute;
-  right: 12px;
-  top: 10px;
-  width: 34px;
-  height: 34px;
+  right: 14px;
+  bottom: 14px;
+
+  width: 40px;
+  height: 40px;
+
   border: none;
   border-radius: 999px;
   background: rgba(0,0,0,0.06);
   color: #0f1a2c;
-  font-size: 22px;
+
+  font-size: 24px;
   line-height: 1;
   cursor: pointer;
-  z-index: 2;
+
+  z-index: 5;
 }
 
-/* Scroll body */
+/* Body becomes a column so header is fixed + main fills remaining */
 .cigar-detail-body{
-  flex: 1 1 auto;            /* ✅ fill sheet height */
-  min-height: 0;             /* ✅ allow inner flex/grid to shrink */
-  overflow: auto;
+  height: 100%;
+  overflow: hidden;               /* main area handles its own sizing */
   padding: 14px 16px 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-/* Header card */
+/* Header card (UNCHANGED look — keep your current values) */
 .cd-headercard{
   background: #fff;
   border-radius: 18px;
@@ -571,9 +583,9 @@ body.cigar-detail-open #receipt-count{
   gap: 12px;
   align-items: center;
   box-shadow: 0 10px 26px rgba(15,26,44,0.08), 0 2px 8px rgba(15,26,44,0.05);
-  margin-bottom: 14px;
 }
 
+/* Keep your top typography EXACT */
 .cd-brand{
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   font-weight: 800;
@@ -582,7 +594,6 @@ body.cigar-detail-open #receipt-count{
   letter-spacing: -0.02em;
   color: #0f1a2c;
 }
-
 .cd-name{
   margin-top: 4px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
@@ -592,7 +603,6 @@ body.cigar-detail-open #receipt-count{
   letter-spacing: -0.02em;
   color: rgba(15,26,44,0.60);
 }
-
 .cd-h-icon{
   width: 72px;
   height: 72px;
@@ -606,51 +616,49 @@ body.cigar-detail-open #receipt-count{
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display:block;
 }
 
-/* Main 2-column layout */
+/* Main area fills remaining height under header */
 .cd-main{
+  flex: 1 1 auto;
+  min-height: 0;                 /* critical so children can shrink */
+
   display: grid;
-  grid-template-columns: 0.52fr 0.48fr;
+  grid-template-columns: 0.44fr 0.56fr; /* cigar left, info right */
   gap: 14px;
-  align-items: start;
+  align-items: stretch;
 }
 
-/* -----------------------------
-   ✅ IMAGE COLUMN — FIXED
-   Goal: keep cigar image from being massive
-   - Remove min-height:520px
-   - Remove calc height that forces it tall
-   - Cap container + image with a hard max-height
-   ----------------------------- */
+/* LEFT: image column */
 .cd-img{
-  background: transparent;
+  min-height: 0;                 /* critical */
   border-radius: 18px;
   overflow: hidden;
 
-  /* flex center so it never stretches image weirdly */
   display: flex;
   align-items: center;
-  justify-content: center;
-
-  /* ✅ cap image area (tweakable) */
-  max-height: 44vh;
-  min-height: 0;
-  width: 100%;
+  justify-content: flex-start;   /* ✅ aligns cigar to the LEFT */
+  padding-left: 8px;             /* small left bias like your mock */
 }
 
-.cd-img img{
-  /* ✅ the actual cap */
-  max-height: 44vh !important;
-  width: auto !important;
-  height: auto !important;
+/* The cigar image ALWAYS fits the available height */
+.cd-img img.cigar-detail-stick{
+  max-height: 100% !important;
+  height: 100% !important;       /* fill the column height */
+  width: auto !important;        /* preserve aspect */
+  max-width: 100% !important;
+
   object-fit: contain !important;
   display: block !important;
-  margin: 0 auto !important;
 }
 
-/* Right column */
+/* RIGHT: info column */
 .cd-right{
+  min-height: 0;                 /* critical */
+  overflow: auto;                /* if content grows, right side scrolls */
+  padding-right: 2px;
+
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -669,7 +677,6 @@ body.cigar-detail-open #receipt-count{
   text-align: center;
 }
 .cd-stat .k{
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   font-weight: 400;
   font-size: 12px;
   letter-spacing: -0.02em;
@@ -677,7 +684,6 @@ body.cigar-detail-open #receipt-count{
 }
 .cd-stat .v{
   margin-top: 6px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   font-weight: 800;
   font-size: 54px;
   letter-spacing: -0.02em;
@@ -686,15 +692,6 @@ body.cigar-detail-open #receipt-count{
 .cd-stat.small .v{
   font-size: 22px;
   font-weight: 800;
-}
-
-.cd-grid2.big .cd-stat.bigonly{
-  padding: 18px 12px;
-}
-.cd-grid2.big .cd-stat.bigonly .v{
-  font-size: 54px;
-  font-weight: 800;
-  margin-top: 0;
 }
 
 /* Wrapper/Binder/Filler blocks */
@@ -715,7 +712,6 @@ body.cigar-detail-open #receipt-count{
 .cd-kv:first-child{ border-top: none; }
 .cd-kv .k{
   text-align: right;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   font-weight: 400;
   font-size: 12px;
   letter-spacing: -0.02em;
@@ -724,7 +720,6 @@ body.cigar-detail-open #receipt-count{
 .cd-kv .v{
   margin-top: 4px;
   text-align: left;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   font-weight: 800;
   font-size: 22px;
   letter-spacing: -0.02em;
@@ -744,7 +739,6 @@ body.cigar-detail-open #receipt-count{
   border: 1px solid rgba(15,26,44,0.18);
   background: rgba(255,255,255,0.75);
   color: rgba(15,26,44,0.35);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   font-weight: 400;
   font-size: 15px;
   letter-spacing: -0.02em;
@@ -756,8 +750,16 @@ body.cigar-detail-open #receipt-count{
 
 /* Mobile stack */
 @media (max-width: 520px){
-  .cd-main{ grid-template-columns: 1fr; }
-  .cd-img{ max-height: 46vh; }
-  .cd-img img{ max-height: 46vh !important; }
-  .cd-stat .v{ font-size: 48px; }
+  .cd-main{
+    grid-template-columns: 1fr;  /* stack */
+  }
+  .cd-img{
+    justify-content: center;     /* center cigar when stacked */
+    padding-left: 0;
+    height: 42vh;               /* gives cigar a predictable zone */
+  }
+  .cd-img img.cigar-detail-stick{
+    height: 100% !important;
+    max-height: 100% !important;
+  }
 }
