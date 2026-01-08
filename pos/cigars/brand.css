@@ -571,10 +571,10 @@ body.cigar-detail-open #receipt-count{
 .cd-headercard{
   background: #fff;
   border-radius: 18px;
-  padding: 14px 14px;
+  padding: 12px 14px; /* ✅ tightened */
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 12px;
+  gap: 10px; /* ✅ tightened */
   align-items: center;
   box-shadow: 0 10px 26px rgba(15,26,44,0.08), 0 2px 8px rgba(15,26,44,0.05);
 }
@@ -589,14 +589,18 @@ body.cigar-detail-open #receipt-count{
 .cd-name{
   margin-top: 4px;
   font-weight: 400;
-  font-size: 19px;
-  line-height: 1.2;
+  font-size: 18px;           /* ✅ slightly smaller */
+  line-height: 1.15;         /* ✅ tighter */
   letter-spacing: -0.02em;
   color: rgba(15,26,44,0.60);
+
+  white-space: nowrap;       /* ✅ force single line */
+  overflow: hidden;          /* ✅ no wrap */
+  text-overflow: ellipsis;   /* ✅ safe fallback */
 }
 .cd-h-icon{
-  width: 72px;
-  height: 72px;
+  width: 64px;               /* ✅ slightly smaller */
+  height: 64px;              /* ✅ slightly smaller */
   border-radius: 18px;
   background: rgba(0,0,0,0.06);
   overflow: hidden;
@@ -640,14 +644,16 @@ body.cigar-detail-open #receipt-count{
   margin: 0 !important;
 }
 
-/* ✅ RIGHT: make EVERYTHING smaller and fit inside */
+/* ✅ RIGHT: left aligned + NO SCROLL */
 .cd-right{
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;          /* ✅ no scrolling */
   padding-right: 2px;
   display: flex;
   flex-direction: column;
   gap: 8px; /* tighter */
+  align-items: stretch;
+  text-align: left;
 }
 
 /* Stats grid (smaller cards) */
@@ -659,14 +665,15 @@ body.cigar-detail-open #receipt-count{
 .cd-stat{
   background: rgba(0,0,0,0.04);
   border-radius: 14px;
-  padding: 8px 8px; /* smaller */
-  text-align: center;
+  padding: 8px 10px; /* ✅ slightly adjusted */
+  text-align: left;  /* ✅ left aligned */
 }
 .cd-stat .k{
   font-weight: 500;
   font-size: 10px;
   letter-spacing: -0.02em;
   color: rgba(15,26,44,0.42);
+  text-align: left; /* ✅ */
 }
 .cd-stat .v{
   margin-top: 5px;
@@ -674,6 +681,7 @@ body.cigar-detail-open #receipt-count{
   font-size: 40px; /* ✅ smaller */
   letter-spacing: -0.02em;
   color: #0f1a2c;
+  text-align: left; /* ✅ */
 }
 .cd-stat.small .v{
   font-size: 17px; /* ✅ smaller */
@@ -697,7 +705,7 @@ body.cigar-detail-open #receipt-count{
 }
 .cd-kv:first-child{ border-top: none; }
 .cd-kv .k{
-  text-align: right;
+  text-align: left;          /* ✅ left aligned */
   font-weight: 500;
   font-size: 10px;
   letter-spacing: -0.02em;
