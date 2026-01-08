@@ -527,9 +527,9 @@ body.cigar-detail-open #receipt-count{
 }
 .cigar-detail-overlay.open{ display:flex; }
 
-/* ✅ Sheet: fit within overlay padding (prevents right-side cut off on mobile) */
+/* Sheet */
 .cigar-detail-sheet{
-  width: min(720px, 100%);     /* ✅ was 94vw (could clip inside padded overlay) */
+  width: min(720px, 100%);
   height: min(820px, 90svh);
   max-height: 90svh;
   background: rgba(255,255,255,0.96);
@@ -539,7 +539,7 @@ body.cigar-detail-open #receipt-count{
   position: relative;
 }
 
-/* ✅ Close button — NO circle behind it (just red X) */
+/* Close button (no circle) */
 .cigar-detail-x{
   position: absolute;
   left: 14px;
@@ -549,9 +549,9 @@ body.cigar-detail-open #receipt-count{
   height: 32px;
 
   border: none;
-  border-radius: 0;          /* ✅ no pill/circle */
-  background: transparent;   /* ✅ remove circle */
-  box-shadow: none;          /* ✅ remove shadow */
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 
   color: #ff3b30;
   font-size: 18px;
@@ -566,13 +566,13 @@ body.cigar-detail-open #receipt-count{
 .cigar-detail-body{
   height: 100%;
   overflow: hidden;
-  padding: 12px 14px 14px;   /* ✅ slightly tighter to keep buttons visible */
+  padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* Header card */
+/* Header */
 .cd-headercard{
   background: #fff;
   border-radius: 18px;
@@ -592,7 +592,7 @@ body.cigar-detail-open #receipt-count{
   color: #0f1a2c;
 }
 
-/* ✅ force cigar name to ONE line to shrink header */
+/* one-line cigar name */
 .cd-name{
   margin-top: 4px;
   font-weight: 400;
@@ -622,32 +622,31 @@ body.cigar-detail-open #receipt-count{
   display:block;
 }
 
-/* Main under header */
+/* Main */
 .cd-main{
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: 0.44fr 0.56fr; /* ✅ a touch more room for right column */
-  gap: 12px;
+  grid-template-columns: 0.42fr 0.58fr; /* ✅ give right column more room */
+  gap: 10px;                             /* ✅ tighter gap */
   align-items: stretch;
 }
 
-/* Left cigar column */
+/* Left cigar */
 .cigar-detail-sheet .cd-img{
   display: flex;
   align-items: center;
   justify-content: flex-start !important;
-  padding-left: 26px;
+  padding-left: 22px;
   padding-top: 6px;
   padding-bottom: 6px;
   min-height: 0;
   overflow: hidden;
 }
 
-/* ✅ Image fits cleanly in available column height */
 .cigar-detail-sheet .cd-img img.cigar-detail-stick{
   height: auto !important;
-  max-height: 100% !important;   /* ✅ fit the left column */
+  max-height: 100% !important;
   width: auto !important;
   max-width: 100% !important;
   object-fit: contain !important;
@@ -655,7 +654,7 @@ body.cigar-detail-open #receipt-count{
   margin: 0 !important;
 }
 
-/* Right side (NO scroll in portrait; keep everything visible) */
+/* Right side */
 .cd-right{
   min-height: 0;
   overflow: hidden;
@@ -666,38 +665,47 @@ body.cigar-detail-open #receipt-count{
   align-items: stretch;
 }
 
-/* Stats grid */
+/* ✅ Stats grid: fixed-narrow left col + flexible right col
+   This guarantees LENGTH + VITOLA have enough width and won’t clip. */
 .cd-grid2{
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 140px 1fr; /* ✅ ring/shape narrow, length/vitola flexible */
   gap: 8px;
 }
 
-/* ✅ Right-align inside cards (title + value) */
+/* Stats cards */
 .cd-stat{
   background: rgba(0,0,0,0.04);
   border-radius: 14px;
   padding: 8px 10px;
-  text-align: right; /* ✅ */
+  text-align: right;
+  min-width: 0; /* ✅ allow ellipsis instead of overflow */
 }
 .cd-stat .k{
   font-weight: 500;
   font-size: 10px;
   letter-spacing: -0.02em;
   color: rgba(15,26,44,0.42);
-  text-align: right; /* ✅ */
+  text-align: right;
+  white-space: nowrap;
 }
 .cd-stat .v{
   margin-top: 5px;
   font-weight: 800;
-  font-size: 34px; /* ✅ slightly smaller so buttons stay visible */
+  font-size: 34px;
   letter-spacing: -0.02em;
   color: #0f1a2c;
-  text-align: right; /* ✅ */
+  text-align: right;
+  white-space: nowrap;
 }
+
+/* ✅ For SHAPE/VITOLA (small cards): never clip; ellipsis if needed */
 .cd-stat.small .v{
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Wrapper/Binder/Filler blocks */
@@ -718,64 +726,87 @@ body.cigar-detail-open #receipt-count{
 }
 .cd-kv:first-child{ border-top: none; }
 
-/* ✅ Right-align label + value */
 .cd-kv .k{
   text-align: right;
   font-weight: 500;
   font-size: 10px;
   letter-spacing: -0.02em;
   color: rgba(15,26,44,0.40);
+  white-space: nowrap;
 }
 .cd-kv .v{
   margin-top: 3px;
   text-align: right;
   font-weight: 800;
-  font-size: 16px; /* ✅ slightly tighter */
+  font-size: 16px;
   letter-spacing: -0.02em;
   color: #0f1a2c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Actions (keep visible at bottom) */
+/* ✅ Actions: ONE LINE, smaller */
 .cd-actions{
-  margin-top: auto;   /* ✅ pushes buttons to bottom and keeps them visible */
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 6px;
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* ✅ 3 on one row */
+  gap: 8px;
+  padding-top: 8px;
   padding-bottom: 6px;
 }
 
 .cd-btn{
-  height: 28px;
+  height: 26px;
   border-radius: 999px;
-  border: 1px solid rgba(15,26,44,0.10);
-  background: rgba(255,255,255,0.52);
-  color: rgba(15,26,44,0.26);
-  font-weight: 600;
-  font-size: 11px;
+  border: 1px solid rgba(15,26,44,0.12);
+  background: rgba(255,255,255,0.66);
+  color: rgba(15,26,44,0.40);
+  font-weight: 700;
+  font-size: 10px;
   letter-spacing: -0.02em;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  padding: 0 10px;
-}
-.cd-btn[disabled]{ cursor: not-allowed; opacity: 1; }
-.cd-btn.is-live{
-  border-color: rgba(15,26,44,0.14);
-  background: rgba(255,255,255,0.66);
-  color: rgba(15,26,44,0.28);
-}
-.cd-btn:active{ transform: scale(.99); opacity: .92; }
+  padding: 0 8px;
 
-/* ✅ Landscape: allow scroll (because height is short in horizontal) */
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* keep disabled looking disabled */
+.cd-btn[disabled]{ cursor: not-allowed; opacity: 0.9; }
+
+/* ✅ CSS-only label override (shows ADD / EDIT / COMPARE regardless of existing text)
+   If you later change the actual HTML labels, you can delete this block. */
+.cd-actions .cd-btn{ font-size: 0; }             /* hides original text */
+.cd-actions .cd-btn::before{
+  font-size: 10px;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  color: rgba(15,26,44,0.40);
+  content: "ACTION";
+}
+.cd-actions .cd-btn:nth-child(1)::before{ content: "ADD"; }
+.cd-actions .cd-btn:nth-child(2)::before{ content: "EDIT"; }
+.cd-actions .cd-btn:nth-child(3)::before{ content: "COMPARE"; }
+
+/* Landscape: allow scroll if short */
 @media (orientation: landscape) and (max-height: 520px){
   .cigar-detail-body{
-    overflow-y: auto;                 /* ✅ enable scroll in landscape */
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 }
 
-/* Mobile */
+/* Mobile tweaks */
 @media (max-width: 520px){
-  .cd-main{ grid-template-columns: 1fr 1fr; }
-  .cigar-detail-sheet .cd-img{ padding-left: 22px !important; }
+  .cd-main{
+    grid-template-columns: 0.40fr 0.60fr; /* ✅ even more room to right */
+    gap: 10px;
+  }
+  .cigar-detail-sheet .cd-img{ padding-left: 18px !important; }
+  .cd-grid2{ grid-template-columns: 132px 1fr; } /* ✅ tighter ring column */
+  .cd-stat .v{ font-size: 32px; }                /* ✅ prevents clip on LENGTH */
 }
