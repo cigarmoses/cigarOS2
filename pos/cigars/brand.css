@@ -566,3 +566,265 @@ body.pos-modal-open{ overflow:hidden; }
 /* ✅ IMPORTANT:
    REMOVED the old centered #sheet-filters CSS + the !important overrides
    so your brand.js v3.1 bottom sheet can render correctly. */
+
+/* =========================================================
+   CIGAR DETAIL POPUP (Mockup matched)
+   - Same footprint as receipt popup (75vh)
+   - Blurred backdrop
+   - SF Pro Display Heavy + Regular
+   - Tracking -0.02 everywhere
+   - Hides receipt FAB while open
+   ========================================================= */
+
+/* Hide receipt/invoice FAB while cigar detail is open */
+body.cigar-detail-open .pos-invoice-fab,
+body.cigar-detail-open .pos-receipt-fab,
+body.cigar-detail-open .receipt-fab,
+body.cigar-detail-open #posInvoiceFab,
+body.cigar-detail-open #posReceiptFab,
+body.cigar-detail-open #receipt-open,
+body.cigar-detail-open .pos-receipt-badge,
+body.cigar-detail-open .receipt-badge,
+body.cigar-detail-open #posReceiptBadge,
+body.cigar-detail-open #receipt-count{
+  display:none !important;
+}
+
+/* Overlay = same blur vibe as invoice */
+.cigar-detail-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10003; /* above invoice + product popups */
+  background: rgba(10, 22, 40, 0.38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding:
+    calc(18px + env(safe-area-inset-top))
+    14px
+    calc(18px + env(safe-area-inset-bottom));
+  letter-spacing: -0.02em;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+}
+.cigar-detail-overlay.open{ display:flex; }
+
+/* Sheet = same size class as invoice */
+.cigar-detail-sheet{
+  width: min(720px, 96vw);
+  height: 75vh;
+  background: rgba(255,255,255,0.96);
+  border-radius: 22px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Simple X */
+.cigar-detail-x{
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.06);
+  color: #0f1a2c;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Scroll body */
+.cigar-detail-body{
+  height: 100%;
+  overflow: auto;
+  padding: 14px 16px 16px;
+}
+
+/* Header card (Padron + subtitle + icon) */
+.cd-headercard{
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  box-shadow: 0 10px 26px rgba(15,26,44,0.08), 0 2px 8px rgba(15,26,44,0.05);
+  margin-bottom: 14px;
+}
+
+.cd-brand{
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-weight: 800; /* Heavy */
+  font-size: 44px;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+}
+
+.cd-name{
+  margin-top: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-weight: 400; /* Regular */
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: rgba(15,26,44,0.60);
+}
+
+.cd-h-icon{
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.06);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.cd-h-icon img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Main 2-column layout */
+.cd-main{
+  display: grid;
+  grid-template-columns: 0.52fr 0.48fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* Image column: tight – full cigar visible, minimal padding */
+.cd-img{
+  background: transparent;
+  border-radius: 18px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  height: calc(75vh - 14px - 16px - 16px - 14px - 92px); /* keeps it tall */
+  min-height: 520px;
+}
+.cd-img img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Right column */
+.cd-right{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Stat grid */
+.cd-grid2{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.cd-stat{
+  background: rgba(0,0,0,0.04);
+  border-radius: 18px;
+  padding: 12px 12px;
+  text-align: center;
+}
+.cd-stat .k{
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-weight: 400; /* Regular */
+  font-size: 12px;
+  letter-spacing: -0.02em;
+  color: rgba(15,26,44,0.50);
+}
+.cd-stat .v{
+  margin-top: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-weight: 800; /* Heavy */
+  font-size: 54px;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+}
+.cd-stat.small .v{
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.cd-grid2.big .cd-stat.bigonly{
+  padding: 18px 12px;
+}
+.cd-grid2.big .cd-stat.bigonly .v{
+  font-size: 54px;
+  font-weight: 800;
+  margin-top: 0;
+}
+
+/* Wrapper/Binder/Filler blocks */
+.cd-block{
+  background: rgba(0,0,0,0.04);
+  border-radius: 18px;
+  padding: 10px 12px;
+}
+.cd-block.single{
+  padding: 12px 12px;
+}
+.cd-kv{
+  display: grid;
+  grid-template-columns: 1fr;
+  padding: 10px 4px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.cd-kv:first-child{ border-top: none; }
+.cd-kv .k{
+  text-align: right;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-weight: 400; /* Regular */
+  font-size: 12px;
+  letter-spacing: -0.02em;
+  color: rgba(15,26,44,0.45);
+}
+.cd-kv .v{
+  margin-top: 4px;
+  text-align: left;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-weight: 800; /* Heavy */
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+}
+
+/* Buttons (2x2) */
+.cd-actions{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  padding-top: 2px;
+}
+.cd-btn{
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,26,44,0.18);
+  background: rgba(255,255,255,0.75);
+  color: rgba(15,26,44,0.35);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-weight: 400; /* Regular */
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cd-btn:active{ transform: scale(.99); opacity: .9; }
+.cd-btn.did{ box-shadow: 0 8px 18px rgba(0,0,0,0.08); }
+
+/* Mobile stack */
+@media (max-width: 520px){
+  .cd-main{ grid-template-columns: 1fr; }
+  .cd-img{ min-height: 440px; height: auto; }
+  .cd-stat .v{ font-size: 48px; }
+}
