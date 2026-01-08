@@ -489,7 +489,11 @@ body.pos-modal-open{ overflow:hidden; }
    - Header stays EXACTLY as-is (title/subtitle/icon)
    - Cigar LEFT, info RIGHT
    - Image always scales to fit (no overflow)
-   - Close X moved to BOTTOM RIGHT
+   - Close X BOTTOM LEFT (RED + subtle shadow) — size stays the same
+   - Typography:
+       Labels: SF Pro Display MEDIUM (grey)
+       Values: SF Pro Display HEAVY (black)
+       Tracking: -0.02 everywhere
    ========================================================= */
 
 /* Hide receipt/invoice FAB while cigar detail is open */
@@ -531,8 +535,8 @@ body.cigar-detail-open #receipt-count{
 
 /* Sheet size = your “blank popup” target */
 .cigar-detail-sheet{
-  width: min(720px, 94vw);
-  height: min(860px, 86vh);
+  width: min(720px, 96vw);
+  height: 75vh;
 
   background: rgba(255,255,255,0.96);
   border-radius: 22px;
@@ -541,45 +545,50 @@ body.cigar-detail-open #receipt-count{
   position: relative;
 }
 
-/* Move X to BOTTOM LEFT */
+/* ✅ Close X — bottom LEFT, iOS red, subtle shadow (same size) */
 .cigar-detail-x{
   position: absolute;
-  left: 14px;          /* ✅ bottom LEFT */
-  bottom: 14px;
+  left: 12px;
+  bottom: 12px;
 
-  width: 40px;
-  height: 40px;
+  width: 34px;   /* ✅ keep size */
+  height: 34px;  /* ✅ keep size */
 
   border: none;
   border-radius: 999px;
 
-  background: #ff3b30; /* iOS system red */
-  color: #ffffff;
+  background: rgba(255,255,255,0.92);
+  color: #ff3b30; /* iOS system red */
 
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
-
-  cursor: pointer;
+  font-weight: 900;
 
   box-shadow:
-    0 6px 14px rgba(0,0,0,0.25),
-    0 2px 6px rgba(0,0,0,0.18);
+    0 10px 18px rgba(0,0,0,0.18),
+    0 2px 6px rgba(0,0,0,0.14);
 
+  display: grid;
+  place-items: center;
+  cursor: pointer;
   z-index: 10;
 }
 
 /* Body becomes a column so header is fixed + main fills remaining */
 .cigar-detail-body{
   height: 100%;
-  overflow: hidden;               /* main area handles its own sizing */
+  overflow: hidden; /* main area handles its own sizing */
   padding: 14px 16px 16px;
 
   display: flex;
   flex-direction: column;
   gap: 14px;
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 
-/* Header card (UNCHANGED look — keep your current values) */
+/* Header card (LOCKED, do not change look) */
 .cd-headercard{
   background: #fff;
   border-radius: 18px;
@@ -591,7 +600,7 @@ body.cigar-detail-open #receipt-count{
   box-shadow: 0 10px 26px rgba(15,26,44,0.08), 0 2px 8px rgba(15,26,44,0.05);
 }
 
-/* Keep your top typography EXACT */
+/* Keep top typography EXACT */
 .cd-brand{
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   font-weight: 800;
@@ -628,30 +637,33 @@ body.cigar-detail-open #receipt-count{
 /* Main area fills remaining height under header */
 .cd-main{
   flex: 1 1 auto;
-  min-height: 0;                 /* critical so children can shrink */
+  min-height: 0; /* critical so children can shrink */
 
   display: grid;
-  grid-template-columns: 0.44fr 0.56fr; /* cigar left, info right */
+  grid-template-columns: 0.52fr 0.48fr; /* cigar left, info right */
   gap: 14px;
   align-items: stretch;
 }
 
-/* LEFT column — cigar */
-.cigar-detail-sheet .cd-img{
+/* LEFT column — cigar zone */
+.cd-img{
+  border-radius: 18px;
+  overflow: hidden;
+
   display: flex;
   align-items: center;
-  justify-content: flex-start !important; /* ✅ LEFT align always */
-  padding-left: 6px;
+  justify-content: flex-start; /* ✅ hard left align */
+  padding-left: 6px;          /* subtle inset like mockup */
 
   min-height: 0;
-  max-height: 44vh;
-  overflow: hidden;
+  height: 58vh;
+  max-height: calc(75vh - 170px);
 }
 
 /* Cigar image — full stick, left aligned */
-.cigar-detail-sheet .cd-img img.cigar-detail-stick{
+.cd-img img.cigar-detail-stick{
   height: 100% !important;
-  max-height: 44vh !important;
+  max-height: 100% !important;
 
   width: auto !important;
   max-width: none !important;
@@ -662,10 +674,10 @@ body.cigar-detail-open #receipt-count{
   margin: 0 !important; /* ✅ no centering */
 }
 
-/* RIGHT: info column */
+/* RIGHT column */
 .cd-right{
-  min-height: 0;                 /* critical */
-  overflow: auto;                /* if content grows, right side scrolls */
+  min-height: 0;
+  overflow: auto; /* right side scrolls if needed */
   padding-right: 2px;
 
   display: flex;
@@ -679,21 +691,26 @@ body.cigar-detail-open #receipt-count{
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+
 .cd-stat{
   background: rgba(0,0,0,0.04);
   border-radius: 18px;
   padding: 12px 12px;
   text-align: center;
 }
+
+/* Labels = MEDIUM grey */
 .cd-stat .k{
-  font-weight: 400;
+  font-weight: 500; /* ✅ Medium */
   font-size: 12px;
   letter-spacing: -0.02em;
-  color: rgba(15,26,44,0.50);
+  color: rgba(15,26,44,0.45);
 }
+
+/* Values = HEAVY black */
 .cd-stat .v{
   margin-top: 6px;
-  font-weight: 800;
+  font-weight: 800; /* ✅ Heavy */
   font-size: 54px;
   letter-spacing: -0.02em;
   color: #0f1a2c;
@@ -703,15 +720,13 @@ body.cigar-detail-open #receipt-count{
   font-weight: 800;
 }
 
-/* Wrapper/Binder/Filler blocks */
+/* Wrapper/Binder/Filler/Origin blocks */
 .cd-block{
   background: rgba(0,0,0,0.04);
   border-radius: 18px;
   padding: 10px 12px;
 }
-.cd-block.single{
-  padding: 12px 12px;
-}
+
 .cd-kv{
   display: grid;
   grid-template-columns: 1fr;
@@ -719,59 +734,65 @@ body.cigar-detail-open #receipt-count{
   border-top: 1px solid rgba(0,0,0,0.06);
 }
 .cd-kv:first-child{ border-top: none; }
+
+/* Labels = MEDIUM grey */
 .cd-kv .k{
   text-align: right;
-  font-weight: 400;
+  font-weight: 500; /* ✅ Medium */
   font-size: 12px;
   letter-spacing: -0.02em;
   color: rgba(15,26,44,0.45);
 }
+
+/* Values = HEAVY black */
 .cd-kv .v{
   margin-top: 4px;
   text-align: left;
-  font-weight: 800;
+  font-weight: 800; /* ✅ Heavy */
   font-size: 22px;
   letter-spacing: -0.02em;
   color: #0f1a2c;
 }
 
-/* Buttons (2x2) */
+/* Action Buttons (Bottom Right Column) — disabled look stays */
 .cd-actions{
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 12px;
+  grid-template-columns: 1fr;
+  gap: 10px;
   padding-top: 2px;
 }
+
 .cd-btn{
   height: 44px;
-  border-radius: 999px;
-  border: 1px solid rgba(15,26,44,0.18);
-  background: rgba(255,255,255,0.75);
-  color: rgba(15,26,44,0.35);
-  font-weight: 400;
+  border-radius: 14px;
+  border: 1px solid rgba(15,26,44,0.08);
+  background: rgba(0,0,0,0.03);
+  color: rgba(15,26,44,0.25);
+
+  font-weight: 500;
   font-size: 15px;
   letter-spacing: -0.02em;
+
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.cd-btn:active{ transform: scale(.99); opacity: .9; }
+.cd-btn:active{ transform: scale(.99); opacity: .95; }
 .cd-btn.did{ box-shadow: 0 8px 18px rgba(0,0,0,0.08); }
 
-/* Mobile stack */
-@media (max-width: 520px){
-  .cd-main{ grid-template-columns: 1fr; } /* keep stack */
+/* ✅ Only stack on truly tiny widths; iPhone 15 Pro Max stays 2-col */
+@media (max-width: 389px){
+  .cd-main{ grid-template-columns: 1fr; }
 
-  .cigar-detail-sheet .cd-img{
-    justify-content: flex-start !important; /* ✅ LEFT even on mobile */
-    padding-left: 6px !important;
-    height: 42vh;
+  .cd-img{
+    height: 44vh;
+    max-height: 44vh;
+    justify-content: center;
+    padding-left: 0;
   }
 
-  .cigar-detail-sheet .cd-img img.cigar-detail-stick{
+  .cd-img img.cigar-detail-stick{
     height: 100% !important;
-    max-height: 42vh !important;
-    width: auto !important;
-    margin: 0 !important;
-    object-fit: contain !important;
+    max-height: 100% !important;
+    margin: 0 auto !important;
   }
 }
