@@ -867,19 +867,15 @@ img.cigar-detail-img{
    CIGAR DETAIL POPUP — FORCE STICK IMAGE TO FIT HEIGHT
    ========================================================= */
 
-/* Make the area that holds the cigar image behave */
 .cigar-detail-stick{
-  /* never overflow the sheet height */
-  max-height: 52vh !important;  /* ✅ start here (strong reduction) */
+  max-height: 52vh !important;
   width: auto !important;
   height: auto !important;
-
   object-fit: contain !important;
   display: block !important;
   margin: 0 auto !important;
 }
 
-/* If the image is inside a column/slot, ensure it can shrink */
 .cigar-detail-left,
 .cigar-detail-image,
 .cigar-detail-photo,
@@ -887,5 +883,6 @@ img.cigar-detail-img{
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 0;               /* ✅ critical for flex shrink */
+  min-height: 0;
 }
+
