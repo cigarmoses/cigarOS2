@@ -268,7 +268,7 @@ body.brand-page{
 .row-add{
   width:20px;
   height:20px;
-  border-radius:899px;
+  border-radius:999px;
   font-size:12px;
   font-weight:600;
   line-height:1;
@@ -298,7 +298,6 @@ body.pos-modal-open{ overflow:hidden; }
 
 /* ===============================
    BACKDROP (shared)
-   NOTE: brand.js + injected sheet styles control filters sheet UI.
    =============================== */
 #sheet-backdrop{
   position:fixed;
@@ -484,16 +483,11 @@ body.pos-modal-open{ overflow:hidden; }
 }
 
 /* =========================================================
-   CIGAR DETAIL POPUP (FINAL, SINGLE SOURCE OF TRUTH)
-   - Popup size matches your "blank white popup" on all devices
-   - Header stays EXACTLY as-is (title/subtitle/icon)
-   - Cigar LEFT, info RIGHT
-   - Image always scales to fit (no overflow)
-   - Close X BOTTOM LEFT (RED + subtle shadow) — size stays the same
-   - Typography:
-       Labels: SF Pro Display MEDIUM (grey)
-       Values: SF Pro Display HEAVY (black)
-       Tracking: -0.02 everywhere
+   ✅ CIGAR DETAIL POPUP (MOCKUP MATCH — UPDATED FIXES)
+   - popup height restored smaller (like last correct live version)
+   - cigar nudged RIGHT a bit more
+   - right-side details scaled down to fit inside
+   - 3 action buttons MUCH smaller
    ========================================================= */
 
 /* Hide receipt/invoice FAB while cigar detail is open */
@@ -524,20 +518,19 @@ body.cigar-detail-open #receipt-count{
   -webkit-backdrop-filter: blur(10px);
 
   padding:
-    calc(18px + env(safe-area-inset-top))
+    calc(22px + env(safe-area-inset-top))
     14px
-    calc(18px + env(safe-area-inset-bottom));
+    calc(22px + env(safe-area-inset-bottom));
 
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
   letter-spacing: -0.02em;
 }
 .cigar-detail-overlay.open{ display:flex; }
 
-/* Sheet size = your “blank popup” target */
+/* ✅ Popup size: smaller + stable on iOS (svh) */
 .cigar-detail-sheet{
-  width: min(720px, 96vw);
-  height: 75vh;
-
+  width: min(720px, 94vw);
+  height: min(760px, 74svh); /* ✅ smaller than before (restores your “correct” feel) */
   background: rgba(255,255,255,0.96);
   border-radius: 22px;
   box-shadow: 0 18px 60px rgba(0,0,0,0.25);
@@ -545,54 +538,40 @@ body.cigar-detail-open #receipt-count{
   position: relative;
 }
 
-/* ✅ Close X — bottom LEFT, iOS red, subtle shadow (same size) */
+/* Close button — bottom left, white circle, red X */
 .cigar-detail-x{
   position: absolute;
-  left: 12px;
-  bottom: 12px;
-
-  width: 34px;   /* ✅ keep size */
-  height: 34px;  /* ✅ keep size */
-
+  left: 14px;
+  bottom: 14px;
+  width: 40px;
+  height: 40px;
   border: none;
   border-radius: 999px;
-
-  background: rgba(255,255,255,0.92);
-  color: #ff3b30; /* iOS system red */
-
-  font-size: 22px;
+  background: #ffffff;
+  color: #ff3b30;
+  font-size: 24px;
   line-height: 1;
-  font-weight: 900;
-
-  box-shadow:
-    0 10px 18px rgba(0,0,0,0.18),
-    0 2px 6px rgba(0,0,0,0.14);
-
-  display: grid;
-  place-items: center;
   cursor: pointer;
+  box-shadow:
+    0 10px 20px rgba(0,0,0,0.20),
+    0 2px 6px rgba(0,0,0,0.14);
   z-index: 10;
 }
 
-/* Body becomes a column so header is fixed + main fills remaining */
 .cigar-detail-body{
   height: 100%;
-  overflow: hidden; /* main area handles its own sizing */
+  overflow: hidden;
   padding: 14px 16px 16px;
-
   display: flex;
   flex-direction: column;
-  gap: 14px;
-
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  gap: 12px; /* slightly tighter */
 }
 
-/* Header card (LOCKED, do not change look) */
+/* Header card */
 .cd-headercard{
   background: #fff;
   border-radius: 18px;
-  padding: 16px 16px;
+  padding: 14px 14px;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
@@ -600,9 +579,7 @@ body.cigar-detail-open #receipt-count{
   box-shadow: 0 10px 26px rgba(15,26,44,0.08), 0 2px 8px rgba(15,26,44,0.05);
 }
 
-/* Keep top typography EXACT */
 .cd-brand{
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   font-weight: 800;
   font-size: 44px;
   line-height: 1.0;
@@ -611,9 +588,8 @@ body.cigar-detail-open #receipt-count{
 }
 .cd-name{
   margin-top: 4px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   font-weight: 400;
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1.2;
   letter-spacing: -0.02em;
   color: rgba(15,26,44,0.60);
@@ -634,165 +610,146 @@ body.cigar-detail-open #receipt-count{
   display:block;
 }
 
-/* Main area fills remaining height under header */
+/* Main under header */
 .cd-main{
   flex: 1 1 auto;
-  min-height: 0; /* critical so children can shrink */
-
+  min-height: 0;
   display: grid;
-  grid-template-columns: 0.52fr 0.48fr; /* cigar left, info right */
-  gap: 14px;
+  grid-template-columns: 0.46fr 0.54fr;
+  gap: 12px;
   align-items: stretch;
 }
 
-/* LEFT column — cigar zone */
-.cd-img{
-  border-radius: 18px;
-  overflow: hidden;
-
+/* ✅ Cigar column — move right a little more */
+.cigar-detail-sheet .cd-img{
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* ✅ hard left align */
-  padding-left: 6px;          /* subtle inset like mockup */
-
+  justify-content: flex-start !important;
+  padding-left: 28px; /* ✅ was 18px */
   min-height: 0;
-  height: 58vh;
-  max-height: calc(75vh - 170px);
+  overflow: hidden;
 }
 
-/* Cigar image — full stick, left aligned */
-.cd-img img.cigar-detail-stick{
+.cigar-detail-sheet .cd-img img.cigar-detail-stick{
   height: 100% !important;
-  max-height: 100% !important;
-
+  max-height: 48svh !important; /* ✅ slightly smaller so it fits comfortably */
   width: auto !important;
   max-width: none !important;
-
   object-fit: contain !important;
-
   display: block !important;
-  margin: 0 !important; /* ✅ no centering */
+  margin: 0 !important;
 }
 
-/* RIGHT column */
+/* ✅ RIGHT: make EVERYTHING smaller and fit inside */
 .cd-right{
   min-height: 0;
-  overflow: auto; /* right side scrolls if needed */
+  overflow: auto;
   padding-right: 2px;
-
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px; /* tighter */
 }
 
-/* Stat grid */
+/* Stats grid (smaller cards) */
 .cd-grid2{
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
 }
-
 .cd-stat{
   background: rgba(0,0,0,0.04);
-  border-radius: 18px;
-  padding: 12px 12px;
+  border-radius: 14px;
+  padding: 8px 8px; /* smaller */
   text-align: center;
 }
-
-/* Labels = MEDIUM grey */
 .cd-stat .k{
-  font-weight: 500; /* ✅ Medium */
-  font-size: 12px;
+  font-weight: 500;
+  font-size: 10px;
   letter-spacing: -0.02em;
-  color: rgba(15,26,44,0.45);
+  color: rgba(15,26,44,0.42);
 }
-
-/* Values = HEAVY black */
 .cd-stat .v{
-  margin-top: 6px;
-  font-weight: 800; /* ✅ Heavy */
-  font-size: 54px;
+  margin-top: 5px;
+  font-weight: 800;
+  font-size: 40px; /* ✅ smaller */
   letter-spacing: -0.02em;
   color: #0f1a2c;
 }
 .cd-stat.small .v{
-  font-size: 22px;
+  font-size: 17px; /* ✅ smaller */
   font-weight: 800;
 }
 
-/* Wrapper/Binder/Filler/Origin blocks */
+/* Wrapper/Binder/Filler blocks (smaller) */
 .cd-block{
   background: rgba(0,0,0,0.04);
-  border-radius: 18px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 6px 8px;
 }
-
+.cd-block.single{
+  padding: 8px 8px;
+}
 .cd-kv{
   display: grid;
   grid-template-columns: 1fr;
-  padding: 10px 4px;
+  padding: 6px 2px;
   border-top: 1px solid rgba(0,0,0,0.06);
 }
 .cd-kv:first-child{ border-top: none; }
-
-/* Labels = MEDIUM grey */
 .cd-kv .k{
   text-align: right;
-  font-weight: 500; /* ✅ Medium */
-  font-size: 12px;
+  font-weight: 500;
+  font-size: 10px;
   letter-spacing: -0.02em;
-  color: rgba(15,26,44,0.45);
+  color: rgba(15,26,44,0.40);
 }
-
-/* Values = HEAVY black */
 .cd-kv .v{
-  margin-top: 4px;
+  margin-top: 3px;
   text-align: left;
-  font-weight: 800; /* ✅ Heavy */
-  font-size: 22px;
+  font-weight: 800;
+  font-size: 18px; /* ✅ smaller */
   letter-spacing: -0.02em;
   color: #0f1a2c;
 }
 
-/* Action Buttons (Bottom Right Column) — disabled look stays */
+/* ✅ Action buttons MUCH smaller */
 .cd-actions{
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   padding-top: 2px;
+  padding-bottom: 6px;
 }
 
 .cd-btn{
-  height: 44px;
-  border-radius: 14px;
-  border: 1px solid rgba(15,26,44,0.08);
-  background: rgba(0,0,0,0.03);
-  color: rgba(15,26,44,0.25);
-
-  font-weight: 500;
-  font-size: 15px;
+  height: 28px;              /* ✅ was 34px */
+  border-radius: 999px;
+  border: 1px solid rgba(15,26,44,0.10);
+  background: rgba(255,255,255,0.52);
+  color: rgba(15,26,44,0.26);
+  font-weight: 600;
+  font-size: 11px;           /* ✅ smaller */
   letter-spacing: -0.02em;
-
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  padding: 0 10px;           /* ✅ tighter */
 }
-.cd-btn:active{ transform: scale(.99); opacity: .95; }
-.cd-btn.did{ box-shadow: 0 8px 18px rgba(0,0,0,0.08); }
 
-/* ✅ Only stack on truly tiny widths; iPhone 15 Pro Max stays 2-col */
-@media (max-width: 389px){
-  .cd-main{ grid-template-columns: 1fr; }
+.cd-btn[disabled]{
+  cursor: not-allowed;
+  opacity: 1;
+}
 
-  .cd-img{
-    height: 44vh;
-    max-height: 44vh;
-    justify-content: center;
-    padding-left: 0;
-  }
+.cd-btn.is-live{
+  border-color: rgba(15,26,44,0.14);
+  background: rgba(255,255,255,0.66);
+  color: rgba(15,26,44,0.28);
+}
+.cd-btn:active{ transform: scale(.99); opacity: .92; }
 
-  .cd-img img.cigar-detail-stick{
-    height: 100% !important;
-    max-height: 100% !important;
-    margin: 0 auto !important;
-  }
+/* Mobile */
+@media (max-width: 520px){
+  .cd-main{ grid-template-columns: 1fr 1fr; }
+  .cigar-detail-sheet .cd-img{ padding-left: 26px !important; }
+  .cigar-detail-sheet .cd-img img.cigar-detail-stick{ max-height: 50svh !important; }
 }
