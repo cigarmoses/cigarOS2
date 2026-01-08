@@ -2,7 +2,15 @@
    Brand POS page controller (Cigars)
 
    ✅ Filters Sheet v3.1 (locked spec)
-   ✅ NEW: Cigar Detail Image Popup (mockup-matched)
+   ✅ Cigar Detail Popup (FINAL layout)
+      - Popup size handled by brand.css
+      - Header stays EXACT (brand/name/icon)
+      - Cigar LEFT, info RIGHT (like your screenshot)
+      - Close X bottom-left (handled by CSS; button rendered here)
+      - Action buttons (right column, stacked):
+          1) Compare to (future)
+          2) Add to bill (LIVE)
+          3) Edit in Hub (future)
 */
 
 (() => {
@@ -117,6 +125,7 @@
     if (s.startsWith("img/")) s = "/" + s;
     if (!s.startsWith("/")) s = "/" + s;
 
+    // Your repo path rule (memory #83): /img/icons/brands
     s = s.replace(/^\/img\/icons\/brand\//i, "/img/icons/brands/");
     s = s.replace(/^\/img\/icons\/brands\/[a-z0-9]\/+/i, "/img/icons/brands/");
     s = s.replace(/\/{2,}/g, "/");
@@ -322,7 +331,7 @@
         return;
       }
 
-      // ✅ Open cigar detail popup
+      // Open cigar detail popup
       const openBtn = e.target.closest("[data-open-detail], [data-open]");
       if (openBtn) {
         const rowEl = openBtn.closest(".brand-row");
@@ -454,8 +463,29 @@
   }
 
   // ---------- Filters value ordering ----------
-  const ORDER_VITOLA = ["Robusto", "Toro", "Gordo", "Churchill", "Corona", "Corona Extra", "Corona Gorda", "Lancero", "Pyramid", "Belicoso", "Gigante"];
-  const ORDER_SHADE = ["Natural", "Connecticut", "Colorado", "Colorado Maduro", "Maduro", "Oscuro", "Candela", "EMS"];
+  const ORDER_VITOLA = [
+    "Robusto",
+    "Toro",
+    "Gordo",
+    "Churchill",
+    "Corona",
+    "Corona Extra",
+    "Corona Gorda",
+    "Lancero",
+    "Pyramid",
+    "Belicoso",
+    "Gigante",
+  ];
+  const ORDER_SHADE = [
+    "Natural",
+    "Connecticut",
+    "Colorado",
+    "Colorado Maduro",
+    "Maduro",
+    "Oscuro",
+    "Candela",
+    "EMS",
+  ];
   const ORDER_STRENGTH = ["Mellow", "Mild", "Medium", "Medium-Full", "Full"];
   const ORDER_SHAPE = ["Parejo", "Perfecto", "Pyramid", "Torpedo", "Figurado", "Belicoso"];
 
@@ -1140,7 +1170,7 @@
     return list.map((x) => ({ ...x, src: (x.src || "").replace("seriebank", "serieband") }));
   }
 
-  // ✅ NEW: ensure the Bands Confirm button has iOS-blue enabled styling even if CSS is missing
+  // ✅ ensure the Bands Confirm button has iOS-blue enabled styling even if CSS is missing
   const BANDS_CONFIRM_STYLE_ID = "bands-confirm-iosblue-style";
   function injectBandsConfirmStylesOnce() {
     if (document.getElementById(BANDS_CONFIRM_STYLE_ID)) return;
@@ -1171,13 +1201,12 @@
       }
       #bands-confirm:disabled{
         cursor: not-allowed;
-        opacity: 1; /* keep iOS look (not faded) */
+        opacity: 1;
       }
     `;
     document.head.appendChild(style);
   }
 
-  // ✅ UPDATED: toggle disabled + iOS blue class
   function updateBandsConfirmState() {
     if (!bandsConfirm) return;
 
@@ -1248,7 +1277,7 @@
   }
 
   // =========================================================
-  // ✅ CIGAR DETAIL POPUP (mockup matched)
+  // ✅ CIGAR DETAIL POPUP (final layout)
   // =========================================================
   let detailOverlay = null;
   let detailSheet = null;
@@ -1282,7 +1311,7 @@
     const raw = row["Cigar IMG"] || row["Cigar Image"] || row["Image"] || "";
     let src = normalizeIconPath(raw);
 
-    // Your requested sample fallback
+    // Optional fallback example (safe if you use it)
     if (!src) {
       const b = norm(row.Brand || "");
       const c = norm(row.Cigar || "");
@@ -1293,37 +1322,80 @@
     return src;
   }
 
+  function firstNonEmpty(...vals) {
+    for (const v of vals) {
+      const s = (v ?? "").toString().trim();
+      if (s) return s;
+    }
+    return "";
+  }
+
+  function renderKV(k, v) {
+    const vv = (v || "").toString().trim() || "—";
+    return `
+      <div class="cd-kv">
+        <div class="k">${escapeHTML(k)}</div>
+        <div class="v">${escapeHTML(vv)}</div>
+      </div>
+    `;
+  }
+
+  function addToBillFromRow(row) {
+    const id = row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}`;
+    window.CigarOSCart?.add({
+      id,
+      name: row.Cigar,
+      brand: row.Brand,
+      category: "Cigars",
+      sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
+      price: toNum(row.MSRP),
+      img: bestIconForRow(row) || "",
+    });
+  }
+
   function openCigarDetail(row) {
     ensureCigarDetailModal();
 
-    // Hide receipt while open (CSS is keyed on this class)
     document.body.classList.add("cigar-detail-open");
-    document.documentElement.classList.add("pos-lock");
 
     const brand = row.Brand || qp("brand") || "Brand";
     const cigarName = row.Cigar || "";
     const brandIcon = bestBrandHeaderIcon(row) || bestIconForRow(row) || "";
     const cigarImg = pickCigarImage(row);
 
-    const rg = row.RG || row["Ring"] || "";
-    const len = row.Length || "";
-    const strength = row.Strength || "";
-    const vitola = row.Vitola || "";
-    const wrapper = row.Wrapper || row["Wrapper Type"] || row["Wrapper"] || row["Wrapper Country"] || "";
-    const binder = row.Binder || row["Binder Type"] || "";
-    const filler = row.Filler || row["Filler Type"] || "";
-    const origin = row.Origin || row["Country of Origin"] || row["Country"] || "";
-    const shade = row["Wrapper Shade"] || row.Shade || "";
+    const rg = firstNonEmpty(row.RG, row["Ring"], row["Ring Gauge"]);
+    const len = firstNonEmpty(row.Length, row["Length (in)"], row["Length"]);
+    const shape = firstNonEmpty(row.Shape, row["Shape"]);
+    const vitola = firstNonEmpty(row.Vitola, row["Vitola"]);
+    const strength = firstNonEmpty(row.Strength, row["Strength"]);
+    const shade = firstNonEmpty(row["Wrapper Shade"], row.Shade);
 
-    // Placeholder icons/metrics
-    const p1 = "#1";
-    const p2 = "#2";
+    // In your screenshot these 4 show as "Nicaragua" etc.
+    const wrapper = firstNonEmpty(
+      row.Wrapper,
+      row["Wrapper Type"],
+      row["Wrapper Country"],
+      row["Wrapper Origin"]
+    );
+    const binder = firstNonEmpty(
+      row.Binder,
+      row["Binder Type"],
+      row["Binder Country"],
+      row["Binder Origin"]
+    );
+    const filler = firstNonEmpty(
+      row.Filler,
+      row["Filler Type"],
+      row["Filler Country"],
+      row["Filler Origin"]
+    );
+    const origin = firstNonEmpty(row.Origin, row["Country of Origin"], row["Country"], row["Made In"]);
 
     detailSheet.innerHTML = `
       <button type="button" class="cigar-detail-x" aria-label="Close">×</button>
 
       <div class="cigar-detail-body">
-        <!-- Header card -->
+        <!-- Header card (DO NOT change look) -->
         <div class="cd-headercard">
           <div class="cd-h-left">
             <div class="cd-brand">${escapeHTML(brand)}</div>
@@ -1336,10 +1408,14 @@
 
         <!-- Main layout -->
         <div class="cd-main">
-        <div class="cd-img">
-          ${cigarImg ? `<img class="cigar-detail-stick" src="${escapeAttr(cigarImg)}" alt="">` : ``}
+          <!-- LEFT: cigar -->
+          <div class="cd-img">
+            ${cigarImg ? `<img class="cigar-detail-stick" src="${escapeAttr(cigarImg)}" alt="">` : ``}
           </div>
+
+          <!-- RIGHT: info -->
           <div class="cd-right">
+            <!-- Top stats (2x2) -->
             <div class="cd-grid2">
               <div class="cd-stat">
                 <div class="k">RING</div>
@@ -1350,78 +1426,66 @@
                 <div class="v">${escapeHTML(String(len || ""))}</div>
               </div>
               <div class="cd-stat small">
-                <div class="k">STRENGTH</div>
-                <div class="v">${escapeHTML(String(strength || ""))}</div>
+                <div class="k">SHAPE</div>
+                <div class="v">${escapeHTML(String(shape || "—"))}</div>
               </div>
               <div class="cd-stat small">
                 <div class="k">VITOLA</div>
-                <div class="v">${escapeHTML(String(vitola || ""))}</div>
+                <div class="v">${escapeHTML(String(vitola || "—"))}</div>
               </div>
             </div>
 
+            <!-- Wrapper/Binder/Filler/Origin (single block) -->
             <div class="cd-block">
               ${renderKV("WRAPPER", wrapper)}
               ${renderKV("BINDER", binder)}
               ${renderKV("FILLER", filler)}
-            </div>
-
-            <div class="cd-block single">
               ${renderKV("ORIGIN", origin)}
             </div>
 
+            <!-- Strength -->
+            <div class="cd-block single">
+              ${renderKV("STRENGTH", strength)}
+            </div>
+
+            <!-- Wrapper Shade -->
             <div class="cd-block single">
               ${renderKV("WRAPPER SHADE", shade)}
             </div>
 
-            <div class="cd-grid2 big">
-              <div class="cd-stat bigonly">
-                <div class="v">${escapeHTML(p1)}</div>
-              </div>
-              <div class="cd-stat bigonly">
-                <div class="v">${escapeHTML(p2)}</div>
-              </div>
-            </div>
-
+            <!-- Actions (stacked, disabled-looking; Add to bill is LIVE) -->
             <div class="cd-actions">
-              <button type="button" class="cd-btn" data-cd-action="favorite">FAVORITE</button>
-              <button type="button" class="cd-btn" data-cd-action="compare">COMPARE</button>
-              <button type="button" class="cd-btn" data-cd-action="wishlist">WISHLIST</button>
-              <button type="button" class="cd-btn" data-cd-action="connect">CONNECT</button>
+              <button type="button" class="cd-btn" data-cd-action="compare" aria-disabled="true">COMPARE TO</button>
+              <button type="button" class="cd-btn" data-cd-action="add">ADD TO BILL</button>
+              <button type="button" class="cd-btn" data-cd-action="edit" aria-disabled="true">EDIT IN HUB</button>
             </div>
           </div>
         </div>
       </div>
     `;
 
-    function renderKV(k, v) {
-      const vv = (v || "").toString().trim() || "—";
-      return `
-        <div class="cd-kv">
-          <div class="k">${escapeHTML(k)}</div>
-          <div class="v">${escapeHTML(vv)}</div>
-        </div>
-      `;
-    }
-
-    // Bind close
+    // Close
     detailSheet.querySelector(".cigar-detail-x")?.addEventListener("click", closeCigarDetail);
 
-    // Bind actions
+    // Actions
     detailSheet.querySelectorAll("[data-cd-action]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const action = btn.getAttribute("data-cd-action") || "";
-        if (action === "compare") {
-          // Per your spec: opens a new window entirely (we’ll build feature next)
-          const id = encodeURIComponent(row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}`);
-          window.open(`/pos/compare/?id=${id}`, "_blank");
+
+        // Future features (keep disabled-looking; do nothing)
+        if (action === "compare" || action === "edit") {
+          btn.classList.add("did");
+          setTimeout(() => btn.classList.remove("did"), 160);
           return;
         }
 
-        // Placeholder actions until you wire real behavior
-        // (still “activates” like you requested)
-        console.log(`[Cigar Detail] action=${action}`, row);
-        btn.classList.add("did");
-        setTimeout(() => btn.classList.remove("did"), 180);
+        // LIVE: Add to bill
+        if (action === "add") {
+          addToBillFromRow(row);
+          btn.classList.add("did");
+          setTimeout(() => btn.classList.remove("did"), 160);
+          return;
+        }
       });
     });
 
@@ -1435,7 +1499,6 @@
     detailOverlay.classList.remove("open");
     detailOverlay.setAttribute("aria-hidden", "true");
     document.body.classList.remove("cigar-detail-open");
-    document.documentElement.classList.remove("pos-lock");
   }
 
   // ---------- init ----------
@@ -1480,7 +1543,7 @@
       }
     });
 
-    // also close on any [data-sheet-close] click (your HTML uses these)
+    // close on any [data-sheet-close] click (your HTML uses these)
     document.addEventListener("click", (e) => {
       const closeBtn = e.target.closest("[data-sheet-close]");
       if (!closeBtn) return;
