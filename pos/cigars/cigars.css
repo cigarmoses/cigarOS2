@@ -20,6 +20,16 @@
   padding: 8px 16px 24px;
 }
 
+/* ============================
+   Title row + Favorites star
+   ============================ */
+.cigars-title-row{
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 /* Title + search */
 .cigars-title {
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
@@ -28,6 +38,28 @@
   font-size: 56px;
   line-height: 1.02;
   margin: 10px 0 14px;
+}
+
+/* ⭐ Favorites */
+.cigars-fav-btn{
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  text-decoration: none;
+  color: #f5c542; /* warm gold */
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 10px; /* matches visual baseline with title */
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cigars-fav-btn:active{
+  transform: scale(.96);
+  opacity: .85;
 }
 
 .cigars-search-wrap { margin: 0 0 14px; }
@@ -170,6 +202,14 @@
 @media (max-width: 390px) {
   .filter-pill { font-size: 14px; }
   .cigars-filters-row--shade3 { grid-template-columns: 0.90fr 1.20fr 0.90fr; }
+
+  /* keep star aligned on smaller devices */
+  .cigars-fav-btn{
+    width: 44px;
+    height: 44px;
+    font-size: 26px;
+    margin-bottom: 10px;
+  }
 }
 
 /* Brands title */
