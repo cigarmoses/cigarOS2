@@ -3,6 +3,14 @@
 
    ✅ Filters Sheet v3.1 (locked spec)
    ✅ Cigar Detail Popup (mockup matched)
+
+   FIXES:
+   ✅ Display name = Line + Cigar (for ALL lines) — no "Anniversary"/"Serie"
+      - Dedupes if cigar already starts with line (e.g., "1964 1964 Monarca" -> "1964 Monarca")
+   ✅ Forgiving cigar image resolution
+      - Uses sheet Cigar IMG if it points to /img/cigars/... or is a filename
+      - Otherwise builds filename candidates (Padron 1964*, 1926serie*, Damaso.png case, accents/punctuation removed)
+      - Tries png/jpg/jpeg/webp until one loads
 */
 
 (() => {
@@ -79,8 +87,23 @@
   let openSection = "";
 
   // ---------- helpers ----------
+  // keep your original behavior for filtering/search matching
   const norm = (s) => (s || "").toString().trim().toLowerCase();
   const normKeepCase = (s) => (s || "").toString().trim();
+
+  // diacritic-safe normalization for filenames / dedupe logic (does NOT replace norm() usage in filters)
+  const normD = (s) =>
+    (s || "")
+      .toString()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+
+  const slugTight = (s) =>
+    normD(s)
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, ""); // remove spaces/punctuation entirely (matches your filenames)
 
   const toNum = (v) => {
     const x = Number((v ?? "").toString().replace(/[^\d.]/g, ""));
@@ -146,6 +169,149 @@
       }
       brandIconWrap.innerHTML = `<img src="${escapeAttr(src)}" alt="" />`;
     }
+  }
+
+  // =========================================================
+  // ✅ DISPLAY NAME = Line + Cigar (ALL lines, no extra words)
+  // =========================================================
+  function stripDuplicateLinePrefix(lineRaw, cigarRaw) {
+    const line = (lineRaw || "").toString().trim();
+    const cigar = (cigarRaw || "").toString().trim();
+    if (!line || !cigar) return cigar;
+
+    const ln = normD(line);
+    const cn = normD(cigar);
+
+    // If cigar begins with the line token (e.g., "1964 monarca maduro" / "damaso no. 34")
+    if (cn.startsWith(ln + " ")) {
+      return cigar.slice(line.length).trim();
+    }
+    return cigar;
+  }
+
+  function buildDisplayName(row) {
+    const line = (row.Line || "").toString().trim();
+    const cigar = (row.Cigar || "").toString().trim();
+
+    const cigarNoDup = stripDuplicateLinePrefix(line, cigar);
+
+    if (line && cigarNoDup) return `${line} ${cigarNoDup}`;
+    return cigarNoDup || cigar || line || "";
+  }
+
+  // =========================================================
+  // ✅ IMAGE RESOLUTION (forgiving)
+  // =========================================================
+  function getBrandSlug() {
+    // brand slug is query param; matches your folder name (padron)
+    return (qp("brand") || "").toString().trim().toLowerCase();
+  }
+
+  function isLikelyCigarImagePath(s) {
+    const v = (s || "").toString().trim();
+    if (!v) return false;
+    // direct cigar photo path
+    if (v.includes("/img/cigars/")) return true;
+    // filename only (e.g. padron1964monarcamaduro.png)
+    if (!v.includes("/") && /\.(png|jpg|jpeg|webp)$/i.test(v)) return true;
+    return false;
+  }
+
+  function resolveCigarImageCandidates(row) {
+    const brandSlug = getBrandSlug();
+    const baseDir = brandSlug ? `/img/cigars/${brandSlug}/` : "/img/cigars/";
+
+    const candidates = [];
+
+    // 1) Prefer sheet cigar image IF it looks like a cigar photo path or a filename
+    const raw = row["Cigar IMG"] || row["Cigar Image"] || row["Image"] || "";
+    const normalized = normalizeIconPath(raw);
+
+    if (isLikelyCigarImagePath(normalized)) {
+      // already absolute
+      candidates.push(normalized);
+    } else if (isLikelyCigarImagePath(raw)) {
+      // maybe raw filename without leading slash normalization
+      if (raw.includes("/img/cigars/")) {
+        candidates.push(raw.startsWith("/") ? raw : `/${raw}`);
+      } else {
+        candidates.push(`${baseDir}${raw.replace(/^\/+/, "")}`);
+      }
+    }
+
+    // 2) Generate candidates from brand/line/cigar
+    const lineRaw = (row.Line || "").toString().trim();
+    const cigarRaw = (row.Cigar || "").toString().trim();
+
+    const brand = normD(row.Brand || brandSlug || "");
+    const lineNorm = normD(lineRaw);
+    const cigarSlug = slugTight(cigarRaw);
+    const lineSlug = slugTight(lineRaw);
+
+    const exts = [".png", ".jpg", ".jpeg", ".webp"];
+
+    const pushBase = (baseNoExt) => {
+      exts.forEach((ext) => candidates.push(`${baseNoExt}${ext}`));
+    };
+
+    // Padron-specific patterns you showed
+    if (brand === "padron" || brandSlug === "padron") {
+      // 1964: padron1964{cigar}.png
+      if (lineNorm === "1964") {
+        pushBase(`${baseDir}padron1964${cigarSlug}`);
+      }
+
+      // 1926: 1926serie{cigar}.png (NO padron prefix)
+      if (lineNorm === "1926") {
+        pushBase(`${baseDir}1926serie${cigarSlug}`);
+        // just in case variants exist in the repo
+        pushBase(`${baseDir}padron1926serie${cigarSlug}`);
+        pushBase(`${baseDir}1926${cigarSlug}`);
+      }
+
+      // Damaso special casing: Damaso.png (case variants)
+      if (normD(cigarRaw) === "damaso" || lineNorm === "damaso") {
+        pushBase(`${baseDir}Damaso`);
+        pushBase(`${baseDir}damaso`);
+        pushBase(`${baseDir}padrondamaso`);
+      }
+
+      // Generic Padron fallback: padron{line}{cigar}.png
+      if (lineSlug && cigarSlug) pushBase(`${baseDir}padron${lineSlug}${cigarSlug}`);
+
+      // Generic Padron fallback: padron{cigar}.png
+      if (cigarSlug) pushBase(`${baseDir}padron${cigarSlug}`);
+    } else {
+      // Other brands: try brand+line+cigar and brand+cigar
+      if (brandSlug && lineSlug && cigarSlug) pushBase(`${baseDir}${brandSlug}${lineSlug}${cigarSlug}`);
+      if (brandSlug && cigarSlug) pushBase(`${baseDir}${brandSlug}${cigarSlug}`);
+    }
+
+    // De-dupe + keep order
+    return Array.from(new Set(candidates.filter(Boolean)));
+  }
+
+  function loadFirstWorkingImage(imgEl, candidates, fallbackSrc) {
+    let i = 0;
+    const tryNext = () => {
+      if (i >= candidates.length) {
+        if (fallbackSrc) imgEl.src = fallbackSrc;
+        return;
+      }
+      imgEl.onerror = () => {
+        i++;
+        tryNext();
+      };
+      imgEl.src = candidates[i];
+    };
+    tryNext();
+  }
+
+  function pickListImage(row) {
+    // try cigar photos first (derived), then fall back to brand icon
+    const cands = resolveCigarImageCandidates(row);
+    if (cands.length) return { candidates: cands, fallback: bestIconForRow(row) || "" };
+    return { candidates: [], fallback: bestIconForRow(row) || "" };
   }
 
   // ---------- CSV parsing ----------
@@ -268,18 +434,16 @@
 
     listEl.innerHTML = rows
       .map((row) => {
-        const name = row.Cigar || "";
+        const name = buildDisplayName(row);        // ✅ Line + Cigar (deduped)
         const sub = row.Vitola || "";
         const price = money(toNum(row.MSRP));
-        const icon = bestIconForRow(row);
         const id = row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}`;
 
         VIEW_BY_ID[id] = row;
 
         return `
           <div class="brand-row" data-id="${escapeAttr(id)}">
-            <img class="row-ico" src="${escapeAttr(icon)}" alt=""
-                 onerror="this.style.opacity='0';this.style.pointerEvents='none';" />
+            <img class="row-ico" data-cigar-img alt="" />
 
             <div class="row-main" data-open>
               <div class="row-title">${escapeHTML(name)}</div>
@@ -295,6 +459,18 @@
       })
       .join("");
 
+    // After injecting rows, apply forgiving image loading
+    listEl.querySelectorAll(".brand-row").forEach((rowEl) => {
+      const id = rowEl.getAttribute("data-id") || "";
+      const row = VIEW_BY_ID[id];
+      const imgEl = rowEl.querySelector("img[data-cigar-img]");
+      if (!row || !imgEl) return;
+
+      const { candidates, fallback } = pickListImage(row);
+      if (candidates.length) loadFirstWorkingImage(imgEl, candidates, fallback);
+      else if (fallback) imgEl.src = fallback;
+    });
+
     injectRowOpenHitStylesOnce();
   }
 
@@ -309,9 +485,10 @@
         const row = VIEW_BY_ID[id];
         if (!row) return;
 
+        const displayName = buildDisplayName(row); // ✅
         window.CigarOSCart?.add({
           id: row.key || id,
-          name: row.Cigar,
+          name: displayName,                       // ✅
           brand: row.Brand,
           category: "Cigars",
           sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
@@ -460,17 +637,11 @@
   }
 
   function pickCigarImage(row) {
-    const raw = row["Cigar IMG"] || row["Cigar Image"] || row["Image"] || "";
-    let src = normalizeIconPath(raw);
+    // Use the same forgiving candidate logic as the list.
+    const { candidates, fallback } = pickListImage(row);
 
-    if (!src) {
-      const b = norm(row.Brand || "");
-      const c = norm(row.Cigar || "");
-      if (b === "padron" && (c.includes("60th") || c.includes("60"))) {
-        src = "/img/cigars/padron/padron60thanniversaryperfecto.png";
-      }
-    }
-    return src;
+    // We'll return the FIRST candidate. The <img> element in the modal gets onerror chaining.
+    return { candidates, fallback };
   }
 
   function renderKV(k, v) {
@@ -488,9 +659,8 @@
     document.body.classList.add("cigar-detail-open");
 
     const brand = row.Brand || qp("brand") || "Brand";
-    const cigarName = row.Cigar || "";
+    const cigarName = buildDisplayName(row); // ✅ Line + Cigar (deduped)
     const brandIcon = bestBrandHeaderIcon(row) || bestIconForRow(row) || "";
-    const cigarImg = pickCigarImage(row);
 
     const rg = row.RG || row["Ring"] || "";
     const len = row.Length || "";
@@ -519,7 +689,7 @@
 
         <div class="cd-main">
           <div class="cd-img">
-            ${cigarImg ? `<img class="cigar-detail-stick" src="${escapeAttr(cigarImg)}" alt="">` : ``}
+            <img class="cigar-detail-stick" data-detail-cigar-img alt="">
           </div>
 
           <div class="cd-right">
@@ -567,12 +737,21 @@
       </div>
     `;
 
+    // Load cigar image with fallback chain
+    const imgEl = detailSheet.querySelector("img[data-detail-cigar-img]");
+    if (imgEl) {
+      const { candidates, fallback } = pickCigarImage(row);
+      if (candidates.length) loadFirstWorkingImage(imgEl, candidates, fallback);
+      else if (fallback) imgEl.src = fallback;
+    }
+
     detailSheet.querySelector(".cigar-detail-x")?.addEventListener("click", closeCigarDetail);
 
     detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
+      const displayName = buildDisplayName(row); // ✅
       window.CigarOSCart?.add({
         id: row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}`,
-        name: row.Cigar,
+        name: displayName, // ✅
         brand: row.Brand,
         category: "Cigars",
         sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
