@@ -1,10 +1,9 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   ✅ Display name = Line + Cigar (deduped) — no "Anniversary"/"Serie"
-   ✅ Forgiving cigar image resolution for list + detail
-   ✅ FIX: Brand icon slot never uses cigar images
-   ✅ NEW: Detail cigar-image placeholder (outline + "image coming soon")
+   ✅ List row icon = BRAND LOGO ONLY (never cigar images)
+   ✅ Display name = Line + Cigar (dedupe prefix)
+   ✅ Detail popup: cigar image forgiving match + "image coming soon" placeholder
 */
 
 (() => {
@@ -31,6 +30,9 @@
   // ---------- State ----------
   let ALL = [];
   let VIEW_BY_ID = Object.create(null);
+
+  // Brand icon candidates (computed once per page)
+  let BRAND_ICON_CANDS = [];
 
   // Wrapper “maduro/natural/all”
   let wrapperState = "all"; // maduro | natural | all
@@ -115,7 +117,7 @@
   }
 
   // =========================================================
-  // ✅ DISPLAY NAME = Line + Cigar (ALL lines, no extra words)
+  // ✅ DISPLAY NAME = Line + Cigar (dedupe prefix)
   // =========================================================
   function stripDuplicateLinePrefix(lineRaw, cigarRaw) {
     const line = (lineRaw || "").toString().trim();
@@ -141,10 +143,11 @@
   }
 
   // =========================================================
-  // ✅ BRAND ICON (NEVER fallback to cigar images)
+  // ✅ BRAND ICON candidates (NEVER use cigar images)
   // =========================================================
   function brandIconCandidates(row) {
     const out = [];
+
     const rawBrand = row?.["Brand IMG"] || "";
     const rawMfg = row?.["Manufacturer IMG"] || "";
 
@@ -154,7 +157,7 @@
     if (a) out.push(a);
     if (b) out.push(b);
 
-    // canonical fallback: /img/icons/brands/{brand}.svg
+    // canonical fallback
     const slug = getBrandSlug() || normD(row?.Brand || "");
     if (slug) {
       out.push(`/img/icons/brands/${slug}.svg`);
@@ -163,96 +166,6 @@
     }
 
     return Array.from(new Set(out.filter(Boolean)));
-  }
-
-  function applyBrandHeader(brandName, firstRow) {
-    if (brandTitleEl) brandTitleEl.textContent = brandName || "Brand";
-
-    if (!brandIconWrap) return;
-
-    const cands = brandIconCandidates(firstRow || {});
-    if (!cands.length) {
-      brandIconWrap.innerHTML = "";
-      return;
-    }
-
-    // Use img with fallback chain via onerror
-    brandIconWrap.innerHTML = `<img data-brand-icon alt="" />`;
-    const img = brandIconWrap.querySelector("img[data-brand-icon]");
-    if (!img) return;
-    loadFirstWorkingImage(img, cands, "");
-  }
-
-  // =========================================================
-  // ✅ CIGAR IMAGE RESOLUTION (forgiving)
-  // =========================================================
-  function isLikelyCigarImagePath(s) {
-    const v = (s || "").toString().trim();
-    if (!v) return false;
-    if (v.includes("/img/cigars/")) return true;
-    if (!v.includes("/") && /\.(png|jpg|jpeg|webp)$/i.test(v)) return true;
-    return false;
-  }
-
-  function resolveCigarImageCandidates(row) {
-    const brandSlug = getBrandSlug();
-    const baseDir = brandSlug ? `/img/cigars/${brandSlug}/` : "/img/cigars/";
-
-    const candidates = [];
-
-    // 1) Prefer sheet cigar image IF it looks like a cigar photo path or filename
-    const raw = row["Cigar IMG"] || row["Cigar Image"] || row["Image"] || "";
-    const normalized = normalizeIconPath(raw);
-
-    if (isLikelyCigarImagePath(normalized)) {
-      candidates.push(normalized);
-    } else if (isLikelyCigarImagePath(raw)) {
-      if (raw.includes("/img/cigars/")) candidates.push(raw.startsWith("/") ? raw : `/${raw}`);
-      else candidates.push(`${baseDir}${raw.replace(/^\/+/, "")}`);
-    }
-
-    // 2) Generate candidates from line/cigar (Padron patterns)
-    const lineRaw = (row.Line || "").toString().trim();
-    const cigarRaw = (row.Cigar || "").toString().trim();
-
-    const brand = normD(row.Brand || brandSlug || "");
-    const lineNorm = normD(lineRaw);
-    const cigarSlug = slugTight(cigarRaw);
-    const lineSlug = slugTight(lineRaw);
-
-    const exts = [".png", ".jpg", ".jpeg", ".webp"];
-    const pushBase = (baseNoExt) => exts.forEach((ext) => candidates.push(`${baseNoExt}${ext}`));
-
-    if (brand === "padron" || brandSlug === "padron") {
-      if (lineNorm === "1964") {
-        pushBase(`${baseDir}padron1964${cigarSlug}`);
-      }
-
-      if (lineNorm === "1926") {
-        // your repo uses: 1926serie{...}.png (no padron prefix)
-        pushBase(`${baseDir}1926serie${cigarSlug}`);
-        // just in case variants exist
-        pushBase(`${baseDir}padron1926serie${cigarSlug}`);
-        pushBase(`${baseDir}1926${cigarSlug}`);
-      }
-
-      // Damaso.png case variance
-      if (lineNorm === "damaso" || normD(cigarRaw) === "damaso") {
-        pushBase(`${baseDir}Damaso`);
-        pushBase(`${baseDir}damaso`);
-        pushBase(`${baseDir}padrondamaso`);
-      }
-
-      // generic fallbacks
-      if (lineSlug && cigarSlug) pushBase(`${baseDir}padron${lineSlug}${cigarSlug}`);
-      if (cigarSlug) pushBase(`${baseDir}padron${cigarSlug}`);
-    } else {
-      // other brands (safe generic)
-      if (brandSlug && lineSlug && cigarSlug) pushBase(`${baseDir}${brandSlug}${lineSlug}${cigarSlug}`);
-      if (brandSlug && cigarSlug) pushBase(`${baseDir}${brandSlug}${cigarSlug}`);
-    }
-
-    return Array.from(new Set(candidates.filter(Boolean)));
   }
 
   function loadFirstWorkingImage(imgEl, candidates, fallbackSrc) {
@@ -274,11 +187,95 @@
     tryNext();
   }
 
+  function applyBrandHeader(brandName, firstRow) {
+    if (brandTitleEl) brandTitleEl.textContent = brandName || "Brand";
+
+    // compute once for the entire page (used for header + EVERY row)
+    BRAND_ICON_CANDS = brandIconCandidates(firstRow || {});
+
+    if (!brandIconWrap) return;
+
+    if (!BRAND_ICON_CANDS.length) {
+      brandIconWrap.innerHTML = "";
+      return;
+    }
+
+    brandIconWrap.innerHTML = `<img data-brand-icon alt="" />`;
+    const img = brandIconWrap.querySelector("img[data-brand-icon]");
+    if (!img) return;
+
+    loadFirstWorkingImage(img, BRAND_ICON_CANDS, "");
+  }
+
+  // =========================================================
+  // ✅ DETAIL cigar image resolution (forgiving)
+  // =========================================================
+  function resolveCigarImageCandidates(row) {
+    const brandSlug = getBrandSlug();
+    const baseDir = brandSlug ? `/img/cigars/${brandSlug}/` : "/img/cigars/";
+
+    const candidates = [];
+
+    // 1) explicit sheet image (if it points into /img/cigars/ or is a filename)
+    const raw = row["Cigar IMG"] || row["Cigar Image"] || row["Image"] || "";
+    const rawNorm = normalizeIconPath(raw);
+
+    if (rawNorm.includes("/img/cigars/")) {
+      candidates.push(rawNorm);
+    } else if (raw && /\.(png|jpg|jpeg|webp)$/i.test(raw)) {
+      candidates.push(`${baseDir}${raw.replace(/^\/+/, "")}`);
+    }
+
+    // 2) generate from line/cigar patterns
+    const lineRaw = (row.Line || "").toString().trim();
+    const cigarRaw = (row.Cigar || "").toString().trim();
+
+    const lineNorm = normD(lineRaw);
+    const cigarSlug = slugTight(cigarRaw);
+    const lineSlug = slugTight(lineRaw);
+
+    const exts = [".png", ".jpg", ".jpeg", ".webp"];
+    const pushBase = (baseNoExt) => exts.forEach((ext) => candidates.push(`${baseNoExt}${ext}`));
+
+    // Padron specifics
+    if (brandSlug === "padron" || normD(row.Brand) === "padron") {
+      if (lineNorm === "1964") {
+        // ex: padron1964monarcamaduro.png
+        pushBase(`${baseDir}padron1964${cigarSlug}`);
+      }
+
+      if (lineNorm === "1926") {
+        // ex: 1926serie02maduro.png, 1926serie1maduro.png, etc.
+        // try a few forgiving patterns:
+        pushBase(`${baseDir}1926serie${cigarSlug}`);
+        pushBase(`${baseDir}1926series${cigarSlug}`);
+        pushBase(`${baseDir}1926${cigarSlug}`);
+        pushBase(`${baseDir}padron1926serie${cigarSlug}`);
+      }
+
+      // Damaso.png case variance
+      if (lineNorm === "damaso" || normD(cigarRaw) === "damaso") {
+        pushBase(`${baseDir}Damaso`);
+        pushBase(`${baseDir}damaso`);
+        pushBase(`${baseDir}padrondamaso`);
+      }
+
+      // general fallbacks
+      if (lineSlug && cigarSlug) pushBase(`${baseDir}padron${lineSlug}${cigarSlug}`);
+      if (cigarSlug) pushBase(`${baseDir}padron${cigarSlug}`);
+    } else {
+      // other brands (safe generic)
+      if (brandSlug && lineSlug && cigarSlug) pushBase(`${baseDir}${brandSlug}${lineSlug}${cigarSlug}`);
+      if (brandSlug && cigarSlug) pushBase(`${baseDir}${brandSlug}${cigarSlug}`);
+    }
+
+    return Array.from(new Set(candidates.filter(Boolean)));
+  }
+
   // =========================================================
   // ✅ DETAIL PLACEHOLDER SVG ("image coming soon")
   // =========================================================
   function cigarPlaceholderSVG() {
-    // simple cigar outline + small text inside
     return `
       <svg viewBox="0 0 240 520" width="100%" height="100%" aria-hidden="true">
         <defs>
@@ -288,21 +285,17 @@
           </linearGradient>
         </defs>
 
-        <!-- cigar outline -->
         <rect x="78" y="32" width="84" height="456" rx="42"
               fill="url(#ph_g)" stroke="rgba(15,26,44,0.22)" stroke-width="3"/>
 
-        <!-- cap -->
         <rect x="78" y="32" width="84" height="44" rx="22"
               fill="rgba(15,26,44,0.06)" stroke="rgba(15,26,44,0.18)" stroke-width="2"/>
 
-        <!-- subtle band lines -->
         <rect x="86" y="160" width="68" height="22" rx="11"
               fill="rgba(15,26,44,0.06)"/>
         <rect x="86" y="192" width="68" height="10" rx="5"
               fill="rgba(15,26,44,0.05)"/>
 
-        <!-- message -->
         <text x="120" y="275"
               text-anchor="middle"
               font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
@@ -318,10 +311,7 @@
   // ---------- CSV parsing ----------
   function parseCSV(text) {
     const rows = [];
-    let i = 0,
-      field = "",
-      row = [],
-      inQuotes = false;
+    let i = 0, field = "", row = [], inQuotes = false;
 
     while (i < text.length) {
       const c = text[i];
@@ -341,33 +331,15 @@
         i++;
         continue;
       } else {
-        if (c === '"') {
-          inQuotes = true;
-          i++;
-          continue;
-        }
-        if (c === ",") {
-          row.push(field);
-          field = "";
-          i++;
-          continue;
-        }
-        if (c === "\n") {
-          row.push(field);
-          rows.push(row);
-          row = [];
-          field = "";
-          i++;
-          continue;
-        }
-        if (c === "\r") {
-          i++;
-          continue;
-        }
+        if (c === '"') { inQuotes = true; i++; continue; }
+        if (c === ",") { row.push(field); field = ""; i++; continue; }
+        if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+        if (c === "\r") { i++; continue; }
         field += c;
         i++;
       }
     }
+
     row.push(field);
     rows.push(row);
     while (rows.length && rows[rows.length - 1].every((x) => !x || !x.trim())) rows.pop();
@@ -442,10 +414,10 @@
 
         VIEW_BY_ID[id] = row;
 
+        // IMPORTANT: row icon is ALWAYS brand icon
         return `
           <div class="brand-row" data-id="${escapeAttr(id)}">
-            <img class="row-ico" data-cigar-img alt=""
-              onerror="this.style.opacity='0';this.style.pointerEvents='none';" />
+            <img class="row-ico" data-row-brand-icon alt="" />
 
             <div class="row-main" data-open>
               <div class="row-title">${escapeHTML(name)}</div>
@@ -461,20 +433,15 @@
       })
       .join("");
 
-    // Forgiving list images:
-    listEl.querySelectorAll(".brand-row").forEach((rowEl) => {
-      const id = rowEl.getAttribute("data-id") || "";
-      const row = VIEW_BY_ID[id];
-      const imgEl = rowEl.querySelector("img[data-cigar-img]");
-      if (!row || !imgEl) return;
-
-      const candidates = resolveCigarImageCandidates(row);
-      if (candidates.length) {
-        loadFirstWorkingImage(imgEl, candidates, "");
+    // Apply brand icon to every row (same source chain)
+    const rowIcons = listEl.querySelectorAll("img[data-row-brand-icon]");
+    rowIcons.forEach((img) => {
+      if (BRAND_ICON_CANDS?.length) {
+        loadFirstWorkingImage(img, BRAND_ICON_CANDS, "");
       } else {
-        // if no cigar candidates, leave brand icon as-is in list
-        const b = brandIconCandidates(row);
-        if (b.length) loadFirstWorkingImage(imgEl, b, "");
+        // if truly nothing exists, hide it cleanly
+        img.style.opacity = "0";
+        img.style.pointerEvents = "none";
       }
     });
 
@@ -492,15 +459,14 @@
         const row = VIEW_BY_ID[id];
         if (!row) return;
 
-        const displayName = buildDisplayName(row);
         window.CigarOSCart?.add({
           id: row.key || id,
-          name: displayName,
+          name: buildDisplayName(row),
           brand: row.Brand,
           category: "Cigars",
           sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
           price: toNum(row.MSRP),
-          img: "", // keep as-is (your cart can use its own logic)
+          img: "", // keep cart behavior unchanged
         });
         return;
       }
@@ -512,7 +478,6 @@
         const row = VIEW_BY_ID[id];
         if (!row) return;
         openCigarDetail(row);
-        return;
       }
     });
   }
@@ -623,9 +588,6 @@
     const brand = row.Brand || qp("brand") || "Brand";
     const cigarName = buildDisplayName(row);
 
-    // ✅ FIX: brand icon candidates ONLY (never cigar img)
-    const bCands = brandIconCandidates(row);
-
     const rg = row.RG || row["Ring"] || "";
     const len = row.Length || "";
     const strength = row.Strength || "";
@@ -637,7 +599,6 @@
     const origin = row.Origin || row["Country of Origin"] || row["Country"] || "";
     const shade = row["Wrapper Shade"] || row.Shade || "";
 
-    // cigar image candidates (for the big stick area)
     const cigarCands = resolveCigarImageCandidates(row);
 
     detailSheet.innerHTML = `
@@ -707,14 +668,14 @@
       </div>
     `;
 
-    // brand icon load chain
+    // Brand icon in detail popup (same as page brand icon)
     const brandImg = detailSheet.querySelector("img[data-detail-brand-icon]");
     if (brandImg) {
-      if (bCands.length) loadFirstWorkingImage(brandImg, bCands, "");
+      if (BRAND_ICON_CANDS?.length) loadFirstWorkingImage(brandImg, BRAND_ICON_CANDS, "");
       else brandImg.removeAttribute("src");
     }
 
-    // cigar image load chain + placeholder swap
+    // Cigar image load chain + placeholder swap
     const ph = detailSheet.querySelector("[data-cigar-placeholder]");
     const cigarImg = detailSheet.querySelector("img[data-detail-cigar-img]");
     if (cigarImg) {
@@ -730,7 +691,6 @@
       if (!cigarCands.length) {
         showPlaceholder();
       } else {
-        // custom chain so we can show placeholder if all fail
         let idx = 0;
         const tryNext = () => {
           if (idx >= cigarCands.length) {
@@ -751,10 +711,9 @@
     detailSheet.querySelector(".cigar-detail-x")?.addEventListener("click", closeCigarDetail);
 
     detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
-      const displayName = buildDisplayName(row);
       window.CigarOSCart?.add({
         id: row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}`,
-        name: displayName,
+        name: buildDisplayName(row),
         brand: row.Brand,
         category: "Cigars",
         sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
