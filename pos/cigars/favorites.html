@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Favorites</title>
+
+  <!-- Reuse your existing cigars page styling if you want -->
+  <link rel="stylesheet" href="/pos/cigars/cigars.css" />
+  <link rel="stylesheet" href="/pos/cigars/favorites.css" />
+</head>
+
+<body class="cigars-page favorites-page">
+  <div class="cigars-topbar">
+    <button class="pos-back" type="button" aria-label="Back" onclick="history.back()">
+      ←
+    </button>
+  </div>
+
+  <main class="cigars-main">
+    <div class="favorites-header">
+      <h1 class="favorites-title">Favorites</h1>
+    </div>
+
+    <!-- BRANDS FIRST -->
+    <section class="favorites-section">
+      <div class="favorites-section-title">Brands</div>
+      <div id="favBrandsGrid" class="brands-grid"></div>
+    </section>
+
+    <!-- CIGARS SECOND -->
+    <section class="favorites-section">
+      <div class="favorites-section-title">Cigars</div>
+      <div id="favCigarsList" class="favorites-cigar-list"></div>
+    </section>
+  </main>
+
+  <!-- Your existing cart/invoice controller (if it’s global on POS pages) -->
+  <script src="/pos/cart.js"></script>
+
+  <script src="/pos/cigars/favorites.js"></script>
+</body>
+</html>
