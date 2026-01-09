@@ -296,9 +296,6 @@ body.brand-page{
 [hidden]{ display:none !important; }
 body.pos-modal-open{ overflow:hidden; }
 
-/* ===============================
-   BACKDROP (shared)
-   =============================== */
 #sheet-backdrop{
   position:fixed;
   inset:0;
@@ -306,6 +303,17 @@ body.pos-modal-open{ overflow:hidden; }
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   z-index: 9998;
+
+  /* 🔑 critical: do not block clicks unless open */
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* when JS opens it */
+#sheet-backdrop.open,
+#sheet-backdrop:not([hidden]){
+  pointer-events: auto;
+  opacity: 1;
 }
 
 /* ===============================
@@ -520,8 +528,15 @@ body.cigar-detail-open #receipt-count{
 
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
   letter-spacing: -0.02em;
+
+  /* ✅ critical: never block taps unless open */
+  pointer-events: none;
 }
-.cigar-detail-overlay.open{ display:flex; }
+
+.cigar-detail-overlay.open{
+  display:flex;
+  pointer-events: auto;
+}
 
 /* Sheet */
 .cigar-detail-sheet{
