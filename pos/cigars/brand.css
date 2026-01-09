@@ -484,10 +484,6 @@ body.pos-modal-open{ overflow:hidden; }
 
 /* =========================================================
    ✅ CIGAR DETAIL POPUP (MOCKUP MATCH — UPDATED FIXES)
-   - popup height restored smaller (like last correct live version)
-   - cigar nudged RIGHT a bit more
-   - right-side details scaled down to fit inside
-   - 3 action buttons MUCH smaller
    ========================================================= */
 
 /* Hide receipt/invoice FAB while cigar detail is open */
@@ -627,8 +623,8 @@ body.cigar-detail-open #receipt-count{
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: 0.42fr 0.58fr; /* ✅ give right column more room */
-  gap: 10px;                             /* ✅ tighter gap */
+  grid-template-columns: 0.42fr 0.58fr;
+  gap: 10px;
   align-items: stretch;
 }
 
@@ -665,11 +661,10 @@ body.cigar-detail-open #receipt-count{
   align-items: stretch;
 }
 
-/* ✅ Stats grid: fixed-narrow left col + flexible right col
-   This guarantees LENGTH + VITOLA have enough width and won’t clip. */
+/* ✅ Stats grid: make LEFT column narrower so RIGHT column (LENGTH/VITOLA) has room */
 .cd-grid2{
   display: grid;
-  grid-template-columns: 140px 1fr; /* ✅ ring/shape narrow, length/vitola flexible */
+  grid-template-columns: 112px 1fr; /* ✅ was 140px 1fr */
   gap: 8px;
 }
 
@@ -679,7 +674,7 @@ body.cigar-detail-open #receipt-count{
   border-radius: 14px;
   padding: 8px 10px;
   text-align: right;
-  min-width: 0; /* ✅ allow ellipsis instead of overflow */
+  min-width: 0;
 }
 .cd-stat .k{
   font-weight: 500;
@@ -699,9 +694,9 @@ body.cigar-detail-open #receipt-count{
   white-space: nowrap;
 }
 
-/* ✅ For SHAPE/VITOLA (small cards): never clip; ellipsis if needed */
+/* ✅ For SHAPE/VITOLA (small cards): slightly smaller so it never clips; ellipsis if needed */
 .cd-stat.small .v{
-  font-size: 14px;
+  font-size: 13px; /* ✅ was 14px */
   font-weight: 800;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -746,11 +741,11 @@ body.cigar-detail-open #receipt-count{
   text-overflow: ellipsis;
 }
 
-/* ✅ Actions: ONE LINE, smaller */
+/* ✅ Actions: ONE LINE, smaller + regular text so COMPARE fits */
 .cd-actions{
   margin-top: auto;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* ✅ 3 on one row */
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
   padding-top: 8px;
   padding-bottom: 6px;
@@ -762,12 +757,12 @@ body.cigar-detail-open #receipt-count{
   border: 1px solid rgba(15,26,44,0.12);
   background: rgba(255,255,255,0.66);
   color: rgba(15,26,44,0.40);
-  font-weight: 700;
-  font-size: 10px;
+  font-weight: 600; /* ✅ was 700 */
+  font-size: 9px;   /* ✅ was 10px */
   letter-spacing: -0.02em;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  padding: 0 8px;
+  padding: 0 6px;   /* ✅ was 0 8px */
 
   min-width: 0;
   white-space: nowrap;
@@ -778,13 +773,12 @@ body.cigar-detail-open #receipt-count{
 /* keep disabled looking disabled */
 .cd-btn[disabled]{ cursor: not-allowed; opacity: 0.9; }
 
-/* ✅ CSS-only label override (shows ADD / EDIT / COMPARE regardless of existing text)
-   If you later change the actual HTML labels, you can delete this block. */
-.cd-actions .cd-btn{ font-size: 0; }             /* hides original text */
+/* ✅ CSS-only label override (ADD / EDIT / COMPARE) — make regular + smaller */
+.cd-actions .cd-btn{ font-size: 0; } /* hides original text */
 .cd-actions .cd-btn::before{
-  font-size: 10px;
+  font-size: 9px;      /* ✅ was 10px */
   letter-spacing: -0.02em;
-  font-weight: 800;
+  font-weight: 600;    /* ✅ was 800 */
   color: rgba(15,26,44,0.40);
   content: "ACTION";
 }
@@ -803,10 +797,11 @@ body.cigar-detail-open #receipt-count{
 /* Mobile tweaks */
 @media (max-width: 520px){
   .cd-main{
-    grid-template-columns: 0.40fr 0.60fr; /* ✅ even more room to right */
+    grid-template-columns: 0.40fr 0.60fr;
     gap: 10px;
   }
   .cigar-detail-sheet .cd-img{ padding-left: 18px !important; }
-  .cd-grid2{ grid-template-columns: 132px 1fr; } /* ✅ tighter ring column */
-  .cd-stat .v{ font-size: 32px; }                /* ✅ prevents clip on LENGTH */
+
+  .cd-grid2{ grid-template-columns: 104px 1fr; } /* ✅ was 132px 1fr */
+  .cd-stat .v{ font-size: 32px; }
 }
