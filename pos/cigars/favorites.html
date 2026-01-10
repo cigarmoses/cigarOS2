@@ -2,42 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Favorites</title>
 
-  <!-- Reuse your existing cigars page styling if you want -->
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/pos/pos.css" />
+  <!-- Reuse the same cigars page styling so brand tiles match 1:1 -->
   <link rel="stylesheet" href="/pos/cigars/cigars.css" />
   <link rel="stylesheet" href="/pos/cigars/favorites.css" />
 </head>
 
 <body class="cigars-page favorites-page">
-  <div class="cigars-topbar">
-    <button class="pos-back" type="button" aria-label="Back" onclick="history.back()">
-      ←
+  <header class="cigars-topbar">
+    <button type="button" class="pos-back" id="fav-back" aria-label="Back">
+      <span class="pos-back-icon">←</span>
     </button>
-  </div>
+  </header>
 
   <main class="cigars-main">
-    <div class="favorites-header">
-      <h1 class="favorites-title">Favorites</h1>
-    </div>
-
-    <!-- BRANDS FIRST -->
-    <section class="favorites-section">
-      <div class="favorites-section-title">Brands</div>
-      <div id="favBrandsGrid" class="brands-grid"></div>
+    <section class="cigars-header">
+      <h1 class="cigars-title favorites-title">Favorites</h1>
     </section>
 
-    <!-- CIGARS SECOND -->
-    <section class="favorites-section">
-      <div class="favorites-section-title">Cigars</div>
-      <div id="favCigarsList" class="favorites-cigar-list"></div>
+    <!-- Brands (must match /pos/cigars/ grid style) -->
+    <section class="cigars-brands-section">
+      <h2 class="cigars-brands-title">Brands</h2>
+      <div id="fav-brands-grid" class="brands-grid"></div>
+    </section>
+
+    <!-- Cigars (must match brand-page row layout, but WHITE container) -->
+    <section class="favorites-cigars-section">
+      <h2 class="favorites-cigars-title">Cigars</h2>
+      <div id="fav-cigars-list" class="fav-cigars-list"></div>
+      <div id="fav-status" class="fav-status" hidden></div>
     </section>
   </main>
 
-  <!-- Your existing cart/invoice controller (if it’s global on POS pages) -->
-  <script src="/pos/cart.js"></script>
-
-  <script src="/pos/cigars/favorites.js"></script>
+  <script defer src="/pos/pos.js"></script>
+  <script defer src="/pos/cigars/favorites.js"></script>
 </body>
 </html>
