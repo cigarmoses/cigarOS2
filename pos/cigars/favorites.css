@@ -27,54 +27,65 @@
   box-shadow: 0 10px 26px rgba(15, 26, 44, 0.08);
 }
 
-/* Row layout (matches brand page structure: icon | main | divider | price | + ) */
+/* =========================================================
+   FAVORITES CIGAR ROW — match Brand POS row sizing
+   icon | main | divider | price | +
+========================================================= */
+
 .fav-row{
   display: grid;
-  grid-template-columns: 68px 1fr 1px 86px 56px;
-  align-items: center;
-  column-gap: 14px;
 
-  /* tightened to feel like POS brand rows */
-  padding: 12px 16px;
+  /* KEY: reduce fixed cols so the MAIN text column gets more room,
+     which pushes the divider to the RIGHT (like the green box). */
+  grid-template-columns: 62px 1fr 1px 72px 50px;
+
+  align-items: center;
+  column-gap: 12px;
+  padding: 12px 14px;
 }
 
 .fav-row + .fav-row{
   border-top: 1px solid rgba(15,26,44,0.08);
 }
 
+/* Brand icon */
 .fav-ico{
-  width: 54px;
-  height: 54px;
-  border-radius: 16px;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+
+  /* match brand list feel */
   background: #ffffff;
   box-shadow: 0 6px 16px rgba(15, 26, 44, 0.10);
+
   padding: 8px;
   object-fit: contain;
   display: block;
 }
 
+/* Text column */
 .fav-main{
   min-width: 0;
 }
 
-/* ✅ MATCH POS BRAND PAGE SCALE (this was the problem) */
+/* Cigar name — smaller + cleaner like brand page */
 .fav-title{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-weight: 700;
   font-size: 16px;
   letter-spacing: -0.01em;
-  line-height: 1.22;
+  line-height: 1.2;
   margin: 0;
   color: #0f1a2c;
 
-  /* multi-line but clean */
+  /* Match the green list behavior: stay clean and tight */
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 2; /* keep 2 lines max like POS */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* ✅ smaller vitola line like POS */
+/* Vitola line */
 .fav-sub{
   margin-top: 3px;
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
@@ -89,14 +100,15 @@
   overflow: hidden;
 }
 
+/* Vertical separator */
 .fav-divider{
-  height: 44px;
-  background: rgba(255,255,255,0.0);
-  border-left: 2px solid rgba(15,26,44,0.14); /* vertical separator */
+  height: 42px;
+  background: transparent;
+  border-left: 2px solid rgba(15,26,44,0.14);
   justify-self: center;
 }
 
-/* ✅ price matches POS scale */
+/* Price */
 .fav-price{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-weight: 800;
@@ -106,15 +118,15 @@
   color: #0f1a2c;
 }
 
-/* Green + button (matches your look) */
+/* Green + button */
 .fav-add{
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   border: none;
   background: #34c759;
   color: #ffffff;
-  font-size: 26px;
+  font-size: 24px;
   line-height: 0;
   font-weight: 900;
   display: grid;
@@ -129,7 +141,7 @@
   filter: brightness(0.98);
 }
 
-/* Clicking the name should open details, so make it feel tappable */
+/* Tappable name area */
 .fav-open{
   border: none;
   background: transparent;
@@ -150,26 +162,24 @@
 /* Responsive tighten */
 @media (max-width: 390px){
   .fav-row{
-    grid-template-columns: 62px 1fr 1px 78px 52px;
-    padding: 11px 14px;
-    column-gap: 12px;
+    grid-template-columns: 60px 1fr 1px 68px 48px;
+    padding: 11px 12px;
+    column-gap: 10px;
   }
 
   .fav-ico{
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     border-radius: 14px;
   }
 
-  .fav-title{
-    font-size: 15px;
-  }
+  .fav-title{ font-size: 15px; }
+  .fav-sub{ font-size: 12px; }
+  .fav-price{ font-size: 15px; }
 
-  .fav-sub{
-    font-size: 12px;
-  }
-
-  .fav-price{
-    font-size: 15px;
+  .fav-add{
+    width: 38px;
+    height: 38px;
+    font-size: 22px;
   }
 }
