@@ -154,3 +154,77 @@
   .fav-sub{ font-size: 17px; }
   .fav-price{ font-size: 24px; }
 }
+
+/* =========================================================
+   Favorites → Cigars list
+   Match POS Brand cigar row typography + layout
+   Keep WHITE background
+========================================================= */
+
+.favorites-cigar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #ffffff; /* keep white */
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.06);
+}
+
+/* Cigar image / placeholder */
+.favorites-cigar-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #f2f3f5;
+  flex-shrink: 0;
+}
+
+/* Text container */
+.favorites-cigar-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== TITLE (MATCH POS BRAND PAGE) ===== */
+.favorites-cigar-name {
+  font-size: 15px;           /* ⬅️ key fix */
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+  color: #0f1a2c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== SUBLINE (vitola) ===== */
+.favorites-cigar-vitola {
+  margin-top: 2px;
+  font-size: 12.5px;         /* ⬅️ key fix */
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* ===== MSRP ===== */
+.favorites-cigar-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f1a2c;
+  margin-left: 8px;
+}
+
+/* Add button (unchanged behavior, scaled correctly) */
+.favorites-cigar-add {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #34c759;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
