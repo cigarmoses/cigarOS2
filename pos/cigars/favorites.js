@@ -37,8 +37,6 @@
 
   // If your actual brand route is different, change this ONE function.
   function brandHref(slug){
-    // common patterns:
-    // return `/pos/cigars/brand.html?brand=${encodeURIComponent(slug)}`;
     return `/pos/cigars/brand/?brand=${encodeURIComponent(slug)}`;
   }
 
@@ -124,6 +122,67 @@
     ];
   }
 
+  // ✅ NEW: generate robust slug candidates for brand icons
+  // This is what fixes La Flor Dominicana (often stored as LFD)
+  function brandSlugCandidatesFromName(brandName){
+    const b = normD(brandName || "");
+    const slugs = new Set();
+
+    // base “tight” slug
+    const tight = slugTight(brandName || "");
+    if (tight) slugs.add(tight);
+
+    // remove parenthetical abbreviations: "La Flor Dominicana (LFD)"
+    const noParen = b.replace(/\s*$begin:math:text$\[\^\)\]\*$end:math:text$\s*/g, " ").replace(/\s+/g, " ").trim();
+    const tightNoParen = slugTight(noParen);
+    if (tightNoParen) slugs.add(tightNoParen);
+
+    // common leading articles
+    if (b.startsWith("la ")) {
+      const noLa = slugTight(b.replace(/^la\s+/i, ""));
+      if (noLa) slugs.add(noLa);
+    }
+    if (b.startsWith("the ")) {
+      const noThe = slugTight(b.replace(/^the\s+/i, ""));
+      if (noThe) slugs.add(noThe);
+    }
+
+    // special known brands (covers your exact example)
+    if (b.includes("la flor dominicana")) {
+      slugs.add("laflordominicana");
+      slugs.add("lfd");
+    }
+    if (b.includes("padron")) slugs.add("padron");
+    if (b.includes("arturo fuente")) slugs.add("arturofuente");
+
+    return Array.from(slugs);
+  }
+
+  // ✅ NEW: build icon candidates from row using multiple slugs + optional sheet icon column
+  function brandIconCandidatesFromRow(row){
+    const candidates = [];
+
+    // if the sheet ever includes a brand icon path, prefer it
+    const rawIcon =
+      row["Brand Icon"] ||
+      row["Brand IMG"] ||
+      row["Brand Image"] ||
+      row["Icon"] ||
+      "";
+
+    const rawNorm = normalizeIconPath(rawIcon);
+    if (rawNorm) candidates.push(rawNorm);
+
+    const brand = row.Brand || "";
+    const slugs = brandSlugCandidatesFromName(brand);
+    slugs.forEach((s) => {
+      brandIconCandidatesFromSlug(s).forEach((p) => candidates.push(p));
+    });
+
+    // de-dupe
+    return Array.from(new Set(candidates.filter(Boolean)));
+  }
+
   // ------------------------------------------------------------
   // Brands grid render (uses SAME markup/class expectations as cigars page)
   // ------------------------------------------------------------
@@ -190,7 +249,6 @@
   function findRowForFavorite(allRows, fav){
     const target = normD(fav.cigar);
 
-    // 1) direct best match on "Cigar" column
     let best = null;
     let bestScore = -1;
 
@@ -198,7 +256,6 @@
       const cigar = normD(r.Cigar || "");
       if (!cigar) continue;
 
-      // quick brand hint helps if duplicates exist
       const brand = normD(r.Brand || "");
       const brandHint = normD(fav.brandHint || "");
 
@@ -207,7 +264,6 @@
       if (cigar === target) score += 100;
       if (cigar.includes(target) || target.includes(cigar)) score += 60;
 
-      // token overlap
       const tA = new Set(target.split(/\s+/g));
       const tB = new Set(cigar.split(/\s+/g));
       let overlap = 0;
@@ -346,7 +402,6 @@
     const exts = [".png", ".jpg", ".jpeg", ".webp"];
     const pushBase = (baseNoExt) => exts.forEach((ext) => candidates.push(`${baseNoExt}${ext}`));
 
-    // Padron special forgiving patterns (so your 60th image keeps working)
     if (brandSlug === "padron") {
       if (lineNorm === "1964") pushBase(`${baseDir}padron1964${cigarSlug}`);
       if (lineNorm === "1926") {
@@ -388,8 +443,8 @@
     const origin = row.Origin || row["Country of Origin"] || row["Country"] || "";
     const shade = row["Wrapper Shade"] || row.Shade || "";
 
-    const brandSlug = slugTight(row.Brand || "");
-    const brandIconCands = brandIconCandidatesFromSlug(brandSlug);
+    // ✅ Use robust icon candidates here too
+    const brandIconCands = brandIconCandidatesFromRow(row);
     const cigarCands = resolveCigarImageCandidates(row);
 
     detailSheet.innerHTML = `
@@ -460,7 +515,7 @@
     `;
 
     const brandImg = detailSheet.querySelector("img[data-detail-brand-icon]");
-    if (brandImg) loadFirstWorkingImage(brandImg, brandIconCands, "");
+    if (brandImg) loadFirstWorkingImage(brandImg, brandIconCands, "/img/icons/cigar-outline.svg");
 
     const ph = detailSheet.querySelector("[data-cigar-placeholder]");
     const cigarImg = detailSheet.querySelector("img[data-detail-cigar-img]");
@@ -529,15 +584,16 @@
       const id = row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}-${row.MSRP || ""}`;
       ROW_BY_ID[id] = row;
 
-      const brandSlug = slugTight(row.Brand || "");
-      const iconCands = brandIconCandidatesFromSlug(brandSlug);
+      // ✅ robust icon candidates
+      const iconCands = brandIconCandidatesFromRow(row);
+
       const name = buildDisplayName(row);
       const sub = row.Vitola || row.Brand || "";
       const price = money(toNum(row.MSRP));
 
       return `
         <div class="fav-row" data-id="${escapeAttr(id)}">
-          <img class="fav-ico" data-ico alt="" />
+          <img class="fav-ico" data-ico alt="${escapeAttr(row.Brand || "")}" />
 
           <div class="fav-main">
             <button class="fav-open" type="button" data-open>
@@ -557,14 +613,14 @@
       `;
     }).join("");
 
-    // apply icons
+    // apply icons (with a REAL fallback)
     cigarsList.querySelectorAll(".fav-row").forEach((rowEl) => {
       const img = rowEl.querySelector("img[data-ico]");
       const t = rowEl.querySelector("template[data-ico-cands]");
       if (!img || !t) return;
       let cands = [];
       try { cands = JSON.parse(t.textContent || "[]"); } catch {}
-      loadFirstWorkingImage(img, cands, "");
+      loadFirstWorkingImage(img, cands, "/img/icons/cigar-outline.svg");
     });
   }
 
