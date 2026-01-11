@@ -2,6 +2,7 @@
    Shared POS Cart + Invoice (single controller for ALL POS pages)
 
    ✅ FIX: If page already has #receipt-open, use it instead of injecting a second button.
+   ✅ FIX: Invoice line icon fallback (brand icon -> cigar outline) so icons never appear blank.
 */
 
 (() => {
@@ -28,6 +29,41 @@
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
   const money = (n) => Number(n || 0).toFixed(2);
+
+  const normD = (s) =>
+    (s || "")
+      .toString()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+
+  const slugTight = (s) =>
+    normD(s)
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "");
+
+  function normalizeIconPath(p) {
+    let s = (p || "").toString().trim();
+    if (!s) return "";
+    if (/^https?:\/\//i.test(s)) return s;
+    if (s.startsWith("img/")) s = "/" + s;
+    if (!s.startsWith("/")) s = "/" + s;
+    s = s.replace(/^\/img\/icons\/brand\//i, "/img/icons/brands/");
+    s = s.replace(/\/{2,}/g, "/");
+    return s;
+  }
+
+  function invoiceIconForItem(it) {
+    const direct = normalizeIconPath(it?.img || "");
+    if (direct) return direct;
+
+    const brand = (it?.brand || "").toString().trim();
+    const slug = slugTight(brand);
+    if (slug) return `/img/icons/brands/${slug}.svg`;
+
+    return "/img/icons/cigar-outline.svg";
+  }
 
   const nowStamp = () => {
     const d = new Date();
@@ -119,7 +155,6 @@
       return;
     }
 
-    // fallback: inject if not present
     receiptBtn = document.createElement("button");
     receiptBtn.type = "button";
     receiptBtn.className = "pos-receipt-btn";
@@ -264,15 +299,13 @@
       row.className = "pos-line";
       row.setAttribute("role", "listitem");
 
-      const imgSrc = it.img || "";
+      const iconSrc = invoiceIconForItem(it);
+
       row.innerHTML = `
         <div class="pos-line-left">
           <div class="pos-line-thumb">
-            ${
-              imgSrc
-                ? `<img src="${escapeAttr(imgSrc)}" alt="">`
-                : `<div class="pos-line-thumb-fallback"></div>`
-            }
+            <img src="${escapeAttr(iconSrc)}" alt=""
+                 onerror="this.onerror=null; this.src='/img/icons/cigar-outline.svg';" />
           </div>
         </div>
 
@@ -397,7 +430,7 @@
       brand: item.brand || "",
       name: item.name || "Item",
       price: Number(item.price || 0),
-      img: item.img || "",
+      img: item.img || "", // may be empty; invoice has fallback
       link: item.link || "",
       sub: item.sub || "",
       qty: clamp(Number(item.qty || 1), 1, 999),
@@ -505,7 +538,7 @@
       .pos-lock { overflow: hidden; }
       html.pos-lock, body { overscroll-behavior: none; }
 
-      /* Receipt button (works for injected OR existing #receipt-open) */
+      /* Receipt button */
       .pos-receipt-btn{
         position: fixed;
         right: 16px;
@@ -644,9 +677,9 @@
         overflow: hidden;
         display: grid;
         place-items: center;
+        background: rgba(15,26,44,0.06);
       }
-      .pos-line-thumb img{ width: 54px; height: 54px; object-fit: cover; }
-      .pos-line-thumb-fallback{ width: 54px; height: 54px; border-radius: 14px; background: rgba(0,122,255,0.12); }
+      .pos-line-thumb img{ width: 54px; height: 54px; object-fit: cover; display:block; }
 
       .pos-line-cat{
         font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
