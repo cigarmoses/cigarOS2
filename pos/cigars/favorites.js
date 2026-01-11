@@ -36,14 +36,13 @@
   ];
 
   // If your actual brand route is different, change this ONE function.
-  function brandHref(slug){
+  function brandHref(slug) {
     return `/pos/cigars/brand/?brand=${encodeURIComponent(slug)}`;
   }
 
   // ------------------------------------------------------------
   // helpers
   // ------------------------------------------------------------
-  const norm = (s) => (s || "").toString().trim().toLowerCase();
   const normD = (s) =>
     (s || "")
       .toString()
@@ -78,7 +77,7 @@
     return escapeHTML(s).replaceAll("`", "");
   }
 
-  function setStatus(msg){
+  function setStatus(msg) {
     if (!statusEl) return;
     statusEl.hidden = !msg;
     statusEl.textContent = msg || "";
@@ -98,7 +97,7 @@
     return s;
   }
 
-  function loadFirstWorkingImage(imgEl, candidates, fallbackSrc="") {
+  function loadFirstWorkingImage(imgEl, candidates, fallbackSrc = "") {
     let i = 0;
     const tryNext = () => {
       if (i >= candidates.length) {
@@ -106,13 +105,16 @@
         else imgEl.removeAttribute("src");
         return;
       }
-      imgEl.onerror = () => { i++; tryNext(); };
+      imgEl.onerror = () => {
+        i++;
+        tryNext();
+      };
       imgEl.src = candidates[i];
     };
     tryNext();
   }
 
-  function brandIconCandidatesFromSlug(slug){
+  function brandIconCandidatesFromSlug(slug) {
     const s = (slug || "").trim().toLowerCase();
     if (!s) return [];
     return [
@@ -122,18 +124,18 @@
     ];
   }
 
-  // ✅ NEW: generate robust slug candidates for brand icons
-  // This is what fixes La Flor Dominicana (often stored as LFD)
-  function brandSlugCandidatesFromName(brandName){
-    const b = normD(brandName || "");
+  // ✅ robust slug candidates for brand icons (fixes LFD + “La …” brands)
+  function brandSlugCandidatesFromName(brandName) {
+    const raw = (brandName || "").toString().trim();
+    const b = normD(raw);
     const slugs = new Set();
 
     // base “tight” slug
-    const tight = slugTight(brandName || "");
+    const tight = slugTight(raw);
     if (tight) slugs.add(tight);
 
-    // remove parenthetical abbreviations: "La Flor Dominicana (LFD)"
-    const noParen = b.replace(/\s*$begin:math:text$\[\^\)\]\*$end:math:text$\s*/g, " ").replace(/\s+/g, " ").trim();
+    // remove parenthetical abbreviations: "Name (ABC)"
+    const noParen = raw.replace(/\s*$begin:math:text$\[\^\)\]\*$end:math:text$\s*/g, " ").replace(/\s+/g, " ").trim();
     const tightNoParen = slugTight(noParen);
     if (tightNoParen) slugs.add(tightNoParen);
 
@@ -158,8 +160,8 @@
     return Array.from(slugs);
   }
 
-  // ✅ NEW: build icon candidates from row using multiple slugs + optional sheet icon column
-  function brandIconCandidatesFromRow(row){
+  // ✅ build icon candidates from row using multiple slugs + optional sheet icon column + _brandHint
+  function brandIconCandidatesFromRow(row) {
     const candidates = [];
 
     // if the sheet ever includes a brand icon path, prefer it
@@ -173,20 +175,25 @@
     const rawNorm = normalizeIconPath(rawIcon);
     if (rawNorm) candidates.push(rawNorm);
 
-    const brand = row.Brand || "";
-    const slugs = brandSlugCandidatesFromName(brand);
-    slugs.forEach((s) => {
-      brandIconCandidatesFromSlug(s).forEach((p) => candidates.push(p));
+    // include both sheet brand + attached hint (so the icon never goes wrong)
+    const brandNamesToTry = [];
+    if (row.Brand) brandNamesToTry.push(row.Brand);
+    if (row._brandHint) brandNamesToTry.push(row._brandHint);
+
+    brandNamesToTry.forEach((bn) => {
+      const slugs = brandSlugCandidatesFromName(bn);
+      slugs.forEach((s) => {
+        brandIconCandidatesFromSlug(s).forEach((p) => candidates.push(p));
+      });
     });
 
-    // de-dupe
     return Array.from(new Set(candidates.filter(Boolean)));
   }
 
   // ------------------------------------------------------------
   // Brands grid render (uses SAME markup/class expectations as cigars page)
   // ------------------------------------------------------------
-  function renderFavoriteBrands(){
+  function renderFavoriteBrands() {
     if (!brandsGrid) return;
 
     brandsGrid.innerHTML = FAVORITE_BRANDS.map((b) => {
@@ -207,26 +214,60 @@
   // ------------------------------------------------------------
   function parseCSV(text) {
     const rows = [];
-    let i = 0, field = "", row = [], inQuotes = false;
+    let i = 0,
+      field = "",
+      row = [],
+      inQuotes = false;
 
     while (i < text.length) {
       const c = text[i];
 
       if (inQuotes) {
-        if (c === '"' && text[i + 1] === '"') { field += '"'; i += 2; continue; }
-        if (c === '"') { inQuotes = false; i++; continue; }
-        field += c; i++; continue;
+        if (c === '"' && text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        }
+        if (c === '"') {
+          inQuotes = false;
+          i++;
+          continue;
+        }
+        field += c;
+        i++;
+        continue;
       } else {
-        if (c === '"') { inQuotes = true; i++; continue; }
-        if (c === ",") { row.push(field); field = ""; i++; continue; }
-        if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
-        if (c === "\r") { i++; continue; }
-        field += c; i++;
+        if (c === '"') {
+          inQuotes = true;
+          i++;
+          continue;
+        }
+        if (c === ",") {
+          row.push(field);
+          field = "";
+          i++;
+          continue;
+        }
+        if (c === "\n") {
+          row.push(field);
+          rows.push(row);
+          row = [];
+          field = "";
+          i++;
+          continue;
+        }
+        if (c === "\r") {
+          i++;
+          continue;
+        }
+        field += c;
+        i++;
       }
     }
     row.push(field);
     rows.push(row);
-    while (rows.length && rows[rows.length-1].every(x => !x || !x.trim())) rows.pop();
+
+    while (rows.length && rows[rows.length - 1].every((x) => !x || !x.trim())) rows.pop();
     return rows;
   }
 
@@ -244,10 +285,11 @@
   }
 
   // ------------------------------------------------------------
-  // Find favorite cigars from sheet
+  // Find favorite cigars from sheet (brandHint matters)
   // ------------------------------------------------------------
-  function findRowForFavorite(allRows, fav){
+  function findRowForFavorite(allRows, fav) {
     const target = normD(fav.cigar);
+    const brandHint = normD(fav.brandHint || "");
 
     let best = null;
     let bestScore = -1;
@@ -257,20 +299,27 @@
       if (!cigar) continue;
 
       const brand = normD(r.Brand || "");
-      const brandHint = normD(fav.brandHint || "");
 
       let score = 0;
 
-      if (cigar === target) score += 100;
-      if (cigar.includes(target) || target.includes(cigar)) score += 60;
+      // cigar name match
+      if (cigar === target) score += 120;
+      if (cigar.includes(target) || target.includes(cigar)) score += 70;
 
+      // token overlap
       const tA = new Set(target.split(/\s+/g));
       const tB = new Set(cigar.split(/\s+/g));
       let overlap = 0;
-      tA.forEach(x => { if (tB.has(x)) overlap++; });
-      score += overlap * 5;
+      tA.forEach((x) => {
+        if (tB.has(x)) overlap++;
+      });
+      score += overlap * 6;
 
-      if (brandHint && brand && brand.includes(brandHint)) score += 15;
+      // brandHint is a strong tiebreaker
+      if (brandHint) {
+        if (brand === brandHint) score += 60;
+        else if (brand.includes(brandHint) || brandHint.includes(brand)) score += 45;
+      }
 
       if (score > bestScore) {
         bestScore = score;
@@ -429,7 +478,7 @@
     ensureDetailModal();
     document.body.classList.add("cigar-detail-open");
 
-    const brand = row.Brand || "Brand";
+    const brand = row.Brand || row._brandHint || "Brand";
     const cigarName = buildDisplayName(row);
 
     const rg = row.RG || row["Ring"] || "";
@@ -443,7 +492,6 @@
     const origin = row.Origin || row["Country of Origin"] || row["Country"] || "";
     const shade = row["Wrapper Shade"] || row.Shade || "";
 
-    // ✅ Use robust icon candidates here too
     const brandIconCands = brandIconCandidatesFromRow(row);
     const cigarCands = resolveCigarImageCandidates(row);
 
@@ -520,16 +568,28 @@
     const ph = detailSheet.querySelector("[data-cigar-placeholder]");
     const cigarImg = detailSheet.querySelector("img[data-detail-cigar-img]");
     if (cigarImg) {
-      const showPlaceholder = () => { if (ph) ph.style.display = "flex"; cigarImg.style.display = "none"; };
-      const showImage = () => { if (ph) ph.style.display = "none"; cigarImg.style.display = "block"; };
+      const showPlaceholder = () => {
+        if (ph) ph.style.display = "flex";
+        cigarImg.style.display = "none";
+      };
+      const showImage = () => {
+        if (ph) ph.style.display = "none";
+        cigarImg.style.display = "block";
+      };
 
       if (!cigarCands.length) {
         showPlaceholder();
       } else {
         let idx = 0;
         const tryNext = () => {
-          if (idx >= cigarCands.length) { showPlaceholder(); return; }
-          cigarImg.onerror = () => { idx++; tryNext(); };
+          if (idx >= cigarCands.length) {
+            showPlaceholder();
+            return;
+          }
+          cigarImg.onerror = () => {
+            idx++;
+            tryNext();
+          };
           cigarImg.onload = () => showImage();
           cigarImg.src = cigarCands[idx];
         };
@@ -541,9 +601,9 @@
 
     detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
       window.CigarOSCart?.add({
-        id: row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}`,
+        id: row.key || `${row.Brand || row._brandHint || ""}-${row.Cigar || ""}-${row.Vitola || ""}`,
         name: buildDisplayName(row),
-        brand: row.Brand,
+        brand: row.Brand || row._brandHint || "",
         category: "Cigars",
         sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
         price: toNum(row.MSRP),
@@ -556,7 +616,7 @@
     detailOverlay.setAttribute("aria-hidden", "false");
   }
 
-  function closeDetail(){
+  function closeDetail() {
     if (!detailOverlay) return;
     detailOverlay.classList.remove("open");
     detailOverlay.setAttribute("aria-hidden", "true");
@@ -568,11 +628,11 @@
   // ------------------------------------------------------------
   let ROW_BY_ID = Object.create(null);
 
-  function renderFavoriteCigars(rows){
+  function renderFavoriteCigars(rows) {
     if (!cigarsList) return;
     ROW_BY_ID = Object.create(null);
 
-    if (!rows.length){
+    if (!rows.length) {
       cigarsList.innerHTML = "";
       setStatus("No favorites found.");
       return;
@@ -580,25 +640,20 @@
 
     setStatus("");
 
-    cigarsList.innerHTML = rows.map((row) => {
-      const id = row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}-${row.MSRP || ""}`;
-      ROW_BY_ID[id] = row;
+    cigarsList.innerHTML = rows
+      .map((row) => {
+        const id = row.key || `${row.Brand || ""}-${row.Cigar || ""}-${row.Vitola || ""}-${row.MSRP || ""}`;
+        ROW_BY_ID[id] = row;
 
-      // ✅ robust icon candidates
-      const brandSlug = slugTight(row.Brand || "");
-const iconCands = [
-  `/img/icons/brands/${brandSlug}.svg`,
-  `/img/icons/brands/${brandSlug}.png`,
-  `/img/icons/brands/${brandSlug}.jpg`,
-];
+        const iconCands = brandIconCandidatesFromRow(row);
 
-      const name = buildDisplayName(row);
-      const sub = row.Vitola || row.Brand || "";
-      const price = money(toNum(row.MSRP));
+        const name = buildDisplayName(row);
+        const sub = row.Vitola || row.Brand || row._brandHint || "";
+        const price = money(toNum(row.MSRP));
 
-      return `
+        return `
         <div class="fav-row" data-id="${escapeAttr(id)}">
-          <img class="fav-ico" data-ico alt="${escapeAttr(row.Brand || "")}" />
+          <img class="fav-ico" data-ico alt="${escapeAttr(row.Brand || row._brandHint || "")}" />
 
           <div class="fav-main">
             <button class="fav-open" type="button" data-open>
@@ -616,25 +671,28 @@ const iconCands = [
           <template data-ico-cands>${escapeHTML(JSON.stringify(iconCands))}</template>
         </div>
       `;
-    }).join("");
+      })
+      .join("");
 
-    // apply icons (with a REAL fallback)
+    // apply icons (REAL fallback)
     cigarsList.querySelectorAll(".fav-row").forEach((rowEl) => {
       const img = rowEl.querySelector("img[data-ico]");
       const t = rowEl.querySelector("template[data-ico-cands]");
       if (!img || !t) return;
       let cands = [];
-      try { cands = JSON.parse(t.textContent || "[]"); } catch {}
-      loadFirstWorkingImage(img, cands, "/img/icons/brands/padron.svg");
+      try {
+        cands = JSON.parse(t.textContent || "[]");
+      } catch {}
+      loadFirstWorkingImage(img, cands, "/img/icons/cigar-outline.svg");
     });
   }
 
-  function initCigarDelegation(){
+  function initCigarDelegation() {
     if (!cigarsList) return;
 
     cigarsList.addEventListener("click", (e) => {
       const addBtn = e.target.closest("[data-add]");
-      if (addBtn){
+      if (addBtn) {
         const rowEl = addBtn.closest(".fav-row");
         const id = rowEl?.getAttribute("data-id") || "";
         const row = ROW_BY_ID[id];
@@ -643,7 +701,7 @@ const iconCands = [
         window.CigarOSCart?.add({
           id: row.key || id,
           name: buildDisplayName(row),
-          brand: row.Brand,
+          brand: row.Brand || row._brandHint || "",
           category: "Cigars",
           sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
           price: toNum(row.MSRP),
@@ -653,7 +711,7 @@ const iconCands = [
       }
 
       const openBtn = e.target.closest("[data-open]");
-      if (openBtn){
+      if (openBtn) {
         const rowEl = openBtn.closest(".fav-row");
         const id = rowEl?.getAttribute("data-id") || "";
         const row = ROW_BY_ID[id];
@@ -673,25 +731,28 @@ const iconCands = [
     window.location.href = "/pos/cigars/";
   });
 
-  async function load(){
+  async function load() {
     setStatus("Loading…");
 
     const res = await fetch(`${CSV_URL}&_=${Date.now()}`, { cache: "no-store" });
     const text = await res.text();
     const table = tableFromCSV(text);
 
-    // Build the favorite cigar rows by matching sheet data
+    // Build the favorite cigar rows by matching sheet data (and carry hint through)
     const foundRows = [];
-    for (const fav of FAVORITE_CIGARS){
+    for (const fav of FAVORITE_CIGARS) {
       const row = findRowForFavorite(table, fav);
-      if (row) foundRows.push(row);
+      if (row) {
+        row._brandHint = fav.brandHint || "";
+        foundRows.push(row);
+      }
     }
 
     renderFavoriteBrands();
     renderFavoriteCigars(foundRows);
   }
 
-  function init(){
+  function init() {
     renderFavoriteBrands();
     initCigarDelegation();
 
