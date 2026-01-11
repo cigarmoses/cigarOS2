@@ -37,7 +37,7 @@
 
   /* KEY: reduce fixed cols so the MAIN text column gets more room,
      which pushes the divider to the RIGHT (like the green box). */
-  grid-template-columns: 62px 1fr 1px 72px 50px;
+  grid-template-columns: 60px 1fr 1px 70px 48px;
 
   align-items: center;
   column-gap: 12px;
