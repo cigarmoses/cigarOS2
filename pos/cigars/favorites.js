@@ -1,13 +1,14 @@
 /* /pos/cigars/favorites.js
    Favorites shortcut page
 
-   Goals:
    ✅ Brands grid uses SAME DOM/CSS classes as /pos/cigars/ (brands-grid tile style)
    ✅ Cigars list uses SAME row layout as brand pages (icon | title | divider | MSRP | +)
    ✅ White container (not blue)
    ✅ Clicking brand tile -> brand page
    ✅ Clicking cigar name -> detail modal (same behavior style as brand pages)
    ✅ Green + adds to invoice via window.CigarOSCart.add
+   ✅ FIX: Add brand icon into cart so invoice shows icons
+   ✅ FIX: Brand href supports slug
 */
 
 (() => {
@@ -21,9 +22,6 @@
   const cigarsList = $("#fav-cigars-list");
   const statusEl = $("#fav-status");
 
-  // ------------------------------------------------------------
-  // HARD-CODED favorites for now (you said this will become ongoing)
-  // ------------------------------------------------------------
   const FAVORITE_BRANDS = [
     { name: "Padron", slug: "padron" },
     { name: "Arturo Fuente", slug: "arturofuente" },
@@ -35,14 +33,10 @@
     { cigar: "Padron 60th Anniversary Perfecto", brandHint: "padron" },
   ];
 
-  // If your actual brand route is different, change this ONE function.
   function brandHref(slug) {
     return `/pos/cigars/brand/?brand=${encodeURIComponent(slug)}`;
   }
 
-  // ------------------------------------------------------------
-  // helpers
-  // ------------------------------------------------------------
   const normD = (s) =>
     (s || "")
       .toString()
@@ -91,7 +85,6 @@
     if (s.startsWith("img/")) s = "/" + s;
     if (!s.startsWith("/")) s = "/" + s;
 
-    // ensure plural path for brand icons
     s = s.replace(/^\/img\/icons\/brand\//i, "/img/icons/brands/");
     s = s.replace(/\/{2,}/g, "/");
     return s;
@@ -124,22 +117,18 @@
     ];
   }
 
-  // ✅ robust slug candidates for brand icons (fixes LFD + “La …” brands)
   function brandSlugCandidatesFromName(brandName) {
     const raw = (brandName || "").toString().trim();
     const b = normD(raw);
     const slugs = new Set();
 
-    // base “tight” slug
     const tight = slugTight(raw);
     if (tight) slugs.add(tight);
 
-    // remove parenthetical abbreviations: "Name (ABC)"
-    const noParen = raw.replace(/\s*$begin:math:text$\[\^\)\]\*$end:math:text$\s*/g, " ").replace(/\s+/g, " ").trim();
+    const noParen = raw.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
     const tightNoParen = slugTight(noParen);
     if (tightNoParen) slugs.add(tightNoParen);
 
-    // common leading articles
     if (b.startsWith("la ")) {
       const noLa = slugTight(b.replace(/^la\s+/i, ""));
       if (noLa) slugs.add(noLa);
@@ -149,7 +138,6 @@
       if (noThe) slugs.add(noThe);
     }
 
-    // special known brands (covers your exact example)
     if (b.includes("la flor dominicana")) {
       slugs.add("laflordominicana");
       slugs.add("lfd");
@@ -160,14 +148,13 @@
     return Array.from(slugs);
   }
 
-  // ✅ build icon candidates from row using multiple slugs + optional sheet icon column + _brandHint
   function brandIconCandidatesFromRow(row) {
     const candidates = [];
 
-    // if the sheet ever includes a brand icon path, prefer it
     const rawIcon =
       row["Brand Icon"] ||
       row["Brand IMG"] ||
+      row["Manufacturer IMG"] ||
       row["Brand Image"] ||
       row["Icon"] ||
       "";
@@ -175,7 +162,6 @@
     const rawNorm = normalizeIconPath(rawIcon);
     if (rawNorm) candidates.push(rawNorm);
 
-    // include both sheet brand + attached hint (so the icon never goes wrong)
     const brandNamesToTry = [];
     if (row.Brand) brandNamesToTry.push(row.Brand);
     if (row._brandHint) brandNamesToTry.push(row._brandHint);
@@ -190,9 +176,13 @@
     return Array.from(new Set(candidates.filter(Boolean)));
   }
 
-  // ------------------------------------------------------------
-  // Brands grid render (uses SAME markup/class expectations as cigars page)
-  // ------------------------------------------------------------
+  function cartBrandIcon(row) {
+    const rawBrand = normalizeIconPath(row?.["Brand IMG"] || "");
+    const rawMfg = normalizeIconPath(row?.["Manufacturer IMG"] || "");
+    const slug = slugTight(row?.Brand || row?._brandHint || "");
+    return rawBrand || rawMfg || (slug ? `/img/icons/brands/${slug}.svg` : "") || "/img/icons/cigar-outline.svg";
+  }
+
   function renderFavoriteBrands() {
     if (!brandsGrid) return;
 
@@ -209,59 +199,23 @@
     }).join("");
   }
 
-  // ------------------------------------------------------------
-  // CSV parsing
-  // ------------------------------------------------------------
   function parseCSV(text) {
     const rows = [];
-    let i = 0,
-      field = "",
-      row = [],
-      inQuotes = false;
+    let i = 0, field = "", row = [], inQuotes = false;
 
     while (i < text.length) {
       const c = text[i];
 
       if (inQuotes) {
-        if (c === '"' && text[i + 1] === '"') {
-          field += '"';
-          i += 2;
-          continue;
-        }
-        if (c === '"') {
-          inQuotes = false;
-          i++;
-          continue;
-        }
-        field += c;
-        i++;
-        continue;
+        if (c === '"' && text[i + 1] === '"') { field += '"'; i += 2; continue; }
+        if (c === '"') { inQuotes = false; i++; continue; }
+        field += c; i++; continue;
       } else {
-        if (c === '"') {
-          inQuotes = true;
-          i++;
-          continue;
-        }
-        if (c === ",") {
-          row.push(field);
-          field = "";
-          i++;
-          continue;
-        }
-        if (c === "\n") {
-          row.push(field);
-          rows.push(row);
-          row = [];
-          field = "";
-          i++;
-          continue;
-        }
-        if (c === "\r") {
-          i++;
-          continue;
-        }
-        field += c;
-        i++;
+        if (c === '"') { inQuotes = true; i++; continue; }
+        if (c === ",") { row.push(field); field = ""; i++; continue; }
+        if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+        if (c === "\r") { i++; continue; }
+        field += c; i++;
       }
     }
     row.push(field);
@@ -284,9 +238,6 @@
     return out;
   }
 
-  // ------------------------------------------------------------
-  // Find favorite cigars from sheet (brandHint matters)
-  // ------------------------------------------------------------
   function findRowForFavorite(allRows, fav) {
     const target = normD(fav.cigar);
     const brandHint = normD(fav.brandHint || "");
@@ -299,23 +250,17 @@
       if (!cigar) continue;
 
       const brand = normD(r.Brand || "");
-
       let score = 0;
 
-      // cigar name match
       if (cigar === target) score += 120;
       if (cigar.includes(target) || target.includes(cigar)) score += 70;
 
-      // token overlap
       const tA = new Set(target.split(/\s+/g));
       const tB = new Set(cigar.split(/\s+/g));
       let overlap = 0;
-      tA.forEach((x) => {
-        if (tB.has(x)) overlap++;
-      });
+      tA.forEach((x) => { if (tB.has(x)) overlap++; });
       score += overlap * 6;
 
-      // brandHint is a strong tiebreaker
       if (brandHint) {
         if (brand === brandHint) score += 60;
         else if (brand.includes(brandHint) || brandHint.includes(brand)) score += 45;
@@ -330,9 +275,6 @@
     return best;
   }
 
-  // ------------------------------------------------------------
-  // Brand-page-style display name (Line + cigar, dedupe prefix)
-  // ------------------------------------------------------------
   function stripDuplicateLinePrefix(lineRaw, cigarRaw) {
     const line = (lineRaw || "").toString().trim();
     const cigar = (cigarRaw || "").toString().trim();
@@ -355,7 +297,7 @@
   }
 
   // ------------------------------------------------------------
-  // Detail modal (copied behavior from brand.js, but multi-brand)
+  // Detail modal (same DOM/CSS classes as brand page modal)
   // ------------------------------------------------------------
   let detailOverlay = null;
   let detailSheet = null;
@@ -431,15 +373,11 @@
     const baseDir = brandSlug ? `/img/cigars/${brandSlug}/` : "/img/cigars/";
 
     const candidates = [];
-
     const raw = row["Cigar IMG"] || row["Cigar Image"] || row["Image"] || "";
     const rawNorm = normalizeIconPath(raw);
 
-    if (rawNorm.includes("/img/cigars/")) {
-      candidates.push(rawNorm);
-    } else if (raw && /\.(png|jpg|jpeg|webp)$/i.test(raw)) {
-      candidates.push(`${baseDir}${raw.replace(/^\/+/, "")}`);
-    }
+    if (rawNorm.includes("/img/cigars/")) candidates.push(rawNorm);
+    else if (raw && /\.(png|jpg|jpeg|webp)$/i.test(raw)) candidates.push(`${baseDir}${raw.replace(/^\/+/, "")}`);
 
     const lineRaw = (row.Line || "").toString().trim();
     const cigarRaw = (row.Cigar || "").toString().trim();
@@ -586,10 +524,7 @@
             showPlaceholder();
             return;
           }
-          cigarImg.onerror = () => {
-            idx++;
-            tryNext();
-          };
+          cigarImg.onerror = () => { idx++; tryNext(); };
           cigarImg.onload = () => showImage();
           cigarImg.src = cigarCands[idx];
         };
@@ -607,7 +542,7 @@
         category: "Cigars",
         sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
         price: toNum(row.MSRP),
-        img: "",
+        img: cartBrandIcon(row), // ✅ invoice icon
       });
       closeDetail();
     });
@@ -662,10 +597,7 @@
             </button>
           </div>
 
-          <div class="fav-divider" aria-hidden="true"></div>
-
           <div class="fav-price">${escapeHTML(price)}</div>
-
           <button class="fav-add" type="button" aria-label="Add" data-add>+</button>
 
           <template data-ico-cands>${escapeHTML(JSON.stringify(iconCands))}</template>
@@ -674,15 +606,13 @@
       })
       .join("");
 
-    // apply icons (REAL fallback)
+    // apply icons
     cigarsList.querySelectorAll(".fav-row").forEach((rowEl) => {
       const img = rowEl.querySelector("img[data-ico]");
       const t = rowEl.querySelector("template[data-ico-cands]");
       if (!img || !t) return;
       let cands = [];
-      try {
-        cands = JSON.parse(t.textContent || "[]");
-      } catch {}
+      try { cands = JSON.parse(t.textContent || "[]"); } catch {}
       loadFirstWorkingImage(img, cands, "/img/icons/cigar-outline.svg");
     });
   }
@@ -705,7 +635,7 @@
           category: "Cigars",
           sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
           price: toNum(row.MSRP),
-          img: "",
+          img: cartBrandIcon(row), // ✅ invoice icon
         });
         return;
       }
@@ -721,9 +651,6 @@
     });
   }
 
-  // ------------------------------------------------------------
-  // init
-  // ------------------------------------------------------------
   backBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -738,7 +665,6 @@
     const text = await res.text();
     const table = tableFromCSV(text);
 
-    // Build the favorite cigar rows by matching sheet data (and carry hint through)
     const foundRows = [];
     for (const fav of FAVORITE_CIGARS) {
       const row = findRowForFavorite(table, fav);
