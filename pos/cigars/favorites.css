@@ -71,10 +71,10 @@
 /* Cigar name — smaller + cleaner like brand page */
 .fav-title{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 500;
+  font-size: 15px;
   letter-spacing: -0.01em;
-  line-height: 1.2;
+  line-height: 1.1;
   margin: 0;
   color: #0f1a2c;
 
@@ -89,9 +89,9 @@
 .fav-sub{
   margin-top: 3px;
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 600;
-  font-size: 12.5px;
-  letter-spacing: 0;
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: -0.01em;
   color: rgba(15,26,44,.55);
 
   display: -webkit-box;
@@ -111,8 +111,8 @@
 /* Price */
 .fav-price{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 800;
-  font-size: 16px;
+  font-weight: 500;
+  font-size: 12px;
   letter-spacing: -0.01em;
   text-align: right;
   color: #0f1a2c;
@@ -120,15 +120,15 @@
 
 /* Green + button */
 .fav-add{
-  width: 40px;
-  height: 40px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
   border: none;
   background: #34c759;
   color: #ffffff;
-  font-size: 24px;
+  font-size: 10px;
   line-height: 0;
-  font-weight: 900;
+  font-weight: 500;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -173,9 +173,9 @@
     border-radius: 14px;
   }
 
-  .fav-title{ font-size: 15px; }
-  .fav-sub{ font-size: 12px; }
-  .fav-price{ font-size: 15px; }
+  .fav-title{ font-size: 14px; }
+  .fav-sub{ font-size: 10px; }
+  .fav-price{ font-size: 14px; }
 
   .fav-add{
     width: 38px;
