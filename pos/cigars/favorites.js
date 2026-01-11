@@ -585,7 +585,12 @@
       ROW_BY_ID[id] = row;
 
       // ✅ robust icon candidates
-      const iconCands = brandIconCandidatesFromRow(row);
+      const brandSlug = slugTight(row.Brand || "");
+const iconCands = [
+  `/img/icons/brands/${brandSlug}.svg`,
+  `/img/icons/brands/${brandSlug}.png`,
+  `/img/icons/brands/${brandSlug}.jpg`,
+];
 
       const name = buildDisplayName(row);
       const sub = row.Vitola || row.Brand || "";
@@ -620,7 +625,7 @@
       if (!img || !t) return;
       let cands = [];
       try { cands = JSON.parse(t.textContent || "[]"); } catch {}
-      loadFirstWorkingImage(img, cands, "/img/icons/cigar-outline.svg");
+      loadFirstWorkingImage(img, cands, "/img/icons/brands/padron.svg");
     });
   }
 
