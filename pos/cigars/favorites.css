@@ -18,15 +18,14 @@
   margin: 18px 0 10px;
 }
 
-/* ✅ IMPORTANT:
-   Remove the "rounded card" look entirely.
-   We want the Brand POS style: just rows + thin dividers. */
-.fav-cigars-list{
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  overflow: visible;
-  box-shadow: none;
+/* ✅ Remove any “card” styling: NO rounded container, no shadow.
+   We want: rows + thin horizontal separators only. */
+.favorites-page .fav-cigars-list{
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  box-shadow: none !important;
 }
 
 /* =========================================================
@@ -34,48 +33,60 @@
    ICON | TEXT | PRICE | +
 ========================================================= */
 
-.fav-row{
+.favorites-page .fav-row{
   display:grid;
   grid-template-columns:54px 1fr auto auto; /* ICON | TEXT | PRICE | + */
   align-items:center;
   gap:12px;
 
-  /* Match brand.css row padding */
   padding:14px 10px;
 
-  /* Match brand.css thin row separator */
+  /* ✅ thin separators only */
   border-top:1px solid rgba(15,26,44,.10);
+
+  /* ✅ kill any lingering “rounded row” styling */
+  background: transparent !important;
+  border-radius: 0 !important;
 }
 
-/* If your HTML renders a first row, remove the first divider like brand.css */
-.fav-row:first-child{ border-top:none; }
+.favorites-page .fav-row:first-child{
+  border-top:none;
+}
 
 /* Icon (brand logo) */
-.fav-ico{
+.favorites-page .fav-ico{
   width:54px;
   height:54px;
   border-radius:14px;
   object-fit:cover;
-
-  /* similar visual weight to brand page */
   background:rgba(15,26,44,.06);
   box-shadow:0 10px 24px rgba(0,0,0,.10);
-
-  /* stops weird Safari “open image” behavior */
   pointer-events:none;
   display:block;
 }
 
 /* Text column */
-.fav-main{
+.favorites-page .fav-main{
   display:flex;
   flex-direction:column;
   gap:4px;
   min-width:0;
 }
 
+/* Clickable text area */
+.favorites-page .fav-open{
+  border:none;
+  background:transparent;
+  padding:0;
+  margin:0;
+  cursor:pointer;
+  text-align:left;
+  width:100%;
+  display:block;
+}
+
 /* Cigar name */
-.fav-title{
+.favorites-page .fav-title{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-size:16px;
   font-weight:700;
@@ -92,12 +103,11 @@
 }
 
 /* Vitola line */
-.fav-sub{
+.favorites-page .fav-sub{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-size:12px;
   font-weight:700;
   color:rgba(15,26,44,.55);
-
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -105,7 +115,7 @@
 }
 
 /* ✅ Price column with the SAME vertical separator style as brand.css */
-.fav-price{
+.favorites-page .fav-price{
   position:relative;
   padding-left:10px;
 
@@ -117,8 +127,7 @@
   min-width:78px;
   text-align:right;
 }
-
-.fav-price::before{
+.favorites-page .fav-price::before{
   content:"";
   position:absolute;
   left:0;
@@ -131,7 +140,7 @@
 }
 
 /* Green + button (match brand.css sizing) */
-.fav-add{
+.favorites-page .fav-add{
   width:20px;
   height:20px;
   border-radius:999px;
@@ -150,25 +159,17 @@
   box-shadow:0 10px 18px rgba(0,0,0,.12);
   -webkit-tap-highlight-color:transparent;
 }
-.fav-add:active{ transform:scale(.98); }
-
-/* Clickable text area */
-.fav-open{
-  border:none;
-  background:transparent;
-  padding:0;
-  margin:0;
-  cursor:pointer;
-  text-align:left;
-  width:100%;
-  display:block;
+.favorites-page .fav-add:active{
+  transform:scale(.98);
 }
 
 /* If an old divider element exists in HTML, kill it */
-.fav-divider{ display:none !important; }
+.favorites-page .fav-divider{
+  display:none !important;
+}
 
 /* Status */
-.fav-status{
+.favorites-page .fav-status{
   margin-top:10px;
   font-size:14px;
   color:rgba(15,26,44,.55);
@@ -176,27 +177,19 @@
 
 /* Responsive tighten */
 @media (max-width: 390px){
-  .fav-row{
+  .favorites-page .fav-row{
     grid-template-columns:54px 1fr auto auto;
     padding:13px 10px;
     gap:10px;
   }
 
-  .fav-ico{
+  .favorites-page .fav-ico{
     width:52px;
     height:52px;
-    border-radius:14px;
   }
 
-  .fav-title{ font-size:15px; }
-  .fav-sub{ font-size:11px; }
-  .fav-price{ font-size:15px; min-width:74px; }
-
-  .fav-price::before{ height:42px; }
-
-  .fav-add{
-    width:20px;
-    height:20px;
-    font-size:12px;
-  }
+  .favorites-page .fav-title{ font-size:15px; }
+  .favorites-page .fav-sub{ font-size:11px; }
+  .favorites-page .fav-price{ font-size:15px; min-width:74px; }
+  .favorites-page .fav-price::before{ height:42px; }
 }
