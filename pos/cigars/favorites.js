@@ -1,14 +1,13 @@
 /* /pos/cigars/favorites.js
    Favorites shortcut page
 
+   Goals:
    ✅ Brands grid uses SAME DOM/CSS classes as /pos/cigars/ (brands-grid tile style)
-   ✅ Cigars list uses SAME row layout as brand pages (icon | title | divider | MSRP | +)
+   ✅ Cigars list uses SAME row layout as brand pages (icon | title | price separator | MSRP | +)
    ✅ White container (not blue)
    ✅ Clicking brand tile -> brand page
    ✅ Clicking cigar name -> detail modal (same behavior style as brand pages)
    ✅ Green + adds to invoice via window.CigarOSCart.add
-   ✅ FIX: Add brand icon into cart so invoice shows icons
-   ✅ FIX: Brand href supports slug
 */
 
 (() => {
@@ -22,6 +21,9 @@
   const cigarsList = $("#fav-cigars-list");
   const statusEl = $("#fav-status");
 
+  // ------------------------------------------------------------
+  // HARD-CODED favorites for now
+  // ------------------------------------------------------------
   const FAVORITE_BRANDS = [
     { name: "Padron", slug: "padron" },
     { name: "Arturo Fuente", slug: "arturofuente" },
@@ -33,10 +35,14 @@
     { cigar: "Padron 60th Anniversary Perfecto", brandHint: "padron" },
   ];
 
+  // If your actual brand route is different, change this ONE function.
   function brandHref(slug) {
     return `/pos/cigars/brand/?brand=${encodeURIComponent(slug)}`;
   }
 
+  // ------------------------------------------------------------
+  // helpers
+  // ------------------------------------------------------------
   const normD = (s) =>
     (s || "")
       .toString()
@@ -77,6 +83,17 @@
     statusEl.textContent = msg || "";
   }
 
+  // ✅ inline SVG fallback so iOS never shows the blue "?"
+  const FALLBACK_ICON_SVG = encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+      <rect x="10" y="10" width="76" height="76" rx="18" fill="rgba(15,26,44,0.06)"/>
+      <path d="M38 22h20c8 0 14 6 14 14 0 6-3 10-8 13-5 3-6 5-6 9v2H44v-3c0-9 4-12 9-15 3-2 5-4 5-7 0-4-3-7-7-7H38v-6z"
+        fill="rgba(15,26,44,0.55)"/>
+      <circle cx="48" cy="72" r="4.2" fill="rgba(15,26,44,0.55)"/>
+    </svg>
+  `).trim();
+  const FALLBACK_ICON = `data:image/svg+xml;charset=utf-8,${FALLBACK_ICON_SVG}`;
+
   function normalizeIconPath(p) {
     let s = (p || "").toString().trim();
     if (!s) return "";
@@ -85,25 +102,29 @@
     if (s.startsWith("img/")) s = "/" + s;
     if (!s.startsWith("/")) s = "/" + s;
 
+    // ensure plural path for brand icons
     s = s.replace(/^\/img\/icons\/brand\//i, "/img/icons/brands/");
     s = s.replace(/\/{2,}/g, "/");
     return s;
   }
 
-  function loadFirstWorkingImage(imgEl, candidates, fallbackSrc = "") {
+  function loadFirstWorkingImage(imgEl, candidates, fallbackSrc = FALLBACK_ICON) {
     let i = 0;
+    const list = Array.isArray(candidates) ? candidates.filter(Boolean) : [];
+
     const tryNext = () => {
-      if (i >= candidates.length) {
-        if (fallbackSrc) imgEl.src = fallbackSrc;
-        else imgEl.removeAttribute("src");
+      if (i >= list.length) {
+        imgEl.onerror = null;
+        imgEl.src = fallbackSrc || FALLBACK_ICON;
         return;
       }
       imgEl.onerror = () => {
         i++;
         tryNext();
       };
-      imgEl.src = candidates[i];
+      imgEl.src = list[i];
     };
+
     tryNext();
   }
 
@@ -114,9 +135,11 @@
       `/img/icons/brands/${s}.svg`,
       `/img/icons/brands/${s}.png`,
       `/img/icons/brands/${s}.jpg`,
+      `/img/icons/brands/${s}.webp`,
     ];
   }
 
+  // ✅ robust slug candidates for brand icons (fixes LFD + “La …” brands)
   function brandSlugCandidatesFromName(brandName) {
     const raw = (brandName || "").toString().trim();
     const b = normD(raw);
@@ -125,7 +148,8 @@
     const tight = slugTight(raw);
     if (tight) slugs.add(tight);
 
-    const noParen = raw.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+    // remove parenthetical: "Name (ABC)"
+    const noParen = raw.replace(/\s*$begin:math:text$\[\^\)\]\*$end:math:text$\s*/g, " ").replace(/\s+/g, " ").trim();
     const tightNoParen = slugTight(noParen);
     if (tightNoParen) slugs.add(tightNoParen);
 
@@ -151,10 +175,10 @@
   function brandIconCandidatesFromRow(row) {
     const candidates = [];
 
+    // if the sheet ever includes a brand icon path, prefer it
     const rawIcon =
       row["Brand Icon"] ||
       row["Brand IMG"] ||
-      row["Manufacturer IMG"] ||
       row["Brand Image"] ||
       row["Icon"] ||
       "";
@@ -176,29 +200,33 @@
     return Array.from(new Set(candidates.filter(Boolean)));
   }
 
-  function cartBrandIcon(row) {
-    const rawBrand = normalizeIconPath(row?.["Brand IMG"] || "");
-    const rawMfg = normalizeIconPath(row?.["Manufacturer IMG"] || "");
-    const slug = slugTight(row?.Brand || row?._brandHint || "");
-    return rawBrand || rawMfg || (slug ? `/img/icons/brands/${slug}.svg` : "") || "/img/icons/cigar-outline.svg";
-  }
-
+  // ------------------------------------------------------------
+  // Brands grid render (uses SAME markup/class expectations as cigars page)
+  // ------------------------------------------------------------
   function renderFavoriteBrands() {
     if (!brandsGrid) return;
 
-    brandsGrid.innerHTML = FAVORITE_BRANDS.map((b) => {
-      const imgCands = brandIconCandidatesFromSlug(b.slug);
-      const img0 = imgCands[0] || "";
+    brandsGrid.innerHTML = FAVORITE_BRANDS.map((b, idx) => {
+      const imgId = `favBrandIco_${idx}`;
       return `
         <a class="category-card" href="${escapeAttr(brandHref(b.slug))}">
-          <img src="${escapeAttr(img0)}" alt="${escapeAttr(b.name)}"
-               onerror="this.onerror=null; this.src='${escapeAttr(imgCands[1] || img0)}';" />
+          <img id="${imgId}" alt="${escapeAttr(b.name)}" />
           <div class="category-name">${escapeHTML(b.name)}</div>
         </a>
       `;
     }).join("");
+
+    // load icons with real fallback (no blue "?")
+    FAVORITE_BRANDS.forEach((b, idx) => {
+      const img = document.getElementById(`favBrandIco_${idx}`);
+      if (!img) return;
+      loadFirstWorkingImage(img, brandIconCandidatesFromSlug(b.slug), FALLBACK_ICON);
+    });
   }
 
+  // ------------------------------------------------------------
+  // CSV parsing
+  // ------------------------------------------------------------
   function parseCSV(text) {
     const rows = [];
     let i = 0, field = "", row = [], inQuotes = false;
@@ -238,6 +266,9 @@
     return out;
   }
 
+  // ------------------------------------------------------------
+  // Find favorite cigars from sheet (brandHint matters)
+  // ------------------------------------------------------------
   function findRowForFavorite(allRows, fav) {
     const target = normD(fav.cigar);
     const brandHint = normD(fav.brandHint || "");
@@ -275,6 +306,9 @@
     return best;
   }
 
+  // ------------------------------------------------------------
+  // Brand-page-style display name (Line + cigar, dedupe prefix)
+  // ------------------------------------------------------------
   function stripDuplicateLinePrefix(lineRaw, cigarRaw) {
     const line = (lineRaw || "").toString().trim();
     const cigar = (cigarRaw || "").toString().trim();
@@ -297,7 +331,7 @@
   }
 
   // ------------------------------------------------------------
-  // Detail modal (same DOM/CSS classes as brand page modal)
+  // Detail modal (same behavior style as brand pages)
   // ------------------------------------------------------------
   let detailOverlay = null;
   let detailSheet = null;
@@ -311,20 +345,13 @@
             <stop offset="1" stop-color="rgba(15,26,44,0.04)"/>
           </linearGradient>
         </defs>
-
         <rect x="78" y="32" width="84" height="456" rx="42"
               fill="url(#ph_g)" stroke="rgba(15,26,44,0.22)" stroke-width="3"/>
-
         <rect x="78" y="32" width="84" height="44" rx="22"
               fill="rgba(15,26,44,0.06)" stroke="rgba(15,26,44,0.18)" stroke-width="2"/>
-
-        <rect x="86" y="160" width="68" height="22" rx="11"
-              fill="rgba(15,26,44,0.06)"/>
-        <rect x="86" y="192" width="68" height="10" rx="5"
-              fill="rgba(15,26,44,0.05)"/>
-
-        <text x="120" y="275"
-              text-anchor="middle"
+        <rect x="86" y="160" width="68" height="22" rx="11" fill="rgba(15,26,44,0.06)"/>
+        <rect x="86" y="192" width="68" height="10" rx="5" fill="rgba(15,26,44,0.05)"/>
+        <text x="120" y="275" text-anchor="middle"
               font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
               font-size="14"
               fill="rgba(15,26,44,0.55)"
@@ -371,13 +398,16 @@
   function resolveCigarImageCandidates(row) {
     const brandSlug = slugTight(row.Brand || "");
     const baseDir = brandSlug ? `/img/cigars/${brandSlug}/` : "/img/cigars/";
-
     const candidates = [];
+
     const raw = row["Cigar IMG"] || row["Cigar Image"] || row["Image"] || "";
     const rawNorm = normalizeIconPath(raw);
 
-    if (rawNorm.includes("/img/cigars/")) candidates.push(rawNorm);
-    else if (raw && /\.(png|jpg|jpeg|webp)$/i.test(raw)) candidates.push(`${baseDir}${raw.replace(/^\/+/, "")}`);
+    if (rawNorm.includes("/img/cigars/")) {
+      candidates.push(rawNorm);
+    } else if (raw && /\.(png|jpg|jpeg|webp)$/i.test(raw)) {
+      candidates.push(`${baseDir}${raw.replace(/^\/+/, "")}`);
+    }
 
     const lineRaw = (row.Line || "").toString().trim();
     const cigarRaw = (row.Cigar || "").toString().trim();
@@ -501,7 +531,7 @@
     `;
 
     const brandImg = detailSheet.querySelector("img[data-detail-brand-icon]");
-    if (brandImg) loadFirstWorkingImage(brandImg, brandIconCands, "/img/icons/cigar-outline.svg");
+    if (brandImg) loadFirstWorkingImage(brandImg, brandIconCands, FALLBACK_ICON);
 
     const ph = detailSheet.querySelector("[data-cigar-placeholder]");
     const cigarImg = detailSheet.querySelector("img[data-detail-cigar-img]");
@@ -524,7 +554,10 @@
             showPlaceholder();
             return;
           }
-          cigarImg.onerror = () => { idx++; tryNext(); };
+          cigarImg.onerror = () => {
+            idx++;
+            tryNext();
+          };
           cigarImg.onload = () => showImage();
           cigarImg.src = cigarCands[idx];
         };
@@ -542,7 +575,7 @@
         category: "Cigars",
         sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
         price: toNum(row.MSRP),
-        img: cartBrandIcon(row), // ✅ invoice icon
+        img: "",
       });
       closeDetail();
     });
@@ -581,7 +614,6 @@
         ROW_BY_ID[id] = row;
 
         const iconCands = brandIconCandidatesFromRow(row);
-
         const name = buildDisplayName(row);
         const sub = row.Vitola || row.Brand || row._brandHint || "";
         const price = money(toNum(row.MSRP));
@@ -598,6 +630,7 @@
           </div>
 
           <div class="fav-price">${escapeHTML(price)}</div>
+
           <button class="fav-add" type="button" aria-label="Add" data-add>+</button>
 
           <template data-ico-cands>${escapeHTML(JSON.stringify(iconCands))}</template>
@@ -606,14 +639,14 @@
       })
       .join("");
 
-    // apply icons
+    // apply icons with inline SVG fallback (no blue "?")
     cigarsList.querySelectorAll(".fav-row").forEach((rowEl) => {
       const img = rowEl.querySelector("img[data-ico]");
       const t = rowEl.querySelector("template[data-ico-cands]");
       if (!img || !t) return;
       let cands = [];
       try { cands = JSON.parse(t.textContent || "[]"); } catch {}
-      loadFirstWorkingImage(img, cands, "/img/icons/cigar-outline.svg");
+      loadFirstWorkingImage(img, cands, FALLBACK_ICON);
     });
   }
 
@@ -635,7 +668,7 @@
           category: "Cigars",
           sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}`.trim() : "",
           price: toNum(row.MSRP),
-          img: cartBrandIcon(row), // ✅ invoice icon
+          img: "",
         });
         return;
       }
@@ -651,6 +684,9 @@
     });
   }
 
+  // ------------------------------------------------------------
+  // init
+  // ------------------------------------------------------------
   backBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
