@@ -4,7 +4,6 @@
    Goals:
    ✅ Brands grid uses SAME DOM/CSS classes as /pos/cigars/ (brands-grid tile style)
    ✅ Cigars list uses SAME row layout as brand pages (icon | title | price separator | MSRP | +)
-   ✅ White container (not blue)
    ✅ Clicking brand tile -> brand page
    ✅ Clicking cigar name -> detail modal (same behavior style as brand pages)
    ✅ Green + adds to invoice via window.CigarOSCart.add
@@ -35,7 +34,6 @@
     { cigar: "Padron 60th Anniversary Perfecto", brandHint: "padron" },
   ];
 
-  // If your actual brand route is different, change this ONE function.
   function brandHref(slug) {
     return `/pos/cigars/brand/?brand=${encodeURIComponent(slug)}`;
   }
@@ -139,7 +137,7 @@
     ];
   }
 
-  // ✅ robust slug candidates for brand icons (fixes LFD + “La …” brands)
+  // ✅ robust slug candidates for brand icons
   function brandSlugCandidatesFromName(brandName) {
     const raw = (brandName || "").toString().trim();
     const b = normD(raw);
@@ -162,12 +160,14 @@
       if (noThe) slugs.add(noThe);
     }
 
+    // known brand shortcuts
     if (b.includes("la flor dominicana")) {
       slugs.add("laflordominicana");
       slugs.add("lfd");
     }
     if (b.includes("padron")) slugs.add("padron");
     if (b.includes("arturo fuente")) slugs.add("arturofuente");
+    if (b.includes("aladino")) slugs.add("aladino");
 
     return Array.from(slugs);
   }
@@ -201,7 +201,7 @@
   }
 
   // ------------------------------------------------------------
-  // Brands grid render (uses SAME markup/class expectations as cigars page)
+  // Brands grid render
   // ------------------------------------------------------------
   function renderFavoriteBrands() {
     if (!brandsGrid) return;
@@ -216,7 +216,6 @@
       `;
     }).join("");
 
-    // load icons with real fallback (no blue "?")
     FAVORITE_BRANDS.forEach((b, idx) => {
       const img = document.getElementById(`favBrandIco_${idx}`);
       if (!img) return;
@@ -267,7 +266,7 @@
   }
 
   // ------------------------------------------------------------
-  // Find favorite cigars from sheet (brandHint matters)
+  // Find favorite cigars from sheet
   // ------------------------------------------------------------
   function findRowForFavorite(allRows, fav) {
     const target = normD(fav.cigar);
@@ -307,27 +306,25 @@
   }
 
   // ------------------------------------------------------------
-  // Brand-page-style display name (Line + cigar, dedupe prefix)
+  // ✅ Display name: Line + Cigar, but NEVER duplicate.
+  // If cigar already contains line anywhere, do not prepend line.
   // ------------------------------------------------------------
-  function stripDuplicateLinePrefix(lineRaw, cigarRaw) {
-    const line = (lineRaw || "").toString().trim();
-    const cigar = (cigarRaw || "").toString().trim();
-    if (!line || !cigar) return cigar;
+  function buildDisplayName(row) {
+    const line = (row.Line || "").toString().trim();
+    const cigar = (row.Cigar || "").toString().trim();
+    if (!line) return cigar;
+    if (!cigar) return line;
 
     const ln = normD(line);
     const cn = normD(cigar);
 
-    if (cn.startsWith(ln + " ")) return cigar.slice(line.length).trim();
-    return cigar;
-  }
+    // if cigar already includes the line anywhere, just use cigar
+    if (ln && cn.includes(ln)) return cigar;
 
-  function buildDisplayName(row) {
-    const line = (row.Line || "").toString().trim();
-    const cigar = (row.Cigar || "").toString().trim();
-    const cigarNoDup = stripDuplicateLinePrefix(line, cigar);
+    // if cigar starts with the line, strip it (extra safety)
+    if (ln && cn.startsWith(ln + " ")) return cigar.slice(line.length).trim();
 
-    if (line && cigarNoDup) return `${line} ${cigarNoDup}`;
-    return cigarNoDup || cigar || line || "";
+    return `${line} ${cigar}`;
   }
 
   // ------------------------------------------------------------
@@ -409,36 +406,6 @@
       candidates.push(`${baseDir}${raw.replace(/^\/+/, "")}`);
     }
 
-    const lineRaw = (row.Line || "").toString().trim();
-    const cigarRaw = (row.Cigar || "").toString().trim();
-
-    const lineNorm = normD(lineRaw);
-    const cigarSlug = slugTight(cigarRaw);
-    const lineSlug = slugTight(lineRaw);
-
-    const exts = [".png", ".jpg", ".jpeg", ".webp"];
-    const pushBase = (baseNoExt) => exts.forEach((ext) => candidates.push(`${baseNoExt}${ext}`));
-
-    if (brandSlug === "padron") {
-      if (lineNorm === "1964") pushBase(`${baseDir}padron1964${cigarSlug}`);
-      if (lineNorm === "1926") {
-        pushBase(`${baseDir}1926serie${cigarSlug}`);
-        pushBase(`${baseDir}1926series${cigarSlug}`);
-        pushBase(`${baseDir}1926${cigarSlug}`);
-        pushBase(`${baseDir}padron1926serie${cigarSlug}`);
-      }
-      if (lineNorm === "damaso" || normD(cigarRaw) === "damaso") {
-        pushBase(`${baseDir}Damaso`);
-        pushBase(`${baseDir}damaso`);
-        pushBase(`${baseDir}padrondamaso`);
-      }
-      if (lineSlug && cigarSlug) pushBase(`${baseDir}padron${lineSlug}${cigarSlug}`);
-      if (cigarSlug) pushBase(`${baseDir}padron${cigarSlug}`);
-    } else {
-      if (brandSlug && lineSlug && cigarSlug) pushBase(`${baseDir}${brandSlug}${lineSlug}${cigarSlug}`);
-      if (brandSlug && cigarSlug) pushBase(`${baseDir}${brandSlug}${cigarSlug}`);
-    }
-
     return Array.from(new Set(candidates.filter(Boolean)));
   }
 
@@ -473,7 +440,7 @@
             <div class="cd-name">${escapeHTML(cigarName)}</div>
           </div>
           <div class="cd-h-icon">
-            <img data-detail-brand-icon alt="">
+            <img data-detail-brand-icon alt="${escapeAttr(brand)}">
           </div>
         </div>
 
@@ -530,6 +497,7 @@
       </div>
     `;
 
+    // ✅ always attempt to load a brand icon into the header
     const brandImg = detailSheet.querySelector("img[data-detail-brand-icon]");
     if (brandImg) loadFirstWorkingImage(brandImg, brandIconCands, FALLBACK_ICON);
 
@@ -592,7 +560,7 @@
   }
 
   // ------------------------------------------------------------
-  // Render favorite cigars list (brand-page layout but white)
+  // Render favorite cigars list
   // ------------------------------------------------------------
   let ROW_BY_ID = Object.create(null);
 
@@ -615,7 +583,7 @@
 
         const iconCands = brandIconCandidatesFromRow(row);
         const name = buildDisplayName(row);
-        const sub = row.Vitola || row.Brand || row._brandHint || "";
+        const sub = row.Vitola || "";
         const price = money(toNum(row.MSRP));
 
         return `
@@ -639,7 +607,6 @@
       })
       .join("");
 
-    // apply icons with inline SVG fallback (no blue "?")
     cigarsList.querySelectorAll(".fav-row").forEach((rowEl) => {
       const img = rowEl.querySelector("img[data-ico]");
       const t = rowEl.querySelector("template[data-ico-cands]");
@@ -716,6 +683,8 @@
 
   function init() {
     renderFavoriteBrands();
+
+    // ✅ FIXED: correct function name so clicks work
     initCigarDelegation();
 
     load().catch((err) => {
