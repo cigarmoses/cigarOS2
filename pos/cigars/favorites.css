@@ -1,4 +1,11 @@
-/* /pos/cigars/favorites.css */
+/* /pos/cigars/favorites.css
+   ✅ Favorites “Cigars” rows now MATCH /pos/cigars/brand.css row design:
+   - Top/bottom thin separators
+   - Same grid + spacing
+   - Same price vertical separator (inside price column)
+   - Same + button sizing
+   - Keeps Favorites page WHITE + dark text
+*/
 
 /* Slightly tighter title margin for this page */
 .favorites-title{
@@ -18,7 +25,7 @@
   margin: 18px 0 10px;
 }
 
-/* White container card for the cigar rows (NOT blue) */
+/* White container card for the cigar rows */
 .fav-cigars-list{
   background: #ffffff;
   border: 1px solid #e4ecf6;
@@ -28,163 +35,9 @@
 }
 
 /* =========================================================
-   FAVORITES CIGAR ROW — match Brand POS row sizing
-   icon | main | divider | price | +
-========================================================= */
-
-.fav-row{
-  display: grid;
-
-  /* KEY: reduce fixed cols so the MAIN text column gets more room,
-     which pushes the divider to the RIGHT (like the green box). */
-  grid-template-columns: 60px 1fr 1px 70px 48px;
-
-  align-items: center;
-  column-gap: 12px;
-  padding: 12px 14px;
-}
-
-.fav-row + .fav-row{
-  border-top: 1px solid rgba(15,26,44,0.08);
-}
-
-/* Brand icon */
-.fav-ico{
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-
-  /* match brand list feel */
-  background: #ffffff;
-  box-shadow: 0 6px 16px rgba(15, 26, 44, 0.10);
-
-  padding: 8px;
-  object-fit: contain;
-  display: block;
-}
-
-/* Text column */
-.fav-main{
-  min-width: 0;
-}
-
-/* Cigar name — smaller + cleaner like brand page */
-.fav-title{
-  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
-  margin: 0;
-  color: #0f1a2c;
-
-  /* Match the green list behavior: stay clean and tight */
-  display: -webkit-box;
-  -webkit-line-clamp: 2; /* keep 2 lines max like POS */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Vitola line */
-.fav-sub{
-  margin-top: 3px;
-  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 400;
-  font-size: 12px;
-  letter-spacing: -0.01em;
-  color: rgba(15,26,44,.55);
-
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Vertical separator */
-.fav-divider{
-  height: 42px;
-  background: transparent;
-  border-left: 2px solid rgba(15,26,44,0.14);
-  justify-self: center;
-}
-
-/* Price */
-.fav-price{
-  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500;
-  font-size: 12px;
-  letter-spacing: -0.01em;
-  text-align: right;
-  color: #0f1a2c;
-}
-
-/* Green + button */
-.fav-add{
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  border: none;
-  background: #34c759;
-  color: #ffffff;
-  font-size: 10px;
-  line-height: 0;
-  font-weight: 500;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  justify-self: end;
-}
-
-.fav-add:active{
-  transform: scale(.96);
-  filter: brightness(0.98);
-}
-
-/* Tappable name area */
-.fav-open{
-  border: none;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  text-align: left;
-  width: 100%;
-}
-
-/* Status */
-.fav-status{
-  margin-top: 10px;
-  font-size: 14px;
-  color: rgba(15,26,44,.55);
-}
-
-/* Responsive tighten */
-@media (max-width: 390px){
-  .fav-row{
-    grid-template-columns: 60px 1fr 1px 68px 48px;
-    padding: 11px 12px;
-    column-gap: 10px;
-  }
-
-  .fav-ico{
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-  }
-
-  .fav-title{ font-size: 14px; }
-  .fav-sub{ font-size: 10px; }
-  .fav-price{ font-size: 14px; }
-
-  .fav-add{
-    width: 38px;
-    height: 38px;
-    font-size: 22px;
-  }
-  /* =========================================================
-   Favorites cigar rows — MATCH /pos/cigars/brand.css sizing
-   (but keep white background + dark text)
+   FAVORITES CIGAR ROW — MATCH /pos/cigars/brand.css
+   ICON | TEXT | PRICE | +
+   (no separate divider element; separator lives in price)
 ========================================================= */
 
 .fav-row{
@@ -193,11 +46,16 @@
   align-items:center;
   gap:12px;
   padding:14px 10px;
+
+  /* ✅ match brand rows: thin separators between rows */
   border-top:1px solid rgba(15,26,44,.10);
 }
 
-.fav-row:first-child{ border-top:none; }
+.fav-row:first-child{
+  border-top:none;
+}
 
+/* Brand icon (same sizing as brand rows) */
 .fav-ico{
   width:54px;
   height:54px;
@@ -206,9 +64,10 @@
   background:rgba(15,26,44,.06);
   box-shadow:0 10px 24px rgba(0,0,0,.10);
   pointer-events:none; /* stops weird Safari “open image” behavior */
+  display:block;
 }
 
-/* clickable text block */
+/* Text column */
 .fav-main{
   display:flex;
   flex-direction:column;
@@ -216,7 +75,9 @@
   min-width:0;
 }
 
+/* Cigar name */
 .fav-title{
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-size:16px;
   font-weight:700;
   letter-spacing:-.01em;
@@ -230,7 +91,9 @@
   white-space:normal;
 }
 
+/* Vitola line */
 .fav-sub{
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-size:12px;
   font-weight:700;
   color:rgba(15,26,44,.55);
@@ -239,16 +102,18 @@
   text-overflow:ellipsis;
 }
 
-/* price column with the SAME vertical separator style as brand.css */
+/* ✅ Price column WITH the vertical separator (matches brand.css) */
 .fav-price{
   position:relative;
   padding-left:10px;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-size:16px;
   font-weight:600;
   color:#0f1a2c;
   min-width:78px;
   text-align:right;
 }
+
 .fav-price::before{
   content:"";
   position:absolute;
@@ -261,7 +126,7 @@
   opacity:.9;
 }
 
-/* MATCH brand.css row-add size */
+/* ✅ Green + button (match brand row sizing) */
 .fav-add{
   width:20px;
   height:20px;
@@ -277,9 +142,60 @@
   cursor:pointer;
   box-shadow:0 10px 18px rgba(0,0,0,.12);
   -webkit-tap-highlight-color:transparent;
+  justify-self:end;
 }
-.fav-add:active{ transform:scale(.98); }
 
-/* Remove any old divider element spacing if it exists */
-.fav-divider{ display:none !important; }
+.fav-add:active{
+  transform:scale(.98);
+}
+
+/* Tappable name area */
+.fav-open{
+  border:none;
+  background:transparent;
+  padding:0;
+  margin:0;
+  cursor:pointer;
+  text-align:left;
+  width:100%;
+}
+
+/* ✅ Remove the old divider element if it exists in markup */
+.fav-divider{
+  display:none !important;
+}
+
+/* Status */
+.fav-status{
+  margin-top: 10px;
+  font-size: 14px;
+  color: rgba(15,26,44,.55);
+}
+
+/* Responsive tighten */
+@media (max-width: 390px){
+  .fav-row{
+    grid-template-columns:54px 1fr auto auto;
+    padding:13px 10px;
+    gap:10px;
+  }
+
+  .fav-ico{
+    width:52px;
+    height:52px;
+  }
+
+  .fav-title{ font-size:15px; }
+  .fav-sub{ font-size:11px; }
+
+  .fav-price{
+    min-width:74px;
+    font-size:15px;
+  }
+
+  .fav-add{
+    width:20px;
+    height:20px;
+    font-size:12px;
+  }
 }
