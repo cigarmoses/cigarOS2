@@ -1,11 +1,4 @@
-/* /pos/cigars/favorites.css
-   ✅ Favorites “Cigars” rows now MATCH /pos/cigars/brand.css row design:
-   - Top/bottom thin separators
-   - Same grid + spacing
-   - Same price vertical separator (inside price column)
-   - Same + button sizing
-   - Keeps Favorites page WHITE + dark text
-*/
+/* /pos/cigars/favorites.css */
 
 /* Slightly tighter title margin for this page */
 .favorites-title{
@@ -25,144 +18,151 @@
   margin: 18px 0 10px;
 }
 
-/* White container card for the cigar rows */
+/* White container card for the cigar rows (single connected card) */
 .fav-cigars-list{
   background: #ffffff;
   border: 1px solid #e4ecf6;
   border-radius: 22px;
-  overflow: hidden;
+  overflow: hidden; /* keeps the outer rounded corners only */
   box-shadow: 0 10px 26px rgba(15, 26, 44, 0.08);
 }
 
 /* =========================================================
-   FAVORITES CIGAR ROW — MATCH /pos/cigars/brand.css
+   FAVORITES CIGAR ROW — MATCH /pos/cigars/brand.css sizing
    ICON | TEXT | PRICE | +
-   (no separate divider element; separator lives in price)
+   + horizontal dividers only (NO per-row rounded corners)
 ========================================================= */
 
 .fav-row{
-  display:grid;
-  grid-template-columns:54px 1fr auto auto; /* ICON | TEXT | PRICE | + */
-  align-items:center;
-  gap:12px;
-  padding:14px 10px;
+  display: grid;
+  grid-template-columns: 54px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
 
-  /* ✅ match brand rows: thin separators between rows */
-  border-top:1px solid rgba(15,26,44,.10);
+  padding: 14px 10px;
+
+  /* key: rows must be FLAT (no card look) */
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+
+  border-top: 1px solid rgba(15,26,44,.10);
 }
 
 .fav-row:first-child{
-  border-top:none;
+  border-top: none;
 }
 
-/* Brand icon (same sizing as brand rows) */
+/* Brand icon (same sizing feel as brand page list icon) */
 .fav-ico{
-  width:54px;
-  height:54px;
-  border-radius:14px;
-  object-fit:cover;
-  background:rgba(15,26,44,.06);
-  box-shadow:0 10px 24px rgba(0,0,0,.10);
-  pointer-events:none; /* stops weird Safari “open image” behavior */
-  display:block;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  object-fit: contain;
+
+  background: rgba(15,26,44,.06);
+  box-shadow: 0 10px 24px rgba(0,0,0,.10);
+
+  padding: 8px;
+  display: block;
+
+  pointer-events: none; /* prevents long-press “open image” weirdness on iOS */
 }
 
-/* Text column */
+/* Clickable text block */
 .fav-main{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  min-width:0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
-/* Cigar name */
 .fav-title{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-size:16px;
-  font-weight:700;
-  letter-spacing:-.01em;
-  line-height:1.1;
-  color:#0f1a2c;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: #0f1a2c;
 
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-  white-space:normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
 }
 
-/* Vitola line */
 .fav-sub{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-size:12px;
-  font-weight:700;
-  color:rgba(15,26,44,.55);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(15,26,44,.55);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ✅ Price column WITH the vertical separator (matches brand.css) */
+/* Price column with the SAME vertical separator style as brand.css */
 .fav-price{
-  position:relative;
-  padding-left:10px;
+  position: relative;
+  padding-left: 10px;
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-size:16px;
-  font-weight:600;
-  color:#0f1a2c;
-  min-width:78px;
-  text-align:right;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f1a2c;
+  min-width: 78px;
+  text-align: right;
 }
-
 .fav-price::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:50%;
-  transform:translateY(-50%);
-  width:1px;
-  height:44px;
-  background:rgba(15,26,44,.18);
-  opacity:.9;
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 44px;
+  background: rgba(15,26,44,.18);
+  opacity: .9;
 }
 
-/* ✅ Green + button (match brand row sizing) */
+/* Green + button (match brand.css row-add size) */
 .fav-add{
-  width:20px;
-  height:20px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:600;
-  line-height:1;
-  display:grid;
-  place-items:center;
-  border:none;
-  background:var(--green, #34c759);
-  color:#073018;
-  cursor:pointer;
-  box-shadow:0 10px 18px rgba(0,0,0,.12);
-  -webkit-tap-highlight-color:transparent;
-  justify-self:end;
-}
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  border: none;
 
+  background: var(--green, #34c759);
+  color: #073018;
+
+  cursor: pointer;
+  box-shadow: 0 10px 18px rgba(0,0,0,.12);
+  -webkit-tap-highlight-color: transparent;
+}
 .fav-add:active{
-  transform:scale(.98);
+  transform: scale(.98);
 }
 
 /* Tappable name area */
 .fav-open{
-  border:none;
-  background:transparent;
-  padding:0;
-  margin:0;
-  cursor:pointer;
-  text-align:left;
-  width:100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
 }
 
-/* ✅ Remove the old divider element if it exists in markup */
+/* Old divider element should not render (we use price ::before) */
 .fav-divider{
-  display:none !important;
+  display: none !important;
 }
 
 /* Status */
@@ -172,30 +172,293 @@
   color: rgba(15,26,44,.55);
 }
 
-/* Responsive tighten */
-@media (max-width: 390px){
-  .fav-row{
-    grid-template-columns:54px 1fr auto auto;
-    padding:13px 10px;
-    gap:10px;
-  }
+/* =========================================================
+   ✅ CIGAR DETAIL MODAL STYLES (Favorites page was missing these)
+========================================================= */
 
-  .fav-ico{
-    width:52px;
-    height:52px;
-  }
+/* Hide receipt/invoice FAB while cigar detail is open */
+body.cigar-detail-open #receipt-open,
+body.cigar-detail-open .pos-receipt-btn,
+body.cigar-detail-open .pos-receipt-badge,
+body.cigar-detail-open #receipt-count{
+  display:none !important;
+}
 
-  .fav-title{ font-size:15px; }
-  .fav-sub{ font-size:11px; }
+.cigar-detail-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
 
-  .fav-price{
-    min-width:74px;
-    font-size:15px;
-  }
+  z-index: 10003;
+  background: rgba(10, 22, 40, 0.38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 
-  .fav-add{
-    width:20px;
-    height:20px;
-    font-size:12px;
+  padding:
+    calc(22px + env(safe-area-inset-top))
+    14px
+    calc(22px + env(safe-area-inset-bottom));
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+
+  pointer-events: none;
+}
+
+.cigar-detail-overlay.open{
+  display:flex;
+  pointer-events: auto;
+}
+
+.cigar-detail-sheet{
+  width: min(720px, 100%);
+  height: min(820px, 90svh);
+  max-height: 90svh;
+  background: rgba(255,255,255,0.96);
+  border-radius: 22px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
+  overflow: hidden;
+  position: relative;
+}
+
+.cigar-detail-x{
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #ff3b30;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.cigar-detail-body{
+  height: 100%;
+  overflow: hidden;
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cd-headercard{
+  background: #fff;
+  border-radius: 18px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  box-shadow: 0 10px 26px rgba(15,26,44,0.08), 0 2px 8px rgba(15,26,44,0.05);
+}
+
+.cd-brand{
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+}
+
+.cd-name{
+  margin-top: 4px;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: rgba(15,26,44,0.60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-h-icon{
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.06);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.cd-h-icon img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+
+.cd-main{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 0.42fr 0.58fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.cigar-detail-sheet .cd-img{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start !important;
+  padding-left: 22px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cigar-detail-sheet .cd-img img.cigar-detail-stick{
+  height: auto !important;
+  max-height: 100% !important;
+  width: auto !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 !important;
+}
+
+.cd-right{
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.cd-grid2{
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 8px;
+}
+
+.cd-stat{
+  background: rgba(0,0,0,0.04);
+  border-radius: 14px;
+  padding: 8px 10px;
+  text-align: right;
+  min-width: 0;
+}
+.cd-stat .k{
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: -0.02em;
+  color: rgba(15,26,44,0.42);
+  white-space: nowrap;
+}
+.cd-stat .v{
+  margin-top: 5px;
+  font-weight: 800;
+  font-size: 34px;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+  white-space: nowrap;
+}
+.cd-stat.small .v{
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cd-block{
+  background: rgba(0,0,0,0.04);
+  border-radius: 14px;
+  padding: 6px 10px;
+}
+.cd-block.single{
+  padding: 8px 10px;
+}
+
+.cd-kv{
+  display: grid;
+  grid-template-columns: 1fr;
+  padding: 5px 0;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.cd-kv:first-child{ border-top: none; }
+
+.cd-kv .k{
+  text-align: right;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: -0.02em;
+  color: rgba(15,26,44,0.40);
+  white-space: nowrap;
+}
+.cd-kv .v{
+  margin-top: 3px;
+  text-align: right;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-actions{
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  padding-top: 8px;
+  padding-bottom: 6px;
+}
+
+.cd-btn{
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,26,44,0.12);
+  background: rgba(255,255,255,0.66);
+  color: rgba(15,26,44,0.40);
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0 6px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cd-btn[disabled]{ cursor: not-allowed; opacity: 0.9; }
+.cd-actions .cd-btn{ font-size: 0; }
+.cd-actions .cd-btn::before{
+  font-size: 9px;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: rgba(15,26,44,0.40);
+  content: "ACTION";
+}
+.cd-actions .cd-btn:nth-child(1)::before{ content: "ADD"; }
+.cd-actions .cd-btn:nth-child(2)::before{ content: "EDIT"; }
+.cd-actions .cd-btn:nth-child(3)::before{ content: "COMPARE"; }
+
+@media (orientation: landscape) and (max-height: 520px){
+  .cigar-detail-body{
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
+}
+
+@media (max-width: 520px){
+  .cd-main{
+    grid-template-columns: 0.40fr 0.60fr;
+    gap: 10px;
+  }
+  .cigar-detail-sheet .cd-img{ padding-left: 18px !important; }
+  .cd-grid2{ grid-template-columns: 104px 1fr; }
+  .cd-stat .v{ font-size: 32px; }
 }
