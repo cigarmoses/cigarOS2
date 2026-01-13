@@ -1,8 +1,10 @@
 /* /pos/cart.js
    Shared POS Cart + Invoice (single controller for ALL POS pages)
 
-   ✅ FIX: If page already has #receipt-open, use it instead of injecting a second button.
-   ✅ FIX: Invoice line icon fallback (brand icon -> cigar outline) so icons never appear blank.
+   ✅ FIX 1: Receipt/Invoice FAB ALWAYS exists + is correctly sized (id + classes + badge id).
+   ✅ FIX 2: Do NOT trigger the “Add to invoice” popup when clicking Favorites cigar rows
+            (prevents the “big icon at bottom” behavior).
+   ✅ FIX 3: Invoice line icon fallback (brand icon -> cigar outline) so icons never appear blank.
 */
 
 (() => {
@@ -131,23 +133,33 @@
   function ensureReceiptButton() {
     if (receiptBtn) return;
 
+    // ✅ Always prefer an existing #receipt-open if the page provides it
     const existing = $("#receipt-open");
     if (existing) {
       receiptBtn = existing;
-      receiptBtn.classList.add("pos-receipt-btn");
+
+      // ✅ Give it the common class hooks your global CSS targets
+      receiptBtn.classList.add("pos-receipt-btn", "receipt-fab", "pos-receipt-fab");
 
       receiptImg = $("img", receiptBtn) || document.createElement("img");
       receiptImg.classList.add("pos-receipt-img");
       receiptImg.alt = "Receipt";
       if (!receiptImg.parentElement) receiptBtn.appendChild(receiptImg);
 
-      receiptBadge = $("#receipt-count") || document.createElement("span");
-      receiptBadge.classList.add("pos-receipt-badge");
+      // ✅ Force badge id/class used across pages/CSS
+      receiptBadge = $("#receipt-count") || $("span", receiptBtn) || document.createElement("span");
+      receiptBadge.id = "receipt-count";
+      receiptBadge.classList.add("pos-receipt-badge", "receipt-badge");
       if (!receiptBadge.parentElement) receiptBtn.appendChild(receiptBadge);
 
       if (!receiptBtn.dataset.bound) {
         receiptBtn.dataset.bound = "1";
-        receiptBtn.addEventListener("click", () => openInvoice());
+        receiptBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+          openInvoice();
+        });
       }
 
       injectStyles();
@@ -155,9 +167,11 @@
       return;
     }
 
+    // ✅ If page did NOT include it, inject ONE consistent button with the SAME id.
     receiptBtn = document.createElement("button");
     receiptBtn.type = "button";
-    receiptBtn.className = "pos-receipt-btn";
+    receiptBtn.id = "receipt-open";
+    receiptBtn.className = "pos-receipt-btn receipt-fab pos-receipt-fab";
     receiptBtn.setAttribute("aria-label", "Open Invoice");
 
     receiptImg = document.createElement("img");
@@ -165,12 +179,18 @@
     receiptImg.alt = "Receipt";
 
     receiptBadge = document.createElement("span");
-    receiptBadge.className = "pos-receipt-badge";
+    receiptBadge.id = "receipt-count";
+    receiptBadge.className = "pos-receipt-badge receipt-badge";
 
     receiptBtn.appendChild(receiptImg);
     receiptBtn.appendChild(receiptBadge);
 
-    receiptBtn.addEventListener("click", () => openInvoice());
+    receiptBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      openInvoice();
+    });
 
     document.body.appendChild(receiptBtn);
     injectStyles();
@@ -179,6 +199,7 @@
 
   function updateReceiptButton() {
     if (!receiptImg || !receiptBadge) return;
+
     const count = getItemCount();
     receiptImg.src = count === 0 ? ICON_EMPTY : ICON_FULL;
 
@@ -482,6 +503,11 @@
       (e) => {
         const target = e.target;
 
+        // ✅ NEVER intercept clicks intended to open cigar detail on Favorites (or similar)
+        // This is what was causing the “big icon at the bottom” behavior.
+        if (target.closest(".fav-open, [data-open], .fav-row")) return;
+
+        // Don’t interfere with existing explicit add buttons
         if (target.closest("[data-direct-add], .pos-row-add, .pos-plus, .row-plus, .add-plus, .green-plus")) return;
 
         const card = target.closest("[data-receipt-item]");
@@ -538,39 +564,40 @@
       .pos-lock { overflow: hidden; }
       html.pos-lock, body { overscroll-behavior: none; }
 
-      /* Receipt button */
+      /* Receipt button (FORCE small + fixed) */
       .pos-receipt-btn{
-        position: fixed;
-        right: 16px;
-        bottom: 16px;
-        width: 56px;
-        height: 56px;
-        border: none;
-        background: transparent;
-        padding: 0;
-        margin: 0;
-        cursor: pointer;
-        z-index: 10000;
-        -webkit-tap-highlight-color: transparent;
+        position: fixed !important;
+        right: 16px !important;
+        bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+        width: 56px !important;
+        height: 56px !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        cursor: pointer !important;
+        z-index: 10000 !important;
+        -webkit-tap-highlight-color: transparent !important;
       }
       .pos-receipt-img{
-        width: 56px;
-        height: 56px;
-        display: block;
-        border-radius: 14px;
-        box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+        width: 56px !important;
+        height: 56px !important;
+        display: block !important;
+        border-radius: 14px !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.14) !important;
+        object-fit: contain !important;
       }
       .pos-receipt-badge{
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        min-width: 22px;
-        height: 22px;
-        padding: 0 6px;
-        border-radius: 999px;
-        background: #ff3b30;
-        color: #fff;
-        font: 700 12px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        position: absolute !important;
+        top: -6px !important;
+        right: -6px !important;
+        min-width: 22px !important;
+        height: 22px !important;
+        padding: 0 6px !important;
+        border-radius: 999px !important;
+        background: #ff3b30 !important;
+        color: #fff !important;
+        font: 700 12px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
         display: none;
         place-items: center;
         box-shadow: 0 10px 18px rgba(0,0,0,0.18);
