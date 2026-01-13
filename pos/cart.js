@@ -1,10 +1,11 @@
 /* /pos/cart.js
    Shared POS Cart + Invoice (single controller for ALL POS pages)
 
-   ✅ FIX 1: Receipt/Invoice FAB ALWAYS exists + is correctly sized (id + classes + badge id).
-   ✅ FIX 2: Do NOT trigger the “Add to invoice” popup when clicking Favorites cigar rows
-            (prevents the “big icon at bottom” behavior).
-   ✅ FIX 3: Invoice line icon fallback (brand icon -> cigar outline) so icons never appear blank.
+   ✅ FIX: If page already has #receipt-open, use it instead of injecting a second button.
+   ✅ FIX: Invoice line icon fallback (brand icon -> cigar outline) so icons never appear blank.
+   ✅ FIX (NEW): Do NOT intercept clicks inside Favorites cigar rows (.fav-row / .fav-open / #fav-cigars-list)
+                so favorites.js can open the cigar detail modal.
+   ✅ FIX (NEW): Force receipt/invoice FAB visible + bottom-right safe-area on ALL POS pages.
 */
 
 (() => {
@@ -130,48 +131,53 @@
   let invoiceOverlay, invoiceSheet;
   let productOverlay, productSheet;
 
+  // ✅ NEW: hard-force visibility/position for the FAB
+  function hardForceFabVisible() {
+    if (!receiptBtn) return;
+    receiptBtn.hidden = false;
+    receiptBtn.removeAttribute("hidden");
+    receiptBtn.style.display = "block";
+    receiptBtn.style.visibility = "visible";
+    receiptBtn.style.opacity = "1";
+    receiptBtn.style.pointerEvents = "auto";
+    receiptBtn.style.position = "fixed";
+    receiptBtn.style.right = "16px";
+    receiptBtn.style.bottom = `calc(16px + env(safe-area-inset-bottom))`;
+    receiptBtn.style.zIndex = "10000";
+  }
+
   function ensureReceiptButton() {
     if (receiptBtn) return;
 
-    // ✅ Always prefer an existing #receipt-open if the page provides it
     const existing = $("#receipt-open");
     if (existing) {
       receiptBtn = existing;
-
-      // ✅ Give it the common class hooks your global CSS targets
-      receiptBtn.classList.add("pos-receipt-btn", "receipt-fab", "pos-receipt-fab");
+      receiptBtn.classList.add("pos-receipt-btn");
 
       receiptImg = $("img", receiptBtn) || document.createElement("img");
       receiptImg.classList.add("pos-receipt-img");
       receiptImg.alt = "Receipt";
       if (!receiptImg.parentElement) receiptBtn.appendChild(receiptImg);
 
-      // ✅ Force badge id/class used across pages/CSS
-      receiptBadge = $("#receipt-count") || $("span", receiptBtn) || document.createElement("span");
-      receiptBadge.id = "receipt-count";
-      receiptBadge.classList.add("pos-receipt-badge", "receipt-badge");
+      receiptBadge = $("#receipt-count") || document.createElement("span");
+      receiptBadge.classList.add("pos-receipt-badge");
       if (!receiptBadge.parentElement) receiptBtn.appendChild(receiptBadge);
 
       if (!receiptBtn.dataset.bound) {
         receiptBtn.dataset.bound = "1";
-        receiptBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
-          openInvoice();
-        });
+        receiptBtn.addEventListener("click", () => openInvoice());
       }
 
       injectStyles();
       updateReceiptButton();
+      hardForceFabVisible(); // ✅ NEW
       return;
     }
 
-    // ✅ If page did NOT include it, inject ONE consistent button with the SAME id.
     receiptBtn = document.createElement("button");
     receiptBtn.type = "button";
+    receiptBtn.className = "pos-receipt-btn";
     receiptBtn.id = "receipt-open";
-    receiptBtn.className = "pos-receipt-btn receipt-fab pos-receipt-fab";
     receiptBtn.setAttribute("aria-label", "Open Invoice");
 
     receiptImg = document.createElement("img");
@@ -179,27 +185,22 @@
     receiptImg.alt = "Receipt";
 
     receiptBadge = document.createElement("span");
+    receiptBadge.className = "pos-receipt-badge";
     receiptBadge.id = "receipt-count";
-    receiptBadge.className = "pos-receipt-badge receipt-badge";
 
     receiptBtn.appendChild(receiptImg);
     receiptBtn.appendChild(receiptBadge);
 
-    receiptBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
-      openInvoice();
-    });
+    receiptBtn.addEventListener("click", () => openInvoice());
 
     document.body.appendChild(receiptBtn);
     injectStyles();
     updateReceiptButton();
+    hardForceFabVisible(); // ✅ NEW
   }
 
   function updateReceiptButton() {
     if (!receiptImg || !receiptBadge) return;
-
     const count = getItemCount();
     receiptImg.src = count === 0 ? ICON_EMPTY : ICON_FULL;
 
@@ -210,6 +211,8 @@
       receiptBadge.textContent = "";
       receiptBadge.style.display = "none";
     }
+
+    hardForceFabVisible(); // ✅ NEW
   }
 
   // -------------------------
@@ -451,7 +454,7 @@
       brand: item.brand || "",
       name: item.name || "Item",
       price: Number(item.price || 0),
-      img: item.img || "", // may be empty; invoice has fallback
+      img: item.img || "",
       link: item.link || "",
       sub: item.sub || "",
       qty: clamp(Number(item.qty || 1), 1, 999),
@@ -503,12 +506,10 @@
       (e) => {
         const target = e.target;
 
-        // ✅ NEVER intercept clicks intended to open cigar detail on Favorites (or similar)
-        // This is what was causing the “big icon at the bottom” behavior.
-        if (target.closest(".fav-open, [data-open], .fav-row")) return;
-
-        // Don’t interfere with existing explicit add buttons
         if (target.closest("[data-direct-add], .pos-row-add, .pos-plus, .row-plus, .add-plus, .green-plus")) return;
+
+        // ✅ NEW: Do NOT hijack Favorites cigar row clicks (let favorites.js open the detail modal)
+        if (target.closest("#fav-cigars-list, .fav-row, .fav-open, [data-open]")) return;
 
         const card = target.closest("[data-receipt-item]");
         if (!card) return;
@@ -564,40 +565,39 @@
       .pos-lock { overflow: hidden; }
       html.pos-lock, body { overscroll-behavior: none; }
 
-      /* Receipt button (FORCE small + fixed) */
+      /* Receipt button */
       .pos-receipt-btn{
-        position: fixed !important;
-        right: 16px !important;
-        bottom: calc(16px + env(safe-area-inset-bottom)) !important;
-        width: 56px !important;
-        height: 56px !important;
-        border: none !important;
-        background: transparent !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        cursor: pointer !important;
-        z-index: 10000 !important;
-        -webkit-tap-highlight-color: transparent !important;
+        position: fixed;
+        right: 16px;
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        width: 56px;
+        height: 56px;
+        border: none;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        z-index: 10000;
+        -webkit-tap-highlight-color: transparent;
       }
       .pos-receipt-img{
-        width: 56px !important;
-        height: 56px !important;
-        display: block !important;
-        border-radius: 14px !important;
-        box-shadow: 0 10px 24px rgba(0,0,0,0.14) !important;
-        object-fit: contain !important;
+        width: 56px;
+        height: 56px;
+        display: block;
+        border-radius: 14px;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.14);
       }
       .pos-receipt-badge{
-        position: absolute !important;
-        top: -6px !important;
-        right: -6px !important;
-        min-width: 22px !important;
-        height: 22px !important;
-        padding: 0 6px !important;
-        border-radius: 999px !important;
-        background: #ff3b30 !important;
-        color: #fff !important;
-        font: 700 12px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #ff3b30;
+        color: #fff;
+        font: 700 12px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
         display: none;
         place-items: center;
         box-shadow: 0 10px 18px rgba(0,0,0,0.18);
@@ -898,6 +898,311 @@
     `;
     document.head.appendChild(style);
   }
+
+  function openInvoice() {
+    ensureReceiptButton();
+    ensureInvoiceModal();
+    renderInvoice();
+
+    invoiceOverlay.classList.add("open");
+    invoiceOverlay.setAttribute("aria-hidden", "false");
+    document.documentElement.classList.add("pos-lock");
+  }
+
+  function closeInvoice() {
+    if (!invoiceOverlay) return;
+    invoiceOverlay.classList.remove("open");
+    invoiceOverlay.setAttribute("aria-hidden", "true");
+    document.documentElement.classList.remove("pos-lock");
+  }
+
+  // -------------------------
+  // Product popup / Cart core (unchanged)
+  // -------------------------
+  function add(item) {
+    if (!item) return;
+
+    const normalized = {
+      id: String(item.id || "").trim() || makeStableId(item),
+      type: (item.type || "product").toLowerCase(),
+      category: item.category || "Product",
+      brand: item.brand || "",
+      name: item.name || "Item",
+      price: Number(item.price || 0),
+      img: item.img || "",
+      link: item.link || "",
+      sub: item.sub || "",
+      qty: clamp(Number(item.qty || 1), 1, 999),
+    };
+
+    const idx = state.items.findIndex((x) => x.id === normalized.id);
+    if (idx >= 0) state.items[idx].qty = clamp((state.items[idx].qty || 1) + normalized.qty, 1, 999);
+    else state.items.push(normalized);
+
+    saveState();
+    updateReceiptButton();
+
+    if (invoiceOverlay?.classList.contains("open")) renderInvoice();
+  }
+
+  function setQty(id, qty) {
+    const idx = state.items.findIndex((x) => x.id === id);
+    if (idx < 0) return;
+
+    const q = Number(qty || 0);
+    if (q <= 0) state.items.splice(idx, 1);
+    else state.items[idx].qty = clamp(q, 1, 999);
+
+    saveState();
+    updateReceiptButton();
+    renderInvoice();
+  }
+
+  function clear() {
+    state.items = [];
+    saveState();
+    updateReceiptButton();
+    if (invoiceOverlay?.classList.contains("open")) renderInvoice();
+  }
+
+  function makeStableId(item) {
+    const category = (item.category || "product").toLowerCase();
+    const brand = (item.brand || "").toLowerCase();
+    const name = (item.name || "item").toLowerCase();
+    return `${category}|${brand}|${name}`.replace(/\s+/g, " ").trim();
+  }
+
+  // -------------------------
+  // Product “Add to invoice” popup (unchanged)
+  // -------------------------
+  function ensureProductPopup() {
+    if (productOverlay) return;
+
+    productOverlay = document.createElement("div");
+    productOverlay.className = "pos-product-overlay";
+    productOverlay.setAttribute("aria-hidden", "true");
+
+    productOverlay.addEventListener("click", (e) => {
+      if (e.target === productOverlay) closeProductPopup();
+    });
+
+    productSheet = document.createElement("div");
+    productSheet.className = "pos-product-sheet";
+    productSheet.setAttribute("role", "dialog");
+    productSheet.setAttribute("aria-modal", "true");
+
+    productOverlay.appendChild(productSheet);
+    document.body.appendChild(productOverlay);
+  }
+
+  function openProductPopup(payload) {
+    ensureProductPopup();
+
+    const { img, title } = payload;
+
+    productSheet.innerHTML = `
+      <button type="button" class="pos-product-close" aria-label="Close">×</button>
+      <div class="pos-product-inner">
+        <div class="pos-product-icon">
+          ${img ? `<img src="${escapeAttr(img)}" alt="">` : `<div class="pos-product-fallback"></div>`}
+        </div>
+        <div class="pos-product-title">${escapeHtml(title)}</div>
+        <button type="button" class="pos-product-add">Add to invoice</button>
+      </div>
+    `;
+
+    $(".pos-product-close", productSheet).addEventListener("click", closeProductPopup);
+    $(".pos-product-add", productSheet).addEventListener("click", () => {
+      add(payload.item);
+      closeProductPopup();
+    });
+
+    productOverlay.classList.add("open");
+    productOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeProductPopup() {
+    if (!productOverlay) return;
+    productOverlay.classList.remove("open");
+    productOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  // -------------------------
+  // Escaping helpers
+  // -------------------------
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+  function escapeAttr(str) {
+    return escapeHtml(str).replaceAll("`", "&#096;");
+  }
+
+  // -------------------------
+  // Missing functions (kept from your file)
+  // -------------------------
+  function renderInvoice() {
+    ensureInvoiceModal();
+
+    $(".pos-invoice-date", invoiceSheet).textContent = nowStamp();
+    $(".pos-invoice-shop", invoiceSheet).textContent = state.shopName;
+    $(".pos-invoice-inv", invoiceSheet).textContent = `INV# ${state.lastInvNumber}`;
+
+    const list = $(".pos-invoice-list", invoiceSheet);
+    list.innerHTML = "";
+
+    state.items.forEach((it) => {
+      const row = document.createElement("div");
+      row.className = "pos-line";
+      row.setAttribute("role", "listitem");
+
+      const iconSrc = invoiceIconForItem(it);
+
+      row.innerHTML = `
+        <div class="pos-line-left">
+          <div class="pos-line-thumb">
+            <img src="${escapeAttr(iconSrc)}" alt=""
+                 onerror="this.onerror=null; this.src='/img/icons/cigar-outline.svg';" />
+          </div>
+        </div>
+
+        <div class="pos-line-mid">
+          <div class="pos-line-cat">${escapeHtml(it.category || "")}</div>
+          <div class="pos-line-name">${escapeHtml(it.name || "")}</div>
+          <div class="pos-line-sub">${escapeHtml(it.price != null ? `$${money(it.price)}` : "")}</div>
+        </div>
+
+        <div class="pos-line-right">
+          <div class="pos-qty">
+            <button type="button" class="qty-btn" data-qty="-1" aria-label="Decrease">−</button>
+            <div class="qty-num">${escapeHtml(String(it.qty || 1))}</div>
+            <button type="button" class="qty-btn" data-qty="+1" aria-label="Increase">+</button>
+          </div>
+          <div class="pos-line-price">$${escapeHtml(money((it.price || 0) * (it.qty || 1)))}</div>
+        </div>
+      `;
+
+      $$(".qty-btn", row).forEach((b) => {
+        b.addEventListener("click", () => {
+          const dir = b.getAttribute("data-qty");
+          if (dir === "+1") setQty(it.id, (it.qty || 1) + 1);
+          if (dir === "-1") setQty(it.id, (it.qty || 1) - 1);
+        });
+      });
+
+      list.appendChild(row);
+    });
+
+    const subtotal = getSubtotal();
+    const tax = getTax(subtotal);
+    const total = subtotal + tax;
+
+    $(".pos-subtotal", invoiceSheet).textContent = `$${money(subtotal)}`;
+    $(".pos-tax", invoiceSheet).textContent = `$${money(tax)}`;
+    $(".pos-total", invoiceSheet).textContent = `$${money(total)}`;
+  }
+
+  // -------------------------
+  // UI: Invoice modal (kept from your file)
+  // -------------------------
+  function ensureInvoiceModal() {
+    if (invoiceOverlay) return;
+
+    invoiceOverlay = document.createElement("div");
+    invoiceOverlay.className = "pos-invoice-overlay";
+    invoiceOverlay.setAttribute("aria-hidden", "true");
+
+    invoiceOverlay.addEventListener("click", (e) => {
+      if (e.target === invoiceOverlay) closeInvoice();
+    });
+
+    invoiceSheet = document.createElement("div");
+    invoiceSheet.className = "pos-invoice-sheet";
+    invoiceSheet.setAttribute("role", "dialog");
+    invoiceSheet.setAttribute("aria-modal", "true");
+
+    invoiceSheet.innerHTML = `
+      <div class="pos-invoice-header">
+        <div class="pos-invoice-title">INVOICE</div>
+        <button type="button" class="pos-invoice-close" aria-label="Close Invoice">×</button>
+      </div>
+
+      <div class="pos-invoice-meta">
+        <div class="pos-invoice-meta-line pos-invoice-date">${nowStamp()}</div>
+        <div class="pos-invoice-meta-line pos-invoice-shop">${escapeHtml(state.shopName)}</div>
+        <div class="pos-invoice-meta-line pos-invoice-inv">INV# ${escapeHtml(state.lastInvNumber)}</div>
+      </div>
+
+      <div class="pos-invoice-customer">
+        <select class="pos-invoice-select" aria-label="Attach loyalty customer">
+          <option value="" disabled selected>Attach loyalty customer...</option>
+          <option value="__add_new__">Add new customer...</option>
+          <option value="Walk-in">Walk-in</option>
+          <option value="Michael Test">Michael Test</option>
+          <option value="John Smith">John Smith</option>
+        </select>
+      </div>
+
+      <div class="pos-invoice-list" role="list"></div>
+
+      <div class="pos-invoice-footer">
+        <div class="pos-invoice-totals">
+          <div class="row"><span>Subtotal</span><strong class="pos-subtotal">$0.00</strong></div>
+          <div class="row"><span>Tax</span><strong class="pos-tax">$0.00</strong></div>
+          <div class="row total"><span>TOTAL</span><strong class="pos-total">$0.00</strong></div>
+        </div>
+
+        <div class="pos-invoice-actions">
+          <button type="button" class="pos-action secondary" data-action="draft">Save Draft</button>
+          <button type="button" class="pos-action primary" data-action="confirm">Confirm</button>
+        </div>
+      </div>
+    `;
+
+    invoiceOverlay.appendChild(invoiceSheet);
+    document.body.appendChild(invoiceOverlay);
+
+    $(".pos-invoice-close", invoiceSheet).addEventListener("click", closeInvoice);
+
+    const select = $(".pos-invoice-select", invoiceSheet);
+    select.value = "";
+
+    select.addEventListener("change", () => {
+      const v = select.value;
+      if (v === "__add_new__") {
+        select.value = "";
+        window.location.href = ADD_NEW_CUSTOMER_URL;
+        return;
+      }
+      state.customer = v;
+      saveState();
+    });
+
+    $$(".pos-action", invoiceSheet).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const action = btn.getAttribute("data-action");
+        if (action === "draft") {
+          closeInvoice();
+        } else if (action === "confirm") {
+          clear();
+          closeInvoice();
+        }
+      });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && invoiceOverlay?.classList.contains("open")) closeInvoice();
+    });
+  }
+
+  // -------------------------
+  // Styles are injected once
+  // -------------------------
+  let stylesInjected = false;
 
   // -------------------------
   // Init
