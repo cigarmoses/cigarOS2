@@ -126,7 +126,7 @@
     const tight = slugTight(raw);
     if (tight) slugs.add(tight);
 
-    const noParen = raw.replace(/\s*$begin:math:text$\[\^\)\]\*$end:math:text$\s*/g, " ").replace(/\s+/g, " ").trim();
+    const noParen = raw.replace(/\s*$begin:math:text$$begin:math:display$\\\^\\\)$end:math:display$\*$end:math:text$\s*/g, " ").replace(/\s+/g, " ").trim();
     const tightNoParen = slugTight(noParen);
     if (tightNoParen) slugs.add(tightNoParen);
 
@@ -382,11 +382,10 @@
       const sub = row.Vitola || "";
       const price = money(toNum(row.MSRP));
 
-      // ✅ store candidates safely (no HTML escaping -> JSON parse failure)
       const candsEncoded = encodeURIComponent(JSON.stringify(iconCands));
 
       return `
-        <div class="fav-row" data-id="${escapeAttr(id)}">
+        <div class="fav-row" data-id="${escapeAttr(id)}" data-direct-add="1">
           <img class="fav-ico" data-ico data-cands="${candsEncoded}" alt="${escapeAttr(row.Brand || row._brandHint || "")}" />
 
           <div class="fav-main">
@@ -402,7 +401,6 @@
       `;
     }).join("");
 
-    // apply icons
     cigarsList.querySelectorAll("img[data-ico]").forEach((img) => {
       let cands = [];
       try {
@@ -415,11 +413,13 @@
   function initCigarDelegation() {
     if (!cigarsList) return;
 
+    // ✅ CAPTURE PHASE so we beat any global document click interceptors
     cigarsList.addEventListener("click", (e) => {
       const addBtn = e.target.closest("[data-add]");
       if (addBtn) {
         e.preventDefault();
         e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
         const rowEl = addBtn.closest(".fav-row");
         const id = rowEl?.getAttribute("data-id") || "";
@@ -440,9 +440,10 @@
 
       const openBtn = e.target.closest("[data-open]");
       if (openBtn) {
-        // ✅ stop any Safari default behavior
+        // ✅ THIS is the key fix: prevent global cart popup hijack
         e.preventDefault();
         e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
         const rowEl = openBtn.closest(".fav-row");
         const id = rowEl?.getAttribute("data-id") || "";
@@ -451,7 +452,7 @@
 
         openDetail(row);
       }
-    });
+    }, true);
   }
 
   backBtn?.addEventListener("click", (e) => {
