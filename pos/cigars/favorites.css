@@ -18,8 +18,7 @@
   margin: 18px 0 10px;
 }
 
-/* ✅ Remove any “card” styling: NO rounded container, no shadow.
-   We want: rows + thin horizontal separators only. */
+/* ✅ No rounded container, no shadow (rows only) */
 .favorites-page .fav-cigars-list{
   background: transparent !important;
   border: none !important;
@@ -38,13 +37,10 @@
   grid-template-columns:54px 1fr auto auto; /* ICON | TEXT | PRICE | + */
   align-items:center;
   gap:12px;
-
   padding:14px 10px;
 
-  /* ✅ thin separators only */
   border-top:1px solid rgba(15,26,44,.10);
 
-  /* ✅ kill any lingering “rounded row” styling */
   background: transparent !important;
   border-radius: 0 !important;
 }
@@ -53,7 +49,7 @@
   border-top:none;
 }
 
-/* Icon (brand logo) */
+/* ✅ IMPORTANT: stop iOS “image preview” behavior */
 .favorites-page .fav-ico{
   width:54px;
   height:54px;
@@ -61,11 +57,14 @@
   object-fit:cover;
   background:rgba(15,26,44,.06);
   box-shadow:0 10px 24px rgba(0,0,0,.10);
-  pointer-events:none;
   display:block;
+
+  pointer-events:none !important;
+  -webkit-touch-callout:none !important;
+  -webkit-user-select:none !important;
+  user-select:none !important;
 }
 
-/* Text column */
 .favorites-page .fav-main{
   display:flex;
   flex-direction:column;
@@ -83,9 +82,10 @@
   text-align:left;
   width:100%;
   display:block;
+
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Cigar name */
 .favorites-page .fav-title{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-size:16px;
@@ -102,7 +102,6 @@
   margin:0;
 }
 
-/* Vitola line */
 .favorites-page .fav-sub{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-size:12px;
@@ -114,7 +113,7 @@
   margin:0;
 }
 
-/* ✅ Price column with the SAME vertical separator style as brand.css */
+/* ✅ Price column with vertical separator (same idea as brand.css) */
 .favorites-page .fav-price{
   position:relative;
   padding-left:10px;
@@ -127,6 +126,7 @@
   min-width:78px;
   text-align:right;
 }
+
 .favorites-page .fav-price::before{
   content:"";
   position:absolute;
@@ -139,7 +139,6 @@
   opacity:.9;
 }
 
-/* Green + button (match brand.css sizing) */
 .favorites-page .fav-add{
   width:20px;
   height:20px;
@@ -159,35 +158,29 @@
   box-shadow:0 10px 18px rgba(0,0,0,.12);
   -webkit-tap-highlight-color:transparent;
 }
+
 .favorites-page .fav-add:active{
   transform:scale(.98);
 }
 
-/* If an old divider element exists in HTML, kill it */
-.favorites-page .fav-divider{
-  display:none !important;
-}
+/* If an old divider element exists, kill it */
+.favorites-page .fav-divider{ display:none !important; }
 
-/* Status */
 .favorites-page .fav-status{
   margin-top:10px;
   font-size:14px;
   color:rgba(15,26,44,.55);
 }
 
-/* Responsive tighten */
 @media (max-width: 390px){
   .favorites-page .fav-row{
-    grid-template-columns:54px 1fr auto auto;
     padding:13px 10px;
     gap:10px;
   }
-
   .favorites-page .fav-ico{
     width:52px;
     height:52px;
   }
-
   .favorites-page .fav-title{ font-size:15px; }
   .favorites-page .fav-sub{ font-size:11px; }
   .favorites-page .fav-price{ font-size:15px; min-width:74px; }
