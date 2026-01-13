@@ -119,106 +119,9 @@ body.pos-home{
 }
 
 /* =========================================================
-   GLOBAL: Force Invoice/Receipt button to be SMALL bottom-right
-   (Fixes the giant full-screen icon on non-brand pages)
-   ========================================================= */
-
-/* The container element injected by cart.js (covers common ids/classes) */
-.pos-invoice-fab,
-.pos-receipt-fab,
-.receipt-fab,
-#posInvoiceFab,
-#posReceiptFab,
-#receipt-open{
-  position: fixed !important;
-  right: 16px !important;
-  bottom: 16px !important;
-  width: 56px !important;
-  height: 56px !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  z-index: 9999 !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  /* Optional: keep it from inheriting weird layout styles */
-  max-width: 56px !important;
-  max-height: 56px !important;
-  overflow: hidden !important;
-}
-
-/* The image inside the FAB */
-.pos-invoice-fab img,
-.pos-receipt-fab img,
-.receipt-fab img,
-#posInvoiceFab img,
-#posReceiptFab img,
-#receipt-open img{
-  width: 28px !important;
-  height: 28px !important;
-  display: block !important;
-  object-fit: contain !important;
-}
-
-/* If the badge exists, keep it in the corner */
-.pos-receipt-badge,
-.receipt-badge,
-#posReceiptBadge,
-#receipt-count{
-  position: absolute !important;
-  right: -4px !important;
-  bottom: -4px !important;
-  min-width: 18px !important;
-  height: 18px !important;
-  padding: 0 5px !important;
-  border-radius: 999px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 10000 !important;
-}
-
-/* Mobile tightening */
-@media (max-width: 380px){
-  .pos-title{ font-size: 58px; }
-  .pos-card{ min-height: 140px; }
-  .pos-card-icon,
-  .pos-card-icon img{
-    width: 88px;
-    height: 88px;
-  }
-  .pos-card-title{ font-size: 21px; }
-
-  /* Slightly smaller FAB on tiny screens */
-  .pos-invoice-fab,
-  .pos-receipt-fab,
-  .receipt-fab,
-  #posInvoiceFab,
-  #posReceiptFab,
-  #receipt-open{
-    width: 52px !important;
-    height: 52px !important;
-    right: 14px !important;
-    bottom: 14px !important;
-    max-width: 52px !important;
-    max-height: 52px !important;
-  }
-  .pos-invoice-fab img,
-  .pos-receipt-fab img,
-  .receipt-fab img,
-  #posInvoiceFab img,
-  #posReceiptFab img,
-  #receipt-open img{
-    width: 26px !important;
-    height: 26px !important;
-  }
-}
-/* ================================
    GLOBAL CONFIRM BUTTON OVERRIDE
    (safe – does NOT affect cigar rows)
-   ================================ */
+   ========================================================= */
 
 .btn-confirm{
   width: min(320px, 100%);
@@ -244,4 +147,106 @@ button.confirm,
   font-size: 34px;
   font-weight: 900;
   letter-spacing: .2px;
+}
+
+/* =========================================================
+   ✅ GLOBAL: Invoice / Receipt FAB (ALL POS pages)
+   One single source of truth (no duplicates)
+   ========================================================= */
+
+.pos-invoice-fab,
+.pos-receipt-fab,
+.receipt-fab,
+#posInvoiceFab,
+#posReceiptFab,
+#receipt-open{
+  position: fixed !important;
+  right: 16px !important;
+  bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+
+  width: 56px !important;
+  height: 56px !important;
+  padding: 0 !important;
+
+  border-radius: 999px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+
+  max-width: 56px !important;
+  max-height: 56px !important;
+  overflow: hidden !important;
+}
+
+/* The image inside the FAB */
+.pos-invoice-fab img,
+.pos-receipt-fab img,
+.receipt-fab img,
+#posInvoiceFab img,
+#posReceiptFab img,
+#receipt-open img{
+  width: 28px !important;
+  height: 28px !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+/* Badge */
+.pos-receipt-badge,
+.receipt-badge,
+#posReceiptBadge,
+#receipt-count{
+  position: absolute !important;
+  right: -4px !important;
+  bottom: -4px !important;
+
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+
+  border-radius: 999px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  z-index: 100000 !important;
+}
+
+/* Mobile tightening */
+@media (max-width: 380px){
+  .pos-title{ font-size: 58px; }
+  .pos-card{ min-height: 140px; }
+  .pos-card-icon,
+  .pos-card-icon img{
+    width: 88px;
+    height: 88px;
+  }
+  .pos-card-title{ font-size: 21px; }
+
+  .pos-invoice-fab,
+  .pos-receipt-fab,
+  .receipt-fab,
+  #posInvoiceFab,
+  #posReceiptFab,
+  #receipt-open{
+    width: 52px !important;
+    height: 52px !important;
+    right: 14px !important;
+    bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    max-width: 52px !important;
+    max-height: 52px !important;
+  }
+
+  .pos-invoice-fab img,
+  .pos-receipt-fab img,
+  .receipt-fab img,
+  #posInvoiceFab img,
+  #posReceiptFab img,
+  #receipt-open img{
+    width: 26px !important;
+    height: 26px !important;
+  }
 }
