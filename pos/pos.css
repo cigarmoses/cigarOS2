@@ -6,12 +6,16 @@
 :root{
   --pos-bg: #ffffff;
   --pos-surface: #ffffff;
-  --pos-page: #f3f5f8;            /* soft page gray like Learn */
+  --pos-page: #f3f5f8;
   --pos-ink: #0f1a2c;
   --pos-accent: #007aff;
 }
 
 * { box-sizing: border-box; }
+
+/* =========================
+   POS HOME BASE
+   ========================= */
 
 body.pos-home{
   margin: 0;
@@ -53,13 +57,13 @@ body.pos-home{
 .pos-title{
   margin: 6px 0 14px;
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 999;                 /* SF Pro Display Heavy look */
+  font-weight: 999;
   font-size: 64px;
   letter-spacing: -0.04em;
   color: var(--pos-ink);
 }
 
-/* Grid (Learn-style cards) */
+/* Grid */
 .pos-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -70,7 +74,7 @@ body.pos-home{
 .pos-card{
   appearance: none;
   border: none;
-  background: var(--pos-surface);    /* WHITE interior background */
+  background: var(--pos-surface);
   border-radius: 22px;
   padding: 18px 16px;
   text-align: center;
@@ -93,7 +97,7 @@ body.pos-home{
   transform: translateY(1px);
 }
 
-/* Bigger icons like Learn */
+/* Icons */
 .pos-card-icon{
   width: 96px;
   height: 96px;
@@ -109,33 +113,17 @@ body.pos-home{
   display: block;
 }
 
-/* Title only (no subtitles) */
 .pos-card-title{
-  font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 800; /* Bold */
+  font-weight: 800;
   font-size: 22px;
   letter-spacing: -0.02em;
-  line-height: 1.15;
 }
 
-/* =========================================================
-   GLOBAL CONFIRM BUTTON OVERRIDE
-   (safe – does NOT affect cigar rows)
-   ========================================================= */
+/* =========================
+   CONFIRM BUTTON (SAFE)
+   ========================= */
 
-.btn-confirm{
-  width: min(320px, 100%);
-  height: 74px;
-  border-radius: 999px;
-  border: none;
-  background: #63d7a1;
-  color: rgba(255,255,255,.95);
-  font-size: 34px;
-  font-weight: 900;
-  letter-spacing: .2px;
-}
-
-/* Fallbacks if other confirm class names are used */
+.btn-confirm,
 button.confirm,
 .confirm-btn{
   width: min(320px, 100%);
@@ -150,12 +138,14 @@ button.confirm,
 }
 
 /* =========================================================
-   ✅ GLOBAL: Invoice / Receipt FAB (ALL POS pages)
-   One single source of truth (no duplicates)
+   ✅ GLOBAL INVOICE / RECEIPT FAB
+   ONE SOURCE OF TRUTH — FIXES ALL PAGES
    ========================================================= */
 
+/* Button container */
 .pos-invoice-fab,
 .pos-receipt-fab,
+.pos-receipt-btn,
 .receipt-fab,
 #posInvoiceFab,
 #posReceiptFab,
@@ -181,9 +171,11 @@ button.confirm,
   overflow: hidden !important;
 }
 
-/* The image inside the FAB */
+/* Icon image */
 .pos-invoice-fab img,
 .pos-receipt-fab img,
+.pos-receipt-btn img,
+.pos-receipt-img,
 .receipt-fab img,
 #posInvoiceFab img,
 #posReceiptFab img,
@@ -215,19 +207,16 @@ button.confirm,
   z-index: 100000 !important;
 }
 
-/* Mobile tightening */
+/* =========================
+   MOBILE TIGHTENING
+   ========================= */
+
 @media (max-width: 380px){
   .pos-title{ font-size: 58px; }
-  .pos-card{ min-height: 140px; }
-  .pos-card-icon,
-  .pos-card-icon img{
-    width: 88px;
-    height: 88px;
-  }
-  .pos-card-title{ font-size: 21px; }
 
   .pos-invoice-fab,
   .pos-receipt-fab,
+  .pos-receipt-btn,
   .receipt-fab,
   #posInvoiceFab,
   #posReceiptFab,
@@ -242,6 +231,8 @@ button.confirm,
 
   .pos-invoice-fab img,
   .pos-receipt-fab img,
+  .pos-receipt-btn img,
+  .pos-receipt-img,
   .receipt-fab img,
   #posInvoiceFab img,
   #posReceiptFab img,
