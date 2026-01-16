@@ -1,42 +1,39 @@
 /* /pos/cigars/favorites.js
    Favorites (CIGARS ONLY) — Store-wide favorites driven by Hub column "Favorite" = X/x
 
-   Requirements satisfied:
    ✅ Favorites shows ONLY cigars where Favorite cell is X/x
-   ✅ Uses the SAME row structure/flow as brand POS rows:
-      - Click cigar name/line area -> opens cigar detail popup
-      - Click green + -> adds 1 to invoice via shared cart.js interception on [data-receipt-item]
-   ✅ No localStorage favorites. Source-of-truth = Hub sheet only.
-   ✅ Defensive against column name drift.
+   ✅ Rows look/behave like brand POS:
+      - Left icon (Cigar IMG) + stacked text + price + green +
+      - Click row text area -> opens detail modal
+      - Click green + -> adds 1 to invoice (cart.js JSON contract)
+   ✅ No brand favorites (brands section hidden)
 */
 
 (() => {
   const CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
   const listEl = $("#fav-cigars-list");
-  const brandsGrid = $("#fav-brands-grid"); // we will intentionally leave this empty per your instruction
+  const brandsGrid = $("#fav-brands-grid");
   const statusEl = $("#fav-status");
   const backBtn = $("#fav-back");
 
-  // ---- helpers ----
   const norm = (s) => String(s ?? "").trim();
   const lower = (s) => norm(s).toLowerCase();
-  const slug = (s) => lower(s).replace(/[^a-z0-9]+/g, "").trim();
+  const slug = (s) => lower(s).replace(/[^a-z0-9]+/g, "");
 
-  function escapeHtml(s = "") {
-    return String(s)
+  const esc = (s = "") =>
+    String(s)
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#39;");
-  }
 
-  // CSV parser (simple + safe for quoted commas)
+  // CSV parser
   function splitCsvLine(line) {
     const out = [];
     let cur = "";
@@ -78,74 +75,49 @@
     return rows;
   }
 
-  // Column pickers (supports sheet drift)
   function pick(r, keys) {
-    for (const k of keys) {
-      if (r[k] != null && norm(r[k]) !== "") return r[k];
-    }
-    // fallback: case-insensitive header matching
-    const map = Object.keys(r);
+    for (const k of keys) if (r[k] != null && norm(r[k]) !== "") return r[k];
+    const ks = Object.keys(r);
     for (const want of keys) {
-      const hit = map.find((h) => lower(h) === lower(want));
+      const hit = ks.find((h) => lower(h) === lower(want));
       if (hit && norm(r[hit]) !== "") return r[hit];
     }
     return "";
   }
 
-  function getBrand(r) {
-    return pick(r, ["Brand", "brand", "Manufacturer", "maker"]);
-  }
-  function getLine(r) {
-    return pick(r, ["Line", "line", "Collection", "Series"]);
-  }
-  function getCigar(r) {
-    return pick(r, ["Cigar", "cigar", "Name", "Cigar Name"]);
-  }
-  function getWrapper(r) {
-    return pick(r, ["Wrapper", "wrapper", "Wrapper Type", "Wrapper Shade", "Wrapper Shade/Type"]);
-  }
-  function getBinder(r) {
-    return pick(r, ["Binder", "binder"]);
-  }
-  function getFiller(r) {
-    return pick(r, ["Filler", "filler"]);
-  }
-  function getOrigin(r) {
-    return pick(r, ["Origin", "origin", "Country", "Country of Origin"]);
-  }
-  function getRing(r) {
-    return pick(r, ["Ring", "ring", "RG", "Ring Gauge"]);
-  }
-  function getLength(r) {
-    return pick(r, ["Length", "length"]);
-  }
-  function getMSRP(r) {
-    return pick(r, ["MSRP", "msrp", "Price", "price"]);
-  }
-  function getFavorite(r) {
-    return pick(r, ["Favorite", "favorite", "Fav", "fav"]);
-  }
-  function getImage(r) {
-    return pick(r, ["Image", "image", "Photo", "photo", "Img", "img"]);
-  }
+  // Hub columns
+  const getManufacturer = (r) => pick(r, ["Manufacturer"]);
+  const getBrand = (r) => pick(r, ["Brand", "Manufacturer"]);
+  const getLine = (r) => pick(r, ["Line"]);
+  const getCigar = (r) => pick(r, ["Cigar", "Name", "Cigar Name"]);
+  const getWrapper = (r) => pick(r, ["Wrapper", "Wrapper Shade"]);
+  const getBinder = (r) => pick(r, ["Binder"]);
+  const getFiller = (r) => pick(r, ["Filler"]);
+  const getOrigin = (r) => pick(r, ["Origin"]);
+  const getLength = (r) => pick(r, ["Length"]);
+  const getRG = (r) => pick(r, ["RG", "Ring"]);
+  const getVitola = (r) => pick(r, ["Vitola"]);
+  const getShape = (r) => pick(r, ["Shape"]);
+  const getStrength = (r) => pick(r, ["Strength"]);
+  const getMSRP = (r) => pick(r, ["MSRP", "Price"]);
+  const getCigarImg = (r) => pick(r, ["Cigar IMG", "Cigar Img", "Cigar Image"]);
+  const getFavorite = (r) => pick(r, ["Favorite"]);
+
+  const toPrice = (x) => {
+    const n = Number(String(x ?? "").replace(/[^\d.]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  };
 
   function isFavRow(r) {
     return lower(getFavorite(r)) === "x";
   }
 
-  function parsePrice(val) {
-    const s = String(val ?? "");
-    const n = Number(s.replace(/[^\d.]/g, ""));
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  // ---- Inject minimal modal CSS (so Favorites can open the same style popup) ----
+  // ---- Modal (Favorites-only) ----
   function ensureModalCSS() {
     if ($("#fav-modal-css")) return;
     const style = document.createElement("style");
     style.id = "fav-modal-css";
     style.textContent = `
-      /* Favorites cigar modal (matches brand POS modal feel) */
       .cigar-modal-backdrop{
         position:fixed; inset:0;
         background:rgba(0,0,0,.35);
@@ -239,9 +211,7 @@
         grid-template-columns: 1fr 1fr;
         gap: 10px 14px;
       }
-      .cigar-field{
-        min-width:0;
-      }
+      .cigar-field{ min-width:0; }
       .cigar-label{
         color: rgba(15,26,44,.55);
         font-size: 11px;
@@ -325,59 +295,58 @@
     });
   }
 
-  let modalCurrentItem = null;
+  let modalItem = null;
 
   function openModal(item) {
     ensureModalDOM();
-    modalCurrentItem = item;
+    modalItem = item;
 
     const title = `${item.line ? item.line + " — " : ""}${item.cigar || "Cigar"}`;
     $("#cigar-modal-title").textContent = title;
     $("#cigar-modal-sub").textContent = item.brand || "";
 
     const imgWrap = $("#cigar-modal-img");
-    const imgSrc = item.image;
+    const imgSrc = item.img;
 
     if (imgSrc) {
-      imgWrap.innerHTML = `<img src="${imgSrc}" alt="" onerror="this.remove(); this.parentElement.innerHTML='<div class=img-ph>Image coming soon</div>'" />`;
+      imgWrap.innerHTML = `<img src="${esc(imgSrc)}" alt=""
+        onerror="this.remove(); this.parentElement.innerHTML='<div class=img-ph>Image coming soon</div>'" />`;
     } else {
       imgWrap.innerHTML = `<div class="img-ph">Image coming soon</div>`;
     }
 
-    const grid = $("#cigar-modal-grid");
     const fields = [
       ["Wrapper", item.wrapper],
       ["Binder", item.binder],
       ["Filler", item.filler],
       ["Origin", item.origin],
       ["Length", item.length ? `${item.length}"` : ""],
-      ["Ring", item.ring ? `RG ${item.ring}` : ""],
+      ["Ring", item.rg ? `RG ${item.rg}` : ""],
+      ["Vitola", item.vitola],
+      ["Shape", item.shape],
+      ["Strength", item.strength],
       ["MSRP", item.msrp],
     ];
 
-    grid.innerHTML = fields
+    $("#cigar-modal-grid").innerHTML = fields
       .filter(([, v]) => norm(v) !== "")
       .map(
         ([k, v]) => `
           <div class="cigar-field">
-            <div class="cigar-label">${escapeHtml(k)}</div>
-            <div class="cigar-value" title="${escapeHtml(v)}">${escapeHtml(v)}</div>
+            <div class="cigar-label">${esc(k)}</div>
+            <div class="cigar-value" title="${esc(v)}">${esc(v)}</div>
           </div>
         `
       )
       .join("");
 
-    const backdrop = $("#cigar-modal-backdrop");
-    const modal = $("#cigar-modal");
-    backdrop.classList.add("is-open");
-    modal.classList.add("is-open");
+    $("#cigar-modal-backdrop").classList.add("is-open");
+    $("#cigar-modal").classList.add("is-open");
 
-    // Add button uses the same cart interception contract as the green +
     $("#cigar-modal-add").onclick = () => {
-      if (!modalCurrentItem) return;
-      // programmatically trigger a click on a synthetic element with data-receipt-item
+      if (!modalItem) return;
       const fake = document.createElement("button");
-      fake.setAttribute("data-receipt-item", JSON.stringify(modalCurrentItem.receiptItem));
+      fake.setAttribute("data-receipt-item", JSON.stringify(modalItem.receiptItem));
       document.body.appendChild(fake);
       fake.click();
       fake.remove();
@@ -386,54 +355,48 @@
   }
 
   function closeModal() {
-    const backdrop = $("#cigar-modal-backdrop");
-    const modal = $("#cigar-modal");
-    if (!backdrop || !modal) return;
-    backdrop.classList.remove("is-open");
-    modal.classList.remove("is-open");
-    modalCurrentItem = null;
+    const b = $("#cigar-modal-backdrop");
+    const m = $("#cigar-modal");
+    if (!b || !m) return;
+    b.classList.remove("is-open");
+    m.classList.remove("is-open");
+    modalItem = null;
   }
 
-  // ---- Render: EXACT row behavior contract ----
-  function buildReceiptItem(rowObj) {
-    // Cart system: expects [data-receipt-item]. Provide rich payload + fallback fields.
-    // Keep stable key so duplicates match properly.
-    const key = `${slug(rowObj.brand)}|${slug(rowObj.line)}|${slug(rowObj.cigar)}` || slug(rowObj.cigar);
+  // ---- Receipt payload (JSON) ----
+  function receiptPayload(r) {
+    const brand = norm(getBrand(r) || getManufacturer(r));
+    const line = norm(getLine(r));
+    const cigar = norm(getCigar(r));
+    const vitola = norm(getVitola(r));
+    const msrp = norm(getMSRP(r));
+
+    const key = `${slug(brand)}|${slug(line)}|${slug(cigar)}|${slug(vitola)}`;
 
     return {
+      id: key,
       key,
+      type: "product",
       category: "Cigars",
-      name: rowObj.displayName,
-      price: rowObj.priceNumber,
+      brand,
+      name: `${line ? line + " — " : ""}${cigar}${vitola ? " (" + vitola + ")" : ""}`,
+      price: toPrice(msrp),
       qty: 1,
-      meta: {
-        brand: rowObj.brand,
-        line: rowObj.line,
-        cigar: rowObj.cigar,
-        length: rowObj.length,
-        ring: rowObj.ring,
-      },
+      img: norm(getCigarImg(r)),
+      sub: [norm(getOrigin(r)), norm(getLength(r)) ? `${norm(getLength(r))}"` : "", norm(getRG(r)) ? `RG ${norm(getRG(r))}` : ""]
+        .filter(Boolean)
+        .join(" • "),
+      meta: { brand, line, cigar, vitola },
     };
   }
 
-  function rowDisplayName(brand, line, cigar) {
-    // Your preference: 2-line row (Line + Cigar) like brand page
-    // Keep dedupe clean:
-    const l = norm(line);
-    const c = norm(cigar);
-    if (!l) return c || "";
-    if (!c) return l;
-    // Avoid double prefix if cigar already starts with line:
-    return lower(c).startsWith(lower(l)) ? c : `${l} ${c}`;
-  }
-
+  // ---- Render ----
   function render(rows) {
+    // Hide brands section completely (per your instruction)
     if (brandsGrid) {
-      // You asked: leave brands out completely for now
       brandsGrid.innerHTML = "";
-      brandsGrid.style.display = "none";
-      const brandsSection = brandsGrid.closest("section");
-      if (brandsSection) brandsSection.style.display = "none";
+      const section = brandsGrid.closest("section");
+      if (section) section.style.display = "none";
     }
 
     if (!listEl) return;
@@ -451,87 +414,71 @@
 
     listEl.innerHTML = rows
       .map((r) => {
-        const brand = norm(getBrand(r));
+        const brand = norm(getBrand(r) || getManufacturer(r));
         const line = norm(getLine(r));
         const cigar = norm(getCigar(r));
         const wrapper = norm(getWrapper(r));
         const binder = norm(getBinder(r));
         const filler = norm(getFiller(r));
         const origin = norm(getOrigin(r));
-        const ring = norm(getRing(r));
         const length = norm(getLength(r));
+        const rg = norm(getRG(r));
+        const vitola = norm(getVitola(r));
+        const shape = norm(getShape(r));
+        const strength = norm(getStrength(r));
         const msrp = norm(getMSRP(r));
-        const image = norm(getImage(r));
+        const img = norm(getCigarImg(r));
 
-        const leftTitleTop = line || brand || "Cigar";
-        const leftTitleBottom = cigar || "";
-        const subBits = [
-          wrapper ? wrapper : "",
-          length ? `${length}"` : "",
-          ring ? `RG ${ring}` : "",
-        ].filter(Boolean);
-        const sub = subBits.join(" • ");
+        const payload = receiptPayload(r);
+        const sub = [origin, length ? `${length}"` : "", rg ? `RG ${rg}` : ""].filter(Boolean).join(" • ");
 
-        const displayName = rowDisplayName(brand, line, cigar) || cigar || "Cigar";
-        const priceNumber = parsePrice(msrp);
-
-        const receiptItem = buildReceiptItem({
-          brand,
-          line,
-          cigar,
-          length,
-          ring,
-          displayName,
-          priceNumber,
-        });
-
-        // IMPORTANT:
-        // - Click name area -> open our cigar modal (same behavior as brand page modal)
-        // - Click green + -> add to invoice (cart.js listens for [data-receipt-item])
-        // - Keep row structure consistent with brand-page CSS classes
         return `
-          <div class="brand-row" data-fav-row
-               data-brand="${escapeHtml(brand)}"
-               data-line="${escapeHtml(line)}"
-               data-cigar="${escapeHtml(cigar)}"
-               data-wrapper="${escapeHtml(wrapper)}"
-               data-binder="${escapeHtml(binder)}"
-               data-filler="${escapeHtml(filler)}"
-               data-origin="${escapeHtml(origin)}"
-               data-length="${escapeHtml(length)}"
-               data-ring="${escapeHtml(ring)}"
-               data-msrp="${escapeHtml(msrp)}"
-               data-image="${escapeHtml(image)}">
-            <div class="brand-row-left">
-              <div class="brand-row-title">
-                ${escapeHtml(leftTitleTop)}
-                ${leftTitleBottom ? `<span style="display:block; font-weight:900;">${escapeHtml(leftTitleBottom)}</span>` : ""}
-              </div>
-              ${sub ? `<div class="brand-row-sub">${escapeHtml(sub)}</div>` : ``}
-            </div>
+          <div class="fav-row" data-fav-row
+               data-brand="${esc(brand)}"
+               data-line="${esc(line)}"
+               data-cigar="${esc(cigar)}"
+               data-wrapper="${esc(wrapper)}"
+               data-binder="${esc(binder)}"
+               data-filler="${esc(filler)}"
+               data-origin="${esc(origin)}"
+               data-length="${esc(length)}"
+               data-rg="${esc(rg)}"
+               data-vitola="${esc(vitola)}"
+               data-shape="${esc(shape)}"
+               data-strength="${esc(strength)}"
+               data-msrp="${esc(msrp)}"
+               data-img="${esc(img)}">
 
-            <div class="brand-row-right">
-              ${msrp ? `<div class="brand-row-msrp">${escapeHtml(msrp)}</div>` : ``}
-              <button type="button"
-                class="pos-add"
-                aria-label="Add to invoice"
-                data-receipt-item='${escapeHtml(JSON.stringify(receiptItem))}'
-                style="margin-left:10px; width:34px; height:34px; border-radius:999px; border:none; background:#34c759; color:#fff; font-weight:900; cursor:pointer;">
-                +
+            ${
+              img
+                ? `<img class="fav-ico" src="${esc(img)}" alt="" onerror="this.style.display='none';" />`
+                : `<div class="fav-ico" aria-hidden="true" style="display:grid;place-items:center;font-size:10px;font-weight:800;color:rgba(15,26,44,.55);text-align:center;line-height:1.1;padding:6px;">IMG<br/>SOON</div>`
+            }
+
+            <div class="fav-main">
+              <button class="fav-open" type="button" aria-label="Open cigar details">
+                <div class="fav-title">${esc(line || brand)}${cigar ? `<br/>${esc(cigar)}` : ""}${wrapper ? `<br/>${esc(wrapper)}` : ""}</div>
+                ${sub ? `<div class="fav-sub">${esc(sub)}</div>` : ""}
               </button>
             </div>
+
+            <div class="fav-price">${esc(msrp)}</div>
+
+            <button type="button"
+              class="fav-add"
+              aria-label="Add to invoice"
+              data-receipt-item='${esc(JSON.stringify(payload))}'>+</button>
           </div>
         `;
       })
       .join("");
 
-    // Bind click name/line area -> open modal
-    // (Do NOT hijack plus clicks; cart.js will handle those)
-    listEl.addEventListener(
-      "click",
-      (e) => {
+    // Bind row open (once)
+    if (!listEl.dataset.bound) {
+      listEl.dataset.bound = "1";
+      listEl.addEventListener("click", (e) => {
         const addBtn = e.target.closest("[data-receipt-item]");
-        if (addBtn) return; // let cart.js take it
+        if (addBtn) return; // cart.js handles add
 
         const row = e.target.closest("[data-fav-row]");
         if (!row) return;
@@ -545,27 +492,29 @@
           filler: norm(row.dataset.filler),
           origin: norm(row.dataset.origin),
           length: norm(row.dataset.length),
-          ring: norm(row.dataset.ring),
+          rg: norm(row.dataset.rg),
+          vitola: norm(row.dataset.vitola),
+          shape: norm(row.dataset.shape),
+          strength: norm(row.dataset.strength),
           msrp: norm(row.dataset.msrp),
-          image: norm(row.dataset.image),
+          img: norm(row.dataset.img),
         };
 
-        item.displayName = rowDisplayName(item.brand, item.line, item.cigar) || item.cigar || "Cigar";
-        item.priceNumber = parsePrice(item.msrp);
-        item.receiptItem = buildReceiptItem({
+        item.receiptItem = {
+          id: `${slug(item.brand)}|${slug(item.line)}|${slug(item.cigar)}|${slug(item.vitola)}`,
+          type: "product",
+          category: "Cigars",
           brand: item.brand,
-          line: item.line,
-          cigar: item.cigar,
-          length: item.length,
-          ring: item.ring,
-          displayName: item.displayName,
-          priceNumber: item.priceNumber,
-        });
+          name: `${item.line ? item.line + " — " : ""}${item.cigar}${item.vitola ? " (" + item.vitola + ")" : ""}`,
+          price: toPrice(item.msrp),
+          qty: 1,
+          img: item.img || "",
+          sub: [item.origin, item.length ? `${item.length}"` : "", item.rg ? `RG ${item.rg}` : ""].filter(Boolean).join(" • "),
+        };
 
         openModal(item);
-      },
-      { passive: true }
-    );
+      });
+    }
   }
 
   async function boot() {
@@ -591,7 +540,6 @@
 
       const favs = rows.filter(isFavRow);
 
-      // Stable sort (Brand -> Line -> Cigar)
       favs.sort((a, b) => {
         const A = `${lower(getBrand(a))} ${lower(getLine(a))} ${lower(getCigar(a))}`;
         const B = `${lower(getBrand(b))} ${lower(getLine(b))} ${lower(getCigar(b))}`;
@@ -610,9 +558,6 @@
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
 })();
