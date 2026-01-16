@@ -1,17 +1,20 @@
 /* /pos/cart.js
    Shared POS Cart + Receipt Sheet controller
 
-   FIXES:
-   ✅ Uses the EXISTING receipt sheet UI already in your POS HTML:
+   ✅ Supports BOTH cart add contracts:
+      (A) data-receipt-item='{"key":...,"name":...,"price":...}'  (JSON payload)
+      (B) dataset fields: data-id/data-name/data-price/...        (legacy)
+
+   ✅ Uses EXISTING receipt sheet UI in your POS HTML:
       - #sheet-backdrop
       - #sheet-receipt
       - #receipt-items
       - #receipt-clear
       - [data-sheet-close]
-   ✅ Receipt FAB always opens the sheet
-   ✅ Green + (brand pages) adds to cart + updates badge immediately
-   ✅ Optional: clicking [data-receipt-item] cards adds + opens sheet
-   ✅ Never interferes with Favorites modal open behavior
+
+   ✅ Receipt FAB always opens the receipt sheet
+   ✅ Green + adds to cart + updates badge immediately
+   ✅ Does NOT hijack row clicks (detail modals remain yours)
 */
 
 (() => {
@@ -97,9 +100,9 @@
   }
 
   // -------------------------
-  // Sheet open/close
+  // Sheet open/close (Receipt only)
   // -------------------------
-  function openSheet() {
+  function openReceiptSheet() {
     resolveDOM();
     if (!backdropEl || !sheetEl) return;
 
@@ -112,15 +115,24 @@
     renderReceipt();
   }
 
-  function closeSheet() {
+  function closeReceiptSheet() {
     resolveDOM();
     if (!backdropEl || !sheetEl) return;
 
-    backdropEl.hidden = true;
     sheetEl.hidden = true;
-
-    backdropEl.classList.remove("open");
     sheetEl.classList.remove("open");
+
+    // keep backdrop open if other sheets are visible
+    const otherOpen = document.querySelector(
+      '#sheet-bands:not([hidden]), #sheet-filters:not([hidden]), #cigarDetailOverlay.open, .cigar-modal.is-open'
+    );
+    if (!otherOpen) {
+      backdropEl.hidden = true;
+      backdropEl.classList.remove("open");
+    } else {
+      backdropEl.hidden = false;
+      backdropEl.classList.add("open");
+    }
   }
 
   // -------------------------
@@ -146,8 +158,10 @@
         const line = price * qty;
 
         return `
-          <div class="receipt-row" data-id="${escapeHTML(it.id)}" style="display:flex;gap:10px;align-items:center;padding:10px 6px;border-bottom:1px solid rgba(0,0,0,.06);">
-            <div class="receipt-ico" style="width:42px;height:42px;border-radius:12px;background:#f3f5f8;border:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+          <div class="receipt-row" data-id="${escapeHTML(it.id)}"
+               style="display:flex;gap:10px;align-items:center;padding:10px 6px;border-bottom:1px solid rgba(0,0,0,.06);">
+            <div class="receipt-ico"
+                 style="width:42px;height:42px;border-radius:12px;background:#f3f5f8;border:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
               ${it.img ? `<img src="${escapeHTML(it.img)}" alt="" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none';" />` : ""}
             </div>
 
@@ -161,9 +175,11 @@
                   : ""
               }
               <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
-                <button type="button" data-qty="-1" style="width:28px;height:28px;border-radius:10px;border:1px solid rgba(0,0,0,.10);background:#fff;font-weight:900;">−</button>
+                <button type="button" data-qty="-1"
+                        style="width:28px;height:28px;border-radius:10px;border:1px solid rgba(0,0,0,.10);background:#fff;font-weight:900;">−</button>
                 <div style="min-width:22px;text-align:center;font-weight:900;">${qty}</div>
-                <button type="button" data-qty="+1" style="width:28px;height:28px;border-radius:10px;border:1px solid rgba(0,0,0,.10);background:#fff;font-weight:900;">+</button>
+                <button type="button" data-qty="+1"
+                        style="width:28px;height:28px;border-radius:10px;border:1px solid rgba(0,0,0,.10);background:#fff;font-weight:900;">+</button>
               </div>
             </div>
 
@@ -187,22 +203,22 @@
   }
 
   // -------------------------
-  // Public API
+  // Cart core
   // -------------------------
-  function add(item) {
-    if (!item) return;
+  function add(rawItem) {
+    if (!rawItem) return;
 
     const normalized = {
-      id: String(item.id || "").trim() || makeStableId(item),
-      type: (item.type || "product").toLowerCase(),
-      category: item.category || "Product",
-      brand: item.brand || "",
-      name: item.name || "Item",
-      price: toNum(item.price),
-      img: item.img || "",
-      link: item.link || "",
-      sub: item.sub || "",
-      qty: clamp(Number(item.qty || 1), 1, 999),
+      id: String(rawItem.id || rawItem.key || "").trim() || makeStableId(rawItem),
+      type: (rawItem.type || "product").toLowerCase(),
+      category: rawItem.category || "Product",
+      brand: rawItem.brand || (rawItem.meta && rawItem.meta.brand) || "",
+      name: rawItem.name || "Item",
+      price: toNum(rawItem.price),
+      img: rawItem.img || rawItem.image || "",
+      link: rawItem.link || "",
+      sub: rawItem.sub || "",
+      qty: clamp(Number(rawItem.qty || 1), 1, 999),
     };
 
     const idx = state.items.findIndex((x) => x.id === normalized.id);
@@ -212,7 +228,6 @@
     saveState();
     updateBadge();
 
-    // if sheet is open, re-render
     resolveDOM();
     if (sheetEl && !sheetEl.hidden) renderReceipt();
   }
@@ -225,36 +240,107 @@
   }
 
   // -------------------------
+  // Parse add payload from element
+  // -------------------------
+  function parseFromElement(el) {
+    if (!el) return null;
+
+    // (A) JSON payload in attribute
+    const jsonAttr = el.getAttribute("data-receipt-item");
+    if (jsonAttr) {
+      const parsed = safeParseJSON(jsonAttr, null);
+      if (parsed && typeof parsed === "object") return parsed;
+    }
+
+    // (B) legacy dataset fields
+    const ds = el.dataset || {};
+    if (ds.name || ds.price || ds.id) {
+      return {
+        id: ds.id || "",
+        key: ds.key || "",
+        type: (ds.type || "product").toLowerCase(),
+        category: ds.category || "Product",
+        brand: ds.brand || "",
+        name: ds.name || "Item",
+        price: toNum(ds.price || 0),
+        img: ds.img || "",
+        link: ds.link || "",
+        sub: ds.sub || "",
+        qty: 1,
+      };
+    }
+
+    return null;
+  }
+
+  // -------------------------
   // Wiring
   // -------------------------
   function bindEventsOnce() {
     resolveDOM();
 
-    // Receipt FAB opens sheet
+    // Receipt FAB opens receipt sheet
     if (receiptBtn && !receiptBtn.dataset.bound) {
       receiptBtn.dataset.bound = "1";
       receiptBtn.addEventListener("click", (e) => {
         e.preventDefault();
-        openSheet();
+        openReceiptSheet();
       });
     }
 
-    // Backdrop click closes
+    // Backdrop click: close whichever sheets are open (receipt/bands/filters),
+    // but never interfere with cigar detail overlay or favorites modal if they handle it.
     if (backdropEl && !backdropEl.dataset.bound) {
       backdropEl.dataset.bound = "1";
-      backdropEl.addEventListener("click", () => closeSheet());
+      backdropEl.addEventListener("click", () => {
+        // close receipt
+        closeReceiptSheet();
+
+        // close bands/filters if present
+        const bands = $("#sheet-bands");
+        const filters = $("#sheet-filters");
+        if (bands && !bands.hidden) bands.hidden = true;
+        if (filters && !filters.hidden) filters.hidden = true;
+
+        // if nothing left open, hide backdrop
+        const otherOpen = document.querySelector(
+          '#sheet-bands:not([hidden]), #sheet-filters:not([hidden]), #sheet-receipt:not([hidden]), #cigarDetailOverlay.open, .cigar-modal.is-open'
+        );
+        if (!otherOpen) {
+          backdropEl.hidden = true;
+          backdropEl.classList.remove("open");
+        }
+      });
     }
 
-    // Close buttons
+    // Close buttons (any sheet)
     document.addEventListener("click", (e) => {
       const closeBtn = e.target.closest("[data-sheet-close]");
-      if (closeBtn) {
-        e.preventDefault();
-        closeSheet();
+      if (!closeBtn) return;
+
+      e.preventDefault();
+
+      // close receipt if it's open
+      closeReceiptSheet();
+
+      // close any other sheets
+      const bands = $("#sheet-bands");
+      const filters = $("#sheet-filters");
+      if (bands && !bands.hidden) bands.hidden = true;
+      if (filters && !filters.hidden) filters.hidden = true;
+
+      // hide backdrop if nothing else open
+      resolveDOM();
+      const otherOpen = document.querySelector(
+        '#sheet-bands:not([hidden]), #sheet-filters:not([hidden]), #sheet-receipt:not([hidden]), #cigarDetailOverlay.open, .cigar-modal.is-open'
+      );
+      if (!otherOpen && backdropEl) {
+        backdropEl.hidden = true;
+        backdropEl.classList.remove("open");
       }
     });
 
-    // Clear
+    // Clear receipt
     if (clearBtn && !clearBtn.dataset.bound) {
       clearBtn.dataset.bound = "1";
       clearBtn.addEventListener("click", (e) => {
@@ -288,42 +374,33 @@
       });
     }
 
-    // ESC closes sheet
+    // ESC closes only receipt (other sheets can close via their own logic)
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeSheet();
+      if (e.key === "Escape") closeReceiptSheet();
     });
 
-    // OPTIONAL: product-card click add-to-receipt (only if present)
-    // Never interfere with Favorites open behavior.
+    // ✅ Universal ADD handler:
+    // If ANY element with data-receipt-item is clicked, add it.
+    // Do NOT open receipt sheet automatically.
     document.addEventListener(
       "click",
       (e) => {
-        const t = e.target;
+        const el = e.target.closest("[data-receipt-item]");
+        if (!el) return;
 
-        if (t.closest("#fav-cigars-list, .fav-row, .fav-open, [data-open], [data-open-detail]")) return;
-        if (t.closest("[data-add]")) return; // brand.js handles explicit add buttons
+        // Allow row click handlers to still run when they aren't clicking the + button.
+        // But for the + button itself we want add to work reliably.
+        const payload = parseFromElement(el);
+        if (!payload) return;
 
-        const card = t.closest("[data-receipt-item]");
-        if (!card) return;
-
+        // If it's clearly an "add" button, prevent navigation/other behavior.
+        // (Most + buttons are <button>, but be defensive.)
         e.preventDefault();
+        e.stopPropagation();
 
-        add({
-          id: card.dataset.id || "",
-          type: (card.dataset.type || "product").toLowerCase(),
-          category: card.dataset.category || "Product",
-          brand: card.dataset.brand || "",
-          name: card.dataset.name || "Item",
-          price: toNum(card.dataset.price || 0),
-          img: card.dataset.img || "",
-          link: card.dataset.link || "",
-          sub: card.dataset.sub || "",
-          qty: 1,
-        });
-
-        openSheet();
+        add(payload);
       },
-      { passive: false }
+      { capture: true }
     );
   }
 
@@ -333,28 +410,27 @@
     updateBadge();
     bindEventsOnce();
 
-    // Expose API for brand.js / cigars.js / favorites.js
     window.CigarOSCart = {
       add,
       clear,
-      openInvoice: openSheet,   // legacy naming support
-      closeInvoice: closeSheet, // legacy naming support
-      openSheet,
-      closeSheet,
+      openInvoice: openReceiptSheet,
+      closeInvoice: closeReceiptSheet,
+      openSheet: openReceiptSheet,
+      closeSheet: closeReceiptSheet,
       getCount: () => getItemCount(),
       getItems: () => [...state.items],
       money,
     };
   }
 
-  // define early (so brand.js can call it even if it fires fast)
+  // define early
   window.CigarOSCart = window.CigarOSCart || {
     add,
     clear,
-    openInvoice: openSheet,
-    closeInvoice: closeSheet,
-    openSheet,
-    closeSheet,
+    openInvoice: openReceiptSheet,
+    closeInvoice: closeReceiptSheet,
+    openSheet: openReceiptSheet,
+    closeSheet: closeReceiptSheet,
     getCount: () => getItemCount(),
     getItems: () => [...state.items],
     money,
