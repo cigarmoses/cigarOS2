@@ -909,3 +909,26 @@ body.cigar-detail-open #receipt-count{
   .cd-grid2{ grid-template-columns: 104px 1fr; } /* ✅ was 132px 1fr */
   .cd-stat .v{ font-size: 32px; }
 }
+/* ================================
+   FIX: cigar detail close button
+   ================================ */
+.cigar-detail-close{
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+
+  width: 32px;
+  height: 32px;
+
+  border: none;
+  background: transparent;
+  box-shadow: none;
+
+  color: #ff3b30;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+
+  cursor: pointer;
+  z-index: 10;
+}
