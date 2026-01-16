@@ -1,18 +1,23 @@
 /* /pos/cart.js
    Shared POS Cart + Receipt Sheet controller
 
-   ✅ Fix #9: Receipt icon always opens sheet (when present)
-   ✅ Fix #5: Green + adds to cart via BOTH contracts:
-      A) data-receipt-item='{"key"...}' JSON payload (new)
-      B) data-name / data-price / etc. dataset fields (old)
-   ✅ Never blocks cigar detail clicks
+   FIXES:
+   ✅ Uses EXISTING receipt sheet UI in HTML:
+      - #sheet-backdrop
+      - #sheet-receipt
+      - #receipt-items
+      - #receipt-clear
+      - [data-sheet-close]
+   ✅ Receipt FAB opens the sheet
+   ✅ Supports BOTH:
+      (A) dataset-style cards (data-name, data-price...)
+      (B) JSON payload inside data-receipt-item='{"name":...}'
 */
 
 (() => {
   "use strict";
 
   const STORAGE_KEY = "cigaros_pos_cart_v1";
-
   const $ = (sel, root = document) => root.querySelector(sel);
 
   // -------------------------
@@ -52,6 +57,18 @@
     return state.items.reduce((sum, it) => sum + clamp(Number(it.qty || 0), 0, 999), 0);
   }
 
+  function makeStableId(item) {
+    const bits = [
+      item.type || "product",
+      item.category || "",
+      item.brand || "",
+      item.name || "",
+      item.sub || "",
+      String(item.price || ""),
+    ].map((s) => String(s || "").trim().toLowerCase());
+    return bits.join("|");
+  }
+
   function escapeHTML(s) {
     return String(s ?? "")
       .replace(/&/g, "&amp;")
@@ -59,20 +76,6 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
-  }
-
-  function makeStableId(item) {
-    // prefer key/id if provided
-    if (item.key) return String(item.key);
-    if (item.id) return String(item.id);
-
-    const bits = [
-      item.category || "",
-      item.brand || "",
-      item.name || "",
-      String(item.price || ""),
-    ].map((s) => String(s || "").trim().toLowerCase());
-    return bits.join("|");
   }
 
   // -------------------------
@@ -97,13 +100,7 @@
   // -------------------------
   function openSheet() {
     resolveDOM();
-
-    if (!backdropEl || !sheetEl) {
-      console.warn(
-        "[cart.js] Receipt sheet elements missing on this page (#sheet-backdrop / #sheet-receipt)."
-      );
-      return;
-    }
+    if (!backdropEl || !sheetEl) return;
 
     backdropEl.hidden = false;
     sheetEl.hidden = false;
@@ -148,15 +145,9 @@
         const line = price * qty;
 
         return `
-          <div class="receipt-row" data-id="${escapeHTML(it.id)}"
-               style="display:flex;gap:10px;align-items:center;padding:10px 6px;border-bottom:1px solid rgba(0,0,0,.06);">
-            <div class="receipt-ico"
-                 style="width:42px;height:42px;border-radius:12px;background:#f3f5f8;border:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
-              ${
-                it.img
-                  ? `<img src="${escapeHTML(it.img)}" alt="" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none';" />`
-                  : ""
-              }
+          <div class="receipt-row" data-id="${escapeHTML(it.id)}" style="display:flex;gap:10px;align-items:center;padding:10px 6px;border-bottom:1px solid rgba(0,0,0,.06);">
+            <div class="receipt-ico" style="width:42px;height:42px;border-radius:12px;background:#f3f5f8;border:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+              ${it.img ? `<img src="${escapeHTML(it.img)}" alt="" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none';" />` : ""}
             </div>
 
             <div style="flex:1;min-width:0;">
@@ -165,25 +156,19 @@
               </div>
               ${
                 it.sub
-                  ? `<div style="margin-top:3px;font-size:12px;color:rgba(15,26,44,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(
-                      it.sub
-                    )}</div>`
+                  ? `<div style="margin-top:3px;font-size:12px;color:rgba(15,26,44,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(it.sub)}</div>`
                   : ""
               }
               <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
-                <button type="button" data-qty="-1"
-                        style="width:28px;height:28px;border-radius:10px;border:1px solid rgba(0,0,0,.10);background:#fff;font-weight:900;">−</button>
+                <button type="button" data-qty="-1" style="width:28px;height:28px;border-radius:10px;border:1px solid rgba(0,0,0,.10);background:#fff;font-weight:900;">−</button>
                 <div style="min-width:22px;text-align:center;font-weight:900;">${qty}</div>
-                <button type="button" data-qty="+1"
-                        style="width:28px;height:28px;border-radius:10px;border:1px solid rgba(0,0,0,.10);background:#fff;font-weight:900;">+</button>
+                <button type="button" data-qty="+1" style="width:28px;height:28px;border-radius:10px;border:1px solid rgba(0,0,0,.10);background:#fff;font-weight:900;">+</button>
               </div>
             </div>
 
             <div style="text-align:right;">
               <div style="font-weight:900;color:#0f1a2c;">$${money(price)}</div>
-              <div style="margin-top:4px;font-size:12px;color:rgba(15,26,44,.65);">$${money(
-                line
-              )}</div>
+              <div style="margin-top:4px;font-size:12px;color:rgba(15,26,44,.65);">$${money(line)}</div>
             </div>
           </div>
         `;
@@ -201,62 +186,27 @@
   }
 
   // -------------------------
-  // Normalize incoming item (supports BOTH contracts)
+  // Public API
   // -------------------------
-  function normalizeFromJSONPayload(payload) {
-    // payload may be:
-    // { key, category, name, price, qty, img, sub, brand, link, meta }
-    const id = String(payload.key || payload.id || "").trim() || makeStableId(payload);
-
-    return {
-      id,
-      type: (payload.type || "product").toLowerCase(),
-      category: payload.category || "Product",
-      brand: payload.brand || payload.meta?.brand || "",
-      name: payload.name || "Item",
-      price: toNum(payload.price),
-      img: payload.img || "",
-      link: payload.link || "",
-      sub:
-        payload.sub ||
-        payload.meta?.sub ||
-        payload.meta?.origin ||
-        payload.meta?.line ||
-        "",
-      qty: clamp(Number(payload.qty || 1), 1, 999),
-    };
-  }
-
-  function normalizeFromDataset(el) {
-    const d = el.dataset || {};
-    const item = {
-      id: String(d.id || "").trim() || "",
-      type: (d.type || "product").toLowerCase(),
-      category: d.category || "Product",
-      brand: d.brand || "",
-      name: d.name || "Item",
-      price: toNum(d.price),
-      img: d.img || "",
-      link: d.link || "",
-      sub: d.sub || "",
-      qty: 1,
-    };
-    if (!item.id) item.id = makeStableId(item);
-    return item;
-  }
-
-  // -------------------------
-  // Core actions
-  // -------------------------
-  function addNormalized(item) {
+  function add(item) {
     if (!item) return;
 
-    const idx = state.items.findIndex((x) => x.id === item.id);
-    if (idx >= 0) {
-      state.items[idx].qty = clamp((state.items[idx].qty || 1) + item.qty, 1, 999);
-    } else {
-      state.items.push(item);
-    }
+    const normalized = {
+      id: String(item.id || "").trim() || makeStableId(item),
+      type: (item.type || "product").toLowerCase(),
+      category: item.category || "Product",
+      brand: item.brand || "",
+      name: item.name || "Item",
+      price: toNum(item.price),
+      img: item.img || "",
+      link: item.link || "",
+      sub: item.sub || "",
+      qty: clamp(Number(item.qty || 1), 1, 999),
+    };
+
+    const idx = state.items.findIndex((x) => x.id === normalized.id);
+    if (idx >= 0) state.items[idx].qty = clamp((state.items[idx].qty || 1) + normalized.qty, 1, 999);
+    else state.items.push(normalized);
 
     saveState();
     updateBadge();
@@ -273,12 +223,53 @@
   }
 
   // -------------------------
+  // Parse click target into cart item
+  // -------------------------
+  function itemFromReceiptNode(node) {
+    if (!node) return null;
+
+    // (B) JSON payload in data-receipt-item
+    const raw = node.getAttribute("data-receipt-item");
+    if (raw && raw.trim().startsWith("{")) {
+      const payload = safeParseJSON(raw, null);
+      if (payload) {
+        // allow either already-normalized payload OR older "receiptItem" shape
+        return {
+          id: payload.id || payload.key || "",
+          type: payload.type || "product",
+          category: payload.category || "Cigars",
+          brand: payload.brand || (payload.meta?.brand || ""),
+          name: payload.name || "",
+          price: payload.price ?? 0,
+          img: payload.img || "",
+          sub: payload.sub || "",
+          qty: payload.qty ?? 1,
+          link: payload.link || payload.meta?.link || "",
+        };
+      }
+    }
+
+    // (A) dataset-style
+    return {
+      id: node.dataset.id || "",
+      type: (node.dataset.type || "product").toLowerCase(),
+      category: node.dataset.category || "Product",
+      brand: node.dataset.brand || "",
+      name: node.dataset.name || "Item",
+      price: toNum(node.dataset.price || 0),
+      img: node.dataset.img || "",
+      link: node.dataset.link || "",
+      sub: node.dataset.sub || "",
+      qty: 1,
+    };
+  }
+
+  // -------------------------
   // Wiring
   // -------------------------
   function bindEventsOnce() {
     resolveDOM();
 
-    // Receipt FAB opens sheet
     if (receiptBtn && !receiptBtn.dataset.bound) {
       receiptBtn.dataset.bound = "1";
       receiptBtn.addEventListener("click", (e) => {
@@ -287,13 +278,11 @@
       });
     }
 
-    // Backdrop click closes
     if (backdropEl && !backdropEl.dataset.bound) {
       backdropEl.dataset.bound = "1";
       backdropEl.addEventListener("click", () => closeSheet());
     }
 
-    // Close buttons
     document.addEventListener("click", (e) => {
       const closeBtn = e.target.closest("[data-sheet-close]");
       if (closeBtn) {
@@ -302,7 +291,6 @@
       }
     });
 
-    // Clear
     if (clearBtn && !clearBtn.dataset.bound) {
       clearBtn.dataset.bound = "1";
       clearBtn.addEventListener("click", (e) => {
@@ -311,7 +299,6 @@
       });
     }
 
-    // Qty adjust delegation inside receipt items
     if (itemsEl && !itemsEl.dataset.bound) {
       itemsEl.dataset.bound = "1";
       itemsEl.addEventListener("click", (e) => {
@@ -336,39 +323,29 @@
       });
     }
 
-    // ESC closes sheet
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeSheet();
     });
 
-    // ✅ MAIN: capture clicks on anything with [data-receipt-item]
-    // and add using either JSON payload or dataset fields
+    // Main click delegation: any element with [data-receipt-item] adds to cart
     document.addEventListener(
       "click",
       (e) => {
-        const el = e.target.closest("[data-receipt-item]");
-        if (!el) return;
+        const node = e.target.closest("[data-receipt-item]");
+        if (!node) return;
 
-        // DO NOT block modal open areas; we only handle the + button / add buttons
-        // If someone mistakenly put data-receipt-item on a row container, this still works.
+        // Let other UIs keep their own row-click behavior; we only act on the + buttons/cards.
+        // If you want stricter gating, we can later restrict to .row-add/.pos-add.
         e.preventDefault();
         e.stopPropagation();
 
-        const raw = el.getAttribute("data-receipt-item") || "";
+        const item = itemFromReceiptNode(node);
+        if (!item) return;
 
-        // Contract A: JSON payload in data-receipt-item
-        if (raw && raw !== "1") {
-          const payload = safeParseJSON(raw, null);
-          if (payload) {
-            addNormalized(normalizeFromJSONPayload(payload));
-            return;
-          }
-        }
-
-        // Contract B: dataset fields on the element
-        addNormalized(normalizeFromDataset(el));
+        add(item);
+        updateBadge();
       },
-      { capture: true } // capture = ensures + works even inside other handlers
+      { passive: false }
     );
   }
 
@@ -378,10 +355,11 @@
     updateBadge();
     bindEventsOnce();
 
-    // Public API
     window.CigarOSCart = {
-      add: (item) => addNormalized(normalizeFromJSONPayload(item)),
+      add,
       clear,
+      openInvoice: openSheet,
+      closeInvoice: closeSheet,
       openSheet,
       closeSheet,
       getCount: () => getItemCount(),
@@ -389,6 +367,18 @@
       money,
     };
   }
+
+  window.CigarOSCart = window.CigarOSCart || {
+    add,
+    clear,
+    openInvoice: openSheet,
+    closeInvoice: closeSheet,
+    openSheet,
+    closeSheet,
+    getCount: () => getItemCount(),
+    getItems: () => [...state.items],
+    money,
+  };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
