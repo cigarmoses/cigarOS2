@@ -194,15 +194,20 @@ body.brand-page{
   flex-direction:column;
 }
 
+/* ✅ Compatibility row layout:
+   Supports BOTH:
+   (A) old contract: .row-ico .row-main .row-price .row-add
+   (B) new contract: .brand-row-left + .brand-row-right (+ optional .brand-row-msrp + .pos-add)
+*/
 .brand-row{
-  display:grid;
-  grid-template-columns:54px 1fr auto auto; /* ICON | TEXT | PRICE | + */
+  display:flex;
   align-items:center;
   gap:12px;
   padding:14px 10px;
   border-top:1px solid rgba(255,255,255,.10);
 }
 
+/* Optional left icon (old contract) */
 .row-ico{
   width:54px;
   height:54px;
@@ -210,16 +215,21 @@ body.brand-page{
   object-fit:cover;
   box-shadow:0 10px 24px rgba(0,0,0,.20);
   background:rgba(255,255,255,.08);
+  flex:0 0 auto;
 }
 
-.row-main{
+/* Left column (works for BOTH contracts) */
+.row-main,
+.brand-row-left{
   display:flex;
   flex-direction:column;
   gap:4px;
   min-width:0;
+  flex:1 1 auto;
   cursor:pointer;
 }
 
+/* Title/sub blocks (old contract) */
 .row-title{
   font-size:16px;
   font-weight:700;
@@ -243,6 +253,44 @@ body.brand-page{
   text-overflow:ellipsis;
 }
 
+/* Title/sub blocks (new contract) */
+.brand-row-title{
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:-.01em;
+  line-height:1.12;
+  color:rgba(255,255,255,.92);
+
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  white-space:normal;
+}
+
+.brand-row-sub{
+  margin-top:2px;
+  font-size:12px;
+  font-weight:700;
+  color:rgba(255,255,255,.55);
+  white-space:normal;
+}
+.brand-row-sub div{
+  display:inline;
+}
+.brand-row-sub div + div{
+  margin-left:8px;
+}
+
+/* Right column wrapper (new contract) */
+.brand-row-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:0 0 auto;
+}
+
+/* MSRP (old contract) */
 .row-price{
   position:relative;
   padding-left:10px;
@@ -252,7 +300,6 @@ body.brand-page{
   min-width:78px;
   text-align:right;
 }
-
 .row-price::before{
   content:"";
   position:absolute;
@@ -265,6 +312,29 @@ body.brand-page{
   opacity:.9;
 }
 
+/* MSRP (new contract) */
+.brand-row-msrp{
+  position:relative;
+  padding-left:10px;
+  font-size:16px;
+  font-weight:600;
+  color:rgba(255,255,255,.92);
+  min-width:78px;
+  text-align:right;
+}
+.brand-row-msrp::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:50%;
+  transform:translateY(-50%);
+  width:1px;
+  height:44px;
+  background:rgba(255,255,255,.20);
+  opacity:.9;
+}
+
+/* Add button (old small dot) */
 .row-add{
   width:20px;
   height:20px;
@@ -282,6 +352,25 @@ body.brand-page{
   -webkit-tap-highlight-color:transparent;
 }
 .row-add:active{ transform:scale(.98); }
+
+/* Add button (new big green + like your screenshots) */
+.brand-row .pos-add{
+  width:48px;
+  height:48px;
+  border-radius:999px;
+  border:none;
+  background:var(--green);
+  color:#ffffff;
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  box-shadow:0 12px 20px rgba(0,0,0,.28);
+  -webkit-tap-highlight-color:transparent;
+}
+.brand-row .pos-add:active{ transform:scale(.98); }
 
 /* ========== STATUS TEXT ========== */
 .brand-status{
