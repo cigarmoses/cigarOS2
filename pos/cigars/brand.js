@@ -1,4 +1,4 @@
-/* /pos/cigars/brand.js
+   /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
    FIXES:
@@ -414,15 +414,11 @@
                 <div>${esc(line || brand)}</div>
                 <div>${esc(cigar)}</div>
 
-                <!-- ✅ NEW: Vitola ONLY on this line -->
-                <div>${esc(vitola)}</div>
               </div>
 
-              <div class="brand-row-sub">
-                <div>${esc(origin)}</div>
-                ${length ? `<div>• ${esc(length)}"</div>` : ``}
-                ${ring ? `<div>• RG ${esc(ring)}</div>` : ``}
-              </div>
+               <div class="brand-row-sub">
+              <div>${esc(vitola)}</div>
+               </div>
             </div>
 
             <div class="brand-row-right">
