@@ -1,4 +1,4 @@
-   /* /pos/cigars/brand.js
+/* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
    FIXES:
@@ -31,6 +31,23 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#39;");
+
+  // =========================================================
+  // ✅ Helpers needed by the cigar detail popup (3-point fix #1)
+  // (aliases to existing esc/slug + lightweight normalizer)
+  // =========================================================
+  const escapeHTML = esc;
+  const escapeAttr = esc;
+
+  function normalizeIconPath(p) {
+    const s = norm(p);
+    return s || "";
+  }
+
+  function bestBrandHeaderIcon(row) {
+    const b = norm(row?.brand || row?.Brand || row?.Manufacturer || qp("brand") || "");
+    return `/img/icons/brands/${slug(b)}.svg`;
+  }
 
   // ---- brand context ----
   const BRAND = norm(qp("brand"));
@@ -128,7 +145,7 @@
   const getRing = (r) => pick(r, ["Ring", "Ring Gauge", "RG"]);
   const getLength = (r) => pick(r, ["Length"]);
   const getMSRP = (r) => pick(r, ["MSRP", "Price"]);
-  const getImage = (r) => pick(r, ["Image", "Img", "Photo"]);
+  const getImage = (r) => pick(r, ["Image", "Img", "Photo", "Cigar Image", "Cigar IMG"]);
 
   const priceNum = (x) => {
     const n = Number(String(x ?? "").replace(/[^\d.]/g, ""));
@@ -148,7 +165,7 @@
     };
   }
 
-     // =========================================================
+  // =========================================================
   // ✅ CIGAR DETAIL POPUP
   // =========================================================
   let detailOverlay = null;
@@ -181,12 +198,20 @@
   }
 
   function pickCigarImage(row) {
-    const raw = row["Cigar IMG"] || row["Cigar Image"] || row["Image"] || "";
+    // 3-point fix #2: support lowercase item.image as well as CSV column keys
+    const raw =
+      row?.image ||
+      row?.Image ||
+      row?.["Cigar IMG"] ||
+      row?.["Cigar Image"] ||
+      row?.Img ||
+      row?.Photo ||
+      "";
     let src = normalizeIconPath(raw);
 
     if (!src) {
-      const b = (row.Brand || "").toLowerCase();
-      const c = (row.Cigar || "").toLowerCase();
+      const b = lower(row?.brand || row?.Brand || "");
+      const c = lower(row?.cigar || row?.Cigar || "");
       if (b === "padron" && (c.includes("60th") || c.includes("60"))) {
         src = "/img/cigars/padron/padron60thanniversaryperfecto.png";
       }
@@ -208,21 +233,26 @@
     ensureCigarDetailModal();
     document.body.classList.add("cigar-detail-open");
 
-    const brand = row.Brand || qp("brand") || "Brand";
-    const cigarName = row.Cigar || "";
+    // =========================================================
+    // 3-point fix #2: allow BOTH shapes:
+    // - CSV row: row.Brand / row.Cigar / row.RG / row.Length / row.MSRP ...
+    // - Click item: row.brand / row.cigar / row.ring / row.length / row.msrp ...
+    // =========================================================
+    const brand = norm(row?.brand || row?.Brand || qp("brand") || "Brand");
+    const cigarName = norm(row?.cigar || row?.Cigar || "");
     const brandIcon = bestBrandHeaderIcon(row) || "";
     const cigarImg = pickCigarImage(row);
 
-    const rg = row.RG || row["Ring"] || "";
-    const len = row.Length || "";
-    const strength = row.Strength || "";
-    const vitola = row.Vitola || "";
-    const shape = row.Shape || "";
-    const wrapper = row.Wrapper || "";
-    const binder = row.Binder || "";
-    const filler = row.Filler || "";
-    const origin = row.Origin || "";
-    const shade = row["Wrapper Shade"] || "";
+    const rg = norm(row?.ring || row?.RG || row?.Ring || row?.["Ring"] || "");
+    const len = norm(row?.length || row?.Length || "");
+    const strength = norm(row?.strength || row?.Strength || "");
+    const vitola = norm(row?.vitola || row?.Vitola || "");
+    const shape = norm(row?.shape || row?.Shape || "");
+    const wrapper = norm(row?.wrapper || row?.Wrapper || "");
+    const binder = norm(row?.binder || row?.Binder || "");
+    const filler = norm(row?.filler || row?.Filler || "");
+    const origin = norm(row?.origin || row?.Origin || "");
+    const shade = norm(row?.shade || row?.["Wrapper Shade"] || row?.WrapperShade || "");
 
     detailSheet.innerHTML = `
       <button type="button" class="cigar-detail-x" aria-label="Close">×</button>
@@ -295,13 +325,18 @@
     detailSheet.querySelector(".cigar-detail-x")?.addEventListener("click", closeCigarDetail);
 
     detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
+      // =========================================================
+      // 3-point fix #3: price must use lowercase msrp first
+      // =========================================================
+      const msrpVal = row?.msrp ?? row?.MSRP ?? row?.Price ?? row?.price ?? 0;
+
       window.CigarOSCart?.add({
-        id: row.key || `${row.Brand}-${row.Cigar}-${row.Vitola}`,
-        name: row.Cigar,
-        brand: row.Brand,
+        id: row?.key || `${brand}-${cigarName}-${vitola}`,
+        name: cigarName,
+        brand: brand,
         category: "Cigars",
-        sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}` : "",
-        price: Number(row.MSRP || 0),
+        sub: vitola ? `${vitola} • ${len} × ${rg}` : "",
+        price: Number(msrpVal || 0),
         img: "",
       });
       closeCigarDetail();
@@ -317,7 +352,7 @@
     detailOverlay.setAttribute("aria-hidden", "true");
     document.body.classList.remove("cigar-detail-open");
   }
-   
+
   // ---- bottom sheets (unchanged) ----
   function ensureSheet() {
     if ($("#pos-sheet")) return;
@@ -457,12 +492,11 @@
               <div class="brand-row-title">
                 <div>${esc(line || brand)}</div>
                 <div>${esc(cigar)}</div>
-
               </div>
 
-               <div class="brand-row-sub">
-              <div>${esc(vitola)}</div>
-               </div>
+              <div class="brand-row-sub">
+                <div>${esc(vitola)}</div>
+              </div>
             </div>
 
             <div class="brand-row-right">
@@ -479,7 +513,7 @@
       .join("");
   }
 
-  // row click -> modal (but ignore + button)
+  // row click -> popup (but ignore + button)
   function bindClicks() {
     if (!listEl) return;
     listEl.addEventListener("click", (e) => {
@@ -501,7 +535,10 @@
         length: norm(row.dataset.length),
         msrp: norm(row.dataset.msrp),
         image: norm(row.dataset.image),
+        vitola: "", // optional (not required by popup, but safe)
+        key: `${slug(row.dataset.brand)}|${slug(row.dataset.line)}|${slug(row.dataset.cigar)}`
       };
+
       item.receiptItem = buildReceiptItem({
         brand: item.brand,
         line: item.line,
