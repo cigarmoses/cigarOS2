@@ -148,132 +148,176 @@
     };
   }
 
-  // ---- modal (unchanged) ----
-  function ensureModal() {
-    if ($("#cigar-modal")) return;
+     // =========================================================
+  // ✅ CIGAR DETAIL POPUP
+  // =========================================================
+  let detailOverlay = null;
+  let detailSheet = null;
 
-    const style = document.createElement("style");
-    style.textContent = `
-      .cigar-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .18s ease;z-index:9998}
-      .cigar-modal{position:fixed;left:12px;right:12px;top:12vh;max-width:920px;margin:0 auto;background:#fff;border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.22);transform:translateY(12px) scale(.98);opacity:0;pointer-events:none;transition:transform .18s ease,opacity .18s ease;z-index:9999;overflow:hidden}
-      .cigar-modal.is-open{opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
-      .cigar-modal-backdrop.is-open{opacity:1;pointer-events:auto}
-      .cigar-modal-head{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(15,26,44,.08)}
-      .cigar-modal-title{font-weight:900;letter-spacing:-.02em;color:#0f1a2c;font-size:18px;line-height:1.15}
-      .cigar-modal-sub{margin-top:6px;color:rgba(15,26,44,.62);font-size:13px;font-weight:650}
-      .cigar-modal-close{width:34px;height:34px;border-radius:999px;border:none;background:#f3f5f8;font-size:18px;font-weight:900;color:#0f1a2c;cursor:pointer;flex:0 0 auto}
-      .cigar-modal-body{display:flex;gap:14px;padding:14px 16px 16px}
-      .cigar-modal-img{width:132px;flex:0 0 auto;border-radius:16px;background:#f3f5f8;border:1px solid rgba(15,26,44,.08);overflow:hidden;display:flex;align-items:center;justify-content:center}
-      .cigar-modal-img img{display:block;width:100%;height:auto}
-      .cigar-modal-img .img-ph{padding:16px 10px;text-align:center;color:rgba(15,26,44,.55);font-size:12px;font-weight:800;line-height:1.25}
-      .cigar-modal-grid{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
-      .cigar-field{min-width:0}
-      .cigar-label{color:rgba(15,26,44,.55);font-size:11px;font-weight:800;letter-spacing:.02em;text-transform:uppercase}
-      .cigar-value{margin-top:4px;color:#0f1a2c;font-size:14px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .cigar-modal-actions{padding:12px 16px 16px;border-top:1px solid rgba(15,26,44,.08);display:flex;gap:10px}
-      .cigar-btn{flex:1 1 auto;height:46px;border-radius:14px;border:none;font-weight:900;font-size:16px;cursor:pointer}
-      .cigar-btn.primary{background:#34c759;color:#fff}
-      .cigar-btn.ghost{background:#f3f5f8;color:#0f1a2c}
-    `;
-    document.head.appendChild(style);
+  function ensureCigarDetailModal() {
+    if (detailOverlay) return;
 
-    const backdrop = document.createElement("div");
-    backdrop.className = "cigar-modal-backdrop";
-    backdrop.id = "cigar-modal-backdrop";
+    detailOverlay = document.createElement("div");
+    detailOverlay.className = "cigar-detail-overlay";
+    detailOverlay.setAttribute("aria-hidden", "true");
 
-    const modal = document.createElement("div");
-    modal.className = "cigar-modal";
-    modal.id = "cigar-modal";
-    modal.innerHTML = `
-      <div class="cigar-modal-head">
-        <div style="min-width:0;">
-          <div class="cigar-modal-title" id="cigar-modal-title"></div>
-          <div class="cigar-modal-sub" id="cigar-modal-sub"></div>
-        </div>
-        <button class="cigar-modal-close" id="cigar-modal-close" aria-label="Close">×</button>
-      </div>
-      <div class="cigar-modal-body">
-        <div class="cigar-modal-img" id="cigar-modal-img"></div>
-        <div class="cigar-modal-grid" id="cigar-modal-grid"></div>
-      </div>
-      <div class="cigar-modal-actions">
-        <button class="cigar-btn ghost" id="cigar-modal-close2" type="button">Close</button>
-        <button class="cigar-btn primary" id="cigar-modal-add" type="button">Add to invoice</button>
-      </div>
-    `;
+    detailOverlay.addEventListener("click", (e) => {
+      if (e.target === detailOverlay) closeCigarDetail();
+    });
 
-    document.body.appendChild(backdrop);
-    document.body.appendChild(modal);
+    detailSheet = document.createElement("div");
+    detailSheet.className = "cigar-detail-sheet";
+    detailSheet.setAttribute("role", "dialog");
+    detailSheet.setAttribute("aria-modal", "true");
 
-    const close = () => closeModal();
-    $("#cigar-modal-close").addEventListener("click", close);
-    $("#cigar-modal-close2").addEventListener("click", close);
-    backdrop.addEventListener("click", close);
+    detailOverlay.appendChild(detailSheet);
+    document.body.appendChild(detailOverlay);
+
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape" && detailOverlay?.classList.contains("open")) {
+        closeCigarDetail();
+      }
     });
   }
 
-  let modalItem = null;
+  function pickCigarImage(row) {
+    const raw = row["Cigar IMG"] || row["Cigar Image"] || row["Image"] || "";
+    let src = normalizeIconPath(raw);
 
-  function openModal(item) {
-    ensureModal();
-    modalItem = item;
-
-    $("#cigar-modal-title").textContent = `${item.line ? item.line + " — " : ""}${item.cigar}`;
-    $("#cigar-modal-sub").textContent = item.brand;
-
-    const imgWrap = $("#cigar-modal-img");
-    if (item.image) {
-      imgWrap.innerHTML = `<img src="${item.image}" alt=""
-        onerror="this.remove(); this.parentElement.innerHTML='<div class=img-ph>Image coming soon</div>'" />`;
-    } else {
-      imgWrap.innerHTML = `<div class="img-ph">Image coming soon</div>`;
+    if (!src) {
+      const b = (row.Brand || "").toLowerCase();
+      const c = (row.Cigar || "").toLowerCase();
+      if (b === "padron" && (c.includes("60th") || c.includes("60"))) {
+        src = "/img/cigars/padron/padron60thanniversaryperfecto.png";
+      }
     }
-
-    const fields = [
-      ["WRAPPER", item.wrapper],
-      ["BINDER", item.binder],
-      ["FILLER", item.filler],
-      ["ORIGIN", item.origin],
-      ["LENGTH", item.length ? `${item.length}"` : ""],
-      ["RING", item.ring ? `RG ${item.ring}` : ""],
-      ["MSRP", item.msrp],
-    ].filter(([, v]) => norm(v));
-
-    $("#cigar-modal-grid").innerHTML = fields
-      .map(
-        ([k, v]) => `
-        <div class="cigar-field">
-          <div class="cigar-label">${esc(k)}</div>
-          <div class="cigar-value" title="${esc(v)}">${esc(v)}</div>
-        </div>`
-      )
-      .join("");
-
-    $("#cigar-modal-backdrop").classList.add("is-open");
-    $("#cigar-modal").classList.add("is-open");
-
-    $("#cigar-modal-add").onclick = () => {
-      if (!modalItem) return;
-      const btn = document.createElement("button");
-      btn.setAttribute("data-receipt-item", JSON.stringify(modalItem.receiptItem));
-      document.body.appendChild(btn);
-      btn.click();
-      btn.remove();
-      closeModal();
-    };
+    return src;
   }
 
-  function closeModal() {
-    const b = $("#cigar-modal-backdrop");
-    const m = $("#cigar-modal");
-    if (!b || !m) return;
-    b.classList.remove("is-open");
-    m.classList.remove("is-open");
-    modalItem = null;
+  function renderKV(k, v) {
+    const vv = (v || "").toString().trim() || "—";
+    return `
+      <div class="cd-kv">
+        <div class="k">${escapeHTML(k)}</div>
+        <div class="v">${escapeHTML(vv)}</div>
+      </div>
+    `;
   }
 
+  function openCigarDetail(row) {
+    ensureCigarDetailModal();
+    document.body.classList.add("cigar-detail-open");
+
+    const brand = row.Brand || qp("brand") || "Brand";
+    const cigarName = row.Cigar || "";
+    const brandIcon = bestBrandHeaderIcon(row) || "";
+    const cigarImg = pickCigarImage(row);
+
+    const rg = row.RG || row["Ring"] || "";
+    const len = row.Length || "";
+    const strength = row.Strength || "";
+    const vitola = row.Vitola || "";
+    const shape = row.Shape || "";
+    const wrapper = row.Wrapper || "";
+    const binder = row.Binder || "";
+    const filler = row.Filler || "";
+    const origin = row.Origin || "";
+    const shade = row["Wrapper Shade"] || "";
+
+    detailSheet.innerHTML = `
+      <button type="button" class="cigar-detail-x" aria-label="Close">×</button>
+
+      <div class="cigar-detail-body">
+        <div class="cd-headercard">
+          <div class="cd-h-left">
+            <div class="cd-brand">${escapeHTML(brand)}</div>
+            <div class="cd-name">${escapeHTML(cigarName)}</div>
+          </div>
+          <div class="cd-h-icon">
+            ${brandIcon ? `<img src="${escapeAttr(brandIcon)}" alt="">` : ``}
+          </div>
+        </div>
+
+        <div class="cd-main">
+          <div class="cd-img">
+            ${
+              cigarImg
+                ? `<img class="cigar-detail-stick" src="${escapeAttr(cigarImg)}" alt="">`
+                : ``
+            }
+          </div>
+
+          <div class="cd-right">
+            <div class="cd-grid2">
+              <div class="cd-stat">
+                <div class="k">RING</div>
+                <div class="v">${escapeHTML(String(rg))}</div>
+              </div>
+              <div class="cd-stat">
+                <div class="k">LENGTH</div>
+                <div class="v">${escapeHTML(String(len))}</div>
+              </div>
+              <div class="cd-stat small">
+                <div class="k">SHAPE</div>
+                <div class="v">${escapeHTML(String(shape))}</div>
+              </div>
+              <div class="cd-stat small">
+                <div class="k">VITOLA</div>
+                <div class="v">${escapeHTML(String(vitola))}</div>
+              </div>
+            </div>
+
+            <div class="cd-block">
+              ${renderKV("WRAPPER", wrapper)}
+              ${renderKV("BINDER", binder)}
+              ${renderKV("FILLER", filler)}
+              ${renderKV("ORIGIN", origin)}
+            </div>
+
+            <div class="cd-block single">
+              ${renderKV("STRENGTH", strength)}
+            </div>
+
+            <div class="cd-block single">
+              ${renderKV("WRAPPER SHADE", shade)}
+            </div>
+
+            <div class="cd-actions">
+              <button type="button" class="cd-btn" disabled>COMPARE TO</button>
+              <button type="button" class="cd-btn is-live" data-cd-action="add">ADD TO BILL</button>
+              <button type="button" class="cd-btn" disabled>EDIT IN HUB</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    detailSheet.querySelector(".cigar-detail-x")?.addEventListener("click", closeCigarDetail);
+
+    detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
+      window.CigarOSCart?.add({
+        id: row.key || `${row.Brand}-${row.Cigar}-${row.Vitola}`,
+        name: row.Cigar,
+        brand: row.Brand,
+        category: "Cigars",
+        sub: row.Vitola ? `${row.Vitola} • ${row.Length} × ${row.RG}` : "",
+        price: Number(row.MSRP || 0),
+        img: "",
+      });
+      closeCigarDetail();
+    });
+
+    detailOverlay.classList.add("open");
+    detailOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeCigarDetail() {
+    if (!detailOverlay) return;
+    detailOverlay.classList.remove("open");
+    detailOverlay.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("cigar-detail-open");
+  }
+   
   // ---- bottom sheets (unchanged) ----
   function ensureSheet() {
     if ($("#pos-sheet")) return;
@@ -465,7 +509,7 @@
         msrp: item.msrp,
       });
 
-      openModal(item);
+      openCigarDetail(item);
     });
   }
 
