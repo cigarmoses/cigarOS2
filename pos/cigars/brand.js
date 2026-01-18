@@ -138,7 +138,10 @@
   const getLine = (r) => pick(r, ["Line", "Series", "Collection"]);
   const getCigar = (r) => pick(r, ["Cigar", "Name", "Cigar Name"]);
   const getVitola = (r) => pick(r, ["Vitola"]); // ✅ NEW: used for the subtitle line
-  const getWrapper = (r) => pick(r, ["Wrapper", "Wrapper Type", "Wrapper Shade"]);
+  const getStrength = (r) => pick(r, ["Strength"]);
+  const getShape = (r) => pick(r, ["Shape"]);
+  const getWrapperShade = (r) => pick(r, ["Wrapper Shade"]);
+  const getWrapper = (r) => pick(r, ["Wrapper", "Wrapper Type"]);
   const getBinder = (r) => pick(r, ["Binder"]);
   const getFiller = (r) => pick(r, ["Filler"]);
   const getOrigin = (r) => pick(r, ["Origin", "Country", "Country of Origin"]);
@@ -455,6 +458,9 @@
         const line = norm(getLine(r));
         const cigar = norm(getCigar(r));
         const vitola = norm(getVitola(r)); // ✅ NEW
+        const strength = norm(getStrength(r)); // ✅ NEW
+        const shape = norm(getShape(r)); // ✅ NEW
+        const wrapperShade = norm(getWrapperShade(r)); // ✅ NEW
         const wrapper = norm(getWrapper(r));
         const binder = norm(getBinder(r));
         const filler = norm(getFiller(r));
@@ -481,6 +487,10 @@
             data-origin="${esc(origin)}"
             data-ring="${esc(ring)}"
             data-length="${esc(length)}"
+            data-shape="${esc(shape)}"
+            data-vitola="${esc(vitola)}"
+            data-strength="${esc(strength)}"
+            data-wrapper-shade="${esc(wrapperShade)}"
             data-msrp="${esc(msrp)}"
             data-image="${esc(image)}">
 
@@ -523,21 +533,26 @@
       const row = e.target.closest("[data-row]");
       if (!row) return;
 
-      const item = {
-        brand: norm(row.dataset.brand),
-        line: norm(row.dataset.line),
-        cigar: norm(row.dataset.cigar),
-        wrapper: norm(row.dataset.wrapper),
-        binder: norm(row.dataset.binder),
-        filler: norm(row.dataset.filler),
-        origin: norm(row.dataset.origin),
-        ring: norm(row.dataset.ring),
-        length: norm(row.dataset.length),
-        msrp: norm(row.dataset.msrp),
-        image: norm(row.dataset.image),
-        vitola: "", // optional (not required by popup, but safe)
-        key: `${slug(row.dataset.brand)}|${slug(row.dataset.line)}|${slug(row.dataset.cigar)}`
-      };
+
+const item = {
+  brand: norm(row.dataset.brand),
+  line: norm(row.dataset.line),
+  cigar: norm(row.dataset.cigar),
+
+  vitola: norm(row.dataset.vitola),
+  shape: norm(row.dataset.shape),
+  strength: norm(row.dataset.strength),
+  wrapperShade: norm(row.dataset.wrapperShade),
+
+  wrapper: norm(row.dataset.wrapper),
+  binder: norm(row.dataset.binder),
+  filler: norm(row.dataset.filler),
+  origin: norm(row.dataset.origin),
+  ring: norm(row.dataset.ring),
+  length: norm(row.dataset.length),
+  msrp: norm(row.dataset.msrp),
+  image: norm(row.dataset.image),
+};
 
       item.receiptItem = buildReceiptItem({
         brand: item.brand,
