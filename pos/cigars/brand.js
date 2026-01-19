@@ -1,16 +1,14 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   FIXES:
-   ✅ Correct row DOM: left stack + right MSRP/+ (no "Maduro 29.25" inline)
-   ✅ Click row opens cigar detail modal (built-in modal here)
-   ✅ Green + adds to invoice via data-receipt-item
-   ✅ Filters button works
-   ✅ Bands button works (scoped to current brand)
-
-   ✅ NEW (requested - ONLY):
-   1) Row subtitle line = Vitola ONLY (from "Vitola" column)
-   2) Left icon = Brand icon from /img/icons/brands/(brand).svg (e.g. /img/icons/brands/padron.svg)
+   FIXES (current):
+   ✅ Brand POS grid title shows: Column G + Column H  (Line + Cigar)
+   ✅ Subtitle line = Vitola ONLY
+   ✅ Row click opens cigar detail modal
+   ✅ Green + adds to invoice (data-receipt-item) — cart.js handles
+   ✅ Brand icon (left) always /img/icons/brands/(brand).svg
+   ✅ Wrapper Shade pulled from BOTH CSV + row dataset (multiple key fallbacks)
+   ✅ Popup image picker reads row.image (dataset) or CSV image columns
 */
 
 (() => {
@@ -32,22 +30,9 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#39;");
 
-  // =========================================================
-  // ✅ Helpers needed by the cigar detail popup (3-point fix #1)
-  // (aliases to existing esc/slug + lightweight normalizer)
-  // =========================================================
+  // aliases used by modal render helpers
   const escapeHTML = esc;
   const escapeAttr = esc;
-
-  function normalizeIconPath(p) {
-    const s = norm(p);
-    return s || "";
-  }
-
-  function bestBrandHeaderIcon(row) {
-    const b = norm(row?.brand || row?.Brand || row?.Manufacturer || qp("brand") || "");
-    return `/img/icons/brands/${slug(b)}.svg`;
-  }
 
   // ---- brand context ----
   const BRAND = norm(qp("brand"));
@@ -134,13 +119,18 @@
     return "";
   }
 
+  // NOTE: these match your HUB headers
   const getBrand = (r) => pick(r, ["Brand", "Manufacturer"]);
   const getLine = (r) => pick(r, ["Line", "Series", "Collection"]);
   const getCigar = (r) => pick(r, ["Cigar", "Name", "Cigar Name"]);
-  const getVitola = (r) => pick(r, ["Vitola"]); // ✅ NEW: used for the subtitle line
+  const getVitola = (r) => pick(r, ["Vitola"]);
   const getStrength = (r) => pick(r, ["Strength"]);
   const getShape = (r) => pick(r, ["Shape"]);
-  const getWrapperShade = (r) => pick(r, ["Wrapper Shade"]);
+
+  // Wrapper Shade: support multiple possible column spellings
+  const getWrapperShade = (r) =>
+    pick(r, ["Wrapper Shade", "WrapperShade", "Wrapper shade", "wrapper shade", "Shade"]);
+
   const getWrapper = (r) => pick(r, ["Wrapper", "Wrapper Type"]);
   const getBinder = (r) => pick(r, ["Binder"]);
   const getFiller = (r) => pick(r, ["Filler"]);
@@ -200,8 +190,15 @@
     });
   }
 
+  function bestBrandHeaderIcon(row) {
+    const b = norm(row?.brand || row?.Brand || row?.Manufacturer || BRAND || "");
+    return `/img/icons/brands/${slug(b)}.svg`;
+  }
+
   function pickCigarImage(row) {
-    // 3-point fix #2: support lowercase item.image as well as CSV column keys
+    // supports BOTH shapes:
+    // - dataset item: row.image
+    // - CSV row: Image / Cigar IMG / Photo etc.
     const raw =
       row?.image ||
       row?.Image ||
@@ -210,16 +207,9 @@
       row?.Img ||
       row?.Photo ||
       "";
-    let src = normalizeIconPath(raw);
 
-    if (!src) {
-      const b = lower(row?.brand || row?.Brand || "");
-      const c = lower(row?.cigar || row?.Cigar || "");
-      if (b === "padron" && (c.includes("60th") || c.includes("60"))) {
-        src = "/img/cigars/padron/padron60thanniversaryperfecto.png";
-      }
-    }
-    return src;
+    const src = norm(raw);
+    return src || "";
   }
 
   function renderKV(k, v) {
@@ -236,13 +226,20 @@
     ensureCigarDetailModal();
     document.body.classList.add("cigar-detail-open");
 
-    // =========================================================
-    // 3-point fix #2: allow BOTH shapes:
-    // - CSV row: row.Brand / row.Cigar / row.RG / row.Length / row.MSRP ...
-    // - Click item: row.brand / row.cigar / row.ring / row.length / row.msrp ...
-    // =========================================================
-    const brand = norm(row?.brand || row?.Brand || qp("brand") || "Brand");
-    const cigarName = norm(row?.cigar || row?.Cigar || "");
+    const brand = norm(row?.brand || row?.Brand || BRAND || "Brand");
+
+    // IMPORTANT: we want the popup title to match the grid:
+    // "Line + Cigar" (1926 No. 1 Maduro)
+    const cigarName = norm(
+      row?.cigarFull ||
+        row?.["Cigar Full"] ||
+        row?.cigar ||
+        row?.Cigar ||
+        (norm(row?.line || row?.Line) && norm(row?.cigar || row?.Cigar)
+          ? `${norm(row?.line || row?.Line)} ${norm(row?.cigar || row?.Cigar)}`.trim()
+          : "")
+    );
+
     const brandIcon = bestBrandHeaderIcon(row) || "";
     const cigarImg = pickCigarImage(row);
 
@@ -255,14 +252,17 @@
     const binder = norm(row?.binder || row?.Binder || "");
     const filler = norm(row?.filler || row?.Filler || "");
     const origin = norm(row?.origin || row?.Origin || "");
-const shade = norm(
-  row?.wrapperShade ||          // ✅ from data-wrapper-shade (row click payload)
-  row?.shade ||                 // legacy
-  row?.["Wrapper Shade"] ||     // CSV column
-  row?.WrapperShade ||          // alt key
-  row?.["WrapperShade"] ||      // alt key
-  ""
-);
+
+    // Wrapper shade: dataset + CSV fallbacks
+    const shade = norm(
+      row?.wrapperShade || // from data-wrapper-shade
+        row?.shade || // legacy
+        row?.["Wrapper Shade"] || // CSV
+        row?.WrapperShade || // alt
+        row?.["WrapperShade"] || // alt
+        ""
+    );
+
     detailSheet.innerHTML = `
       <button type="button" class="cigar-detail-x" aria-label="Close">×</button>
 
@@ -331,12 +331,11 @@ const shade = norm(
       </div>
     `;
 
-    detailSheet.querySelector(".cigar-detail-x")?.addEventListener("click", closeCigarDetail);
+    detailSheet
+      .querySelector(".cigar-detail-x")
+      ?.addEventListener("click", closeCigarDetail);
 
     detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
-      // =========================================================
-      // 3-point fix #3: price must use lowercase msrp first
-      // =========================================================
       const msrpVal = row?.msrp ?? row?.MSRP ?? row?.Price ?? row?.price ?? 0;
 
       window.CigarOSCart?.add({
@@ -348,6 +347,7 @@ const shade = norm(
         price: Number(msrpVal || 0),
         img: "",
       });
+
       closeCigarDetail();
     });
 
@@ -362,7 +362,7 @@ const shade = norm(
     document.body.classList.remove("cigar-detail-open");
   }
 
-  // ---- bottom sheets (unchanged) ----
+  // ---- bottom sheets (filters/bands) ----
   function ensureSheet() {
     if ($("#pos-sheet")) return;
 
@@ -444,7 +444,9 @@ const shade = norm(
     render();
   }
 
-  // ---- render rows (ONLY TWO CHANGES INSIDE) ----
+  // =========================================================
+  // ✅ RENDER (grid shows Line + Cigar)
+  // =========================================================
   function render() {
     if (!listEl) return;
 
@@ -461,12 +463,17 @@ const shade = norm(
     listEl.innerHTML = state.view
       .map((r) => {
         const brand = norm(getBrand(r));
-        const line = norm(getLine(r));
-        const cigar = norm(getCigar(r));
-        const vitola = norm(getVitola(r)); // ✅ NEW
-        const strength = norm(getStrength(r)); // ✅ NEW
-        const shape = norm(getShape(r)); // ✅ NEW
-        const wrapperShade = norm(getWrapperShade(r)); // ✅ NEW
+        const line = norm(getLine(r));     // Column G
+        const cigar = norm(getCigar(r));   // Column H
+
+        // ✅ combined display title
+        const cigarFull = `${line} ${cigar}`.trim();
+
+        const vitola = norm(getVitola(r));
+        const strength = norm(getStrength(r));
+        const shape = norm(getShape(r));
+        const wrapperShade = norm(getWrapperShade(r));
+
         const wrapper = norm(getWrapper(r));
         const binder = norm(getBinder(r));
         const filler = norm(getFiller(r));
@@ -476,9 +483,9 @@ const shade = norm(
         const msrp = norm(getMSRP(r));
         const image = norm(getImage(r));
 
+        // invoice still uses line + cigar separately
         const receiptItem = buildReceiptItem({ brand, line, cigar, msrp });
 
-        // ✅ NEW: brand icon path from /img/icons/brands/(brand).svg
         const brandIconSrc = `/img/icons/brands/${slug(brand || BRAND)}.svg`;
 
         return `
@@ -487,6 +494,7 @@ const shade = norm(
             data-brand="${esc(brand)}"
             data-line="${esc(line)}"
             data-cigar="${esc(cigar)}"
+            data-cigar-full="${esc(cigarFull)}"
             data-wrapper="${esc(wrapper)}"
             data-binder="${esc(binder)}"
             data-filler="${esc(filler)}"
@@ -500,14 +508,12 @@ const shade = norm(
             data-msrp="${esc(msrp)}"
             data-image="${esc(image)}">
 
-            <!-- ✅ NEW: left brand icon (uses existing .row-ico styling in brand.css) -->
             <img class="row-ico" alt="" src="${esc(brandIconSrc)}"
                  onerror="this.style.visibility='hidden';" />
 
             <div class="brand-row-left">
               <div class="brand-row-title">
-                <div>${esc(line || brand)}</div>
-                <div>${esc(cigar)}</div>
+                <div>${esc(cigarFull || cigar)}</div>
               </div>
 
               <div class="brand-row-sub">
@@ -529,37 +535,46 @@ const shade = norm(
       .join("");
   }
 
-  // row click -> popup (but ignore + button)
+  // =========================================================
+  // ✅ CLICKS (row opens popup; + ignored)
+  // =========================================================
   function bindClicks() {
     if (!listEl) return;
+
     listEl.addEventListener("click", (e) => {
       const add = e.target.closest("[data-receipt-item]");
-      if (add) return; // let cart.js handle
+      if (add) return; // cart.js handles add
 
       const row = e.target.closest("[data-row]");
       if (!row) return;
 
+      // ✅ IMPORTANT: pass cigarFull into popup so title matches grid
+      const item = {
+        brand: norm(row.dataset.brand),
+        line: norm(row.dataset.line),
+        cigar: norm(row.dataset.cigar),
+        cigarFull: norm(row.dataset.cigarFull),
 
-const item = {
-  brand: norm(row.dataset.brand),
-  line: norm(row.dataset.line),
-  cigar: norm(row.dataset.cigar),
+        vitola: norm(row.dataset.vitola),
+        shape: norm(row.dataset.shape),
+        strength: norm(row.dataset.strength),
+        wrapperShade: norm(row.dataset.wrapperShade),
 
-  vitola: norm(row.dataset.vitola),
-  shape: norm(row.dataset.shape),
-  strength: norm(row.dataset.strength),
-  wrapperShade: norm(row.dataset.wrapperShade),
+        wrapper: norm(row.dataset.wrapper),
+        binder: norm(row.dataset.binder),
+        filler: norm(row.dataset.filler),
+        origin: norm(row.dataset.origin),
+        ring: norm(row.dataset.ring),
+        length: norm(row.dataset.length),
+        msrp: norm(row.dataset.msrp),
+        image: norm(row.dataset.image),
 
-  wrapper: norm(row.dataset.wrapper),
-  binder: norm(row.dataset.binder),
-  filler: norm(row.dataset.filler),
-  origin: norm(row.dataset.origin),
-  ring: norm(row.dataset.ring),
-  length: norm(row.dataset.length),
-  msrp: norm(row.dataset.msrp),
-  image: norm(row.dataset.image),
-};
+        key: `${slug(row.dataset.brand)}|${slug(row.dataset.line)}|${slug(
+          row.dataset.cigarFull || row.dataset.cigar
+        )}`,
+      };
 
+      // receipt meta stays separate line/cigar
       item.receiptItem = buildReceiptItem({
         brand: item.brand,
         line: item.line,
@@ -610,8 +625,9 @@ const item = {
   }
 
   function openBands() {
-    // build unique line list for this brand
-    let lines = Array.from(new Set(state.all.filter(inBrand).map((r) => norm(getLine(r))).filter(Boolean)));
+    let lines = Array.from(
+      new Set(state.all.filter(inBrand).map((r) => norm(getLine(r))).filter(Boolean))
+    );
     if (!lines.length) lines = ["All"];
 
     openSheet(
@@ -625,7 +641,9 @@ const item = {
               <button type="button" data-band="${esc(l)}"
                 style="text-align:left;border:1px solid rgba(15,26,44,.12);background:#fff;border-radius:14px;padding:14px;font-weight:900;font-size:16px;color:#0f1a2c;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
                 <span>${esc(l)}</span>
-                <span style="width:18px;height:18px;border-radius:999px;border:2px solid ${active ? "#007aff" : "rgba(15,26,44,.18)"};background:${active ? "#007aff" : "transparent"};"></span>
+                <span style="width:18px;height:18px;border-radius:999px;border:2px solid ${
+                  active ? "#007aff" : "rgba(15,26,44,.18)"
+                };background:${active ? "#007aff" : "transparent"};"></span>
               </button>
             `;
           })
@@ -660,13 +678,11 @@ const item = {
 
     bindClicks();
 
-    // wire search input (if present)
     searchEl?.addEventListener("input", () => {
       state.q = norm(searchEl.value || "");
       apply();
     });
 
-    // wire buttons
     filtersBtn?.addEventListener("click", openFilters);
     bandsBtn?.addEventListener("click", openBands);
 
