@@ -262,7 +262,7 @@ body.brand-page{
   color:rgba(255,255,255,.92);
 
   display:-webkit-box;
-  -webkit-line-clamp:3;
+  -webkit-line-clamp:2;   /* ✅ prevents 3-line wrap */
   -webkit-box-orient:vertical;
   overflow:hidden;
   white-space:normal;
@@ -288,6 +288,8 @@ body.brand-page{
   align-items:center;
   gap:12px;
   flex:0 0 auto;
+
+  margin-left: 14px;   /* ✅ pushes separator/right side to the right */
 }
 
 /* MSRP (old contract) */
@@ -355,19 +357,19 @@ body.brand-page{
 
 /* Add button (new big green + like your screenshots) */
 .brand-row .pos-add{
-  width:48px;
-  height:48px;
+  width:26px;          /* ✅ ~half of 48 */
+  height:26px;
   border-radius:999px;
   border:none;
   background:var(--green);
   color:#ffffff;
-  font-size:22px;
+  font-size:16px;      /* ✅ scale the plus down too */
   font-weight:900;
   line-height:1;
   display:grid;
   place-items:center;
   cursor:pointer;
-  box-shadow:0 12px 20px rgba(0,0,0,.28);
+  box-shadow:0 10px 16px rgba(0,0,0,.24);
   -webkit-tap-highlight-color:transparent;
 }
 .brand-row .pos-add:active{ transform:scale(.98); }
