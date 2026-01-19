@@ -255,8 +255,14 @@
     const binder = norm(row?.binder || row?.Binder || "");
     const filler = norm(row?.filler || row?.Filler || "");
     const origin = norm(row?.origin || row?.Origin || "");
-    const shade = norm(row?.shade || row?.["Wrapper Shade"] || row?.WrapperShade || "");
-
+const shade = norm(
+  row?.wrapperShade ||          // ✅ from data-wrapper-shade (row click payload)
+  row?.shade ||                 // legacy
+  row?.["Wrapper Shade"] ||     // CSV column
+  row?.WrapperShade ||          // alt key
+  row?.["WrapperShade"] ||      // alt key
+  ""
+);
     detailSheet.innerHTML = `
       <button type="button" class="cigar-detail-x" aria-label="Close">×</button>
 
