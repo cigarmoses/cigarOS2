@@ -957,7 +957,11 @@ body.cigar-detail-open #receipt-count{
   bottom: 0;
   z-index: 5;
 
-  background: rgba(255,255,255,0.96);
-  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
-  border-top: 1px solid rgba(15,26,44,0.10);
+  background: transparent;
+  padding: 8px 0 env(safe-area-inset-bottom);
+  border-top: none;
+}
+
+.cd-right{
+  padding-bottom: 54px; /* room for the sticky button row */
 }
