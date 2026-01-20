@@ -520,21 +520,21 @@ body.pos-modal-open{ overflow:hidden; }
   position:relative;
   display:flex;
   align-items:center;
-  justify-content:center;   /* ✅ center label under art */
-  padding:0 0 0 0;
+  justify-content:center;
+  padding:0 18px;   /* ✅ must match the checkbox right inset */
 }
 
 .band-label{
   flex:1 1 auto;
   text-align:center;        /* ✅ center text */
-  font-weight:800;
+  font-weight:400;
   font-size:14px;
   color:#0b1220;
 }
 
 .band-check{
-  position:absolute;        /* ✅ keep checkbox on the right */
-  right:0;
+  position:absolute;
+  right:24px;
   top:50%;
   transform:translateY(-50%);
 }
