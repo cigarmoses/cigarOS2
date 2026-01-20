@@ -517,10 +517,26 @@ body.pos-modal-open{ overflow:hidden; }
 }
 
 .band-meta{
+  position:relative;
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  padding-right:28px;
+  justify-content:center;   /* ✅ center label under art */
+  padding:0 0 0 0;
+}
+
+.band-label{
+  flex:1 1 auto;
+  text-align:center;        /* ✅ center text */
+  font-weight:800;
+  font-size:14px;
+  color:#0b1220;
+}
+
+.band-check{
+  position:absolute;        /* ✅ keep checkbox on the right */
+  right:0;
+  top:50%;
+  transform:translateY(-50%);
 }
 
 .band-check{
