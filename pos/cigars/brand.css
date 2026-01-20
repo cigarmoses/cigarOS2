@@ -520,8 +520,8 @@ body.pos-modal-open{ overflow:hidden; }
   position:relative;
   display:flex;
   align-items:center;
-  justify-content:center;
-  padding:0 18px;   /* ✅ must match the checkbox right inset */
+  justify-content:center;   /* ✅ center label */
+  padding:0 20px;           /* ✅ reserve equal space left & right */
 }
 
 .band-label{
@@ -534,7 +534,7 @@ body.pos-modal-open{ overflow:hidden; }
 
 .band-check{
   position:absolute;
-  right:24px;
+  right:20px;
   top:50%;
   transform:translateY(-50%);
 }
