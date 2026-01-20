@@ -969,17 +969,15 @@ body.cigar-detail-open #receipt-count{
   -webkit-overflow-scrolling:touch;
 }
 
-/* keep the 3 buttons visible */
 .cd-actions{
   position: sticky;
-  bottom: 0;
+  bottom: env(safe-area-inset-bottom);
   z-index: 5;
 
   background: transparent;
-  padding: 8px 0 env(safe-area-inset-bottom);
-  border-top: none;
+  padding: 12px 0 env(safe-area-inset-bottom);
 }
 
 .cd-right{
-  padding-bottom: 130px; /* room for sticky buttons so WRAPPER SHADE isn't covered */
+  padding-bottom: 96px;
 }
