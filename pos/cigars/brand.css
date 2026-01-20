@@ -965,5 +965,5 @@ body.cigar-detail-open #receipt-count{
 }
 
 .cd-right{
-  padding-bottom: 62px; /* room for the sticky button row */
+  padding-bottom: 130px; /* room for sticky buttons so WRAPPER SHADE isn't covered */
 }
