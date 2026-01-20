@@ -254,8 +254,39 @@
     );
 
     const brandIcon = bestBrandHeaderIcon(row) || "";
-    const cigarImg = pickCigarImage(row);
 
+     // ----- Image (CSV path OR smart filename fallback) -----
+const picked = pickCigarImage(row);
+
+// name hookup (matches your file naming like: 1926no1maduro.png)
+const nameForFile = slug(
+  row?.cigarFull ||
+  row?.["Cigar Full"] ||
+  row?.cigar ||
+  row?.Cigar ||
+  `${norm(row?.line || row?.Line || "")} ${norm(row?.cigar || row?.Cigar || "")}`.trim()
+);
+
+const brandForFolder = slug(row?.brand || row?.Brand || BRAND || "");
+
+// candidates (try CSV first, then generated)
+const imgCandidates = [
+  picked,
+
+  // folder + name
+  `/img/cigars/${brandForFolder}/${nameForFile}.png`,
+  `/img/cigars/${brandForFolder}/${nameForFile}.jpg`,
+  `/img/cigars/${brandForFolder}/${nameForFile}.jpeg`,
+
+  // folder + brand+name (matches files like padron1964no4maduro.png)
+  `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.png`,
+  `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpg`,
+  `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpeg`,
+].filter(Boolean);
+
+const cigarImg = imgCandidates[0] || "";
+const cigarImgAlts = imgCandidates.slice(1).join("|");
+     
     const rg = norm(row?.ring || row?.RG || row?.Ring || row?.["Ring"] || "");
     const len = norm(row?.length || row?.Length || "");
     const strength = norm(row?.strength || row?.Strength || "");
