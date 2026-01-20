@@ -53,7 +53,7 @@
 
   // HTML buttons on this page
   const filtersBtn = $("#btn-filters");
-  const bandsBtn = $("#btn-bands");
+  const sBtn = $("#btn-s");
 
   // Maduro/Natural segmented control
   const wrapperSeg = $("#wrapper-seg");
@@ -65,7 +65,7 @@
   const backdrop = $("#sheet-backdrop");
 
   const sheetReceipt = $("#sheet-receipt"); // (not touched here)
-  const sheetBands = $("#sheet-bands");
+  const sheets = $("#sheet-bands");
   const sheetFilters = $("#sheet-filters");
 
   // Bands sheet targets
@@ -520,7 +520,7 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
       label: "Family Reserve",
       src: "/img/icons/padronfamilyreserveband.svg",
     },
-    { key: "padrondamasoband", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
+    { key: "padron1926serieband", label: "1926", src: "/img/icons/padron1926serieband.svg" },
     {
       key: "padronblackseriesband",
       label: "Black Series",
@@ -531,7 +531,7 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
       label: "1964",
       src: "/img/icons/padron1964anniversaryband.svg",
     },
-    { key: "padron1926serieband", label: "1926", src: "/img/icons/padron1926serieband.svg" },
+    { key: "padrondamasoband", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
   ];
 
   function bandKeyMatchesRow(bandKey, r) {
@@ -576,7 +576,7 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
         return `
           <div class="band-row">
             <div class="band-art">
-              <img src="${esc(b.src)}" alt="${esc(b.label)}">
+              <img class="band-img" src="${esc(b.src)}" alt="${esc(b.label)}">
             </div>
 
             <div class="band-meta">
