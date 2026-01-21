@@ -26,7 +26,11 @@
 
   const norm = (s) => String(s ?? "").trim();
   const lower = (s) => norm(s).toLowerCase();
-  const slug = (s) => lower(s).replace(/[^a-z0-9]+/g, "");
+  const slug = (s) =>
+  lower(s)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")   // ✅ strip accents (Padrón -> Padron)
+    .replace(/[^a-z0-9]+/g, "");
   const esc = (s = "") =>
     String(s)
       .replaceAll("&", "&amp;")
