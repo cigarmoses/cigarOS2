@@ -140,7 +140,7 @@
   }
 
   // NOTE: these match your HUB headers
-  const getBrand = (r) => pick(r, ["Brand", "Manufacturer"]);
+  const getBrand = (r) => pick(r, ["Brand", "Brand AKA", "Brand aka"]);
   const getLine = (r) => pick(r, ["Line", "Series", "Collection"]);
   const getCigar = (r) => pick(r, ["Cigar", "Name", "Cigar Name"]);
   const getVitola = (r) => pick(r, ["Vitola"]);
