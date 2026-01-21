@@ -26,11 +26,14 @@
 
   const norm = (s) => String(s ?? "").trim();
   const lower = (s) => norm(s).toLowerCase();
+
+  // ✅ IMPORTANT: accent-safe slug (Padrón -> padron)
   const slug = (s) =>
-  lower(s)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")   // ✅ strip accents (Padrón -> Padron)
-    .replace(/[^a-z0-9]+/g, "");
+    lower(s)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "");
+
   const esc = (s = "") =>
     String(s)
       .replaceAll("&", "&amp;")
@@ -55,9 +58,9 @@
   const searchEl = $("#brand-search");
   const backBtn = $("#brand-back") || $(".pos-back");
 
-  // HTML buttons on this page
+  // ✅ Correct buttons on this page
   const filtersBtn = $("#btn-filters");
-  const sBtn = $("#btn-s");
+  const bandsBtn = $("#btn-bands");
 
   // Maduro/Natural segmented control
   const wrapperSeg = $("#wrapper-seg");
@@ -69,7 +72,7 @@
   const backdrop = $("#sheet-backdrop");
 
   const sheetReceipt = $("#sheet-receipt"); // (not touched here)
-  const sheets = $("#sheet-bands");
+  const sheetBands = $("#sheet-bands");     // ✅ FIXED NAME
   const sheetFilters = $("#sheet-filters");
 
   // Bands sheet targets
@@ -84,13 +87,6 @@
   const filtersBack = $("#filters-back");
   const filtersTitle = $("#filters-title");
   const filtersConfirm = $("#filters-confirm");
-
-  // Applied chips (optional UI)
-  const brandApplied = $("#brand-applied");
-  const brandAppliedRow = $("#brand-applied-row");
-
-  const filtersApplied = $("#filters-applied");
-  const filtersAppliedRow = $("#filters-applied-row");
 
   // ---- CSV parsing ----
   function splitCsvLine(line) {
@@ -144,14 +140,13 @@
   }
 
   // NOTE: these match your HUB headers
-  const getBrand = (r) => pick(r, ["Brand", "Brand AKA", "Brand aka"]);
+  const getBrand = (r) => pick(r, ["Brand", "Brand", "Brand AKA", "Brand aka", "Manufacturer"]);
   const getLine = (r) => pick(r, ["Line", "Series", "Collection"]);
   const getCigar = (r) => pick(r, ["Cigar", "Name", "Cigar Name"]);
   const getVitola = (r) => pick(r, ["Vitola"]);
   const getStrength = (r) => pick(r, ["Strength"]);
   const getShape = (r) => pick(r, ["Shape"]);
 
-  // Wrapper Shade: support multiple possible column spellings
   const getWrapperShade = (r) =>
     pick(r, ["Wrapper Shade", "WrapperShade", "Wrapper shade", "wrapper shade", "Shade"]);
 
@@ -169,7 +164,6 @@
     return Number.isFinite(n) ? n : 0;
   };
 
-  // ---- invoice payload (cart.js listens for data-receipt-item) ----
   function buildReceiptItem({ brand, line, cigar, msrp }) {
     const key = `${slug(brand)}|${slug(line)}|${slug(cigar)}`;
     return {
@@ -183,7 +177,7 @@
   }
 
   // =========================================================
-  // ✅ CIGAR DETAIL POPUP (UNCHANGED)
+  // ✅ CIGAR DETAIL POPUP
   // =========================================================
   let detailOverlay = null;
   let detailSheet = null;
@@ -259,38 +253,31 @@
 
     const brandIcon = bestBrandHeaderIcon(row) || "";
 
-     // ----- Image (CSV path OR smart filename fallback) -----
-const picked = pickCigarImage(row);
+    // ----- Image (CSV path OR smart filename fallback) -----
+    const picked = pickCigarImage(row);
 
-// name hookup (matches your file naming like: 1926no1maduro.png)
-const nameForFile = slug(
-  row?.cigarFull ||
-  row?.["Cigar Full"] ||
-  row?.cigar ||
-  row?.Cigar ||
-  `${norm(row?.line || row?.Line || "")} ${norm(row?.cigar || row?.Cigar || "")}`.trim()
-);
+    const nameForFile = slug(
+      row?.cigarFull ||
+        row?.["Cigar Full"] ||
+        row?.cigar ||
+        row?.Cigar ||
+        `${norm(row?.line || row?.Line || "")} ${norm(row?.cigar || row?.Cigar || "")}`.trim()
+    );
 
-const brandForFolder = slug(row?.brand || row?.Brand || BRAND || "");
+    const brandForFolder = slug(row?.brand || row?.Brand || BRAND || "");
 
-// candidates (try CSV first, then generated)
-const imgCandidates = [
-  picked,
+    const imgCandidates = [
+      picked,
+      `/img/cigars/${brandForFolder}/${nameForFile}.png`,
+      `/img/cigars/${brandForFolder}/${nameForFile}.jpg`,
+      `/img/cigars/${brandForFolder}/${nameForFile}.jpeg`,
+      `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.png`,
+      `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpg`,
+      `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpeg`,
+    ].filter(Boolean);
 
-  // folder + name
-  `/img/cigars/${brandForFolder}/${nameForFile}.png`,
-  `/img/cigars/${brandForFolder}/${nameForFile}.jpg`,
-  `/img/cigars/${brandForFolder}/${nameForFile}.jpeg`,
+    const cigarImg = imgCandidates[0] || "";
 
-  // folder + brand+name (matches files like padron1964no4maduro.png)
-  `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.png`,
-  `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpg`,
-  `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpeg`,
-].filter(Boolean);
-
-const cigarImg = imgCandidates[0] || "";
-const cigarImgAlts = imgCandidates.slice(1).join("|");
-     
     const rg = norm(row?.ring || row?.RG || row?.Ring || row?.["Ring"] || "");
     const len = norm(row?.length || row?.Length || "");
     const strength = norm(row?.strength || row?.Strength || "");
@@ -406,7 +393,7 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   }
 
   // =========================================================
-  // ✅ SHEET OPEN/CLOSE (uses YOUR existing #sheet-backdrop + sheets)
+  // ✅ SHEET OPEN/CLOSE
   // =========================================================
   function openSheetEl(sheetEl) {
     if (!sheetEl) return;
@@ -421,7 +408,7 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   function closeAllSheets() {
     document.body.classList.remove("pos-modal-open");
 
-    // close any sheet that is open
+    // ✅ FIXED: use declared sheet elements
     [sheetBands, sheetFilters, sheetReceipt].forEach((el) => {
       if (el) el.hidden = true;
     });
@@ -432,7 +419,6 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
     }
   }
 
-  // close handlers from [data-sheet-close] and backdrop click
   function bindSheetClosers() {
     $$("[data-sheet-close]").forEach((btn) => btn.addEventListener("click", closeAllSheets));
     backdrop?.addEventListener("click", closeAllSheets);
@@ -448,35 +434,29 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
     all: [],
     view: [],
     q: "",
-
-    // #6 wrapper toggle
     wrapperState: "all", // all | maduro | natural
-
-    // #4 band art filter (multi-select)
-    bandKeys: new Set(), // e.g. "padron1926serieband"
-
-    // #5 filters
-    filterKey: "", // which filter is open in detail view
+    bandKeys: new Set(),
+    filterKey: "",
     filters: {
-      values: new Map(), // key -> Set(values)
-      toggles: new Map(), // key -> boolean
+      values: new Map(),
+      toggles: new Map(),
     },
   };
 
+  // ✅ FIXED: use getBrand() (includes accents/AKA/manufacturer)
   function inBrand(r) {
     if (!BRAND) return true;
-    return slug(pick(r, ["Brand", "Manufacturer"])) === BRAND_SLUG;
+    return slug(getBrand(r)) === BRAND_SLUG;
   }
 
   // =========================================================
-  // ✅ #6 WRAPPER TOGGLE (string match on name)
+  // ✅ WRAPPER TOGGLE
   // =========================================================
   function setWrapperState(next) {
     state.wrapperState = next;
 
     if (wrapperSeg) wrapperSeg.dataset.state = next;
 
-    // aria-pressed: only true when that side is active
     if (segMaduro) segMaduro.setAttribute("aria-pressed", next === "maduro" ? "true" : "false");
     if (segNatural) segNatural.setAttribute("aria-pressed", next === "natural" ? "true" : "false");
 
@@ -486,13 +466,11 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   function bindWrapperToggle() {
     if (!wrapperSeg) return;
 
-    // default
     setWrapperState("all");
 
     segMaduro?.addEventListener("click", () => setWrapperState("maduro"));
     segNatural?.addEventListener("click", () => setWrapperState("natural"));
 
-    // middle switch cycles: all -> maduro -> natural -> all
     segSwitch?.addEventListener("click", () => {
       const cur = state.wrapperState;
       const next = cur === "all" ? "maduro" : cur === "maduro" ? "natural" : "all";
@@ -515,26 +493,14 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   }
 
   // =========================================================
-  // ✅ #4 BANDS (Padron SVG artwork)
+  // ✅ BANDS (Padron SVG artwork)
   // =========================================================
   const PADRON_BANDS = [
     { key: "padronseriesband", label: "Padron Series", src: "/img/icons/padronseriesband.svg" },
-    {
-      key: "padronfamilyreserveband",
-      label: "Family Reserve",
-      src: "/img/icons/padronfamilyreserveband.svg",
-    },
+    { key: "padronfamilyreserveband", label: "Family Reserve", src: "/img/icons/padronfamilyreserveband.svg" },
     { key: "padron1926serieband", label: "1926", src: "/img/icons/padron1926serieband.svg" },
-    {
-      key: "padronblackseriesband",
-      label: "Black Series",
-      src: "/img/icons/padronblackseriesband.svg",
-    },
-    {
-      key: "padron1964anniversaryband",
-      label: "1964",
-      src: "/img/icons/padron1964anniversaryband.svg",
-    },
+    { key: "padronblackseriesband", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
+    { key: "padron1964anniversaryband", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
     { key: "padrondamasoband", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
   ];
 
@@ -544,18 +510,12 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
     const full = `${line} ${cigar}`;
 
     switch (bandKey) {
-      case "padron1926serieband":
-        return full.includes("1926");
-      case "padron1964anniversaryband":
-        return full.includes("1964");
-      case "padronfamilyreserveband":
-        return full.includes("family reserve") || full.includes("familyreserve");
-      case "padrondamasoband":
-        return full.includes("damaso");
-      case "padronblackseriesband":
-        return full.includes("black");
+      case "padron1926serieband": return full.includes("1926");
+      case "padron1964anniversaryband": return full.includes("1964");
+      case "padronfamilyreserveband": return full.includes("family reserve") || full.includes("familyreserve");
+      case "padrondamasoband": return full.includes("damaso");
+      case "padronblackseriesband": return full.includes("black");
       case "padronseriesband":
-        // catch-all for "Padron" base series that isn't one of the above
         return (
           !bandKeyMatchesRow("padron1926serieband", r) &&
           !bandKeyMatchesRow("padron1964anniversaryband", r) &&
@@ -571,7 +531,6 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   function renderBandsOptions() {
     if (!bandsOptionsEl) return;
 
-    // Only implementing Padron artwork (per your request)
     const items = BRAND_SLUG === "padron" ? PADRON_BANDS : [];
 
     bandsOptionsEl.innerHTML = items
@@ -582,19 +541,15 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
             <div class="band-art">
               <img class="band-img" src="${esc(b.src)}" alt="${esc(b.label)}">
             </div>
-
             <div class="band-meta">
               <div class="band-label">${esc(b.label)}</div>
-              <input class="band-check" type="checkbox" data-band-key="${esc(b.key)}" ${
-          checked ? "checked" : ""
-        } />
+              <input class="band-check" type="checkbox" data-band-key="${esc(b.key)}" ${checked ? "checked" : ""} />
             </div>
           </div>
         `;
       })
       .join("");
 
-    // wire checkbox changes
     bandsOptionsEl.querySelectorAll("[data-band-key]").forEach((cb) => {
       cb.addEventListener("change", () => {
         const k = cb.getAttribute("data-band-key");
@@ -611,46 +566,35 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   }
 
   // =========================================================
-  // ✅ #5 FILTERS (populate detail lists)
+  // ✅ FILTERS
   // =========================================================
   const FILTER_KEYS = ["RG", "Length", "Wrapper Shade", "Shape", "Vitola", "Strength"];
 
   function getRowValueForKey(r, key) {
     switch (key) {
-      case "RG":
-        return norm(getRing(r));
-      case "Length":
-        return norm(getLength(r));
-      case "Wrapper Shade":
-        return norm(getWrapperShade(r));
-      case "Shape":
-        return norm(getShape(r));
-      case "Vitola":
-        return norm(getVitola(r));
-      case "Strength":
-        return norm(getStrength(r));
-      default:
-        return "";
+      case "RG": return norm(getRing(r));
+      case "Length": return norm(getLength(r));
+      case "Wrapper Shade": return norm(getWrapperShade(r));
+      case "Shape": return norm(getShape(r));
+      case "Vitola": return norm(getVitola(r));
+      case "Strength": return norm(getStrength(r));
+      default: return "";
     }
   }
 
   function uniqueSortedValuesForKey(key) {
     const set = new Set();
-    state.all
-      .filter(inBrand)
-      .forEach((r) => {
-        const v = getRowValueForKey(r, key);
-        if (v) set.add(v);
-      });
+    state.all.filter(inBrand).forEach((r) => {
+      const v = getRowValueForKey(r, key);
+      if (v) set.add(v);
+    });
 
-    // numeric sort for RG and Length when possible, else alpha
     const arr = Array.from(set);
-    if (key === "RG") {
-      arr.sort((a, b) => Number(a) - Number(b));
-      return arr;
-    }
+    if (key === "RG") { arr.sort((a, b) => Number(a) - Number(b)); return arr; }
     if (key === "Length") {
-      arr.sort((a, b) => Number(String(a).replace(/[^\d.]/g, "")) - Number(String(b).replace(/[^\d.]/g, "")));
+      arr.sort((a, b) =>
+        Number(String(a).replace(/[^\d.]/g, "")) - Number(String(b).replace(/[^\d.]/g, ""))
+      );
       return arr;
     }
     arr.sort((a, b) => a.localeCompare(b));
@@ -663,25 +607,16 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   }
 
   function anyFiltersApplied() {
-    // wrapper toggle counts if not "all"
     if (state.wrapperState !== "all") return true;
-
-    // band selection counts
     if (state.bandKeys.size) return true;
 
-    // filter values
     for (const [, set] of state.filters.values) {
       if (set && set.size) return true;
     }
-
-    // toggles
     for (const [, v] of state.filters.toggles) {
       if (v) return true;
     }
-
-    // search text counts (optional)
     if (norm(state.q)) return true;
-
     return false;
   }
 
@@ -720,7 +655,6 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
 
     const allVals = uniqueSortedValuesForKey(key);
     const q = lower(filtersSearch?.value || "");
-
     const selected = ensureSetForFilter(key);
 
     const rows = allVals
@@ -734,15 +668,15 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
                    padding:12px 14px;font-weight:800;font-size:15px;color:#0f1a2c;cursor:pointer;">
             <span>${esc(v)}</span>
             <span aria-hidden="true"
-              style="width:18px;height:18px;border-radius:6px;border:2px solid ${
-                isOn ? "#007aff" : "rgba(15,26,44,.18)"
-              };background:${isOn ? "#007aff" : "transparent"};"></span>
+              style="width:18px;height:18px;border-radius:6px;border:2px solid ${isOn ? "#007aff" : "rgba(15,26,44,.18)"};
+                     background:${isOn ? "#007aff" : "transparent"};"></span>
           </button>
         `;
       })
       .join("");
 
-    filtersList.innerHTML = rows || `<div style="padding:12px 4px;color:rgba(15,26,44,.55);font-weight:700;">No values</div>`;
+    filtersList.innerHTML =
+      rows || `<div style="padding:12px 4px;color:rgba(15,26,44,.55);font-weight:700;">No values</div>`;
 
     filtersList.querySelectorAll("[data-filter-val]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -757,13 +691,11 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   }
 
   function bindFiltersUI() {
-    // Open filters sheet
     filtersBtn?.addEventListener("click", () => {
       showFiltersHome();
       openSheetEl(sheetFilters);
     });
 
-    // Home pills -> detail
     $$("[data-open-filter]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const key = btn.getAttribute("data-open-filter") || "";
@@ -772,28 +704,20 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
       });
     });
 
-    // Back in filters
     filtersBack?.addEventListener("click", showFiltersHome);
-
-    // Search within detail
     filtersSearch?.addEventListener("input", () => renderFiltersDetailList());
 
-    // Toggles
     $$("[data-toggle-key]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const k = btn.getAttribute("data-toggle-key") || "";
         if (!k) return;
         const cur = !!state.filters.toggles.get(k);
         state.filters.toggles.set(k, !cur);
-
-        // basic visual: toggle "on" by adding a class (optional)
         btn.classList.toggle("is-on", !cur);
-
         setFiltersConfirmState();
       });
     });
 
-    // Confirm applies & closes
     filtersConfirm?.addEventListener("click", () => {
       closeAllSheets();
       apply();
@@ -801,10 +725,7 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   }
 
   function bindBandsUI() {
-    bandsBtn?.addEventListener("click", () => {
-      openBandsSheet();
-    });
-
+    bandsBtn?.addEventListener("click", () => openBandsSheet());
     bandsConfirmBtn?.addEventListener("click", () => {
       closeAllSheets();
       apply();
@@ -815,34 +736,22 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
   // ✅ APPLY FILTERS + RENDER
   // =========================================================
   function rowPassesFilters(r) {
-    // wrapper toggle (#6)
     if (!matchesWrapper(r)) return false;
 
-    // band artwork filter (#4)
     if (state.bandKeys.size) {
       let ok = false;
       for (const k of state.bandKeys) {
-        if (bandKeyMatchesRow(k, r)) {
-          ok = true;
-          break;
-        }
+        if (bandKeyMatchesRow(k, r)) { ok = true; break; }
       }
       if (!ok) return false;
     }
 
-    // filter value sets (#5)
     for (const [key, set] of state.filters.values) {
       if (!set || set.size === 0) continue;
       const v = getRowValueForKey(r, key);
       if (!set.has(v)) return false;
     }
 
-    // toggles (#5) — only enforce if true
-    // NOTE: these require columns to exist; if missing, they simply won't match
-    // You can wire these to actual columns later; this keeps UI functional without breaking.
-    // (We keep this minimal to avoid unintended changes.)
-    // Example: Tubo/Tin/Pack/Flavored/Box-Pressed/Barber would require dedicated HUB fields.
-    // For now: toggles are "stored" and UI works; they won't filter unless you add matching data logic.
     return true;
   }
 
@@ -950,7 +859,7 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
 
     listEl.addEventListener("click", (e) => {
       const add = e.target.closest("[data-receipt-item]");
-      if (add) return; // cart.js handles add
+      if (add) return;
 
       const row = e.target.closest("[data-row]");
       if (!row) return;
@@ -975,17 +884,8 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
         msrp: norm(row.dataset.msrp),
         image: norm(row.dataset.image),
 
-        key: `${slug(row.dataset.brand)}|${slug(row.dataset.line)}|${slug(
-          row.dataset.cigarFull || row.dataset.cigar
-        )}`,
+        key: `${slug(row.dataset.brand)}|${slug(row.dataset.line)}|${slug(row.dataset.cigarFull || row.dataset.cigar)}`,
       };
-
-      item.receiptItem = buildReceiptItem({
-        brand: item.brand,
-        line: item.line,
-        cigar: item.cigar,
-        msrp: item.msrp,
-      });
 
       openCigarDetail(item);
     });
@@ -998,7 +898,6 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
     if (brandTitleEl) brandTitleEl.textContent = BRAND || "Brand";
     backBtn?.addEventListener("click", () => history.back());
 
-    // top-right brand icon (existing container) — keep minimal & safe
     if (brandIconWrap) {
       const src = `/img/icons/brands/${BRAND_SLUG}.svg`;
       brandIconWrap.innerHTML = `<img src="${esc(src)}" alt="">`;
@@ -1006,19 +905,14 @@ const cigarImgAlts = imgCandidates.slice(1).join("|");
 
     bindClicks();
     bindSheetClosers();
+    bindWrapperToggle();
+    bindBandsUI();
+    bindFiltersUI();
 
-    // Search still filters list (existing behavior)
     searchEl?.addEventListener("input", () => {
       state.q = norm(searchEl.value || "");
       apply();
     });
-
-    // NEW: wrapper toggle (#6)
-    bindWrapperToggle();
-
-    // NEW: bands + filters (#4/#5)
-    bindBandsUI();
-    bindFiltersUI();
 
     if (statusEl) {
       statusEl.hidden = false;
