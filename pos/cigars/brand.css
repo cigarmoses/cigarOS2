@@ -969,13 +969,13 @@ body.cigar-detail-open #receipt-count{
 
 .cd-actions{
   position: sticky;
-  bottom: env(safe-area-inset-bottom);
+  bottom: 12px;                 /* ✅ pulls it down */
   z-index: 5;
 
   background: transparent;
-  padding: 12px 0 env(safe-area-inset-bottom);
+  padding: 12px 0 0;            /* ✅ remove extra bottom padding */
 }
 
 .cd-right{
-  padding-bottom: 140px;
+  padding-bottom: 96px;
 }
