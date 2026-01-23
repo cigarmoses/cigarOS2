@@ -317,7 +317,7 @@ body.brand-page{
 /* MSRP (new contract) */
 .brand-row-msrp{
   position:relative;
-  padding-left:10px;
+  10px;
   font-size:16px;
   font-weight:600;
   color:rgba(255,255,255,.92);
@@ -753,7 +753,7 @@ body.cigar-detail-open #receipt-count{
   display: flex;
   align-items: center;
   justify-content: flex-start !important;
-  padding-left: 200px;
+  padding-left: 36px;
   padding-top: 6px;
   padding-bottom: 6px;
   min-height: 0;
@@ -920,7 +920,7 @@ body.cigar-detail-open #receipt-count{
     grid-template-columns: 0.40fr 0.60fr;
     gap: 10px;
   }
-  .cigar-detail-sheet .cd-img{ padding-left: 18px !important; }
+  .cigar-detail-sheet .cd-img{ padding-left: 60px !important; }
 
   .cd-grid2{ grid-template-columns: 104px 1fr; } /* ✅ was 132px 1fr */
   .cd-stat .v{ font-size: 32px; }
