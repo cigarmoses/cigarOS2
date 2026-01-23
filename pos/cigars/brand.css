@@ -968,14 +968,14 @@ body.cigar-detail-open #receipt-count{
 }
 
 .cd-actions{
-  position: sticky;
-  bottom: 12px;                 /* ✅ pulls it down */
-  z-index: 5;
-
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 18px; /* ✅ controls how low it sits */
+  z-index: 20;
   background: transparent;
-  padding: 12px 0 0;            /* ✅ remove extra bottom padding */
 }
 
 .cd-right{
-  padding-bottom: 96px;
+  padding-bottom: 140px;
 }
