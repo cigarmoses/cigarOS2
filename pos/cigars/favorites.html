@@ -7,38 +7,25 @@
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-  <!-- Reuse the same cigars page styling so brand tiles match 1:1 -->
-  <link rel="stylesheet" href="/pos/cigars/cigars.css" />
-  <link rel="stylesheet" href="/pos/cigars/favorites.css" />
+  <link rel="stylesheet" href="/pos/favorites/favorites.css" />
 </head>
 
-<body class="cigars-page favorites-page">
-  <header class="cigars-topbar">
-    <button type="button" class="pos-back" id="fav-back" aria-label="Back">
-      <span class="pos-back-icon">←</span>
-    </button>
+<body class="pos-favorites">
+  <header class="fav-top">
+    <a class="fav-back" href="/pos/cigars/">
+      <span class="fav-back-icon">←</span>
+    </a>
+
+    <h1 class="fav-title">Favorites</h1>
+    <h2 class="fav-subtitle">Cigars</h2>
   </header>
 
-  <main class="cigars-main">
-    <section class="cigars-header">
-      <h1 class="cigars-title favorites-title">Favorites</h1>
-    </section>
+  <main class="fav-main">
+    <div id="fav-status" class="fav-status">Loading favorites…</div>
 
-    <!-- Brands (must match /pos/cigars/ grid style) -->
-    <section class="cigars-brands-section">
-      <h2 class="cigars-brands-title">Brands</h2>
-      <div id="fav-brands-grid" class="brands-grid"></div>
-    </section>
-
-    <!-- Cigars (must match brand-page row layout, but WHITE container) -->
-    <section class="favorites-cigars-section">
-      <h2 class="favorites-cigars-title">Cigars</h2>
-      <div id="fav-cigars-list" class="fav-cigars-list"></div>
-      <div id="fav-status" class="fav-status" hidden></div>
-    </section>
+    <div id="fav-list" class="fav-list" aria-live="polite"></div>
   </main>
 
-  <script defer src="/pos/pos.js"></script>
-  <script defer src="/pos/cigars/favorites.js"></script>
+  <script src="/pos/favorites/favorites.js"></script>
 </body>
 </html>
