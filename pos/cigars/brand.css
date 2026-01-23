@@ -753,7 +753,7 @@ body.cigar-detail-open #receipt-count{
   display: flex;
   align-items: center;
   justify-content: flex-start !important;
-  padding-left: 150px;
+  padding-left: 200px;
   padding-top: 6px;
   padding-bottom: 6px;
   min-height: 0;
