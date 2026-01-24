@@ -5,13 +5,163 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Favorites</title>
 
+  <!-- keep your global type + pos styling -->
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/favorites/favorites.css" />
+
+  <style>
+    :root{
+      --page:#ffffff;
+      --ink:#0f1a2c;
+      --muted:rgba(15,26,44,.55);
+      --hair:rgba(15,26,44,.12);
+      --row-hover:rgba(0,0,0,.03);
+      --green:#34c759;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body.pos-favorites{
+      margin:0;
+      min-height:100vh;
+      background:var(--page);
+      color:var(--ink);
+      font-family:var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+    }
+
+    .fav-top{
+      padding:18px 18px 8px;
+      position:sticky;
+      top:0;
+      background:var(--page);
+      z-index:5;
+    }
+
+    .fav-back{
+      display:inline-flex;
+      width:44px;
+      height:44px;
+      align-items:center;
+      justify-content:center;
+      border-radius:12px;
+      text-decoration:none;
+      color:var(--ink);
+    }
+    .fav-back:active{ opacity:.6; }
+    .fav-back-icon{ font-size:26px; line-height:1; }
+
+    .fav-title{
+      margin:6px 0 0;
+      font-size:62px;
+      letter-spacing:-1.5px;
+      line-height:1.02;
+      font-weight:800;
+    }
+    .fav-subtitle{
+      margin:10px 0 0;
+      font-size:46px;
+      letter-spacing:-1px;
+      line-height:1.05;
+      font-weight:800;
+    }
+
+    .fav-main{ padding:8px 18px 28px; }
+
+    #fav-status{
+      color:var(--muted);
+      padding:10px 2px 14px;
+      font-size:15px;
+    }
+
+    /* === MATCH BRAND POS ROW LAYOUT === */
+    #fav-list{
+      display:block;
+      border-top:1px solid var(--hair);
+    }
+
+    .cigar-row{
+      display:grid;
+      grid-template-columns:64px 1fr 1px 86px 58px; /* icon | text | divider | msrp | plus */
+      gap:14px;
+      align-items:center;
+      padding:18px 2px;
+      border-bottom:1px solid var(--hair);
+      user-select:none;
+    }
+    .cigar-row:hover{ background:var(--row-hover); }
+    .cigar-row:active{ opacity:.75; }
+
+    .cigar-icon{
+      width:56px; height:56px;
+      border-radius:14px;
+      overflow:hidden;
+      background:rgba(0,0,0,.04);
+      display:grid;
+      place-items:center;
+    }
+    .cigar-icon img{
+      width:100%; height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .cigar-text{ min-width:0; }
+
+    .cigar-title{
+      margin:0;
+      font-size:22px;
+      font-weight:800;
+      letter-spacing:-.2px;
+      display:-webkit-box;
+      -webkit-box-orient:vertical;
+      -webkit-line-clamp:3;
+      overflow:hidden;
+    }
+
+    .cigar-sub{
+      margin:6px 0 0;
+      font-size:18px;
+      font-weight:700;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .cigar-sep{
+      width:1px;
+      height:46px;
+      background:var(--hair);
+      justify-self:center;
+    }
+
+    .cigar-msrp{
+      justify-self:end;
+      font-size:26px;
+      font-weight:900;
+      letter-spacing:-.2px;
+    }
+
+    .cigar-add{
+      justify-self:end;
+      width:44px; height:44px;
+      border-radius:999px;
+      border:0;
+      background:var(--green);
+      color:#0b1c0f;
+      font-size:28px;
+      font-weight:900;
+      line-height:1;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+    }
+    .cigar-add:active{ transform:scale(.98); opacity:.9; }
+  </style>
 </head>
 
 <body class="pos-favorites">
   <header class="fav-top">
+    <!-- If your back behavior is different, change this href -->
     <a class="fav-back" href="/pos/cigars/">
       <span class="fav-back-icon">←</span>
     </a>
@@ -21,11 +171,195 @@
   </header>
 
   <main class="fav-main">
-    <div id="fav-status" class="fav-status">Loading favorites…</div>
-
-    <div id="fav-list" class="fav-list" aria-live="polite"></div>
+    <div id="fav-status">Loading favorites…</div>
+    <div id="fav-list" aria-live="polite"></div>
   </main>
 
-  <script src="/pos/favorites/favorites.js"></script>
+  <script>
+    // If anything breaks, show it ON SCREEN (no Safari console needed)
+    window.addEventListener("error", (e) => {
+      const el = document.querySelector("#fav-status");
+      if (el) el.textContent = "JS error: " + (e.message || "unknown error");
+    });
+    window.addEventListener("unhandledrejection", (e) => {
+      const el = document.querySelector("#fav-status");
+      if (el) el.textContent = "Promise error: " + (e.reason?.message || e.reason || "unknown error");
+    });
+
+    (() => {
+      const CSV_URL =
+        "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+
+      const $ = (sel) => document.querySelector(sel);
+
+      const listEl = $("#fav-list");
+      const statusEl = $("#fav-status");
+
+      const norm = (s) => (s ?? "").toString().trim();
+      const low = (s) => norm(s).toLowerCase();
+
+      const money = (v) => {
+        const n = Number(String(v ?? "").replace(/[^0-9.]/g, ""));
+        if (!isFinite(n) || n <= 0) return "";
+        return n.toFixed(2);
+      };
+
+      // IMPORTANT: icons live under /img/icons/brands (plural) per your standard
+      const brandIconPath = (brand) => {
+        const b = low(brand)
+          .replace(/&/g, "and")
+          .replace(/[^a-z0-9]+/g, "")
+          .trim();
+        return `/img/icons/brands/${b}.svg`;
+      };
+
+      const escapeHTML = (s) =>
+        String(s ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+
+      const parseCSV = (text) => {
+        const rows = [];
+        let i = 0, cur = "", inQ = false;
+        const out = [];
+
+        while (i < text.length) {
+          const ch = text[i];
+
+          if (ch === '"') {
+            if (inQ && text[i + 1] === '"') { cur += '"'; i += 2; continue; }
+            inQ = !inQ; i++; continue;
+          }
+
+          if (!inQ && ch === ",") { out.push(cur); cur = ""; i++; continue; }
+
+          if (!inQ && (ch === "\n" || ch === "\r")) {
+            if (ch === "\r" && text[i + 1] === "\n") i++;
+            out.push(cur);
+            rows.push(out.slice());
+            out.length = 0;
+            cur = "";
+            i++;
+            continue;
+          }
+
+          cur += ch; i++;
+        }
+
+        out.push(cur);
+        rows.push(out);
+
+        const header = (rows.shift() || []).map((h) => norm(h));
+        return rows
+          .filter((r) => r.some((c) => norm(c) !== ""))
+          .map((r) => {
+            const obj = {};
+            header.forEach((h, idx) => (obj[h] = r[idx] ?? ""));
+            return obj;
+          });
+      };
+
+      const isFav = (row) => {
+        const v = low(row["Favorite"]);
+        return v === "true" || v === "yes" || v === "1" || v === "y";
+      };
+
+      // Brand POS rule: display = Line + Cigar (dedupe if cigar already starts with line)
+      const displayTitle = (row) => {
+        const line = norm(row["Line"]);
+        const cigar = norm(row["Cigar"]);
+        if (!line && !cigar) return "—";
+        if (!line) return cigar;
+        if (!cigar) return line;
+
+        const lc = low(cigar);
+        const ll = low(line);
+        if (lc.startsWith(ll)) return cigar;
+        return `${line} ${cigar}`.replace(/\s+/g, " ").trim();
+      };
+
+      // Brand POS requirement: subtitle is Vitola ONLY
+      const vitolaOnly = (row) => norm(row["Vitola"]) || "x";
+
+      const renderRow = (row) => {
+        const brand = norm(row["Brand"]);
+        const title = displayTitle(row);
+        const sub = vitolaOnly(row);
+        const msrp = money(row["MSRP"]);
+
+        const iconSrc = brand ? brandIconPath(brand) : "";
+        const key = norm(row["key"]) || `${brand}__${title}__${sub}`;
+
+        const el = document.createElement("div");
+        el.className = "cigar-row";
+        el.dataset.key = key;
+
+        el.innerHTML = `
+          <div class="cigar-icon">
+            ${iconSrc ? `<img src="${iconSrc}" alt="${escapeHTML(brand)}">` : ""}
+          </div>
+
+          <div class="cigar-text">
+            <p class="cigar-title">${escapeHTML(title)}</p>
+            <p class="cigar-sub">${escapeHTML(sub)}</p>
+          </div>
+
+          <div class="cigar-sep"></div>
+
+          <div class="cigar-msrp">${msrp ? escapeHTML(msrp) : ""}</div>
+
+          <button class="cigar-add" type="button" aria-label="Add to invoice">+</button>
+        `;
+
+        // Match your existing cart.js: it listens for data-receipt-item
+        const addBtn = el.querySelector(".cigar-add");
+        addBtn.setAttribute("data-receipt-item", "1");
+
+        // Payload fields (safe + useful)
+        addBtn.dataset.brand = brand;
+        addBtn.dataset.line = norm(row["Line"]);
+        addBtn.dataset.cigar = norm(row["Cigar"]);
+        addBtn.dataset.vitola = norm(row["Vitola"]);
+        addBtn.dataset.msrp = msrp;
+
+        // Common fallbacks cart systems use
+        addBtn.dataset.name = title;
+        addBtn.dataset.price = msrp;
+
+        return el;
+      };
+
+      async function init() {
+        statusEl.textContent = "Loading favorites…";
+
+        const res = await fetch(CSV_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(`CSV fetch failed (${res.status})`);
+
+        const text = await res.text();
+        const data = parseCSV(text);
+
+        const favs = data.filter(isFav);
+
+        listEl.innerHTML = "";
+        if (!favs.length) {
+          statusEl.textContent = "No favorites yet.";
+          return;
+        }
+
+        statusEl.textContent = `${favs.length} favorites`;
+        const frag = document.createDocumentFragment();
+        favs.forEach((row) => frag.appendChild(renderRow(row)));
+        listEl.appendChild(frag);
+      }
+
+      init().catch((err) => {
+        console.error(err);
+        statusEl.textContent = "Favorites failed: " + (err?.message || "unknown error");
+      });
+    })();
+  </script>
 </body>
 </html>
