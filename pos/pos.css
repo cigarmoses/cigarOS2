@@ -169,6 +169,8 @@ button.confirm,
   max-width: 56px !important;
   max-height: 56px !important;
   overflow: hidden !important;
+
+  touch-action: manipulation; /* iOS tap friendliness */
 }
 
 /* Icon image */
@@ -240,4 +242,99 @@ button.confirm,
     width: 26px !important;
     height: 26px !important;
   }
+}
+
+/* =========================================================
+   GLOBAL RECEIPT SHEET (ALL POS PAGES)
+   ========================================================= */
+
+#sheet-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 9998;
+
+  pointer-events: none;
+  opacity: 0;
+}
+
+#sheet-backdrop.open,
+#sheet-backdrop:not([hidden]){
+  pointer-events: auto;
+  opacity: 1;
+}
+
+#sheet-receipt{
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 110%);
+  width: min(720px, 100%);
+  max-height: 78svh;
+
+  background: rgba(255,255,255,0.96);
+  color: #0f1a2c;
+
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+
+  box-shadow: 0 -18px 60px rgba(0,0,0,0.35);
+  z-index: 9999;
+
+  opacity: 0;
+  pointer-events: none;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  transition: transform .22s ease, opacity .22s ease;
+}
+
+/* When cart.js opens it */
+#sheet-receipt.open,
+#sheet-receipt:not([hidden]){
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#sheet-receipt .sheet-header{
+  padding: 14px 16px 10px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+#sheet-receipt .sheet-body{
+  padding: 10px 14px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#sheet-receipt .sheet-footer{
+  padding: 12px 14px 16px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  display:flex;
+  gap: 10px;
+}
+
+#sheet-receipt .sheet-btn{
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  font-weight: 800;
+  padding: 0 14px;
+}
+
+#sheet-receipt .sheet-btn.primary{
+  background: #007aff;
+  border-color: #007aff;
+  color: #fff;
 }
