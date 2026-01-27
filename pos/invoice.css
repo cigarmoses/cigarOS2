@@ -17,8 +17,8 @@
   padding: 0;
 
   border: none;
-  background: transparent; /* ✅ nothing behind PNG */
-  box-shadow: none;        /* ✅ shadow is already baked into PNG */
+  background: transparent;
+  box-shadow: none;
 
   display: grid;
   place-items: center;
@@ -99,6 +99,9 @@
   display: flex;
   flex-direction: column;
 
+  /* ✅ critical: prevent any sideways scroll from children */
+  overflow-x: hidden;
+
   opacity: 0;
   pointer-events: none;
   transition: opacity .18s ease;
@@ -128,7 +131,7 @@
   line-height: 1;
 }
 
-/* Header block (small text like "Attach Saved Customer") */
+/* Header block */
 #sheet-receipt .invoice-head{
   padding: 22px 18px 10px;
   text-align: center;
@@ -137,21 +140,21 @@
 #sheet-receipt .invoice-head-title{
   font-weight: 900;
   letter-spacing: -0.02em;
-  font-size: 18px; /* ✅ not huge */
+  font-size: 18px;
   line-height: 1.1;
 }
 
 #sheet-receipt .invoice-head-shop{
   margin-top: 6px;
   font-weight: 900;
-  font-size: 18px; /* ✅ match customer button size */
+  font-size: 18px;
   letter-spacing: -0.02em;
 }
 
 #sheet-receipt .invoice-head-date{
   margin-top: 2px;
   font-weight: 900;
-  font-size: 18px; /* ✅ match */
+  font-size: 18px;
   letter-spacing: -0.02em;
 }
 
@@ -179,6 +182,10 @@
   font-weight: 900;
   font-size: 18px;
   color: rgba(15,26,44,.55);
+
+  /* ✅ prevent horizontal overflow */
+  max-width: 100%;
+  overflow: hidden;
 }
 
 #sheet-receipt .invoice-customer-chev{
@@ -197,6 +204,9 @@
   -webkit-overflow-scrolling: touch;
 
   border-top: 1px solid rgba(0,0,0,.08);
+
+  /* ✅ stop sideways scroll inside the list */
+  overflow-x: hidden;
 }
 
 /* Empty */
@@ -208,16 +218,25 @@
 
 /* -------------------------
    Invoice row layout
-   icon | teal text | purple (qty + total)
+   icon | teal text | qty+total
 ------------------------- */
 #sheet-receipt .inv-row{
+  width: 100%;
+  max-width: 100%;
+
   display: grid;
-  grid-template-columns: 74px 1fr 140px;
+
+  /* ✅ responsive right column (never forces overflow) */
+  grid-template-columns: 74px minmax(0, 1fr) minmax(108px, 140px);
+
   gap: 12px;
   align-items: center;
 
   padding: 14px 18px;
   border-top: 1px solid rgba(0,0,0,.08);
+
+  /* ✅ just in case */
+  overflow: hidden;
 }
 
 /* icon */
@@ -227,7 +246,7 @@
   border-radius: 20px;
   overflow: hidden;
 
-  background: rgba(15,26,44,.04); /* subtle fallback only */
+  background: rgba(15,26,44,.04);
   display: grid;
   place-items: center;
 }
@@ -241,7 +260,7 @@
 
 /* teal text block (3 lines) */
 #sheet-receipt .inv-mid{
-  min-width: 0; /* allows wrapping */
+  min-width: 0;
 }
 
 #sheet-receipt .inv-l1{
@@ -249,9 +268,9 @@
   font-size: 18px;
   line-height: 1.15;
 
-  /* ✅ allow wrap */
   white-space: normal;
-  overflow: visible;
+  overflow: hidden;
+  text-overflow: ellipsis;
   word-break: break-word;
 }
 
@@ -263,6 +282,8 @@
   color: rgba(15,26,44,.55);
 
   white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
   word-break: break-word;
 }
 
@@ -274,8 +295,10 @@
   color: rgba(15,26,44,.35);
 }
 
-/* purple block (qty top, total bottom) */
+/* right block (qty top, total bottom) */
 #sheet-receipt .inv-right{
+  min-width: 0;
+
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -287,6 +310,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
+
+  /* ✅ prevent pushing width */
+  max-width: 100%;
 }
 
 #sheet-receipt .qbtn{
@@ -325,6 +351,9 @@
   font-weight: 900;
   font-size: 20px;
   color: #0f1a2c;
+
+  /* ✅ prevent overflow */
+  max-width: 100%;
 }
 
 /* Totals block */
@@ -387,6 +416,36 @@
 }
 
 /* -------------------------
+   Small screen tightening (prevents side scroll permanently)
+------------------------- */
+@media (max-width: 420px){
+  #sheet-receipt .inv-row{
+    grid-template-columns: 64px minmax(0, 1fr) minmax(96px, 120px);
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  #sheet-receipt .inv-ico{
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+  }
+
+  #sheet-receipt .inv-l1{ font-size: 17px; }
+  #sheet-receipt .inv-line{ font-size: 18px; }
+
+  #sheet-receipt .qbtn{
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+  }
+
+  #sheet-receipt .qval{
+    min-width: 40px;
+  }
+}
+
+/* -------------------------
    Customer overlay
 ------------------------- */
 .cust-overlay{
@@ -407,6 +466,10 @@
   box-shadow: 0 20px 70px rgba(0,0,0,.35);
   padding: 14px;
   position: relative;
+
+  /* ✅ avoid accidental sideways scroll */
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .cust-x{
@@ -537,6 +600,10 @@
   border-radius: 22px;
   box-shadow: 0 20px 70px rgba(0,0,0,.35);
   padding: 16px;
+
+  /* ✅ avoid accidental sideways scroll */
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .pos-confirm-title{
