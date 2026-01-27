@@ -4,13 +4,20 @@
    Goals:
    ✅ Bottom-right floating invoice icon (no background behind PNG)
    ✅ Badge count + "has-items" class
-   ✅ INVOICE modal matches your old layout:
+   ✅ INVOICE modal matches your old layout (and your NEW cigar text rule):
       - Centered, tall modal (not a bottom sheet)
       - Header: INVOICE / Shop / Date / INV#
       - Customer attach (search + add) works
       - Line items: icon | 3 lines text | qty controls above line total
-      - Cigars: Cigar Name / Vitola / MSRP
-      - Others: Category / Product name / MSRP
+      - Cigars text order:
+          1) Cigar line + name
+          2) Vitola
+          3) MSRP (unit price)
+      - Others text order:
+          1) Category
+          2) Product name
+          3) MSRP (unit price)
+
    ✅ Add to cart: only triggers from + buttons (row-add / pos-add)
 */
 
@@ -69,6 +76,8 @@
     return String(s || "")
       .trim()
       .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "")
       .replace(/^\-+|\-+$/g, "");
@@ -113,12 +122,18 @@
 
   function setSelectedCustomer(c) {
     state.selectedCustomer = c || null;
-    localStorage.setItem(SELECTED_CUSTOMER_KEY, JSON.stringify(state.selectedCustomer));
+    localStorage.setItem(
+      SELECTED_CUSTOMER_KEY,
+      JSON.stringify(state.selectedCustomer)
+    );
     renderCustomerLabel();
   }
 
   function getItemCount() {
-    return state.items.reduce((sum, it) => sum + clamp(Number(it.qty || 0), 0, 999), 0);
+    return state.items.reduce(
+      (sum, it) => sum + clamp(Number(it.qty || 0), 0, 999),
+      0
+    );
   }
 
   function makeStableId(item) {
@@ -137,8 +152,7 @@
   // DOM refs (existing ids in your pages)
   // -------------------------
   let fabBtn, badgeEl, fabImg;
-  let backdropEl, sheetEl, itemsEl, clearBtn;
-  let closeBtns;
+  let backdropEl, sheetEl, itemsEl;
 
   // Injected (customer modal)
   let custOverlay;
@@ -152,56 +166,61 @@
     sheetEl = $("#sheet-receipt");
 
     itemsEl = $("#receipt-items");
-    clearBtn = $("#receipt-clear");
-    closeBtns = document.querySelectorAll("[data-sheet-close]");
   }
 
   // -------------------------
   // Ensure INVOICE markup exists inside #sheet-receipt
-  // (Keeps your existing HTML, but upgrades the inside layout)
+  // IMPORTANT: this markup matches the CSS you pasted:
+  //   #sheet-receipt .sheet-header / .sheet-x
+  //   .inv-head / .inv-title / .inv-shop / .inv-date / .inv-num
+  //   .inv-customer / .inv-customer-btn / .inv-customer-caret
+  //   .inv-row / .inv-ico / .inv-cat / .inv-name / .inv-msrp
+  //   .inv-right / .inv-qty / .inv-qty-btn / .inv-qty-pill / .inv-total-top / .inv-total-sub
+  //   .sheet-footer / .sheet-btn
   // -------------------------
   function ensureInvoiceShell() {
     resolveDOM();
     if (!sheetEl) return;
 
-    // If already upgraded, bail
     if (sheetEl.dataset.invoiceShell === "1") return;
     sheetEl.dataset.invoiceShell = "1";
 
-    // Rebuild the sheet content into the invoice layout you want.
     sheetEl.innerHTML = `
-      <button class="invoice-x" type="button" data-sheet-close aria-label="Close">×</button>
+      <header class="sheet-header">
+        <h2>Invoice</h2>
+        <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+      </header>
 
-      <div class="invoice-head">
-        <div class="invoice-head-title">INVOICE</div>
-        <div class="invoice-head-shop" id="inv-shop">${escapeHTML(getShopName())}</div>
-        <div class="invoice-head-date" id="inv-date">${escapeHTML(getNowLabel())}</div>
-        <div class="invoice-head-num" id="inv-num">INV# ${escapeHTML(getInvoiceNumber())}</div>
+      <div class="inv-head">
+        <div class="inv-title">INVOICE</div>
+        <div class="inv-shop" id="inv-shop">${escapeHTML(getShopName())}</div>
+        <div class="inv-date" id="inv-date">${escapeHTML(getNowLabel())}</div>
+        <div class="inv-num" id="inv-num">INV# ${escapeHTML(
+          getInvoiceNumber()
+        )}</div>
       </div>
 
-      <button class="invoice-customer" type="button" id="inv-customer-btn">
-        <span id="inv-customer-label">Attach Saved Customer</span>
-        <span class="invoice-customer-chev">▼</span>
-      </button>
-
-      <div class="invoice-items" id="receipt-items"></div>
-
-      <div class="invoice-totals">
-        <div class="tot-row"><span>Subtotal</span><strong id="inv-subtotal">$0.00</strong></div>
-        <div class="tot-row"><span>Tax</span><strong id="inv-tax">$0.00</strong></div>
-        <div class="tot-row tot-total"><span>TOTAL</span><strong id="inv-total">$0.00</strong></div>
+      <div class="inv-customer">
+        <button class="inv-customer-btn" type="button" id="inv-customer-btn" aria-haspopup="dialog" aria-expanded="false">
+          <span id="inv-customer-label">Attach Saved Customer</span>
+          <span class="inv-customer-caret" aria-hidden="true"></span>
+        </button>
       </div>
 
-      <div class="invoice-actions">
-        <button class="inv-btn" type="button" id="receipt-clear">Clear</button>
-        <button class="inv-btn primary" type="button" data-sheet-close>Close</button>
+      <div class="sheet-body">
+        <div class="receipt-items" id="receipt-items"></div>
       </div>
+
+      <footer class="sheet-footer">
+        <button class="sheet-btn" type="button" id="receipt-clear">Clear</button>
+        <button class="sheet-btn primary" type="button" data-sheet-close>Close</button>
+      </footer>
     `;
 
-    // Re-resolve after rewrite
+    // re-resolve now that we re-wrote the inside
     resolveDOM();
 
-    // Wire customer button
+    // bind customer button once
     const custBtn = $("#inv-customer-btn");
     if (custBtn && !custBtn.dataset.bound) {
       custBtn.dataset.bound = "1";
@@ -217,12 +236,15 @@
   function renderCustomerLabel() {
     const label = $("#inv-customer-label");
     if (!label) return;
+
     if (!state.selectedCustomer) {
       label.textContent = "Attach Saved Customer";
       return;
     }
     const name = state.selectedCustomer.name || "Customer";
-    const phone = state.selectedCustomer.phone ? ` • ${state.selectedCustomer.phone}` : "";
+    const phone = state.selectedCustomer.phone
+      ? ` • ${state.selectedCustomer.phone}`
+      : "";
     label.textContent = `${name}${phone}`;
   }
 
@@ -275,8 +297,8 @@
       else fabBtn.classList.remove("has-items");
     }
 
-    // Optional: if you have a red version file, this will use it automatically
-    // Add this attribute in HTML if desired: <img ... data-active-src="/img/icons/receipt-red.png">
+    // If you ever add a red asset, this supports it:
+    // <img ... data-active-src="/img/icons/receipt-red.png" data-src="/img/icons/receipt.png">
     if (fabImg) {
       const active = fabImg.getAttribute("data-active-src");
       const normal = fabImg.getAttribute("data-src") || fabImg.getAttribute("src");
@@ -289,7 +311,9 @@
   // Item normalization
   // -------------------------
   function normalizeItem(item) {
-    const isCigar = String(item.type || "").toLowerCase() === "cigar" || String(item.category || "").toLowerCase() === "cigars";
+    const isCigar =
+      String(item.type || "").toLowerCase() === "cigar" ||
+      String(item.category || "").toLowerCase() === "cigars";
 
     // Prefer brand icon for cigars
     let img = item.img || "";
@@ -304,9 +328,11 @@
       type: (item.type || (isCigar ? "cigar" : "product")).toLowerCase(),
       category: item.category || (isCigar ? "Cigars" : "Product"),
       brand: item.brand || "",
+      // For cigars, upstream should pass "Line — Cigar" as name (brand.js already does)
       name: item.name || "Item",
       vitola: item.vitola || "",
-      sub: item.sub || "", // used as vitola for cigars
+      // used as vitola for cigars (brand.js can pass sub=vitola or leave it blank)
+      sub: item.sub || "",
       price: toNum(item.price),
       img,
       link: item.link || "",
@@ -324,7 +350,11 @@
     const idx = state.items.findIndex((x) => x.id === normalized.id);
 
     if (idx >= 0) {
-      state.items[idx].qty = clamp((state.items[idx].qty || 1) + normalized.qty, 1, 999);
+      state.items[idx].qty = clamp(
+        (state.items[idx].qty || 1) + normalized.qty,
+        1,
+        999
+      );
     } else {
       state.items.push(normalized);
     }
@@ -357,7 +387,9 @@
 
       return {
         id: payload.id || payload.key || "",
-        type: payload.type || (payload.category?.toLowerCase() === "cigars" ? "cigar" : "product"),
+        type:
+          payload.type ||
+          (payload.category?.toLowerCase() === "cigars" ? "cigar" : "product"),
         category: payload.category || "Product",
         brand: payload.brand || payload.meta?.brand || "",
         name: payload.name || "",
@@ -388,44 +420,39 @@
 
   // -------------------------
   // Render INVOICE
+  // (Text rules corrected to your final cigar rule)
   // -------------------------
   function renderInvoice() {
     resolveDOM();
     if (!itemsEl) return;
 
-    // totals
-    const subtotal = state.items.reduce((s, it) => s + toNum(it.price) * clamp(Number(it.qty || 1), 1, 999), 0);
-    const tax = subtotal * TAX_RATE;
-    const total = subtotal + tax;
-
-    const elSub = $("#inv-subtotal");
-    const elTax = $("#inv-tax");
-    const elTot = $("#inv-total");
-
-    if (elSub) elSub.textContent = `$${money(subtotal)}`;
-    if (elTax) elTax.textContent = `$${money(tax)}`;
-    if (elTot) elTot.textContent = `$${money(total)}`;
-
     if (!state.items.length) {
-      itemsEl.innerHTML = `
-        <div class="inv-empty">No items yet.</div>
-      `;
+      itemsEl.innerHTML = `<div class="inv-empty">No items yet.</div>`;
       return;
     }
 
     itemsEl.innerHTML = state.items
       .map((it) => {
         const qty = clamp(Number(it.qty || 1), 1, 999);
-        const price = toNum(it.price);
-        const line = price * qty;
+        const unit = toNum(it.price);
+        const lineTotal = unit * qty;
 
         const isCigar =
           it.type === "cigar" || String(it.category || "").toLowerCase() === "cigars";
 
-        // Text rules
+        // ✅ FINAL TEXT RULES:
+        // CIGARS:
+        //   1) cigar line + name  (it.name)
+        //   2) vitola             (it.sub / it.vitola)
+        //   3) MSRP               (unit price)
+        //
+        // OTHER:
+        //   1) category
+        //   2) product name
+        //   3) MSRP (unit)
         const line1 = isCigar ? (it.name || "Cigar") : (it.category || "Product");
         const line2 = isCigar ? (it.sub || it.vitola || "") : (it.name || "");
-        const line3 = `$${money(price)}`;
+        const line3 = `$${money(unit)}`;
 
         return `
           <div class="inv-row" data-id="${escapeHTML(it.id)}">
@@ -438,18 +465,22 @@
             </div>
 
             <div class="inv-mid">
-              <div class="inv-l1">${escapeHTML(line1)}</div>
-              <div class="inv-l2">${escapeHTML(line2)}</div>
-              <div class="inv-l3">${escapeHTML(line3)}</div>
+              <div class="inv-cat">${escapeHTML(line1)}</div>
+              <div class="inv-name">${escapeHTML(line2)}</div>
+              <div class="inv-msrp">${escapeHTML(line3)}</div>
             </div>
 
             <div class="inv-right">
               <div class="inv-qty">
-                <button type="button" class="qbtn" data-qty="-1" aria-label="Decrease">−</button>
-                <div class="qval">${qty}</div>
-                <button type="button" class="qbtn" data-qty="+1" aria-label="Increase">+</button>
+                <button type="button" class="inv-qty-btn" data-qty="-1" aria-label="Decrease">−</button>
+                <div class="inv-qty-pill">${qty}</div>
+                <button type="button" class="inv-qty-btn" data-qty="+1" aria-label="Increase">+</button>
               </div>
-              <div class="inv-line">$${money(line)}</div>
+
+              <div class="inv-total">
+                <div class="inv-total-top">$${money(lineTotal)}</div>
+                <div class="inv-total-sub">$${money(unit)}</div>
+              </div>
             </div>
           </div>
         `;
@@ -559,7 +590,9 @@
     if (!custOverlay) return;
 
     const db = loadCustomerDB();
-    const q = (custOverlay.querySelector("#cust-q").value || "").trim().toLowerCase();
+    const q = (custOverlay.querySelector("#cust-q").value || "")
+      .trim()
+      .toLowerCase();
 
     const rows = db.filter((c) => {
       if (!q) return true;
@@ -578,9 +611,12 @@
     list.innerHTML = rows
       .slice(0, 100)
       .map((c) => {
-        const active = state.selectedCustomer && state.selectedCustomer.id === c.id;
+        const active =
+          state.selectedCustomer && state.selectedCustomer.id === c.id;
         return `
-          <button type="button" class="cust-row ${active ? "active" : ""}" data-id="${escapeHTML(c.id)}">
+          <button type="button" class="cust-row ${active ? "active" : ""}" data-id="${escapeHTML(
+            c.id
+          )}">
             <div class="cust-row-name">${escapeHTML(c.name || "Customer")}</div>
             <div class="cust-row-sub">${escapeHTML(c.phone || "")}</div>
           </button>
@@ -620,7 +656,7 @@
       backdropEl.addEventListener("click", () => closeSheet());
     }
 
-    // Any close button
+    // Any close button (delegated)
     document.addEventListener("click", (e) => {
       const closeBtn = e.target.closest("[data-sheet-close]");
       if (!closeBtn) return;
@@ -670,7 +706,7 @@
 
     // ADD-TO-CART gating:
     // Only fire when the user clicks a PLUS BUTTON (pos-add / row-add),
-    // NOT when they click the row text area (prevents the “giant icon at bottom” bug).
+    // NOT when they click the row text area.
     document.addEventListener(
       "click",
       (e) => {
@@ -682,7 +718,7 @@
           node.classList.contains("row-add") ||
           node.matches("button.pos-add,button.row-add");
 
-        if (!isAddBtn) return; // 🔑 do not hijack row clicks
+        if (!isAddBtn) return;
 
         e.preventDefault();
         e.stopPropagation();
