@@ -53,19 +53,61 @@
     <p class="brand-status" id="brand-status" hidden></p>
   </main>
 
+  <!-- ✅ Receipt / Invoice FAB -->
   <button type="button" class="receipt-fab" id="receipt-open" aria-label="Receipt">
     <img src="/img/icons/receipt.png" alt="" />
     <span class="receipt-badge" id="receipt-count" hidden>0</span>
   </button>
 
+  <!-- ✅ Shared backdrop -->
   <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
 
+  <!-- ✅ Invoice/Receipt Sheet -->
   <section class="sheet" id="sheet-receipt" role="dialog" aria-modal="true" aria-label="Receipt" hidden>
     <div class="sheet-handle" aria-hidden="true"></div>
+
     <header class="sheet-header">
-      <h2>Receipt</h2>
+      <!-- You can keep "Receipt" if you want; my cart.js works either way -->
+      <h2>Invoice</h2>
       <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
     </header>
+
+    <!-- ✅ Customer attach dropdown (required for customer search/add-new) -->
+    <div class="inv-customer">
+      <button type="button" class="inv-customer-btn" id="cust-open" aria-haspopup="dialog">
+        <span class="inv-customer-label" id="cust-label">Attach Saved Customer</span>
+        <span class="inv-customer-caret" aria-hidden="true"></span>
+      </button>
+
+      <div class="cust-panel" id="cust-panel" hidden>
+        <div class="cust-panel-top">
+          <input
+            id="cust-search"
+            class="cust-search"
+            type="search"
+            placeholder="Search name or phone…"
+            autocomplete="off"
+          />
+          <button type="button" class="cust-add-btn" id="cust-add-open">Add New</button>
+        </div>
+
+        <div class="cust-list" id="cust-list"></div>
+
+        <form class="cust-form" id="cust-form" hidden>
+          <div class="cust-form-row">
+            <input id="cust-name" placeholder="Full name" />
+            <input id="cust-phone" placeholder="Phone" inputmode="tel" />
+          </div>
+          <div class="cust-form-row">
+            <input id="cust-email" placeholder="Email (optional)" inputmode="email" />
+          </div>
+          <div class="cust-form-actions">
+            <button type="button" class="cust-cancel" id="cust-add-cancel">Cancel</button>
+            <button type="submit" class="cust-save" id="cust-add-save">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <div class="sheet-body">
       <div class="receipt-items" id="receipt-items"></div>
@@ -77,6 +119,7 @@
     </footer>
   </section>
 
+  <!-- ✅ Bands sheet -->
   <section class="sheet bands-sheet" id="sheet-bands" role="dialog" aria-modal="true" aria-label="Bands" hidden>
     <header class="sheet-header bands-header">
       <h2>Filter by band art</h2>
@@ -92,6 +135,7 @@
     </footer>
   </section>
 
+  <!-- ✅ Filters sheet -->
   <section class="sheet filters-sheet" id="sheet-filters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
     <header class="sheet-header filters-header">
       <button type="button" class="filters-back" id="filters-back" aria-label="Back" hidden>←</button>
@@ -164,7 +208,6 @@
     </div>
 
     <footer class="sheet-footer filters-footer">
-      <!-- ✅ OFF by default -->
       <button class="sheet-btn primary" type="button" id="filters-confirm" disabled>Confirm</button>
     </footer>
   </section>
