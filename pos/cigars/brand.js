@@ -164,17 +164,19 @@
     return Number.isFinite(n) ? n : 0;
   };
 
-  function buildReceiptItem({ brand, line, cigar, msrp }) {
-    const key = `${slug(brand)}|${slug(line)}|${slug(cigar)}`;
-    return {
-      key,
-      category: "Cigars",
-      name: `${line ? line + " — " : ""}${cigar}`,
-      price: priceNum(msrp),
-      qty: 1,
-      meta: { brand, line, cigar },
-    };
-  }
+function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
+  const key = `${slug(brand)}|${slug(line)}|${slug(cigar)}`;
+  return {
+    key,
+    type: "cigar",
+    category: "Cigars",
+    name: `${line ? line + " — " : ""}${cigar}`,
+    sub: vitola || "",
+    price: priceNum(msrp),
+    qty: 1,
+    meta: { brand, line, cigar, vitola },
+  };
+}
 
   // =========================================================
   // ✅ CIGAR DETAIL POPUP
@@ -804,8 +806,8 @@
         const msrp = norm(getMSRP(r));
         const image = norm(getImage(r));
 
-        const receiptItem = buildReceiptItem({ brand, line, cigar, msrp });
-        const brandIconSrc = `/img/icons/brands/${slug(brand || BRAND)}.svg`;
+         const receiptItem = buildReceiptItem({ brand, line, cigar, vitola, msrp });
+         const brandIconSrc = `/img/icons/brands/${slug(brand || BRAND)}.svg`;
 
         return `
           <div class="brand-row"
