@@ -1,253 +1,9 @@
 /* =========================================================
-   POS (Learn-style home)
-   + Global Invoice / Receipt FAB sizing (ALL POS pages)
+   GLOBAL INVOICE SHEET (ALL POS PAGES)
+   Matches your original invoice mockup
    ========================================================= */
 
-:root{
-  --pos-bg: #ffffff;
-  --pos-surface: #ffffff;
-  --pos-page: #f3f5f8;
-  --pos-ink: #0f1a2c;
-  --pos-accent: #007aff;
-}
-
-* { box-sizing: border-box; }
-
-/* =========================
-   POS HOME BASE
-   ========================= */
-
-body.pos-home{
-  margin: 0;
-  background: var(--pos-page);
-  color: var(--pos-ink);
-  font-family: var(--font-text, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  min-height: 100vh;
-}
-
-/* Top bar */
-.pos-topbar{
-  padding: 16px 18px 0;
-  display: flex;
-  align-items: center;
-}
-
-.pos-back{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  padding: 6px 4px;
-  color: var(--pos-accent);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.pos-back-icon{
-  font-size: 22px;
-  line-height: 1;
-}
-
-/* Main */
-.pos-main{
-  padding: 6px 16px 26px;
-}
-
-.pos-title{
-  margin: 6px 0 14px;
-  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 999;
-  font-size: 64px;
-  letter-spacing: -0.04em;
-  color: var(--pos-ink);
-}
-
-/* Grid */
-.pos-grid{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-/* Card */
-.pos-card{
-  appearance: none;
-  border: none;
-  background: var(--pos-surface);
-  border-radius: 22px;
-  padding: 18px 16px;
-  text-align: center;
-  cursor: pointer;
-
-  box-shadow:
-    0 10px 26px rgba(15, 26, 44, 0.08),
-    0 2px 8px rgba(15, 26, 44, 0.05);
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  min-height: 148px;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.pos-card:active{
-  transform: translateY(1px);
-}
-
-/* Icons */
-.pos-card-icon{
-  width: 96px;
-  height: 96px;
-  display: grid;
-  place-items: center;
-  margin-bottom: 10px;
-}
-
-.pos-card-icon img{
-  width: 96px;
-  height: 96px;
-  object-fit: contain;
-  display: block;
-}
-
-.pos-card-title{
-  font-weight: 800;
-  font-size: 22px;
-  letter-spacing: -0.02em;
-}
-
-/* =========================
-   CONFIRM BUTTON (SAFE)
-   ========================= */
-
-.btn-confirm,
-button.confirm,
-.confirm-btn{
-  width: min(320px, 100%);
-  height: 74px;
-  border-radius: 999px;
-  border: none;
-  background: #63d7a1;
-  color: rgba(255,255,255,.95);
-  font-size: 34px;
-  font-weight: 900;
-  letter-spacing: .2px;
-}
-
-/* =========================================================
-   ✅ GLOBAL INVOICE / RECEIPT FAB
-   ONE SOURCE OF TRUTH — FIXES ALL PAGES
-   ========================================================= */
-
-/* Button container */
-.pos-invoice-fab,
-.pos-receipt-fab,
-.pos-receipt-btn,
-.receipt-fab,
-#posInvoiceFab,
-#posReceiptFab,
-#receipt-open{
-  position: fixed !important;
-  right: 16px !important;
-  bottom: calc(16px + env(safe-area-inset-bottom)) !important;
-
-  width: 56px !important;
-  height: 56px !important;
-  padding: 0 !important;
-
-  border-radius: 999px !important;
-
-  display: grid !important;
-  place-items: center !important;
-
-  z-index: 99999 !important;
-  pointer-events: auto !important;
-
-  max-width: 56px !important;
-  max-height: 56px !important;
-  overflow: hidden !important;
-
-  touch-action: manipulation; /* iOS tap friendliness */
-}
-
-/* Icon image */
-.pos-invoice-fab img,
-.pos-receipt-fab img,
-.pos-receipt-btn img,
-.pos-receipt-img,
-.receipt-fab img,
-#posInvoiceFab img,
-#posReceiptFab img,
-#receipt-open img{
-  width: 28px !important;
-  height: 28px !important;
-  display: block !important;
-  object-fit: contain !important;
-}
-
-/* Badge */
-.pos-receipt-badge,
-.receipt-badge,
-#posReceiptBadge,
-#receipt-count{
-  position: absolute !important;
-  right: -4px !important;
-  bottom: -4px !important;
-
-  min-width: 18px !important;
-  height: 18px !important;
-  padding: 0 5px !important;
-
-  border-radius: 999px !important;
-
-  display: grid !important;
-  place-items: center !important;
-
-  z-index: 100000 !important;
-}
-
-/* =========================
-   MOBILE TIGHTENING
-   ========================= */
-
-@media (max-width: 380px){
-  .pos-title{ font-size: 58px; }
-
-  .pos-invoice-fab,
-  .pos-receipt-fab,
-  .pos-receipt-btn,
-  .receipt-fab,
-  #posInvoiceFab,
-  #posReceiptFab,
-  #receipt-open{
-    width: 52px !important;
-    height: 52px !important;
-    right: 14px !important;
-    bottom: calc(14px + env(safe-area-inset-bottom)) !important;
-    max-width: 52px !important;
-    max-height: 52px !important;
-  }
-
-  .pos-invoice-fab img,
-  .pos-receipt-fab img,
-  .pos-receipt-btn img,
-  .pos-receipt-img,
-  .receipt-fab img,
-  #posInvoiceFab img,
-  #posReceiptFab img,
-  #receipt-open img{
-    width: 26px !important;
-    height: 26px !important;
-  }
-}
-
-/* =========================================================
-   GLOBAL RECEIPT SHEET (ALL POS PAGES)
-   ========================================================= */
-
+/* Backdrop */
 #sheet-backdrop{
   position: fixed;
   inset: 0;
@@ -259,28 +15,26 @@ button.confirm,
   pointer-events: none;
   opacity: 0;
 }
-
 #sheet-backdrop.open,
 #sheet-backdrop:not([hidden]){
   pointer-events: auto;
   opacity: 1;
 }
 
+/* ✅ Make the invoice sheet “tall” like your grey box (near top) */
 #sheet-receipt{
   position: fixed;
   left: 50%;
-  bottom: 0;
-  transform: translate(-50%, 110%);
-  width: min(720px, 100%);
-  max-height: 78svh;
+  top: calc(10px + env(safe-area-inset-top));
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
 
+  width: min(760px, calc(100% - 20px));
   background: rgba(255,255,255,0.96);
   color: #0f1a2c;
 
-  border-top-left-radius: 22px;
-  border-top-right-radius: 22px;
-
-  box-shadow: 0 -18px 60px rgba(0,0,0,0.35);
+  border-radius: 26px;
+  box-shadow: 0 20px 70px rgba(0,0,0,0.35);
   z-index: 9999;
 
   opacity: 0;
@@ -290,51 +44,358 @@ button.confirm,
   flex-direction: column;
   overflow: hidden;
 
-  transition: transform .22s ease, opacity .22s ease;
+  transition: opacity .18s ease, transform .18s ease;
 }
-
-/* When cart.js opens it */
 #sheet-receipt.open,
 #sheet-receipt:not([hidden]){
-  transform: translate(-50%, 0);
   opacity: 1;
   pointer-events: auto;
 }
 
+/* Header row (small) */
 #sheet-receipt .sheet-header{
-  padding: 14px 16px 10px;
+  padding: 12px 14px 6px;
   display:flex;
   align-items:center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(0,0,0,.08);
+  border-bottom: none;
+}
+#sheet-receipt .sheet-header h2{
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+#sheet-receipt .sheet-x{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(15,26,44,0.06);
+  color: #007aff;
+  font-weight: 900;
 }
 
+/* ✅ Invoice heading block */
+#sheet-receipt .inv-head{
+  padding: 6px 14px 10px;
+  text-align: center;
+}
+#sheet-receipt .inv-title{
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: 30px;
+  line-height: 1.05;
+}
+#sheet-receipt .inv-shop{
+  margin-top: 4px;
+  font-weight: 800;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+#sheet-receipt .inv-date{
+  margin-top: 2px;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+#sheet-receipt .inv-num{
+  margin-top: 4px;
+  font-weight: 700;
+  font-size: 20px;
+  color: rgba(15,26,44,.55);
+}
+
+/* Customer attach area */
+#sheet-receipt .inv-customer{
+  padding: 10px 14px 6px;
+  display:flex;
+  justify-content:center;
+}
+#sheet-receipt .inv-customer-btn{
+  width: min(540px, 100%);
+  height: 46px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.18);
+  background: #fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 10px;
+  font-weight: 800;
+  color: rgba(15,26,44,.55);
+}
+#sheet-receipt .inv-customer-caret{
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid rgba(15,26,44,.40);
+}
+
+/* Customer panel */
+#sheet-receipt .cust-panel{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 210px; /* sits under header block */
+  width: min(680px, calc(100% - 28px));
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 16px 50px rgba(0,0,0,.18);
+  border: 1px solid rgba(0,0,0,.10);
+  padding: 12px;
+  z-index: 10000;
+}
+#sheet-receipt .cust-panel-top{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+}
+#sheet-receipt .cust-search{
+  flex: 1 1 auto;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.12);
+  padding: 0 12px;
+  font-weight: 700;
+}
+#sheet-receipt .cust-add-btn{
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  font-weight: 900;
+  color: #007aff;
+  padding: 0 12px;
+}
+#sheet-receipt .cust-list{
+  margin-top: 10px;
+  max-height: 220px;
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+}
+#sheet-receipt .cust-item{
+  border: 1px solid rgba(0,0,0,.10);
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 12px;
+  text-align:left;
+}
+#sheet-receipt .cust-item-name{
+  font-weight: 900;
+}
+#sheet-receipt .cust-item-sub{
+  margin-top: 2px;
+  color: rgba(15,26,44,.55);
+  font-weight: 700;
+  font-size: 13px;
+}
+#sheet-receipt .cust-empty{
+  padding: 10px;
+  color: rgba(15,26,44,.55);
+  font-weight: 800;
+}
+
+/* add new customer form */
+#sheet-receipt .cust-form{
+  margin-top: 10px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  padding-top: 10px;
+}
+#sheet-receipt .cust-form-row{
+  display:flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+#sheet-receipt .cust-form input{
+  flex: 1 1 auto;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.12);
+  padding: 0 12px;
+  font-weight: 700;
+}
+#sheet-receipt .cust-form-actions{
+  display:flex;
+  gap: 10px;
+  justify-content:flex-end;
+}
+#sheet-receipt .cust-cancel,
+#sheet-receipt .cust-save{
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.12);
+  background:#fff;
+  font-weight: 900;
+  padding: 0 14px;
+}
+#sheet-receipt .cust-save{
+  background:#007aff;
+  border-color:#007aff;
+  color:#fff;
+}
+
+/* Body */
 #sheet-receipt .sheet-body{
-  padding: 10px 14px;
+  padding: 6px 0 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   flex: 1 1 auto;
   min-height: 0;
 }
 
-#sheet-receipt .sheet-footer{
-  padding: 12px 14px 16px;
+/* Empty state */
+#sheet-receipt .inv-empty{
+  padding: 16px 14px;
+  color: rgba(15,26,44,.55);
+  font-weight: 900;
+}
+
+/* ✅ Invoice rows: 3 columns */
+#sheet-receipt .inv-row{
+  display:grid;
+  grid-template-columns: 86px 1fr 190px;
+  gap: 14px;
+  align-items:center;
+
+  padding: 14px 14px;
   border-top: 1px solid rgba(0,0,0,.08);
+}
+#sheet-receipt .inv-ico{
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  background: rgba(0,122,255,0.10);
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+}
+#sheet-receipt .inv-ico img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+
+/* middle 3-line text */
+#sheet-receipt .inv-cat{
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+#sheet-receipt .inv-name{
+  margin-top: 2px;
+  font-weight: 800;
+  font-size: 18px;
+  color: rgba(15,26,44,.55);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#sheet-receipt .inv-msrp{
+  margin-top: 4px;
+  font-weight: 900;
+  font-size: 18px;
+  color: rgba(15,26,44,.35);
+}
+
+/* right: qty adjuster above line total */
+#sheet-receipt .inv-right{
   display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+}
+#sheet-receipt .inv-qty{
+  display:flex;
+  align-items:center;
   gap: 10px;
 }
-
-#sheet-receipt .sheet-btn{
-  height: 40px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.12);
-  background: #fff;
-  font-weight: 800;
-  padding: 0 14px;
+#sheet-receipt .inv-qty-btn{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.14);
+  background:#fff;
+  font-weight: 900;
+  color:#007aff;
+  font-size: 18px;
+}
+#sheet-receipt .inv-qty-pill{
+  min-width: 44px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.18);
+  display:grid;
+  place-items:center;
+  font-weight: 900;
+  color: rgba(15,26,44,.55);
+  padding: 0 10px;
+}
+#sheet-receipt .inv-total{
+  text-align:right;
+}
+#sheet-receipt .inv-total-top{
+  font-weight: 900;
+  font-size: 22px;
+  color:#0f1a2c;
+}
+#sheet-receipt .inv-total-sub{
+  margin-top: 2px;
+  font-weight: 900;
+  font-size: 16px;
+  color: rgba(15,26,44,.35);
 }
 
+/* Footer */
+#sheet-receipt .sheet-footer{
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  display:flex;
+  gap: 12px;
+}
+#sheet-receipt .sheet-btn{
+  flex: 1 1 auto;
+  height: 48px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.14);
+  background: #fff;
+  font-weight: 900;
+  color:#007aff;
+}
 #sheet-receipt .sheet-btn.primary{
-  background: #007aff;
-  border-color: #007aff;
+  background:#007aff;
+  border-color:#007aff;
+  color:#fff;
+}
+
+/* =========================================================
+   Receipt FAB: red state + badge
+   ========================================================= */
+
+#receipt-open{
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,.18);
+}
+#receipt-open.has-items{
+  border-color: rgba(255,59,48,.30);
+  box-shadow: 0 12px 30px rgba(255,59,48,.22);
+}
+/* make the icon “red” without needing a new asset */
+#receipt-open.has-items img{
+  filter: hue-rotate(320deg) saturate(3) brightness(1.0);
+}
+
+/* badge */
+#receipt-count{
+  background: #ff3b30;
   color: #fff;
+  font-weight: 900;
+  font-size: 12px;
+  border: 2px solid #fff;
 }
