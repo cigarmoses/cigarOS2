@@ -2,6 +2,7 @@
    Shared POS Cart + INVOICE modal controller (ALL POS pages)
 
    ✅ Injects invoice FAB + sheet markup if missing (so ALL POS pages get the invoice)
+   ✅ Injects /pos/invoice.css automatically if not already on the page
    ✅ FAB is bottom-right, transparent (no background behind PNG), badge count, has-items class
    ✅ Invoice modal matches target layout:
       - Tall centered modal (not bottom sheet)
@@ -150,9 +151,19 @@
   let custOverlay;
   let confirmOverlay;
 
+  // ✅ FIXED: this now actually injects /pos/invoice.css if missing
   function injectInvoiceCSSOnce() {
-    if (document.querySelector('link[href="/pos/invoice.css"]')) return;
-    // If you already include invoice.css in HTML, this does nothing.
+    // If already present by href, bail
+    const already =
+      document.querySelector('link[href="/pos/invoice.css"]') ||
+      document.querySelector('link[data-invoice-css="1"]');
+    if (already) return;
+
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/pos/invoice.css";
+    link.setAttribute("data-invoice-css", "1");
+    document.head.appendChild(link);
   }
 
   function ensureBaseMarkup() {
@@ -464,7 +475,9 @@
         const lineTotal = unit * qty;
         const cigar = isCigarItem(it);
 
-        // TEAL text rules
+        // TEAL text rules:
+        // Cigars: (Line + Name) / Vitola / MSRP
+        // Others: Category / Product Name / MSRP
         const l1 = cigar ? (it.name || "Cigar") : (it.category || "Product");
         const l2 = cigar ? (it.sub || it.vitola || "") : (it.name || "");
         const l3 = `$${money(unit)}`;
@@ -532,287 +545,4 @@
         <div class="cust-add">
           <div class="cust-add-title">Add New Customer</div>
           <div class="cust-add-grid">
-            <input type="text" id="cust-new-name" placeholder="Full name" />
-            <input type="tel" id="cust-new-phone" placeholder="Phone" />
-          </div>
-          <button class="cust-add-btn" type="button" id="cust-add-btn">Add Customer</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(custOverlay);
-
-    custOverlay.querySelector(".cust-x").addEventListener("click", closeCustomerPicker);
-    custOverlay.addEventListener("click", (e) => {
-      if (e.target === custOverlay) closeCustomerPicker();
-    });
-
-    custOverlay.querySelector("#cust-q").addEventListener("input", renderCustomerList);
-
-    custOverlay.querySelector("#cust-add-btn").addEventListener("click", () => {
-      const name = custOverlay.querySelector("#cust-new-name").value.trim();
-      const phone = custOverlay.querySelector("#cust-new-phone").value.trim();
-      if (!name) return;
-
-      const db = loadCustomerDB();
-      const newCustomer = { id: String(Date.now()), name, phone };
-      db.unshift(newCustomer);
-      saveCustomerDB(db);
-
-      setSelectedCustomer(newCustomer);
-
-      custOverlay.querySelector("#cust-new-name").value = "";
-      custOverlay.querySelector("#cust-new-phone").value = "";
-
-      renderCustomerList();
-      closeCustomerPicker();
-    });
-  }
-
-  function openCustomerPicker() {
-    ensureCustomerOverlay();
-    custOverlay.hidden = false;
-    custOverlay.classList.add("open");
-
-    const q = custOverlay.querySelector("#cust-q");
-    q.value = "";
-    q.focus();
-
-    renderCustomerList();
-  }
-
-  function closeCustomerPicker() {
-    if (!custOverlay) return;
-    custOverlay.classList.remove("open");
-    custOverlay.hidden = true;
-  }
-
-  function renderCustomerList() {
-    if (!custOverlay) return;
-
-    const db = loadCustomerDB();
-    const q = (custOverlay.querySelector("#cust-q").value || "").trim().toLowerCase();
-
-    const rows = db.filter((c) => {
-      if (!q) return true;
-      const name = String(c.name || "").toLowerCase();
-      const phone = String(c.phone || "").toLowerCase();
-      return name.includes(q) || phone.includes(q);
-    });
-
-    const list = custOverlay.querySelector("#cust-list");
-
-    if (!rows.length) {
-      list.innerHTML = `<div class="cust-empty">No matches.</div>`;
-      return;
-    }
-
-    list.innerHTML = rows
-      .slice(0, 100)
-      .map((c) => {
-        const active = state.selectedCustomer && state.selectedCustomer.id === c.id;
-        return `
-          <button type="button" class="cust-row ${active ? "active" : ""}" data-id="${escapeHTML(c.id)}">
-            <div class="cust-row-name">${escapeHTML(c.name || "Customer")}</div>
-            <div class="cust-row-sub">${escapeHTML(c.phone || "")}</div>
-          </button>
-        `;
-      })
-      .join("");
-
-    $$(".cust-row", list).forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-id");
-        const found = db.find((x) => String(x.id) === String(id));
-        if (!found) return;
-        setSelectedCustomer(found);
-        closeCustomerPicker();
-      });
-    });
-  }
-
-  // -------------------------
-  // Confirm modal (for NON-CIGAR items)
-  // -------------------------
-  function ensureConfirmOverlay() {
-    if (confirmOverlay) return;
-
-    confirmOverlay = document.createElement("div");
-    confirmOverlay.className = "pos-confirm-overlay";
-    confirmOverlay.hidden = true;
-    confirmOverlay.innerHTML = `
-      <div class="pos-confirm-card" role="dialog" aria-modal="true" aria-label="Add to bill">
-        <div class="pos-confirm-title">Add to Bill</div>
-        <div class="pos-confirm-sub" id="pos-confirm-sub"></div>
-        <div class="pos-confirm-actions">
-          <button type="button" class="pos-confirm-btn" data-confirm-cancel>Cancel</button>
-          <button type="button" class="pos-confirm-btn primary" data-confirm-add>Confirm</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(confirmOverlay);
-
-    confirmOverlay.addEventListener("click", (e) => {
-      if (e.target === confirmOverlay) closeConfirm();
-    });
-    confirmOverlay.querySelector("[data-confirm-cancel]").addEventListener("click", closeConfirm);
-  }
-
-  let pendingConfirmItem = null;
-
-  function openConfirm(item) {
-    ensureConfirmOverlay();
-    pendingConfirmItem = item;
-
-    const sub = $("#pos-confirm-sub", confirmOverlay);
-    const name = item?.name || "Item";
-    const cat = item?.category || "";
-    const price = `$${money(item?.price || 0)}`;
-    sub.textContent = cat ? `${cat} • ${name} • ${price}` : `${name} • ${price}`;
-
-    confirmOverlay.hidden = false;
-    confirmOverlay.classList.add("open");
-
-    const addBtn = confirmOverlay.querySelector("[data-confirm-add]");
-    addBtn.onclick = () => {
-      if (pendingConfirmItem) add(pendingConfirmItem);
-      closeConfirm();
-    };
-  }
-
-  function closeConfirm() {
-    if (!confirmOverlay) return;
-    confirmOverlay.classList.remove("open");
-    confirmOverlay.hidden = true;
-    pendingConfirmItem = null;
-  }
-
-  // -------------------------
-  // Event wiring
-  // -------------------------
-  function bindEventsOnce() {
-    resolveDOM();
-
-    // FAB open
-    if (fabBtn && !fabBtn.dataset.bound) {
-      fabBtn.dataset.bound = "1";
-      fabBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        openSheet();
-      });
-    }
-
-    // Backdrop close
-    if (backdropEl && !backdropEl.dataset.bound) {
-      backdropEl.dataset.bound = "1";
-      backdropEl.addEventListener("click", closeSheet);
-    }
-
-    // Close buttons
-    document.addEventListener("click", (e) => {
-      const closeBtn = e.target.closest("[data-sheet-close]");
-      if (!closeBtn) return;
-      e.preventDefault();
-      closeSheet();
-    });
-
-    // Clear
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest("#receipt-clear");
-      if (!btn) return;
-      e.preventDefault();
-      clear();
-    });
-
-    // Qty clicks (delegated)
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest(".inv-row [data-qty]");
-      if (!btn) return;
-
-      const row = e.target.closest(".inv-row");
-      if (!row) return;
-
-      const id = row.getAttribute("data-id");
-      const it = state.items.find((x) => x.id === id);
-      if (!it) return;
-
-      const dir = btn.getAttribute("data-qty");
-      const delta = dir === "+1" ? 1 : -1;
-
-      const next = clamp(Number(it.qty || 1) + delta, 0, 999);
-      if (next <= 0) state.items = state.items.filter((x) => x.id !== id);
-      else it.qty = next;
-
-      saveCart();
-      updateBadge();
-      renderInvoice();
-    });
-
-    // ESC close
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeConfirm();
-        closeCustomerPicker();
-        closeSheet();
-      }
-    });
-
-    // ADD behavior:
-    // - Cigars: ONLY add when clicking explicit + buttons (pos-add / row-add)
-    // - Non-cigars: clicking any element carrying data-receipt-item opens confirm modal
-    document.addEventListener(
-      "click",
-      (e) => {
-        const node = e.target.closest("[data-receipt-item]");
-        if (!node) return;
-
-        const item = itemFromReceiptNode(node);
-        if (!item) return;
-
-        const cigar = isCigarItem(item);
-
-        const isAddBtn =
-          node.classList.contains("pos-add") ||
-          node.classList.contains("row-add") ||
-          node.matches("button.pos-add,button.row-add");
-
-        if (cigar) {
-          // Prevent row hijack: only add via + button
-          if (!isAddBtn) return;
-          e.preventDefault();
-          e.stopPropagation();
-          add(item);
-          return;
-        }
-
-        // Non-cigars: show confirm (on any click target with data-receipt-item)
-        // If it IS an add button, we still confirm (your request: confirm menu for non-cigars)
-        e.preventDefault();
-        e.stopPropagation();
-        openConfirm(item);
-      },
-      { passive: false }
-    );
-  }
-
-  function boot() {
-    injectInvoiceCSSOnce();
-    loadCart();
-    resolveDOM();
-    ensureInvoiceShell();
-    updateBadge();
-    bindEventsOnce();
-
-    window.CigarOSCart = {
-      add,
-      clear,
-      openInvoice: openSheet,
-      closeInvoice: closeSheet,
-      getCount: () => getItemCount(),
-      getItems: () => [...state.items],
-      money,
-    };
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
-})();
+            <
