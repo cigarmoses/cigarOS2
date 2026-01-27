@@ -1,6 +1,6 @@
 /* =========================================================
    GLOBAL INVOICE SHEET (ALL POS PAGES)
-   Matches your original invoice mockup
+   Matches your original invoice mockup (and fixes FAB issues)
    ========================================================= */
 
 /* Backdrop */
@@ -15,13 +15,12 @@
   pointer-events: none;
   opacity: 0;
 }
-#sheet-backdrop.open,
-#sheet-backdrop:not([hidden]){
+#sheet-backdrop.open{
   pointer-events: auto;
   opacity: 1;
 }
 
-/* ✅ Make the invoice sheet “tall” like your grey box (near top) */
+/* ✅ Tall modal (near top + bottom safe areas) */
 #sheet-receipt{
   position: fixed;
   left: 50%;
@@ -46,25 +45,21 @@
 
   transition: opacity .18s ease, transform .18s ease;
 }
-#sheet-receipt.open,
-#sheet-receipt:not([hidden]){
+#sheet-receipt.open{
   opacity: 1;
   pointer-events: auto;
 }
 
-/* Header row (small) */
+/* Header row (we keep the X, but REMOVE the left “Invoice/Receipt” word) */
 #sheet-receipt .sheet-header{
-  padding: 12px 14px 6px;
+  padding: 10px 12px 0;
   display:flex;
   align-items:center;
-  justify-content: space-between;
+  justify-content: flex-end; /* ✅ push X to right */
   border-bottom: none;
 }
 #sheet-receipt .sheet-header h2{
-  margin: 0;
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  display:none !important; /* ✅ removes top-left “Invoice/Receipt” text */
 }
 #sheet-receipt .sheet-x{
   width: 34px;
@@ -74,9 +69,11 @@
   background: rgba(15,26,44,0.06);
   color: #007aff;
   font-weight: 900;
+  font-size: 18px;
+  line-height: 1;
 }
 
-/* ✅ Invoice heading block */
+/* ✅ Invoice heading block (SMALL like “Attach Saved Customer”) */
 #sheet-receipt .inv-head{
   padding: 6px 14px 10px;
   text-align: center;
@@ -84,31 +81,31 @@
 #sheet-receipt .inv-title{
   font-weight: 900;
   letter-spacing: -0.02em;
-  font-size: 30px;
-  line-height: 1.05;
+  font-size: 14px;  /* ✅ smaller */
+  line-height: 1.1;
 }
 #sheet-receipt .inv-shop{
   margin-top: 4px;
   font-weight: 800;
-  font-size: 28px;
+  font-size: 14px;  /* ✅ smaller */
   letter-spacing: -0.02em;
 }
 #sheet-receipt .inv-date{
   margin-top: 2px;
   font-weight: 800;
-  font-size: 24px;
+  font-size: 14px;  /* ✅ smaller */
   letter-spacing: -0.02em;
 }
 #sheet-receipt .inv-num{
   margin-top: 4px;
-  font-weight: 700;
-  font-size: 20px;
+  font-weight: 800;
+  font-size: 14px;  /* ✅ smaller */
   color: rgba(15,26,44,.55);
 }
 
 /* Customer attach area */
 #sheet-receipt .inv-customer{
-  padding: 10px 14px 6px;
+  padding: 6px 14px 10px;
   display:flex;
   justify-content:center;
 }
@@ -123,6 +120,7 @@
   justify-content:center;
   gap: 10px;
   font-weight: 800;
+  font-size: 14px;
   color: rgba(15,26,44,.55);
 }
 #sheet-receipt .inv-customer-caret{
@@ -138,7 +136,7 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 210px; /* sits under header block */
+  top: 170px; /* sits under header block */
   width: min(680px, calc(100% - 28px));
   background: #fff;
   border-radius: 18px;
@@ -241,7 +239,7 @@
 
 /* Body */
 #sheet-receipt .sheet-body{
-  padding: 6px 0 0;
+  padding: 0 0 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   flex: 1 1 auto;
@@ -255,21 +253,21 @@
   font-weight: 900;
 }
 
-/* ✅ Invoice rows: 3 columns */
+/* ✅ Invoice rows: COMPACT 3 columns (mobile-friendly) */
 #sheet-receipt .inv-row{
   display:grid;
-  grid-template-columns: 86px 1fr 190px;
-  gap: 14px;
+  grid-template-columns: 72px 1fr 150px; /* ✅ smaller right column */
+  gap: 12px;
   align-items:center;
 
-  padding: 14px 14px;
+  padding: 10px 14px; /* ✅ smaller */
   border-top: 1px solid rgba(0,0,0,.08);
 }
 #sheet-receipt .inv-ico{
-  width: 76px;
-  height: 76px;
-  border-radius: 22px;
-  background: rgba(0,122,255,0.10);
+  width: 64px;         /* ✅ smaller */
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.06); /* ✅ neutral */
   display:grid;
   place-items:center;
   overflow:hidden;
@@ -284,13 +282,16 @@
 /* middle 3-line text */
 #sheet-receipt .inv-cat{
   font-weight: 900;
-  font-size: 22px;
+  font-size: 16px;   /* ✅ smaller */
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 #sheet-receipt .inv-name{
   margin-top: 2px;
   font-weight: 800;
-  font-size: 18px;
+  font-size: 13px;   /* ✅ smaller */
   color: rgba(15,26,44,.55);
   white-space: nowrap;
   overflow:hidden;
@@ -299,34 +300,35 @@
 #sheet-receipt .inv-msrp{
   margin-top: 4px;
   font-weight: 900;
-  font-size: 18px;
+  font-size: 13px;   /* ✅ smaller */
   color: rgba(15,26,44,.35);
 }
 
 /* right: qty adjuster above line total */
 #sheet-receipt .inv-right{
   display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 14px;
+  flex-direction: column;   /* ✅ qty above total */
+  align-items:flex-end;
+  gap: 6px;
 }
 #sheet-receipt .inv-qty{
   display:flex;
   align-items:center;
-  gap: 10px;
+  gap: 8px;
 }
 #sheet-receipt .inv-qty-btn{
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 12px;
   border: 1px solid rgba(0,0,0,.14);
   background:#fff;
   font-weight: 900;
   color:#007aff;
   font-size: 18px;
+  line-height: 1;
 }
 #sheet-receipt .inv-qty-pill{
-  min-width: 44px;
+  min-width: 42px;
   height: 28px;
   border-radius: 999px;
   border: 1px solid rgba(0,0,0,.18);
@@ -341,14 +343,11 @@
 }
 #sheet-receipt .inv-total-top{
   font-weight: 900;
-  font-size: 22px;
+  font-size: 16px; /* ✅ smaller */
   color:#0f1a2c;
 }
 #sheet-receipt .inv-total-sub{
-  margin-top: 2px;
-  font-weight: 900;
-  font-size: 16px;
-  color: rgba(15,26,44,.35);
+  display:none; /* optional */
 }
 
 /* Footer */
@@ -360,8 +359,8 @@
 }
 #sheet-receipt .sheet-btn{
   flex: 1 1 auto;
-  height: 48px;
-  border-radius: 16px;
+  height: 54px;
+  border-radius: 18px;
   border: 1px solid rgba(0,0,0,.14);
   background: #fff;
   font-weight: 900;
@@ -374,28 +373,61 @@
 }
 
 /* =========================================================
-   Receipt FAB: red state + badge
+   ✅ RECEIPT / INVOICE FAB (PNG ONLY, bottom-right)
+   - No background plate
+   - Badge overlays on top-right
+   - Red state handled by .has-items class (optional)
    ========================================================= */
 
 #receipt-open{
-  background: #fff;
-  border: 1px solid rgba(0,0,0,.08);
-  box-shadow: 0 12px 30px rgba(0,0,0,.18);
-}
-#receipt-open.has-items{
-  border-color: rgba(255,59,48,.30);
-  box-shadow: 0 12px 30px rgba(255,59,48,.22);
-}
-/* make the icon “red” without needing a new asset */
-#receipt-open.has-items img{
-  filter: hue-rotate(320deg) saturate(3) brightness(1.0);
+  position: fixed !important;
+  right: 16px !important;
+  bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+  z-index: 100000 !important;
+
+  width: 64px !important;
+  height: 64px !important;
+  padding: 0 !important;
+
+  border: none !important;
+  background: transparent !important;   /* ✅ no backplate */
+  box-shadow: none !important;          /* ✅ PNG already has shadow */
+  display: grid !important;
+  place-items: center !important;
+  overflow: visible !important;
 }
 
-/* badge */
+#receipt-open img{
+  width: 64px !important;
+  height: 64px !important;
+  display: block !important;
+  object-fit: contain !important;
+  background: transparent !important;
+}
+
+/* Badge */
 #receipt-count{
-  background: #ff3b30;
-  color: #fff;
-  font-weight: 900;
-  font-size: 12px;
-  border: 2px solid #fff;
+  position: absolute !important;
+  right: 2px !important;
+  top: 2px !important;
+
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+
+  border-radius: 999px !important;
+  background: #ff3b30 !important;
+  color: #fff !important;
+  font-weight: 900 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+
+  border: 2px solid #fff !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+/* Optional “has items” state (keep subtle; do NOT recolor PNG) */
+#receipt-open.has-items{
+  filter: drop-shadow(0 12px 30px rgba(255,59,48,.22));
 }
