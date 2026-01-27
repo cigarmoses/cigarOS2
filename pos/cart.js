@@ -1,18 +1,24 @@
 /* /pos/cart.js
    Shared POS Cart + INVOICE modal controller (ALL POS pages)
 
-   ✅ Injects invoice FAB + sheet markup if missing (so ALL POS pages get the invoice)
-   ✅ Injects /pos/invoice.css automatically if not already on the page
-   ✅ FAB is bottom-right, transparent (no background behind PNG), badge count, has-items class
-   ✅ Invoice modal matches target layout:
-      - Tall centered modal (not bottom sheet)
+   Goals:
+   ✅ Bottom-right floating invoice icon (no background behind PNG)
+   ✅ Badge count + "has-items" class
+   ✅ INVOICE modal matches your old layout (and your NEW cigar text rule):
+      - Centered, tall modal (not a bottom sheet)
       - Header: INVOICE / Shop / Date / INV#
-      - Attach Saved Customer works (localStorage DB)
-      - Rows: icon | 3 lines text | qty controls + line total
-      - Cigars: (Line + Name) / Vitola / MSRP
-      - Others: Category / Product Name / MSRP
-   ✅ Non-cigar items: click shows "Add to Bill" confirm modal (Add / Cancel)
-   ✅ Cigars: only add via + buttons (pos-add / row-add) to avoid hijacking row clicks
+      - Customer attach (search + add) works
+      - Line items: icon | 3 lines text | qty controls above line total
+      - Cigars text order:
+          1) Cigar line + name
+          2) Vitola
+          3) MSRP (unit price)
+      - Others text order:
+          1) Category
+          2) Product name
+          3) MSRP (unit price)
+
+   ✅ Add to cart: only triggers from + buttons (row-add / pos-add)
 */
 
 (() => {
@@ -21,7 +27,7 @@
   // -------------------------
   // Storage keys
   // -------------------------
-  const CART_KEY = "cigaros_pos_cart_v3";
+  const CART_KEY = "cigaros_pos_cart_v2";
   const SHOP_KEY = "cigaros_pos_shop_name";
   const INV_KEY = "cigaros_pos_invoice_number";
   const CUSTOMER_DB_KEY = "cigaros_pos_customers_v1";
@@ -30,7 +36,6 @@
   const TAX_RATE = 0.07;
 
   const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
   // -------------------------
   // State
@@ -67,7 +72,7 @@
       .replace(/'/g, "&#039;");
   }
 
-  function brandSlug(s) {
+  function slugifyBrand(s) {
     return String(s || "")
       .trim()
       .toLowerCase()
@@ -117,12 +122,18 @@
 
   function setSelectedCustomer(c) {
     state.selectedCustomer = c || null;
-    localStorage.setItem(SELECTED_CUSTOMER_KEY, JSON.stringify(state.selectedCustomer));
+    localStorage.setItem(
+      SELECTED_CUSTOMER_KEY,
+      JSON.stringify(state.selectedCustomer)
+    );
     renderCustomerLabel();
   }
 
   function getItemCount() {
-    return state.items.reduce((sum, it) => sum + clamp(Number(it.qty || 0), 0, 999), 0);
+    return state.items.reduce(
+      (sum, it) => sum + clamp(Number(it.qty || 0), 0, 999),
+      0
+    );
   }
 
   function makeStableId(item) {
@@ -137,86 +148,35 @@
     return bits.join("|");
   }
 
-  function isCigarItem(item) {
-    const t = String(item?.type || "").toLowerCase();
-    const c = String(item?.category || "").toLowerCase();
-    return t === "cigar" || c === "cigars";
-  }
-
   // -------------------------
-  // DOM refs (created if missing)
+  // DOM refs (existing ids in your pages)
   // -------------------------
   let fabBtn, badgeEl, fabImg;
   let backdropEl, sheetEl, itemsEl;
+
+  // Injected (customer modal)
   let custOverlay;
-  let confirmOverlay;
-
-  // ✅ FIXED: this now actually injects /pos/invoice.css if missing
-  function injectInvoiceCSSOnce() {
-    // If already present by href, bail
-    const already =
-      document.querySelector('link[href="/pos/invoice.css"]') ||
-      document.querySelector('link[data-invoice-css="1"]');
-    if (already) return;
-
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "/pos/invoice.css";
-    link.setAttribute("data-invoice-css", "1");
-    document.head.appendChild(link);
-  }
-
-  function ensureBaseMarkup() {
-    // FAB
-    if (!$("#receipt-open")) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "receipt-fab";
-      btn.id = "receipt-open";
-      btn.setAttribute("aria-label", "Invoice");
-      btn.innerHTML = `
-        <img src="/img/icons/receipt.png" alt="" />
-        <span class="receipt-badge" id="receipt-count" hidden>0</span>
-      `;
-      document.body.appendChild(btn);
-    }
-
-    // Backdrop
-    if (!$("#sheet-backdrop")) {
-      const bd = document.createElement("div");
-      bd.className = "sheet-backdrop";
-      bd.id = "sheet-backdrop";
-      bd.hidden = true;
-      document.body.appendChild(bd);
-    }
-
-    // Sheet container
-    if (!$("#sheet-receipt")) {
-      const sheet = document.createElement("section");
-      sheet.className = "sheet invoice-sheet";
-      sheet.id = "sheet-receipt";
-      sheet.setAttribute("role", "dialog");
-      sheet.setAttribute("aria-modal", "true");
-      sheet.setAttribute("aria-label", "Invoice");
-      sheet.hidden = true;
-      document.body.appendChild(sheet);
-    }
-  }
 
   function resolveDOM() {
-    ensureBaseMarkup();
-
     fabBtn = $("#receipt-open");
     badgeEl = $("#receipt-count");
     fabImg = fabBtn ? fabBtn.querySelector("img") : null;
 
     backdropEl = $("#sheet-backdrop");
     sheetEl = $("#sheet-receipt");
-    itemsEl = $("#receipt-items"); // will be re-created inside shell
+
+    itemsEl = $("#receipt-items");
   }
 
   // -------------------------
-  // Invoice shell inside #sheet-receipt
+  // Ensure INVOICE markup exists inside #sheet-receipt
+  // IMPORTANT: this markup matches the CSS you pasted:
+  //   #sheet-receipt .sheet-header / .sheet-x
+  //   .inv-head / .inv-title / .inv-shop / .inv-date / .inv-num
+  //   .inv-customer / .inv-customer-btn / .inv-customer-caret
+  //   .inv-row / .inv-ico / .inv-cat / .inv-name / .inv-msrp
+  //   .inv-right / .inv-qty / .inv-qty-btn / .inv-qty-pill / .inv-total-top / .inv-total-sub
+  //   .sheet-footer / .sheet-btn
   // -------------------------
   function ensureInvoiceShell() {
     resolveDOM();
@@ -226,38 +186,41 @@
     sheetEl.dataset.invoiceShell = "1";
 
     sheetEl.innerHTML = `
-      <button class="invoice-x" type="button" data-sheet-close aria-label="Close">×</button>
+      <header class="sheet-header">
+        <h2>Invoice</h2>
+        <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+      </header>
 
-      <div class="invoice-head">
-        <div class="invoice-head-title">INVOICE</div>
-        <div class="invoice-head-shop" id="inv-shop">${escapeHTML(getShopName())}</div>
-        <div class="invoice-head-date" id="inv-date">${escapeHTML(getNowLabel())}</div>
-        <div class="invoice-head-num" id="inv-num">INV# ${escapeHTML(getInvoiceNumber())}</div>
+      <div class="inv-head">
+        <div class="inv-title">INVOICE</div>
+        <div class="inv-shop" id="inv-shop">${escapeHTML(getShopName())}</div>
+        <div class="inv-date" id="inv-date">${escapeHTML(getNowLabel())}</div>
+        <div class="inv-num" id="inv-num">INV# ${escapeHTML(
+          getInvoiceNumber()
+        )}</div>
       </div>
 
-      <button class="invoice-customer" type="button" id="inv-customer-btn">
-        <span id="inv-customer-label">Attach Saved Customer</span>
-        <span class="invoice-customer-chev" aria-hidden="true"></span>
-      </button>
-
-      <div class="invoice-items" id="receipt-items"></div>
-
-      <div class="invoice-totals">
-        <div class="tot-row"><span>Subtotal</span><strong id="inv-subtotal">$0.00</strong></div>
-        <div class="tot-row"><span>Tax</span><strong id="inv-tax">$0.00</strong></div>
-        <div class="tot-row tot-total"><span>TOTAL</span><strong id="inv-total">$0.00</strong></div>
+      <div class="inv-customer">
+        <button class="inv-customer-btn" type="button" id="inv-customer-btn" aria-haspopup="dialog" aria-expanded="false">
+          <span id="inv-customer-label">Attach Saved Customer</span>
+          <span class="inv-customer-caret" aria-hidden="true"></span>
+        </button>
       </div>
 
-      <div class="invoice-actions">
-        <button class="inv-btn" type="button" id="receipt-clear">Clear</button>
-        <button class="inv-btn primary" type="button" data-sheet-close>Close</button>
+      <div class="sheet-body">
+        <div class="receipt-items" id="receipt-items"></div>
       </div>
+
+      <footer class="sheet-footer">
+        <button class="sheet-btn" type="button" id="receipt-clear">Clear</button>
+        <button class="sheet-btn primary" type="button" data-sheet-close>Close</button>
+      </footer>
     `;
 
-    // re-resolve inside rebuilt content
+    // re-resolve now that we re-wrote the inside
     resolveDOM();
-    itemsEl = $("#receipt-items");
 
+    // bind customer button once
     const custBtn = $("#inv-customer-btn");
     if (custBtn && !custBtn.dataset.bound) {
       custBtn.dataset.bound = "1";
@@ -279,12 +242,14 @@
       return;
     }
     const name = state.selectedCustomer.name || "Customer";
-    const phone = state.selectedCustomer.phone ? ` • ${state.selectedCustomer.phone}` : "";
+    const phone = state.selectedCustomer.phone
+      ? ` • ${state.selectedCustomer.phone}`
+      : "";
     label.textContent = `${name}${phone}`;
   }
 
   // -------------------------
-  // Open/close invoice
+  // Open/close modal
   // -------------------------
   function openSheet() {
     resolveDOM();
@@ -299,6 +264,7 @@
     sheetEl.classList.add("open");
 
     document.body.classList.add("pos-invoice-open");
+
     renderInvoice();
   }
 
@@ -330,30 +296,43 @@
       if (c > 0) fabBtn.classList.add("has-items");
       else fabBtn.classList.remove("has-items");
     }
+
+    // If you ever add a red asset, this supports it:
+    // <img ... data-active-src="/img/icons/receipt-red.png" data-src="/img/icons/receipt.png">
+    if (fabImg) {
+      const active = fabImg.getAttribute("data-active-src");
+      const normal = fabImg.getAttribute("data-src") || fabImg.getAttribute("src");
+      if (c > 0 && active) fabImg.src = active;
+      else if (normal) fabImg.src = normal;
+    }
   }
 
   // -------------------------
   // Item normalization
   // -------------------------
   function normalizeItem(item) {
-    const cigar = isCigarItem(item);
+    const isCigar =
+      String(item.type || "").toLowerCase() === "cigar" ||
+      String(item.category || "").toLowerCase() === "cigars";
 
     // Prefer brand icon for cigars
     let img = item.img || "";
-    if (cigar) {
+    if (isCigar) {
       const b = item.brand || "";
-      const s = brandSlug(b);
-      if (s) img = `/img/icons/brands/${s}.svg`;
+      const slug = slugifyBrand(b);
+      if (slug) img = `/img/icons/brands/${slug}.svg`;
     }
 
     return {
       id: String(item.id || "").trim() || makeStableId(item),
-      type: (item.type || (cigar ? "cigar" : "product")).toLowerCase(),
-      category: item.category || (cigar ? "Cigars" : "Product"),
+      type: (item.type || (isCigar ? "cigar" : "product")).toLowerCase(),
+      category: item.category || (isCigar ? "Cigars" : "Product"),
       brand: item.brand || "",
+      // For cigars, upstream should pass "Line — Cigar" as name (brand.js already does)
       name: item.name || "Item",
       vitola: item.vitola || "",
-      sub: item.sub || "", // used as vitola for cigars
+      // used as vitola for cigars (brand.js can pass sub=vitola or leave it blank)
+      sub: item.sub || "",
       price: toNum(item.price),
       img,
       link: item.link || "",
@@ -371,7 +350,11 @@
     const idx = state.items.findIndex((x) => x.id === normalized.id);
 
     if (idx >= 0) {
-      state.items[idx].qty = clamp((state.items[idx].qty || 1) + normalized.qty, 1, 999);
+      state.items[idx].qty = clamp(
+        (state.items[idx].qty || 1) + normalized.qty,
+        1,
+        999
+      );
     } else {
       state.items.push(normalized);
     }
@@ -396,28 +379,22 @@
   function itemFromReceiptNode(node) {
     if (!node) return null;
 
+    // JSON payload
     const raw = node.getAttribute("data-receipt-item");
     if (raw && raw.trim().startsWith("{")) {
       const payload = safeParseJSON(raw, null);
       if (!payload) return null;
 
-      // Accept either "type" or infer from category
-      const inferredType =
-        payload.type ||
-        (String(payload.category || "").toLowerCase() === "cigars" ? "cigar" : "product");
-
-      // Accept either top-level vitola or meta.vitola
-      const vitola = payload.vitola || payload.meta?.vitola || "";
-      const sub = payload.sub || vitola || payload.meta?.vitola || "";
-
       return {
         id: payload.id || payload.key || "",
-        type: inferredType,
+        type:
+          payload.type ||
+          (payload.category?.toLowerCase() === "cigars" ? "cigar" : "product"),
         category: payload.category || "Product",
         brand: payload.brand || payload.meta?.brand || "",
-        name: payload.name || payload.meta?.name || "",
-        vitola,
-        sub,
+        name: payload.name || "",
+        vitola: payload.vitola || payload.meta?.vitola || "",
+        sub: payload.sub || payload.vitola || payload.meta?.vitola || "",
         price: payload.price ?? payload.msrp ?? 0,
         img: payload.img || payload.brandImg || payload.brand_img || "",
         qty: payload.qty ?? 1,
@@ -425,7 +402,7 @@
       };
     }
 
-    // Dataset-style fallback
+    // Dataset-style
     return {
       id: node.dataset.id || "",
       type: (node.dataset.type || "").toLowerCase(),
@@ -442,26 +419,12 @@
   }
 
   // -------------------------
-  // Render invoice rows + totals
+  // Render INVOICE
+  // (Text rules corrected to your final cigar rule)
   // -------------------------
   function renderInvoice() {
     resolveDOM();
     if (!itemsEl) return;
-
-    const subtotal = state.items.reduce(
-      (s, it) => s + toNum(it.price) * clamp(Number(it.qty || 1), 1, 999),
-      0
-    );
-    const tax = subtotal * TAX_RATE;
-    const total = subtotal + tax;
-
-    const elSub = $("#inv-subtotal");
-    const elTax = $("#inv-tax");
-    const elTot = $("#inv-total");
-
-    if (elSub) elSub.textContent = `$${money(subtotal)}`;
-    if (elTax) elTax.textContent = `$${money(tax)}`;
-    if (elTot) elTot.textContent = `$${money(total)}`;
 
     if (!state.items.length) {
       itemsEl.innerHTML = `<div class="inv-empty">No items yet.</div>`;
@@ -473,14 +436,23 @@
         const qty = clamp(Number(it.qty || 1), 1, 999);
         const unit = toNum(it.price);
         const lineTotal = unit * qty;
-        const cigar = isCigarItem(it);
 
-        // TEAL text rules:
-        // Cigars: (Line + Name) / Vitola / MSRP
-        // Others: Category / Product Name / MSRP
-        const l1 = cigar ? (it.name || "Cigar") : (it.category || "Product");
-        const l2 = cigar ? (it.sub || it.vitola || "") : (it.name || "");
-        const l3 = `$${money(unit)}`;
+        const isCigar =
+          it.type === "cigar" || String(it.category || "").toLowerCase() === "cigars";
+
+        // ✅ FINAL TEXT RULES:
+        // CIGARS:
+        //   1) cigar line + name  (it.name)
+        //   2) vitola             (it.sub / it.vitola)
+        //   3) MSRP               (unit price)
+        //
+        // OTHER:
+        //   1) category
+        //   2) product name
+        //   3) MSRP (unit)
+        const line1 = isCigar ? (it.name || "Cigar") : (it.category || "Product");
+        const line2 = isCigar ? (it.sub || it.vitola || "") : (it.name || "");
+        const line3 = `$${money(unit)}`;
 
         return `
           <div class="inv-row" data-id="${escapeHTML(it.id)}">
@@ -493,18 +465,22 @@
             </div>
 
             <div class="inv-mid">
-              <div class="inv-l1">${escapeHTML(l1)}</div>
-              <div class="inv-l2">${escapeHTML(l2)}</div>
-              <div class="inv-l3">${escapeHTML(l3)}</div>
+              <div class="inv-cat">${escapeHTML(line1)}</div>
+              <div class="inv-name">${escapeHTML(line2)}</div>
+              <div class="inv-msrp">${escapeHTML(line3)}</div>
             </div>
 
             <div class="inv-right">
               <div class="inv-qty">
-                <button type="button" class="qbtn" data-qty="-1" aria-label="Decrease">−</button>
-                <div class="qval">${qty}</div>
-                <button type="button" class="qbtn" data-qty="+1" aria-label="Increase">+</button>
+                <button type="button" class="inv-qty-btn" data-qty="-1" aria-label="Decrease">−</button>
+                <div class="inv-qty-pill">${qty}</div>
+                <button type="button" class="inv-qty-btn" data-qty="+1" aria-label="Increase">+</button>
               </div>
-              <div class="inv-line">$${money(lineTotal)}</div>
+
+              <div class="inv-total">
+                <div class="inv-total-top">$${money(lineTotal)}</div>
+                <div class="inv-total-sub">$${money(unit)}</div>
+              </div>
             </div>
           </div>
         `;
@@ -545,4 +521,236 @@
         <div class="cust-add">
           <div class="cust-add-title">Add New Customer</div>
           <div class="cust-add-grid">
-            <
+            <input type="text" id="cust-new-name" placeholder="Full name" />
+            <input type="tel" id="cust-new-phone" placeholder="Phone" />
+          </div>
+          <button class="cust-add-btn" type="button" id="cust-add-btn">Add Customer</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(custOverlay);
+
+    // close handlers
+    const x = custOverlay.querySelector(".cust-x");
+    x.addEventListener("click", () => closeCustomerPicker());
+    custOverlay.addEventListener("click", (e) => {
+      if (e.target === custOverlay) closeCustomerPicker();
+    });
+
+    const q = custOverlay.querySelector("#cust-q");
+    q.addEventListener("input", () => renderCustomerList());
+
+    const addBtn = custOverlay.querySelector("#cust-add-btn");
+    addBtn.addEventListener("click", () => {
+      const name = custOverlay.querySelector("#cust-new-name").value.trim();
+      const phone = custOverlay.querySelector("#cust-new-phone").value.trim();
+      if (!name) return;
+
+      const db = loadCustomerDB();
+      const newCustomer = {
+        id: String(Date.now()),
+        name,
+        phone,
+      };
+      db.unshift(newCustomer);
+      saveCustomerDB(db);
+
+      // select immediately
+      setSelectedCustomer(newCustomer);
+
+      // reset fields
+      custOverlay.querySelector("#cust-new-name").value = "";
+      custOverlay.querySelector("#cust-new-phone").value = "";
+
+      renderCustomerList();
+      closeCustomerPicker();
+    });
+  }
+
+  function openCustomerPicker() {
+    ensureCustomerOverlay();
+    custOverlay.hidden = false;
+    custOverlay.classList.add("open");
+
+    // reset search and render
+    const q = custOverlay.querySelector("#cust-q");
+    q.value = "";
+    q.focus();
+
+    renderCustomerList();
+  }
+
+  function closeCustomerPicker() {
+    if (!custOverlay) return;
+    custOverlay.classList.remove("open");
+    custOverlay.hidden = true;
+  }
+
+  function renderCustomerList() {
+    if (!custOverlay) return;
+
+    const db = loadCustomerDB();
+    const q = (custOverlay.querySelector("#cust-q").value || "")
+      .trim()
+      .toLowerCase();
+
+    const rows = db.filter((c) => {
+      if (!q) return true;
+      const name = String(c.name || "").toLowerCase();
+      const phone = String(c.phone || "").toLowerCase();
+      return name.includes(q) || phone.includes(q);
+    });
+
+    const list = custOverlay.querySelector("#cust-list");
+
+    if (!rows.length) {
+      list.innerHTML = `<div class="cust-empty">No matches.</div>`;
+      return;
+    }
+
+    list.innerHTML = rows
+      .slice(0, 100)
+      .map((c) => {
+        const active =
+          state.selectedCustomer && state.selectedCustomer.id === c.id;
+        return `
+          <button type="button" class="cust-row ${active ? "active" : ""}" data-id="${escapeHTML(
+            c.id
+          )}">
+            <div class="cust-row-name">${escapeHTML(c.name || "Customer")}</div>
+            <div class="cust-row-sub">${escapeHTML(c.phone || "")}</div>
+          </button>
+        `;
+      })
+      .join("");
+
+    list.querySelectorAll(".cust-row").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-id");
+        const found = db.find((x) => String(x.id) === String(id));
+        if (!found) return;
+        setSelectedCustomer(found);
+        closeCustomerPicker();
+      });
+    });
+  }
+
+  // -------------------------
+  // Event wiring
+  // -------------------------
+  function bindEventsOnce() {
+    resolveDOM();
+
+    // Open invoice
+    if (fabBtn && !fabBtn.dataset.bound) {
+      fabBtn.dataset.bound = "1";
+      fabBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openSheet();
+      });
+    }
+
+    // Backdrop close
+    if (backdropEl && !backdropEl.dataset.bound) {
+      backdropEl.dataset.bound = "1";
+      backdropEl.addEventListener("click", () => closeSheet());
+    }
+
+    // Any close button (delegated)
+    document.addEventListener("click", (e) => {
+      const closeBtn = e.target.closest("[data-sheet-close]");
+      if (!closeBtn) return;
+      e.preventDefault();
+      closeSheet();
+    });
+
+    // Clear
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("#receipt-clear");
+      if (!btn) return;
+      e.preventDefault();
+      clear();
+    });
+
+    // Qty clicks (delegated)
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".inv-row [data-qty]");
+      if (!btn) return;
+
+      const row = e.target.closest(".inv-row");
+      if (!row) return;
+
+      const id = row.getAttribute("data-id");
+      const it = state.items.find((x) => x.id === id);
+      if (!it) return;
+
+      const dir = btn.getAttribute("data-qty");
+      const delta = dir === "+1" ? 1 : -1;
+
+      const next = clamp(Number(it.qty || 1) + delta, 0, 999);
+      if (next <= 0) state.items = state.items.filter((x) => x.id !== id);
+      else it.qty = next;
+
+      saveCart();
+      updateBadge();
+      renderInvoice();
+    });
+
+    // ESC close
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeCustomerPicker();
+        closeSheet();
+      }
+    });
+
+    // ADD-TO-CART gating:
+    // Only fire when the user clicks a PLUS BUTTON (pos-add / row-add),
+    // NOT when they click the row text area.
+    document.addEventListener(
+      "click",
+      (e) => {
+        const node = e.target.closest("[data-receipt-item]");
+        if (!node) return;
+
+        const isAddBtn =
+          node.classList.contains("pos-add") ||
+          node.classList.contains("row-add") ||
+          node.matches("button.pos-add,button.row-add");
+
+        if (!isAddBtn) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const item = itemFromReceiptNode(node);
+        if (!item) return;
+
+        add(item);
+      },
+      { passive: false }
+    );
+  }
+
+  function boot() {
+    loadCart();
+    resolveDOM();
+    updateBadge();
+    bindEventsOnce();
+
+    window.CigarOSCart = {
+      add,
+      clear,
+      openInvoice: openSheet,
+      closeInvoice: closeSheet,
+      openSheet,
+      closeSheet,
+      getCount: () => getItemCount(),
+      getItems: () => [...state.items],
+      money,
+    };
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
