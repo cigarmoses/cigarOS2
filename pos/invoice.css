@@ -1,0 +1,575 @@
+/* /pos/invoice.css
+   Global Invoice UI (ALL POS pages)
+*/
+
+/* -------------------------
+   Floating Invoice FAB
+   IMPORTANT: NO background behind the PNG
+------------------------- */
+#receipt-open.receipt-fab{
+  position: fixed;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 9999;
+
+  width: 74px;
+  height: 74px;
+  padding: 0;
+
+  border: none;
+  background: transparent; /* ✅ nothing behind PNG */
+  box-shadow: none;        /* ✅ shadow is already baked into PNG */
+
+  display: grid;
+  place-items: center;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+#receipt-open.receipt-fab img{
+  width: 74px;
+  height: 74px;
+  display: block;
+  pointer-events: none;
+}
+
+#receipt-count.receipt-badge{
+  position: absolute;
+  top: 4px;
+  right: 6px;
+
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+
+  border-radius: 999px;
+  background: #ff3b30;
+  color: #fff;
+
+  display: grid;
+  place-items: center;
+
+  font-weight: 900;
+  font-size: 12px;
+  border: 2px solid #fff;
+}
+
+/* -------------------------
+   Backdrop
+------------------------- */
+#sheet-backdrop.sheet-backdrop{
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+
+#sheet-backdrop.open{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* -------------------------
+   Invoice modal (tall centered)
+------------------------- */
+#sheet-receipt.invoice-sheet{
+  position: fixed;
+  left: 50%;
+  top: calc(10px + env(safe-area-inset-top));
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+
+  width: min(860px, calc(100% - 20px));
+  z-index: 9998;
+
+  background: rgba(255,255,255,.96);
+  color: #0f1a2c;
+
+  border-radius: 26px;
+  box-shadow: 0 20px 70px rgba(0,0,0,.35);
+
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+
+#sheet-receipt.open{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Close X (top right) */
+#sheet-receipt .invoice-x{
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+
+  border: none;
+  background: rgba(15,26,44,.06);
+  color: #007aff;
+
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* Header block (small text like "Attach Saved Customer") */
+#sheet-receipt .invoice-head{
+  padding: 22px 18px 10px;
+  text-align: center;
+}
+
+#sheet-receipt .invoice-head-title{
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: 18px; /* ✅ not huge */
+  line-height: 1.1;
+}
+
+#sheet-receipt .invoice-head-shop{
+  margin-top: 6px;
+  font-weight: 900;
+  font-size: 18px; /* ✅ match customer button size */
+  letter-spacing: -0.02em;
+}
+
+#sheet-receipt .invoice-head-date{
+  margin-top: 2px;
+  font-weight: 900;
+  font-size: 18px; /* ✅ match */
+  letter-spacing: -0.02em;
+}
+
+#sheet-receipt .invoice-head-num{
+  margin-top: 4px;
+  font-weight: 900;
+  font-size: 16px;
+  color: rgba(15,26,44,.55);
+}
+
+/* Customer attach */
+#sheet-receipt .invoice-customer{
+  margin: 0 18px 10px;
+  height: 46px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(0,0,0,.18);
+  background: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  font-weight: 900;
+  font-size: 18px;
+  color: rgba(15,26,44,.55);
+}
+
+#sheet-receipt .invoice-customer-chev{
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid rgba(15,26,44,.40);
+}
+
+/* Items scroll area */
+#sheet-receipt .invoice-items{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+
+/* Empty */
+#sheet-receipt .inv-empty{
+  padding: 16px 18px;
+  color: rgba(15,26,44,.55);
+  font-weight: 900;
+}
+
+/* -------------------------
+   Invoice row layout
+   icon | teal text | purple (qty + total)
+------------------------- */
+#sheet-receipt .inv-row{
+  display: grid;
+  grid-template-columns: 74px 1fr 140px;
+  gap: 12px;
+  align-items: center;
+
+  padding: 14px 18px;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+
+/* icon */
+#sheet-receipt .inv-ico{
+  width: 66px;
+  height: 66px;
+  border-radius: 20px;
+  overflow: hidden;
+
+  background: rgba(15,26,44,.04); /* subtle fallback only */
+  display: grid;
+  place-items: center;
+}
+
+#sheet-receipt .inv-ico img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* teal text block (3 lines) */
+#sheet-receipt .inv-mid{
+  min-width: 0; /* allows wrapping */
+}
+
+#sheet-receipt .inv-l1{
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1.15;
+
+  /* ✅ allow wrap */
+  white-space: normal;
+  overflow: visible;
+  word-break: break-word;
+}
+
+#sheet-receipt .inv-l2{
+  margin-top: 3px;
+  font-weight: 900;
+  font-size: 15px;
+  line-height: 1.15;
+  color: rgba(15,26,44,.55);
+
+  white-space: normal;
+  word-break: break-word;
+}
+
+#sheet-receipt .inv-l3{
+  margin-top: 4px;
+  font-weight: 900;
+  font-size: 15px;
+  line-height: 1;
+  color: rgba(15,26,44,.35);
+}
+
+/* purple block (qty top, total bottom) */
+#sheet-receipt .inv-right{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+}
+
+#sheet-receipt .inv-qty{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#sheet-receipt .qbtn{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+
+  border: 1px solid rgba(0,0,0,.14);
+  background: #fff;
+
+  font-weight: 900;
+  font-size: 18px;
+  color: #007aff;
+
+  display: grid;
+  place-items: center;
+}
+
+#sheet-receipt .qval{
+  min-width: 44px;
+  height: 28px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(0,0,0,.18);
+  background: #fff;
+
+  display: grid;
+  place-items: center;
+
+  font-weight: 900;
+  color: rgba(15,26,44,.55);
+}
+
+/* line total */
+#sheet-receipt .inv-line{
+  font-weight: 900;
+  font-size: 20px;
+  color: #0f1a2c;
+}
+
+/* Totals block */
+#sheet-receipt .invoice-totals{
+  padding: 12px 18px 10px;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+
+#sheet-receipt .tot-row{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-weight: 900;
+  font-size: 20px;
+  color: rgba(15,26,44,.55);
+  padding: 6px 0;
+}
+
+#sheet-receipt .tot-row strong{
+  color: #0f1a2c;
+  font-weight: 900;
+}
+
+#sheet-receipt .tot-total{
+  font-size: 26px;
+  color: #0f1a2c;
+}
+
+#sheet-receipt .tot-total strong{
+  font-size: 26px;
+}
+
+/* Actions */
+#sheet-receipt .invoice-actions{
+  padding: 12px 18px 16px;
+  border-top: 1px solid rgba(0,0,0,.08);
+
+  display: flex;
+  gap: 12px;
+}
+
+#sheet-receipt .inv-btn{
+  flex: 1 1 auto;
+  height: 48px;
+  border-radius: 16px;
+
+  border: 1px solid rgba(0,0,0,.14);
+  background: #fff;
+
+  font-weight: 900;
+  color: #007aff;
+  font-size: 18px;
+}
+
+#sheet-receipt .inv-btn.primary{
+  background: #007aff;
+  border-color: #007aff;
+  color: #fff;
+}
+
+/* -------------------------
+   Customer overlay
+------------------------- */
+.cust-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+}
+
+.cust-card{
+  width: min(720px, calc(100% - 20px));
+  background: rgba(255,255,255,.98);
+  border-radius: 22px;
+  box-shadow: 0 20px 70px rgba(0,0,0,.35);
+  padding: 14px;
+  position: relative;
+}
+
+.cust-x{
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(15,26,44,.06);
+  color: #007aff;
+  font-weight: 900;
+  font-size: 22px;
+}
+
+.cust-title{
+  font-weight: 900;
+  font-size: 18px;
+  text-align: center;
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
+.cust-search input{
+  width: 100%;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.12);
+  padding: 0 12px;
+  font-weight: 800;
+}
+
+.cust-list{
+  margin-top: 10px;
+  max-height: 260px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cust-row{
+  border: 1px solid rgba(0,0,0,.10);
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.cust-row.active{
+  border-color: rgba(0,122,255,.35);
+  box-shadow: 0 8px 22px rgba(0,122,255,.12);
+}
+
+.cust-row-name{
+  font-weight: 900;
+}
+
+.cust-row-sub{
+  margin-top: 2px;
+  color: rgba(15,26,44,.55);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.cust-empty{
+  padding: 10px;
+  color: rgba(15,26,44,.55);
+  font-weight: 800;
+}
+
+.cust-add{
+  margin-top: 12px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  padding-top: 12px;
+}
+
+.cust-add-title{
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.cust-add-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.cust-add-grid input{
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.12);
+  padding: 0 12px;
+  font-weight: 800;
+}
+
+.cust-add-btn{
+  margin-top: 10px;
+  width: 100%;
+  height: 46px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #007aff;
+  color: #fff;
+  font-weight: 900;
+  font-size: 18px;
+}
+
+/* -------------------------
+   Confirm overlay (non-cigars)
+------------------------- */
+.pos-confirm-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+}
+
+.pos-confirm-card{
+  width: min(520px, calc(100% - 20px));
+  background: rgba(255,255,255,.98);
+  border-radius: 22px;
+  box-shadow: 0 20px 70px rgba(0,0,0,.35);
+  padding: 16px;
+}
+
+.pos-confirm-title{
+  font-weight: 900;
+  font-size: 18px;
+  text-align: center;
+}
+
+.pos-confirm-sub{
+  margin-top: 8px;
+  color: rgba(15,26,44,.55);
+  font-weight: 800;
+  text-align: center;
+}
+
+.pos-confirm-actions{
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.pos-confirm-btn{
+  flex: 1 1 auto;
+  height: 46px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.14);
+  background: #fff;
+  font-weight: 900;
+  color: #007aff;
+}
+
+.pos-confirm-btn.primary{
+  background: #007aff;
+  border-color: #007aff;
+  color: #fff;
+}
