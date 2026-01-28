@@ -1,12 +1,12 @@
 /* /pos/cart.js
-   Shared POS Cart + INVOICE modal controller (ALL POS pages)
+   Self-contained Invoice/Cart controller (no external cart.css required)
 
-   Fixes in this version:
-   ✅ Add-to-bill confirm modal now CLOSES on Confirm/Cancel every time
-   ✅ Invoice typography is no longer “all bold” (regular body, bold headers only)
-   ✅ “Product” label now uses the actual category (Accessories / Ashtrays / Food & Bevs / Packs / Pipes / etc.)
-   ✅ Qty adjuster smaller (buttons + text)
-   ✅ Attach Saved Customer works (loads from localStorage + persists selected customer)
+   Fixes:
+   ✅ Confirm modal closes on Cancel/Confirm
+   ✅ Typography no longer “all bold” (scoped to invoice UI only)
+   ✅ Category label shows real category (Accessories / Ashtrays / Food & Bevs / Packs / Pipes / etc.)
+   ✅ Qty controls smaller
+   ✅ Attach Saved Customer works (loads from /pos/pos-contacts.json + caches in localStorage)
 */
 
 (() => {
@@ -17,16 +17,22 @@
   // -------------------------
   const CART_KEY = "cigaros_pos_cart_v3";
   const SHOP_KEY = "cigaros_pos_shop_name";
-  const INV_KEY  = "cigaros_pos_invoice_number";
-  const CUST_DB_KEY = "cigaros_pos_customers_v1";     // array of customers
-  const CUST_ATTACHED_KEY = "cigaros_pos_attached_customer_v1"; // selected customer object
+  const INV_KEY = "cigaros_pos_invoice_number";
+
+  // customers
+  const CUST_CACHE_KEY = "cigaros_pos_customers_cache_v1";
+  const CUST_ATTACHED_KEY = "cigaros_pos_attached_customer_v1";
+
   const TAX_RATE = 0.07;
 
   // -------------------------
   // Helpers
   // -------------------------
-  const $  = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const $ = (sel, root = document) => root.querySelector(sel);
+
+  const safeJsonParse = (s, fallback) => {
+    try { return JSON.parse(s); } catch { return fallback; }
+  };
 
   const clampInt = (v, min, max) => {
     const n = Number.parseInt(v, 10);
@@ -50,14 +56,11 @@
       .join(" ");
   };
 
-  const safeJsonParse = (s, fallback) => {
-    try { return JSON.parse(s); } catch { return fallback; }
-  };
-
   const readCart = () => safeJsonParse(localStorage.getItem(CART_KEY) || "[]", []);
   const writeCart = (items) => localStorage.setItem(CART_KEY, JSON.stringify(items || []));
 
   const getShopName = () => localStorage.getItem(SHOP_KEY) || "Shop";
+
   const getInvoiceNumber = () => {
     let inv = localStorage.getItem(INV_KEY);
     if (!inv) {
@@ -69,7 +72,9 @@
 
   const todayLabel = () => {
     const d = new Date();
-    return d.toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+    return d.toLocaleDateString(undefined, {
+      weekday: "short", year: "numeric", month: "short", day: "numeric"
+    });
   };
 
   const calcTotals = (items) => {
@@ -79,8 +84,7 @@
     return { subtotal, tax, total };
   };
 
-  // Category resolution:
-  // We accept either: category, type, group, kind, section
+  // category mapping (accept multiple field names)
   const resolveCategory = (it) => {
     const raw =
       it.category ||
@@ -89,107 +93,263 @@
       it.kind ||
       it.section ||
       it.collection ||
-      "Product";
+      it.department ||
+      "";
 
-    // normalize common variants
-    const s = String(raw).trim();
-
-    // Your UI shows “Food & Bevs” etc — keep that exact style if present
-    if (/food/i.test(s) && /bev/i.test(s)) return "Food & Bevs";
+    const s = String(raw || "").trim();
+    if (/food/i.test(s) && (/bev/i.test(s) || /bevs/i.test(s))) return "Food & Bevs";
     if (/ash/i.test(s)) return "Ashtrays";
     if (/access/i.test(s)) return "Accessories";
     if (/pipe/i.test(s)) return "Pipes";
     if (/pack/i.test(s)) return "Packs";
     if (/cigar/i.test(s)) return "Cigars";
 
-    return titleCase(s);
+    // last resort:
+    return s ? titleCase(s) : "Product";
   };
 
+  // stable key for deduping cart lines
+  const itemKey = (it) => String(
+    it.key || it.sku || it.id || `${resolveCategory(it)}|${it.name || it.title || ""}|${it.price || ""}`
+  );
+
   // -------------------------
-  // Inject CSS (small overrides)
+  // Inline CSS (SCOPED to invoice UI only)
   // -------------------------
-  const ensureCartCss = () => {
-    if ($("#pos-cart-css")) return;
-    const link = document.createElement("link");
-    link.id = "pos-cart-css";
-    link.rel = "stylesheet";
-    link.href = "/pos/cart.css";
-    document.head.appendChild(link);
+  const ensureInlineStyles = () => {
+    if ($("#pos-invoice-inline-css")) return;
+    const style = document.createElement("style");
+    style.id = "pos-invoice-inline-css";
+    style.textContent = `
+/* scoped: only our injected UI uses these ids/classes */
+#pos-invoice-fab{
+  position:fixed; right:18px; bottom:18px; z-index:9999;
+  border:0; background:transparent; padding:0;
+  width:58px; height:58px;
+}
+#pos-invoice-fab .fab{
+  width:58px; height:58px; border-radius:18px;
+  display:flex; align-items:center; justify-content:center;
+  background:#fff; box-shadow:0 14px 34px rgba(0,0,0,.18);
+  border:1px solid rgba(0,0,0,.08);
+}
+#pos-invoice-fab .fab span{ font-size:26px; }
+#pos-invoice-badge{
+  position:absolute; right:-2px; top:-2px;
+  min-width:22px; height:22px; padding:0 6px;
+  border-radius:999px; background:#ff3b30; color:#fff;
+  font-weight:800; font-size:13px;
+  display:inline-flex; align-items:center; justify-content:center;
+  box-shadow:0 6px 14px rgba(0,0,0,.18);
+}
+
+#pos-invoice-modal, #pos-confirm-modal{
+  position:fixed; inset:0; z-index:10000; display:none;
+  font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+#pos-invoice-modal.is-open, #pos-confirm-modal.is-open{ display:block; }
+
+.pos-backdrop{
+  position:absolute; inset:0; background:rgba(0,0,0,.35);
+  backdrop-filter:blur(4px);
+}
+
+#pos-invoice-sheet{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(720px, calc(100vw - 22px));
+  max-height:calc(100vh - 26px);
+  overflow:hidden;
+  border-radius:22px; background:#fff;
+  box-shadow:0 22px 70px rgba(0,0,0,.25);
+  color:#0f1a2c;
+  font-weight:400; /* IMPORTANT: regular */
+}
+
+#pos-invoice-x{
+  position:absolute; right:12px; top:12px;
+  width:36px; height:36px; border-radius:999px;
+  border:0; background:rgba(15,26,44,.06);
+  color:#0f1a2c; font-size:22px; line-height:1;
+}
+
+#pos-invoice-head{ padding:18px 18px 10px; text-align:center; }
+#pos-invoice-head .t{ font-weight:900; letter-spacing:.08em; font-size:16px; }
+#pos-invoice-head .shop{ font-weight:800; font-size:24px; margin-top:4px; }
+#pos-invoice-head .date{ font-weight:700; font-size:22px; margin-top:2px; }
+#pos-invoice-head .inv{ margin-top:6px; color:rgba(15,26,44,.55); font-weight:700; font-size:18px; }
+
+#pos-customer{ padding:6px 18px 10px; }
+#pos-customer select{
+  width:100%;
+  border:1px solid rgba(15,26,44,.14);
+  border-radius:999px;
+  padding:12px 44px 12px 16px;
+  font-size:18px;
+  font-weight:700;
+  color:rgba(15,26,44,.65);
+  background:#fff;
+  appearance:none;
+}
+#pos-customer .caret{
+  position:absolute; right:16px; top:50%; transform:translateY(-50%);
+  color:rgba(15,26,44,.45); pointer-events:none; font-size:14px;
+}
+#pos-customer .wrap{ position:relative; }
+
+#pos-invoice-list{
+  padding:0 12px;
+  overflow:auto;
+  max-height:calc(100vh - 420px);
+}
+
+.pos-row{
+  display:flex; justify-content:space-between; gap:12px;
+  padding:12px;
+  border-top:1px solid rgba(15,26,44,.10);
+}
+.pos-left{ display:flex; align-items:center; gap:12px; min-width:0; }
+.pos-thumb{
+  width:56px; height:56px; border-radius:16px;
+  background:rgba(15,26,44,.06); overflow:hidden; flex:0 0 auto;
+}
+.pos-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pos-meta{ min-width:0; }
+.pos-cat{ font-weight:800; font-size:18px; line-height:1.05; }
+.pos-name{ font-weight:700; font-size:18px; color:rgba(15,26,44,.78); margin-top:2px; }
+.pos-sub{ font-weight:600; font-size:15px; color:rgba(15,26,44,.55); margin-top:2px; }
+.pos-unit{ font-weight:700; font-size:15px; color:rgba(15,26,44,.45); margin-top:2px; }
+
+.pos-right{ display:flex; align-items:center; gap:12px; flex:0 0 auto; }
+.pos-qty{ display:inline-flex; align-items:center; gap:8px; }
+.pos-qty button{
+  width:34px; height:34px; border-radius:10px;
+  border:1px solid rgba(15,26,44,.12); background:#fff;
+  font-size:20px; font-weight:900; color:#007aff;
+}
+.pos-qty .val{
+  width:34px; height:34px; border-radius:12px;
+  border:1px solid rgba(15,26,44,.12); background:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:800; color:rgba(15,26,44,.75);
+}
+.pos-line-total{ font-size:22px; font-weight:900; min-width:96px; text-align:right; }
+
+#pos-totals{
+  border-top:1px solid rgba(15,26,44,.10);
+  padding:12px 18px 6px;
+}
+#pos-totals .row{
+  display:flex; justify-content:space-between;
+  font-size:22px; font-weight:800; color:rgba(15,26,44,.72);
+  padding:6px 0;
+}
+#pos-totals .row.total{
+  font-size:34px; font-weight:1000; color:rgba(15,26,44,.95);
+  padding-top:10px;
+}
+
+#pos-actions{ display:flex; gap:12px; padding:12px 18px 18px; }
+#pos-actions button{
+  border:0; border-radius:14px; padding:14px 18px;
+  font-size:20px; font-weight:900; flex:1;
+}
+#pos-clear{ background:rgba(15,26,44,.06); color:#007aff; }
+#pos-close{ background:#007aff; color:#fff; }
+
+/* confirm sheet */
+#pos-confirm-sheet{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(720px, calc(100vw - 22px));
+  border-radius:18px; background:#fff;
+  box-shadow:0 22px 70px rgba(0,0,0,.25);
+  padding:18px;
+  color:#0f1a2c;
+  font-weight:400;
+}
+#pos-confirm-sheet .title{ text-align:center; font-size:20px; font-weight:900; }
+#pos-confirm-sheet .sub{
+  margin-top:10px; text-align:center;
+  color:rgba(15,26,44,.65); font-size:20px; font-weight:700;
+}
+#pos-confirm-sheet .buttons{ margin-top:14px; display:flex; gap:12px; }
+#pos-confirm-sheet .buttons button{
+  border:0; border-radius:14px; padding:14px 18px;
+  font-size:20px; font-weight:900; flex:1;
+}
+#pos-confirm-cancel{ background:rgba(15,26,44,.06); color:#007aff; }
+#pos-confirm-ok{ background:#007aff; color:#fff; }
+    `;
+    document.head.appendChild(style);
   };
 
   // -------------------------
   // DOM injection
   // -------------------------
   const ensureDom = () => {
-    // Floating invoice FAB
     if (!$("#pos-invoice-fab")) {
       const fab = document.createElement("button");
       fab.id = "pos-invoice-fab";
       fab.type = "button";
       fab.setAttribute("aria-label", "Open invoice");
       fab.innerHTML = `
-        <span class="pos-fab-badge" id="pos-invoice-badge">0</span>
-        <img class="pos-fab-img" src="/img/pos/invoice-fab.png" alt="" />
+        <span id="pos-invoice-badge">0</span>
+        <div class="fab" aria-hidden="true"><span>🧾</span></div>
       `;
       document.body.appendChild(fab);
     }
 
-    // Invoice modal
     if (!$("#pos-invoice-modal")) {
       const wrap = document.createElement("div");
       wrap.id = "pos-invoice-modal";
-      wrap.className = "pos-modal";
       wrap.innerHTML = `
-        <div class="pos-modal-backdrop" data-close="invoice"></div>
-        <div class="pos-modal-sheet" role="dialog" aria-modal="true" aria-label="Invoice">
-          <button class="pos-modal-x" type="button" data-close="invoice" aria-label="Close invoice">×</button>
+        <div class="pos-backdrop" data-close="invoice"></div>
+        <div id="pos-invoice-sheet" role="dialog" aria-modal="true" aria-label="Invoice">
+          <button id="pos-invoice-x" type="button" data-close="invoice" aria-label="Close">×</button>
 
-          <div class="pos-invoice-head">
-            <div class="pos-invoice-title">INVOICE</div>
-            <div class="pos-invoice-shop" id="pos-invoice-shop"></div>
-            <div class="pos-invoice-date" id="pos-invoice-date"></div>
-            <div class="pos-invoice-inv" id="pos-invoice-inv"></div>
+          <div id="pos-invoice-head">
+            <div class="t">INVOICE</div>
+            <div class="shop" id="pos-invoice-shop"></div>
+            <div class="date" id="pos-invoice-date"></div>
+            <div class="inv" id="pos-invoice-inv"></div>
           </div>
 
-          <div class="pos-invoice-customer">
-            <div class="pos-cust-select-wrap">
-              <select id="pos-cust-select" class="pos-cust-select" aria-label="Attach Saved Customer">
+          <div id="pos-customer">
+            <div class="wrap">
+              <select id="pos-cust-select" aria-label="Attach Saved Customer">
                 <option value="">Attach Saved Customer</option>
               </select>
-              <span class="pos-cust-caret">▼</span>
+              <span class="caret">▼</span>
             </div>
           </div>
 
-          <div class="pos-invoice-list" id="pos-invoice-list"></div>
+          <div id="pos-invoice-list"></div>
 
-          <div class="pos-invoice-totals">
-            <div class="pos-trow"><span>Subtotal</span><span id="pos-subtotal">$0.00</span></div>
-            <div class="pos-trow"><span>Tax</span><span id="pos-tax">$0.00</span></div>
-            <div class="pos-trow pos-total"><span>TOTAL</span><span id="pos-total">$0.00</span></div>
+          <div id="pos-totals">
+            <div class="row"><span>Subtotal</span><span id="pos-subtotal">$0.00</span></div>
+            <div class="row"><span>Tax</span><span id="pos-tax">$0.00</span></div>
+            <div class="row total"><span>TOTAL</span><span id="pos-total">$0.00</span></div>
           </div>
 
-          <div class="pos-invoice-actions">
-            <button class="pos-btn pos-btn-ghost" type="button" id="pos-clear-cart">Clear</button>
-            <button class="pos-btn pos-btn-primary" type="button" data-close="invoice">Close</button>
+          <div id="pos-actions">
+            <button id="pos-clear" type="button">Clear</button>
+            <button id="pos-close" type="button" data-close="invoice">Close</button>
           </div>
         </div>
       `;
       document.body.appendChild(wrap);
     }
 
-    // Add-to-bill confirm modal
     if (!$("#pos-confirm-modal")) {
       const c = document.createElement("div");
       c.id = "pos-confirm-modal";
-      c.className = "pos-confirm";
       c.innerHTML = `
-        <div class="pos-confirm-backdrop" data-close="confirm"></div>
-        <div class="pos-confirm-sheet" role="dialog" aria-modal="true" aria-label="Add to Bill">
-          <div class="pos-confirm-title">Add to Bill</div>
-          <div class="pos-confirm-sub" id="pos-confirm-sub">—</div>
-          <div class="pos-confirm-actions">
-            <button class="pos-btn pos-btn-ghost" type="button" data-close="confirm" id="pos-confirm-cancel">Cancel</button>
-            <button class="pos-btn pos-btn-primary" type="button" id="pos-confirm-ok">Confirm</button>
+        <div class="pos-backdrop" data-close="confirm"></div>
+        <div id="pos-confirm-sheet" role="dialog" aria-modal="true" aria-label="Add to Bill">
+          <div class="title">Add to Bill</div>
+          <div class="sub" id="pos-confirm-sub">—</div>
+          <div class="buttons">
+            <button id="pos-confirm-cancel" type="button" data-close="confirm">Cancel</button>
+            <button id="pos-confirm-ok" type="button">Confirm</button>
           </div>
         </div>
       `;
@@ -198,51 +358,73 @@
   };
 
   // -------------------------
-  // Modal open/close
+  // Modals
   // -------------------------
   const openInvoice = () => {
     $("#pos-invoice-modal")?.classList.add("is-open");
-    document.documentElement.classList.add("pos-modal-open");
     renderInvoice();
   };
 
   const closeInvoice = () => {
     $("#pos-invoice-modal")?.classList.remove("is-open");
-    document.documentElement.classList.remove("pos-modal-open");
   };
 
   let confirmOnOk = null;
 
-  const openConfirm = ({ label, onOk }) => {
+  const openConfirm = (label, onOk) => {
     confirmOnOk = typeof onOk === "function" ? onOk : null;
     $("#pos-confirm-sub").textContent = label || "";
-    $("#pos-confirm-modal").classList.add("is-open");
+    $("#pos-confirm-modal")?.classList.add("is-open");
   };
 
   const closeConfirm = () => {
-    $("#pos-confirm-modal").classList.remove("is-open");
+    $("#pos-confirm-modal")?.classList.remove("is-open");
     confirmOnOk = null;
   };
 
   // -------------------------
-  // Customer attach
+  // Customers: load from /pos/pos-contacts.json (exists in your repo)
   // -------------------------
-  const readCustomers = () => safeJsonParse(localStorage.getItem(CUST_DB_KEY) || "[]", []);
-  const readAttachedCustomer = () => safeJsonParse(localStorage.getItem(CUST_ATTACHED_KEY) || "null", null);
+  const readCachedCustomers = () =>
+    safeJsonParse(localStorage.getItem(CUST_CACHE_KEY) || "[]", []);
+
+  const readAttachedCustomer = () =>
+    safeJsonParse(localStorage.getItem(CUST_ATTACHED_KEY) || "null", null);
 
   const writeAttachedCustomer = (cust) => {
     if (!cust) localStorage.removeItem(CUST_ATTACHED_KEY);
     else localStorage.setItem(CUST_ATTACHED_KEY, JSON.stringify(cust));
   };
 
-  const buildCustomerSelect = () => {
+  const loadCustomers = async () => {
+    // prefer cached
+    const cached = readCachedCustomers();
+    if (Array.isArray(cached) && cached.length) return cached;
+
+    // fetch from file you have
+    try {
+      const res = await fetch("/pos/pos-contacts.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`contacts fetch failed: ${res.status}`);
+      const data = await res.json();
+
+      const list = Array.isArray(data) ? data : (Array.isArray(data.customers) ? data.customers : []);
+      if (Array.isArray(list)) {
+        localStorage.setItem(CUST_CACHE_KEY, JSON.stringify(list));
+        return list;
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+    return [];
+  };
+
+  const buildCustomerSelect = async () => {
     const sel = $("#pos-cust-select");
     if (!sel) return;
 
-    const customers = readCustomers();
+    const customers = await loadCustomers();
     const attached = readAttachedCustomer();
 
-    // keep first option
     sel.innerHTML = `<option value="">Attach Saved Customer</option>`;
 
     customers.forEach((c, idx) => {
@@ -255,10 +437,9 @@
       sel.appendChild(opt);
     });
 
-    // restore selection
     if (attached && customers.length) {
+      const aName = attached.name || attached.fullName || attached.company || "";
       const matchIdx = customers.findIndex(c => {
-        const aName = attached.name || attached.fullName || attached.company || "";
         const cName = c.name || c.fullName || c.company || "";
         return aName && cName && aName === cName;
       });
@@ -266,60 +447,45 @@
     }
   };
 
-  const wireCustomerSelect = () => {
-    const sel = $("#pos-cust-select");
-    if (!sel) return;
-
-    sel.addEventListener("change", () => {
-      const customers = readCustomers();
-      const idx = sel.value === "" ? -1 : clampInt(sel.value, 0, customers.length - 1);
-      if (idx < 0) writeAttachedCustomer(null);
-      else writeAttachedCustomer(customers[idx] || null);
-    });
-  };
-
   // -------------------------
   // Rendering
   // -------------------------
-  const updateFabBadge = () => {
+  const updateBadge = () => {
     const items = readCart();
     const count = items.reduce((n, it) => n + Number(it.qty || 0), 0);
-    const badge = $("#pos-invoice-badge");
-    if (badge) badge.textContent = String(count);
-    $("#pos-invoice-fab")?.classList.toggle("has-items", count > 0);
+    const b = $("#pos-invoice-badge");
+    if (b) b.textContent = String(count);
   };
 
-  const renderInvoice = () => {
+  const renderInvoice = async () => {
     const items = readCart();
 
     $("#pos-invoice-shop").textContent = getShopName();
     $("#pos-invoice-date").textContent = todayLabel();
     $("#pos-invoice-inv").textContent = `INV# ${getInvoiceNumber()}`;
 
-    buildCustomerSelect();
+    await buildCustomerSelect();
 
     const list = $("#pos-invoice-list");
     if (!list) return;
 
     if (!items.length) {
-      list.innerHTML = `<div class="pos-empty">No items yet.</div>`;
+      list.innerHTML = `<div style="padding:18px;text-align:center;color:rgba(15,26,44,.6);font-weight:600">No items yet.</div>`;
     } else {
       list.innerHTML = items.map((it, i) => {
         const cat = resolveCategory(it);
         const name = it.name || it.title || "Item";
-        const sub = it.subtitle || it.vitola || ""; // non-cigar ok
+        const sub = it.subtitle || it.vitola || "";
         const price = Number(it.price || 0);
         const qty = clampInt(it.qty || 1, 1, 999);
         const lineTotal = price * qty;
-
-        // NOTE: icon is optional; show placeholder if missing
         const img = it.image || it.img || it.icon || "";
 
         return `
           <div class="pos-row" data-i="${i}">
-            <div class="pos-row-left">
+            <div class="pos-left">
               <div class="pos-thumb">
-                ${img ? `<img src="${img}" alt="" />` : `<div class="pos-thumb-ph"></div>`}
+                ${img ? `<img src="${img}" alt="" />` : ``}
               </div>
               <div class="pos-meta">
                 <div class="pos-cat">${cat}</div>
@@ -329,11 +495,11 @@
               </div>
             </div>
 
-            <div class="pos-row-right">
+            <div class="pos-right">
               <div class="pos-qty">
-                <button class="pos-qty-btn" type="button" data-qty="dec" aria-label="Decrease quantity">−</button>
-                <div class="pos-qty-val" aria-label="Quantity">${qty}</div>
-                <button class="pos-qty-btn" type="button" data-qty="inc" aria-label="Increase quantity">+</button>
+                <button type="button" data-qty="dec" aria-label="Decrease">−</button>
+                <div class="val" aria-label="Quantity">${qty}</div>
+                <button type="button" data-qty="inc" aria-label="Increase">+</button>
               </div>
               <div class="pos-line-total">${money(lineTotal)}</div>
             </div>
@@ -347,51 +513,50 @@
     $("#pos-tax").textContent = money(tax);
     $("#pos-total").textContent = money(total);
 
-    updateFabBadge();
+    updateBadge();
   };
 
   // -------------------------
-  // Add-to-cart plumbing
+  // Add-to-cart
   // -------------------------
   const addItem = (item) => {
     if (!item) return;
+
     const items = readCart();
-
-    // Use stable key if provided (so duplicates add qty)
-    const key = item.key || item.sku || item.id || `${resolveCategory(item)}|${item.name || ""}|${item.price || ""}`.trim();
-
-    const idx = items.findIndex(x => (x.key || x.sku || x.id) ? (String(x.key || x.sku || x.id) === String(key)) : false);
+    const k = itemKey(item);
+    const idx = items.findIndex(x => itemKey(x) === k);
 
     if (idx >= 0) {
       items[idx].qty = clampInt(Number(items[idx].qty || 0) + 1, 1, 999);
     } else {
       items.push({
         ...item,
-        key,
+        key: k,
         qty: clampInt(item.qty || 1, 1, 999),
-        category: resolveCategory(item) // normalize once
+        category: resolveCategory(item)
       });
     }
 
     writeCart(items);
-    updateFabBadge();
+    updateBadge();
     renderInvoice();
   };
 
   // -------------------------
-  // Event wiring
+  // Events
   // -------------------------
   const wireEvents = () => {
-    // Open invoice
+    // open invoice
     $("#pos-invoice-fab")?.addEventListener("click", (e) => {
       e.preventDefault();
       openInvoice();
     });
 
-    // Close invoice (x, backdrop, close btn)
+    // close invoice / confirm via backdrop + close buttons
     document.addEventListener("click", (e) => {
       const t = e.target;
       if (!(t instanceof Element)) return;
+
       if (t.matches('[data-close="invoice"]')) {
         e.preventDefault();
         closeInvoice();
@@ -402,20 +567,15 @@
       }
     });
 
-    // Confirm modal buttons (IMPORTANT: always close)
-    $("#pos-confirm-cancel")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      closeConfirm();
-    });
-
+    // confirm ok (ALWAYS closes)
     $("#pos-confirm-ok")?.addEventListener("click", (e) => {
       e.preventDefault();
       const fn = confirmOnOk;
-      closeConfirm();         // CLOSE FIRST so it never gets stuck
+      closeConfirm();
       try { fn && fn(); } catch (err) { console.error(err); }
     });
 
-    // Qty controls in invoice
+    // qty controls
     $("#pos-invoice-list")?.addEventListener("click", (e) => {
       const btn = (e.target instanceof Element) ? e.target.closest("[data-qty]") : null;
       if (!btn) return;
@@ -431,25 +591,38 @@
       const cur = clampInt(items[i].qty || 1, 1, 999);
 
       if (dir === "inc") items[i].qty = clampInt(cur + 1, 1, 999);
-      if (dir === "dec") items[i].qty = clampInt(cur - 1, 1, 999);
-
-      // if dec would go below 1, remove item (optional behavior)
-      if (dir === "dec" && cur === 1) items.splice(i, 1);
+      if (dir === "dec") {
+        if (cur === 1) items.splice(i, 1);
+        else items[i].qty = clampInt(cur - 1, 1, 999);
+      }
 
       writeCart(items);
       renderInvoice();
     });
 
-    // Clear cart
-    $("#pos-clear-cart")?.addEventListener("click", () => {
+    // clear cart
+    $("#pos-clear")?.addEventListener("click", () => {
       writeCart([]);
-      updateFabBadge();
+      updateBadge();
       renderInvoice();
     });
 
-    // Listen for add-to-cart triggers across POS
-    // - Cigars typically add via explicit + buttons (pos-add / row-add)
-    // - Non-cigars: clicking the card/row can open confirm modal, then add
+    // close button
+    $("#pos-close")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeInvoice();
+    });
+
+    // customer select
+    $("#pos-cust-select")?.addEventListener("change", async (e) => {
+      const sel = e.currentTarget;
+      const customers = await loadCustomers();
+      const idx = sel.value === "" ? -1 : clampInt(sel.value, 0, customers.length - 1);
+      if (idx < 0) writeAttachedCustomer(null);
+      else writeAttachedCustomer(customers[idx] || null);
+    });
+
+    // global add-to-cart hook (existing POS uses data-receipt-item JSON)
     document.addEventListener("click", (e) => {
       const el = (e.target instanceof Element) ? e.target.closest("[data-receipt-item]") : null;
       if (!el) return;
@@ -458,36 +631,29 @@
       const item = safeJsonParse(raw, null);
       if (!item) return;
 
-      // If element requests confirm (non-cigars)
-      const wantsConfirm = el.hasAttribute("data-confirm-add") || item.confirm === true || item.type === "product";
+      // if confirm is requested by attribute or by item.confirm
+      const wantsConfirm = el.hasAttribute("data-confirm-add") || item.confirm === true;
 
       if (wantsConfirm) {
         e.preventDefault();
         const cat = resolveCategory(item);
         const name = item.name || item.title || "Item";
         const price = money(item.price || 0);
-        openConfirm({
-          label: `${cat} • ${name} • ${price}`,
-          onOk: () => addItem(item)
-        });
+        openConfirm(`${cat} • ${name} • ${price}`, () => addItem(item));
         return;
       }
 
-      // No confirm: add immediately
       addItem(item);
     });
-
-    wireCustomerSelect();
   };
 
   // -------------------------
   // Boot
   // -------------------------
   const init = () => {
-    ensureCartCss();
+    ensureInlineStyles();
     ensureDom();
-    updateFabBadge();
-    renderInvoice();
+    updateBadge();
     wireEvents();
   };
 
