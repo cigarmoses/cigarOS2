@@ -1,14 +1,18 @@
 /* /pos/cart.js
    Shared POS Cart + INVOICE modal controller (ALL POS pages)
 
-   FIXES IN THIS VERSION:
-   ✅ Invoice row NEVER causes horizontal scrolling (matches invoice.css grid)
-   ✅ Cigars show: (Line + Cigar) / Vitola / MSRP (unit)
-   ✅ Non-cigars show: Category / Product Name / MSRP (unit)
-   ✅ Non-cigar category no longer falls back to "Product" when we can infer it
-      (infers from payload, dataset, link, or current /pos/{category}/ page)
-   ✅ Works on ALL POS pages (injects FAB/backdrop/sheet markup if missing)
-   ✅ Add to cart: ONLY from + buttons (row-add / pos-add)
+   ✅ Injects invoice FAB + sheet markup if missing (so ALL POS pages get the invoice)
+   ✅ Injects /pos/invoice.css if missing
+   ✅ FAB is bottom-right, transparent (no background behind PNG), badge count, has-items class
+   ✅ Invoice modal matches target layout:
+      - Tall centered modal (not bottom sheet)
+      - Header: INVOICE / Shop / Date / INV#
+      - Attach Saved Customer works (localStorage DB)
+      - Rows: icon | 3 lines text | qty controls + line total
+      - Cigars: (Line + Name) / Vitola / MSRP
+      - Others: Category / Product Name / MSRP
+   ✅ Non-cigar items: click shows "Add to Bill" confirm modal (Confirm / Cancel)
+   ✅ Cigars: only add via + buttons (pos-add / row-add) to avoid hijacking row clicks
 */
 
 (() => {
@@ -17,7 +21,7 @@
   // -------------------------
   // Storage keys
   // -------------------------
-  const CART_KEY = "cigaros_pos_cart_v2";
+  const CART_KEY = "cigaros_pos_cart_v3";
   const SHOP_KEY = "cigaros_pos_shop_name";
   const INV_KEY = "cigaros_pos_invoice_number";
   const CUSTOMER_DB_KEY = "cigaros_pos_customers_v1";
@@ -63,7 +67,7 @@
       .replace(/'/g, "&#039;");
   }
 
-  function slugifyBrand(s) {
+  function brandSlug(s) {
     return String(s || "")
       .trim()
       .toLowerCase()
@@ -72,38 +76,6 @@
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "")
       .replace(/^\-+|\-+$/g, "");
-  }
-
-  function titleCase(s) {
-    const x = String(s || "").trim();
-    if (!x) return "";
-    return x
-      .split(/\s+/g)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(" ");
-  }
-
-  function categoryFromPath(pathname) {
-    const p = String(pathname || location.pathname || "").toLowerCase();
-    if (p.includes("/pos/ashtrays")) return "Ashtrays";
-    if (p.includes("/pos/accessories")) return "Accessories";
-    if (p.includes("/pos/foodandbevs")) return "Food & Bevs";
-    if (p.includes("/pos/pipes")) return "Pipes";
-    if (p.includes("/pos/packs")) return "Packs";
-    if (p.includes("/pos/cigars")) return "Cigars";
-    return "";
-  }
-
-  function categoryFromLink(link) {
-    const s = String(link || "").toLowerCase();
-    if (!s) return "";
-    if (s.includes("/pos/ashtrays")) return "Ashtrays";
-    if (s.includes("/pos/accessories")) return "Accessories";
-    if (s.includes("/pos/foodandbevs")) return "Food & Bevs";
-    if (s.includes("/pos/pipes")) return "Pipes";
-    if (s.includes("/pos/packs")) return "Packs";
-    if (s.includes("/pos/cigars")) return "Cigars";
-    return "";
   }
 
   function getShopName() {
@@ -120,6 +92,7 @@
   }
 
   function getNowLabel() {
+    // Tue, Jan 27, 2026
     const d = new Date();
     return d.toLocaleDateString(undefined, {
       weekday: "short",
@@ -157,6 +130,7 @@
       item.type || "product",
       item.category || "",
       item.brand || "",
+      item.line || "",
       item.name || "",
       item.vitola || item.sub || "",
       String(item.price || ""),
@@ -170,12 +144,41 @@
     return t === "cigar" || c === "cigars";
   }
 
+  function dedupeLineName(line, name) {
+    const l = String(line || "").trim();
+    const n = String(name || "").trim();
+    if (!l) return n;
+    if (!n) return l;
+
+    const lLow = l.toLowerCase();
+    const nLow = n.toLowerCase();
+
+    // If name already starts with line (or contains it as a prefix), just return name
+    if (nLow.startsWith(lLow)) return n;
+
+    return `${l} ${n}`.trim();
+  }
+
   // -------------------------
   // DOM refs (created if missing)
   // -------------------------
   let fabBtn, badgeEl, fabImg;
   let backdropEl, sheetEl, itemsEl;
   let custOverlay;
+  let confirmOverlay;
+
+  function injectInvoiceCSSOnce() {
+    // Inject only if not already present
+    const already =
+      document.querySelector('link[href="/pos/invoice.css"]') ||
+      document.querySelector('link[href="pos/invoice.css"]');
+    if (already) return;
+
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/pos/invoice.css";
+    document.head.appendChild(link);
+  }
 
   function ensureBaseMarkup() {
     // FAB
@@ -201,7 +204,7 @@
       document.body.appendChild(bd);
     }
 
-    // Sheet
+    // Sheet container
     if (!$("#sheet-receipt")) {
       const sheet = document.createElement("section");
       sheet.className = "sheet invoice-sheet";
@@ -227,7 +230,7 @@
   }
 
   // -------------------------
-  // Invoice shell (MUST match /pos/invoice.css)
+  // Invoice shell inside #sheet-receipt
   // -------------------------
   function ensureInvoiceShell() {
     resolveDOM();
@@ -265,6 +268,7 @@
       </div>
     `;
 
+    // re-resolve inside rebuilt content
     resolveDOM();
     itemsEl = $("#receipt-items");
 
@@ -340,53 +344,31 @@
       if (c > 0) fabBtn.classList.add("has-items");
       else fabBtn.classList.remove("has-items");
     }
-
-    if (fabImg) {
-      const active = fabImg.getAttribute("data-active-src");
-      const normal = fabImg.getAttribute("data-src") || fabImg.getAttribute("src");
-      if (c > 0 && active) fabImg.src = active;
-      else if (normal) fabImg.src = normal;
-    }
   }
 
   // -------------------------
-  // Item normalization (vitola + category)
+  // Item normalization
   // -------------------------
   function normalizeItem(item) {
     const cigar = isCigarItem(item);
-
-    // category inference for NON-cigars (fixes "Product" -> "Ashtrays", etc.)
-    let category = String(item.category || "").trim();
-    const catLower = category.toLowerCase();
-    const isGenericCategory = !category || catLower === "product" || catLower === "products";
-
-    if (isGenericCategory && !cigar) {
-      const fromLink = categoryFromLink(item.link);
-      const fromPage = categoryFromPath(item.sourcePage || "");
-      category = fromLink || fromPage || category || "Product";
-    }
 
     // Prefer brand icon for cigars
     let img = item.img || "";
     if (cigar) {
       const b = item.brand || "";
-      const slug = slugifyBrand(b);
-      if (slug) img = `/img/icons/brands/${slug}.svg`;
-      category = "Cigars";
+      const s = brandSlug(b);
+      if (s) img = `/img/icons/brands/${s}.svg`;
     }
-
-    // Vitola carry-through (fixes missing vitola line)
-    const vitola = String(item.vitola || item.meta?.vitola || "").trim();
-    const sub = String(item.sub || vitola || "").trim();
 
     return {
       id: String(item.id || "").trim() || makeStableId(item),
       type: (item.type || (cigar ? "cigar" : "product")).toLowerCase(),
-      category: category || (cigar ? "Cigars" : "Product"),
+      category: item.category || (cigar ? "Cigars" : "Product"),
       brand: item.brand || "",
+      line: item.line || "", // ✅ needed for cigar Line+Name
       name: item.name || "Item",
-      vitola,
-      sub,
+      vitola: item.vitola || "",
+      sub: item.sub || "", // used as vitola for cigars
       price: toNum(item.price),
       img,
       link: item.link || "",
@@ -429,62 +411,52 @@
   function itemFromReceiptNode(node) {
     if (!node) return null;
 
-    const sourcePage = location.pathname || "";
-
-    // JSON payload
     const raw = node.getAttribute("data-receipt-item");
     if (raw && raw.trim().startsWith("{")) {
       const payload = safeParseJSON(raw, null);
       if (!payload) return null;
 
+      // Accept either "type" or infer from category
       const inferredType =
         payload.type ||
-        (String(payload.category || payload.meta?.category || "").toLowerCase() === "cigars"
-          ? "cigar"
-          : "product");
+        (String(payload.category || "").toLowerCase() === "cigars" ? "cigar" : "product");
 
-      const category =
-        payload.category ||
-        payload.meta?.category ||
-        payload.meta?.Category ||
-        node.dataset.category ||
-        "Product";
-
-      const vitola =
-        payload.vitola ||
-        payload.meta?.vitola ||
-        payload.meta?.Vitola ||
-        node.dataset.vitola ||
+      // Pull "line" if present (supports multiple shapes)
+      const line =
+        payload.line ||
+        payload.cigarLine ||
+        payload.meta?.line ||
+        payload.meta?.cigarLine ||
+        payload.meta?.cigar_line ||
         "";
+
+      // Accept either top-level vitola or meta.vitola
+      const vitola = payload.vitola || payload.meta?.vitola || "";
+      const sub = payload.sub || vitola || payload.meta?.vitola || "";
 
       return {
         id: payload.id || payload.key || "",
         type: inferredType,
-        category,
-        brand: payload.brand || payload.meta?.brand || node.dataset.brand || "",
-        name: payload.name || payload.meta?.name || node.dataset.name || "",
+        category: payload.category || "Product",
+        brand: payload.brand || payload.meta?.brand || "",
+        line,
+        name: payload.name || payload.meta?.name || "",
         vitola,
-        sub: payload.sub || vitola || payload.meta?.vitola || "",
-        price: payload.price ?? payload.msrp ?? payload.meta?.msrp ?? node.dataset.price ?? 0,
-        img:
-          payload.img ||
-          payload.brandImg ||
-          payload.brand_img ||
-          node.dataset.img ||
-          "",
+        sub,
+        price: payload.price ?? payload.msrp ?? 0,
+        img: payload.img || payload.brandImg || payload.brand_img || "",
         qty: payload.qty ?? 1,
-        link: payload.link || payload.meta?.link || node.dataset.link || "",
-        sourcePage,
-        meta: payload.meta || null,
+        link: payload.link || payload.meta?.link || "",
       };
     }
 
-    // Dataset-style
+    // Dataset-style fallback
     return {
       id: node.dataset.id || "",
       type: (node.dataset.type || "").toLowerCase(),
       category: node.dataset.category || "Product",
       brand: node.dataset.brand || "",
+      line: node.dataset.line || node.dataset.cigarLine || "",
       name: node.dataset.name || "Item",
       vitola: node.dataset.vitola || "",
       sub: node.dataset.sub || node.dataset.vitola || "",
@@ -492,18 +464,16 @@
       img: node.dataset.img || "",
       qty: 1,
       link: node.dataset.link || "",
-      sourcePage,
     };
   }
 
   // -------------------------
-  // Render invoice rows + totals (matches invoice.css classes)
+  // Render invoice rows + totals
   // -------------------------
   function renderInvoice() {
     resolveDOM();
     if (!itemsEl) return;
 
-    // totals
     const subtotal = state.items.reduce(
       (s, it) => s + toNum(it.price) * clamp(Number(it.qty || 1), 1, 999),
       0
@@ -514,6 +484,7 @@
     const elSub = $("#inv-subtotal");
     const elTax = $("#inv-tax");
     const elTot = $("#inv-total");
+
     if (elSub) elSub.textContent = `$${money(subtotal)}`;
     if (elTax) elTax.textContent = `$${money(tax)}`;
     if (elTot) elTot.textContent = `$${money(total)}`;
@@ -528,14 +499,23 @@
         const qty = clamp(Number(it.qty || 1), 1, 999);
         const unit = toNum(it.price);
         const lineTotal = unit * qty;
-
         const cigar = isCigarItem(it);
 
-        // FINAL TEXT RULES:
-        // CIGARS:  (Line + Cigar) / Vitola / MSRP
-        // OTHER:   Category / Product Name / MSRP
-        const l1 = cigar ? (it.name || "Cigar") : (it.category || "Product");
-        const l2 = cigar ? (it.sub || it.vitola || "") : (it.name || "");
+        // ✅ TEAL text rules (exactly as requested)
+        // Cigars:
+        //  1) Line + Name
+        //  2) Vitola
+        //  3) MSRP
+        // Others:
+        //  1) Category name
+        //  2) Product name
+        //  3) MSRP
+        const l1 = cigar
+          ? dedupeLineName(it.line || "", it.name || "Cigar")
+          : (it.category || "Product");
+        const l2 = cigar
+          ? (it.sub || it.vitola || "")
+          : (it.name || "");
         const l3 = `$${money(unit)}`;
 
         return `
@@ -610,7 +590,6 @@
     `;
     document.body.appendChild(custOverlay);
 
-    // close handlers
     custOverlay.querySelector(".cust-x").addEventListener("click", closeCustomerPicker);
     custOverlay.addEventListener("click", (e) => {
       if (e.target === custOverlay) closeCustomerPicker();
@@ -701,12 +680,68 @@
   }
 
   // -------------------------
+  // Confirm modal (for NON-CIGAR items)
+  // -------------------------
+  function ensureConfirmOverlay() {
+    if (confirmOverlay) return;
+
+    confirmOverlay = document.createElement("div");
+    confirmOverlay.className = "pos-confirm-overlay";
+    confirmOverlay.hidden = true;
+    confirmOverlay.innerHTML = `
+      <div class="pos-confirm-card" role="dialog" aria-modal="true" aria-label="Add to bill">
+        <div class="pos-confirm-title">Add to Bill</div>
+        <div class="pos-confirm-sub" id="pos-confirm-sub"></div>
+        <div class="pos-confirm-actions">
+          <button type="button" class="pos-confirm-btn" data-confirm-cancel>Cancel</button>
+          <button type="button" class="pos-confirm-btn primary" data-confirm-add>Confirm</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(confirmOverlay);
+
+    confirmOverlay.addEventListener("click", (e) => {
+      if (e.target === confirmOverlay) closeConfirm();
+    });
+    confirmOverlay.querySelector("[data-confirm-cancel]").addEventListener("click", closeConfirm);
+  }
+
+  let pendingConfirmItem = null;
+
+  function openConfirm(item) {
+    ensureConfirmOverlay();
+    pendingConfirmItem = item;
+
+    const sub = $("#pos-confirm-sub", confirmOverlay);
+    const name = item?.name || "Item";
+    const cat = item?.category || "";
+    const price = `$${money(item?.price || 0)}`;
+    sub.textContent = cat ? `${cat} • ${name} • ${price}` : `${name} • ${price}`;
+
+    confirmOverlay.hidden = false;
+    confirmOverlay.classList.add("open");
+
+    const addBtn = confirmOverlay.querySelector("[data-confirm-add]");
+    addBtn.onclick = () => {
+      if (pendingConfirmItem) add(pendingConfirmItem);
+      closeConfirm();
+    };
+  }
+
+  function closeConfirm() {
+    if (!confirmOverlay) return;
+    confirmOverlay.classList.remove("open");
+    confirmOverlay.hidden = true;
+    pendingConfirmItem = null;
+  }
+
+  // -------------------------
   // Event wiring
   // -------------------------
   function bindEventsOnce() {
     resolveDOM();
 
-    // Open invoice
+    // FAB open
     if (fabBtn && !fabBtn.dataset.bound) {
       fabBtn.dataset.bound = "1";
       fabBtn.addEventListener("click", (e) => {
@@ -721,7 +756,7 @@
       backdropEl.addEventListener("click", closeSheet);
     }
 
-    // Close buttons (delegated)
+    // Close buttons
     document.addEventListener("click", (e) => {
       const closeBtn = e.target.closest("[data-sheet-close]");
       if (!closeBtn) return;
@@ -764,40 +799,51 @@
     // ESC close
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
+        closeConfirm();
         closeCustomerPicker();
         closeSheet();
       }
     });
 
-    // ADD-TO-CART gating:
-    // Only fire when the user clicks a PLUS BUTTON (pos-add / row-add),
-    // NOT when they click the row text area.
+    // ADD behavior:
+    // - Cigars: ONLY add when clicking explicit + buttons (pos-add / row-add)
+    // - Non-cigars: clicking any element carrying data-receipt-item opens confirm modal
     document.addEventListener(
       "click",
       (e) => {
         const node = e.target.closest("[data-receipt-item]");
         if (!node) return;
 
+        const item = itemFromReceiptNode(node);
+        if (!item) return;
+
+        const cigar = isCigarItem(item);
+
         const isAddBtn =
           node.classList.contains("pos-add") ||
           node.classList.contains("row-add") ||
           node.matches("button.pos-add,button.row-add");
 
-        if (!isAddBtn) return;
+        if (cigar) {
+          // Prevent row hijack: only add via + button
+          if (!isAddBtn) return;
+          e.preventDefault();
+          e.stopPropagation();
+          add(item);
+          return;
+        }
 
+        // Non-cigars: always confirm
         e.preventDefault();
         e.stopPropagation();
-
-        const item = itemFromReceiptNode(node);
-        if (!item) return;
-
-        add(item);
+        openConfirm(item);
       },
       { passive: false }
     );
   }
 
   function boot() {
+    injectInvoiceCSSOnce();
     loadCart();
     resolveDOM();
     ensureInvoiceShell();
