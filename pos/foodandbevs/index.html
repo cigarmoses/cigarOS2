@@ -11,10 +11,11 @@
   <link rel="stylesheet" href="/pos/category.css" />
 </head>
 
-<body class="category-page"
-      data-category="Food & Bevs"
-      data-image-dir="/img/icons/foodandbevs">
-
+<body
+  class="category-page"
+  data-category="Food & Bevs"
+  data-image-dir="/img/icons/foodandbevs"
+>
   <header class="category-topbar">
     <button type="button" class="pos-back" id="category-back" aria-label="Back">
       <span class="pos-back-icon">←</span>
@@ -28,11 +29,13 @@
       <input type="search" class="category-search-input" placeholder="Search" />
     </section>
 
-    <section class="category-grid" id="category-grid"></section>
+    <section class="category-grid"></section>
   </main>
 
-  <!-- cart.js MUST load first so window.CigarOSCart exists -->
+  <!-- cart storage + invoice nav -->
   <script src="/pos/cart.js" defer></script>
+
+  <!-- universal category renderer (reads /pos/pos-products.json) -->
   <script src="/pos/category-page.js" defer></script>
 </body>
 </html>
