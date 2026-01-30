@@ -3,39 +3,34 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>POS • Food &amp; Bevs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Food &amp; Bevs</title>
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/category.css" />
+  <link rel="stylesheet" href="/pos/foodandbevs.css" />
 </head>
 
-<body
-  class="category-page"
-  data-category="Food & Bevs"
-  data-image-dir="/img/icons/foodandbevs"
->
-  <header class="category-topbar">
-    <button type="button" class="pos-back" id="category-back" aria-label="Back">
-      <span class="pos-back-icon">←</span>
-    </button>
+<body class="page">
+  <header class="page-header">
+    <a class="back" href="/pos/" aria-label="Back">←</a>
+    <h1 class="page-title">Food &amp; Bevs</h1>
   </header>
 
-  <main>
-    <h1 class="category-title">Food &amp; Bevs</h1>
+  <div class="page-search">
+    <input id="search" type="search" placeholder="Search" autocomplete="off" />
+  </div>
 
-    <section class="category-search">
-      <input type="search" class="category-search-input" placeholder="Search" />
-    </section>
-
-    <section class="category-grid"></section>
+  <main class="page-content">
+    <div id="grid" class="category-grid category-grid-foodbevs" aria-label="Food &amp; Bevs products"></div>
   </main>
 
-  <!-- cart storage + invoice nav -->
-  <script src="/pos/cart.js" defer></script>
-
-  <!-- universal category renderer (reads /pos/pos-products.json) -->
-  <script src="/pos/category-page.js" defer></script>
+  <!-- IMPORTANT:
+       cart.js injects the FAB and routes to /pos/invoice/
+       Do NOT include any legacy invoice modal / sheet markup on this page.
+  -->
+  <script src="/pos/cart.js?v=11" defer></script>
+  <script src="/pos/foodandbevs.js?v=11" defer></script>
 </body>
 </html>
