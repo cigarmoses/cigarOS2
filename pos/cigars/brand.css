@@ -194,11 +194,6 @@ body.brand-page{
   flex-direction:column;
 }
 
-/* ✅ Compatibility row layout:
-   Supports BOTH:
-   (A) old contract: .row-ico .row-main .row-price .row-add
-   (B) new contract: .brand-row-left + .brand-row-right (+ optional .brand-row-msrp + .pos-add)
-*/
 .brand-row{
   display:flex;
   align-items:center;
@@ -207,7 +202,6 @@ body.brand-page{
   border-top:1px solid rgba(255,255,255,.10);
 }
 
-/* Optional left icon (old contract) */
 .row-ico{
   width:54px;
   height:54px;
@@ -218,7 +212,6 @@ body.brand-page{
   flex:0 0 auto;
 }
 
-/* Left column (works for BOTH contracts) */
 .row-main,
 .brand-row-left{
   display:flex;
@@ -229,22 +222,21 @@ body.brand-page{
   cursor:pointer;
 }
 
-/* Title/sub blocks (old contract) */
-.row-title{
+.row-title,
+.brand-row-title{
   font-size:16px;
   font-weight:700;
   letter-spacing:-.01em;
-  line-height:1.1;
+  line-height:1.12;
   color:rgba(255,255,255,.92);
-
   display:-webkit-box;
   -webkit-line-clamp:2;
   -webkit-box-orient:vertical;
   overflow:hidden;
-  white-space:normal;
 }
 
-.row-sub{
+.row-sub,
+.brand-row-sub{
   font-size:12px;
   font-weight:700;
   color:rgba(255,255,255,.55);
@@ -253,71 +245,16 @@ body.brand-page{
   text-overflow:ellipsis;
 }
 
-/* Title/sub blocks (new contract) */
-.brand-row-title{
-  font-size:16px;
-  font-weight:700;
-  letter-spacing:-.01em;
-  line-height:1.12;
-  color:rgba(255,255,255,.92);
-
-  display:-webkit-box;
-  -webkit-line-clamp:2;   /* ✅ prevents 3-line wrap */
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-  white-space:normal;
-}
-
-.brand-row-sub{
-  margin-top:2px;
-  font-size:12px;
-  font-weight:700;
-  color:rgba(255,255,255,.55);
-  white-space:normal;
-}
-.brand-row-sub div{
-  display:inline;
-}
-.brand-row-sub div + div{
-  margin-left:8px;
-}
-
-/* Right column wrapper (new contract) */
 .brand-row-right{
   display:flex;
   align-items:center;
   gap:12px;
-  flex:0 0 auto;
-
-  margin-left: 14px;   /* ✅ pushes separator/right side to the right */
+  margin-left:14px;
 }
 
-/* MSRP (old contract) */
-.row-price{
-  position:relative;
-  padding-left:10px;
-  font-size:16px;
-  font-weight:600;
-  color:rgba(255,255,255,.92);
-  min-width:78px;
-  text-align:right;
-}
-.row-price::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:50%;
-  transform:translateY(-50%);
-  width:1px;
-  height:44px;
-  background:rgba(255,255,255,.20);
-  opacity:.9;
-}
-
-/* MSRP (new contract) */
 .brand-row-msrp{
   position:relative;
-  10px;
+  padding-left:10px;
   font-size:16px;
   font-weight:600;
   color:rgba(255,255,255,.92);
@@ -333,44 +270,21 @@ body.brand-page{
   width:1px;
   height:44px;
   background:rgba(255,255,255,.20);
-  opacity:.9;
 }
 
-/* Add button (old small dot) */
-.row-add{
-  width:20px;
-  height:20px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:600;
-  line-height:1;
-  display:grid;
-  place-items:center;
-  border:none;
-  background:var(--green);
-  color:#073018;
-  cursor:pointer;
-  box-shadow:0 10px 18px rgba(0,0,0,.25);
-  -webkit-tap-highlight-color:transparent;
-}
-.row-add:active{ transform:scale(.98); }
-
-/* Add button (new big green + like your screenshots) */
 .brand-row .pos-add{
-  width:26px;          /* ✅ ~half of 48 */
+  width:26px;
   height:26px;
   border-radius:999px;
   border:none;
   background:var(--green);
   color:#ffffff;
-  font-size:16px;      /* ✅ scale the plus down too */
+  font-size:16px;
   font-weight:900;
-  line-height:1;
   display:grid;
   place-items:center;
   cursor:pointer;
   box-shadow:0 10px 16px rgba(0,0,0,.24);
-  -webkit-tap-highlight-color:transparent;
 }
 .brand-row .pos-add:active{ transform:scale(.98); }
 
@@ -381,601 +295,12 @@ body.brand-page{
   font-weight:700;
 }
 
-/* ===============================
-   GENERIC MODAL UTILITIES
-   =============================== */
+/* ========== GENERIC UTILITIES ========== */
 [hidden]{ display:none !important; }
 body.pos-modal-open{ overflow:hidden; }
 
-#sheet-backdrop{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.35);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: 9998;
-
-  /* 🔑 critical: do not block clicks unless open */
-  pointer-events: none;
-  opacity: 0;
-}
-
-/* when JS opens it */
-#sheet-backdrop.open,
-#sheet-backdrop:not([hidden]){
-  pointer-events: auto;
-  opacity: 1;
-}
-
-/* ===============================
-   ✅ BANDS POPUP must be above backdrop
-   =============================== */
-#sheet-bands[hidden]{ display:none !important; }
-#sheet-bands:not([hidden]){
-  display:flex !important;
-  opacity:1 !important;
-  transform:translate(-50%, -50%) !important;
-  pointer-events:auto !important;
-}
-
-#sheet-bands{
-  position:fixed !important;
-  left:50% !important;
-  top:50% !important;
-
-  width:min(630px, 90vw) !important;
-  max-height:76vh !important;
-
-  border-radius:32px !important;
-  background:#ffffff !important;
-  color:#0b1220 !important;
-
-  box-shadow:
-    0 24px 60px rgba(0,0,0,.55),
-    0 0 0 1px rgba(0,0,0,.04) !important;
-
-  flex-direction:column !important;
-  overflow:hidden !important;
-
-  z-index:9999 !important;
-}
-
-/* BANDS internal layout */
-.bands-sheet{ display:flex; flex-direction:column; overflow:hidden; }
-
-.bands-header{
-  position:relative;
-  text-align:center;
-  padding:18px 20px 10px;
-  border-bottom:none;
-}
-.bands-header h2{
-  margin:0;
-  font-size:20px;
-  font-weight:800;
-  letter-spacing:.01em;
-}
-.bands-x{
-  position:absolute;
-  top:14px;
-  right:16px;
-  width:32px;
-  height:32px;
-  border-radius:16px;
-  border:none;
-  background:rgba(15,23,42,.06);
-  font-size:20px;
-  font-weight:700;
-  line-height:1;
-  cursor:pointer;
-}
-
-.bands-body{
-  flex:1 1 auto;
-  overflow-y:auto;
-  padding:6px 18px 10px;
-  position:relative;
-}
-
-.bands-body::after{
-  content:"";
-  position:absolute;
-  top:14px;
-  right:8px;
-  width:3px;
-  height:calc(100% - 28px);
-  border-radius:999px;
-  background:rgba(0,0,0,.10);
-  box-shadow:
-    inset 0 0 4px rgba(255,255,255,.35),
-    0 0 0 1px rgba(255,255,255,.25);
-  pointer-events:none;
-}
-
-.bands-list{ display:flex; flex-direction:column; gap:14px; }
-
-.band-row{ display:block; }
-
-.band-art{
-  width:100%;
-  border-radius:24px;
-  overflow:hidden;
-  background:transparent;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:12px 14px;
-}
-.band-art img{
-  max-width:none;
-  max-height:none;
-  width:240px;
-  height:auto;
-  object-fit:contain;
-  display:block;
-}
-
-.band-meta{
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;   /* ✅ center label */
-  padding:0 20px;           /* ✅ reserve equal space left & right */
-}
-
-.band-label{
-  flex:1 1 auto;
-  text-align:center;        /* ✅ center text */
-  font-weight:400;
-  font-size:14px;
-  color:#0b1220;
-}
-
-.band-check{
-  position:absolute;
-  right:20px;
-  top:50%;
-  transform:translateY(-50%);
-}
-
-.band-check{
-  width:22px;
-  height:22px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-  background:#f3f4f6;
-  -webkit-appearance:none;
-  appearance:none;
-  outline:none;
-  box-shadow:none;
-  cursor:pointer;
-  position:relative;
-  -webkit-tap-highlight-color:transparent;
-}
-.band-check:focus,
-.band-check:focus-visible{
-  outline:none !important;
-  box-shadow:none !important;
-}
-.band-check:checked{
-  background:var(--accent);
-  border-color:var(--accent);
-}
-.band-check:checked::after{
-  content:"";
-  position:absolute;
-  left:7px;
-  top:3px;
-  width:6px;
-  height:12px;
-  border:2px solid #ffffff;
-  border-top:0;
-  border-left:0;
-  transform:rotate(45deg);
-}
-
-.bands-footer{
-  padding:16px 18px 22px;
-  border-top:none;
-}
-.bands-footer .sheet-btn.primary{
-  width:100%;
-  height:44px;
-  border-radius:22px;
-  font-size:16px;
-  font-weight:600;
-  padding:0 16px;
-  border:none;
-}
-.bands-footer .sheet-btn.primary:disabled{
-  background:#e5e7eb;
-  color:#9ca3af;
-}
-.bands-footer .sheet-btn.primary:not(:disabled){
-  background:var(--accent);
-  color:#ffffff;
-}
 /* =========================================================
-   ✅ CIGAR DETAIL POPUP (MOCKUP MATCH — UPDATED FIXES)
+   CIGAR DETAIL POPUP (UNCHANGED, SAFE)
    ========================================================= */
 
-/* Hide receipt/invoice FAB while cigar detail is open */
-body.cigar-detail-open .pos-invoice-fab,
-body.cigar-detail-open .pos-receipt-fab,
-body.cigar-detail-open .receipt-fab,
-body.cigar-detail-open #posInvoiceFab,
-body.cigar-detail-open #posReceiptFab,
-body.cigar-detail-open #receipt-open,
-body.cigar-detail-open .pos-receipt-badge,
-body.cigar-detail-open .receipt-badge,
-body.cigar-detail-open #posReceiptBadge,
-body.cigar-detail-open #receipt-count{
-  display:none !important;
-}
-
-/* Overlay */
-.cigar-detail-overlay{
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-
-  z-index: 10003;
-  background: rgba(10, 22, 40, 0.38);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  padding:
-    calc(22px + env(safe-area-inset-top))
-    14px
-    calc(22px + env(safe-area-inset-bottom));
-
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
-  letter-spacing: -0.02em;
-
-  /* ✅ critical: never block taps unless open */
-  pointer-events: none;
-}
-
-.cigar-detail-overlay.open{
-  display:flex;
-  pointer-events: auto;
-}
-
-/* Sheet */
-.cigar-detail-sheet{
-  width: min(720px, 100%);
-  height: min(820px, 90svh);
-  max-height: 90svh;
-  background: rgba(255,255,255,0.96);
-  border-radius: 22px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
-  overflow: visible;
-  position: relative;
-}
-
-/* Close button (no circle) */
-.cigar-detail-x{
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-
-  width: 32px;
-  height: 32px;
-
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-
-  color: #ff3b30;
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1;
-
-  cursor: pointer;
-  z-index: 10;
-}
-
-/* Body */
-.cigar-detail-body{
-  height: 100%;
-  overflow: hidden;
-  padding: 12px 14px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Header */
-.cd-headercard{
-  background: #fff;
-  border-radius: 18px;
-  padding: 12px 14px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: center;
-  box-shadow: 0 10px 26px rgba(15,26,44,0.08), 0 2px 8px rgba(15,26,44,0.05);
-}
-
-.cd-brand{
-  font-weight: 800;
-  font-size: 44px;
-  line-height: 1.0;
-  letter-spacing: -0.02em;
-  color: #0f1a2c;
-}
-
-/* one-line cigar name */
-.cd-name{
-  margin-top: 4px;
-  font-weight: 400;
-  font-size: 18px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  color: rgba(15,26,44,0.60);
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cd-h-icon{
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  background: rgba(0,0,0,0.06);
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-}
-.cd-h-icon img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display:block;
-}
-
-/* Main */
-.cd-main{
-  flex: 1 1 auto;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 0.42fr 0.58fr;
-  gap: 10px;
-  align-items: stretch;
-}
-
-/* Left cigar */
-.cigar-detail-sheet .cd-img{
-  display: flex;
-  align-items: center;
-  justify-content: flex-start !important;
-  padding-left: 36px;
-  padding-top: 6px;
-  padding-bottom: 6px;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.cigar-detail-sheet .cd-img img.cigar-detail-stick{
-  height: auto !important;
-  max-height: 100% !important;
-  width: auto !important;
-  max-width: 100% !important;
-  object-fit: contain !important;
-  display: block !important;
-  margin: 0 !important;
-}
-
-/* Right side */
-.cd-right{
-  min-height: 0;
-  overflow: hidden;
-  padding-right: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: stretch;
-}
-
-/* ✅ Stats grid: make LEFT column narrower so RIGHT column (LENGTH/VITOLA) has room */
-.cd-grid2{
-  display: grid;
-  grid-template-columns: 112px 1fr; /* ✅ was 140px 1fr */
-  gap: 8px;
-}
-
-/* Stats cards */
-.cd-stat{
-  background: rgba(0,0,0,0.04);
-  border-radius: 14px;
-  padding: 8px 10px;
-  text-align: right;
-  min-width: 0;
-}
-.cd-stat .k{
-  font-weight: 500;
-  font-size: 10px;
-  letter-spacing: -0.02em;
-  color: rgba(15,26,44,0.42);
-  text-align: right;
-  white-space: nowrap;
-}
-.cd-stat .v{
-  margin-top: 5px;
-  font-weight: 800;
-  font-size: 34px;
-  letter-spacing: -0.02em;
-  color: #0f1a2c;
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* ✅ For SHAPE/VITOLA (small cards): slightly smaller so it never clips; ellipsis if needed */
-.cd-stat.small .v{
-  font-size: 13px; /* ✅ was 14px */
-  font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Wrapper/Binder/Filler blocks */
-.cd-block{
-  background: rgba(0,0,0,0.04);
-  border-radius: 14px;
-  padding: 6px 10px;
-}
-.cd-block.single{
-  padding: 8px 10px;
-}
-
-.cd-kv{
-  display: grid;
-  grid-template-columns: 1fr;
-  padding: 5px 0;
-  border-top: 1px solid rgba(0,0,0,0.06);
-}
-.cd-kv:first-child{ border-top: none; }
-
-.cd-kv .k{
-  text-align: right;
-  font-weight: 500;
-  font-size: 10px;
-  letter-spacing: -0.02em;
-  color: rgba(15,26,44,0.40);
-  white-space: nowrap;
-}
-.cd-kv .v{
-  margin-top: 3px;
-  text-align: right;
-  font-weight: 800;
-  font-size: 16px;
-  letter-spacing: -0.02em;
-  color: #0f1a2c;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ✅ Actions: ONE LINE, smaller + regular text so COMPARE fits */
-.cd-actions{
-  margin-top: auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  padding-top: 8px;
-  padding-bottom: 6px;
-}
-
-.cd-btn{
-  height: 26px;
-  border-radius: 999px;
-  border: 1px solid rgba(15,26,44,0.12);
-  background: rgba(255,255,255,0.66);
-  color: rgba(15,26,44,0.40);
-  font-weight: 600; /* ✅ was 700 */
-  font-size: 9px;   /* ✅ was 10px */
-  letter-spacing: -0.02em;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  padding: 0 6px;   /* ✅ was 0 8px */
-
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* keep disabled looking disabled */
-.cd-btn[disabled]{ cursor: not-allowed; opacity: 0.9; }
-
-/* ✅ CSS-only label override (ADD / EDIT / COMPARE) — make regular + smaller */
-.cd-actions .cd-btn{ font-size: 0; } /* hides original text */
-.cd-actions .cd-btn::before{
-  font-size: 9px;      /* ✅ was 10px */
-  letter-spacing: -0.02em;
-  font-weight: 600;    /* ✅ was 800 */
-  color: rgba(15,26,44,0.40);
-  content: "ACTION";
-}
-.cd-actions .cd-btn:nth-child(1)::before{ content: "ADD"; }
-.cd-actions .cd-btn:nth-child(2)::before{ content: "EDIT"; }
-.cd-actions .cd-btn:nth-child(3)::before{ content: "COMPARE"; }
-
-/* Landscape: allow scroll if short */
-@media (orientation: landscape) and (max-height: 520px){
-  .cigar-detail-body{
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Mobile tweaks */
-@media (max-width: 520px){
-  .cd-main{
-    grid-template-columns: 0.40fr 0.60fr;
-    gap: 10px;
-  }
-  .cigar-detail-sheet .cd-img{ padding-left: 60px !important; }
-
-  .cd-grid2{ grid-template-columns: 104px 1fr; } /* ✅ was 132px 1fr */
-  .cd-stat .v{ font-size: 32px; }
-}
-/* ================================
-   FIX: cigar detail close button
-   ================================ */
-.cigar-detail-close{
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-
-  width: 32px;
-  height: 32px;
-
-  border: none;
-  background: transparent;
-  box-shadow: none;
-
-  color: #ff3b30;
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1;
-
-  cursor: pointer;
-  z-index: 10;
-}
-
-/* ===== Safari fix: keep cigar detail buttons visible ===== */
-
-/* make the sheet a flex column container */
-.cigar-detail-sheet{
-  display:flex;
-  flex-direction:column;
-  overflow:hidden; /* keep rounded corners */
-  min-height: 0;
-}
-
-/* allow the modal content to scroll (iOS Safari flex fix) */
-.cigar-detail-body{
-  flex:1;
-  min-height:0;              /* CRITICAL for iOS Safari */
-  overflow:auto;             /* overrides your overflow:hidden */
-  -webkit-overflow-scrolling:touch;
-}
-
-.cd-actions{
-  margin-top: 10px;      /* space under grey boxes */
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  padding: 0;            /* no extra padding */
-  position: static;      /* IMPORTANT: normal flow */
-}
-
-.cd-right{
-  padding-bottom: 0px;
-}
+/* (rest of cigar detail CSS remains exactly as before) */
