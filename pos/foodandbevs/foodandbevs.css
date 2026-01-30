@@ -9,6 +9,6 @@
 
 /* Extra breathing room under last row */
 .category-grid-foodbevs {
-  padding-bottom: 160px;  /* ~2 rows of whitespace */
+  padding-bottom: 400px;
   box-sizing: border-box;
 }
