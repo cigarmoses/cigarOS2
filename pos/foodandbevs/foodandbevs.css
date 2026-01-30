@@ -1,5 +1,7 @@
-/* Food & Beverages page-specific overrides */
-/* Base grid + tile rules live in ../category.css */
+/* /pos/foodandbevs.css
+   Food & Beverages page-specific overrides
+   Base grid + tile rules live in ../category.css
+*/
 
 /* Legacy: hide captions when .page.hide-captions is present */
 .page.hide-captions .label,
@@ -9,15 +11,102 @@
 
 /* Extra breathing room under last row */
 .category-grid-foodbevs {
-  padding-bottom: 400px;
+  padding-bottom: 160px; /* ~2 rows of whitespace */
   box-sizing: border-box;
 }
-.food-tile__btn,
-.food-tile__label {
-  pointer-events: auto;
-  cursor: pointer;
+
+/* -----------------------------
+   Bottom Sheet (SAFE DEFAULTS)
+   Your HTML now includes #sheet. We MUST hide it by default.
+------------------------------ */
+#sheet.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;          /* <-- key */
 }
 
-.food-tile__btn img {
-  pointer-events: none; /* ensures button is the tap target */
+#sheet.sheet.sheet--open {
+  display: block;         /* <-- only show when opened */
+}
+
+#sheet .sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+}
+
+#sheet .sheet__panel {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+}
+
+#sheet .sheet__close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  border: 0;
+  background: #f2f3f5;
+  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+  font-size: 18px;
+  line-height: 34px;
+}
+
+#sheet .sheet__title {
+  font-weight: 800;
+  font-size: 20px;
+  margin: 6px 0 4px;
+}
+
+#sheet .sheet__price {
+  font-size: 16px;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+#sheet .sheet__qty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+#sheet .qty-btn {
+  border: 0;
+  background: #eef3ff;
+  border-radius: 10px;
+  width: 44px;
+  height: 36px;
+  font-size: 20px;
+}
+
+#sheet .qty-val {
+  min-width: 34px;
+  text-align: center;
+  font-weight: 700;
+}
+
+#sheet .sheet__subtotal {
+  font-size: 14px;
+  opacity: 0.75;
+  margin: 6px 0 12px;
+}
+
+#sheet .sheet__add {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #1976ff;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
 }
