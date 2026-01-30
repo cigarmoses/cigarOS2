@@ -1,15 +1,11 @@
 /* /pos/foodandbevs.js
    Food & Bevs page (LIVE from /pos/pos-products.json)
 
-   Click targets:
-   ✅ icon button (.food-tile__btn)
-   ✅ product name text (.food-tile__label)
-
-   Action:
-   ✅ triggers cart.js confirm modal (non-cigars) and adds to invoice after confirm
-
-   Debug:
-   ✅ always shows Loading... then either renders items or shows error text in #grid
+   ✅ Loads items where category == "Food & Bevs"
+   ✅ Renders icon + label + price
+   ✅ Click ANYWHERE on a tile adds to cart via window.CigarOSCart.add()
+   ✅ Icons resolved from /img/icons/foodandbevs using:
+      item.image (if present) OR slug key with svg/png/jpg/jpeg/webp fallback
 */
 
 (() => {
@@ -17,78 +13,107 @@
 
   const DATA_URL = "/pos/pos-products.json";
   const CATEGORY_NAME = "Food & Bevs";
-  const ICON_BASE = "/img/icons/foodandbevs/";
-
-  const DEBUG_TAP_ALERT = false; // set true for 1 deploy if needed
+  const ICON_DIR = "/img/icons/foodandbevs";
 
   const $ = (sel, root = document) => root.querySelector(sel);
 
   const grid = $("#grid");
-  if (!grid) {
-    console.error("[foodandbevs.js] Missing #grid");
-    return;
-  }
+  if (!grid) return console.error("[foodandbevs.js] Missing #grid");
 
-  // Show immediate status so we know JS is running
   grid.innerHTML = `<div style="padding:16px;font-weight:800;">Loading…</div>`;
 
-  let ITEMS = [];
+  const norm = (s) =>
+    String(s ?? "")
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
 
   const money = (n) => `$${Number(n || 0).toFixed(2)}`;
 
-  const slugify = (s) => String(s || "")
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/['’]/g, "")
-    .replace(/[^a-z0-9]+/g, "")
-    .trim();
+  // Turns "Coke Zero" -> "cokezero"
+  const keyify = (s) =>
+    String(s || "")
+      .toLowerCase()
+      .trim()
+      .replace(/&/g, "and")
+      .replace(/['’]/g, "")
+      .replace(/[^a-z0-9]+/g, "");
 
-  const safeJson = (obj) => {
-    try { return JSON.stringify(obj); } catch { return "{}"; }
-  };
+  // -------- icon resolver --------
+  const existsCache = new Map();
 
-  function showError(err) {
-    const msg = (err && err.message) ? err.message : String(err);
-    grid.innerHTML = `
-      <div style="padding:16px;color:#b00020;font-weight:900;">
-        Food &amp; Bevs failed to load
-      </div>
-      <pre style="padding:16px;white-space:pre-wrap;word-break:break-word;background:#fff3f3;border-radius:12px;margin:0 12px 12px;">
-${msg}
-      </pre>
-      <div style="padding:0 16px 16px;opacity:.8;">
-        Check that <code>${DATA_URL}</code> is reachable and that this page is loading <code>/pos/foodandbevs.js</code>.
-      </div>
-    `;
+  async function urlExists(url) {
+    if (existsCache.has(url)) return existsCache.get(url);
+
+    let ok = false;
+    try {
+      const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+      ok = res.ok;
+    } catch (_) {}
+
+    // fallback if HEAD blocked
+    if (!ok) {
+      try {
+        const res = await fetch(url, { method: "GET", cache: "no-store" });
+        ok = res.ok;
+      } catch (_) {}
+    }
+
+    existsCache.set(url, ok);
+    return ok;
   }
 
-  // Invoke cart.js by clicking a hidden element with data-receipt-item
-  function sendToCartConfirm(item) {
-    const payload = {
-      key: item.key,
-      category: item.category,        // must be category for invoice header row
-      brand: item.brand || "",
-      name: item.name,                // product name shown on invoice
-      subtitle: item.variant || "",   // optional third line
-      price: item.price,
-      qty: 1,
-      image: item.image || "",
-      brandIcon: item.brandIcon || "",
-      distributor: item.distributor || "",
-      bucket: item.bucket || "Other",
-      taxable: !!item.taxable,
-      confirm: true
-    };
+  async function resolveIconSrc(item) {
+    // 1) If JSON includes a direct image path/url, use it
+    const direct = String(item.image || "").trim();
+    if (direct) return direct;
 
-    const ghost = document.createElement("button");
-    ghost.type = "button";
-    ghost.style.display = "none";
-    ghost.setAttribute("data-receipt-item", safeJson(payload));
-    ghost.setAttribute("data-confirm-add", "1");
-    document.body.appendChild(ghost);
-    ghost.click();
-    ghost.remove();
+    // 2) Try key candidates against ICON_DIR with multi-ext fallback
+    const candidates = [
+      keyify(item.slug || ""),
+      keyify(item.product || ""),
+      keyify(item.name || ""),
+      keyify(item.key || "")
+    ].filter(Boolean);
+
+    const exts = ["svg", "png", "jpg", "jpeg", "webp"];
+
+    for (const c of candidates) {
+      for (const ext of exts) {
+        const url = `${ICON_DIR}/${c}.${ext}`;
+        if (await urlExists(url)) return url;
+      }
+    }
+
+    return "";
+  }
+
+  // -------- cart add --------
+  function addToCart(item) {
+    if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") {
+      console.warn("[foodandbevs.js] CigarOSCart not ready yet");
+      return;
+    }
+
+    const category = item.category || CATEGORY_NAME;
+    const brand = item.brand || "";
+    const name = item.name || item.product || "Item";
+    const price = Number(item.price || 0);
+
+    const id = (category + "|" + brand + "|" + name).toLowerCase();
+
+    window.CigarOSCart.add({
+      id,
+      type: "product",
+      category,
+      brand,
+      name,
+      price,
+      sub: item.variant || "",
+      img: item.image || "",
+      link: ""
+    });
   }
 
   async function loadItems() {
@@ -99,8 +124,8 @@ ${msg}
     if (!Array.isArray(all)) throw new Error("pos-products.json is not an array");
 
     const items = all
-      .filter(p => String(p.category || "").toLowerCase() === CATEGORY_NAME.toLowerCase())
-      .map(p => {
+      .filter((p) => norm(p.category) === norm(CATEGORY_NAME))
+      .map((p) => {
         const name = p.product || p.name || p.brand || "Item";
         return {
           key: p.key || `${CATEGORY_NAME}:${name}:${p.price}`,
@@ -108,92 +133,78 @@ ${msg}
           brand: p.brand || "",
           name,
           variant: p.variant || "",
-          distributor: p.distributor || "",
-          bucket: p.bucket || "Other",
-          taxable: !!p.taxable,
           price: Number(p.price || 0),
           image: p.image || "",
-          brandIcon: p.brandIcon || "",
-          slug: slugify(name)
+          slug: keyify(name)
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
     if (!items.length) {
-      throw new Error(`No items found where category == "${CATEGORY_NAME}". Check your JSON category values.`);
+      throw new Error(`No items found where category == "${CATEGORY_NAME}"`);
     }
 
     return items;
   }
 
-  function render() {
+  async function render(items) {
     const frag = document.createDocumentFragment();
 
-    for (const item of ITEMS) {
-      const wrap = document.createElement("div");
-      wrap.className = "food-tile";
+    for (const item of items) {
+      const tile = document.createElement("button");
+      tile.type = "button";
+      tile.className = "food-tile";
+      tile.dataset.key = item.key;
 
-      const btn = document.createElement("button");
-      btn.className = "food-tile__btn";
-      btn.type = "button";
-      btn.dataset.key = item.key;
+      // icon box
+      const iconBox = document.createElement("div");
+      iconBox.className = "food-tile__icon";
 
-      const img = document.createElement("img");
-      img.alt = item.name;
-      img.src = `${ICON_BASE}${item.slug}.svg`;
-      img.onerror = () => {
-        img.onerror = null;
-        img.removeAttribute("src");
-        img.style.display = "none";
-      };
-
-      btn.appendChild(img);
+      const src = await resolveIconSrc(item);
+      if (src) {
+        const img = document.createElement("img");
+        img.alt = item.name;
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.src = src;
+        iconBox.appendChild(img);
+      }
 
       const label = document.createElement("div");
       label.className = "food-tile__label";
       label.textContent = item.name;
-      label.dataset.key = item.key;
 
       const price = document.createElement("div");
       price.className = "food-tile__price";
       price.textContent = money(item.price);
 
-      wrap.append(btn, label, price);
-      frag.appendChild(wrap);
+      tile.append(iconBox, label, price);
+
+      tile.addEventListener("click", () => addToCart(item));
+
+      frag.appendChild(tile);
     }
 
     grid.innerHTML = "";
     grid.appendChild(frag);
   }
 
-  // Only icon or label triggers add
-  function handleActivate(target) {
-    const hit = target.closest(".food-tile__btn, .food-tile__label");
-    if (!hit) return;
-
-    const key = hit.dataset.key;
-    const item = ITEMS.find(x => x.key === key);
-    if (!item) return;
-
-    if (DEBUG_TAP_ALERT) alert(`tap: ${item.name}`);
-
-    sendToCartConfirm(item);
-  }
-
-  function wireClicks() {
-    grid.addEventListener("click", (e) => handleActivate(e.target));
-    grid.addEventListener("touchend", (e) => handleActivate(e.target), { passive: true });
+  function showError(err) {
+    const msg = err?.message ? err.message : String(err);
+    grid.innerHTML = `
+      <div style="padding:16px;color:#b00020;font-weight:900;">Food &amp; Bevs failed</div>
+      <pre style="padding:16px;white-space:pre-wrap;word-break:break-word;background:#fff3f3;border-radius:12px;margin:0 12px 12px;">${msg}</pre>
+    `;
   }
 
   async function init() {
     try {
-      ITEMS = await loadItems();
-      render();
-      wireClicks();
-      console.log(`[foodandbevs.js] Loaded ${ITEMS.length} items`);
-    } catch (err) {
-      console.error(err);
-      showError(err);
+      const items = await loadItems();
+      await render(items);
+      console.log(`[foodandbevs.js] Rendered ${items.length} items`);
+    } catch (e) {
+      console.error(e);
+      showError(e);
     }
   }
 
