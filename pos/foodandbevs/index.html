@@ -9,28 +9,12 @@
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/category.css" />
-
-  <style>
-    /* Match Accessories behavior (contain images nicely) */
-    .category-card-icon{
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-    }
-    .category-card-icon img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-    }
-  </style>
 </head>
 
-<body
-  class="category-page"
-  data-category="Food & Bevs"
-  data-image-dir="/img/icons/foodandbevs"
->
+<body class="category-page"
+      data-category="Food & Bevs"
+      data-image-dir="/img/icons/foodandbevs">
+
   <header class="category-topbar">
     <button type="button" class="pos-back" id="category-back" aria-label="Back">
       <span class="pos-back-icon">←</span>
@@ -41,22 +25,14 @@
     <h1 class="category-title">Food &amp; Bevs</h1>
 
     <section class="category-search">
-      <input
-        type="search"
-        class="category-search-input"
-        placeholder="Search"
-        autocomplete="off"
-      />
+      <input type="search" class="category-search-input" placeholder="Search" />
     </section>
 
-    <!-- category-page.js renders cards into THIS -->
-    <section class="category-grid" aria-label="Food &amp; Bevs products"></section>
+    <section class="category-grid" id="category-grid"></section>
   </main>
 
-  <!-- cart.js injects the invoice FAB + modal -->
+  <!-- cart.js MUST load first so window.CigarOSCart exists -->
   <script src="/pos/cart.js" defer></script>
-
-  <!-- universal category renderer from /pos/pos-products.json -->
   <script src="/pos/category-page.js" defer></script>
 </body>
 </html>
