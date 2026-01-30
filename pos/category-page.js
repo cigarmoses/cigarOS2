@@ -1,10 +1,18 @@
 /* /pos/category-page.js
    Universal POS category renderer (non-cigar categories)
-   - Reads from /pos/pos-products.json
-   - Filters by category (from <body data-category="..."> OR <h1> text OR URL path)
-   - Renders cards in the same layout as your Accessories page
-   - Adds to invoice using window.CigarOSCart.add (cart.js)
-   - Optional image resolving via <body data-image-dir="/img/lighters">
+
+   ✅ Reads from /pos/pos-products.json
+   ✅ Detects category via:
+      1) <body data-category="...">
+      2) <h1 class="category-title">...</h1>
+      3) URL segment fallback
+   ✅ Renders into:
+      <section class="category-grid" id="category-grid"></section>
+      (also supports .category-grid without id)
+   ✅ Tap ANYWHERE on a card adds to invoice (event delegation)
+   ✅ Optional icon resolver:
+      <body data-image-dir="/img/icons/foodandbevs">
+      or defaults to /img/icons/<normalized-category>
 */
 
 (() => {
@@ -13,9 +21,8 @@
   const PRODUCTS_URL = "/pos/pos-products.json";
 
   const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  // Normalize for category matching (Food & Bevs vs Food and Bevs, etc.)
+  // Normalize strings for matching
   const norm = (s) =>
     String(s ?? "")
       .toLowerCase()
@@ -37,19 +44,16 @@
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
 
-  // ---------------------------------------
+  // -----------------------------
   // Category detection
-  // ---------------------------------------
-  function detectCategory() {
-    // 1) explicit body dataset
+  // -----------------------------
+  function detectCategoryLabel() {
     const bodyCat = document.body?.dataset?.category;
     if (bodyCat && String(bodyCat).trim()) return String(bodyCat).trim();
 
-    // 2) title text (your pages use .category-title)
     const h1 = $(".category-title");
     if (h1 && h1.textContent.trim()) return h1.textContent.trim();
 
-    // 3) URL segment fallback: /pos/foodandbevs/ => "foodandbevs"
     const path = location.pathname.split("?")[0].replace(/\/+$/, "");
     const seg = path.split("/").filter(Boolean).pop() || "";
     if (seg) {
@@ -60,9 +64,15 @@
     return "Category";
   }
 
-  // ---------------------------------------
-  // Image resolving (optional)
-  // ---------------------------------------
+  function defaultImageDirFromCategory(categoryLabel) {
+    // default: /img/icons/<normalized-category>
+    // e.g. Food & Bevs -> /img/icons/foodandbevs
+    return `/img/icons/${norm(categoryLabel)}`;
+  }
+
+  // -----------------------------
+  // Icon resolving
+  // -----------------------------
   const existsCache = new Map();
 
   async function urlExists(url) {
@@ -76,7 +86,7 @@
       ok = false;
     }
 
-    // Some hosts don’t like HEAD; fallback to GET
+    // fallback for hosts that dislike HEAD
     if (!ok) {
       try {
         const res = await fetch(url, { method: "GET", cache: "no-store" });
@@ -108,137 +118,49 @@
   }
 
   async function resolveProductImage(item, imageDir) {
-    // 1) If JSON has a direct image URL/path, use it
+    // 1) direct image path from JSON if present
     const direct = String(item?.image ?? "").trim();
     if (direct) return direct;
 
-    // 2) Optional: try imgKey/key
-    const key1 = normalizeKey(item?.imgKey || item?.key || "");
-    if (key1) {
-      const hit = await resolveByKey(key1, imageDir);
-      if (hit) return hit;
-    }
-
-    // 3) fallback: normalized product name
-    const nameKey = normalizeKey(item?.name || item?.product || "");
-    if (nameKey) {
-      const hit = await resolveByKey(nameKey, imageDir);
+    // 2) key-based hit
+    const key = normalizeKey(item?.imgKey || item?.key || item?.name || item?.product || "");
+    if (key) {
+      const hit = await resolveByKey(key, imageDir);
       if (hit) return hit;
     }
 
     return "";
   }
 
-  // ---------------------------------------
+  // -----------------------------
   // Rendering
-  // ---------------------------------------
+  // -----------------------------
   function buildCard(item, categoryLabel) {
     const brand = String(item.brand ?? "").trim();
-    const product = String(item.product ?? item.name ?? "Item").trim();
-    const name = String(item.name ?? product).trim();
+    const name = String(item.name ?? item.product ?? "Item").trim();
     const price = Number(item.price ?? 0);
-
-    const displayName = product;
-    const displayPrice = `$${money(price)}`;
 
     const card = document.createElement("article");
     card.className = "category-card";
     card.setAttribute("data-receipt-item", "");
-    card.style.cursor = "pointer";
 
-    // Minimal dataset contract
+    // data contract used by our click handler
     card.dataset.type = "product";
     card.dataset.category = categoryLabel;
     card.dataset.brand = brand;
     card.dataset.name = name;
     card.dataset.price = String(isFinite(price) ? price : 0);
 
-    // Image hints (optional)
-    card.dataset.imgKey = normalizeKey(item.imgKey || item.key || name || product);
+    // icon resolver hint
+    card.dataset.imgKey = normalizeKey(item.imgKey || item.key || name);
 
     card.innerHTML = `
       <div class="category-card-icon"></div>
-      <div class="category-card-name">${escapeHTML(displayName)}</div>
-      <div class="category-card-price">${escapeHTML(displayPrice)}</div>
+      <div class="category-card-name">${escapeHTML(name)}</div>
+      <div class="category-card-price">$${escapeHTML(money(price))}</div>
     `;
 
     return card;
-  }
-
-  function addCardToInvoice(card) {
-    if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
-
-    const type = (card.dataset.type || "product").toLowerCase();
-    const category = card.dataset.category || "Product";
-    const brand = card.dataset.brand || "";
-    const name = card.dataset.name || "Item";
-    const price = Number(card.dataset.price || "0");
-
-    const id = (category + "|" + brand + "|" + name).toLowerCase();
-
-    window.CigarOSCart.add({
-      id,
-      type,
-      category,
-      brand,
-      name,
-      price,
-      img: "",
-      link: "",
-      sub: ""
-    });
-  }
-
-  // ✅ SUPER RELIABLE: event delegation (works even if inner elements intercept clicks)
-  function wireCardTaps(gridEl) {
-    if (!gridEl) return;
-
-    const handler = (e) => {
-      const card = e.target?.closest?.(".category-card");
-      if (!card || !gridEl.contains(card)) return;
-
-      // Prevent accidental double triggers
-      if (card.__adding) return;
-      card.__adding = true;
-      try {
-        addCardToInvoice(card);
-      } finally {
-        setTimeout(() => (card.__adding = false), 180);
-      }
-    };
-
-    // pointerup works best on iOS
-    gridEl.addEventListener("pointerup", handler, { passive: true });
-    // fallback for older browsers
-    gridEl.addEventListener("click", handler, { passive: true });
-  }
-
-  async function applyIcons(cards, itemsByCard, imageDir) {
-    await Promise.all(
-      cards.map(async (card) => {
-        const iconBox = card.querySelector(".category-card-icon");
-        if (!iconBox) return;
-
-        const item = itemsByCard.get(card);
-        const src = await resolveProductImage(item, imageDir);
-
-        iconBox.innerHTML = "";
-        if (!src) return;
-
-        const img = document.createElement("img");
-        img.alt = item?.name || item?.product || "Product";
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.src = src;
-
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "contain";
-        img.style.display = "block";
-
-        iconBox.appendChild(img);
-      })
-    );
   }
 
   function wireSearch(gridEl, inputEl) {
@@ -246,16 +168,13 @@
 
     inputEl.addEventListener("input", () => {
       const q = norm(inputEl.value);
-      const cards = $$(".category-card", gridEl);
+      const cards = Array.from(gridEl.querySelectorAll(".category-card"));
 
       cards.forEach((card) => {
         const hay =
-          norm(card.dataset.brand) +
-          " " +
-          norm(card.dataset.name) +
-          " " +
+          norm(card.dataset.brand) + " " +
+          norm(card.dataset.name) + " " +
           norm(card.dataset.category);
-
         card.style.display = !q || hay.includes(q) ? "" : "none";
       });
     });
@@ -264,31 +183,95 @@
   function wireBack() {
     const backBtn = $("#category-back");
     if (!backBtn) return;
-
     backBtn.addEventListener("click", () => {
       window.location.href = "/pos/";
     });
   }
 
-  // ---------------------------------------
-  // Main
-  // ---------------------------------------
+  // ✅ ONE universal add-to-invoice handler (event delegation)
+  function wireAddToInvoice(gridEl) {
+    if (!gridEl) return;
+
+    gridEl.addEventListener("click", (e) => {
+      const card = e.target.closest?.(".category-card[data-receipt-item]");
+      if (!card) return;
+
+      // cart.js defines window.CigarOSCart
+      if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") {
+        console.warn("CigarOSCart not ready yet");
+        return;
+      }
+
+      const type = (card.dataset.type || "product").toLowerCase();
+      const category = card.dataset.category || "Product";
+      const brand = card.dataset.brand || "";
+      const name = card.dataset.name || "Item";
+      const price = Number(card.dataset.price || "0");
+
+      const id = (category + "|" + brand + "|" + name).toLowerCase();
+
+      window.CigarOSCart.add({
+        id,
+        type,
+        category,
+        brand,
+        name,
+        price,
+        img: "",
+        link: "",
+        sub: ""
+      });
+    });
+  }
+
+  async function applyIcons(gridEl, itemsByKey, imageDir) {
+    const cards = Array.from(gridEl.querySelectorAll(".category-card"));
+    await Promise.all(cards.map(async (card) => {
+      const iconBox = card.querySelector(".category-card-icon");
+      if (!iconBox) return;
+
+      const key = card.dataset.imgKey || "";
+      const item = itemsByKey.get(key) || null;
+      if (!item) return;
+
+      const src = await resolveProductImage(item, imageDir);
+
+      iconBox.innerHTML = "";
+      if (!src) return;
+
+      const img = document.createElement("img");
+      img.alt = item?.name || item?.product || "Product";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.src = src;
+
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "contain";
+      img.style.display = "block";
+
+      iconBox.appendChild(img);
+    }));
+  }
+
   async function init() {
     wireBack();
 
-    const gridEl = $(".category-grid");
+    const gridEl =
+      $("#category-grid") ||
+      $(".category-grid");
+
     const searchEl = $(".category-search-input");
+
     if (!gridEl) return;
 
-    // ✅ Ensure taps always work
-    wireCardTaps(gridEl);
-
-    const categoryLabel = detectCategory();
+    const categoryLabel = detectCategoryLabel();
     const categoryKey = norm(categoryLabel);
 
-    // Image directory can be set per page:
-    // <body data-image-dir="/img/icons/foodandbevs">
-    const imageDir = String(document.body?.dataset?.imageDir || "").trim();
+    // image directory: body override OR default mapping
+    const imageDir =
+      String(document.body?.dataset?.imageDir || "").trim() ||
+      defaultImageDirFromCategory(categoryLabel);
 
     // Fetch master products
     const res = await fetch(PRODUCTS_URL, { cache: "no-store" });
@@ -302,25 +285,29 @@
 
     // Render
     gridEl.innerHTML = "";
-    const itemsByCard = new Map();
     const frag = document.createDocumentFragment();
+
+    // Key map for icon lookup
+    const itemsByKey = new Map();
 
     filtered.forEach((it) => {
       const card = buildCard(it, categoryLabel);
-      itemsByCard.set(card, it);
       frag.appendChild(card);
+
+      const k = normalizeKey(it.imgKey || it.key || it.name || it.product || "");
+      if (k && !itemsByKey.has(k)) itemsByKey.set(k, it);
     });
 
     gridEl.appendChild(frag);
 
+    // ✅ ONE click handler for everything inside the grid
+    wireAddToInvoice(gridEl);
+
     // Search
     wireSearch(gridEl, searchEl);
 
-    // Icons (optional)
-    if (imageDir) {
-      const cards = $$(".category-card", gridEl);
-      await applyIcons(cards, itemsByCard, imageDir);
-    }
+    // Icons
+    await applyIcons(gridEl, itemsByKey, imageDir);
   }
 
   document.addEventListener("DOMContentLoaded", () => {
