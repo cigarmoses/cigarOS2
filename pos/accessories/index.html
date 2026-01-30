@@ -1,218 +1,911 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>POS • Accessories</title>
+/* /pos/cigars/brand.css */
 
-  <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/category.css" />
+/* ========== THEME ========== */
+:root{
+  --bg1:#071024;
+  --bg2:#0b1c3a;
 
-  <style>
-    .category-card-icon{
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-    }
-    .category-card-icon img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-    }
-  </style>
-</head>
-<body class="category-page">
-  <header class="category-topbar">
-    <button type="button" class="pos-back" id="category-back" aria-label="Back">
-      <span class="pos-back-icon">←</span>
-    </button>
-  </header>
+  --ink:#ffffff;
+  --muted:rgba(255,255,255,.65);
+  --hair:rgba(255,255,255,.10);
 
-  <main>
-    <h1 class="category-title">Accessories</h1>
+  --card:rgba(255,255,255,.06);
+  --card-border:rgba(255,255,255,.12);
 
-    <section class="category-search">
-      <input type="search" class="category-search-input" placeholder="Search" />
-    </section>
+  --pill:rgba(255,255,255,.07);
+  --pill-border:rgba(255,255,255,.14);
 
-    <section class="category-grid">
-      <!-- data-img-key should match the filename (no extension), normalized -->
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Accessories"
-        data-brand="Vertigo"
-        data-name="Vertigo Boxer Triple Torch"
-        data-img-key="vertigoboxertripletorch"
-        data-price="9.99">
-        <div class="category-card-icon"></div>
-        <div class="category-card-name">Vertigo Boxer Triple Torch</div>
-        <div class="category-card-price">$9.99</div>
-      </article>
+  --accent:#0f7aff;
+  --green:#34c759;
+}
 
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Accessories"
-        data-brand="Lotus"
-        data-name="Lotus Excalibur Double Torch V-Cutter Lighter"
-        data-img-key="lotusexcaliburdoubletorchvcutterlighter"
-        data-price="34.99">
-        <div class="category-card-icon"></div>
-        <div class="category-card-name">Lotus Excalibur Double Torch</div>
-        <div class="category-card-price">$34.99</div>
-      </article>
+*{ box-sizing:border-box; }
 
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Accessories"
-        data-brand="Vertigo"
-        data-name="Vertigo Oculus"
-        data-img-key="vertigooculus"
-        data-price="39.99">
-        <div class="category-card-icon"></div>
-        <div class="category-card-name">Vertigo Oculus</div>
-        <div class="category-card-price">$39.99</div>
-      </article>
-    </section>
-  </main>
+/* ========== PAGE BACKGROUND ========== */
+body.brand-page{
+  margin:0;
+  min-height:100vh;
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 700px at 15% 5%, rgba(65,110,200,.35), transparent 55%),
+    radial-gradient(900px 600px at 90% 10%, rgba(0,190,255,.16), transparent 55%),
+    linear-gradient(180deg, var(--bg2), var(--bg1));
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+}
 
-  <script src="/pos/cart.js" defer></script>
+/* ========== TOP BAR ========== */
+.brand-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  padding:14px 14px 0;
+}
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const IMAGE_DIR = "/img/lighters"; // Accessories folder
+.icon-btn{
+  width:44px;height:44px;
+  display:grid;place-items:center;
+  border:none;background:transparent;
+  color:var(--ink);
+}
 
-      // Back
-      const backBtn = document.getElementById("category-back");
-      if (backBtn) backBtn.addEventListener("click", () => (window.location.href = "/pos/"));
+.icon-btn svg{ width:24px;height:24px; stroke:rgba(255,255,255,.85); }
 
-      // -----------------------------
-      // Add-to-cart (tap card)
-      // -----------------------------
-      function addFromCard(card) {
-        if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
+/* ========== MAIN ========== */
+.brand-main{ padding:0 14px 120px; }
 
-        const type = (card.dataset.type || "product").toLowerCase();
-        const category = card.dataset.category || "Product";
-        const brand = card.dataset.brand || "";
-        const name = card.dataset.name || "Item";
-        const price = Number(card.dataset.price || "0");
+.brand-title-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:2px;
+}
 
-        const id = (category + "|" + brand + "|" + name).toLowerCase();
+.brand-title{
+  margin:8px 0 12px;
+  font-size:56px;
+  line-height:.92;
+  letter-spacing:-.02em;
+  font-weight:800;
+}
 
-        window.CigarOSCart.add({
-          id,
-          type,
-          category,
-          brand,
-          name,
-          price,
-          img: "",
-          link: "",
-          sub: ""
-        });
+.brand-icon{
+  width:54px;height:54px;
+  border-radius:14px;
+  background:rgba(255,255,255,.10);
+  box-shadow:0 10px 24px rgba(0,0,0,.25);
+  margin-top:10px;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+}
+.brand-icon img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
 
-        // Optional auto-open:
-        // window.CigarOSCart.openInvoice?.();
-      }
+/* ========== SEARCH ========== */
+.brand-search .search-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:18px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+}
 
-      document.querySelectorAll("[data-receipt-item]").forEach((card) => {
-        card.addEventListener("click", () => addFromCard(card));
-      });
+.search-ico{ opacity:.75; }
 
-      // ---------------------------------------
-      // Image resolver: img-key → name fallback
-      // Ext order: .svg → .png → .jpg
-      // ---------------------------------------
-      const existsCache = new Map();
+#brand-search{
+  width:100%;
+  border:none;
+  background:transparent;
+  outline:none;
+  color:var(--ink);
+  font-size:16px;
+  font-weight:700;
+}
+#brand-search::placeholder{ color:rgba(255,255,255,.45); }
 
-      function normalizeKey(str) {
-        return String(str || "")
-          .toLowerCase()
-          .replace(/[\s-]+/g, "")
-          .replace(/[^a-z0-9]/g, "");
-      }
+/* ========== CONTROLS ========== */
+.brand-controls{
+  display:grid;
+  grid-template-columns:1.05fr .72fr 1.7fr;
+  gap:10px;
+  margin-top:10px;
+}
 
-      async function urlExists(url) {
-        if (existsCache.has(url)) return existsCache.get(url);
+.pill-btn{
+  height:40px;
+  border-radius:16px;
+  border:1px solid var(--pill-border);
+  background:var(--pill);
+  color:rgba(255,255,255,.80);
+  font-size:13px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.pill-btn:active{ transform:scale(.99); }
 
-        let ok = false;
+/* ========== MADURO/NATURAL TOGGLE ========== */
+.seg{
+  height:40px;
+  border-radius:16px;
+  border:1px solid var(--pill-border);
+  background:var(--pill);
+  display:grid;
+  grid-template-columns:1fr 56px 1fr;
+  align-items:center;
+  padding:0 6px;
+}
 
-        try {
-          const res = await fetch(url, { method: "HEAD", cache: "no-store" });
-          ok = res.ok;
-        } catch (_) {
-          ok = false;
-        }
+.seg-btn{
+  height:40px;
+  border:none;
+  background:transparent;
+  font-size:12px;
+  font-weight:900;
+  color:rgba(255,255,255,.45);
+}
 
-        if (!ok) {
-          try {
-            const res = await fetch(url, { method: "GET", cache: "no-store" });
-            ok = res.ok;
-          } catch (_) {
-            ok = false;
-          }
-        }
+.seg-btn[aria-pressed="true"]{
+  color:rgba(15,122,255,.95);
+}
 
-        existsCache.set(url, ok);
-        return ok;
-      }
+.seg-dot{
+  width:56px;
+  height:30px;
+  border-radius:999px;
+  border:2px solid rgba(255,255,255,.22);
+  background:rgba(0,0,0,.18);
+  position:relative;
+  display:block;
+  margin:0 auto;
+  -webkit-tap-highlight-color:transparent;
+}
 
-      async function resolveByKey(key, baseDir) {
-        const exts = ["svg", "png", "jpg"];
-        for (const ext of exts) {
-          const url = `${baseDir}/${key}.${ext}`;
-          if (await urlExists(url)) return url;
-        }
-        return "";
-      }
+.seg-dot::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  background:rgba(15,122,255,.90);
+  left:4px;
+  transition:left .18s ease, opacity .18s ease;
+}
 
-      async function resolveProductImage(card) {
-        // Manual override if you ever want:
-        // data-img="/img/lighters/vertigoboxertripletorch.jpg"
-        const manual = card.dataset.img || "";
-        if (manual) return manual;
+#wrapper-seg[data-state="maduro"] .seg-dot::after{ left:4px; opacity:1; }
+#wrapper-seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }
+#wrapper-seg[data-state="natural"] .seg-dot::after{ left:30px; opacity:1; }
 
-        // 1) data-img-key (preferred)
-        const keyRaw = card.dataset.imgKey || "";
-        const key = normalizeKey(keyRaw);
-        if (key) {
-          const hit = await resolveByKey(key, IMAGE_DIR);
-          if (hit) return hit;
-        }
+/* ========== LIST ROWS ========== */
+.brand-list{
+  margin-top:14px;
+  display:flex;
+  flex-direction:column;
+}
 
-        // 2) fallback: normalized product name
-        const name = card.dataset.name || "";
-        const nameKey = normalizeKey(name);
-        if (nameKey) return await resolveByKey(nameKey, IMAGE_DIR);
+/* ✅ Compatibility row layout:
+   Supports BOTH:
+   (A) old contract: .row-ico .row-main .row-price .row-add
+   (B) new contract: .brand-row-left + .brand-row-right (+ optional .brand-row-msrp + .pos-add)
+*/
+.brand-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 10px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
 
-        return "";
-      }
+/* Optional left icon (old contract) */
+.row-ico{
+  width:54px;
+  height:54px;
+  border-radius:14px;
+  object-fit:cover;
+  box-shadow:0 10px 24px rgba(0,0,0,.20);
+  background:rgba(255,255,255,.08);
+  flex:0 0 auto;
+}
 
-      async function applyCardIcons() {
-        const cards = Array.from(document.querySelectorAll("[data-receipt-item]"));
+/* Left column (works for BOTH contracts) */
+.row-main,
+.brand-row-left{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+  flex:1 1 auto;
+  cursor:pointer;
+}
 
-        await Promise.all(cards.map(async (card) => {
-          const iconBox = card.querySelector(".category-card-icon");
-          if (!iconBox) return;
+/* Title/sub blocks (old contract) */
+.row-title{
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:-.01em;
+  line-height:1.1;
+  color:rgba(255,255,255,.92);
 
-          const src = await resolveProductImage(card);
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  white-space:normal;
+}
 
-          iconBox.innerHTML = "";
-          if (!src) return;
+.row-sub{
+  font-size:12px;
+  font-weight:700;
+  color:rgba(255,255,255,.55);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
-          const img = document.createElement("img");
-          img.alt = card.dataset.name || "Product";
-          img.loading = "lazy";
-          img.decoding = "async";
-          img.src = src;
-          iconBox.appendChild(img);
-        }));
-      }
+/* Title/sub blocks (new contract) */
+.brand-row-title{
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:-.01em;
+  line-height:1.12;
+  color:rgba(255,255,255,.92);
 
-      applyCardIcons();
-    });
-  </script>
-</body>
-</html>
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  white-space:normal;
+}
+
+.brand-row-sub{
+  margin-top:2px;
+  font-size:12px;
+  font-weight:700;
+  color:rgba(255,255,255,.55);
+  white-space:normal;
+}
+.brand-row-sub div{ display:inline; }
+.brand-row-sub div + div{ margin-left:8px; }
+
+/* Right column wrapper (new contract) */
+.brand-row-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:0 0 auto;
+  margin-left:14px;
+}
+
+/* MSRP (old contract) */
+.row-price{
+  position:relative;
+  padding-left:10px;
+  font-size:16px;
+  font-weight:600;
+  color:rgba(255,255,255,.92);
+  min-width:78px;
+  text-align:right;
+}
+.row-price::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:50%;
+  transform:translateY(-50%);
+  width:1px;
+  height:44px;
+  background:rgba(255,255,255,.20);
+  opacity:.9;
+}
+
+/* MSRP (new contract) */
+.brand-row-msrp{
+  position:relative;
+  padding-left:10px; /* ✅ FIXED */
+  font-size:16px;
+  font-weight:600;
+  color:rgba(255,255,255,.92);
+  min-width:78px;
+  text-align:right;
+}
+.brand-row-msrp::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:50%;
+  transform:translateY(-50%);
+  width:1px;
+  height:44px;
+  background:rgba(255,255,255,.20);
+  opacity:.9;
+}
+
+/* Add button (old small dot) */
+.row-add{
+  width:20px;
+  height:20px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+  line-height:1;
+  display:grid;
+  place-items:center;
+  border:none;
+  background:var(--green);
+  color:#073018;
+  cursor:pointer;
+  box-shadow:0 10px 18px rgba(0,0,0,.25);
+  -webkit-tap-highlight-color:transparent;
+}
+.row-add:active{ transform:scale(.98); }
+
+/* Add button (new big green + like your screenshots) */
+.brand-row .pos-add{
+  width:26px;
+  height:26px;
+  border-radius:999px;
+  border:none;
+  background:var(--green);
+  color:#ffffff;
+  font-size:16px;
+  font-weight:900;
+  line-height:1;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  box-shadow:0 10px 16px rgba(0,0,0,.24);
+  -webkit-tap-highlight-color:transparent;
+}
+.brand-row .pos-add:active{ transform:scale(.98); }
+
+/* ========== STATUS TEXT ========== */
+.brand-status{
+  margin:16px 0 0;
+  color:rgba(255,255,255,.75);
+  font-weight:700;
+}
+
+/* ===============================
+   GENERIC MODAL UTILITIES
+   =============================== */
+[hidden]{ display:none !important; }
+body.pos-modal-open{ overflow:hidden; }
+
+#sheet-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 9998;
+  pointer-events:none;
+  opacity:0;
+}
+
+#sheet-backdrop.open,
+#sheet-backdrop:not([hidden]){
+  pointer-events:auto;
+  opacity:1;
+}
+
+/* ===============================
+   ✅ BANDS POPUP
+   =============================== */
+#sheet-bands[hidden]{ display:none !important; }
+#sheet-bands:not([hidden]){
+  display:flex !important;
+  opacity:1 !important;
+  transform:translate(-50%, -50%) !important;
+  pointer-events:auto !important;
+}
+
+#sheet-bands{
+  position:fixed !important;
+  left:50% !important;
+  top:50% !important;
+
+  width:min(630px, 90vw) !important;
+  max-height:76vh !important;
+
+  border-radius:32px !important;
+  background:#ffffff !important;
+  color:#0b1220 !important;
+
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.55),
+    0 0 0 1px rgba(0,0,0,.04) !important;
+
+  flex-direction:column !important;
+  overflow:hidden !important;
+
+  z-index:9999 !important;
+}
+
+.bands-sheet{ display:flex; flex-direction:column; overflow:hidden; }
+
+.bands-header{
+  position:relative;
+  text-align:center;
+  padding:18px 20px 10px;
+  border-bottom:none;
+}
+.bands-header h2{
+  margin:0;
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:.01em;
+}
+.bands-x{
+  position:absolute;
+  top:14px;
+  right:16px;
+  width:32px;
+  height:32px;
+  border-radius:16px;
+  border:none;
+  background:rgba(15,23,42,.06);
+  font-size:20px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+}
+
+.bands-body{
+  flex:1 1 auto;
+  overflow-y:auto;
+  padding:6px 18px 10px;
+  position:relative;
+}
+.bands-body::after{
+  content:"";
+  position:absolute;
+  top:14px;
+  right:8px;
+  width:3px;
+  height:calc(100% - 28px);
+  border-radius:999px;
+  background:rgba(0,0,0,.10);
+  box-shadow:
+    inset 0 0 4px rgba(255,255,255,.35),
+    0 0 0 1px rgba(255,255,255,.25);
+  pointer-events:none;
+}
+
+.bands-list{ display:flex; flex-direction:column; gap:14px; }
+
+.band-row{ display:block; }
+
+.band-art{
+  width:100%;
+  border-radius:24px;
+  overflow:hidden;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:12px 14px;
+}
+.band-art img{
+  max-width:none;
+  max-height:none;
+  width:240px;
+  height:auto;
+  object-fit:contain;
+  display:block;
+}
+
+.band-meta{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 20px;
+}
+
+.band-label{
+  flex:1 1 auto;
+  text-align:center;
+  font-weight:400;
+  font-size:14px;
+  color:#0b1220;
+}
+
+.band-check{
+  position:absolute;
+  right:20px;
+  top:50%;
+  transform:translateY(-50%);
+  width:22px;
+  height:22px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  background:#f3f4f6;
+  -webkit-appearance:none;
+  appearance:none;
+  outline:none;
+  box-shadow:none;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.band-check:focus,
+.band-check:focus-visible{
+  outline:none !important;
+  box-shadow:none !important;
+}
+.band-check:checked{
+  background:var(--accent);
+  border-color:var(--accent);
+}
+.band-check:checked::after{
+  content:"";
+  position:absolute;
+  left:7px;
+  top:3px;
+  width:6px;
+  height:12px;
+  border:2px solid #ffffff;
+  border-top:0;
+  border-left:0;
+  transform:rotate(45deg);
+}
+
+.bands-footer{
+  padding:16px 18px 22px;
+  border-top:none;
+}
+.bands-footer .sheet-btn.primary{
+  width:100%;
+  height:44px;
+  border-radius:22px;
+  font-size:16px;
+  font-weight:600;
+  padding:0 16px;
+  border:none;
+}
+.bands-footer .sheet-btn.primary:disabled{
+  background:#e5e7eb;
+  color:#9ca3af;
+}
+.bands-footer .sheet-btn.primary:not(:disabled){
+  background:var(--accent);
+  color:#ffffff;
+}
+
+/* =========================================================
+   ✅ CIGAR DETAIL POPUP (MOCKUP MATCH — STABLE iOS SAFARI)
+   ========================================================= */
+
+/* Hide receipt/invoice FAB while cigar detail is open */
+body.cigar-detail-open .pos-invoice-fab,
+body.cigar-detail-open .pos-receipt-fab,
+body.cigar-detail-open .receipt-fab,
+body.cigar-detail-open #posInvoiceFab,
+body.cigar-detail-open #posReceiptFab,
+body.cigar-detail-open #receipt-open,
+body.cigar-detail-open .pos-receipt-badge,
+body.cigar-detail-open .receipt-badge,
+body.cigar-detail-open #posReceiptBadge,
+body.cigar-detail-open #receipt-count{
+  display:none !important;
+}
+
+/* Overlay */
+.cigar-detail-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 10003;
+  background: rgba(10, 22, 40, 0.38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  padding:
+    calc(22px + env(safe-area-inset-top))
+    14px
+    calc(22px + env(safe-area-inset-bottom));
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+
+  pointer-events: none;
+}
+.cigar-detail-overlay.open{
+  display:flex;
+  pointer-events: auto;
+}
+
+/* Sheet (flex column so body can scroll on iOS Safari) */
+.cigar-detail-sheet{
+  width: min(720px, 100%);
+  height: min(820px, 90svh);
+  max-height: 90svh;
+  background: rgba(255,255,255,0.96);
+  border-radius: 22px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
+  position: relative;
+
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+}
+
+/* Close button */
+.cigar-detail-close,
+.cigar-detail-x{
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+
+  width: 32px;
+  height: 32px;
+
+  border: none;
+  background: transparent;
+  box-shadow: none;
+
+  color: #ff3b30;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* Body (scrollable) */
+.cigar-detail-body{
+  flex:1;
+  min-height:0;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Header */
+.cd-headercard{
+  background: #fff;
+  border-radius: 18px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  box-shadow: 0 10px 26px rgba(15,26,44,0.08), 0 2px 8px rgba(15,26,44,0.05);
+}
+
+.cd-brand{
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+}
+
+.cd-name{
+  margin-top: 4px;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: rgba(15,26,44,0.60);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-h-icon{
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.06);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.cd-h-icon img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+
+/* Main */
+.cd-main{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 0.42fr 0.58fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+/* Left cigar image */
+.cigar-detail-sheet .cd-img{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start !important;
+  padding-left: 36px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+.cigar-detail-sheet .cd-img img.cigar-detail-stick{
+  height: auto !important;
+  max-height: 100% !important;
+  width: auto !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 !important;
+}
+
+/* Right side */
+.cd-right{
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  padding-bottom: 0px;
+}
+
+.cd-grid2{
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 8px;
+}
+
+.cd-stat{
+  background: rgba(0,0,0,0.04);
+  border-radius: 14px;
+  padding: 8px 10px;
+  text-align: right;
+  min-width: 0;
+}
+.cd-stat .k{
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: -0.02em;
+  color: rgba(15,26,44,0.42);
+  text-align: right;
+  white-space: nowrap;
+}
+.cd-stat .v{
+  margin-top: 5px;
+  font-weight: 800;
+  font-size: 34px;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cd-stat.small .v{
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cd-block{
+  background: rgba(0,0,0,0.04);
+  border-radius: 14px;
+  padding: 6px 10px;
+}
+.cd-block.single{
+  padding: 8px 10px;
+}
+
+.cd-kv{
+  display: grid;
+  grid-template-columns: 1fr;
+  padding: 5px 0;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.cd-kv:first-child{ border-top: none; }
+
+.cd-kv .k{
+  text-align: right;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: -0.02em;
+  color: rgba(15,26,44,0.40);
+  white-space: nowrap;
+}
+.cd-kv .v{
+  margin-top: 3px;
+  text-align: right;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  color: #0f1a2c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Actions */
+.cd-actions{
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 0;
+  position: static;
+}
+
+.cd-btn{
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,26,44,0.12);
+  background: rgba(255,255,255,0.66);
+  color: rgba(15,26,44,0.40);
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0 6px;
+
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-btn[disabled]{ cursor: not-allowed; opacity: 0.9; }
+
+/* CSS-only label override */
+.cd-actions .cd-btn{ font-size: 0; }
+.cd-actions .cd-btn::before{
+  font-size: 9px;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: rgba(15,26,44,0.40);
+  content: "ACTION";
+}
+.cd-actions .cd-btn:nth-child(1)::before{ content: "ADD"; }
+.cd-actions .cd-btn:nth-child(2)::before{ content: "EDIT"; }
+.cd-actions .cd-btn:nth-child(3)::before{ content: "COMPARE"; }
+
+/* Landscape: allow scroll if short */
+@media (orientation: landscape) and (max-height: 520px){
+  .cigar-detail-body{
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Mobile tweaks */
+@media (max-width: 520px){
+  .cd-main{
+    grid-template-columns: 0.40fr 0.60fr;
+    gap: 10px;
+  }
+  .cigar-detail-sheet .cd-img{ padding-left: 60px !important; }
+  .cd-grid2{ grid-template-columns: 104px 1fr; }
+  .cd-stat .v{ font-size: 32px; }
+}
