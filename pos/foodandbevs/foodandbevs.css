@@ -12,3 +12,12 @@
   padding-bottom: 400px;
   box-sizing: border-box;
 }
+.food-tile__btn,
+.food-tile__label {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.food-tile__btn img {
+  pointer-events: none; /* ensures button is the tap target */
+}
