@@ -3,7 +3,7 @@
    - Reads from /pos/pos-products.json
    - Filters by category (from <body data-category="..."> OR <h1> text OR URL path)
    - Renders cards in the same layout as your Accessories page
-   - Keeps cart.js untouched (uses window.CigarOSCart.add)
+   - Adds to invoice using window.CigarOSCart.add (cart.js)
    - Optional image resolving via <body data-image-dir="/img/lighters">
 */
 
@@ -112,7 +112,7 @@
     const direct = String(item?.image ?? "").trim();
     if (direct) return direct;
 
-    // 2) If you store an img key in JSON (optional), try that
+    // 2) Optional: try imgKey/key
     const key1 = normalizeKey(item?.imgKey || item?.key || "");
     if (key1) {
       const hit = await resolveByKey(key1, imageDir);
@@ -136,7 +136,6 @@
     const brand = String(item.brand ?? "").trim();
     const product = String(item.product ?? item.name ?? "Item").trim();
     const name = String(item.name ?? product).trim();
-
     const price = Number(item.price ?? 0);
 
     const displayName = product;
@@ -145,8 +144,9 @@
     const card = document.createElement("article");
     card.className = "category-card";
     card.setAttribute("data-receipt-item", "");
+    card.style.cursor = "pointer";
 
-    // Minimal dataset contract for cart.js / your add logic
+    // Minimal dataset contract
     card.dataset.type = "product";
     card.dataset.category = categoryLabel;
     card.dataset.brand = brand;
@@ -154,7 +154,7 @@
     card.dataset.price = String(isFinite(price) ? price : 0);
 
     // Image hints (optional)
-    card.dataset.imgKey = normalizeKey(item.imgKey || name || product);
+    card.dataset.imgKey = normalizeKey(item.imgKey || item.key || name || product);
 
     card.innerHTML = `
       <div class="category-card-icon"></div>
@@ -165,30 +165,52 @@
     return card;
   }
 
-  function attachCartTap(card) {
-    card.addEventListener("click", () => {
-      if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
+  function addCardToInvoice(card) {
+    if (!window.CigarOSCart || typeof window.CigarOSCart.add !== "function") return;
 
-      const type = (card.dataset.type || "product").toLowerCase();
-      const category = card.dataset.category || "Product";
-      const brand = card.dataset.brand || "";
-      const name = card.dataset.name || "Item";
-      const price = Number(card.dataset.price || "0");
+    const type = (card.dataset.type || "product").toLowerCase();
+    const category = card.dataset.category || "Product";
+    const brand = card.dataset.brand || "";
+    const name = card.dataset.name || "Item";
+    const price = Number(card.dataset.price || "0");
 
-      const id = (category + "|" + brand + "|" + name).toLowerCase();
+    const id = (category + "|" + brand + "|" + name).toLowerCase();
 
-      window.CigarOSCart.add({
-        id,
-        type,
-        category,
-        brand,
-        name,
-        price,
-        img: "",
-        link: "",
-        sub: ""
-      });
+    window.CigarOSCart.add({
+      id,
+      type,
+      category,
+      brand,
+      name,
+      price,
+      img: "",
+      link: "",
+      sub: ""
     });
+  }
+
+  // ✅ SUPER RELIABLE: event delegation (works even if inner elements intercept clicks)
+  function wireCardTaps(gridEl) {
+    if (!gridEl) return;
+
+    const handler = (e) => {
+      const card = e.target?.closest?.(".category-card");
+      if (!card || !gridEl.contains(card)) return;
+
+      // Prevent accidental double triggers
+      if (card.__adding) return;
+      card.__adding = true;
+      try {
+        addCardToInvoice(card);
+      } finally {
+        setTimeout(() => (card.__adding = false), 180);
+      }
+    };
+
+    // pointerup works best on iOS
+    gridEl.addEventListener("pointerup", handler, { passive: true });
+    // fallback for older browsers
+    gridEl.addEventListener("click", handler, { passive: true });
   }
 
   async function applyIcons(cards, itemsByCard, imageDir) {
@@ -202,11 +224,6 @@
 
         iconBox.innerHTML = "";
         if (!src) return;
-
-        // contain behavior like your Accessories page
-        iconBox.style.display = "grid";
-        iconBox.style.placeItems = "center";
-        iconBox.style.overflow = "hidden";
 
         const img = document.createElement("img");
         img.alt = item?.name || item?.product || "Product";
@@ -263,11 +280,14 @@
     const searchEl = $(".category-search-input");
     if (!gridEl) return;
 
+    // ✅ Ensure taps always work
+    wireCardTaps(gridEl);
+
     const categoryLabel = detectCategory();
     const categoryKey = norm(categoryLabel);
 
     // Image directory can be set per page:
-    // <body data-image-dir="/img/lighters">
+    // <body data-image-dir="/img/icons/foodandbevs">
     const imageDir = String(document.body?.dataset?.imageDir || "").trim();
 
     // Fetch master products
@@ -287,7 +307,6 @@
 
     filtered.forEach((it) => {
       const card = buildCard(it, categoryLabel);
-      attachCartTap(card);
       itemsByCard.set(card, it);
       frag.appendChild(card);
     });
