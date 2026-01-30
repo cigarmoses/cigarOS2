@@ -1,446 +1,82 @@
+<!-- /pos/foodandbevs/index.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>POS • Food & Bevs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Food &amp; Bevs</title>
 
-  <link rel="stylesheet" href="/css/type.css" />
+  <!-- Global POS styles -->
   <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/category.css" />
-</head>
-<body class="category-page">
 
-  <header class="category-topbar">
-    <button type="button" class="pos-back" id="category-back">
-      <span class="pos-back-icon">←</span>
-    </button>
+  <!-- Category grid base styles (shared) -->
+  <link rel="stylesheet" href="/pos/category.css" />
+
+  <!-- Page-specific overrides -->
+  <link rel="stylesheet" href="/pos/foodandbevs.css" />
+
+  <!-- Invoice / cart modal styles -->
+  <link rel="stylesheet" href="/pos/invoice.css" />
+</head>
+
+<body class="page">
+  <!-- Top bar -->
+  <header class="page-header">
+    <a class="back" href="/pos/" aria-label="Back">
+      ←
+    </a>
+    <h1 class="page-title">Food &amp; Bevs</h1>
   </header>
 
-  <main>
-    <h1 class="category-title">Food &amp; Bevs</h1>
+  <!-- Search (if you already have a wired search, keep it; otherwise it’s just UI) -->
+  <div class="page-search">
+    <input id="search" type="search" placeholder="Search" autocomplete="off" />
+  </div>
 
-    <section class="category-search">
-      <input type="search" class="category-search-input" placeholder="Search" />
-    </section>
-
-    <!-- NOTE: added category-grid-foodbevs class here -->
-    <section class="category-grid category-grid-foodbevs">
-
-      <!-- Row 1 -->
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="7up" data-price="1.50"
-        data-img="/img/icons/foodandbevs/7up.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/7up.svg" alt="7up" />
-        </div>
-        <div class="category-card-name">7up</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Coca-Cola" data-price="1.50"
-        data-img="/img/icons/foodandbevs/cocacola.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/cocacola.svg" alt="Coca-Cola" />
-        </div>
-        <div class="category-card-name">Coca-Cola</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Coke Zero" data-price="1.50"
-        data-img="/img/icons/foodandbevs/cokezero.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/cokezero.svg" alt="Coke Zero" />
-        </div>
-        <div class="category-card-name">Coke Zero</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Diet Coke" data-price="1.50"
-        data-img="/img/icons/foodandbevs/dietcoke.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/dietcoke.svg" alt="Diet Coke" />
-        </div>
-        <div class="category-card-name">Diet Coke</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <!-- Row 2 -->
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Dr Pepper" data-price="1.50"
-        data-img="/img/icons/foodandbevs/drpepper.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/drpepper.svg" alt="Dr Pepper" />
-        </div>
-        <div class="category-card-name">Dr Pepper</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Diet Dr Pepper" data-price="1.50"
-        data-img="/img/icons/foodandbevs/dietdrpepper.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/dietdrpepper.svg" alt="Diet Dr Pepper" />
-        </div>
-        <div class="category-card-name">Diet Dr Pepper</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Dunkin Iced Coffee" data-price="3.99"
-        data-img="/img/icons/foodandbevs/dunkin.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/dunkin.svg" alt="Dunkin Iced Coffee" />
-        </div>
-        <div class="category-card-name">Dunkin Iced Coffee</div>
-        <div class="category-card-price">$3.99</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Gatorade" data-price="2.99"
-        data-img="/img/icons/foodandbevs/gatorade.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/gatorade.svg" alt="Gatorade" />
-        </div>
-        <div class="category-card-name">Gatorade</div>
-        <div class="category-card-price">$2.99</div>
-      </article>
-
-      <!-- Row 3 -->
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Ginger Ale" data-price="1.50"
-        data-img="/img/icons/foodandbevs/gingerale.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/gingerale.svg" alt="Ginger Ale" />
-        </div>
-        <div class="category-card-name">Ginger Ale</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Sweet Tea" data-price="2.49"
-        data-img="/img/icons/foodandbevs/gpsweettea.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/gpsweettea.svg" alt="Gold Peak Sweet Tea" />
-        </div>
-        <div class="category-card-name">Sweet Tea</div>
-        <div class="category-card-price">$2.49</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Unsweet Tea" data-price="2.49"
-        data-img="/img/icons/foodandbevs/gpunsweetenedtea.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/gpunsweetenedtea.svg" alt="Gold Peak Unsweet Tea" />
-        </div>
-        <div class="category-card-name">Unsweet Tea</div>
-        <div class="category-card-price">$2.49</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Zero Sugar Tea" data-price="2.49"
-        data-img="/img/icons/foodandbevs/gpzerosugarsweettea.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/gpzerosugarsweettea.svg" alt="Gold Peak Zero Sugar Sweet Tea" />
-        </div>
-        <div class="category-card-name">Zero Sugar Tea</div>
-        <div class="category-card-price">$2.49</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Sprite" data-price="1.50"
-        data-img="/img/icons/foodandbevs/sprite.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/sprite.svg" alt="Sprite" />
-        </div>
-        <div class="category-card-name">Sprite</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Starbucks" data-price="1.50"
-        data-img="/img/icons/foodandbevs/starbucks.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/starbucks.svg" alt="Starbucks" />
-        </div>
-        <div class="category-card-name">Starbucks</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-      
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Monster Tea" data-price="3.50"
-        data-img="/img/icons/foodandbevs/monstertea.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/monstertea.svg" alt="Monster Tea" />
-        </div>
-        <div class="category-card-name">Monster Tea</div>
-        <div class="category-card-price">$3.50</div>
-      </article>
-            
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Root Beer" data-price="1.50"
-        data-img="/img/icons/foodandbevs/rootbeer.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/rootbeer.svg" alt="Root Beer" />
-        </div>
-        <div class="category-card-name">Root Beer</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-                  
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Red Bull" data-price="3.50"
-        data-img="/img/icons/foodandbevs/redbull.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/redbull.svg" alt="Red Bull" />
-        </div>
-        <div class="category-card-name">Red Bull</div>
-        <div class="category-card-price">$3.50</div>
-      </article>
-                        
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Mountain Dew" data-price="1.50"
-        data-img="/img/icons/foodandbevs/mountaindew.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/mountaindew.svg" alt="Mountain Dew" />
-        </div>
-        <div class="category-card-name">Mountain Dew</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Pepsi" data-price="1.50"
-        data-img="/img/icons/foodandbevs/pepsi.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/pepsi.svg" alt="Pepsi" />
-        </div>
-        <div class="category-card-name">Pepsi</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-      
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Water" data-price="1.50"
-        data-img="/img/icons/foodandbevs/water.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/water.svg" alt="Water" />
-        </div>
-        <div class="category-card-name">Water</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-                                    
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Illy" data-price="2.99"
-        data-img="/img/icons/foodandbevs/illy.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/illy.svg" alt="Illy" />
-        </div>
-        <div class="category-card-name">Illy</div>
-        <div class="category-card-price">$2.99</div>
-      </article>
-                                          
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Fanta" data-price="1.50"
-        data-img="/img/icons/foodandbevs/fanta.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/fanta.svg" alt="Fanta" />
-        </div>
-        <div class="category-card-name">Fanta</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-                                                
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Doritos" data-price="1.50"
-        data-img="/img/icons/foodandbevs/doritos.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/doritos.svg" alt="Doritos" />
-        </div>
-        <div class="category-card-name">Doritos</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-                                                           
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Oreos" data-price="1.50"
-        data-img="/img/icons/foodandbevs/oreos.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/oreos.svg" alt="Oreos" />
-        </div>
-        <div class="category-card-name">Oreos</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-                                   
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Flamin Hot Cheetos" data-price="1.50"
-        data-img="/img/icons/foodandbevs/flaminhotcheetos.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/flaminhotcheetos.svg" alt="Flamin Hot Cheetos" />
-        </div>
-        <div class="category-card-name">Flamin Hot Cheetos</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Rold Gold Pretzels" data-price="1.50"
-        data-img="/img/icons/foodandbevs/roldgoldpretzels.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/roldgoldpretzels.svg" alt="Rold Gold Pretzels" />
-        </div>
-        <div class="category-card-name">Rold Gold Pretzels</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Fritos" data-price="1.50"
-        data-img="/img/icons/foodandbevs/fritos.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/fritos.svg" alt="Fritos" />
-        </div>
-        <div class="category-card-name">Fritos</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Lays" data-price="1.50"
-        data-img="/img/icons/foodandbevs/lays.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/lays.svg" alt="Lays" />
-        </div>
-        <div class="category-card-name">Lays</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Lays BBQ" data-price="1.50"
-        data-img="/img/icons/foodandbevs/laysbbq.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/laysbbq.svg" alt="Lays BBQ" />
-        </div>
-        <div class="category-card-name">Lays BBQ</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Reese's" data-price="1.50"
-        data-img="/img/icons/foodandbevs/reeses.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/reeses.svg" alt="Reese's" />
-        </div>
-        <div class="category-card-name">Reese's</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="M & M's" data-price="1.50"
-        data-img="/img/icons/foodandbevs/mandms.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/mandms.svg" alt="M & M's" />
-        </div>
-        <div class="category-card-name">M & M's</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="McDonald's Coffee" data-price="1.50"
-        data-img="/img/icons/foodandbevs/mcdonalds.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/mcdonalds.svg" alt="McDonald's Coffee" />
-        </div>
-        <div class="category-card-name">McDonald's Coffee</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-
-      <article class="category-card" data-receipt-item
-        data-type="product"
-        data-category="Food & Bevs"
-        data-name="Skittles" data-price="1.50"
-        data-img="/img/icons/foodandbevs/skittles.svg">
-        <div class="category-card-icon">
-          <img src="/img/icons/foodandbevs/skittles.svg" alt="Skittles" />
-        </div>
-        <div class="category-card-name">Skittles</div>
-        <div class="category-card-price">$1.50</div>
-      </article>
-      
-      
-      <!-- Add the rest the same way... -->
-
-    </section>
+  <!-- Grid -->
+  <main class="page-content">
+    <!-- IMPORTANT: foodandbevs.js requires #grid -->
+    <div id="grid" class="category-grid category-grid-foodbevs" aria-label="Food &amp; Bevs products"></div>
   </main>
 
-  <script>
-    // Back button only
-    (function () {
-      const backBtn = document.getElementById("category-back");
-      if (backBtn) backBtn.addEventListener("click", () => { window.location.href = "/pos/"; });
-    })();
-  </script>
+  <!-- OPTIONAL legacy bottom sheet UI (safe to keep even if not used)
+       If these IDs exist, earlier versions may open it.
+       If you don’t want the sheet at all, you can delete this entire block.
+  -->
+  <section id="sheet" class="sheet" aria-hidden="true">
+    <div class="sheet__panel">
+      <button class="sheet__close" type="button" data-close-sheet aria-label="Close">✕</button>
 
-  <!-- ONE shared cart controller for all POS pages -->
-  <script src="/pos/cart.js" defer></script>
+      <div class="sheet__title" id="sheetTitle">Item</div>
+      <div class="sheet__price" id="sheetPrice">$0.00</div>
+
+      <div class="sheet__qty">
+        <button id="btnMinus" type="button" class="qty-btn" aria-label="Decrease">−</button>
+        <div id="qtyVal" class="qty-val">1</div>
+        <button id="btnPlus" type="button" class="qty-btn" aria-label="Increase">+</button>
+      </div>
+
+      <div id="sheetSubtotal" class="sheet__subtotal">$0.00 subtotal</div>
+
+      <button id="btnAddToBill" type="button" class="sheet__add">
+        Add to Bill
+      </button>
+    </div>
+    <div class="sheet__backdrop" data-close-sheet></div>
+  </section>
+
+  <!-- OPTIONAL legacy cart pill (safe if present; cart.js has its own FAB anyway) -->
+  <div id="cartPill" class="cart-pill" hidden>
+    <span id="cartCount">0</span>
+    <span id="cartTotal">$0.00</span>
+  </div>
+
+  <!-- SCRIPTS (order matters)
+       1) cart.js injects the invoice FAB + modal and attaches listeners
+       2) foodandbevs.js renders tiles and triggers add-to-invoice
+       NOTE: absolute /pos/... paths avoid folder-route issues.
+  -->
+  <script src="/pos/cart.js?v=10" defer></script>
+  <script src="/pos/foodandbevs.js?v=10" defer></script>
 </body>
 </html>
