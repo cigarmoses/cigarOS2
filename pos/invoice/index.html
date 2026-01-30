@@ -1,0 +1,53 @@
+<!-- /pos/invoice/index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>POS • Invoice</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/pos/pos.css" />
+  <link rel="stylesheet" href="/pos/invoice/invoice.css" />
+</head>
+
+<body class="pos-invoice-page">
+  <header class="inv-topbar">
+    <a class="inv-back" href="/pos/" aria-label="Back">←</a>
+  </header>
+
+  <main class="inv-wrap">
+    <section class="inv-card">
+      <div class="inv-header">
+        <div class="inv-title">INVOICE</div>
+        <div class="inv-shop" id="invShop">Shop</div>
+        <div class="inv-date" id="invDate"></div>
+        <div class="inv-num" id="invNum"></div>
+      </div>
+
+      <button class="inv-cust" type="button" id="custBtn">
+        <span id="custLabel">Attach Saved Customer</span>
+        <span class="inv-caret">▾</span>
+      </button>
+
+      <div class="inv-items" id="invItems">
+        <div class="inv-empty" id="invEmpty">No items yet.</div>
+      </div>
+
+      <div class="inv-totals">
+        <div class="row"><span>Subtotal</span><span id="invSubtotal">$0.00</span></div>
+        <div class="row"><span>Tax</span><span id="invTax">$0.00</span></div>
+        <div class="row total"><span>TOTAL</span><span id="invTotal">$0.00</span></div>
+      </div>
+
+      <div class="inv-actions">
+        <button class="btn ghost" id="invClear" type="button">Clear</button>
+        <a class="btn primary" href="/pos/" role="button">Close</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="/pos/cart.js" defer></script>
+  <script src="/pos/invoice/invoice.js" defer></script>
+</body>
+</html>
