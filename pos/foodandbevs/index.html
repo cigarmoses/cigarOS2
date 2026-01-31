@@ -12,48 +12,59 @@
   <link rel="stylesheet" href="/pos/foodandbevs.css" />
 
   <style>
-    /* Header Invoice button (top-right) */
+    .page-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .page-header-left{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+    .page-title{ margin:0; }
     .invoice-btn{
-      margin-left:auto;
       display:inline-flex;
       align-items:center;
       gap:10px;
-      padding:10px 12px;
+      padding:10px 14px;
       border-radius:14px;
-      text-decoration:none;
+      border:1px solid rgba(0,0,0,.08);
+      background:#fff;
       font-weight:900;
-      color:#0b1220;
-      background:rgba(255,255,255,.75);
-      border:1px solid rgba(15,23,42,.08);
-      -webkit-tap-highlight-color: transparent;
+      font-size:16px;
+      line-height:1;
+      -webkit-tap-highlight-color:transparent;
     }
     .invoice-badge{
-      min-width:22px;
-      height:22px;
-      padding:0 7px;
+      min-width:26px;
+      height:26px;
+      padding:0 8px;
       border-radius:999px;
       background:#ff3b30;
       color:#fff;
-      font-weight:900;
-      font-size:12px;
       display:grid;
       place-items:center;
-      line-height:1;
+      font-weight:900;
+      font-size:14px;
     }
   </style>
 </head>
 
 <body class="page">
   <header class="page-header">
-    <a class="back" href="/pos/" aria-label="Back">←</a>
+    <div class="page-header-left">
+      <a class="back" href="/pos/" aria-label="Back">←</a>
+      <h1 class="page-title">Food &amp; Bevs</h1>
+    </div>
 
-    <h1 class="page-title">Food &amp; Bevs</h1>
-
-    <!-- Top-right invoice button (NO floating icon anywhere) -->
-    <a class="invoice-btn" id="invoiceBtn" href="/pos/invoice/" aria-label="Invoice">
+    <!-- ✅ Top-right invoice -->
+    <button id="invoiceBtn" class="invoice-btn" type="button" aria-label="Invoice">
       Invoice
-      <span class="invoice-badge" id="invoiceBadge" hidden>0</span>
-    </a>
+      <span id="invoiceBadge" class="invoice-badge" hidden>0</span>
+    </button>
   </header>
 
   <div class="page-search">
@@ -64,10 +75,7 @@
     <div id="grid" class="category-grid category-grid-foodbevs" aria-label="Food &amp; Bevs products"></div>
   </main>
 
-  <!-- IMPORTANT:
-       cart.js is now state + badge updater ONLY.
-       No floating icon, no modal, no sheet.
-  -->
+  <!-- ✅ cart.js handles cart + badge + routing -->
   <script src="/pos/cart.js?v=12" defer></script>
   <script src="/pos/foodandbevs.js?v=12" defer></script>
 </body>
