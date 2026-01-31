@@ -41,14 +41,21 @@ body.brand-page{
   padding:14px 14px 0;
 }
 
-.icon-btn{
-  width:44px;height:44px;
-  display:grid;place-items:center;
-  border:none;background:transparent;
+/* ✅ SCOPED ICON BUTTON */
+body.brand-page .icon-btn{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border:none;
+  background:transparent;
   color:var(--ink);
 }
-
-.icon-btn svg{ width:24px;height:24px; stroke:rgba(255,255,255,.85); }
+body.brand-page .icon-btn svg{
+  width:24px;
+  height:24px;
+  stroke:rgba(255,255,255,.85);
+}
 
 /* ========== MAIN ========== */
 .brand-main{ padding:0 14px 120px; }
@@ -70,7 +77,8 @@ body.brand-page{
 }
 
 .brand-icon{
-  width:54px;height:54px;
+  width:54px;
+  height:54px;
   border-radius:14px;
   background:rgba(255,255,255,.10);
   box-shadow:0 10px 24px rgba(0,0,0,.25);
@@ -133,7 +141,7 @@ body.brand-page{
 }
 .pill-btn:active{ transform:scale(.99); }
 
-/* ========== MADURO/NATURAL TOGGLE ========== */
+/* ========== MADURO / NATURAL TOGGLE ========== */
 .seg{
   height:40px;
   border-radius:16px;
@@ -165,9 +173,7 @@ body.brand-page{
   border:2px solid rgba(255,255,255,.22);
   background:rgba(0,0,0,.18);
   position:relative;
-  display:block;
   margin:0 auto;
-  -webkit-tap-highlight-color:transparent;
 }
 
 .seg-dot::after{
@@ -222,6 +228,7 @@ body.brand-page{
   cursor:pointer;
 }
 
+/* ✅ WRAPPING TEXT — NO ELLIPSIS */
 .row-title,
 .brand-row-title{
   font-size:16px;
@@ -229,10 +236,8 @@ body.brand-page{
   letter-spacing:-.01em;
   line-height:1.12;
   color:rgba(255,255,255,.92);
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
+  white-space:normal;
+  overflow:visible;
 }
 
 .row-sub,
@@ -240,11 +245,11 @@ body.brand-page{
   font-size:12px;
   font-weight:700;
   color:rgba(255,255,255,.55);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  white-space:normal;
+  overflow:visible;
 }
 
+/* Right column */
 .brand-row-right{
   display:flex;
   align-items:center;
@@ -272,6 +277,7 @@ body.brand-page{
   background:rgba(255,255,255,.20);
 }
 
+/* Add button */
 .brand-row .pos-add{
   width:26px;
   height:26px;
@@ -295,12 +301,12 @@ body.brand-page{
   font-weight:700;
 }
 
-/* ========== GENERIC UTILITIES ========== */
+/* ========== UTILITIES ========== */
 [hidden]{ display:none !important; }
 body.pos-modal-open{ overflow:hidden; }
 
 /* =========================================================
-   CIGAR DETAIL POPUP (UNCHANGED, SAFE)
+   CIGAR DETAIL POPUP
+   (UNCHANGED — SAFE)
    ========================================================= */
-
-/* (rest of cigar detail CSS remains exactly as before) */
+/* (leave the rest of your cigar detail CSS exactly as-is) */
