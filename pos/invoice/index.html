@@ -8,52 +8,52 @@
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=1" />
+  <link rel="stylesheet" href="/pos/invoice/invoice.css" />
 </head>
 
-<body class="inv-body">
-  <main class="inv-page" id="invPage">
+<body class="inv-page">
+  <!-- Back button (top-left) -->
+  <a class="inv-back" href="/pos/" aria-label="Back">←</a>
 
-    <!-- HEADER -->
-    <header class="inv-header">
-      <div class="inv-h1">INVOICE</div>
-      <div class="inv-h2" id="invDate">—</div>
-      <div class="inv-h3" id="invShop">—</div>
-      <div class="inv-h4" id="invNumber">—</div>
+  <main class="inv-wrap" role="main">
+    <header class="inv-head">
+      <div class="inv-title">INVOICE</div>
+      <div class="inv-meta" id="invMeta">—</div>
+      <div class="inv-shop" id="invShop">Shop</div>
+      <div class="inv-num" id="invNum">INV# —</div>
     </header>
 
-    <!-- ATTACH CUSTOMER -->
-    <button class="inv-attach" id="attachCustomer" type="button">
+    <button class="inv-customer" type="button">
       ATTACH SAVED CUSTOMER
     </button>
 
-    <!-- LINE ITEMS -->
-    <section class="inv-list" id="invList" aria-label="Invoice items">
-      <!-- JS renders rows here -->
+    <!-- Items -->
+    <section class="inv-items" id="invItems">
+      <!-- invoice.js will render rows here -->
     </section>
 
-    <!-- TOTALS -->
+    <!-- Totals -->
     <section class="inv-totals" aria-label="Totals">
-      <div class="inv-trow"><div class="k">TOBACCO</div><div class="v" id="totTobacco">$0.00</div></div>
-      <div class="inv-trow"><div class="k">ALCOHOL</div><div class="v" id="totAlcohol">$0.00</div></div>
-      <div class="inv-trow"><div class="k">OTHER</div><div class="v" id="totOther">$0.00</div></div>
-      <div class="inv-trow"><div class="k">SUBTOTAL</div><div class="v" id="totSubtotal">$0.00</div></div>
-      <div class="inv-trow"><div class="k">TAX</div><div class="v" id="totTax">$0.00</div></div>
-      <div class="inv-trow big"><div class="k">GRAND TOTAL</div><div class="v" id="totGrand">$0.00</div></div>
-    </section>
+      <div class="trow"><div>TOBACCO</div><div id="tTobacco">$0.00</div></div>
+      <div class="trow"><div>ALCOHOL</div><div id="tAlcohol">$0.00</div></div>
+      <div class="trow"><div>OTHER</div><div id="tOther">$0.00</div></div>
+      <div class="trow"><div>SUBTOTAL</div><div id="tSubtotal">$0.00</div></div>
+      <div class="trow"><div>TAX</div><div id="tTax">$0.00</div></div>
 
+      <div class="grand">
+        <div class="glabel">GRAND<br/>TOTAL</div>
+        <div class="gval" id="tGrand">$0.00</div>
+      </div>
+    </section>
   </main>
 
-  <!-- FIXED BOTTOM ACTIONS -->
+  <!-- Bottom actions -->
   <footer class="inv-actions">
-    <div class="inv-actions-bar">
-      <button class="inv-btn" id="btnDraft" type="button">SAVE AS DRAFT</button>
-      <button class="inv-btn" id="btnCashOut" type="button">CASH OUT</button>
-    </div>
+    <button class="inv-action" type="button">SAVE AS DRAFT</button>
+    <button class="inv-action" type="button">CASH OUT</button>
   </footer>
 
-  <!-- cart.js gives us window.CigarOSCart + localStorage cart -->
-  <script src="/pos/cart.js?v=11" defer></script>
-  <script src="/pos/invoice/invoice.js?v=1" defer></script>
+  <script src="/pos/cart.js?v=12" defer></script>
+  <script src="/pos/invoice/invoice.js?v=12" defer></script>
 </body>
 </html>
