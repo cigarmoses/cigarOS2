@@ -2,11 +2,11 @@
    Shared POS cart controller (ALL POS pages)
 
    ✅ Stores cart in localStorage
-   ✅ Updates header badge everywhere (if present)
-   ✅ Clicking header Invoice button goes to /pos/invoice/
-   ✅ NO floating FAB / NO modal / NO injected UI
-   ✅ Back-compat: click any element with [data-receipt-item] + dataset fields adds to cart
-   ✅ Removes legacy invoice/modal/sheet nodes so they can’t pop up anymore
+   ✅ Updates invoice badge everywhere (top-right button)
+   ✅ Clicking invoice button navigates to /pos/invoice/
+   ✅ Back-compat: clicking any element with [data-receipt-item] + dataset fields adds to cart
+   ✅ Kills legacy invoice/modal UI so it can’t pop up anymore
+   ✅ DOES NOT inject the bottom-right floating FAB anymore
 */
 
 (() => {
@@ -66,11 +66,12 @@
       ".sheet__backdrop",
       ".sheet"
     ];
+
     selectors.forEach((sel) => {
       document.querySelectorAll(sel).forEach((el) => el.remove());
     });
 
-    // If any legacy "receipt-open" button exists, force it to navigate
+    // Any legacy “receipt-open” style buttons should navigate
     const legacyOpen = document.getElementById("receipt-open");
     if (legacyOpen) {
       legacyOpen.addEventListener("click", (e) => {
@@ -82,43 +83,36 @@
   }
 
   // -------------------------
-  // Badge updater (header)
+  // Badge (top-right)
   // -------------------------
-  function updateBadges() {
+  function updateBadge() {
     const cart = loadCart();
     const count = cart.reduce((a, it) => a + (Number(it.qty) || 0), 0);
 
-    // New header badge IDs
-    const headerBadge =
+    // Preferred: top-right invoice badge
+    const badge =
       document.getElementById("invoiceBadge") ||
       document.getElementById("posInvoiceBadge") ||
-      null;
-
-    if (headerBadge) {
-      headerBadge.textContent = String(count);
-      headerBadge.hidden = count <= 0;
-    }
-
-    // Also update any legacy badge nodes if they exist
-    const legacyBadge =
       document.getElementById("posReceiptBadge") ||
       document.getElementById("receipt-count") ||
       null;
 
-    if (legacyBadge) {
-      legacyBadge.textContent = String(count);
-      legacyBadge.hidden = count <= 0;
+    if (badge) {
+      badge.textContent = String(count);
+      badge.hidden = count <= 0;
     }
 
-    // Dispatch event (useful if invoice page listens)
     window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { count } }));
   }
 
-  // Ensure header invoice button always routes correctly
-  function wireHeaderInvoiceBtn() {
+  function wireInvoiceButton() {
     const btn = document.getElementById("invoiceBtn");
     if (!btn) return;
-    btn.setAttribute("href", "/pos/invoice/");
+
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "/pos/invoice/";
+    });
   }
 
   // -------------------------
@@ -157,7 +151,7 @@
       }
 
       saveCart(cart);
-      updateBadges();
+      updateBadge();
     },
 
     setQty(id, qty) {
@@ -173,12 +167,12 @@
         it.qty = q;
         saveCart(cart);
       }
-      updateBadges();
+      updateBadge();
     },
 
     clear() {
       saveCart([]);
-      updateBadges();
+      updateBadge();
     },
 
     totals() {
@@ -198,14 +192,12 @@
       const el = e.target?.closest?.("[data-receipt-item]");
       if (!el) return;
 
-      // opt-out
       if (el.hasAttribute("data-no-cart")) return;
 
       const priceRaw = el.dataset.price;
       const name = el.dataset.name;
       const category = el.dataset.category;
 
-      // Only add if it looks like a product tile/card
       if (!name || !category || priceRaw == null) return;
 
       const type = (el.dataset.type || "product").toLowerCase();
@@ -221,8 +213,8 @@
   // Init
   document.addEventListener("DOMContentLoaded", () => {
     killLegacyInvoiceUI();
-    wireHeaderInvoiceBtn();
-    updateBadges();
+    wireInvoiceButton();
+    updateBadge();
     wireDatasetAdds();
   });
 
