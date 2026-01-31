@@ -2,11 +2,11 @@
    Shared POS cart controller (ALL POS pages)
 
    ✅ Stores cart in localStorage
-   ✅ Updates invoice badge everywhere (top-right button)
-   ✅ Clicking invoice button navigates to /pos/invoice/
-   ✅ Back-compat: clicking any element with [data-receipt-item] + dataset fields adds to cart
-   ✅ Kills legacy invoice/modal UI so it can’t pop up anymore
-   ✅ DOES NOT inject the bottom-right floating FAB anymore
+   ✅ Injects TOP-RIGHT "Invoice" pill + badge on every POS page
+   ✅ Invoice pill navigates to /pos/invoice/
+   ✅ Clicking any element with [data-receipt-item] (or common + button patterns) adds to cart
+   ✅ Uses CAPTURE click listener so it works even if page JS stops propagation
+   ✅ No bottom-right floating icon (removed)
 */
 
 (() => {
@@ -35,6 +35,8 @@
     return v.toFixed(2);
   };
 
+  const norm = (s) => String(s ?? "").trim();
+
   const getShopName = () => localStorage.getItem(SHOP_KEY) || "Shop";
 
   const getInvoiceNumber = () => {
@@ -46,82 +48,144 @@
     return cur;
   };
 
-  const norm = (s) => String(s ?? "").trim();
-
   // -------------------------
-  // Legacy UI cleanup (prevents old popup)
+  // Invoice pill (top-right)
   // -------------------------
-  function killLegacyInvoiceUI() {
-    const selectors = [
-      "#receipt-modal",
-      "#invoice-modal",
-      "#posInvoiceModal",
-      "#posReceiptModal",
-      ".receipt-modal",
-      ".invoice-modal",
-      ".pos-invoice-modal",
-      ".pos-receipt-modal",
-      "#sheet-backdrop",
-      "#sheet",
-      ".sheet__backdrop",
-      ".sheet"
-    ];
+  function injectInvoicePillCSSOnce() {
+    if (document.getElementById("posInvoicePillCSS")) return;
 
-    selectors.forEach((sel) => {
-      document.querySelectorAll(sel).forEach((el) => el.remove());
-    });
+    const style = document.createElement("style");
+    style.id = "posInvoicePillCSS";
+    style.textContent = `
+      /* Top-right invoice pill (matches your screenshots) */
+      .pos-invoice-pill{
+        display:inline-flex;
+        align-items:center;
+        gap:12px;
+        height:56px;
+        padding:0 18px;
+        border-radius:20px;
+        border:2px solid rgba(0,0,0,.10);
+        background:#f7f7f8;
+        box-shadow:0 10px 22px rgba(0,0,0,.06);
+        font-weight:900;
+        font-size:22px;
+        letter-spacing:-.02em;
+        line-height:1;
+        cursor:pointer;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .pos-invoice-pill:active{ transform:scale(.99); }
 
-    // Any legacy “receipt-open” style buttons should navigate
-    const legacyOpen = document.getElementById("receipt-open");
-    if (legacyOpen) {
-      legacyOpen.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        window.location.href = "/pos/invoice/";
-      }, true);
-    }
+      .pos-invoice-pill .pos-badge{
+        min-width:38px;
+        height:34px;
+        padding:0 12px;
+        border-radius:999px;
+        background:#ff3b30;
+        color:#fff;
+        display:grid;
+        place-items:center;
+        font-weight:900;
+        font-size:18px;
+        box-shadow:0 10px 18px rgba(255,59,48,.25);
+      }
+
+      /* If we can’t find a header container, we pin it */
+      .pos-invoice-pill.pos-fixed{
+        position:fixed;
+        top:12px;
+        right:12px;
+        z-index:9999;
+      }
+
+      /* In pages where you already have a header row layout */
+      .page-header{
+        position:relative;
+      }
+      .page-header .pos-invoice-pill{
+        position:absolute;
+        right:12px;
+        top:10px;
+      }
+
+      /* Brand pages usually have their own header; we still pin safely */
+      @media (max-width: 520px){
+        .pos-invoice-pill{
+          height:52px;
+          padding:0 16px;
+          font-size:20px;
+          border-radius:18px;
+        }
+        .pos-invoice-pill .pos-badge{
+          min-width:34px;
+          height:30px;
+          font-size:16px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
   }
 
-  // -------------------------
-  // Badge (top-right)
-  // -------------------------
+  function ensureInvoicePill() {
+    // Don’t show pill on invoice page itself
+    if (location.pathname.startsWith("/pos/invoice")) return null;
+
+    let pill = document.getElementById("posInvoicePill");
+    if (pill) return pill;
+
+    pill = document.createElement("button");
+    pill.type = "button";
+    pill.id = "posInvoicePill";
+    pill.className = "pos-invoice-pill";
+    pill.setAttribute("aria-label", "Invoice");
+
+    pill.innerHTML = `
+      <span class="pos-label">Invoice</span>
+      <span class="pos-badge" id="posInvoiceBadge">0</span>
+    `;
+
+    pill.addEventListener("click", () => {
+      window.location.href = "/pos/invoice/";
+    });
+
+    // Try to place in a known header container first
+    const header =
+      document.querySelector(".page-header") ||
+      document.querySelector(".brand-header") ||
+      document.querySelector("header");
+
+    if (header) {
+      header.appendChild(pill);
+    } else {
+      pill.classList.add("pos-fixed");
+      document.body.appendChild(pill);
+    }
+
+    return pill;
+  }
+
   function updateBadge() {
     const cart = loadCart();
     const count = cart.reduce((a, it) => a + (Number(it.qty) || 0), 0);
 
-    // Preferred: top-right invoice badge
     const badge =
-      document.getElementById("invoiceBadge") ||
       document.getElementById("posInvoiceBadge") ||
       document.getElementById("posReceiptBadge") ||
       document.getElementById("receipt-count") ||
       null;
 
-    if (badge) {
-      badge.textContent = String(count);
-      badge.hidden = count <= 0;
-    }
+    if (badge) badge.textContent = String(count);
 
+    // Broadcast
     window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { count } }));
   }
 
-  function wireInvoiceButton() {
-    const btn = document.getElementById("invoiceBtn");
-    if (!btn) return;
-
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      window.location.href = "/pos/invoice/";
-    });
-  }
-
   // -------------------------
-  // Public API
+  // Cart API
   // -------------------------
   const API = {
-    get cart() {
-      return loadCart();
-    },
+    get cart() { return loadCart(); },
     getShopName,
     getInvoiceNumber,
 
@@ -161,8 +225,7 @@
 
       const q = Number(qty);
       if (!isFinite(q) || q <= 0) {
-        const next = cart.filter((x) => x.id !== id);
-        saveCart(next);
+        saveCart(cart.filter((x) => x.id !== id));
       } else {
         it.qty = q;
         saveCart(cart);
@@ -185,37 +248,94 @@
   window.CigarOSCart = API;
 
   // -------------------------
-  // Back-compat: click-to-add via dataset
+  // Add-to-cart (capture phase so + buttons always work)
   // -------------------------
-  function wireDatasetAdds() {
-    document.addEventListener("click", (e) => {
-      const el = e.target?.closest?.("[data-receipt-item]");
-      if (!el) return;
+  function readAddPayload(el) {
+    const d = el?.dataset || {};
+    // price can appear as price / msrp
+    const priceRaw = d.price ?? d.msrp ?? d.unitPrice ?? null;
 
+    // category can appear as category / posCategory
+    const category =
+      d.category ?? d.posCategory ?? d.cat ?? "";
+
+    // name can appear as name / product / cigar
+    const name =
+      d.name ?? d.product ?? d.cigar ?? "";
+
+    // brand sometimes exists
+    const brand =
+      d.brand ?? d.line ?? d.manufacturer ?? "";
+
+    // "sub" line (vitola or subtitle) often exists
+    const sub =
+      d.sub ?? d.vitola ?? d.subtitle ?? "";
+
+    // type hint
+    const type = (d.type || "").toLowerCase();
+
+    const price = Number(priceRaw || "0");
+    const hasBasics = (name && (priceRaw != null) && (category || type));
+
+    if (!hasBasics) return null;
+
+    const finalCategory =
+      category ||
+      (type === "cigar" ? "Cigars" : "Other");
+
+    const finalType =
+      type || (finalCategory.toLowerCase() === "cigars" ? "cigar" : "product");
+
+    // Prefer supplied id/key if present
+    const id =
+      (d.id || d.key || (finalCategory + "|" + brand + "|" + name + "|" + sub)).toLowerCase();
+
+    return {
+      id,
+      type: finalType,
+      category: finalCategory,
+      brand,
+      name,
+      sub,
+      price
+    };
+  }
+
+  function wireAdds() {
+    document.addEventListener("click", (e) => {
+      const t = e.target;
+
+      // 1) Primary contract: any element (or ancestor) with [data-receipt-item]
+      let el = t?.closest?.("[data-receipt-item]");
+
+      // 2) Also support common + buttons on brand pages (in case they’re missing the attribute)
+      if (!el) {
+        el = t?.closest?.(
+          ".pos-add, .row-add, .add, .add-btn, .plus, button[data-add], button[data-cart-add]"
+        );
+      }
+
+      if (!el) return;
       if (el.hasAttribute("data-no-cart")) return;
 
-      const priceRaw = el.dataset.price;
-      const name = el.dataset.name;
-      const category = el.dataset.category;
+      // If button is inside a row that holds the dataset, prefer the row’s dataset
+      const row = el.closest?.("[data-receipt-item], [data-row], .brand-row, .row") || el;
 
-      if (!name || !category || priceRaw == null) return;
+      const payload =
+        readAddPayload(row) ||
+        readAddPayload(el);
 
-      const type = (el.dataset.type || "product").toLowerCase();
-      const brand = el.dataset.brand || "";
-      const price = Number(priceRaw || "0");
+      if (!payload) return;
 
-      const id = (category + "|" + brand + "|" + name).toLowerCase();
-
-      API.add({ id, type, category, brand, name, price, img: "", link: "", sub: "" });
-    }, { passive: true });
+      API.add(payload);
+    }, true); // CAPTURE: ensures it fires even if other code stops propagation
   }
 
   // Init
   document.addEventListener("DOMContentLoaded", () => {
-    killLegacyInvoiceUI();
-    wireInvoiceButton();
+    injectInvoicePillCSSOnce();
+    ensureInvoicePill();
     updateBadge();
-    wireDatasetAdds();
+    wireAdds();
   });
-
 })();
