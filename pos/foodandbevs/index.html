@@ -10,12 +10,50 @@
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/category.css" />
   <link rel="stylesheet" href="/pos/foodandbevs.css" />
+
+  <style>
+    /* Header Invoice button (top-right) */
+    .invoice-btn{
+      margin-left:auto;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      text-decoration:none;
+      font-weight:900;
+      color:#0b1220;
+      background:rgba(255,255,255,.75);
+      border:1px solid rgba(15,23,42,.08);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .invoice-badge{
+      min-width:22px;
+      height:22px;
+      padding:0 7px;
+      border-radius:999px;
+      background:#ff3b30;
+      color:#fff;
+      font-weight:900;
+      font-size:12px;
+      display:grid;
+      place-items:center;
+      line-height:1;
+    }
+  </style>
 </head>
 
 <body class="page">
   <header class="page-header">
     <a class="back" href="/pos/" aria-label="Back">←</a>
+
     <h1 class="page-title">Food &amp; Bevs</h1>
+
+    <!-- Top-right invoice button (NO floating icon anywhere) -->
+    <a class="invoice-btn" id="invoiceBtn" href="/pos/invoice/" aria-label="Invoice">
+      Invoice
+      <span class="invoice-badge" id="invoiceBadge" hidden>0</span>
+    </a>
   </header>
 
   <div class="page-search">
@@ -27,10 +65,10 @@
   </main>
 
   <!-- IMPORTANT:
-       cart.js injects the FAB and routes to /pos/invoice/
-       Do NOT include any legacy invoice modal / sheet markup on this page.
+       cart.js is now state + badge updater ONLY.
+       No floating icon, no modal, no sheet.
   -->
-  <script src="/pos/cart.js?v=11" defer></script>
-  <script src="/pos/foodandbevs.js?v=11" defer></script>
+  <script src="/pos/cart.js?v=12" defer></script>
+  <script src="/pos/foodandbevs.js?v=12" defer></script>
 </body>
 </html>
