@@ -3,51 +3,57 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>POS • Invoice</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Invoice</title>
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/invoice/invoice.css" />
+  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=1" />
 </head>
 
-<body class="pos-invoice-page">
-  <header class="inv-topbar">
-    <a class="inv-back" href="/pos/" aria-label="Back">←</a>
-  </header>
+<body class="inv-body">
+  <main class="inv-page" id="invPage">
 
-  <main class="inv-wrap">
-    <section class="inv-card">
-      <div class="inv-header">
-        <div class="inv-title">INVOICE</div>
-        <div class="inv-shop" id="invShop">Shop</div>
-        <div class="inv-date" id="invDate"></div>
-        <div class="inv-num" id="invNum"></div>
-      </div>
+    <!-- HEADER -->
+    <header class="inv-header">
+      <div class="inv-h1">INVOICE</div>
+      <div class="inv-h2" id="invDate">—</div>
+      <div class="inv-h3" id="invShop">—</div>
+      <div class="inv-h4" id="invNumber">—</div>
+    </header>
 
-      <button class="inv-cust" type="button" id="custBtn">
-        <span id="custLabel">Attach Saved Customer</span>
-        <span class="inv-caret">▾</span>
-      </button>
+    <!-- ATTACH CUSTOMER -->
+    <button class="inv-attach" id="attachCustomer" type="button">
+      ATTACH SAVED CUSTOMER
+    </button>
 
-      <div class="inv-items" id="invItems">
-        <div class="inv-empty" id="invEmpty">No items yet.</div>
-      </div>
-
-      <div class="inv-totals">
-        <div class="row"><span>Subtotal</span><span id="invSubtotal">$0.00</span></div>
-        <div class="row"><span>Tax</span><span id="invTax">$0.00</span></div>
-        <div class="row total"><span>TOTAL</span><span id="invTotal">$0.00</span></div>
-      </div>
-
-      <div class="inv-actions">
-        <button class="btn ghost" id="invClear" type="button">Clear</button>
-        <a class="btn primary" href="/pos/" role="button">Close</a>
-      </div>
+    <!-- LINE ITEMS -->
+    <section class="inv-list" id="invList" aria-label="Invoice items">
+      <!-- JS renders rows here -->
     </section>
+
+    <!-- TOTALS -->
+    <section class="inv-totals" aria-label="Totals">
+      <div class="inv-trow"><div class="k">TOBACCO</div><div class="v" id="totTobacco">$0.00</div></div>
+      <div class="inv-trow"><div class="k">ALCOHOL</div><div class="v" id="totAlcohol">$0.00</div></div>
+      <div class="inv-trow"><div class="k">OTHER</div><div class="v" id="totOther">$0.00</div></div>
+      <div class="inv-trow"><div class="k">SUBTOTAL</div><div class="v" id="totSubtotal">$0.00</div></div>
+      <div class="inv-trow"><div class="k">TAX</div><div class="v" id="totTax">$0.00</div></div>
+      <div class="inv-trow big"><div class="k">GRAND TOTAL</div><div class="v" id="totGrand">$0.00</div></div>
+    </section>
+
   </main>
 
-  <script src="/pos/cart.js" defer></script>
-  <script src="/pos/invoice/invoice.js" defer></script>
+  <!-- FIXED BOTTOM ACTIONS -->
+  <footer class="inv-actions">
+    <div class="inv-actions-bar">
+      <button class="inv-btn" id="btnDraft" type="button">SAVE AS DRAFT</button>
+      <button class="inv-btn" id="btnCashOut" type="button">CASH OUT</button>
+    </div>
+  </footer>
+
+  <!-- cart.js gives us window.CigarOSCart + localStorage cart -->
+  <script src="/pos/cart.js?v=11" defer></script>
+  <script src="/pos/invoice/invoice.js?v=1" defer></script>
 </body>
 </html>
