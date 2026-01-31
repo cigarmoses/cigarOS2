@@ -2,10 +2,12 @@
    Shared POS cart controller (ALL POS pages)
 
    ✅ Stores cart in localStorage
-   ✅ Updates the invoice FAB badge everywhere
-   ✅ Clicking the invoice FAB navigates to /pos/invoice/
+   ✅ Updates cart count event (cigaros:cart) for any listeners
    ✅ Back-compat: clicking any element with [data-receipt-item] + dataset fields adds to cart
    ✅ Cleans legacy invoice/modal UI so it can’t pop up anymore
+
+   ❌ REMOVED: Floating bottom-right invoice/cart icon (FAB)
+   ❌ REMOVED: Injected FAB CSS + badge
 */
 
 (() => {
@@ -51,7 +53,6 @@
   // Legacy UI cleanup (prevents old popup)
   // -------------------------
   function killLegacyInvoiceUI() {
-    // remove known legacy nodes (safe if they don’t exist)
     const selectors = [
       "#receipt-modal",
       "#invoice-modal",
@@ -64,123 +65,31 @@
       "#sheet-backdrop",
       "#sheet",
       ".sheet__backdrop",
-      ".sheet"
+      ".sheet",
+
+      // legacy FABs / buttons
+      "#receipt-open",
+      ".receipt-fab",
+      ".pos-invoice-fab",
+      ".pos-receipt-fab",
+      "#posInvoiceFab",
+      "#posReceiptFab"
     ];
+
     selectors.forEach((sel) => {
-      document.querySelectorAll(sel).forEach((el) => {
-        // Don’t delete normal category sheets unless you want:
-        // We only nuke if it looks like legacy invoice/modal container.
-        // But #sheet is the old product sheet; remove it to avoid any popups.
-        el.remove();
-      });
+      document.querySelectorAll(sel).forEach((el) => el.remove());
     });
-
-    // Force legacy “receipt” buttons to navigate instead of open a modal
-    const legacyOpen = document.getElementById("receipt-open");
-    if (legacyOpen) {
-      legacyOpen.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        window.location.href = "/pos/invoice/";
-      }, true);
-    }
   }
 
   // -------------------------
-  // Badge + FAB
+  // Badge/event update (no UI)
   // -------------------------
-  function ensureFab() {
-    // If already on invoice page, do NOT show the floating FAB
-    if (location.pathname.startsWith("/pos/invoice")) return null;
-
-    let fab = document.getElementById("posInvoiceFab");
-    if (fab) return fab;
-
-    fab = document.createElement("button");
-    fab.type = "button";
-    fab.id = "posInvoiceFab";
-    fab.className = "pos-invoice-fab";
-    fab.setAttribute("aria-label", "Invoice");
-
-    fab.innerHTML = `
-      <img src="/img/icons/receipt.png" alt="" />
-      <span class="pos-invoice-badge" id="posInvoiceBadge" hidden>0</span>
-    `;
-
-    fab.addEventListener("click", () => {
-      window.location.href = "/pos/invoice/";
-    });
-
-    document.body.appendChild(fab);
-    return fab;
-  }
-
-  function updateBadge() {
+  function updateBadgeAndEmit() {
     const cart = loadCart();
     const count = cart.reduce((a, it) => a + (Number(it.qty) || 0), 0);
 
-    // Update any known badge nodes (old + new IDs/classes)
-    const badge =
-      document.getElementById("posInvoiceBadge") ||
-      document.getElementById("posReceiptBadge") ||
-      document.getElementById("receipt-count") ||
-      null;
-
-    if (badge) {
-      badge.textContent = String(count);
-      badge.hidden = count <= 0;
-    }
-
-    // Dispatch event so invoice page can live-update if open in same tab
+    // Emit event for any pages that want to react (invoice page, etc.)
     window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { count } }));
-  }
-
-  function injectFabCSSIfMissing() {
-    if (document.getElementById("posInvoiceFabCSS")) return;
-
-    const style = document.createElement("style");
-    style.id = "posInvoiceFabCSS";
-    style.textContent = `
-      .pos-invoice-fab{
-        position:fixed;
-        right:14px;
-        bottom:calc(14px + env(safe-area-inset-bottom));
-        width:62px;
-        height:62px;
-        border-radius:16px;
-        border:none;
-        background:transparent;
-        padding:0;
-        display:grid;
-        place-items:center;
-        z-index:9999;
-        -webkit-tap-highlight-color:transparent;
-      }
-      .pos-invoice-fab img{
-        width:62px;
-        height:62px;
-        display:block;
-        border-radius:16px;
-      }
-      .pos-invoice-badge{
-        position:absolute;
-        right:-4px;
-        top:-4px;
-        min-width:22px;
-        height:22px;
-        padding:0 6px;
-        border-radius:999px;
-        background:#ff3b30;
-        color:#fff;
-        font-weight:900;
-        font-size:12px;
-        display:grid;
-        place-items:center;
-        line-height:1;
-        box-shadow:0 8px 20px rgba(0,0,0,.25);
-      }
-    `;
-    document.head.appendChild(style);
   }
 
   // -------------------------
@@ -219,7 +128,7 @@
       }
 
       saveCart(cart);
-      updateBadge();
+      updateBadgeAndEmit();
     },
 
     setQty(id, qty) {
@@ -235,17 +144,21 @@
         it.qty = q;
         saveCart(cart);
       }
-      updateBadge();
+
+      updateBadgeAndEmit();
     },
 
     clear() {
       saveCart([]);
-      updateBadge();
+      updateBadgeAndEmit();
     },
 
     totals() {
       const cart = loadCart();
-      const subtotal = cart.reduce((a, it) => a + (Number(it.price) || 0) * (Number(it.qty) || 0), 0);
+      const subtotal = cart.reduce(
+        (a, it) => a + (Number(it.price) || 0) * (Number(it.qty) || 0),
+        0
+      );
       return { subtotal, subtotalText: money(subtotal) };
     }
   };
@@ -260,11 +173,10 @@
       const el = e.target?.closest?.("[data-receipt-item]");
       if (!el) return;
 
-      // If element is explicitly opt-out
+      // Explicit opt-out
       if (el.hasAttribute("data-no-cart")) return;
 
-      // If page already handles click and wants to stop, let it.
-      // (We only add if it has the fields we need.)
+      // Only add if we have required fields
       const priceRaw = el.dataset.price;
       const name = el.dataset.name;
       const category = el.dataset.category;
@@ -283,11 +195,9 @@
 
   // Init
   document.addEventListener("DOMContentLoaded", () => {
-    injectFabCSSIfMissing();
-    killLegacyInvoiceUI();
-    ensureFab();
-    updateBadge();
-    wireDatasetAdds();
+    killLegacyInvoiceUI();     // removes any old popup UI + any existing FAB nodes
+    updateBadgeAndEmit();      // just emits count event (no UI)
+    wireDatasetAdds();         // click-to-add support
   });
 
 })();
