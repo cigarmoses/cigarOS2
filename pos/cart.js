@@ -4,7 +4,8 @@
    ✅ Stores cart in localStorage
    ✅ Updates the invoice FAB badge everywhere
    ✅ Clicking the invoice FAB navigates to /pos/invoice/
-   ✅ NO modal / NO injected sheet UI
+   ✅ Back-compat: clicking any element with [data-receipt-item] + dataset fields adds to cart
+   ✅ Cleans legacy invoice/modal UI so it can’t pop up anymore
 */
 
 (() => {
@@ -44,12 +45,53 @@
     return cur;
   };
 
+  const norm = (s) => String(s ?? "").trim();
+
+  // -------------------------
+  // Legacy UI cleanup (prevents old popup)
+  // -------------------------
+  function killLegacyInvoiceUI() {
+    // remove known legacy nodes (safe if they don’t exist)
+    const selectors = [
+      "#receipt-modal",
+      "#invoice-modal",
+      "#posInvoiceModal",
+      "#posReceiptModal",
+      ".receipt-modal",
+      ".invoice-modal",
+      ".pos-invoice-modal",
+      ".pos-receipt-modal",
+      "#sheet-backdrop",
+      "#sheet",
+      ".sheet__backdrop",
+      ".sheet"
+    ];
+    selectors.forEach((sel) => {
+      document.querySelectorAll(sel).forEach((el) => {
+        // Don’t delete normal category sheets unless you want:
+        // We only nuke if it looks like legacy invoice/modal container.
+        // But #sheet is the old product sheet; remove it to avoid any popups.
+        el.remove();
+      });
+    });
+
+    // Force legacy “receipt” buttons to navigate instead of open a modal
+    const legacyOpen = document.getElementById("receipt-open");
+    if (legacyOpen) {
+      legacyOpen.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = "/pos/invoice/";
+      }, true);
+    }
+  }
+
   // -------------------------
   // Badge + FAB
   // -------------------------
   function ensureFab() {
     // If already on invoice page, do NOT show the floating FAB
-    if (location.pathname.startsWith("/pos/invoice")) return;
+    if (location.pathname.startsWith("/pos/invoice")) return null;
 
     let fab = document.getElementById("posInvoiceFab");
     if (fab) return fab;
@@ -60,7 +102,6 @@
     fab.className = "pos-invoice-fab";
     fab.setAttribute("aria-label", "Invoice");
 
-    // Use your existing receipt icon asset
     fab.innerHTML = `
       <img src="/img/icons/receipt.png" alt="" />
       <span class="pos-invoice-badge" id="posInvoiceBadge" hidden>0</span>
@@ -83,19 +124,11 @@
       document.getElementById("posInvoiceBadge") ||
       document.getElementById("posReceiptBadge") ||
       document.getElementById("receipt-count") ||
-      document.getElementById("receipt-count") ||
       null;
 
     if (badge) {
       badge.textContent = String(count);
       badge.hidden = count <= 0;
-    }
-
-    // Also update legacy “receipt-open” button badge if present
-    const legacyBadge = document.getElementById("receipt-count");
-    if (legacyBadge) {
-      legacyBadge.textContent = String(count);
-      legacyBadge.hidden = count <= 0;
     }
 
     // Dispatch event so invoice page can live-update if open in same tab
@@ -162,7 +195,8 @@
 
     add(item) {
       const cart = loadCart();
-      const id = String(item?.id || "").trim();
+
+      const id = norm(item?.id);
       if (!id) return;
 
       const existing = cart.find((x) => x.id === id);
@@ -172,15 +206,15 @@
       } else {
         cart.push({
           id,
-          type: String(item.type || "product"),
-          category: String(item.category || ""),
-          brand: String(item.brand || ""),
-          name: String(item.name || "Item"),
-          sub: String(item.sub || ""),
-          price: Number(item.price || 0),
+          type: norm(item?.type || "product"),
+          category: norm(item?.category || ""),
+          brand: norm(item?.brand || ""),
+          name: norm(item?.name || "Item"),
+          sub: norm(item?.sub || ""),
+          price: Number(item?.price || 0),
           qty: 1,
-          img: String(item.img || ""),
-          link: String(item.link || "")
+          img: norm(item?.img || ""),
+          link: norm(item?.link || "")
         });
       }
 
@@ -216,14 +250,44 @@
     }
   };
 
-  // Expose globally
   window.CigarOSCart = API;
+
+  // -------------------------
+  // Back-compat: click-to-add via dataset
+  // -------------------------
+  function wireDatasetAdds() {
+    document.addEventListener("click", (e) => {
+      const el = e.target?.closest?.("[data-receipt-item]");
+      if (!el) return;
+
+      // If element is explicitly opt-out
+      if (el.hasAttribute("data-no-cart")) return;
+
+      // If page already handles click and wants to stop, let it.
+      // (We only add if it has the fields we need.)
+      const priceRaw = el.dataset.price;
+      const name = el.dataset.name;
+      const category = el.dataset.category;
+
+      if (!name || !category || priceRaw == null) return;
+
+      const type = (el.dataset.type || "product").toLowerCase();
+      const brand = el.dataset.brand || "";
+      const price = Number(priceRaw || "0");
+
+      const id = (category + "|" + brand + "|" + name).toLowerCase();
+
+      API.add({ id, type, category, brand, name, price, img: "", link: "", sub: "" });
+    }, { passive: true });
+  }
 
   // Init
   document.addEventListener("DOMContentLoaded", () => {
     injectFabCSSIfMissing();
+    killLegacyInvoiceUI();
     ensureFab();
     updateBadge();
+    wireDatasetAdds();
   });
 
 })();
