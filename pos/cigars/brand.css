@@ -422,25 +422,30 @@ body.cigar-detail-open{ overflow:hidden; }
   gap:14px;
 }
 @media (max-width: 860px){
-  .cd-main{ grid-template-columns:1fr; }
+  .cd-main{
+    grid-template-columns: .95fr 1.05fr;
+    gap:12px;
+  }
 }
 
 /* Left image box */
 .cd-img{
   background:rgba(15,26,44,.06);
   border-radius:26px;
-  padding:16px;
+  padding:14px 14px 14px 22px;
   display:flex;
   align-items:center;
-  justify-content:center;
-  min-height:420px;
+  justify-content:flex-start;
+  min-height:360px;
   overflow:hidden;
 }
 .cigar-detail-stick{
   max-width:100%;
-  max-height:520px;
+  max-height:440px;
   object-fit:contain;
+  object-position:left center;
   display:block;
+  margin:0;
 }
 
 /* Right column */
