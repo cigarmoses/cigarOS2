@@ -306,12 +306,11 @@ body.brand-page .icon-btn svg{
 body.pos-modal-open{ overflow:hidden; }
 
 /* =========================================================
-   ✅ CIGAR DETAIL POPUP (RESTORED)
+   ✅ CIGAR DETAIL MODAL — “WHITE CARD” (matches old look)
    ========================================================= */
 
 body.cigar-detail-open{ overflow:hidden; }
 
-/* Fullscreen overlay */
 .cigar-detail-overlay{
   position:fixed;
   inset:0;
@@ -319,206 +318,205 @@ body.cigar-detail-open{ overflow:hidden; }
   background:rgba(0,0,0,.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-
   display:flex;
   align-items:center;
   justify-content:center;
-
   opacity:0;
   pointer-events:none;
   transition:opacity .18s ease;
 }
-
 .cigar-detail-overlay.open{
   opacity:1;
   pointer-events:auto;
 }
 
-/* Centered sheet */
+/* The big white rounded card */
 .cigar-detail-sheet{
-  width:min(920px, calc(100vw - 28px));
-  max-height:calc(100vh - 40px);
+  width:min(980px, calc(100vw - 28px));
+  max-height:calc(100vh - 42px);
   overflow:auto;
-
   position:relative;
-  border-radius:22px;
-  background:rgba(13,22,45,.96);
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 30px 80px rgba(0,0,0,.55);
-
+  border-radius:26px;
+  background:#f2f4f7; /* light grey like old screenshot */
+  box-shadow:0 30px 90px rgba(0,0,0,.55);
   transform:translateY(10px) scale(.985);
   transition:transform .18s ease;
 }
-
 .cigar-detail-overlay.open .cigar-detail-sheet{
   transform:translateY(0) scale(1);
 }
 
-/* Close X */
+/* bottom-left red X */
 .cigar-detail-x{
   position:absolute;
-  top:12px;
-  left:12px;
-  width:40px;
-  height:40px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.08);
-  color:#fff;
-  font-size:22px;
+  left:14px;
+  bottom:14px;
+  width:28px;
+  height:28px;
+  border:none;
+  background:transparent;
+  color:#e53935;
+  font-size:28px;
   font-weight:900;
   line-height:1;
-  display:grid;
-  place-items:center;
   cursor:pointer;
 }
 
-/* Body spacing */
+/* Inner padding */
 .cigar-detail-body{
-  padding:18px 16px 16px;
+  padding:18px 18px 22px;
+  color:#0f1a2c;
 }
 
-/* Header card */
+/* White rounded header “pill” */
 .cd-headercard{
+  background:#ffffff;
+  border-radius:22px;
+  padding:16px 16px;
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
   gap:12px;
-  padding:14px 14px;
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
+  box-shadow:0 10px 24px rgba(15,26,44,.10);
 }
 
 .cd-brand{
-  font-size:13px;
+  font-size:46px;            /* “Padron” big */
   font-weight:900;
-  letter-spacing:.02em;
-  color:rgba(255,255,255,.70);
-  text-transform:uppercase;
+  letter-spacing:-.03em;
+  color:#0f1a2c;
+  line-height:1;
 }
 
 .cd-name{
   margin-top:6px;
-  font-size:22px;
-  line-height:1.12;
-  font-weight:900;
-  letter-spacing:-.02em;
-  color:rgba(255,255,255,.95);
+  font-size:18px;
+  font-weight:800;
+  color:rgba(15,26,44,.55);
+  line-height:1.15;
 }
 
 .cd-h-icon{
-  width:56px;
-  height:56px;
+  width:58px;
+  height:58px;
   border-radius:16px;
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.12);
+  background:#ffffff;
+  box-shadow:0 10px 24px rgba(15,26,44,.12);
   overflow:hidden;
   display:grid;
   place-items:center;
   flex:0 0 auto;
 }
-.cd-h-icon img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-/* Main layout */
-.cd-main{
-  margin-top:12px;
-  display:grid;
-  grid-template-columns: 1fr 1.35fr;
-  gap:14px;
+.cd-h-icon img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
 }
 
-@media (max-width: 840px){
+/* Main 2-col layout like old */
+.cd-main{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns: 1.05fr 1.25fr;
+  gap:14px;
+}
+@media (max-width: 860px){
   .cd-main{ grid-template-columns:1fr; }
 }
 
+/* Left image box */
 .cd-img{
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.05);
+  background:rgba(15,26,44,.06);
+  border-radius:26px;
+  padding:16px;
   display:flex;
   align-items:center;
   justify-content:center;
-  min-height:320px;
+  min-height:420px;
   overflow:hidden;
-  padding:12px;
 }
-
 .cigar-detail-stick{
   max-width:100%;
-  max-height:420px;
+  max-height:520px;
   object-fit:contain;
   display:block;
 }
 
-/* Right side */
+/* Right column */
 .cd-right{
   display:flex;
   flex-direction:column;
   gap:12px;
 }
 
+/* RG/LENGTH + SHAPE/VITOLA boxes */
 .cd-grid2{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px;
+  gap:12px;
 }
 
+/* Light grey stat tiles */
 .cd-stat{
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
-  padding:12px 12px;
+  background:#e9edf2;
+  border-radius:20px;
+  padding:14px 14px;
 }
 .cd-stat .k{
-  font-size:11px;
+  font-size:12px;
   font-weight:900;
-  letter-spacing:.06em;
-  color:rgba(255,255,255,.55);
+  letter-spacing:.08em;
+  color:rgba(15,26,44,.40);
 }
 .cd-stat .v{
   margin-top:6px;
-  font-size:18px;
+  font-size:44px;  /* big numbers like old */
   font-weight:900;
-  letter-spacing:-.01em;
-  color:rgba(255,255,255,.95);
+  letter-spacing:-.03em;
+  color:#0f1a2c;
+  line-height:1;
 }
-.cd-stat.small .v{ font-size:15px; }
+.cd-stat.small .v{
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-.01em;
+}
 
+/* Stacked spec blocks */
 .cd-block{
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
-  padding:12px 12px;
+  background:#e9edf2;
+  border-radius:20px;
+  padding:14px 14px;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:12px;
 }
 
-.cd-block.single{ padding:12px; }
+.cd-block.single{ padding:14px; }
 
 .cd-kv{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  gap:12px;
+  gap:14px;
 }
 .cd-kv .k{
   font-size:12px;
   font-weight:900;
-  color:rgba(255,255,255,.58);
-  letter-spacing:.04em;
+  letter-spacing:.08em;
+  color:rgba(15,26,44,.40);
 }
 .cd-kv .v{
-  font-size:12px;
+  font-size:18px;
   font-weight:900;
-  color:rgba(255,255,255,.92);
+  color:#0f1a2c;
   text-align:right;
 }
 
-/* Actions */
+/* Bottom buttons (ADD/EDIT/COMPARE look) */
 .cd-actions{
-  margin-top:2px;
+  margin-top:6px;
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
   gap:10px;
@@ -526,19 +524,19 @@ body.cigar-detail-open{ overflow:hidden; }
 
 .cd-btn{
   height:44px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.07);
-  color:rgba(255,255,255,.72);
+  border-radius:999px;
+  border:1px solid rgba(15,26,44,.12);
+  background:#f6f8fb;
+  color:rgba(15,26,44,.55);
   font-size:12px;
   font-weight:900;
   cursor:default;
 }
 
 .cd-btn.is-live{
-  background:rgba(52,199,89,.18);
-  border:1px solid rgba(52,199,89,.55);
-  color:#eafff1;
+  background:#ffffff;
+  color:#0f1a2c;
+  border:1px solid rgba(15,26,44,.16);
   cursor:pointer;
 }
 .cd-btn.is-live:active{ transform:scale(.99); }
