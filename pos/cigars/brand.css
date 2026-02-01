@@ -306,7 +306,239 @@ body.brand-page .icon-btn svg{
 body.pos-modal-open{ overflow:hidden; }
 
 /* =========================================================
-   CIGAR DETAIL POPUP
-   (UNCHANGED — SAFE)
+   ✅ CIGAR DETAIL POPUP (RESTORED)
    ========================================================= */
-/* (leave the rest of your cigar detail CSS exactly as-is) */
+
+body.cigar-detail-open{ overflow:hidden; }
+
+/* Fullscreen overlay */
+.cigar-detail-overlay{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease;
+}
+
+.cigar-detail-overlay.open{
+  opacity:1;
+  pointer-events:auto;
+}
+
+/* Centered sheet */
+.cigar-detail-sheet{
+  width:min(920px, calc(100vw - 28px));
+  max-height:calc(100vh - 40px);
+  overflow:auto;
+
+  position:relative;
+  border-radius:22px;
+  background:rgba(13,22,45,.96);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 30px 80px rgba(0,0,0,.55);
+
+  transform:translateY(10px) scale(.985);
+  transition:transform .18s ease;
+}
+
+.cigar-detail-overlay.open .cigar-detail-sheet{
+  transform:translateY(0) scale(1);
+}
+
+/* Close X */
+.cigar-detail-x{
+  position:absolute;
+  top:12px;
+  left:12px;
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+
+/* Body spacing */
+.cigar-detail-body{
+  padding:18px 16px 16px;
+}
+
+/* Header card */
+.cd-headercard{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 14px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+}
+
+.cd-brand{
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.02em;
+  color:rgba(255,255,255,.70);
+  text-transform:uppercase;
+}
+
+.cd-name{
+  margin-top:6px;
+  font-size:22px;
+  line-height:1.12;
+  font-weight:900;
+  letter-spacing:-.02em;
+  color:rgba(255,255,255,.95);
+}
+
+.cd-h-icon{
+  width:56px;
+  height:56px;
+  border-radius:16px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+}
+.cd-h-icon img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+/* Main layout */
+.cd-main{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap:14px;
+}
+
+@media (max-width: 840px){
+  .cd-main{ grid-template-columns:1fr; }
+}
+
+.cd-img{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:320px;
+  overflow:hidden;
+  padding:12px;
+}
+
+.cigar-detail-stick{
+  max-width:100%;
+  max-height:420px;
+  object-fit:contain;
+  display:block;
+}
+
+/* Right side */
+.cd-right{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.cd-grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.cd-stat{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  padding:12px 12px;
+}
+.cd-stat .k{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.06em;
+  color:rgba(255,255,255,.55);
+}
+.cd-stat .v{
+  margin-top:6px;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.01em;
+  color:rgba(255,255,255,.95);
+}
+.cd-stat.small .v{ font-size:15px; }
+
+.cd-block{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  padding:12px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.cd-block.single{ padding:12px; }
+
+.cd-kv{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.cd-kv .k{
+  font-size:12px;
+  font-weight:900;
+  color:rgba(255,255,255,.58);
+  letter-spacing:.04em;
+}
+.cd-kv .v{
+  font-size:12px;
+  font-weight:900;
+  color:rgba(255,255,255,.92);
+  text-align:right;
+}
+
+/* Actions */
+.cd-actions{
+  margin-top:2px;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+}
+
+.cd-btn{
+  height:44px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.07);
+  color:rgba(255,255,255,.72);
+  font-size:12px;
+  font-weight:900;
+  cursor:default;
+}
+
+.cd-btn.is-live{
+  background:rgba(52,199,89,.18);
+  border:1px solid rgba(52,199,89,.55);
+  color:#eafff1;
+  cursor:pointer;
+}
+.cd-btn.is-live:active{ transform:scale(.99); }
