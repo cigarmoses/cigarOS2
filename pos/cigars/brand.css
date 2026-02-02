@@ -381,11 +381,17 @@ body.cigar-detail-open{ overflow:hidden; }
 }
 
 .cd-brand{
-  font-size:46px;            /* “Padron” big */
+  font-size:46px;
   font-weight:900;
   letter-spacing:-.03em;
   color:#0f1a2c;
   line-height:1;
+
+  /* ✅ FORCE SINGLE LINE */
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
 }
 
 .cd-name{
