@@ -354,10 +354,10 @@ function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
             </div>
 
             <div class="cd-actions">
-              <button type="button" class="cd-btn" disabled>COMPARE TO</button>
-              <button type="button" class="cd-btn is-live" data-cd-action="add">ADD TO BILL</button>
-              <button type="button" class="cd-btn" disabled>EDIT IN HUB</button>
-            </div>
+  <button type="button" class="cd-btn" disabled>COMPARE</button>
+  <button type="button" class="cd-btn" disabled>EDIT</button>
+  <button type="button" class="cd-btn is-live" data-cd-action="add">ADD</button>
+</div>
           </div>
         </div>
       </div>
