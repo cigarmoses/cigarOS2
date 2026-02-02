@@ -427,18 +427,17 @@ body.cigar-detail-open{ overflow:hidden; }
     gap:12px;
   }
 }
-
-/* Left image box */
 .cd-img{
-  background:rgba(15,26,44,.06);
-  border-radius:26px;
-  padding:14px 14px 14px 22px;
+  background:transparent;     /* ← REMOVE GREY PILL */
+  border-radius:0;
+  padding:0 0 0 8px;           /* slight left inset */
   display:flex;
   align-items:center;
   justify-content:flex-start;
   min-height:360px;
   overflow:hidden;
 }
+
 .cigar-detail-stick{
   max-width:100%;
   max-height:440px;
@@ -521,27 +520,29 @@ body.cigar-detail-open{ overflow:hidden; }
 
 /* Bottom buttons (ADD/EDIT/COMPARE look) */
 .cd-actions{
-  margin-top:6px;
+  margin-top:8px;
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:10px;
+  grid-template-columns:1fr 1fr 1fr; /* always one row */
+  gap:8px;
 }
 
 .cd-btn{
-  height:44px;
+  height:38px;                 /* smaller */
   border-radius:999px;
-  border:1px solid rgba(15,26,44,.12);
+  border:1px solid rgba(15,26,44,.14);
   background:#f6f8fb;
   color:rgba(15,26,44,.55);
-  font-size:12px;
+  font-size:11px;              /* smaller text */
   font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
   cursor:default;
 }
 
 .cd-btn.is-live{
   background:#ffffff;
   color:#0f1a2c;
-  border:1px solid rgba(15,26,44,.16);
+  border:1px solid rgba(15,26,44,.20);
   cursor:pointer;
 }
 .cd-btn.is-live:active{ transform:scale(.99); }
