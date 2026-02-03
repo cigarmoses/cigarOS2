@@ -14,6 +14,10 @@
    ✅ Bands button opens your existing #sheet-bands modal and renders SVG band artwork (Padron)
    ✅ Filters button opens your existing #sheet-filters modal and populates filter choices
    ✅ Maduro/Natural segmented toggle works via name string match ("maduro" / "natural")
+
+   ✅ FIX (THIS MESSAGE):
+   ✅ Removes duplicate back button (brand-back vs .pos-back)
+   ✅ Top-right INVOICE pill opens invoice (clicks existing invoice FAB/button, fallback to invoice page)
 */
 
 (() => {
@@ -56,7 +60,11 @@
   const listEl = $("#brand-list");
   const statusEl = $("#brand-status");
   const searchEl = $("#brand-search");
-  const backBtn = $("#brand-back") || $(".pos-back");
+
+  // 🔥 Back buttons (both can exist — causes “double back”)
+  const brandBackBtn = $("#brand-back");
+  const posBackBtn = $(".pos-back");
+  const backBtn = brandBackBtn || posBackBtn;
 
   // ✅ Correct buttons on this page
   const filtersBtn = $("#btn-filters");
@@ -87,6 +95,80 @@
   const filtersBack = $("#filters-back");
   const filtersTitle = $("#filters-title");
   const filtersConfirm = $("#filters-confirm");
+
+  // =========================================================
+  // ✅ FIX #1: REMOVE DUPLICATE BACK BUTTON
+  // =========================================================
+  function fixDuplicateBackButtons() {
+    // If both exist, keep #brand-back (brand page), hide .pos-back (shared)
+    if (brandBackBtn && posBackBtn && posBackBtn !== brandBackBtn) {
+      posBackBtn.style.display = "none";
+      posBackBtn.setAttribute("aria-hidden", "true");
+      posBackBtn.tabIndex = -1;
+    }
+  }
+
+  // =========================================================
+  // ✅ FIX #2: INVOICE PILL SHOULD OPEN INVOICE
+  // =========================================================
+  function findInvoicePill() {
+    // Common ids/classes used across pages
+    return (
+      $("#invoice-pill") ||
+      $("#posInvoicePill") ||
+      $("#invoice-btn") ||
+      $(".invoice-pill") ||
+      $(".pos-invoice-pill") ||
+      $(".pos-invoice") ||
+      // fallback: any button/link that literally says invoice
+      $$("button, a, div")
+        .find((el) => lower(el.textContent).trim() === "invoice" && el.offsetParent !== null) ||
+      null
+    );
+  }
+
+  function openInvoice() {
+    // Try to click the existing invoice FAB / open button injected by cart.js
+    const candidates = [
+      $("#posInvoiceFab"),
+      $("#posReceiptFab"),
+      $("#receipt-open"),
+      $("#invoice-open"),
+      $(".pos-invoice-fab"),
+      $(".pos-receipt-fab"),
+      $(".receipt-fab"),
+      $("[data-open-invoice]"),
+      $("[data-open-receipt]"),
+    ].filter(Boolean);
+
+    if (candidates.length) {
+      candidates[0].click();
+      return true;
+    }
+
+    // Fallback: if you have a dedicated invoice page route
+    // (keeps your current behavior intact if page exists)
+    try {
+      // prefer absolute from site root
+      location.href = "/pos/invoice.html";
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function bindInvoicePill() {
+    const pill = findInvoicePill();
+    if (!pill) return;
+
+    // Make sure it acts clickable even if it’s a div
+    pill.style.cursor = "pointer";
+    pill.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openInvoice();
+    });
+  }
 
   // ---- CSV parsing ----
   function splitCsvLine(line) {
@@ -164,19 +246,19 @@
     return Number.isFinite(n) ? n : 0;
   };
 
-function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
-  const key = `${slug(brand)}|${slug(line)}|${slug(cigar)}`;
-  return {
-    key,
-    type: "cigar",
-    category: "Cigars",
-    name: `${line ? line + " — " : ""}${cigar}`,
-    sub: vitola || "",
-    price: priceNum(msrp),
-    qty: 1,
-    meta: { brand, line, cigar, vitola },
-  };
-}
+  function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
+    const key = `${slug(brand)}|${slug(line)}|${slug(cigar)}`;
+    return {
+      key,
+      type: "cigar",
+      category: "Cigars",
+      name: `${line ? line + " — " : ""}${cigar}`,
+      sub: vitola || "",
+      price: priceNum(msrp),
+      qty: 1,
+      meta: { brand, line, cigar, vitola },
+    };
+  }
 
   // =========================================================
   // ✅ CIGAR DETAIL POPUP
@@ -354,10 +436,10 @@ function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
             </div>
 
             <div class="cd-actions">
-  <button type="button" class="cd-btn" disabled>COMPARE</button>
-  <button type="button" class="cd-btn" disabled>EDIT</button>
-  <button type="button" class="cd-btn is-live" data-cd-action="add">ADD</button>
-</div>
+              <button type="button" class="cd-btn" disabled>COMPARE</button>
+              <button type="button" class="cd-btn" disabled>EDIT</button>
+              <button type="button" class="cd-btn is-live" data-cd-action="add">ADD</button>
+            </div>
           </div>
         </div>
       </div>
@@ -410,7 +492,6 @@ function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
   function closeAllSheets() {
     document.body.classList.remove("pos-modal-open");
 
-    // ✅ FIXED: use declared sheet elements
     [sheetBands, sheetFilters, sheetReceipt].forEach((el) => {
       if (el) el.hidden = true;
     });
@@ -806,8 +887,8 @@ function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
         const msrp = norm(getMSRP(r));
         const image = norm(getImage(r));
 
-         const receiptItem = buildReceiptItem({ brand, line, cigar, vitola, msrp });
-         const brandIconSrc = `/img/icons/brands/${slug(brand || BRAND)}.svg`;
+        const receiptItem = buildReceiptItem({ brand, line, cigar, vitola, msrp });
+        const brandIconSrc = `/img/icons/brands/${slug(brand || BRAND)}.svg`;
 
         return `
           <div class="brand-row"
@@ -897,6 +978,10 @@ function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
   // ✅ BOOT
   // =========================================================
   async function boot() {
+    // 🔥 fixes first so layout is clean immediately
+    fixDuplicateBackButtons();
+    bindInvoicePill();
+
     if (brandTitleEl) brandTitleEl.textContent = BRAND || "Brand";
     backBtn?.addEventListener("click", () => history.back());
 
