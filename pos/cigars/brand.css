@@ -346,6 +346,12 @@ body.cigar-detail-open{ overflow:hidden; }
   transform:translateY(0) scale(1);
 }
 
+/* ✅ STEP 2: Force SF Pro Display inside the popup */
+.cigar-detail-sheet,
+.cigar-detail-sheet *{
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+}
+
 /* bottom-left red X */
 .cigar-detail-x{
   position:absolute;
@@ -380,6 +386,12 @@ body.cigar-detail-open{ overflow:hidden; }
   box-shadow:0 10px 24px rgba(15,26,44,.10);
 }
 
+/* ✅ STEP 1: allow the left text column to shrink so ellipsis works */
+.cd-headercard > :first-child{
+  min-width:0;
+  flex:1 1 auto;
+}
+
 .cd-brand{
   font-size:46px;
   font-weight:900;
@@ -397,9 +409,14 @@ body.cigar-detail-open{ overflow:hidden; }
 .cd-name{
   margin-top:6px;
   font-size:18px;
-  font-weight:800;
+  font-weight:600;          /* optional: slightly less bold */
   color:rgba(15,26,44,.55);
   line-height:1.15;
+
+  white-space:nowrap;       /* ✅ FORCE 1 LINE */
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
 }
 
 .cd-h-icon{
@@ -433,6 +450,7 @@ body.cigar-detail-open{ overflow:hidden; }
     gap:12px;
   }
 }
+
 .cd-img{
   background:transparent;     /* ← REMOVE GREY PILL */
   border-radius:0;
@@ -474,10 +492,10 @@ body.cigar-detail-open{ overflow:hidden; }
   padding:14px 14px;
 }
 .cd-stat .k{
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.08em;
-  color:rgba(15,26,44,.40);
+  font-size:11px;
+  font-weight:700;       /* was 900 */
+  letter-spacing:.02em;  /* was .08em */
+  color:rgba(15,26,44,.45);
 }
 .cd-stat .v{
   margin-top:6px;
@@ -512,14 +530,14 @@ body.cigar-detail-open{ overflow:hidden; }
   gap:14px;
 }
 .cd-kv .k{
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.08em;
-  color:rgba(15,26,44,.40);
+  font-size:11px;
+  font-weight:700;       /* was 900 */
+  letter-spacing:0em;    /* tighter */
+  color:rgba(15,26,44,.45);
 }
 .cd-kv .v{
-  font-size:18px;
-  font-weight:900;
+  font-size:16px;
+  font-weight:800;
   color:#0f1a2c;
   text-align:right;
 }
@@ -539,9 +557,9 @@ body.cigar-detail-open{ overflow:hidden; }
   background:#f6f8fb;
   color:rgba(15,26,44,.55);
   font-size:11px;              /* smaller text */
-  font-weight:900;
-  letter-spacing:.04em;
-  text-transform:uppercase;
+  font-weight:500;
+  letter-spacing:.01em;
+  text-transform:none;
   cursor:default;
 }
 
