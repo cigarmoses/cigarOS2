@@ -19,17 +19,52 @@
 
   <main class="cigars-main">
     <section class="cigars-header">
-      <!-- Title row + Favorites star -->
+      <!-- Title row + Top-right actions -->
       <div class="cigars-title-row">
         <h1 class="cigars-title">Cigars</h1>
 
-        <!-- ⭐ Favorites -->
-        <a
-          class="cigars-fav-btn"
-          href="/pos/cigars/favorites.html"
-          aria-label="Favorites"
-          title="Favorites"
-        >★</a>
+        <!-- Right-side actions: Filters + Favorites -->
+        <div class="cigars-title-actions" style="display:flex;align-items:flex-end;gap:10px;margin-bottom:10px;">
+          <!-- Filters icon (purple spot) -->
+          <button
+            type="button"
+            id="btn-open-filters"
+            class="cigars-filter-btn"
+            aria-label="Filters"
+            title="Filters"
+            style="
+              flex:0 0 auto;
+              display:grid;
+              place-items:center;
+              width:46px;height:46px;
+              border-radius:14px;
+              background:transparent;
+              border:none;
+              color:#0f1a2c;
+              -webkit-tap-highlight-color:transparent;
+              cursor:pointer;
+            "
+          >
+            <!-- iOS-style filter icon -->
+            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 6h16M7 12h13M10 18h10"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+
+          <!-- ⭐ Favorites -->
+          <a
+            class="cigars-fav-btn"
+            href="/pos/cigars/favorites.html"
+            aria-label="Favorites"
+            title="Favorites"
+          >★</a>
+        </div>
       </div>
 
       <div class="cigars-search-wrap">
@@ -45,53 +80,7 @@
       </div>
     </section>
 
-    <section class="cigars-filters-section">
-      <div class="cigars-filters-card" id="filters-card">
-        <div class="cigars-filters-header">
-          <div class="cigars-filters-title">Filters</div>
-          <button type="button" class="cigars-filters-viewall" id="filters-view-all">
-            view all
-          </button>
-        </div>
-
-        <!-- TOP 3 ROWS (always visible) — EXACT ORDER AS YOUR SCREENSHOT -->
-        <div class="cigars-filters-grid">
-          <!-- Row 1 (2): Manufacturer, Brand -->
-          <div class="cigars-filters-row cigars-filters-row--2">
-            <button class="filter-pill" data-filter="manufacturer">Manufacturer</button>
-            <button class="filter-pill" data-filter="brand">Brand</button>
-          </div>
-
-          <!-- Row 2 (3): Ring, Wrapper Shade, Vitolas (Wrapper Shade one line) -->
-          <div class="cigars-filters-row cigars-filters-row--shade3">
-            <button class="filter-pill pill-compact" data-filter="ring">Ring</button>
-            <button class="filter-pill pill-nowrap" data-filter="shade">Wrapper Shade</button>
-            <button class="filter-pill pill-compact" data-filter="vitola">Vitolas</button>
-          </div>
-
-          <!-- Row 3 (3): Flavored, Box-Pressed, Strength -->
-          <div class="cigars-filters-row cigars-filters-row--3">
-            <button class="filter-pill filter-pill--toggle" data-toggle="flavored">Flavored</button>
-            <button class="filter-pill filter-pill--toggle" data-toggle="boxpressed">Box-Pressed</button>
-            <button class="filter-pill" data-filter="strength">Strength</button>
-          </div>
-        </div>
-
-        <!-- VIEW ALL (everything else) -->
-        <div class="cigars-filters-expanded" id="filters-expanded" hidden>
-          <div class="cigars-filters-grid">
-            <div class="cigars-filters-row cigars-filters-row--wrap">
-              <button class="filter-pill" data-filter="length">Length</button>
-              <button class="filter-pill" data-filter="shape">Shape</button>
-              <button class="filter-pill filter-pill--toggle" data-toggle="tin">Tin</button>
-              <button class="filter-pill filter-pill--toggle" data-toggle="pack">Packs</button>
-              <button class="filter-pill filter-pill--toggle" data-toggle="barberpole">Barberpole</button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
+    <!-- ✅ REMOVED: old Filters card section (under the red X) -->
 
     <section class="cigars-brands-section">
       <h2 class="cigars-brands-title">Brands</h2>
@@ -103,28 +92,7 @@
   <script defer src="/pos/img/scripts/build-cigars.js"></script>
   <script defer src="/pos/cigars/cigars.js"></script>
 
-  <!-- Unified Filter Popup -->
-  <div id="filter-modal" class="fm fm--hidden" aria-hidden="true">
-    <div class="fm-backdrop" data-fm-close></div>
-
-    <div class="fm-sheet" role="dialog" aria-modal="true" aria-labelledby="fm-title">
-      <div class="fm-header">
-        <h2 id="fm-title" class="fm-title">Filter</h2>
-      </div>
-
-      <div class="fm-search-row">
-        <div class="fm-search">
-          <span class="fm-search-icon" aria-hidden="true">🔎</span>
-          <input id="fm-search-input" type="search" placeholder="search..." />
-        </div>
-      </div>
-
-      <div class="fm-list" id="fm-list"></div>
-
-      <div class="fm-footer">
-        <button type="button" id="fm-confirm" class="fm-confirm">Confirm</button>
-      </div>
-    </div>
-  </div>
+  <!-- ✅ Bottom-sheet filter system root (JS injects full sheet markup) -->
+  <div id="filter-modal" class="fm fm--hidden" aria-hidden="true"></div>
 </body>
 </html>
