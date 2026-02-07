@@ -242,10 +242,14 @@
     );
   }
 
-  function formatPrice(v) {
-    const n = Number(String(v || "").replace(/[^0-9.]/g, ""));
-    if (!Number.isFinite(n) || n <= 0) return "-";
-    return "$" + n.toFixed(2);
+  // ✅ Match Brand POS: no "$", show "0.00" instead of "-"
+  function formatPriceNoDollar(v) {
+    const raw = String(v ?? "").trim();
+    if (!raw) return "0.00";
+
+    const n = Number(raw.replace(/[^0-9.]/g, ""));
+    if (!Number.isFinite(n)) return "0.00";
+    return n.toFixed(2);
   }
 
   function makeReceiptItem(row) {
@@ -256,8 +260,13 @@
       line: (row["Line"] || "").trim(),
       cigar: (row["Cigar"] || "").trim(),
       vitola: (row["Vitola"] || "").trim(),
-      msrp:
-        (row["MSRP"] || row["Price"] || row["MSRP Price"] || row["Cigar MSRP"] || "").trim(),
+      msrp: (
+        row["MSRP"] ||
+        row["Price"] ||
+        row["MSRP Price"] ||
+        row["Cigar MSRP"] ||
+        ""
+      ).trim(),
       ring: (row["RG"] || row["Ring"] || "").trim(),
       length: (row["Length"] || "").trim(),
       wrapperShade: (row["Wrapper Shade"] || "").trim(),
@@ -266,6 +275,33 @@
       image: (row["Image"] || row["IMG"] || row["Cigar IMG"] || "").trim(),
     };
     return JSON.stringify(payload);
+  }
+
+  function makeModalPayload(row) {
+    // This is what the modal opener will receive (brand.js can map whatever it wants).
+    // We include BOTH raw row + normalized fields for easier compatibility.
+    const brand = (row["Brand"] || "").trim();
+    const line = (row["Line"] || "").trim();
+    const cigar = (row["Cigar"] || "").trim();
+    const vitola = (row["Vitola"] || "").trim();
+
+    return {
+      row, // raw sheet row
+      kind: "cigar",
+      Brand: brand,
+      Line: line,
+      Cigar: cigar,
+      Vitola: vitola,
+      Manufacturer: (row["Manufacturer"] || "").trim(),
+      MSRP: (row["MSRP"] || row["Price"] || row["MSRP Price"] || row["Cigar MSRP"] || "").trim(),
+      RG: (row["RG"] || row["Ring"] || "").trim(),
+      Length: (row["Length"] || "").trim(),
+      Shape: (row["Shape"] || "").trim(),
+      Strength: (row["Strength"] || "").trim(),
+      "Wrapper Shade": (row["Wrapper Shade"] || "").trim(),
+      Image: (row["Image"] || row["IMG"] || row["Cigar IMG"] || "").trim(),
+      BrandImg: (row["Brand IMG"] || row["Brand Img"] || "").trim(),
+    };
   }
 
   function buildCigarRow(row) {
@@ -279,6 +315,7 @@
 
     const brandImg = (row["Brand IMG"] || row["Brand Img"] || "").trim();
 
+    // icon
     const icon = document.createElement("div");
     icon.className = "cigar-row__icon";
 
@@ -289,6 +326,7 @@
     setBrandImgWithFallback(img, brand, brandImg);
     icon.appendChild(img);
 
+    // meta
     const meta = document.createElement("div");
     meta.className = "cigar-row__meta";
 
@@ -304,29 +342,49 @@
     meta.appendChild(title);
     meta.appendChild(sub);
 
-    const right = document.createElement("div");
-    right.className = "cigar-row__right";
+    // divider (for CSS grid layout)
+    const divider = document.createElement("div");
+    divider.className = "cigar-row__divider";
 
+    // price (no $)
     const priceVal = pick(row, ["MSRP", "Price", "MSRP Price", "Cigar MSRP"]);
     const price = document.createElement("div");
     price.className = "cigar-row__price";
-    price.textContent = formatPrice(priceVal);
+    price.textContent = formatPriceNoDollar(priceVal);
 
+    // add (+) with cart payload
     const add = document.createElement("button");
     add.type = "button";
     add.className = "cigar-row__add";
     add.setAttribute("aria-label", "Add");
     add.textContent = "+";
-
-    // IMPORTANT: cart.js listens for this dataset pattern
     add.setAttribute("data-receipt-item", makeReceiptItem(row));
 
-    right.appendChild(price);
-    right.appendChild(add);
+    // ✅ Row click should open cigar popup (but NOT when clicking +)
+    wrap.addEventListener("click", (e) => {
+      if (e.target instanceof Element && e.target.closest(".cigar-row__add")) return;
+
+      const payload = makeModalPayload(row);
+
+      // If brand.js exposes a global opener, use it.
+      if (typeof window.openCigarDetailModal === "function") {
+        window.openCigarDetailModal(payload);
+        return;
+      }
+      if (typeof window.openCigarModal === "function") {
+        window.openCigarModal(payload);
+        return;
+      }
+
+      // Otherwise dispatch an event brand.js can listen to.
+      window.dispatchEvent(new CustomEvent("cigar:open", { detail: payload }));
+    });
 
     wrap.appendChild(icon);
     wrap.appendChild(meta);
-    wrap.appendChild(right);
+    wrap.appendChild(divider);
+    wrap.appendChild(price);
+    wrap.appendChild(add);
 
     return wrap;
   }
@@ -400,7 +458,12 @@
         const set = state.filters[k];
         if (!set || set.size === 0) continue;
         for (const v of Array.from(set)) {
-          chips.push({ type: "filter", key: k, label: `${labelMap[k]}: ${v}`, value: v });
+          chips.push({
+            type: "filter",
+            key: k,
+            label: `${labelMap[k]}: ${v}`,
+            value: v,
+          });
         }
       }
     }
