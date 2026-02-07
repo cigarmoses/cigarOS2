@@ -1,25 +1,5 @@
 /* /pos/cigars/cigars.js
    POS Cigars (Main) — NEW Filters Bottom Sheet
-
-   ✅ Replaces legacy "Filters card" + centered modal
-   ✅ Uses top-right filter icon button (no text) next to Favorites ⭐
-   ✅ Bottom sheet slides up from bottom
-   ✅ Close via:
-      - X button
-      - click outside (backdrop)
-      - ESC key
-   ✅ Left column: filter categories
-   ✅ Right column: searchable/scrollable list w/ checkboxes + optional icons
-   ✅ Selected text uses iOS blue (#007AFF) (handled by CSS)
-   ✅ Writes to window.__CIGAR_FILTER_STATE__ and calls window.buildCigarsRender()
-
-   Data source:
-   - Prefers window.__CIGAR_SHEET_ROWS__ (loaded by build-cigars.js)
-   - Falls back to fetching the same CSV
-
-   Icons:
-   - Manufacturer: /img/icons/manufacturers/{slug}.svg
-   - Brand:        /img/icons/brands/{slug}.svg
 */
 
 (() => {
@@ -37,11 +17,9 @@
   const backBtn = $("#cigars-back");
   const searchInput = $("#cigars-search-input");
 
-  // New filter icon button (you can use either)
   const openBtn =
     $("#btn-open-filters") || $(".cigars-filter-btn") || $("#cigars-filter-btn");
 
-  // Modal root (CSS expects #filter-modal with class "fm")
   let modalRoot = $("#filter-modal");
 
   // -----------------------------
@@ -68,10 +46,9 @@
           shape: new Set(),
           strength: new Set(),
         },
-        toggles: {}, // reserved
+        toggles: {},
       };
     } else {
-      // If these came back as arrays/objects, normalize to Set
       const g = window.__CIGAR_FILTER_STATE__;
       if (!g.filters) g.filters = {};
       for (const k of [
@@ -94,7 +71,7 @@
     }
   }
 
-  function renderBrands() {
+  function renderBrandsOrResults() {
     if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
   }
 
@@ -102,7 +79,6 @@
   // Local UI state
   // -----------------------------
   const state = {
-    // mirror of global filters, but local until "Apply"
     selected: {
       manufacturer: new Set(),
       brand: new Set(),
@@ -189,17 +165,57 @@
       if (match) {
         ordered.push(match);
         seen.add(match.toLowerCase());
-      } else {
-        ordered.push(item);
-        seen.add(item.toLowerCase());
       }
     }
-
     for (const v of list) {
       const k = v.toLowerCase();
       if (!seen.has(k)) ordered.push(v);
     }
+    return ordered;
+  }
 
+  // -----------------------------
+  // ✅ Vitola custom ordering
+  // (common vitolas first, then alphabetical remainder)
+  // -----------------------------
+  const VITOLA_ORDER = [
+    "Toro",
+    "Robusto",
+    "Gordo",
+    "Churchill",
+    "Corona",
+    "Petit Corona",
+    "Corona Gorda",
+    "Lonsdale",
+    "Lancero",
+    "Panetela",
+    "Belicoso",
+    "Torpedo",
+    "Piramide",
+    "Perfecto",
+    "Diadema",
+    "Figurado",
+    "Double Corona",
+    "Petit Robusto",
+    "Short Robusto",
+  ];
+
+  function orderVitolas(values) {
+    const list = uniqSorted(values);
+    const seen = new Set();
+    const ordered = [];
+
+    for (const item of VITOLA_ORDER) {
+      const match = list.find((v) => v.toLowerCase() === item.toLowerCase());
+      if (match) {
+        ordered.push(match);
+        seen.add(match.toLowerCase());
+      }
+    }
+    for (const v of list) {
+      const k = v.toLowerCase();
+      if (!seen.has(k)) ordered.push(v);
+    }
     return ordered;
   }
 
@@ -296,6 +312,7 @@
 
     const cleaned = uniqSorted(vals);
     if (key === "shade") return orderWrapperShades(cleaned);
+    if (key === "vitola") return orderVitolas(cleaned);
     return cleaned;
   }
 
@@ -322,7 +339,6 @@
       document.body.appendChild(modalRoot);
     }
 
-    // Build sheet markup if empty
     if (!modalRoot.querySelector(".fm__sheet")) {
       modalRoot.innerHTML = `
         <div class="fm__backdrop" data-fm-close></div>
@@ -381,7 +397,6 @@
     renderCats();
     setActiveCategory(state.activeKey);
 
-    // focus search after animation kick
     window.setTimeout(() => {
       const inp = $("#fm-search", modalRoot);
       inp?.focus();
@@ -424,12 +439,10 @@
     const inp = $("#fm-search", modalRoot);
     if (inp) inp.value = "";
 
-    // highlight left buttons
     $$(".fm__cat-btn", modalRoot).forEach((b) => {
       b.classList.toggle("is-active", b.getAttribute("data-cat") === key);
     });
 
-    // load values
     state.activeValues = getValuesForKey(key);
     renderList();
   }
@@ -444,9 +457,7 @@
 
     const q = norm(state.activeSearch).toLowerCase();
     const values = state.activeValues || [];
-    const filtered = !q
-      ? values
-      : values.filter((v) => norm(v).toLowerCase().includes(q));
+    const filtered = !q ? values : values.filter((v) => norm(v).toLowerCase().includes(q));
 
     listEl.innerHTML = filtered
       .map((v) => {
@@ -470,9 +481,7 @@
           : `<div class="fm__icon" aria-hidden="true"></div>`;
 
         return `
-          <div class="fm__row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(
-          label
-        )}">
+          <div class="fm__row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(label)}">
             ${cb}
             ${icon}
             <div class="fm__label">${escapeHtml(label)}</div>
@@ -493,7 +502,6 @@
         const cb = $(".fm__cb", row);
         if (cb) cb.classList.toggle("is-checked", selectedSet.has(val));
 
-        // re-render checkbox svg quickly (simple + robust)
         if (cb) {
           cb.innerHTML = selectedSet.has(val)
             ? `<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -523,10 +531,8 @@
       g.filters[k] = new Set([...state.selected[k]]);
     }
 
-    // main page search stays live in the top bar
     g.q = (searchInput?.value || "").toString();
-
-    renderBrands();
+    renderBrandsOrResults();
   }
 
   function resetLocalSelections() {
@@ -537,22 +543,21 @@
   // -----------------------------
   // Event bindings
   // -----------------------------
-  backBtn?.addEventListener("click", () => history.back());
+  backBtn?.addEventListener("click", () => {
+    window.location.href = "/pos/";
+  });
 
-  // Top bar search -> live update global & render
   searchInput?.addEventListener("input", () => {
     ensureGlobalState();
     window.__CIGAR_FILTER_STATE__.q = (searchInput.value || "").toString();
-    renderBrands();
+    renderBrandsOrResults();
   });
 
-  // Open modal
   openBtn?.addEventListener("click", () => {
     syncLocalFromGlobal();
     openModal();
   });
 
-  // Close handlers (delegated inside modal)
   document.addEventListener("click", (e) => {
     if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
     const t = e.target;
@@ -560,7 +565,6 @@
     if (t.closest("[data-fm-close]")) closeModal();
   });
 
-  // Backdrop click already handled by [data-fm-close], but ensure click-outside works:
   document.addEventListener("mousedown", (e) => {
     if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
     const sheet = $(".fm__sheet", modalRoot);
@@ -575,7 +579,6 @@
     closeModal();
   });
 
-  // Modal controls
   document.addEventListener("input", (e) => {
     if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
     const t = e.target;
@@ -610,7 +613,6 @@
     try {
       ensureGlobalState();
 
-      // Prefer build-cigars.js data
       if (Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length) {
         DATA_ROWS = window.__CIGAR_SHEET_ROWS__;
       } else {
@@ -621,18 +623,14 @@
         window.__CIGAR_SHEET_ROWS__ = DATA_ROWS;
       }
 
-      // hydrate top search from global state
       if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
-
-      // initial render
-      renderBrands();
+      renderBrandsOrResults();
     } catch (err) {
       console.error("cigars.js init error:", err);
-      // still try rendering with what we have
       try {
         ensureGlobalState();
         if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
-        renderBrands();
+        renderBrandsOrResults();
       } catch {}
     }
   }
