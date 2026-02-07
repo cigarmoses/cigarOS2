@@ -251,32 +251,39 @@
 
 /* ============================
    Filtered Results (cigar rows)
+   Match Brand POS row style
    ============================ */
 .cigars-results{
   display:flex;
   flex-direction:column;
-  gap: 10px;
+  gap: 0;
   padding: 6px 0 18px;
 }
 
+/* row matches brand list: full-width strip w dividers */
 .cigar-row{
   display:grid;
-  grid-template-columns: 52px 1fr auto;
-  gap: 12px;
+  grid-template-columns: 62px 1fr 12px 92px 54px; /* icon | text | divider | price | + */
+  gap: 14px;
   align-items:center;
-  padding: 12px 12px;
-  border-radius: 18px;
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 14px 40px rgba(0,0,0,.22);
+  padding: 16px 14px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+.cigar-row:first-child{
+  border-top: 1px solid rgba(255,255,255,.10);
 }
 
 .cigar-row__icon{
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: rgba(255,255,255,.10);
-  border: 1px solid rgba(255,255,255,.12);
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.10);
   display:grid;
   place-items:center;
   overflow:hidden;
@@ -291,60 +298,74 @@
 .cigar-row__meta{
   display:flex;
   flex-direction:column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
 }
 
+/* ✅ allow wrap to 2 lines like Brand page */
 .cigar-row__title{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-weight: 800;
   letter-spacing: -0.01em;
-  font-size: 18px;
+  font-size: 22px;
+  line-height: 1.05;
   color: rgba(255,255,255,.96);
-  white-space: nowrap;
+
+  /* 2-line wrap clamp */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .cigar-row__sub{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight: 500;
-  font-size: 14px;
-  color: rgba(255,255,255,.65);
+  font-weight: 600;
+  font-size: 18px;
+  color: rgba(255,255,255,.55);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.cigar-row__right{
-  display:flex;
-  align-items:center;
-  gap: 10px;
+/* divider between text and price */
+.cigar-row__divider{
+  width: 1px;
+  height: 52px;
+  background: rgba(255,255,255,.12);
+  justify-self: center;
 }
 
+/* ✅ price matches Brand page: no $ sign, larger */
 .cigar-row__price{
   font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-weight: 800;
-  font-size: 16px;
+  font-size: 22px;
   color: rgba(255,255,255,.92);
-  min-width: 56px;
   text-align:right;
+  letter-spacing: -0.01em;
 }
 
+/* ✅ add button matches Brand page: bigger green circle */
 .cigar-row__add{
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  border:none;
-  cursor:pointer;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
   background: #34c759;
-  color: #081024;
-  display:grid;
-  place-items:center;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  line-height: 1;
   box-shadow: 0 10px 22px rgba(0,0,0,.22);
 }
 
-.cigar-row__add:active{ transform: translateY(1px); opacity: .92; }
+.cigar-row__add:active{
+  transform: translateY(1px);
+  opacity: .92;
+}
 
 /* ============================
    Responsive tweaks
