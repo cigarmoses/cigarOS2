@@ -25,7 +25,7 @@
 
         <!-- Right-side actions: Filters + Favorites -->
         <div class="cigars-title-actions" style="display:flex;align-items:flex-end;gap:10px;margin-bottom:10px;">
-          <!-- Filters icon (purple spot) -->
+          <!-- Filters icon -->
           <button
             type="button"
             id="btn-open-filters"
@@ -40,12 +40,11 @@
               border-radius:14px;
               background:transparent;
               border:none;
-              color:#0f1a2c;
+              color:inherit;
               -webkit-tap-highlight-color:transparent;
               cursor:pointer;
             "
           >
-            <!-- iOS-style filter icon -->
             <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M4 6h16M7 12h13M10 18h10"
@@ -77,13 +76,14 @@
             autocomplete="off"
           />
         </div>
+
+        <!-- ✅ Applied filter chips (JS populates) -->
+        <div id="cigars-applied-filters" class="cigars-applied-filters" aria-label="Applied filters"></div>
       </div>
     </section>
 
-    <!-- ✅ REMOVED: old Filters card section (under the red X) -->
-
     <section class="cigars-brands-section">
-      <h2 class="cigars-brands-title">Brands</h2>
+      <h2 class="cigars-brands-title" id="cigars-section-title">Brands</h2>
       <div id="category-grid" class="brands-grid"></div>
     </section>
   </main>
@@ -92,7 +92,7 @@
   <script defer src="/pos/img/scripts/build-cigars.js"></script>
   <script defer src="/pos/cigars/cigars.js"></script>
 
-  <!-- ✅ Bottom-sheet filter system root (JS injects full sheet markup) -->
+  <!-- Bottom-sheet filter system root (JS injects full sheet markup) -->
   <div id="filter-modal" class="fm fm--hidden" aria-hidden="true"></div>
 </body>
 </html>
