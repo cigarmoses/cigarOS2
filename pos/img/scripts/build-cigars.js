@@ -1,5 +1,5 @@
 // /pos/img/scripts/build-cigars.js
-// Loads Google Sheets CSV (HUB) -> builds brand grid on /pos/cigars/
+// Loads Google Sheets CSV (HUB) -> builds brand grid OR filtered cigar rows on /pos/cigars/
 // Exposes:
 //   - window.__CIGAR_SHEET_ROWS__
 //   - window.__CIGAR_HUB_CSV_URL__
@@ -9,7 +9,7 @@
 
 (function () {
   const SHEET_ID = "10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM";
-  const GID = "822697742"; // HUB tab gid (your data tab)
+  const GID = "822697742";
   const HUB_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
   function withNoCache(url) {
@@ -18,7 +18,6 @@
     return u.toString();
   }
 
-  // Make HUB url globally available so other scripts NEVER guess tabs
   window.__CIGAR_HUB_CSV_URL__ = HUB_CSV_URL;
 
   function getGridEl() {
@@ -26,6 +25,14 @@
       document.getElementById("category-grid") ||
       document.getElementById("brands-grid")
     );
+  }
+
+  function getSectionTitleEl() {
+    return document.getElementById("cigars-section-title");
+  }
+
+  function getAppliedFiltersEl() {
+    return document.getElementById("cigars-applied-filters");
   }
 
   // Minimal CSV parser (supports quotes)
@@ -189,22 +196,6 @@
       if (!hay.includes(q)) return false;
     }
 
-    const featureCols = {
-      tubo: ["Tubo", "TUBO"],
-      flavored: ["Flavored", "FLAVORED"],
-      tin: ["Tin", "TIN"],
-      pack: ["Pack", "PACK"],
-      barberpole: ["Barber", "Barberpole", "BARBER", "BARBERPOLE"],
-      boxpressed: ["Box-Pressed", "Box Pressed", "BOX-PRESSED", "BOX PRESSED"],
-    };
-
-    for (const key of Object.keys(featureCols)) {
-      if (!state.toggles[key]) continue;
-      const colKeys = featureCols[key];
-      const val = pick(row, colKeys).toString().trim();
-      if (!val) return false;
-    }
-
     const map = {
       manufacturer: ["Manufacturer"],
       brand: ["Brand"],
@@ -217,7 +208,7 @@
     };
 
     for (const filterKey of Object.keys(map)) {
-      const set = state.filters[filterKey];
+      const set = state.filters && state.filters[filterKey];
       if (!set || set.size === 0) continue;
 
       const colVal = pick(row, map[filterKey]).toString().trim();
@@ -251,6 +242,213 @@
     );
   }
 
+  function formatPrice(v) {
+    const n = Number(String(v || "").replace(/[^0-9.]/g, ""));
+    if (!Number.isFinite(n) || n <= 0) return "-";
+    return "$" + n.toFixed(2);
+  }
+
+  function makeReceiptItem(row) {
+    // Best-effort payload for cart.js (matches your “data-receipt-item” pattern)
+    const payload = {
+      kind: "cigar",
+      brand: (row["Brand"] || "").trim(),
+      line: (row["Line"] || "").trim(),
+      cigar: (row["Cigar"] || "").trim(),
+      vitola: (row["Vitola"] || "").trim(),
+      msrp:
+        (row["MSRP"] || row["Price"] || row["MSRP Price"] || row["Cigar MSRP"] || "").trim(),
+      ring: (row["RG"] || row["Ring"] || "").trim(),
+      length: (row["Length"] || "").trim(),
+      wrapperShade: (row["Wrapper Shade"] || "").trim(),
+      strength: (row["Strength"] || "").trim(),
+      // optional
+      image: (row["Image"] || row["IMG"] || row["Cigar IMG"] || "").trim(),
+    };
+    return JSON.stringify(payload);
+  }
+
+  function buildCigarRow(row) {
+    const wrap = document.createElement("div");
+    wrap.className = "cigar-row";
+
+    const brand = (row["Brand"] || "").trim();
+    const line = (row["Line"] || "").trim();
+    const cigar = (row["Cigar"] || "").trim();
+    const vitola = (row["Vitola"] || "").trim();
+
+    const brandImg = (row["Brand IMG"] || row["Brand Img"] || "").trim();
+
+    const icon = document.createElement("div");
+    icon.className = "cigar-row__icon";
+
+    const img = document.createElement("img");
+    img.alt = brand || "";
+    img.loading = "lazy";
+    img.decoding = "async";
+    setBrandImgWithFallback(img, brand, brandImg);
+    icon.appendChild(img);
+
+    const meta = document.createElement("div");
+    meta.className = "cigar-row__meta";
+
+    const title = document.createElement("div");
+    title.className = "cigar-row__title";
+    // Match Brand POS row convention: "Line + Cigar"
+    title.textContent = [line, cigar].filter(Boolean).join(" ");
+
+    const sub = document.createElement("div");
+    sub.className = "cigar-row__sub";
+    sub.textContent = vitola || brand || "";
+
+    meta.appendChild(title);
+    meta.appendChild(sub);
+
+    const right = document.createElement("div");
+    right.className = "cigar-row__right";
+
+    const priceVal = pick(row, ["MSRP", "Price", "MSRP Price", "Cigar MSRP"]);
+    const price = document.createElement("div");
+    price.className = "cigar-row__price";
+    price.textContent = formatPrice(priceVal);
+
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "cigar-row__add";
+    add.setAttribute("aria-label", "Add");
+    add.textContent = "+";
+
+    // IMPORTANT: cart.js listens for this dataset pattern
+    add.setAttribute("data-receipt-item", makeReceiptItem(row));
+
+    right.appendChild(price);
+    right.appendChild(add);
+
+    wrap.appendChild(icon);
+    wrap.appendChild(meta);
+    wrap.appendChild(right);
+
+    return wrap;
+  }
+
+  function hasActiveState(state) {
+    const q = (state && state.q ? String(state.q).trim() : "");
+    if (q) return true;
+
+    const filters = state && state.filters ? state.filters : {};
+    for (const k of Object.keys(filters)) {
+      const s = filters[k];
+      if (s && typeof s.size === "number" && s.size > 0) return true;
+    }
+    return false;
+  }
+
+  function clearAllState() {
+    const st = window.__CIGAR_FILTER_STATE__;
+    if (!st) return;
+    st.q = "";
+    if (st.filters) {
+      Object.keys(st.filters).forEach((k) => {
+        const s = st.filters[k];
+        if (s && typeof s.clear === "function") s.clear();
+        else st.filters[k] = new Set();
+      });
+    }
+  }
+
+  function removeFilterValue(key, value) {
+    const st = window.__CIGAR_FILTER_STATE__;
+    if (!st || !st.filters || !st.filters[key]) return;
+    const set = st.filters[key];
+    if (set && typeof set.delete === "function") set.delete(value);
+  }
+
+  function clearSearch() {
+    const st = window.__CIGAR_FILTER_STATE__;
+    if (!st) return;
+    st.q = "";
+    const inp = document.getElementById("cigars-search-input");
+    if (inp) inp.value = "";
+  }
+
+  function buildAppliedChips(state) {
+    const root = getAppliedFiltersEl();
+    if (!root) return;
+
+    root.innerHTML = "";
+
+    const chips = [];
+
+    const q = (state.q || "").trim();
+    if (q) {
+      chips.push({ type: "q", key: "q", label: `Search: ${q}`, value: q });
+    }
+
+    const labelMap = {
+      manufacturer: "Manufacturer",
+      brand: "Brand",
+      vitola: "Vitola",
+      ring: "Ring",
+      length: "Length",
+      strength: "Strength",
+      shape: "Shape",
+      shade: "Wrap. Shade",
+    };
+
+    if (state.filters) {
+      for (const k of Object.keys(labelMap)) {
+        const set = state.filters[k];
+        if (!set || set.size === 0) continue;
+        for (const v of Array.from(set)) {
+          chips.push({ type: "filter", key: k, label: `${labelMap[k]}: ${v}`, value: v });
+        }
+      }
+    }
+
+    if (chips.length === 0) return;
+
+    // Clear all chip
+    const clearChip = document.createElement("div");
+    clearChip.className = "af-chip af-clear";
+    clearChip.innerHTML = `
+      <div class="af-chip__text">Clear All</div>
+      <button class="af-chip__x" type="button" aria-label="Clear all">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+        </svg>
+      </button>
+    `;
+    clearChip.querySelector(".af-chip__x").addEventListener("click", () => {
+      clearAllState();
+      clearSearch();
+      window.buildCigarsRender && window.buildCigarsRender();
+    });
+    root.appendChild(clearChip);
+
+    chips.forEach((c) => {
+      const chip = document.createElement("div");
+      chip.className = "af-chip";
+      chip.innerHTML = `
+        <div class="af-chip__text"></div>
+        <button class="af-chip__x" type="button" aria-label="Remove">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+          </svg>
+        </button>
+      `;
+      chip.querySelector(".af-chip__text").textContent = c.label;
+
+      chip.querySelector(".af-chip__x").addEventListener("click", () => {
+        if (c.type === "q") clearSearch();
+        else removeFilterValue(c.key, c.value);
+
+        window.buildCigarsRender && window.buildCigarsRender();
+      });
+
+      root.appendChild(chip);
+    });
+  }
+
   async function loadSheet() {
     const res = await fetch(withNoCache(HUB_CSV_URL), { cache: "no-store" });
     if (!res.ok) throw new Error("Google Sheets CSV fetch failed: " + res.status);
@@ -265,11 +463,8 @@
 
     try {
       const rows = await loadSheet();
-
-      // store globally so cigars.js can build filter option lists
       window.__CIGAR_SHEET_ROWS__ = rows;
 
-      // create default state if missing
       if (!window.__CIGAR_FILTER_STATE__) {
         window.__CIGAR_FILTER_STATE__ = {
           q: "",
@@ -283,49 +478,91 @@
             shape: new Set(),
             strength: new Set(),
           },
-          toggles: {
-            tubo: false,
-            flavored: false,
-            tin: false,
-            pack: false,
-            barberpole: false,
-            boxpressed: false,
-          },
+          toggles: {},
         };
       }
 
-      // expose render function for cigars.js
       window.buildCigarsRender = function () {
-        const state = window.__CIGAR_FILTER_STATE__;
-        const brands = brandsFromRows(rows, state);
+        const state = window.__CIGAR_FILTER_STATE__ || { q: "", filters: {} };
+        const titleEl = getSectionTitleEl();
+
+        // Chips always reflect current state
+        buildAppliedChips(state);
+
+        // MODE SWITCH:
+        // - No active filters/search => brand browse
+        // - Any active => cigar rows
+        const active = hasActiveState(state);
 
         grid.innerHTML = "";
-        if (!brands.length) {
+
+        if (!active) {
+          if (titleEl) titleEl.textContent = "Brands";
+          grid.classList.remove("cigars-results");
+          grid.classList.add("brands-grid");
+
+          const brands = brandsFromRows(rows, state);
+
+          if (!brands.length) {
+            const msg = document.createElement("div");
+            msg.style.color = "rgba(255,255,255,.65)";
+            msg.style.fontWeight = "700";
+            msg.style.padding = "10px 0";
+            msg.textContent = "No brands found.";
+            grid.appendChild(msg);
+            return;
+          }
+
+          const frag = document.createDocumentFragment();
+          brands.forEach((b) => frag.appendChild(buildTile(b)));
+          grid.appendChild(frag);
+          return;
+        }
+
+        // Filtered cigar results
+        if (titleEl) titleEl.textContent = "Results";
+        grid.classList.remove("brands-grid");
+        grid.classList.add("cigars-results");
+
+        const matches = rows.filter((r) => rowMatchesState(r, state));
+
+        if (!matches.length) {
           const msg = document.createElement("div");
-          msg.style.color = "#6a7586";
-          msg.style.fontWeight = "600";
+          msg.style.color = "rgba(255,255,255,.70)";
+          msg.style.fontWeight = "800";
           msg.style.padding = "10px 0";
-          msg.textContent = "No brands match your filters.";
+          msg.textContent = "No cigars match your filters.";
           grid.appendChild(msg);
           return;
         }
 
+        // Keep it stable and fast: cap long lists (tweak if you want)
+        const MAX = 200;
+        const slice = matches.slice(0, MAX);
+
         const frag = document.createDocumentFragment();
-        brands.forEach((b) => frag.appendChild(buildTile(b)));
+        slice.forEach((r) => frag.appendChild(buildCigarRow(r)));
         grid.appendChild(frag);
+
+        if (matches.length > MAX) {
+          const more = document.createElement("div");
+          more.style.color = "rgba(255,255,255,.55)";
+          more.style.fontWeight = "700";
+          more.style.padding = "8px 2px 0";
+          more.textContent = `Showing ${MAX} of ${matches.length} results. Narrow your filters to see more.`;
+          grid.appendChild(more);
+        }
       };
 
-      // initial paint
       window.buildCigarsRender();
 
-      // ✅ Signal to cigars.js: HUB + renderer are ready
       window.dispatchEvent(new Event("cigars:hub-ready"));
     } catch (err) {
       console.error("[build-cigars] error:", err);
       grid.innerHTML = "";
       const msg = document.createElement("div");
-      msg.style.color = "#b00020";
-      msg.style.fontWeight = "700";
+      msg.style.color = "#ff6b6b";
+      msg.style.fontWeight = "800";
       msg.style.padding = "10px 0";
       msg.textContent =
         "Brands failed to load from the Hub (Google Sheets). Check sharing + CSV access.";
