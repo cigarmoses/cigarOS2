@@ -1,15 +1,15 @@
 // /pos/img/scripts/build-cigars.js
-// Loads Google Sheets CSV (HUB) -> builds brand grid OR (when filters/search active) renders
-// the EXACT SAME row markup + click behavior as /pos/cigars/brand.js (brand-row + cigar detail popup)
+// Loads Google Sheets CSV (HUB) -> builds brand grid OR filtered cigar rows on /pos/cigars/
 //
-// Exposes:
-//   - window.__CIGAR_SHEET_ROWS__
-//   - window.__CIGAR_HUB_CSV_URL__
-//   - window.buildCigarsRender()
-// Dispatches:
-//   - window event "cigars:hub-ready" when data + renderer are ready
+// ✅ Option A (final):
+// - Results mode reuses BRAND PAGE row system (same classes + structure)
+// - Row click opens cigar detail popup and populates
+// - Green + uses window.addToInvoice() (pos.js), not data-receipt-item
+// - Main page background is handled in cigars.css (dark like brand page)
 
 (function () {
+  "use strict";
+
   const SHEET_ID = "10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM";
   const GID = "822697742";
   const HUB_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
@@ -22,21 +22,24 @@
 
   window.__CIGAR_HUB_CSV_URL__ = HUB_CSV_URL;
 
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-  // ---------- DOM helpers ----------
+  // -----------------------------
+  // DOM helpers
+  // -----------------------------
   function getGridEl() {
     return document.getElementById("category-grid") || document.getElementById("brands-grid");
   }
+
   function getSectionTitleEl() {
     return document.getElementById("cigars-section-title");
   }
+
   function getAppliedFiltersEl() {
     return document.getElementById("cigars-applied-filters");
   }
 
-  // ---------- utilities ----------
+  // -----------------------------
+  // Utilities
+  // -----------------------------
   const norm = (s) => String(s ?? "").trim();
   const lower = (s) => norm(s).toLowerCase();
 
@@ -48,20 +51,21 @@
       .replace(/[^a-z0-9]+/g, "")
       .trim();
 
-  const esc = (s = "") =>
-    String(s)
+  function esc(s = "") {
+    return String(s)
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#39;");
+  }
 
   function pick(row, keys) {
     for (const k of keys) {
-      if (row[k] != null && String(row[k]).trim() !== "") return row[k];
+      if (row[k] != null && norm(row[k]) !== "") return row[k];
     }
     // case-insensitive fallback
-    const ks = Object.keys(row || {});
+    const ks = Object.keys(row);
     for (const want of keys) {
       const hit = ks.find((h) => lower(h) === lower(want));
       if (hit && norm(row[hit]) !== "") return row[hit];
@@ -69,17 +73,24 @@
     return "";
   }
 
-  function safeSrc(src) {
-    if (!src) return "";
-    let s = String(src).trim();
-    if (!s) return "";
-    if (!s.startsWith("/") && !s.startsWith("http")) {
-      s = "/" + s.replace(/^\/+/, "");
-    }
-    return s;
+  function formatPriceRaw(v) {
+    // Keep your sheet’s display formatting if present; otherwise attempt $X.XX
+    const s = norm(v);
+    if (!s) return "-";
+    if (s.includes("$")) return s;
+    const n = Number(s.replace(/[^0-9.]/g, ""));
+    if (!Number.isFinite(n) || n <= 0) return s;
+    return "$" + n.toFixed(2);
   }
 
-  // ---------- CSV parsing ----------
+  function priceNumber(v) {
+    const n = Number(String(v ?? "").replace(/[^0-9.]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  // -----------------------------
+  // CSV parser
+  // -----------------------------
   function parseCSV(text) {
     const rows = [];
     let row = [];
@@ -132,7 +143,17 @@
     return { headers, data };
   }
 
-  // ---------- brand icon overrides ----------
+  async function loadSheet() {
+    const res = await fetch(withNoCache(HUB_CSV_URL), { cache: "no-store" });
+    if (!res.ok) throw new Error("Google Sheets CSV fetch failed: " + res.status);
+    const text = await res.text();
+    const parsed = parseCSV(text);
+    return parsed.data;
+  }
+
+  // -----------------------------
+  // Brand tile icons
+  // -----------------------------
   const BRAND_ICON_OVERRIDES = {
     aturrent: "aturrent",
     aflores: "aflores",
@@ -152,14 +173,24 @@
     return canonical;
   }
 
+  function safeSrc(src) {
+    if (!src) return "";
+    let s = String(src).trim();
+    if (!s) return "";
+    if (!s.startsWith("/") && !s.startsWith("http")) {
+      s = "/" + s.replace(/^\/+/, "");
+    }
+    return s;
+  }
+
   function setBrandImgWithFallback(imgEl, brandName, csvImgPath) {
-    const s = brandSlug(brandName);
+    const slugB = brandSlug(brandName);
     const csvSrc = safeSrc(csvImgPath);
 
     const candidates = [];
     if (csvSrc) candidates.push(csvSrc);
-    if (s) candidates.push(`/img/icons/brands/${s}.svg`);
-    if (s) candidates.push(`/img/icons/brand/${s}.svg`);
+    if (slugB) candidates.push(`/img/icons/brands/${slugB}.svg`);
+    if (slugB) candidates.push(`/img/icons/brand/${slugB}.svg`);
 
     let idx = 0;
     function tryNext() {
@@ -174,7 +205,6 @@
     tryNext();
   }
 
-  // ---------- brand tiles ----------
   function buildTile({ brand, brandImg }) {
     const a = document.createElement("a");
     a.className = "category-card";
@@ -196,30 +226,28 @@
     return a;
   }
 
-  function brandsFromRows(rows, state) {
-    const brandMap = new Map();
-
-    for (const row of rows) {
-      const brand = norm(row["Brand"]);
-      if (!brand) continue;
-
-      if (state && !rowMatchesState(row, state)) continue;
-
-      const brandImg = norm(row["Brand IMG"] || row["Brand Img"]);
-      if (!brandMap.has(brand)) {
-        brandMap.set(brand, { brand, brandImg });
-      } else {
-        const existing = brandMap.get(brand);
-        if (!existing.brandImg && brandImg) existing.brandImg = brandImg;
-      }
+  // -----------------------------
+  // Filter state + matching
+  // -----------------------------
+  function ensureDefaultState() {
+    if (!window.__CIGAR_FILTER_STATE__) {
+      window.__CIGAR_FILTER_STATE__ = {
+        q: "",
+        filters: {
+          manufacturer: new Set(),
+          brand: new Set(),
+          shade: new Set(),
+          vitola: new Set(),
+          length: new Set(),
+          ring: new Set(),
+          shape: new Set(),
+          strength: new Set(),
+        },
+        toggles: {},
+      };
     }
-
-    return Array.from(brandMap.values()).sort((a, b) =>
-      a.brand.toLowerCase().localeCompare(b.brand.toLowerCase())
-    );
   }
 
-  // ---------- filter matching (same logic as your build) ----------
   function rowMatchesState(row, state) {
     const q = (state.q || "").trim().toLowerCase();
 
@@ -255,7 +283,7 @@
       const set = state.filters && state.filters[filterKey];
       if (!set || set.size === 0) continue;
 
-      const colVal = norm(pick(row, map[filterKey]));
+      const colVal = pick(row, map[filterKey]).toString().trim();
       if (!colVal || !set.has(colVal)) return false;
     }
 
@@ -263,10 +291,10 @@
   }
 
   function hasActiveState(state) {
-    const q = state?.q ? norm(state.q) : "";
+    const q = state && state.q ? String(state.q).trim() : "";
     if (q) return true;
 
-    const filters = state?.filters || {};
+    const filters = state && state.filters ? state.filters : {};
     for (const k of Object.keys(filters)) {
       const s = filters[k];
       if (s && typeof s.size === "number" && s.size > 0) return true;
@@ -274,7 +302,33 @@
     return false;
   }
 
-  // ---------- Applied chips (unchanged) ----------
+  function brandsFromRows(rows, state) {
+    const brandMap = new Map();
+
+    for (const row of rows) {
+      const brand = (row["Brand"] || "").trim();
+      if (!brand) continue;
+
+      if (state && !rowMatchesState(row, state)) continue;
+
+      const brandImg = (row["Brand IMG"] || row["Brand Img"] || "").trim();
+
+      if (!brandMap.has(brand)) {
+        brandMap.set(brand, { brand, brandImg });
+      } else {
+        const existing = brandMap.get(brand);
+        if (!existing.brandImg && brandImg) existing.brandImg = brandImg;
+      }
+    }
+
+    return Array.from(brandMap.values()).sort((a, b) =>
+      a.brand.toLowerCase().localeCompare(b.brand.toLowerCase())
+    );
+  }
+
+  // -----------------------------
+  // Applied filter chips (unchanged from your build)
+  // -----------------------------
   function clearAllState() {
     const st = window.__CIGAR_FILTER_STATE__;
     if (!st) return;
@@ -310,7 +364,7 @@
     root.innerHTML = "";
 
     const chips = [];
-    const q = norm(state.q);
+    const q = (state.q || "").trim();
     if (q) chips.push({ type: "q", key: "q", label: `Search: ${q}`, value: q });
 
     const labelMap = {
@@ -336,6 +390,7 @@
 
     if (chips.length === 0) return;
 
+    // Clear all
     const clearChip = document.createElement("div");
     clearChip.className = "af-chip af-clear";
     clearChip.innerHTML = `
@@ -376,9 +431,80 @@
     });
   }
 
-  // =========================================================
-  // ✅ CIGAR DETAIL POPUP (copied from brand.js, so row click works on main page)
-  // =========================================================
+  // -----------------------------
+  // ✅ BRAND-PAGE IDENTICAL ROW MARKUP (Results mode)
+  // -----------------------------
+  function buildBrandRowHTML(row) {
+    const brand = norm(pick(row, ["Brand"]));
+    const line = norm(pick(row, ["Line", "Series", "Collection"]));
+    const cigar = norm(pick(row, ["Cigar", "Name", "Cigar Name"]));
+    const vitola = norm(pick(row, ["Vitola"]));
+
+    const cigarFull = `${line} ${cigar}`.trim();
+
+    const wrapper = norm(pick(row, ["Wrapper", "Wrapper Type"]));
+    const binder = norm(pick(row, ["Binder"]));
+    const filler = norm(pick(row, ["Filler"]));
+    const origin = norm(pick(row, ["Origin", "Country", "Country of Origin"]));
+    const ring = norm(pick(row, ["RG", "Ring", "Ring Gauge"]));
+    const length = norm(pick(row, ["Length"]));
+    const shape = norm(pick(row, ["Shape"]));
+    const strength = norm(pick(row, ["Strength"]));
+    const wrapperShade = norm(pick(row, ["Wrapper Shade", "WrapperShade", "Shade"]));
+    const msrpRaw = pick(row, ["MSRP", "Price", "MSRP Price", "Cigar MSRP"]);
+    const msrp = formatPriceRaw(msrpRaw);
+
+    const image = norm(pick(row, ["Image", "IMG", "Img", "Photo", "Cigar IMG", "Cigar Image"]));
+
+    const brandIconSrc = `/img/icons/brands/${brandSlug(brand)}.svg`;
+
+    return `
+      <div class="brand-row"
+        data-row
+        data-brand="${esc(brand)}"
+        data-line="${esc(line)}"
+        data-cigar="${esc(cigar)}"
+        data-cigar-full="${esc(cigarFull)}"
+        data-wrapper="${esc(wrapper)}"
+        data-binder="${esc(binder)}"
+        data-filler="${esc(filler)}"
+        data-origin="${esc(origin)}"
+        data-ring="${esc(ring)}"
+        data-length="${esc(length)}"
+        data-shape="${esc(shape)}"
+        data-vitola="${esc(vitola)}"
+        data-strength="${esc(strength)}"
+        data-wrapper-shade="${esc(wrapperShade)}"
+        data-msrp="${esc(msrp)}"
+        data-msrp-num="${esc(String(priceNumber(msrpRaw)))}"
+        data-image="${esc(image)}">
+
+        <img class="row-ico" alt="" src="${esc(brandIconSrc)}"
+             onerror="this.style.visibility='hidden';" />
+
+        <div class="brand-row-left">
+          <div class="brand-row-title">
+            <div>${esc(cigarFull || cigar)}</div>
+          </div>
+
+          <div class="brand-row-sub">
+            <div>${esc(vitola)}</div>
+          </div>
+        </div>
+
+        <div class="brand-row-right">
+          <div class="brand-row-msrp">${esc(msrp)}</div>
+          <button type="button"
+            class="pos-add"
+            aria-label="Add to invoice">+</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // -----------------------------
+  // ✅ Cigar Detail Popup (copied from brand system)
+  // -----------------------------
   let detailOverlay = null;
   let detailSheet = null;
 
@@ -402,25 +528,22 @@
     document.body.appendChild(detailOverlay);
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && detailOverlay?.classList.contains("open")) closeCigarDetail();
+      if (e.key === "Escape" && detailOverlay?.classList.contains("open")) {
+        closeCigarDetail();
+      }
     });
   }
 
-  function bestBrandHeaderIcon(row) {
-    const b = norm(row?.brand || row?.Brand || row?.Manufacturer || "");
-    return b ? `/img/icons/brands/${slug(b)}.svg` : "";
+  function closeCigarDetail() {
+    if (!detailOverlay) return;
+    detailOverlay.classList.remove("open");
+    detailOverlay.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("cigar-detail-open");
   }
 
-  function pickCigarImage(row) {
-    const raw =
-      row?.image ||
-      row?.Image ||
-      row?.["Cigar IMG"] ||
-      row?.["Cigar Image"] ||
-      row?.Img ||
-      row?.Photo ||
-      "";
-    return norm(raw);
+  function pickCigarImageFromDataset(ds) {
+    const src = norm(ds.image || "");
+    return src || "";
   }
 
   function renderKV(k, v) {
@@ -433,45 +556,40 @@
     `;
   }
 
-  function openCigarDetail(row) {
+  function openCigarDetailFromDataset(ds) {
     ensureCigarDetailModal();
     document.body.classList.add("cigar-detail-open");
 
-    const brand = norm(row?.brand || row?.Brand || "Brand");
-    const cigarName = norm(
-      row?.cigarFull ||
-        row?.["Cigar Full"] ||
-        row?.cigar ||
-        row?.Cigar ||
-        ""
-    );
+    const brand = norm(ds.brand || "Brand");
+    const cigarName = norm(ds.cigarFull || ds.cigar || "");
+    const vitola = norm(ds.vitola || "");
+    const ring = norm(ds.ring || "");
+    const length = norm(ds.length || "");
+    const shape = norm(ds.shape || "");
+    const strength = norm(ds.strength || "");
+    const wrapperShade = norm(ds.wrapperShade || "");
 
-    const brandIcon = bestBrandHeaderIcon(row) || "";
+    const wrapper = norm(ds.wrapper || "");
+    const binder = norm(ds.binder || "");
+    const filler = norm(ds.filler || "");
+    const origin = norm(ds.origin || "");
 
-    const picked = pickCigarImage(row);
-    const nameForFile = slug(
-      row?.cigarFull || row?.cigar || row?.Cigar || ""
-    );
-    const brandForFolder = slug(row?.brand || row?.Brand || "");
+    const brandIcon = `/img/icons/brands/${brandSlug(brand)}.svg`;
+
+    const picked = pickCigarImageFromDataset(ds);
+    const nameForFile = slug(cigarName || "");
+    const brandForFolder = slug(brand || "");
+
     const imgCandidates = [
       picked,
-      brandForFolder && nameForFile ? `/img/cigars/${brandForFolder}/${nameForFile}.png` : "",
-      brandForFolder && nameForFile ? `/img/cigars/${brandForFolder}/${nameForFile}.jpg` : "",
-      brandForFolder && nameForFile ? `/img/cigars/${brandForFolder}/${nameForFile}.jpeg` : "",
+      `/img/cigars/${brandForFolder}/${nameForFile}.png`,
+      `/img/cigars/${brandForFolder}/${nameForFile}.jpg`,
+      `/img/cigars/${brandForFolder}/${nameForFile}.jpeg`,
     ].filter(Boolean);
 
     const cigarImg = imgCandidates[0] || "";
 
-    const rg = norm(row?.ring || row?.RG || row?.Ring || "");
-    const len = norm(row?.length || row?.Length || "");
-    const strength = norm(row?.strength || row?.Strength || "");
-    const vitola = norm(row?.vitola || row?.Vitola || "");
-    const shape = norm(row?.shape || row?.Shape || "");
-    const wrapper = norm(row?.wrapper || row?.Wrapper || "");
-    const binder = norm(row?.binder || row?.Binder || "");
-    const filler = norm(row?.filler || row?.Filler || "");
-    const origin = norm(row?.origin || row?.Origin || "");
-    const shade = norm(row?.wrapperShade || row?.["Wrapper Shade"] || row?.Shade || "");
+    const msrpNum = Number(ds.msrpNum || "0") || 0;
 
     detailSheet.innerHTML = `
       <button type="button" class="cigar-detail-x" aria-label="Close">×</button>
@@ -483,7 +601,7 @@
             <div class="cd-name">${esc(cigarName)}</div>
           </div>
           <div class="cd-h-icon">
-            ${brandIcon ? `<img src="${esc(brandIcon)}" alt="">` : ``}
+            <img src="${esc(brandIcon)}" alt="" onerror="this.style.display='none';">
           </div>
         </div>
 
@@ -496,19 +614,19 @@
             <div class="cd-grid2">
               <div class="cd-stat">
                 <div class="k">RING</div>
-                <div class="v">${esc(String(rg || "—"))}</div>
+                <div class="v">${esc(ring || "—")}</div>
               </div>
               <div class="cd-stat">
                 <div class="k">LENGTH</div>
-                <div class="v">${esc(String(len || "—"))}</div>
+                <div class="v">${esc(length || "—")}</div>
               </div>
               <div class="cd-stat small">
                 <div class="k">SHAPE</div>
-                <div class="v">${esc(String(shape || "—"))}</div>
+                <div class="v">${esc(shape || "—")}</div>
               </div>
               <div class="cd-stat small">
                 <div class="k">VITOLA</div>
-                <div class="v">${esc(String(vitola || "—"))}</div>
+                <div class="v">${esc(vitola || "—")}</div>
               </div>
             </div>
 
@@ -524,7 +642,7 @@
             </div>
 
             <div class="cd-block single">
-              ${renderKV("WRAPPER SHADE", shade)}
+              ${renderKV("WRAPPER SHADE", wrapperShade)}
             </div>
 
             <div class="cd-actions">
@@ -540,19 +658,18 @@
     detailSheet.querySelector(".cigar-detail-x")?.addEventListener("click", closeCigarDetail);
 
     detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
-      const msrpVal = row?.msrp ?? row?.MSRP ?? row?.Price ?? row?.price ?? 0;
-
-      // If your cart exposes window.CigarOSCart (brand.js expects it), use it.
-      window.CigarOSCart?.add?.({
-        id: row?.key || `${brand}-${cigarName}-${vitola}`,
-        name: cigarName,
-        brand: brand,
-        category: "Cigars",
-        sub: vitola ? `${vitola} • ${len} × ${rg}` : "",
-        price: Number(msrpVal || 0),
-        img: "",
-      });
-
+      if (typeof window.addToInvoice === "function") {
+        const id = `${slug(brand)}|${slug(cigarName)}|${slug(vitola)}`;
+        window.addToInvoice({
+          id,
+          name: cigarName,
+          vitola: vitola,
+          brand: brand,
+          price: msrpNum,
+          qty: 1,
+          icon: brandIcon,
+        });
+      }
       closeCigarDetail();
     });
 
@@ -560,154 +677,9 @@
     detailOverlay.setAttribute("aria-hidden", "false");
   }
 
-  function closeCigarDetail() {
-    if (!detailOverlay) return;
-    detailOverlay.classList.remove("open");
-    detailOverlay.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("cigar-detail-open");
-  }
-
-  // =========================================================
-  // ✅ EXACT BRAND-PAGE ROW MARKUP FOR RESULTS
-  // =========================================================
-  function priceNum(x) {
-    const n = Number(String(x ?? "").replace(/[^\d.]/g, ""));
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
-    const key = `${slug(brand)}|${slug(line)}|${slug(cigar)}`;
-    return {
-      key,
-      type: "cigar",
-      category: "Cigars",
-      name: `${line ? line + " — " : ""}${cigar}`,
-      sub: vitola || "",
-      price: priceNum(msrp),
-      qty: 1,
-      meta: { brand, line, cigar, vitola },
-    };
-  }
-
-  function buildBrandPageRowFromHubRow(r) {
-    const brand = norm(pick(r, ["Brand"]));
-    const line = norm(pick(r, ["Line", "Series", "Collection"]));
-    const cigar = norm(pick(r, ["Cigar", "Name", "Cigar Name"]));
-    const cigarFull = norm([line, cigar].filter(Boolean).join(" "));
-
-    const vitola = norm(pick(r, ["Vitola"]));
-    const strength = norm(pick(r, ["Strength"]));
-    const shape = norm(pick(r, ["Shape"]));
-    const wrapperShade = norm(pick(r, ["Wrapper Shade", "WrapperShade", "Shade"]));
-
-    const wrapper = norm(pick(r, ["Wrapper", "Wrapper Type"]));
-    const binder = norm(pick(r, ["Binder"]));
-    const filler = norm(pick(r, ["Filler"]));
-    const origin = norm(pick(r, ["Origin", "Country", "Country of Origin"]));
-    const ring = norm(pick(r, ["RG", "Ring", "Ring Gauge"]));
-    const length = norm(pick(r, ["Length"]));
-    const msrp = norm(pick(r, ["MSRP", "Price", "MSRP Price", "Cigar MSRP"]));
-    const image = norm(pick(r, ["Image", "Img", "Photo", "Cigar Image", "Cigar IMG"]));
-
-    const receiptItem = buildReceiptItem({ brand, line, cigar, vitola, msrp });
-    const brandIconSrc = `/img/icons/brands/${slug(brand)}.svg`;
-
-    const row = document.createElement("div");
-    row.className = "brand-row";
-    row.setAttribute("data-row", "");
-    row.dataset.brand = brand;
-    row.dataset.line = line;
-    row.dataset.cigar = cigar;
-    row.dataset.cigarFull = cigarFull;
-    row.dataset.wrapper = wrapper;
-    row.dataset.binder = binder;
-    row.dataset.filler = filler;
-    row.dataset.origin = origin;
-    row.dataset.ring = ring;
-    row.dataset.length = length;
-    row.dataset.shape = shape;
-    row.dataset.vitola = vitola;
-    row.dataset.strength = strength;
-    row.dataset.wrapperShade = wrapperShade;
-    row.dataset.msrp = msrp;
-    row.dataset.image = image;
-
-    row.innerHTML = `
-      <img class="row-ico" alt="" src="${esc(brandIconSrc)}" onerror="this.style.visibility='hidden';" />
-
-      <div class="brand-row-left">
-        <div class="brand-row-title">
-          <div>${esc(cigarFull || cigar)}</div>
-        </div>
-
-        <div class="brand-row-sub">
-          <div>${esc(vitola)}</div>
-        </div>
-      </div>
-
-      <div class="brand-row-right">
-        <div class="brand-row-msrp">${esc(msrp)}</div>
-        <button
-          type="button"
-          class="pos-add"
-          aria-label="Add to invoice"
-          data-receipt-item='${esc(JSON.stringify(receiptItem))}'
-        >+</button>
-      </div>
-    `;
-
-    return row;
-  }
-
-  function bindResultsRowClicks(containerEl) {
-    if (!containerEl) return;
-
-    containerEl.addEventListener("click", (e) => {
-      const t = e.target;
-
-      // If they hit the green +, cart.js handles via [data-receipt-item]
-      const add = t && t.closest ? t.closest("[data-receipt-item]") : null;
-      if (add) return;
-
-      const row = t && t.closest ? t.closest("[data-row]") : null;
-      if (!row) return;
-
-      const item = {
-        brand: norm(row.dataset.brand),
-        line: norm(row.dataset.line),
-        cigar: norm(row.dataset.cigar),
-        cigarFull: norm(row.dataset.cigarFull),
-
-        vitola: norm(row.dataset.vitola),
-        shape: norm(row.dataset.shape),
-        strength: norm(row.dataset.strength),
-        wrapperShade: norm(row.dataset.wrapperShade),
-
-        wrapper: norm(row.dataset.wrapper),
-        binder: norm(row.dataset.binder),
-        filler: norm(row.dataset.filler),
-        origin: norm(row.dataset.origin),
-        ring: norm(row.dataset.ring),
-        length: norm(row.dataset.length),
-        msrp: norm(row.dataset.msrp),
-        image: norm(row.dataset.image),
-
-        key: `${slug(row.dataset.brand)}|${slug(row.dataset.line)}|${slug(row.dataset.cigarFull || row.dataset.cigar)}`,
-      };
-
-      openCigarDetail(item);
-    });
-  }
-
-  // ---------- load + render ----------
-  async function loadSheet() {
-    const res = await fetch(withNoCache(HUB_CSV_URL), { cache: "no-store" });
-    if (!res.ok) throw new Error("Google Sheets CSV fetch failed: " + res.status);
-    const text = await res.text();
-    const parsed = parseCSV(text);
-    return parsed.data;
-  }
-
+  // -----------------------------
+  // Main renderer
+  // -----------------------------
   async function run() {
     const grid = getGridEl();
     if (!grid) return;
@@ -715,36 +687,16 @@
     try {
       const rows = await loadSheet();
       window.__CIGAR_SHEET_ROWS__ = rows;
+      ensureDefaultState();
 
-      if (!window.__CIGAR_FILTER_STATE__) {
-        window.__CIGAR_FILTER_STATE__ = {
-          q: "",
-          filters: {
-            manufacturer: new Set(),
-            brand: new Set(),
-            shade: new Set(),
-            vitola: new Set(),
-            length: new Set(),
-            ring: new Set(),
-            shape: new Set(),
-            strength: new Set(),
-          },
-          toggles: {},
-        };
-      }
-
-      // (re)bind once (safe; event handler is on container)
-      bindResultsRowClicks(grid);
-
+      // expose render function for cigars.js (filters/search)
       window.buildCigarsRender = function () {
         const state = window.__CIGAR_FILTER_STATE__ || { q: "", filters: {} };
         const titleEl = getSectionTitleEl();
 
-        // Chips always reflect current state
         buildAppliedChips(state);
 
         const active = hasActiveState(state);
-
         grid.innerHTML = "";
 
         if (!active) {
@@ -756,9 +708,7 @@
 
           if (!brands.length) {
             const msg = document.createElement("div");
-            msg.style.color = "rgba(255,255,255,.65)";
-            msg.style.fontWeight = "700";
-            msg.style.padding = "10px 0";
+            msg.className = "cigars-empty";
             msg.textContent = "No brands found.";
             grid.appendChild(msg);
             return;
@@ -770,18 +720,15 @@
           return;
         }
 
-        // Filtered cigar results (render with brand-page row markup)
+        // Results mode (brand-row identical)
         if (titleEl) titleEl.textContent = "Results";
         grid.classList.remove("brands-grid");
         grid.classList.add("cigars-results");
 
         const matches = rows.filter((r) => rowMatchesState(r, state));
-
         if (!matches.length) {
           const msg = document.createElement("div");
-          msg.style.color = "rgba(255,255,255,.70)";
-          msg.style.fontWeight = "800";
-          msg.style.padding = "10px 0";
+          msg.className = "cigars-empty";
           msg.textContent = "No cigars match your filters.";
           grid.appendChild(msg);
           return;
@@ -790,31 +737,83 @@
         const MAX = 200;
         const slice = matches.slice(0, MAX);
 
-        const frag = document.createDocumentFragment();
-        slice.forEach((r) => frag.appendChild(buildBrandPageRowFromHubRow(r)));
-        grid.appendChild(frag);
+        const html = slice.map(buildBrandRowHTML).join("");
+        grid.innerHTML = html;
 
         if (matches.length > MAX) {
           const more = document.createElement("div");
-          more.style.color = "rgba(255,255,255,.55)";
-          more.style.fontWeight = "700";
-          more.style.padding = "8px 2px 0";
+          more.className = "cigars-more";
           more.textContent = `Showing ${MAX} of ${matches.length} results. Narrow your filters to see more.`;
           grid.appendChild(more);
         }
       };
 
+      // Bind clicks ONCE (event delegation)
+      if (!grid.__boundBrandRowClicks) {
+        grid.__boundBrandRowClicks = true;
+
+        grid.addEventListener("click", (e) => {
+          const addBtn = e.target.closest(".pos-add");
+          if (addBtn) {
+            const rowEl = addBtn.closest("[data-row]");
+            if (!rowEl) return;
+
+            const ds = rowEl.dataset;
+            const brand = norm(ds.brand);
+            const cigarName = norm(ds.cigarFull || ds.cigar);
+            const vitola = norm(ds.vitola);
+            const price = Number(ds.msrpNum || "0") || 0;
+            const icon = `/img/icons/brands/${brandSlug(brand)}.svg`;
+            const id = `${slug(brand)}|${slug(cigarName)}|${slug(vitola)}`;
+
+            if (typeof window.addToInvoice === "function") {
+              window.addToInvoice({
+                id,
+                name: cigarName,
+                vitola,
+                brand,
+                price,
+                qty: 1,
+                icon,
+              });
+            }
+            return; // IMPORTANT: do not open popup
+          }
+
+          const rowEl = e.target.closest("[data-row]");
+          if (!rowEl) return;
+
+          const ds = rowEl.dataset;
+          openCigarDetailFromDataset({
+            brand: ds.brand,
+            line: ds.line,
+            cigar: ds.cigar,
+            cigarFull: ds.cigarFull,
+            wrapper: ds.wrapper,
+            binder: ds.binder,
+            filler: ds.filler,
+            origin: ds.origin,
+            ring: ds.ring,
+            length: ds.length,
+            shape: ds.shape,
+            vitola: ds.vitola,
+            strength: ds.strength,
+            wrapperShade: ds.wrapperShade,
+            image: ds.image,
+            msrpNum: ds.msrpNum,
+          });
+        });
+      }
+
+      // initial paint
       window.buildCigarsRender();
       window.dispatchEvent(new Event("cigars:hub-ready"));
     } catch (err) {
       console.error("[build-cigars] error:", err);
       grid.innerHTML = "";
       const msg = document.createElement("div");
-      msg.style.color = "#ff6b6b";
-      msg.style.fontWeight = "800";
-      msg.style.padding = "10px 0";
-      msg.textContent =
-        "Brands failed to load from the Hub (Google Sheets). Check sharing + CSV access.";
+      msg.className = "cigars-empty cigars-empty--error";
+      msg.textContent = "Brands failed to load from the Hub (Google Sheets). Check sharing + CSV access.";
       grid.appendChild(msg);
     }
   }
