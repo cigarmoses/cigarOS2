@@ -721,7 +721,7 @@
         }
 
         // Results mode (brand-row identical)
-        if (titleEl) titleEl.textContent = "Results";
+        if (titleEl) titleEl.textContent = "";
         grid.classList.remove("brands-grid");
         grid.classList.add("cigars-results");
 
