@@ -807,3 +807,47 @@ body.cigar-detail-open{ overflow:hidden; }
   .brands-grid{ gap:18px 14px; }
   .brands-grid img{ width:72px; height:72px; border-radius:16px; }
 }
+/* =========================================
+   ✅ MINOR UI FIXES (requested)
+   ========================================= */
+
+/* 1) Back arrow: off-white arrow ONLY (no pill bg) */
+#cigars-back{
+  width:44px;
+  height:44px;
+  border:none !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  padding:0 !important;
+  color:rgba(255,255,255,.90);
+}
+#cigars-back .pos-back-icon{
+  color:rgba(255,255,255,.90);
+}
+
+/* 2) Invoice icon button (top-right) */
+.cigars-invoice-btn{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:transparent;
+  color:rgba(255,255,255,.92);
+  text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.cigars-invoice-btn svg{
+  width:28px;
+  height:28px;
+}
+.cigars-invoice-btn:active{
+  transform:scale(.96);
+  opacity:.90;
+}
+
+/* 3) (optional) Make sure placeholder is invisible even if set elsewhere */
+#cigars-search-input::placeholder{
+  color:transparent !important;
+}
