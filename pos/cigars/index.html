@@ -1,102 +1,66 @@
+<!-- /pos/invoice/index.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Cigars</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Invoice</title>
 
-  <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css" />
+  <link rel="stylesheet" href="/css/type.css?v=13" />
+  <link rel="stylesheet" href="/pos/pos.css?v=13" />
+  <!-- ✅ cache bust -->
+  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=13" />
 </head>
 
-<body class="cigars-page">
-  <header class="cigars-topbar">
-    <button type="button" class="pos-back" id="cigars-back" aria-label="Back">
-      <span class="pos-back-icon">←</span>
+<body class="inv-page">
+  <!-- Back button (top-left) -->
+  <button
+    class="inv-back"
+    type="button"
+    aria-label="Back"
+    onclick="history.back()"
+  >←</button>
+
+  <main class="inv-wrap" role="main">
+    <header class="inv-head">
+      <div class="inv-title">INVOICE</div>
+      <div class="inv-meta" id="invMeta">—</div>
+      <div class="inv-shop" id="invShop">Shop</div>
+      <div class="inv-num" id="invNum">INV# —</div>
+    </header>
+
+    <button class="inv-customer" type="button">
+      ATTACH SAVED CUSTOMER
     </button>
-  </header>
 
-  <main class="cigars-main">
-    <section class="cigars-header">
-      <div class="cigars-title-row">
-        <h1 class="cigars-title">Cigars</h1>
-
-        <div class="cigars-title-actions">
-          <!-- ✅ Universal Invoice (top-right) -->
-          <a
-            class="cigars-invoice-btn"
-            href="/pos/invoice.html"
-            aria-label="Invoice"
-            title="Invoice"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M7 3h10a2 2 0 0 1 2 2v16l-2-1-2 1-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 0 1 2-2z"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linejoin="round"
-              />
-              <path d="M9 7h6M9 11h6M9 15h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </a>
-
-          <!-- Filters icon -->
-          <button
-            type="button"
-            id="btn-open-filters"
-            class="cigars-filter-btn"
-            aria-label="Filters"
-            title="Filters"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M4 6h16M7 12h13M10 18h10"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.4"
-                stroke-linecap="round"
-              />
-            </svg>
-          </button>
-
-          <!-- ⭐ Favorites -->
-          <a
-            class="cigars-fav-btn"
-            href="/pos/cigars/favorites.html"
-            aria-label="Favorites"
-            title="Favorites"
-          >★</a>
-        </div>
-      </div>
-
-      <div class="cigars-search-wrap">
-        <div class="cigars-search-bar">
-          <span class="cigars-search-icon" aria-hidden="true">🔍</span>
-          <input
-            id="cigars-search-input"
-            type="search"
-            placeholder=""
-            autocomplete="off"
-          />
-        </div>
-
-        <div id="cigars-applied-filters" class="cigars-applied-filters" aria-label="Applied filters"></div>
-      </div>
+    <!-- Items -->
+    <section class="inv-items" id="invItems">
+      <!-- invoice.js will render rows here -->
     </section>
 
-    <section class="cigars-brands-section">
-      <!-- ✅ This will show “Brands” in browse mode, and blank in filtered mode -->
-      <h2 class="cigars-brands-title" id="cigars-section-title">Brands</h2>
-      <div id="category-grid" class="brands-grid"></div>
+    <!-- Totals -->
+    <section class="inv-totals" aria-label="Totals">
+      <div class="trow"><div>TOBACCO</div><div id="tTobacco">$0.00</div></div>
+      <div class="trow"><div>ALCOHOL</div><div id="tAlcohol">$0.00</div></div>
+      <div class="trow"><div>OTHER</div><div id="tOther">$0.00</div></div>
+      <div class="trow"><div>SUBTOTAL</div><div id="tSubtotal">$0.00</div></div>
+      <div class="trow"><div>TAX</div><div id="tTax">$0.00</div></div>
+
+      <div class="grand">
+        <div class="glabel">GRAND<br/>TOTAL</div>
+        <div class="gval" id="tGrand">$0.00</div>
+      </div>
     </section>
   </main>
 
-  <script defer src="/pos/pos.js"></script>
-  <script defer src="/pos/img/scripts/build-cigars.js"></script>
-  <script defer src="/pos/cigars/cigars.js"></script>
+  <!-- Bottom actions -->
+  <footer class="inv-actions">
+    <button class="inv-action" type="button">SAVE AS DRAFT</button>
+    <button class="inv-action" type="button">CASH OUT</button>
+  </footer>
 
-  <div id="filter-modal" class="fm fm--hidden" aria-hidden="true"></div>
+  <!-- ✅ cache bust scripts too -->
+  <script src="/pos/cart.js?v=13" defer></script>
+  <script src="/pos/invoice/invoice.js?v=13" defer></script>
 </body>
 </html>
