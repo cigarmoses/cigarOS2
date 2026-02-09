@@ -7,6 +7,7 @@
    ✅ Invoice badge count updates
    ✅ Invoice icon navigates to /pos/invoice/
    ✅ Prevents duplicate invoice click handlers (MutationObserver-safe)
+   ✅ FIX: Prevents invoice wiring from hijacking non-invoice buttons/tiles (like Cigars)
 */
 
 (() => {
@@ -60,6 +61,41 @@
     return cart.reduce((sum, it) => (Number(it?.qty || 0) > 0 ? sum + 1 : sum), 0);
   }
 
+  // -------------------------
+  // invoice detection (STRICT ✅)
+  // -------------------------
+  function isInvoiceElement(el) {
+    if (!el || !(el instanceof Element)) return false;
+
+    // Explicit: data-invoice-btn or id invoice-btn
+    if (el.hasAttribute("data-invoice-btn")) return true;
+    if ((el.id || "") === "invoice-btn") return true;
+
+    // If using .pos-invoice-btn as a shared style class, we must verify intent
+    if (el.classList.contains("pos-invoice-btn")) {
+      const aria = normStr(el.getAttribute("aria-label")).toLowerCase();
+      const title = normStr(el.getAttribute("title")).toLowerCase();
+      const href = normStr(el.getAttribute("href")).toLowerCase();
+
+      // Must clearly be invoice
+      if (aria.includes("invoice")) return true;
+      if (title.includes("invoice")) return true;
+      if (href.includes("/pos/invoice") || href.endsWith("/invoice/") || href.includes("invoice.html")) return true;
+
+      return false; // ✅ prevents hijacking tiles/buttons that reuse the class
+    }
+
+    // We no longer bind to generic a[href*='invoice'] (too broad + risky)
+    return false;
+  }
+
+  function getInvoiceTargets(root = document) {
+    const nodes = [
+      ...root.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn")
+    ];
+    return nodes.filter(isInvoiceElement);
+  }
+
   function updateBadges(cartMaybe) {
     const cart = cartMaybe || loadCart();
     const count = getCartCount(cart);
@@ -71,7 +107,8 @@
       el.textContent = String(count);
     });
 
-    document.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn").forEach((btn) => {
+    // ✅ Only toggle has-items on real invoice targets
+    getInvoiceTargets(document).forEach((btn) => {
       btn.classList.toggle("has-items", count > 0);
     });
   }
@@ -229,25 +266,27 @@
   }
 
   // -------------------------
-  // Invoice nav (Option A)
+  // Invoice nav (STRICT ✅)
   // -------------------------
   function wireInvoiceNav(root = document) {
-    const candidates = [
-      ...root.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn, a[href*='invoice']")
-    ];
+    const candidates = getInvoiceTargets(root);
 
     candidates.forEach((el) => {
       if (el.__invoiceNavBound) return;
       el.__invoiceNavBound = true;
 
+      // Normalize any legacy invoice.html links
       if (el.tagName === "A") {
         const href = el.getAttribute("href") || "";
         if (href.includes("invoice.html")) el.setAttribute("href", "/pos/invoice/");
       }
 
       el.addEventListener("click", (e) => {
+        // allow open-in-new-tab on anchors
         if (el.tagName === "A" && (e.metaKey || e.ctrlKey)) return;
+
         e.preventDefault();
+        e.stopPropagation();
         window.location.href = "/pos/invoice/";
       }, { passive: false });
     });
@@ -266,7 +305,7 @@
     if (!btn) return;
 
     // If this is invoice icon/button, let invoice wiring handle it
-    if (btn.matches("[data-invoice-btn], #invoice-btn, .pos-invoice-btn")) return;
+    if (isInvoiceElement(btn)) return;
 
     const btnText = normStr(btn.textContent).toLowerCase();
     const looksLikeAdd =
