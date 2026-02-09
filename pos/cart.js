@@ -4,8 +4,9 @@
    Fixes:
    ✅ Green + adds to cart (even if data attrs are missing) via DOM fallback scraping
    ✅ Modal "Add" adds to cart via DOM fallback scraping
-   ✅ Invoice badge count updates
-   ✅ Invoice icon navigates to /pos/invoice/ (correct view)
+   ✅ Invoice badge count updates (distinct items with qty > 0)
+   ✅ Invoice icon navigates to /pos/invoice/ (Option A, correct view)
+   ✅ Prevents duplicate invoice click handlers (MutationObserver-safe)
 */
 
 (() => {
@@ -28,18 +29,12 @@
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
 
-  function money(n) {
-    const x = Number(n || 0);
-    return x.toFixed(2);
-  }
-
   function normStr(s) {
     return String(s || "").trim();
   }
 
   function parsePriceFromText(txt) {
     const t = String(txt || "");
-    // matches $59.00, 59.00, 59
     const m = t.match(/\$?\s*([0-9]+(?:\.[0-9]{1,2})?)/);
     if (!m) return 0;
     return Number(m[1] || 0) || 0;
@@ -59,6 +54,31 @@
     ].map((x) => normStr(x).toLowerCase());
 
     return parts.join("|");
+  }
+
+  // Distinct item count (qty > 0)
+  function getCartCount(cartMaybe) {
+    const cart = cartMaybe || loadCart();
+    return cart.reduce((sum, it) => (Number(it?.qty || 0) > 0 ? sum + 1 : sum), 0);
+  }
+
+  function updateBadges(cartMaybe) {
+    const cart = cartMaybe || loadCart();
+    const count = getCartCount(cart);
+
+    // legacy badge
+    const legacy = document.getElementById("receipt-count");
+    if (legacy) legacy.textContent = String(count);
+
+    // any badge nodes
+    document.querySelectorAll("[data-cart-badge]").forEach((el) => {
+      el.textContent = String(count);
+    });
+
+    // toggle has-items on invoice button(s)
+    document.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn").forEach((btn) => {
+      btn.classList.toggle("has-items", count > 0);
+    });
   }
 
   function addToCart(item, qtyToAdd = 1) {
@@ -99,36 +119,10 @@
     document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart } }));
   }
 
-  function getCartCount(cartMaybe) {
-    const cart = cartMaybe || loadCart();
-    // total quantity
-    return cart.reduce((sum, it) => sum + Number(it.qty || 0), 0);
-  }
-
-  function updateBadges(cartMaybe) {
-    const cart = cartMaybe || loadCart();
-    const count = getCartCount(cart);
-
-    // legacy badge
-    const legacy = document.getElementById("receipt-count");
-    if (legacy) legacy.textContent = String(count);
-
-    // any badge nodes
-    document.querySelectorAll("[data-cart-badge]").forEach((el) => {
-      el.textContent = String(count);
-    });
-
-    // toggle has-items on invoice button(s)
-    document.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn").forEach((btn) => {
-      btn.classList.toggle("has-items", count > 0);
-    });
-  }
-
   // -------------------------
   // DOM scrape fallbacks
   // -------------------------
   function scrapeFromCigarRow(btn) {
-    // Try to find the row container
     const row =
       btn.closest(".cigar-row") ||
       btn.closest(".cigars-row") ||
@@ -139,7 +133,6 @@
 
     if (!row) return null;
 
-    // Title / vitola / price patterns from your screenshot
     const titleEl =
       row.querySelector(".cigar-title") ||
       row.querySelector(".row-title") ||
@@ -167,8 +160,6 @@
 
     const msrp = priceText ? parsePriceFromText(priceText) : parsePriceFromText(row.textContent);
 
-    // Try to split "Line + Name" if possible (your brand pages often do this)
-    // We'll keep it simple: line unknown, name = titleText.
     const item = {
       type: "cigar",
       brand: "",
@@ -178,7 +169,6 @@
       msrp
     };
 
-    // If row has a brand icon with alt/title
     const img = row.querySelector("img");
     if (img) {
       item.image = img.getAttribute("src") || "";
@@ -222,7 +212,6 @@
   }
 
   function itemFromDataset(ds) {
-    // works if you DO have data attrs
     const name = normStr(ds.name || ds.cigar || "");
     const brand = normStr(ds.brand || "");
     const line = normStr(ds.line || "");
@@ -245,7 +234,7 @@
   }
 
   // -------------------------
-  // Invoice icon: always go to correct page
+  // Invoice icon: always go to correct page (Option A)
   // -------------------------
   function wireInvoiceNav(root = document) {
     const candidates = [
@@ -253,13 +242,15 @@
     ];
 
     candidates.forEach((el) => {
+      if (el.__invoiceNavBound) return;
+      el.__invoiceNavBound = true;
+
       // If it's a link, fix href
       if (el.tagName === "A") {
         const href = el.getAttribute("href") || "";
         if (href.includes("invoice.html")) el.setAttribute("href", "/pos/invoice/");
       }
 
-      // Add click override to be safe
       el.addEventListener("click", (e) => {
         // allow cmd/ctrl click open new tab if anchor
         if (el.tagName === "A" && (e.metaKey || e.ctrlKey)) return;
@@ -287,7 +278,6 @@
     // If this is invoice icon/button, let invoice wiring handle it
     if (btn.matches("[data-invoice-btn], #invoice-btn, .pos-invoice-btn")) return;
 
-    // Detect "Add" text in modal
     const btnText = normStr(btn.textContent).toLowerCase();
     const looksLikeAdd =
       btn.hasAttribute("data-cart-add") ||
@@ -297,13 +287,8 @@
 
     if (!looksLikeAdd) return;
 
-    // 1) dataset item
     const dsItem = itemFromDataset(btn.dataset);
-
-    // 2) fallback: row scrape
     const rowItem = scrapeFromCigarRow(btn);
-
-    // 3) fallback: modal scrape
     const modalItem = scrapeFromModal(btn);
 
     const item = dsItem || rowItem || modalItem;
@@ -318,7 +303,7 @@
   updateBadges(loadCart());
   wireInvoiceNav(document);
 
-  // If elements mount later, keep wiring
+  // If elements mount later, keep wiring (safe — bound flag prevents duplicates)
   const mo = new MutationObserver((mutations) => {
     for (const m of mutations) {
       for (const n of m.addedNodes) {
