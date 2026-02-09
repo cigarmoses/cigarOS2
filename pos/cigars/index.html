@@ -1,66 +1,38 @@
-<!-- /pos/invoice/index.html -->
+<!-- /pos/cigars/index.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Invoice</title>
+  <title>Cigars</title>
 
   <link rel="stylesheet" href="/css/type.css?v=13" />
   <link rel="stylesheet" href="/pos/pos.css?v=13" />
-  <!-- ✅ cache bust -->
-  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=13" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=13" />
 </head>
 
-<body class="inv-page">
-  <!-- Back button (top-left) -->
-  <button
-    class="inv-back"
-    type="button"
-    aria-label="Back"
-    onclick="history.back()"
-  >←</button>
-
-  <main class="inv-wrap" role="main">
-    <header class="inv-head">
-      <div class="inv-title">INVOICE</div>
-      <div class="inv-meta" id="invMeta">—</div>
-      <div class="inv-shop" id="invShop">Shop</div>
-      <div class="inv-num" id="invNum">INV# —</div>
-    </header>
-
-    <button class="inv-customer" type="button">
-      ATTACH SAVED CUSTOMER
+<body class="cigars-page">
+  <header class="cigars-topbar">
+    <button type="button" class="pos-back" aria-label="Back" onclick="history.back()">
+      <span class="pos-back-icon">←</span>
     </button>
 
-    <!-- Items -->
-    <section class="inv-items" id="invItems">
-      <!-- invoice.js will render rows here -->
-    </section>
+    <!-- If you have an invoice icon in your global UI, it can live here.
+         IMPORTANT: only the real invoice button should have data-invoice-btn -->
+    <button type="button" class="pos-invoice-btn" data-invoice-btn aria-label="Invoice">
+      🧾
+      <span data-cart-badge>0</span>
+    </button>
+  </header>
 
-    <!-- Totals -->
-    <section class="inv-totals" aria-label="Totals">
-      <div class="trow"><div>TOBACCO</div><div id="tTobacco">$0.00</div></div>
-      <div class="trow"><div>ALCOHOL</div><div id="tAlcohol">$0.00</div></div>
-      <div class="trow"><div>OTHER</div><div id="tOther">$0.00</div></div>
-      <div class="trow"><div>SUBTOTAL</div><div id="tSubtotal">$0.00</div></div>
-      <div class="trow"><div>TAX</div><div id="tTax">$0.00</div></div>
+  <main class="cigars-main" role="main">
+    <h1 class="cigars-title">Cigars</h1>
 
-      <div class="grand">
-        <div class="glabel">GRAND<br/>TOTAL</div>
-        <div class="gval" id="tGrand">$0.00</div>
-      </div>
-    </section>
+    <!-- Your cigars page JS should render into this -->
+    <section class="cigars-list" id="cigarsList"></section>
   </main>
 
-  <!-- Bottom actions -->
-  <footer class="inv-actions">
-    <button class="inv-action" type="button">SAVE AS DRAFT</button>
-    <button class="inv-action" type="button">CASH OUT</button>
-  </footer>
-
-  <!-- ✅ cache bust scripts too -->
   <script src="/pos/cart.js?v=13" defer></script>
-  <script src="/pos/invoice/invoice.js?v=13" defer></script>
+  <script src="/pos/cigars/cigars.js?v=13" defer></script>
 </body>
 </html>
