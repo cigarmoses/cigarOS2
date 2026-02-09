@@ -1,10 +1,10 @@
 /* /loyalty/loyalty.js
    Loyalty page controller (SF Pro / iOS style)
-   - Reads customers from localStorage: cigaros_customers_v1
-   - Reads confirmed sales from localStorage: cigaros_sales_v1
-   - Search + segmented modes (All / Regulars / Lockers)
-   - Customer profile dialog with purchase history from sales
-   - Simple inline edit mode for key fields, persisted back to customers
+
+   FIX:
+   - If localStorage has no customers, auto-load from /pos/pos-contacts.json
+   - Normalize JSON columns into the customer shape used by this page
+   - Persist into localStorage under cigaros_customers_v1 so everything else works
 
    Storage Keys (must match /pos/cart.js):
      CUSTOMERS_KEY = "cigaros_customers_v1"
@@ -14,6 +14,9 @@
 (() => {
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
+
+  // Where your master contacts live (same-origin on Netlify)
+  const CONTACTS_JSON_URL = "/pos/pos-contacts.json";
 
   // ---------- DOM ----------
   const $ = (sel) => document.querySelector(sel);
@@ -107,12 +110,26 @@
       .replaceAll("'", "&#039;");
   }
 
-  // “locker vs regular” — you can tune this mapping later
+  function toNum(v) {
+    if (v == null) return 0;
+    const t = String(v).trim();
+    if (!t) return 0;
+    // strip currency, commas, "pts", etc.
+    const cleaned = t.replace(/[^0-9.\-]/g, "");
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function toStr(v) {
+    const s = (v == null ? "" : String(v)).trim();
+    return s;
+  }
+
+  // “locker vs regular”
   function customerType(c) {
     const t = norm(c.type || c.tier || c.segment || "");
     if (t.includes("locker")) return "locker";
     if (t.includes("regular")) return "regular";
-    // fallback: if they have a “locker number” or “locker” field
     if (c.locker || c.lockerNumber) return "locker";
     return "regular";
   }
@@ -143,7 +160,123 @@
     return Array.isArray(list) ? list : [];
   }
 
-  // sales for a given customer
+  // ---------- seed customers from /pos/pos-contacts.json ----------
+  function normalizeContacts(rows) {
+    const arr = Array.isArray(rows) ? rows : [];
+
+    return arr.map((r, idx) => {
+      // Your JSON keys look like:
+      // 'First Name', 'Last Name', 'Nickname AKA', 'Phone', 'Email', 'Birthday',
+      // 'Rewards', 'Locker number', 'type', 'YTD spend', '90-day visits', 'Gift card balance',
+      // 'Ring Pref', 'Fav brand 1', 'Fav brand 2', 'Fav brand 3', 'Fav cigar', 'Fav cigar 2', 'Fav cigar 3'
+      const id = toStr(r.id) || `c_${idx}_${Math.random().toString(16).slice(2)}`;
+
+      const firstName = toStr(r["First Name"] ?? r.firstName ?? r.FirstName);
+      const lastName = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
+      const nicknameAKA = toStr(r["Nickname AKA"] ?? r.nickname ?? r.nick);
+
+      const phone = toStr(r["Phone"] ?? r.phone);
+      const email = toStr(r["Email"] ?? r.email);
+      const birthday = toStr(r["Birthday"] ?? r.birthday);
+
+      const points = toNum(r["Rewards"] ?? r.points);
+
+      const lockerNumber = toStr(r["Locker number"] ?? r.lockerNumber ?? r.locker);
+      const type = toStr(r["type"] ?? r.type);
+
+      const ringPref = toStr(r["Ring Pref"] ?? r.ringPref ?? r.ringPreference);
+
+      const favBrands = [
+        toStr(r["Fav brand 1"]),
+        toStr(r["Fav brand 2"]),
+        toStr(r["Fav brand 3"]),
+      ].filter(Boolean);
+
+      const favCigars = [
+        toStr(r["Fav cigar"]),
+        toStr(r["Fav cigar 2"]),
+        toStr(r["Fav cigar 3"]),
+      ].filter(Boolean);
+
+      const giftBalance = (() => {
+        const gb = r["Gift card balance"] ?? r.giftBalance;
+        const n = toNum(gb);
+        return Number.isFinite(n) ? n : null;
+      })();
+
+      // keep these as informational fields (not required by the UI but helpful)
+      const ytd = toNum(r["YTD spend"]);
+      const visits90 = toNum(r["90-day visits"]);
+      const lastPurchase = toStr(r["Last Purchase"]);
+
+      // determine locker/regular if type missing
+      const derivedType = (() => {
+        const t = norm(type);
+        if (t) return type;
+        if (lockerNumber) return "locker";
+        const reg = r["Regular"];
+        if (norm(reg) === "yes" || norm(reg) === "true" || norm(reg) === "1") return "regular";
+        return "regular";
+      })();
+
+      return {
+        id,
+
+        firstName,
+        lastName,
+        nickname: nicknameAKA,
+
+        phone,
+        email,
+        birthday,
+
+        points,
+        type: derivedType,
+
+        lockerNumber: lockerNumber || "",
+
+        ringPref: ringPref || "",
+
+        favBrands,
+        favCigars,
+
+        wishlist: Array.isArray(r.wishlist) ? r.wishlist : [],
+
+        giftBalance,
+
+        // helpful extras
+        lastPurchaseText: lastPurchase || "",
+        ytdSpendImported: ytd,
+        visits90Imported: visits90,
+
+        createdAt: r.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    });
+  }
+
+  async function seedCustomersFromJSONIfNeeded() {
+    const existing = readCustomers();
+    if (existing.length) return existing;
+
+    try {
+      const res = await fetch(CONTACTS_JSON_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`fetch ${CONTACTS_JSON_URL} failed: ${res.status}`);
+      const rows = await res.json();
+
+      const normalized = normalizeContacts(rows);
+
+      // If file exists but empty, don’t overwrite anything
+      if (normalized.length) writeCustomers(normalized);
+
+      return normalized;
+    } catch (err) {
+      console.warn("[Loyalty] Could not seed customers from JSON:", err);
+      return existing; // still empty
+    }
+  }
+
+  // ---------- sales helpers ----------
   function salesForCustomer(customerId) {
     const id = String(customerId || "");
     return (state.sales || [])
@@ -193,6 +326,7 @@
           c.lastName,
           c.phone,
           c.email,
+          c.lockerNumber,
         ].map(norm).join(" ");
         return hay.includes(q);
       });
@@ -296,7 +430,13 @@
     // purchase history
     const sales = salesForCustomer(c.id);
     const last = sales[0] || null;
-    if (pLastPurchase) pLastPurchase.textContent = last ? fmtDateTime(last.createdAt) : "—";
+
+    // If we have actual sales, use them; otherwise fall back to imported “Last Purchase” text if present
+    if (pLastPurchase) {
+      if (last?.createdAt) pLastPurchase.textContent = fmtDateTime(last.createdAt);
+      else if (c.lastPurchaseText) pLastPurchase.textContent = c.lastPurchaseText;
+      else pLastPurchase.textContent = "—";
+    }
 
     renderVisitsList(c.id);
 
@@ -314,10 +454,21 @@
     // wishlist (chips)
     renderChips(pWishlist, c.wishlist || []);
 
-    // stats
-    if (pStatYtd) pStatYtd.textContent = `YTD spend: $${money(ytdSpend(c.id))}`;
-    if (pStatVisits90) pStatVisits90.textContent = `90-day visits: ${visits90(c.id)}`;
-    if (pStatGift) pStatGift.textContent = `Gift card balance: ${c.giftBalance != null ? `$${money(c.giftBalance)}` : "—"}`;
+    // stats (prefer real sales calc; fall back to imported values if no sales exist)
+    const hasSales = sales.length > 0;
+
+    const ytd = hasSales ? ytdSpend(c.id) : (c.ytdSpendImported || 0);
+    const v90 = hasSales ? visits90(c.id) : (c.visits90Imported || 0);
+
+    if (pStatYtd) pStatYtd.textContent = `YTD spend: $${money(ytd)}`;
+    if (pStatVisits90) pStatVisits90.textContent = `90-day visits: ${Number(v90 || 0)}`;
+
+    if (pStatGift) {
+      pStatGift.textContent =
+        c.giftBalance != null && c.giftBalance !== ""
+          ? `Gift card balance: $${money(c.giftBalance)}`
+          : "—";
+    }
 
     // dialog open
     if (dialog && !dialog.open) dialog.showModal();
@@ -358,7 +509,6 @@
     const list = Array.isArray(arr) ? arr : [];
 
     if (!list.length) {
-      // keep placeholder look consistent
       container.innerHTML = `<span class="chip">—</span>`;
       return;
     }
@@ -381,7 +531,6 @@
     if (!profileCard) return;
     profileCard.classList.toggle("editing", state.editing);
 
-    // These are safe to edit as plain text
     const editableIds = [
       "pPhone",
       "pEmail",
@@ -400,12 +549,10 @@
       el.spellcheck = false;
     });
 
-    // Wishlist: allow simple comma-separated edit when in edit mode
     if (pWishlist) {
       if (state.editing) {
         pWishlist.contentEditable = "true";
         pWishlist.spellcheck = false;
-        // convert chips -> text
         const c = getActiveCustomer();
         const w = (c?.wishlist || []).join(", ");
         pWishlist.innerHTML = escapeHTML(w || "");
@@ -414,7 +561,6 @@
       }
     }
 
-    // Fav Brands / Fav Cigars: same approach
     if (pFavBrands) {
       if (state.editing) {
         pFavBrands.contentEditable = "true";
@@ -449,7 +595,6 @@
     const c = getActiveCustomer();
     if (!c) return;
 
-    // Pull edited fields
     const phone = (pPhone?.textContent || "").trim();
     const email = (pEmail?.textContent || "").trim();
     const birthday = (pBirthday?.textContent || "").trim();
@@ -460,7 +605,6 @@
     c.birthday = birthday && birthday !== "—" ? birthday : "";
     c.ringPref = ringPref && ringPref !== "—" ? ringPref : "";
 
-    // Chips edited as comma-separated text
     const parseCSV = (txt) =>
       (txt || "")
         .split(",")
@@ -482,10 +626,8 @@
 
     c.updatedAt = new Date().toISOString();
 
-    // persist
     writeCustomers(state.customers);
 
-    // re-render dialog content from saved customer object
     setEditable(false);
     openProfile(c.id);
     render();
@@ -493,7 +635,6 @@
 
   // ---------- events ----------
   function bindEvents() {
-    // segmented control
     modeButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         modeButtons.forEach((b) => b.classList.remove("active"));
@@ -503,16 +644,13 @@
       });
     });
 
-    // search
     searchEl?.addEventListener("input", () => {
       state.query = searchEl.value || "";
       render();
     });
 
-    // profile close
     closeBtn?.addEventListener("click", closeProfile);
     dialog?.addEventListener("click", (e) => {
-      // click outside to close
       const rect = dialog.getBoundingClientRect();
       const inside =
         e.clientX >= rect.left &&
@@ -522,47 +660,42 @@
       if (!inside) closeProfile();
     });
 
-    // view all visits
     viewAllVisitsBtn?.addEventListener("click", () => {
       if (!state.activeCustomerId) return;
       state.showAllVisits = !state.showAllVisits;
       renderVisitsList(state.activeCustomerId);
     });
 
-    // edit toggle
     editBtn?.addEventListener("click", () => {
       if (!state.activeCustomerId) return;
       if (!state.editing) setEditable(true);
       else saveProfileEdits();
     });
 
-    // Tony (optional — keep harmless for now)
     tonyFab?.addEventListener("click", () => {
-      // You can route this wherever you want later.
-      // For now, just go to Learn home.
       window.location.href = "/learn/";
     });
 
-    // live updates from POS confirms (storage changes)
     window.addEventListener("storage", (e) => {
       if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) {
         loadAndRender(true);
       }
     });
 
-    // if you ever dispatch these custom events, we listen too
     window.addEventListener("cigaros:customers-changed", () => loadAndRender(true));
     window.addEventListener("cigaros:sales-changed", () => loadAndRender(true));
   }
 
   // ---------- load ----------
-  function loadAndRender(keepDialog) {
-    state.customers = readCustomers();
+  async function loadAndRender(keepDialog) {
+    // load sales first (fine)
     state.sales = readSales();
+
+    // customers: localStorage first; if empty, seed from JSON
+    state.customers = await seedCustomersFromJSONIfNeeded();
 
     render();
 
-    // keep profile open and refreshed if it’s currently open
     if (keepDialog && dialog?.open && state.activeCustomerId) {
       openProfile(state.activeCustomerId);
     }
