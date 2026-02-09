@@ -1,22 +1,35 @@
 /* /loyalty/loyalty.js
    Loyalty page controller (SF Pro / iOS style)
 
-   FIX:
-   - If localStorage has no customers, auto-load from /pos/pos-contacts.json
-   - Normalize JSON columns into the customer shape used by this page
-   - Persist into localStorage under cigaros_customers_v1 so everything else works
+   - Reads customers from localStorage: cigaros_customers_v1
+   - Seeds from /pos/pos-contacts.json if localStorage is empty
+   - Search + segmented modes (All / Regulars / Lockers)
+   - Customer profile dialog with purchase history from sales
+   - Compact list rows with right-aligned status icons
 
-   Storage Keys (must match /pos/cart.js):
-     CUSTOMERS_KEY = "cigaros_customers_v1"
-     SALES_KEY     = "cigaros_sales_v1"
+   ICON RULE (as requested):
+   - Columns are labeled exactly with the icon names:
+     Military, Paramedic, Firefighter, Police, Locker, Regular
+   - If that column contains ANY value (x, X, or the word itself, etc.) -> show that icon
+
+   Icon path:
+     /img/icons/loyalty/{name}.svg
 */
 
 (() => {
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
-
-  // Where your master contacts live (same-origin on Netlify)
   const CONTACTS_JSON_URL = "/pos/pos-contacts.json";
+
+  const ICON_BASE = "/img/icons/loyalty/";
+  const ICONS = {
+    military: `${ICON_BASE}military.svg`,
+    paramedic: `${ICON_BASE}paramedic.svg`,
+    firefighter: `${ICON_BASE}firefighter.svg`,
+    police: `${ICON_BASE}police.svg`,
+    locker: `${ICON_BASE}locker.svg`,
+    regular: `${ICON_BASE}regular.svg`,
+  };
 
   // ---------- DOM ----------
   const $ = (sel) => document.querySelector(sel);
@@ -24,7 +37,6 @@
   const listEl = $("#list");
   const summaryEl = $("#summary");
   const searchEl = $("#search");
-
   const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
 
   const dialog = $("#profileDialog");
@@ -54,7 +66,6 @@
 
   const editBtn = $("#editProfileBtn");
   const closeBtn = profileCard?.querySelector(".profile-close");
-
   const tonyFab = $("#tonyFab");
 
   // ---------- state ----------
@@ -71,9 +82,7 @@
   // ---------- utils ----------
   const safeJSON = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
   const writeJSON = (key, val) => localStorage.setItem(key, JSON.stringify(val));
-
   const norm = (s) => (s || "").toString().trim().toLowerCase();
-
   const money = (n) => Number(n || 0).toFixed(2);
 
   const fmtDate = (isoOrDate) => {
@@ -114,23 +123,46 @@
     if (v == null) return 0;
     const t = String(v).trim();
     if (!t) return 0;
-    // strip currency, commas, "pts", etc.
     const cleaned = t.replace(/[^0-9.\-]/g, "");
     const n = Number(cleaned);
     return Number.isFinite(n) ? n : 0;
   }
 
   function toStr(v) {
-    const s = (v == null ? "" : String(v)).trim();
-    return s;
+    return (v == null ? "" : String(v)).trim();
   }
 
-  // “locker vs regular”
+  // ---------- NEW: column-based icon detection ----------
+  // checks BOTH exact-case key and lowercase key (in case JSON normalized keys)
+  function hasColumnValue(obj, columnTitle) {
+    if (!obj) return false;
+    const v1 = obj[columnTitle];
+    const v2 = obj[columnTitle.toLowerCase()];
+    const v3 = obj[columnTitle.toUpperCase()];
+    const v4 = obj[columnTitle.replace(/\s+/g, "")]; // just-in-case
+    const v5 = obj[columnTitle.toLowerCase().replace(/\s+/g, "")];
+
+    const candidates = [v1, v2, v3, v4, v5];
+
+    return candidates.some((v) => {
+      if (v == null) return false;
+      if (typeof v === "boolean") return v === true;
+      const s = String(v).trim();
+      return s.length > 0; // ANYTHING indicates true
+    });
+  }
+
   function customerType(c) {
+    // Locker column or lockerNumber wins
+    if (hasColumnValue(c, "Locker") || c.locker || c.lockerNumber) return "locker";
+    // Otherwise Regular column indicates regular; fallback regular
+    if (hasColumnValue(c, "Regular")) return "regular";
+
+    // keep backward compat with prior "type" field if present
     const t = norm(c.type || c.tier || c.segment || "");
     if (t.includes("locker")) return "locker";
     if (t.includes("regular")) return "regular";
-    if (c.locker || c.lockerNumber) return "locker";
+
     return "regular";
   }
 
@@ -143,6 +175,25 @@
 
   function nickname(c) {
     return (c.nickname || c.nick || "").trim();
+  }
+
+  function buildIconHTML(iconNames) {
+    return iconNames.map((n) => (
+      `<img class="loy-ico" src="${ICONS[n]}" alt="${escapeHTML(n)}" loading="lazy" />`
+    )).join("");
+  }
+
+  function getRoleIcons(c) {
+    const icons = [];
+    if (hasColumnValue(c, "Military")) icons.push("military");
+    if (hasColumnValue(c, "Paramedic")) icons.push("paramedic");
+    if (hasColumnValue(c, "Firefighter")) icons.push("firefighter");
+    if (hasColumnValue(c, "Police")) icons.push("police");
+    return icons;
+  }
+
+  function getTierIcon(c) {
+    return customerType(c) === "locker" ? "locker" : "regular";
   }
 
   // ---------- data access ----------
@@ -160,26 +211,21 @@
     return Array.isArray(list) ? list : [];
   }
 
-  // ---------- seed customers from /pos/pos-contacts.json ----------
   function normalizeContacts(rows) {
     const arr = Array.isArray(rows) ? rows : [];
 
     return arr.map((r, idx) => {
-      // Your JSON keys look like:
-      // 'First Name', 'Last Name', 'Nickname AKA', 'Phone', 'Email', 'Birthday',
-      // 'Rewards', 'Locker number', 'type', 'YTD spend', '90-day visits', 'Gift card balance',
-      // 'Ring Pref', 'Fav brand 1', 'Fav brand 2', 'Fav brand 3', 'Fav cigar', 'Fav cigar 2', 'Fav cigar 3'
       const id = toStr(r.id) || `c_${idx}_${Math.random().toString(16).slice(2)}`;
 
       const firstName = toStr(r["First Name"] ?? r.firstName ?? r.FirstName);
-      const lastName = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
-      const nicknameAKA = toStr(r["Nickname AKA"] ?? r.nickname ?? r.nick);
+      const lastName  = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
+      const nick      = toStr(r["Nickname AKA"] ?? r.nickname ?? r.nick);
 
-      const phone = toStr(r["Phone"] ?? r.phone);
-      const email = toStr(r["Email"] ?? r.email);
-      const birthday = toStr(r["Birthday"] ?? r.birthday);
+      const phone     = toStr(r["Phone"] ?? r.phone);
+      const email     = toStr(r["Email"] ?? r.email);
+      const birthday  = toStr(r["Birthday"] ?? r.birthday);
 
-      const points = toNum(r["Rewards"] ?? r.points);
+      const points    = toNum(r["Rewards"] ?? r.points);
 
       const lockerNumber = toStr(r["Locker number"] ?? r.lockerNumber ?? r.locker);
       const type = toStr(r["type"] ?? r.type);
@@ -204,50 +250,53 @@
         return Number.isFinite(n) ? n : null;
       })();
 
-      // keep these as informational fields (not required by the UI but helpful)
       const ytd = toNum(r["YTD spend"]);
-      const visits90 = toNum(r["90-day visits"]);
+      const v90 = toNum(r["90-day visits"]);
       const lastPurchase = toStr(r["Last Purchase"]);
 
-      // determine locker/regular if type missing
-      const derivedType = (() => {
-        const t = norm(type);
-        if (t) return type;
-        if (lockerNumber) return "locker";
-        const reg = r["Regular"];
-        if (norm(reg) === "yes" || norm(reg) === "true" || norm(reg) === "1") return "regular";
-        return "regular";
-      })();
+      // IMPORTANT: keep the icon columns intact (exact titles),
+      // because icon logic reads from those columns directly.
+      const Military = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
+      const Paramedic = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
+      const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
+      const Police = r["Police"] ?? r.Police ?? r["police"] ?? r.police;
+      const Locker = r["Locker"] ?? r.Locker ?? r["locker"] ?? r.locker;
+      const Regular = r["Regular"] ?? r.Regular ?? r["regular"] ?? r.regular;
 
       return {
         id,
-
         firstName,
         lastName,
-        nickname: nicknameAKA,
+        nickname: nick,
 
         phone,
         email,
         birthday,
 
         points,
-        type: derivedType,
 
+        // keep legacy type too
+        type,
         lockerNumber: lockerNumber || "",
 
         ringPref: ringPref || "",
-
         favBrands,
         favCigars,
-
         wishlist: Array.isArray(r.wishlist) ? r.wishlist : [],
 
         giftBalance,
 
-        // helpful extras
         lastPurchaseText: lastPurchase || "",
         ytdSpendImported: ytd,
-        visits90Imported: visits90,
+        visits90Imported: v90,
+
+        // ICON COLUMNS (exact titles)
+        Military,
+        Paramedic,
+        Firefighter,
+        Police,
+        Locker,
+        Regular,
 
         createdAt: r.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -263,16 +312,12 @@
       const res = await fetch(CONTACTS_JSON_URL, { cache: "no-store" });
       if (!res.ok) throw new Error(`fetch ${CONTACTS_JSON_URL} failed: ${res.status}`);
       const rows = await res.json();
-
       const normalized = normalizeContacts(rows);
-
-      // If file exists but empty, don’t overwrite anything
       if (normalized.length) writeCustomers(normalized);
-
       return normalized;
     } catch (err) {
       console.warn("[Loyalty] Could not seed customers from JSON:", err);
-      return existing; // still empty
+      return existing;
     }
   }
 
@@ -308,7 +353,6 @@
   // ---------- filtering ----------
   function filteredCustomers() {
     const q = norm(state.query);
-
     let list = (state.customers || []).slice();
 
     if (state.mode === "regular") {
@@ -332,7 +376,6 @@
       });
     }
 
-    // Sort: lockers first in all-mode, then by points desc, then name
     list.sort((a, b) => {
       if (state.mode === "all") {
         const ta = customerType(a);
@@ -370,31 +413,21 @@
       const rowClass = type === "locker" ? "row locker" : "row regular";
 
       const name = escapeHTML(displayName(c));
-      const nick = escapeHTML(nickname(c));
-      const pts = Number(c.points || 0);
+      const sub = nickname(c) || [toStr(c.phone), toStr(c.email)].filter(Boolean).join(" • ");
 
-      const phone = (c.phone || "").trim();
-      const email = (c.email || "").trim();
-
-      const last = lastSale(c.id);
-      const lastTxt = last ? `${fmtDate(last.createdAt)} • $${money(last.totals?.total || 0)}` : "—";
-
-      const tagType = type === "locker" ? "Locker" : "Regular";
-      const tagPts = `${pts} pts`;
+      // Right-side icons: role icons (0..4) + tier icon last (locker/regular)
+      const roleIcons = getRoleIcons(c);
+      const tierIcon = getTierIcon(c);
+      const icons = [...roleIcons, tierIcon];
 
       return `
         <div class="${rowClass}" data-id="${escapeHTML(c.id)}">
-          <div class="row-header">
-            <div class="name customer-name">${name}</div>
-            <div class="points-pill">${escapeHTML(tagPts)}</div>
+          <div class="row-left">
+            <div class="row-name">${name}</div>
+            ${sub ? `<div class="row-sub">${escapeHTML(sub)}</div>` : ``}
           </div>
-          ${nick ? `<div class="nickname">${nick}</div>` : ``}
-          <div class="meta-line">
-            <span class="meta-pill">${tagType}</span>
-            <span class="meta-pill">Last: ${escapeHTML(lastTxt)}</span>
-          </div>
-          <div class="contact-line">
-            ${escapeHTML([phone, email].filter(Boolean).join(" • ") || "")}
+          <div class="row-right" aria-hidden="true">
+            ${buildIconHTML(icons)}
           </div>
         </div>
       `;
@@ -418,7 +451,6 @@
     const c = state.customers.find((x) => String(x.id) === String(customerId));
     if (!c) return;
 
-    // header
     if (pName) pName.textContent = displayName(c);
 
     const type = customerType(c) === "locker" ? "Locker" : "Regular";
@@ -427,11 +459,9 @@
 
     if (pPoints) pPoints.textContent = `${Number(c.points || 0)} pts`;
 
-    // purchase history
     const sales = salesForCustomer(c.id);
     const last = sales[0] || null;
 
-    // If we have actual sales, use them; otherwise fall back to imported “Last Purchase” text if present
     if (pLastPurchase) {
       if (last?.createdAt) pLastPurchase.textContent = fmtDateTime(last.createdAt);
       else if (c.lastPurchaseText) pLastPurchase.textContent = c.lastPurchaseText;
@@ -440,23 +470,17 @@
 
     renderVisitsList(c.id);
 
-    // contact
     if (pPhone) pPhone.textContent = c.phone || "—";
     if (pEmail) pEmail.textContent = c.email || "—";
     if (pBirthday) pBirthday.textContent = c.birthday || "—";
 
-    // favorites
     renderChips(pFavBrands, c.favBrands || c.favoriteBrands || []);
     renderChips(pFavCigars, c.favCigars || c.favoriteCigars || []);
-
     if (pRingPref) pRingPref.textContent = c.ringPref || c.ringPreference || "—";
 
-    // wishlist (chips)
     renderChips(pWishlist, c.wishlist || []);
 
-    // stats (prefer real sales calc; fall back to imported values if no sales exist)
     const hasSales = sales.length > 0;
-
     const ytd = hasSales ? ytdSpend(c.id) : (c.ytdSpendImported || 0);
     const v90 = hasSales ? visits90(c.id) : (c.visits90Imported || 0);
 
@@ -470,7 +494,6 @@
           : "—";
     }
 
-    // dialog open
     if (dialog && !dialog.open) dialog.showModal();
   }
 
@@ -625,7 +648,6 @@
     }
 
     c.updatedAt = new Date().toISOString();
-
     writeCustomers(state.customers);
 
     setEditable(false);
@@ -677,9 +699,7 @@
     });
 
     window.addEventListener("storage", (e) => {
-      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) {
-        loadAndRender(true);
-      }
+      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) loadAndRender(true);
     });
 
     window.addEventListener("cigaros:customers-changed", () => loadAndRender(true));
@@ -688,10 +708,7 @@
 
   // ---------- load ----------
   async function loadAndRender(keepDialog) {
-    // load sales first (fine)
     state.sales = readSales();
-
-    // customers: localStorage first; if empty, seed from JSON
     state.customers = await seedCustomersFromJSONIfNeeded();
 
     render();
