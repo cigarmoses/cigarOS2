@@ -2,10 +2,10 @@
    Global POS cart + invoice badge + add-to-cart wiring (ALL pages)
 
    Fixes:
-   ✅ Green + adds to cart (even if data attrs are missing) via DOM fallback scraping
+   ✅ Green + adds to cart even when rows stopPropagation (CAPTURE listener)
    ✅ Modal "Add" adds to cart via DOM fallback scraping
-   ✅ Invoice badge count updates (distinct items with qty > 0)
-   ✅ Invoice icon navigates to /pos/invoice/ (Option A, correct view)
+   ✅ Invoice badge count updates
+   ✅ Invoice icon navigates to /pos/invoice/
    ✅ Prevents duplicate invoice click handlers (MutationObserver-safe)
 */
 
@@ -41,7 +41,6 @@
   }
 
   function getKey(item) {
-    // stable key – prefers sku/id else composite
     const sku = normStr(item.sku || item.id);
     if (sku) return sku.toLowerCase();
 
@@ -56,7 +55,6 @@
     return parts.join("|");
   }
 
-  // Distinct item count (qty > 0)
   function getCartCount(cartMaybe) {
     const cart = cartMaybe || loadCart();
     return cart.reduce((sum, it) => (Number(it?.qty || 0) > 0 ? sum + 1 : sum), 0);
@@ -66,16 +64,13 @@
     const cart = cartMaybe || loadCart();
     const count = getCartCount(cart);
 
-    // legacy badge
     const legacy = document.getElementById("receipt-count");
     if (legacy) legacy.textContent = String(count);
 
-    // any badge nodes
     document.querySelectorAll("[data-cart-badge]").forEach((el) => {
       el.textContent = String(count);
     });
 
-    // toggle has-items on invoice button(s)
     document.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn").forEach((btn) => {
       btn.classList.toggle("has-items", count > 0);
     });
@@ -234,7 +229,7 @@
   }
 
   // -------------------------
-  // Invoice icon: always go to correct page (Option A)
+  // Invoice nav (Option A)
   // -------------------------
   function wireInvoiceNav(root = document) {
     const candidates = [
@@ -245,14 +240,12 @@
       if (el.__invoiceNavBound) return;
       el.__invoiceNavBound = true;
 
-      // If it's a link, fix href
       if (el.tagName === "A") {
         const href = el.getAttribute("href") || "";
         if (href.includes("invoice.html")) el.setAttribute("href", "/pos/invoice/");
       }
 
       el.addEventListener("click", (e) => {
-        // allow cmd/ctrl click open new tab if anchor
         if (el.tagName === "A" && (e.metaKey || e.ctrlKey)) return;
         e.preventDefault();
         window.location.href = "/pos/invoice/";
@@ -261,18 +254,15 @@
   }
 
   // -------------------------
-  // Global click handler for add buttons
+  // Add-to-cart handler (CAPTURE PHASE ✅)
   // -------------------------
-  document.addEventListener("click", (e) => {
-    // 1) preferred: data-cart-add or data-receipt-item
+  function handleAddClick(e) {
     let btn = e.target.closest("[data-cart-add], [data-receipt-item]");
-    // 2) fallback: common + button classes / aria labels
     if (!btn) {
       btn = e.target.closest(
         ".row-add, .pos-add, .cigar-add, .add-btn, .plus-btn, button[aria-label='Add'], button[title='Add']"
       );
     }
-
     if (!btn) return;
 
     // If this is invoice icon/button, let invoice wiring handle it
@@ -295,7 +285,10 @@
     if (!item || !item.name) return;
 
     addToCart(item, btn.dataset.qty || 1);
-  });
+  }
+
+  // ✅ Capture phase so stopPropagation on rows/modals can't block it
+  document.addEventListener("click", handleAddClick, true);
 
   // -------------------------
   // Init
@@ -303,7 +296,6 @@
   updateBadges(loadCart());
   wireInvoiceNav(document);
 
-  // If elements mount later, keep wiring (safe — bound flag prevents duplicates)
   const mo = new MutationObserver((mutations) => {
     for (const m of mutations) {
       for (const n of m.addedNodes) {
@@ -314,7 +306,6 @@
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
-  // Small global API (optional)
   window.cigarOSCart = window.cigarOSCart || {};
   window.cigarOSCart.add = addToCart;
   window.cigarOSCart.items = () => loadCart();
