@@ -13,22 +13,64 @@
 
 <body class="cigars-page">
   <header class="cigars-topbar">
+    <!-- Back -->
     <button type="button" class="pos-back" aria-label="Back" onclick="history.back()">
       <span class="pos-back-icon">←</span>
     </button>
 
-    <!-- If you have an invoice icon in your global UI, it can live here.
-         IMPORTANT: only the real invoice button should have data-invoice-btn -->
+    <!-- Invoice (cart.js will wire this via data-invoice-btn and update badge via data-cart-badge) -->
     <button type="button" class="pos-invoice-btn" data-invoice-btn aria-label="Invoice">
-      🧾
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 3h10a2 2 0 0 1 2 2v16l-2-1-2 1-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 0 1 2-2Z"
+              fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+        <path d="M8 8h8M8 12h8M8 16h6"
+              fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
       <span data-cart-badge>0</span>
     </button>
   </header>
 
   <main class="cigars-main" role="main">
-    <h1 class="cigars-title">Cigars</h1>
+    <!-- Title row + actions -->
+    <div class="cigars-title-row">
+      <h1 class="cigars-title">Cigars</h1>
 
-    <!-- Your cigars page JS should render into this -->
+      <div class="cigars-title-actions">
+        <!-- Filters -->
+        <button type="button" class="cigars-filter-btn" id="btn-open-filters" aria-label="Filters">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16M7 12h10M10 18h4"
+                  fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <!-- Favorites -->
+        <a class="cigars-fav-btn" href="/pos/cigars/favorites/" aria-label="Favorites">★</a>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="cigars-search-wrap">
+      <div class="cigars-search-bar">
+        <div class="cigars-search-icon">🔍</div>
+        <input
+          id="cigars-search-input"
+          type="search"
+          inputmode="search"
+          autocomplete="off"
+          placeholder=""
+          aria-label="Search cigars"
+        />
+      </div>
+
+      <!-- Applied filter chips (JS populates) -->
+      <div class="cigars-applied-filters" id="cigarsAppliedFilters" aria-label="Applied filters"></div>
+    </div>
+
+    <!-- Brands / Results heading (JS can change the text if desired) -->
+    <h2 class="cigars-brands-title" id="cigarsSectionTitle">Brands</h2>
+
+    <!-- Render target -->
     <section class="cigars-list" id="cigarsList"></section>
   </main>
 
