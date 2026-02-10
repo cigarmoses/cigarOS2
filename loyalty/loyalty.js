@@ -1,24 +1,22 @@
 /* /loyalty/loyalty.js
-   Loyalty page controller (SF Pro / iOS style)
+   Loyalty page controller
 
-   FIXES (as requested):
-   ✅ All: sorted by LAST name A–Z (no lockers-first)
-   ✅ Regulars: ONLY explicitly-marked regulars (does NOT default everyone to regular)
-   ✅ Lockers: sorted by locker number 1–25, and locker number appears BEFORE last name
-   ✅ List rows have NO subtitles (details show on tap)
-
-   Data:
-   - Reads customers from localStorage: cigaros_customers_v1
-   - Seeds from /pos/pos-contacts.json if localStorage is empty
-
-   ICON RULE:
-   - Columns labeled: Military, Paramedic, Firefighter, Police, Locker, Regular
-   - If column has ANY value -> show that icon
+   Requirements implemented:
+   ✅ iOS-ish list typography handled in CSS (17px / 44px row)
+   ✅ A–Z right sidebar index (tap/drag to jump)
+   ✅ All: sorted by last name A–Z (no lockers-first)
+   ✅ Regulars: ONLY if JSON column "Regular" is truthy
+   ✅ Lockers: ONLY if locker marker OR locker number exists
+   ✅ Lockers: sort by locker number 1–25
+   ✅ Lockers list label: "23 Moses, Michael" (locker # before last name)
+   ✅ Row shading ONLY by data:
+      - locker -> blue
+      - regular -> orange
+   ✅ Role icons show (Military/Police/Paramedic/Firefighter) via robust key normalization
 */
 
 (() => {
   const CUSTOMERS_KEY = "cigaros_customers_v1";
-  const SALES_KEY = "cigaros_sales_v1";
   const CONTACTS_JSON_URL = "/pos/pos-contacts.json";
 
   const ICON_BASE = "/img/icons/loyalty/";
@@ -38,6 +36,7 @@
   const summaryEl = $("#summary");
   const searchEl = $("#search");
   const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
+  const azEl = $("#azIndex");
   const tonyFab = $("#tonyFab");
 
   // ---------- state ----------
@@ -45,7 +44,7 @@
     mode: "all", // all | regular | lockers
     query: "",
     customers: [],
-    sales: [],
+    activeAZ: null,
   };
 
   // ---------- utils ----------
@@ -63,6 +62,10 @@
       .replaceAll("'", "&#039;");
   }
 
+  function toStr(v) {
+    return (v == null ? "" : String(v)).trim();
+  }
+
   function toNum(v) {
     if (v == null) return 0;
     const t = String(v).trim();
@@ -72,44 +75,86 @@
     return Number.isFinite(n) ? n : 0;
   }
 
-  function toStr(v) {
-    return (v == null ? "" : String(v)).trim();
+  // Normalize object keys to improve column matching (fixes missing icons)
+  function normalizeKey(k) {
+    return String(k || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "")
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function valueByColumn(obj, columnTitle) {
+    if (!obj) return undefined;
+
+    const want = normalizeKey(columnTitle);
+    // fast path: exact
+    if (Object.prototype.hasOwnProperty.call(obj, columnTitle)) return obj[columnTitle];
+
+    // scan keys once (objects are small enough)
+    for (const k of Object.keys(obj)) {
+      if (normalizeKey(k) === want) return obj[k];
+    }
+    return undefined;
+  }
+
+  function truthyCell(v) {
+    if (v === true) return true;
+    if (v === false || v == null) return false;
+    const s = String(v).trim().toLowerCase();
+    if (!s) return false;
+    if (s === "0" || s === "no" || s === "false" || s === "n") return false;
+    return true; // x, X, yes, 1, any string => true
+  }
+
+  function hasColumnValue(obj, columnTitle) {
+    return truthyCell(valueByColumn(obj, columnTitle));
   }
 
   function lockerNum(c) {
-    const raw = toStr(c.lockerNumber ?? c.locker ?? c["Locker number"] ?? "");
+    const raw = toStr(c.lockerNumber ?? c.locker ?? valueByColumn(c, "Locker number"));
     const n = Number(String(raw).replace(/[^\d]/g, ""));
     return Number.isFinite(n) && n > 0 ? n : null;
   }
 
-  // ---------- column-based icon detection ----------
-  function hasColumnValue(obj, columnTitle) {
-    if (!obj) return false;
-
-    const variants = [
-      obj[columnTitle],
-      obj[columnTitle.toLowerCase()],
-      obj[columnTitle.toUpperCase()],
-      obj[columnTitle.replace(/\s+/g, "")],
-      obj[columnTitle.toLowerCase().replace(/\s+/g, "")]
-    ];
-
-    return variants.some(v => {
-      if (v === true) return true;
-      if (v === false || v == null) return false;
-      const s = String(v).trim().toLowerCase();
-      return s !== "" && s !== "0" && s !== "no";
-    });
-  }
-
-  // ✅ IMPORTANT CHANGE:
-  // - locker if Locker column OR lockerNumber exists
-  // - regular ONLY if Regular column has value
-  // - otherwise "other" (so Regulars tab doesn't capture everyone)
+  // ✅ Strict classification:
+  // - locker ONLY if Locker column truthy OR locker # exists
+  // - regular ONLY if Regular column truthy
+  // - otherwise "other"
   function customerType(c) {
     if (hasColumnValue(c, "Locker") || lockerNum(c) != null) return "locker";
     if (hasColumnValue(c, "Regular")) return "regular";
     return "other";
+  }
+
+  function lastName(c) {
+    return toStr(c.lastName ?? c["Last Name"] ?? valueByColumn(c, "Last Name"));
+  }
+  function firstName(c) {
+    return toStr(c.firstName ?? c["First Name"] ?? valueByColumn(c, "First Name"));
+  }
+
+  function letterBucket(c) {
+    const l = lastName(c);
+    const ch = (l[0] || "").toUpperCase();
+    return /[A-Z]/.test(ch) ? ch : "#";
+  }
+
+  // ---------- icons ----------
+  function getRoleIcons(c) {
+    const icons = [];
+    if (hasColumnValue(c, "Military")) icons.push("military");
+    if (hasColumnValue(c, "Police")) icons.push("police");
+    if (hasColumnValue(c, "Paramedic")) icons.push("paramedic");
+    if (hasColumnValue(c, "Firefighter")) icons.push("firefighter");
+    return icons;
+  }
+
+  function getTierIcon(c) {
+    const t = customerType(c);
+    if (t === "locker") return "locker";
+    if (t === "regular") return "regular";
+    return null;
   }
 
   function buildIconHTML(iconNames) {
@@ -119,24 +164,7 @@
       .join("");
   }
 
-  function getRoleIcons(c) {
-    const icons = [];
-    if (hasColumnValue(c, "Military")) icons.push("military");
-    if (hasColumnValue(c, "Paramedic")) icons.push("paramedic");
-    if (hasColumnValue(c, "Firefighter")) icons.push("firefighter");
-    if (hasColumnValue(c, "Police")) icons.push("police");
-    return icons;
-  }
-
-  // ✅ Tier icon only for locker/regular
-  function getTierIcon(c) {
-    const t = customerType(c);
-    if (t === "locker") return "locker";
-    if (t === "regular") return "regular";
-    return null;
-  }
-
-  // ---------- data access ----------
+  // ---------- data ----------
   function readCustomers() {
     const list = safeJSON(localStorage.getItem(CUSTOMERS_KEY), []);
     return Array.isArray(list) ? list : [];
@@ -146,50 +174,32 @@
     writeJSON(CUSTOMERS_KEY, list);
   }
 
-  function readSales() {
-    const list = safeJSON(localStorage.getItem(SALES_KEY), []);
-    return Array.isArray(list) ? list : [];
-  }
-
   function normalizeContacts(rows) {
     const arr = Array.isArray(rows) ? rows : [];
 
     return arr.map((r, idx) => {
       const id = toStr(r.id) || `c_${idx}_${Math.random().toString(16).slice(2)}`;
 
-      const firstName = toStr(r["First Name"] ?? r.firstName ?? r.FirstName);
-      const lastName  = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
+      const fn = toStr(valueByColumn(r, "First Name") ?? r.firstName ?? r.FirstName);
+      const ln = toStr(valueByColumn(r, "Last Name") ?? r.lastName ?? r.LastName);
 
-      const phone     = toStr(r["Phone"] ?? r.phone);
-      const email     = toStr(r["Email"] ?? r.email);
+      const phone = toStr(valueByColumn(r, "Phone") ?? r.phone);
+      const email = toStr(valueByColumn(r, "Email") ?? r.email);
 
-      const points    = toNum(r["Rewards"] ?? r.points);
-      const lockerNumber = toStr(r["Locker number"] ?? r.lockerNumber ?? r.locker);
+      const points = toNum(valueByColumn(r, "Rewards") ?? r.points);
 
-      const Military = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
-      const Paramedic = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
-      const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
-      const Police = r["Police"] ?? r.Police ?? r["police"] ?? r.police;
-      const Locker = r["Locker"] ?? r.Locker ?? r["locker"] ?? r.locker;
-      const Regular = r["Regular"] ?? r.Regular ?? r["regular"] ?? r.regular;
+      const lockerNumber = toStr(valueByColumn(r, "Locker number") ?? r.lockerNumber ?? r.locker);
 
+      // Preserve icon columns (whatever casing/spaces the source uses, we keep originals too)
       return {
+        ...r,
         id,
-        firstName,
-        lastName,
+        firstName: fn,
+        lastName: ln,
         phone,
         email,
         points,
         lockerNumber: lockerNumber || "",
-
-        // ICON COLUMNS (exact titles)
-        Military,
-        Paramedic,
-        Firefighter,
-        Police,
-        Locker,
-        Regular,
-
         createdAt: r.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -213,7 +223,7 @@
     }
   }
 
-  // ---------- filtering ----------
+  // ---------- filtering + sorting ----------
   function filteredCustomers() {
     const q = norm(state.query);
     let list = (state.customers || []).slice();
@@ -222,40 +232,36 @@
       list = list.filter((c) => customerType(c) === "regular");
     } else if (state.mode === "lockers") {
       list = list.filter((c) => customerType(c) === "locker");
-    } // all = show everything (locker + regular + other)
+    } // all = show everyone
 
     if (q) {
       list = list.filter((c) => {
         const hay = [
-          c.lastName,
-          c.firstName,
-          c.phone,
-          c.email,
-          c.lockerNumber,
+          lastName(c),
+          firstName(c),
+          toStr(c.phone),
+          toStr(c.email),
+          toStr(c.lockerNumber),
         ].map(norm).join(" ");
         return hay.includes(q);
       });
     }
 
-    // ✅ SORT RULES (as requested)
     list.sort((a, b) => {
       if (state.mode === "lockers") {
-        // locker number 1–25, then last/first
+        // locker number 1–25 first
         const an = lockerNum(a) ?? 999999;
         const bn = lockerNum(b) ?? 999999;
         if (an !== bn) return an - bn;
-
-        const al = norm(a.lastName);
-        const bl = norm(b.lastName);
-        if (al !== bl) return al.localeCompare(bl);
-        return norm(a.firstName).localeCompare(norm(b.firstName));
       }
 
-      // All + Regulars: last name A–Z, then first
-      const al = norm(a.lastName);
-      const bl = norm(b.lastName);
+      const al = norm(lastName(a));
+      const bl = norm(lastName(b));
       if (al !== bl) return al.localeCompare(bl);
-      return norm(a.firstName).localeCompare(norm(b.firstName));
+
+      const af = norm(firstName(a));
+      const bf = norm(firstName(b));
+      return af.localeCompare(bf);
     });
 
     return list;
@@ -325,33 +331,117 @@
     const dlgMeta = dlg.querySelector("#dlgMeta");
     const dlgBody = dlg.querySelector("#dlgBody");
 
-    const first = (c.firstName || "").trim();
-    const last  = (c.lastName || "").trim();
-    const ln = lockerNum(c);
+    const fn = firstName(c);
+    const ln = lastName(c);
+    const lnNum = lockerNum(c);
 
-    const nameLine = ln != null
-      ? `${ln} ${last || "—"}, ${first || "—"}`
-      : `${last || "—"}, ${first || "—"}`;
+    const nameLine =
+      (state.mode === "lockers" && lnNum != null)
+        ? `${lnNum} ${ln || "—"}, ${fn || "—"}`
+        : `${ln || "—"}, ${fn || "—"}`;
 
     if (dlgName) dlgName.textContent = nameLine;
 
     const t = customerType(c);
     const typeLabel = t === "locker" ? "Locker" : (t === "regular" ? "Regular" : "Customer");
     const metaBits = [typeLabel];
-    if (ln != null) metaBits.push(`Locker ${ln}`);
+    if (lnNum != null) metaBits.push(`Locker ${lnNum}`);
     dlgMeta.textContent = metaBits.join(" • ");
 
     const bodyBits = [];
-    if (c.phone) bodyBits.push(`<div><b>Phone:</b> ${escapeHTML(c.phone)}</div>`);
-    if (c.email) bodyBits.push(`<div style="margin-top:6px;"><b>Email:</b> ${escapeHTML(c.email)}</div>`);
-    bodyBits.push(`<div style="margin-top:6px;"><b>Points:</b> ${escapeHTML(String(Number(c.points || 0)))}</div>`);
+    if (c.phone) bodyBits.push(`<div><b>Phone:</b> ${escapeHTML(toStr(c.phone))}</div>`);
+    if (c.email) bodyBits.push(`<div style="margin-top:6px;"><b>Email:</b> ${escapeHTML(toStr(c.email))}</div>`);
+    bodyBits.push(`<div style="margin-top:6px;"><b>Points:</b> ${escapeHTML(String(toNum(c.points || 0)))}</div>`);
 
     dlgBody.innerHTML = bodyBits.join("") || `<div style="color:#8e8e93;">No details available.</div>`;
 
     if (!dlg.open) dlg.showModal();
   }
 
-  // ---------- render list ----------
+  // ---------- A–Z index ----------
+  const AZ = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","#"];
+
+  function renderAZ(list) {
+    if (!azEl) return;
+
+    // always show the full alphabet like iOS
+    azEl.innerHTML = AZ.map(ch => `<div class="az-letter" data-ch="${ch}">${ch}</div>`).join("");
+
+    // Active letter highlight based on state.activeAZ
+    if (state.activeAZ) {
+      const el = azEl.querySelector(`.az-letter[data-ch="${state.activeAZ}"]`);
+      if (el) el.classList.add("active");
+    }
+
+    const scrollToLetter = (ch) => {
+      const target = document.querySelector(`.row[data-letter="${ch}"]`);
+      if (target) {
+        target.scrollIntoView({ block: "start" });
+        state.activeAZ = ch;
+        azEl.querySelectorAll(".az-letter").forEach(x => x.classList.remove("active"));
+        const el = azEl.querySelector(`.az-letter[data-ch="${ch}"]`);
+        if (el) el.classList.add("active");
+      }
+    };
+
+    const pickByY = (clientY) => {
+      const rect = azEl.getBoundingClientRect();
+      const y = Math.min(Math.max(clientY - rect.top, 0), rect.height - 1);
+      const idx = Math.floor((y / rect.height) * AZ.length);
+      return AZ[Math.min(Math.max(idx, 0), AZ.length - 1)];
+    };
+
+    // click
+    azEl.querySelectorAll(".az-letter").forEach((node) => {
+      node.addEventListener("click", (e) => {
+        const ch = e.currentTarget.getAttribute("data-ch");
+        if (ch) scrollToLetter(ch);
+      });
+    });
+
+    // touch drag
+    let dragging = false;
+
+    const onTouch = (e) => {
+      if (!dragging) return;
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      const ch = pickByY(t.clientY);
+      scrollToLetter(ch);
+      e.preventDefault();
+    };
+
+    azEl.addEventListener("touchstart", (e) => {
+      dragging = true;
+      const t = e.touches && e.touches[0];
+      if (t) {
+        const ch = pickByY(t.clientY);
+        scrollToLetter(ch);
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    azEl.addEventListener("touchmove", onTouch, { passive: false });
+    azEl.addEventListener("touchend", () => { dragging = false; }, { passive: true });
+    azEl.addEventListener("touchcancel", () => { dragging = false; }, { passive: true });
+
+    // mouse drag (desktop)
+    let mdown = false;
+    azEl.addEventListener("mousedown", (e) => {
+      mdown = true;
+      const ch = pickByY(e.clientY);
+      scrollToLetter(ch);
+      e.preventDefault();
+    });
+    window.addEventListener("mousemove", (e) => {
+      if (!mdown) return;
+      const ch = pickByY(e.clientY);
+      scrollToLetter(ch);
+    });
+    window.addEventListener("mouseup", () => { mdown = false; });
+  }
+
+  // ---------- render ----------
   function render() {
     const list = filteredCustomers();
 
@@ -365,32 +455,42 @@
 
     if (!list.length) {
       listEl.innerHTML = `<div class="empty-state">No customers found</div>`;
+      renderAZ([]);
       return;
     }
 
     listEl.innerHTML = list.map((c) => {
       const t = customerType(c);
-      const rowClass = t === "locker" ? "row locker" : (t === "regular" ? "row regular" : "row regular");
 
-      const first = (c.firstName || "").trim();
-      const last  = (c.lastName || "").trim();
-      const ln = lockerNum(c);
+      // Shade by data only:
+      const rowClass =
+        t === "locker" ? "row locker" :
+        t === "regular" ? "row regular" :
+        "row";
 
-      // ✅ ROW TITLE RULES
-      // Lockers tab + locker customers: "14 Armistead, Robin"
-      // Everyone else: "Armistead, Robin"
-      const title = (t === "locker" && ln != null)
-        ? `<span class="name-last">${escapeHTML(String(ln))} ${escapeHTML(last || "—")}</span><span class="name-first">, ${escapeHTML(first || "—")}</span>`
-        : `<span class="name-last">${escapeHTML(last || "—")}</span><span class="name-first">, ${escapeHTML(first || "—")}</span>`;
+      const fn = firstName(c);
+      const ln = lastName(c);
+      const lnNum = lockerNum(c);
 
+      // Row label rules:
+      // - Lockers tab: "23 Moses, Michael" (if locker number exists)
+      // - Otherwise: "Moses, Michael"
+      const label =
+        (state.mode === "lockers" && lnNum != null)
+          ? `<span class="name-last">${escapeHTML(String(lnNum))} ${escapeHTML(ln || "—")}</span><span class="name-first">, ${escapeHTML(fn || "—")}</span>`
+          : `<span class="name-last">${escapeHTML(ln || "—")}</span><span class="name-first">, ${escapeHTML(fn || "—")}</span>`;
+
+      // Icons: role icons + tier icon
       const roleIcons = getRoleIcons(c);
-      const tierIcon = getTierIcon(c); // null for "other"
+      const tierIcon = getTierIcon(c);
       const icons = [...roleIcons, tierIcon].filter(Boolean);
 
+      const bucket = letterBucket(c);
+
       return `
-        <div class="${rowClass}" data-id="${escapeHTML(c.id)}">
+        <div class="${rowClass}" data-id="${escapeHTML(c.id)}" data-letter="${bucket}">
           <div class="row-left">
-            <div class="row-name">${title}</div>
+            <div class="row-name">${label}</div>
           </div>
           <div class="row-right" aria-hidden="true">
             ${buildIconHTML(icons)}
@@ -402,9 +502,11 @@
     listEl.querySelectorAll(".row").forEach((row) => {
       row.addEventListener("click", () => {
         const id = row.getAttribute("data-id");
-        openDetails(id);
+        if (id) openDetails(id);
       });
     });
+
+    renderAZ(list);
   }
 
   // ---------- events ----------
@@ -414,12 +516,14 @@
         modeButtons.forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         state.mode = btn.getAttribute("data-mode") || "all";
+        state.activeAZ = null;
         render();
       });
     });
 
     searchEl?.addEventListener("input", () => {
       state.query = searchEl.value || "";
+      state.activeAZ = null;
       render();
     });
 
@@ -428,16 +532,12 @@
     });
 
     window.addEventListener("storage", (e) => {
-      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) loadAndRender();
+      if (e.key === CUSTOMERS_KEY) loadAndRender();
     });
-
-    window.addEventListener("cigaros:customers-changed", () => loadAndRender());
-    window.addEventListener("cigaros:sales-changed", () => loadAndRender());
   }
 
   // ---------- load ----------
   async function loadAndRender() {
-    state.sales = readSales();
     state.customers = await seedCustomersFromJSONIfNeeded();
     render();
   }
