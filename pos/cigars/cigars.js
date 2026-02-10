@@ -1,5 +1,13 @@
 /* /pos/cigars/cigars.js
    POS Cigars (Main) — NEW Filters Bottom Sheet
+
+   FIX:
+   - The main /pos/cigars/ page was blank because this file never rendered anything.
+   - renderBrandsOrResults() only called window.buildCigarsRender(), which is undefined on this page.
+   - This version defines a renderer that paints into #cigarsList and respects global filters.
+
+   Data source:
+   - Google Sheets CSV export
 */
 
 (() => {
@@ -14,13 +22,17 @@
   // -----------------------------
   // DOM (existing)
   // -----------------------------
-  const backBtn = $("#cigars-back");
-  const searchInput = $("#cigars-search-input");
+  // NOTE: main page HTML does NOT have these IDs in your current markup.
+  // We keep them optional so nothing crashes.
+  const backBtn = $("#cigars-back"); // may be null
+  const searchInput = $("#cigars-search-input"); // may be null
 
   const openBtn =
     $("#btn-open-filters") || $(".cigars-filter-btn") || $("#cigars-filter-btn");
 
   let modalRoot = $("#filter-modal");
+
+  const listRoot = $("#cigarsList");
 
   // -----------------------------
   // Data
@@ -71,29 +83,6 @@
     }
   }
 
-  function renderBrandsOrResults() {
-    if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
-  }
-
-  // -----------------------------
-  // Local UI state
-  // -----------------------------
-  const state = {
-    selected: {
-      manufacturer: new Set(),
-      brand: new Set(),
-      vitola: new Set(),
-      ring: new Set(),
-      length: new Set(),
-      strength: new Set(),
-      shape: new Set(),
-      shade: new Set(),
-    },
-    activeKey: "brand",
-    activeValues: [],
-    activeSearch: "",
-  };
-
   // -----------------------------
   // Utilities
   // -----------------------------
@@ -137,6 +126,24 @@
     return "";
   }
 
+  function getField(r, keys) {
+    for (const k of keys) {
+      const v = r?.[k];
+      if (v != null && String(v).trim() !== "") return String(v);
+    }
+    return "";
+  }
+
+  function includesQ(haystack, q) {
+    if (!q) return true;
+    return norm(haystack).toLowerCase().includes(q);
+  }
+
+  function parseNum(s) {
+    const n = Number(String(s ?? "").replace(/[^\d.]+/g, ""));
+    return Number.isFinite(n) ? n : NaN;
+  }
+
   // -----------------------------
   // Wrapper Shade custom ordering
   // -----------------------------
@@ -176,7 +183,6 @@
 
   // -----------------------------
   // ✅ Vitola custom ordering
-  // (common vitolas first, then alphabetical remainder)
   // -----------------------------
   const VITOLA_ORDER = [
     "Toro",
@@ -531,7 +537,9 @@
       g.filters[k] = new Set([...state.selected[k]]);
     }
 
-    g.q = (searchInput?.value || "").toString();
+    // Main page may not have searchInput; still keep contract.
+    g.q = (searchInput?.value || g.q || "").toString();
+
     renderBrandsOrResults();
   }
 
@@ -541,8 +549,188 @@
   }
 
   // -----------------------------
+  // Local UI state (filters sheet)
+  // -----------------------------
+  const state = {
+    selected: {
+      manufacturer: new Set(),
+      brand: new Set(),
+      vitola: new Set(),
+      ring: new Set(),
+      length: new Set(),
+      strength: new Set(),
+      shape: new Set(),
+      shade: new Set(),
+    },
+    activeKey: "brand",
+    activeValues: [],
+    activeSearch: "",
+  };
+
+  // -----------------------------
+  // ✅ Main page renderer (THE FIX)
+  // -----------------------------
+  function rowMatchesFilters(row, g) {
+    const f = g?.filters || {};
+
+    const manufacturer = norm(getField(row, ["Manufacturer", "manufacturer"]));
+    const brand = norm(getField(row, ["Brand", "brand", "Brand aka", "brand_aka"]));
+    const vitola = norm(getField(row, ["Vitola", "vitola", "Style", "style"]));
+    const ring = norm(getField(row, ["RG", "Ring", "ring"]));
+    const length = norm(getField(row, ["Length", "length"]));
+    const strength = norm(getField(row, ["Strength", "strength"]));
+    const shape = norm(getField(row, ["Shape", "shape"]));
+    const shade = norm(getField(row, ["Wrapper Shade", "WrapperShade", "wrapperShade", "shade"]));
+
+    const checks = [
+      ["manufacturer", manufacturer],
+      ["brand", brand],
+      ["vitola", vitola],
+      ["ring", ring],
+      ["length", length],
+      ["strength", strength],
+      ["shape", shape],
+      ["shade", shade],
+    ];
+
+    for (const [key, val] of checks) {
+      const set = f[key];
+      if (set instanceof Set && set.size) {
+        if (!set.has(val)) return false;
+      }
+    }
+
+    const q = norm(g?.q).toLowerCase();
+    if (q) {
+      const cigarName = norm(getField(row, ["Cigar", "Cigar Name", "Name", "cigar", "cigar_name"]));
+      const line = norm(getField(row, ["Line", "line"]));
+      const hay = `${manufacturer} ${brand} ${line} ${cigarName} ${vitola} ${shade} ${strength} ${shape} ${ring} ${length}`;
+      if (!includesQ(hay, q)) return false;
+    }
+
+    return true;
+  }
+
+  function buildBrandCards(rows) {
+    // Group by Brand, but keep Manufacturer around for subtitle
+    const map = new Map();
+
+    for (const r of rows) {
+      const brand = norm(getField(r, ["Brand", "brand", "Brand aka", "brand_aka"])) || "Unknown Brand";
+      const mfg = norm(getField(r, ["Manufacturer", "manufacturer"]));
+
+      if (!map.has(brand)) {
+        map.set(brand, { brand, manufacturer: mfg, count: 0 });
+      }
+      const obj = map.get(brand);
+      obj.count += 1;
+
+      // Prefer any non-empty manufacturer we see
+      if (!obj.manufacturer && mfg) obj.manufacturer = mfg;
+    }
+
+    const list = Array.from(map.values()).sort((a, b) =>
+      a.brand.localeCompare(b.brand)
+    );
+
+    return list;
+  }
+
+  function renderMain() {
+    if (!listRoot) return;
+
+    ensureGlobalState();
+    const g = window.__CIGAR_FILTER_STATE__;
+
+    const filteredRows = (DATA_ROWS || []).filter((r) => rowMatchesFilters(r, g));
+    const cards = buildBrandCards(filteredRows);
+
+    // Empty state
+    if (!cards.length) {
+      listRoot.innerHTML = `
+        <div style="padding:18px; color: rgba(255,255,255,.75); font: 500 16px/1.35 -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui;">
+          No results.
+        </div>
+      `;
+      return;
+    }
+
+    // Render as iOS-style list cards (simple, works on mobile)
+    listRoot.innerHTML = cards
+      .map((c) => {
+        const brandEsc = escapeHtml(c.brand);
+        const mfgEsc = escapeHtml(c.manufacturer || "");
+        const icon = iconPathFor("brand", c.brand);
+
+        // Route to brand page controller
+        const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
+
+        return `
+          <a class="cigars-brand-row" href="${href}" style="
+            display:flex; align-items:center; gap:12px;
+            padding:12px 14px; border-radius:14px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.10);
+            text-decoration:none; color:#fff;
+            margin: 10px 12px;
+          ">
+            <div style="
+              width:42px; height:42px; border-radius:12px;
+              background: rgba(255,255,255,.08);
+              display:flex; align-items:center; justify-content:center;
+              flex: 0 0 auto;
+              overflow:hidden;
+            ">
+              <img src="${escapeHtml(icon)}" alt="" style="width:26px; height:26px;"
+                   loading="lazy" decoding="async"
+                   onerror="this.style.display='none';" />
+            </div>
+
+            <div style="flex:1; min-width:0;">
+              <div style="font: 800 18px/1.15 'SF Pro Display', -apple-system, system-ui; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${brandEsc}
+              </div>
+              ${
+                mfgEsc
+                  ? `<div style="margin-top:4px; font: 500 13px/1.2 'SF Pro Display', -apple-system, system-ui; color: rgba(255,255,255,.68); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                       ${mfgEsc}
+                     </div>`
+                  : `<div style="margin-top:4px; font: 500 13px/1.2 'SF Pro Display', -apple-system, system-ui; color: rgba(255,255,255,.55);">
+                       —
+                     </div>`
+              }
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px; flex:0 0 auto;">
+              <div style="
+                font: 700 13px/1 'SF Pro Display', -apple-system, system-ui;
+                color: rgba(255,255,255,.75);
+                padding:6px 10px; border-radius:999px;
+                background: rgba(255,255,255,.08);
+                border: 1px solid rgba(255,255,255,.10);
+              ">
+                ${c.count}
+              </div>
+              <div style="font:700 18px/1 -apple-system, system-ui; color: rgba(255,255,255,.6);">›</div>
+            </div>
+          </a>
+        `;
+      })
+      .join("");
+  }
+
+  // Provide the function your existing pattern expects
+  window.buildCigarsRender = renderMain;
+
+  function renderBrandsOrResults() {
+    // Always render now (this is the fix)
+    if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
+  }
+
+  // -----------------------------
   // Event bindings
   // -----------------------------
+  // If the main page still uses inline onclick="history.back()", this may be null and that's fine.
   backBtn?.addEventListener("click", () => {
     window.location.href = "/pos/";
   });
@@ -617,16 +805,21 @@
         DATA_ROWS = window.__CIGAR_SHEET_ROWS__;
       } else {
         const res = await fetch(CSV_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
         const text = await res.text();
         const parsed = parseCSV(text);
         DATA_ROWS = rowsToObjects(parsed);
         window.__CIGAR_SHEET_ROWS__ = DATA_ROWS;
       }
 
+      // Keep search contract if an input exists (main page may not have it)
       if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
+
       renderBrandsOrResults();
     } catch (err) {
       console.error("cigars.js init error:", err);
+
+      // Still try to render whatever we have cached, so the page never stays blank
       try {
         ensureGlobalState();
         if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
