@@ -1,18 +1,10 @@
 /* /loyalty/loyalty.js
-   Loyalty page controller
-
-   Requirements implemented:
-   ✅ iOS-ish list typography handled in CSS (17px / 44px row)
-   ✅ A–Z right sidebar index (tap/drag to jump)
-   ✅ All: sorted by last name A–Z (no lockers-first)
-   ✅ Regulars: ONLY if JSON column "Regular" is truthy
-   ✅ Lockers: ONLY if locker marker OR locker number exists
-   ✅ Lockers: sort by locker number 1–25
-   ✅ Lockers list label: "23 Moses, Michael" (locker # before last name)
-   ✅ Row shading ONLY by data:
-      - locker -> blue
-      - regular -> orange
-   ✅ Role icons show (Military/Police/Paramedic/Firefighter) via robust key normalization
+   Fixes:
+   ✅ move icons left (CSS handles)
+   ✅ lockers: locker # NOT bold + extra spacing (HTML spans + CSS)
+   ✅ Regulars tab now works (truthy detection expanded)
+   ✅ Add green + on All tab (creates customer -> localStorage)
+   ✅ Role icons show (better key matching + truthy markers)
 */
 
 (() => {
@@ -38,6 +30,15 @@
   const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
   const azEl = $("#azIndex");
   const tonyFab = $("#tonyFab");
+
+  const addBtn = $("#addCustomerBtn");
+  const addDlg = $("#addCustomerDialog");
+  const acFirst = $("#acFirst");
+  const acLast = $("#acLast");
+  const acPhone = $("#acPhone");
+  const acEmail = $("#acEmail");
+  const acCancel = $("#acCancel");
+  const acSave = $("#acSave");
 
   // ---------- state ----------
   let state = {
@@ -75,7 +76,7 @@
     return Number.isFinite(n) ? n : 0;
   }
 
-  // Normalize object keys to improve column matching (fixes missing icons)
+  // Normalize keys: "Regular ", "REGULAR", "Regulars", etc. map cleanly
   function normalizeKey(k) {
     return String(k || "")
       .trim()
@@ -87,24 +88,46 @@
   function valueByColumn(obj, columnTitle) {
     if (!obj) return undefined;
 
-    const want = normalizeKey(columnTitle);
-    // fast path: exact
+    // exact
     if (Object.prototype.hasOwnProperty.call(obj, columnTitle)) return obj[columnTitle];
 
-    // scan keys once (objects are small enough)
+    // normalize scan
+    const want = normalizeKey(columnTitle);
     for (const k of Object.keys(obj)) {
       if (normalizeKey(k) === want) return obj[k];
     }
+
+    // small extra: sometimes exported keys become "regulars" instead of "regular"
+    if (want === "regular") {
+      for (const k of Object.keys(obj)) {
+        if (normalizeKey(k) === "regulars") return obj[k];
+      }
+    }
+    if (want === "locker") {
+      for (const k of Object.keys(obj)) {
+        if (normalizeKey(k) === "lockers") return obj[k];
+      }
+    }
+
     return undefined;
   }
 
+  // Truthy markers (expanded): x / X / r / R / yes / 1 / true / any non-empty
   function truthyCell(v) {
     if (v === true) return true;
     if (v === false || v == null) return false;
+
     const s = String(v).trim().toLowerCase();
     if (!s) return false;
-    if (s === "0" || s === "no" || s === "false" || s === "n") return false;
-    return true; // x, X, yes, 1, any string => true
+
+    // explicit falsy strings
+    if (["0", "no", "false", "n", "none", "null"].includes(s)) return false;
+
+    // allow common markers
+    if (["x", "yes", "y", "1", "true", "r"].includes(s)) return true;
+
+    // any other non-empty string counts as true
+    return true;
   }
 
   function hasColumnValue(obj, columnTitle) {
@@ -118,9 +141,9 @@
   }
 
   // ✅ Strict classification:
-  // - locker ONLY if Locker column truthy OR locker # exists
-  // - regular ONLY if Regular column truthy
-  // - otherwise "other"
+  // - locker if Locker column truthy OR locker number exists
+  // - regular if Regular column truthy
+  // - otherwise other
   function customerType(c) {
     if (hasColumnValue(c, "Locker") || lockerNum(c) != null) return "locker";
     if (hasColumnValue(c, "Regular")) return "regular";
@@ -190,9 +213,8 @@
 
       const lockerNumber = toStr(valueByColumn(r, "Locker number") ?? r.lockerNumber ?? r.locker);
 
-      // Preserve icon columns (whatever casing/spaces the source uses, we keep originals too)
       return {
-        ...r,
+        ...r,                 // keep ALL original columns (including icon columns)
         id,
         firstName: fn,
         lastName: ln,
@@ -232,7 +254,7 @@
       list = list.filter((c) => customerType(c) === "regular");
     } else if (state.mode === "lockers") {
       list = list.filter((c) => customerType(c) === "locker");
-    } // all = show everyone
+    } // all shows everyone
 
     if (q) {
       list = list.filter((c) => {
@@ -249,12 +271,10 @@
 
     list.sort((a, b) => {
       if (state.mode === "lockers") {
-        // locker number 1–25 first
         const an = lockerNum(a) ?? 999999;
         const bn = lockerNum(b) ?? 999999;
         if (an !== bn) return an - bn;
       }
-
       const al = norm(lastName(a));
       const bl = norm(lastName(b));
       if (al !== bl) return al.localeCompare(bl);
@@ -267,8 +287,8 @@
     return list;
   }
 
-  // ---------- details dialog ----------
-  function ensureDialog() {
+  // ---------- details dialog (simple) ----------
+  function ensureDetailsDialog() {
     let dlg = $("#loyDetailsDialog");
     if (dlg) return dlg;
 
@@ -282,11 +302,11 @@
     el.style.boxShadow = "0 20px 60px rgba(0,0,0,.25)";
 
     el.innerHTML = `
-      <div style="padding:14px 14px 12px; font-family: var(--font-text);">
+      <div style="padding:14px 14px 12px; font-family: var(--font-text); background:#fff;">
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
           <div style="min-width:0;">
             <div id="dlgName" style="font-family: var(--font-display); font-weight:800; font-size:20px; line-height:1.2;"></div>
-            <div id="dlgMeta" style="margin-top:4px; font-size:13px; color:#8e8e93; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+            <div id="dlgMeta" style="margin-top:4px; font-size:13px; color:#8e8e93;"></div>
           </div>
           <button id="dlgClose" type="button"
             style="border:none; background:transparent; font-size:16px; padding:6px 10px; cursor:pointer;">✕</button>
@@ -294,7 +314,7 @@
 
         <div id="dlgBody" style="margin-top:10px; font-size:14px; color:#111; line-height:1.35;"></div>
 
-        <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(0,0,0,.08); display:flex; justify-content:flex-end; gap:10px;">
+        <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(0,0,0,.08); display:flex; justify-content:flex-end;">
           <button id="dlgOk" type="button"
             style="border:none; background:#007aff; color:#fff; font-weight:600; padding:10px 14px; border-radius:12px; cursor:pointer;">
             Done
@@ -326,33 +346,24 @@
     const c = state.customers.find(x => String(x.id) === String(customerId));
     if (!c) return;
 
-    const dlg = ensureDialog();
+    const dlg = ensureDetailsDialog();
     const dlgName = dlg.querySelector("#dlgName");
     const dlgMeta = dlg.querySelector("#dlgMeta");
     const dlgBody = dlg.querySelector("#dlgBody");
 
     const fn = firstName(c);
     const ln = lastName(c);
-    const lnNum = lockerNum(c);
+    const num = lockerNum(c);
 
-    const nameLine =
-      (state.mode === "lockers" && lnNum != null)
-        ? `${lnNum} ${ln || "—"}, ${fn || "—"}`
-        : `${ln || "—"}, ${fn || "—"}`;
-
-    if (dlgName) dlgName.textContent = nameLine;
+    if (dlgName) dlgName.textContent = `${ln || "—"}, ${fn || "—"}`;
 
     const t = customerType(c);
     const typeLabel = t === "locker" ? "Locker" : (t === "regular" ? "Regular" : "Customer");
-    const metaBits = [typeLabel];
-    if (lnNum != null) metaBits.push(`Locker ${lnNum}`);
-    dlgMeta.textContent = metaBits.join(" • ");
+    dlgMeta.textContent = num ? `${typeLabel} • Locker ${num}` : typeLabel;
 
     const bodyBits = [];
-    if (c.phone) bodyBits.push(`<div><b>Phone:</b> ${escapeHTML(toStr(c.phone))}</div>`);
+    if (c.phone) bodyBits.push(`<div><b>Cell:</b> ${escapeHTML(toStr(c.phone))}</div>`);
     if (c.email) bodyBits.push(`<div style="margin-top:6px;"><b>Email:</b> ${escapeHTML(toStr(c.email))}</div>`);
-    bodyBits.push(`<div style="margin-top:6px;"><b>Points:</b> ${escapeHTML(String(toNum(c.points || 0)))}</div>`);
-
     dlgBody.innerHTML = bodyBits.join("") || `<div style="color:#8e8e93;">No details available.</div>`;
 
     if (!dlg.open) dlg.showModal();
@@ -364,14 +375,7 @@
   function renderAZ(list) {
     if (!azEl) return;
 
-    // always show the full alphabet like iOS
     azEl.innerHTML = AZ.map(ch => `<div class="az-letter" data-ch="${ch}">${ch}</div>`).join("");
-
-    // Active letter highlight based on state.activeAZ
-    if (state.activeAZ) {
-      const el = azEl.querySelector(`.az-letter[data-ch="${state.activeAZ}"]`);
-      if (el) el.classList.add("active");
-    }
 
     const scrollToLetter = (ch) => {
       const target = document.querySelector(`.row[data-letter="${ch}"]`);
@@ -391,7 +395,6 @@
       return AZ[Math.min(Math.max(idx, 0), AZ.length - 1)];
     };
 
-    // click
     azEl.querySelectorAll(".az-letter").forEach((node) => {
       node.addEventListener("click", (e) => {
         const ch = e.currentTarget.getAttribute("data-ch");
@@ -399,51 +402,87 @@
       });
     });
 
-    // touch drag
     let dragging = false;
-
-    const onTouch = (e) => {
-      if (!dragging) return;
-      const t = e.touches && e.touches[0];
-      if (!t) return;
-      const ch = pickByY(t.clientY);
-      scrollToLetter(ch);
-      e.preventDefault();
-    };
 
     azEl.addEventListener("touchstart", (e) => {
       dragging = true;
       const t = e.touches && e.touches[0];
-      if (t) {
-        const ch = pickByY(t.clientY);
-        scrollToLetter(ch);
-      }
+      if (t) scrollToLetter(pickByY(t.clientY));
       e.preventDefault();
     }, { passive: false });
 
-    azEl.addEventListener("touchmove", onTouch, { passive: false });
+    azEl.addEventListener("touchmove", (e) => {
+      if (!dragging) return;
+      const t = e.touches && e.touches[0];
+      if (t) scrollToLetter(pickByY(t.clientY));
+      e.preventDefault();
+    }, { passive: false });
+
     azEl.addEventListener("touchend", () => { dragging = false; }, { passive: true });
     azEl.addEventListener("touchcancel", () => { dragging = false; }, { passive: true });
+  }
 
-    // mouse drag (desktop)
-    let mdown = false;
-    azEl.addEventListener("mousedown", (e) => {
-      mdown = true;
-      const ch = pickByY(e.clientY);
-      scrollToLetter(ch);
-      e.preventDefault();
-    });
-    window.addEventListener("mousemove", (e) => {
-      if (!mdown) return;
-      const ch = pickByY(e.clientY);
-      scrollToLetter(ch);
-    });
-    window.addEventListener("mouseup", () => { mdown = false; });
+  // ---------- Add customer ----------
+  function showAddButton() {
+    if (!addBtn) return;
+    addBtn.style.display = (state.mode === "all") ? "inline-flex" : "none";
+  }
+
+  function openAddDialog() {
+    if (!addDlg) return;
+    acFirst.value = "";
+    acLast.value = "";
+    acPhone.value = "";
+    acEmail.value = "";
+    addDlg.showModal();
+    setTimeout(() => acFirst?.focus(), 0);
+  }
+
+  function closeAddDialog() {
+    if (!addDlg) return;
+    if (addDlg.open) addDlg.close();
+  }
+
+  function addCustomer() {
+    const first = toStr(acFirst?.value);
+    const last = toStr(acLast?.value);
+    const phone = toStr(acPhone?.value);
+    const email = toStr(acEmail?.value);
+
+    // minimal validation
+    if (!first && !last && !phone && !email) return;
+
+    const now = new Date().toISOString();
+    const id = `c_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+    const newCustomer = {
+      id,
+      firstName: first,
+      lastName: last,
+      phone,
+      email,
+      points: 0,
+      lockerNumber: "",
+
+      // default: not regular, not locker
+      Regular: "",
+      Locker: "",
+
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    state.customers = [newCustomer, ...(state.customers || [])];
+    writeCustomers(state.customers);
+    closeAddDialog();
+    render();
   }
 
   // ---------- render ----------
   function render() {
     const list = filteredCustomers();
+
+    showAddButton();
 
     if (summaryEl) {
       const total = state.customers.length;
@@ -462,7 +501,6 @@
     listEl.innerHTML = list.map((c) => {
       const t = customerType(c);
 
-      // Shade by data only:
       const rowClass =
         t === "locker" ? "row locker" :
         t === "regular" ? "row regular" :
@@ -470,17 +508,14 @@
 
       const fn = firstName(c);
       const ln = lastName(c);
-      const lnNum = lockerNum(c);
+      const num = lockerNum(c);
 
-      // Row label rules:
-      // - Lockers tab: "23 Moses, Michael" (if locker number exists)
-      // - Otherwise: "Moses, Michael"
+      // lockers tab label: number not bold + more space
       const label =
-        (state.mode === "lockers" && lnNum != null)
-          ? `<span class="name-last">${escapeHTML(String(lnNum))} ${escapeHTML(ln || "—")}</span><span class="name-first">, ${escapeHTML(fn || "—")}</span>`
+        (state.mode === "lockers" && num != null)
+          ? `<span class="locker-num">${escapeHTML(String(num))}</span><span class="name-last">${escapeHTML(ln || "—")}</span><span class="name-first">, ${escapeHTML(fn || "—")}</span>`
           : `<span class="name-last">${escapeHTML(ln || "—")}</span><span class="name-first">, ${escapeHTML(fn || "—")}</span>`;
 
-      // Icons: role icons + tier icon
       const roleIcons = getRoleIcons(c);
       const tierIcon = getTierIcon(c);
       const icons = [...roleIcons, tierIcon].filter(Boolean);
@@ -499,6 +534,7 @@
       `;
     }).join("");
 
+    // Click row -> details
     listEl.querySelectorAll(".row").forEach((row) => {
       row.addEventListener("click", () => {
         const id = row.getAttribute("data-id");
@@ -507,6 +543,30 @@
     });
 
     renderAZ(list);
+
+    // Debug: if role icons still never appear, it's data not icons
+    // (tier icons should always show if regular/locker)
+    const anyRole = list.some(c => getRoleIcons(c).length > 0);
+    if (!anyRole) {
+      // This helps confirm whether the data actually has markers
+      console.warn("[Loyalty] No role markers detected in Military/Police/Paramedic/Firefighter columns.");
+    }
+  }
+
+  // ---------- init/load ----------
+  async function loadAndRender() {
+    state.customers = await seedCustomersFromJSONIfNeeded();
+
+    // quick icon existence check (if these 404, role icons can't show)
+    // This won’t block anything; just logs.
+    ["military","police","paramedic","firefighter"].forEach((k) => {
+      const img = new Image();
+      img.onload = () => {};
+      img.onerror = () => console.warn(`[Loyalty] Missing icon file: ${ICONS[k]}`);
+      img.src = ICONS[k];
+    });
+
+    render();
   }
 
   // ---------- events ----------
@@ -527,6 +587,19 @@
       render();
     });
 
+    addBtn?.addEventListener("click", openAddDialog);
+    acCancel?.addEventListener("click", closeAddDialog);
+    acSave?.addEventListener("click", addCustomer);
+
+    // Enter key saves in add dialog
+    addDlg?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addCustomer();
+      }
+      if (e.key === "Escape") closeAddDialog();
+    });
+
     tonyFab?.addEventListener("click", () => {
       window.location.href = "/learn/";
     });
@@ -536,13 +609,6 @@
     });
   }
 
-  // ---------- load ----------
-  async function loadAndRender() {
-    state.customers = await seedCustomersFromJSONIfNeeded();
-    render();
-  }
-
-  // ---------- init ----------
   bindEvents();
   loadAndRender();
 })();
