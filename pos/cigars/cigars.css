@@ -807,12 +807,15 @@ body.cigar-detail-open{ overflow:hidden; }
   .brands-grid{ gap:18px 14px; }
   .brands-grid img{ width:72px; height:72px; border-radius:16px; }
 }
+
 /* =========================================
    ✅ MINOR UI FIXES (requested)
    ========================================= */
 
-/* 1) Back arrow: off-white arrow ONLY (no pill bg) */
-#cigars-back{
+/* 1) Back arrow: off-white arrow ONLY (no pill bg)
+      Your HTML uses .pos-back (not #cigars-back), so target both. */
+#cigars-back,
+.cigars-topbar .pos-back{
   width:44px;
   height:44px;
   border:none !important;
@@ -822,12 +825,16 @@ body.cigar-detail-open{ overflow:hidden; }
   padding:0 !important;
   color:rgba(255,255,255,.90);
 }
-#cigars-back .pos-back-icon{
+
+#cigars-back .pos-back-icon,
+.cigars-topbar .pos-back .pos-back-icon{
   color:rgba(255,255,255,.90);
 }
 
-/* 2) Invoice icon button (top-right) */
-.cigars-invoice-btn{
+/* 2) Invoice icon button (top-right)
+      Your HTML uses .pos-invoice-btn + data-invoice-btn, so target both. */
+.cigars-invoice-btn,
+.pos-invoice-btn[data-invoice-btn]{
   width:46px;
   height:46px;
   display:grid;
@@ -837,12 +844,19 @@ body.cigar-detail-open{ overflow:hidden; }
   color:rgba(255,255,255,.92);
   text-decoration:none;
   -webkit-tap-highlight-color:transparent;
+  border:none; /* in case browser default */
+  cursor:pointer;
+  padding:0;
 }
-.cigars-invoice-btn svg{
+
+.cigars-invoice-btn svg,
+.pos-invoice-btn[data-invoice-btn] svg{
   width:28px;
   height:28px;
 }
-.cigars-invoice-btn:active{
+
+.cigars-invoice-btn:active,
+.pos-invoice-btn[data-invoice-btn]:active{
   transform:scale(.96);
   opacity:.90;
 }
