@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <!-- Disable iOS auto-detected links so emails/phones are not underlined -->
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Loyalty • CigarOS2</title>
 
@@ -12,18 +11,12 @@
 
   <style>
     :root {
-      --bg: #f2f2f7;        /* iOS background */
-      --surface: #ffffff;   /* white cards / list */
+      --bg: #f2f2f7;
+      --surface: #ffffff;
       --ink: #111111;
       --muted: #8e8e93;
       --seg-bg: #e4e4ea;
       --seg-border: #c7c7cc;
-      --all-active: #e5fbe7;
-      --all-active-text: #034d1b;
-      --reg-active: #fff2e5;
-      --reg-active-text: #8a3a00;
-      --lock-active: #e5f0ff;
-      --lock-active-text: #003e9f;
     }
 
     * { box-sizing: border-box; }
@@ -31,7 +24,7 @@
     body {
       margin: 0;
       background: var(--bg);
-      font-family: var(--font-text); /* use global SF Pro Text */
+      font-family: var(--font-text);
       color: var(--ink);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
@@ -48,23 +41,22 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 4px;
     }
 
     .back-link {
       font-size: 15px;
       color: #007aff;
       text-decoration: none;
-      padding: 4px 0;
     }
 
     h1.page-title {
+      font-family: var(--font-display);
       font-size: 56px;
       font-weight: 800;
-      margin: 4px 0 0;
+      margin: 6px 0 4px;
     }
 
-    /* Mode toggle – iOS segmented control style */
+    /* Segmented control */
     .mode-toggle {
       display: inline-flex;
       padding: 2px;
@@ -77,40 +69,23 @@
     .mode-btn {
       border: none;
       background: transparent;
-      padding: 5px 12px;
+      padding: 6px 14px;
       font-size: 14px;
       border-radius: 999px;
       cursor: pointer;
       color: var(--muted);
       font-weight: 500;
-      min-width: 80px;
+      min-width: 84px;
     }
 
     .mode-btn.active {
-      background: var(--surface);
-      color: var(--ink);
-      box-shadow: 0 1px 1px rgba(0,0,0,0.12);
+      background: #ffffff;
+      color: #111;
+      box-shadow: 0 1px 1px rgba(0,0,0,.12);
     }
 
-    .mode-btn[data-mode="all"].active {
-      background: #e5fbe7;
-      color: #034d1b;
-    }
-
-    .mode-btn[data-mode="regular"].active {
-      background: #fff2e5;
-      color: #8a3a00;
-    }
-
-    .mode-btn[data-mode="lockers"].active {
-      background: #e5f0ff;
-      color: #003e9f;
-    }
-
-    /* Search bar */
-    .search-wrap {
-      margin-top: 12px;
-    }
+    /* Search */
+    .search-wrap { margin-top: 12px; }
 
     .search-input {
       width: 100%;
@@ -120,14 +95,9 @@
       font-size: 15px;
       outline: none;
       background: #ffffff;
-      box-shadow: 0 0 0 0.5px rgba(0,0,0,0.12);
+      box-shadow: 0 0 0 .5px rgba(0,0,0,.12);
     }
 
-    .search-input:focus {
-      box-shadow: 0 0 0 1px #0a84ff;
-    }
-
-    /* Summary */
     .summary {
       margin-top: 6px;
       font-size: 11px;
@@ -135,88 +105,73 @@
       padding-left: 4px;
     }
 
-    /* List container */
+    /* List */
     .list {
       margin-top: 10px;
       background: var(--surface);
       border-radius: 14px;
-      padding: 0; /* so row highlight spans full width of card */
-      box-shadow: 0 1px 0 rgba(0,0,0,0.12);
-      overflow: hidden; /* keep rounded corners clean with full-width rows */
+      overflow: hidden;
+      box-shadow: 0 1px 0 rgba(0,0,0,.12);
     }
 
     .row {
-      padding: 8px 16px; /* moved padding from .list to each row */
-      margin: 0;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: .5px solid #d1d1d6;
+      cursor: pointer;
+    }
+
+    .row:last-child { border-bottom: none; }
+
+    .row.locker { background: #e5f0ff; }
+    .row.regular { background: #fff3e6; }
+
+    .row-left {
+      min-width: 0;
       display: flex;
       flex-direction: column;
-      border-bottom: 0.5px solid #d1d1d6;
-      cursor: pointer;
-      background: #ffffff;
+      gap: 2px;
     }
 
-    .row:last-child {
-      border-bottom: none;
-    }
-
-    .row.locker {
-      background: #e5f0ff; /* blue tint across full row */
-    }
-
-    .row.regular {
-      background: #fff3e6; /* orange tint across full row */
-    }
-
-    .row-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    .name.customer-name {
-      font-weight: 600;
+    .row-name {
+      font-family: var(--font-display);
+      font-weight: 800;
       font-size: 16px;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .nickname {
+    .row-sub {
       font-size: 12px;
       color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .points-pill {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: #f2f2f7;
-      color: var(--muted);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .meta-line {
-      margin-top: 4px;
-      font-size: 11px;
-      color: var(--muted);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
+    .row-right {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .meta-pill {
-      padding: 1px 6px;
-      border-radius: 999px;
-      background: #f2f2f7;
-    }
-
-    .contact-line {
-      margin-top: 2px;
-      font-size: 11px;
-      color: var(--muted);
+    .row-right img {
+      width: 18px !important;
+      height: 18px !important;
+      max-width: 18px !important;
+      max-height: 18px !important;
+      object-fit: contain;
+      display: block;
     }
 
     .empty-state {
-      padding: 16px 0;
+      padding: 16px;
       text-align: center;
       font-size: 14px;
       color: var(--muted);
@@ -229,176 +184,7 @@
       color: var(--muted);
     }
 
-    /* Profile dialog */
-    dialog#profileDialog {
-      border: none;
-      padding: 0;
-      border-radius: 16px;
-      max-width: 520px;
-      width: calc(100% - 32px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
-    }
-
-    dialog::backdrop {
-      background: rgba(0,0,0,0.35);
-    }
-
-    .profile-card {
-      padding: 16px 18px 18px;
-      background: #f2f2f7;
-      border-radius: 16px;
-      position: relative;
-    }
-
-    .profile-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .profile-name {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .profile-sub {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .profile-points {
-      font-size: 12px;
-      padding: 3px 10px;
-      border-radius: 999px;
-      background: #0a84ff1a;
-      color: #0a84ff;
-      white-space: nowrap;
-    }
-
-    .profile-close {
-      position: absolute;
-      top: 6px;
-      right: 10px;
-      border: none;
-      background: transparent;
-      font-size: 20px;
-      cursor: pointer;
-      color: var(--muted);
-    }
-
-    .profile-sections {
-      margin-top: 6px;
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-
-    .profile-section-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin: 4px 0 6px;
-    }
-
-    .profile-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 13px;
-      padding: 4px 0;
-      border-bottom: 0.5px solid #e5e5ea;
-    }
-
-    .profile-row:last-child {
-      border-bottom: none;
-    }
-
-    .profile-label {
-      color: var(--muted);
-    }
-
-    .profile-value {
-      text-align: right;
-      max-width: 60%;
-      word-wrap: break-word;
-    }
-
-    .profile-multi-line {
-      font-size: 13px;
-      padding: 2px 0 4px;
-    }
-
-    .profile-multi-label {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 2px;
-    }
-
-    .chip-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 2px;
-    }
-
-    .chip {
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: #f2f2f7;
-    }
-
-    .visit-list {
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
-    .visit-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 2px 0;
-    }
-
-    .visit-date {
-      color: var(--muted);
-    }
-
-    .visit-amount {
-      font-weight: 500;
-    }
-
-    .visit-actions {
-      margin-top: 4px;
-      text-align: right;
-    }
-
-    .profile-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 10px;
-      gap: 8px;
-    }
-
-    .btn-ghost {
-      border-radius: 999px;
-      padding: 6px 14px;
-      border: 1px solid #c7c7cc;
-      background: #ffffff;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .profile-card.editing .profile-editable {
-      outline: 1px solid #0a84ff;
-      background: #ffffff;
-    }
-
-    /* Tony floating icon bottom-left */
+    /* Tony FAB */
     .tony-fab {
       position: fixed;
       left: 16px;
@@ -411,6 +197,7 @@
       padding: 0;
       z-index: 40;
     }
+
     .tony-fab img {
       width: 100%;
       height: 100%;
@@ -419,6 +206,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="topbar">
@@ -428,117 +216,22 @@
 
     <h1 class="page-title">Loyalty</h1>
 
-    <div class="mode-toggle" aria-label="Contact type toggle">
+    <div class="mode-toggle">
       <button class="mode-btn active" data-mode="all">All</button>
       <button class="mode-btn" data-mode="regular">Regulars</button>
       <button class="mode-btn" data-mode="lockers">Lockers</button>
     </div>
 
     <div class="search-wrap">
-      <input
-        id="search"
-        class="search-input"
-        type="search"
-        placeholder="Search"
-        autocomplete="off"
-      />
+      <input id="search" class="search-input" type="search" placeholder="Search" autocomplete="off" />
     </div>
 
     <div id="summary" class="summary"></div>
-
     <div id="list" class="list"></div>
 
-    <footer>
-      CigarOS2 • Loyalty
-    </footer>
+    <footer>CigarOS2 • Loyalty</footer>
   </div>
 
-  <!-- Profile dialog (unchanged) -->
-  <dialog id="profileDialog">
-    <div class="profile-card" id="profileCard">
-      <button class="profile-close" type="button" aria-label="Close">&times;</button>
-
-      <div class="profile-header">
-        <div>
-          <div class="profile-name" id="pName">Customer Name</div>
-          <div class="profile-sub" id="pSub">Locker • Contact</div>
-        </div>
-        <div class="profile-points" id="pPoints">0 pts</div>
-      </div>
-
-      <!-- Purchase history -->
-      <div class="profile-sections">
-        <div class="profile-section-title">Purchase History</div>
-        <div class="profile-row">
-          <div class="profile-label">Last purchase</div>
-          <div class="profile-value profile-editable" data-field="Last Purchase" id="pLastPurchase">—</div>
-        </div>
-        <div class="visit-list" id="pVisitList"></div>
-        <div class="visit-actions">
-          <button class="btn-ghost" type="button" id="viewAllVisitsBtn">View all</button>
-        </div>
-      </div>
-
-      <!-- Contact -->
-      <div class="profile-sections">
-        <div class="profile-section-title">Contact</div>
-        <div class="profile-row">
-          <div class="profile-label">Phone</div>
-          <div class="profile-value profile-editable" data-field="Phone" id="pPhone">—</div>
-        </div>
-        <div class="profile-row">
-          <div class="profile-label">Email</div>
-          <div class="profile-value profile-editable" data-field="Email" id="pEmail">—</div>
-        </div>
-        <div class="profile-row">
-          <div class="profile-label">Birthday</div>
-          <div class="profile-value profile-editable" data-field="Birthday" id="pBirthday">—</div>
-        </div>
-      </div>
-
-      <!-- Favorites -->
-      <div class="profile-sections">
-        <div class="profile-section-title">Favorites</div>
-        <div class="profile-multi-line">
-          <div class="profile-multi-label">Brands</div>
-          <div class="chip-list" id="pFavBrands"></div>
-        </div>
-        <div class="profile-multi-line">
-          <div class="profile-multi-label">Cigars</div>
-          <div class="chip-list" id="pFavCigars"></div>
-        </div>
-        <div class="profile-row">
-          <div class="profile-label">Ring preference</div>
-          <div class="profile-value profile-editable" data-field="Ring Pref" id="pRingPref">—</div>
-        </div>
-      </div>
-
-      <!-- Wishlist -->
-      <div class="profile-sections">
-        <div class="profile-section-title">Wishlist</div>
-        <div class="profile-multi-line">
-          <div class="profile-multi-label">Items</div>
-          <div class="chip-list profile-editable" data-field="Wishlist" id="pWishlist"></div>
-        </div>
-      </div>
-
-      <!-- Loyalty stats pills -->
-      <div class="profile-sections">
-        <div class="profile-section-title">Loyalty Stats</div>
-        <div class="chip-list">
-          <span class="chip profile-editable" data-field="YTD spend" id="pStatYtd">—</span>
-          <span class="chip profile-editable" data-field="90-day visits" id="pStatVisits90">—</span>
-          <span class="chip profile-editable" data-field="Gift card balance" id="pStatGift">—</span>
-        </div>
-      </div>
-
-      <div class="profile-actions">
-        <button class="btn-ghost" id="editProfileBtn" type="button">Edit</button>
-      </div>
-    </div>
-  </dialog>
-
-  <!-- Tony floating icon (bottom-left, same on all pages) -->
   <button class="tony-fab" id="tonyFab">
     <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
   </button>
