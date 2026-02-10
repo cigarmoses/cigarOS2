@@ -1,23 +1,23 @@
 /* /loyalty/loyalty.js
    Loyalty page controller (SF Pro / iOS style)
 
-   - Reads customers from localStorage: cigaros_customers_v1
-   - Seeds from /pos/pos-contacts.json if localStorage is empty
-   - Search + segmented modes (All / Regulars / Lockers)
-   - Customer profile dialog with purchase history from sales
-   - Compact list rows with right-aligned status icons
-
-   ICON RULE (as requested):
-   - Columns are labeled exactly with the icon names:
-     Military, Paramedic, Firefighter, Police, Locker, Regular
-   - If that column contains ANY value (x, X, or the word itself, etc.) -> show that icon
-
-   Icon path:
-     /img/icons/loyalty/{name}.svg
+   FIXES:
+   ✅ Reads customers from the correct localStorage key (auto-detect)
+   ✅ render() no longer crashes (sub is defined)
 */
 
 (() => {
-  const CUSTOMERS_KEY = "cigaros_customers_v1";
+  // ---- customer storage (AUTO-DETECT) ----
+  const CUSTOMER_KEYS = [
+    "cigaros_pos_customers_v1",
+    "cigaros_pos_customer_db_v1",
+    "cigaros_pos_saved_customers_v1",
+    "cigaros_customers_v1",
+    "cigaros_customers",
+  ];
+
+  let ACTIVE_CUSTOMERS_KEY = null; // detected at runtime
+
   const SALES_KEY = "cigaros_sales_v1";
   const CONTACTS_JSON_URL = "/pos/pos-contacts.json";
 
@@ -132,34 +132,30 @@
     return (v == null ? "" : String(v)).trim();
   }
 
-  // ---------- NEW: column-based icon detection ----------
-  // checks BOTH exact-case key and lowercase key (in case JSON normalized keys)
-function hasColumnValue(obj, columnTitle){
-  if (!obj) return false;
+  // ---------- column-based icon detection ----------
+  function hasColumnValue(obj, columnTitle) {
+    if (!obj) return false;
 
-  const variants = [
-    obj[columnTitle],
-    obj[columnTitle.toLowerCase()],
-    obj[columnTitle.toUpperCase()],
-    obj[columnTitle.replace(/\s+/g, "")],
-    obj[columnTitle.toLowerCase().replace(/\s+/g, "")]
-  ];
+    const variants = [
+      obj[columnTitle],
+      obj[columnTitle.toLowerCase()],
+      obj[columnTitle.toUpperCase()],
+      obj[columnTitle.replace(/\s+/g, "")],
+      obj[columnTitle.toLowerCase().replace(/\s+/g, "")]
+    ];
 
-  return variants.some(v => {
-    if (v === true) return true;
-    if (v === false || v == null) return false;
-    const s = String(v).trim().toLowerCase();
-    return s !== "" && s !== "0" && s !== "no";
-  });
-}
+    return variants.some(v => {
+      if (v === true) return true;
+      if (v === false || v == null) return false;
+      const s = String(v).trim().toLowerCase();
+      return s !== "" && s !== "0" && s !== "no";
+    });
+  }
 
   function customerType(c) {
-    // Locker column or lockerNumber wins
     if (hasColumnValue(c, "Locker") || c.locker || c.lockerNumber) return "locker";
-    // Otherwise Regular column indicates regular; fallback regular
     if (hasColumnValue(c, "Regular")) return "regular";
 
-    // keep backward compat with prior "type" field if present
     const t = norm(c.type || c.tier || c.segment || "");
     if (t.includes("locker")) return "locker";
     if (t.includes("regular")) return "regular";
@@ -198,13 +194,34 @@ function hasColumnValue(obj, columnTitle){
   }
 
   // ---------- data access ----------
+  function detectCustomersKey() {
+    for (const k of CUSTOMER_KEYS) {
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+      const parsed = safeJSON(raw, null);
+      const arr =
+        Array.isArray(parsed) ? parsed :
+        (parsed && Array.isArray(parsed.customers)) ? parsed.customers :
+        null;
+
+      if (arr && arr.length) {
+        ACTIVE_CUSTOMERS_KEY = k;
+        return { key: k, list: arr };
+      }
+    }
+    // fallback (still allow seeding)
+    ACTIVE_CUSTOMERS_KEY = CUSTOMER_KEYS[0];
+    return { key: ACTIVE_CUSTOMERS_KEY, list: [] };
+  }
+
   function readCustomers() {
-    const list = safeJSON(localStorage.getItem(CUSTOMERS_KEY), []);
+    const { list } = detectCustomersKey();
     return Array.isArray(list) ? list : [];
   }
 
   function writeCustomers(list) {
-    writeJSON(CUSTOMERS_KEY, list);
+    if (!ACTIVE_CUSTOMERS_KEY) detectCustomersKey();
+    writeJSON(ACTIVE_CUSTOMERS_KEY, list);
   }
 
   function readSales() {
@@ -255,8 +272,6 @@ function hasColumnValue(obj, columnTitle){
       const v90 = toNum(r["90-day visits"]);
       const lastPurchase = toStr(r["Last Purchase"]);
 
-      // IMPORTANT: keep the icon columns intact (exact titles),
-      // because icon logic reads from those columns directly.
       const Military = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
       const Paramedic = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
       const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
@@ -276,7 +291,6 @@ function hasColumnValue(obj, columnTitle){
 
         points,
 
-        // keep legacy type too
         type,
         lockerNumber: lockerNumber || "",
 
@@ -291,7 +305,6 @@ function hasColumnValue(obj, columnTitle){
         ytdSpendImported: ytd,
         visits90Imported: v90,
 
-        // ICON COLUMNS (exact titles)
         Military,
         Paramedic,
         Firefighter,
@@ -328,11 +341,6 @@ function hasColumnValue(obj, columnTitle){
     return (state.sales || [])
       .filter((s) => String(s.customerId || "") === id)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }
-
-  function lastSale(customerId) {
-    const s = salesForCustomer(customerId);
-    return s[0] || null;
   }
 
   function ytdSpend(customerId) {
@@ -399,7 +407,8 @@ function hasColumnValue(obj, columnTitle){
     if (summaryEl) {
       const total = state.customers.length;
       const showing = list.length;
-      summaryEl.textContent = `${showing} of ${total} customers`;
+      const keyLabel = ACTIVE_CUSTOMERS_KEY ? ` • ${ACTIVE_CUSTOMERS_KEY}` : "";
+      summaryEl.textContent = `${showing} of ${total} customers${keyLabel}`;
     }
 
     if (!listEl) return;
@@ -413,15 +422,26 @@ function hasColumnValue(obj, columnTitle){
       const type = customerType(c);
       const rowClass = type === "locker" ? "row locker" : "row regular";
 
-const first = (c.firstName || "").trim();
-const last  = (c.lastName || "").trim();
+      const first = (c.firstName || "").trim();
+      const last  = (c.lastName || "").trim();
 
-const nameHTML = `
-  <span class="name-last">${escapeHTML(last)}</span>
-  <span class="name-first">${escapeHTML(first)}</span>
-`;
+      const nameHTML = `
+        <span class="name-last">${escapeHTML(last)}</span>
+        <span class="name-first">${escapeHTML(first)}</span>
+      `;
 
-      // Right-side icons: role icons (0..4) + tier icon last (locker/regular)
+      // ✅ FIX: define sub (was crashing before)
+      const subParts = [];
+      const nick = nickname(c);
+      if (nick) subParts.push(nick);
+
+      if (c.lockerNumber) subParts.push(`Locker ${toStr(c.lockerNumber)}`);
+
+      if (c.phone) subParts.push(toStr(c.phone));
+      else if (c.email) subParts.push(toStr(c.email));
+
+      const sub = subParts.filter(Boolean).join(" • ");
+
       const roleIcons = getRoleIcons(c);
       const tierIcon = getTierIcon(c);
       const icons = [...roleIcons, tierIcon];
@@ -705,7 +725,8 @@ const nameHTML = `
     });
 
     window.addEventListener("storage", (e) => {
-      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) loadAndRender(true);
+      if (e.key && CUSTOMER_KEYS.includes(e.key)) loadAndRender(true);
+      if (e.key === SALES_KEY) loadAndRender(true);
     });
 
     window.addEventListener("cigaros:customers-changed", () => loadAndRender(true));
