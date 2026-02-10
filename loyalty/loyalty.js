@@ -1,23 +1,23 @@
 /* /loyalty/loyalty.js
    Loyalty page controller (SF Pro / iOS style)
 
-   FIXES:
-   ✅ Reads customers from the correct localStorage key (auto-detect)
-   ✅ render() no longer crashes (sub is defined)
+   FIXES (as requested):
+   ✅ All: sorted by LAST name A–Z (no lockers-first)
+   ✅ Regulars: ONLY explicitly-marked regulars (does NOT default everyone to regular)
+   ✅ Lockers: sorted by locker number 1–25, and locker number appears BEFORE last name
+   ✅ List rows have NO subtitles (details show on tap)
+
+   Data:
+   - Reads customers from localStorage: cigaros_customers_v1
+   - Seeds from /pos/pos-contacts.json if localStorage is empty
+
+   ICON RULE:
+   - Columns labeled: Military, Paramedic, Firefighter, Police, Locker, Regular
+   - If column has ANY value -> show that icon
 */
 
 (() => {
-  // ---- customer storage (AUTO-DETECT) ----
-  const CUSTOMER_KEYS = [
-    "cigaros_pos_customers_v1",
-    "cigaros_pos_customer_db_v1",
-    "cigaros_pos_saved_customers_v1",
-    "cigaros_customers_v1",
-    "cigaros_customers",
-  ];
-
-  let ACTIVE_CUSTOMERS_KEY = null; // detected at runtime
-
+  const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
   const CONTACTS_JSON_URL = "/pos/pos-contacts.json";
 
@@ -38,34 +38,6 @@
   const summaryEl = $("#summary");
   const searchEl = $("#search");
   const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
-
-  const dialog = $("#profileDialog");
-  const profileCard = $("#profileCard");
-
-  const pName = $("#pName");
-  const pSub = $("#pSub");
-  const pPoints = $("#pPoints");
-
-  const pLastPurchase = $("#pLastPurchase");
-  const pVisitList = $("#pVisitList");
-  const viewAllVisitsBtn = $("#viewAllVisitsBtn");
-
-  const pPhone = $("#pPhone");
-  const pEmail = $("#pEmail");
-  const pBirthday = $("#pBirthday");
-
-  const pFavBrands = $("#pFavBrands");
-  const pFavCigars = $("#pFavCigars");
-  const pRingPref = $("#pRingPref");
-
-  const pWishlist = $("#pWishlist");
-
-  const pStatYtd = $("#pStatYtd");
-  const pStatVisits90 = $("#pStatVisits90");
-  const pStatGift = $("#pStatGift");
-
-  const editBtn = $("#editProfileBtn");
-  const closeBtn = profileCard?.querySelector(".profile-close");
   const tonyFab = $("#tonyFab");
 
   // ---------- state ----------
@@ -74,40 +46,12 @@
     query: "",
     customers: [],
     sales: [],
-    activeCustomerId: null,
-    showAllVisits: false,
-    editing: false,
   };
 
   // ---------- utils ----------
   const safeJSON = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
   const writeJSON = (key, val) => localStorage.setItem(key, JSON.stringify(val));
   const norm = (s) => (s || "").toString().trim().toLowerCase();
-  const money = (n) => Number(n || 0).toFixed(2);
-
-  const fmtDate = (isoOrDate) => {
-    try {
-      const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
-      return d.toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric" });
-    } catch {
-      return "—";
-    }
-  };
-
-  const fmtDateTime = (isoOrDate) => {
-    try {
-      const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
-      return d.toLocaleString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      });
-    } catch {
-      return "—";
-    }
-  };
 
   function escapeHTML(s) {
     return (s ?? "")
@@ -132,6 +76,12 @@
     return (v == null ? "" : String(v)).trim();
   }
 
+  function lockerNum(c) {
+    const raw = toStr(c.lockerNumber ?? c.locker ?? c["Locker number"] ?? "");
+    const n = Number(String(raw).replace(/[^\d]/g, ""));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+
   // ---------- column-based icon detection ----------
   function hasColumnValue(obj, columnTitle) {
     if (!obj) return false;
@@ -152,32 +102,21 @@
     });
   }
 
+  // ✅ IMPORTANT CHANGE:
+  // - locker if Locker column OR lockerNumber exists
+  // - regular ONLY if Regular column has value
+  // - otherwise "other" (so Regulars tab doesn't capture everyone)
   function customerType(c) {
-    if (hasColumnValue(c, "Locker") || c.locker || c.lockerNumber) return "locker";
+    if (hasColumnValue(c, "Locker") || lockerNum(c) != null) return "locker";
     if (hasColumnValue(c, "Regular")) return "regular";
-
-    const t = norm(c.type || c.tier || c.segment || "");
-    if (t.includes("locker")) return "locker";
-    if (t.includes("regular")) return "regular";
-
-    return "regular";
-  }
-
-  function displayName(c) {
-    const first = (c.firstName || "").trim();
-    const last = (c.lastName || "").trim();
-    const full = `${first} ${last}`.trim();
-    return full || c.name || c.email || c.phone || "Customer";
-  }
-
-  function nickname(c) {
-    return (c.nickname || c.nick || "").trim();
+    return "other";
   }
 
   function buildIconHTML(iconNames) {
-    return iconNames.map((n) => (
-      `<img class="loy-ico" src="${ICONS[n]}" alt="${escapeHTML(n)}" loading="lazy" />`
-    )).join("");
+    return iconNames
+      .filter(Boolean)
+      .map((n) => `<img class="loy-ico" src="${ICONS[n]}" alt="${escapeHTML(n)}" loading="lazy" />`)
+      .join("");
   }
 
   function getRoleIcons(c) {
@@ -189,39 +128,22 @@
     return icons;
   }
 
+  // ✅ Tier icon only for locker/regular
   function getTierIcon(c) {
-    return customerType(c) === "locker" ? "locker" : "regular";
+    const t = customerType(c);
+    if (t === "locker") return "locker";
+    if (t === "regular") return "regular";
+    return null;
   }
 
   // ---------- data access ----------
-  function detectCustomersKey() {
-    for (const k of CUSTOMER_KEYS) {
-      const raw = localStorage.getItem(k);
-      if (!raw) continue;
-      const parsed = safeJSON(raw, null);
-      const arr =
-        Array.isArray(parsed) ? parsed :
-        (parsed && Array.isArray(parsed.customers)) ? parsed.customers :
-        null;
-
-      if (arr && arr.length) {
-        ACTIVE_CUSTOMERS_KEY = k;
-        return { key: k, list: arr };
-      }
-    }
-    // fallback (still allow seeding)
-    ACTIVE_CUSTOMERS_KEY = CUSTOMER_KEYS[0];
-    return { key: ACTIVE_CUSTOMERS_KEY, list: [] };
-  }
-
   function readCustomers() {
-    const { list } = detectCustomersKey();
+    const list = safeJSON(localStorage.getItem(CUSTOMERS_KEY), []);
     return Array.isArray(list) ? list : [];
   }
 
   function writeCustomers(list) {
-    if (!ACTIVE_CUSTOMERS_KEY) detectCustomersKey();
-    writeJSON(ACTIVE_CUSTOMERS_KEY, list);
+    writeJSON(CUSTOMERS_KEY, list);
   }
 
   function readSales() {
@@ -237,40 +159,12 @@
 
       const firstName = toStr(r["First Name"] ?? r.firstName ?? r.FirstName);
       const lastName  = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
-      const nick      = toStr(r["Nickname AKA"] ?? r.nickname ?? r.nick);
 
       const phone     = toStr(r["Phone"] ?? r.phone);
       const email     = toStr(r["Email"] ?? r.email);
-      const birthday  = toStr(r["Birthday"] ?? r.birthday);
 
       const points    = toNum(r["Rewards"] ?? r.points);
-
       const lockerNumber = toStr(r["Locker number"] ?? r.lockerNumber ?? r.locker);
-      const type = toStr(r["type"] ?? r.type);
-
-      const ringPref = toStr(r["Ring Pref"] ?? r.ringPref ?? r.ringPreference);
-
-      const favBrands = [
-        toStr(r["Fav brand 1"]),
-        toStr(r["Fav brand 2"]),
-        toStr(r["Fav brand 3"]),
-      ].filter(Boolean);
-
-      const favCigars = [
-        toStr(r["Fav cigar"]),
-        toStr(r["Fav cigar 2"]),
-        toStr(r["Fav cigar 3"]),
-      ].filter(Boolean);
-
-      const giftBalance = (() => {
-        const gb = r["Gift card balance"] ?? r.giftBalance;
-        const n = toNum(gb);
-        return Number.isFinite(n) ? n : null;
-      })();
-
-      const ytd = toNum(r["YTD spend"]);
-      const v90 = toNum(r["90-day visits"]);
-      const lastPurchase = toStr(r["Last Purchase"]);
 
       const Military = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
       const Paramedic = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
@@ -283,28 +177,12 @@
         id,
         firstName,
         lastName,
-        nickname: nick,
-
         phone,
         email,
-        birthday,
-
         points,
-
-        type,
         lockerNumber: lockerNumber || "",
 
-        ringPref: ringPref || "",
-        favBrands,
-        favCigars,
-        wishlist: Array.isArray(r.wishlist) ? r.wishlist : [],
-
-        giftBalance,
-
-        lastPurchaseText: lastPurchase || "",
-        ytdSpendImported: ytd,
-        visits90Imported: v90,
-
+        // ICON COLUMNS (exact titles)
         Military,
         Paramedic,
         Firefighter,
@@ -335,30 +213,6 @@
     }
   }
 
-  // ---------- sales helpers ----------
-  function salesForCustomer(customerId) {
-    const id = String(customerId || "");
-    return (state.sales || [])
-      .filter((s) => String(s.customerId || "") === id)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }
-
-  function ytdSpend(customerId) {
-    const year = new Date().getFullYear();
-    const s = salesForCustomer(customerId);
-    return s.reduce((sum, sale) => {
-      const d = new Date(sale.createdAt);
-      if (d.getFullYear() !== year) return sum;
-      return sum + Number(sale.totals?.total || 0);
-    }, 0);
-  }
-
-  function visits90(customerId) {
-    const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
-    const s = salesForCustomer(customerId);
-    return s.filter((sale) => +new Date(sale.createdAt) >= cutoff).length;
-  }
-
   // ---------- filtering ----------
   function filteredCustomers() {
     const q = norm(state.query);
@@ -368,15 +222,13 @@
       list = list.filter((c) => customerType(c) === "regular");
     } else if (state.mode === "lockers") {
       list = list.filter((c) => customerType(c) === "locker");
-    }
+    } // all = show everything (locker + regular + other)
 
     if (q) {
       list = list.filter((c) => {
         const hay = [
-          displayName(c),
-          nickname(c),
-          c.firstName,
           c.lastName,
+          c.firstName,
           c.phone,
           c.email,
           c.lockerNumber,
@@ -385,19 +237,118 @@
       });
     }
 
+    // ✅ SORT RULES (as requested)
     list.sort((a, b) => {
-      if (state.mode === "all") {
-        const ta = customerType(a);
-        const tb = customerType(b);
-        if (ta !== tb) return ta === "locker" ? -1 : 1;
+      if (state.mode === "lockers") {
+        // locker number 1–25, then last/first
+        const an = lockerNum(a) ?? 999999;
+        const bn = lockerNum(b) ?? 999999;
+        if (an !== bn) return an - bn;
+
+        const al = norm(a.lastName);
+        const bl = norm(b.lastName);
+        if (al !== bl) return al.localeCompare(bl);
+        return norm(a.firstName).localeCompare(norm(b.firstName));
       }
-      const pa = Number(a.points || 0);
-      const pb = Number(b.points || 0);
-      if (pb !== pa) return pb - pa;
-      return displayName(a).localeCompare(displayName(b));
+
+      // All + Regulars: last name A–Z, then first
+      const al = norm(a.lastName);
+      const bl = norm(b.lastName);
+      if (al !== bl) return al.localeCompare(bl);
+      return norm(a.firstName).localeCompare(norm(b.firstName));
     });
 
     return list;
+  }
+
+  // ---------- details dialog ----------
+  function ensureDialog() {
+    let dlg = $("#loyDetailsDialog");
+    if (dlg) return dlg;
+
+    const el = document.createElement("dialog");
+    el.id = "loyDetailsDialog";
+    el.style.border = "none";
+    el.style.borderRadius = "16px";
+    el.style.padding = "0";
+    el.style.maxWidth = "520px";
+    el.style.width = "92vw";
+    el.style.boxShadow = "0 20px 60px rgba(0,0,0,.25)";
+
+    el.innerHTML = `
+      <div style="padding:14px 14px 12px; font-family: var(--font-text);">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+          <div style="min-width:0;">
+            <div id="dlgName" style="font-family: var(--font-display); font-weight:800; font-size:20px; line-height:1.2;"></div>
+            <div id="dlgMeta" style="margin-top:4px; font-size:13px; color:#8e8e93; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+          </div>
+          <button id="dlgClose" type="button"
+            style="border:none; background:transparent; font-size:16px; padding:6px 10px; cursor:pointer;">✕</button>
+        </div>
+
+        <div id="dlgBody" style="margin-top:10px; font-size:14px; color:#111; line-height:1.35;"></div>
+
+        <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(0,0,0,.08); display:flex; justify-content:flex-end; gap:10px;">
+          <button id="dlgOk" type="button"
+            style="border:none; background:#007aff; color:#fff; font-weight:600; padding:10px 14px; border-radius:12px; cursor:pointer;">
+            Done
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(el);
+
+    const close = () => { if (el.open) el.close(); };
+    el.querySelector("#dlgClose")?.addEventListener("click", close);
+    el.querySelector("#dlgOk")?.addEventListener("click", close);
+
+    el.addEventListener("click", (e) => {
+      const rect = el.getBoundingClientRect();
+      const inside =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
+      if (!inside) close();
+    });
+
+    return el;
+  }
+
+  function openDetails(customerId) {
+    const c = state.customers.find(x => String(x.id) === String(customerId));
+    if (!c) return;
+
+    const dlg = ensureDialog();
+    const dlgName = dlg.querySelector("#dlgName");
+    const dlgMeta = dlg.querySelector("#dlgMeta");
+    const dlgBody = dlg.querySelector("#dlgBody");
+
+    const first = (c.firstName || "").trim();
+    const last  = (c.lastName || "").trim();
+    const ln = lockerNum(c);
+
+    const nameLine = ln != null
+      ? `${ln} ${last || "—"}, ${first || "—"}`
+      : `${last || "—"}, ${first || "—"}`;
+
+    if (dlgName) dlgName.textContent = nameLine;
+
+    const t = customerType(c);
+    const typeLabel = t === "locker" ? "Locker" : (t === "regular" ? "Regular" : "Customer");
+    const metaBits = [typeLabel];
+    if (ln != null) metaBits.push(`Locker ${ln}`);
+    dlgMeta.textContent = metaBits.join(" • ");
+
+    const bodyBits = [];
+    if (c.phone) bodyBits.push(`<div><b>Phone:</b> ${escapeHTML(c.phone)}</div>`);
+    if (c.email) bodyBits.push(`<div style="margin-top:6px;"><b>Email:</b> ${escapeHTML(c.email)}</div>`);
+    bodyBits.push(`<div style="margin-top:6px;"><b>Points:</b> ${escapeHTML(String(Number(c.points || 0)))}</div>`);
+
+    dlgBody.innerHTML = bodyBits.join("") || `<div style="color:#8e8e93;">No details available.</div>`;
+
+    if (!dlg.open) dlg.showModal();
   }
 
   // ---------- render list ----------
@@ -407,8 +358,7 @@
     if (summaryEl) {
       const total = state.customers.length;
       const showing = list.length;
-      const keyLabel = ACTIVE_CUSTOMERS_KEY ? ` • ${ACTIVE_CUSTOMERS_KEY}` : "";
-      summaryEl.textContent = `${showing} of ${total} customers${keyLabel}`;
+      summaryEl.textContent = `${showing} of ${total} customers`;
     }
 
     if (!listEl) return;
@@ -419,38 +369,28 @@
     }
 
     listEl.innerHTML = list.map((c) => {
-      const type = customerType(c);
-      const rowClass = type === "locker" ? "row locker" : "row regular";
+      const t = customerType(c);
+      const rowClass = t === "locker" ? "row locker" : (t === "regular" ? "row regular" : "row regular");
 
       const first = (c.firstName || "").trim();
       const last  = (c.lastName || "").trim();
+      const ln = lockerNum(c);
 
-      const nameHTML = `
-        <span class="name-last">${escapeHTML(last)}</span>
-        <span class="name-first">${escapeHTML(first)}</span>
-      `;
-
-      // ✅ FIX: define sub (was crashing before)
-      const subParts = [];
-      const nick = nickname(c);
-      if (nick) subParts.push(nick);
-
-      if (c.lockerNumber) subParts.push(`Locker ${toStr(c.lockerNumber)}`);
-
-      if (c.phone) subParts.push(toStr(c.phone));
-      else if (c.email) subParts.push(toStr(c.email));
-
-      const sub = subParts.filter(Boolean).join(" • ");
+      // ✅ ROW TITLE RULES
+      // Lockers tab + locker customers: "14 Armistead, Robin"
+      // Everyone else: "Armistead, Robin"
+      const title = (t === "locker" && ln != null)
+        ? `<span class="name-last">${escapeHTML(String(ln))} ${escapeHTML(last || "—")}</span><span class="name-first">, ${escapeHTML(first || "—")}</span>`
+        : `<span class="name-last">${escapeHTML(last || "—")}</span><span class="name-first">, ${escapeHTML(first || "—")}</span>`;
 
       const roleIcons = getRoleIcons(c);
-      const tierIcon = getTierIcon(c);
-      const icons = [...roleIcons, tierIcon];
+      const tierIcon = getTierIcon(c); // null for "other"
+      const icons = [...roleIcons, tierIcon].filter(Boolean);
 
       return `
         <div class="${rowClass}" data-id="${escapeHTML(c.id)}">
           <div class="row-left">
-            <div class="row-name">${nameHTML}</div>
-            ${sub ? `<div class="row-sub">${escapeHTML(sub)}</div>` : ``}
+            <div class="row-name">${title}</div>
           </div>
           <div class="row-right" aria-hidden="true">
             ${buildIconHTML(icons)}
@@ -462,223 +402,9 @@
     listEl.querySelectorAll(".row").forEach((row) => {
       row.addEventListener("click", () => {
         const id = row.getAttribute("data-id");
-        openProfile(id);
+        openDetails(id);
       });
     });
-  }
-
-  // ---------- profile dialog ----------
-  function openProfile(customerId) {
-    state.activeCustomerId = customerId;
-    state.showAllVisits = false;
-    state.editing = false;
-    profileCard?.classList.remove("editing");
-
-    const c = state.customers.find((x) => String(x.id) === String(customerId));
-    if (!c) return;
-
-    if (pName) pName.textContent = displayName(c);
-
-    const type = customerType(c) === "locker" ? "Locker" : "Regular";
-    const contact = [c.phone, c.email].filter(Boolean).join(" • ") || "Contact";
-    if (pSub) pSub.textContent = `${type} • ${contact}`;
-
-    if (pPoints) pPoints.textContent = `${Number(c.points || 0)} pts`;
-
-    const sales = salesForCustomer(c.id);
-    const last = sales[0] || null;
-
-    if (pLastPurchase) {
-      if (last?.createdAt) pLastPurchase.textContent = fmtDateTime(last.createdAt);
-      else if (c.lastPurchaseText) pLastPurchase.textContent = c.lastPurchaseText;
-      else pLastPurchase.textContent = "—";
-    }
-
-    renderVisitsList(c.id);
-
-    if (pPhone) pPhone.textContent = c.phone || "—";
-    if (pEmail) pEmail.textContent = c.email || "—";
-    if (pBirthday) pBirthday.textContent = c.birthday || "—";
-
-    renderChips(pFavBrands, c.favBrands || c.favoriteBrands || []);
-    renderChips(pFavCigars, c.favCigars || c.favoriteCigars || []);
-    if (pRingPref) pRingPref.textContent = c.ringPref || c.ringPreference || "—";
-
-    renderChips(pWishlist, c.wishlist || []);
-
-    const hasSales = sales.length > 0;
-    const ytd = hasSales ? ytdSpend(c.id) : (c.ytdSpendImported || 0);
-    const v90 = hasSales ? visits90(c.id) : (c.visits90Imported || 0);
-
-    if (pStatYtd) pStatYtd.textContent = `YTD spend: $${money(ytd)}`;
-    if (pStatVisits90) pStatVisits90.textContent = `90-day visits: ${Number(v90 || 0)}`;
-
-    if (pStatGift) {
-      pStatGift.textContent =
-        c.giftBalance != null && c.giftBalance !== ""
-          ? `Gift card balance: $${money(c.giftBalance)}`
-          : "—";
-    }
-
-    if (dialog && !dialog.open) dialog.showModal();
-  }
-
-  function renderVisitsList(customerId) {
-    const sales = salesForCustomer(customerId);
-
-    const max = state.showAllVisits ? sales.length : Math.min(5, sales.length);
-    const slice = sales.slice(0, max);
-
-    if (!pVisitList) return;
-
-    if (!slice.length) {
-      pVisitList.innerHTML = `<div class="empty-state" style="padding:8px 0;">No purchases yet</div>`;
-      return;
-    }
-
-    pVisitList.innerHTML = slice.map((s) => {
-      const dt = fmtDate(s.createdAt);
-      const amt = `$${money(s.totals?.total || 0)}`;
-      return `
-        <div class="visit-item">
-          <div class="visit-date">${escapeHTML(dt)}</div>
-          <div class="visit-amount">${escapeHTML(amt)}</div>
-        </div>
-      `;
-    }).join("");
-
-    if (viewAllVisitsBtn) {
-      viewAllVisitsBtn.textContent = state.showAllVisits ? "View less" : "View all";
-      viewAllVisitsBtn.disabled = sales.length <= 5;
-    }
-  }
-
-  function renderChips(container, arr) {
-    if (!container) return;
-    const list = Array.isArray(arr) ? arr : [];
-
-    if (!list.length) {
-      container.innerHTML = `<span class="chip">—</span>`;
-      return;
-    }
-
-    container.innerHTML = list.map((x) => `<span class="chip">${escapeHTML(x)}</span>`).join("");
-  }
-
-  function closeProfile() {
-    if (!dialog) return;
-    if (dialog.open) dialog.close();
-    state.activeCustomerId = null;
-    state.editing = false;
-    profileCard?.classList.remove("editing");
-  }
-
-  // ---------- editing ----------
-  function setEditable(on) {
-    state.editing = !!on;
-
-    if (!profileCard) return;
-    profileCard.classList.toggle("editing", state.editing);
-
-    const editableIds = [
-      "pPhone",
-      "pEmail",
-      "pBirthday",
-      "pRingPref",
-      "pStatYtd",
-      "pStatVisits90",
-      "pStatGift",
-      "pLastPurchase",
-    ];
-
-    editableIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.contentEditable = state.editing ? "true" : "false";
-      el.spellcheck = false;
-    });
-
-    if (pWishlist) {
-      if (state.editing) {
-        pWishlist.contentEditable = "true";
-        pWishlist.spellcheck = false;
-        const c = getActiveCustomer();
-        const w = (c?.wishlist || []).join(", ");
-        pWishlist.innerHTML = escapeHTML(w || "");
-      } else {
-        pWishlist.contentEditable = "false";
-      }
-    }
-
-    if (pFavBrands) {
-      if (state.editing) {
-        pFavBrands.contentEditable = "true";
-        const c = getActiveCustomer();
-        const v = (c?.favBrands || c?.favoriteBrands || []).join(", ");
-        pFavBrands.innerHTML = escapeHTML(v || "");
-      } else {
-        pFavBrands.contentEditable = "false";
-      }
-    }
-
-    if (pFavCigars) {
-      if (state.editing) {
-        pFavCigars.contentEditable = "true";
-        const c = getActiveCustomer();
-        const v = (c?.favCigars || c?.favoriteCigars || []).join(", ");
-        pFavCigars.innerHTML = escapeHTML(v || "");
-      } else {
-        pFavCigars.contentEditable = "false";
-      }
-    }
-
-    if (editBtn) editBtn.textContent = state.editing ? "Save" : "Edit";
-  }
-
-  function getActiveCustomer() {
-    if (!state.activeCustomerId) return null;
-    return state.customers.find((x) => String(x.id) === String(state.activeCustomerId)) || null;
-  }
-
-  function saveProfileEdits() {
-    const c = getActiveCustomer();
-    if (!c) return;
-
-    const phone = (pPhone?.textContent || "").trim();
-    const email = (pEmail?.textContent || "").trim();
-    const birthday = (pBirthday?.textContent || "").trim();
-    const ringPref = (pRingPref?.textContent || "").trim();
-
-    c.phone = phone && phone !== "—" ? phone : "";
-    c.email = email && email !== "—" ? email : "";
-    c.birthday = birthday && birthday !== "—" ? birthday : "";
-    c.ringPref = ringPref && ringPref !== "—" ? ringPref : "";
-
-    const parseCSV = (txt) =>
-      (txt || "")
-        .split(",")
-        .map((x) => x.trim())
-        .filter(Boolean);
-
-    if (pWishlist) {
-      const w = (pWishlist.textContent || "").trim();
-      c.wishlist = parseCSV(w);
-    }
-    if (pFavBrands) {
-      const v = (pFavBrands.textContent || "").trim();
-      c.favBrands = parseCSV(v);
-    }
-    if (pFavCigars) {
-      const v = (pFavCigars.textContent || "").trim();
-      c.favCigars = parseCSV(v);
-    }
-
-    c.updatedAt = new Date().toISOString();
-    writeCustomers(state.customers);
-
-    setEditable(false);
-    openProfile(c.id);
-    render();
   }
 
   // ---------- events ----------
@@ -697,55 +423,26 @@
       render();
     });
 
-    closeBtn?.addEventListener("click", closeProfile);
-    dialog?.addEventListener("click", (e) => {
-      const rect = dialog.getBoundingClientRect();
-      const inside =
-        e.clientX >= rect.left &&
-        e.clientX <= rect.right &&
-        e.clientY >= rect.top &&
-        e.clientY <= rect.bottom;
-      if (!inside) closeProfile();
-    });
-
-    viewAllVisitsBtn?.addEventListener("click", () => {
-      if (!state.activeCustomerId) return;
-      state.showAllVisits = !state.showAllVisits;
-      renderVisitsList(state.activeCustomerId);
-    });
-
-    editBtn?.addEventListener("click", () => {
-      if (!state.activeCustomerId) return;
-      if (!state.editing) setEditable(true);
-      else saveProfileEdits();
-    });
-
     tonyFab?.addEventListener("click", () => {
       window.location.href = "/learn/";
     });
 
     window.addEventListener("storage", (e) => {
-      if (e.key && CUSTOMER_KEYS.includes(e.key)) loadAndRender(true);
-      if (e.key === SALES_KEY) loadAndRender(true);
+      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) loadAndRender();
     });
 
-    window.addEventListener("cigaros:customers-changed", () => loadAndRender(true));
-    window.addEventListener("cigaros:sales-changed", () => loadAndRender(true));
+    window.addEventListener("cigaros:customers-changed", () => loadAndRender());
+    window.addEventListener("cigaros:sales-changed", () => loadAndRender());
   }
 
   // ---------- load ----------
-  async function loadAndRender(keepDialog) {
+  async function loadAndRender() {
     state.sales = readSales();
     state.customers = await seedCustomersFromJSONIfNeeded();
-
     render();
-
-    if (keepDialog && dialog?.open && state.activeCustomerId) {
-      openProfile(state.activeCustomerId);
-    }
   }
 
   // ---------- init ----------
   bindEvents();
-  loadAndRender(false);
+  loadAndRender();
 })();
