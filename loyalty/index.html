@@ -17,6 +17,11 @@
       --muted: #8e8e93;
       --seg-bg: #e4e4ea;
       --seg-border: #c7c7cc;
+
+      /* row tints */
+      --tint-locker: #e5f0ff;  /* light iOS blue */
+      --tint-regular: #fff3e6; /* light iOS orange */
+      --hairline: rgba(60,60,67,.18);
     }
 
     * { box-sizing: border-box; }
@@ -28,12 +33,14 @@
       color: var(--ink);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .wrap {
       max-width: 520px;
       margin: 0 auto;
       padding: 12px 12px 24px;
+      position: relative;
     }
 
     /* Top bar */
@@ -103,6 +110,7 @@
       font-size: 11px;
       color: var(--muted);
       padding-left: 4px;
+      user-select: none;
     }
 
     /* List */
@@ -112,63 +120,53 @@
       border-radius: 14px;
       overflow: hidden;
       box-shadow: 0 1px 0 rgba(0,0,0,.12);
+      position: relative;
     }
 
+    /* iOS Contacts-ish row sizing */
     .row {
+      min-height: 44px;
       padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      border-bottom: .5px solid #d1d1d6;
+      border-bottom: 1px solid var(--hairline);
       cursor: pointer;
+      background: #fff;
     }
-
     .row:last-child { border-bottom: none; }
 
-    .row.locker { background: #e5f0ff; }
-    .row.regular { background: #fff3e6; }
+    /* Shade ONLY based on data (not tab styling differences) */
+    .row.locker { background: var(--tint-locker); }
+    .row.regular { background: var(--tint-regular); }
 
     .row-left {
       min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 2px;
     }
 
     .row-name {
-      font-family: var(--font-display);
-      font-weight: 800;
-      font-size: 16px;
-      line-height: 1.1;
+      font-family: var(--font-text);
+      font-size: 17px;        /* iOS Contacts-ish */
+      line-height: 1.2;
+      letter-spacing: -0.2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    /* ✅ Add this CSS (small + safe) */
-    .name-last{
-      font-weight: 800; /* SF Pro Display Heavy */
-    }
-
-    .name-first{
-      font-weight: 500; /* SF Pro Display Medium */
-      margin-left: 4px;
-    }
-
-    .row-sub {
-      font-size: 12px;
-      color: var(--muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    /* “small + safe” name weights */
+    .name-last{ font-weight: 800; }  /* SF Pro Display Heavy feel */
+    .name-first{ font-weight: 500; } /* SF Pro Display Medium feel */
 
     .row-right {
       flex: 0 0 auto;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      padding-left: 8px;
     }
 
     .row-right img {
@@ -192,6 +190,40 @@
       font-size: 11px;
       text-align: center;
       color: var(--muted);
+    }
+
+    /* A–Z index (right side) */
+    .az-index {
+      position: fixed;
+      right: 8px;
+      top: 170px; /* below title/search area */
+      bottom: 80px;
+      width: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      z-index: 50;
+    }
+
+    .az-letter {
+      font-size: 11px;
+      line-height: 11px;
+      color: rgba(60,60,67,.55);
+      font-weight: 600;
+      width: 18px;
+      text-align: center;
+      padding: 1px 0;
+      border-radius: 6px;
+    }
+
+    .az-letter.active {
+      color: #007aff;
+      background: rgba(0,122,255,.12);
     }
 
     /* Tony FAB */
@@ -241,6 +273,9 @@
 
     <footer>CigarOS2 • Loyalty</footer>
   </div>
+
+  <!-- A–Z Sidebar -->
+  <div id="azIndex" class="az-index" aria-hidden="true"></div>
 
   <button class="tony-fab" id="tonyFab">
     <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
