@@ -2,12 +2,10 @@
    Global POS cart + invoice badge + add-to-cart wiring (ALL pages)
 
    Fixes:
-   ✅ Green + adds to cart even when rows stopPropagation (CAPTURE listener)
-   ✅ Modal "Add" adds to cart via DOM fallback scraping
-   ✅ Invoice badge count updates
+   ✅ CAPTURE click handler so stopPropagation can't block add-to-cart
+   ✅ Writes cart to localStorage (cigaros_pos_cart_v3)
+   ✅ Also mirrors to legacy window.cigarOSCart ARRAY if it exists (pos.js compatibility)
    ✅ Invoice icon navigates to /pos/invoice/
-   ✅ Prevents duplicate invoice click handlers (MutationObserver-safe)
-   ✅ FIX: Prevents invoice wiring from hijacking non-invoice buttons/tiles (like Cigars)
 */
 
 (() => {
@@ -56,44 +54,10 @@
     return parts.join("|");
   }
 
+  // Distinct item count (qty > 0)
   function getCartCount(cartMaybe) {
     const cart = cartMaybe || loadCart();
     return cart.reduce((sum, it) => (Number(it?.qty || 0) > 0 ? sum + 1 : sum), 0);
-  }
-
-  // -------------------------
-  // invoice detection (STRICT ✅)
-  // -------------------------
-  function isInvoiceElement(el) {
-    if (!el || !(el instanceof Element)) return false;
-
-    // Explicit: data-invoice-btn or id invoice-btn
-    if (el.hasAttribute("data-invoice-btn")) return true;
-    if ((el.id || "") === "invoice-btn") return true;
-
-    // If using .pos-invoice-btn as a shared style class, we must verify intent
-    if (el.classList.contains("pos-invoice-btn")) {
-      const aria = normStr(el.getAttribute("aria-label")).toLowerCase();
-      const title = normStr(el.getAttribute("title")).toLowerCase();
-      const href = normStr(el.getAttribute("href")).toLowerCase();
-
-      // Must clearly be invoice
-      if (aria.includes("invoice")) return true;
-      if (title.includes("invoice")) return true;
-      if (href.includes("/pos/invoice") || href.endsWith("/invoice/") || href.includes("invoice.html")) return true;
-
-      return false; // ✅ prevents hijacking tiles/buttons that reuse the class
-    }
-
-    // We no longer bind to generic a[href*='invoice'] (too broad + risky)
-    return false;
-  }
-
-  function getInvoiceTargets(root = document) {
-    const nodes = [
-      ...root.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn")
-    ];
-    return nodes.filter(isInvoiceElement);
   }
 
   function updateBadges(cartMaybe) {
@@ -107,10 +71,20 @@
       el.textContent = String(count);
     });
 
-    // ✅ Only toggle has-items on real invoice targets
-    getInvoiceTargets(document).forEach((btn) => {
+    document.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn").forEach((btn) => {
       btn.classList.toggle("has-items", count > 0);
     });
+  }
+
+  // -------------------------
+  // legacy bridge (pos.js used window.cigarOSCart = [])
+  // -------------------------
+  function mirrorToLegacyArray(cart) {
+    // If some other script set window.cigarOSCart as an array, keep it updated
+    if (Array.isArray(window.cigarOSCart)) {
+      window.cigarOSCart.length = 0;
+      for (const it of cart) window.cigarOSCart.push(it);
+    }
   }
 
   function addToCart(item, qtyToAdd = 1) {
@@ -147,7 +121,9 @@
     }
 
     saveCart(cart);
+    mirrorToLegacyArray(cart);
     updateBadges(cart);
+
     document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart } }));
   }
 
@@ -266,34 +242,32 @@
   }
 
   // -------------------------
-  // Invoice nav (STRICT ✅)
+  // Invoice nav
   // -------------------------
   function wireInvoiceNav(root = document) {
-    const candidates = getInvoiceTargets(root);
+    const candidates = [
+      ...root.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn, a[href*='invoice']")
+    ];
 
     candidates.forEach((el) => {
       if (el.__invoiceNavBound) return;
       el.__invoiceNavBound = true;
 
-      // Normalize any legacy invoice.html links
       if (el.tagName === "A") {
         const href = el.getAttribute("href") || "";
         if (href.includes("invoice.html")) el.setAttribute("href", "/pos/invoice/");
       }
 
       el.addEventListener("click", (e) => {
-        // allow open-in-new-tab on anchors
         if (el.tagName === "A" && (e.metaKey || e.ctrlKey)) return;
-
         e.preventDefault();
-        e.stopPropagation();
         window.location.href = "/pos/invoice/";
       }, { passive: false });
     });
   }
 
   // -------------------------
-  // Add-to-cart handler (CAPTURE PHASE ✅)
+  // Add-to-cart handler (CAPTURE ✅)
   // -------------------------
   function handleAddClick(e) {
     let btn = e.target.closest("[data-cart-add], [data-receipt-item]");
@@ -304,8 +278,7 @@
     }
     if (!btn) return;
 
-    // If this is invoice icon/button, let invoice wiring handle it
-    if (isInvoiceElement(btn)) return;
+    if (btn.matches("[data-invoice-btn], #invoice-btn, .pos-invoice-btn")) return;
 
     const btnText = normStr(btn.textContent).toLowerCase();
     const looksLikeAdd =
@@ -326,13 +299,14 @@
     addToCart(item, btn.dataset.qty || 1);
   }
 
-  // ✅ Capture phase so stopPropagation on rows/modals can't block it
   document.addEventListener("click", handleAddClick, true);
 
   // -------------------------
   // Init
   // -------------------------
-  updateBadges(loadCart());
+  const initial = loadCart();
+  mirrorToLegacyArray(initial);
+  updateBadges(initial);
   wireInvoiceNav(document);
 
   const mo = new MutationObserver((mutations) => {
@@ -345,8 +319,11 @@
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
-  window.cigarOSCart = window.cigarOSCart || {};
-  window.cigarOSCart.add = addToCart;
-  window.cigarOSCart.items = () => loadCart();
-  window.cigarOSCart.count = () => getCartCount(loadCart());
+  // Expose API without breaking legacy array
+  if (!Array.isArray(window.cigarOSCart)) {
+    window.cigarOSCart = window.cigarOSCart || {};
+    window.cigarOSCart.add = addToCart;
+    window.cigarOSCart.items = () => loadCart();
+    window.cigarOSCart.count = () => getCartCount(loadCart());
+  }
 })();
