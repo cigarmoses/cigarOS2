@@ -132,29 +132,38 @@
     return (v == null ? "" : String(v)).trim();
   }
 
-  // ---------- NEW: column-based icon detection ----------
-  // checks BOTH exact-case key and lowercase key (in case JSON normalized keys)
+  // ---------- column-based icon detection (HARDENED) ----------
+  // We look up the column title in a case/space-insensitive way across all keys.
+  function getByColumn(obj, columnTitle) {
+    if (!obj || !columnTitle) return undefined;
+
+    // Fast path exact match first
+    if (Object.prototype.hasOwnProperty.call(obj, columnTitle)) return obj[columnTitle];
+
+    const want = norm(columnTitle).replace(/\s+/g, "");
+    const keys = Object.keys(obj);
+
+    for (const k of keys) {
+      const nk = norm(k).replace(/\s+/g, "");
+      if (nk === want) return obj[k];
+    }
+
+    return undefined;
+  }
+
+  // ANY non-empty value counts as true (x/X/word/number/etc.)
   function hasColumnValue(obj, columnTitle) {
-    if (!obj) return false;
-    const v1 = obj[columnTitle];
-    const v2 = obj[columnTitle.toLowerCase()];
-    const v3 = obj[columnTitle.toUpperCase()];
-    const v4 = obj[columnTitle.replace(/\s+/g, "")]; // just-in-case
-    const v5 = obj[columnTitle.toLowerCase().replace(/\s+/g, "")];
-
-    const candidates = [v1, v2, v3, v4, v5];
-
-    return candidates.some((v) => {
-      if (v == null) return false;
-      if (typeof v === "boolean") return v === true;
-      const s = String(v).trim();
-      return s.length > 0; // ANYTHING indicates true
-    });
+    const v = getByColumn(obj, columnTitle);
+    if (v == null) return false;
+    if (typeof v === "boolean") return v === true;
+    const s = String(v).trim();
+    return s.length > 0;
   }
 
   function customerType(c) {
     // Locker column or lockerNumber wins
     if (hasColumnValue(c, "Locker") || c.locker || c.lockerNumber) return "locker";
+
     // Otherwise Regular column indicates regular; fallback regular
     if (hasColumnValue(c, "Regular")) return "regular";
 
@@ -254,8 +263,7 @@
       const v90 = toNum(r["90-day visits"]);
       const lastPurchase = toStr(r["Last Purchase"]);
 
-      // IMPORTANT: keep the icon columns intact (exact titles),
-      // because icon logic reads from those columns directly.
+      // Keep icon columns intact (exact titles)
       const Military = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
       const Paramedic = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
       const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
@@ -275,7 +283,6 @@
 
         points,
 
-        // keep legacy type too
         type,
         lockerNumber: lockerNumber || "",
 
@@ -290,7 +297,6 @@
         ytdSpendImported: ytd,
         visits90Imported: v90,
 
-        // ICON COLUMNS (exact titles)
         Military,
         Paramedic,
         Firefighter,
@@ -412,7 +418,15 @@
       const type = customerType(c);
       const rowClass = type === "locker" ? "row locker" : "row regular";
 
-      const name = escapeHTML(displayName(c));
+      const first = (c.firstName || "").trim();
+      const last = (c.lastName || "").trim();
+
+      // Last Name (Bold), First Name (Regular)
+      const nameHTML = `
+        <span class="name-last">${escapeHTML(last || "Customer")}</span>
+        ${first ? `<span class="name-first">${escapeHTML(first)}</span>` : ``}
+      `;
+
       const sub = nickname(c) || [toStr(c.phone), toStr(c.email)].filter(Boolean).join(" • ");
 
       // Right-side icons: role icons (0..4) + tier icon last (locker/regular)
@@ -423,7 +437,7 @@
       return `
         <div class="${rowClass}" data-id="${escapeHTML(c.id)}">
           <div class="row-left">
-            <div class="row-name">${name}</div>
+            <div class="row-name">${nameHTML}</div>
             ${sub ? `<div class="row-sub">${escapeHTML(sub)}</div>` : ``}
           </div>
           <div class="row-right" aria-hidden="true">
