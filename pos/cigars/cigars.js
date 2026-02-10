@@ -1,13 +1,12 @@
 /* /pos/cigars/cigars.js
-   POS Cigars (Main) — NEW Filters Bottom Sheet
+   POS Cigars (Main) — Filters Bottom Sheet + Brands Grid + Results Rows
 
    FIX:
-   - The main /pos/cigars/ page was blank because this file never rendered anything.
-   - renderBrandsOrResults() only called window.buildCigarsRender(), which is undefined on this page.
-   - This version defines a renderer that paints into #cigarsList and respects global filters.
-
-   Data source:
-   - Google Sheets CSV export
+   - Restores the expected main-page UI: title actions, search bar, Brands heading
+   - Renders:
+       * Brands GRID when no search + no filters
+       * Results ROWS (brand-row style) when search/filters are active
+   - Keeps your existing bottom-sheet filter modal implementation
 */
 
 (() => {
@@ -20,19 +19,15 @@
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   // -----------------------------
-  // DOM (existing)
+  // DOM
   // -----------------------------
-  // NOTE: main page HTML does NOT have these IDs in your current markup.
-  // We keep them optional so nothing crashes.
-  const backBtn = $("#cigars-back"); // may be null
-  const searchInput = $("#cigars-search-input"); // may be null
-
-  const openBtn =
-    $("#btn-open-filters") || $(".cigars-filter-btn") || $("#cigars-filter-btn");
+  const searchInput = $("#cigars-search-input");
+  const openBtn = $("#btn-open-filters") || $(".cigars-filter-btn") || $("#cigars-filter-btn");
+  const listRoot = $("#cigarsList");
+  const appliedRoot = $("#cigarsAppliedFilters");
+  const sectionTitle = $("#cigarsSectionTitle");
 
   let modalRoot = $("#filter-modal");
-
-  const listRoot = $("#cigarsList");
 
   // -----------------------------
   // Data
@@ -90,15 +85,6 @@
     return String(v ?? "").trim().replace(/\s+/g, " ");
   }
 
-  function uniqSorted(values) {
-    const set = new Set();
-    for (const v of values) {
-      const s = norm(v);
-      if (s) set.add(s);
-    }
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }
-
   function escapeHtml(str) {
     return String(str ?? "")
       .replaceAll("&", "&amp;")
@@ -106,6 +92,15 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function uniqSorted(values) {
+    const set = new Set();
+    for (const v of values) {
+      const s = norm(v);
+      if (s) set.add(s);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
 
   function slugify(name) {
@@ -134,99 +129,57 @@
     return "";
   }
 
-  function includesQ(haystack, q) {
-    if (!q) return true;
-    return norm(haystack).toLowerCase().includes(q);
+  function hasActiveFilters(g) {
+    const f = g?.filters || {};
+    for (const k of Object.keys(f)) {
+      if (f[k] instanceof Set && f[k].size) return true;
+    }
+    return false;
   }
 
-  function parseNum(s) {
-    const n = Number(String(s ?? "").replace(/[^\d.]+/g, ""));
-    return Number.isFinite(n) ? n : NaN;
-  }
+  function rowMatchesFilters(row, g) {
+    const f = g?.filters || {};
 
-  // -----------------------------
-  // Wrapper Shade custom ordering
-  // -----------------------------
-  const WRAPPER_SHADE_ORDER = [
-    "Natural",
-    "Connecticut",
-    "Maduro",
-    "Oscuro",
-    "Connecticut Shade",
-    "EMS",
-    "Claro",
-    "Colorado",
-    "Colorado Claro",
-    "Colorado Maduro",
-    "Mixed",
-    "Candela",
-  ];
+    const manufacturer = norm(getField(row, ["Manufacturer", "manufacturer"]));
+    const brand = norm(getField(row, ["Brand", "brand", "Brand aka", "brand_aka"]));
+    const vitola = norm(getField(row, ["Vitola", "vitola", "Style", "style"]));
+    const ring = norm(getField(row, ["RG", "Ring", "ring"]));
+    const length = norm(getField(row, ["Length", "length"]));
+    const strength = norm(getField(row, ["Strength", "strength"]));
+    const shape = norm(getField(row, ["Shape", "shape"]));
+    const shade = norm(getField(row, ["Wrapper Shade", "WrapperShade", "wrapperShade", "shade"]));
 
-  function orderWrapperShades(values) {
-    const list = uniqSorted(values);
-    const seen = new Set();
-    const ordered = [];
+    const checks = [
+      ["manufacturer", manufacturer],
+      ["brand", brand],
+      ["vitola", vitola],
+      ["ring", ring],
+      ["length", length],
+      ["strength", strength],
+      ["shape", shape],
+      ["shade", shade],
+    ];
 
-    for (const item of WRAPPER_SHADE_ORDER) {
-      const match = list.find((v) => v.toLowerCase() === item.toLowerCase());
-      if (match) {
-        ordered.push(match);
-        seen.add(match.toLowerCase());
+    for (const [key, val] of checks) {
+      const set = f[key];
+      if (set instanceof Set && set.size) {
+        if (!set.has(val)) return false;
       }
     }
-    for (const v of list) {
-      const k = v.toLowerCase();
-      if (!seen.has(k)) ordered.push(v);
+
+    const q = norm(g?.q).toLowerCase();
+    if (q) {
+      const cigarName = norm(getField(row, ["Cigar", "Cigar Name", "Name", "cigar", "cigar_name"]));
+      const line = norm(getField(row, ["Line", "line"]));
+      const hay = `${manufacturer} ${brand} ${line} ${cigarName} ${vitola} ${shade} ${strength} ${shape} ${ring} ${length}`.toLowerCase();
+      if (!hay.includes(q)) return false;
     }
-    return ordered;
+
+    return true;
   }
 
   // -----------------------------
-  // ✅ Vitola custom ordering
-  // -----------------------------
-  const VITOLA_ORDER = [
-    "Toro",
-    "Robusto",
-    "Gordo",
-    "Churchill",
-    "Corona",
-    "Petit Corona",
-    "Corona Gorda",
-    "Lonsdale",
-    "Lancero",
-    "Panetela",
-    "Belicoso",
-    "Torpedo",
-    "Piramide",
-    "Perfecto",
-    "Diadema",
-    "Figurado",
-    "Double Corona",
-    "Petit Robusto",
-    "Short Robusto",
-  ];
-
-  function orderVitolas(values) {
-    const list = uniqSorted(values);
-    const seen = new Set();
-    const ordered = [];
-
-    for (const item of VITOLA_ORDER) {
-      const match = list.find((v) => v.toLowerCase() === item.toLowerCase());
-      if (match) {
-        ordered.push(match);
-        seen.add(match.toLowerCase());
-      }
-    }
-    for (const v of list) {
-      const k = v.toLowerCase();
-      if (!seen.has(k)) ordered.push(v);
-    }
-    return ordered;
-  }
-
-  // -----------------------------
-  // CSV parsing (fallback)
+  // CSV parsing
   // -----------------------------
   function parseCSV(text) {
     const rows = [];
@@ -289,6 +242,251 @@
     });
   }
 
+  // -----------------------------
+  // ✅ Render: Brands grid OR Results list
+  // -----------------------------
+  function buildBrandSummary(rows) {
+    const map = new Map();
+
+    for (const r of rows) {
+      const brand = norm(getField(r, ["Brand", "brand", "Brand aka", "brand_aka"])) || "Unknown";
+      const manufacturer = norm(getField(r, ["Manufacturer", "manufacturer"]));
+
+      if (!map.has(brand)) map.set(brand, { brand, manufacturer, count: 0 });
+      const o = map.get(brand);
+      o.count += 1;
+      if (!o.manufacturer && manufacturer) o.manufacturer = manufacturer;
+    }
+
+    return Array.from(map.values()).sort((a, b) => a.brand.localeCompare(b.brand));
+  }
+
+  function renderAppliedChips(g) {
+    if (!appliedRoot) return;
+
+    const chips = [];
+    const f = g.filters || {};
+
+    // chips for active sets
+    for (const key of ["manufacturer","brand","vitola","ring","length","strength","shape","shade"]) {
+      const set = f[key];
+      if (!(set instanceof Set) || !set.size) continue;
+
+      for (const val of set) {
+        const label = `${key}: ${val}`;
+        chips.push(`
+          <div class="af-chip" data-chip-key="${escapeHtml(key)}" data-chip-val="${escapeHtml(val)}">
+            <span>${escapeHtml(label)}</span>
+            <button class="af-chip__x" type="button" aria-label="Remove ${escapeHtml(label)}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        `);
+      }
+    }
+
+    // clear all
+    if ((g.q && g.q.trim()) || hasActiveFilters(g)) {
+      chips.push(`
+        <div class="af-chip af-clear">
+          <span>Clear</span>
+          <button class="af-chip__x" type="button" id="af-clear-all" aria-label="Clear all filters">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      `);
+    }
+
+    appliedRoot.innerHTML = chips.join("");
+
+    // handlers
+    $$(".af-chip", appliedRoot).forEach((chip) => {
+      const xBtn = $(".af-chip__x", chip);
+      if (!xBtn) return;
+
+      xBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (xBtn.id === "af-clear-all") {
+          g.q = "";
+          for (const k of Object.keys(g.filters)) g.filters[k] = new Set();
+          if (searchInput) searchInput.value = "";
+          renderAll();
+          return;
+        }
+
+        const key = chip.getAttribute("data-chip-key");
+        const val = chip.getAttribute("data-chip-val");
+        if (!key || !val) return;
+
+        const set = g.filters[key];
+        if (set instanceof Set) set.delete(val);
+        renderAll();
+      });
+    });
+  }
+
+  function renderBrandsGrid(summary) {
+    if (!listRoot) return;
+
+    if (sectionTitle) sectionTitle.textContent = "Brands";
+
+    listRoot.innerHTML = `
+      <div class="brands-grid">
+        ${summary.map((c) => {
+          const icon = iconPathFor("brand", c.brand);
+          const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
+          return `
+            <a href="${href}" aria-label="${escapeHtml(c.brand)}">
+              <img src="${escapeHtml(icon)}" alt="${escapeHtml(c.brand)}"
+                   loading="lazy" decoding="async"
+                   onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';" />
+              <div class="category-name">${escapeHtml(c.brand)}</div>
+            </a>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function renderResultsRows(summary) {
+    if (!listRoot) return;
+
+    if (sectionTitle) sectionTitle.textContent = "Results";
+
+    listRoot.innerHTML = `
+      <div class="cigars-results">
+        ${summary.map((c) => {
+          const icon = iconPathFor("brand", c.brand);
+          const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
+          return `
+            <a class="brand-row" href="${href}" style="text-decoration:none; color:inherit;">
+              <img class="row-ico" src="${escapeHtml(icon)}" alt=""
+                   loading="lazy" decoding="async"
+                   onerror="this.style.display='none';" />
+
+              <div class="brand-row-left">
+                <div class="brand-row-title">${escapeHtml(c.brand)}</div>
+                <div class="brand-row-sub">${escapeHtml(c.manufacturer || "—")}</div>
+              </div>
+
+              <div class="brand-row-right">
+                <div class="brand-row-msrp">${escapeHtml(String(c.count))}</div>
+                <div style="font:700 20px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui; color: rgba(255,255,255,.55);">›</div>
+              </div>
+            </a>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function renderAll() {
+    ensureGlobalState();
+    const g = window.__CIGAR_FILTER_STATE__;
+
+    // applied chips
+    renderAppliedChips(g);
+
+    const filteredRows = (DATA_ROWS || []).filter((r) => rowMatchesFilters(r, g));
+    const summary = buildBrandSummary(filteredRows);
+
+    const qOn = !!(g.q && g.q.trim());
+    const filtersOn = hasActiveFilters(g);
+
+    if (!summary.length) {
+      if (sectionTitle) sectionTitle.textContent = qOn || filtersOn ? "Results" : "Brands";
+      listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
+      return;
+    }
+
+    if (qOn || filtersOn) renderResultsRows(summary);
+    else renderBrandsGrid(summary);
+  }
+
+  // -----------------------------
+  // Bottom Sheet Filter Modal (your existing logic)
+  // -----------------------------
+  const state = {
+    selected: {
+      manufacturer: new Set(),
+      brand: new Set(),
+      vitola: new Set(),
+      ring: new Set(),
+      length: new Set(),
+      strength: new Set(),
+      shape: new Set(),
+      shade: new Set(),
+    },
+    activeKey: "brand",
+    activeValues: [],
+    activeSearch: "",
+  };
+
+  const WRAPPER_SHADE_ORDER = [
+    "Natural",
+    "Connecticut",
+    "Maduro",
+    "Oscuro",
+    "Connecticut Shade",
+    "EMS",
+    "Claro",
+    "Colorado",
+    "Colorado Claro",
+    "Colorado Maduro",
+    "Mixed",
+    "Candela",
+  ];
+
+  function orderWrapperShades(values) {
+    const list = uniqSorted(values);
+    const seen = new Set();
+    const ordered = [];
+
+    for (const item of WRAPPER_SHADE_ORDER) {
+      const match = list.find((v) => v.toLowerCase() === item.toLowerCase());
+      if (match) {
+        ordered.push(match);
+        seen.add(match.toLowerCase());
+      }
+    }
+    for (const v of list) {
+      const k = v.toLowerCase();
+      if (!seen.has(k)) ordered.push(v);
+    }
+    return ordered;
+  }
+
+  const VITOLA_ORDER = [
+    "Toro","Robusto","Gordo","Churchill","Corona","Petit Corona","Corona Gorda","Lonsdale",
+    "Lancero","Panetela","Belicoso","Torpedo","Piramide","Perfecto","Diadema","Figurado",
+    "Double Corona","Petit Robusto","Short Robusto",
+  ];
+
+  function orderVitolas(values) {
+    const list = uniqSorted(values);
+    const seen = new Set();
+    const ordered = [];
+
+    for (const item of VITOLA_ORDER) {
+      const match = list.find((v) => v.toLowerCase() === item.toLowerCase());
+      if (match) {
+        ordered.push(match);
+        seen.add(match.toLowerCase());
+      }
+    }
+    for (const v of list) {
+      const k = v.toLowerCase();
+      if (!seen.has(k)) ordered.push(v);
+    }
+    return ordered;
+  }
+
   function getValuesForKey(key) {
     if (!DATA_ROWS.length) return [];
 
@@ -304,8 +502,8 @@
     };
 
     const keysToTry = fieldMap[key] || [key];
-
     const vals = [];
+
     for (const r of DATA_ROWS) {
       if (!r) continue;
       for (const k of keysToTry) {
@@ -322,9 +520,6 @@
     return cleaned;
   }
 
-  // -----------------------------
-  // Modal template + wiring
-  // -----------------------------
   const CATEGORIES = [
     { key: "manufacturer", label: "Manufacturers" },
     { key: "brand", label: "Brands" },
@@ -522,7 +717,6 @@
   function syncLocalFromGlobal() {
     ensureGlobalState();
     const g = window.__CIGAR_FILTER_STATE__;
-
     for (const k of Object.keys(state.selected)) {
       const set = g.filters?.[k];
       state.selected[k] = set instanceof Set ? new Set([...set]) : new Set();
@@ -532,15 +726,9 @@
   function pushLocalToGlobal() {
     ensureGlobalState();
     const g = window.__CIGAR_FILTER_STATE__;
-
-    for (const k of Object.keys(state.selected)) {
-      g.filters[k] = new Set([...state.selected[k]]);
-    }
-
-    // Main page may not have searchInput; still keep contract.
+    for (const k of Object.keys(state.selected)) g.filters[k] = new Set([...state.selected[k]]);
     g.q = (searchInput?.value || g.q || "").toString();
-
-    renderBrandsOrResults();
+    renderAll();
   }
 
   function resetLocalSelections() {
@@ -549,196 +737,12 @@
   }
 
   // -----------------------------
-  // Local UI state (filters sheet)
-  // -----------------------------
-  const state = {
-    selected: {
-      manufacturer: new Set(),
-      brand: new Set(),
-      vitola: new Set(),
-      ring: new Set(),
-      length: new Set(),
-      strength: new Set(),
-      shape: new Set(),
-      shade: new Set(),
-    },
-    activeKey: "brand",
-    activeValues: [],
-    activeSearch: "",
-  };
-
-  // -----------------------------
-  // ✅ Main page renderer (THE FIX)
-  // -----------------------------
-  function rowMatchesFilters(row, g) {
-    const f = g?.filters || {};
-
-    const manufacturer = norm(getField(row, ["Manufacturer", "manufacturer"]));
-    const brand = norm(getField(row, ["Brand", "brand", "Brand aka", "brand_aka"]));
-    const vitola = norm(getField(row, ["Vitola", "vitola", "Style", "style"]));
-    const ring = norm(getField(row, ["RG", "Ring", "ring"]));
-    const length = norm(getField(row, ["Length", "length"]));
-    const strength = norm(getField(row, ["Strength", "strength"]));
-    const shape = norm(getField(row, ["Shape", "shape"]));
-    const shade = norm(getField(row, ["Wrapper Shade", "WrapperShade", "wrapperShade", "shade"]));
-
-    const checks = [
-      ["manufacturer", manufacturer],
-      ["brand", brand],
-      ["vitola", vitola],
-      ["ring", ring],
-      ["length", length],
-      ["strength", strength],
-      ["shape", shape],
-      ["shade", shade],
-    ];
-
-    for (const [key, val] of checks) {
-      const set = f[key];
-      if (set instanceof Set && set.size) {
-        if (!set.has(val)) return false;
-      }
-    }
-
-    const q = norm(g?.q).toLowerCase();
-    if (q) {
-      const cigarName = norm(getField(row, ["Cigar", "Cigar Name", "Name", "cigar", "cigar_name"]));
-      const line = norm(getField(row, ["Line", "line"]));
-      const hay = `${manufacturer} ${brand} ${line} ${cigarName} ${vitola} ${shade} ${strength} ${shape} ${ring} ${length}`;
-      if (!includesQ(hay, q)) return false;
-    }
-
-    return true;
-  }
-
-  function buildBrandCards(rows) {
-    // Group by Brand, but keep Manufacturer around for subtitle
-    const map = new Map();
-
-    for (const r of rows) {
-      const brand = norm(getField(r, ["Brand", "brand", "Brand aka", "brand_aka"])) || "Unknown Brand";
-      const mfg = norm(getField(r, ["Manufacturer", "manufacturer"]));
-
-      if (!map.has(brand)) {
-        map.set(brand, { brand, manufacturer: mfg, count: 0 });
-      }
-      const obj = map.get(brand);
-      obj.count += 1;
-
-      // Prefer any non-empty manufacturer we see
-      if (!obj.manufacturer && mfg) obj.manufacturer = mfg;
-    }
-
-    const list = Array.from(map.values()).sort((a, b) =>
-      a.brand.localeCompare(b.brand)
-    );
-
-    return list;
-  }
-
-  function renderMain() {
-    if (!listRoot) return;
-
-    ensureGlobalState();
-    const g = window.__CIGAR_FILTER_STATE__;
-
-    const filteredRows = (DATA_ROWS || []).filter((r) => rowMatchesFilters(r, g));
-    const cards = buildBrandCards(filteredRows);
-
-    // Empty state
-    if (!cards.length) {
-      listRoot.innerHTML = `
-        <div style="padding:18px; color: rgba(255,255,255,.75); font: 500 16px/1.35 -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui;">
-          No results.
-        </div>
-      `;
-      return;
-    }
-
-    // Render as iOS-style list cards (simple, works on mobile)
-    listRoot.innerHTML = cards
-      .map((c) => {
-        const brandEsc = escapeHtml(c.brand);
-        const mfgEsc = escapeHtml(c.manufacturer || "");
-        const icon = iconPathFor("brand", c.brand);
-
-        // Route to brand page controller
-        const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
-
-        return `
-          <a class="cigars-brand-row" href="${href}" style="
-            display:flex; align-items:center; gap:12px;
-            padding:12px 14px; border-radius:14px;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.10);
-            text-decoration:none; color:#fff;
-            margin: 10px 12px;
-          ">
-            <div style="
-              width:42px; height:42px; border-radius:12px;
-              background: rgba(255,255,255,.08);
-              display:flex; align-items:center; justify-content:center;
-              flex: 0 0 auto;
-              overflow:hidden;
-            ">
-              <img src="${escapeHtml(icon)}" alt="" style="width:26px; height:26px;"
-                   loading="lazy" decoding="async"
-                   onerror="this.style.display='none';" />
-            </div>
-
-            <div style="flex:1; min-width:0;">
-              <div style="font: 800 18px/1.15 'SF Pro Display', -apple-system, system-ui; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                ${brandEsc}
-              </div>
-              ${
-                mfgEsc
-                  ? `<div style="margin-top:4px; font: 500 13px/1.2 'SF Pro Display', -apple-system, system-ui; color: rgba(255,255,255,.68); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                       ${mfgEsc}
-                     </div>`
-                  : `<div style="margin-top:4px; font: 500 13px/1.2 'SF Pro Display', -apple-system, system-ui; color: rgba(255,255,255,.55);">
-                       —
-                     </div>`
-              }
-            </div>
-
-            <div style="display:flex; align-items:center; gap:10px; flex:0 0 auto;">
-              <div style="
-                font: 700 13px/1 'SF Pro Display', -apple-system, system-ui;
-                color: rgba(255,255,255,.75);
-                padding:6px 10px; border-radius:999px;
-                background: rgba(255,255,255,.08);
-                border: 1px solid rgba(255,255,255,.10);
-              ">
-                ${c.count}
-              </div>
-              <div style="font:700 18px/1 -apple-system, system-ui; color: rgba(255,255,255,.6);">›</div>
-            </div>
-          </a>
-        `;
-      })
-      .join("");
-  }
-
-  // Provide the function your existing pattern expects
-  window.buildCigarsRender = renderMain;
-
-  function renderBrandsOrResults() {
-    // Always render now (this is the fix)
-    if (typeof window.buildCigarsRender === "function") window.buildCigarsRender();
-  }
-
-  // -----------------------------
   // Event bindings
   // -----------------------------
-  // If the main page still uses inline onclick="history.back()", this may be null and that's fine.
-  backBtn?.addEventListener("click", () => {
-    window.location.href = "/pos/";
-  });
-
   searchInput?.addEventListener("input", () => {
     ensureGlobalState();
     window.__CIGAR_FILTER_STATE__.q = (searchInput.value || "").toString();
-    renderBrandsOrResults();
+    renderAll();
   });
 
   openBtn?.addEventListener("click", () => {
@@ -753,14 +757,6 @@
     if (t.closest("[data-fm-close]")) closeModal();
   });
 
-  document.addEventListener("mousedown", (e) => {
-    if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
-    const sheet = $(".fm__sheet", modalRoot);
-    const t = e.target;
-    if (!(t instanceof Element)) return;
-    if (sheet && !sheet.contains(t) && t.closest(".fm")) closeModal();
-  });
-
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
@@ -772,7 +768,6 @@
     const t = e.target;
     if (!(t instanceof HTMLInputElement)) return;
     if (t.id !== "fm-search") return;
-
     state.activeSearch = t.value || "";
     renderList();
   });
@@ -795,11 +790,14 @@
   });
 
   // -----------------------------
-  // Init: load data, hydrate, render
+  // Init
   // -----------------------------
   async function init() {
     try {
       ensureGlobalState();
+
+      // hydrate search input
+      if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
 
       if (Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length) {
         DATA_ROWS = window.__CIGAR_SHEET_ROWS__;
@@ -812,19 +810,11 @@
         window.__CIGAR_SHEET_ROWS__ = DATA_ROWS;
       }
 
-      // Keep search contract if an input exists (main page may not have it)
-      if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
-
-      renderBrandsOrResults();
+      renderAll();
     } catch (err) {
       console.error("cigars.js init error:", err);
-
-      // Still try to render whatever we have cached, so the page never stays blank
-      try {
-        ensureGlobalState();
-        if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
-        renderBrandsOrResults();
-      } catch {}
+      ensureGlobalState();
+      renderAll();
     }
   }
 
