@@ -134,23 +134,24 @@
 
   // ---------- NEW: column-based icon detection ----------
   // checks BOTH exact-case key and lowercase key (in case JSON normalized keys)
-  function hasColumnValue(obj, columnTitle) {
-    if (!obj) return false;
-    const v1 = obj[columnTitle];
-    const v2 = obj[columnTitle.toLowerCase()];
-    const v3 = obj[columnTitle.toUpperCase()];
-    const v4 = obj[columnTitle.replace(/\s+/g, "")]; // just-in-case
-    const v5 = obj[columnTitle.toLowerCase().replace(/\s+/g, "")];
+function hasColumnValue(obj, columnTitle){
+  if (!obj) return false;
 
-    const candidates = [v1, v2, v3, v4, v5];
+  const variants = [
+    obj[columnTitle],
+    obj[columnTitle.toLowerCase()],
+    obj[columnTitle.toUpperCase()],
+    obj[columnTitle.replace(/\s+/g, "")],
+    obj[columnTitle.toLowerCase().replace(/\s+/g, "")]
+  ];
 
-    return candidates.some((v) => {
-      if (v == null) return false;
-      if (typeof v === "boolean") return v === true;
-      const s = String(v).trim();
-      return s.length > 0; // ANYTHING indicates true
-    });
-  }
+  return variants.some(v => {
+    if (v === true) return true;
+    if (v === false || v == null) return false;
+    const s = String(v).trim().toLowerCase();
+    return s !== "" && s !== "0" && s !== "no";
+  });
+}
 
   function customerType(c) {
     // Locker column or lockerNumber wins
@@ -412,8 +413,13 @@
       const type = customerType(c);
       const rowClass = type === "locker" ? "row locker" : "row regular";
 
-      const name = escapeHTML(displayName(c));
-      const sub = nickname(c) || [toStr(c.phone), toStr(c.email)].filter(Boolean).join(" • ");
+const first = (c.firstName || "").trim();
+const last  = (c.lastName || "").trim();
+
+const nameHTML = `
+  <span class="name-last">${escapeHTML(last)}</span>
+  <span class="name-first">${escapeHTML(first)}</span>
+`;
 
       // Right-side icons: role icons (0..4) + tier icon last (locker/regular)
       const roleIcons = getRoleIcons(c);
@@ -423,7 +429,7 @@
       return `
         <div class="${rowClass}" data-id="${escapeHTML(c.id)}">
           <div class="row-left">
-            <div class="row-name">${name}</div>
+            <div class="row-name">${nameHTML}</div>
             ${sub ? `<div class="row-sub">${escapeHTML(sub)}</div>` : ``}
           </div>
           <div class="row-right" aria-hidden="true">
