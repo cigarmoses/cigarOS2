@@ -1,37 +1,32 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   FIXES (kept):
-   ✅ Grid title shows: Line + Cigar
-   ✅ Subtitle line = Vitola ONLY
-   ✅ Row click opens cigar detail modal
-   ✅ Green + uses data-receipt-item (cart.js handles)
-   ✅ Brand icon (left) always /img/icons/brands/(brand).svg
-   ✅ Wrapper Shade pulled from BOTH CSV + row dataset (multiple key fallbacks)
-   ✅ Popup image picker reads row.image (dataset) or CSV image columns
-
-   NEW (THIS PASS — ONLY #4/#5/#6):
-   ✅ Bands button opens your existing #sheet-bands modal and renders SVG band artwork (Padron)
-   ✅ Filters button opens your existing #sheet-filters modal and populates filter choices
-   ✅ Maduro/Natural segmented toggle works via name string match ("maduro" / "natural")
-
-   ✅ FIX (THIS MESSAGE):
-   ✅ Removes duplicate back button (brand-back vs .pos-back)
-   ✅ Top-right INVOICE pill opens invoice (clicks existing invoice FAB/button, fallback to invoice page)
+   ✅ Fixes in this version:
+   - Bands + Filters buttons always OPEN their sheets (even if CSS expects a class)
+   - Adds a universal #sheet-backdrop automatically if it’s missing
+   - Uses BOTH mechanisms to show sheets:
+       1) removes [hidden]
+       2) adds .open + .is-open classes (covers your older CSS patterns)
+   - Close buttons + ESC + backdrop click close all sheets
+   - Keeps your existing list rendering + detail modal + add-to-cart wiring
+   - Keeps your wrapper toggle behavior
+   - Keeps invoice pill wiring (best-effort click existing injected invoice button; fallback route)
 */
 
 (() => {
+  "use strict";
+
   const CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const qp = (k) => new URLSearchParams(location.search).get(k) || "";
 
   const norm = (s) => String(s ?? "").trim();
   const lower = (s) => norm(s).toLowerCase();
 
-  // ✅ IMPORTANT: accent-safe slug (Padrón -> padron)
+  // ✅ Accent-safe slug (Padrón -> padron)
   const slug = (s) =>
     lower(s)
       .normalize("NFD")
@@ -46,7 +41,6 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#39;");
 
-  // aliases used by modal render helpers
   const escapeHTML = esc;
   const escapeAttr = esc;
 
@@ -61,12 +55,12 @@
   const statusEl = $("#brand-status");
   const searchEl = $("#brand-search");
 
-  // 🔥 Back buttons (both can exist — causes “double back”)
+  // Back buttons (both can exist — causes “double back”)
   const brandBackBtn = $("#brand-back");
   const posBackBtn = $(".pos-back");
   const backBtn = brandBackBtn || posBackBtn;
 
-  // ✅ Correct buttons on this page
+  // Buttons on this page
   const filtersBtn = $("#btn-filters");
   const bandsBtn = $("#btn-bands");
 
@@ -76,11 +70,9 @@
   const segNatural = $("#seg-natural");
   const segSwitch = $("#seg-switch");
 
-  // HTML sheets/backdrop (already in brand.html)
-  const backdrop = $("#sheet-backdrop");
-
-  const sheetReceipt = $("#sheet-receipt"); // (not touched here)
-  const sheetBands = $("#sheet-bands");     // ✅ FIXED NAME
+  // Sheets (already in brand.html)
+  const sheetReceipt = $("#sheet-receipt"); // (not touched)
+  const sheetBands = $("#sheet-bands");
   const sheetFilters = $("#sheet-filters");
 
   // Bands sheet targets
@@ -97,10 +89,27 @@
   const filtersConfirm = $("#filters-confirm");
 
   // =========================================================
+  // ✅ Backdrop (create if missing)
+  // =========================================================
+  function ensureBackdrop() {
+    let bd = $("#sheet-backdrop");
+    if (!bd) {
+      bd = document.createElement("div");
+      bd.id = "sheet-backdrop";
+      bd.className = "sheet-backdrop";
+      bd.hidden = true;
+      bd.setAttribute("aria-hidden", "true");
+      document.body.appendChild(bd);
+    }
+    return bd;
+  }
+
+  const backdrop = ensureBackdrop();
+
+  // =========================================================
   // ✅ FIX #1: REMOVE DUPLICATE BACK BUTTON
   // =========================================================
   function fixDuplicateBackButtons() {
-    // If both exist, keep #brand-back (brand page), hide .pos-back (shared)
     if (brandBackBtn && posBackBtn && posBackBtn !== brandBackBtn) {
       posBackBtn.style.display = "none";
       posBackBtn.setAttribute("aria-hidden", "true");
@@ -112,7 +121,6 @@
   // ✅ FIX #2: INVOICE PILL SHOULD OPEN INVOICE
   // =========================================================
   function findInvoicePill() {
-    // Common ids/classes used across pages
     return (
       $("#invoice-pill") ||
       $("#posInvoicePill") ||
@@ -120,15 +128,15 @@
       $(".invoice-pill") ||
       $(".pos-invoice-pill") ||
       $(".pos-invoice") ||
-      // fallback: any button/link that literally says invoice
-      $$("button, a, div")
-        .find((el) => lower(el.textContent).trim() === "invoice" && el.offsetParent !== null) ||
+      $$("button, a, div").find(
+        (el) => lower(el.textContent).trim() === "invoice" && el.offsetParent !== null
+      ) ||
       null
     );
   }
 
   function openInvoice() {
-    // Try to click the existing invoice FAB / open button injected by cart.js
+    // Try to click an existing invoice button injected by cart.js
     const candidates = [
       $("#posInvoiceFab"),
       $("#posReceiptFab"),
@@ -139,6 +147,7 @@
       $(".receipt-fab"),
       $("[data-open-invoice]"),
       $("[data-open-receipt]"),
+      $("[data-invoice-btn]"),
     ].filter(Boolean);
 
     if (candidates.length) {
@@ -146,22 +155,21 @@
       return true;
     }
 
-    // Fallback: if you have a dedicated invoice page route
-    // (keeps your current behavior intact if page exists)
-    try {
-      // prefer absolute from site root
-      location.href = "/pos/invoice.html";
-      return true;
-    } catch (e) {
-      return false;
+    // Fallback route(s)
+    const fallbacks = ["/pos/invoice/", "/pos/invoice/index.html", "/pos/invoice.html"];
+    for (const href of fallbacks) {
+      try {
+        location.href = href;
+        return true;
+      } catch {}
     }
+    return false;
   }
 
   function bindInvoicePill() {
     const pill = findInvoicePill();
     if (!pill) return;
 
-    // Make sure it acts clickable even if it’s a div
     pill.style.cursor = "pointer";
     pill.addEventListener("click", (e) => {
       e.preventDefault();
@@ -221,8 +229,8 @@
     return "";
   }
 
-  // NOTE: these match your HUB headers
-  const getBrand = (r) => pick(r, ["Brand", "Brand", "Brand AKA", "Brand aka", "Manufacturer"]);
+  // Hub headers
+  const getBrand = (r) => pick(r, ["Brand", "Brand AKA", "Brand aka", "Manufacturer"]);
   const getLine = (r) => pick(r, ["Line", "Series", "Collection"]);
   const getCigar = (r) => pick(r, ["Cigar", "Name", "Cigar Name"]);
   const getVitola = (r) => pick(r, ["Vitola"]);
@@ -306,8 +314,7 @@
       row?.Img ||
       row?.Photo ||
       "";
-    const src = norm(raw);
-    return src || "";
+    return norm(raw) || "";
   }
 
   function renderKV(k, v) {
@@ -337,9 +344,7 @@
 
     const brandIcon = bestBrandHeaderIcon(row) || "";
 
-    // ----- Image (CSV path OR smart filename fallback) -----
     const picked = pickCigarImage(row);
-
     const nameForFile = slug(
       row?.cigarFull ||
         row?.["Cigar Full"] ||
@@ -347,7 +352,6 @@
         row?.Cigar ||
         `${norm(row?.line || row?.Line || "")} ${norm(row?.cigar || row?.Cigar || "")}`.trim()
     );
-
     const brandForFolder = slug(row?.brand || row?.Brand || BRAND || "");
 
     const imgCandidates = [
@@ -355,9 +359,6 @@
       `/img/cigars/${brandForFolder}/${nameForFile}.png`,
       `/img/cigars/${brandForFolder}/${nameForFile}.jpg`,
       `/img/cigars/${brandForFolder}/${nameForFile}.jpeg`,
-      `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.png`,
-      `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpg`,
-      `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpeg`,
     ].filter(Boolean);
 
     const cigarImg = imgCandidates[0] || "";
@@ -445,14 +446,12 @@
       </div>
     `;
 
-    detailSheet
-      .querySelector(".cigar-detail-x")
-      ?.addEventListener("click", closeCigarDetail);
+    detailSheet.querySelector(".cigar-detail-x")?.addEventListener("click", closeCigarDetail);
 
     detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
       const msrpVal = row?.msrp ?? row?.MSRP ?? row?.Price ?? row?.price ?? 0;
 
-      window.CigarOSCart?.add({
+      window.CigarOSCart?.add?.({
         id: row?.key || `${brand}-${cigarName}-${vitola}`,
         name: cigarName,
         brand: brand,
@@ -477,34 +476,65 @@
   }
 
   // =========================================================
-  // ✅ SHEET OPEN/CLOSE
+  // ✅ SHEET OPEN/CLOSE (ROBUST)
   // =========================================================
   function openSheetEl(sheetEl) {
     if (!sheetEl) return;
+
+    // Make sure it isn't hidden
+    sheetEl.hidden = false;
+    sheetEl.removeAttribute("hidden");
+
+    // Many CSS patterns rely on these classes
+    sheetEl.classList.add("open");
+    sheetEl.classList.add("is-open");
+
+    // Body state
     document.body.classList.add("pos-modal-open");
+
+    // Backdrop
     if (backdrop) {
       backdrop.hidden = false;
+      backdrop.removeAttribute("hidden");
       backdrop.classList.add("open");
+      backdrop.classList.add("is-open");
+      backdrop.setAttribute("aria-hidden", "false");
     }
-    sheetEl.hidden = false;
+
+    // Accessibility
+    sheetEl.setAttribute("aria-hidden", "false");
+
+    // Focus the first close button if present
+    setTimeout(() => {
+      sheetEl.querySelector("[data-sheet-close]")?.focus?.();
+    }, 0);
   }
 
   function closeAllSheets() {
     document.body.classList.remove("pos-modal-open");
 
     [sheetBands, sheetFilters, sheetReceipt].forEach((el) => {
-      if (el) el.hidden = true;
+      if (!el) return;
+      el.classList.remove("open", "is-open");
+      el.hidden = true;
+      el.setAttribute("aria-hidden", "true");
     });
 
     if (backdrop) {
-      backdrop.classList.remove("open");
+      backdrop.classList.remove("open", "is-open");
       backdrop.hidden = true;
+      backdrop.setAttribute("aria-hidden", "true");
     }
   }
 
   function bindSheetClosers() {
+    // Any X button
     $$("[data-sheet-close]").forEach((btn) => btn.addEventListener("click", closeAllSheets));
+
+    // Backdrop click
     backdrop?.addEventListener("click", closeAllSheets);
+
+    // ESC
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeAllSheets();
     });
@@ -521,12 +551,12 @@
     bandKeys: new Set(),
     filterKey: "",
     filters: {
-      values: new Map(),
-      toggles: new Map(),
+      values: new Map(), // key -> Set(values)
+      toggles: new Map(), // key -> bool
     },
   };
 
-  // ✅ FIXED: use getBrand() (includes accents/AKA/manufacturer)
+  // Use getBrand() (includes accents/AKA/manufacturer)
   function inBrand(r) {
     if (!BRAND) return true;
     return slug(getBrand(r)) === BRAND_SLUG;
@@ -580,10 +610,22 @@
   // =========================================================
   const PADRON_BANDS = [
     { key: "padronseriesband", label: "Padron Series", src: "/img/icons/padronseriesband.svg" },
-    { key: "padronfamilyreserveband", label: "Family Reserve", src: "/img/icons/padronfamilyreserveband.svg" },
+    {
+      key: "padronfamilyreserveband",
+      label: "Family Reserve",
+      src: "/img/icons/padronfamilyreserveband.svg",
+    },
     { key: "padron1926serieband", label: "1926", src: "/img/icons/padron1926serieband.svg" },
-    { key: "padronblackseriesband", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
-    { key: "padron1964anniversaryband", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
+    {
+      key: "padronblackseriesband",
+      label: "Black Series",
+      src: "/img/icons/padronblackseriesband.svg",
+    },
+    {
+      key: "padron1964anniversaryband",
+      label: "1964",
+      src: "/img/icons/padron1964anniversaryband.svg",
+    },
     { key: "padrondamasoband", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
   ];
 
@@ -593,11 +635,16 @@
     const full = `${line} ${cigar}`;
 
     switch (bandKey) {
-      case "padron1926serieband": return full.includes("1926");
-      case "padron1964anniversaryband": return full.includes("1964");
-      case "padronfamilyreserveband": return full.includes("family reserve") || full.includes("familyreserve");
-      case "padrondamasoband": return full.includes("damaso");
-      case "padronblackseriesband": return full.includes("black");
+      case "padron1926serieband":
+        return full.includes("1926");
+      case "padron1964anniversaryband":
+        return full.includes("1964");
+      case "padronfamilyreserveband":
+        return full.includes("family reserve") || full.includes("familyreserve");
+      case "padrondamasoband":
+        return full.includes("damaso");
+      case "padronblackseriesband":
+        return full.includes("black");
       case "padronseriesband":
         return (
           !bandKeyMatchesRow("padron1926serieband", r) &&
@@ -626,7 +673,9 @@
             </div>
             <div class="band-meta">
               <div class="band-label">${esc(b.label)}</div>
-              <input class="band-check" type="checkbox" data-band-key="${esc(b.key)}" ${checked ? "checked" : ""} />
+              <input class="band-check" type="checkbox" data-band-key="${esc(b.key)}" ${
+          checked ? "checked" : ""
+        } />
             </div>
           </div>
         `;
@@ -648,6 +697,14 @@
     openSheetEl(sheetBands);
   }
 
+  function bindBandsUI() {
+    bandsBtn?.addEventListener("click", () => openBandsSheet());
+    bandsConfirmBtn?.addEventListener("click", () => {
+      closeAllSheets();
+      apply();
+    });
+  }
+
   // =========================================================
   // ✅ FILTERS
   // =========================================================
@@ -655,13 +712,20 @@
 
   function getRowValueForKey(r, key) {
     switch (key) {
-      case "RG": return norm(getRing(r));
-      case "Length": return norm(getLength(r));
-      case "Wrapper Shade": return norm(getWrapperShade(r));
-      case "Shape": return norm(getShape(r));
-      case "Vitola": return norm(getVitola(r));
-      case "Strength": return norm(getStrength(r));
-      default: return "";
+      case "RG":
+        return norm(getRing(r));
+      case "Length":
+        return norm(getLength(r));
+      case "Wrapper Shade":
+        return norm(getWrapperShade(r));
+      case "Shape":
+        return norm(getShape(r));
+      case "Vitola":
+        return norm(getVitola(r));
+      case "Strength":
+        return norm(getStrength(r));
+      default:
+        return "";
     }
   }
 
@@ -673,10 +737,15 @@
     });
 
     const arr = Array.from(set);
-    if (key === "RG") { arr.sort((a, b) => Number(a) - Number(b)); return arr; }
+    if (key === "RG") {
+      arr.sort((a, b) => Number(a) - Number(b));
+      return arr;
+    }
     if (key === "Length") {
-      arr.sort((a, b) =>
-        Number(String(a).replace(/[^\d.]/g, "")) - Number(String(b).replace(/[^\d.]/g, ""))
+      arr.sort(
+        (a, b) =>
+          Number(String(a).replace(/[^\d.]/g, "")) -
+          Number(String(b).replace(/[^\d.]/g, ""))
       );
       return arr;
     }
@@ -751,7 +820,9 @@
                    padding:12px 14px;font-weight:800;font-size:15px;color:#0f1a2c;cursor:pointer;">
             <span>${esc(v)}</span>
             <span aria-hidden="true"
-              style="width:18px;height:18px;border-radius:6px;border:2px solid ${isOn ? "#007aff" : "rgba(15,26,44,.18)"};
+              style="width:18px;height:18px;border-radius:6px;border:2px solid ${
+                isOn ? "#007aff" : "rgba(15,26,44,.18)"
+              };
                      background:${isOn ? "#007aff" : "transparent"};"></span>
           </button>
         `;
@@ -807,14 +878,6 @@
     });
   }
 
-  function bindBandsUI() {
-    bandsBtn?.addEventListener("click", () => openBandsSheet());
-    bandsConfirmBtn?.addEventListener("click", () => {
-      closeAllSheets();
-      apply();
-    });
-  }
-
   // =========================================================
   // ✅ APPLY FILTERS + RENDER
   // =========================================================
@@ -824,7 +887,10 @@
     if (state.bandKeys.size) {
       let ok = false;
       for (const k of state.bandKeys) {
-        if (bandKeyMatchesRow(k, r)) { ok = true; break; }
+        if (bandKeyMatchesRow(k, r)) {
+          ok = true;
+          break;
+        }
       }
       if (!ok) return false;
     }
@@ -846,7 +912,9 @@
       .filter(rowPassesFilters)
       .filter((r) => {
         if (!q) return true;
-        const blob = `${getLine(r)} ${getCigar(r)} ${getWrapper(r)} ${getOrigin(r)} ${getRing(r)} ${getLength(r)} ${getMSRP(r)}`.toLowerCase();
+        const blob = `${getLine(r)} ${getCigar(r)} ${getWrapper(r)} ${getOrigin(r)} ${getRing(
+          r
+        )} ${getLength(r)} ${getMSRP(r)}`.toLowerCase();
         return blob.includes(q);
       });
 
@@ -941,10 +1009,10 @@
     if (!listEl) return;
 
     listEl.addEventListener("click", (e) => {
-      const add = e.target.closest("[data-receipt-item]");
+      const add = e.target.closest?.("[data-receipt-item]");
       if (add) return;
 
-      const row = e.target.closest("[data-row]");
+      const row = e.target.closest?.("[data-row]");
       if (!row) return;
 
       const item = {
@@ -967,7 +1035,9 @@
         msrp: norm(row.dataset.msrp),
         image: norm(row.dataset.image),
 
-        key: `${slug(row.dataset.brand)}|${slug(row.dataset.line)}|${slug(row.dataset.cigarFull || row.dataset.cigar)}`,
+        key: `${slug(row.dataset.brand)}|${slug(row.dataset.line)}|${slug(
+          row.dataset.cigarFull || row.dataset.cigar
+        )}`,
       };
 
       openCigarDetail(item);
@@ -978,7 +1048,6 @@
   // ✅ BOOT
   // =========================================================
   async function boot() {
-    // 🔥 fixes first so layout is clean immediately
     fixDuplicateBackButtons();
     bindInvoicePill();
 
@@ -1008,6 +1077,7 @@
 
     try {
       const res = await fetch(CSV_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
       const text = await res.text();
       state.all = csvToObjects(text);
       apply();
