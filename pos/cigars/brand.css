@@ -305,48 +305,51 @@ body.brand-page .icon-btn svg{
 [hidden]{ display:none !important; }
 
 /* =========================================================
-   ✅ CRITICAL FIX: STOP GLOBAL BLUR FROM AFFECTING THE SHEETS
+   ✅ MODAL BACKDROP (NO BLUR) + SCROLL LOCK
+   - This is the ONLY backdrop layer for Bands/Filters
    ========================================================= */
 
-/* If pos.css applies blur/filter when pos-modal-open is on, kill it everywhere. */
-body.pos-modal-open,
-body.pos-modal-open *{
-  filter:none !important;
-  -webkit-filter:none !important;
-}
-
-/* Keep scroll lock only */
 body.pos-modal-open{ overflow:hidden; }
 
-/* Add a dim backdrop WITHOUT blurring the sheet content */
+/* Dim the page WITHOUT blur (prevents iOS soft rendering) */
 body.pos-modal-open::before{
   content:"";
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.35);
-  z-index:8990;
+  z-index:10040;
 }
 
 /* =========================================================
-   ✅ SHEETS (Bands + Filters) — iOS style white card
+   ✅ SHEETS (Bands + Filters) — crisp on iOS (NO transforms)
+   - No translate centering
+   - Use top/bottom safe-area layout like your mockup
    ========================================================= */
 
 .sheet{
   position:fixed;
   left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:min(720px, calc(100vw - 28px));
-  max-height:calc(100vh - 72px);
+  transform:translateX(-50%); /* ✅ only X translate (safe), no Y centering */
+  top: calc(10px + env(safe-area-inset-top));
+  bottom: calc(10px + env(safe-area-inset-bottom));
+
+  width: min(720px, calc(100vw - 20px));
   display:flex;
   flex-direction:column;
+
   background:#ffffff;
   border-radius:28px;
   box-shadow:0 30px 90px rgba(0,0,0,.45);
-  z-index:9000; /* above body::before */
+
+  z-index:10060; /* above backdrop */
   overflow:hidden;
+
   color:#0f1a2c;
   font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+
+  /* ✅ iOS crispness hint */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
 }
 
 /* Header */
@@ -356,6 +359,7 @@ body.pos-modal-open::before{
   justify-content:space-between;
   gap:12px;
   padding:18px 18px 12px;
+  border-bottom:1px solid rgba(15,26,44,.06);
 }
 .sheet-header h2{
   margin:0;
@@ -385,12 +389,15 @@ body.pos-modal-open::before{
   padding:8px 18px 0;
   overflow:auto;
   -webkit-overflow-scrolling:touch;
+  flex:1 1 auto;
+  min-height:0;
 }
 
 /* Footer + Confirm */
 .sheet-footer{
   padding:14px 18px 18px;
   background:#ffffff;
+  border-top:1px solid rgba(15,26,44,.06);
 }
 .sheet-btn.primary{
   width:100%;
@@ -460,7 +467,8 @@ body.pos-modal-open::before{
 }
 
 /* =========================================================
-   ✅ FILTERS SHEET CONTENT
+   ✅ FILTERS SHEET CONTENT (your current simple version)
+   - We will REPLACE this with the main cigars filter UI next
    ========================================================= */
 
 .filters-body{ padding-top:6px; }
@@ -557,6 +565,7 @@ body.pos-modal-open::before{
 
 /* =========================================================
    ✅ CIGAR DETAIL MODAL — “WHITE CARD”
+   (unchanged from your current version)
    ========================================================= */
 
 body.cigar-detail-open{ overflow:hidden; }
