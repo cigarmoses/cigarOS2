@@ -19,8 +19,8 @@
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
   const CONTACTS_JSON_URL = "/pos/pos-contacts.json";
-
-  const ICON_BASE = "/img/icons/loyalty/";
+  
+  const ICON_BASE = "../img/icons/loyalty/";
   const ICONS = {
     military: `${ICON_BASE}military.svg`,
     paramedic: `${ICON_BASE}paramedic.svg`,
