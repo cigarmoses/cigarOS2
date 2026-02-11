@@ -1,32 +1,25 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   ✅ Fixes in this version:
-   - Bands + Filters buttons always OPEN their sheets (even if CSS expects a class)
-   - Adds a universal #sheet-backdrop automatically if it’s missing
-   - Uses BOTH mechanisms to show sheets:
-       1) removes [hidden]
-       2) adds .open + .is-open classes (covers your older CSS patterns)
-   - Close buttons + ESC + backdrop click close all sheets
-   - Keeps your existing list rendering + detail modal + add-to-cart wiring
-   - Keeps your wrapper toggle behavior
-   - Keeps invoice pill wiring (best-effort click existing injected invoice button; fallback route)
+   ✅ FIX (THIS PASS):
+   - Bands + Filters sheets render FULL-SCREEN bottom sheet (not tiny center)
+   - Adds/ensures a real #sheet-backdrop overlay (created if missing in HTML)
+   - Proper z-index layering so the sheet is on top and the background is dimmed (not “blurry card in center”)
+   - Keeps: Bands logic, Filters logic, Maduro/Natural toggle, row click detail modal, add-to-cart wiring
 */
 
 (() => {
-  "use strict";
-
   const CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
   const qp = (k) => new URLSearchParams(location.search).get(k) || "";
 
   const norm = (s) => String(s ?? "").trim();
   const lower = (s) => norm(s).toLowerCase();
 
-  // ✅ Accent-safe slug (Padrón -> padron)
+  // accent-safe slug (Padrón -> padron)
   const slug = (s) =>
     lower(s)
       .normalize("NFD")
@@ -41,6 +34,7 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#39;");
 
+  // aliases used by some helpers
   const escapeHTML = esc;
   const escapeAttr = esc;
 
@@ -55,7 +49,7 @@
   const statusEl = $("#brand-status");
   const searchEl = $("#brand-search");
 
-  // Back buttons (both can exist — causes “double back”)
+  // Back buttons (both can exist)
   const brandBackBtn = $("#brand-back");
   const posBackBtn = $(".pos-back");
   const backBtn = brandBackBtn || posBackBtn;
@@ -71,7 +65,7 @@
   const segSwitch = $("#seg-switch");
 
   // Sheets (already in brand.html)
-  const sheetReceipt = $("#sheet-receipt"); // (not touched)
+  const sheetReceipt = $("#sheet-receipt"); // (not touched here)
   const sheetBands = $("#sheet-bands");
   const sheetFilters = $("#sheet-filters");
 
@@ -89,25 +83,22 @@
   const filtersConfirm = $("#filters-confirm");
 
   // =========================================================
-  // ✅ Backdrop (create if missing)
+  // ✅ BACKDROP (CREATE IF MISSING)
   // =========================================================
   function ensureBackdrop() {
     let bd = $("#sheet-backdrop");
-    if (!bd) {
-      bd = document.createElement("div");
-      bd.id = "sheet-backdrop";
-      bd.className = "sheet-backdrop";
-      bd.hidden = true;
-      bd.setAttribute("aria-hidden", "true");
-      document.body.appendChild(bd);
-    }
+    if (bd) return bd;
+
+    bd = document.createElement("div");
+    bd.id = "sheet-backdrop";
+    bd.className = "sheet-backdrop";
+    bd.hidden = true;
+    document.body.appendChild(bd);
     return bd;
   }
 
-  const backdrop = ensureBackdrop();
-
   // =========================================================
-  // ✅ FIX #1: REMOVE DUPLICATE BACK BUTTON
+  // ✅ REMOVE DUPLICATE BACK BUTTON
   // =========================================================
   function fixDuplicateBackButtons() {
     if (brandBackBtn && posBackBtn && posBackBtn !== brandBackBtn) {
@@ -118,7 +109,7 @@
   }
 
   // =========================================================
-  // ✅ FIX #2: INVOICE PILL SHOULD OPEN INVOICE
+  // ✅ INVOICE PILL SHOULD OPEN INVOICE
   // =========================================================
   function findInvoicePill() {
     return (
@@ -136,7 +127,6 @@
   }
 
   function openInvoice() {
-    // Try to click an existing invoice button injected by cart.js
     const candidates = [
       $("#posInvoiceFab"),
       $("#posReceiptFab"),
@@ -147,7 +137,6 @@
       $(".receipt-fab"),
       $("[data-open-invoice]"),
       $("[data-open-receipt]"),
-      $("[data-invoice-btn]"),
     ].filter(Boolean);
 
     if (candidates.length) {
@@ -155,21 +144,17 @@
       return true;
     }
 
-    // Fallback route(s)
-    const fallbacks = ["/pos/invoice/", "/pos/invoice/index.html", "/pos/invoice.html"];
-    for (const href of fallbacks) {
-      try {
-        location.href = href;
-        return true;
-      } catch {}
+    try {
+      location.href = "/pos/invoice.html";
+      return true;
+    } catch {
+      return false;
     }
-    return false;
   }
 
   function bindInvoicePill() {
     const pill = findInvoicePill();
     if (!pill) return;
-
     pill.style.cursor = "pointer";
     pill.addEventListener("click", (e) => {
       e.preventDefault();
@@ -229,17 +214,15 @@
     return "";
   }
 
-  // Hub headers
+  // Match HUB headers
   const getBrand = (r) => pick(r, ["Brand", "Brand AKA", "Brand aka", "Manufacturer"]);
   const getLine = (r) => pick(r, ["Line", "Series", "Collection"]);
   const getCigar = (r) => pick(r, ["Cigar", "Name", "Cigar Name"]);
   const getVitola = (r) => pick(r, ["Vitola"]);
   const getStrength = (r) => pick(r, ["Strength"]);
   const getShape = (r) => pick(r, ["Shape"]);
-
   const getWrapperShade = (r) =>
     pick(r, ["Wrapper Shade", "WrapperShade", "Wrapper shade", "wrapper shade", "Shade"]);
-
   const getWrapper = (r) => pick(r, ["Wrapper", "Wrapper Type"]);
   const getBinder = (r) => pick(r, ["Binder"]);
   const getFiller = (r) => pick(r, ["Filler"]);
@@ -345,6 +328,7 @@
     const brandIcon = bestBrandHeaderIcon(row) || "";
 
     const picked = pickCigarImage(row);
+
     const nameForFile = slug(
       row?.cigarFull ||
         row?.["Cigar Full"] ||
@@ -352,6 +336,7 @@
         row?.Cigar ||
         `${norm(row?.line || row?.Line || "")} ${norm(row?.cigar || row?.Cigar || "")}`.trim()
     );
+
     const brandForFolder = slug(row?.brand || row?.Brand || BRAND || "");
 
     const imgCandidates = [
@@ -359,11 +344,14 @@
       `/img/cigars/${brandForFolder}/${nameForFile}.png`,
       `/img/cigars/${brandForFolder}/${nameForFile}.jpg`,
       `/img/cigars/${brandForFolder}/${nameForFile}.jpeg`,
+      `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.png`,
+      `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpg`,
+      `/img/cigars/${brandForFolder}/${brandForFolder}${nameForFile}.jpeg`,
     ].filter(Boolean);
 
     const cigarImg = imgCandidates[0] || "";
 
-    const rg = norm(row?.ring || row?.RG || row?.Ring || row?.["Ring"] || "");
+    const rg = norm(row?.ring || row?.RG || row?.Ring || "");
     const len = norm(row?.length || row?.Length || "");
     const strength = norm(row?.strength || row?.Strength || "");
     const vitola = norm(row?.vitola || row?.Vitola || "");
@@ -451,7 +439,7 @@
     detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
       const msrpVal = row?.msrp ?? row?.MSRP ?? row?.Price ?? row?.price ?? 0;
 
-      window.CigarOSCart?.add?.({
+      window.CigarOSCart?.add({
         id: row?.key || `${brand}-${cigarName}-${vitola}`,
         name: cigarName,
         brand: brand,
@@ -476,65 +464,46 @@
   }
 
   // =========================================================
-  // ✅ SHEET OPEN/CLOSE (ROBUST)
+  // ✅ SHEET OPEN/CLOSE (FULLSCREEN BOTTOM SHEET)
   // =========================================================
   function openSheetEl(sheetEl) {
     if (!sheetEl) return;
 
-    // Make sure it isn't hidden
-    sheetEl.hidden = false;
-    sheetEl.removeAttribute("hidden");
+    const bd = ensureBackdrop();
 
-    // Many CSS patterns rely on these classes
-    sheetEl.classList.add("open");
-    sheetEl.classList.add("is-open");
-
-    // Body state
     document.body.classList.add("pos-modal-open");
 
-    // Backdrop
-    if (backdrop) {
-      backdrop.hidden = false;
-      backdrop.removeAttribute("hidden");
-      backdrop.classList.add("open");
-      backdrop.classList.add("is-open");
-      backdrop.setAttribute("aria-hidden", "false");
-    }
+    bd.hidden = false;
+    bd.classList.add("open");
 
-    // Accessibility
-    sheetEl.setAttribute("aria-hidden", "false");
-
-    // Focus the first close button if present
-    setTimeout(() => {
-      sheetEl.querySelector("[data-sheet-close]")?.focus?.();
-    }, 0);
+    sheetEl.hidden = false;
+    sheetEl.classList.add("is-open");
   }
 
   function closeAllSheets() {
+    const bd = ensureBackdrop();
+
     document.body.classList.remove("pos-modal-open");
 
     [sheetBands, sheetFilters, sheetReceipt].forEach((el) => {
       if (!el) return;
-      el.classList.remove("open", "is-open");
+      el.classList.remove("is-open");
       el.hidden = true;
-      el.setAttribute("aria-hidden", "true");
     });
 
-    if (backdrop) {
-      backdrop.classList.remove("open", "is-open");
-      backdrop.hidden = true;
-      backdrop.setAttribute("aria-hidden", "true");
-    }
+    bd.classList.remove("open");
+    bd.hidden = true;
   }
 
   function bindSheetClosers() {
-    // Any X button
+    // x buttons
     $$("[data-sheet-close]").forEach((btn) => btn.addEventListener("click", closeAllSheets));
 
-    // Backdrop click
-    backdrop?.addEventListener("click", closeAllSheets);
+    // backdrop
+    const bd = ensureBackdrop();
+    bd.addEventListener("click", closeAllSheets);
 
-    // ESC
+    // escape
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeAllSheets();
     });
@@ -551,12 +520,11 @@
     bandKeys: new Set(),
     filterKey: "",
     filters: {
-      values: new Map(), // key -> Set(values)
-      toggles: new Map(), // key -> bool
+      values: new Map(),
+      toggles: new Map(),
     },
   };
 
-  // Use getBrand() (includes accents/AKA/manufacturer)
   function inBrand(r) {
     if (!BRAND) return true;
     return slug(getBrand(r)) === BRAND_SLUG;
@@ -595,6 +563,7 @@
     const mode = state.wrapperState;
     if (mode === "all") return true;
 
+    // keep your current behavior: name-string match
     const line = norm(getLine(r));
     const cigar = norm(getCigar(r));
     const cigarFull = `${line} ${cigar}`.trim();
@@ -616,11 +585,7 @@
       src: "/img/icons/padronfamilyreserveband.svg",
     },
     { key: "padron1926serieband", label: "1926", src: "/img/icons/padron1926serieband.svg" },
-    {
-      key: "padronblackseriesband",
-      label: "Black Series",
-      src: "/img/icons/padronblackseriesband.svg",
-    },
+    { key: "padronblackseriesband", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
     {
       key: "padron1964anniversaryband",
       label: "1964",
@@ -667,17 +632,17 @@
       .map((b) => {
         const checked = state.bandKeys.has(b.key);
         return `
-          <div class="band-row">
-            <div class="band-art">
-              <img class="band-img" src="${esc(b.src)}" alt="${esc(b.label)}">
+          <label class="bands-row" role="button" tabindex="0">
+            <div class="bands-art">
+              <img class="bands-img" src="${esc(b.src)}" alt="${esc(b.label)}" />
             </div>
-            <div class="band-meta">
-              <div class="band-label">${esc(b.label)}</div>
-              <input class="band-check" type="checkbox" data-band-key="${esc(b.key)}" ${
-          checked ? "checked" : ""
-        } />
+            <div class="bands-meta">
+              <div class="bands-label">${esc(b.label)}</div>
             </div>
-          </div>
+            <input class="bands-check" type="checkbox" data-band-key="${esc(b.key)}" ${
+              checked ? "checked" : ""
+            } />
+          </label>
         `;
       })
       .join("");
@@ -695,14 +660,6 @@
   function openBandsSheet() {
     renderBandsOptions();
     openSheetEl(sheetBands);
-  }
-
-  function bindBandsUI() {
-    bandsBtn?.addEventListener("click", () => openBandsSheet());
-    bandsConfirmBtn?.addEventListener("click", () => {
-      closeAllSheets();
-      apply();
-    });
   }
 
   // =========================================================
@@ -737,6 +694,7 @@
     });
 
     const arr = Array.from(set);
+
     if (key === "RG") {
       arr.sort((a, b) => Number(a) - Number(b));
       return arr;
@@ -744,11 +702,11 @@
     if (key === "Length") {
       arr.sort(
         (a, b) =>
-          Number(String(a).replace(/[^\d.]/g, "")) -
-          Number(String(b).replace(/[^\d.]/g, ""))
+          Number(String(a).replace(/[^\d.]/g, "")) - Number(String(b).replace(/[^\d.]/g, ""))
       );
       return arr;
     }
+
     arr.sort((a, b) => a.localeCompare(b));
     return arr;
   }
@@ -779,11 +737,14 @@
 
   function showFiltersHome() {
     if (!filtersHome || !filtersDetail) return;
+
     filtersHome.hidden = false;
     filtersDetail.hidden = true;
+
     if (filtersBack) filtersBack.hidden = true;
     if (filtersTitle) filtersTitle.textContent = "Filters";
     if (filtersSearch) filtersSearch.value = "";
+
     state.filterKey = "";
     setFiltersConfirmState();
   }
@@ -793,6 +754,7 @@
 
     if (filtersHome) filtersHome.hidden = true;
     if (filtersDetail) filtersDetail.hidden = false;
+
     if (filtersBack) filtersBack.hidden = false;
     if (filtersTitle) filtersTitle.textContent = key;
 
@@ -814,23 +776,16 @@
       .map((v) => {
         const isOn = selected.has(v);
         return `
-          <button type="button" class="filter-item" data-filter-val="${esc(v)}"
-            style="display:flex;align-items:center;justify-content:space-between;gap:12px;
-                   width:100%;border:1px solid rgba(15,26,44,.10);background:#fff;border-radius:14px;
-                   padding:12px 14px;font-weight:800;font-size:15px;color:#0f1a2c;cursor:pointer;">
-            <span>${esc(v)}</span>
-            <span aria-hidden="true"
-              style="width:18px;height:18px;border-radius:6px;border:2px solid ${
-                isOn ? "#007aff" : "rgba(15,26,44,.18)"
-              };
-                     background:${isOn ? "#007aff" : "transparent"};"></span>
+          <button type="button" class="filters-item" data-filter-val="${esc(v)}">
+            <span class="filters-item-label">${esc(v)}</span>
+            <span class="filters-item-check ${isOn ? "is-on" : ""}" aria-hidden="true"></span>
           </button>
         `;
       })
       .join("");
 
     filtersList.innerHTML =
-      rows || `<div style="padding:12px 4px;color:rgba(15,26,44,.55);font-weight:700;">No values</div>`;
+      rows || `<div class="filters-empty">No values</div>`;
 
     filtersList.querySelectorAll("[data-filter-val]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -878,6 +833,14 @@
     });
   }
 
+  function bindBandsUI() {
+    bandsBtn?.addEventListener("click", () => openBandsSheet());
+    bandsConfirmBtn?.addEventListener("click", () => {
+      closeAllSheets();
+      apply();
+    });
+  }
+
   // =========================================================
   // ✅ APPLY FILTERS + RENDER
   // =========================================================
@@ -912,9 +875,7 @@
       .filter(rowPassesFilters)
       .filter((r) => {
         if (!q) return true;
-        const blob = `${getLine(r)} ${getCigar(r)} ${getWrapper(r)} ${getOrigin(r)} ${getRing(
-          r
-        )} ${getLength(r)} ${getMSRP(r)}`.toLowerCase();
+        const blob = `${getLine(r)} ${getCigar(r)} ${getWrapper(r)} ${getOrigin(r)} ${getRing(r)} ${getLength(r)} ${getMSRP(r)}`.toLowerCase();
         return blob.includes(q);
       });
 
@@ -1009,10 +970,10 @@
     if (!listEl) return;
 
     listEl.addEventListener("click", (e) => {
-      const add = e.target.closest?.("[data-receipt-item]");
+      const add = e.target.closest("[data-receipt-item]");
       if (add) return;
 
-      const row = e.target.closest?.("[data-row]");
+      const row = e.target.closest("[data-row]");
       if (!row) return;
 
       const item = {
@@ -1048,6 +1009,9 @@
   // ✅ BOOT
   // =========================================================
   async function boot() {
+    // Ensure overlay exists early so CSS can target it
+    ensureBackdrop();
+
     fixDuplicateBackButtons();
     bindInvoicePill();
 
@@ -1077,7 +1041,6 @@
 
     try {
       const res = await fetch(CSV_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
       const text = await res.text();
       state.all = csvToObjects(text);
       apply();
