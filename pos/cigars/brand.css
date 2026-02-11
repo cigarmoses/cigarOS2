@@ -303,7 +303,257 @@ body.brand-page .icon-btn svg{
 
 /* ========== UTILITIES ========== */
 [hidden]{ display:none !important; }
+
+/* =========================================================
+   ✅ CRITICAL FIX: STOP GLOBAL BLUR FROM AFFECTING THE SHEETS
+   ========================================================= */
+
+/* If pos.css applies blur/filter when pos-modal-open is on, kill it everywhere. */
+body.pos-modal-open,
+body.pos-modal-open *{
+  filter:none !important;
+  -webkit-filter:none !important;
+}
+
+/* Keep scroll lock only */
 body.pos-modal-open{ overflow:hidden; }
+
+/* Add a dim backdrop WITHOUT blurring the sheet content */
+body.pos-modal-open::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  z-index:8990;
+}
+
+/* =========================================================
+   ✅ SHEETS (Bands + Filters) — iOS style white card
+   ========================================================= */
+
+.sheet{
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:min(720px, calc(100vw - 28px));
+  max-height:calc(100vh - 72px);
+  display:flex;
+  flex-direction:column;
+  background:#ffffff;
+  border-radius:28px;
+  box-shadow:0 30px 90px rgba(0,0,0,.45);
+  z-index:9000; /* above body::before */
+  overflow:hidden;
+  color:#0f1a2c;
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+}
+
+/* Header */
+.sheet-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 18px 12px;
+}
+.sheet-header h2{
+  margin:0;
+  font-size:28px;
+  font-weight:900;
+  letter-spacing:-.02em;
+}
+
+/* Close button (top right) */
+.sheet-x{
+  width:36px;
+  height:36px;
+  border:none;
+  border-radius:12px;
+  background:rgba(15,26,44,.06);
+  color:rgba(15,26,44,.70);
+  font-size:28px;
+  font-weight:900;
+  line-height:1;
+  display:grid;
+  place-items:center;
+}
+.sheet-x:active{ transform:scale(.98); }
+
+/* Body */
+.sheet-body{
+  padding:8px 18px 0;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* Footer + Confirm */
+.sheet-footer{
+  padding:14px 18px 18px;
+  background:#ffffff;
+}
+.sheet-btn.primary{
+  width:100%;
+  height:52px;
+  border:none;
+  border-radius:999px;
+  background:#0f7aff;
+  color:#fff;
+  font-size:18px;
+  font-weight:800;
+}
+.sheet-btn.primary:active{ transform:scale(.99); }
+
+/* =========================================================
+   ✅ BANDS SHEET CONTENT
+   ========================================================= */
+
+.bands-list{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  padding-bottom:6px;
+}
+
+.band-row{
+  display:grid;
+  grid-template-columns:1fr 44px;
+  align-items:center;
+  gap:14px;
+}
+
+.band-art{
+  width:100%;
+  border-radius:18px;
+  background:#ffffff;
+}
+
+.band-img{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius:18px;
+}
+
+.band-meta{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.band-label{
+  font-size:16px;
+  font-weight:800;
+  color:rgba(15,26,44,.70);
+  text-align:center;
+  line-height:1.1;
+}
+
+/* iOS-ish checkbox */
+.band-check{
+  width:28px;
+  height:28px;
+  border-radius:10px;
+  accent-color:#0f7aff;
+}
+
+/* =========================================================
+   ✅ FILTERS SHEET CONTENT
+   ========================================================= */
+
+.filters-body{ padding-top:6px; }
+
+.filters-grid{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.filters-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.filter-pill{
+  border:1px solid rgba(15,26,44,.12);
+  background:rgba(15,26,44,.06);
+  color:rgba(15,26,44,.75);
+  border-radius:14px;
+  height:38px;
+  padding:0 14px;
+  font-weight:900;
+  font-size:14px;
+}
+.filter-pill:active{ transform:scale(.99); }
+
+.pill-wide{ padding:0 14px; }
+.pill-nowrap{ white-space:nowrap; }
+
+/* Toggle rows */
+.filters-toggles{
+  margin-top:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding-bottom:8px;
+}
+
+.tog-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.tog{
+  border:1px solid rgba(15,26,44,.12);
+  background:rgba(15,26,44,.06);
+  color:rgba(15,26,44,.75);
+  border-radius:14px;
+  height:38px;
+  padding:0 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:900;
+  font-size:14px;
+}
+.tog .tog-dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:rgba(15,26,44,.22);
+}
+.tog.is-on{
+  border-color:rgba(15,122,255,.25);
+  background:rgba(15,122,255,.10);
+}
+.tog.is-on .tog-dot{ background:#0f7aff; }
+
+/* Filters detail view search */
+.filters-search{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:18px;
+  background:rgba(15,26,44,.06);
+  border:1px solid rgba(15,26,44,.10);
+  margin:6px 0 12px;
+}
+.filters-search-ico{ opacity:.55; }
+#filters-search{
+  width:100%;
+  border:none;
+  background:transparent;
+  outline:none;
+  font-size:16px;
+  font-weight:800;
+  color:#0f1a2c;
+}
+#filters-search::placeholder{ color:rgba(15,26,44,.35); }
 
 /* =========================================================
    ✅ CIGAR DETAIL MODAL — “WHITE CARD”
@@ -330,6 +580,7 @@ body.cigar-detail-open{ overflow:hidden; }
   pointer-events:auto;
 }
 
+/* The big white rounded card */
 .cigar-detail-sheet{
   width:min(980px, calc(100vw - 28px));
   max-height:calc(100vh - 42px);
@@ -350,6 +601,7 @@ body.cigar-detail-open{ overflow:hidden; }
   font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
+/* bottom-left red X */
 .cigar-detail-x{
   position:absolute;
   left:14px;
@@ -365,11 +617,13 @@ body.cigar-detail-open{ overflow:hidden; }
   cursor:pointer;
 }
 
+/* Inner padding */
 .cigar-detail-body{
   padding:18px 18px 22px;
   color:#0f1a2c;
 }
 
+/* White rounded header */
 .cd-headercard{
   background:#ffffff;
   border-radius:22px;
@@ -542,9 +796,9 @@ body.cigar-detail-open{ overflow:hidden; }
   font-size:11px;
   font-weight:500;
   letter-spacing:.01em;
-  text-transform:none;
   cursor:default;
 }
+
 .cd-btn.is-live{
   background:#ffffff;
   color:#0f1a2c;
@@ -552,246 +806,3 @@ body.cigar-detail-open{ overflow:hidden; }
   cursor:pointer;
 }
 .cd-btn.is-live:active{ transform:scale(.99); }
-
-/* =========================================================
-   ✅ BANDS + FILTERS SHEETS (FULL-SCREEN BOTTOM SHEETS)
-   Fixes: tiny centered content + weird blur/layout
-   ========================================================= */
-
-/* backdrop overlay (JS creates #sheet-backdrop if missing) */
-.sheet-backdrop{
-  position:fixed;
-  inset:0;
-  z-index:9000;
-  background:rgba(0,0,0,.42);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  opacity:0;
-  transition:opacity .18s ease;
-}
-.sheet-backdrop.open{ opacity:1; }
-
-/* shared sheet container */
-.sheet{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  z-index:9001;
-  width:100%;
-  max-height:92vh;
-  background:#fff;
-  color:#0f1a2c;
-  border-top-left-radius:26px;
-  border-top-right-radius:26px;
-  box-shadow:0 -18px 60px rgba(0,0,0,.35);
-  transform:translateY(16px);
-  opacity:0;
-  pointer-events:none;
-  transition:transform .18s ease, opacity .18s ease;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
-.sheet.is-open{
-  transform:translateY(0);
-  opacity:1;
-  pointer-events:auto;
-}
-
-/* header */
-.sheet-header{
-  padding:16px 16px 10px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  border-bottom:1px solid rgba(15,26,44,.10);
-}
-.sheet-header h2{
-  margin:0;
-  font-size:22px;
-  font-weight:900;
-  letter-spacing:-.02em;
-}
-
-/* close button */
-.sheet-x{
-  width:34px;
-  height:34px;
-  border:none;
-  border-radius:12px;
-  background:rgba(15,26,44,.06);
-  color:rgba(15,26,44,.80);
-  font-size:22px;
-  font-weight:900;
-  line-height:1;
-  display:grid;
-  place-items:center;
-}
-
-/* body scroll */
-.sheet-body{
-  padding:14px 16px 16px;
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-}
-
-/* footer + confirm */
-.sheet-footer{
-  padding:12px 16px 16px;
-  border-top:1px solid rgba(15,26,44,.10);
-  background:#fff;
-}
-.sheet-btn{
-  width:100%;
-  height:52px;
-  border:none;
-  border-radius:18px;
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:-.01em;
-}
-.sheet-btn.primary{
-  background:#0f7aff;
-  color:#fff;
-}
-.sheet-btn.primary:disabled{
-  opacity:.45;
-}
-
-/* ----- Bands list ----- */
-.bands-list{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-.bands-row{
-  display:grid;
-  grid-template-columns: 1fr auto;
-  align-items:center;
-  gap:12px;
-  padding:10px 10px;
-  border-radius:18px;
-  background:#f6f8fb;
-  border:1px solid rgba(15,26,44,.10);
-}
-.bands-art{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:8px 8px;
-  border-radius:16px;
-  background:#fff;
-  border:1px solid rgba(15,26,44,.10);
-}
-.bands-img{
-  width:100%;
-  max-width:420px;
-  height:auto;
-  display:block;
-}
-.bands-meta{
-  display:none; /* your reference view doesn’t need extra text clutter */
-}
-.bands-check{
-  width:30px;
-  height:30px;
-  border-radius:10px;
-  accent-color:#0f7aff;
-}
-
-/* ----- Filters home pills layout (keep your HTML, just make it look right) ----- */
-.filters-grid{ display:flex; flex-direction:column; gap:10px; }
-.filters-row{ display:flex; gap:10px; }
-.filter-pill{
-  flex:1 1 auto;
-  height:40px;
-  border-radius:14px;
-  border:1px solid rgba(15,26,44,.12);
-  background:#f6f8fb;
-  color:#0f1a2c;
-  font-size:13px;
-  font-weight:900;
-}
-.pill-wide{ flex:1.25 1 auto; }
-.pill-nowrap{ white-space:nowrap; }
-
-.filters-toggles{ margin-top:14px; display:flex; flex-direction:column; gap:10px; }
-.tog-row{ display:flex; gap:10px; }
-.tog{
-  flex:1 1 auto;
-  height:44px;
-  border-radius:16px;
-  border:1px solid rgba(15,26,44,.12);
-  background:#f6f8fb;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  font-weight:900;
-  color:#0f1a2c;
-}
-.tog.is-on{
-  border-color:rgba(15,122,255,.45);
-  background:rgba(15,122,255,.12);
-}
-.tog-dot{
-  width:10px; height:10px; border-radius:999px;
-  background:rgba(15,26,44,.25);
-}
-.tog.is-on .tog-dot{ background:#0f7aff; }
-
-/* Filters detail list */
-.filters-search{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
-  border-radius:16px;
-  background:#f6f8fb;
-  border:1px solid rgba(15,26,44,.10);
-  margin-bottom:12px;
-}
-#filters-search{
-  width:100%;
-  border:none;
-  background:transparent;
-  outline:none;
-  font-size:15px;
-  font-weight:800;
-  color:#0f1a2c;
-}
-#filters-search::placeholder{ color:rgba(15,26,44,.45); }
-
-.filters-item{
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:12px 14px;
-  border-radius:16px;
-  border:1px solid rgba(15,26,44,.10);
-  background:#fff;
-  font-size:15px;
-  font-weight:900;
-  color:#0f1a2c;
-  margin-bottom:10px;
-}
-.filters-item-check{
-  width:20px;
-  height:20px;
-  border-radius:7px;
-  border:2px solid rgba(15,26,44,.18);
-  background:transparent;
-}
-.filters-item-check.is-on{
-  border-color:#0f7aff;
-  background:#0f7aff;
-}
-.filters-empty{
-  padding:12px 4px;
-  color:rgba(15,26,44,.55);
-  font-weight:800;
-}
