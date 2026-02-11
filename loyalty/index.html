@@ -158,7 +158,7 @@
     .row {
       min-height: 44px;
       padding: 10px 14px;
-      padding-right: 74px; /* reserve for AZ index breathing room */
+      padding-right: 22px; /* reserve for AZ index breathing room */
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -208,17 +208,18 @@
       align-items: center;
       gap: 8px;
       padding-left: 8px;
-      margin-right: 8px; /* closer to right, more space from AZ index */
+      margin-right: 0px; /* closer to right, more space from AZ index */
     }
 
-    .row-right img {
-      width: 18px !important;
-      height: 18px !important;
-      max-width: 18px !important;
-      max-height: 18px !important;
-      object-fit: contain;
-      display: block;
-    }
+    .row-right {
+  position: absolute;
+  right: 28px; /* adjust until it matches red box */
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 
     .empty-state {
       padding: 16px;
