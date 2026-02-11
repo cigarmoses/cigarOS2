@@ -4,7 +4,7 @@
    - Reads customers from localStorage: cigaros_customers_v1
    - Seeds from /pos/pos-contacts.json if localStorage is empty
    - Search + segmented modes (All / Regulars / Lockers)
-   - Customer profile dialog (NEW iOS-style layout)
+   - Customer profile dialog (iOS-style layout)
    - Compact list rows with right-aligned status icons
 
    ICON RULE:
@@ -44,7 +44,6 @@
   const pPointsPill = $("#pPointsPill");
   const pDetails = $("#pDetails");
   const pCloseX = $("#pCloseX");
-  const pDone = $("#pDone");
 
   const tonyFab = $("#tonyFab");
 
@@ -102,25 +101,34 @@
   }
 
   function customerType(c) {
-    // Locker column or lockerNumber wins
     if (hasColumnValue(c, "Locker") || c.locker || c.lockerNumber) return "locker";
-
-    // Otherwise, only TRUE Regular column indicates regular
     if (hasColumnValue(c, "Regular")) return "regular";
 
-    // backward compat if a type exists
     const t = norm(c.type || c.tier || c.segment || "");
     if (t.includes("locker")) return "locker";
     if (t.includes("regular")) return "regular";
 
-    // default: regular (but note: tab filtering controls visibility)
     return "regular";
   }
 
-  function firstLast(c){
+  function firstLastParts(c){
     const first = (c.firstName || "").trim();
-    const last = (c.lastName || "").trim();
-    return `${first} ${last}`.trim();
+    const last  = (c.lastName || "").trim();
+
+    // fallback if missing names
+    const fallback = (c.name || c.email || c.phone || "Customer").trim();
+
+    return {
+      first: first || (last ? "" : fallback),
+      last:  last  || (first ? "" : ""),
+      fallbackOnly: (!first && !last) ? fallback : "",
+    };
+  }
+
+  function firstLast(c){
+    const p = firstLastParts(c);
+    if (p.fallbackOnly) return p.fallbackOnly;
+    return `${p.first} ${p.last}`.trim();
   }
 
   function lastFirst(c){
@@ -187,7 +195,6 @@
       const lockerNumber = toStr(r["Locker number"] ?? r.lockerNumber ?? r.locker);
       const type = toStr(r["type"] ?? r.type);
 
-      // keep icon columns intact
       const Military = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
       const Paramedic = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
       const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
@@ -210,7 +217,6 @@
         type,
         lockerNumber: lockerNumber || "",
 
-        // ICON COLUMNS (exact titles)
         Military,
         Paramedic,
         Firefighter,
@@ -247,7 +253,6 @@
     let list = (state.customers || []).slice();
 
     if (state.mode === "regular") {
-      // ONLY those marked Regular column
       list = list.filter((c) => customerType(c) === "regular" && hasColumnValue(c, "Regular"));
     } else if (state.mode === "lockers") {
       list = list.filter((c) => customerType(c) === "locker");
@@ -267,10 +272,6 @@
       });
     }
 
-    // Sorting rules:
-    // - All: sort by LAST NAME (iOS Contacts)
-    // - Lockers tab: sort by lockerNumber numeric asc (1..25 etc)
-    // - Regulars tab: sort by last name
     if (state.mode === "lockers") {
       list.sort((a, b) => {
         const na = Number(String(a.lockerNumber || "").replace(/\D+/g, "")) || 0;
@@ -309,7 +310,6 @@
       const first = (c.firstName || "").trim();
       const last  = (c.lastName || "").trim();
 
-      // Locker tab: show locker number before last name (not bold)
       const lockerPrefix = (state.mode === "lockers" && c.lockerNumber)
         ? `<span class="locker-num">${escapeHTML(String(c.lockerNumber).replace(/\D+/g, "") || c.lockerNumber)}</span>`
         : ``;
@@ -320,7 +320,6 @@
         <span class="name-first">${escapeHTML(first)}</span>
       `;
 
-      // Right-side icons: role icons (0..4) + tier icon last (locker/regular)
       const roleIcons = getRoleIcons(c);
       const tierIcon = getTierIcon(c);
       const icons = [...roleIcons, tierIcon];
@@ -345,17 +344,29 @@
     });
   }
 
-  // ---------- profile dialog (NEW TARGET LOOK) ----------
+  // ---------- profile dialog (FIRST line = first name, SECOND line = last name) ----------
   function openProfile(customerId) {
     state.activeCustomerId = customerId;
 
     const c = state.customers.find((x) => String(x.id) === String(customerId));
     if (!c) return;
 
-    // Big name: First Last (as in your screenshot)
-    if (pName) pName.textContent = firstLast(c) || "—";
+    const parts = firstLastParts(c);
 
-    // aka line
+    // Always first on top, last below (or fallback if no names)
+    if (pName) {
+      const firstSpan = pName.querySelector(".pn-first");
+      const lastSpan  = pName.querySelector(".pn-last");
+
+      if (parts.fallbackOnly) {
+        if (firstSpan) firstSpan.textContent = parts.fallbackOnly;
+        if (lastSpan) lastSpan.textContent = "";
+      } else {
+        if (firstSpan) firstSpan.textContent = parts.first || "";
+        if (lastSpan) lastSpan.textContent = parts.last || "";
+      }
+    }
+
     const nick = nickname(c);
     if (pAka) {
       if (nick) {
@@ -367,7 +378,6 @@
       }
     }
 
-    // Tier line: "Locker 23" or "Regular"
     const isLocker = customerType(c) === "locker";
     const lockerNum = String(c.lockerNumber || "").replace(/\D+/g, "") || "";
     const tierLine = isLocker
@@ -376,11 +386,9 @@
 
     if (pTier) pTier.textContent = tierLine || "—";
 
-    // Points pill (green)
     const pts = Number(c.points || 0);
     if (pPointsPill) pPointsPill.textContent = String(pts);
 
-    // Details: phone / email / birthday stacked
     const phone = (c.phone || "").trim();
     const email = (c.email || "").trim();
     const bday  = (c.birthday || "").trim();
@@ -417,9 +425,8 @@
       render();
     });
 
-    // Close buttons in popup
+    // Close button in popup (only X)
     pCloseX?.addEventListener("click", closeProfile);
-    pDone?.addEventListener("click", closeProfile);
 
     // Click outside dialog closes
     dialog?.addEventListener("click", (e) => {
