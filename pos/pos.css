@@ -7,9 +7,14 @@
 #sheet-backdrop{
   position: fixed;
   inset: 0;
+
+  /* ✅ Keep darkening, REMOVE blur (blur is what makes iOS render everything soft) */
   background: rgba(0,0,0,.35);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+
+  /* ❌ REMOVE these (they are the reason your modals look blurred on iPhone) */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
   z-index: 9998;
 
   pointer-events: none;
