@@ -166,7 +166,7 @@
       border-bottom: 1px solid var(--hairline);
       cursor: pointer;
       background: #fff;
-      position: relative;
+      position: relative; /* needed because row-right is absolute */
     }
     .row:last-child { border-bottom: none; }
 
@@ -187,6 +187,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding-right: 86px; /* room so text doesn't sit under icons */
     }
 
     .name-last{ font-weight: 800; }
@@ -201,25 +202,26 @@
       color: rgba(17,17,17,.9);
     }
 
-    /* ICON cluster */
-    .row-right {
-      flex: 0 0 auto;
+    /* ICON cluster (RIGHT SIDE) */
+    .row-right{
+      position: absolute;
+      right: 28px; /* leaves room for AZ index */
+      top: 50%;
+      transform: translateY(-50%);
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding-left: 8px;
-      margin-right: 0px; /* closer to right, more space from AZ index */
+      pointer-events: none;
     }
 
-    .row-right {
-  position: absolute;
-  right: 28px; /* adjust until it matches red box */
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
+    /* ✅ ICON SIZE FIX */
+    .loy-ico{
+      width: 18px;
+      height: 18px;
+      display: block;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
 
     .empty-state {
       padding: 16px;
@@ -336,7 +338,7 @@
       max-width: 560px;
       border-radius: 18px;
       overflow: hidden;
-      background: #fff; /* <-- POPUP BACKGROUND WHITE */
+      background: #fff; /* popup background white */
       box-shadow: 0 24px 70px rgba(0,0,0,.28);
     }
     dialog#profileDialog::backdrop{
@@ -421,7 +423,6 @@
       justify-content: flex-start; /* only X on left */
     }
 
-    /* bottom-left X (only close control) */
     .p-close{
       border: none;
       background: transparent;
