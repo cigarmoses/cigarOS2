@@ -1,11 +1,11 @@
 /* /pos/cigars/brand.js
    Brand POS page controller (Cigars)
 
-   ✅ FIX (THIS PASS):
-   - Bands + Filters sheets render FULL-SCREEN bottom sheet (not tiny center)
-   - Adds/ensures a real #sheet-backdrop overlay (created if missing in HTML)
-   - Proper z-index layering so the sheet is on top and the background is dimmed (not “blurry card in center”)
-   - Keeps: Bands logic, Filters logic, Maduro/Natural toggle, row click detail modal, add-to-cart wiring
+   ✅ UPDATE (FILTER UI MATCH):
+   - Brand page Filters now uses the SAME bottom-sheet filter modal layout as /pos/cigars (main)
+   - Removes Manufacturers + Brands categories on brand pages
+   - Filters apply ONLY within the current brand context
+   - Keeps everything else: Bands sheet, Maduro/Natural toggle, row click detail modal, add-to-cart wiring
 */
 
 (() => {
@@ -16,7 +16,7 @@
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
   const qp = (k) => new URLSearchParams(location.search).get(k) || "";
 
-  const norm = (s) => String(s ?? "").trim();
+  const norm = (s) => String(s ?? "").trim().replace(/\s+/g, " ");
   const lower = (s) => norm(s).toLowerCase();
 
   // accent-safe slug (Padrón -> padron)
@@ -24,7 +24,9 @@
     lower(s)
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "");
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
 
   const esc = (s = "") =>
     String(s)
@@ -67,35 +69,10 @@
   // Sheets (already in brand.html)
   const sheetReceipt = $("#sheet-receipt"); // (not touched here)
   const sheetBands = $("#sheet-bands");
-  const sheetFilters = $("#sheet-filters");
 
   // Bands sheet targets
   const bandsOptionsEl = $("#bands-options");
   const bandsConfirmBtn = $("#bands-confirm");
-
-  // Filters sheet targets
-  const filtersHome = $("#filters-home");
-  const filtersDetail = $("#filters-detail");
-  const filtersList = $("#filters-list");
-  const filtersSearch = $("#filters-search");
-  const filtersBack = $("#filters-back");
-  const filtersTitle = $("#filters-title");
-  const filtersConfirm = $("#filters-confirm");
-
-  // =========================================================
-  // ✅ BACKDROP (CREATE IF MISSING)
-  // =========================================================
-  function ensureBackdrop() {
-    let bd = $("#sheet-backdrop");
-    if (bd) return bd;
-
-    bd = document.createElement("div");
-    bd.id = "sheet-backdrop";
-    bd.className = "sheet-backdrop";
-    bd.hidden = true;
-    document.body.appendChild(bd);
-    return bd;
-  }
 
   // =========================================================
   // ✅ REMOVE DUPLICATE BACK BUTTON
@@ -218,7 +195,7 @@
   const getBrand = (r) => pick(r, ["Brand", "Brand AKA", "Brand aka", "Manufacturer"]);
   const getLine = (r) => pick(r, ["Line", "Series", "Collection"]);
   const getCigar = (r) => pick(r, ["Cigar", "Name", "Cigar Name"]);
-  const getVitola = (r) => pick(r, ["Vitola"]);
+  const getVitola = (r) => pick(r, ["Vitola", "Style"]);
   const getStrength = (r) => pick(r, ["Strength"]);
   const getShape = (r) => pick(r, ["Shape"]);
   const getWrapperShade = (r) =>
@@ -326,7 +303,6 @@
     );
 
     const brandIcon = bestBrandHeaderIcon(row) || "";
-
     const picked = pickCigarImage(row);
 
     const nameForFile = slug(
@@ -464,52 +440,6 @@
   }
 
   // =========================================================
-  // ✅ SHEET OPEN/CLOSE (FULLSCREEN BOTTOM SHEET)
-  // =========================================================
-  function openSheetEl(sheetEl) {
-    if (!sheetEl) return;
-
-    const bd = ensureBackdrop();
-
-    document.body.classList.add("pos-modal-open");
-
-    bd.hidden = false;
-    bd.classList.add("open");
-
-    sheetEl.hidden = false;
-    sheetEl.classList.add("is-open");
-  }
-
-  function closeAllSheets() {
-    const bd = ensureBackdrop();
-
-    document.body.classList.remove("pos-modal-open");
-
-    [sheetBands, sheetFilters, sheetReceipt].forEach((el) => {
-      if (!el) return;
-      el.classList.remove("is-open");
-      el.hidden = true;
-    });
-
-    bd.classList.remove("open");
-    bd.hidden = true;
-  }
-
-  function bindSheetClosers() {
-    // x buttons
-    $$("[data-sheet-close]").forEach((btn) => btn.addEventListener("click", closeAllSheets));
-
-    // backdrop
-    const bd = ensureBackdrop();
-    bd.addEventListener("click", closeAllSheets);
-
-    // escape
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeAllSheets();
-    });
-  }
-
-  // =========================================================
   // ✅ STATE
   // =========================================================
   const state = {
@@ -518,10 +448,14 @@
     q: "",
     wrapperState: "all", // all | maduro | natural
     bandKeys: new Set(),
-    filterKey: "",
-    filters: {
-      values: new Map(),
-      toggles: new Map(),
+    // actual applied filters (brand page):
+    applied: {
+      ring: new Set(),
+      length: new Set(),
+      shade: new Set(),
+      shape: new Set(),
+      vitola: new Set(),
+      strength: new Set(),
     },
   };
 
@@ -563,7 +497,6 @@
     const mode = state.wrapperState;
     if (mode === "all") return true;
 
-    // keep your current behavior: name-string match
     const line = norm(getLine(r));
     const cigar = norm(getCigar(r));
     const cigarFull = `${line} ${cigar}`.trim();
@@ -579,18 +512,10 @@
   // =========================================================
   const PADRON_BANDS = [
     { key: "padronseriesband", label: "Padron Series", src: "/img/icons/padronseriesband.svg" },
-    {
-      key: "padronfamilyreserveband",
-      label: "Family Reserve",
-      src: "/img/icons/padronfamilyreserveband.svg",
-    },
+    { key: "padronfamilyreserveband", label: "Family Reserve", src: "/img/icons/padronfamilyreserveband.svg" },
     { key: "padron1926serieband", label: "1926", src: "/img/icons/padron1926serieband.svg" },
     { key: "padronblackseriesband", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
-    {
-      key: "padron1964anniversaryband",
-      label: "1964",
-      src: "/img/icons/padron1964anniversaryband.svg",
-    },
+    { key: "padron1964anniversaryband", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
     { key: "padrondamasoband", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
   ];
 
@@ -658,185 +583,50 @@
   }
 
   function openBandsSheet() {
+    // existing sheet system stays for Bands
     renderBandsOptions();
-    openSheetEl(sheetBands);
+    const bd = $("#sheet-backdrop");
+    if (bd) {
+      bd.hidden = false;
+      bd.classList.add("open");
+    }
+    document.body.classList.add("pos-modal-open");
+    sheetBands.hidden = false;
+    sheetBands.classList.add("is-open");
   }
 
-  // =========================================================
-  // ✅ FILTERS
-  // =========================================================
-  const FILTER_KEYS = ["RG", "Length", "Wrapper Shade", "Shape", "Vitola", "Strength"];
-
-  function getRowValueForKey(r, key) {
-    switch (key) {
-      case "RG":
-        return norm(getRing(r));
-      case "Length":
-        return norm(getLength(r));
-      case "Wrapper Shade":
-        return norm(getWrapperShade(r));
-      case "Shape":
-        return norm(getShape(r));
-      case "Vitola":
-        return norm(getVitola(r));
-      case "Strength":
-        return norm(getStrength(r));
-      default:
-        return "";
+  function closeBandAndReceiptSheets() {
+    const bd = $("#sheet-backdrop");
+    document.body.classList.remove("pos-modal-open");
+    [sheetBands, sheetReceipt].forEach((el) => {
+      if (!el) return;
+      el.classList.remove("is-open");
+      el.hidden = true;
+    });
+    if (bd) {
+      bd.classList.remove("open");
+      bd.hidden = true;
     }
   }
 
-  function uniqueSortedValuesForKey(key) {
-    const set = new Set();
-    state.all.filter(inBrand).forEach((r) => {
-      const v = getRowValueForKey(r, key);
-      if (v) set.add(v);
-    });
+  function bindBandSheetClosers() {
+    // x buttons
+    $$("[data-sheet-close]").forEach((btn) => btn.addEventListener("click", closeBandAndReceiptSheets));
 
-    const arr = Array.from(set);
+    // backdrop
+    const bd = $("#sheet-backdrop");
+    bd?.addEventListener("click", closeBandAndReceiptSheets);
 
-    if (key === "RG") {
-      arr.sort((a, b) => Number(a) - Number(b));
-      return arr;
-    }
-    if (key === "Length") {
-      arr.sort(
-        (a, b) =>
-          Number(String(a).replace(/[^\d.]/g, "")) - Number(String(b).replace(/[^\d.]/g, ""))
-      );
-      return arr;
-    }
-
-    arr.sort((a, b) => a.localeCompare(b));
-    return arr;
-  }
-
-  function ensureSetForFilter(key) {
-    if (!state.filters.values.has(key)) state.filters.values.set(key, new Set());
-    return state.filters.values.get(key);
-  }
-
-  function anyFiltersApplied() {
-    if (state.wrapperState !== "all") return true;
-    if (state.bandKeys.size) return true;
-
-    for (const [, set] of state.filters.values) {
-      if (set && set.size) return true;
-    }
-    for (const [, v] of state.filters.toggles) {
-      if (v) return true;
-    }
-    if (norm(state.q)) return true;
-    return false;
-  }
-
-  function setFiltersConfirmState() {
-    if (!filtersConfirm) return;
-    filtersConfirm.disabled = !anyFiltersApplied();
-  }
-
-  function showFiltersHome() {
-    if (!filtersHome || !filtersDetail) return;
-
-    filtersHome.hidden = false;
-    filtersDetail.hidden = true;
-
-    if (filtersBack) filtersBack.hidden = true;
-    if (filtersTitle) filtersTitle.textContent = "Filters";
-    if (filtersSearch) filtersSearch.value = "";
-
-    state.filterKey = "";
-    setFiltersConfirmState();
-  }
-
-  function showFiltersDetail(key) {
-    state.filterKey = key;
-
-    if (filtersHome) filtersHome.hidden = true;
-    if (filtersDetail) filtersDetail.hidden = false;
-
-    if (filtersBack) filtersBack.hidden = false;
-    if (filtersTitle) filtersTitle.textContent = key;
-
-    renderFiltersDetailList();
-    setFiltersConfirmState();
-  }
-
-  function renderFiltersDetailList() {
-    if (!filtersList) return;
-    const key = state.filterKey;
-    if (!key) return;
-
-    const allVals = uniqueSortedValuesForKey(key);
-    const q = lower(filtersSearch?.value || "");
-    const selected = ensureSetForFilter(key);
-
-    const rows = allVals
-      .filter((v) => (q ? lower(v).includes(q) : true))
-      .map((v) => {
-        const isOn = selected.has(v);
-        return `
-          <button type="button" class="filters-item" data-filter-val="${esc(v)}">
-            <span class="filters-item-label">${esc(v)}</span>
-            <span class="filters-item-check ${isOn ? "is-on" : ""}" aria-hidden="true"></span>
-          </button>
-        `;
-      })
-      .join("");
-
-    filtersList.innerHTML =
-      rows || `<div class="filters-empty">No values</div>`;
-
-    filtersList.querySelectorAll("[data-filter-val]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const v = btn.getAttribute("data-filter-val") || "";
-        if (!v) return;
-        if (selected.has(v)) selected.delete(v);
-        else selected.add(v);
-        renderFiltersDetailList();
-        setFiltersConfirmState();
-      });
-    });
-  }
-
-  function bindFiltersUI() {
-    filtersBtn?.addEventListener("click", () => {
-      showFiltersHome();
-      openSheetEl(sheetFilters);
-    });
-
-    $$("[data-open-filter]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const key = btn.getAttribute("data-open-filter") || "";
-        if (!FILTER_KEYS.includes(key)) return;
-        showFiltersDetail(key);
-      });
-    });
-
-    filtersBack?.addEventListener("click", showFiltersHome);
-    filtersSearch?.addEventListener("input", () => renderFiltersDetailList());
-
-    $$("[data-toggle-key]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const k = btn.getAttribute("data-toggle-key") || "";
-        if (!k) return;
-        const cur = !!state.filters.toggles.get(k);
-        state.filters.toggles.set(k, !cur);
-        btn.classList.toggle("is-on", !cur);
-        setFiltersConfirmState();
-      });
-    });
-
-    filtersConfirm?.addEventListener("click", () => {
-      closeAllSheets();
-      apply();
+    // escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeBandAndReceiptSheets();
     });
   }
 
   function bindBandsUI() {
     bandsBtn?.addEventListener("click", () => openBandsSheet());
     bandsConfirmBtn?.addEventListener("click", () => {
-      closeAllSheets();
+      closeBandAndReceiptSheets();
       apply();
     });
   }
@@ -844,7 +634,7 @@
   // =========================================================
   // ✅ APPLY FILTERS + RENDER
   // =========================================================
-  function rowPassesFilters(r) {
+  function rowPassesAppliedFilters(r) {
     if (!matchesWrapper(r)) return false;
 
     if (state.bandKeys.size) {
@@ -858,11 +648,20 @@
       if (!ok) return false;
     }
 
-    for (const [key, set] of state.filters.values) {
-      if (!set || set.size === 0) continue;
-      const v = getRowValueForKey(r, key);
-      if (!set.has(v)) return false;
-    }
+    // applied sets
+    const ring = norm(getRing(r));
+    const length = norm(getLength(r));
+    const shade = norm(getWrapperShade(r));
+    const shape = norm(getShape(r));
+    const vitola = norm(getVitola(r));
+    const strength = norm(getStrength(r));
+
+    if (state.applied.ring.size && !state.applied.ring.has(ring)) return false;
+    if (state.applied.length.size && !state.applied.length.has(length)) return false;
+    if (state.applied.shade.size && !state.applied.shade.has(shade)) return false;
+    if (state.applied.shape.size && !state.applied.shape.has(shape)) return false;
+    if (state.applied.vitola.size && !state.applied.vitola.has(vitola)) return false;
+    if (state.applied.strength.size && !state.applied.strength.has(strength)) return false;
 
     return true;
   }
@@ -872,10 +671,11 @@
 
     state.view = state.all
       .filter(inBrand)
-      .filter(rowPassesFilters)
+      .filter(rowPassesAppliedFilters)
       .filter((r) => {
         if (!q) return true;
-        const blob = `${getLine(r)} ${getCigar(r)} ${getWrapper(r)} ${getOrigin(r)} ${getRing(r)} ${getLength(r)} ${getMSRP(r)}`.toLowerCase();
+        const blob = `${getLine(r)} ${getCigar(r)} ${getWrapper(r)} ${getOrigin(r)} ${getRing(r)} ${getLength(r)} ${getMSRP(r)}`
+          .toLowerCase();
         return blob.includes(q);
       });
 
@@ -943,13 +743,8 @@
                  onerror="this.style.visibility='hidden';" />
 
             <div class="brand-row-left">
-              <div class="brand-row-title">
-                <div>${esc(cigarFull || cigar)}</div>
-              </div>
-
-              <div class="brand-row-sub">
-                <div>${esc(vitola)}</div>
-              </div>
+              <div class="brand-row-title"><div>${esc(cigarFull || cigar)}</div></div>
+              <div class="brand-row-sub"><div>${esc(vitola)}</div></div>
             </div>
 
             <div class="brand-row-right">
@@ -1006,12 +801,388 @@
   }
 
   // =========================================================
+  // ✅ NEW: MAIN-PAGE STYLE FILTER MODAL (NO BRAND/MFG)
+  // =========================================================
+  const FM_KEYS = [
+    { key: "vitola", label: "Vitolas" },
+    { key: "ring", label: "Ring" },
+    { key: "length", label: "Length" },
+    { key: "strength", label: "Strength" },
+    { key: "shape", label: "Shape" },
+    { key: "shade", label: "Wrap. Shade" },
+  ];
+
+  const WRAPPER_SHADE_ORDER = [
+    "Natural",
+    "Connecticut",
+    "Maduro",
+    "Oscuro",
+    "Connecticut Shade",
+    "EMS",
+    "Claro",
+    "Colorado",
+    "Colorado Claro",
+    "Colorado Maduro",
+    "Mixed",
+    "Candela",
+  ];
+
+  const VITOLA_ORDER = [
+    "Toro","Robusto","Gordo","Churchill","Corona","Petit Corona","Corona Gorda","Lonsdale",
+    "Lancero","Panetela","Belicoso","Torpedo","Piramide","Perfecto","Diadema","Figurado",
+    "Double Corona","Petit Robusto","Short Robusto",
+  ];
+
+  function uniqSorted(values) {
+    const set = new Set();
+    for (const v of values) {
+      const s = norm(v);
+      if (s) set.add(s);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }
+
+  function orderWrapperShades(values) {
+    const list = uniqSorted(values);
+    const seen = new Set();
+    const ordered = [];
+
+    for (const item of WRAPPER_SHADE_ORDER) {
+      const match = list.find((v) => v.toLowerCase() === item.toLowerCase());
+      if (match) {
+        ordered.push(match);
+        seen.add(match.toLowerCase());
+      }
+    }
+    for (const v of list) {
+      const k = v.toLowerCase();
+      if (!seen.has(k)) ordered.push(v);
+    }
+    return ordered;
+  }
+
+  function orderVitolas(values) {
+    const list = uniqSorted(values);
+    const seen = new Set();
+    const ordered = [];
+
+    for (const item of VITOLA_ORDER) {
+      const match = list.find((v) => v.toLowerCase() === item.toLowerCase());
+      if (match) {
+        ordered.push(match);
+        seen.add(match.toLowerCase());
+      }
+    }
+    for (const v of list) {
+      const k = v.toLowerCase();
+      if (!seen.has(k)) ordered.push(v);
+    }
+    return ordered;
+  }
+
+  function getValuesForFmKey(key) {
+    const rows = state.all.filter(inBrand);
+    const vals = [];
+
+    for (const r of rows) {
+      if (!r) continue;
+      if (key === "vitola") vals.push(getVitola(r));
+      if (key === "ring") vals.push(getRing(r));
+      if (key === "length") vals.push(getLength(r));
+      if (key === "strength") vals.push(getStrength(r));
+      if (key === "shape") vals.push(getShape(r));
+      if (key === "shade") vals.push(getWrapperShade(r));
+    }
+
+    if (key === "shade") return orderWrapperShades(vals);
+    if (key === "vitola") return orderVitolas(vals);
+
+    const cleaned = uniqSorted(vals);
+
+    if (key === "ring") {
+      cleaned.sort((a, b) => Number(a) - Number(b));
+      return cleaned;
+    }
+    if (key === "length") {
+      cleaned.sort(
+        (a, b) =>
+          Number(String(a).replace(/[^\d.]/g, "")) - Number(String(b).replace(/[^\d.]/g, ""))
+      );
+      return cleaned;
+    }
+
+    return cleaned;
+  }
+
+  // modal DOM
+  let fmRoot = null;
+
+  // local (draft) selection state while modal open
+  const fmState = {
+    selected: {
+      vitola: new Set(),
+      ring: new Set(),
+      length: new Set(),
+      strength: new Set(),
+      shape: new Set(),
+      shade: new Set(),
+    },
+    activeKey: "shade",
+    activeValues: [],
+    activeSearch: "",
+  };
+
+  function syncFmLocalFromApplied() {
+    fmState.selected.vitola = new Set([...state.applied.vitola]);
+    fmState.selected.ring = new Set([...state.applied.ring]);
+    fmState.selected.length = new Set([...state.applied.length]);
+    fmState.selected.strength = new Set([...state.applied.strength]);
+    fmState.selected.shape = new Set([...state.applied.shape]);
+    fmState.selected.shade = new Set([...state.applied.shade]);
+  }
+
+  function pushFmLocalToApplied() {
+    state.applied.vitola = new Set([...fmState.selected.vitola]);
+    state.applied.ring = new Set([...fmState.selected.ring]);
+    state.applied.length = new Set([...fmState.selected.length]);
+    state.applied.strength = new Set([...fmState.selected.strength]);
+    state.applied.shape = new Set([...fmState.selected.shape]);
+    state.applied.shade = new Set([...fmState.selected.shade]);
+    apply();
+  }
+
+  function ensureFilterModal() {
+    if (!fmRoot) {
+      fmRoot = document.createElement("div");
+      fmRoot.id = "filter-modal";
+      fmRoot.className = "fm fm--hidden";
+      fmRoot.setAttribute("aria-hidden", "true");
+      document.body.appendChild(fmRoot);
+    }
+
+    if (!fmRoot.querySelector(".fm__sheet")) {
+      fmRoot.innerHTML = `
+        <div class="fm__backdrop" data-fm-close></div>
+
+        <div class="fm__sheet" role="dialog" aria-modal="true" aria-label="Filters">
+          <div class="fm__header">
+            <h2 class="fm__title">Filters</h2>
+            <button class="fm__close" type="button" aria-label="Close filters" data-fm-close>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="fm__body">
+            <div class="fm__cats" id="fm-cats"></div>
+
+            <div class="fm__panel">
+              <div class="fm__search-row">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
+                        fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                </svg>
+
+                <input class="fm__search-input" id="fm-search" placeholder="Search" autocomplete="off" />
+
+                <button class="fm__mic-btn" type="button" aria-label="Voice search (coming soon)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z"
+                          fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                    <path d="M19 11a7 7 0 0 1-14 0" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                    <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="fm__list" id="fm-list"></div>
+            </div>
+          </div>
+
+          <div class="fm__actions">
+            <button class="fm__btn fm__btn--reset" type="button" id="fm-reset">Reset</button>
+            <button class="fm__btn fm__btn--apply" type="button" id="fm-apply">Apply</button>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function renderFmCats() {
+    const catsEl = $("#fm-cats", fmRoot);
+    if (!catsEl) return;
+
+    catsEl.innerHTML = FM_KEYS.map((c) => {
+      const active = c.key === fmState.activeKey ? "is-active" : "";
+      return `<button class="fm__cat-btn ${active}" type="button" data-cat="${esc(c.key)}">${esc(
+        c.label
+      )}</button>`;
+    }).join("");
+
+    $$(".fm__cat-btn", catsEl).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-cat");
+        if (!key) return;
+        setFmActiveCategory(key);
+      });
+    });
+  }
+
+  function setFmActiveCategory(key) {
+    if (!fmState.selected[key]) return;
+
+    fmState.activeKey = key;
+    fmState.activeSearch = "";
+
+    const inp = $("#fm-search", fmRoot);
+    if (inp) inp.value = "";
+
+    $$(".fm__cat-btn", fmRoot).forEach((b) => {
+      b.classList.toggle("is-active", b.getAttribute("data-cat") === key);
+    });
+
+    fmState.activeValues = getValuesForFmKey(key);
+    renderFmList();
+  }
+
+  function renderFmList() {
+    const listEl = $("#fm-list", fmRoot);
+    if (!listEl) return;
+
+    const key = fmState.activeKey;
+    const selectedSet = fmState.selected[key];
+
+    const q = norm(fmState.activeSearch).toLowerCase();
+    const values = fmState.activeValues || [];
+    const filtered = !q ? values : values.filter((v) => norm(v).toLowerCase().includes(q));
+
+    listEl.innerHTML = filtered
+      .map((v) => {
+        const label = norm(v);
+        const isSelected = selectedSet.has(label);
+
+        const cb = isSelected
+          ? `<div class="fm__cb is-checked" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>`
+          : `<div class="fm__cb" aria-hidden="true"></div>`;
+
+        // no icons for brand page modal categories
+        const icon = `<div class="fm__icon" aria-hidden="true"></div>`;
+
+        return `
+          <div class="fm__row ${isSelected ? "is-selected" : ""}" data-value="${esc(label)}">
+            ${cb}
+            ${icon}
+            <div class="fm__label">${esc(label)}</div>
+          </div>
+        `;
+      })
+      .join("");
+
+    $$(".fm__row", listEl).forEach((row) => {
+      row.addEventListener("click", () => {
+        const val = row.getAttribute("data-value") || "";
+        if (!val) return;
+
+        if (selectedSet.has(val)) selectedSet.delete(val);
+        else selectedSet.add(val);
+
+        row.classList.toggle("is-selected");
+        const cb = $(".fm__cb", row);
+        if (cb) cb.classList.toggle("is-checked", selectedSet.has(val));
+
+        if (cb) {
+          cb.innerHTML = selectedSet.has(val)
+            ? `<svg viewBox="0 0 24 24" aria-hidden="true">
+                 <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+               </svg>`
+            : "";
+        }
+      });
+    });
+  }
+
+  function openFilterModal() {
+    ensureFilterModal();
+
+    fmRoot.classList.remove("fm--hidden");
+    fmRoot.classList.add("is-open");
+    fmRoot.setAttribute("aria-hidden", "false");
+
+    renderFmCats();
+    setFmActiveCategory(fmState.activeKey);
+
+    window.setTimeout(() => {
+      $("#fm-search", fmRoot)?.focus();
+    }, 60);
+  }
+
+  function closeFilterModal() {
+    if (!fmRoot) return;
+    fmRoot.classList.remove("is-open");
+    fmRoot.classList.add("fm--hidden");
+    fmRoot.setAttribute("aria-hidden", "true");
+  }
+
+  function bindFilterModalEvents() {
+    // open
+    filtersBtn?.addEventListener("click", () => {
+      syncFmLocalFromApplied();
+      openFilterModal();
+    });
+
+    // close (backdrop / x)
+    document.addEventListener("click", (e) => {
+      if (!fmRoot || fmRoot.classList.contains("fm--hidden")) return;
+      const t = e.target;
+      if (!(t instanceof Element)) return;
+      if (t.closest("[data-fm-close]")) closeFilterModal();
+    });
+
+    // escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (!fmRoot || fmRoot.classList.contains("fm--hidden")) return;
+      closeFilterModal();
+    });
+
+    // search within active list
+    document.addEventListener("input", (e) => {
+      if (!fmRoot || fmRoot.classList.contains("fm--hidden")) return;
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.id !== "fm-search") return;
+      fmState.activeSearch = t.value || "";
+      renderFmList();
+    });
+
+    // reset/apply
+    document.addEventListener("click", (e) => {
+      if (!fmRoot || fmRoot.classList.contains("fm--hidden")) return;
+      const t = e.target;
+      if (!(t instanceof Element)) return;
+
+      if (t.closest("#fm-reset")) {
+        for (const k of Object.keys(fmState.selected)) fmState.selected[k].clear();
+        renderFmList();
+        return;
+      }
+
+      if (t.closest("#fm-apply")) {
+        pushFmLocalToApplied();
+        closeFilterModal();
+      }
+    });
+  }
+
+  // =========================================================
   // ✅ BOOT
   // =========================================================
   async function boot() {
-    // Ensure overlay exists early so CSS can target it
-    ensureBackdrop();
-
     fixDuplicateBackButtons();
     bindInvoicePill();
 
@@ -1024,10 +1195,12 @@
     }
 
     bindClicks();
-    bindSheetClosers();
+    bindBandSheetClosers();
     bindWrapperToggle();
     bindBandsUI();
-    bindFiltersUI();
+
+    // ✅ new filter modal bindings
+    bindFilterModalEvents();
 
     searchEl?.addEventListener("input", () => {
       state.q = norm(searchEl.value || "");
