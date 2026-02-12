@@ -1,7 +1,22 @@
-/* /pos/cigars/brand.css */
+/* /pos/cigars/brand.css
+   FULL REPLACEMENT FILE
 
-/* ========== THEME ========== */
-:root{
+   ✅ Changes in this version:
+   - SCOPES theme vars to body.brand-page (no global :root bleed)
+   - Keeps your current BRAND page layout + rows + cigar detail modal
+   - Keeps your existing .sheet system for BANDS (and any legacy sheets)
+   - Adds the MAIN CIGARS PAGE filter modal layout (.fm) for BRAND pages
+   - Prevents backdrop/z-index conflicts:
+       • .fm always sits above the pos-modal-open ::before dimmer
+       • when .fm is open, the pos-modal-open dimmer is disabled to avoid double overlays
+*/
+
+*{ box-sizing:border-box; }
+
+/* =========================================================
+   THEME (SCOPED — prevents global bleed)
+   ========================================================= */
+body.brand-page{
   --bg1:#071024;
   --bg2:#0b1c3a;
 
@@ -17,12 +32,7 @@
 
   --accent:#0f7aff;
   --green:#34c759;
-}
 
-*{ box-sizing:border-box; }
-
-/* ========== PAGE BACKGROUND ========== */
-body.brand-page{
   margin:0;
   min-height:100vh;
   color:var(--ink);
@@ -33,7 +43,9 @@ body.brand-page{
   font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
-/* ========== TOP BAR ========== */
+/* =========================================================
+   TOP BAR
+   ========================================================= */
 .brand-topbar{
   display:flex;
   align-items:center;
@@ -41,7 +53,7 @@ body.brand-page{
   padding:14px 14px 0;
 }
 
-/* ✅ SCOPED ICON BUTTON */
+/* ✅ scoped icon button */
 body.brand-page .icon-btn{
   width:44px;
   height:44px;
@@ -50,6 +62,8 @@ body.brand-page .icon-btn{
   border:none;
   background:transparent;
   color:var(--ink);
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
 }
 body.brand-page .icon-btn svg{
   width:24px;
@@ -57,7 +71,9 @@ body.brand-page .icon-btn svg{
   stroke:rgba(255,255,255,.85);
 }
 
-/* ========== MAIN ========== */
+/* =========================================================
+   MAIN
+   ========================================================= */
 .brand-main{ padding:0 14px 120px; }
 
 .brand-title-row{
@@ -94,7 +110,9 @@ body.brand-page .icon-btn svg{
   display:block;
 }
 
-/* ========== SEARCH ========== */
+/* =========================================================
+   SEARCH
+   ========================================================= */
 .brand-search .search-wrap{
   display:flex;
   align-items:center;
@@ -104,7 +122,6 @@ body.brand-page .icon-btn svg{
   background:rgba(255,255,255,.07);
   border:1px solid rgba(255,255,255,.12);
 }
-
 .search-ico{ opacity:.75; }
 
 #brand-search{
@@ -118,7 +135,9 @@ body.brand-page .icon-btn svg{
 }
 #brand-search::placeholder{ color:rgba(255,255,255,.45); }
 
-/* ========== CONTROLS ========== */
+/* =========================================================
+   CONTROLS
+   ========================================================= */
 .brand-controls{
   display:grid;
   grid-template-columns:1.05fr .72fr 1.7fr;
@@ -141,7 +160,9 @@ body.brand-page .icon-btn svg{
 }
 .pill-btn:active{ transform:scale(.99); }
 
-/* ========== MADURO / NATURAL TOGGLE ========== */
+/* =========================================================
+   MADURO / NATURAL TOGGLE
+   ========================================================= */
 .seg{
   height:40px;
   border-radius:16px;
@@ -161,7 +182,6 @@ body.brand-page .icon-btn svg{
   font-weight:900;
   color:rgba(255,255,255,.45);
 }
-
 .seg-btn[aria-pressed="true"]{
   color:rgba(15,122,255,.95);
 }
@@ -175,7 +195,6 @@ body.brand-page .icon-btn svg{
   position:relative;
   margin:0 auto;
 }
-
 .seg-dot::after{
   content:"";
   position:absolute;
@@ -193,7 +212,9 @@ body.brand-page .icon-btn svg{
 #wrapper-seg[data-state="all"] .seg-dot::after{ left:17px; opacity:.55; }
 #wrapper-seg[data-state="natural"] .seg-dot::after{ left:30px; opacity:1; }
 
-/* ========== LIST ROWS ========== */
+/* =========================================================
+   LIST ROWS
+   ========================================================= */
 .brand-list{
   margin-top:14px;
   display:flex;
@@ -239,7 +260,6 @@ body.brand-page .icon-btn svg{
   white-space:normal;
   overflow:visible;
 }
-
 .row-sub,
 .brand-row-sub{
   font-size:12px;
@@ -294,24 +314,23 @@ body.brand-page .icon-btn svg{
 }
 .brand-row .pos-add:active{ transform:scale(.98); }
 
-/* ========== STATUS TEXT ========== */
+/* Status */
 .brand-status{
   margin:16px 0 0;
   color:rgba(255,255,255,.75);
   font-weight:700;
 }
 
-/* ========== UTILITIES ========== */
+/* Utilities */
 [hidden]{ display:none !important; }
 
 /* =========================================================
-   ✅ MODAL BACKDROP (NO BLUR) + SCROLL LOCK
-   - This is the ONLY backdrop layer for Bands/Filters
+   LEGACY SHEET SYSTEM (Bands + any existing sheets)
+   Keep working exactly as you have today.
    ========================================================= */
-
 body.pos-modal-open{ overflow:hidden; }
 
-/* Dim the page WITHOUT blur (prevents iOS soft rendering) */
+/* Dim the page WITHOUT blur */
 body.pos-modal-open::before{
   content:"";
   position:fixed;
@@ -320,16 +339,20 @@ body.pos-modal-open::before{
   z-index:10040;
 }
 
-/* =========================================================
-   ✅ SHEETS (Bands + Filters) — crisp on iOS (NO transforms)
-   - No translate centering
-   - Use top/bottom safe-area layout like your mockup
-   ========================================================= */
+/* ✅ If the MAIN FILTER MODAL (.fm) is open, disable this dim layer
+      (prevents double overlays and tap-blocking) */
+body.pos-modal-open .fm.is-open ~ *{} /* no-op (keeps selector valid on older engines) */
+body.pos-modal-open:has(.fm.is-open)::before{
+  content:none;
+}
 
+/* =========================================================
+   SHEETS (crisp on iOS)
+   ========================================================= */
 .sheet{
   position:fixed;
   left:50%;
-  transform:translateX(-50%); /* ✅ only X translate (safe), no Y centering */
+  transform:translateX(-50%);
   top: calc(10px + env(safe-area-inset-top));
   bottom: calc(10px + env(safe-area-inset-bottom));
 
@@ -341,18 +364,16 @@ body.pos-modal-open::before{
   border-radius:28px;
   box-shadow:0 30px 90px rgba(0,0,0,.45);
 
-  z-index:10060; /* above backdrop */
+  z-index:10060;
   overflow:hidden;
 
   color:#0f1a2c;
   font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 
-  /* ✅ iOS crispness hint */
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
 }
 
-/* Header */
 .sheet-header{
   display:flex;
   align-items:center;
@@ -368,7 +389,6 @@ body.pos-modal-open::before{
   letter-spacing:-.02em;
 }
 
-/* Close button (top right) */
 .sheet-x{
   width:36px;
   height:36px;
@@ -384,7 +404,6 @@ body.pos-modal-open::before{
 }
 .sheet-x:active{ transform:scale(.98); }
 
-/* Body */
 .sheet-body{
   padding:8px 18px 0;
   overflow:auto;
@@ -393,7 +412,6 @@ body.pos-modal-open::before{
   min-height:0;
 }
 
-/* Footer + Confirm */
 .sheet-footer{
   padding:14px 18px 18px;
   background:#ffffff;
@@ -412,9 +430,8 @@ body.pos-modal-open::before{
 .sheet-btn.primary:active{ transform:scale(.99); }
 
 /* =========================================================
-   ✅ BANDS SHEET CONTENT
+   BANDS SHEET CONTENT (unchanged)
    ========================================================= */
-
 .bands-list{
   display:flex;
   flex-direction:column;
@@ -458,7 +475,6 @@ body.pos-modal-open::before{
   line-height:1.1;
 }
 
-/* iOS-ish checkbox */
 .band-check{
   width:28px;
   height:28px;
@@ -467,10 +483,9 @@ body.pos-modal-open::before{
 }
 
 /* =========================================================
-   ✅ FILTERS SHEET CONTENT (your current simple version)
-   - We will REPLACE this with the main cigars filter UI next
+   (Legacy) FILTERS SHEET CONTENT — retained, but not required
+   If you switch brand Filters to .fm, you can delete this later.
    ========================================================= */
-
 .filters-body{ padding-top:6px; }
 
 .filters-grid{
@@ -500,7 +515,6 @@ body.pos-modal-open::before{
 .pill-wide{ padding:0 14px; }
 .pill-nowrap{ white-space:nowrap; }
 
-/* Toggle rows */
 .filters-toggles{
   margin-top:14px;
   display:flex;
@@ -540,7 +554,6 @@ body.pos-modal-open::before{
 }
 .tog.is-on .tog-dot{ background:#0f7aff; }
 
-/* Filters detail view search */
 .filters-search{
   display:flex;
   align-items:center;
@@ -564,10 +577,8 @@ body.pos-modal-open::before{
 #filters-search::placeholder{ color:rgba(15,26,44,.35); }
 
 /* =========================================================
-   ✅ CIGAR DETAIL MODAL — “WHITE CARD”
-   (unchanged from your current version)
+   CIGAR DETAIL MODAL — “WHITE CARD” (unchanged)
    ========================================================= */
-
 body.cigar-detail-open{ overflow:hidden; }
 
 .cigar-detail-overlay{
@@ -589,7 +600,6 @@ body.cigar-detail-open{ overflow:hidden; }
   pointer-events:auto;
 }
 
-/* The big white rounded card */
 .cigar-detail-sheet{
   width:min(980px, calc(100vw - 28px));
   max-height:calc(100vh - 42px);
@@ -610,7 +620,6 @@ body.cigar-detail-open{ overflow:hidden; }
   font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
-/* bottom-left red X */
 .cigar-detail-x{
   position:absolute;
   left:14px;
@@ -626,13 +635,11 @@ body.cigar-detail-open{ overflow:hidden; }
   cursor:pointer;
 }
 
-/* Inner padding */
 .cigar-detail-body{
   padding:18px 18px 22px;
   color:#0f1a2c;
 }
 
-/* White rounded header */
 .cd-headercard{
   background:#ffffff;
   border-radius:22px;
@@ -815,3 +822,215 @@ body.cigar-detail-open{ overflow:hidden; }
   cursor:pointer;
 }
 .cd-btn.is-live:active{ transform:scale(.99); }
+
+/* =========================================================
+   MAIN-PAGE STYLE FILTER MODAL (fm) — BRAND PAGES
+   ========================================================= */
+.fm{
+  position: fixed;
+  inset: 0;
+  z-index: 10100; /* ✅ above pos-modal-open::before (10040) */
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+}
+.fm.fm--hidden{ opacity:0; }
+.fm.is-open{ pointer-events:auto; opacity:1; }
+
+.fm__backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(10, 20, 35, 0.28);
+  backdrop-filter: blur(2px);
+  opacity:0;
+  transition:opacity 220ms ease;
+}
+.fm.is-open .fm__backdrop{ opacity:1; }
+
+.fm__sheet{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  background:#fff;
+  border-radius:22px 22px 0 0;
+  box-shadow:0 -18px 60px rgba(15,26,44,.18);
+  transform:translateY(110%);
+  transition:transform 260ms cubic-bezier(0.2, 0.9, 0.2, 1);
+  max-height:86vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.fm.is-open .fm__sheet{ transform:translateY(0); }
+
+.fm__header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:18px 18px 14px;
+  border-bottom:1px solid rgba(15,26,44,.06);
+}
+.fm__title{
+  margin:0;
+  font-weight:800;
+  letter-spacing:-0.02em;
+  font-size:40px;
+  line-height:1.05;
+  color:#0f1a2c;
+}
+.fm__close{
+  width:40px;
+  height:40px;
+  border-radius:14px;
+  border:1px solid rgba(15,26,44,.10);
+  background:rgba(255,255,255,.85);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  padding:0;
+}
+.fm__close svg{ width:18px; height:18px; }
+
+.fm__body{
+  display:grid;
+  grid-template-columns:150px 1fr;
+  gap:14px;
+  padding:14px 14px 0;
+  overflow:hidden;
+}
+.fm__cats{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding-bottom:14px;
+}
+.fm__cat-btn{
+  font-weight:400;
+  font-size:18px;
+  padding:14px 12px;
+  border-radius:18px;
+  border:1px solid rgba(15,26,44,.06);
+  background:#f3f6fb;
+  color:rgba(15,26,44,.60);
+  text-align:left;
+  cursor:pointer;
+}
+.fm__cat-btn.is-active{
+  background:#2f6fe4;
+  border-color:rgba(47,111,228,.35);
+  color:#fff;
+}
+
+.fm__panel{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  padding-bottom:14px;
+}
+.fm__search-row{
+  display:grid;
+  grid-template-columns:22px 1fr 34px;
+  gap:10px;
+  align-items:center;
+  background:#f3f6fb;
+  border:1px solid rgba(15,26,44,.06);
+  border-radius:18px;
+  padding:12px 12px;
+  margin:0 0 12px;
+}
+.fm__search-row svg{ width:18px; height:18px; color:rgba(15,26,44,.45); }
+.fm__search-input{
+  font-weight:400;
+  font-size:18px;
+  border:none;
+  outline:none;
+  background:transparent;
+  color:#0f1a2c;
+}
+.fm__search-input::placeholder{ color:rgba(15,26,44,.40); }
+
+.fm__mic-btn{
+  width:34px;
+  height:34px;
+  border-radius:14px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+}
+
+.fm__list{
+  overflow:auto;
+  padding:0 2px 8px 2px;
+}
+
+.fm__row{
+  display:grid;
+  grid-template-columns:28px 34px 1fr;
+  gap:10px;
+  align-items:center;
+  padding:10px 8px;
+  border-radius:14px;
+  cursor:pointer;
+  user-select:none;
+}
+.fm__row:hover{ background:rgba(15,26,44,.03); }
+
+.fm__cb{
+  width:22px;
+  height:22px;
+  border-radius:6px;
+  border:2px solid rgba(15,26,44,.25);
+  display:grid;
+  place-items:center;
+}
+.fm__cb.is-checked{
+  border-color:#007aff;
+  background:#007aff;
+}
+.fm__cb svg{ width:14px; height:14px; color:#fff; }
+
+.fm__icon{
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+}
+.fm__icon img{ width:100%; height:100%; object-fit:contain; }
+
+.fm__label{
+  font-weight:400;
+  font-size:22px;
+  color:rgba(15,26,44,.55);
+}
+.fm__row.is-selected .fm__label{ color:#007aff; }
+
+.fm__actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  padding:14px 14px 16px;
+  border-top:1px solid rgba(15,26,44,.06);
+  background:#fff;
+}
+.fm__btn{
+  font-weight:400;
+  font-size:22px;
+  height:58px;
+  border-radius:18px;
+  border:none;
+  cursor:pointer;
+}
+.fm__btn--reset{ background:#a9adb8; color:#fff; }
+.fm__btn--apply{ background:#2f6fe4; color:#fff; }
+
+@media (max-width: 430px){
+  .fm__body{ grid-template-columns:140px 1fr; }
+  .fm__title{ font-size:36px; }
+  .fm__label{ font-size:20px; }
+}
