@@ -2,29 +2,31 @@
    Loyalty page controller (SF Pro / iOS style)
 
    - Reads customers from localStorage: cigaros_customers_v1
-   - Seeds from /loyalty/loyalty-contacts.json if localStorage is empty
+   - Seeds from /loyalty/loyalty-contacts.json
    - Search + segmented modes (All / Regulars / Lockers)
    - A–Z index scroller (right)
    - Customer profile dialog (iOS-style layout)
 
-   ICON RULE:
-   - Columns are labeled with icon names: Military, Paramedic, Firefighter, Police, Locker, Regular
-   - If that column contains ANY marker (x/X/y/Y/1/true/yes or any non-empty value) -> show the icon
-
-   IMPORTANT FIXES IN THIS VERSION:
-   ✅ Uses absolute icon paths: /img/icons/loyalty/{name}.svg (no relative path weirdness)
-   ✅ Seeds from /loyalty/loyalty-contacts.json (your new file)
-   ✅ Column detection is robust to: casing, spaces, underscores, hyphens, trailing spaces
+   Fixes:
+     ✅ Always seeds from loyalty-contacts.json (not pos-contacts.json)
+     ✅ Auto-refreshes localStorage when source changes (so Regulars/icons work)
+     ✅ Role icons show for x/X/y/Y/true/1/"word"/numbers
+     ✅ Lockers tab sorts by locker number numeric
+     ✅ Tier icon shows ONLY when Locker or Regular is marked (no default regular)
 */
 
 (() => {
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
 
-  // ✅ your new contacts file (Netlify-served)
+  // ✅ NEW: correct source for loyalty contacts
   const CONTACTS_JSON_URL = "/loyalty/loyalty-contacts.json";
 
-  // ✅ absolute path so it always works regardless of routing depth
+  // ✅ NEW: store the source we used so we can refresh if it changes
+  const CONTACTS_SOURCE_KEY = "cigaros_customers_source_v1";
+  const CONTACTS_SOURCE_VALUE = CONTACTS_JSON_URL;
+
+  // ✅ Icons are pulled from: /img/icons/loyalty/*.svg
   const ICON_BASE = "/img/icons/loyalty/";
   const ICONS = {
     military: `${ICON_BASE}military.svg`,
@@ -42,7 +44,6 @@
   const summaryEl = $("#summary");
   const searchEl = $("#search");
   const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
-
   const azIndexEl = $("#azIndex");
 
   // Add customer button (only shown on All tab) + dialog
@@ -91,29 +92,9 @@
       .replaceAll("'", "&#039;");
   }
 
-  // normalize a key so we can match weird Excel/export variations
-  function normKey(k) {
-    return String(k || "")
-      .trim()
-      .toLowerCase()
-      .replace(/[\s\-_]+/g, ""); // remove spaces/underscores/hyphens
-  }
-
-  // build a normalized lookup map for a row object
-  function buildKeyMap(obj) {
-    const m = Object.create(null);
-    if (!obj || typeof obj !== "object") return m;
-
-    for (const k of Object.keys(obj)) {
-      const nk = normKey(k);
-      if (!nk) continue;
-      // first one wins (stable)
-      if (m[nk] === undefined) m[nk] = obj[k];
-    }
-    return m;
-  }
-
   // Marker values that should count as "true" in icon columns.
+  // Accept: x/X, y/Y, true, 1, "yes", or the word of the column itself ("military", "police", etc.)
+  // Also: numbers like locker "8" should count as true.
   function isTruthyMarker(v, columnTitle) {
     if (v === true) return true;
     if (v === false || v == null) return false;
@@ -126,26 +107,34 @@
     // common markers
     if (s === "x" || s === "y" || s === "1" || s === "yes" || s === "true") return true;
 
-    // sometimes sheet contains the word itself (or includes it)
+    // numbers (locker numbers etc.)
+    if (/^\d+(\.\d+)?$/.test(s)) return true;
+
+    // sometimes sheet contains the word itself
     const col = String(columnTitle || "").trim().toLowerCase();
-    if (col && (s === col || s.includes(col))) return true;
+    if (col && s === col) return true;
+
+    // sometimes "regular", "military", etc appears in longer strings
+    if (col && s.includes(col)) return true;
 
     // any other non-empty token counts as true
     return true;
   }
 
-  // ✅ robust column detection (handles trailing spaces, weird casing, underscores, etc.)
+  // checks multiple possible key variants (exact, lower, upper, no spaces)
   function hasColumnValue(obj, columnTitle) {
     if (!obj) return false;
 
-    // fast-paths (exact/typical)
-    const direct = obj[columnTitle];
-    if (isTruthyMarker(direct, columnTitle)) return true;
+    const k = columnTitle;
+    const variants = [
+      obj[k],
+      obj[k?.toLowerCase()],
+      obj[k?.toUpperCase()],
+      obj[k?.replace(/\s+/g, "")],
+      obj[k?.toLowerCase()?.replace(/\s+/g, "")],
+    ];
 
-    // normalized lookup
-    const map = buildKeyMap(obj);
-    const v = map[normKey(columnTitle)];
-    return isTruthyMarker(v, columnTitle);
+    return variants.some((v) => isTruthyMarker(v, columnTitle));
   }
 
   function nickname(c) {
@@ -153,32 +142,35 @@
   }
 
   function lockerNumOnly(c) {
-    const raw =
-      String(
-        c.lockerNumber ||
-        c["Locker number"] ||
-        c["Locker Number"] ||
-        c.locker ||
-        ""
-      ).trim();
+    const raw = String(
+      c.lockerNumber ||
+      c["Locker number"] ||
+      c.locker ||
+      c["Locker"] ||
+      ""
+    ).trim();
     const n = raw.replace(/\D+/g, "");
     return n || "";
   }
 
   // ---------- type / shading rules ----------
   function isLockerCustomer(c) {
+    // Locker column marker OR lockerNumber present
     return hasColumnValue(c, "Locker") || !!lockerNumOnly(c);
   }
 
   function isRegularCustomer(c) {
+    // ONLY true if Regular column marker exists
     return hasColumnValue(c, "Regular");
   }
 
   function buildIconHTML(iconNames) {
-    if (!iconNames || !iconNames.length) return "";
-    return iconNames.map((n) => (
-      `<img class="loy-ico" src="${ICONS[n]}" alt="${escapeHTML(n)}" loading="lazy" />`
-    )).join("");
+    return (iconNames || [])
+      .filter(Boolean)
+      .map((n) => (
+        `<img class="loy-ico" src="${ICONS[n]}" alt="${escapeHTML(n)}" loading="lazy" />`
+      ))
+      .join("");
   }
 
   function getRoleIcons(c) {
@@ -193,7 +185,7 @@
   function getTierIcon(c) {
     if (isLockerCustomer(c)) return "locker";
     if (isRegularCustomer(c)) return "regular";
-    return null; // no default tier icon
+    return null; // IMPORTANT: no default tier icon
   }
 
   // ---------- data access ----------
@@ -219,18 +211,33 @@
 
       const firstName = toStr(r["First Name"] ?? r.firstName ?? r.FirstName);
       const lastName  = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
-      const nick      = toStr(r["Nickname AKA"] ?? r.nickname ?? r.nick);
 
-      const phone     = toStr(r["Phone"] ?? r.phone);
-      const email     = toStr(r["Email"] ?? r.email);
-      const birthday  = toStr(r["Birthday"] ?? r.birthday);
+      // ✅ Handle your curly-quote header too:
+      const nick = toStr(
+        r['Nickname AKA'] ??
+        r['Nickname “aka”'] ??
+        r['Nickname "aka"'] ??
+        r['Nickname aka'] ??
+        r.nickname ??
+        r.nick
+      );
+
+      const phone    = toStr(r["Phone"] ?? r.phone);
+      const email    = toStr(r["Email"] ?? r.email);
+      const birthday = toStr(r["Birthday"] ?? r.birthday);
 
       const pointsRaw = r["Rewards"] ?? r.points ?? r["Points"];
-      const points    = Number(String(pointsRaw ?? "0").replace(/[^0-9.\-]/g, "")) || 0;
+      const points = Number(String(pointsRaw ?? "0").replace(/[^0-9.\-]/g, "")) || 0;
 
-      const lockerNumber = toStr(r["Locker number"] ?? r["Locker Number"] ?? r.lockerNumber ?? r.locker);
+      // ✅ In your sheet, locker number is in the "Locker" column (numbers)
+      const lockerNumber = toStr(
+        r["Locker number"] ??
+        r.lockerNumber ??
+        r.locker ??
+        r["Locker"] // IMPORTANT
+      );
 
-      // Keep icon columns *as-is* (we still detect via normalized keys anyway)
+      // icon columns (preserve)
       const Military    = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
       const Paramedic   = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
       const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
@@ -243,12 +250,16 @@
         firstName,
         lastName,
         nickname: nick,
+
         phone,
         email,
         birthday,
+
         points,
+
         lockerNumber: lockerNumber || "",
 
+        // ICON COLUMNS (exact titles)
         Military,
         Paramedic,
         Firefighter,
@@ -262,16 +273,28 @@
     });
   }
 
+  // ✅ NEW: seed OR refresh when source changes
   async function seedCustomersFromJSONIfNeeded() {
     const existing = readCustomers();
-    if (existing.length) return existing;
+    const prevSource = localStorage.getItem(CONTACTS_SOURCE_KEY) || "";
+
+    const shouldRefreshFromSource =
+      !existing.length ||
+      prevSource !== CONTACTS_SOURCE_VALUE;
+
+    if (!shouldRefreshFromSource) return existing;
 
     try {
       const res = await fetch(CONTACTS_JSON_URL, { cache: "no-store" });
       if (!res.ok) throw new Error(`fetch ${CONTACTS_JSON_URL} failed: ${res.status}`);
       const rows = await res.json();
       const normalized = normalizeContacts(rows);
-      if (normalized.length) writeCustomers(normalized);
+
+      if (normalized.length) {
+        writeCustomers(normalized);
+        localStorage.setItem(CONTACTS_SOURCE_KEY, CONTACTS_SOURCE_VALUE);
+      }
+
       return normalized;
     } catch (err) {
       console.warn("[Loyalty] Could not seed customers from JSON:", err);
@@ -292,11 +315,9 @@
 
     if (q) {
       list = list.filter((c) => {
-        const last = (c.lastName || "").trim();
-        const first = (c.firstName || "").trim();
         const hay = [
-          `${first} ${last}`.trim(),
-          `${last}, ${first}`.trim(),
+          `${(c.lastName || "").trim()}, ${(c.firstName || "").trim()}`.trim(),
+          `${(c.firstName || "").trim()} ${(c.lastName || "").trim()}`.trim(),
           nickname(c),
           c.phone,
           c.email,
@@ -345,7 +366,6 @@
       summaryEl.textContent = `${showing} of ${total} customers`;
     }
 
-    // Add button only on All
     if (addBtn) addBtn.style.display = (state.mode === "all") ? "inline-flex" : "none";
 
     if (!listEl) return;
@@ -357,13 +377,13 @@
     }
 
     listEl.innerHTML = list.map((c) => {
-      const locker = isLockerCustomer(c);
-      const reg = isRegularCustomer(c);
+      const isLocker = isLockerCustomer(c);
+      const isReg = isRegularCustomer(c);
 
       const rowClass =
-        locker ? "row locker" :
-        reg    ? "row regular" :
-                "row";
+        isLocker ? "row locker" :
+        isReg    ? "row regular" :
+                 "row";
 
       const first = (c.firstName || "").trim();
       const last  = (c.lastName || "").trim();
@@ -491,9 +511,9 @@
       }
     }
 
-    const locker = isLockerCustomer(c);
+    const isLocker = isLockerCustomer(c);
     const lockerNum = lockerNumOnly(c);
-    const tierLine = locker
+    const tierLine = isLocker
       ? `Locker ${lockerNum || c.lockerNumber || ""}`.trim()
       : (isRegularCustomer(c) ? "Regular" : "");
 
