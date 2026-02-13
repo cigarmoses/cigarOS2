@@ -2,25 +2,30 @@
    Loyalty page controller (SF Pro / iOS style)
 
    - Reads customers from localStorage: cigaros_customers_v1
-   - Seeds from /pos/pos-contacts.json if localStorage is empty
+   - Seeds from /loyalty/loyalty-contacts.json if localStorage is empty
    - Search + segmented modes (All / Regulars / Lockers)
    - A–Z index scroller (right)
    - Customer profile dialog (iOS-style layout)
-   - Fixes:
-     ✅ Regulars tab only shows rows where Regular column has marker
-     ✅ All tab does NOT mark everyone as Regular
-     ✅ Locker rows only if Locker column OR lockerNumber is present
-     ✅ Role icons show for x/X/y/Y/"word" etc
-     ✅ Locker tab sorting by locker number numeric
-     ✅ Tier icon: locker for lockers, regular for regulars ONLY (no default regular)
+
+   ICON RULE:
+   - Columns are labeled with icon names: Military, Paramedic, Firefighter, Police, Locker, Regular
+   - If that column contains ANY marker (x/X/y/Y/1/true/yes or any non-empty value) -> show the icon
+
+   IMPORTANT FIXES IN THIS VERSION:
+   ✅ Uses absolute icon paths: /img/icons/loyalty/{name}.svg (no relative path weirdness)
+   ✅ Seeds from /loyalty/loyalty-contacts.json (your new file)
+   ✅ Column detection is robust to: casing, spaces, underscores, hyphens, trailing spaces
 */
 
 (() => {
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
-  const CONTACTS_JSON_URL = "/pos/pos-contacts.json";
-  
-  const ICON_BASE = "../img/icons/loyalty/";
+
+  // ✅ your new contacts file (Netlify-served)
+  const CONTACTS_JSON_URL = "/loyalty/loyalty-contacts.json";
+
+  // ✅ absolute path so it always works regardless of routing depth
+  const ICON_BASE = "/img/icons/loyalty/";
   const ICONS = {
     military: `${ICON_BASE}military.svg`,
     paramedic: `${ICON_BASE}paramedic.svg`,
@@ -50,7 +55,7 @@
   const acCancel = $("#acCancel");
   const acSave = $("#acSave");
 
-  // Profile dialog (NEW)
+  // Profile dialog
   const dialog = $("#profileDialog");
   const pName = $("#pName");
   const pAka = $("#pAka");
@@ -86,8 +91,29 @@
       .replaceAll("'", "&#039;");
   }
 
+  // normalize a key so we can match weird Excel/export variations
+  function normKey(k) {
+    return String(k || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s\-_]+/g, ""); // remove spaces/underscores/hyphens
+  }
+
+  // build a normalized lookup map for a row object
+  function buildKeyMap(obj) {
+    const m = Object.create(null);
+    if (!obj || typeof obj !== "object") return m;
+
+    for (const k of Object.keys(obj)) {
+      const nk = normKey(k);
+      if (!nk) continue;
+      // first one wins (stable)
+      if (m[nk] === undefined) m[nk] = obj[k];
+    }
+    return m;
+  }
+
   // Marker values that should count as "true" in icon columns.
-  // Accept: x/X, y/Y, true, 1, "yes", or the word of the column itself ("military", "police", etc.)
   function isTruthyMarker(v, columnTitle) {
     if (v === true) return true;
     if (v === false || v == null) return false;
@@ -100,37 +126,26 @@
     // common markers
     if (s === "x" || s === "y" || s === "1" || s === "yes" || s === "true") return true;
 
-    // sometimes sheet contains the word itself
+    // sometimes sheet contains the word itself (or includes it)
     const col = String(columnTitle || "").trim().toLowerCase();
-    if (col && s === col) return true;
+    if (col && (s === col || s.includes(col))) return true;
 
-    // sometimes "regular", "military", etc appears in longer strings
-    if (col && s.includes(col)) return true;
-
-    // any other non-empty token counts as true (safer for your sheet)
+    // any other non-empty token counts as true
     return true;
   }
 
-  // checks multiple possible key variants (exact, lower, upper, no spaces)
+  // ✅ robust column detection (handles trailing spaces, weird casing, underscores, etc.)
   function hasColumnValue(obj, columnTitle) {
     if (!obj) return false;
 
-    const k = columnTitle;
-    const variants = [
-      obj[k],
-      obj[k?.toLowerCase()],
-      obj[k?.toUpperCase()],
-      obj[k?.replace(/\s+/g, "")],
-      obj[k?.toLowerCase()?.replace(/\s+/g, "")],
-    ];
+    // fast-paths (exact/typical)
+    const direct = obj[columnTitle];
+    if (isTruthyMarker(direct, columnTitle)) return true;
 
-    return variants.some((v) => isTruthyMarker(v, columnTitle));
-  }
-
-  function firstLast(c) {
-    const first = (c.firstName || "").trim();
-    const last = (c.lastName || "").trim();
-    return `${first} ${last}`.trim();
+    // normalized lookup
+    const map = buildKeyMap(obj);
+    const v = map[normKey(columnTitle)];
+    return isTruthyMarker(v, columnTitle);
   }
 
   function nickname(c) {
@@ -138,23 +153,29 @@
   }
 
   function lockerNumOnly(c) {
-    const raw = String(c.lockerNumber || c["Locker number"] || c.locker || "").trim();
+    const raw =
+      String(
+        c.lockerNumber ||
+        c["Locker number"] ||
+        c["Locker Number"] ||
+        c.locker ||
+        ""
+      ).trim();
     const n = raw.replace(/\D+/g, "");
     return n || "";
   }
 
   // ---------- type / shading rules ----------
   function isLockerCustomer(c) {
-    // Locker column marker OR lockerNumber present
     return hasColumnValue(c, "Locker") || !!lockerNumOnly(c);
   }
 
   function isRegularCustomer(c) {
-    // ONLY true if Regular column marker exists
     return hasColumnValue(c, "Regular");
   }
 
   function buildIconHTML(iconNames) {
+    if (!iconNames || !iconNames.length) return "";
     return iconNames.map((n) => (
       `<img class="loy-ico" src="${ICONS[n]}" alt="${escapeHTML(n)}" loading="lazy" />`
     )).join("");
@@ -172,7 +193,7 @@
   function getTierIcon(c) {
     if (isLockerCustomer(c)) return "locker";
     if (isRegularCustomer(c)) return "regular";
-    return null; // IMPORTANT: no default tier icon
+    return null; // no default tier icon
   }
 
   // ---------- data access ----------
@@ -207,9 +228,9 @@
       const pointsRaw = r["Rewards"] ?? r.points ?? r["Points"];
       const points    = Number(String(pointsRaw ?? "0").replace(/[^0-9.\-]/g, "")) || 0;
 
-      const lockerNumber = toStr(r["Locker number"] ?? r.lockerNumber ?? r.locker);
+      const lockerNumber = toStr(r["Locker number"] ?? r["Locker Number"] ?? r.lockerNumber ?? r.locker);
 
-      // icon columns (preserve)
+      // Keep icon columns *as-is* (we still detect via normalized keys anyway)
       const Military    = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
       const Paramedic   = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
       const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
@@ -228,7 +249,6 @@
         points,
         lockerNumber: lockerNumber || "",
 
-        // ICON COLUMNS (exact titles)
         Military,
         Paramedic,
         Firefighter,
@@ -272,9 +292,11 @@
 
     if (q) {
       list = list.filter((c) => {
+        const last = (c.lastName || "").trim();
+        const first = (c.firstName || "").trim();
         const hay = [
-          firstLast(c),
-          `${(c.lastName || "").trim()}, ${(c.firstName || "").trim()}`.trim(),
+          `${first} ${last}`.trim(),
+          `${last}, ${first}`.trim(),
           nickname(c),
           c.phone,
           c.email,
@@ -284,10 +306,6 @@
       });
     }
 
-    // Sorting rules:
-    // - All: sort by last name, then first
-    // - Regulars: sort by last name, then first
-    // - Lockers: sort by locker number numeric asc (then last/first)
     if (state.mode === "lockers") {
       list.sort((a, b) => {
         const na = Number(lockerNumOnly(a)) || 0;
@@ -334,27 +352,22 @@
 
     if (!list.length) {
       listEl.innerHTML = `<div class="empty-state">No customers found</div>`;
-      buildAZIndex([]); // hide/clear
+      buildAZIndex([]);
       return;
     }
 
     listEl.innerHTML = list.map((c) => {
-      const isLocker = isLockerCustomer(c);
-      const isReg = isRegularCustomer(c);
+      const locker = isLockerCustomer(c);
+      const reg = isRegularCustomer(c);
 
-      // row shading:
-      // lockers -> blue
-      // regulars -> orange
-      // everyone else -> white
       const rowClass =
-        isLocker ? "row locker" :
-        isReg    ? "row regular" :
-                 "row";
+        locker ? "row locker" :
+        reg    ? "row regular" :
+                "row";
 
       const first = (c.firstName || "").trim();
       const last  = (c.lastName || "").trim();
 
-      // Locker tab: show locker number before last name (NOT bold)
       const lockerPrefix = (state.mode === "lockers")
         ? `<span class="locker-num">${escapeHTML(lockerNumOnly(c) || c.lockerNumber || "")}</span>`
         : ``;
@@ -365,7 +378,6 @@
         <span class="name-first">${escapeHTML(first)}</span>
       `;
 
-      // Right-side icons: role icons (0..4) + tier icon last (locker/regular)
       const roleIcons = getRoleIcons(c);
       const tierIcon = getTierIcon(c);
       const icons = tierIcon ? [...roleIcons, tierIcon] : [...roleIcons];
@@ -396,7 +408,6 @@
   function buildAZIndex(list) {
     if (!azIndexEl) return;
 
-    // only show on All/Regular (contacts style). Lockers are numeric list.
     const show = (state.mode !== "lockers") && list.length > 10;
     azIndexEl.style.display = show ? "flex" : "none";
     azIndexEl.innerHTML = "";
@@ -428,7 +439,6 @@
       if (active) active.classList.add("active");
     }
 
-    // touch drag
     let touching = false;
     const getLetterFromPoint = (clientY) => {
       const rect = azIndexEl.getBoundingClientRect();
@@ -454,7 +464,6 @@
 
     window.addEventListener("touchend", () => { touching = false; }, { passive: true });
 
-    // click letters too
     azIndexEl.querySelectorAll(".az-letter").forEach((el) => {
       el.addEventListener("click", () => scrollToLetter(el.getAttribute("data-letter")));
     });
@@ -467,12 +476,10 @@
     const c = state.customers.find((x) => String(x.id) === String(customerId));
     if (!c) return;
 
-    // ALWAYS two lines: First on line 1, Last on line 2
     const first = (c.firstName || "").trim();
     const last  = (c.lastName || "").trim();
     if (pName) pName.innerHTML = `${escapeHTML(first || "—")}<br>${escapeHTML(last || "")}`.trim();
 
-    // aka line
     const nick = nickname(c);
     if (pAka) {
       if (nick) {
@@ -484,20 +491,17 @@
       }
     }
 
-    // Tier line: "Locker 23" or "Regular"
-    const isLocker = isLockerCustomer(c);
+    const locker = isLockerCustomer(c);
     const lockerNum = lockerNumOnly(c);
-    const tierLine = isLocker
+    const tierLine = locker
       ? `Locker ${lockerNum || c.lockerNumber || ""}`.trim()
       : (isRegularCustomer(c) ? "Regular" : "");
 
     if (pTier) pTier.textContent = tierLine || "—";
 
-    // Points pill (green)
     const pts = Number(c.points || 0);
     if (pPointsPill) pPointsPill.textContent = String(pts);
 
-    // Details: phone / email / birthday stacked
     const phone = (c.phone || "").trim();
     const email = (c.email || "").trim();
     const bday  = (c.birthday || "").trim();
@@ -570,15 +574,11 @@
     current.push(newCust);
     writeCustomers(current);
 
-    // refresh state + UI
     state.customers = current;
     closeAddCustomer();
     render();
-
-    // open profile immediately
     openProfile(newCust.id);
 
-    // notify other tabs
     window.dispatchEvent(new Event("cigaros:customers-changed"));
   }
 
@@ -598,10 +598,8 @@
       render();
     });
 
-    // Profile close buttons
     pCloseX?.addEventListener("click", closeProfile);
 
-    // Click outside dialog closes
     dialog?.addEventListener("click", (e) => {
       const rect = dialog.getBoundingClientRect();
       const inside =
@@ -612,12 +610,10 @@
       if (!inside) closeProfile();
     });
 
-    // Add customer button
     addBtn?.addEventListener("click", openAddCustomer);
     acCancel?.addEventListener("click", closeAddCustomer);
     acSave?.addEventListener("click", saveNewCustomer);
 
-    // Clicking backdrop closes add dialog
     addDlg?.addEventListener("click", (e) => {
       const rect = addDlg.getBoundingClientRect();
       const inside =
