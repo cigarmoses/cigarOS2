@@ -13,16 +13,17 @@
      ✅ Role icons show for x/X/y/Y/true/1/"word"/numbers
      ✅ Lockers tab sorts by locker number numeric
      ✅ Tier icon shows ONLY when Locker or Regular is marked (no default regular)
+     ✅ Regulars tab ONLY includes explicit X under Regular (numbers/words no longer count)
 */
 
 (() => {
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
 
-  // ✅ NEW: correct source for loyalty contacts
+  // ✅ correct source for loyalty contacts
   const CONTACTS_JSON_URL = "/loyalty/loyalty-contacts.json";
 
-  // ✅ NEW: store the source we used so we can refresh if it changes
+  // ✅ store the source we used so we can refresh if it changes
   const CONTACTS_SOURCE_KEY = "cigaros_customers_source_v1";
   const CONTACTS_SOURCE_VALUE = CONTACTS_JSON_URL;
 
@@ -121,6 +122,13 @@
     return true;
   }
 
+  // ✅ NEW: strict X marker (used ONLY for Regular tab)
+  function isExplicitX(v) {
+    if (v == null) return false;
+    const s = String(v).trim().toLowerCase();
+    return s === "x";
+  }
+
   // checks multiple possible key variants (exact, lower, upper, no spaces)
   function hasColumnValue(obj, columnTitle) {
     if (!obj) return false;
@@ -135,6 +143,22 @@
     ];
 
     return variants.some((v) => isTruthyMarker(v, columnTitle));
+  }
+
+  // ✅ NEW: same variant lookup, but ONLY counts explicit "X"
+  function hasExplicitX(obj, columnTitle) {
+    if (!obj) return false;
+
+    const k = columnTitle;
+    const variants = [
+      obj[k],
+      obj[k?.toLowerCase()],
+      obj[k?.toUpperCase()],
+      obj[k?.replace(/\s+/g, "")],
+      obj[k?.toLowerCase()?.replace(/\s+/g, "")],
+    ];
+
+    return variants.some((v) => isExplicitX(v));
   }
 
   function nickname(c) {
@@ -160,8 +184,8 @@
   }
 
   function isRegularCustomer(c) {
-    // ONLY true if Regular column marker exists
-    return hasColumnValue(c, "Regular");
+    // ✅ ONLY true if Regular column is explicitly "X"
+    return hasExplicitX(c, "Regular");
   }
 
   function buildIconHTML(iconNames) {
@@ -273,7 +297,7 @@
     });
   }
 
-  // ✅ NEW: seed OR refresh when source changes
+  // ✅ seed OR refresh when source changes
   async function seedCustomersFromJSONIfNeeded() {
     const existing = readCustomers();
     const prevSource = localStorage.getItem(CONTACTS_SOURCE_KEY) || "";
@@ -308,6 +332,7 @@
     let list = (state.customers || []).slice();
 
     if (state.mode === "regular") {
+      // ✅ now strictly X-only via isRegularCustomer()
       list = list.filter((c) => isRegularCustomer(c));
     } else if (state.mode === "lockers") {
       list = list.filter((c) => isLockerCustomer(c));
