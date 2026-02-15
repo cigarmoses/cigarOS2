@@ -1,5 +1,9 @@
 /* /loyalty/contact.css
-   iOS-style contact detail polish (NO internal divider lines + folder tabs)
+   Polished iOS contact page
+   - No avatar
+   - No divider lines in header block
+   - Icons are raw SVG only (no tiles, no shadow)
+   - Active tab is bold only (no underline)
 */
 
 :root{
@@ -10,7 +14,7 @@
   --hair: rgba(60,60,67,.18);
   --blue:#007aff;
 
-  --tabbar:#e5e5ea; /* folder tab bar color */
+  --tabbar:#e5e5ea; /* folder strip */
 }
 
 *{ box-sizing:border-box; }
@@ -29,16 +33,29 @@ body.loy-contact{
   top:0;
   z-index:5;
   background:var(--bg);
-  padding: 12px 14px 6px;
+  padding: 10px 14px 6px;
+  padding-top: calc(10px + env(safe-area-inset-top));
 }
 
 .lc-back{
+  width: 44px;
+  height: 44px;
   border:0;
   background:transparent;
-  color: rgba(0,0,0,.85);
-  font-size: 28px;
-  line-height: 1;
-  padding: 6px 6px;
+  padding:0;
+  display:grid;
+  place-items:center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lc-back svg{
+  width: 22px;
+  height: 22px;
+  stroke: rgba(0,0,0,.85);
+  stroke-width: 2.75;
+  fill:none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* wrapper */
@@ -56,11 +73,7 @@ body.loy-contact{
   overflow:hidden;
 }
 
-/* =========================
-   PROFILE CARD (top block)
-   Remove internal divider lines
-   ========================= */
-
+/* profile card */
 .lc-profile{
   padding: 14px;
 }
@@ -71,25 +84,18 @@ body.loy-contact{
   gap: 12px;
 }
 
-.lc-avatar{
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  background: #e5e5ea;
-  flex: 0 0 auto;
-}
-
 .lc-nameblock{
   flex:1;
   min-width:0;
   padding-top: 2px;
 }
 
+/* ✅ name bigger, shifted left since avatar removed */
 .lc-name{
-  font-weight: 800; /* heavy */
-  font-size: 28px;
+  font-weight: 800;
+  font-size: 32px;          /* increased */
   line-height: 1.05;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.35px;
   white-space: nowrap;
   overflow:hidden;
   text-overflow: ellipsis;
@@ -97,7 +103,7 @@ body.loy-contact{
 
 .lc-aka{
   margin-top: 6px;
-  font-weight: 600; /* medium */
+  font-weight: 600;
   color: var(--muted);
   font-size: 16px;
 }
@@ -108,13 +114,14 @@ body.loy-contact{
   color: var(--blue);
   font-weight: 800;
   font-size: 14px;
-  padding: 8px 6px;
+  padding: 10px 6px;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Quick note — NO divider line, just spacing */
+/* ✅ remove internal divider line */
 .lc-note{
   margin-top: 12px;
-  border-top: none;              /* ✅ remove line */
+  border-top: none;
   padding-top: 6px;
 }
 
@@ -132,114 +139,90 @@ body.loy-contact{
   color: rgba(142,142,147,.75);
 }
 
-/* Icons row — NO divider line, just spacing */
+/* ✅ icons row: NO divider, NO background tiles, NO shadows */
 .lc-icons{
   display:flex;
   align-items:center;
   gap: 10px;
   padding-top: 10px;
-  margin-top: 8px;
-  border-top: none;              /* ✅ remove line */
+  margin-top: 6px;
+  border-top: none;
 }
 
 .lc-ico{
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: #f2f2f7;
+  width: 28px;
+  height: 28px;
+  background: transparent;     /* ✅ no tile */
+  box-shadow: none;            /* ✅ no shadow/line */
+  border-radius: 0;
   display:grid;
   place-items:center;
-  overflow:hidden;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.04) inset;
+  overflow: visible;
 }
 
 .lc-ico img{
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
 }
 
 /* =========================
-   FOLDER TABS (like your reference)
+   FOLDER TABS
    ========================= */
-
-/* This creates the gray "folder strip" behind the tabs */
 .lc-tabs{
   margin: 14px 0 0;
   display:flex;
   justify-content:center;
-  gap: 0;                         /* ✅ no gaps between tabs */
-  padding: 10px 10px 0;           /* top padding only */
+  gap: 0;
+  padding: 10px 10px 0;
   background: var(--tabbar);
-  border-radius: 18px 18px 0 0;   /* rounded top like folder */
+  border-radius: 18px 18px 0 0;
   box-shadow: 0 0 0 1px rgba(0,0,0,.04);
 }
 
-/* Tabs themselves */
 .lc-tab{
   border: 0;
   background: transparent;
   color: rgba(142,142,147,.95);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 18px;
   padding: 12px 18px 14px;
-  border-radius: 16px 16px 0 0;  /* rounded only on top */
+  border-radius: 16px 16px 0 0;
   position: relative;
-  margin: 0 6px;                 /* slight spacing like iOS */
+  margin: 0 6px;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Inactive tabs: look embedded into the gray strip */
-.lc-tab:not(.active){
-  background: transparent;
-  opacity: .85;
-}
-
-/* Active tab: becomes a white “folder tab” connected to content */
+/* ✅ Active tab is bold ONLY (no underline) */
 .lc-tab.active{
   background: #ffffff;
   color: var(--ink);
+  font-weight: 900;
   box-shadow: 0 -1px 0 rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.06);
   z-index: 2;
 }
 
-/* underline on active tab */
-.lc-tab.active::after{
-  content:"";
-  position:absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 8px;
-  height: 3px;
-  border-radius: 3px;
-  background: #111;
-}
+/* ✅ remove underline entirely */
+.lc-tab.active::after{ content:none; }
 
-/* Content card under tabs should connect seamlessly */
+/* content card connects seamlessly */
 .lc-panel-card{
   background: var(--card);
-  border-radius: 0 0 18px 18px;   /* flat top to connect to tabs */
+  border-radius: 0 0 18px 18px;
   box-shadow: 0 0 0 1px rgba(0,0,0,.04);
   overflow:hidden;
 }
 
-/* =========================
-   PANELS
-   ========================= */
+/* panels */
+.lc-panel{ padding:0; }
 
-.lc-panel{
-  padding: 0;
-}
-
-/* rows (history + empty states) */
+/* history rows */
 .lc-row{
   display:flex;
   align-items:center;
   padding: 16px 16px;
   gap: 12px;
 }
-
-.lc-row + .lc-row{
-  border-top: 1px solid var(--hair);
-}
+.lc-row + .lc-row{ border-top: 1px solid var(--hair); }
 
 .lc-row .left{
   flex:1;
@@ -272,28 +255,45 @@ body.loy-contact{
 /* contact key/value */
 .lc-kv{
   display:grid;
-  grid-template-columns: 130px 1fr; /* prevent "Cigar Social" wrapping */
+  grid-template-columns: 130px 1fr;
   gap: 18px 16px;
   padding: 18px 16px;
 }
-
 .lc-kv .k{
   font-size: 22px;
-  font-weight: 700;
-  color: var(--ink);
+  font-weight: 800;
   white-space: nowrap;
 }
-
 .lc-kv .v{
   font-size: 22px;
-  color: var(--ink);
   word-break: break-word;
 }
-
 .lc-kv .v a{
   color: var(--blue);
   text-decoration:none;
   font-weight: 800;
+}
+
+/* editable inputs look like plain text until edit mode */
+.lc-field{
+  width:100%;
+  border:0;
+  outline:none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+}
+
+.lc-field[readonly]{
+  cursor: default;
+}
+
+.lc-field:not([readonly]){
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f2f2f7;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
 }
 
 /* favorites */
@@ -302,28 +302,42 @@ body.loy-contact{
   font-weight: 800;
   padding: 16px 16px 8px;
 }
-
-.section-divider{
-  border-top: 1px solid var(--hair);
-}
-
+.section-divider{ border-top: 1px solid var(--hair); }
 .empty-line{
   padding: 16px;
   color: var(--muted);
   font-size: 22px;
 }
-
 .pills{
   display:flex;
   flex-wrap:wrap;
   gap: 10px;
   padding: 12px 16px 18px;
 }
-
 .pill{
   border:1px solid rgba(0,0,0,.18);
   border-radius: 999px;
   padding: 10px 14px;
   font-size: 18px;
   background: #fff;
+}
+
+/* editable textarea for favorites when editing */
+.lc-textarea{
+  width:100%;
+  border:0;
+  outline:none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  resize: vertical;
+  min-height: 86px;
+  padding: 0;
+}
+
+.lc-textarea:not([readonly]){
+  padding: 10px 12px;
+  border-radius: 12px;
+  background:#f2f2f7;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
 }
