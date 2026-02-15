@@ -1,9 +1,9 @@
 /* /loyalty/contact.css
-   Polished iOS contact page
-   - No avatar
-   - No divider lines in header block
-   - Icons are raw SVG only (no tiles, no shadow)
-   - Active tab is bold only (no underline)
+   Full iOS-style contact page polish
+   - Traditional folder tabs
+   - White content panel stretches down
+   - Contact values shift left w/ icons
+   - Favorites section has NO divider lines under titles
 */
 
 :root{
@@ -14,7 +14,7 @@
   --hair: rgba(60,60,67,.18);
   --blue:#007aff;
 
-  --tabbar:#e5e5ea; /* folder strip */
+  --tabbar:#e5e5ea;
 }
 
 *{ box-sizing:border-box; }
@@ -31,15 +31,15 @@ body.loy-contact{
 .lc-topbar{
   position:sticky;
   top:0;
-  z-index:5;
+  z-index:10;
   background:var(--bg);
   padding: 10px 14px 6px;
   padding-top: calc(10px + env(safe-area-inset-top));
 }
 
 .lc-back{
-  width: 44px;
-  height: 44px;
+  width:44px;
+  height:44px;
   border:0;
   background:transparent;
   padding:0;
@@ -58,11 +58,15 @@ body.loy-contact{
   stroke-linejoin: round;
 }
 
-/* wrapper */
+/* wrapper stretches so panel can fill */
 .lc-wrap{
-  padding: 10px 14px 28px;
   max-width: 520px;
   margin: 0 auto;
+  padding: 10px 14px 18px;
+
+  display:flex;
+  flex-direction:column;
+  min-height: calc(100vh - 70px);
 }
 
 /* cards */
@@ -73,7 +77,7 @@ body.loy-contact{
   overflow:hidden;
 }
 
-/* profile card */
+/* profile */
 .lc-profile{
   padding: 14px;
 }
@@ -90,10 +94,9 @@ body.loy-contact{
   padding-top: 2px;
 }
 
-/* ✅ name bigger, shifted left since avatar removed */
 .lc-name{
   font-weight: 800;
-  font-size: 32px;          /* increased */
+  font-size: 32px;
   line-height: 1.05;
   letter-spacing: -0.35px;
   white-space: nowrap;
@@ -118,7 +121,6 @@ body.loy-contact{
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ✅ remove internal divider line */
 .lc-note{
   margin-top: 12px;
   border-top: none;
@@ -139,7 +141,7 @@ body.loy-contact{
   color: rgba(142,142,147,.75);
 }
 
-/* ✅ icons row: NO divider, NO background tiles, NO shadows */
+/* user icons row (raw svgs only; no tiles/shadows) */
 .lc-icons{
   display:flex;
   align-items:center;
@@ -152,12 +154,11 @@ body.loy-contact{
 .lc-ico{
   width: 28px;
   height: 28px;
-  background: transparent;     /* ✅ no tile */
-  box-shadow: none;            /* ✅ no shadow/line */
+  background: transparent;
+  box-shadow: none;
   border-radius: 0;
   display:grid;
   place-items:center;
-  overflow: visible;
 }
 
 .lc-ico img{
@@ -165,57 +166,64 @@ body.loy-contact{
   height: 28px;
 }
 
-/* =========================
-   FOLDER TABS
-   ========================= */
+/* -------------------------
+   FOLDER TABS (traditional)
+-------------------------- */
 .lc-tabs{
-  margin: 14px 0 0;
-  display:flex;
-  justify-content:center;
-  gap: 0;
-  padding: 10px 10px 0;
+  margin-top: 14px;
   background: var(--tabbar);
   border-radius: 18px 18px 0 0;
   box-shadow: 0 0 0 1px rgba(0,0,0,.04);
+
+  display:flex;
+  justify-content:space-between;
+  padding: 10px 10px 0;
 }
 
 .lc-tab{
-  border: 0;
+  border:0;
   background: transparent;
   color: rgba(142,142,147,.95);
   font-weight: 700;
   font-size: 18px;
-  padding: 12px 18px 14px;
+  padding: 12px 16px 14px;
   border-radius: 16px 16px 0 0;
-  position: relative;
   margin: 0 6px;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ✅ Active tab is bold ONLY (no underline) */
 .lc-tab.active{
-  background: #ffffff;
+  background:#fff;
   color: var(--ink);
   font-weight: 900;
   box-shadow: 0 -1px 0 rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.06);
-  z-index: 2;
+  z-index:2;
 }
 
-/* ✅ remove underline entirely */
-.lc-tab.active::after{ content:none; }
-
-/* content card connects seamlessly */
+/* connect tab to panel below */
 .lc-panel-card{
-  background: var(--card);
   border-radius: 0 0 18px 18px;
   box-shadow: 0 0 0 1px rgba(0,0,0,.04);
   overflow:hidden;
+
+  /* ✅ pull white panel up to meet the active tab */
+  margin-top: -1px;
+
+  /* ✅ stretch to fill the screen */
+  flex: 1;
+  min-height: 320px;
+  display:flex;
+  flex-direction:column;
 }
 
-/* panels */
-.lc-panel{ padding:0; }
+.lc-panel{
+  padding:0;
+  flex: 1;
+}
 
-/* history rows */
+/* -------------------------
+   HISTORY rows
+-------------------------- */
 .lc-row{
   display:flex;
   align-items:center;
@@ -252,29 +260,44 @@ body.loy-contact{
   text-decoration:none;
 }
 
-/* contact key/value */
+/* -------------------------
+   CONTACT layout (icons + values)
+-------------------------- */
 .lc-kv{
   display:grid;
-  grid-template-columns: 130px 1fr;
-  gap: 18px 16px;
+  grid-template-columns: 34px 1fr; /* ✅ narrow icon column */
+  gap: 16px 12px;
   padding: 18px 16px;
 }
-.lc-kv .k{
-  font-size: 22px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-.lc-kv .v{
-  font-size: 22px;
-  word-break: break-word;
-}
-.lc-kv .v a{
-  color: var(--blue);
-  text-decoration:none;
-  font-weight: 800;
+
+.lc-kv .ico{
+  width: 28px;
+  height: 28px;
+  display:grid;
+  place-items:center;
+  opacity: .85;
 }
 
-/* editable inputs look like plain text until edit mode */
+.lc-kv .ico svg{
+  width: 22px;
+  height: 22px;
+  stroke: rgba(0,0,0,.85);
+  stroke-width: 2.25;
+  fill:none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lc-kv .v{
+  font-size: 22px;
+  font-weight: 800;
+  min-width:0;
+
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
 .lc-field{
   width:100%;
   border:0;
@@ -283,10 +306,10 @@ body.loy-contact{
   font: inherit;
   color: inherit;
   padding: 0;
-}
 
-.lc-field[readonly]{
-  cursor: default;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
 }
 
 .lc-field:not([readonly]){
@@ -296,48 +319,55 @@ body.loy-contact{
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
 }
 
-/* favorites */
+/* -------------------------
+   FAVORITES
+   - NO thin lines under titles
+-------------------------- */
 .section-title{
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 900;
   padding: 16px 16px 8px;
 }
-.section-divider{ border-top: 1px solid var(--hair); }
+
+.section-divider{ display:none; } /* ✅ kill those thin lines */
+
 .empty-line{
-  padding: 16px;
+  padding: 10px 16px 18px;
   color: var(--muted);
   font-size: 22px;
 }
+
+.brand-icons{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  padding: 6px 16px 18px;
+  flex-wrap: wrap;
+}
+
+.brand-icons img{
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
+  padding: 6px;
+}
+
 .pills{
   display:flex;
   flex-wrap:wrap;
   gap: 10px;
-  padding: 12px 16px 18px;
+  padding: 6px 16px 18px;
 }
+
 .pill{
   border:1px solid rgba(0,0,0,.18);
   border-radius: 999px;
   padding: 10px 14px;
   font-size: 18px;
   background: #fff;
-}
-
-/* editable textarea for favorites when editing */
-.lc-textarea{
-  width:100%;
-  border:0;
-  outline:none;
-  background: transparent;
-  font: inherit;
-  color: inherit;
-  resize: vertical;
-  min-height: 86px;
-  padding: 0;
-}
-
-.lc-textarea:not([readonly]){
-  padding: 10px 12px;
-  border-radius: 12px;
-  background:#f2f2f7;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+  text-decoration:none;
+  color: var(--ink);
+  font-weight: 800;
 }
