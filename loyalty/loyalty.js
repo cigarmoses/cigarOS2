@@ -5,7 +5,6 @@
    - Seeds from /loyalty/loyalty-contacts.json
    - Search + segmented modes (All / Regulars / Lockers)
    - A–Z index scroller (right)
-   - Customer profile dialog (iOS-style layout)
 
    Fixes:
      ✅ Always seeds from loyalty-contacts.json (not pos-contacts.json)
@@ -14,20 +13,20 @@
      ✅ Lockers tab sorts by locker number numeric
      ✅ Tier icon shows ONLY when Locker or Regular is marked (no default regular)
      ✅ Regulars tab ONLY includes explicit X under Regular (numbers/words no longer count)
+
+   NEW:
+     ✅ Row click goes to full-page detail: /loyalty/contact.html?id=...
 */
 
 (() => {
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
 
-  // ✅ correct source for loyalty contacts
   const CONTACTS_JSON_URL = "/loyalty/loyalty-contacts.json";
 
-  // ✅ store the source we used so we can refresh if it changes
   const CONTACTS_SOURCE_KEY = "cigaros_customers_source_v1";
   const CONTACTS_SOURCE_VALUE = CONTACTS_JSON_URL;
 
-  // ✅ Icons are pulled from: /img/icons/loyalty/*.svg
   const ICON_BASE = "/img/icons/loyalty/";
   const ICONS = {
     military: `${ICON_BASE}military.svg`,
@@ -57,15 +56,6 @@
   const acCancel = $("#acCancel");
   const acSave = $("#acSave");
 
-  // Profile dialog
-  const dialog = $("#profileDialog");
-  const pName = $("#pName");
-  const pAka = $("#pAka");
-  const pTier = $("#pTier");
-  const pPointsPill = $("#pPointsPill");
-  const pDetails = $("#pDetails");
-  const pCloseX = $("#pCloseX");
-
   const tonyFab = $("#tonyFab");
 
   // ---------- state ----------
@@ -74,7 +64,6 @@
     query: "",
     customers: [],
     sales: [],
-    activeCustomerId: null,
   };
 
   // ---------- utils ----------
@@ -94,8 +83,6 @@
   }
 
   // Marker values that should count as "true" in icon columns.
-  // Accept: x/X, y/Y, true, 1, "yes", or the word of the column itself ("military", "police", etc.)
-  // Also: numbers like locker "8" should count as true.
   function isTruthyMarker(v, columnTitle) {
     if (v === true) return true;
     if (v === false || v == null) return false;
@@ -105,31 +92,23 @@
 
     if (s === "0" || s === "no" || s === "false" || s === "n") return false;
 
-    // common markers
     if (s === "x" || s === "y" || s === "1" || s === "yes" || s === "true") return true;
 
-    // numbers (locker numbers etc.)
     if (/^\d+(\.\d+)?$/.test(s)) return true;
 
-    // sometimes sheet contains the word itself
     const col = String(columnTitle || "").trim().toLowerCase();
     if (col && s === col) return true;
-
-    // sometimes "regular", "military", etc appears in longer strings
     if (col && s.includes(col)) return true;
 
-    // any other non-empty token counts as true
     return true;
   }
 
-  // ✅ NEW: strict X marker (used ONLY for Regular tab)
   function isExplicitX(v) {
     if (v == null) return false;
     const s = String(v).trim().toLowerCase();
     return s === "x";
   }
 
-  // checks multiple possible key variants (exact, lower, upper, no spaces)
   function hasColumnValue(obj, columnTitle) {
     if (!obj) return false;
 
@@ -145,7 +124,6 @@
     return variants.some((v) => isTruthyMarker(v, columnTitle));
   }
 
-  // ✅ NEW: same variant lookup, but ONLY counts explicit "X"
   function hasExplicitX(obj, columnTitle) {
     if (!obj) return false;
 
@@ -177,14 +155,11 @@
     return n || "";
   }
 
-  // ---------- type / shading rules ----------
   function isLockerCustomer(c) {
-    // Locker column marker OR lockerNumber present
     return hasColumnValue(c, "Locker") || !!lockerNumOnly(c);
   }
 
   function isRegularCustomer(c) {
-    // ✅ ONLY true if Regular column is explicitly "X"
     return hasExplicitX(c, "Regular");
   }
 
@@ -209,7 +184,7 @@
   function getTierIcon(c) {
     if (isLockerCustomer(c)) return "locker";
     if (isRegularCustomer(c)) return "regular";
-    return null; // IMPORTANT: no default tier icon
+    return null;
   }
 
   // ---------- data access ----------
@@ -236,7 +211,6 @@
       const firstName = toStr(r["First Name"] ?? r.firstName ?? r.FirstName);
       const lastName  = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
 
-      // ✅ Handle your curly-quote header too:
       const nick = toStr(
         r['Nickname AKA'] ??
         r['Nickname “aka”'] ??
@@ -253,21 +227,27 @@
       const pointsRaw = r["Rewards"] ?? r.points ?? r["Points"];
       const points = Number(String(pointsRaw ?? "0").replace(/[^0-9.\-]/g, "")) || 0;
 
-      // ✅ In your sheet, locker number is in the "Locker" column (numbers)
       const lockerNumber = toStr(
         r["Locker number"] ??
         r.lockerNumber ??
         r.locker ??
-        r["Locker"] // IMPORTANT
+        r["Locker"]
       );
 
-      // icon columns (preserve)
       const Military    = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
       const Paramedic   = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
       const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
       const Police      = r["Police"] ?? r.Police ?? r["police"] ?? r.police;
       const Locker      = r["Locker"] ?? r.Locker ?? r["locker"] ?? r.locker;
       const Regular     = r["Regular"] ?? r.Regular ?? r["regular"] ?? r.regular;
+
+      // favorites placeholders (safe if missing)
+      const favoritesBrands = r.favoritesBrands ?? r["Favorite Brands"] ?? r.favoriteBrands ?? "";
+      const favoritesCigars = r.favoritesCigars ?? r["Favorite Cigars"] ?? r.favoriteCigars ?? "";
+
+      // Cigar Social handle + quick note placeholders
+      const cigarSocial = toStr(r.cigarSocial ?? r["Cigar Social"] ?? r["CigarSocial"] ?? "");
+      const note = toStr(r.note ?? r["Note"] ?? r["Quick Note"] ?? "");
 
       return {
         id,
@@ -283,7 +263,6 @@
 
         lockerNumber: lockerNumber || "",
 
-        // ICON COLUMNS (exact titles)
         Military,
         Paramedic,
         Firefighter,
@@ -291,13 +270,18 @@
         Locker,
         Regular,
 
+        cigarSocial,
+        note,
+
+        favoritesBrands,
+        favoritesCigars,
+
         createdAt: r.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
     });
   }
 
-  // ✅ seed OR refresh when source changes
   async function seedCustomersFromJSONIfNeeded() {
     const existing = readCustomers();
     const prevSource = localStorage.getItem(CONTACTS_SOURCE_KEY) || "";
@@ -332,7 +316,6 @@
     let list = (state.customers || []).slice();
 
     if (state.mode === "regular") {
-      // ✅ now strictly X-only via isRegularCustomer()
       list = list.filter((c) => isRegularCustomer(c));
     } else if (state.mode === "lockers") {
       list = list.filter((c) => isLockerCustomer(c));
@@ -382,6 +365,11 @@
   }
 
   // ---------- render list ----------
+  function goToContact(customerId) {
+    const url = `/loyalty/contact.html?id=${encodeURIComponent(String(customerId))}`;
+    window.location.href = url;
+  }
+
   function render() {
     const list = filteredCustomers();
 
@@ -428,7 +416,7 @@
       const icons = tierIcon ? [...roleIcons, tierIcon] : [...roleIcons];
 
       return `
-        <div class="${rowClass}" data-id="${escapeHTML(c.id)}">
+        <div class="${rowClass}" data-id="${escapeHTML(c.id)}" role="button" tabindex="0">
           <div class="row-left">
             <div class="row-name">${nameHTML}</div>
           </div>
@@ -440,9 +428,13 @@
     }).join("");
 
     listEl.querySelectorAll(".row").forEach((row) => {
-      row.addEventListener("click", () => {
-        const id = row.getAttribute("data-id");
-        openProfile(id);
+      const id = row.getAttribute("data-id");
+      row.addEventListener("click", () => goToContact(id));
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          goToContact(id);
+        }
       });
     });
 
@@ -514,59 +506,6 @@
     });
   }
 
-  // ---------- profile dialog ----------
-  function openProfile(customerId) {
-    state.activeCustomerId = customerId;
-
-    const c = state.customers.find((x) => String(x.id) === String(customerId));
-    if (!c) return;
-
-    const first = (c.firstName || "").trim();
-    const last  = (c.lastName || "").trim();
-    if (pName) pName.innerHTML = `${escapeHTML(first || "—")}<br>${escapeHTML(last || "")}`.trim();
-
-    const nick = nickname(c);
-    if (pAka) {
-      if (nick) {
-        pAka.style.display = "";
-        pAka.textContent = `aka ${nick}`;
-      } else {
-        pAka.style.display = "none";
-        pAka.textContent = "";
-      }
-    }
-
-    const isLocker = isLockerCustomer(c);
-    const lockerNum = lockerNumOnly(c);
-    const tierLine = isLocker
-      ? `Locker ${lockerNum || c.lockerNumber || ""}`.trim()
-      : (isRegularCustomer(c) ? "Regular" : "");
-
-    if (pTier) pTier.textContent = tierLine || "—";
-
-    const pts = Number(c.points || 0);
-    if (pPointsPill) pPointsPill.textContent = String(pts);
-
-    const phone = (c.phone || "").trim();
-    const email = (c.email || "").trim();
-    const bday  = (c.birthday || "").trim();
-
-    const lines = [];
-    if (phone) lines.push(phone);
-    if (email) lines.push(email);
-    if (bday)  lines.push(bday);
-
-    if (pDetails) pDetails.textContent = lines.length ? lines.join("\n") : "—";
-
-    if (dialog && !dialog.open) dialog.showModal();
-  }
-
-  function closeProfile() {
-    if (!dialog) return;
-    if (dialog.open) dialog.close();
-    state.activeCustomerId = null;
-  }
-
   // ---------- add customer ----------
   function openAddCustomer() {
     if (!addDlg) return;
@@ -611,6 +550,10 @@
       Police: "",
       Locker: "",
       Regular: "",
+      cigarSocial: "",
+      note: "",
+      favoritesBrands: "",
+      favoritesCigars: "",
       createdAt: now,
       updatedAt: now,
     };
@@ -622,7 +565,7 @@
     state.customers = current;
     closeAddCustomer();
     render();
-    openProfile(newCust.id);
+    goToContact(newCust.id);
 
     window.dispatchEvent(new Event("cigaros:customers-changed"));
   }
@@ -641,18 +584,6 @@
     searchEl?.addEventListener("input", () => {
       state.query = searchEl.value || "";
       render();
-    });
-
-    pCloseX?.addEventListener("click", closeProfile);
-
-    dialog?.addEventListener("click", (e) => {
-      const rect = dialog.getBoundingClientRect();
-      const inside =
-        e.clientX >= rect.left &&
-        e.clientX <= rect.right &&
-        e.clientY >= rect.top &&
-        e.clientY <= rect.bottom;
-      if (!inside) closeProfile();
     });
 
     addBtn?.addEventListener("click", openAddCustomer);
@@ -674,26 +605,21 @@
     });
 
     window.addEventListener("storage", (e) => {
-      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) loadAndRender(true);
+      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) loadAndRender();
     });
 
-    window.addEventListener("cigaros:customers-changed", () => loadAndRender(true));
-    window.addEventListener("cigaros:sales-changed", () => loadAndRender(true));
+    window.addEventListener("cigaros:customers-changed", () => loadAndRender());
+    window.addEventListener("cigaros:sales-changed", () => loadAndRender());
   }
 
   // ---------- load ----------
-  async function loadAndRender(keepDialog) {
+  async function loadAndRender() {
     state.sales = readSales();
     state.customers = await seedCustomersFromJSONIfNeeded();
-
     render();
-
-    if (keepDialog && dialog?.open && state.activeCustomerId) {
-      openProfile(state.activeCustomerId);
-    }
   }
 
   // ---------- init ----------
   bindEvents();
-  loadAndRender(false);
+  loadAndRender();
 })();
