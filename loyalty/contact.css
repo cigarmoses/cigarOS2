@@ -1,5 +1,5 @@
 /* /loyalty/contact.css
-   iOS-style contact detail polish
+   iOS-style contact detail polish (NO internal divider lines + folder tabs)
 */
 
 :root{
@@ -9,6 +9,8 @@
   --muted:#8e8e93;
   --hair: rgba(60,60,67,.18);
   --blue:#007aff;
+
+  --tabbar:#e5e5ea; /* folder tab bar color */
 }
 
 *{ box-sizing:border-box; }
@@ -54,7 +56,11 @@ body.loy-contact{
   overflow:hidden;
 }
 
-/* profile card */
+/* =========================
+   PROFILE CARD (top block)
+   Remove internal divider lines
+   ========================= */
+
 .lc-profile{
   padding: 14px;
 }
@@ -105,10 +111,11 @@ body.loy-contact{
   padding: 8px 6px;
 }
 
-/* quick note */
+/* Quick note — NO divider line, just spacing */
 .lc-note{
   margin-top: 12px;
-  border-top: 1px solid var(--hair);
+  border-top: none;              /* ✅ remove line */
+  padding-top: 6px;
 }
 
 .lc-note input{
@@ -117,7 +124,7 @@ body.loy-contact{
   outline:none;
   background: transparent;
   font-size: 18px;
-  padding: 12px 2px;
+  padding: 10px 2px;
   color: rgba(0,0,0,.72);
 }
 
@@ -125,13 +132,14 @@ body.loy-contact{
   color: rgba(142,142,147,.75);
 }
 
-/* icons row */
+/* Icons row — NO divider line, just spacing */
 .lc-icons{
   display:flex;
   align-items:center;
   gap: 10px;
-  padding-top: 12px;
-  border-top: 1px solid var(--hair);
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: none;              /* ✅ remove line */
 }
 
 .lc-ico{
@@ -150,43 +158,73 @@ body.loy-contact{
   height: 22px;
 }
 
-/* tabs */
+/* =========================
+   FOLDER TABS (like your reference)
+   ========================= */
+
+/* This creates the gray "folder strip" behind the tabs */
 .lc-tabs{
-  margin: 14px 0 12px;
+  margin: 14px 0 0;
   display:flex;
-  gap: 10px;
   justify-content:center;
+  gap: 0;                         /* ✅ no gaps between tabs */
+  padding: 10px 10px 0;           /* top padding only */
+  background: var(--tabbar);
+  border-radius: 18px 18px 0 0;   /* rounded top like folder */
+  box-shadow: 0 0 0 1px rgba(0,0,0,.04);
 }
 
+/* Tabs themselves */
 .lc-tab{
-  border:0;
-  background: #e5e5ea;
+  border: 0;
+  background: transparent;
   color: rgba(142,142,147,.95);
   font-weight: 800;
   font-size: 18px;
-  padding: 10px 18px;
-  border-radius: 14px;
+  padding: 12px 18px 14px;
+  border-radius: 16px 16px 0 0;  /* rounded only on top */
+  position: relative;
+  margin: 0 6px;                 /* slight spacing like iOS */
 }
 
+/* Inactive tabs: look embedded into the gray strip */
+.lc-tab:not(.active){
+  background: transparent;
+  opacity: .85;
+}
+
+/* Active tab: becomes a white “folder tab” connected to content */
 .lc-tab.active{
   background: #ffffff;
   color: var(--ink);
-  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
-  position: relative;
+  box-shadow: 0 -1px 0 rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.06);
+  z-index: 2;
 }
 
+/* underline on active tab */
 .lc-tab.active::after{
   content:"";
   position:absolute;
   left: 16px;
   right: 16px;
-  bottom: 6px;
+  bottom: 8px;
   height: 3px;
   border-radius: 3px;
   background: #111;
 }
 
-/* panels */
+/* Content card under tabs should connect seamlessly */
+.lc-panel-card{
+  background: var(--card);
+  border-radius: 0 0 18px 18px;   /* flat top to connect to tabs */
+  box-shadow: 0 0 0 1px rgba(0,0,0,.04);
+  overflow:hidden;
+}
+
+/* =========================
+   PANELS
+   ========================= */
+
 .lc-panel{
   padding: 0;
 }
@@ -234,7 +272,7 @@ body.loy-contact{
 /* contact key/value */
 .lc-kv{
   display:grid;
-  grid-template-columns: 130px 1fr; /* widened so "Cigar Social:" doesn't wrap */
+  grid-template-columns: 130px 1fr; /* prevent "Cigar Social" wrapping */
   gap: 18px 16px;
   padding: 18px 16px;
 }
@@ -243,7 +281,7 @@ body.loy-contact{
   font-size: 22px;
   font-weight: 700;
   color: var(--ink);
-  white-space: nowrap; /* prevent wrapping */
+  white-space: nowrap;
 }
 
 .lc-kv .v{
