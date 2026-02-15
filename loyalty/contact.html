@@ -2,56 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="format-detection" content="telephone=no,email=no,address=no" />
-  <title>Loyalty • Contact</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Contact</title>
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/loyalty/contact.css" />
+
 </head>
 
 <body class="loy-contact">
-
   <header class="lc-topbar">
-    <button class="lc-back" type="button" aria-label="Back">←</button>
+    <button class="lc-back" type="button" aria-label="Back" id="lcBack">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 18L9 12L15 6"></path>
+      </svg>
+    </button>
   </header>
 
   <main class="lc-wrap">
-
-    <!-- Profile card -->
+    <!-- PROFILE CARD -->
     <section class="lc-card lc-profile">
       <div class="lc-profile-row">
-        <div class="lc-avatar" aria-hidden="true"></div>
-
         <div class="lc-nameblock">
           <div class="lc-name" id="lcName">—</div>
           <div class="lc-aka" id="lcAka" style="display:none;">aka —</div>
         </div>
 
-        <button class="lc-edit" id="lcEditBtn" type="button">EDIT</button>
+        <button class="lc-edit" type="button" id="lcEditBtn">EDIT</button>
       </div>
 
       <div class="lc-note">
-        <input id="lcNote" type="text" placeholder="Quick note…" />
+        <input id="lcNote" type="text" placeholder="Quick note..." readonly />
       </div>
 
       <div class="lc-icons" id="lcIcons"></div>
     </section>
 
-    <!-- Tabs -->
-    <section class="lc-tabs">
-      <button class="lc-tab active" data-tab="history" type="button">History</button>
-      <button class="lc-tab" data-tab="contact" type="button">Contact</button>
-      <button class="lc-tab" data-tab="favorites" type="button">Favorites</button>
+    <!-- TABS -->
+    <section class="lc-tabs" role="tablist" aria-label="Contact tabs">
+      <button class="lc-tab" type="button" data-tab="history" role="tab">History</button>
+      <button class="lc-tab" type="button" data-tab="contact" role="tab">Contact</button>
+      <button class="lc-tab" type="button" data-tab="favorites" role="tab">Favorites</button>
     </section>
 
-    <!-- Panels -->
-    <section class="lc-card lc-panel" id="panelHistory"></section>
-    <section class="lc-card lc-panel" id="panelContact" style="display:none;"></section>
-    <section class="lc-card lc-panel" id="panelFavorites" style="display:none;"></section>
-
+    <!-- CONTENT CARD (connects to tabs) -->
+    <section class="lc-card lc-panel-card">
+      <div class="lc-panel" id="panelHistory"></div>
+      <div class="lc-panel" id="panelContact" style="display:none;"></div>
+      <div class="lc-panel" id="panelFavorites" style="display:none;"></div>
+    </section>
   </main>
 
-  <script src="/loyalty/contact.js"></script>
+  <script defer src="/loyalty/contact.js"></script>
 </body>
 </html>
