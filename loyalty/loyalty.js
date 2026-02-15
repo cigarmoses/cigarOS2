@@ -22,11 +22,14 @@
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
 
+  // ✅ correct source for loyalty contacts
   const CONTACTS_JSON_URL = "/loyalty/loyalty-contacts.json";
 
+  // ✅ store the source we used so we can refresh if it changes
   const CONTACTS_SOURCE_KEY = "cigaros_customers_source_v1";
   const CONTACTS_SOURCE_VALUE = CONTACTS_JSON_URL;
 
+  // ✅ Icons are pulled from: /img/icons/loyalty/*.svg
   const ICON_BASE = "/img/icons/loyalty/";
   const ICONS = {
     military: `${ICON_BASE}military.svg`,
@@ -83,6 +86,8 @@
   }
 
   // Marker values that should count as "true" in icon columns.
+  // Accept: x/X, y/Y, true, 1, "yes", or the word of the column itself ("military", "police", etc.)
+  // Also: numbers like locker "8" should count as true.
   function isTruthyMarker(v, columnTitle) {
     if (v === true) return true;
     if (v === false || v == null) return false;
@@ -92,23 +97,31 @@
 
     if (s === "0" || s === "no" || s === "false" || s === "n") return false;
 
+    // common markers
     if (s === "x" || s === "y" || s === "1" || s === "yes" || s === "true") return true;
 
+    // numbers (locker numbers etc.)
     if (/^\d+(\.\d+)?$/.test(s)) return true;
 
+    // sometimes sheet contains the word itself
     const col = String(columnTitle || "").trim().toLowerCase();
     if (col && s === col) return true;
+
+    // sometimes "regular", "military", etc appears in longer strings
     if (col && s.includes(col)) return true;
 
+    // any other non-empty token counts as true
     return true;
   }
 
+  // ✅ strict X marker (used ONLY for Regular tab)
   function isExplicitX(v) {
     if (v == null) return false;
     const s = String(v).trim().toLowerCase();
     return s === "x";
   }
 
+  // checks multiple possible key variants (exact, lower, upper, no spaces)
   function hasColumnValue(obj, columnTitle) {
     if (!obj) return false;
 
@@ -124,6 +137,7 @@
     return variants.some((v) => isTruthyMarker(v, columnTitle));
   }
 
+  // ✅ same variant lookup, but ONLY counts explicit "X"
   function hasExplicitX(obj, columnTitle) {
     if (!obj) return false;
 
@@ -155,11 +169,14 @@
     return n || "";
   }
 
+  // ---------- type / shading rules ----------
   function isLockerCustomer(c) {
+    // Locker column marker OR lockerNumber present
     return hasColumnValue(c, "Locker") || !!lockerNumOnly(c);
   }
 
   function isRegularCustomer(c) {
+    // ✅ ONLY true if Regular column is explicitly "X"
     return hasExplicitX(c, "Regular");
   }
 
@@ -184,7 +201,7 @@
   function getTierIcon(c) {
     if (isLockerCustomer(c)) return "locker";
     if (isRegularCustomer(c)) return "regular";
-    return null;
+    return null; // IMPORTANT: no default tier icon
   }
 
   // ---------- data access ----------
@@ -211,6 +228,7 @@
       const firstName = toStr(r["First Name"] ?? r.firstName ?? r.FirstName);
       const lastName  = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
 
+      // ✅ Handle your curly-quote header too:
       const nick = toStr(
         r['Nickname AKA'] ??
         r['Nickname “aka”'] ??
@@ -227,27 +245,21 @@
       const pointsRaw = r["Rewards"] ?? r.points ?? r["Points"];
       const points = Number(String(pointsRaw ?? "0").replace(/[^0-9.\-]/g, "")) || 0;
 
+      // ✅ In your sheet, locker number is in the "Locker" column (numbers)
       const lockerNumber = toStr(
         r["Locker number"] ??
         r.lockerNumber ??
         r.locker ??
-        r["Locker"]
+        r["Locker"] // IMPORTANT
       );
 
+      // icon columns (preserve)
       const Military    = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
       const Paramedic   = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
       const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
       const Police      = r["Police"] ?? r.Police ?? r["police"] ?? r.police;
       const Locker      = r["Locker"] ?? r.Locker ?? r["locker"] ?? r.locker;
       const Regular     = r["Regular"] ?? r.Regular ?? r["regular"] ?? r.regular;
-
-      // favorites placeholders (safe if missing)
-      const favoritesBrands = r.favoritesBrands ?? r["Favorite Brands"] ?? r.favoriteBrands ?? "";
-      const favoritesCigars = r.favoritesCigars ?? r["Favorite Cigars"] ?? r.favoriteCigars ?? "";
-
-      // Cigar Social handle + quick note placeholders
-      const cigarSocial = toStr(r.cigarSocial ?? r["Cigar Social"] ?? r["CigarSocial"] ?? "");
-      const note = toStr(r.note ?? r["Note"] ?? r["Quick Note"] ?? "");
 
       return {
         id,
@@ -263,6 +275,7 @@
 
         lockerNumber: lockerNumber || "",
 
+        // ICON COLUMNS (exact titles)
         Military,
         Paramedic,
         Firefighter,
@@ -270,18 +283,13 @@
         Locker,
         Regular,
 
-        cigarSocial,
-        note,
-
-        favoritesBrands,
-        favoritesCigars,
-
         createdAt: r.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
     });
   }
 
+  // ✅ seed OR refresh when source changes
   async function seedCustomersFromJSONIfNeeded() {
     const existing = readCustomers();
     const prevSource = localStorage.getItem(CONTACTS_SOURCE_KEY) || "";
@@ -316,6 +324,7 @@
     let list = (state.customers || []).slice();
 
     if (state.mode === "regular") {
+      // ✅ now strictly X-only via isRegularCustomer()
       list = list.filter((c) => isRegularCustomer(c));
     } else if (state.mode === "lockers") {
       list = list.filter((c) => isLockerCustomer(c));
@@ -364,12 +373,11 @@
     return list;
   }
 
-  // ---------- render list ----------
-  function goToContact(customerId) {
-    const url = `/loyalty/contact.html?id=${encodeURIComponent(String(customerId))}`;
-    window.location.href = url;
+  function goToContact(id) {
+    window.location.href = `/loyalty/contact.html?id=${encodeURIComponent(String(id))}`;
   }
 
+  // ---------- render list ----------
   function render() {
     const list = filteredCustomers();
 
@@ -550,10 +558,6 @@
       Police: "",
       Locker: "",
       Regular: "",
-      cigarSocial: "",
-      note: "",
-      favoritesBrands: "",
-      favoritesCigars: "",
       createdAt: now,
       updatedAt: now,
     };
@@ -605,11 +609,11 @@
     });
 
     window.addEventListener("storage", (e) => {
-      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) loadAndRender();
+      if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) loadAndRender(true);
     });
 
-    window.addEventListener("cigaros:customers-changed", () => loadAndRender());
-    window.addEventListener("cigaros:sales-changed", () => loadAndRender());
+    window.addEventListener("cigaros:customers-changed", () => loadAndRender(true));
+    window.addEventListener("cigaros:sales-changed", () => loadAndRender(true));
   }
 
   // ---------- load ----------
