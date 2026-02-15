@@ -1,4 +1,6 @@
-/* /loyalty/contact.css */
+/* /loyalty/contact.css
+   iOS-style contact detail polish
+*/
 
 :root{
   --bg:#f2f2f7;
@@ -11,6 +13,7 @@
 
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
+
 body.loy-contact{
   margin:0;
   background:var(--bg);
@@ -18,35 +21,40 @@ body.loy-contact{
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, Arial, sans-serif;
 }
 
+/* topbar */
 .lc-topbar{
   position:sticky;
   top:0;
   z-index:5;
   background:var(--bg);
-  padding: 14px 14px 8px;
+  padding: 12px 14px 6px;
 }
 
 .lc-back{
   border:0;
   background:transparent;
-  color: var(--ink);
-  font-size: 26px;
+  color: rgba(0,0,0,.85);
+  font-size: 28px;
   line-height: 1;
-  padding: 4px 6px;
+  padding: 6px 6px;
 }
 
+/* wrapper */
 .lc-wrap{
   padding: 10px 14px 28px;
   max-width: 520px;
   margin: 0 auto;
 }
 
+/* cards */
 .lc-card{
   background:var(--card);
   border-radius: 18px;
   box-shadow: 0 0 0 1px rgba(0,0,0,.04);
+  overflow:hidden;
 }
 
+/* profile card */
 .lc-profile{
   padding: 14px;
 }
@@ -60,23 +68,30 @@ body.loy-contact{
 .lc-avatar{
   width: 64px;
   height: 64px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: #e5e5ea;
   flex: 0 0 auto;
 }
 
-.lc-nameblock{ flex:1; min-width:0; }
+.lc-nameblock{
+  flex:1;
+  min-width:0;
+  padding-top: 2px;
+}
 
 .lc-name{
   font-weight: 800; /* heavy */
   font-size: 28px;
   line-height: 1.05;
   letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
 }
 
 .lc-aka{
   margin-top: 6px;
-  font-weight: 600;
+  font-weight: 600; /* medium */
   color: var(--muted);
   font-size: 16px;
 }
@@ -85,13 +100,15 @@ body.loy-contact{
   border:0;
   background:transparent;
   color: var(--blue);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 14px;
   padding: 8px 6px;
 }
 
+/* quick note */
 .lc-note{
   margin-top: 12px;
+  border-top: 1px solid var(--hair);
 }
 
 .lc-note input{
@@ -100,33 +117,40 @@ body.loy-contact{
   outline:none;
   background: transparent;
   font-size: 18px;
-  padding: 10px 2px;
-  color: var(--muted);
-  border-top: 1px solid var(--hair);
+  padding: 12px 2px;
+  color: rgba(0,0,0,.72);
 }
 
+.lc-note input::placeholder{
+  color: rgba(142,142,147,.75);
+}
+
+/* icons row */
 .lc-icons{
   display:flex;
+  align-items:center;
   gap: 10px;
-  margin-top: 10px;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid var(--hair);
 }
 
 .lc-ico{
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   background: #f2f2f7;
   display:grid;
   place-items:center;
   overflow:hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.04) inset;
 }
+
 .lc-ico img{
   width: 22px;
   height: 22px;
 }
 
+/* tabs */
 .lc-tabs{
   margin: 14px 0 12px;
   display:flex;
@@ -137,7 +161,7 @@ body.loy-contact{
 .lc-tab{
   border:0;
   background: #e5e5ea;
-  color: var(--muted);
+  color: rgba(142,142,147,.95);
   font-weight: 800;
   font-size: 18px;
   padding: 10px 18px;
@@ -162,11 +186,12 @@ body.loy-contact{
   background: #111;
 }
 
+/* panels */
 .lc-panel{
-  padding: 10px 0;
-  overflow:hidden;
+  padding: 0;
 }
 
+/* rows (history + empty states) */
 .lc-row{
   display:flex;
   align-items:center;
@@ -192,7 +217,7 @@ body.loy-contact{
 
 .lc-row .right a{
   color: var(--blue);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 22px;
   text-decoration:none;
 }
@@ -200,40 +225,61 @@ body.loy-contact{
 .lc-mutedlink{
   display:block;
   text-align:center;
-  padding: 14px 16px 18px;
+  padding: 16px 16px 18px;
   color: var(--muted);
   font-size: 22px;
   text-decoration:none;
 }
 
+/* contact key/value */
 .lc-kv{
   display:grid;
-  grid-template-columns: 110px 1fr;
+  grid-template-columns: 130px 1fr; /* widened so "Cigar Social:" doesn't wrap */
   gap: 18px 16px;
   padding: 18px 16px;
 }
 
 .lc-kv .k{
   font-size: 22px;
+  font-weight: 700;
   color: var(--ink);
+  white-space: nowrap; /* prevent wrapping */
 }
 
 .lc-kv .v{
   font-size: 22px;
   color: var(--ink);
+  word-break: break-word;
 }
 
 .lc-kv .v a{
   color: var(--blue);
   text-decoration:none;
-  font-weight: 700;
+  font-weight: 800;
+}
+
+/* favorites */
+.section-title{
+  font-size: 26px;
+  font-weight: 800;
+  padding: 16px 16px 8px;
+}
+
+.section-divider{
+  border-top: 1px solid var(--hair);
+}
+
+.empty-line{
+  padding: 16px;
+  color: var(--muted);
+  font-size: 22px;
 }
 
 .pills{
   display:flex;
   flex-wrap:wrap;
   gap: 10px;
-  padding: 14px 16px 18px;
+  padding: 12px 16px 18px;
 }
 
 .pill{
