@@ -246,16 +246,46 @@
   }
 
   function brandIconPath(brandName) {
-    // best-effort: lowercase, no spaces, hyphen-separated
+    // best-effort: lowercase, no spaces
     const slug = slugify(brandName).replace(/-/g, "");
-    // If your icons are *not* no-space, change this to slugify(brandName)
     return `${BRAND_ICON_BASE}${slug}.svg`;
   }
 
-  function cigarDetailHref(displayName) {
-    // Best-effort link: route to cigars page with query
-    // If you have a dedicated cigar detail route later, swap here.
-    return `/pos/cigars/?q=${encodeURIComponent(displayName)}`;
+  // ✅ UPDATED: cigar pills try to route to the Brand page when brand is known,
+  // otherwise fall back to global cigars search.
+  //
+  // Supported formats:
+  //   "Padron | 1926 40 Years Torpedo"
+  //   "Padron - 1926 40 Years Torpedo"
+  //   Otherwise: just "Opus X Shark" -> /pos/cigars/?q=
+  function cigarDetailHref(displayNameRaw) {
+    const raw = toStr(displayNameRaw);
+    if (!raw) return "/pos/cigars/";
+
+    // Try "Brand | Cigar"
+    let brand = "";
+    let cigar = "";
+
+    if (raw.includes("|")) {
+      const parts = raw.split("|").map((p) => p.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        brand = parts[0];
+        cigar = parts.slice(1).join(" | ");
+      }
+    } else if (raw.includes(" - ")) {
+      const parts = raw.split(" - ").map((p) => p.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        brand = parts[0];
+        cigar = parts.slice(1).join(" - ");
+      }
+    }
+
+    if (brand && cigar) {
+      return `/pos/cigars/brand?brand=${encodeURIComponent(brand)}&q=${encodeURIComponent(cigar)}`;
+    }
+
+    // fallback works today even without brand info
+    return `/pos/cigars/?q=${encodeURIComponent(raw)}`;
   }
 
   // ---------- panels ----------
@@ -321,7 +351,6 @@
   }
 
   function iconSVG(type) {
-    // simple inline icons (no external dependency)
     if (type === "phone") return `
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3 5.2 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L9.9 10.7a16 16 0 0 0 3.4 3.4l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6A2 2 0 0 1 22 16.9z"></path>
@@ -336,7 +365,6 @@
         <path d="M12 21s7-4.4 7-11a7 7 0 0 0-14 0c0 6.6 7 11 7 11z"></path>
         <path d="M12 10.5a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z"></path>
       </svg>`;
-    // cigar social / profile
     return `
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M20 21a8 8 0 1 0-16 0"></path>
@@ -445,7 +473,6 @@
   }
 
   function setNoteValue(c) {
-    // ✅ placeholder automatically disappears when value exists
     noteEl.value = toStr(c.note);
     noteEl.readOnly = !editMode;
   }
@@ -459,12 +486,9 @@
     if (!c) return;
 
     setNoteValue(c);
-
-    // panels
     renderContact(c, editMode);
     renderFavorites(c);
 
-    // header fields
     if (editMode) makeHeaderEditable(c);
     else teardownHeaderEditable(c);
   }
@@ -476,7 +500,6 @@
 
     const c = customers[idx];
 
-    // header
     const fFirst = document.getElementById("fFirst");
     const fLast = document.getElementById("fLast");
     const fNick = document.getElementById("fNick");
@@ -485,10 +508,8 @@
     if (fLast) c.lastName = toStr(fLast.value);
     if (fNick) c.nickname = toStr(fNick.value);
 
-    // quick note
     c.note = toStr(noteEl.value);
 
-    // contact
     const fPhone = document.getElementById("fPhone");
     const fEmail = document.getElementById("fEmail");
     const fAddress = document.getElementById("fAddress");
@@ -504,7 +525,6 @@
     customers[idx] = c;
     writeCustomers(customers);
 
-    // refresh view
     renderIcons(c);
     teardownHeaderEditable(c);
     setNoteValue(c);
@@ -527,10 +547,8 @@
       return;
     }
 
-    // header render
     teardownHeaderEditable(customer);
 
-    // aka line
     const nick = nickname(customer);
     if (nick) {
       akaEl.style.display = "";
@@ -540,30 +558,23 @@
       akaEl.textContent = "";
     }
 
-    // quick note
     editMode = false;
     setNoteValue(customer);
 
-    // icons
     renderIcons(customer);
 
-    // tabs
     tabs.forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
 
-    // default open history (matches your example)
     showTab("history");
 
-    // panels
     const sales = readSales();
     renderHistory(customer, sales);
     renderContact(customer, false);
     renderFavorites(customer);
 
-    // edit
     editBtn.textContent = "EDIT";
     editBtn?.addEventListener("click", () => {
       if (!editMode) return setEditMode(true);
-      // DONE
       saveEdits();
       setEditMode(false);
     });
