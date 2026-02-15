@@ -34,6 +34,11 @@
   const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const toStr = (v) => (v == null ? "" : String(v)).trim();
 
+  function getParam(name) {
+    const u = new URL(window.location.href);
+    return u.searchParams.get(name);
+  }
+
   function isTruthyMarker(v, columnTitle) {
     if (v === true) return true;
     if (v === false || v == null) return false;
@@ -116,11 +121,6 @@
     return Array.isArray(list) ? list : [];
   }
 
-  function getParam(name) {
-    const u = new URL(window.location.href);
-    return u.searchParams.get(name);
-  }
-
   function buildIconBox(src, alt) {
     const wrap = document.createElement("div");
     wrap.className = "lc-ico";
@@ -144,6 +144,13 @@
     const tier = isLockerCustomer(c) ? "locker" : (isRegularCustomer(c) ? "regular" : null);
     const list = tier ? [...roleIcons, tier] : [...roleIcons];
 
+    if (!list.length) {
+      // keep the row from feeling empty: subtle placeholder icon box if none
+      iconsEl.appendChild(buildIconBox(`${ICON_BASE}regular.svg`, "icon"));
+      iconsEl.firstChild.style.opacity = "0.28";
+      return;
+    }
+
     list.forEach((key) => iconsEl.appendChild(buildIconBox(ICONS[key], key)));
   }
 
@@ -157,6 +164,14 @@
   function money(n) {
     const x = Number(n || 0);
     return `$${x.toFixed(2)}`;
+  }
+
+  function formatPhone(raw) {
+    const d = String(raw || "").replace(/\D+/g, "");
+    if (!d) return "";
+    if (d.length === 10) return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
+    if (d.length === 11 && d[0] === "1") return `${d.slice(1,4)}-${d.slice(4,7)}-${d.slice(7)}`;
+    return raw; // fallback
   }
 
   // HISTORY: tries to link by customerId first, then phone/email fallback
@@ -187,7 +202,6 @@
       return;
     }
 
-    // Most recent first (best-effort date parsing)
     matches.sort((a, b) => {
       const da = new Date(a.date ?? a.createdAt ?? a.timestamp ?? 0).getTime() || 0;
       const db = new Date(b.date ?? b.createdAt ?? b.timestamp ?? 0).getTime() || 0;
@@ -200,7 +214,6 @@
 
       const total = Number(s.total ?? s.amount ?? s.grandTotal ?? 0) || 0;
 
-      // pdf link can be any of these keys (future-proof)
       const pdfUrl =
         toStr(s.pdfUrl ?? s.pdfURL ?? s.invoicePdf ?? s.invoicePdfUrl ?? s.receiptPdfUrl ?? "");
 
@@ -224,17 +237,32 @@
   }
 
   function renderContact(customer) {
-    const phone = toStr(customer.phone);
+    const phone = formatPhone(toStr(customer.phone));
     const email = toStr(customer.email);
-    const address = toStr(customer.address ?? customer.Address ?? customer["Address"] ?? "");
-    const cigarSocial = toStr(customer.cigarSocial ?? customer["Cigar Social"] ?? "");
+
+    // address keys vary; support common variants
+    const address =
+      toStr(customer.address) ||
+      toStr(customer.Address) ||
+      toStr(customer["Address"]) ||
+      "";
+
+    const cigarSocial =
+      toStr(customer.cigarSocial) ||
+      toStr(customer["Cigar Social"]) ||
+      toStr(customer["CigarSocial"]) ||
+      "";
 
     const addressHTML = address
       ? address.split("\n").map((l) => l.trim()).filter(Boolean).join("<br>")
       : "—";
 
-    const cigarSocialHTML = cigarSocial
-      ? `<a href="javascript:void(0)">${cigarSocial.startsWith("@") ? cigarSocial : `@${cigarSocial}`}</a>`
+    const cs = cigarSocial
+      ? (cigarSocial.startsWith("@") ? cigarSocial : `@${cigarSocial}`)
+      : "";
+
+    const cigarSocialHTML = cs
+      ? `<a href="javascript:void(0)">${cs}</a>`
       : "—";
 
     panelContact.innerHTML = `
@@ -257,7 +285,6 @@
   function csvToPills(v) {
     const s = toStr(v);
     if (!s) return [];
-    // supports CSV or pipe-separated or array-like strings
     return s
       .split(/[,|]/g)
       .map((x) => x.trim())
@@ -265,42 +292,48 @@
   }
 
   function renderFavorites(customer) {
-    const brandsRaw = customer.favoritesBrands ?? customer["Favorite Brands"] ?? "";
-    const cigarsRaw = customer.favoritesCigars ?? customer["Favorite Cigars"] ?? "";
+    const brandsRaw =
+      customer.favoritesBrands ??
+      customer["Favorite Brands"] ??
+      customer.favoriteBrands ??
+      "";
+
+    const cigarsRaw =
+      customer.favoritesCigars ??
+      customer["Favorite Cigars"] ??
+      customer.favoriteCigars ??
+      "";
 
     const brands = Array.isArray(brandsRaw) ? brandsRaw : csvToPills(brandsRaw);
     const cigars = Array.isArray(cigarsRaw) ? cigarsRaw : csvToPills(cigarsRaw);
 
     const brandsHTML = brands.length
       ? `<div class="pills">${brands.map((b) => `<div class="pill">${b}</div>`).join("")}</div>`
-      : `<div class="lc-row"><div class="left" style="color:#8e8e93;">No favorite brands yet</div></div>`;
+      : `<div class="empty-line">No favorite brands yet</div>`;
 
     const cigarsHTML = cigars.length
       ? `<div class="pills">${cigars.map((c) => `<div class="pill">${c}</div>`).join("")}</div>`
-      : `<div class="lc-row"><div class="left" style="color:#8e8e93;">No favorite cigars yet</div></div>`;
+      : `<div class="empty-line">No favorite cigars yet</div>`;
 
     panelFavorites.innerHTML = `
-      <div class="lc-row"><div class="left" style="font-weight:800;">Brands</div></div>
+      <div class="section-title">Brands</div>
+      <div class="section-divider"></div>
       ${brandsHTML}
-      <div class="lc-row" style="border-top:1px solid rgba(60,60,67,.18);"><div class="left" style="font-weight:800;">Cigars</div></div>
+      <div class="section-divider"></div>
+      <div class="section-title">Cigars</div>
+      <div class="section-divider"></div>
       ${cigarsHTML}
     `;
   }
 
-  // EDIT MODE: lets you edit nickname, note, phone, email, address, cigarSocial, favorites
+  // EDIT MODE (for now: note only, exactly like your current behavior)
   let editMode = false;
 
-  function setEditMode(on, customer, customers) {
+  function setEditMode(on) {
     editMode = !!on;
     editBtn.textContent = editMode ? "DONE" : "EDIT";
-
-    // note editable always (but only saves in edit mode on DONE)
     noteEl.readOnly = !editMode;
-    noteEl.style.color = editMode ? "#111" : "#8e8e93";
-
-    // In this first pass, we’ll edit the key fields via prompt-less inline inputs:
-    // We keep Contact + Favorites read-only visually, but “DONE” commits the edited top fields now.
-    // Next iteration (after you send contacts json) we can make those panels fully inline-editable too.
+    noteEl.style.color = editMode ? "rgba(0,0,0,.82)" : "rgba(0,0,0,.72)";
   }
 
   function saveEdits(customerId, customers) {
@@ -310,8 +343,8 @@
     const c = customers[idx];
     c.note = toStr(noteEl.value);
     c.updatedAt = new Date().toISOString();
-
     customers[idx] = c;
+
     writeCustomers(customers);
   }
 
@@ -339,6 +372,7 @@
       akaEl.textContent = `aka ${nick}`;
     } else {
       akaEl.style.display = "none";
+      akaEl.textContent = "";
     }
 
     noteEl.value = toStr(customer.note);
@@ -356,15 +390,11 @@
     renderFavorites(customer);
 
     // Edit
-    setEditMode(false, customer, customers);
+    setEditMode(false);
     editBtn?.addEventListener("click", () => {
-      if (!editMode) {
-        setEditMode(true, customer, customers);
-        return;
-      }
-      // DONE
+      if (!editMode) return setEditMode(true);
       saveEdits(customer.id, customers);
-      setEditMode(false, customer, customers);
+      setEditMode(false);
     });
   }
 
