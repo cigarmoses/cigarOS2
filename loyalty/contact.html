@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>Loyalty • Contact</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/loyalty/contact.css" />
+</head>
+
+<body class="loy-contact">
+
+  <header class="lc-topbar">
+    <button class="lc-back" type="button" aria-label="Back">←</button>
+  </header>
+
+  <main class="lc-wrap">
+
+    <!-- Profile card -->
+    <section class="lc-card lc-profile">
+      <div class="lc-profile-row">
+        <div class="lc-avatar" aria-hidden="true"></div>
+
+        <div class="lc-nameblock">
+          <div class="lc-name" id="lcName">—</div>
+          <div class="lc-aka" id="lcAka" style="display:none;">aka —</div>
+        </div>
+
+        <button class="lc-edit" id="lcEditBtn" type="button">EDIT</button>
+      </div>
+
+      <div class="lc-note">
+        <input id="lcNote" type="text" placeholder="Quick note…" />
+      </div>
+
+      <div class="lc-icons" id="lcIcons"></div>
+    </section>
+
+    <!-- Tabs -->
+    <section class="lc-tabs">
+      <button class="lc-tab active" data-tab="history" type="button">History</button>
+      <button class="lc-tab" data-tab="contact" type="button">Contact</button>
+      <button class="lc-tab" data-tab="favorites" type="button">Favorites</button>
+    </section>
+
+    <!-- Panels -->
+    <section class="lc-card lc-panel" id="panelHistory"></section>
+    <section class="lc-card lc-panel" id="panelContact" style="display:none;"></section>
+    <section class="lc-card lc-panel" id="panelFavorites" style="display:none;"></section>
+
+  </main>
+
+  <script src="/loyalty/contact.js"></script>
+</body>
+</html>
