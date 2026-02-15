@@ -1,17 +1,19 @@
 /* /loyalty/contact.js
-   Full-page loyalty contact detail
-   - Active tab bold only
-   - Edit button unlocks ALL editable fields (except transaction history)
-   - Saves to localStorage (cigaros_customers_v1)
-
-   NOTE:
-   A static Netlify site cannot write back to /loyalty/loyalty-contacts.json at runtime.
-   Persisting edits into localStorage is the correct runtime behavior.
+   - Folder tabs + stretched content panel
+   - Quick note placeholder behavior
+   - Contact values use icons (more width, no wrapping)
+   - Favorites pulled from JSON-style columns:
+       "Fav brand 1", "Fav brand 2", ...
+       "Fav cigar", "Fav cigar 2", ...
+   - Edit toggles unlock fields, Done saves to localStorage customers
 */
 
 (() => {
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
+
+  // Brand icons live here (per your repo convention)
+  const BRAND_ICON_BASE = "/img/icons/brands/"; // plural
 
   const ICON_BASE = "/img/icons/loyalty/";
   const ICONS = {
@@ -59,6 +61,26 @@
   function readSales() {
     const list = safeJSON(localStorage.getItem(SALES_KEY), []);
     return Array.isArray(list) ? list : [];
+  }
+
+  function escapeHTML(s) {
+    return (s ?? "")
+      .toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function escapeAttr(s) {
+    return (s ?? "")
+      .toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function isTruthyMarker(v, columnTitle) {
@@ -124,6 +146,7 @@
   function isLockerCustomer(c) {
     return hasColumnValue(c, "Locker") || !!lockerNumOnly(c);
   }
+
   function isRegularCustomer(c) {
     return hasExplicitX(c, "Regular");
   }
@@ -164,7 +187,6 @@
     const list = tier ? [...roleIcons, tier] : [...roleIcons];
 
     if (!list.length) return;
-
     list.forEach((key) => iconsEl.appendChild(buildIconBox(ICONS[key], key)));
   }
 
@@ -180,77 +202,60 @@
     return `$${x.toFixed(2)}`;
   }
 
-  // ---------- UI render helpers (editable fields) ----------
-  function field(id, value, placeholder = "—", readonly = true) {
-    const v = toStr(value);
-    const shown = v || (readonly ? "—" : "");
-    const ro = readonly ? "readonly" : "";
-    const ph = readonly ? "" : `placeholder="${placeholder}"`;
-    return `<input class="lc-field" id="${id}" value="${escapeAttr(shown)}" ${ro} ${ph} />`;
+  // ---- Favorites parsing from JSON-style columns ----
+  function keyIsFavBrand(k) {
+    const s = String(k || "").trim().toLowerCase();
+    return s.startsWith("fav brand");
+  }
+  function keyIsFavCigar(k) {
+    const s = String(k || "").trim().toLowerCase();
+    return s.startsWith("fav cigar");
+  }
+  function numFromKey(k) {
+    const m = String(k || "").match(/(\d+)/);
+    return m ? Number(m[1]) : 1; // "Fav cigar" (no number) treated as 1
   }
 
-  function textarea(id, value, placeholder = "", readonly = true) {
-    const v = toStr(value);
-    const ro = readonly ? "readonly" : "";
-    const ph = placeholder ? `placeholder="${escapeAttr(placeholder)}"` : "";
-    return `<textarea class="lc-textarea" id="${id}" ${ro} ${ph}>${escapeHTML(v)}</textarea>`;
+  function getFavBrandsFromColumns(c) {
+    const pairs = Object.keys(c || {})
+      .filter(keyIsFavBrand)
+      .map((k) => ({ k, n: numFromKey(k), v: toStr(c[k]) }))
+      .filter((x) => x.v);
+
+    pairs.sort((a, b) => a.n - b.n);
+    return pairs.map((x) => x.v);
   }
 
-  function escapeHTML(s) {
-    return (s ?? "")
-      .toString()
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+  function getFavCigarsFromColumns(c) {
+    const pairs = Object.keys(c || {})
+      .filter(keyIsFavCigar)
+      .map((k) => ({ k, n: numFromKey(k), v: toStr(c[k]) }))
+      .filter((x) => x.v);
+
+    pairs.sort((a, b) => a.n - b.n);
+    return pairs.map((x) => x.v);
   }
 
-  function escapeAttr(s) {
-    return (s ?? "")
-      .toString()
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+  function slugify(s) {
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
-  function csvToPills(v) {
-    const s = toStr(v);
-    if (!s) return [];
-    return s
-      .split(/[,|]/g)
-      .map((x) => x.trim())
-      .filter(Boolean);
+  function brandIconPath(brandName) {
+    // best-effort: lowercase, no spaces, hyphen-separated
+    const slug = slugify(brandName).replace(/-/g, "");
+    // If your icons are *not* no-space, change this to slugify(brandName)
+    return `${BRAND_ICON_BASE}${slug}.svg`;
   }
 
-  // We support multiple key variants but SAVE into normalized keys:
-  // phone, email, address, cigarSocial, favoritesBrands, favoritesCigars, nickname, firstName, lastName, note
-  function getAddress(c) {
-    return (
-      toStr(c.address) ||
-      toStr(c.Address) ||
-      toStr(c["Address"]) ||
-      ""
-    );
-  }
-
-  function getCigarSocial(c) {
-    return (
-      toStr(c.cigarSocial) ||
-      toStr(c["Cigar Social"]) ||
-      toStr(c["CigarSocial"]) ||
-      ""
-    );
-  }
-
-  function getFavBrands(c) {
-    return c.favoritesBrands ?? c["Favorite Brands"] ?? c.favoriteBrands ?? "";
-  }
-
-  function getFavCigars(c) {
-    return c.favoritesCigars ?? c["Favorite Cigars"] ?? c.favoriteCigars ?? "";
+  function cigarDetailHref(displayName) {
+    // Best-effort link: route to cigars page with query
+    // If you have a dedicated cigar detail route later, swap here.
+    return `/pos/cigars/?q=${encodeURIComponent(displayName)}`;
   }
 
   // ---------- panels ----------
@@ -315,56 +320,86 @@
     `;
   }
 
+  function iconSVG(type) {
+    // simple inline icons (no external dependency)
+    if (type === "phone") return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3 5.2 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L9.9 10.7a16 16 0 0 0 3.4 3.4l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6A2 2 0 0 1 22 16.9z"></path>
+      </svg>`;
+    if (type === "mail") return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 4h16v16H4z"></path>
+        <path d="M4 6l8 6 8-6"></path>
+      </svg>`;
+    if (type === "pin") return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 21s7-4.4 7-11a7 7 0 0 0-14 0c0 6.6 7 11 7 11z"></path>
+        <path d="M12 10.5a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z"></path>
+      </svg>`;
+    // cigar social / profile
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 21a8 8 0 1 0-16 0"></path>
+        <path d="M12 13a4 4 0 1 0-4-4 4 4 0 0 0 4 4z"></path>
+      </svg>`;
+  }
+
+  function getAddress(c) {
+    return toStr(c.address ?? c.Address ?? c["Address"] ?? "");
+  }
+  function getCigarSocial(c) {
+    return toStr(c.cigarSocial ?? c["Cigar Social"] ?? c["CigarSocial"] ?? "");
+  }
+
   function renderContact(customer, editing) {
-    const phone = editing ? toStr(customer.phone) : formatPhone(toStr(customer.phone));
+    const phoneShown = editing ? toStr(customer.phone) : formatPhone(toStr(customer.phone));
     const email = toStr(customer.email);
     const address = getAddress(customer);
     const cigarSocial = getCigarSocial(customer);
 
     panelContact.innerHTML = `
       <div class="lc-kv">
-        <div class="k">Cell:</div>
-        <div class="v">${field("fPhone", phone, "412-555-1212", !editing)}</div>
+        <div class="ico">${iconSVG("phone")}</div>
+        <div class="v"><input class="lc-field" id="fPhone" value="${escapeAttr(phoneShown)}" ${editing ? "" : "readonly"} placeholder="412-555-1212"></div>
 
-        <div class="k">Email:</div>
-        <div class="v">${field("fEmail", email, "name@email.com", !editing)}</div>
+        <div class="ico">${iconSVG("mail")}</div>
+        <div class="v"><input class="lc-field" id="fEmail" value="${escapeAttr(email)}" ${editing ? "" : "readonly"} placeholder="name@email.com"></div>
 
-        <div class="k">Address:</div>
-        <div class="v">${field("fAddress", address || (editing ? "" : "—"), "Street, City, ST ZIP", !editing)}</div>
+        <div class="ico">${iconSVG("pin")}</div>
+        <div class="v"><input class="lc-field" id="fAddress" value="${escapeAttr(address)}" ${editing ? "" : "readonly"} placeholder="Street, City, ST ZIP"></div>
 
-        <div class="k">Cigar Social:</div>
-        <div class="v">${field("fCigarSocial", cigarSocial || (editing ? "" : "—"), "@username", !editing)}</div>
+        <div class="ico">${iconSVG("user")}</div>
+        <div class="v"><input class="lc-field" id="fCigarSocial" value="${escapeAttr(cigarSocial)}" ${editing ? "" : "readonly"} placeholder="@username"></div>
       </div>
     `;
   }
 
-  function renderFavorites(customer, editing) {
-    const brandsRaw = getFavBrands(customer);
-    const cigarsRaw = getFavCigars(customer);
+  function renderFavorites(customer) {
+    const brands = getFavBrandsFromColumns(customer);
+    const cigars = getFavCigarsFromColumns(customer);
 
-    const brands = Array.isArray(brandsRaw) ? brandsRaw : csvToPills(brandsRaw);
-    const cigars = Array.isArray(cigarsRaw) ? cigarsRaw : csvToPills(cigarsRaw);
+    const brandIconsHTML = brands.length
+      ? `<div class="brand-icons">
+          ${brands.map((b) => `
+            <img src="${brandIconPath(b)}" alt="${escapeAttr(b)}" title="${escapeAttr(b)}" loading="lazy"
+                 onerror="this.style.display='none';" />
+          `).join("")}
+        </div>`
+      : `<div class="empty-line">No favorite brands yet</div>`;
 
-    const brandsHTML = editing
-      ? `<div style="padding: 12px 16px 18px;">${textarea("fFavBrands", Array.isArray(brandsRaw) ? brands.join(", ") : toStr(brandsRaw), "Comma-separated brands", false)}</div>`
-      : (brands.length
-          ? `<div class="pills">${brands.map((b) => `<div class="pill">${escapeHTML(b)}</div>`).join("")}</div>`
-          : `<div class="empty-line">No favorite brands yet</div>`);
-
-    const cigarsHTML = editing
-      ? `<div style="padding: 12px 16px 18px;">${textarea("fFavCigars", Array.isArray(cigarsRaw) ? cigars.join(", ") : toStr(cigarsRaw), "Comma-separated cigars", false)}</div>`
-      : (cigars.length
-          ? `<div class="pills">${cigars.map((c) => `<div class="pill">${escapeHTML(c)}</div>`).join("")}</div>`
-          : `<div class="empty-line">No favorite cigars yet</div>`);
+    const cigarPillsHTML = cigars.length
+      ? `<div class="pills">
+          ${cigars.map((c) => `
+            <a class="pill" href="${cigarDetailHref(c)}">${escapeHTML(c)}</a>
+          `).join("")}
+        </div>`
+      : `<div class="empty-line">No favorite cigars yet</div>`;
 
     panelFavorites.innerHTML = `
       <div class="section-title">Brands</div>
-      <div class="section-divider"></div>
-      ${brandsHTML}
-      <div class="section-divider"></div>
+      ${brandIconsHTML}
       <div class="section-title">Cigars</div>
-      <div class="section-divider"></div>
-      ${cigarsHTML}
+      ${cigarPillsHTML}
     `;
   }
 
@@ -372,33 +407,11 @@
   let editMode = false;
   let activeCustomerId = null;
 
-  function setEditMode(on) {
-    editMode = !!on;
-    editBtn.textContent = editMode ? "DONE" : "EDIT";
-
-    // unlock header fields
-    noteEl.readOnly = !editMode;
-
-    // re-render panels in edit/read mode
-    const customers = readCustomers();
-    const c = customers.find((x) => String(x.id) === String(activeCustomerId));
-    if (!c) return;
-
-    renderContact(c, editMode);
-    renderFavorites(c, editMode);
-
-    // allow editing name + nickname in header using prompt-free inline editing
-    // (keeps layout identical; we swap the text node to an input only in edit mode)
-    if (editMode) {
-      makeHeaderEditable(c);
-    } else {
-      teardownHeaderEditable(c);
-    }
+  function nickname(c) {
+    return toStr(c.nickname ?? c.nick ?? "");
   }
 
   function makeHeaderEditable(c) {
-    // Name becomes two inputs behind the scenes
-    // Replace nameEl content with inputs
     const first = toStr(c.firstName);
     const last = toStr(c.lastName);
 
@@ -408,8 +421,7 @@
       <input class="lc-field" id="fLast" value="${escapeAttr(last)}" placeholder="Last" />
     `;
 
-    // AKA becomes input
-    const nick = toStr(c.nickname ?? c.nick);
+    const nick = nickname(c);
     akaEl.style.display = "";
     akaEl.innerHTML = `
       <span style="color:#8e8e93;font-weight:600;">aka </span>
@@ -422,7 +434,7 @@
     const last = toStr(c.lastName);
     nameEl.textContent = `${first} ${last}`.trim() || "—";
 
-    const nick = toStr(c.nickname ?? c.nick);
+    const nick = nickname(c);
     if (nick) {
       akaEl.style.display = "";
       akaEl.textContent = `aka ${nick}`;
@@ -430,6 +442,31 @@
       akaEl.style.display = "none";
       akaEl.textContent = "";
     }
+  }
+
+  function setNoteValue(c) {
+    // ✅ placeholder automatically disappears when value exists
+    noteEl.value = toStr(c.note);
+    noteEl.readOnly = !editMode;
+  }
+
+  function setEditMode(on) {
+    editMode = !!on;
+    editBtn.textContent = editMode ? "DONE" : "EDIT";
+
+    const customers = readCustomers();
+    const c = customers.find((x) => String(x.id) === String(activeCustomerId));
+    if (!c) return;
+
+    setNoteValue(c);
+
+    // panels
+    renderContact(c, editMode);
+    renderFavorites(c);
+
+    // header fields
+    if (editMode) makeHeaderEditable(c);
+    else teardownHeaderEditable(c);
   }
 
   function saveEdits() {
@@ -439,19 +476,19 @@
 
     const c = customers[idx];
 
-    // header fields
+    // header
     const fFirst = document.getElementById("fFirst");
     const fLast = document.getElementById("fLast");
     const fNick = document.getElementById("fNick");
 
     if (fFirst) c.firstName = toStr(fFirst.value);
     if (fLast) c.lastName = toStr(fLast.value);
-
     if (fNick) c.nickname = toStr(fNick.value);
 
+    // quick note
     c.note = toStr(noteEl.value);
 
-    // contact fields
+    // contact
     const fPhone = document.getElementById("fPhone");
     const fEmail = document.getElementById("fEmail");
     const fAddress = document.getElementById("fAddress");
@@ -460,40 +497,29 @@
     if (fPhone) c.phone = normalizePhoneToDigits(fPhone.value) || toStr(fPhone.value);
     if (fEmail) c.email = toStr(fEmail.value);
     if (fAddress) c.address = toStr(fAddress.value);
-
-    if (fCigarSocial) {
-      const raw = toStr(fCigarSocial.value);
-      c.cigarSocial = raw;
-    }
-
-    // favorites
-    const fFavBrands = document.getElementById("fFavBrands");
-    const fFavCigars = document.getElementById("fFavCigars");
-
-    if (fFavBrands) c.favoritesBrands = toStr(fFavBrands.value);
-    if (fFavCigars) c.favoritesCigars = toStr(fFavCigars.value);
+    if (fCigarSocial) c.cigarSocial = toStr(fCigarSocial.value);
 
     c.updatedAt = new Date().toISOString();
 
     customers[idx] = c;
     writeCustomers(customers);
 
-    // re-render header + panels back in view mode
+    // refresh view
     renderIcons(c);
     teardownHeaderEditable(c);
+    setNoteValue(c);
     renderContact(c, false);
-    renderFavorites(c, false);
+    renderFavorites(c);
   }
 
   // ---------- init ----------
   function init() {
     backBtn?.addEventListener("click", () => history.back());
 
-    const id = getParam("id");
-    activeCustomerId = id;
+    activeCustomerId = getParam("id");
 
     const customers = readCustomers();
-    const customer = customers.find((c) => String(c.id) === String(id));
+    const customer = customers.find((c) => String(c.id) === String(activeCustomerId));
 
     if (!customer) {
       nameEl.textContent = "Not found";
@@ -501,12 +527,11 @@
       return;
     }
 
-    // Header render
-    const first = toStr(customer.firstName);
-    const last = toStr(customer.lastName);
-    nameEl.textContent = `${first} ${last}`.trim() || "—";
+    // header render
+    teardownHeaderEditable(customer);
 
-    const nick = toStr(customer.nickname ?? customer.nick);
+    // aka line
+    const nick = nickname(customer);
     if (nick) {
       akaEl.style.display = "";
       akaEl.textContent = `aka ${nick}`;
@@ -515,24 +540,26 @@
       akaEl.textContent = "";
     }
 
-    noteEl.value = toStr(customer.note);
-    noteEl.readOnly = true;
+    // quick note
+    editMode = false;
+    setNoteValue(customer);
 
+    // icons
     renderIcons(customer);
 
-    // Tabs
+    // tabs
     tabs.forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
-    showTab("contact"); // ✅ opens to Contact tab by default if you want
-    tabs.forEach((b) => b.classList.toggle("active", b.dataset.tab === "contact"));
 
-    // Panels
+    // default open history (matches your example)
+    showTab("history");
+
+    // panels
     const sales = readSales();
     renderHistory(customer, sales);
     renderContact(customer, false);
-    renderFavorites(customer, false);
+    renderFavorites(customer);
 
-    // Edit
-    editMode = false;
+    // edit
     editBtn.textContent = "EDIT";
     editBtn?.addEventListener("click", () => {
       if (!editMode) return setEditMode(true);
