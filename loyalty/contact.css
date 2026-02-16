@@ -5,10 +5,11 @@
    - Contact values shift left w/ icons
    - Favorites section has NO divider lines under titles
 
-   FIXES:
+   UPDATES:
    ✅ Name edit layout prevents last name from disappearing
    ✅ Address renders as 2 lines (view) + 2 fields (edit)
-   ✅ Only address row is allowed to wrap (others stay single-line)
+   ✅ Birthday + Age integrated into the same grid rows cleanly
+   ✅ History tab includes styled YTD row
 */
 
 :root{
@@ -284,6 +285,28 @@ body.loy-contact{
   text-decoration:none;
 }
 
+/* ✅ YTD row */
+.lc-ytd{
+  display:flex;
+  align-items:baseline;
+  justify-content:flex-start;
+  gap: 10px;
+  padding: 18px 16px 18px;
+  border-top: 1px solid var(--hair);
+}
+
+.lc-ytd-label{
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.lc-ytd-value{
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
 /* -------------------------
    CONTACT layout (icons + values)
 -------------------------- */
@@ -384,6 +407,12 @@ body.loy-contact{
 
 .lc-addr-edit .lc-field{
   white-space: nowrap;
+}
+
+/* Age display */
+.lc-age{
+  font: inherit;
+  color: inherit;
 }
 
 /* -------------------------
