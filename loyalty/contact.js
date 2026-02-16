@@ -7,6 +7,10 @@
        Cigars -> ("Fav cigar", "Fav cigar 2..N") pills
                 If "Fav cigar id 1..N" exists, link EXACT to canonical /cigars route
    - Edit toggles unlock fields, Done saves to localStorage customers
+
+   UPDATE (Contact tab icon swap):
+   ✅ Uses new black contact icons in /img/icons/*.svg
+      blackphone, blackemail, blackaddress, blackaccount, blackbirthday
 */
 
 (() => {
@@ -23,6 +27,16 @@
     police: `${ICON_BASE}police.svg`,
     locker: `${ICON_BASE}locker.svg`,
     regular: `${ICON_BASE}regular.svg`,
+  };
+
+  // ✅ NEW: contact info icons (your uploaded files)
+  const CONTACT_ICON_BASE = "/img/icons/";
+  const CONTACT_ICONS = {
+    phone: `${CONTACT_ICON_BASE}blackphone.svg`,
+    email: `${CONTACT_ICON_BASE}blackemail.svg`,
+    address: `${CONTACT_ICON_BASE}blackaddress.svg`,
+    account: `${CONTACT_ICON_BASE}blackaccount.svg`,
+    birthday: `${CONTACT_ICON_BASE}blackbirthday.svg`,
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -336,33 +350,33 @@
     `;
   }
 
-  function iconSVG(type) {
-    if (type === "phone") return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3 5.2 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L9.9 10.7a16 16 0 0 0 3.4 3.4l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6A2 2 0 0 1 22 16.9z"></path>
-      </svg>`;
-    if (type === "mail") return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 4h16v16H4z"></path>
-        <path d="M4 6l8 6 8-6"></path>
-      </svg>`;
-    if (type === "pin") return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 21s7-4.4 7-11a7 7 0 0 0-14 0c0 6.6 7 11 7 11z"></path>
-        <path d="M12 10.5a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z"></path>
-      </svg>`;
-    return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20 21a8 8 0 1 0-16 0"></path>
-        <path d="M12 13a4 4 0 1 0-4-4 4 4 0 0 0 4 4z"></path>
-      </svg>`;
-  }
-
   function getAddress(c) {
     return toStr(c.address ?? c.Address ?? c["Address"] ?? "");
   }
+
   function getCigarSocial(c) {
     return toStr(c.cigarSocial ?? c["Cigar Social"] ?? c["CigarSocial"] ?? "");
+  }
+
+  function getRoleTitle(c) {
+    // Prefer explicit role/title fields if you have them
+    const role =
+      toStr(c.role ?? c.title ?? c["Title"] ?? c["Role"] ?? c.type ?? c["Type"] ?? "");
+
+    // Fallback: show locker/regular label if that’s how you’re using it
+    if (role) return role;
+    if (isLockerCustomer(c)) return "locker";
+    if (isRegularCustomer(c)) return "regular";
+    return "";
+  }
+
+  function getBirthdayText(c) {
+    // Accept a few common keys
+    return toStr(c.birthday ?? c.Birthday ?? c["Birthday"] ?? c.dob ?? c.DOB ?? c["DOB"] ?? "");
+  }
+
+  function iconIMG(src, alt) {
+    return `<img src="${src}" alt="${escapeAttr(alt || "")}" loading="lazy">`;
   }
 
   function renderContact(customer, editing) {
@@ -371,19 +385,40 @@
     const address = getAddress(customer);
     const cigarSocial = getCigarSocial(customer);
 
+    const role = getRoleTitle(customer);
+    const bday = getBirthdayText(customer);
+
     panelContact.innerHTML = `
       <div class="lc-kv">
-        <div class="ico">${iconSVG("phone")}</div>
-        <div class="v"><input class="lc-field" id="fPhone" value="${escapeAttr(phoneShown)}" ${editing ? "" : "readonly"} placeholder="412-555-1212"></div>
+        <div class="ico">${iconIMG(CONTACT_ICONS.phone, "Phone")}</div>
+        <div class="v">
+          <input class="lc-field" id="fPhone" value="${escapeAttr(phoneShown)}" ${editing ? "" : "readonly"} placeholder="412-555-1212">
+        </div>
 
-        <div class="ico">${iconSVG("mail")}</div>
-        <div class="v"><input class="lc-field" id="fEmail" value="${escapeAttr(email)}" ${editing ? "" : "readonly"} placeholder="name@email.com"></div>
+        <div class="ico">${iconIMG(CONTACT_ICONS.email, "Email")}</div>
+        <div class="v">
+          <input class="lc-field" id="fEmail" value="${escapeAttr(email)}" ${editing ? "" : "readonly"} placeholder="name@email.com">
+        </div>
 
-        <div class="ico">${iconSVG("pin")}</div>
-        <div class="v"><input class="lc-field" id="fAddress" value="${escapeAttr(address)}" ${editing ? "" : "readonly"} placeholder="Street, City, ST ZIP"></div>
+        <div class="ico">${iconIMG(CONTACT_ICONS.address, "Address")}</div>
+        <div class="v">
+          <input class="lc-field" id="fAddress" value="${escapeAttr(address)}" ${editing ? "" : "readonly"} placeholder="Street, City, ST ZIP">
+        </div>
 
-        <div class="ico">${iconSVG("user")}</div>
-        <div class="v"><input class="lc-field" id="fCigarSocial" value="${escapeAttr(cigarSocial)}" ${editing ? "" : "readonly"} placeholder="@username"></div>
+        <div class="ico">${iconIMG(CONTACT_ICONS.account, "Account")}</div>
+        <div class="v">
+          <input class="lc-field" id="fRole" value="${escapeAttr(role)}" ${editing ? "" : "readonly"} placeholder="founder">
+        </div>
+
+        <div class="ico">${iconIMG(CONTACT_ICONS.birthday, "Birthday")}</div>
+        <div class="v">
+          <input class="lc-field" id="fBirthday" value="${escapeAttr(bday)}" ${editing ? "" : "readonly"} placeholder="August 15">
+        </div>
+
+        <div class="ico">${iconIMG(CONTACT_ICONS.account, "Cigar Social")}</div>
+        <div class="v">
+          <input class="lc-field" id="fCigarSocial" value="${escapeAttr(cigarSocial)}" ${editing ? "" : "readonly"} placeholder="@username">
+        </div>
       </div>
     `;
   }
@@ -503,10 +538,17 @@
     const fAddress = document.getElementById("fAddress");
     const fCigarSocial = document.getElementById("fCigarSocial");
 
+    const fRole = document.getElementById("fRole");
+    const fBirthday = document.getElementById("fBirthday");
+
     if (fPhone) c.phone = normalizePhoneToDigits(fPhone.value) || toStr(fPhone.value);
     if (fEmail) c.email = toStr(fEmail.value);
     if (fAddress) c.address = toStr(fAddress.value);
     if (fCigarSocial) c.cigarSocial = toStr(fCigarSocial.value);
+
+    // ✅ save role + birthday if edited
+    if (fRole) c.role = toStr(fRole.value);
+    if (fBirthday) c.birthday = toStr(fBirthday.value);
 
     c.updatedAt = new Date().toISOString();
 
