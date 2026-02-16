@@ -6,6 +6,12 @@
        "Fav brand 1", "Fav brand 2", ...
        "Fav cigar", "Fav cigar 2", ...
    - Edit toggles unlock fields, Done saves to localStorage customers
+
+   FIXES:
+   ✅ Last name stays visible in EDIT mode (header inputs wrapped + explicit attrs)
+   ✅ Address renders as 2 lines:
+      - View: Line 1 Street, Line 2 City, State ZIP
+      - Edit: two fields, saved back as "Street, City, State ZIP"
 */
 
 (() => {
@@ -251,13 +257,54 @@
     return `${BRAND_ICON_BASE}${slug}.svg`;
   }
 
+  // Address helpers (2-line format)
+  function normalizeSpaces(s) {
+    return String(s || "").replace(/\s+/g, " ").trim();
+  }
+
+  function parseAddressParts(addressRaw) {
+    const raw = normalizeSpaces(addressRaw);
+    if (!raw) return { line1: "", line2: "" };
+
+    // If user stored with newline already
+    if (raw.includes("\n")) {
+      const parts = raw.split("\n").map((x) => normalizeSpaces(x)).filter(Boolean);
+      return { line1: parts[0] || "", line2: parts.slice(1).join(" ") || "" };
+    }
+
+    // Typical: "Street, City, ST ZIP"
+    const parts = raw.split(",").map((x) => normalizeSpaces(x)).filter(Boolean);
+    if (parts.length >= 3) {
+      return {
+        line1: parts[0],
+        line2: `${parts[1]}, ${parts.slice(2).join(", ")}`
+      };
+    }
+
+    // If only two comma chunks: "Street, City ST ZIP"
+    if (parts.length === 2) {
+      return { line1: parts[0], line2: parts[1] };
+    }
+
+    // No commas: best-effort split at double-space patterns? keep as line1.
+    return { line1: raw, line2: "" };
+  }
+
+  function joinAddressParts(line1Raw, line2Raw) {
+    const line1 = normalizeSpaces(line1Raw);
+    const line2 = normalizeSpaces(line2Raw);
+
+    if (!line1 && !line2) return "";
+    if (line1 && !line2) return line1;
+    if (!line1 && line2) return line2;
+
+    // Store as one string (backward compatible)
+    // "Street, City, ST ZIP" (we assume line2 already contains comma after city if desired)
+    return `${line1}, ${line2}`;
+  }
+
   // ✅ UPDATED: cigar pills try to route to the Brand page when brand is known,
   // otherwise fall back to global cigars search.
-  //
-  // Supported formats:
-  //   "Padron | 1926 40 Years Torpedo"
-  //   "Padron - 1926 40 Years Torpedo"
-  //   Otherwise: just "Opus X Shark" -> /pos/cigars/?q=
   function cigarDetailHref(displayNameRaw) {
     const raw = toStr(displayNameRaw);
     if (!raw) return "/pos/cigars/";
@@ -284,7 +331,6 @@
       return `/pos/cigars/brand?brand=${encodeURIComponent(brand)}&q=${encodeURIComponent(cigar)}`;
     }
 
-    // fallback works today even without brand info
     return `/pos/cigars/?q=${encodeURIComponent(raw)}`;
   }
 
@@ -382,22 +428,61 @@
   function renderContact(customer, editing) {
     const phoneShown = editing ? toStr(customer.phone) : formatPhone(toStr(customer.phone));
     const email = toStr(customer.email);
-    const address = getAddress(customer);
+
+    const addressRaw = getAddress(customer);
+    const addr = parseAddressParts(addressRaw);
+
     const cigarSocial = getCigarSocial(customer);
+
+    // View-mode: address becomes 2 lines (stacked)
+    const addressViewHTML = `
+      <div class="lc-lines" aria-label="Address">
+        <div class="lc-line1">${escapeHTML(addr.line1 || "—")}</div>
+        <div class="lc-line2">${escapeHTML(addr.line2 || "")}</div>
+      </div>
+    `;
+
+    // Edit-mode: two inputs
+    const addressEditHTML = `
+      <div class="lc-addr-edit">
+        <input class="lc-field" id="fAddr1" value="${escapeAttr(addr.line1)}" placeholder="Street" autocomplete="street-address" />
+        <input class="lc-field" id="fAddr2" value="${escapeAttr(addr.line2)}" placeholder="City, State ZIP" autocomplete="postal-code" />
+      </div>
+    `;
 
     panelContact.innerHTML = `
       <div class="lc-kv">
         <div class="ico">${iconSVG("phone")}</div>
-        <div class="v"><input class="lc-field" id="fPhone" value="${escapeAttr(phoneShown)}" ${editing ? "" : "readonly"} placeholder="412-555-1212"></div>
+        <div class="v">
+          <input class="lc-field" id="fPhone"
+            value="${escapeAttr(phoneShown)}"
+            ${editing ? "" : "readonly"}
+            inputmode="tel" autocomplete="tel"
+            placeholder="412-555-1212">
+        </div>
 
         <div class="ico">${iconSVG("mail")}</div>
-        <div class="v"><input class="lc-field" id="fEmail" value="${escapeAttr(email)}" ${editing ? "" : "readonly"} placeholder="name@email.com"></div>
+        <div class="v">
+          <input class="lc-field" id="fEmail"
+            value="${escapeAttr(email)}"
+            ${editing ? "" : "readonly"}
+            inputmode="email" autocomplete="email"
+            placeholder="name@email.com">
+        </div>
 
         <div class="ico">${iconSVG("pin")}</div>
-        <div class="v"><input class="lc-field" id="fAddress" value="${escapeAttr(address)}" ${editing ? "" : "readonly"} placeholder="Street, City, ST ZIP"></div>
+        <div class="v">
+          ${editing ? addressEditHTML : addressViewHTML}
+        </div>
 
         <div class="ico">${iconSVG("user")}</div>
-        <div class="v"><input class="lc-field" id="fCigarSocial" value="${escapeAttr(cigarSocial)}" ${editing ? "" : "readonly"} placeholder="@username"></div>
+        <div class="v">
+          <input class="lc-field" id="fCigarSocial"
+            value="${escapeAttr(cigarSocial)}"
+            ${editing ? "" : "readonly"}
+            autocapitalize="none" autocomplete="nickname"
+            placeholder="@username">
+        </div>
       </div>
     `;
   }
@@ -443,17 +528,28 @@
     const first = toStr(c.firstName);
     const last = toStr(c.lastName);
 
+    // IMPORTANT: wrap to prevent any CSS selector from hiding the second input
+    // and provide explicit attributes so layout engines don't collapse it.
     nameEl.innerHTML = `
-      <input class="lc-field" id="fFirst" value="${escapeAttr(first)}" placeholder="First" />
-      <span style="display:inline-block;width:8px;"></span>
-      <input class="lc-field" id="fLast" value="${escapeAttr(last)}" placeholder="Last" />
+      <span class="lc-name-edit" role="group" aria-label="Name">
+        <input class="lc-field lc-name-first"
+          id="fFirst"
+          value="${escapeAttr(first)}"
+          placeholder="First"
+          autocomplete="given-name" />
+        <input class="lc-field lc-name-last"
+          id="fLast"
+          value="${escapeAttr(last)}"
+          placeholder="Last"
+          autocomplete="family-name" />
+      </span>
     `;
 
     const nick = nickname(c);
     akaEl.style.display = "";
     akaEl.innerHTML = `
       <span style="color:#8e8e93;font-weight:600;">aka </span>
-      <input class="lc-field" id="fNick" value="${escapeAttr(nick)}" placeholder="Nickname" />
+      <input class="lc-field" id="fNick" value="${escapeAttr(nick)}" placeholder="Nickname" autocomplete="nickname" />
     `;
   }
 
@@ -512,12 +608,28 @@
 
     const fPhone = document.getElementById("fPhone");
     const fEmail = document.getElementById("fEmail");
-    const fAddress = document.getElementById("fAddress");
+
+    // Address is now 2 fields in edit mode
+    const fAddr1 = document.getElementById("fAddr1");
+    const fAddr2 = document.getElementById("fAddr2");
+
     const fCigarSocial = document.getElementById("fCigarSocial");
 
     if (fPhone) c.phone = normalizePhoneToDigits(fPhone.value) || toStr(fPhone.value);
     if (fEmail) c.email = toStr(fEmail.value);
-    if (fAddress) c.address = toStr(fAddress.value);
+
+    if (fAddr1 || fAddr2) {
+      const joined = joinAddressParts(
+        fAddr1 ? fAddr1.value : "",
+        fAddr2 ? fAddr2.value : ""
+      );
+      c.address = joined;
+    } else {
+      // Backward compatibility: if for some reason it's still the old single input
+      const fAddress = document.getElementById("fAddress");
+      if (fAddress) c.address = toStr(fAddress.value);
+    }
+
     if (fCigarSocial) c.cigarSocial = toStr(fCigarSocial.value);
 
     c.updatedAt = new Date().toISOString();
