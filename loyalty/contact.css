@@ -10,6 +10,11 @@
    ✅ Address renders as 2 lines (view) + 2 fields (edit)
    ✅ Birthday + Age integrated into the same grid rows cleanly
    ✅ History tab includes styled YTD row
+
+   NEW (2026-02-16):
+   ✅ Body text is NOT bold (SF Pro Display Medium / 500)
+   ✅ Contact values + address lines use Medium weight
+   ✅ .lc-kv icons support <img> (new black*.svg icons)
 */
 
 :root{
@@ -31,6 +36,7 @@ body.loy-contact{
   background:var(--bg);
   color:var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, Arial, sans-serif;
+  font-weight: 500; /* ✅ Medium default for all body text */
 }
 
 /* topbar */
@@ -133,7 +139,7 @@ body.loy-contact{
 /* aka */
 .lc-aka{
   margin-top: 6px;
-  font-weight: 600;
+  font-weight: 500; /* ✅ Medium (not bold) */
   color: var(--muted);
   font-size: 16px;
 }
@@ -162,6 +168,7 @@ body.loy-contact{
   font-size: 18px;
   padding: 10px 2px;
   color: rgba(0,0,0,.72);
+  font-weight: 500; /* ✅ Medium */
 }
 
 .lc-note input::placeholder{
@@ -261,6 +268,7 @@ body.loy-contact{
   flex:1;
   min-width:0;
   font-size: 22px;
+  font-weight: 500; /* ✅ Medium */
 }
 
 .lc-row .mid{
@@ -283,6 +291,7 @@ body.loy-contact{
   color: var(--muted);
   font-size: 22px;
   text-decoration:none;
+  font-weight: 500; /* ✅ Medium */
 }
 
 /* ✅ YTD row */
@@ -322,9 +331,10 @@ body.loy-contact{
   height: 28px;
   display:grid;
   place-items:center;
-  opacity: .85;
+  opacity: 1; /* ✅ new black icons should be full strength */
 }
 
+/* ✅ If contact icons are SVG inline (legacy support) */
 .lc-kv .ico svg{
   width: 22px;
   height: 22px;
@@ -335,10 +345,17 @@ body.loy-contact{
   stroke-linejoin: round;
 }
 
+/* ✅ If contact icons are <img src="/img/icons/blackphone.svg"> */
+.lc-kv .ico img{
+  width: 26px;
+  height: 26px;
+  display:block;
+}
+
 /* Default: keep single-line + ellipsis for non-address values */
 .lc-kv .v{
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 500; /* ✅ Medium (NOT bold) */
   min-width:0;
 
   white-space: nowrap;
@@ -365,6 +382,7 @@ body.loy-contact{
   white-space: nowrap;
   overflow:hidden;
   text-overflow: ellipsis;
+  font-weight: 500; /* ✅ Medium */
 }
 
 .lc-field:not([readonly]){
@@ -383,7 +401,7 @@ body.loy-contact{
 }
 
 .lc-line1{
-  font-weight: 800;
+  font-weight: 500; /* ✅ Medium */
   color: var(--ink);
   white-space: nowrap;
   overflow:hidden;
@@ -391,7 +409,7 @@ body.loy-contact{
 }
 
 .lc-line2{
-  font-weight: 700;
+  font-weight: 500; /* ✅ Medium (still muted) */
   color: var(--muted);
   white-space: nowrap;
   overflow:hidden;
@@ -413,6 +431,7 @@ body.loy-contact{
 .lc-age{
   font: inherit;
   color: inherit;
+  font-weight: 500; /* ✅ Medium */
 }
 
 /* -------------------------
@@ -430,6 +449,7 @@ body.loy-contact{
   padding: 10px 16px 18px;
   color: var(--muted);
   font-size: 22px;
+  font-weight: 500; /* ✅ Medium */
 }
 
 .brand-icons{
@@ -464,5 +484,5 @@ body.loy-contact{
   background: #fff;
   text-decoration:none;
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 600; /* slightly stronger than body, but not “bold” */
 }
