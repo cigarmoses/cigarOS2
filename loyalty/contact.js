@@ -7,11 +7,11 @@
        "Fav cigar", "Fav cigar 2", ...
    - Edit toggles unlock fields, Done saves to localStorage customers
 
-   FIXES:
-   ✅ Last name stays visible in EDIT mode (header inputs wrapped + explicit attrs)
-   ✅ Address renders as 2 lines:
-      - View: Line 1 Street, Line 2 City, State ZIP
-      - Edit: two fields, saved back as "Street, City, State ZIP"
+   UPDATES:
+   ✅ History tab shows true YTD spend (sum of sales/invoices in current year)
+   ✅ Birthday pulled from column "Birthday" and displayed as "Month D" (e.g., August 15)
+   ✅ Age calculated ONLY if Birthday includes a year
+   ✅ Birthday + Age integrated into Contact grid properly
 */
 
 (() => {
@@ -219,7 +219,7 @@
   }
   function numFromKey(k) {
     const m = String(k || "").match(/(\d+)/);
-    return m ? Number(m[1]) : 1; // "Fav cigar" (no number) treated as 1
+    return m ? Number(m[1]) : 1;
   }
 
   function getFavBrandsFromColumns(c) {
@@ -252,7 +252,6 @@
   }
 
   function brandIconPath(brandName) {
-    // best-effort: lowercase, no spaces
     const slug = slugify(brandName).replace(/-/g, "");
     return `${BRAND_ICON_BASE}${slug}.svg`;
   }
@@ -266,13 +265,11 @@
     const raw = normalizeSpaces(addressRaw);
     if (!raw) return { line1: "", line2: "" };
 
-    // If user stored with newline already
     if (raw.includes("\n")) {
       const parts = raw.split("\n").map((x) => normalizeSpaces(x)).filter(Boolean);
       return { line1: parts[0] || "", line2: parts.slice(1).join(" ") || "" };
     }
 
-    // Typical: "Street, City, ST ZIP"
     const parts = raw.split(",").map((x) => normalizeSpaces(x)).filter(Boolean);
     if (parts.length >= 3) {
       return {
@@ -281,12 +278,10 @@
       };
     }
 
-    // If only two comma chunks: "Street, City ST ZIP"
     if (parts.length === 2) {
       return { line1: parts[0], line2: parts[1] };
     }
 
-    // No commas: best-effort split at double-space patterns? keep as line1.
     return { line1: raw, line2: "" };
   }
 
@@ -298,9 +293,73 @@
     if (line1 && !line2) return line1;
     if (!line1 && line2) return line2;
 
-    // Store as one string (backward compatible)
-    // "Street, City, ST ZIP" (we assume line2 already contains comma after city if desired)
     return `${line1}, ${line2}`;
+  }
+
+  // Birthday / Age helpers
+  function parseBirthdayRaw(raw) {
+    const s = normalizeSpaces(raw);
+    if (!s) return { ok: false, month: null, day: null, year: null };
+
+    // MM/DD or MM/DD/YYYY
+    const mdy = s.match(/^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?$/);
+    if (mdy) {
+      const mm = Number(mdy[1]);
+      const dd = Number(mdy[2]);
+      let yy = mdy[3] ? Number(mdy[3]) : null;
+      if (yy != null && yy < 100) yy = 2000 + yy; // best-effort
+      if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+        return { ok: true, month: mm, day: dd, year: yy };
+      }
+    }
+
+    // Try Date parse (handles "August 15 1985", "Aug 15, 1985", ISO, etc.)
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      // Only trust year if the original string clearly included a year-like token
+      const hasYearToken = /\b(19|20)\d{2}\b/.test(s);
+      const year = hasYearToken ? d.getFullYear() : null;
+      return { ok: true, month, day, year };
+    }
+
+    // Month name + day optionally year: "August 15" or "August 15 1985"
+    const nameDayYear = s.match(/^([A-Za-z]+)\s+(\d{1,2})(?:,?\s+(\d{4}))?$/);
+    if (nameDayYear) {
+      const monthName = nameDayYear[1].toLowerCase();
+      const day = Number(nameDayYear[2]);
+      const year = nameDayYear[3] ? Number(nameDayYear[3]) : null;
+
+      const months = {
+        january:1, february:2, march:3, april:4, may:5, june:6,
+        july:7, august:8, september:9, october:10, november:11, december:12,
+        jan:1, feb:2, mar:3, apr:4, jun:6, jul:7, aug:8, sep:9, sept:9, oct:10, nov:11, dec:12
+      };
+      const month = months[monthName];
+      if (month && day >= 1 && day <= 31) {
+        return { ok: true, month, day, year };
+      }
+    }
+
+    return { ok: false, month: null, day: null, year: null };
+  }
+
+  function formatMonthDay(month, day) {
+    if (!month || !day) return "";
+    const dt = new Date(2000, month - 1, day);
+    return dt.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+  }
+
+  function computeAgeFromYMD(year, month, day) {
+    if (!year || !month || !day) return null;
+    const now = new Date();
+    let age = now.getFullYear() - year;
+    const hasHadBirthdayThisYear =
+      (now.getMonth() + 1 > month) ||
+      (now.getMonth() + 1 === month && now.getDate() >= day);
+    if (!hasHadBirthdayThisYear) age -= 1;
+    return age >= 0 && age < 130 ? age : null;
   }
 
   // ✅ UPDATED: cigar pills try to route to the Brand page when brand is known,
@@ -309,7 +368,6 @@
     const raw = toStr(displayNameRaw);
     if (!raw) return "/pos/cigars/";
 
-    // Try "Brand | Cigar"
     let brand = "";
     let cigar = "";
 
@@ -353,11 +411,33 @@
       return false;
     });
 
+    // ✅ YTD total (current calendar year)
+    const currentYear = new Date().getFullYear();
+    const ytdTotal = matches
+      .filter((s) => {
+        const dt = new Date(s.date ?? s.createdAt ?? s.timestamp ?? 0);
+        const t = dt.getTime();
+        if (!t) return false;
+        return dt.getFullYear() === currentYear;
+      })
+      .reduce((sum, s) => {
+        const total = Number(s.total ?? s.amount ?? s.grandTotal ?? 0) || 0;
+        return sum + total;
+      }, 0);
+
+    const ytdHTML = `
+      <div class="lc-ytd">
+        <div class="lc-ytd-label">YTD:</div>
+        <div class="lc-ytd-value">${money(ytdTotal)}</div>
+      </div>
+    `;
+
     if (!matches.length) {
       panelHistory.innerHTML = `
         <div class="lc-row">
           <div class="left" style="color:#8e8e93;">No transactions yet</div>
         </div>
+        ${ytdHTML}
       `;
       return;
     }
@@ -393,6 +473,7 @@
     panelHistory.innerHTML = `
       ${rows}
       <a class="lc-mutedlink" href="javascript:void(0)">view all transactions</a>
+      ${ytdHTML}
     `;
   }
 
@@ -411,6 +492,20 @@
         <path d="M12 21s7-4.4 7-11a7 7 0 0 0-14 0c0 6.6 7 11 7 11z"></path>
         <path d="M12 10.5a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z"></path>
       </svg>`;
+    if (type === "cake") return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 21h16v-8a4 4 0 0 1-4 2 4 4 0 0 1-4-2 4 4 0 0 1-4 2 4 4 0 0 1-4-2v8z"></path>
+        <path d="M4 13a4 4 0 0 0 4 2 4 4 0 0 0 4-2 4 4 0 0 0 4 2 4 4 0 0 0 4-2"></path>
+        <path d="M7 10h10v3H7z"></path>
+        <path d="M12 3c1.2 1 .9 2.2 0 3-1.1-.8-1.2-2 0-3z"></path>
+      </svg>`;
+    if (type === "calendar") return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 3v3"></path>
+        <path d="M17 3v3"></path>
+        <path d="M4 7h16"></path>
+        <path d="M5 5h14a1 1 0 0 1 1 1v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1z"></path>
+      </svg>`;
     return `
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M20 21a8 8 0 1 0-16 0"></path>
@@ -425,6 +520,10 @@
     return toStr(c.cigarSocial ?? c["Cigar Social"] ?? c["CigarSocial"] ?? "");
   }
 
+  function getBirthdayRaw(c) {
+    return toStr(c["Birthday"] ?? c.birthday ?? c.Birthday ?? "");
+  }
+
   function renderContact(customer, editing) {
     const phoneShown = editing ? toStr(customer.phone) : formatPhone(toStr(customer.phone));
     const email = toStr(customer.email);
@@ -433,6 +532,12 @@
     const addr = parseAddressParts(addressRaw);
 
     const cigarSocial = getCigarSocial(customer);
+
+    // Birthday / Age
+    const bdayRaw = getBirthdayRaw(customer);
+    const b = parseBirthdayRaw(bdayRaw);
+    const bdayDisplay = b.ok ? formatMonthDay(b.month, b.day) : (bdayRaw || "");
+    const ageVal = (b.ok && b.year) ? computeAgeFromYMD(b.year, b.month, b.day) : null;
 
     // View-mode: address becomes 2 lines (stacked)
     const addressViewHTML = `
@@ -471,7 +576,7 @@
         </div>
 
         <div class="ico">${iconSVG("pin")}</div>
-        <div class="v">
+        <div class="v v-addr">
           ${editing ? addressEditHTML : addressViewHTML}
         </div>
 
@@ -482,6 +587,19 @@
             ${editing ? "" : "readonly"}
             autocapitalize="none" autocomplete="nickname"
             placeholder="@username">
+        </div>
+
+        <div class="ico">${iconSVG("cake")}</div>
+        <div class="v">
+          <input class="lc-field" id="fBirthday"
+            value="${escapeAttr(bdayDisplay || "—")}"
+            readonly
+            placeholder="—">
+        </div>
+
+        <div class="ico">${iconSVG("calendar")}</div>
+        <div class="v">
+          <div class="lc-age">${ageVal != null ? `Age: ${ageVal}` : "—"}</div>
         </div>
       </div>
     `;
@@ -528,8 +646,6 @@
     const first = toStr(c.firstName);
     const last = toStr(c.lastName);
 
-    // IMPORTANT: wrap to prevent any CSS selector from hiding the second input
-    // and provide explicit attributes so layout engines don't collapse it.
     nameEl.innerHTML = `
       <span class="lc-name-edit" role="group" aria-label="Name">
         <input class="lc-field lc-name-first"
@@ -609,7 +725,6 @@
     const fPhone = document.getElementById("fPhone");
     const fEmail = document.getElementById("fEmail");
 
-    // Address is now 2 fields in edit mode
     const fAddr1 = document.getElementById("fAddr1");
     const fAddr2 = document.getElementById("fAddr2");
 
@@ -619,18 +734,19 @@
     if (fEmail) c.email = toStr(fEmail.value);
 
     if (fAddr1 || fAddr2) {
-      const joined = joinAddressParts(
+      c.address = joinAddressParts(
         fAddr1 ? fAddr1.value : "",
         fAddr2 ? fAddr2.value : ""
       );
-      c.address = joined;
     } else {
-      // Backward compatibility: if for some reason it's still the old single input
       const fAddress = document.getElementById("fAddress");
       if (fAddress) c.address = toStr(fAddress.value);
     }
 
     if (fCigarSocial) c.cigarSocial = toStr(fCigarSocial.value);
+
+    // Birthday is read-only here by request (pulled from JSON column)
+    // Age is computed from Birthday year automatically
 
     c.updatedAt = new Date().toISOString();
 
