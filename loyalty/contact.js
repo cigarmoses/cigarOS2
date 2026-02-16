@@ -2,23 +2,17 @@
    - Folder tabs + stretched content panel
    - Quick note placeholder behavior
    - Contact values use icons (more width, no wrapping)
-   - Favorites pulled from JSON-style columns:
-       "Fav brand 1", "Fav brand 2", ...
-       "Fav cigar", "Fav cigar 2", ...
+   - Favorites:
+       Brands -> "Fav brand 1..N" => brand SVG icons
+       Cigars -> ("Fav cigar", "Fav cigar 2..N") pills
+                If "Fav cigar id 1..N" exists, link EXACT to canonical /cigars route
    - Edit toggles unlock fields, Done saves to localStorage customers
-
-   UPDATES:
-   ✅ History tab shows true YTD spend (sum of sales/invoices in current year)
-   ✅ Birthday pulled from column "Birthday" and displayed as "Month D" (e.g., August 15)
-   ✅ Age calculated ONLY if Birthday includes a year
-   ✅ Birthday + Age integrated into Contact grid properly
 */
 
 (() => {
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
 
-  // Brand icons live here (per your repo convention)
   const BRAND_ICON_BASE = "/img/icons/brands/"; // plural
 
   const ICON_BASE = "/img/icons/loyalty/";
@@ -217,6 +211,10 @@
     const s = String(k || "").trim().toLowerCase();
     return s.startsWith("fav cigar");
   }
+  function keyIsFavCigarId(k) {
+    const s = String(k || "").trim().toLowerCase();
+    return s.startsWith("fav cigar id");
+  }
   function numFromKey(k) {
     const m = String(k || "").match(/(\d+)/);
     return m ? Number(m[1]) : 1;
@@ -242,6 +240,16 @@
     return pairs.map((x) => x.v);
   }
 
+  function getFavCigarIdsFromColumns(c) {
+    const pairs = Object.keys(c || {})
+      .filter(keyIsFavCigarId)
+      .map((k) => ({ k, n: numFromKey(k), v: toStr(c[k]) }))
+      .filter((x) => x.v);
+
+    pairs.sort((a, b) => a.n - b.n);
+    return pairs.map((x) => x.v);
+  }
+
   function slugify(s) {
     return String(s || "")
       .trim()
@@ -256,140 +264,14 @@
     return `${BRAND_ICON_BASE}${slug}.svg`;
   }
 
-  // Address helpers (2-line format)
-  function normalizeSpaces(s) {
-    return String(s || "").replace(/\s+/g, " ").trim();
-  }
+  // ✅ Exact canonical route when cigarId exists
+  function cigarDetailHref(displayName, cigarIdMaybe) {
+    const cigarId = toStr(cigarIdMaybe);
+    if (cigarId) return `/cigars/cigar?id=${encodeURIComponent(cigarId)}`;
 
-  function parseAddressParts(addressRaw) {
-    const raw = normalizeSpaces(addressRaw);
-    if (!raw) return { line1: "", line2: "" };
-
-    if (raw.includes("\n")) {
-      const parts = raw.split("\n").map((x) => normalizeSpaces(x)).filter(Boolean);
-      return { line1: parts[0] || "", line2: parts.slice(1).join(" ") || "" };
-    }
-
-    const parts = raw.split(",").map((x) => normalizeSpaces(x)).filter(Boolean);
-    if (parts.length >= 3) {
-      return {
-        line1: parts[0],
-        line2: `${parts[1]}, ${parts.slice(2).join(", ")}`
-      };
-    }
-
-    if (parts.length === 2) {
-      return { line1: parts[0], line2: parts[1] };
-    }
-
-    return { line1: raw, line2: "" };
-  }
-
-  function joinAddressParts(line1Raw, line2Raw) {
-    const line1 = normalizeSpaces(line1Raw);
-    const line2 = normalizeSpaces(line2Raw);
-
-    if (!line1 && !line2) return "";
-    if (line1 && !line2) return line1;
-    if (!line1 && line2) return line2;
-
-    return `${line1}, ${line2}`;
-  }
-
-  // Birthday / Age helpers
-  function parseBirthdayRaw(raw) {
-    const s = normalizeSpaces(raw);
-    if (!s) return { ok: false, month: null, day: null, year: null };
-
-    // MM/DD or MM/DD/YYYY
-    const mdy = s.match(/^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?$/);
-    if (mdy) {
-      const mm = Number(mdy[1]);
-      const dd = Number(mdy[2]);
-      let yy = mdy[3] ? Number(mdy[3]) : null;
-      if (yy != null && yy < 100) yy = 2000 + yy; // best-effort
-      if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
-        return { ok: true, month: mm, day: dd, year: yy };
-      }
-    }
-
-    // Try Date parse (handles "August 15 1985", "Aug 15, 1985", ISO, etc.)
-    const d = new Date(s);
-    if (!Number.isNaN(d.getTime())) {
-      const month = d.getMonth() + 1;
-      const day = d.getDate();
-      // Only trust year if the original string clearly included a year-like token
-      const hasYearToken = /\b(19|20)\d{2}\b/.test(s);
-      const year = hasYearToken ? d.getFullYear() : null;
-      return { ok: true, month, day, year };
-    }
-
-    // Month name + day optionally year: "August 15" or "August 15 1985"
-    const nameDayYear = s.match(/^([A-Za-z]+)\s+(\d{1,2})(?:,?\s+(\d{4}))?$/);
-    if (nameDayYear) {
-      const monthName = nameDayYear[1].toLowerCase();
-      const day = Number(nameDayYear[2]);
-      const year = nameDayYear[3] ? Number(nameDayYear[3]) : null;
-
-      const months = {
-        january:1, february:2, march:3, april:4, may:5, june:6,
-        july:7, august:8, september:9, october:10, november:11, december:12,
-        jan:1, feb:2, mar:3, apr:4, jun:6, jul:7, aug:8, sep:9, sept:9, oct:10, nov:11, dec:12
-      };
-      const month = months[monthName];
-      if (month && day >= 1 && day <= 31) {
-        return { ok: true, month, day, year };
-      }
-    }
-
-    return { ok: false, month: null, day: null, year: null };
-  }
-
-  function formatMonthDay(month, day) {
-    if (!month || !day) return "";
-    const dt = new Date(2000, month - 1, day);
-    return dt.toLocaleDateString(undefined, { month: "long", day: "numeric" });
-  }
-
-  function computeAgeFromYMD(year, month, day) {
-    if (!year || !month || !day) return null;
-    const now = new Date();
-    let age = now.getFullYear() - year;
-    const hasHadBirthdayThisYear =
-      (now.getMonth() + 1 > month) ||
-      (now.getMonth() + 1 === month && now.getDate() >= day);
-    if (!hasHadBirthdayThisYear) age -= 1;
-    return age >= 0 && age < 130 ? age : null;
-  }
-
-  // ✅ UPDATED: cigar pills try to route to the Brand page when brand is known,
-  // otherwise fall back to global cigars search.
-  function cigarDetailHref(displayNameRaw) {
-    const raw = toStr(displayNameRaw);
-    if (!raw) return "/pos/cigars/";
-
-    let brand = "";
-    let cigar = "";
-
-    if (raw.includes("|")) {
-      const parts = raw.split("|").map((p) => p.trim()).filter(Boolean);
-      if (parts.length >= 2) {
-        brand = parts[0];
-        cigar = parts.slice(1).join(" | ");
-      }
-    } else if (raw.includes(" - ")) {
-      const parts = raw.split(" - ").map((p) => p.trim()).filter(Boolean);
-      if (parts.length >= 2) {
-        brand = parts[0];
-        cigar = parts.slice(1).join(" - ");
-      }
-    }
-
-    if (brand && cigar) {
-      return `/pos/cigars/brand?brand=${encodeURIComponent(brand)}&q=${encodeURIComponent(cigar)}`;
-    }
-
-    return `/pos/cigars/?q=${encodeURIComponent(raw)}`;
+    // fallback (legacy)
+    const raw = toStr(displayName);
+    return raw ? `/pos/cigars/?q=${encodeURIComponent(raw)}` : "/pos/cigars/";
   }
 
   // ---------- panels ----------
@@ -411,33 +293,11 @@
       return false;
     });
 
-    // ✅ YTD total (current calendar year)
-    const currentYear = new Date().getFullYear();
-    const ytdTotal = matches
-      .filter((s) => {
-        const dt = new Date(s.date ?? s.createdAt ?? s.timestamp ?? 0);
-        const t = dt.getTime();
-        if (!t) return false;
-        return dt.getFullYear() === currentYear;
-      })
-      .reduce((sum, s) => {
-        const total = Number(s.total ?? s.amount ?? s.grandTotal ?? 0) || 0;
-        return sum + total;
-      }, 0);
-
-    const ytdHTML = `
-      <div class="lc-ytd">
-        <div class="lc-ytd-label">YTD:</div>
-        <div class="lc-ytd-value">${money(ytdTotal)}</div>
-      </div>
-    `;
-
     if (!matches.length) {
       panelHistory.innerHTML = `
         <div class="lc-row">
           <div class="left" style="color:#8e8e93;">No transactions yet</div>
         </div>
-        ${ytdHTML}
       `;
       return;
     }
@@ -473,7 +333,6 @@
     panelHistory.innerHTML = `
       ${rows}
       <a class="lc-mutedlink" href="javascript:void(0)">view all transactions</a>
-      ${ytdHTML}
     `;
   }
 
@@ -492,20 +351,6 @@
         <path d="M12 21s7-4.4 7-11a7 7 0 0 0-14 0c0 6.6 7 11 7 11z"></path>
         <path d="M12 10.5a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z"></path>
       </svg>`;
-    if (type === "cake") return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 21h16v-8a4 4 0 0 1-4 2 4 4 0 0 1-4-2 4 4 0 0 1-4 2 4 4 0 0 1-4-2v8z"></path>
-        <path d="M4 13a4 4 0 0 0 4 2 4 4 0 0 0 4-2 4 4 0 0 0 4 2 4 4 0 0 0 4-2"></path>
-        <path d="M7 10h10v3H7z"></path>
-        <path d="M12 3c1.2 1 .9 2.2 0 3-1.1-.8-1.2-2 0-3z"></path>
-      </svg>`;
-    if (type === "calendar") return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M7 3v3"></path>
-        <path d="M17 3v3"></path>
-        <path d="M4 7h16"></path>
-        <path d="M5 5h14a1 1 0 0 1 1 1v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1z"></path>
-      </svg>`;
     return `
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M20 21a8 8 0 1 0-16 0"></path>
@@ -520,87 +365,25 @@
     return toStr(c.cigarSocial ?? c["Cigar Social"] ?? c["CigarSocial"] ?? "");
   }
 
-  function getBirthdayRaw(c) {
-    return toStr(c["Birthday"] ?? c.birthday ?? c.Birthday ?? "");
-  }
-
   function renderContact(customer, editing) {
     const phoneShown = editing ? toStr(customer.phone) : formatPhone(toStr(customer.phone));
     const email = toStr(customer.email);
-
-    const addressRaw = getAddress(customer);
-    const addr = parseAddressParts(addressRaw);
-
+    const address = getAddress(customer);
     const cigarSocial = getCigarSocial(customer);
-
-    // Birthday / Age
-    const bdayRaw = getBirthdayRaw(customer);
-    const b = parseBirthdayRaw(bdayRaw);
-    const bdayDisplay = b.ok ? formatMonthDay(b.month, b.day) : (bdayRaw || "");
-    const ageVal = (b.ok && b.year) ? computeAgeFromYMD(b.year, b.month, b.day) : null;
-
-    // View-mode: address becomes 2 lines (stacked)
-    const addressViewHTML = `
-      <div class="lc-lines" aria-label="Address">
-        <div class="lc-line1">${escapeHTML(addr.line1 || "—")}</div>
-        <div class="lc-line2">${escapeHTML(addr.line2 || "")}</div>
-      </div>
-    `;
-
-    // Edit-mode: two inputs
-    const addressEditHTML = `
-      <div class="lc-addr-edit">
-        <input class="lc-field" id="fAddr1" value="${escapeAttr(addr.line1)}" placeholder="Street" autocomplete="street-address" />
-        <input class="lc-field" id="fAddr2" value="${escapeAttr(addr.line2)}" placeholder="City, State ZIP" autocomplete="postal-code" />
-      </div>
-    `;
 
     panelContact.innerHTML = `
       <div class="lc-kv">
         <div class="ico">${iconSVG("phone")}</div>
-        <div class="v">
-          <input class="lc-field" id="fPhone"
-            value="${escapeAttr(phoneShown)}"
-            ${editing ? "" : "readonly"}
-            inputmode="tel" autocomplete="tel"
-            placeholder="412-555-1212">
-        </div>
+        <div class="v"><input class="lc-field" id="fPhone" value="${escapeAttr(phoneShown)}" ${editing ? "" : "readonly"} placeholder="412-555-1212"></div>
 
         <div class="ico">${iconSVG("mail")}</div>
-        <div class="v">
-          <input class="lc-field" id="fEmail"
-            value="${escapeAttr(email)}"
-            ${editing ? "" : "readonly"}
-            inputmode="email" autocomplete="email"
-            placeholder="name@email.com">
-        </div>
+        <div class="v"><input class="lc-field" id="fEmail" value="${escapeAttr(email)}" ${editing ? "" : "readonly"} placeholder="name@email.com"></div>
 
         <div class="ico">${iconSVG("pin")}</div>
-        <div class="v v-addr">
-          ${editing ? addressEditHTML : addressViewHTML}
-        </div>
+        <div class="v"><input class="lc-field" id="fAddress" value="${escapeAttr(address)}" ${editing ? "" : "readonly"} placeholder="Street, City, ST ZIP"></div>
 
         <div class="ico">${iconSVG("user")}</div>
-        <div class="v">
-          <input class="lc-field" id="fCigarSocial"
-            value="${escapeAttr(cigarSocial)}"
-            ${editing ? "" : "readonly"}
-            autocapitalize="none" autocomplete="nickname"
-            placeholder="@username">
-        </div>
-
-        <div class="ico">${iconSVG("cake")}</div>
-        <div class="v">
-          <input class="lc-field" id="fBirthday"
-            value="${escapeAttr(bdayDisplay || "—")}"
-            readonly
-            placeholder="—">
-        </div>
-
-        <div class="ico">${iconSVG("calendar")}</div>
-        <div class="v">
-          <div class="lc-age">${ageVal != null ? `Age: ${ageVal}` : "—"}</div>
-        </div>
+        <div class="v"><input class="lc-field" id="fCigarSocial" value="${escapeAttr(cigarSocial)}" ${editing ? "" : "readonly"} placeholder="@username"></div>
       </div>
     `;
   }
@@ -608,6 +391,7 @@
   function renderFavorites(customer) {
     const brands = getFavBrandsFromColumns(customer);
     const cigars = getFavCigarsFromColumns(customer);
+    const cigarIds = getFavCigarIdsFromColumns(customer);
 
     const brandIconsHTML = brands.length
       ? `<div class="brand-icons">
@@ -618,10 +402,11 @@
         </div>`
       : `<div class="empty-line">No favorite brands yet</div>`;
 
+    // Map cigars to cigarIds by index (1..N)
     const cigarPillsHTML = cigars.length
       ? `<div class="pills">
-          ${cigars.map((c) => `
-            <a class="pill" href="${cigarDetailHref(c)}">${escapeHTML(c)}</a>
+          ${cigars.map((label, i) => `
+            <a class="pill" href="${cigarDetailHref(label, cigarIds[i])}">${escapeHTML(label)}</a>
           `).join("")}
         </div>`
       : `<div class="empty-line">No favorite cigars yet</div>`;
@@ -647,25 +432,16 @@
     const last = toStr(c.lastName);
 
     nameEl.innerHTML = `
-      <span class="lc-name-edit" role="group" aria-label="Name">
-        <input class="lc-field lc-name-first"
-          id="fFirst"
-          value="${escapeAttr(first)}"
-          placeholder="First"
-          autocomplete="given-name" />
-        <input class="lc-field lc-name-last"
-          id="fLast"
-          value="${escapeAttr(last)}"
-          placeholder="Last"
-          autocomplete="family-name" />
-      </span>
+      <input class="lc-field" id="fFirst" value="${escapeAttr(first)}" placeholder="First" />
+      <span style="display:inline-block;width:8px;"></span>
+      <input class="lc-field" id="fLast" value="${escapeAttr(last)}" placeholder="Last" />
     `;
 
     const nick = nickname(c);
     akaEl.style.display = "";
     akaEl.innerHTML = `
       <span style="color:#8e8e93;font-weight:600;">aka </span>
-      <input class="lc-field" id="fNick" value="${escapeAttr(nick)}" placeholder="Nickname" autocomplete="nickname" />
+      <input class="lc-field" id="fNick" value="${escapeAttr(nick)}" placeholder="Nickname" />
     `;
   }
 
@@ -724,29 +500,13 @@
 
     const fPhone = document.getElementById("fPhone");
     const fEmail = document.getElementById("fEmail");
-
-    const fAddr1 = document.getElementById("fAddr1");
-    const fAddr2 = document.getElementById("fAddr2");
-
+    const fAddress = document.getElementById("fAddress");
     const fCigarSocial = document.getElementById("fCigarSocial");
 
     if (fPhone) c.phone = normalizePhoneToDigits(fPhone.value) || toStr(fPhone.value);
     if (fEmail) c.email = toStr(fEmail.value);
-
-    if (fAddr1 || fAddr2) {
-      c.address = joinAddressParts(
-        fAddr1 ? fAddr1.value : "",
-        fAddr2 ? fAddr2.value : ""
-      );
-    } else {
-      const fAddress = document.getElementById("fAddress");
-      if (fAddress) c.address = toStr(fAddress.value);
-    }
-
+    if (fAddress) c.address = toStr(fAddress.value);
     if (fCigarSocial) c.cigarSocial = toStr(fCigarSocial.value);
-
-    // Birthday is read-only here by request (pulled from JSON column)
-    // Age is computed from Birthday year automatically
 
     c.updatedAt = new Date().toISOString();
 
