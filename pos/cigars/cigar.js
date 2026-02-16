@@ -327,8 +327,8 @@
       // Update URL to canonical pretty route if we were opened with ?id=
       // (Non-breaking; keeps query compatibility.)
       const canonicalSlug = makeSlugFromRecord(rec);
-      const wantedPath = `/cigars/${canonicalSlug}`;
-      if (!window.location.pathname.startsWith("/cigars/") || window.location.search.includes("id=")) {
+      const wantedPath = `/pos/cigars/${canonicalSlug}`;
+      if (!window.location.pathname.startsWith("/pos/cigars/") || window.location.search.includes("id=")) {
         // Keep it nice, but don’t break back button.
         history.replaceState(null, "", `${wantedPath}`);
       }
