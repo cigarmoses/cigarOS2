@@ -4,6 +4,11 @@
    - White content panel stretches down
    - Contact values shift left w/ icons
    - Favorites section has NO divider lines under titles
+
+   FIXES:
+   ✅ Name edit layout prevents last name from disappearing
+   ✅ Address renders as 2 lines (view) + 2 fields (edit)
+   ✅ Only address row is allowed to wrap (others stay single-line)
 */
 
 :root{
@@ -94,6 +99,7 @@ body.loy-contact{
   padding-top: 2px;
 }
 
+/* VIEW MODE name */
 .lc-name{
   font-weight: 800;
   font-size: 32px;
@@ -104,6 +110,26 @@ body.loy-contact{
   text-overflow: ellipsis;
 }
 
+/* EDIT MODE name wrapper (prevents last name "disappearing") */
+.lc-name-edit{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  width:100%;
+  min-width:0;
+}
+
+.lc-name-edit .lc-field{
+  min-width: 0;
+}
+
+.lc-name-first,
+.lc-name-last{
+  flex: 1 1 0;
+  width: 50%;
+}
+
+/* aka */
 .lc-aka{
   margin-top: 6px;
   font-weight: 600;
@@ -141,7 +167,7 @@ body.loy-contact{
   color: rgba(142,142,147,.75);
 }
 
-/* user icons row (raw svgs only; no tiles/shadows) */
+/* user icons row */
 .lc-icons{
   display:flex;
   align-items:center;
@@ -206,10 +232,8 @@ body.loy-contact{
   box-shadow: 0 0 0 1px rgba(0,0,0,.04);
   overflow:hidden;
 
-  /* ✅ pull white panel up to meet the active tab */
   margin-top: -1px;
 
-  /* ✅ stretch to fill the screen */
   flex: 1;
   min-height: 320px;
   display:flex;
@@ -265,7 +289,7 @@ body.loy-contact{
 -------------------------- */
 .lc-kv{
   display:grid;
-  grid-template-columns: 34px 1fr; /* ✅ narrow icon column */
+  grid-template-columns: 34px 1fr;
   gap: 16px 12px;
   padding: 18px 16px;
 }
@@ -288,6 +312,7 @@ body.loy-contact{
   stroke-linejoin: round;
 }
 
+/* Default: keep single-line + ellipsis for non-address values */
 .lc-kv .v{
   font-size: 22px;
   font-weight: 800;
@@ -296,6 +321,13 @@ body.loy-contact{
   white-space: nowrap;
   overflow:hidden;
   text-overflow: ellipsis;
+}
+
+/* Address value container may wrap / stack lines */
+.lc-kv .v.v-addr{
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .lc-field{
@@ -319,9 +351,43 @@ body.loy-contact{
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
 }
 
+/* 2-line address (VIEW) */
+.lc-lines{
+  display:flex;
+  flex-direction:column;
+  gap: 4px;
+  line-height: 1.15;
+}
+
+.lc-line1{
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+.lc-line2{
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+/* 2-field address (EDIT) */
+.lc-addr-edit{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.lc-addr-edit .lc-field{
+  white-space: nowrap;
+}
+
 /* -------------------------
    FAVORITES
-   - NO thin lines under titles
 -------------------------- */
 .section-title{
   font-size: 26px;
@@ -329,7 +395,7 @@ body.loy-contact{
   padding: 16px 16px 8px;
 }
 
-.section-divider{ display:none; } /* ✅ kill those thin lines */
+.section-divider{ display:none; }
 
 .empty-line{
   padding: 10px 16px 18px;
