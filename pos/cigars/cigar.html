@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Cigar</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/cigars/cigar.css" />
+</head>
+
+<body class="cigar-detail-page">
+  <header class="cd-topbar">
+    <button type="button" class="cd-back" id="cdBack" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 18L9 12L15 6"></path>
+      </svg>
+    </button>
+
+    <div class="cd-topbar-spacer"></div>
+
+    <!-- Placeholder for future actions (kept minimal to avoid UI drift) -->
+    <button type="button" class="cd-topbar-btn" id="cdShare" aria-label="Share" style="display:none;"></button>
+  </header>
+
+  <main class="cd-wrap">
+    <section class="cd-card" id="cdCard">
+      <div class="cd-loading" id="cdLoading">Loading cigar…</div>
+    </section>
+  </main>
+
+  <script defer src="/cigars/cigar.js"></script>
+</body>
+</html>
