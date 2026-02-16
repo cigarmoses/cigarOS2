@@ -8,9 +8,10 @@
                 If "Fav cigar id 1..N" exists, link EXACT to canonical /cigars route
    - Edit toggles unlock fields, Done saves to localStorage customers
 
-   UPDATE (Contact tab icon swap):
+   UPDATE (Contact tab):
    ✅ Uses new black contact icons in /img/icons/*.svg
-      blackphone, blackemail, blackaddress, blackaccount, blackbirthday
+   ✅ Address = 2 lines (view) + 2 fields (edit)
+   ✅ Removes auto "locker/regular" role fallback (prevents weird "locker" row)
 */
 
 (() => {
@@ -29,7 +30,7 @@
     regular: `${ICON_BASE}regular.svg`,
   };
 
-  // ✅ NEW: contact info icons (your uploaded files)
+  // contact info icons (uploaded)
   const CONTACT_ICON_BASE = "/img/icons/";
   const CONTACT_ICONS = {
     phone: `${CONTACT_ICON_BASE}blackphone.svg`,
@@ -278,12 +279,10 @@
     return `${BRAND_ICON_BASE}${slug}.svg`;
   }
 
-  // ✅ Exact canonical route when cigarId exists
   function cigarDetailHref(displayName, cigarIdMaybe) {
     const cigarId = toStr(cigarIdMaybe);
     if (cigarId) return `/cigars/cigar?id=${encodeURIComponent(cigarId)}`;
 
-    // fallback (legacy)
     const raw = toStr(displayName);
     return raw ? `/pos/cigars/?q=${encodeURIComponent(raw)}` : "/pos/cigars/";
   }
@@ -350,8 +349,38 @@
     `;
   }
 
-  function getAddress(c) {
+  function getAddressRaw(c) {
     return toStr(c.address ?? c.Address ?? c["Address"] ?? "");
+  }
+
+  // ✅ Split address into 2 lines for view/edit
+  function splitAddressTwoLines(raw) {
+    const s = toStr(raw);
+    if (!s) return { line1: "", line2: "" };
+
+    // newline format
+    if (s.includes("\n")) {
+      const parts = s.split("\n").map((x) => x.trim()).filter(Boolean);
+      return { line1: parts[0] || "", line2: parts.slice(1).join(" ") || "" };
+    }
+
+    // comma format
+    if (s.includes(",")) {
+      const idx = s.indexOf(",");
+      const a = s.slice(0, idx).trim();
+      const b = s.slice(idx + 1).trim();
+      return { line1: a, line2: b };
+    }
+
+    // fallback (single line)
+    return { line1: s, line2: "" };
+  }
+
+  function joinAddressTwoLines(line1, line2) {
+    const a = toStr(line1);
+    const b = toStr(line2);
+    if (a && b) return `${a}\n${b}`;
+    return a || b || "";
   }
 
   function getCigarSocial(c) {
@@ -359,19 +388,11 @@
   }
 
   function getRoleTitle(c) {
-    // Prefer explicit role/title fields if you have them
-    const role =
-      toStr(c.role ?? c.title ?? c["Title"] ?? c["Role"] ?? c.type ?? c["Type"] ?? "");
-
-    // Fallback: show locker/regular label if that’s how you’re using it
-    if (role) return role;
-    if (isLockerCustomer(c)) return "locker";
-    if (isRegularCustomer(c)) return "regular";
-    return "";
+    // ✅ Only show role when explicitly present (NO locker/regular fallback)
+    return toStr(c.role ?? c.title ?? c["Title"] ?? c["Role"] ?? "");
   }
 
   function getBirthdayText(c) {
-    // Accept a few common keys
     return toStr(c.birthday ?? c.Birthday ?? c["Birthday"] ?? c.dob ?? c.DOB ?? c["DOB"] ?? "");
   }
 
@@ -382,11 +403,41 @@
   function renderContact(customer, editing) {
     const phoneShown = editing ? toStr(customer.phone) : formatPhone(toStr(customer.phone));
     const email = toStr(customer.email);
-    const address = getAddress(customer);
-    const cigarSocial = getCigarSocial(customer);
 
+    const addrRaw = getAddressRaw(customer);
+    const addr = splitAddressTwoLines(addrRaw);
+
+    const cigarSocial = getCigarSocial(customer);
     const role = getRoleTitle(customer);
     const bday = getBirthdayText(customer);
+
+    const addressHTML = editing
+      ? `
+        <div class="v v-addr">
+          <div class="lc-addr-edit">
+            <input class="lc-field" id="fAddr1" value="${escapeAttr(addr.line1)}" ${editing ? "" : "readonly"} placeholder="143 Beram Ave">
+            <input class="lc-field" id="fAddr2" value="${escapeAttr(addr.line2)}" ${editing ? "" : "readonly"} placeholder="Bridgeville, PA 15017">
+          </div>
+        </div>
+      `
+      : `
+        <div class="v v-addr">
+          <div class="lc-lines">
+            <div class="lc-line1">${escapeHTML(addr.line1 || "—")}</div>
+            ${addr.line2 ? `<div class="lc-line2">${escapeHTML(addr.line2)}</div>` : ""}
+          </div>
+        </div>
+      `;
+
+    // Only render Role row if we have a value (prevents weird “locker” row)
+    const roleRow = role
+      ? `
+        <div class="ico">${iconIMG(CONTACT_ICONS.account, "Role")}</div>
+        <div class="v">
+          <input class="lc-field" id="fRole" value="${escapeAttr(role)}" ${editing ? "" : "readonly"} placeholder="founder">
+        </div>
+      `
+      : "";
 
     panelContact.innerHTML = `
       <div class="lc-kv">
@@ -401,14 +452,9 @@
         </div>
 
         <div class="ico">${iconIMG(CONTACT_ICONS.address, "Address")}</div>
-        <div class="v">
-          <input class="lc-field" id="fAddress" value="${escapeAttr(address)}" ${editing ? "" : "readonly"} placeholder="Street, City, ST ZIP">
-        </div>
+        ${addressHTML}
 
-        <div class="ico">${iconIMG(CONTACT_ICONS.account, "Account")}</div>
-        <div class="v">
-          <input class="lc-field" id="fRole" value="${escapeAttr(role)}" ${editing ? "" : "readonly"} placeholder="founder">
-        </div>
+        ${roleRow}
 
         <div class="ico">${iconIMG(CONTACT_ICONS.birthday, "Birthday")}</div>
         <div class="v">
@@ -437,7 +483,6 @@
         </div>`
       : `<div class="empty-line">No favorite brands yet</div>`;
 
-    // Map cigars to cigarIds by index (1..N)
     const cigarPillsHTML = cigars.length
       ? `<div class="pills">
           ${cigars.map((label, i) => `
@@ -535,20 +580,26 @@
 
     const fPhone = document.getElementById("fPhone");
     const fEmail = document.getElementById("fEmail");
-    const fAddress = document.getElementById("fAddress");
     const fCigarSocial = document.getElementById("fCigarSocial");
-
-    const fRole = document.getElementById("fRole");
     const fBirthday = document.getElementById("fBirthday");
+    const fRole = document.getElementById("fRole");
+
+    // ✅ new 2-field address
+    const fAddr1 = document.getElementById("fAddr1");
+    const fAddr2 = document.getElementById("fAddr2");
 
     if (fPhone) c.phone = normalizePhoneToDigits(fPhone.value) || toStr(fPhone.value);
     if (fEmail) c.email = toStr(fEmail.value);
-    if (fAddress) c.address = toStr(fAddress.value);
-    if (fCigarSocial) c.cigarSocial = toStr(fCigarSocial.value);
 
-    // ✅ save role + birthday if edited
-    if (fRole) c.role = toStr(fRole.value);
+    if (fAddr1 || fAddr2) {
+      c.address = joinAddressTwoLines(fAddr1?.value, fAddr2?.value);
+    }
+
+    if (fCigarSocial) c.cigarSocial = toStr(fCigarSocial.value);
     if (fBirthday) c.birthday = toStr(fBirthday.value);
+
+    // only save role if the field exists (role row is conditional)
+    if (fRole) c.role = toStr(fRole.value);
 
     c.updatedAt = new Date().toISOString();
 
