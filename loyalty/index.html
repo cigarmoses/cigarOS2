@@ -66,6 +66,35 @@
       justify-content: flex-end;
     }
 
+    /* Filters button (pill) */
+    .filters-btn{
+      border: 1px solid rgba(0,0,0,.12);
+      background: #fff;
+      color: #111;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 0 rgba(0,0,0,.08);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .filters-btn .dot{
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.25);
+      display:none;
+    }
+    .filters-btn.active .dot{
+      display:block;
+      background: var(--ios-blue);
+    }
+
     /* Green + add button */
     .add-btn {
       width: 38px;
@@ -143,6 +172,38 @@
       color: var(--muted);
       padding-left: 4px;
       user-select: none;
+    }
+
+    /* Applied filter chips */
+    .chips{
+      margin-top: 10px;
+      display:none;
+      flex-wrap:wrap;
+      gap: 8px;
+      padding-left: 2px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.14);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      color: #111;
+      line-height: 1;
+    }
+    .chip button{
+      border:none;
+      background: transparent;
+      padding: 0;
+      cursor:pointer;
+      font-weight: 900;
+      color: rgba(0,0,0,.45);
+      font-size: 14px;
+      line-height: 1;
     }
 
     /* List */
@@ -454,6 +515,219 @@
       display: block;
       border-radius: inherit;
     }
+
+    /* =========================
+       Filters Bottom Sheet
+    ========================== */
+    .sheet-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.25);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      display:none;
+      z-index: 200;
+    }
+    .sheet{
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #fff;
+      border-radius: 18px 18px 0 0;
+      box-shadow: 0 -20px 60px rgba(0,0,0,.25);
+      transform: translateY(110%);
+      transition: transform .22s ease;
+      z-index: 201;
+      max-height: 82vh;
+      overflow: hidden;
+      display:flex;
+      flex-direction: column;
+    }
+    .sheet.open{
+      transform: translateY(0);
+    }
+    .sheet-backdrop.open{
+      display:block;
+    }
+    .sheet-grab{
+      height: 18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: #fff;
+    }
+    .sheet-grab:before{
+      content:"";
+      width: 42px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+    }
+    .sheet-head{
+      padding: 10px 14px 8px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+    .sheet-title{
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: -0.2px;
+    }
+    .sheet-actions{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+    }
+    .sheet-btn{
+      border:none;
+      background: transparent;
+      color: var(--ios-blue);
+      font-weight: 800;
+      font-size: 14px;
+      padding: 8px 8px;
+      cursor:pointer;
+    }
+    .sheet-btn.reset{
+      color: rgba(0,0,0,.45);
+      font-weight: 800;
+    }
+    .sheet-body{
+      padding: 12px 14px 14px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+    }
+    .sheet-section{
+      margin-top: 12px;
+    }
+    .sheet-section:first-child{ margin-top: 0; }
+    .sheet-label{
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(0,0,0,.55);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 0 2px 8px;
+    }
+
+    .pill-row{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .pill-toggle{
+      border: 1px solid rgba(0,0,0,.14);
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      line-height: 1;
+    }
+    .pill-toggle.on{
+      border-color: rgba(0,122,255,.35);
+      background: rgba(0,122,255,.08);
+      color: #111;
+    }
+    .pill-toggle .mini{
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.22);
+    }
+    .pill-toggle.on .mini{
+      background: var(--ios-blue);
+    }
+
+    .sheet-search{
+      width:100%;
+      border:none;
+      outline:none;
+      background: #f2f2f7;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 15px;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+    }
+
+    .brand-list{
+      margin-top: 10px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.06);
+      overflow:hidden;
+    }
+    .brand-row{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 12px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+      cursor:pointer;
+    }
+    .brand-row:last-child{ border-bottom:none; }
+    .brand-name{
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .brand-check{
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,.12);
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      background:#fff;
+    }
+    .brand-row.on .brand-check{
+      box-shadow: inset 0 0 0 2px rgba(0,122,255,.45);
+      background: rgba(0,122,255,.10);
+    }
+    .brand-check svg{
+      width: 14px;
+      height: 14px;
+      display:none;
+    }
+    .brand-row.on .brand-check svg{
+      display:block;
+    }
+
+    .sheet-foot{
+      padding: 12px 14px 14px;
+      border-top: 1px solid rgba(0,0,0,.08);
+      background: #fff;
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content: flex-end;
+    }
+    .apply-btn{
+      border:none;
+      background: var(--ios-blue);
+      color: #fff;
+      font-weight: 900;
+      font-size: 15px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      min-width: 110px;
+      box-shadow: 0 6px 20px rgba(0,122,255,.25);
+    }
   </style>
 </head>
 
@@ -463,6 +737,11 @@
       <a href="javascript:history.back()" class="back-link">← Back</a>
 
       <div class="topbar-right">
+        <button id="filtersBtn" class="filters-btn" type="button" aria-label="Filters">
+          <span class="dot" aria-hidden="true"></span>
+          Filters
+        </button>
+
         <button id="addCustomerBtn" class="add-btn" type="button" aria-label="Add customer">
           <span>+</span>
         </button>
@@ -482,6 +761,9 @@
     </div>
 
     <div id="summary" class="summary"></div>
+
+    <div id="chips" class="chips" aria-label="Applied filters"></div>
+
     <div id="list" class="list"></div>
 
     <footer>CigarOS2 • Loyalty</footer>
@@ -535,6 +817,43 @@
       <button id="pCloseX" class="p-close" type="button" aria-label="Close">X</button>
     </div>
   </dialog>
+
+  <!-- Filters Sheet -->
+  <div id="filterBackdrop" class="sheet-backdrop" aria-hidden="true"></div>
+
+  <section id="filterSheet" class="sheet" role="dialog" aria-modal="true" aria-label="Loyalty Filters">
+    <div class="sheet-grab" aria-hidden="true"></div>
+
+    <div class="sheet-head">
+      <div class="sheet-title">Filters</div>
+      <div class="sheet-actions">
+        <button id="filtersReset" class="sheet-btn reset" type="button">Reset</button>
+        <button id="filtersClose" class="sheet-btn" type="button">Done</button>
+      </div>
+    </div>
+
+    <div class="sheet-body">
+      <div class="sheet-section">
+        <div class="sheet-label">Roles</div>
+        <div class="pill-row">
+          <button class="pill-toggle" type="button" data-role="Military"><span class="mini"></span>Military</button>
+          <button class="pill-toggle" type="button" data-role="Police"><span class="mini"></span>Police</button>
+          <button class="pill-toggle" type="button" data-role="Firefighter"><span class="mini"></span>Firefighter</button>
+          <button class="pill-toggle" type="button" data-role="Paramedic"><span class="mini"></span>Paramedic</button>
+        </div>
+      </div>
+
+      <div class="sheet-section">
+        <div class="sheet-label">Fav Brands</div>
+        <input id="brandSearch" class="sheet-search" type="search" placeholder="Search brands" autocomplete="off" />
+        <div id="brandList" class="brand-list"></div>
+      </div>
+    </div>
+
+    <div class="sheet-foot">
+      <button id="filtersApply" class="apply-btn" type="button">Apply</button>
+    </div>
+  </section>
 
   <button class="tony-fab" id="tonyFab">
     <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
