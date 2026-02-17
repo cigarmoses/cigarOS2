@@ -10,8 +10,9 @@
 
    UPDATE (Contact tab):
    ✅ Uses new black contact icons in /img/icons/*.svg
-   ✅ Address = 2 lines (view) + 2 fields (edit)
+   ✅ Address = 2 lines (view) + 2 fields (edit) with ONLY ONE icon
    ✅ Removes auto "locker/regular" role fallback (prevents weird "locker" row)
+   ✅ Cigar Social row uses /img/icons/cigarsocial.svg icon
 */
 
 (() => {
@@ -30,7 +31,7 @@
     regular: `${ICON_BASE}regular.svg`,
   };
 
-  // contact info icons (uploaded)
+  // contact info icons
   const CONTACT_ICON_BASE = "/img/icons/";
   const CONTACT_ICONS = {
     phone: `${CONTACT_ICON_BASE}blackphone.svg`,
@@ -38,6 +39,7 @@
     address: `${CONTACT_ICON_BASE}blackaddress.svg`,
     account: `${CONTACT_ICON_BASE}blackaccount.svg`,
     birthday: `${CONTACT_ICON_BASE}blackbirthday.svg`,
+    cigarsocial: `${CONTACT_ICON_BASE}cigarsocial.svg`, // ✅ new
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -353,7 +355,7 @@
     return toStr(c.address ?? c.Address ?? c["Address"] ?? "");
   }
 
-  // ✅ Split address into 2 lines for view/edit
+  // Split address into 2 lines for view/edit
   function splitAddressTwoLines(raw) {
     const s = toStr(raw);
     if (!s) return { line1: "", line2: "" };
@@ -388,7 +390,7 @@
   }
 
   function getRoleTitle(c) {
-    // ✅ Only show role when explicitly present (NO locker/regular fallback)
+    // Only show role when explicitly present (NO locker/regular fallback)
     return toStr(c.role ?? c.title ?? c["Title"] ?? c["Role"] ?? "");
   }
 
@@ -411,12 +413,13 @@
     const role = getRoleTitle(customer);
     const bday = getBirthdayText(customer);
 
+    // ✅ ONE icon + two-line value (view) / two-field value (edit)
     const addressHTML = editing
       ? `
         <div class="v v-addr">
           <div class="lc-addr-edit">
-            <input class="lc-field" id="fAddr1" value="${escapeAttr(addr.line1)}" ${editing ? "" : "readonly"} placeholder="143 Beram Ave">
-            <input class="lc-field" id="fAddr2" value="${escapeAttr(addr.line2)}" ${editing ? "" : "readonly"} placeholder="Bridgeville, PA 15017">
+            <input class="lc-field" id="fAddr1" value="${escapeAttr(addr.line1)}" placeholder="143 Beram Ave">
+            <input class="lc-field" id="fAddr2" value="${escapeAttr(addr.line2)}" placeholder="Bridgeville, PA 15017">
           </div>
         </div>
       `
@@ -429,7 +432,6 @@
         </div>
       `;
 
-    // Only render Role row if we have a value (prevents weird “locker” row)
     const roleRow = role
       ? `
         <div class="ico">${iconIMG(CONTACT_ICONS.account, "Role")}</div>
@@ -461,7 +463,7 @@
           <input class="lc-field" id="fBirthday" value="${escapeAttr(bday)}" ${editing ? "" : "readonly"} placeholder="August 15">
         </div>
 
-        <div class="ico">${iconIMG(CONTACT_ICONS.account, "Cigar Social")}</div>
+        <div class="ico">${iconIMG(CONTACT_ICONS.cigarsocial, "Cigar Social")}</div>
         <div class="v">
           <input class="lc-field" id="fCigarSocial" value="${escapeAttr(cigarSocial)}" ${editing ? "" : "readonly"} placeholder="@username">
         </div>
@@ -584,7 +586,6 @@
     const fBirthday = document.getElementById("fBirthday");
     const fRole = document.getElementById("fRole");
 
-    // ✅ new 2-field address
     const fAddr1 = document.getElementById("fAddr1");
     const fAddr2 = document.getElementById("fAddr2");
 
@@ -598,7 +599,6 @@
     if (fCigarSocial) c.cigarSocial = toStr(fCigarSocial.value);
     if (fBirthday) c.birthday = toStr(fBirthday.value);
 
-    // only save role if the field exists (role row is conditional)
     if (fRole) c.role = toStr(fRole.value);
 
     c.updatedAt = new Date().toISOString();
@@ -613,7 +613,6 @@
     renderFavorites(c);
   }
 
-  // ---------- init ----------
   function init() {
     backBtn?.addEventListener("click", () => history.back());
 
