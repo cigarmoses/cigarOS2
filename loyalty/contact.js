@@ -12,7 +12,8 @@
    ✅ Uses new black contact icons in /img/icons/*.svg
    ✅ Address = 2 lines (view) + 2 fields (edit) with ONLY ONE icon
    ✅ Removes auto "locker/regular" role fallback (prevents weird "locker" row)
-   ✅ Cigar Social row uses /img/icons/cigarsocial.svg icon
+   ✅ Cigar Social icon: try /img/icons/cigarsocial.svg, then /img/icon/cigarsocial.svg, then fallback to blackaccount.svg
+   ✅ Prevents Safari blue “?” placeholder by always resolving to a valid icon
 */
 
 (() => {
@@ -39,7 +40,12 @@
     address: `${CONTACT_ICON_BASE}blackaddress.svg`,
     account: `${CONTACT_ICON_BASE}blackaccount.svg`,
     birthday: `${CONTACT_ICON_BASE}blackbirthday.svg`,
-    cigarsocial: `${CONTACT_ICON_BASE}cigarsocial.svg`, // ✅ new
+
+    // primary path (correct)
+    cigarsocial: `${CONTACT_ICON_BASE}cigarsocial.svg`,
+
+    // alternate path (in case you accidentally put it in /img/icon/)
+    cigarsocialAlt: `/img/icon/cigarsocial.svg`,
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -355,18 +361,15 @@
     return toStr(c.address ?? c.Address ?? c["Address"] ?? "");
   }
 
-  // Split address into 2 lines for view/edit
   function splitAddressTwoLines(raw) {
     const s = toStr(raw);
     if (!s) return { line1: "", line2: "" };
 
-    // newline format
     if (s.includes("\n")) {
       const parts = s.split("\n").map((x) => x.trim()).filter(Boolean);
       return { line1: parts[0] || "", line2: parts.slice(1).join(" ") || "" };
     }
 
-    // comma format
     if (s.includes(",")) {
       const idx = s.indexOf(",");
       const a = s.slice(0, idx).trim();
@@ -374,7 +377,6 @@
       return { line1: a, line2: b };
     }
 
-    // fallback (single line)
     return { line1: s, line2: "" };
   }
 
@@ -390,7 +392,6 @@
   }
 
   function getRoleTitle(c) {
-    // Only show role when explicitly present (NO locker/regular fallback)
     return toStr(c.role ?? c.title ?? c["Title"] ?? c["Role"] ?? "");
   }
 
@@ -398,8 +399,36 @@
     return toStr(c.birthday ?? c.Birthday ?? c["Birthday"] ?? c.dob ?? c.DOB ?? c["DOB"] ?? "");
   }
 
-  function iconIMG(src, alt) {
-    return `<img src="${src}" alt="${escapeAttr(alt || "")}" loading="lazy">`;
+  // ✅ icon helper with fallback chain (prevents iOS blue “?”)
+  // - If altSrc is provided, it tries src -> altSrc -> finalFallback
+  function iconIMG(src, alt, altSrc, finalFallback) {
+    const a = escapeAttr(alt || "");
+    const s1 = escapeAttr(src || "");
+    const s2 = escapeAttr(altSrc || "");
+    const s3 = escapeAttr(finalFallback || "");
+
+    // If no fallbacks, just render normally
+    if (!s2 && !s3) {
+      return `<img src="${s1}" alt="${a}" loading="lazy" onerror="this.style.display='none'">`;
+    }
+
+    // Build an onerror chain:
+    // 1) swap to altSrc
+    // 2) swap to finalFallback
+    // 3) hide
+    const chain = `
+      (function(img){
+        if(!img.dataset.try2 && "${s2}"){
+          img.dataset.try2="1"; img.src="${s2}"; return;
+        }
+        if(!img.dataset.try3 && "${s3}"){
+          img.dataset.try3="1"; img.src="${s3}"; return;
+        }
+        img.style.display="none";
+      })(this);
+    `.replace(/\s+/g, " ").trim();
+
+    return `<img src="${s1}" alt="${a}" loading="lazy" onerror='${chain}'>`;
   }
 
   function renderContact(customer, editing) {
@@ -413,7 +442,6 @@
     const role = getRoleTitle(customer);
     const bday = getBirthdayText(customer);
 
-    // ✅ ONE icon + two-line value (view) / two-field value (edit)
     const addressHTML = editing
       ? `
         <div class="v v-addr">
@@ -463,7 +491,14 @@
           <input class="lc-field" id="fBirthday" value="${escapeAttr(bday)}" ${editing ? "" : "readonly"} placeholder="August 15">
         </div>
 
-        <div class="ico">${iconIMG(CONTACT_ICONS.cigarsocial, "Cigar Social")}</div>
+        <div class="ico">${
+          iconIMG(
+            CONTACT_ICONS.cigarsocial,
+            "Cigar Social",
+            CONTACT_ICONS.cigarsocialAlt,
+            CONTACT_ICONS.account
+          )
+        }</div>
         <div class="v">
           <input class="lc-field" id="fCigarSocial" value="${escapeAttr(cigarSocial)}" ${editing ? "" : "readonly"} placeholder="@username">
         </div>
