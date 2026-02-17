@@ -13,9 +13,13 @@
      ✅ Lockers tab sorts by locker number numeric
      ✅ Tier icon shows ONLY when Locker or Regular is marked (no default regular)
      ✅ Regulars tab ONLY includes explicit X under Regular (numbers/words no longer count)
-
-   NEW:
      ✅ Row click goes to full-page detail: /loyalty/contact.html?id=...
+
+   NEW (Loyalty master-page filters):
+     ✅ Filters bottom-sheet (iOS-style)
+     ✅ Role filters: Military / Police / Firefighter / Paramedic (AND logic)
+     ✅ Fav Brands multi-select, sourced from /data/brands.json
+     ✅ Applied filter chips + clear per chip
 */
 
 (() => {
@@ -28,6 +32,9 @@
   // ✅ store the source we used so we can refresh if it changes
   const CONTACTS_SOURCE_KEY = "cigaros_customers_source_v1";
   const CONTACTS_SOURCE_VALUE = CONTACTS_JSON_URL;
+
+  // ✅ brand source (canonical)
+  const BRANDS_JSON_URL = "/data/brands.json";
 
   // ✅ Icons are pulled from: /img/icons/loyalty/*.svg
   const ICON_BASE = "/img/icons/loyalty/";
@@ -49,6 +56,9 @@
   const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
   const azIndexEl = $("#azIndex");
 
+  // chips
+  const chipsEl = $("#chips");
+
   // Add customer button (only shown on All tab) + dialog
   const addBtn = $("#addCustomerBtn");
   const addDlg = $("#addCustomerDialog");
@@ -61,12 +71,44 @@
 
   const tonyFab = $("#tonyFab");
 
+  // Filters sheet
+  const filtersBtn = $("#filtersBtn");
+  const filterBackdrop = $("#filterBackdrop");
+  const filterSheet = $("#filterSheet");
+  const filtersClose = $("#filtersClose");
+  const filtersReset = $("#filtersReset");
+  const filtersApply = $("#filtersApply");
+  const brandSearchEl = $("#brandSearch");
+  const brandListEl = $("#brandList");
+
+  const roleButtons = Array.from(document.querySelectorAll(".pill-toggle[data-role]"));
+
   // ---------- state ----------
   let state = {
     mode: "all", // all | regular | lockers
     query: "",
     customers: [],
     sales: [],
+
+    // filter data sources
+    brandOptions: [],
+
+    // active filters (applied)
+    filters: {
+      roles: {
+        Military: false,
+        Police: false,
+        Firefighter: false,
+        Paramedic: false,
+      },
+      brands: [], // selected brand names (canonical)
+    },
+
+    // draft filters (editing inside sheet)
+    draftFilters: null,
+
+    // brand search in sheet
+    brandQuery: "",
   };
 
   // ---------- utils ----------
@@ -261,6 +303,16 @@
       const Locker      = r["Locker"] ?? r.Locker ?? r["locker"] ?? r.locker;
       const Regular     = r["Regular"] ?? r.Regular ?? r["regular"] ?? r.regular;
 
+      // ✅ preserve Fav brand 1..N columns if present (case-insensitive)
+      const favBrandMap = {};
+      Object.keys(r || {}).forEach((k) => {
+        const key = String(k || "").trim();
+        const lower = key.toLowerCase();
+        if (lower.startsWith("fav brand")) {
+          favBrandMap[key] = toStr(r[k]);
+        }
+      });
+
       return {
         id,
         firstName,
@@ -282,6 +334,9 @@
         Police,
         Locker,
         Regular,
+
+        // Fav brands (raw columns)
+        ...favBrandMap,
 
         createdAt: r.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -318,18 +373,93 @@
     }
   }
 
+  async function loadBrandsIfNeeded() {
+    if (state.brandOptions && state.brandOptions.length) return state.brandOptions;
+
+    try {
+      const res = await fetch(BRANDS_JSON_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`fetch ${BRANDS_JSON_URL} failed: ${res.status}`);
+      const data = await res.json();
+      const arr = Array.isArray(data) ? data : [];
+      state.brandOptions = arr.map((x) => toStr(x)).filter(Boolean);
+      return state.brandOptions;
+    } catch (err) {
+      console.warn("[Loyalty] Could not load brands.json:", err);
+      state.brandOptions = [];
+      return [];
+    }
+  }
+
+  // ---------- favorites (brands) ----------
+  function getCustomerFavBrands(c) {
+    // Support either:
+    // 1) Fav brand 1..N columns (preferred)
+    // 2) favBrands array (future)
+    const out = [];
+
+    if (Array.isArray(c?.favBrands)) {
+      c.favBrands.forEach((b) => {
+        const v = toStr(b);
+        if (v) out.push(v);
+      });
+    }
+
+    Object.keys(c || {}).forEach((k) => {
+      const lower = String(k || "").trim().toLowerCase();
+      if (!lower.startsWith("fav brand")) return;
+      const v = toStr(c[k]);
+      if (v) out.push(v);
+    });
+
+    // normalize unique (case-insensitive)
+    const seen = new Set();
+    const uniq = [];
+    out.forEach((b) => {
+      const key = norm(b);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      uniq.push(b);
+    });
+    return uniq;
+  }
+
+  function intersectsSelectedBrands(customer, selected) {
+    const sel = (selected || []).map(norm).filter(Boolean);
+    if (!sel.length) return true;
+
+    const fav = getCustomerFavBrands(customer).map(norm);
+    if (!fav.length) return false;
+
+    const setFav = new Set(fav);
+    return sel.some((s) => setFav.has(s));
+  }
+
   // ---------- filtering + sorting ----------
+  function passesRoleFilters(c) {
+    const roles = state.filters.roles || {};
+    const need = Object.keys(roles).filter((k) => roles[k] === true);
+    if (!need.length) return true;
+
+    // AND logic across checked roles
+    return need.every((roleName) => hasColumnValue(c, roleName));
+  }
+
   function filteredCustomers() {
     const q = norm(state.query);
     let list = (state.customers || []).slice();
 
+    // Segmented modes still apply first
     if (state.mode === "regular") {
-      // ✅ now strictly X-only via isRegularCustomer()
       list = list.filter((c) => isRegularCustomer(c));
     } else if (state.mode === "lockers") {
       list = list.filter((c) => isLockerCustomer(c));
     }
 
+    // NEW: applied filters (roles + brands)
+    list = list.filter((c) => passesRoleFilters(c));
+    list = list.filter((c) => intersectsSelectedBrands(c, state.filters.brands));
+
+    // Search
     if (q) {
       list = list.filter((c) => {
         const hay = [
@@ -339,11 +469,13 @@
           c.phone,
           c.email,
           c.lockerNumber,
+          ...getCustomerFavBrands(c),
         ].map(norm).join(" ");
         return hay.includes(q);
       });
     }
 
+    // Sort
     if (state.mode === "lockers") {
       list.sort((a, b) => {
         const na = Number(lockerNumOnly(a)) || 0;
@@ -377,6 +509,70 @@
     window.location.href = `/loyalty/contact.html?id=${encodeURIComponent(String(id))}`;
   }
 
+  // ---------- chips ----------
+  function hasAnyActiveFilters() {
+    const r = state.filters.roles || {};
+    const anyRole = Object.keys(r).some((k) => r[k] === true);
+    const anyBrands = (state.filters.brands || []).length > 0;
+    return anyRole || anyBrands;
+  }
+
+  function setFiltersBtnState() {
+    if (!filtersBtn) return;
+    const on = hasAnyActiveFilters();
+    filtersBtn.classList.toggle("active", on);
+  }
+
+  function renderChips() {
+    if (!chipsEl) return;
+
+    const parts = [];
+
+    Object.keys(state.filters.roles || {}).forEach((k) => {
+      if (state.filters.roles[k]) {
+        parts.push({ type: "role", key: k, label: k });
+      }
+    });
+
+    (state.filters.brands || []).forEach((b) => {
+      parts.push({ type: "brand", key: b, label: b });
+    });
+
+    if (!parts.length) {
+      chipsEl.style.display = "none";
+      chipsEl.innerHTML = "";
+      setFiltersBtnState();
+      return;
+    }
+
+    chipsEl.style.display = "flex";
+    chipsEl.innerHTML = parts.map((p) => `
+      <span class="chip" data-type="${escapeHTML(p.type)}" data-key="${escapeHTML(p.key)}">
+        ${escapeHTML(p.label)}
+        <button type="button" aria-label="Remove">×</button>
+      </span>
+    `).join("");
+
+    chipsEl.querySelectorAll(".chip button").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const chip = e.currentTarget.closest(".chip");
+        const type = chip?.getAttribute("data-type");
+        const key = chip?.getAttribute("data-key") || "";
+        if (!type) return;
+
+        if (type === "role") {
+          state.filters.roles[key] = false;
+        } else if (type === "brand") {
+          state.filters.brands = (state.filters.brands || []).filter((x) => norm(x) !== norm(key));
+        }
+
+        render();
+      });
+    });
+
+    setFiltersBtnState();
+  }
+
   // ---------- render list ----------
   function render() {
     const list = filteredCustomers();
@@ -394,6 +590,7 @@
     if (!list.length) {
       listEl.innerHTML = `<div class="empty-state">No customers found</div>`;
       buildAZIndex([]);
+      renderChips();
       return;
     }
 
@@ -447,6 +644,7 @@
     });
 
     buildAZIndex(list);
+    renderChips();
   }
 
   // ---------- A–Z index ----------
@@ -514,6 +712,136 @@
     });
   }
 
+  // ---------- Filters sheet ----------
+  function cloneFilters(src) {
+    return {
+      roles: {
+        Military: !!src?.roles?.Military,
+        Police: !!src?.roles?.Police,
+        Firefighter: !!src?.roles?.Firefighter,
+        Paramedic: !!src?.roles?.Paramedic,
+      },
+      brands: Array.isArray(src?.brands) ? src.brands.slice() : [],
+    };
+  }
+
+  function openFilters() {
+    if (!filterSheet || !filterBackdrop) return;
+
+    state.draftFilters = cloneFilters(state.filters);
+    state.brandQuery = "";
+    if (brandSearchEl) brandSearchEl.value = "";
+
+    // sync role buttons
+    roleButtons.forEach((btn) => {
+      const role = btn.getAttribute("data-role");
+      const on = !!state.draftFilters.roles[role];
+      btn.classList.toggle("on", on);
+    });
+
+    // build list
+    renderBrandList();
+
+    filterBackdrop.classList.add("open");
+    filterSheet.classList.add("open");
+
+    setTimeout(() => brandSearchEl?.focus?.(), 50);
+  }
+
+  function closeFilters() {
+    if (!filterSheet || !filterBackdrop) return;
+    filterSheet.classList.remove("open");
+    filterBackdrop.classList.remove("open");
+    state.draftFilters = null;
+  }
+
+  function resetDraftFilters() {
+    if (!state.draftFilters) state.draftFilters = cloneFilters(state.filters);
+
+    state.draftFilters.roles = { Military:false, Police:false, Firefighter:false, Paramedic:false };
+    state.draftFilters.brands = [];
+
+    roleButtons.forEach((btn) => btn.classList.remove("on"));
+    state.brandQuery = "";
+    if (brandSearchEl) brandSearchEl.value = "";
+    renderBrandList();
+  }
+
+  function applyDraftFilters() {
+    if (!state.draftFilters) return;
+    state.filters = cloneFilters(state.draftFilters);
+    closeFilters();
+    render();
+  }
+
+  function toggleDraftRole(roleName) {
+    if (!state.draftFilters) state.draftFilters = cloneFilters(state.filters);
+    state.draftFilters.roles[roleName] = !state.draftFilters.roles[roleName];
+
+    const btn = roleButtons.find((b) => b.getAttribute("data-role") === roleName);
+    if (btn) btn.classList.toggle("on", !!state.draftFilters.roles[roleName]);
+  }
+
+  function toggleDraftBrand(brandName) {
+    if (!state.draftFilters) state.draftFilters = cloneFilters(state.filters);
+
+    const list = state.draftFilters.brands || [];
+    const exists = list.some((b) => norm(b) === norm(brandName));
+
+    state.draftFilters.brands = exists
+      ? list.filter((b) => norm(b) !== norm(brandName))
+      : [...list, brandName];
+
+    renderBrandList();
+  }
+
+  function renderBrandList() {
+    if (!brandListEl) return;
+
+    const opts = (state.brandOptions || []).slice();
+    const q = norm(state.brandQuery);
+    const filtered = q
+      ? opts.filter((b) => norm(b).includes(q))
+      : opts;
+
+    const selected = (state.draftFilters?.brands || []).map(norm);
+    const selSet = new Set(selected);
+
+    if (!filtered.length) {
+      brandListEl.innerHTML = `<div class="brand-row"><div class="brand-name" style="color:#8e8e93;">No brands found</div></div>`;
+      return;
+    }
+
+    const checkSVG = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 7L10 17l-5-5" fill="none" stroke="rgba(0,122,255,.95)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    `;
+
+    brandListEl.innerHTML = filtered.slice(0, 250).map((b) => {
+      const on = selSet.has(norm(b));
+      return `
+        <div class="brand-row ${on ? "on" : ""}" data-brand="${escapeHTML(b)}" role="button" tabindex="0">
+          <div class="brand-name">${escapeHTML(b)}</div>
+          <div class="brand-check">${checkSVG}</div>
+        </div>
+      `;
+    }).join("");
+
+    brandListEl.querySelectorAll(".brand-row").forEach((row) => {
+      const brand = row.getAttribute("data-brand") || "";
+      const toggle = () => toggleDraftBrand(brand);
+
+      row.addEventListener("click", toggle);
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggle();
+        }
+      });
+    });
+  }
+
   // ---------- add customer ----------
   function openAddCustomer() {
     if (!addDlg) return;
@@ -558,6 +886,10 @@
       Police: "",
       Locker: "",
       Regular: "",
+
+      // optional future-friendly favorites store
+      favBrands: [],
+
       createdAt: now,
       updatedAt: now,
     };
@@ -608,6 +940,31 @@
       window.location.href = "/learn/";
     });
 
+    // Filters
+    filtersBtn?.addEventListener("click", openFilters);
+    filtersClose?.addEventListener("click", closeFilters);
+    filtersReset?.addEventListener("click", resetDraftFilters);
+    filtersApply?.addEventListener("click", applyDraftFilters);
+
+    filterBackdrop?.addEventListener("click", closeFilters);
+
+    roleButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const role = btn.getAttribute("data-role");
+        if (!role) return;
+        toggleDraftRole(role);
+      });
+    });
+
+    brandSearchEl?.addEventListener("input", () => {
+      state.brandQuery = brandSearchEl.value || "";
+      renderBrandList();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeFilters();
+    });
+
     window.addEventListener("storage", (e) => {
       if (e.key === CUSTOMERS_KEY || e.key === SALES_KEY) loadAndRender(true);
     });
@@ -620,6 +977,10 @@
   async function loadAndRender() {
     state.sales = readSales();
     state.customers = await seedCustomersFromJSONIfNeeded();
+
+    // load brands once
+    await loadBrandsIfNeeded();
+
     render();
   }
 
