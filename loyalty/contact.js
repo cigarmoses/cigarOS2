@@ -1,19 +1,15 @@
 /* /loyalty/contact.js
    - Folder tabs + stretched content panel
    - Quick note placeholder behavior
-   - Contact values use icons (more width, no wrapping)
-   - Favorites:
+   - Contact tab:
+      ✅ Uses new black contact icons in /img/icons/*.svg
+      ✅ Address = 2 lines (view) + 2 fields (edit)
+      ✅ NO extra icon below address (address is ONE row)
+      ✅ Removes role row entirely (prevents “locker” row)
+      ✅ Cigar Social icon uses /img/icons/cigarsocial.svg
+   - Favorites (existing):
        Brands -> "Fav brand 1..N" => brand SVG icons
-       Cigars -> ("Fav cigar", "Fav cigar 2..N") pills
-                If "Fav cigar id 1..N" exists, link EXACT to canonical /cigars route
-   - Edit toggles unlock fields, Done saves to localStorage customers
-
-   UPDATE (Contact tab):
-   ✅ Uses new black contact icons in /img/icons/*.svg
-   ✅ Address = 2 lines (view) + 2 fields (edit) with ONLY ONE icon
-   ✅ Removes auto "locker/regular" role fallback (prevents weird "locker" row)
-   ✅ Cigar Social icon: try /img/icons/cigarsocial.svg, then /img/icon/cigarsocial.svg, then fallback to blackaccount.svg
-   ✅ Prevents Safari blue “?” placeholder by always resolving to a valid icon
+       Cigars -> pills (kept as-is for now)
 */
 
 (() => {
@@ -32,20 +28,14 @@
     regular: `${ICON_BASE}regular.svg`,
   };
 
-  // contact info icons
+  // Contact info icons (uploaded)
   const CONTACT_ICON_BASE = "/img/icons/";
   const CONTACT_ICONS = {
     phone: `${CONTACT_ICON_BASE}blackphone.svg`,
     email: `${CONTACT_ICON_BASE}blackemail.svg`,
     address: `${CONTACT_ICON_BASE}blackaddress.svg`,
-    account: `${CONTACT_ICON_BASE}blackaccount.svg`,
     birthday: `${CONTACT_ICON_BASE}blackbirthday.svg`,
-
-    // primary path (correct)
-    cigarsocial: `${CONTACT_ICON_BASE}cigarsocial.svg`,
-
-    // alternate path (in case you accidentally put it in /img/icon/)
-    cigarsocialAlt: `/img/icon/cigarsocial.svg`,
+    cigarsocial: `${CONTACT_ICON_BASE}cigarsocial.svg`, // ✅ requested
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -290,7 +280,6 @@
   function cigarDetailHref(displayName, cigarIdMaybe) {
     const cigarId = toStr(cigarIdMaybe);
     if (cigarId) return `/cigars/cigar?id=${encodeURIComponent(cigarId)}`;
-
     const raw = toStr(displayName);
     return raw ? `/pos/cigars/?q=${encodeURIComponent(raw)}` : "/pos/cigars/";
   }
@@ -361,6 +350,7 @@
     return toStr(c.address ?? c.Address ?? c["Address"] ?? "");
   }
 
+  // Split address into 2 lines (view/edit)
   function splitAddressTwoLines(raw) {
     const s = toStr(raw);
     if (!s) return { line1: "", line2: "" };
@@ -391,44 +381,12 @@
     return toStr(c.cigarSocial ?? c["Cigar Social"] ?? c["CigarSocial"] ?? "");
   }
 
-  function getRoleTitle(c) {
-    return toStr(c.role ?? c.title ?? c["Title"] ?? c["Role"] ?? "");
-  }
-
   function getBirthdayText(c) {
     return toStr(c.birthday ?? c.Birthday ?? c["Birthday"] ?? c.dob ?? c.DOB ?? c["DOB"] ?? "");
   }
 
-  // ✅ icon helper with fallback chain (prevents iOS blue “?”)
-  // - If altSrc is provided, it tries src -> altSrc -> finalFallback
-  function iconIMG(src, alt, altSrc, finalFallback) {
-    const a = escapeAttr(alt || "");
-    const s1 = escapeAttr(src || "");
-    const s2 = escapeAttr(altSrc || "");
-    const s3 = escapeAttr(finalFallback || "");
-
-    // If no fallbacks, just render normally
-    if (!s2 && !s3) {
-      return `<img src="${s1}" alt="${a}" loading="lazy" onerror="this.style.display='none'">`;
-    }
-
-    // Build an onerror chain:
-    // 1) swap to altSrc
-    // 2) swap to finalFallback
-    // 3) hide
-    const chain = `
-      (function(img){
-        if(!img.dataset.try2 && "${s2}"){
-          img.dataset.try2="1"; img.src="${s2}"; return;
-        }
-        if(!img.dataset.try3 && "${s3}"){
-          img.dataset.try3="1"; img.src="${s3}"; return;
-        }
-        img.style.display="none";
-      })(this);
-    `.replace(/\s+/g, " ").trim();
-
-    return `<img src="${s1}" alt="${a}" loading="lazy" onerror='${chain}'>`;
+  function iconIMG(src, alt) {
+    return `<img src="${src}" alt="${escapeAttr(alt || "")}" loading="lazy">`;
   }
 
   function renderContact(customer, editing) {
@@ -439,9 +397,9 @@
     const addr = splitAddressTwoLines(addrRaw);
 
     const cigarSocial = getCigarSocial(customer);
-    const role = getRoleTitle(customer);
     const bday = getBirthdayText(customer);
 
+    // ✅ Address is ONE row: one icon, one value block containing both lines.
     const addressHTML = editing
       ? `
         <div class="v v-addr">
@@ -460,15 +418,6 @@
         </div>
       `;
 
-    const roleRow = role
-      ? `
-        <div class="ico">${iconIMG(CONTACT_ICONS.account, "Role")}</div>
-        <div class="v">
-          <input class="lc-field" id="fRole" value="${escapeAttr(role)}" ${editing ? "" : "readonly"} placeholder="founder">
-        </div>
-      `
-      : "";
-
     panelContact.innerHTML = `
       <div class="lc-kv">
         <div class="ico">${iconIMG(CONTACT_ICONS.phone, "Phone")}</div>
@@ -484,21 +433,12 @@
         <div class="ico">${iconIMG(CONTACT_ICONS.address, "Address")}</div>
         ${addressHTML}
 
-        ${roleRow}
-
         <div class="ico">${iconIMG(CONTACT_ICONS.birthday, "Birthday")}</div>
         <div class="v">
           <input class="lc-field" id="fBirthday" value="${escapeAttr(bday)}" ${editing ? "" : "readonly"} placeholder="August 15">
         </div>
 
-        <div class="ico">${
-          iconIMG(
-            CONTACT_ICONS.cigarsocial,
-            "Cigar Social",
-            CONTACT_ICONS.cigarsocialAlt,
-            CONTACT_ICONS.account
-          )
-        }</div>
+        <div class="ico">${iconIMG(CONTACT_ICONS.cigarsocial, "Cigar Social")}</div>
         <div class="v">
           <input class="lc-field" id="fCigarSocial" value="${escapeAttr(cigarSocial)}" ${editing ? "" : "readonly"} placeholder="@username">
         </div>
@@ -619,7 +559,6 @@
     const fEmail = document.getElementById("fEmail");
     const fCigarSocial = document.getElementById("fCigarSocial");
     const fBirthday = document.getElementById("fBirthday");
-    const fRole = document.getElementById("fRole");
 
     const fAddr1 = document.getElementById("fAddr1");
     const fAddr2 = document.getElementById("fAddr2");
@@ -634,8 +573,6 @@
     if (fCigarSocial) c.cigarSocial = toStr(fCigarSocial.value);
     if (fBirthday) c.birthday = toStr(fBirthday.value);
 
-    if (fRole) c.role = toStr(fRole.value);
-
     c.updatedAt = new Date().toISOString();
 
     customers[idx] = c;
@@ -648,6 +585,7 @@
     renderFavorites(c);
   }
 
+  // ---------- init ----------
   function init() {
     backBtn?.addEventListener("click", () => history.back());
 
