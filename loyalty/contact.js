@@ -1,24 +1,20 @@
-/* /loyalty/contact.js
-   - Folder tabs + stretched content panel
-   - Quick note placeholder behavior
-   - Contact tab:
-      ✅ Uses new black contact icons in /img/icons/*.svg
-      ✅ Address = 2 lines (view) + 2 fields (edit)
-      ✅ NO extra icon below address (address is ONE row)
-      ✅ Removes role row entirely (prevents “locker” row)
-      ✅ Cigar Social icon:
-         - Uses /img/icons/cigarsocial.svg
-         - Falls back to /img/icons/blackprofile.svg
-         - Never shows the blue broken-image “?” (auto-hides on failure)
-   - Favorites:
-      ✅ Adds "Add / Edit" favorite brands link (iOS blue)
-      ✅ Opens bottom sheet brand picker:
-         checkbox LEFT, brand icon MIDDLE, brand name RIGHT
-      ✅ Saves selected brands back to customer as:
-         "Fav brand 1", "Fav brand 2", ... (and clears old extras)
+/* /loyalty/contact.js (FULL)
+   Fixes:
+   1) Contact page no longer blank (always initializes + renders)
+   2) Tabs order: Contact → History → Favorites (default Contact)
+   3) Empty fields show "-" (view mode)
+   4) Contact values remain Regular (handled by CSS, we don’t force bold)
+   5) Edit mode shows First + Last name inputs (last name no longer missing)
+   6) Cigar Social icon pulls from /img/icons/cigarsocial.svg (fallback to blackprofile)
+   7) Favorite brand picker:
+      - scrolls to bottom
+      - search works for "Padron", "Opus X", "opusx"
+      - never closes while typing
 */
 
 (() => {
+  "use strict";
+
   const CUSTOMERS_KEY = "cigaros_customers_v1";
   const SALES_KEY = "cigaros_sales_v1";
 
@@ -34,8 +30,17 @@
     regular: `${ICON_BASE}regular.svg`,
   };
 
-  // ---- BRAND MASTER LIST (the list you provided, including Sinistro) ----
-  // Used for the brand picker.
+  const CONTACT_ICON_BASE = "/img/icons/";
+  const CONTACT_ICONS = {
+    phone: `${CONTACT_ICON_BASE}blackphone.svg`,
+    email: `${CONTACT_ICON_BASE}blackemail.svg`,
+    address: `${CONTACT_ICON_BASE}blackaddress.svg`,
+    birthday: `${CONTACT_ICON_BASE}blackbirthday.svg`,
+    cigarsocial_primary: `/img/icons/cigarsocial.svg`,
+    cigarsocial_fallback: `${CONTACT_ICON_BASE}blackprofile.svg`,
+  };
+
+  // Brand list for picker
   const BRAND_MASTER = [
     "1502","20 Acre Farm","601 La Bomba","7-20-04","A Flores","A Turrent","Abuelo","Accomplice","ACID",
     "Adventura","Aganorsa Leaf","Aging Room","AJ Fernandez","Aladino","Alec Bradley","Aliados","Ambrosia",
@@ -69,19 +74,9 @@
     "Ventura Cigar Co.","Viaje","Villa Zamorano","Villiger","Viva La Vida","Warped","Warzone","West Tampa","Zino"
   ];
 
-  // Contact info icons
-  const CONTACT_ICON_BASE = "/img/icons/";
-  const CONTACT_ICONS = {
-    phone: `${CONTACT_ICON_BASE}blackphone.svg`,
-    email: `${CONTACT_ICON_BASE}blackemail.svg`,
-    address: `${CONTACT_ICON_BASE}blackaddress.svg`,
-    birthday: `${CONTACT_ICON_BASE}blackbirthday.svg`,
-    cigarsocial_primary: `/img/icons/cigarsocial.svg`,
-    cigarsocial_fallback: `${CONTACT_ICON_BASE}blackprofile.svg`,
-  };
-
   const $ = (sel) => document.querySelector(sel);
 
+  // DOM
   const backBtn = $("#lcBack");
   const nameEl = $("#lcName");
   const akaEl = $("#lcAka");
@@ -94,6 +89,7 @@
   const panelContact = $("#panelContact");
   const panelFavorites = $("#panelFavorites");
 
+  // ---------- helpers ----------
   const safeJSON = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
   const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const toStr = (v) => (v == null ? "" : String(v)).trim();
@@ -101,21 +97,6 @@
   function getParam(name) {
     const u = new URL(window.location.href);
     return u.searchParams.get(name);
-  }
-
-  function readCustomers() {
-    const list = safeJSON(localStorage.getItem(CUSTOMERS_KEY), []);
-    return Array.isArray(list) ? list : [];
-  }
-
-  function writeCustomers(list) {
-    writeJSON(CUSTOMERS_KEY, list);
-    window.dispatchEvent(new Event("cigaros:customers-changed"));
-  }
-
-  function readSales() {
-    const list = safeJSON(localStorage.getItem(SALES_KEY), []);
-    return Array.isArray(list) ? list : [];
   }
 
   function escapeHTML(s) {
@@ -138,19 +119,47 @@
       .replaceAll("'", "&#039;");
   }
 
-  function isTruthyMarker(v, columnTitle) {
+  function readCustomers() {
+    const list = safeJSON(localStorage.getItem(CUSTOMERS_KEY), []);
+    return Array.isArray(list) ? list : [];
+  }
+
+  function writeCustomers(list) {
+    writeJSON(CUSTOMERS_KEY, list);
+    window.dispatchEvent(new Event("cigaros:customers-changed"));
+  }
+
+  function readSales() {
+    const list = safeJSON(localStorage.getItem(SALES_KEY), []);
+    return Array.isArray(list) ? list : [];
+  }
+
+  function formatPhone(raw) {
+    const d = String(raw || "").replace(/\D+/g, "");
+    if (!d) return "";
+    if (d.length === 10) return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
+    if (d.length === 11 && d[0] === "1") return `${d.slice(1,4)}-${d.slice(4,7)}-${d.slice(7)}`;
+    return String(raw || "");
+  }
+
+  function normalizeForSearch(s) {
+    // supports: "opus x" == "opusx"
+    return String(s || "")
+      .toLowerCase()
+      .replace(/[\u2019']/g, "'")
+      .replace(/[^a-z0-9]+/g, "");
+  }
+
+  function isTruthyMarker(v, colName) {
     if (v === true) return true;
     if (v === false || v == null) return false;
-
     const s = String(v).trim().toLowerCase();
     if (!s) return false;
     if (s === "0" || s === "no" || s === "false" || s === "n") return false;
     if (s === "x" || s === "y" || s === "1" || s === "yes" || s === "true") return true;
     if (/^\d+(\.\d+)?$/.test(s)) return true;
-
-    const col = String(columnTitle || "").trim().toLowerCase();
+    const col = String(colName || "").trim().toLowerCase();
     if (col && (s === col || s.includes(col))) return true;
-
     return true;
   }
 
@@ -169,8 +178,7 @@
 
   function isExplicitX(v) {
     if (v == null) return false;
-    const s = String(v).trim().toLowerCase();
-    return s === "x";
+    return String(v).trim().toLowerCase() === "x";
   }
 
   function hasExplicitX(obj, columnTitle) {
@@ -206,18 +214,6 @@
     return hasExplicitX(c, "Regular");
   }
 
-  function formatPhone(raw) {
-    const d = String(raw || "").replace(/\D+/g, "");
-    if (!d) return "";
-    if (d.length === 10) return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
-    if (d.length === 11 && d[0] === "1") return `${d.slice(1,4)}-${d.slice(4,7)}-${d.slice(7)}`;
-    return raw;
-  }
-
-  function normalizePhoneToDigits(raw) {
-    return String(raw || "").replace(/\D+/g, "");
-  }
-
   function buildIconBox(src, alt) {
     const wrap = document.createElement("div");
     wrap.className = "lc-ico";
@@ -235,9 +231,9 @@
 
     const roleIcons = [];
     if (hasColumnValue(c, "Military")) roleIcons.push("military");
-    if (hasColumnValue(c, "Paramedic")) roleIcons.push("paramedic");
-    if (hasColumnValue(c, "Firefighter")) roleIcons.push("firefighter");
     if (hasColumnValue(c, "Police")) roleIcons.push("police");
+    if (hasColumnValue(c, "Firefighter")) roleIcons.push("firefighter");
+    if (hasColumnValue(c, "Paramedic")) roleIcons.push("paramedic");
 
     const tier = isLockerCustomer(c) ? "locker" : (isRegularCustomer(c) ? "regular" : null);
     const list = tier ? [...roleIcons, tier] : [...roleIcons];
@@ -253,9 +249,16 @@
     panelFavorites.style.display = tab === "favorites" ? "" : "none";
   }
 
-  function money(n) {
-    const x = Number(n || 0);
-    return `$${x.toFixed(2)}`;
+  function iconIMG(src, alt, fallbackSrc) {
+    const safeAlt = escapeAttr(alt || "");
+    const safeSrc = escapeAttr(src || "");
+    const safeFallback = fallbackSrc ? escapeAttr(fallbackSrc) : "";
+
+    if (!safeFallback) {
+      return `<img src="${safeSrc}" alt="${safeAlt}" loading="lazy" onerror="this.style.display='none';">`;
+    }
+    return `<img src="${safeSrc}" alt="${safeAlt}" loading="lazy"
+      onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='${safeFallback}';}else{this.style.display='none';}">`;
   }
 
   function getAddressRaw(c) {
@@ -275,7 +278,6 @@
       const b = s.slice(idx + 1).trim();
       return { line1: a, line2: b };
     }
-
     return { line1: s, line2: "" };
   }
 
@@ -294,37 +296,54 @@
     return toStr(c.birthday ?? c.Birthday ?? c["Birthday"] ?? c.dob ?? c.DOB ?? c["DOB"] ?? "");
   }
 
-  function iconIMG(src, alt, fallbackSrc) {
-    const safeAlt = escapeAttr(alt || "");
-    const safeSrc = escapeAttr(src || "");
-    const safeFallback = fallbackSrc ? escapeAttr(fallbackSrc) : "";
+  // ---------- render blocks ----------
+  function renderHeader(customer, editing) {
+    const first = toStr(customer.firstName ?? customer.first ?? customer["First name"] ?? customer["First"] ?? "");
+    const last  = toStr(customer.lastName  ?? customer.last  ?? customer["Last name"]  ?? customer["Last"]  ?? "");
+    const aka   = toStr(customer.aka ?? customer.nickname ?? customer["aka"] ?? customer["Nickname"] ?? "");
+    const note  = toStr(customer.note ?? customer.quickNote ?? customer["Quick note"] ?? customer["Note"] ?? "");
 
-    if (!safeFallback) {
-      return `<img src="${safeSrc}" alt="${safeAlt}" loading="lazy"
-        onerror="this.style.display='none';">`;
+    if (!editing) {
+      const full = (first || last) ? `${first}${first && last ? " " : ""}${last}` : "-";
+      nameEl.classList.remove("editing");
+      nameEl.innerHTML = escapeHTML(full);
+    } else {
+      nameEl.classList.add("editing");
+      nameEl.innerHTML = `
+        <input class="lc-field" id="fFirst" value="${escapeAttr(first)}" placeholder="First">
+        <input class="lc-field" id="fLast" value="${escapeAttr(last)}" placeholder="Last">
+      `;
     }
 
-    return `<img src="${safeSrc}" alt="${safeAlt}" loading="lazy"
-      onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='${safeFallback}';}else{this.style.display='none';}">`;
+    if (aka) {
+      akaEl.style.display = "";
+      akaEl.textContent = `aka ${aka}`;
+    } else {
+      akaEl.style.display = "none";
+      akaEl.textContent = "";
+    }
+
+    noteEl.value = note;
+    noteEl.readOnly = !editing;
+
+    renderIcons(customer);
   }
 
-  function renderContact(customer, editing) {
+  function renderContactPanel(customer, editing) {
     const dash = "-";
 
-    const phoneRaw = toStr(customer.phone);
+    const phoneRaw = toStr(customer.phone ?? customer["Phone"] ?? "");
     const phoneShown = editing ? phoneRaw : formatPhone(phoneRaw);
-    const email = toStr(customer.email);
-
+    const email = toStr(customer.email ?? customer["Email"] ?? "");
     const addrRaw = getAddressRaw(customer);
     const addr = splitAddressTwoLines(addrRaw);
-
-    const cigarSocial = getCigarSocial(customer);
     const bday = getBirthdayText(customer);
+    const cigarSocial = getCigarSocial(customer);
 
     const vPhone = phoneShown || dash;
     const vEmail = email || dash;
-    const vBday = bday || dash;
-    const vCS = cigarSocial || dash;
+    const vBday  = bday || dash;
+    const vCS    = cigarSocial || dash;
 
     const addressViewHTML = `
       <div class="v v-addr">
@@ -338,8 +357,8 @@
     const addressEditHTML = `
       <div class="v v-addr">
         <div class="lc-addr-edit">
-          <input class="lc-field" id="fAddr1" value="${escapeAttr(addr.line1)}" placeholder="143 Beram Ave">
-          <input class="lc-field" id="fAddr2" value="${escapeAttr(addr.line2)}" placeholder="Bridgeville, PA 15017">
+          <input class="lc-field" id="fAddr1" value="${escapeAttr(addr.line1)}" placeholder="Street">
+          <input class="lc-field" id="fAddr2" value="${escapeAttr(addr.line2)}" placeholder="City, ST ZIP">
         </div>
       </div>
     `;
@@ -388,66 +407,363 @@
     `;
   }
 
-  // ----- Favorite Brands Editor (bottom sheet) -----
-  let brandSheet = null;
-  let brandBackdrop = null;
-  let brandSearch = null;
-  let brandListEl = null;
-  let brandDoneBtn = null;
-  let brandCloseBtn = null;
+  function renderHistoryPanel(customer) {
+    const sales = readSales();
 
-  let brandDraftSelected = new Set();
+    const id = toStr(customer.id ?? customer.customerId ?? customer._id ?? "");
+    const phoneDigits = String(customer.phone || "").replace(/\D+/g, "");
 
-  function ensureBrandSheet() {
-    if (brandSheet) return;
+    const hits = sales.filter((s) => {
+      const sid = toStr(s.customerId ?? s.customer_id ?? s.contactId ?? "");
+      const sphone = String(s.phone ?? s.customerPhone ?? "").replace(/\D+/g, "");
+      if (id && sid && sid === id) return true;
+      if (phoneDigits && sphone && sphone === phoneDigits) return true;
+      return false;
+    });
 
-    brandBackdrop = document.createElement("div");
-    brandBackdrop.className = "lc-sheet-backdrop";
-    brandBackdrop.style.display = "none";
+    if (!hits.length) {
+      panelHistory.innerHTML = `<a class="lc-mutedlink" href="#" onclick="return false;">No history yet</a>`;
+      return;
+    }
 
-    brandSheet = document.createElement("div");
-    brandSheet.className = "lc-sheet";
-    brandSheet.style.display = "none";
+    // Simple rows
+    panelHistory.innerHTML = hits
+      .slice()
+      .reverse()
+      .map((s) => {
+        const title = toStr(s.title ?? s.invoice ?? s.receipt ?? "Invoice");
+        const total = toStr(s.total ?? s.grandTotal ?? s.amount ?? "");
+        const when  = toStr(s.date ?? s.created ?? s.time ?? "");
+        const link  = toStr(s.pdf ?? s.pdfUrl ?? s.url ?? "");
+        return `
+          <div class="lc-row">
+            <div class="left">${escapeHTML(title)}<div style="color:#8e8e93;font-weight:600;font-size:14px;margin-top:4px;">${escapeHTML(when)}</div></div>
+            <div class="mid">${escapeHTML(total ? `$${Number(total).toFixed(2)}` : "")}</div>
+            <div class="right">${link ? `<a href="${escapeAttr(link)}" target="_blank" rel="noopener">View</a>` : ""}</div>
+          </div>
+        `;
+      })
+      .join("");
+  }
 
-    brandSheet.innerHTML = `
-      <div class="lc-sheet-head">
-        <button type="button" class="lc-sheet-x" aria-label="Close">Cancel</button>
-        <div class="lc-sheet-title">Favorite Brands</div>
-        <button type="button" class="lc-sheet-done" aria-label="Done">Done</button>
-      </div>
+  // Favorites brands are stored as "Fav brand 1", "Fav brand 2", etc.
+  function getFavBrands(customer) {
+    const out = [];
+    for (let i = 1; i <= 50; i++) {
+      const v = toStr(customer[`Fav brand ${i}`]);
+      if (v) out.push(v);
+    }
+    return out;
+  }
 
-      <div class="lc-sheet-search">
-        <input type="search" class="lc-sheet-input" placeholder="Search brands" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
-      </div>
-
-      <div class="lc-sheet-list" role="list"></div>
-    `;
-
-    document.body.appendChild(brandBackdrop);
-    document.body.appendChild(brandSheet);
-
-    // Prevent taps inside the sheet from bubbling to the backdrop
-    brandSheet.addEventListener("click", (e) => e.stopPropagation());
-
-    brandSearch = brandSheet.querySelector(".lc-sheet-input");
-    brandListEl = brandSheet.querySelector(".lc-sheet-list");
-    brandDoneBtn = brandSheet.querySelector(".lc-sheet-done");
-    brandCloseBtn = brandSheet.querySelector(".lc-sheet-x");
-
-    const close = () => closeBrandSheet(false);
-
-    brandBackdrop.addEventListener("click", close);
-    brandCloseBtn.addEventListener("click", close);
-
-    brandDoneBtn.addEventListener("click", () => closeBrandSheet(true));
-
-    brandSearch.addEventListener("input", () => {
-      renderBrandSheetList(brandSearch.value || "");
+  function setFavBrands(customer, brands) {
+    // clear existing
+    for (let i = 1; i <= 50; i++) delete customer[`Fav brand ${i}`];
+    // set new
+    brands.slice(0, 50).forEach((b, idx) => {
+      customer[`Fav brand ${idx + 1}`] = b;
     });
   }
 
-  // ... remainder of your file unchanged except:
-  // - nameEl editing class toggles
-  // - default tab is Contact on init
-  // (Zip contains the complete file.)
+  function brandIconPath(name) {
+    // your repo convention: /img/icons/brands/{brandname lowercase no spaces}.svg
+    const slug = String(name || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
+    return `${BRAND_ICON_BASE}${slug}.svg`;
+  }
+
+  function renderFavoritesPanel(customer) {
+    const favBrands = getFavBrands(customer);
+
+    const brandsHeader = `
+      <div class="section-head">
+        <div class="section-title">Brands</div>
+        <a class="section-link" href="#" id="favBrandsEditLink">Add / Edit</a>
+      </div>
+    `;
+
+    const brandsBody = favBrands.length
+      ? `<div class="brand-icons">
+          ${favBrands.map((b) =>
+            `<img src="${escapeAttr(brandIconPath(b))}" alt="${escapeAttr(b)}"
+              onerror="this.style.display='none';">`
+          ).join("")}
+        </div>`
+      : `<div class="empty-line">No favorite brands yet</div>`;
+
+    const cigarsHeader = `<div class="section-title">Cigars</div>`;
+    const cigarsBody = `<div class="empty-line">No favorite cigars yet</div>`;
+
+    panelFavorites.innerHTML = `
+      ${brandsHeader}
+      ${brandsBody}
+      ${cigarsHeader}
+      ${cigarsBody}
+    `;
+
+    const link = $("#favBrandsEditLink");
+    link?.addEventListener("click", (e) => {
+      e.preventDefault();
+      openBrandSheet(customer);
+    });
+  }
+
+  // ---------- brand sheet ----------
+  let sheetBackdrop = null;
+  let sheet = null;
+  let sheetSearch = null;
+  let sheetList = null;
+  let sheetDone = null;
+  let sheetCancel = null;
+
+  let activeCustomerRef = null;
+  let draftSelected = new Set();
+
+  function ensureSheet() {
+    if (sheet) return;
+
+    sheetBackdrop = document.createElement("div");
+    sheetBackdrop.className = "lc-sheet-backdrop";
+    sheetBackdrop.style.display = "none";
+
+    sheet = document.createElement("div");
+    sheet.className = "lc-sheet";
+    sheet.style.display = "none";
+
+    sheet.innerHTML = `
+      <div class="lc-sheet-head">
+        <button type="button" class="lc-sheet-x">Cancel</button>
+        <div class="lc-sheet-title">Favorite Brands</div>
+        <button type="button" class="lc-sheet-done">Done</button>
+      </div>
+      <div class="lc-sheet-search">
+        <input type="search" class="lc-sheet-input"
+          placeholder="Search brands"
+          autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
+          inputmode="search" enterkeyhint="search"
+        />
+      </div>
+      <div class="lc-sheet-list" role="list"></div>
+    `;
+
+    document.body.appendChild(sheetBackdrop);
+    document.body.appendChild(sheet);
+
+    // IMPORTANT: prevent sheet clicks from closing it
+    sheet.addEventListener("pointerdown", (e) => e.stopPropagation());
+    sheet.addEventListener("click", (e) => e.stopPropagation());
+
+    sheetBackdrop.addEventListener("pointerdown", () => closeSheet(false));
+
+    sheetSearch = sheet.querySelector(".lc-sheet-input");
+    sheetList = sheet.querySelector(".lc-sheet-list");
+    sheetDone = sheet.querySelector(".lc-sheet-done");
+    sheetCancel = sheet.querySelector(".lc-sheet-x");
+
+    sheetCancel.addEventListener("click", () => closeSheet(false));
+    sheetDone.addEventListener("click", () => closeSheet(true));
+
+    sheetSearch.addEventListener("input", () => renderSheetList(sheetSearch.value || ""));
+  }
+
+  function openSheet() {
+    sheetBackdrop.style.display = "";
+    sheet.style.display = "";
+    // focus after paint
+    requestAnimationFrame(() => sheetSearch.focus({ preventScroll: true }));
+  }
+
+  function closeSheet(apply) {
+    if (apply && activeCustomerRef) {
+      const customers = readCustomers();
+      const id = toStr(activeCustomerRef.id ?? activeCustomerRef.customerId ?? activeCustomerRef._id ?? "");
+      const idx = customers.findIndex((c) => toStr(c.id ?? c.customerId ?? c._id ?? "") === id);
+      if (idx >= 0) {
+        setFavBrands(customers[idx], Array.from(draftSelected));
+        writeCustomers(customers);
+        // refresh UI
+        renderFavoritesPanel(customers[idx]);
+      }
+    }
+
+    sheetBackdrop.style.display = "none";
+    sheet.style.display = "none";
+    sheetSearch.value = "";
+    sheetList.innerHTML = "";
+    activeCustomerRef = null;
+    draftSelected = new Set();
+  }
+
+  function openBrandSheet(customer) {
+    ensureSheet();
+    activeCustomerRef = customer;
+
+    draftSelected = new Set(getFavBrands(customer));
+    renderSheetList("");
+    openSheet();
+  }
+
+  function renderSheetList(q) {
+    const nq = normalizeForSearch(q);
+
+    const rows = BRAND_MASTER
+      .filter((b) => {
+        if (!nq) return true;
+        const nb = normalizeForSearch(b);
+        return nb.includes(nq);
+      })
+      .map((b) => {
+        const checked = draftSelected.has(b) ? "checked" : "";
+        const icon = brandIconPath(b);
+        return `
+          <label class="lc-brand-row">
+            <input class="lc-brand-check" type="checkbox" data-brand="${escapeAttr(b)}" ${checked} />
+            <img src="${escapeAttr(icon)}" alt="" style="width:26px;height:26px;border-radius:8px;"
+              onerror="this.style.display='none';" />
+            <div style="font-weight:700;font-size:18px;">${escapeHTML(b)}</div>
+          </label>
+        `;
+      })
+      .join("");
+
+    sheetList.innerHTML = rows || `<div class="empty-line">No matches</div>`;
+
+    // wire checkboxes
+    sheetList.querySelectorAll('input[type="checkbox"][data-brand]').forEach((cb) => {
+      cb.addEventListener("change", (e) => {
+        const brand = e.target.getAttribute("data-brand");
+        if (!brand) return;
+        if (e.target.checked) draftSelected.add(brand);
+        else draftSelected.delete(brand);
+      });
+    });
+  }
+
+  // ---------- edit mode ----------
+  let editing = false;
+  let currentCustomer = null;
+
+  function enterEdit() {
+    editing = true;
+    editBtn.textContent = "DONE";
+    renderHeader(currentCustomer, true);
+    renderContactPanel(currentCustomer, true);
+    // keep on Contact tab
+    showTab("contact");
+  }
+
+  function exitEditAndSave() {
+    // pull from fields
+    const fFirst = document.getElementById("fFirst");
+    const fLast = document.getElementById("fLast");
+    const fPhone = document.getElementById("fPhone");
+    const fEmail = document.getElementById("fEmail");
+    const fBirthday = document.getElementById("fBirthday");
+    const fCigarSocial = document.getElementById("fCigarSocial");
+    const fAddr1 = document.getElementById("fAddr1");
+    const fAddr2 = document.getElementById("fAddr2");
+
+    const customers = readCustomers();
+    const id = toStr(currentCustomer.id ?? currentCustomer.customerId ?? currentCustomer._id ?? "");
+    const idx = customers.findIndex((c) => toStr(c.id ?? c.customerId ?? c._id ?? "") === id);
+
+    if (idx >= 0) {
+      const c = customers[idx];
+
+      c.firstName = toStr(fFirst?.value);
+      c.lastName = toStr(fLast?.value);
+
+      c.phone = toStr(fPhone?.value);
+      c.email = toStr(fEmail?.value);
+
+      c.birthday = toStr(fBirthday?.value);
+      c.cigarSocial = toStr(fCigarSocial?.value);
+
+      const joinedAddr = joinAddressTwoLines(toStr(fAddr1?.value), toStr(fAddr2?.value));
+      c.address = joinedAddr;
+
+      // quick note
+      c.note = toStr(noteEl.value);
+
+      customers[idx] = c;
+      writeCustomers(customers);
+
+      currentCustomer = c;
+    }
+
+    editing = false;
+    editBtn.textContent = "EDIT";
+    renderHeader(currentCustomer, false);
+    renderContactPanel(currentCustomer, false);
+    showTab("contact");
+  }
+
+  // ---------- init ----------
+  function findCustomerById(customers, id) {
+    if (!id) return null;
+    return customers.find((c) => {
+      const cid = toStr(c.id ?? c.customerId ?? c._id ?? c.contactId ?? "");
+      return cid === id;
+    }) || null;
+  }
+
+  function bindTabs() {
+    tabs.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (editing) return; // keep stable while editing
+        showTab(btn.dataset.tab);
+      });
+    });
+  }
+
+  function init() {
+    backBtn?.addEventListener("click", () => history.back());
+
+    const id = getParam("id");
+    const customers = readCustomers();
+    const customer = findCustomerById(customers, id);
+
+    if (!customer) {
+      // Don’t blank: show a readable message
+      nameEl.textContent = "Contact not found";
+      panelHistory.innerHTML = `<a class="lc-mutedlink" href="/loyalty/">Back to Loyalty</a>`;
+      panelContact.innerHTML = `<div class="empty-line">Missing or invalid contact id.</div>`;
+      panelFavorites.innerHTML = `<div class="empty-line">—</div>`;
+      showTab("contact");
+      bindTabs();
+      return;
+    }
+
+    currentCustomer = customer;
+
+    // Tabs (Contact first)
+    bindTabs();
+    showTab("contact");
+
+    // Render
+    renderHeader(currentCustomer, false);
+    renderContactPanel(currentCustomer, false);
+    renderHistoryPanel(currentCustomer);
+    renderFavoritesPanel(currentCustomer);
+
+    // Edit toggle
+    editBtn?.addEventListener("click", () => {
+      if (!currentCustomer) return;
+      if (!editing) enterEdit();
+      else exitEditAndSave();
+    });
+  }
+
+  // Always initialize
+  try {
+    init();
+  } catch (err) {
+    // fail-safe so it never looks "blank"
+    console.error("contact.js init failed:", err);
+    nameEl.textContent = "Contact error";
+    panelContact.innerHTML = `<div class="empty-line">JS error — check console.</div>`;
+    showTab("contact");
+  }
 })();
