@@ -6,7 +6,7 @@
    - Favorites section has NO divider lines under titles
 
    Updates included:
-   ✅ Body text in Contact tab is NOT bold (Medium)
+   ✅ Body text in Contact tab is NOT bold (Regular)
 */
 
 :root{
@@ -105,6 +105,25 @@ body.loy-contact{
   white-space: nowrap;
   overflow:hidden;
   text-overflow: ellipsis;
+}
+
+/* EDIT MODE name inputs (prevent last name clipping) */
+.lc-name.editing{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  white-space: normal;
+  overflow: visible;
+}
+.lc-name.editing .lc-field{
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 28px;
+  font-weight: 800;
+  background: #f2f2f7;
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
 }
 
 /* aka */
@@ -288,12 +307,18 @@ body.loy-contact{
 /* ✅ Contact value typography: NOT bold */
 .lc-kv .v{
   font-size: 22px;
-  font-weight: 600; /* SF Pro Display Medium-ish */
+  font-weight: 400; /* Regular */
   min-width:0;
 
   white-space: nowrap;
   overflow:hidden;
   text-overflow: ellipsis;
+}
+
+.lc-value{
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
 }
 
 /* Address value container may wrap / stack lines */
@@ -334,7 +359,7 @@ body.loy-contact{
 }
 
 .lc-line1{
-  font-weight: 600;
+  font-weight: 400;
   color: var(--ink);
   white-space: nowrap;
   overflow:hidden;
@@ -342,7 +367,7 @@ body.loy-contact{
 }
 
 .lc-line2{
-  font-weight: 600;
+  font-weight: 400;
   color: var(--ink);
   white-space: nowrap;
   overflow:hidden;
@@ -416,7 +441,7 @@ body.loy-contact{
 }
 
 .section-link{
-  color: var(--ios-blue, #007aff);
+  color: var(--blue);
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
@@ -446,6 +471,7 @@ body.loy-contact{
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .lc-sheet-head{
@@ -478,7 +504,7 @@ body.loy-contact{
 }
 
 .lc-sheet-done{
-  color: var(--ios-blue, #007aff);
+  color: var(--blue);
 }
 
 .lc-sheet-search{
@@ -498,6 +524,8 @@ body.loy-contact{
 }
 
 .lc-sheet-list{
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   padding: 6px 0;
@@ -517,21 +545,4 @@ body.loy-contact{
 .lc-brand-check{
   width: 18px;
   height: 18px;
-}
-
-.lc-brand-ico{
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  display: block;
-}
-
-.lc-brand-name{
-  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, "SF Pro Display");
-  font-weight: 400;
-  font-size: 15px;
-  color: #111;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
