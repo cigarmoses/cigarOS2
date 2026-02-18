@@ -7,9 +7,12 @@
       ✅ NO extra icon below address (address is ONE row)
       ✅ Removes role row entirely (prevents “locker” row)
       ✅ Cigar Social icon uses /img/icons/cigarsocial.svg
-   - Favorites (existing):
-       Brands -> "Fav brand 1..N" => brand SVG icons
-       Cigars -> pills (kept as-is for now)
+   - Favorites:
+      ✅ Brands section now supports Edit/Add via iOS bottom-sheet picker
+         - Loads from /data/brands.json
+         - UI: checkbox (left) + brand icon (middle) + name (right)
+         - Saves to customer.favoriteBrands (array)
+      ✅ Cigars pills kept as-is for now
 */
 
 (() => {
@@ -17,6 +20,7 @@
   const SALES_KEY = "cigaros_sales_v1";
 
   const BRAND_ICON_BASE = "/img/icons/brands/"; // plural
+  const BRANDS_JSON_URL = "/data/brands.json";
 
   const ICON_BASE = "/img/icons/loyalty/";
   const ICONS = {
@@ -55,6 +59,9 @@
   const safeJSON = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
   const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const toStr = (v) => (v == null ? "" : String(v)).trim();
+
+  // In-memory cache
+  let BRANDS_CACHE = null;
 
   function getParam(name) {
     const u = new URL(window.location.href);
@@ -215,7 +222,7 @@
     return `$${x.toFixed(2)}`;
   }
 
-  // ---- Favorites parsing from JSON-style columns ----
+  // ---- Favorites parsing from legacy JSON-style columns ----
   function keyIsFavBrand(k) {
     const s = String(k || "").trim().toLowerCase();
     return s.startsWith("fav brand");
@@ -284,7 +291,7 @@
     return raw ? `/pos/cigars/?q=${encodeURIComponent(raw)}` : "/pos/cigars/";
   }
 
-  // ---------- panels ----------
+  // ---------- history ----------
   function renderHistory(customer, sales) {
     const cid = String(customer.id);
     const phone = toStr(customer.phone);
@@ -346,6 +353,7 @@
     `;
   }
 
+  // ---------- contact tab ----------
   function getAddressRaw(c) {
     return toStr(c.address ?? c.Address ?? c["Address"] ?? "");
   }
@@ -446,12 +454,51 @@
     `;
   }
 
+  // ---------- Favorite Brands: new array + legacy fallback ----------
+  function getFavoriteBrands(customer) {
+    const arr = customer?.favoriteBrands;
+    if (Array.isArray(arr) && arr.length) {
+      return arr.map(toStr).filter(Boolean);
+    }
+    // fallback legacy
+    return getFavBrandsFromColumns(customer);
+  }
+
+  function setFavoriteBrands(customer, brands) {
+    const clean = (brands || [])
+      .map(toStr)
+      .filter(Boolean);
+
+    // de-dupe, preserve order
+    const seen = new Set();
+    const deduped = [];
+    clean.forEach((b) => {
+      const key = b.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      deduped.push(b);
+    });
+
+    customer.favoriteBrands = deduped;
+  }
+
+  // ---------- Favorites tab ----------
   function renderFavorites(customer) {
-    const brands = getFavBrandsFromColumns(customer);
+    const brands = getFavoriteBrands(customer);
     const cigars = getFavCigarsFromColumns(customer);
     const cigarIds = getFavCigarIdsFromColumns(customer);
 
-    const brandIconsHTML = brands.length
+    const hasBrands = brands.length > 0;
+    const brandsActionLabel = hasBrands ? "Edit" : "Add";
+
+    const brandsHeaderHTML = `
+      <div class="lc-fav-head">
+        <div class="section-title lc-fav-title">Brands</div>
+        <button class="lc-fav-link" type="button" id="lcEditBrands">${brandsActionLabel}</button>
+      </div>
+    `;
+
+    const brandIconsHTML = hasBrands
       ? `<div class="brand-icons">
           ${brands.map((b) => `
             <img src="${brandIconPath(b)}" alt="${escapeAttr(b)}" title="${escapeAttr(b)}" loading="lazy"
@@ -469,11 +516,352 @@
       : `<div class="empty-line">No favorite cigars yet</div>`;
 
     panelFavorites.innerHTML = `
-      <div class="section-title">Brands</div>
+      ${brandsHeaderHTML}
       ${brandIconsHTML}
       <div class="section-title">Cigars</div>
       ${cigarPillsHTML}
     `;
+
+    // wire action
+    const btn = document.getElementById("lcEditBrands");
+    btn?.addEventListener("click", () => openBrandsSheet(customer));
+  }
+
+  // ---------- Brand picker bottom sheet ----------
+  function injectBrandSheetStylesOnce() {
+    if (document.getElementById("lcBrandSheetStyles")) return;
+    const style = document.createElement("style");
+    style.id = "lcBrandSheetStyles";
+    style.textContent = `
+      /* Favorites brands header row */
+      .lc-fav-head{
+        display:flex;
+        align-items:flex-end;
+        justify-content:space-between;
+        gap: 12px;
+      }
+      .lc-fav-title{ padding-bottom: 8px; }
+      .lc-fav-link{
+        border:0;
+        background:transparent;
+        color:#007aff;
+        font-size: 18px;
+        font-weight: 500; /* regular/medium */
+        padding: 16px 16px 8px;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Bottom sheet */
+      .lc-sheet-backdrop{
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.28);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        display:flex;
+        align-items:flex-end;
+        justify-content:center;
+        z-index: 9999;
+      }
+      .lc-sheet{
+        width: min(520px, 100vw);
+        background: #fff;
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -18px 60px rgba(0,0,0,.18);
+        overflow:hidden;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      }
+      .lc-sheet-top{
+        padding: 12px 14px 10px;
+        border-bottom: 1px solid rgba(60,60,67,.12);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 10px;
+      }
+      .lc-sheet-title{
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, Arial, sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.2px;
+      }
+      .lc-sheet-btn{
+        border:0;
+        background:transparent;
+        color:#007aff;
+        font-size: 16px;
+        font-weight: 600;
+        padding: 8px 6px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .lc-sheet-btn.muted{
+        color: rgba(60,60,67,.65);
+        font-weight: 600;
+      }
+      .lc-sheet-search{
+        padding: 10px 14px 12px;
+        border-bottom: 1px solid rgba(60,60,67,.12);
+      }
+      .lc-sheet-search input{
+        width:100%;
+        border:0;
+        outline:none;
+        border-radius: 12px;
+        background: #f2f2f7;
+        padding: 10px 12px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .lc-sheet-list{
+        max-height: min(62vh, 520px);
+        overflow:auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .lc-brand-row{
+        display:flex;
+        align-items:center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(60,60,67,.12);
+      }
+      .lc-brand-row:last-child{ border-bottom: none; }
+      .lc-brand-check{
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 1.5px solid rgba(60,60,67,.35);
+        display:grid;
+        place-items:center;
+        flex: 0 0 auto;
+      }
+      .lc-brand-check.on{
+        background: #007aff;
+        border-color: #007aff;
+      }
+      .lc-brand-check svg{
+        width: 16px;
+        height: 16px;
+        fill:none;
+        stroke:#fff;
+        stroke-width: 2.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0;
+      }
+      .lc-brand-check.on svg{ opacity: 1; }
+      .lc-brand-icon{
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 0 0 1px rgba(0,0,0,.06);
+        padding: 4px;
+        flex: 0 0 auto;
+        object-fit: contain;
+      }
+      .lc-brand-name{
+        flex:1;
+        min-width:0;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, Arial, sans-serif;
+        font-size: 17px;
+        font-weight: 500; /* regular */
+        color: #111;
+        white-space: nowrap;
+        overflow:hidden;
+        text-overflow: ellipsis;
+      }
+      .lc-sheet-foot{
+        padding: 10px 14px 12px;
+        border-top: 1px solid rgba(60,60,67,.12);
+        display:flex;
+        justify-content:flex-end;
+      }
+      .lc-sheet-apply{
+        border:0;
+        border-radius: 12px;
+        background: #007aff;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 10px 14px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  async function loadBrandsList() {
+    if (Array.isArray(BRANDS_CACHE) && BRANDS_CACHE.length) return BRANDS_CACHE;
+
+    try {
+      const res = await fetch(BRANDS_JSON_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`fetch ${BRANDS_JSON_URL} failed: ${res.status}`);
+      const data = await res.json();
+
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.brands) ? data.brands : []);
+      const cleaned = list.map(toStr).filter(Boolean);
+
+      // de-dupe + sort A→Z
+      const map = new Map();
+      cleaned.forEach((b) => map.set(b.toLowerCase(), b));
+      BRANDS_CACHE = Array.from(map.values()).sort((a, b) => a.localeCompare(b));
+      return BRANDS_CACHE;
+    } catch (e) {
+      console.warn("[Contact] Could not load /data/brands.json", e);
+      BRANDS_CACHE = [];
+      return BRANDS_CACHE;
+    }
+  }
+
+  function openBrandsSheet(customer) {
+    injectBrandSheetStylesOnce();
+
+    const current = getFavoriteBrands(customer);
+    const selected = new Set(current.map((x) => x.toLowerCase()));
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "lc-sheet-backdrop";
+
+    const sheet = document.createElement("div");
+    sheet.className = "lc-sheet";
+    sheet.innerHTML = `
+      <div class="lc-sheet-top">
+        <button class="lc-sheet-btn muted" type="button" id="lcBrandReset">Reset</button>
+        <div class="lc-sheet-title">Favorite Brands</div>
+        <button class="lc-sheet-btn" type="button" id="lcBrandDone">Done</button>
+      </div>
+
+      <div class="lc-sheet-search">
+        <input id="lcBrandSearch" type="search" placeholder="Search brands" autocomplete="off" />
+      </div>
+
+      <div class="lc-sheet-list" id="lcBrandList">
+        <div style="padding:14px;color:rgba(60,60,67,.65);font-weight:600;">Loading…</div>
+      </div>
+
+      <div class="lc-sheet-foot">
+        <button class="lc-sheet-apply" type="button" id="lcBrandApply">Apply</button>
+      </div>
+    `;
+
+    backdrop.appendChild(sheet);
+    document.body.appendChild(backdrop);
+
+    const close = () => {
+      if (backdrop?.parentNode) backdrop.parentNode.removeChild(backdrop);
+    };
+
+    // click outside to close (no save)
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) close();
+    });
+
+    const listEl = sheet.querySelector("#lcBrandList");
+    const searchEl = sheet.querySelector("#lcBrandSearch");
+    const btnReset = sheet.querySelector("#lcBrandReset");
+    const btnDone = sheet.querySelector("#lcBrandDone");
+    const btnApply = sheet.querySelector("#lcBrandApply");
+
+    const checkSVG = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 6L9 17l-5-5"></path>
+      </svg>
+    `;
+
+    const renderList = (brands, q) => {
+      const query = toStr(q).toLowerCase();
+      const filtered = query
+        ? brands.filter((b) => b.toLowerCase().includes(query))
+        : brands;
+
+      if (!filtered.length) {
+        listEl.innerHTML = `<div style="padding:14px;color:rgba(60,60,67,.65);font-weight:600;">No matches</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map((b) => {
+        const key = b.toLowerCase();
+        const on = selected.has(key);
+        const icon = brandIconPath(b);
+        return `
+          <div class="lc-brand-row" role="button" tabindex="0" data-brand="${escapeAttr(b)}">
+            <div class="lc-brand-check ${on ? "on" : ""}">${checkSVG}</div>
+            <img class="lc-brand-icon" src="${escapeAttr(icon)}" alt="${escapeAttr(b)}"
+                 onerror="this.style.display='none';" />
+            <div class="lc-brand-name">${escapeHTML(b)}</div>
+          </div>
+        `;
+      }).join("");
+
+      listEl.querySelectorAll(".lc-brand-row").forEach((row) => {
+        const b = row.getAttribute("data-brand") || "";
+        const key = b.toLowerCase();
+        const toggle = () => {
+          if (!b) return;
+          if (selected.has(key)) selected.delete(key);
+          else selected.add(key);
+
+          // flip UI
+          const box = row.querySelector(".lc-brand-check");
+          if (box) box.classList.toggle("on", selected.has(key));
+        };
+
+        row.addEventListener("click", toggle);
+        row.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggle();
+          }
+        });
+      });
+    };
+
+    const applySave = () => {
+      // Save to the active customer in storage
+      const customers = readCustomers();
+      const idx = customers.findIndex((c) => String(c.id) === String(activeCustomerId));
+      if (idx === -1) return;
+
+      const c = customers[idx];
+
+      // Use original casing from master list if possible:
+      const allBrands = Array.isArray(BRANDS_CACHE) ? BRANDS_CACHE : [];
+      const pickedLower = Array.from(selected.values());
+
+      const picked = pickedLower.map((lower) => {
+        const found = allBrands.find((x) => x.toLowerCase() === lower);
+        return found || lower;
+      });
+
+      setFavoriteBrands(c, picked);
+      c.updatedAt = new Date().toISOString();
+
+      customers[idx] = c;
+      writeCustomers(customers);
+
+      // re-render favorites tab (and keep user there)
+      renderFavorites(c);
+
+      close();
+    };
+
+    btnApply?.addEventListener("click", applySave);
+    btnDone?.addEventListener("click", applySave);
+
+    btnReset?.addEventListener("click", () => {
+      selected.clear();
+      // reset to none
+      loadBrandsList().then((brands) => renderList(brands, searchEl?.value));
+    });
+
+    searchEl?.addEventListener("input", () => {
+      loadBrandsList().then((brands) => renderList(brands, searchEl.value));
+    });
+
+    // initial load
+    loadBrandsList().then((brands) => {
+      renderList(brands, "");
+      setTimeout(() => searchEl?.focus?.(), 50);
+    });
   }
 
   // ---------- edit mode ----------
