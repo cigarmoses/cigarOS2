@@ -6,13 +6,16 @@
       ✅ Address = 2 lines (view) + 2 fields (edit)
       ✅ NO extra icon below address (address is ONE row)
       ✅ Removes role row entirely (prevents “locker” row)
-      ✅ Cigar Social icon uses /img/icons/cigarsocial.svg
+      ✅ Cigar Social icon:
+         - Tries /img/icon/cigarsocial.svg first (per your note)
+         - Falls back to /img/icons/blackprofile.svg
+         - Never shows the blue broken-image “?” (auto-hides on failure)
    - Favorites:
-      ✅ Brands section now supports Edit/Add via iOS bottom-sheet picker
-         - Loads from /data/brands.json
-         - UI: checkbox (left) + brand icon (middle) + name (right)
-         - Saves to customer.favoriteBrands (array)
-      ✅ Cigars pills kept as-is for now
+      ✅ Adds "Add / Edit" favorite brands link (iOS blue)
+      ✅ Opens bottom sheet brand picker:
+         checkbox LEFT, brand icon MIDDLE, brand name RIGHT
+      ✅ Saves selected brands back to customer as:
+         "Fav brand 1", "Fav brand 2", ... (and clears old extras)
 */
 
 (() => {
@@ -20,7 +23,6 @@
   const SALES_KEY = "cigaros_sales_v1";
 
   const BRAND_ICON_BASE = "/img/icons/brands/"; // plural
-  const BRANDS_JSON_URL = "/data/brands.json";
 
   const ICON_BASE = "/img/icons/loyalty/";
   const ICONS = {
@@ -32,14 +34,51 @@
     regular: `${ICON_BASE}regular.svg`,
   };
 
-  // Contact info icons (uploaded)
+  // ---- BRAND MASTER LIST (the list you provided, including Sinistro) ----
+  // Used for the brand picker.
+  const BRAND_MASTER = [
+    "1502","20 Acre Farm","601 La Bomba","7-20-04","A Flores","A Turrent","Abuelo","Accomplice","ACID",
+    "Adventura","Aganorsa Leaf","Aging Room","AJ Fernandez","Aladino","Alec Bradley","Aliados","Ambrosia",
+    "Angel Cuesta","Antigua Esteli","Artesano del Tobacco","Artista","Arturo Fuente","Ashton","Asylum",
+    "Atabey","ATL Cigar Co.","Aurora","AVO","Balmoral","Bespoke","Black Label Trading Co.","Black Works Studio",
+    "Blackened","Bolivar","Brick House","Brioso","Brun del Ré","Buena Vista","Buffalo Ten","Byron","Cabaiguan",
+    "Cain","Caldwell","Camacho","CAO","Carlos Andre","Carlos Toraño","Casa 1910","Casa Blanca","Casa Cuba",
+    "Casa Fernandez","Casa Magna","Casa Turrent","Casdagli","Cavalier Genève","Chateau Diadem","CLE",
+    "Cloud Hopper","COHIBA","Cohiba (Cuban)","Confidencial","Conspiracy","Crazy Alice","Crowned Heads",
+    "Cuba Aliados","Cubiche","Cuesta Rey","Cumpay","Curivari","Daniel Marshall","Davidoff","Diamond Crown",
+    "Dias de Gloria","Diplomaticos","Diplomaticos (Cuban)","Dominicana","Don Kiki","Don Pepin Garcia","Don Tomas",
+    "Doña Nieves","Drew Estate","Dunbarton","Dunhill","EGM","Eiroa","El Centurion","El Galan","El Güegüense",
+    "El Pulpo","El Rey Del Mundo","El Rey del Mundo (Cuban)","El Septimo","El Titan de Bronze","Emilio",
+    "EP Carrillo","Excalibur","Factory Smokes Maduro","Factory Smokes Shade","Factory Smokes Sungrown",
+    "Factory Smokes Sweet","Fat Bottom Betty","Ferio Tego","Fernando Leon","Flor de Copan","Flor de las Antillas",
+    "Flor de Selva","Fonseca","Foundation","Four Kicks","Garofalo","Gellis Family Cigars","Girl With No Name",
+    "Gispert","Great Wall","Gurkha","H. Upmann","Hamlet","Havana Honeys","Henry Clay","Herrera Esteli",
+    "Highclere Castle","Hoyo","Hoyo de Monterrey","Illusione","Isla Del Sol","Island Jim","Israel Meerapfel",
+    "Java","JC Newman","Jose Seijas","Joya de Nicaragua","Juan Lopez","Karen Berger","K by Karen Berger",
+    "Kentucky Fire Cured","Kristoff","Kuyt’s","La Aroma de Cuba","La Aurora","La Boheme","La Estrella Cubana",
+    "La Flor Dominicana","La Galera","La Gloria Cubana","La Palina","Larutan","Laura Chavin","Leaf by Oscar",
+    "Leather Rose","Leonel","Liga Privada","Litto Gomez","Los Statos","Luciano","Macanudo","Matilde","MBombay",
+    "Micallef","Monte by Montecristo","Montecristo","Montenegro","My Father","Nasser","Nica Rustica","Nicaroma",
+    "NUB","Odyssey","Oliva","Olmec","OneOff","Opus X","Oscar Valladares","Ozgener Family Cigars","Padilla",
+    "Padron","Pappy Van Winkle","Partagas","Patina","Perdomo","Perla del Mar","Peterson","Pinar Del Rio",
+    "Plasencia","Platinum Nova","Powstanie","Principle","Punch","Puros Indios","Quintero","Rafael Gonzalez",
+    "Ramon Allones","Regius","Rocky Patel","Rojas","RoMa Craft","Romeo y Julieta","Room 101","Saint Luis Rey",
+    "San Cristobal","San Lotano","Sancho Panza","Sancho Panza (Cuban)","Sindicato","Sinistro","Southern Draw",
+    "Stolen Throne","Sublimes","Sweet Jane","Tabak","Tatascan","Tatuaje","The American","Trinidad","Undercrown",
+    "United Cigars","VegaFina","VegaFina & Great Wall","Vegas","Vegas de Fonseca","Vegas del Purial","Vegas Robaina",
+    "Ventura Cigar Co.","Viaje","Villa Zamorano","Villiger","Viva La Vida","Warped","Warzone","West Tampa","Zino"
+  ];
+
+  // Contact info icons
   const CONTACT_ICON_BASE = "/img/icons/";
   const CONTACT_ICONS = {
     phone: `${CONTACT_ICON_BASE}blackphone.svg`,
     email: `${CONTACT_ICON_BASE}blackemail.svg`,
     address: `${CONTACT_ICON_BASE}blackaddress.svg`,
     birthday: `${CONTACT_ICON_BASE}blackbirthday.svg`,
-    cigarsocial: `${CONTACT_ICON_BASE}cigarsocial.svg`, // ✅ requested
+    // Try user-requested path first, then fallback (and never show broken-image ?)
+    cigarsocial_primary: `/img/icon/cigarsocial.svg`,
+    cigarsocial_fallback: `${CONTACT_ICON_BASE}blackprofile.svg`,
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -59,9 +98,6 @@
   const safeJSON = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
   const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const toStr = (v) => (v == null ? "" : String(v)).trim();
-
-  // In-memory cache
-  let BRANDS_CACHE = null;
 
   function getParam(name) {
     const u = new URL(window.location.href);
@@ -190,6 +226,8 @@
     img.src = src;
     img.alt = alt;
     img.loading = "lazy";
+    // never show broken icon placeholder
+    img.onerror = () => { img.style.display = "none"; };
     wrap.appendChild(img);
     return wrap;
   }
@@ -222,7 +260,7 @@
     return `$${x.toFixed(2)}`;
   }
 
-  // ---- Favorites parsing from legacy JSON-style columns ----
+  // ---- Favorites parsing from JSON-style columns ----
   function keyIsFavBrand(k) {
     const s = String(k || "").trim().toLowerCase();
     return s.startsWith("fav brand");
@@ -248,6 +286,18 @@
 
     pairs.sort((a, b) => a.n - b.n);
     return pairs.map((x) => x.v);
+  }
+
+  function setFavBrandsToColumns(c, brands) {
+    // clear existing Fav brand N keys
+    Object.keys(c || {}).forEach((k) => {
+      if (keyIsFavBrand(k)) delete c[k];
+    });
+
+    // write new keys: Fav brand 1..N
+    (brands || []).forEach((b, idx) => {
+      c[`Fav brand ${idx + 1}`] = String(b || "").trim();
+    });
   }
 
   function getFavCigarsFromColumns(c) {
@@ -291,7 +341,7 @@
     return raw ? `/pos/cigars/?q=${encodeURIComponent(raw)}` : "/pos/cigars/";
   }
 
-  // ---------- history ----------
+  // ---------- panels ----------
   function renderHistory(customer, sales) {
     const cid = String(customer.id);
     const phone = toStr(customer.phone);
@@ -353,7 +403,6 @@
     `;
   }
 
-  // ---------- contact tab ----------
   function getAddressRaw(c) {
     return toStr(c.address ?? c.Address ?? c["Address"] ?? "");
   }
@@ -393,8 +442,20 @@
     return toStr(c.birthday ?? c.Birthday ?? c["Birthday"] ?? c.dob ?? c.DOB ?? c["DOB"] ?? "");
   }
 
-  function iconIMG(src, alt) {
-    return `<img src="${src}" alt="${escapeAttr(alt || "")}" loading="lazy">`;
+  function iconIMG(src, alt, fallbackSrc) {
+    // Build an <img> that never shows the blue broken image placeholder
+    // and can swap to a fallback src once.
+    const safeAlt = escapeAttr(alt || "");
+    const safeSrc = escapeAttr(src || "");
+    const safeFallback = fallbackSrc ? escapeAttr(fallbackSrc) : "";
+
+    if (!safeFallback) {
+      return `<img src="${safeSrc}" alt="${safeAlt}" loading="lazy"
+        onerror="this.style.display='none';">`;
+    }
+
+    return `<img src="${safeSrc}" alt="${safeAlt}" loading="lazy"
+      onerror="if(!this.dataset.fbk){this.dataset.fbk='1';this.src='${safeFallback}';}else{this.style.display='none';}">`;
   }
 
   function renderContact(customer, editing) {
@@ -407,7 +468,7 @@
     const cigarSocial = getCigarSocial(customer);
     const bday = getBirthdayText(customer);
 
-    // ✅ Address is ONE row: one icon, one value block containing both lines.
+    // Address is ONE row: one icon, one value block containing both lines.
     const addressHTML = editing
       ? `
         <div class="v v-addr">
@@ -446,7 +507,7 @@
           <input class="lc-field" id="fBirthday" value="${escapeAttr(bday)}" ${editing ? "" : "readonly"} placeholder="August 15">
         </div>
 
-        <div class="ico">${iconIMG(CONTACT_ICONS.cigarsocial, "Cigar Social")}</div>
+        <div class="ico">${iconIMG(CONTACT_ICONS.cigarsocial_primary, "Cigar Social", CONTACT_ICONS.cigarsocial_fallback)}</div>
         <div class="v">
           <input class="lc-field" id="fCigarSocial" value="${escapeAttr(cigarSocial)}" ${editing ? "" : "readonly"} placeholder="@username">
         </div>
@@ -454,51 +515,146 @@
     `;
   }
 
-  // ---------- Favorite Brands: new array + legacy fallback ----------
-  function getFavoriteBrands(customer) {
-    const arr = customer?.favoriteBrands;
-    if (Array.isArray(arr) && arr.length) {
-      return arr.map(toStr).filter(Boolean);
-    }
-    // fallback legacy
-    return getFavBrandsFromColumns(customer);
+  // ----- Favorite Brands Editor (bottom sheet) -----
+  let brandSheet = null;
+  let brandBackdrop = null;
+  let brandSearch = null;
+  let brandListEl = null;
+  let brandDoneBtn = null;
+  let brandCloseBtn = null;
+
+  let brandDraftSelected = new Set();
+
+  function ensureBrandSheet() {
+    if (brandSheet) return;
+
+    brandBackdrop = document.createElement("div");
+    brandBackdrop.className = "lc-sheet-backdrop";
+    brandBackdrop.style.display = "none";
+
+    brandSheet = document.createElement("div");
+    brandSheet.className = "lc-sheet";
+    brandSheet.style.display = "none";
+
+    brandSheet.innerHTML = `
+      <div class="lc-sheet-head">
+        <button type="button" class="lc-sheet-x" aria-label="Close">Cancel</button>
+        <div class="lc-sheet-title">Favorite Brands</div>
+        <button type="button" class="lc-sheet-done" aria-label="Done">Done</button>
+      </div>
+
+      <div class="lc-sheet-search">
+        <input type="search" class="lc-sheet-input" placeholder="Search brands" autocomplete="off" />
+      </div>
+
+      <div class="lc-sheet-list" role="list"></div>
+    `;
+
+    document.body.appendChild(brandBackdrop);
+    document.body.appendChild(brandSheet);
+
+    brandSearch = brandSheet.querySelector(".lc-sheet-input");
+    brandListEl = brandSheet.querySelector(".lc-sheet-list");
+    brandDoneBtn = brandSheet.querySelector(".lc-sheet-done");
+    brandCloseBtn = brandSheet.querySelector(".lc-sheet-x");
+
+    const close = () => closeBrandSheet(false);
+
+    brandBackdrop.addEventListener("click", close);
+    brandCloseBtn.addEventListener("click", close);
+
+    brandDoneBtn.addEventListener("click", () => closeBrandSheet(true));
+
+    brandSearch.addEventListener("input", () => {
+      renderBrandSheetList(brandSearch.value || "");
+    });
   }
 
-  function setFavoriteBrands(customer, brands) {
-    const clean = (brands || [])
-      .map(toStr)
-      .filter(Boolean);
+  function openBrandSheet(customer) {
+    ensureBrandSheet();
 
-    // de-dupe, preserve order
-    const seen = new Set();
-    const deduped = [];
-    clean.forEach((b) => {
-      const key = b.toLowerCase();
-      if (seen.has(key)) return;
-      seen.add(key);
-      deduped.push(b);
+    // seed selection from current customer favorites
+    const current = getFavBrandsFromColumns(customer);
+    brandDraftSelected = new Set(current.map((x) => String(x).trim()).filter(Boolean));
+
+    brandSearch.value = "";
+    renderBrandSheetList("");
+
+    brandBackdrop.style.display = "block";
+    brandSheet.style.display = "block";
+
+    // iOS-ish: focus after animation
+    setTimeout(() => brandSearch.focus(), 50);
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeBrandSheet(apply) {
+    brandBackdrop.style.display = "none";
+    brandSheet.style.display = "none";
+    document.body.style.overflow = "";
+
+    if (!apply) return;
+
+    const customers = readCustomers();
+    const idx = customers.findIndex((c) => String(c.id) === String(activeCustomerId));
+    if (idx === -1) return;
+
+    const c = customers[idx];
+    const next = Array.from(brandDraftSelected).filter(Boolean);
+
+    // Keep order consistent with BRAND_MASTER (so it’s predictable)
+    const masterIndex = new Map(BRAND_MASTER.map((b, i) => [b, i]));
+    next.sort((a, b) => (masterIndex.get(a) ?? 999999) - (masterIndex.get(b) ?? 999999));
+
+    setFavBrandsToColumns(c, next);
+
+    c.updatedAt = new Date().toISOString();
+    customers[idx] = c;
+    writeCustomers(customers);
+
+    renderFavorites(c);
+  }
+
+  function renderBrandSheetList(query) {
+    const q = String(query || "").trim().toLowerCase();
+
+    const visible = BRAND_MASTER.filter((b) => {
+      if (!q) return true;
+      return String(b).toLowerCase().includes(q);
     });
 
-    customer.favoriteBrands = deduped;
+    brandListEl.innerHTML = visible.map((name) => {
+      const checked = brandDraftSelected.has(name);
+      const icon = brandIconPath(name);
+
+      // checkbox LEFT, icon MIDDLE, name RIGHT
+      return `
+        <label class="lc-brand-row" role="listitem">
+          <input class="lc-brand-check" type="checkbox" ${checked ? "checked" : ""} data-brand="${escapeAttr(name)}">
+          <img class="lc-brand-ico" src="${escapeAttr(icon)}" alt="${escapeAttr(name)}"
+               loading="lazy"
+               onerror="this.style.visibility='hidden';">
+          <span class="lc-brand-name">${escapeHTML(name)}</span>
+        </label>
+      `;
+    }).join("");
+
+    brandListEl.querySelectorAll(".lc-brand-check").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const b = cb.getAttribute("data-brand");
+        if (!b) return;
+        if (cb.checked) brandDraftSelected.add(b);
+        else brandDraftSelected.delete(b);
+      });
+    });
   }
 
-  // ---------- Favorites tab ----------
   function renderFavorites(customer) {
-    const brands = getFavoriteBrands(customer);
+    const brands = getFavBrandsFromColumns(customer);
     const cigars = getFavCigarsFromColumns(customer);
     const cigarIds = getFavCigarIdsFromColumns(customer);
 
-    const hasBrands = brands.length > 0;
-    const brandsActionLabel = hasBrands ? "Edit" : "Add";
-
-    const brandsHeaderHTML = `
-      <div class="lc-fav-head">
-        <div class="section-title lc-fav-title">Brands</div>
-        <button class="lc-fav-link" type="button" id="lcEditBrands">${brandsActionLabel}</button>
-      </div>
-    `;
-
-    const brandIconsHTML = hasBrands
+    const brandIconsHTML = brands.length
       ? `<div class="brand-icons">
           ${brands.map((b) => `
             <img src="${brandIconPath(b)}" alt="${escapeAttr(b)}" title="${escapeAttr(b)}" loading="lazy"
@@ -515,353 +671,25 @@
         </div>`
       : `<div class="empty-line">No favorite cigars yet</div>`;
 
+    // Add/Edit link is always visible, iOS blue, opens brand sheet
     panelFavorites.innerHTML = `
-      ${brandsHeaderHTML}
+      <div class="section-head">
+        <div class="section-title">Brands</div>
+        <a class="section-link" href="javascript:void(0)" id="favBrandsEditLink">Add / Edit</a>
+      </div>
       ${brandIconsHTML}
-      <div class="section-title">Cigars</div>
+
+      <div class="section-title" style="margin-top:14px;">Cigars</div>
       ${cigarPillsHTML}
     `;
 
-    // wire action
-    const btn = document.getElementById("lcEditBrands");
-    btn?.addEventListener("click", () => openBrandsSheet(customer));
-  }
-
-  // ---------- Brand picker bottom sheet ----------
-  function injectBrandSheetStylesOnce() {
-    if (document.getElementById("lcBrandSheetStyles")) return;
-    const style = document.createElement("style");
-    style.id = "lcBrandSheetStyles";
-    style.textContent = `
-      /* Favorites brands header row */
-      .lc-fav-head{
-        display:flex;
-        align-items:flex-end;
-        justify-content:space-between;
-        gap: 12px;
-      }
-      .lc-fav-title{ padding-bottom: 8px; }
-      .lc-fav-link{
-        border:0;
-        background:transparent;
-        color:#007aff;
-        font-size: 18px;
-        font-weight: 500; /* regular/medium */
-        padding: 16px 16px 8px;
-        -webkit-tap-highlight-color: transparent;
-      }
-
-      /* Bottom sheet */
-      .lc-sheet-backdrop{
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,.28);
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
-        display:flex;
-        align-items:flex-end;
-        justify-content:center;
-        z-index: 9999;
-      }
-      .lc-sheet{
-        width: min(520px, 100vw);
-        background: #fff;
-        border-radius: 18px 18px 0 0;
-        box-shadow: 0 -18px 60px rgba(0,0,0,.18);
-        overflow:hidden;
-        padding-bottom: calc(10px + env(safe-area-inset-bottom));
-      }
-      .lc-sheet-top{
-        padding: 12px 14px 10px;
-        border-bottom: 1px solid rgba(60,60,67,.12);
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap: 10px;
-      }
-      .lc-sheet-title{
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, Arial, sans-serif;
-        font-size: 18px;
-        font-weight: 700;
-        letter-spacing: -0.2px;
-      }
-      .lc-sheet-btn{
-        border:0;
-        background:transparent;
-        color:#007aff;
-        font-size: 16px;
-        font-weight: 600;
-        padding: 8px 6px;
-        -webkit-tap-highlight-color: transparent;
-      }
-      .lc-sheet-btn.muted{
-        color: rgba(60,60,67,.65);
-        font-weight: 600;
-      }
-      .lc-sheet-search{
-        padding: 10px 14px 12px;
-        border-bottom: 1px solid rgba(60,60,67,.12);
-      }
-      .lc-sheet-search input{
-        width:100%;
-        border:0;
-        outline:none;
-        border-radius: 12px;
-        background: #f2f2f7;
-        padding: 10px 12px;
-        font-size: 16px;
-        font-weight: 500;
-      }
-      .lc-sheet-list{
-        max-height: min(62vh, 520px);
-        overflow:auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      .lc-brand-row{
-        display:flex;
-        align-items:center;
-        gap: 12px;
-        padding: 12px 14px;
-        border-bottom: 1px solid rgba(60,60,67,.12);
-      }
-      .lc-brand-row:last-child{ border-bottom: none; }
-      .lc-brand-check{
-        width: 22px;
-        height: 22px;
-        border-radius: 6px;
-        border: 1.5px solid rgba(60,60,67,.35);
-        display:grid;
-        place-items:center;
-        flex: 0 0 auto;
-      }
-      .lc-brand-check.on{
-        background: #007aff;
-        border-color: #007aff;
-      }
-      .lc-brand-check svg{
-        width: 16px;
-        height: 16px;
-        fill:none;
-        stroke:#fff;
-        stroke-width: 2.8;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        opacity: 0;
-      }
-      .lc-brand-check.on svg{ opacity: 1; }
-      .lc-brand-icon{
-        width: 26px;
-        height: 26px;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 0 0 1px rgba(0,0,0,.06);
-        padding: 4px;
-        flex: 0 0 auto;
-        object-fit: contain;
-      }
-      .lc-brand-name{
-        flex:1;
-        min-width:0;
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, Arial, sans-serif;
-        font-size: 17px;
-        font-weight: 500; /* regular */
-        color: #111;
-        white-space: nowrap;
-        overflow:hidden;
-        text-overflow: ellipsis;
-      }
-      .lc-sheet-foot{
-        padding: 10px 14px 12px;
-        border-top: 1px solid rgba(60,60,67,.12);
-        display:flex;
-        justify-content:flex-end;
-      }
-      .lc-sheet-apply{
-        border:0;
-        border-radius: 12px;
-        background: #007aff;
-        color: #fff;
-        font-size: 16px;
-        font-weight: 700;
-        padding: 10px 14px;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  async function loadBrandsList() {
-    if (Array.isArray(BRANDS_CACHE) && BRANDS_CACHE.length) return BRANDS_CACHE;
-
-    try {
-      const res = await fetch(BRANDS_JSON_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`fetch ${BRANDS_JSON_URL} failed: ${res.status}`);
-      const data = await res.json();
-
-      const list = Array.isArray(data) ? data : (Array.isArray(data?.brands) ? data.brands : []);
-      const cleaned = list.map(toStr).filter(Boolean);
-
-      // de-dupe + sort A→Z
-      const map = new Map();
-      cleaned.forEach((b) => map.set(b.toLowerCase(), b));
-      BRANDS_CACHE = Array.from(map.values()).sort((a, b) => a.localeCompare(b));
-      return BRANDS_CACHE;
-    } catch (e) {
-      console.warn("[Contact] Could not load /data/brands.json", e);
-      BRANDS_CACHE = [];
-      return BRANDS_CACHE;
+    const link = document.getElementById("favBrandsEditLink");
+    if (link) {
+      link.addEventListener("click", () => {
+        // open selector for currently active customer
+        openBrandSheet(customer);
+      });
     }
-  }
-
-  function openBrandsSheet(customer) {
-    injectBrandSheetStylesOnce();
-
-    const current = getFavoriteBrands(customer);
-    const selected = new Set(current.map((x) => x.toLowerCase()));
-
-    const backdrop = document.createElement("div");
-    backdrop.className = "lc-sheet-backdrop";
-
-    const sheet = document.createElement("div");
-    sheet.className = "lc-sheet";
-    sheet.innerHTML = `
-      <div class="lc-sheet-top">
-        <button class="lc-sheet-btn muted" type="button" id="lcBrandReset">Reset</button>
-        <div class="lc-sheet-title">Favorite Brands</div>
-        <button class="lc-sheet-btn" type="button" id="lcBrandDone">Done</button>
-      </div>
-
-      <div class="lc-sheet-search">
-        <input id="lcBrandSearch" type="search" placeholder="Search brands" autocomplete="off" />
-      </div>
-
-      <div class="lc-sheet-list" id="lcBrandList">
-        <div style="padding:14px;color:rgba(60,60,67,.65);font-weight:600;">Loading…</div>
-      </div>
-
-      <div class="lc-sheet-foot">
-        <button class="lc-sheet-apply" type="button" id="lcBrandApply">Apply</button>
-      </div>
-    `;
-
-    backdrop.appendChild(sheet);
-    document.body.appendChild(backdrop);
-
-    const close = () => {
-      if (backdrop?.parentNode) backdrop.parentNode.removeChild(backdrop);
-    };
-
-    // click outside to close (no save)
-    backdrop.addEventListener("click", (e) => {
-      if (e.target === backdrop) close();
-    });
-
-    const listEl = sheet.querySelector("#lcBrandList");
-    const searchEl = sheet.querySelector("#lcBrandSearch");
-    const btnReset = sheet.querySelector("#lcBrandReset");
-    const btnDone = sheet.querySelector("#lcBrandDone");
-    const btnApply = sheet.querySelector("#lcBrandApply");
-
-    const checkSVG = `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20 6L9 17l-5-5"></path>
-      </svg>
-    `;
-
-    const renderList = (brands, q) => {
-      const query = toStr(q).toLowerCase();
-      const filtered = query
-        ? brands.filter((b) => b.toLowerCase().includes(query))
-        : brands;
-
-      if (!filtered.length) {
-        listEl.innerHTML = `<div style="padding:14px;color:rgba(60,60,67,.65);font-weight:600;">No matches</div>`;
-        return;
-      }
-
-      listEl.innerHTML = filtered.map((b) => {
-        const key = b.toLowerCase();
-        const on = selected.has(key);
-        const icon = brandIconPath(b);
-        return `
-          <div class="lc-brand-row" role="button" tabindex="0" data-brand="${escapeAttr(b)}">
-            <div class="lc-brand-check ${on ? "on" : ""}">${checkSVG}</div>
-            <img class="lc-brand-icon" src="${escapeAttr(icon)}" alt="${escapeAttr(b)}"
-                 onerror="this.style.display='none';" />
-            <div class="lc-brand-name">${escapeHTML(b)}</div>
-          </div>
-        `;
-      }).join("");
-
-      listEl.querySelectorAll(".lc-brand-row").forEach((row) => {
-        const b = row.getAttribute("data-brand") || "";
-        const key = b.toLowerCase();
-        const toggle = () => {
-          if (!b) return;
-          if (selected.has(key)) selected.delete(key);
-          else selected.add(key);
-
-          // flip UI
-          const box = row.querySelector(".lc-brand-check");
-          if (box) box.classList.toggle("on", selected.has(key));
-        };
-
-        row.addEventListener("click", toggle);
-        row.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toggle();
-          }
-        });
-      });
-    };
-
-    const applySave = () => {
-      // Save to the active customer in storage
-      const customers = readCustomers();
-      const idx = customers.findIndex((c) => String(c.id) === String(activeCustomerId));
-      if (idx === -1) return;
-
-      const c = customers[idx];
-
-      // Use original casing from master list if possible:
-      const allBrands = Array.isArray(BRANDS_CACHE) ? BRANDS_CACHE : [];
-      const pickedLower = Array.from(selected.values());
-
-      const picked = pickedLower.map((lower) => {
-        const found = allBrands.find((x) => x.toLowerCase() === lower);
-        return found || lower;
-      });
-
-      setFavoriteBrands(c, picked);
-      c.updatedAt = new Date().toISOString();
-
-      customers[idx] = c;
-      writeCustomers(customers);
-
-      // re-render favorites tab (and keep user there)
-      renderFavorites(c);
-
-      close();
-    };
-
-    btnApply?.addEventListener("click", applySave);
-    btnDone?.addEventListener("click", applySave);
-
-    btnReset?.addEventListener("click", () => {
-      selected.clear();
-      // reset to none
-      loadBrandsList().then((brands) => renderList(brands, searchEl?.value));
-    });
-
-    searchEl?.addEventListener("input", () => {
-      loadBrandsList().then((brands) => renderList(brands, searchEl.value));
-    });
-
-    // initial load
-    loadBrandsList().then((brands) => {
-      renderList(brands, "");
-      setTimeout(() => searchEl?.focus?.(), 50);
-    });
   }
 
   // ---------- edit mode ----------
