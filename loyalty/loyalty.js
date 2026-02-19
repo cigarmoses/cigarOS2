@@ -20,6 +20,13 @@
      ✅ Role filters: Military / Police / Firefighter / Paramedic (AND logic)
      ✅ Fav Brands multi-select, sourced from /data/brands.json
      ✅ Applied filter chips + clear per chip
+
+   PATCH (per screenshots):
+     ✅ Role icons show inside filter pills (Military/Police/Firefighter/Paramedic)
+     ✅ Role pill text weight -> regular + a bit larger (via JS-injected CSS override)
+     ✅ Brand icons show in filter brand list (left of name)
+     ✅ Brand icons are “full” (NO outline wrapper), sized larger
+     ✅ iOS keyboard: prevent sheet “dropping” by locking body scroll while sheet open
 */
 
 (() => {
@@ -46,6 +53,9 @@
     locker: `${ICON_BASE}locker.svg`,
     regular: `${ICON_BASE}regular.svg`,
   };
+
+  // ✅ Brand icon folder (per your repo memory): /img/icons/brands (plural)
+  const BRAND_ICON_BASE = "/img/icons/brands/";
 
   // ---------- DOM ----------
   const $ = (sel) => document.querySelector(sel);
@@ -112,7 +122,9 @@
   };
 
   // ---------- utils ----------
-  const safeJSON = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
+  const safeJSON = (s, fallback) => {
+    try { return JSON.parse(s); } catch { return fallback; }
+  };
   const writeJSON = (key, val) => localStorage.setItem(key, JSON.stringify(val));
   const norm = (s) => (s || "").toString().trim().toLowerCase();
   const toStr = (v) => (v == null ? "" : String(v)).trim();
@@ -244,6 +256,143 @@
     if (isLockerCustomer(c)) return "locker";
     if (isRegularCustomer(c)) return "regular";
     return null; // IMPORTANT: no default tier icon
+  }
+
+  // ---------- Brand icon helpers ----------
+  function slugifyBrand(name) {
+    return String(name || "")
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/['’]/g, "")
+      .replace(/[^a-z0-9]+/g, "")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function brandIconUrls(brandName) {
+    const slug = slugifyBrand(brandName);
+    return {
+      svg: `${BRAND_ICON_BASE}${slug}.svg`,
+      png: `${BRAND_ICON_BASE}${slug}.png`,
+    };
+  }
+
+  // ---------- iOS sheet stability (keyboard / viewport) ----------
+  let __sheetScrollY = 0;
+  function lockBodyForSheet() {
+    // prevent background scrolling + “drop” behavior
+    __sheetScrollY = window.scrollY || 0;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${__sheetScrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+  }
+  function unlockBodyForSheet() {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    window.scrollTo(0, __sheetScrollY || 0);
+  }
+
+  // ---------- CSS overrides (so you don’t have to chase inline CSS right now) ----------
+  function injectOverridesCSS() {
+    if (document.getElementById("loyOverridesCSS")) return;
+    const style = document.createElement("style");
+    style.id = "loyOverridesCSS";
+    style.textContent = `
+      /* Role pills: SF Pro Display regular + larger (override inline <style> weight=800) */
+      .pill-toggle{
+        font-family: var(--font-display) !important;
+        font-weight: 400 !important;
+        font-size: 16px !important;
+        letter-spacing: -0.1px !important;
+        gap: 10px !important;
+      }
+      .pill-toggle .mini{ display:none !important; } /* we use real icons instead */
+      .pill-toggle .role-ico{
+        width: 18px !important;
+        height: 18px !important;
+        display:block !important;
+        flex: 0 0 auto !important;
+        object-fit: contain !important;
+      }
+
+      /* Brand list: icon left, NO outline wrapper, bigger icon */
+      .brand-row{
+        padding: 12px 12px !important;
+      }
+      .brand-left{
+        display:flex !important;
+        align-items:center !important;
+        gap: 12px !important;
+        min-width: 0 !important;
+      }
+      .brand-ico{
+        width: 28px !important;
+        height: 28px !important;
+        display:block !important;
+        object-fit: contain !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+      }
+      .brand-name{
+        font-family: var(--font-display) !important;
+        font-weight: 400 !important;
+        font-size: 17px !important;
+        letter-spacing: -0.2px !important;
+      }
+
+      /* Make sure the sheet is the scroll container on iOS */
+      .sheet{ padding-bottom: env(safe-area-inset-bottom) !important; }
+      .sheet-body{ -webkit-overflow-scrolling: touch !important; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Ensure role pills contain icon <img> next to text
+  function initRolePillIcons() {
+    const map = {
+      Military: ICONS.military,
+      Police: ICONS.police,
+      Firefighter: ICONS.firefighter,
+      Paramedic: ICONS.paramedic,
+    };
+
+    roleButtons.forEach((btn) => {
+      const role = btn.getAttribute("data-role");
+      if (!role) return;
+
+      // If we already inserted an icon, skip
+      if (btn.querySelector("img.role-ico")) return;
+
+      // Insert icon at the start of the button contents
+      const src = map[role];
+      if (!src) return;
+
+      const img = document.createElement("img");
+      img.className = "role-ico";
+      img.src = src;
+      img.alt = "";
+      img.setAttribute("aria-hidden", "true");
+      img.loading = "lazy";
+      img.onerror = () => { img.remove(); }; // if path wrong, fail gracefully
+
+      // Remove the dot if present
+      const mini = btn.querySelector(".mini");
+      if (mini) mini.remove();
+
+      // Put icon first
+      btn.insertBefore(img, btn.firstChild);
+    });
   }
 
   // ---------- data access ----------
@@ -728,6 +877,10 @@
   function openFilters() {
     if (!filterSheet || !filterBackdrop) return;
 
+    // ✅ Ensure visual styling + role pill icons exist every time
+    injectOverridesCSS();
+    initRolePillIcons();
+
     state.draftFilters = cloneFilters(state.filters);
     state.brandQuery = "";
     if (brandSearchEl) brandSearchEl.value = "";
@@ -742,10 +895,15 @@
     // build list
     renderBrandList();
 
+    // ✅ Lock background scroll (iOS keyboard stability)
+    lockBodyForSheet();
+
     filterBackdrop.classList.add("open");
     filterSheet.classList.add("open");
 
-    setTimeout(() => brandSearchEl?.focus?.(), 50);
+    // Don’t auto-focus on iOS (it tends to jump the sheet). User can tap.
+    // If you want it, uncomment:
+    // setTimeout(() => brandSearchEl?.focus?.(), 50);
   }
 
   function closeFilters() {
@@ -753,6 +911,9 @@
     filterSheet.classList.remove("open");
     filterBackdrop.classList.remove("open");
     state.draftFilters = null;
+
+    // ✅ restore scroll
+    unlockBodyForSheet();
   }
 
   function resetDraftFilters() {
@@ -820,9 +981,16 @@
 
     brandListEl.innerHTML = filtered.slice(0, 250).map((b) => {
       const on = selSet.has(norm(b));
+      const { svg, png } = brandIconUrls(b);
+
       return `
         <div class="brand-row ${on ? "on" : ""}" data-brand="${escapeHTML(b)}" role="button" tabindex="0">
-          <div class="brand-name">${escapeHTML(b)}</div>
+          <div class="brand-left">
+            <img class="brand-ico" src="${svg}" alt="" aria-hidden="true"
+                 loading="lazy"
+                 onerror="this.onerror=null; this.src='${png}';" />
+            <div class="brand-name">${escapeHTML(b)}</div>
+          </div>
           <div class="brand-check">${checkSVG}</div>
         </div>
       `;
@@ -975,11 +1143,17 @@
 
   // ---------- load ----------
   async function loadAndRender() {
+    // ensure our CSS overrides exist once
+    injectOverridesCSS();
+
     state.sales = readSales();
     state.customers = await seedCustomersFromJSONIfNeeded();
 
     // load brands once
     await loadBrandsIfNeeded();
+
+    // ensure role pill icons exist once DOM is ready
+    initRolePillIcons();
 
     render();
   }
