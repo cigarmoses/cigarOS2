@@ -107,7 +107,7 @@
       line-height: 0;
       padding: 0;
       cursor: pointer;
-      display: none;
+      display: none; /* shown only on All tab via JS */
       align-items: center;
       justify-content: center;
     }
@@ -155,12 +155,13 @@
     /* Search */
     .search-wrap { margin-top: 12px; }
 
+    /* ✅ iOS: prevent zoom/reflow while typing (>=16px) */
     .search-input {
       width: 100%;
-      padding: 9px 12px;
+      padding: 10px 12px;
       border-radius: 10px;
       border: none;
-      font-size: 15px;
+      font-size: 16px;
       outline: none;
       background: #ffffff;
       box-shadow: 0 0 0 .5px rgba(0,0,0,.12);
@@ -219,7 +220,7 @@
     .row {
       min-height: 44px;
       padding: 10px 14px;
-      padding-right: 22px;
+      padding-right: 22px; /* reserve for AZ index breathing room */
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -227,7 +228,7 @@
       border-bottom: 1px solid var(--hairline);
       cursor: pointer;
       background: #fff;
-      position: relative;
+      position: relative; /* needed because row-right is absolute */
     }
     .row:last-child { border-bottom: none; }
 
@@ -248,7 +249,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      padding-right: 86px;
+      padding-right: 86px; /* room so text doesn't sit under icons */
     }
 
     .name-last{ font-weight: 800; }
@@ -263,9 +264,10 @@
       color: rgba(17,17,17,.9);
     }
 
+    /* ICON cluster (RIGHT SIDE) */
     .row-right{
       position: absolute;
-      right: 28px;
+      right: 28px; /* leaves room for AZ index */
       top: 50%;
       transform: translateY(-50%);
       display: inline-flex;
@@ -274,12 +276,20 @@
       pointer-events: none;
     }
 
+    /* ✅ ICON SIZE FIX */
     .loy-ico{
       width: 18px;
       height: 18px;
       display: block;
       object-fit: contain;
       flex: 0 0 auto;
+    }
+
+    .empty-state {
+      padding: 16px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--muted);
     }
 
     footer {
@@ -367,11 +377,10 @@
       transform: translateY(110%);
       transition: transform .22s ease;
       z-index: 201;
-      max-height: min(82vh, calc(100dvh - 16px));
+      max-height: 82vh;
       overflow: hidden;
       display:flex;
       flex-direction: column;
-      padding-bottom: env(safe-area-inset-bottom);
     }
     .sheet.open{
       transform: translateY(0);
@@ -400,7 +409,7 @@
       justify-content: space-between;
       gap: 12px;
       border-bottom: 1px solid rgba(0,0,0,.08);
-      background:#fff;
+      background: #fff;
     }
     .sheet-title{
       font-family: var(--font-display);
@@ -431,6 +440,7 @@
       overflow:auto;
       -webkit-overflow-scrolling: touch;
       flex: 1;
+      background: #fff;
     }
     .sheet-section{
       margin-top: 12px;
@@ -462,12 +472,11 @@
       align-items:center;
       gap: 10px;
       line-height: 1;
-      color: var(--ios-blue);
     }
     .pill-toggle.on{
       border-color: rgba(0,122,255,.35);
       background: rgba(0,122,255,.08);
-      color: var(--ios-blue);
+      color: #111;
     }
     .pill-toggle .mini{
       width: 8px;
@@ -478,14 +487,8 @@
     .pill-toggle.on .mini{
       background: var(--ios-blue);
     }
-    .role-ico{
-      width: 18px;
-      height: 18px;
-      display:block;
-      object-fit: contain;
-      flex: 0 0 auto;
-    }
 
+    /* ✅ iOS: prevent zoom/reflow while typing (>=16px) */
     .sheet-search{
       width:100%;
       border:none;
@@ -493,7 +496,7 @@
       background: #f2f2f7;
       border-radius: 12px;
       padding: 10px 12px;
-      font-size: 15px;
+      font-size: 16px;
       box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
     }
 
@@ -505,13 +508,13 @@
       overflow:hidden;
     }
 
-    /* Brand row now supports icon + name + checkbox */
+    /* Brand row (now supports icon + regular-weight SF Pro Display) */
     .brand-row{
       display:flex;
       align-items:center;
       justify-content: space-between;
       gap: 12px;
-      padding: 14px 12px;
+      padding: 12px 12px;
       border-bottom: 1px solid rgba(0,0,0,.08);
       cursor:pointer;
     }
@@ -525,20 +528,20 @@
     }
 
     .brand-ico{
-      width: 28px;
-      height: 28px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
-      background:#fff;
-      box-shadow: 0 0 0 1px rgba(0,0,0,.10);
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
       object-fit: contain;
-      padding: 5px;
       flex: 0 0 auto;
     }
 
+    /* ✅ requested: SF Pro Display "regular" + a bit larger */
     .brand-name{
       font-family: var(--font-display);
-      font-size: 17px;   /* ✅ bigger */
-      font-weight: 400;  /* ✅ Regular */
+      font-size: 18px;
+      font-weight: 400;
       color: #111;
       white-space: nowrap;
       overflow:hidden;
@@ -622,13 +625,62 @@
     </div>
 
     <div id="summary" class="summary"></div>
+
     <div id="chips" class="chips" aria-label="Applied filters"></div>
+
     <div id="list" class="list"></div>
 
     <footer>CigarOS2 • Loyalty</footer>
   </div>
 
   <div id="azIndex" class="az-index" aria-hidden="true"></div>
+
+  <!-- Add Customer Dialog -->
+  <dialog id="addCustomerDialog">
+    <div class="dlg-wrap">
+      <div class="dlg-title">Add Customer</div>
+      <div class="dlg-sub">First, last, cell, email (for now)</div>
+
+      <div class="dlg-form">
+        <input id="acFirst" class="dlg-input" placeholder="First name" autocomplete="off" />
+        <input id="acLast" class="dlg-input" placeholder="Last name" autocomplete="off" />
+        <input id="acPhone" class="dlg-input" placeholder="Cell" inputmode="tel" autocomplete="off" />
+        <input id="acEmail" class="dlg-input" placeholder="Email" inputmode="email" autocomplete="off" />
+      </div>
+
+      <div class="dlg-actions">
+        <button id="acCancel" class="btn btn-cancel" type="button">Cancel</button>
+        <button id="acSave" class="btn btn-save" type="button">Save</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Profile Popup (WHITE, NO DONE) -->
+  <dialog id="profileDialog">
+    <div class="p-wrap">
+      <div class="p-top">
+        <div>
+          <div id="pName" class="p-name">
+            <span class="pn-first"></span>
+            <span class="pn-last"></span>
+          </div>
+
+          <div id="pAka" class="p-aka" style="display:none;"></div>
+          <div id="pTier" class="p-sub"></div>
+        </div>
+
+        <div id="pPointsPill" class="p-pill">0</div>
+      </div>
+
+      <div id="pDetails" class="p-details">—</div>
+
+      <div class="p-divider"></div>
+    </div>
+
+    <div class="p-actions">
+      <button id="pCloseX" class="p-close" type="button" aria-label="Close">X</button>
+    </div>
+  </dialog>
 
   <!-- Filters Sheet -->
   <div id="filterBackdrop" class="sheet-backdrop" aria-hidden="true"></div>
@@ -648,29 +700,10 @@
       <div class="sheet-section">
         <div class="sheet-label">Roles</div>
         <div class="pill-row">
-          <button class="pill-toggle" type="button" data-role="Military">
-            <span class="mini"></span>
-            <img class="role-ico" src="/img/icons/loyalty/military.svg" alt="" onerror="this.style.display='none'">
-            Military
-          </button>
-
-          <button class="pill-toggle" type="button" data-role="Police">
-            <span class="mini"></span>
-            <img class="role-ico" src="/img/icons/loyalty/police.svg" alt="" onerror="this.style.display='none'">
-            Police
-          </button>
-
-          <button class="pill-toggle" type="button" data-role="Firefighter">
-            <span class="mini"></span>
-            <img class="role-ico" src="/img/icons/loyalty/firefighter.svg" alt="" onerror="this.style.display='none'">
-            Firefighter
-          </button>
-
-          <button class="pill-toggle" type="button" data-role="Paramedic">
-            <span class="mini"></span>
-            <img class="role-ico" src="/img/icons/loyalty/paramedic.svg" alt="" onerror="this.style.display='none'">
-            Paramedic
-          </button>
+          <button class="pill-toggle" type="button" data-role="Military"><span class="mini"></span>Military</button>
+          <button class="pill-toggle" type="button" data-role="Police"><span class="mini"></span>Police</button>
+          <button class="pill-toggle" type="button" data-role="Firefighter"><span class="mini"></span>Firefighter</button>
+          <button class="pill-toggle" type="button" data-role="Paramedic"><span class="mini"></span>Paramedic</button>
         </div>
       </div>
 
@@ -691,149 +724,5 @@
   </button>
 
   <script src="/loyalty/loyalty.js" defer></script>
-
-  <!-- ✅ PATCH: brand icons + font regular + prevent keyboard drop -->
-  <script>
-    (function(){
-      const BRAND_ICON_BASE = "/img/icons/brands/";
-      const sheet = document.getElementById("filterSheet");
-      const backdrop = document.getElementById("filterBackdrop");
-      const brandList = document.getElementById("brandList");
-      const brandSearch = document.getElementById("brandSearch");
-
-      function slugifyBrand(name){
-        return String(name || "")
-          .trim()
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "");
-      }
-
-      function ensureBrandRowLayout(row){
-        if (!row || row.dataset.patched === "1") return;
-
-        const nameEl = row.querySelector(".brand-name");
-        const checkEl = row.querySelector(".brand-check");
-        if (!nameEl || !checkEl) return;
-
-        // wrap left side (icon + name)
-        const left = document.createElement("div");
-        left.className = "brand-left";
-
-        const brandName = (nameEl.textContent || "").trim();
-        const ico = document.createElement("img");
-        ico.className = "brand-ico";
-        const slug = slugifyBrand(brandName);
-        ico.src = BRAND_ICON_BASE + slug + ".svg";
-        ico.alt = "";
-        ico.loading = "lazy";
-        ico.onerror = function(){
-          // optional png fallback
-          if (!ico.dataset.fbk){
-            ico.dataset.fbk = "1";
-            ico.src = BRAND_ICON_BASE + slug + ".png";
-          } else {
-            ico.style.display = "none";
-          }
-        };
-
-        // move name into left wrapper
-        left.appendChild(ico);
-        left.appendChild(nameEl);
-
-        // insert left wrapper before checkbox
-        row.insertBefore(left, checkEl);
-
-        // typography cleanup (in case JS re-inlines)
-        nameEl.style.fontWeight = "400";
-        nameEl.style.fontSize = "17px";
-
-        row.dataset.patched = "1";
-      }
-
-      function patchAllBrandRows(){
-        if (!brandList) return;
-        brandList.querySelectorAll(".brand-row").forEach(ensureBrandRowLayout);
-      }
-
-      // Watch brandList re-rendering
-      if (brandList){
-        const obs = new MutationObserver(() => patchAllBrandRows());
-        obs.observe(brandList, { childList: true, subtree: true });
-      }
-
-      // ===== prevent "typing 3rd character drops sheet" =====
-      let scrollY = 0;
-
-      function lockPage(){
-        scrollY = window.scrollY || 0;
-        document.body.style.position = "fixed";
-        document.body.style.top = (-scrollY) + "px";
-        document.body.style.left = "0";
-        document.body.style.right = "0";
-        document.body.style.width = "100%";
-      }
-
-      function unlockPage(){
-        const top = document.body.style.top;
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.left = "";
-        document.body.style.right = "";
-        document.body.style.width = "";
-        const y = top ? Math.abs(parseInt(top, 10) || 0) : scrollY;
-        window.scrollTo(0, y);
-      }
-
-      function isOpen(){
-        return sheet && sheet.classList.contains("open");
-      }
-
-      function applyViewportHeight(){
-        if (!sheet) return;
-        const vv = window.visualViewport;
-        if (!vv) return;
-        // keep sheet inside visible viewport when keyboard opens
-        sheet.style.maxHeight = "calc(" + vv.height + "px - 16px)";
-      }
-
-      // detect open/close by class changes
-      const openObs = new MutationObserver(() => {
-        if (isOpen()){
-          lockPage();
-          applyViewportHeight();
-        } else {
-          sheet.style.maxHeight = "min(82vh, calc(100dvh - 16px))";
-          unlockPage();
-        }
-      });
-
-      if (sheet) openObs.observe(sheet, { attributes: true, attributeFilter: ["class"] });
-      if (backdrop) openObs.observe(backdrop, { attributes: true, attributeFilter: ["class"] });
-
-      if (window.visualViewport){
-        window.visualViewport.addEventListener("resize", () => {
-          if (isOpen()) applyViewportHeight();
-        });
-      }
-
-      // keep results visible while typing
-      if (brandSearch){
-        brandSearch.addEventListener("focus", () => {
-          if (isOpen()) applyViewportHeight();
-          // nudge scroll so list stays visible
-          requestAnimationFrame(() => {
-            const body = sheet ? sheet.querySelector(".sheet-body") : null;
-            if (body) body.scrollTop = 0;
-          });
-        });
-        brandSearch.addEventListener("input", () => {
-          patchAllBrandRows();
-        });
-      }
-
-      // initial patch attempt
-      setTimeout(patchAllBrandRows, 250);
-    })();
-  </script>
 </body>
 </html>
