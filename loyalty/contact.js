@@ -7,13 +7,12 @@
    5) Edit mode shows First + Last name inputs (last name no longer missing)
    6) Cigar Social icon pulls from /img/icons/cigarsocial.svg (fallback to blackprofile)
    7) Favorite brand picker:
-      - scrolls to bottom
       - search works for "Padron", "Opus X", "opusx"
       - never closes while typing
 
-   NEW (your requests):
-   ✅ Add/Edit link sits inline next to "Brands"
-   ✅ Brand sheet rows: bigger REGULAR text + icons x2 + content inset/center
+   NEW:
+   ✅ Favorites "Add / Edit" sits next to "Brands"
+   ✅ Brand picker list uses CSS classes (regular font, bigger, icon x2)
 */
 
 (() => {
@@ -477,9 +476,9 @@
   function renderFavoritesPanel(customer) {
     const favBrands = getFavBrands(customer);
 
-    // ✅ Brands + Add/Edit inline
+    // ✅ Add/Edit link sits next to title
     const brandsHeader = `
-      <div class="section-title-row">
+      <div class="section-head">
         <div class="section-title">Brands</div>
         <a class="section-link" href="#" id="favBrandsEditLink">Add / Edit</a>
       </div>
@@ -494,7 +493,7 @@
         </div>`
       : `<div class="empty-line">No favorite brands yet</div>`;
 
-    const cigarsHeader = `<div class="section-title" style="padding:16px 16px 8px;">Cigars</div>`;
+    const cigarsHeader = `<div class="section-title">Cigars</div>`;
     const cigarsBody = `<div class="empty-line">No favorite cigars yet</div>`;
 
     panelFavorites.innerHTML = `
@@ -618,7 +617,7 @@
         return `
           <label class="lc-brand-row">
             <input class="lc-brand-check" type="checkbox" data-brand="${escapeAttr(b)}" ${checked} />
-            <img class="lc-brand-icon" src="${escapeAttr(icon)}" alt=""
+            <img class="lc-brand-ico" src="${escapeAttr(icon)}" alt="${escapeAttr(b)}"
               onerror="this.style.display='none';" />
             <div class="lc-brand-name">${escapeHTML(b)}</div>
           </label>
