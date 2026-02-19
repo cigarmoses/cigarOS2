@@ -132,7 +132,7 @@
       border-radius: 999px;
       background: var(--seg-bg);
       border: 1px solid var(--seg-border);
-      margin-top: 0; /* moved to row container */
+      margin-top: 0;
       flex: 0 0 auto;
     }
 
@@ -154,7 +154,7 @@
       box-shadow: 0 1px 1px rgba(0,0,0,.12);
     }
 
-    /* ✅ NEW: Row that holds tabs + Filters button */
+    /* Tabs row + Filters button */
     .loy-header-row{
       display:flex;
       align-items:center;
@@ -288,7 +288,6 @@
       pointer-events: none;
     }
 
-    /* ✅ ICON SIZE FIX */
     .loy-ico{
       width: 18px;
       height: 18px;
@@ -345,169 +344,6 @@
       background: rgba(0,122,255,.12);
     }
 
-    /* Add Customer dialog */
-    dialog#addCustomerDialog{
-      border: none;
-      border-radius: 18px;
-      padding: 0;
-      width: 92vw;
-      max-width: 520px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.25);
-      overflow: hidden;
-      background: #fff;
-    }
-    .dlg-wrap{
-      padding: 14px 14px 12px;
-      background: #fff;
-      font-family: var(--font-text);
-    }
-    .dlg-title{
-      font-family: var(--font-display);
-      font-weight: 800;
-      font-size: 20px;
-      line-height: 1.2;
-    }
-    .dlg-sub{
-      margin-top: 4px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .dlg-form{
-      margin-top: 12px;
-      display: grid;
-      gap: 10px;
-    }
-    .dlg-input{
-      width: 100%;
-      border: 1px solid rgba(0,0,0,.12);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 15px;
-      outline: none;
-    }
-    .dlg-actions{
-      margin-top: 14px;
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      padding-top: 12px;
-      border-top: 1px solid rgba(0,0,0,.08);
-    }
-    .btn{
-      border: none;
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 15px;
-    }
-    .btn-cancel{ background: rgba(0,0,0,.06); color: #111; }
-    .btn-save{ background: var(--ios-green); color: #fff; }
-
-    /* ===== Profile Popup (WHITE background, no Done button) ===== */
-    dialog#profileDialog{
-      border: none;
-      padding: 0;
-      width: 92vw;
-      max-width: 560px;
-      border-radius: 18px;
-      overflow: hidden;
-      background: #fff; /* popup background white */
-      box-shadow: 0 24px 70px rgba(0,0,0,.28);
-    }
-    dialog#profileDialog::backdrop{
-      background: rgba(0,0,0,.25);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-    }
-
-    .p-wrap{
-      padding: 16px 16px 10px;
-      background: #fff;
-      font-family: var(--font-text);
-    }
-
-    .p-top{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 12px;
-    }
-
-    .p-name{
-      font-family: var(--font-display);
-      font-weight: 900;
-      font-size: 54px;
-      line-height: .92;
-      letter-spacing: -0.8px;
-      margin: 0;
-    }
-    .p-name .pn-first{ display:block; }
-    .p-name .pn-last{ display:block; }
-
-    .p-sub{
-      margin-top: 6px;
-      font-size: 22px;
-      line-height: 1.1;
-      color: rgba(17,17,17,.62);
-      font-weight: 700;
-    }
-    .p-aka{
-      display:block;
-      margin-top: 2px;
-      font-size: 20px;
-      color: rgba(17,17,17,.55);
-      font-weight: 700;
-    }
-
-    .p-pill{
-      flex: 0 0 auto;
-      margin-top: 6px;
-      background: var(--ios-green);
-      color: #fff;
-      font-weight: 800;
-      font-size: 18px;
-      line-height: 1;
-      padding: 8px 14px;
-      border-radius: 8px;
-      min-width: 58px;
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .p-details{
-      margin-top: 18px;
-      color: rgba(17,17,17,.55);
-      font-size: 18px;
-      line-height: 1.25;
-      white-space: pre-line;
-    }
-
-    .p-divider{
-      margin-top: 14px;
-      height: 1px;
-      background: rgba(0,0,0,.10);
-    }
-
-    .p-actions{
-      padding: 10px 16px 14px;
-      background: #fff;
-      display:flex;
-      align-items:center;
-      justify-content: flex-start; /* only X on left */
-    }
-
-    .p-close{
-      border: none;
-      background: transparent;
-      color: #ff3b30;
-      font-size: 22px;
-      font-weight: 900;
-      cursor: pointer;
-      padding: 8px 8px;
-      border-radius: 10px;
-    }
-
     /* Tony FAB */
     .tony-fab {
       position: fixed;
@@ -521,7 +357,6 @@
       padding: 0;
       z-index: 40;
     }
-
     .tony-fab img {
       width: 100%;
       height: 100%;
@@ -557,12 +392,9 @@
       display:flex;
       flex-direction: column;
     }
-    .sheet.open{
-      transform: translateY(0);
-    }
-    .sheet-backdrop.open{
-      display:block;
-    }
+    .sheet.open{ transform: translateY(0); }
+    .sheet-backdrop.open{ display:block; }
+
     .sheet-grab{
       height: 18px;
       display:flex;
@@ -577,6 +409,7 @@
       border-radius: 999px;
       background: rgba(0,0,0,.18);
     }
+
     .sheet-head{
       padding: 10px 14px 8px;
       display:flex;
@@ -609,16 +442,17 @@
       color: rgba(0,0,0,.45);
       font-weight: 800;
     }
+
     .sheet-body{
       padding: 12px 14px 14px;
       overflow:auto;
       -webkit-overflow-scrolling: touch;
       flex: 1;
     }
-    .sheet-section{
-      margin-top: 12px;
-    }
+
+    .sheet-section{ margin-top: 12px; }
     .sheet-section:first-child{ margin-top: 0; }
+
     .sheet-label{
       font-size: 12px;
       font-weight: 800;
@@ -633,6 +467,8 @@
       flex-wrap: wrap;
       gap: 10px;
     }
+
+    /* ✅ Role pill icons */
     .pill-toggle{
       border: 1px solid rgba(0,0,0,.14);
       background: #fff;
@@ -656,9 +492,17 @@
       height: 8px;
       border-radius: 999px;
       background: rgba(0,0,0,.22);
+      flex: 0 0 auto;
     }
     .pill-toggle.on .mini{
       background: var(--ios-blue);
+    }
+    .pill-ico{
+      width: 18px;
+      height: 18px;
+      display:block;
+      object-fit: contain;
+      flex: 0 0 auto;
     }
 
     .sheet-search{
@@ -672,6 +516,7 @@
       box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
     }
 
+    /* Brand list */
     .brand-list{
       margin-top: 10px;
       background: #fff;
@@ -689,6 +534,27 @@
       cursor:pointer;
     }
     .brand-row:last-child{ border-bottom:none; }
+
+    /* ✅ Brand icon LEFT of name */
+    .brand-left{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+    .brand-ico{
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      display:block;
+      object-fit: contain;
+      flex: 0 0 auto;
+      background: #fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.06);
+      padding: 4px;
+    }
+
     .brand-name{
       font-size: 15px;
       font-weight: 700;
@@ -696,7 +562,9 @@
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
+      min-width: 0;
     }
+
     .brand-check{
       width: 22px;
       height: 22px;
@@ -750,7 +618,6 @@
       <a href="javascript:history.back()" class="back-link">← Back</a>
 
       <div class="topbar-right">
-        <!-- Filters button MOVED DOWN next to Regulars tab -->
         <button id="addCustomerBtn" class="add-btn" type="button" aria-label="Add customer">
           <span>+</span>
         </button>
@@ -759,7 +626,6 @@
 
     <h1 class="page-title">Loyalty</h1>
 
-    <!-- ✅ NEW: Tabs row + Filters button (right side) -->
     <div class="loy-header-row">
       <div class="mode-toggle">
         <button class="mode-btn active" data-mode="all">All</button>
@@ -778,62 +644,13 @@
     </div>
 
     <div id="summary" class="summary"></div>
-
     <div id="chips" class="chips" aria-label="Applied filters"></div>
-
     <div id="list" class="list"></div>
 
     <footer>CigarOS2 • Loyalty</footer>
   </div>
 
   <div id="azIndex" class="az-index" aria-hidden="true"></div>
-
-  <!-- Add Customer Dialog -->
-  <dialog id="addCustomerDialog">
-    <div class="dlg-wrap">
-      <div class="dlg-title">Add Customer</div>
-      <div class="dlg-sub">First, last, cell, email (for now)</div>
-
-      <div class="dlg-form">
-        <input id="acFirst" class="dlg-input" placeholder="First name" autocomplete="off" />
-        <input id="acLast" class="dlg-input" placeholder="Last name" autocomplete="off" />
-        <input id="acPhone" class="dlg-input" placeholder="Cell" inputmode="tel" autocomplete="off" />
-        <input id="acEmail" class="dlg-input" placeholder="Email" inputmode="email" autocomplete="off" />
-      </div>
-
-      <div class="dlg-actions">
-        <button id="acCancel" class="btn btn-cancel" type="button">Cancel</button>
-        <button id="acSave" class="btn btn-save" type="button">Save</button>
-      </div>
-    </div>
-  </dialog>
-
-  <!-- Profile Popup (WHITE, NO DONE) -->
-  <dialog id="profileDialog">
-    <div class="p-wrap">
-      <div class="p-top">
-        <div>
-          <div id="pName" class="p-name">
-            <span class="pn-first"></span>
-            <span class="pn-last"></span>
-          </div>
-
-          <div id="pAka" class="p-aka" style="display:none;"></div>
-          <div id="pTier" class="p-sub"></div>
-        </div>
-
-        <div id="pPointsPill" class="p-pill">0</div>
-      </div>
-
-      <div id="pDetails" class="p-details">—</div>
-
-      <div class="p-divider"></div>
-    </div>
-
-    <div class="p-actions">
-      <button id="pCloseX" class="p-close" type="button" aria-label="Close">X</button>
-    </div>
-  </dialog>
 
   <!-- Filters Sheet -->
   <div id="filterBackdrop" class="sheet-backdrop" aria-hidden="true"></div>
@@ -853,10 +670,33 @@
       <div class="sheet-section">
         <div class="sheet-label">Roles</div>
         <div class="pill-row">
-          <button class="pill-toggle" type="button" data-role="Military"><span class="mini"></span>Military</button>
-          <button class="pill-toggle" type="button" data-role="Police"><span class="mini"></span>Police</button>
-          <button class="pill-toggle" type="button" data-role="Firefighter"><span class="mini"></span>Firefighter</button>
-          <button class="pill-toggle" type="button" data-role="Paramedic"><span class="mini"></span>Paramedic</button>
+          <button class="pill-toggle" type="button" data-role="Military">
+            <span class="mini"></span>
+            <img class="pill-ico" src="/img/icons/loyalty/military.svg" alt="" aria-hidden="true"
+              onerror="this.style.display='none';" />
+            Military
+          </button>
+
+          <button class="pill-toggle" type="button" data-role="Police">
+            <span class="mini"></span>
+            <img class="pill-ico" src="/img/icons/loyalty/police.svg" alt="" aria-hidden="true"
+              onerror="this.style.display='none';" />
+            Police
+          </button>
+
+          <button class="pill-toggle" type="button" data-role="Firefighter">
+            <span class="mini"></span>
+            <img class="pill-ico" src="/img/icons/loyalty/firefighter.svg" alt="" aria-hidden="true"
+              onerror="this.style.display='none';" />
+            Firefighter
+          </button>
+
+          <button class="pill-toggle" type="button" data-role="Paramedic">
+            <span class="mini"></span>
+            <img class="pill-ico" src="/img/icons/loyalty/paramedic.svg" alt="" aria-hidden="true"
+              onerror="this.style.display='none';" />
+            Paramedic
+          </button>
         </div>
       </div>
 
