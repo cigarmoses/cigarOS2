@@ -82,6 +82,7 @@
       gap: 8px;
       box-shadow: 0 1px 0 rgba(0,0,0,.08);
       -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
     }
     .filters-btn .dot{
       width: 7px;
@@ -131,7 +132,8 @@
       border-radius: 999px;
       background: var(--seg-bg);
       border: 1px solid var(--seg-border);
-      margin-top: 12px;
+      margin-top: 0; /* moved to row container */
+      flex: 0 0 auto;
     }
 
     .mode-btn {
@@ -150,6 +152,17 @@
       background: #ffffff;
       color: #111;
       box-shadow: 0 1px 1px rgba(0,0,0,.12);
+    }
+
+    /* ✅ NEW: Row that holds tabs + Filters button */
+    .loy-header-row{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .loy-header-row .filters-btn{
+      margin-left: auto;
     }
 
     /* Search */
@@ -737,11 +750,7 @@
       <a href="javascript:history.back()" class="back-link">← Back</a>
 
       <div class="topbar-right">
-        <button id="filtersBtn" class="filters-btn" type="button" aria-label="Filters">
-          <span class="dot" aria-hidden="true"></span>
-          Filters
-        </button>
-
+        <!-- Filters button MOVED DOWN next to Regulars tab -->
         <button id="addCustomerBtn" class="add-btn" type="button" aria-label="Add customer">
           <span>+</span>
         </button>
@@ -750,10 +759,18 @@
 
     <h1 class="page-title">Loyalty</h1>
 
-    <div class="mode-toggle">
-      <button class="mode-btn active" data-mode="all">All</button>
-      <button class="mode-btn" data-mode="regular">Regulars</button>
-      <button class="mode-btn" data-mode="lockers">Lockers</button>
+    <!-- ✅ NEW: Tabs row + Filters button (right side) -->
+    <div class="loy-header-row">
+      <div class="mode-toggle">
+        <button class="mode-btn active" data-mode="all">All</button>
+        <button class="mode-btn" data-mode="regular">Regulars</button>
+        <button class="mode-btn" data-mode="lockers">Lockers</button>
+      </div>
+
+      <button id="filtersBtn" class="filters-btn" type="button" aria-label="Filters">
+        <span class="dot" aria-hidden="true"></span>
+        Filters
+      </button>
     </div>
 
     <div class="search-wrap">
