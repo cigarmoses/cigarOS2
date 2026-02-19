@@ -7,6 +7,8 @@
 
    Updates included:
    ✅ Body text in Contact tab is NOT bold (Regular)
+   ✅ Brand picker rows: centered, larger icons (x2), larger text, REGULAR weight
+   ✅ Brands header: Add/Edit sits inline next to “Brands” (CSS support)
 */
 
 :root{
@@ -432,21 +434,28 @@ body.loy-contact{
   color: var(--ink);
   font-weight: 800;
 }
+
 /* ===== Favorites section header (Brands + Add/Edit link) ===== */
 .section-head{
   display:flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: baseline;           /* keeps link aligned with “Brands” */
+  justify-content: flex-start;     /* allow it to sit next to Brands */
   gap: 12px;
+  padding-right: 16px;
+}
+
+.section-head .section-title{
+  padding-right: 0; /* prevent extra right gap when inline */
 }
 
 .section-link{
   color: var(--blue);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 18px;     /* closer to iOS body size */
   font-weight: 600;
   line-height: 1;
-  padding: 6px 0;
+  padding: 0;
+  margin-top: 2px;     /* optical alignment with title baseline */
 }
 
 /* ===== Bottom sheet (Favorite Brands picker) ===== */
@@ -532,17 +541,39 @@ body.loy-contact{
 }
 
 /* Row layout per your screenshot:
-   checkbox LEFT, icon MIDDLE, name RIGHT */
+   checkbox LEFT, icon MIDDLE, name RIGHT
+   ✅ Updated per your request:
+      - move content toward center (more left padding)
+      - make text larger + REGULAR
+      - increase icon size x2
+*/
 .lc-brand-row{
   display: grid;
-  grid-template-columns: 28px 30px 1fr;
+  grid-template-columns: 28px 60px 1fr; /* icon col wider */
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 16px;
+  padding: 16px 20px;                  /* more inset (less “stuck left”) */
   border-bottom: 1px solid rgba(60,60,67,.10);
 }
 
 .lc-brand-check{
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+}
+
+/* if your JS uses <img> as the brand icon */
+.lc-brand-row img{
+  width: 48px;     /* ~2x vs old 26px */
+  height: 48px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
+  padding: 6px;
+}
+
+/* if your JS uses <span> for label */
+.lc-brand-row span{
+  font-size: 22px;     /* match Contact rows size */
+  font-weight: 400;    /* Regular */
+  letter-spacing: -0.2px;
 }
