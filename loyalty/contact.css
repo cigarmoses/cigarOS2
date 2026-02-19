@@ -7,8 +7,12 @@
 
    Updates included:
    ✅ Body text in Contact tab is NOT bold (Regular)
-   ✅ Brands header: "Brands" + "Add / Edit" inline
-   ✅ Brand picker rows: centered/inset, larger REGULAR text, icons x2
+
+   NEW:
+   ✅ Favorites > Brands "Add / Edit" sits next to "Brands"
+   ✅ Brand picker list: content shifted toward center (more inset padding)
+   ✅ Brand picker list: font REGULAR + bigger
+   ✅ Brand picker list: brand icons x2
 */
 
 :root{
@@ -386,29 +390,10 @@ body.loy-contact{
 /* -------------------------
    FAVORITES
 -------------------------- */
-
-/* NEW: Brands title + Add/Edit inline */
-.section-title-row{
-  display:flex;
-  align-items: baseline;
-  justify-content: flex-start;
-  gap: 14px;
-  padding: 16px 16px 8px;
-}
-
 .section-title{
   font-size: 26px;
   font-weight: 900;
-  padding: 0; /* moved to .section-title-row */
-}
-
-.section-link{
-  color: var(--blue);
-  text-decoration: none;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 0;
+  padding: 16px 16px 8px;
 }
 
 .section-divider{ display:none; }
@@ -452,6 +437,28 @@ body.loy-contact{
   text-decoration:none;
   color: var(--ink);
   font-weight: 800;
+}
+
+/* ===== Favorites section header (Brands + Add/Edit link) ===== */
+.section-head{
+  display:flex;
+  align-items: baseline;
+  justify-content: flex-start; /* ✅ keep together */
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.section-head .section-title{
+  padding: 16px 0 8px; /* override default padding */
+}
+
+.section-link{
+  color: var(--blue);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 6px 0;
 }
 
 /* ===== Bottom sheet (Favorite Brands picker) ===== */
@@ -533,16 +540,17 @@ body.loy-contact{
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 8px 0;
+  padding: 10px 0; /* ✅ more breathing room */
 }
 
-/* ✅ UPDATED: Brand picker row layout (more centered/inset) */
+/* Row layout:
+   checkbox LEFT, icon MIDDLE, name RIGHT */
 .lc-brand-row{
   display: grid;
-  grid-template-columns: 34px 52px 1fr;
+  grid-template-columns: 34px 56px 1fr; /* ✅ icon lane bigger (x2) */
   align-items: center;
-  gap: 14px;
-  padding: 14px 18px; /* pulls content toward center */
+  gap: 12px;
+  padding: 14px 22px;               /* ✅ shift content toward center */
   border-bottom: 1px solid rgba(60,60,67,.10);
 }
 
@@ -551,21 +559,22 @@ body.loy-contact{
   height: 22px;
 }
 
-.lc-brand-icon{
-  width: 48px;     /* x2-ish from old 24/26 */
-  height: 48px;
-  border-radius: 12px;
+.lc-brand-ico{
+  width: 52px;   /* ✅ ~2x vs old 26 */
+  height: 52px;
+  border-radius: 14px;
   object-fit: contain;
   background: #fff;
   box-shadow: 0 0 0 1px rgba(0,0,0,.06);
-  padding: 6px;
+  padding: 8px;
 }
 
 .lc-brand-name{
-  font-size: 22px;   /* match Contact panel vibe */
-  font-weight: 400;  /* REGULAR, not bold */
+  font-size: 22px;     /* ✅ bigger */
+  font-weight: 400;    /* ✅ Regular, not bold */
   color: var(--ink);
+  min-width: 0;
   white-space: nowrap;
-  overflow:hidden;
+  overflow: hidden;
   text-overflow: ellipsis;
 }
