@@ -155,13 +155,12 @@
     /* Search */
     .search-wrap { margin-top: 12px; }
 
-    /* ✅ iOS: prevent zoom/reflow while typing (>=16px) */
     .search-input {
       width: 100%;
-      padding: 10px 12px;
+      padding: 9px 12px;
       border-radius: 10px;
       border: none;
-      font-size: 16px;
+      font-size: 15px;
       outline: none;
       background: #ffffff;
       box-shadow: 0 0 0 .5px rgba(0,0,0,.12);
@@ -333,6 +332,169 @@
       background: rgba(0,122,255,.12);
     }
 
+    /* Add Customer dialog */
+    dialog#addCustomerDialog{
+      border: none;
+      border-radius: 18px;
+      padding: 0;
+      width: 92vw;
+      max-width: 520px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      overflow: hidden;
+      background: #fff;
+    }
+    .dlg-wrap{
+      padding: 14px 14px 12px;
+      background: #fff;
+      font-family: var(--font-text);
+    }
+    .dlg-title{
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+    .dlg-sub{
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .dlg-form{
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .dlg-input{
+      width: 100%;
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 15px;
+      outline: none;
+    }
+    .dlg-actions{
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding-top: 12px;
+      border-top: 1px solid rgba(0,0,0,.08);
+    }
+    .btn{
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .btn-cancel{ background: rgba(0,0,0,.06); color: #111; }
+    .btn-save{ background: var(--ios-green); color: #fff; }
+
+    /* ===== Profile Popup (WHITE background, no Done button) ===== */
+    dialog#profileDialog{
+      border: none;
+      padding: 0;
+      width: 92vw;
+      max-width: 560px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 24px 70px rgba(0,0,0,.28);
+    }
+    dialog#profileDialog::backdrop{
+      background: rgba(0,0,0,.25);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    .p-wrap{
+      padding: 16px 16px 10px;
+      background: #fff;
+      font-family: var(--font-text);
+    }
+
+    .p-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+    }
+
+    .p-name{
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 54px;
+      line-height: .92;
+      letter-spacing: -0.8px;
+      margin: 0;
+    }
+    .p-name .pn-first{ display:block; }
+    .p-name .pn-last{ display:block; }
+
+    .p-sub{
+      margin-top: 6px;
+      font-size: 22px;
+      line-height: 1.1;
+      color: rgba(17,17,17,.62);
+      font-weight: 700;
+    }
+    .p-aka{
+      display:block;
+      margin-top: 2px;
+      font-size: 20px;
+      color: rgba(17,17,17,.55);
+      font-weight: 700;
+    }
+
+    .p-pill{
+      flex: 0 0 auto;
+      margin-top: 6px;
+      background: var(--ios-green);
+      color: #fff;
+      font-weight: 800;
+      font-size: 18px;
+      line-height: 1;
+      padding: 8px 14px;
+      border-radius: 8px;
+      min-width: 58px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .p-details{
+      margin-top: 18px;
+      color: rgba(17,17,17,.55);
+      font-size: 18px;
+      line-height: 1.25;
+      white-space: pre-line;
+    }
+
+    .p-divider{
+      margin-top: 14px;
+      height: 1px;
+      background: rgba(0,0,0,.10);
+    }
+
+    .p-actions{
+      padding: 10px 16px 14px;
+      background: #fff;
+      display:flex;
+      align-items:center;
+      justify-content: flex-start;
+    }
+
+    .p-close{
+      border: none;
+      background: transparent;
+      color: #ff3b30;
+      font-size: 22px;
+      font-weight: 900;
+      cursor: pointer;
+      padding: 8px 8px;
+      border-radius: 10px;
+    }
+
     /* Tony FAB */
     .tony-fab {
       position: fixed;
@@ -346,7 +508,6 @@
       padding: 0;
       z-index: 40;
     }
-
     .tony-fab img {
       width: 100%;
       height: 100%;
@@ -382,12 +543,9 @@
       display:flex;
       flex-direction: column;
     }
-    .sheet.open{
-      transform: translateY(0);
-    }
-    .sheet-backdrop.open{
-      display:block;
-    }
+    .sheet.open{ transform: translateY(0); }
+    .sheet-backdrop.open{ display:block; }
+
     .sheet-grab{
       height: 18px;
       display:flex;
@@ -409,7 +567,6 @@
       justify-content: space-between;
       gap: 12px;
       border-bottom: 1px solid rgba(0,0,0,.08);
-      background: #fff;
     }
     .sheet-title{
       font-family: var(--font-display);
@@ -440,11 +597,8 @@
       overflow:auto;
       -webkit-overflow-scrolling: touch;
       flex: 1;
-      background: #fff;
     }
-    .sheet-section{
-      margin-top: 12px;
-    }
+    .sheet-section{ margin-top: 12px; }
     .sheet-section:first-child{ margin-top: 0; }
     .sheet-label{
       font-size: 12px;
@@ -460,35 +614,48 @@
       flex-wrap: wrap;
       gap: 10px;
     }
+
+    /* ✅ ROLE FILTER PILLS — icon + REGULAR weight */
     .pill-toggle{
       border: 1px solid rgba(0,0,0,.14);
       background: #fff;
       border-radius: 999px;
       padding: 10px 12px;
-      font-size: 14px;
-      font-weight: 800;
+      font-size: 16px;                 /* a bit larger */
+      font-family: var(--font-display); /* SF Pro Display */
+      font-weight: 400;                /* ✅ regular */
       cursor:pointer;
       display:inline-flex;
       align-items:center;
       gap: 10px;
       line-height: 1;
+      color: var(--ios-blue);
     }
     .pill-toggle.on{
       border-color: rgba(0,122,255,.35);
       background: rgba(0,122,255,.08);
-      color: #111;
+      color: var(--ios-blue);
     }
     .pill-toggle .mini{
       width: 8px;
       height: 8px;
       border-radius: 999px;
       background: rgba(0,0,0,.22);
+      flex: 0 0 auto;
     }
     .pill-toggle.on .mini{
       background: var(--ios-blue);
     }
 
-    /* ✅ iOS: prevent zoom/reflow while typing (>=16px) */
+    /* ✅ role icon */
+    .role-ico{
+      width: 22px;
+      height: 22px;
+      display:block;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+
     .sheet-search{
       width:100%;
       border:none;
@@ -496,7 +663,7 @@
       background: #f2f2f7;
       border-radius: 12px;
       padding: 10px 12px;
-      font-size: 16px;
+      font-size: 15px;
       box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
     }
 
@@ -508,12 +675,12 @@
       overflow:hidden;
     }
 
-    /* Brand row (now supports icon + regular-weight SF Pro Display) */
+    /* ✅ brand row becomes: icon + name on left, checkbox on right */
     .brand-row{
       display:flex;
       align-items:center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       padding: 12px 12px;
       border-bottom: 1px solid rgba(0,0,0,.08);
       cursor:pointer;
@@ -527,17 +694,21 @@
       min-width: 0;
     }
 
+    /* ✅ FULL icon, NO outline container */
     .brand-ico{
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: #fff;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
+      width: 28px;     /* “full” size like your red outline target */
+      height: 28px;
+      display:block;
       object-fit: contain;
       flex: 0 0 auto;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      border-radius: 0 !important;
     }
 
-    /* ✅ requested: SF Pro Display "regular" + a bit larger */
+    /* ✅ brand name: SF Pro Display regular, larger, not bold */
     .brand-name{
       font-family: var(--font-display);
       font-size: 18px;
@@ -700,10 +871,30 @@
       <div class="sheet-section">
         <div class="sheet-label">Roles</div>
         <div class="pill-row">
-          <button class="pill-toggle" type="button" data-role="Military"><span class="mini"></span>Military</button>
-          <button class="pill-toggle" type="button" data-role="Police"><span class="mini"></span>Police</button>
-          <button class="pill-toggle" type="button" data-role="Firefighter"><span class="mini"></span>Firefighter</button>
-          <button class="pill-toggle" type="button" data-role="Paramedic"><span class="mini"></span>Paramedic</button>
+          <!-- ✅ role icons are real <img> now -->
+          <button class="pill-toggle" type="button" data-role="Military">
+            <span class="mini"></span>
+            <img class="role-ico" src="/uxui/roles/military.svg" alt="" aria-hidden="true">
+            Military
+          </button>
+
+          <button class="pill-toggle" type="button" data-role="Police">
+            <span class="mini"></span>
+            <img class="role-ico" src="/uxui/roles/police.svg" alt="" aria-hidden="true">
+            Police
+          </button>
+
+          <button class="pill-toggle" type="button" data-role="Firefighter">
+            <span class="mini"></span>
+            <img class="role-ico" src="/uxui/roles/firefighter.svg" alt="" aria-hidden="true">
+            Firefighter
+          </button>
+
+          <button class="pill-toggle" type="button" data-role="Paramedic">
+            <span class="mini"></span>
+            <img class="role-ico" src="/uxui/roles/paramedic.svg" alt="" aria-hidden="true">
+            Paramedic
+          </button>
         </div>
       </div>
 
@@ -724,5 +915,15 @@
   </button>
 
   <script src="/loyalty/loyalty.js" defer></script>
+
+  <!-- ✅ tiny safety script: if any SVG 404s, hide broken icon box -->
+  <script>
+    document.addEventListener("error", (e) => {
+      const el = e.target;
+      if (el && el.tagName === "IMG" && (el.classList.contains("brand-ico") || el.classList.contains("role-ico"))) {
+        el.style.display = "none";
+      }
+    }, true);
+  </script>
 </body>
 </html>
