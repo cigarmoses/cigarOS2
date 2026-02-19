@@ -3,92 +3,80 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Learn</title>
+  <title>Learn • CigarOS2</title>
 
-  <!-- Global typography -->
   <link rel="stylesheet" href="/css/type.css" />
-
-  <!-- Learn unified styles -->
-  <link rel="stylesheet" href="/css/learn.css" />
+  <link rel="stylesheet" href="/learn/learn.css?v=1" />
 </head>
 
 <body class="learn-page">
+  <!-- background layers -->
+  <div class="learn-bg" aria-hidden="true"></div>
+  <div class="learn-bg-overlay" aria-hidden="true"></div>
 
-  <!-- Top bar -->
   <header class="learn-topbar">
-    <button class="icon-btn" id="learn-back" aria-label="Back">
+    <button type="button" class="icon-btn" aria-label="Back" onclick="history.back()">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M15 18L9 12L15 6"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round" />
+        <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
 
-    <button class="icon-btn" aria-label="Search">
+    <div class="learn-spacer"></div>
+
+    <button type="button" class="icon-btn" aria-label="Search">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-              stroke-width="2.2"
-              stroke-linecap="round" />
-        <path d="M16.5 16.5 21 21"
-              stroke-width="2.2"
-              stroke-linecap="round" />
+        <path d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M16.7 16.7 21 21" stroke-width="2.5" stroke-linecap="round"/>
       </svg>
     </button>
   </header>
 
-  <!-- Title -->
-  <h1 class="learn-page-title">Learn</h1>
+  <main class="learn-main">
+    <h1 class="learn-title">Learn</h1>
 
-  <!-- Grid -->
-  <main class="learn-grid">
+    <section class="learn-grid" aria-label="Learn sections">
+      <a class="glass-tile" href="/learn/vitolas/">
+        <div class="tile-icon">
+          <img src="/img/learn/vitolas.png" alt="" loading="lazy">
+        </div>
+        <div class="tile-label">Vitolas</div>
+      </a>
 
-    <a class="learn-card" href="/learn/vitolas/">
-      <div class="learn-icon">
-        <img src="/img/icons/learn/vitolas.svg?v=1" alt="Vitolas" />
-      </div>
-      <div class="learn-label">Vitolas</div>
-    </a>
+      <a class="glass-tile" href="/learn/shapes/">
+        <div class="tile-icon">
+          <img src="/img/learn/shapes.png" alt="" loading="lazy">
+        </div>
+        <div class="tile-label">Shapes</div>
+      </a>
 
-    <a class="learn-card" href="/learn/shapes/">
-      <div class="learn-icon">
-        <img src="/img/icons/learn/shapes.svg?v=1" alt="Shapes" />
-      </div>
-      <div class="learn-label">Shapes</div>
-    </a>
+      <a class="glass-tile" href="/learn/colors/">
+        <div class="tile-icon">
+          <img src="/img/learn/colors.png" alt="" loading="lazy">
+        </div>
+        <div class="tile-label">Colors</div>
+      </a>
 
-    <a class="learn-card" href="/learn/colors/">
-      <div class="learn-icon">
-        <img src="/img/icons/learn/colors.svg?v=2" alt="Colors" />
-      </div>
-      <div class="learn-label">Colors</div>
-    </a>
+      <a class="glass-tile" href="/learn/anatomy/">
+        <div class="tile-icon">
+          <img src="/img/learn/anatomy.png" alt="" loading="lazy">
+        </div>
+        <div class="tile-label">Anatomy</div>
+      </a>
 
-    <a class="learn-card" href="/learn/anatomy/">
-      <div class="learn-icon">
-        <img src="/img/icons/learn/anatomy.svg?v=1" alt="Anatomy" />
-      </div>
-      <div class="learn-label">Anatomy</div>
-    </a>
+      <a class="glass-tile" href="/learn/ring/">
+        <div class="tile-icon">
+          <img src="/img/learn/ring.png" alt="" loading="lazy">
+        </div>
+        <div class="tile-label">Ring</div>
+      </a>
 
-    <a class="learn-card" href="/learn/ring/">
-      <div class="learn-icon">
-        <img src="/img/icons/learn/ring.svg?v=1" alt="Ring" />
-      </div>
-      <div class="learn-label">Ring</div>
-    </a>
-
-    <a class="learn-card" href="/learn/glossary/">
-      <div class="learn-icon">
-        <img src="/img/icons/learn/glossary.svg?v=1" alt="Glossary" />
-      </div>
-      <div class="learn-label">Glossary</div>
-    </a>
-
+      <a class="glass-tile" href="/learn/glossary/">
+        <div class="tile-icon">
+          <img src="/img/learn/glossary.png" alt="" loading="lazy">
+        </div>
+        <div class="tile-label">Glossary</div>
+      </a>
+    </section>
   </main>
-
-  <!-- Learn behavior -->
-  <script src="/js/global.js" defer></script>
-  <script src="/learn/learn.js"></script>
 </body>
 </html>
