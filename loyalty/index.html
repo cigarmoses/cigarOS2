@@ -82,7 +82,6 @@
       gap: 8px;
       box-shadow: 0 1px 0 rgba(0,0,0,.08);
       -webkit-tap-highlight-color: transparent;
-      white-space: nowrap;
     }
     .filters-btn .dot{
       width: 7px;
@@ -108,7 +107,7 @@
       line-height: 0;
       padding: 0;
       cursor: pointer;
-      display: none; /* shown only on All tab via JS */
+      display: none;
       align-items: center;
       justify-content: center;
     }
@@ -132,8 +131,7 @@
       border-radius: 999px;
       background: var(--seg-bg);
       border: 1px solid var(--seg-border);
-      margin-top: 0;
-      flex: 0 0 auto;
+      margin-top: 12px;
     }
 
     .mode-btn {
@@ -152,17 +150,6 @@
       background: #ffffff;
       color: #111;
       box-shadow: 0 1px 1px rgba(0,0,0,.12);
-    }
-
-    /* Tabs row + Filters button */
-    .loy-header-row{
-      display:flex;
-      align-items:center;
-      gap: 12px;
-      margin-top: 12px;
-    }
-    .loy-header-row .filters-btn{
-      margin-left: auto;
     }
 
     /* Search */
@@ -232,7 +219,7 @@
     .row {
       min-height: 44px;
       padding: 10px 14px;
-      padding-right: 22px; /* reserve for AZ index breathing room */
+      padding-right: 22px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -240,7 +227,7 @@
       border-bottom: 1px solid var(--hairline);
       cursor: pointer;
       background: #fff;
-      position: relative; /* needed because row-right is absolute */
+      position: relative;
     }
     .row:last-child { border-bottom: none; }
 
@@ -261,7 +248,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      padding-right: 86px; /* room so text doesn't sit under icons */
+      padding-right: 86px;
     }
 
     .name-last{ font-weight: 800; }
@@ -276,10 +263,9 @@
       color: rgba(17,17,17,.9);
     }
 
-    /* ICON cluster (RIGHT SIDE) */
     .row-right{
       position: absolute;
-      right: 28px; /* leaves room for AZ index */
+      right: 28px;
       top: 50%;
       transform: translateY(-50%);
       display: inline-flex;
@@ -294,13 +280,6 @@
       display: block;
       object-fit: contain;
       flex: 0 0 auto;
-    }
-
-    .empty-state {
-      padding: 16px;
-      text-align: center;
-      font-size: 14px;
-      color: var(--muted);
     }
 
     footer {
@@ -357,6 +336,7 @@
       padding: 0;
       z-index: 40;
     }
+
     .tony-fab img {
       width: 100%;
       height: 100%;
@@ -387,14 +367,18 @@
       transform: translateY(110%);
       transition: transform .22s ease;
       z-index: 201;
-      max-height: 82vh;
+      max-height: min(82vh, calc(100dvh - 16px));
       overflow: hidden;
       display:flex;
       flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom);
     }
-    .sheet.open{ transform: translateY(0); }
-    .sheet-backdrop.open{ display:block; }
-
+    .sheet.open{
+      transform: translateY(0);
+    }
+    .sheet-backdrop.open{
+      display:block;
+    }
     .sheet-grab{
       height: 18px;
       display:flex;
@@ -409,7 +393,6 @@
       border-radius: 999px;
       background: rgba(0,0,0,.18);
     }
-
     .sheet-head{
       padding: 10px 14px 8px;
       display:flex;
@@ -417,6 +400,7 @@
       justify-content: space-between;
       gap: 12px;
       border-bottom: 1px solid rgba(0,0,0,.08);
+      background:#fff;
     }
     .sheet-title{
       font-family: var(--font-display);
@@ -442,17 +426,16 @@
       color: rgba(0,0,0,.45);
       font-weight: 800;
     }
-
     .sheet-body{
       padding: 12px 14px 14px;
       overflow:auto;
       -webkit-overflow-scrolling: touch;
       flex: 1;
     }
-
-    .sheet-section{ margin-top: 12px; }
+    .sheet-section{
+      margin-top: 12px;
+    }
     .sheet-section:first-child{ margin-top: 0; }
-
     .sheet-label{
       font-size: 12px;
       font-weight: 800;
@@ -467,8 +450,6 @@
       flex-wrap: wrap;
       gap: 10px;
     }
-
-    /* ✅ Role pill icons */
     .pill-toggle{
       border: 1px solid rgba(0,0,0,.14);
       background: #fff;
@@ -481,23 +462,23 @@
       align-items:center;
       gap: 10px;
       line-height: 1;
+      color: var(--ios-blue);
     }
     .pill-toggle.on{
       border-color: rgba(0,122,255,.35);
       background: rgba(0,122,255,.08);
-      color: #111;
+      color: var(--ios-blue);
     }
     .pill-toggle .mini{
       width: 8px;
       height: 8px;
       border-radius: 999px;
       background: rgba(0,0,0,.22);
-      flex: 0 0 auto;
     }
     .pill-toggle.on .mini{
       background: var(--ios-blue);
     }
-    .pill-ico{
+    .role-ico{
       width: 18px;
       height: 18px;
       display:block;
@@ -516,7 +497,6 @@
       box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
     }
 
-    /* Brand list */
     .brand-list{
       margin-top: 10px;
       background: #fff;
@@ -524,45 +504,45 @@
       box-shadow: 0 0 0 1px rgba(0,0,0,.06);
       overflow:hidden;
     }
+
+    /* Brand row now supports icon + name + checkbox */
     .brand-row{
       display:flex;
       align-items:center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 12px 12px;
+      gap: 12px;
+      padding: 14px 12px;
       border-bottom: 1px solid rgba(0,0,0,.08);
       cursor:pointer;
     }
     .brand-row:last-child{ border-bottom:none; }
 
-    /* ✅ Brand icon LEFT of name */
     .brand-left{
       display:flex;
       align-items:center;
-      gap: 10px;
+      gap: 12px;
       min-width: 0;
-      flex: 1;
     }
+
     .brand-ico{
-      width: 24px;
-      height: 24px;
-      border-radius: 8px;
-      display:block;
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      background:#fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.10);
       object-fit: contain;
+      padding: 5px;
       flex: 0 0 auto;
-      background: #fff;
-      box-shadow: 0 0 0 1px rgba(0,0,0,.06);
-      padding: 4px;
     }
 
     .brand-name{
-      font-size: 15px;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-size: 17px;   /* ✅ bigger */
+      font-weight: 400;  /* ✅ Regular */
       color: #111;
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
-      min-width: 0;
     }
 
     .brand-check{
@@ -618,6 +598,11 @@
       <a href="javascript:history.back()" class="back-link">← Back</a>
 
       <div class="topbar-right">
+        <button id="filtersBtn" class="filters-btn" type="button" aria-label="Filters">
+          <span class="dot" aria-hidden="true"></span>
+          Filters
+        </button>
+
         <button id="addCustomerBtn" class="add-btn" type="button" aria-label="Add customer">
           <span>+</span>
         </button>
@@ -626,17 +611,10 @@
 
     <h1 class="page-title">Loyalty</h1>
 
-    <div class="loy-header-row">
-      <div class="mode-toggle">
-        <button class="mode-btn active" data-mode="all">All</button>
-        <button class="mode-btn" data-mode="regular">Regulars</button>
-        <button class="mode-btn" data-mode="lockers">Lockers</button>
-      </div>
-
-      <button id="filtersBtn" class="filters-btn" type="button" aria-label="Filters">
-        <span class="dot" aria-hidden="true"></span>
-        Filters
-      </button>
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="all">All</button>
+      <button class="mode-btn" data-mode="regular">Regulars</button>
+      <button class="mode-btn" data-mode="lockers">Lockers</button>
     </div>
 
     <div class="search-wrap">
@@ -672,29 +650,25 @@
         <div class="pill-row">
           <button class="pill-toggle" type="button" data-role="Military">
             <span class="mini"></span>
-            <img class="pill-ico" src="/img/icons/loyalty/military.svg" alt="" aria-hidden="true"
-              onerror="this.style.display='none';" />
+            <img class="role-ico" src="/img/icons/loyalty/military.svg" alt="" onerror="this.style.display='none'">
             Military
           </button>
 
           <button class="pill-toggle" type="button" data-role="Police">
             <span class="mini"></span>
-            <img class="pill-ico" src="/img/icons/loyalty/police.svg" alt="" aria-hidden="true"
-              onerror="this.style.display='none';" />
+            <img class="role-ico" src="/img/icons/loyalty/police.svg" alt="" onerror="this.style.display='none'">
             Police
           </button>
 
           <button class="pill-toggle" type="button" data-role="Firefighter">
             <span class="mini"></span>
-            <img class="pill-ico" src="/img/icons/loyalty/firefighter.svg" alt="" aria-hidden="true"
-              onerror="this.style.display='none';" />
+            <img class="role-ico" src="/img/icons/loyalty/firefighter.svg" alt="" onerror="this.style.display='none'">
             Firefighter
           </button>
 
           <button class="pill-toggle" type="button" data-role="Paramedic">
             <span class="mini"></span>
-            <img class="pill-ico" src="/img/icons/loyalty/paramedic.svg" alt="" aria-hidden="true"
-              onerror="this.style.display='none';" />
+            <img class="role-ico" src="/img/icons/loyalty/paramedic.svg" alt="" onerror="this.style.display='none'">
             Paramedic
           </button>
         </div>
@@ -717,5 +691,149 @@
   </button>
 
   <script src="/loyalty/loyalty.js" defer></script>
+
+  <!-- ✅ PATCH: brand icons + font regular + prevent keyboard drop -->
+  <script>
+    (function(){
+      const BRAND_ICON_BASE = "/img/icons/brands/";
+      const sheet = document.getElementById("filterSheet");
+      const backdrop = document.getElementById("filterBackdrop");
+      const brandList = document.getElementById("brandList");
+      const brandSearch = document.getElementById("brandSearch");
+
+      function slugifyBrand(name){
+        return String(name || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "");
+      }
+
+      function ensureBrandRowLayout(row){
+        if (!row || row.dataset.patched === "1") return;
+
+        const nameEl = row.querySelector(".brand-name");
+        const checkEl = row.querySelector(".brand-check");
+        if (!nameEl || !checkEl) return;
+
+        // wrap left side (icon + name)
+        const left = document.createElement("div");
+        left.className = "brand-left";
+
+        const brandName = (nameEl.textContent || "").trim();
+        const ico = document.createElement("img");
+        ico.className = "brand-ico";
+        const slug = slugifyBrand(brandName);
+        ico.src = BRAND_ICON_BASE + slug + ".svg";
+        ico.alt = "";
+        ico.loading = "lazy";
+        ico.onerror = function(){
+          // optional png fallback
+          if (!ico.dataset.fbk){
+            ico.dataset.fbk = "1";
+            ico.src = BRAND_ICON_BASE + slug + ".png";
+          } else {
+            ico.style.display = "none";
+          }
+        };
+
+        // move name into left wrapper
+        left.appendChild(ico);
+        left.appendChild(nameEl);
+
+        // insert left wrapper before checkbox
+        row.insertBefore(left, checkEl);
+
+        // typography cleanup (in case JS re-inlines)
+        nameEl.style.fontWeight = "400";
+        nameEl.style.fontSize = "17px";
+
+        row.dataset.patched = "1";
+      }
+
+      function patchAllBrandRows(){
+        if (!brandList) return;
+        brandList.querySelectorAll(".brand-row").forEach(ensureBrandRowLayout);
+      }
+
+      // Watch brandList re-rendering
+      if (brandList){
+        const obs = new MutationObserver(() => patchAllBrandRows());
+        obs.observe(brandList, { childList: true, subtree: true });
+      }
+
+      // ===== prevent "typing 3rd character drops sheet" =====
+      let scrollY = 0;
+
+      function lockPage(){
+        scrollY = window.scrollY || 0;
+        document.body.style.position = "fixed";
+        document.body.style.top = (-scrollY) + "px";
+        document.body.style.left = "0";
+        document.body.style.right = "0";
+        document.body.style.width = "100%";
+      }
+
+      function unlockPage(){
+        const top = document.body.style.top;
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
+        document.body.style.width = "";
+        const y = top ? Math.abs(parseInt(top, 10) || 0) : scrollY;
+        window.scrollTo(0, y);
+      }
+
+      function isOpen(){
+        return sheet && sheet.classList.contains("open");
+      }
+
+      function applyViewportHeight(){
+        if (!sheet) return;
+        const vv = window.visualViewport;
+        if (!vv) return;
+        // keep sheet inside visible viewport when keyboard opens
+        sheet.style.maxHeight = "calc(" + vv.height + "px - 16px)";
+      }
+
+      // detect open/close by class changes
+      const openObs = new MutationObserver(() => {
+        if (isOpen()){
+          lockPage();
+          applyViewportHeight();
+        } else {
+          sheet.style.maxHeight = "min(82vh, calc(100dvh - 16px))";
+          unlockPage();
+        }
+      });
+
+      if (sheet) openObs.observe(sheet, { attributes: true, attributeFilter: ["class"] });
+      if (backdrop) openObs.observe(backdrop, { attributes: true, attributeFilter: ["class"] });
+
+      if (window.visualViewport){
+        window.visualViewport.addEventListener("resize", () => {
+          if (isOpen()) applyViewportHeight();
+        });
+      }
+
+      // keep results visible while typing
+      if (brandSearch){
+        brandSearch.addEventListener("focus", () => {
+          if (isOpen()) applyViewportHeight();
+          // nudge scroll so list stays visible
+          requestAnimationFrame(() => {
+            const body = sheet ? sheet.querySelector(".sheet-body") : null;
+            if (body) body.scrollTop = 0;
+          });
+        });
+        brandSearch.addEventListener("input", () => {
+          patchAllBrandRows();
+        });
+      }
+
+      // initial patch attempt
+      setTimeout(patchAllBrandRows, 250);
+    })();
+  </script>
 </body>
 </html>
