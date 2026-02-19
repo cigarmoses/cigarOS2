@@ -7,8 +7,8 @@
 
    Updates included:
    ✅ Body text in Contact tab is NOT bold (Regular)
-   ✅ Brand picker rows: centered, larger icons (x2), larger text, REGULAR weight
-   ✅ Brands header: Add/Edit sits inline next to “Brands” (CSS support)
+   ✅ Brands header: "Brands" + "Add / Edit" inline
+   ✅ Brand picker rows: centered/inset, larger REGULAR text, icons x2
 */
 
 :root{
@@ -386,10 +386,29 @@ body.loy-contact{
 /* -------------------------
    FAVORITES
 -------------------------- */
+
+/* NEW: Brands title + Add/Edit inline */
+.section-title-row{
+  display:flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 16px 16px 8px;
+}
+
 .section-title{
   font-size: 26px;
   font-weight: 900;
-  padding: 16px 16px 8px;
+  padding: 0; /* moved to .section-title-row */
+}
+
+.section-link{
+  color: var(--blue);
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
 }
 
 .section-divider{ display:none; }
@@ -433,29 +452,6 @@ body.loy-contact{
   text-decoration:none;
   color: var(--ink);
   font-weight: 800;
-}
-
-/* ===== Favorites section header (Brands + Add/Edit link) ===== */
-.section-head{
-  display:flex;
-  align-items: baseline;           /* keeps link aligned with “Brands” */
-  justify-content: flex-start;     /* allow it to sit next to Brands */
-  gap: 12px;
-  padding-right: 16px;
-}
-
-.section-head .section-title{
-  padding-right: 0; /* prevent extra right gap when inline */
-}
-
-.section-link{
-  color: var(--blue);
-  text-decoration: none;
-  font-size: 18px;     /* closer to iOS body size */
-  font-weight: 600;
-  line-height: 1;
-  padding: 0;
-  margin-top: 2px;     /* optical alignment with title baseline */
 }
 
 /* ===== Bottom sheet (Favorite Brands picker) ===== */
@@ -537,43 +533,39 @@ body.loy-contact{
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 6px 0;
+  padding: 8px 0;
 }
 
-/* Row layout per your screenshot:
-   checkbox LEFT, icon MIDDLE, name RIGHT
-   ✅ Updated per your request:
-      - move content toward center (more left padding)
-      - make text larger + REGULAR
-      - increase icon size x2
-*/
+/* ✅ UPDATED: Brand picker row layout (more centered/inset) */
 .lc-brand-row{
   display: grid;
-  grid-template-columns: 28px 60px 1fr; /* icon col wider */
+  grid-template-columns: 34px 52px 1fr;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;                  /* more inset (less “stuck left”) */
+  gap: 14px;
+  padding: 14px 18px; /* pulls content toward center */
   border-bottom: 1px solid rgba(60,60,67,.10);
 }
 
 .lc-brand-check{
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
-/* if your JS uses <img> as the brand icon */
-.lc-brand-row img{
-  width: 48px;     /* ~2x vs old 26px */
+.lc-brand-icon{
+  width: 48px;     /* x2-ish from old 24/26 */
   height: 48px;
-  border-radius: 10px;
+  border-radius: 12px;
+  object-fit: contain;
   background: #fff;
   box-shadow: 0 0 0 1px rgba(0,0,0,.06);
   padding: 6px;
 }
 
-/* if your JS uses <span> for label */
-.lc-brand-row span{
-  font-size: 22px;     /* match Contact rows size */
-  font-weight: 400;    /* Regular */
-  letter-spacing: -0.2px;
+.lc-brand-name{
+  font-size: 22px;   /* match Contact panel vibe */
+  font-weight: 400;  /* REGULAR, not bold */
+  color: var(--ink);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
 }
