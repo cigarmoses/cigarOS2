@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>Shop • CigarOS</title>
+
+  <!-- Your global typography file (should define SF Pro Display) -->
+  <link rel="stylesheet" href="/css/type.css" />
+
+  <!-- Shops public styles -->
+  <link rel="stylesheet" href="/shops/shop.css?v=1" />
+</head>
+
+<body class="shop-public">
+  <main class="sp-wrap">
+
+    <!-- TOP CARD -->
+    <section class="sp-top" aria-label="Shop header">
+      <div class="sp-top-row">
+        <div class="sp-logo" aria-hidden="true">
+          <img id="spLogo" alt="" />
+        </div>
+
+        <div class="sp-head">
+          <div class="sp-titleline">
+            <h1 class="sp-title" id="spName">Shop Name</h1>
+            <span class="sp-pill" id="spPill">SHOP</span>
+          </div>
+
+          <!-- Address (clickable -> Maps) -->
+          <button class="sp-sub sp-link" id="spAddressBtn" type="button">
+            <span id="spCity">City, ST</span>
+          </button>
+
+          <!-- Website -->
+          <a class="sp-sub sp-web" id="spWebsite" href="#" target="_blank" rel="noopener">
+            Website
+          </a>
+        </div>
+      </div>
+
+      <!-- ACTIONS ROW -->
+      <div class="sp-actions">
+        <button class="sp-action sp-follow" id="spFollowBtn" type="button" aria-label="Follow shop">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="sp-ico">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" fill="none" stroke-width="2.25" stroke-linecap="round"/>
+            <circle cx="9" cy="7" r="4" fill="none" stroke-width="2.25"/>
+            <path d="M19 8v6" fill="none" stroke-width="2.25" stroke-linecap="round"/>
+            <path d="M22 11h-6" fill="none" stroke-width="2.25" stroke-linecap="round"/>
+          </svg>
+          <span id="spFollowText">Follow</span>
+        </button>
+
+        <button class="sp-action sp-more" id="spMoreBtn" type="button" aria-label="More options">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="sp-ico">
+            <circle cx="6" cy="12" r="1.6"></circle>
+            <circle cx="12" cy="12" r="1.6"></circle>
+            <circle cx="18" cy="12" r="1.6"></circle>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- AMENITIES -->
+    <section class="sp-amenities" aria-label="Shop amenities">
+      <div class="sp-amen-grid" id="spAmenGrid">
+        <!-- JS renders amenity cards conditionally -->
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/shops/shop.js?v=1"></script>
+</body>
+</html>
