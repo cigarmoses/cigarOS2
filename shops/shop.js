@@ -1,17 +1,9 @@
 /* /shops/shop.js
-   Public Shop Page (TOP section only for v1)
-
-   Features:
-   - Loads a shop by slug (?shop=smoke-inn-psl)
-   - Renders header + actions + amenity tiles
-   - Address click opens Maps (directions + ETA)
-   - Amenities render ONLY if that field is truthy (x/X/true/1/yes/y)
-
-   NOTE:
-   Replace SHOPS_DB with your real "master list" source later:
-   - JSON file
-   - Google Sheet CSV
-   - API
+   Public Shop Page (TOP section only)
+   - Loads shop data from /shops/shops.json
+   - Logo loads from /img/icons/shops/<sanitizedname>.svg (fallback .png)
+   - Amenities render in GRID, only if columns are checked
+   - Address click opens Apple Maps directions (+ ETA)
 */
 
 (() => {
@@ -25,120 +17,141 @@
     return u.searchParams.get(name);
   }
 
+  function toStr(v) {
+    return v == null ? "" : String(v).trim();
+  }
+
   function isTruthy(v) {
     if (v === true) return true;
     if (v === false || v == null) return false;
     const s = String(v).trim().toLowerCase();
-    return ["1","true","t","yes","y","x","✓","check","checked"].includes(s);
+    return ["1", "true", "t", "yes", "y", "x", "✓", "check", "checked"].includes(s);
   }
 
-  // Build a directions URL. Prefer Apple Maps on iOS/macOS; Google Maps elsewhere is fine too.
-  function buildDirectionsUrl({ address, lat, lng, name }) {
+  function sanitizeLogoName(name) {
+    // match your repo filenames: lowercase, no spaces, no punctuation
+    return String(name || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function buildDirectionsUrl(shop) {
+    // Prefer coords if present
+    const lat = shop.lat;
+    const lng = shop.lng;
     const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
-    const q = hasCoords ? `${lat},${lng}` : (address || name || "");
+
+    const addressParts = [
+      toStr(shop.address1),
+      toStr(shop.city),
+      toStr(shop.state),
+      toStr(shop.zip),
+    ].filter(Boolean);
+
+    const fallbackAddress = addressParts.join(", ");
+    const q = hasCoords ? `${lat},${lng}` : (fallbackAddress || shop.name || "");
     const qEnc = encodeURIComponent(q);
 
-    // Apple Maps directions (best UX on iOS)
-    // daddr = destination
+    // Apple Maps directions (best iOS UX)
     return `https://maps.apple.com/?daddr=${qEnc}&dirflg=d`;
   }
 
-  // ---------- amenity config ----------
-  // Put your actual SVGs here.
-  // Recommended path: /img/icons/amenities/<key>.svg
+  // ---------- amenities ----------
+  // Only include icons you actually have right now.
+  // As you add more icons, just extend this list.
   const AMENITIES = [
-    { key: "food", label: "Food", icon: "/img/icons/amenities/food.svg" },
-    { key: "alcohol", label: "Alcohol", icon: "/img/icons/amenities/alcohol.svg" },
-    { key: "byob", label: "BYOB", icon: "/img/icons/amenities/byob.svg" },
-    { key: "tvs", label: "TVs", icon: "/img/icons/amenities/tvs.svg" },
-    { key: "indoorSeating", label: "Indoor seating", icon: "/img/icons/amenities/indoor-seating.svg" },
-    { key: "outdoorSeating", label: "Outdoor seating", icon: "/img/icons/amenities/outdoor-seating.svg" },
-    { key: "onlineOrdering", label: "Online ordering", icon: "/img/icons/amenities/online-ordering.svg" },
-    { key: "byoc", label: "BYOC (cigar)", icon: "/img/icons/amenities/byoc.svg" },
-    { key: "quietSpace", label: "Quiet space available", icon: "/img/icons/amenities/quiet-space.svg" },
+    { key: "food", label: "Food", icon: "/img/icons/food.svg" },
+    { key: "alcohol", label: "Alcohol", icon: "/img/icons/alcohol.svg" },
+    { key: "taa", label: "TAA", icon: "/img/icons/taa.svg" },
   ];
 
-  // ---------- temporary local DB (replace with master list) ----------
-  const SHOPS_DB = [
-    {
-      slug: "smoke-inn-psl",
-      name: "Smoke Inn PSL",
-      pill: "SHOP",
-      cityLine: "Port Saint Lucie, FL",
-      website: "https://smokeinn.com",
-      address: "Smoke Inn PSL, Port Saint Lucie, FL",
-      lat: null,
-      lng: null,
-      logo: "/img/shops/smoke-inn-psl/logo.png",
-
-      // Amenities (only render if checked)
-      food: "x",
-      alcohol: "x",
-      byob: "",
-      tvs: "x",
-      indoorSeating: "x",
-      outdoorSeating: "x",
-      onlineOrdering: "x",
-      byoc: "x",
-      quietSpace: "",
-    },
-  ];
-
-  function getShopBySlug(slug) {
-    return SHOPS_DB.find(s => s.slug === slug) || null;
-  }
-
-  // ---------- render ----------
   function renderShop(shop) {
-    // Header
+    // ---------- header ----------
     $("#spName").textContent = shop.name || "Shop";
-    $("#spPill").textContent = (shop.pill || "SHOP").toUpperCase();
+    $("#spPill").textContent = "SHOP"; // outline pill handled in CSS
 
+    // Address line text (clickable)
+    const cityLine =
+      [toStr(shop.city), toStr(shop.state)].filter(Boolean).join(", ") ||
+      toStr(shop.address1) ||
+      "";
+
+    $("#spCity").textContent = cityLine;
+
+    // Website
+    const webEl = $("#spWebsite");
+    if (shop.website) {
+      const url = shop.website.startsWith("http")
+        ? shop.website
+        : `https://${shop.website}`;
+      webEl.textContent = url.replace(/^https?:\/\//, "");
+      webEl.href = url;
+      webEl.style.display = "";
+    } else {
+      webEl.style.display = "none";
+    }
+
+    // ---------- logo ----------
     const logoEl = $("#spLogo");
-    logoEl.src = shop.logo || "/img/shops/default-logo.png";
+    const base = sanitizeLogoName(shop.name);
+    const svgPath = `/img/icons/shops/${base}.svg`;
+    const pngPath = `/img/icons/shops/${base}.png`;
+
+    logoEl.src = svgPath;
     logoEl.alt = `${shop.name || "Shop"} logo`;
 
-    // Address line (click -> maps)
-    $("#spCity").textContent = shop.cityLine || "";
+    // fallback chain: svg -> png -> default
+    logoEl.onerror = function () {
+      if (logoEl.src.endsWith(".svg")) {
+        logoEl.src = pngPath;
+        return;
+      }
+      logoEl.onerror = null;
+      logoEl.src = "/img/icons/shops/default.png";
+    };
 
+    // ---------- address click -> maps ----------
     const addressBtn = $("#spAddressBtn");
     addressBtn.addEventListener("click", () => {
       const url = buildDirectionsUrl(shop);
       window.open(url, "_blank", "noopener");
     });
 
-    // Website
-    const webEl = $("#spWebsite");
-    if (shop.website) {
-      webEl.textContent = shop.website.replace(/^https?:\/\//, "");
-      webEl.href = shop.website;
-      webEl.style.display = "";
-    } else {
-      webEl.style.display = "none";
-    }
-
-    // Follow button (v1 UI only)
+    // ---------- follow (UI only for now) ----------
     const followBtn = $("#spFollowBtn");
     followBtn.addEventListener("click", () => {
-      // Replace with your CigarSocial follow action later.
-      // For now just toggle UI state.
       const t = $("#spFollowText");
       const isFollowing = followBtn.getAttribute("data-following") === "1";
       followBtn.setAttribute("data-following", isFollowing ? "0" : "1");
       t.textContent = isFollowing ? "Follow" : "Following";
     });
 
-    // More button (placeholder)
+    // ---------- more (placeholder) ----------
     $("#spMoreBtn").addEventListener("click", () => {
-      // Later: share, report, copy link, etc.
       alert("More options (v1 placeholder)");
     });
 
-    // Amenities (conditional)
+    // ---------- features logic ----------
+    // Support both formats:
+    // A) features nested: shop.features.food
+    // B) flat keys: shop.food
+    const features = shop.features && typeof shop.features === "object"
+      ? { ...shop.features }
+      : {
+          food: isTruthy(shop.food),
+          alcohol: isTruthy(shop.alcohol),
+          noAlcohol: isTruthy(shop.noAlcohol),
+          taa: isTruthy(shop.taa),
+        };
+
+    // No Alcohol overrides Alcohol
+    if (features.noAlcohol) features.alcohol = false;
+
+    // ---------- amenities grid ----------
     const grid = $("#spAmenGrid");
     grid.innerHTML = "";
 
-    const enabled = AMENITIES.filter(a => isTruthy(shop[a.key]));
+    const enabled = AMENITIES.filter(a => features[a.key] === true);
     enabled.forEach(a => {
       const tile = document.createElement("div");
       tile.className = "sp-amen";
@@ -151,23 +164,35 @@
       grid.appendChild(tile);
     });
 
-    // If none enabled, hide section
-    const amenitiesSection = document.querySelector(".sp-amenities");
-    amenitiesSection.style.display = enabled.length ? "" : "none";
+    // hide section if none
+    document.querySelector(".sp-amenities").style.display = enabled.length ? "" : "none";
   }
 
-  // ---------- boot ----------
-  const slug = (getParam("shop") || "smoke-inn-psl").trim();
-  const shop = getShopBySlug(slug);
+  async function boot() {
+    const slug = (getParam("shop") || "").trim().toLowerCase();
 
-  if (!shop) {
-    $("#spName").textContent = "Shop not found";
-    $("#spPill").textContent = "SHOP";
-    $("#spAddressBtn").style.display = "none";
-    $("#spWebsite").style.display = "none";
-    document.querySelector(".sp-amenities").style.display = "none";
-    return;
+    try {
+      const res = await fetch("/shops/shops.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`shops.json HTTP ${res.status}`);
+      const list = await res.json();
+
+      // Find by slug, else first record
+      const shop =
+        list.find(s => String(s.slug || "").toLowerCase() === slug) ||
+        list[0];
+
+      if (!shop) throw new Error("No shops found in shops.json");
+
+      renderShop(shop);
+    } catch (err) {
+      console.error(err);
+      $("#spName").textContent = "Shop not found";
+      $("#spPill").textContent = "SHOP";
+      $("#spAddressBtn").style.display = "none";
+      $("#spWebsite").style.display = "none";
+      document.querySelector(".sp-amenities").style.display = "none";
+    }
   }
 
-  renderShop(shop);
+  boot();
 })();
