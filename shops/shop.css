@@ -1,0 +1,234 @@
+:root{
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --ink: #0b0b0f;
+  --muted: rgba(20, 20, 30, .55);
+  --hair: rgba(10, 10, 20, .08);
+
+  --shadow: 0 18px 40px rgba(0,0,0,.10);
+  --shadow-soft: 0 10px 24px rgba(0,0,0,.08);
+
+  --radius-xl: 28px;
+  --radius-lg: 22px;
+  --radius-md: 18px;
+
+  --green: #2fb34a; /* iOS-ish green */
+  --blue: #0a84ff;  /* iOS link */
+}
+
+/* page */
+.shop-public{
+  margin:0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.sp-wrap{
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 22px 60px;
+}
+
+/* top card */
+.sp-top{
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+  padding: 26px 26px 22px;
+}
+
+.sp-top-row{
+  display:flex;
+  gap: 22px;
+  align-items:flex-start;
+}
+
+/* logo tile */
+.sp-logo{
+  width: 112px;
+  height: 112px;
+  border-radius: 26px;
+  background: rgba(255,255,255,.7);
+  border: 1px solid var(--hair);
+  box-shadow: var(--shadow-soft);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  flex: 0 0 auto;
+}
+
+.sp-logo img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* header text */
+.sp-head{
+  flex:1;
+  min-width: 0;
+}
+
+.sp-titleline{
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+
+.sp-title{
+  margin:0;
+  font-size: 46px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 900; /* Heavy */
+}
+
+/* subtle outline SHOP pill */
+.sp-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1.6px solid rgba(47,179,74,.55);
+  color: rgba(47,179,74,.95);
+  font-weight: 650; /* Medium-ish */
+  font-size: 16px;
+  letter-spacing: .02em;
+  background: transparent;
+}
+
+/* subtitle styles */
+.sp-sub{
+  display:block;
+  margin-top: 10px;
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 620; /* Medium */
+  color: var(--muted);
+}
+
+.sp-link{
+  border:0;
+  background: transparent;
+  padding:0;
+  text-align:left;
+  cursor:pointer;
+}
+
+.sp-link:hover{
+  color: rgba(10,132,255,.95);
+}
+
+.sp-web{
+  margin-top: 8px;
+  font-weight: 620;
+  color: var(--blue);
+  text-decoration:none;
+}
+.sp-web:hover{ text-decoration: underline; }
+
+/* actions row */
+.sp-actions{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.sp-action{
+  height: 52px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: rgba(255,255,255,.72);
+  box-shadow: 0 10px 22px rgba(0,0,0,.08);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap: 12px;
+  cursor:pointer;
+  font-family: inherit;
+}
+
+.sp-follow{
+  flex: 1 1 auto;
+  justify-content:center;
+  padding: 0 18px;
+  min-width: 160px;
+  font-size: 22px;
+  font-weight: 650; /* Medium */
+  color: rgba(10,10,20,.85);
+}
+
+.sp-more{
+  width: 64px;
+  flex: 0 0 auto;
+}
+
+.sp-ico{
+  width: 26px;
+  height: 26px;
+  stroke: rgba(20,20,30,.55);
+}
+.sp-more .sp-ico{ stroke:none; fill: rgba(20,20,30,.38); }
+
+/* amenities */
+.sp-amenities{
+  margin-top: 18px;
+}
+
+.sp-amen-grid{
+  display:flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+/* amenity tile */
+.sp-amen{
+  width: 162px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hair);
+  box-shadow: var(--shadow-soft);
+  padding: 18px 16px 16px;
+  text-align:center;
+}
+
+.sp-amen-ico{
+  width: 62px;
+  height: 62px;
+  margin: 2px auto 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.sp-amen-ico img{
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  filter: grayscale(1);
+  opacity: .9;
+}
+
+.sp-amen-label{
+  font-size: 20px;
+  font-weight: 650; /* Medium */
+  color: rgba(10,10,20,.78);
+}
+
+/* responsive */
+@media (max-width: 640px){
+  .sp-wrap{ padding: 18px 16px 44px; }
+  .sp-title{ font-size: 34px; }
+  .sp-sub{ font-size: 18px; }
+  .sp-logo{ width: 92px; height: 92px; border-radius: 22px; }
+  .sp-amen{ width: calc(50% - 9px); }
+}
