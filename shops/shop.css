@@ -1,24 +1,20 @@
-/* /shops/shop.css (v2)
-   Matches your desired card layout:
-   - SHOP pill top-right
-   - GPS icon next to city
-   - Amenity icons as a single row of square icons
-   - Bottom right WEB pill
-*/
+/* /shops/shop.css (v3) — Centered shop profile layout */
 
 :root{
   --bg: #f2f2f7;
   --surface: #ffffff;
   --ink: #0b0b0c;
-  --muted: #6e6e73;
+  --muted: #8e8e93;
   --shadow: 0 20px 60px rgba(0,0,0,.10);
-  --cardRadius: 30px;
+
+  --cardRadius: 34px;
   --pillRadius: 999px;
+
+  --green: #34c759;
+  --red: #ff3b30;
 }
 
-html, body {
-  height: 100%;
-}
+html, body { height: 100%; }
 
 body.shop-public{
   margin: 0;
@@ -28,9 +24,9 @@ body.shop-public{
 }
 
 .sp-wrap{
-  max-width: 420px;
+  max-width: 430px;
   margin: 0 auto;
-  padding: 28px 18px 40px;
+  padding: 28px 18px 60px;
 }
 
 /* CARD */
@@ -39,148 +35,147 @@ body.shop-public{
   background: var(--surface);
   border-radius: var(--cardRadius);
   box-shadow: var(--shadow);
-  padding: 26px 22px 22px;
+  padding: 22px 22px 26px;
 }
 
-/* top row */
-.sp-top-row{
+/* Top-left SHOP pill */
+.sp-pill{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 16px;
+  border-radius: var(--pillRadius);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: .06em;
+  background: rgba(255,255,255,.9);
+  border: 1.5px solid #e5e5ea;
+  color: #c7c7cc;
+}
+
+.sp-pill-left{
+  position: absolute;
+  top: 22px;
+  left: 22px;
+}
+
+/* Top-right OPEN/CLOSED area */
+.sp-status{
+  position: absolute;
+  top: 18px;
+  right: 18px;
   display: flex;
-  gap: 18px;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
 }
 
-/* logo */
-.sp-logo{
-  width: 110px;
-  height: 110px;
-  border-radius: 26px;
+.sp-pill-right{
+  border: none;
+  color: #fff;
+  padding: 7px 16px;
+}
+
+#spStatusPill[data-status="open"]{
+  background: var(--green);
+}
+
+#spStatusPill[data-status="closed"]{
+  background: #c7c7cc;
+}
+
+/* TAA icon under status (only when true) */
+.sp-taa{
+  width: 34px;
+  height: 34px;
+  display: none;
+  filter: grayscale(0);
+}
+
+/* Center logo */
+.sp-logo-center{
+  width: 170px;
+  height: 170px;
+  border-radius: 42px;
   overflow: hidden;
+  margin: 44px auto 18px;
   background: #111;
-  flex: 0 0 auto;
-  box-shadow: 0 18px 40px rgba(0,0,0,.18);
+  box-shadow: 0 18px 50px rgba(0,0,0,.18);
 }
 
-.sp-logo img{
+.sp-logo-center img{
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-/* SHOP pill (top right) */
-.sp-pill{
-  position: absolute;
-  top: 22px;
-  right: 22px;
-  padding: 7px 16px;
-  border-radius: var(--pillRadius);
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: .06em;
-  color: #c7c7cc;
-  border: 1.5px solid #e5e5ea;
-  background: rgba(255,255,255,.9);
-}
-
-/* head */
-.sp-head{
-  flex: 1 1 auto;
-  padding-top: 6px;
-}
-
-.sp-title{
-  margin: 0 0 10px 0;
+/* Center title */
+.sp-title-center{
+  margin: 0;
+  text-align: center;
   font-size: 44px;
-  line-height: .95;
+  line-height: 1.05;
   letter-spacing: -0.02em;
   font-weight: 900;
-  color: #0b0b0c;
+  color: var(--ink);
 }
 
-/* city line */
+/* Center city line */
 .sp-city{
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 22px;
-  font-weight: 650;
   color: var(--muted);
+  font-weight: 700;
+  font-size: 22px;
 }
 
-.sp-city:active{
-  transform: scale(.99);
+.sp-city-center{
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 12px 0 18px;
 }
+
+.sp-city:active{ transform: scale(.99); }
 
 .sp-gps{
   width: 22px;
   height: 22px;
-  color: #ff3b30;
+  color: var(--red);
   flex: 0 0 auto;
 }
 
-/* amenities row */
+/* Amenities panel */
+.sp-amen-panel{
+  margin-top: 18px;
+  background: #ededf0;
+  border-radius: 28px;
+  padding: 18px 18px;
+}
+
 .sp-amen-row{
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 18px;
-  margin-top: 26px;
-  padding-left: 4px;
 }
 
 .sp-amen-icon{
-  width: 58px;   /* matches your green square vibe */
-  height: 58px;
-  border-radius: 14px;
+  width: 54px;
+  height: 54px;
   object-fit: contain;
   display: block;
 }
 
-/* actions row */
-.sp-actions{
-  display: flex;
-  gap: 16px;
-  margin-top: 22px;
-}
-
-.sp-action{
-  height: 58px;
-  border-radius: 18px;
-  border: 1px solid #e5e5ea;
-  background: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 0 18px;
-  font-weight: 800;
-  font-size: 22px;
-  color: #1c1c1e;
-  text-decoration: none;
-}
-
-.sp-follow{
-  flex: 1 1 auto;
-}
-
-.sp-web{
-  flex: 0 0 120px;
-  color: #007aff;
-  background: #f2f2f7;
-  border-color: #e5e5ea;
-}
-
-.sp-ico{
-  width: 26px;
-  height: 26px;
-  stroke: currentColor;
-  fill: none;
-}
-
+/* Responsive tweaks */
 @media (max-width: 390px){
-  .sp-title{ font-size: 40px; }
-  .sp-amen-icon{ width: 54px; height: 54px; }
-  .sp-action{ font-size: 20px; height: 56px; }
+  .sp-title-center{ font-size: 40px; }
+  .sp-logo-center{ width: 155px; height: 155px; }
+  .sp-amen-icon{ width: 50px; height: 50px; }
 }
