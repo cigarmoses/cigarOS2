@@ -7,61 +7,48 @@
   <title>Shop • CigarOS</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/shops/shop.css?v=2" />
+  <link rel="stylesheet" href="/shops/shop.css?v=3" />
 </head>
 
 <body class="shop-public">
   <main class="sp-wrap">
 
-    <!-- TOP CARD -->
-    <section class="sp-top" aria-label="Shop header">
+    <section class="sp-top sp-center" aria-label="Shop header">
 
-      <!-- SHOP pill (top-right) -->
-      <div class="sp-pill" id="spPill">SHOP</div>
+      <!-- Top Left: SHOP -->
+      <div class="sp-pill sp-pill-left" id="spPillLeft">SHOP</div>
 
-      <div class="sp-top-row">
-        <div class="sp-logo" aria-hidden="true">
-          <img id="spLogo" alt="" />
-        </div>
-
-        <div class="sp-head">
-          <h1 class="sp-title" id="spName">Shop Name</h1>
-
-          <!-- City line (clickable -> Maps) -->
-          <button class="sp-city sp-link" id="spAddressBtn" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="sp-gps">
-              <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" fill="currentColor"/>
-              <circle cx="12" cy="9" r="2.5" fill="#fff"/>
-            </svg>
-            <span id="spCity">City, ST</span>
-          </button>
-        </div>
+      <!-- Top Right: OPEN/CLOSED + (optional) TAA icon below -->
+      <div class="sp-status" aria-label="Shop status">
+        <div class="sp-pill sp-pill-right" id="spStatusPill">OPEN</div>
+        <img class="sp-taa" id="spTaaIcon" src="/img/icons/taa.svg" alt="TAA" />
       </div>
 
-      <!-- Amenity icons row -->
-      <div class="sp-amen-row" id="spAmenRow" aria-label="Amenities"></div>
-
-      <!-- ACTIONS ROW -->
-      <div class="sp-actions">
-        <button class="sp-action sp-follow" id="spFollowBtn" type="button" aria-label="Follow shop">
-          <svg viewBox="0 0 24 24" aria-hidden="true" class="sp-ico">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" fill="none" stroke-width="2.25" stroke-linecap="round"/>
-            <circle cx="9" cy="7" r="4" fill="none" stroke-width="2.25"/>
-            <path d="M19 8v6" fill="none" stroke-width="2.25" stroke-linecap="round"/>
-            <path d="M22 11h-6" fill="none" stroke-width="2.25" stroke-linecap="round"/>
-          </svg>
-          <span id="spFollowText">Follow</span>
-        </button>
-
-        <!-- Website button -->
-        <a class="sp-action sp-web" id="spWebsite" href="#" target="_blank" rel="noopener" aria-label="Open website">
-          WEB
-        </a>
+      <!-- Center Logo -->
+      <div class="sp-logo sp-logo-center" aria-hidden="true">
+        <img id="spLogo" alt="" />
       </div>
+
+      <!-- Center Name + City -->
+      <h1 class="sp-title sp-title-center" id="spName">Shop Name</h1>
+
+      <button class="sp-city sp-city-center sp-link" id="spAddressBtn" type="button" aria-label="Open directions">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="sp-gps">
+          <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" fill="currentColor"/>
+          <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+        </svg>
+        <span id="spCity">City, ST</span>
+      </button>
+
+      <!-- Amenities panel -->
+      <div class="sp-amen-panel" id="spAmenPanel" aria-label="Amenities">
+        <div class="sp-amen-row" id="spAmenRow"></div>
+      </div>
+
     </section>
 
   </main>
 
-  <script src="/shops/shop.js?v=2"></script>
+  <script src="/shops/shop.js?v=3"></script>
 </body>
 </html>
