@@ -1,9 +1,10 @@
 /* /shops/shop.js
-   Public Shop Page (TOP section only)
+   Public Shop Page (Top Card Layout v2)
    - Loads shop data from /shops/shops.json
    - Logo loads from /img/icons/shops/<sanitizedname>.svg (fallback .png)
-   - Amenities render in GRID, only if columns are checked
+   - Amenities render as ICON ROW (no labels), only if columns are checked
    - Address click opens Apple Maps directions (+ ETA)
+   - Website button is a pill that always says "WEB"
 */
 
 (() => {
@@ -37,12 +38,12 @@
 
   function buildDirectionsUrl(shop) {
     // Prefer coords if present
-    const lat = shop.lat;
-    const lng = shop.lng;
+    const lat = Number(shop.latitude ?? shop.lat);
+    const lng = Number(shop.longitude ?? shop.lng);
     const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
 
     const addressParts = [
-      toStr(shop.address1),
+      toStr(shop.address1 || shop.address),
       toStr(shop.city),
       toStr(shop.state),
       toStr(shop.zip),
@@ -52,53 +53,78 @@
     const q = hasCoords ? `${lat},${lng}` : (fallbackAddress || shop.name || "");
     const qEnc = encodeURIComponent(q);
 
-    // Apple Maps directions (best iOS UX)
     return `https://maps.apple.com/?daddr=${qEnc}&dirflg=d`;
   }
 
   // ---------- amenities ----------
-  // Only include icons you actually have right now.
-  // As you add more icons, just extend this list.
+  // Add icons here as you create them.
+  // Keys must match your shops.json columns (case-insensitive handled below).
   const AMENITIES = [
-    { key: "food", label: "Food", icon: "/img/icons/food.svg" },
     { key: "alcohol", label: "Alcohol", icon: "/img/icons/alcohol.svg" },
+    { key: "byob", label: "BYOB", icon: "/img/icons/byob.svg" },          // if you add later
+    { key: "noalcohol", label: "No Alcohol", icon: "/img/icons/noalcohol.svg" }, // if you add later
+    { key: "food", label: "Food", icon: "/img/icons/food.svg" },
+    { key: "tvs", label: "TVs", icon: "/img/icons/tv.svg" },              // if you add later
+    { key: "outdoor", label: "Outdoor", icon: "/img/icons/outdoor.svg" }, // if you add later
+    { key: "indoor", label: "Indoor", icon: "/img/icons/indoor.svg" },    // if you add later
+    { key: "quiet", label: "Quiet", icon: "/img/icons/quiet.svg" },       // if you add later
+    { key: "livemusic", label: "Live Music", icon: "/img/icons/livemusic.svg" }, // if you add later
     { key: "taa", label: "TAA", icon: "/img/icons/taa.svg" },
   ];
 
+  function normalizeFeatureBag(shop) {
+    // Supports:
+    // A) shop.features = { food: true, alcohol: "x", ... }
+    // B) flat columns directly on shop row: shop.Food, shop.Alcohol, etc.
+    const bag = {};
+
+    if (shop.features && typeof shop.features === "object") {
+      for (const k of Object.keys(shop.features)) {
+        bag[String(k).trim().toLowerCase()] = isTruthy(shop.features[k]);
+      }
+    }
+
+    // Pull flat keys too (your sheet-style column names)
+    for (const k of Object.keys(shop)) {
+      const nk = String(k).trim().toLowerCase().replace(/\s+/g, "");
+      // only map likely amenity keys
+      if (AMENITIES.some(a => a.key === nk)) {
+        bag[nk] = isTruthy(shop[k]);
+      }
+      // handle explicit "No Alcohol" override if column exists
+      if (nk === "noalcohol") bag[nk] = isTruthy(shop[k]);
+    }
+
+    // No Alcohol overrides Alcohol
+    if (bag.noalcohol === true) bag.alcohol = false;
+
+    return bag;
+  }
+
   function renderShop(shop) {
     // ---------- header ----------
-    $("#spName").textContent = shop.name || "Shop";
-    $("#spPill").textContent = "SHOP"; // outline pill handled in CSS
+    $("#spName").textContent = shop.name || shop.Shop || "Shop";
+    $("#spPill").textContent = "SHOP";
 
-    // Address line text (clickable)
+    // City line text
     const cityLine =
-      [toStr(shop.city), toStr(shop.state)].filter(Boolean).join(", ") ||
-      toStr(shop.address1) ||
+      [toStr(shop.city || shop.City), toStr(shop.state || shop.ST || shop.State)]
+        .filter(Boolean)
+        .join(", ") ||
+      toStr(shop.address1 || shop.Address || "") ||
       "";
 
     $("#spCity").textContent = cityLine;
 
-    // Website
-    const webEl = $("#spWebsite");
-    if (shop.website) {
-      const url = shop.website.startsWith("http")
-        ? shop.website
-        : `https://${shop.website}`;
-      webEl.textContent = url.replace(/^https?:\/\//, "");
-      webEl.href = url;
-      webEl.style.display = "";
-    } else {
-      webEl.style.display = "none";
-    }
-
     // ---------- logo ----------
     const logoEl = $("#spLogo");
-    const base = sanitizeLogoName(shop.name);
+    const shopName = shop.name || shop.Shop || "Shop";
+    const base = sanitizeLogoName(shopName);
     const svgPath = `/img/icons/shops/${base}.svg`;
     const pngPath = `/img/icons/shops/${base}.png`;
 
     logoEl.src = svgPath;
-    logoEl.alt = `${shop.name || "Shop"} logo`;
+    logoEl.alt = `${shopName} logo`;
 
     // fallback chain: svg -> png -> default
     logoEl.onerror = function () {
@@ -117,6 +143,19 @@
       window.open(url, "_blank", "noopener");
     });
 
+    // ---------- website (WEB pill) ----------
+    const webEl = $("#spWebsite");
+    const rawWebsite = toStr(shop.website || shop.Website);
+
+    if (rawWebsite) {
+      const url = rawWebsite.startsWith("http") ? rawWebsite : `https://${rawWebsite}`;
+      webEl.href = url;
+      webEl.style.display = "";
+    } else {
+      webEl.style.display = "none";
+      webEl.removeAttribute("href");
+    }
+
     // ---------- follow (UI only for now) ----------
     const followBtn = $("#spFollowBtn");
     followBtn.addEventListener("click", () => {
@@ -126,46 +165,27 @@
       t.textContent = isFollowing ? "Follow" : "Following";
     });
 
-    // ---------- more (placeholder) ----------
-    $("#spMoreBtn").addEventListener("click", () => {
-      alert("More options (v1 placeholder)");
-    });
+    // ---------- amenities row ----------
+    const features = normalizeFeatureBag(shop);
 
-    // ---------- features logic ----------
-    // Support both formats:
-    // A) features nested: shop.features.food
-    // B) flat keys: shop.food
-    const features = shop.features && typeof shop.features === "object"
-      ? { ...shop.features }
-      : {
-          food: isTruthy(shop.food),
-          alcohol: isTruthy(shop.alcohol),
-          noAlcohol: isTruthy(shop.noAlcohol),
-          taa: isTruthy(shop.taa),
-        };
-
-    // No Alcohol overrides Alcohol
-    if (features.noAlcohol) features.alcohol = false;
-
-    // ---------- amenities grid ----------
-    const grid = $("#spAmenGrid");
-    grid.innerHTML = "";
+    const row = $("#spAmenRow");
+    row.innerHTML = "";
 
     const enabled = AMENITIES.filter(a => features[a.key] === true);
+
     enabled.forEach(a => {
-      const tile = document.createElement("div");
-      tile.className = "sp-amen";
-      tile.innerHTML = `
-        <div class="sp-amen-ico" aria-hidden="true">
-          <img src="${a.icon}" alt="" />
-        </div>
-        <div class="sp-amen-label">${a.label}</div>
-      `;
-      grid.appendChild(tile);
+      const img = document.createElement("img");
+      img.className = "sp-amen-icon";
+      img.src = a.icon;
+      img.alt = a.label;
+
+      // If an icon file doesn't exist yet, fail silently by hiding it
+      img.onerror = () => { img.remove(); };
+
+      row.appendChild(img);
     });
 
-    // hide section if none
-    document.querySelector(".sp-amenities").style.display = enabled.length ? "" : "none";
+    row.style.display = enabled.length ? "flex" : "none";
   }
 
   async function boot() {
@@ -176,9 +196,9 @@
       if (!res.ok) throw new Error(`shops.json HTTP ${res.status}`);
       const list = await res.json();
 
-      // Find by slug, else first record
       const shop =
         list.find(s => String(s.slug || "").toLowerCase() === slug) ||
+        list.find(s => String(s.Shop || s.name || "").toLowerCase().includes(slug)) ||
         list[0];
 
       if (!shop) throw new Error("No shops found in shops.json");
@@ -190,7 +210,7 @@
       $("#spPill").textContent = "SHOP";
       $("#spAddressBtn").style.display = "none";
       $("#spWebsite").style.display = "none";
-      document.querySelector(".sp-amenities").style.display = "none";
+      $("#spAmenRow").style.display = "none";
     }
   }
 
