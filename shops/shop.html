@@ -7,7 +7,7 @@
   <title>Shop • CigarOS</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/shops/shop.css?v=3" />
+  <link rel="stylesheet" href="/shops/shop.css?v=4" />
 </head>
 
 <body class="shop-public">
@@ -20,7 +20,7 @@
 
       <!-- Top Right: OPEN/CLOSED + (optional) TAA icon below -->
       <div class="sp-status" aria-label="Shop status">
-        <div class="sp-pill sp-pill-right" id="spStatusPill">OPEN</div>
+        <div class="sp-pill sp-pill-right" id="spStatusPill" data-status="open">OPEN</div>
         <img class="sp-taa" id="spTaaIcon" src="/img/icons/taa.svg" alt="TAA" />
       </div>
 
@@ -29,9 +29,10 @@
         <img id="spLogo" alt="" />
       </div>
 
-      <!-- Center Name + City -->
+      <!-- Center Name (max 2 lines, auto-sized by JS) -->
       <h1 class="sp-title sp-title-center" id="spName">Shop Name</h1>
 
+      <!-- City/state -->
       <button class="sp-city sp-city-center sp-link" id="spAddressBtn" type="button" aria-label="Open directions">
         <svg viewBox="0 0 24 24" aria-hidden="true" class="sp-gps">
           <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" fill="currentColor"/>
@@ -40,7 +41,7 @@
         <span id="spCity">City, ST</span>
       </button>
 
-      <!-- Amenities panel -->
+      <!-- Amenities panel (NOW WHITE) -->
       <div class="sp-amen-panel" id="spAmenPanel" aria-label="Amenities">
         <div class="sp-amen-row" id="spAmenRow"></div>
       </div>
@@ -49,6 +50,6 @@
 
   </main>
 
-  <script src="/shops/shop.js?v=3"></script>
+  <script src="/shops/shop.js?v=4"></script>
 </body>
 </html>
