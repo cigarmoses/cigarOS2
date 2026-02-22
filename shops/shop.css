@@ -232,3 +232,60 @@
   .sp-logo{ width: 92px; height: 92px; border-radius: 22px; }
   .sp-amen{ width: calc(50% - 9px); }
 }
+/* SHOP pill top right */
+.sp-pill-top {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid #34c759;
+  color: #34c759;
+}
+
+/* GPS line */
+.sp-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #6e6e73;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.sp-gps {
+  width: 16px;
+  height: 16px;
+  color: #ff3b30;
+}
+
+/* Amenity row */
+.sp-amen-row {
+  display: flex;
+  gap: 22px;
+  margin-top: 24px;
+}
+
+.sp-amen-icon {
+  width: 40px;
+  height: 40px;
+}
+
+/* WEB button */
+.sp-web {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 26px;
+  border-radius: 18px;
+  font-weight: 600;
+  font-size: 17px;
+  text-decoration: none;
+  background: #f2f2f7;
+  color: #007aff;
+}
