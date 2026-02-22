@@ -1,291 +1,186 @@
+/* /shops/shop.css (v2)
+   Matches your desired card layout:
+   - SHOP pill top-right
+   - GPS icon next to city
+   - Amenity icons as a single row of square icons
+   - Bottom right WEB pill
+*/
+
 :root{
   --bg: #f2f2f7;
   --surface: #ffffff;
-  --ink: #0b0b0f;
-  --muted: rgba(20, 20, 30, .55);
-  --hair: rgba(10, 10, 20, .08);
-
-  --shadow: 0 18px 40px rgba(0,0,0,.10);
-  --shadow-soft: 0 10px 24px rgba(0,0,0,.08);
-
-  --radius-xl: 28px;
-  --radius-lg: 22px;
-  --radius-md: 18px;
-
-  --green: #2fb34a; /* iOS-ish green */
-  --blue: #0a84ff;  /* iOS link */
+  --ink: #0b0b0c;
+  --muted: #6e6e73;
+  --shadow: 0 20px 60px rgba(0,0,0,.10);
+  --cardRadius: 30px;
+  --pillRadius: 999px;
 }
 
-/* page */
-.shop-public{
-  margin:0;
+html, body {
+  height: 100%;
+}
+
+body.shop-public{
+  margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
 }
 
 .sp-wrap{
-  max-width: 980px;
+  max-width: 420px;
   margin: 0 auto;
-  padding: 28px 22px 60px;
+  padding: 28px 18px 40px;
 }
 
-/* top card */
+/* CARD */
 .sp-top{
+  position: relative;
   background: var(--surface);
-  border-radius: var(--radius-xl);
+  border-radius: var(--cardRadius);
   box-shadow: var(--shadow);
-  padding: 26px 26px 22px;
+  padding: 26px 22px 22px;
 }
 
+/* top row */
 .sp-top-row{
-  display:flex;
-  gap: 22px;
-  align-items:flex-start;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
 }
 
-/* logo tile */
+/* logo */
 .sp-logo{
-  width: 112px;
-  height: 112px;
+  width: 110px;
+  height: 110px;
   border-radius: 26px;
-  background: rgba(255,255,255,.7);
-  border: 1px solid var(--hair);
-  box-shadow: var(--shadow-soft);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
+  overflow: hidden;
+  background: #111;
   flex: 0 0 auto;
+  box-shadow: 0 18px 40px rgba(0,0,0,.18);
 }
 
 .sp-logo img{
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-/* header text */
+/* SHOP pill (top right) */
+.sp-pill{
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  padding: 7px 16px;
+  border-radius: var(--pillRadius);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .06em;
+  color: #c7c7cc;
+  border: 1.5px solid #e5e5ea;
+  background: rgba(255,255,255,.9);
+}
+
+/* head */
 .sp-head{
-  flex:1;
-  min-width: 0;
-}
-
-.sp-titleline{
-  display:flex;
-  gap: 12px;
-  align-items:center;
-  flex-wrap: wrap;
+  flex: 1 1 auto;
+  padding-top: 6px;
 }
 
 .sp-title{
-  margin:0;
-  font-size: 46px;
-  line-height: 1.05;
+  margin: 0 0 10px 0;
+  font-size: 44px;
+  line-height: .95;
   letter-spacing: -0.02em;
-  font-weight: 900; /* Heavy */
+  font-weight: 900;
+  color: #0b0b0c;
 }
 
-/* subtle outline SHOP pill */
-.sp-pill{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1.6px solid rgba(47,179,74,.55);
-  color: rgba(47,179,74,.95);
-  font-weight: 650; /* Medium-ish */
-  font-size: 16px;
-  letter-spacing: .02em;
+/* city line */
+.sp-city{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: none;
   background: transparent;
-}
-
-/* subtitle styles */
-.sp-sub{
-  display:block;
-  margin-top: 10px;
-  font-size: 24px;
-  line-height: 1.2;
-  font-weight: 620; /* Medium */
+  cursor: pointer;
+  font-size: 22px;
+  font-weight: 650;
   color: var(--muted);
 }
 
-.sp-link{
-  border:0;
-  background: transparent;
-  padding:0;
-  text-align:left;
-  cursor:pointer;
+.sp-city:active{
+  transform: scale(.99);
 }
 
-.sp-link:hover{
-  color: rgba(10,132,255,.95);
+.sp-gps{
+  width: 22px;
+  height: 22px;
+  color: #ff3b30;
+  flex: 0 0 auto;
 }
 
-.sp-web{
-  margin-top: 8px;
-  font-weight: 620;
-  color: var(--blue);
-  text-decoration:none;
+/* amenities row */
+.sp-amen-row{
+  display: flex;
+  gap: 18px;
+  margin-top: 26px;
+  padding-left: 4px;
 }
-.sp-web:hover{ text-decoration: underline; }
+
+.sp-amen-icon{
+  width: 58px;   /* matches your green square vibe */
+  height: 58px;
+  border-radius: 14px;
+  object-fit: contain;
+  display: block;
+}
 
 /* actions row */
 .sp-actions{
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-top: 18px;
+  display: flex;
+  gap: 16px;
+  margin-top: 22px;
 }
 
 .sp-action{
-  height: 52px;
-  border-radius: 999px;
-  border: 1px solid var(--hair);
-  background: rgba(255,255,255,.72);
-  box-shadow: 0 10px 22px rgba(0,0,0,.08);
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+  height: 58px;
+  border-radius: 18px;
+  border: 1px solid #e5e5ea;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 12px;
-  cursor:pointer;
-  font-family: inherit;
+  padding: 0 18px;
+  font-weight: 800;
+  font-size: 22px;
+  color: #1c1c1e;
+  text-decoration: none;
 }
 
 .sp-follow{
   flex: 1 1 auto;
-  justify-content:center;
-  padding: 0 18px;
-  min-width: 160px;
-  font-size: 22px;
-  font-weight: 650; /* Medium */
-  color: rgba(10,10,20,.85);
 }
 
-.sp-more{
-  width: 64px;
-  flex: 0 0 auto;
+.sp-web{
+  flex: 0 0 120px;
+  color: #007aff;
+  background: #f2f2f7;
+  border-color: #e5e5ea;
 }
 
 .sp-ico{
   width: 26px;
   height: 26px;
-  stroke: rgba(20,20,30,.55);
-}
-.sp-more .sp-ico{ stroke:none; fill: rgba(20,20,30,.38); }
-
-/* amenities */
-.sp-amenities{
-  margin-top: 18px;
+  stroke: currentColor;
+  fill: none;
 }
 
-.sp-amen-grid{
-  display:flex;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-
-/* amenity tile */
-.sp-amen{
-  width: 162px;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--hair);
-  box-shadow: var(--shadow-soft);
-  padding: 18px 16px 16px;
-  text-align:center;
-}
-
-.sp-amen-ico{
-  width: 62px;
-  height: 62px;
-  margin: 2px auto 10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.sp-amen-ico img{
-  width: 62px;
-  height: 62px;
-  object-fit: contain;
-  filter: grayscale(1);
-  opacity: .9;
-}
-
-.sp-amen-label{
-  font-size: 20px;
-  font-weight: 650; /* Medium */
-  color: rgba(10,10,20,.78);
-}
-
-/* responsive */
-@media (max-width: 640px){
-  .sp-wrap{ padding: 18px 16px 44px; }
-  .sp-title{ font-size: 34px; }
-  .sp-sub{ font-size: 18px; }
-  .sp-logo{ width: 92px; height: 92px; border-radius: 22px; }
-  .sp-amen{ width: calc(50% - 9px); }
-}
-/* SHOP pill top right */
-.sp-pill-top {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1.5px solid #34c759;
-  color: #34c759;
-}
-
-/* GPS line */
-.sp-location {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 18px;
-  font-weight: 500;
-  color: #6e6e73;
-  background: none;
-  border: none;
-  padding: 0;
-}
-
-.sp-gps {
-  width: 16px;
-  height: 16px;
-  color: #ff3b30;
-}
-
-/* Amenity row */
-.sp-amen-row {
-  display: flex;
-  gap: 22px;
-  margin-top: 24px;
-}
-
-.sp-amen-icon {
-  width: 40px;
-  height: 40px;
-}
-
-/* WEB button */
-.sp-web {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 26px;
-  border-radius: 18px;
-  font-weight: 600;
-  font-size: 17px;
-  text-decoration: none;
-  background: #f2f2f7;
-  color: #007aff;
+@media (max-width: 390px){
+  .sp-title{ font-size: 40px; }
+  .sp-amen-icon{ width: 54px; height: 54px; }
+  .sp-action{ font-size: 20px; height: 56px; }
 }
