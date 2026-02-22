@@ -1,4 +1,8 @@
-/* /shops/shop.css (v3) — Centered shop profile layout */
+/* /shops/shop.css (v4)
+   Updates:
+   ✅ Amenities panel background is WHITE (was light gray)
+   ✅ Shop name is max 2 lines (JS inserts <br>) + auto size
+*/
 
 :root{
   --bg: #f2f2f7;
@@ -38,7 +42,7 @@ body.shop-public{
   padding: 22px 22px 26px;
 }
 
-/* Top-left SHOP pill */
+/* Pills */
 .sp-pill{
   display: inline-flex;
   align-items: center;
@@ -89,7 +93,6 @@ body.shop-public{
   width: 34px;
   height: 34px;
   display: none;
-  filter: grayscale(0);
 }
 
 /* Center logo */
@@ -114,14 +117,14 @@ body.shop-public{
 .sp-title-center{
   margin: 0;
   text-align: center;
-  font-size: 44px;
+  font-size: 44px; /* JS overrides per name length */
   line-height: 1.05;
   letter-spacing: -0.02em;
   font-weight: 900;
   color: var(--ink);
 }
 
-/* Center city line */
+/* City line */
 .sp-city{
   border: none;
   background: transparent;
@@ -151,12 +154,13 @@ body.shop-public{
   flex: 0 0 auto;
 }
 
-/* Amenities panel */
+/* Amenities panel (NOW WHITE) */
 .sp-amen-panel{
   margin-top: 18px;
-  background: #ededf0;
+  background: #ffffff;          /* ✅ changed from light gray */
   border-radius: 28px;
   padding: 18px 18px;
+  border: 1px solid #ededf0;    /* subtle separation */
 }
 
 .sp-amen-row{
@@ -175,7 +179,6 @@ body.shop-public{
 
 /* Responsive tweaks */
 @media (max-width: 390px){
-  .sp-title-center{ font-size: 40px; }
   .sp-logo-center{ width: 155px; height: 155px; }
   .sp-amen-icon{ width: 50px; height: 50px; }
 }
