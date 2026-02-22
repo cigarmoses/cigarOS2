@@ -7,12 +7,13 @@
   <title>Shop • CigarOS</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/shops/shop.css?v=4" />
+  <link rel="stylesheet" href="/shops/shop.css?v=5" />
 </head>
 
 <body class="shop-public">
   <main class="sp-wrap">
 
+    <!-- TOP PROFILE CARD -->
     <section class="sp-top sp-center" aria-label="Shop header">
 
       <!-- Top Left: SHOP -->
@@ -41,15 +42,115 @@
         <span id="spCity">City, ST</span>
       </button>
 
-      <!-- Amenities panel (NOW WHITE) -->
+      <!-- Amenities panel -->
       <div class="sp-amen-panel" id="spAmenPanel" aria-label="Amenities">
         <div class="sp-amen-row" id="spAmenRow"></div>
       </div>
 
     </section>
 
+    <!-- BOTTOM SECTION -->
+    <section class="sp-bottom" aria-label="Shop details">
+
+      <!-- ACTION DOCK -->
+      <div class="sp-dock" role="group" aria-label="Quick actions">
+        <button class="sp-dock-btn" id="spActCall" type="button" aria-label="Call">
+          <span class="sp-dock-ico" aria-hidden="true">📞</span>
+          <span class="sp-dock-label">Call</span>
+        </button>
+
+        <button class="sp-dock-btn" id="spActWeb" type="button" aria-label="Website">
+          <span class="sp-dock-ico" aria-hidden="true">🌐</span>
+          <span class="sp-dock-label">Web</span>
+        </button>
+
+        <button class="sp-dock-btn" id="spActMsg" type="button" aria-label="Message">
+          <span class="sp-dock-ico" aria-hidden="true">💬</span>
+          <span class="sp-dock-label">Message</span>
+        </button>
+
+        <button class="sp-dock-btn" id="spActDir" type="button" aria-label="Directions">
+          <span class="sp-dock-ico" aria-hidden="true">🧭</span>
+          <span class="sp-dock-label">Directions</span>
+        </button>
+      </div>
+
+      <!-- SEGMENTED CONTROL -->
+      <div class="sp-seg" role="tablist" aria-label="Shop sections">
+        <button class="sp-seg-btn is-active" id="spTabOverview" type="button" role="tab" aria-selected="true">
+          Overview
+        </button>
+        <button class="sp-seg-btn" id="spTabBrands" type="button" role="tab" aria-selected="false">
+          Brands
+        </button>
+        <button class="sp-seg-btn" id="spTabUpdates" type="button" role="tab" aria-selected="false">
+          Updates
+        </button>
+      </div>
+
+      <!-- PANELS -->
+      <div class="sp-panels">
+
+        <!-- OVERVIEW -->
+        <div class="sp-panel is-active" id="spPanelOverview" role="tabpanel">
+          <div class="sp-card">
+            <div class="sp-card-head">
+              <div class="sp-card-title">Hours</div>
+              <div class="sp-card-right" id="spHoursNow">—</div>
+            </div>
+            <div class="sp-hours" id="spHoursList"></div>
+          </div>
+
+          <div class="sp-card">
+            <div class="sp-card-head">
+              <div class="sp-card-title">Contact</div>
+            </div>
+            <div class="sp-kv">
+              <div class="sp-kv-row">
+                <div class="sp-kv-k">Phone</div>
+                <div class="sp-kv-v" id="spPhoneVal">—</div>
+              </div>
+              <div class="sp-kv-row">
+                <div class="sp-kv-k">Website</div>
+                <div class="sp-kv-v" id="spWebVal">—</div>
+              </div>
+              <div class="sp-kv-row">
+                <div class="sp-kv-k">Address</div>
+                <div class="sp-kv-v" id="spAddrVal">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BRANDS -->
+        <div class="sp-panel" id="spPanelBrands" role="tabpanel">
+          <div class="sp-card">
+            <div class="sp-card-head">
+              <div class="sp-card-title">Brands carried</div>
+              <button class="sp-linkbtn" id="spViewAllBrands" type="button">View all</button>
+            </div>
+            <div class="sp-chips" id="spBrandChips"></div>
+            <div class="sp-empty" id="spBrandsEmpty">No brand data yet.</div>
+          </div>
+        </div>
+
+        <!-- UPDATES -->
+        <div class="sp-panel" id="spPanelUpdates" role="tabpanel">
+          <div class="sp-card">
+            <div class="sp-card-head">
+              <div class="sp-card-title">Today</div>
+              <div class="sp-card-right" id="spUpdateTime">—</div>
+            </div>
+            <div class="sp-update" id="spUpdateText">No updates yet.</div>
+            <button class="sp-linkbtn" id="spPostUpdate" type="button">Post update</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </main>
 
-  <script src="/shops/shop.js?v=4"></script>
+  <script src="/shops/shop.js?v=5"></script>
 </body>
 </html>
