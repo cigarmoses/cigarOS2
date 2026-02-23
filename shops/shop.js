@@ -1,15 +1,14 @@
 /* /shops/shop.js
-   Public Shop Page (Centered Layout + Bottom Section v7)
+   Public Shop Page (Centered Layout + Bottom Section v8)
 
-   Fixes:
-   ✅ Keep SHORT names on ONE line (no forced split)
-      - Only split to 2 lines when name length exceeds threshold
-   ✅ Better amenities key mapping for BYOB + Indoor (and common column variants)
-   ✅ Everything else from v6 preserved
+   Changes requested:
+   ✅ Segmented tabs: Hours | About | Events  (rename middle tab from Brands -> About)
+   ✅ If NO hours are present anywhere, show "Coming soon" instead of "Monday • —"
+   ✅ Center action dock: Brands icon should be a CIGAR (replace the tag icon)
 
    Notes:
-   - The black outline on the left of the logo is almost certainly baked into the logo file.
-     This JS also forces logo image to render cleanly (no filter).
+   - Keeps your “short names stay one line” behavior from v7.
+   - Amenities rendering unchanged (BYOB/Indoor mapping still supported).
 */
 
 (() => {
@@ -88,11 +87,10 @@
     { key: "taa", icon: "/img/icons/taa.svg", label: "TAA" },
   ];
 
-  // Map common spreadsheet column names -> our internal keys
   const FEATURE_ALIASES = {
     alcohol: ["alcohol"],
     byob: ["byob"],
-    noalcohol: ["noalcohol", "noalcohol", "no_alcohol", "noalc"],
+    noalcohol: ["noalcohol", "no_alcohol", "noalc"],
     food: ["food"],
     tvs: ["tvs", "tv"],
     outdoor: ["outdoor", "outdoorseating"],
@@ -105,24 +103,20 @@
   function normalizeFeatures(shop) {
     const bag = {};
 
-    // A) nested features object
     if (shop.features && typeof shop.features === "object") {
       for (const k of Object.keys(shop.features)) {
         bag[normalizeKey(k)] = isTruthy(shop.features[k]);
       }
     }
 
-    // B) direct keys on shop (support many column variants)
     for (const rawKey of Object.keys(shop)) {
       const nk = normalizeKey(rawKey);
 
-      // direct match
       if (AMENITIES.some(a => a.key === nk)) {
         bag[nk] = isTruthy(shop[rawKey]);
         continue;
       }
 
-      // alias match
       for (const targetKey of Object.keys(FEATURE_ALIASES)) {
         if (FEATURE_ALIASES[targetKey].includes(nk)) {
           bag[targetKey] = isTruthy(shop[rawKey]);
@@ -130,9 +124,7 @@
       }
     }
 
-    // No Alcohol overrides Alcohol
     if (bag.noalcohol === true) bag.alcohol = false;
-
     return bag;
   }
 
@@ -177,18 +169,15 @@
     const clean = String(name || "").trim();
     const len = clean.length;
 
-    // ✅ Rule: keep short names on one line
-    // Only split if it's truly long.
-    const SHOULD_SPLIT = len >= 18; // adjust threshold if you want (18 works well)
+    const SHOULD_SPLIT = len >= 18;
 
     if (!SHOULD_SPLIT) {
-      el.textContent = clean;   // one line
+      el.textContent = clean; // ✅ one line
     } else {
       const [l1, l2] = splitNameTwoLinesBalanced(clean);
       el.innerHTML = l2 ? `${escapeHtml(l1)}<br>${escapeHtml(l2)}` : escapeHtml(l1);
     }
 
-    // Auto size
     let px = 44;
     if (len > 18) px = 40;
     if (len > 26) px = 36;
@@ -201,7 +190,7 @@
 
   // ---------------- injected styling ----------------
   function injectStylesOnce() {
-    if (document.getElementById("spInjectedV7")) return;
+    if (document.getElementById("spInjectedV8")) return;
 
     const css = `
       .sp-status { position: absolute !important; top: 18px !important; right: 18px !important; left: auto !important; }
@@ -213,7 +202,6 @@
       }
       .sp-city { color: #8e8e93 !important; }
 
-      /* Ensure logo doesn't get any filter/outline from CSS */
       .sp-logo-center img { filter: none !important; -webkit-filter:none !important; }
 
       .sp-bottom { margin-top: 18px; }
@@ -241,7 +229,7 @@
         font-weight: 800;
         font-size: 12px;
       }
-      .sp-dock .sp-dock-ico{ width: 20px; height: 20px; stroke: #0b0b0c; fill: none; }
+      .sp-dock .sp-dock-ico{ width: 22px; height: 22px; stroke: #0b0b0c; fill: none; }
       .sp-dock .sp-dock-ico-fill{ fill: #0b0b0c; stroke: none; }
 
       .sp-seg {
@@ -296,11 +284,12 @@
     `;
 
     const style = document.createElement("style");
-    style.id = "spInjectedV7";
+    style.id = "spInjectedV8";
     style.textContent = css;
     document.head.appendChild(style);
   }
 
+  // ---------------- icons (dock) ----------------
   function iconSvg(type) {
     const sw = 1.75;
 
@@ -309,18 +298,26 @@
         <path d="M22 16.9v3a2 2 0 0 1-2.2 2c-9.2-.7-16.5-8-17.2-17.2A2 2 0 0 1 4.6 2h3a2 2 0 0 1 2 1.7c.2 1.2.5 2.4 1 3.5a2 2 0 0 1-.5 2.1L8.9 10.5a16 16 0 0 0 4.6 4.6l1.2-1.2a2 2 0 0 1 2.1-.5c1.1.5 2.3.8 3.5 1A2 2 0 0 1 22 16.9z" stroke-width="${sw}" fill="none"/>
       </svg>`;
     }
-    if (type === "tag") {
+
+    // ✅ Cigar icon for Brands action
+    if (type === "cigar") {
       return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20 13l-7 7-11-11V2h7l11 11z" stroke-width="${sw}" fill="none"/>
-        <circle cx="7.5" cy="7.5" r="1.2" class="sp-dock-ico-fill"></circle>
+        <path d="M3 14c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v2H3v-2z" stroke-width="${sw}" fill="none"/>
+        <path d="M17 12h3.2c.9 0 1.6.7 1.6 1.6V16c0 .9-.7 1.6-1.6 1.6H17V12z" stroke-width="${sw}" fill="none"/>
+        <path d="M6 12v5" stroke-width="${sw}" />
+        <path d="M10 12v5" stroke-width="${sw}" />
+        <path d="M14 12v5" stroke-width="${sw}" />
       </svg>`;
     }
+
+    // directions
     return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" class="sp-dock-ico-fill"/>
       <circle cx="12" cy="9" r="2.4" fill="#fff"/>
     </svg>`;
   }
 
+  // ---------------- data helpers ----------------
   function parseBrands(shop) {
     const raw = shop.brands ?? shop.Brands ?? shop["Cigar brands"] ?? shop["Cigar Brands"];
     if (Array.isArray(raw)) return raw.map(toStr).filter(Boolean);
@@ -340,6 +337,18 @@
     return toStr(shop[short] ?? shop[short.toLowerCase()]);
   }
 
+  function getAnyHoursPresent(shop) {
+    const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+    return days.some(d => {
+      const v = getHoursForDay(shop, d);
+      // treat "-" / "—" / "N/A" / empty as not present
+      const s = String(v || "").trim();
+      if (!s) return false;
+      if (["-", "—", "n/a", "na"].includes(s.toLowerCase())) return false;
+      return true;
+    });
+  }
+
   function getTodayName() {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     return days[new Date().getDay()];
@@ -349,6 +358,7 @@
     return toStr(shop.events) || toStr(shop.Events) || toStr(shop.update) || toStr(shop.Update) || toStr(shop.notes) || toStr(shop.Notes) || "";
   }
 
+  // ---------------- bottom section build ----------------
   function buildBottomSection(shop) {
     injectStylesOnce();
 
@@ -364,22 +374,22 @@
     const phone = getPhone(shop);
     const directions = buildDirectionsUrl(shop);
 
-    // Dock: Call | Brands | Directions
+    // Dock: Call | Brands | Directions  (Brands uses cigar icon)
     const dock = document.createElement("div");
     dock.className = "sp-dock";
     dock.innerHTML = `
       ${phone ? `<a href="tel:${phone.replace(/[^\d+]/g, "")}" aria-label="Call">${iconSvg("call")}<div>Call</div></a>` : ""}
-      <a href="#" data-action="brands" aria-label="Brands">${iconSvg("tag")}<div>Brands</div></a>
+      <a href="#" data-action="about" aria-label="About">${iconSvg("cigar")}<div>About</div></a>
       <a href="${directions}" target="_blank" rel="noopener" aria-label="Directions">${iconSvg("dir")}<div>Directions</div></a>
     `;
     bottom.appendChild(dock);
 
-    // Segmented: Hours | Brands | Events
+    // Segmented: Hours | About | Events
     const seg = document.createElement("div");
     seg.className = "sp-seg";
     seg.innerHTML = `
       <button type="button" data-tab="hours" aria-selected="true">Hours</button>
-      <button type="button" data-tab="brands" aria-selected="false">Brands</button>
+      <button type="button" data-tab="about" aria-selected="false">About</button>
       <button type="button" data-tab="events" aria-selected="false">Events</button>
     `;
     bottom.appendChild(seg);
@@ -387,6 +397,8 @@
     const panels = document.createElement("div");
     panels.className = "sp-panels";
 
+    // HOURS panel: if no hours anywhere -> Coming soon
+    const hasAnyHours = getAnyHoursPresent(shop);
     const today = getTodayName();
     const todayHours = getHoursForDay(shop, today);
 
@@ -395,18 +407,28 @@
     hoursCard.setAttribute("data-panel", "hours");
     hoursCard.innerHTML = `
       <h3>Hours</h3>
-      <div class="sp-muted">${escapeHtml(today)} • ${escapeHtml(todayHours || "—")}</div>
+      ${
+        hasAnyHours
+          ? `<div class="sp-muted">${escapeHtml(today)} • ${escapeHtml(todayHours || "—")}</div>`
+          : `<div class="sp-muted">Coming soon</div>`
+      }
     `;
 
+    // ABOUT panel (formerly Brands): show brands list + website/phone later
     const brands = parseBrands(shop);
-    const brandsCard = document.createElement("div");
-    brandsCard.className = "sp-card sp-hidden";
-    brandsCard.setAttribute("data-panel", "brands");
-    brandsCard.innerHTML = `
-      <h3>Brands</h3>
-      ${brands.length ? `<div class="sp-muted">${escapeHtml(brands.slice(0, 20).join(", "))}</div>` : `<div class="sp-muted">No brands listed yet.</div>`}
+    const aboutCard = document.createElement("div");
+    aboutCard.className = "sp-card sp-hidden";
+    aboutCard.setAttribute("data-panel", "about");
+    aboutCard.innerHTML = `
+      <h3>About</h3>
+      ${
+        brands.length
+          ? `<div class="sp-muted">${escapeHtml(brands.slice(0, 24).join(", "))}</div>`
+          : `<div class="sp-muted">Details coming soon.</div>`
+      }
     `;
 
+    // EVENTS panel
     const eventsText = getEventsText(shop);
     const eventsCard = document.createElement("div");
     eventsCard.className = "sp-card sp-hidden";
@@ -417,7 +439,7 @@
     `;
 
     panels.appendChild(hoursCard);
-    panels.appendChild(brandsCard);
+    panels.appendChild(aboutCard);
     panels.appendChild(eventsCard);
     bottom.appendChild(panels);
     top.appendChild(bottom);
@@ -437,11 +459,12 @@
       setTab(btn.dataset.tab);
     });
 
+    // Dock action: About jumps to About tab
     dock.addEventListener("click", (e) => {
-      const a = e.target.closest('a[data-action="brands"]');
+      const a = e.target.closest('a[data-action="about"]');
       if (!a) return;
       e.preventDefault();
-      setTab("brands");
+      setTab("about");
     });
 
     setTab("hours");
@@ -526,6 +549,7 @@
     buildBottomSection(shop);
   }
 
+  // ---------------- boot ----------------
   async function boot() {
     const slug = (getParam("shop") || "").trim().toLowerCase();
 
