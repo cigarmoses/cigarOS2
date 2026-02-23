@@ -80,9 +80,9 @@
     { key: "noalcohol", icon: "/img/icons/noalcohol.svg", label: "No Alcohol" },
     { key: "food", icon: "/img/icons/food.svg", label: "Food" },
     { key: "tvs", icon: "/img/icons/tv.svg", label: "TVs" },
-    { key: "outdoor", icon: "/img/icons/outdoor.svg", label: "Outdoor" },
-    { key: "indoor", icon: "/img/icons/indoor.svg", label: "Indoor" },
-    { key: "quiet", icon: "/img/icons/quiet.svg", label: "Quiet" },
+    { key: "outdoor", icon: "/img/icons/outdoorseating.svg", label: "Outdoor" },
+    { key: "indoor", icon: "/img/icons/indoorseating.svg", label: "Indoor" },
+    { key: "quiet", icon: "/img/icons/quietzone.svg", label: "Quiet" },
     { key: "livemusic", icon: "/img/icons/livemusic.svg", label: "Live Music" },
     { key: "taa", icon: "/img/icons/taa.svg", label: "TAA" },
   ];
@@ -96,7 +96,7 @@
     outdoor: ["outdoor", "outdoorseating"],
     indoor: ["indoor", "indoorseating"],
     quiet: ["quiet", "quietzone"],
-    livemusic: ["livemusic", "live", "livemus"],
+    livemusic: ["livemusic", "live", "music", "livemus"],
     taa: ["taa"],
   };
 
@@ -379,7 +379,7 @@
     dock.className = "sp-dock";
     dock.innerHTML = `
       ${phone ? `<a href="tel:${phone.replace(/[^\d+]/g, "")}" aria-label="Call">${iconSvg("call")}<div>Call</div></a>` : ""}
-      <a href="#" data-action="about" aria-label="About">${iconSvg("cigar")}<div>About</div></a>
+      <a href="#" data-action="brands" aria-label="Brands">${iconSvg("cigar")}<div>Brands</div></a>
       <a href="${directions}" target="_blank" rel="noopener" aria-label="Directions">${iconSvg("dir")}<div>Directions</div></a>
     `;
     bottom.appendChild(dock);
