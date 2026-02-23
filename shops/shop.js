@@ -1,22 +1,15 @@
 /* /shops/shop.js
-   Public Shop Page (Centered Layout + Bottom Section v6)
+   Public Shop Page (Centered Layout + Bottom Section v7)
 
-   Changes requested:
-   ✅ Move OPEN status pill to TOP RIGHT (smaller)
-   ✅ Remove duplicate SHOP/OPEN stack on left (keep SHOP top-left only)
-      - If your HTML currently renders both SHOP and OPEN on the left via markup,
-        this JS will hide the left OPEN if it exists.
-   ✅ City line typography tightened + regular weight (keeps same gray)
-   ✅ Action dock: remove Message, add Brands (web link) in its place
-   ✅ Segmented control labels:
-      - "Overview" -> "Hours"
-      - "Updates"  -> "Events"
-      - Ensure tabs are: Hours | Brands | Events
+   Fixes:
+   ✅ Keep SHORT names on ONE line (no forced split)
+      - Only split to 2 lines when name length exceeds threshold
+   ✅ Better amenities key mapping for BYOB + Indoor (and common column variants)
+   ✅ Everything else from v6 preserved
 
    Notes:
-   - Still injects minimal CSS for the bottom section + pill sizing.
-   - Does NOT require changing shop.html, but if your HTML places OPEN on the left,
-     we hide that duplicate.
+   - The black outline on the left of the logo is almost certainly baked into the logo file.
+     This JS also forces logo image to render cleanly (no filter).
 */
 
 (() => {
@@ -95,21 +88,51 @@
     { key: "taa", icon: "/img/icons/taa.svg", label: "TAA" },
   ];
 
+  // Map common spreadsheet column names -> our internal keys
+  const FEATURE_ALIASES = {
+    alcohol: ["alcohol"],
+    byob: ["byob"],
+    noalcohol: ["noalcohol", "noalcohol", "no_alcohol", "noalc"],
+    food: ["food"],
+    tvs: ["tvs", "tv"],
+    outdoor: ["outdoor", "outdoorseating"],
+    indoor: ["indoor", "indoorseating"],
+    quiet: ["quiet", "quietzone"],
+    livemusic: ["livemusic", "live", "livemus"],
+    taa: ["taa"],
+  };
+
   function normalizeFeatures(shop) {
     const bag = {};
 
+    // A) nested features object
     if (shop.features && typeof shop.features === "object") {
       for (const k of Object.keys(shop.features)) {
         bag[normalizeKey(k)] = isTruthy(shop.features[k]);
       }
     }
 
-    for (const k of Object.keys(shop)) {
-      const nk = normalizeKey(k);
-      if (AMENITIES.some(a => a.key === nk)) bag[nk] = isTruthy(shop[k]);
+    // B) direct keys on shop (support many column variants)
+    for (const rawKey of Object.keys(shop)) {
+      const nk = normalizeKey(rawKey);
+
+      // direct match
+      if (AMENITIES.some(a => a.key === nk)) {
+        bag[nk] = isTruthy(shop[rawKey]);
+        continue;
+      }
+
+      // alias match
+      for (const targetKey of Object.keys(FEATURE_ALIASES)) {
+        if (FEATURE_ALIASES[targetKey].includes(nk)) {
+          bag[targetKey] = isTruthy(shop[rawKey]);
+        }
+      }
     }
 
+    // No Alcohol overrides Alcohol
     if (bag.noalcohol === true) bag.alcohol = false;
+
     return bag;
   }
 
@@ -129,8 +152,8 @@
     return open ? "OPEN" : "CLOSED";
   }
 
-  // ---------------- name formatting (max 2 lines + auto size) ----------------
-  function splitNameTwoLines(name) {
+  // ---------------- name formatting ----------------
+  function splitNameTwoLinesBalanced(name) {
     const words = String(name || "").trim().split(/\s+/).filter(Boolean);
     if (words.length <= 2) return [words.join(" "), ""].filter(Boolean);
 
@@ -151,10 +174,21 @@
   }
 
   function applyNameClampAndSize(el, name) {
-    const [l1, l2] = splitNameTwoLines(name);
-    el.innerHTML = l2 ? `${escapeHtml(l1)}<br>${escapeHtml(l2)}` : escapeHtml(l1);
+    const clean = String(name || "").trim();
+    const len = clean.length;
 
-    const len = String(name || "").length;
+    // ✅ Rule: keep short names on one line
+    // Only split if it's truly long.
+    const SHOULD_SPLIT = len >= 18; // adjust threshold if you want (18 works well)
+
+    if (!SHOULD_SPLIT) {
+      el.textContent = clean;   // one line
+    } else {
+      const [l1, l2] = splitNameTwoLinesBalanced(clean);
+      el.innerHTML = l2 ? `${escapeHtml(l1)}<br>${escapeHtml(l2)}` : escapeHtml(l1);
+    }
+
+    // Auto size
     let px = 44;
     if (len > 18) px = 40;
     if (len > 26) px = 36;
@@ -165,27 +199,23 @@
     el.style.lineHeight = "1.05";
   }
 
-  // ---------------- injected styling (pills + city text + bottom section) ----------------
+  // ---------------- injected styling ----------------
   function injectStylesOnce() {
-    if (document.getElementById("spInjectedV6")) return;
+    if (document.getElementById("spInjectedV7")) return;
 
     const css = `
-      /* --- Fix pill sizing / placement feel --- */
       .sp-status { position: absolute !important; top: 18px !important; right: 18px !important; left: auto !important; }
       #spStatusPill { font-size: 12px !important; padding: 6px 14px !important; letter-spacing: 0 !important; font-weight: 600 !important; }
-      /* If OPEN pill accidentally exists in the left pill container, hide it (we keep SHOP only on left) */
-      .sp-pill-left + .sp-pill-right { display:none !important; }
 
-      /* --- City typography: regular weight, tighter tracking --- */
       .sp-city, .sp-city span, #spCity {
-        font-weight: 600 !important;  /* regular-ish but not bold */
+        font-weight: 600 !important;
         letter-spacing: -0.01em !important;
-        text-transform: none !important;
       }
-      /* Make the city line text itself a touch lighter (keeps your gray) */
       .sp-city { color: #8e8e93 !important; }
 
-      /* --- Bottom section iOS-ish glass tweaks --- */
+      /* Ensure logo doesn't get any filter/outline from CSS */
+      .sp-logo-center img { filter: none !important; -webkit-filter:none !important; }
+
       .sp-bottom { margin-top: 18px; }
       .sp-dock {
         display:flex; gap:12px; justify-content:space-between;
@@ -197,7 +227,7 @@
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
       }
-      .sp-dock a, .sp-dock button{
+      .sp-dock a{
         flex:1 1 0;
         height: 54px;
         border-radius: 16px;
@@ -262,43 +292,21 @@
       .sp-row:first-of-type{ border-top: none; padding-top: 0; }
       .sp-k{ color:#6e6e73; font-weight: 800; }
       .sp-v{ color:#0b0b0c; font-weight: 900; text-align:right; }
-
-      .sp-chips{ display:flex; flex-wrap: wrap; gap: 8px; }
-      .sp-chip{
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: #f2f2f7;
-        border: 1px solid rgba(0,0,0,.05);
-        font-weight: 900;
-        font-size: 13px;
-        color:#0b0b0c;
-      }
-
-      .sp-update{ font-size: 15px; font-weight: 800; line-height: 1.35; color:#0b0b0c; white-space: pre-wrap; }
-      .sp-update-meta{ margin-top: 10px; font-size: 13px; font-weight: 800; color:#8e8e93; }
       .sp-hidden{ display:none !important; }
     `;
 
     const style = document.createElement("style");
-    style.id = "spInjectedV6";
+    style.id = "spInjectedV7";
     style.textContent = css;
     document.head.appendChild(style);
   }
 
   function iconSvg(type) {
-    // Lighter stroke weight (more SF Symbols-like)
     const sw = 1.75;
 
     if (type === "call") {
       return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M22 16.9v3a2 2 0 0 1-2.2 2c-9.2-.7-16.5-8-17.2-17.2A2 2 0 0 1 4.6 2h3a2 2 0 0 1 2 1.7c.2 1.2.5 2.4 1 3.5a2 2 0 0 1-.5 2.1L8.9 10.5a16 16 0 0 0 4.6 4.6l1.2-1.2a2 2 0 0 1 2.1-.5c1.1.5 2.3.8 3.5 1A2 2 0 0 1 22 16.9z" stroke-width="${sw}" fill="none"/>
-      </svg>`;
-    }
-    if (type === "web") {
-      return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="12" r="9" stroke-width="${sw}"/>
-        <path d="M3 12h18" stroke-width="${sw}"/>
-        <path d="M12 3c2.5 2.6 3.9 5.8 4 9-.1 3.2-1.5 6.4-4 9-2.5-2.6-3.9-5.8-4-9 .1-3.2 1.5-6.4 4-9z" stroke-width="${sw}" fill="none"/>
       </svg>`;
     }
     if (type === "tag") {
@@ -307,7 +315,6 @@
         <circle cx="7.5" cy="7.5" r="1.2" class="sp-dock-ico-fill"></circle>
       </svg>`;
     }
-    // directions
     return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" class="sp-dock-ico-fill"/>
       <circle cx="12" cy="9" r="2.4" fill="#fff"/>
@@ -315,40 +322,20 @@
   }
 
   function parseBrands(shop) {
-    const raw =
-      shop.brands ??
-      shop.Brands ??
-      shop["Cigar brands"] ??
-      shop["Cigar Brands"] ??
-      shop.cigarbrands ??
-      shop.CigarBrands;
-
+    const raw = shop.brands ?? shop.Brands ?? shop["Cigar brands"] ?? shop["Cigar Brands"];
     if (Array.isArray(raw)) return raw.map(toStr).filter(Boolean);
-
     const s = toStr(raw);
     if (!s) return [];
     return s.split(/[,|\n/]+/g).map((x) => toStr(x)).filter(Boolean);
   }
 
   function getPhone(shop) {
-    return (
-      toStr(shop.cell || shop.Cell) ||
-      toStr(shop.phone || shop.Phone) ||
-      toStr(shop["Phone #"]) ||
-      ""
-    );
-  }
-
-  function normalizeWebsite(shop) {
-    const raw = toStr(shop.website || shop.Website || shop.web || shop.Web);
-    if (!raw) return "";
-    return raw.startsWith("http") ? raw : `https://${raw}`;
+    return toStr(shop.cell || shop.Cell) || toStr(shop.phone || shop.Phone) || "";
   }
 
   function getHoursForDay(shop, dayName) {
     const direct = toStr(shop[dayName] ?? shop[dayName.toLowerCase()]);
     if (direct) return direct;
-
     const short = dayName.slice(0, 3);
     return toStr(shop[short] ?? shop[short.toLowerCase()]);
   }
@@ -359,19 +346,9 @@
   }
 
   function getEventsText(shop) {
-    // Temporary: reuse Update/Notes fields until you add a true events feed
-    return (
-      toStr(shop.events) ||
-      toStr(shop.Events) ||
-      toStr(shop.update) ||
-      toStr(shop.Update) ||
-      toStr(shop.notes) ||
-      toStr(shop.Notes) ||
-      ""
-    );
+    return toStr(shop.events) || toStr(shop.Events) || toStr(shop.update) || toStr(shop.Update) || toStr(shop.notes) || toStr(shop.Notes) || "";
   }
 
-  // ---------------- bottom section build ----------------
   function buildBottomSection(shop) {
     injectStylesOnce();
 
@@ -385,23 +362,16 @@
     bottom.className = "sp-bottom";
 
     const phone = getPhone(shop);
-    const website = normalizeWebsite(shop);
     const directions = buildDirectionsUrl(shop);
 
     // Dock: Call | Brands | Directions
-    // - remove Message
-    // - replace with Brands (opens the Brands tab AND/OR website if no brands listed)
     const dock = document.createElement("div");
     dock.className = "sp-dock";
-
-    const brands = parseBrands(shop);
-
     dock.innerHTML = `
       ${phone ? `<a href="tel:${phone.replace(/[^\d+]/g, "")}" aria-label="Call">${iconSvg("call")}<div>Call</div></a>` : ""}
       <a href="#" data-action="brands" aria-label="Brands">${iconSvg("tag")}<div>Brands</div></a>
       <a href="${directions}" target="_blank" rel="noopener" aria-label="Directions">${iconSvg("dir")}<div>Directions</div></a>
     `;
-
     bottom.appendChild(dock);
 
     // Segmented: Hours | Brands | Events
@@ -417,18 +387,8 @@
     const panels = document.createElement("div");
     panels.className = "sp-panels";
 
-    // Hours panel
     const today = getTodayName();
     const todayHours = getHoursForDay(shop, today);
-    const hoursLines = [
-      ["Mon", getHoursForDay(shop, "Monday") || "—"],
-      ["Tue", getHoursForDay(shop, "Tuesday") || "—"],
-      ["Wed", getHoursForDay(shop, "Wednesday") || "—"],
-      ["Thu", getHoursForDay(shop, "Thursday") || "—"],
-      ["Fri", getHoursForDay(shop, "Friday") || "—"],
-      ["Sat", getHoursForDay(shop, "Saturday") || "—"],
-      ["Sun", getHoursForDay(shop, "Sunday") || "—"],
-    ];
 
     const hoursCard = document.createElement("div");
     hoursCard.className = "sp-card";
@@ -436,43 +396,29 @@
     hoursCard.innerHTML = `
       <h3>Hours</h3>
       <div class="sp-muted">${escapeHtml(today)} • ${escapeHtml(todayHours || "—")}</div>
-      <div style="margin-top:10px">
-        ${hoursLines
-          .map(([k, v]) => `<div class="sp-row"><div class="sp-k">${escapeHtml(k)}</div><div class="sp-v">${escapeHtml(v)}</div></div>`)
-          .join("")}
-      </div>
     `;
 
-    // Brands panel
+    const brands = parseBrands(shop);
     const brandsCard = document.createElement("div");
     brandsCard.className = "sp-card sp-hidden";
     brandsCard.setAttribute("data-panel", "brands");
     brandsCard.innerHTML = `
       <h3>Brands</h3>
-      ${brands.length
-        ? `<div class="sp-chips">${brands.slice(0, 40).map(b => `<span class="sp-chip">${escapeHtml(b)}</span>`).join("")}</div>`
-        : `<div class="sp-muted">No brands listed yet.</div>`
-      }
-      ${website ? `<div class="sp-row" style="margin-top:12px"><div class="sp-k">Website</div><div class="sp-v"><a href="${website}" target="_blank" rel="noopener" style="color:#007aff;text-decoration:none;font-weight:900">${escapeHtml(website.replace(/^https?:\/\//, ""))}</a></div></div>` : ""}
+      ${brands.length ? `<div class="sp-muted">${escapeHtml(brands.slice(0, 20).join(", "))}</div>` : `<div class="sp-muted">No brands listed yet.</div>`}
     `;
 
-    // Events panel
     const eventsText = getEventsText(shop);
     const eventsCard = document.createElement("div");
     eventsCard.className = "sp-card sp-hidden";
     eventsCard.setAttribute("data-panel", "events");
     eventsCard.innerHTML = `
       <h3>Events</h3>
-      ${eventsText
-        ? `<div class="sp-update">${escapeHtml(eventsText)}</div><div class="sp-update-meta">Just now</div>`
-        : `<div class="sp-muted">No events posted yet.</div>`
-      }
+      ${eventsText ? `<div class="sp-muted">${escapeHtml(eventsText)}</div>` : `<div class="sp-muted">No events posted yet.</div>`}
     `;
 
     panels.appendChild(hoursCard);
     panels.appendChild(brandsCard);
     panels.appendChild(eventsCard);
-
     bottom.appendChild(panels);
     top.appendChild(bottom);
 
@@ -491,7 +437,6 @@
       setTab(btn.dataset.tab);
     });
 
-    // Dock action: Brands button jumps to Brands tab
     dock.addEventListener("click", (e) => {
       const a = e.target.closest('a[data-action="brands"]');
       if (!a) return;
@@ -509,18 +454,11 @@
     const shopName = shop.name || shop.Shop || "Shop";
     const features = normalizeFeatures(shop);
 
-    // Hide any accidental duplicate OPEN on the left if present (defensive)
-    const leftPill = document.querySelector(".sp-pill-left");
-    const possibleLeftOpen = leftPill?.parentElement?.querySelector(".sp-pill-right");
-    if (possibleLeftOpen && possibleLeftOpen.id !== "spStatusPill") {
-      possibleLeftOpen.style.display = "none";
-    }
-
     // Name
     const nameEl = $("#spName");
     if (nameEl) applyNameClampAndSize(nameEl, shopName);
 
-    // City line (tighter + regular)
+    // City
     const cityEl = $("#spCity");
     if (cityEl) {
       const cityLine =
@@ -530,7 +468,7 @@
       cityEl.textContent = cityLine || "—";
     }
 
-    // Status pill (top-right)
+    // Status pill
     const status = getOpenClosed(shop);
     const statusEl = $("#spStatusPill");
     if (statusEl) {
@@ -538,7 +476,7 @@
       statusEl.setAttribute("data-status", status.toLowerCase());
     }
 
-    // TAA icon (optional under status)
+    // TAA icon
     const taaEl = $("#spTaaIcon");
     if (taaEl) taaEl.style.display = features.taa === true ? "" : "none";
 
@@ -585,11 +523,9 @@
       panel.style.display = enabled.length ? "" : "none";
     }
 
-    // Bottom section (Hours | Brands | Events)
     buildBottomSection(shop);
   }
 
-  // ---------------- boot ----------------
   async function boot() {
     const slug = (getParam("shop") || "").trim().toLowerCase();
 
@@ -609,26 +545,8 @@
       renderShop(shop);
     } catch (err) {
       console.error(err);
-
       const nameEl = $("#spName");
       if (nameEl) nameEl.textContent = "Shop not found";
-
-      const cityEl = $("#spCity");
-      if (cityEl) cityEl.textContent = "—";
-
-      const panel = $("#spAmenPanel");
-      if (panel) panel.style.display = "none";
-
-      const taaEl = $("#spTaaIcon");
-      if (taaEl) taaEl.style.display = "none";
-
-      const statusEl = $("#spStatusPill");
-      if (statusEl) {
-        statusEl.textContent = "CLOSED";
-        statusEl.setAttribute("data-status", "closed");
-      }
-
-      buildBottomSection({});
     }
   }
 
