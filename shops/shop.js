@@ -1,14 +1,11 @@
 /* /shops/shop.js
-   Public Shop Page (Centered Layout + Bottom Section v8)
+   Public Shop Page (Centered Layout + Bottom Section v9)
 
-   Changes requested:
-   ✅ Segmented tabs: Hours | About | Events  (rename middle tab from Brands -> About)
-   ✅ If NO hours are present anywhere, show "Coming soon" instead of "Monday • —"
-   ✅ Center action dock: Brands icon should be a CIGAR (replace the tag icon)
-
-   Notes:
-   - Keeps your “short names stay one line” behavior from v7.
-   - Amenities rendering unchanged (BYOB/Indoor mapping still supported).
+   Fixes:
+   ✅ Robust data loading: tries multiple possible JSON paths
+   ✅ Robust slug matching: slugify name + uses slug field when present
+   ✅ No silent "list[0]" fallback (prevents wrong shop showing)
+   ✅ Fix dock click handler (data-action="brands" -> opens About tab)
 */
 
 (() => {
@@ -33,10 +30,22 @@
     return ["1", "true", "t", "yes", "y", "x", "✓", "check", "checked", "open"].includes(s);
   }
 
+  // removes all non-alnum (for logo filename matching)
   function sanitizeLogoName(name) {
     return String(name || "")
       .toLowerCase()
       .replace(/[^a-z0-9]/g, "");
+  }
+
+  // turns "Shelly’s Back Room" -> "shellys-back-room"
+  function slugify(s) {
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .replace(/['’]/g, "")          // remove apostrophes
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "-")   // non-alnum -> hyphen
+      .replace(/^-+|-+$/g, "");      // trim hyphens
   }
 
   function normalizeKey(k) {
@@ -172,7 +181,7 @@
     const SHOULD_SPLIT = len >= 18;
 
     if (!SHOULD_SPLIT) {
-      el.textContent = clean; // ✅ one line
+      el.textContent = clean;
     } else {
       const [l1, l2] = splitNameTwoLinesBalanced(clean);
       el.innerHTML = l2 ? `${escapeHtml(l1)}<br>${escapeHtml(l2)}` : escapeHtml(l1);
@@ -190,15 +199,16 @@
 
   // ---------------- injected styling ----------------
   function injectStylesOnce() {
-    if (document.getElementById("spInjectedV8")) return;
+    if (document.getElementById("spInjectedV9")) return;
 
     const css = `
       .sp-status { position: absolute !important; top: 18px !important; right: 18px !important; left: auto !important; }
       #spStatusPill { font-size: 12px !important; padding: 6px 14px !important; letter-spacing: 0 !important; font-weight: 600 !important; }
 
+      /* Your earlier request was "regular weight" city text */
       .sp-city, .sp-city span, #spCity {
-        font-weight: 600 !important;
-        letter-spacing: -0.01em !important;
+        font-weight: 400 !important;
+        letter-spacing: -0.02em !important;
       }
       .sp-city { color: #8e8e93 !important; }
 
@@ -271,20 +281,11 @@
       .sp-card + .sp-card{ margin-top: 12px; }
       .sp-card h3{ margin: 0 0 8px 0; font-size: 16px; font-weight: 900; letter-spacing: -0.01em; color:#0b0b0c; }
       .sp-muted{ color:#8e8e93; font-weight: 700; }
-      .sp-row{
-        display:flex; justify-content:space-between; align-items:center;
-        gap: 12px;
-        padding: 10px 0;
-        border-top: 1px solid rgba(0,0,0,.05);
-      }
-      .sp-row:first-of-type{ border-top: none; padding-top: 0; }
-      .sp-k{ color:#6e6e73; font-weight: 800; }
-      .sp-v{ color:#0b0b0c; font-weight: 900; text-align:right; }
       .sp-hidden{ display:none !important; }
     `;
 
     const style = document.createElement("style");
-    style.id = "spInjectedV8";
+    style.id = "spInjectedV9";
     style.textContent = css;
     document.head.appendChild(style);
   }
@@ -299,7 +300,6 @@
       </svg>`;
     }
 
-    // ✅ Cigar icon for Brands action
     if (type === "cigar") {
       return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M3 14c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v2H3v-2z" stroke-width="${sw}" fill="none"/>
@@ -310,7 +310,6 @@
       </svg>`;
     }
 
-    // directions
     return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" class="sp-dock-ico-fill"/>
       <circle cx="12" cy="9" r="2.4" fill="#fff"/>
@@ -341,7 +340,6 @@
     const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
     return days.some(d => {
       const v = getHoursForDay(shop, d);
-      // treat "-" / "—" / "N/A" / empty as not present
       const s = String(v || "").trim();
       if (!s) return false;
       if (["-", "—", "n/a", "na"].includes(s.toLowerCase())) return false;
@@ -374,7 +372,6 @@
     const phone = getPhone(shop);
     const directions = buildDirectionsUrl(shop);
 
-    // Dock: Call | Brands | Directions  (Brands uses cigar icon)
     const dock = document.createElement("div");
     dock.className = "sp-dock";
     dock.innerHTML = `
@@ -384,7 +381,6 @@
     `;
     bottom.appendChild(dock);
 
-    // Segmented: Hours | About | Events
     const seg = document.createElement("div");
     seg.className = "sp-seg";
     seg.innerHTML = `
@@ -397,7 +393,6 @@
     const panels = document.createElement("div");
     panels.className = "sp-panels";
 
-    // HOURS panel: if no hours anywhere -> Coming soon
     const hasAnyHours = getAnyHoursPresent(shop);
     const today = getTodayName();
     const todayHours = getHoursForDay(shop, today);
@@ -414,7 +409,6 @@
       }
     `;
 
-    // ABOUT panel (formerly Brands): show brands list + website/phone later
     const brands = parseBrands(shop);
     const aboutCard = document.createElement("div");
     aboutCard.className = "sp-card sp-hidden";
@@ -428,7 +422,6 @@
       }
     `;
 
-    // EVENTS panel
     const eventsText = getEventsText(shop);
     const eventsCard = document.createElement("div");
     eventsCard.className = "sp-card sp-hidden";
@@ -459,9 +452,9 @@
       setTab(btn.dataset.tab);
     });
 
-    // Dock action: About jumps to About tab
+    // ✅ Dock: Brands jumps to About tab
     dock.addEventListener("click", (e) => {
-      const a = e.target.closest('a[data-action="about"]');
+      const a = e.target.closest('a[data-action="brands"]');
       if (!a) return;
       e.preventDefault();
       setTab("about");
@@ -477,11 +470,9 @@
     const shopName = shop.name || shop.Shop || "Shop";
     const features = normalizeFeatures(shop);
 
-    // Name
     const nameEl = $("#spName");
     if (nameEl) applyNameClampAndSize(nameEl, shopName);
 
-    // City
     const cityEl = $("#spCity");
     if (cityEl) {
       const cityLine =
@@ -491,7 +482,6 @@
       cityEl.textContent = cityLine || "—";
     }
 
-    // Status pill
     const status = getOpenClosed(shop);
     const statusEl = $("#spStatusPill");
     if (statusEl) {
@@ -499,11 +489,9 @@
       statusEl.setAttribute("data-status", status.toLowerCase());
     }
 
-    // TAA icon
     const taaEl = $("#spTaaIcon");
     if (taaEl) taaEl.style.display = features.taa === true ? "" : "none";
 
-    // Logo
     const logoEl = $("#spLogo");
     if (logoEl) {
       const base = sanitizeLogoName(shopName);
@@ -523,11 +511,9 @@
       };
     }
 
-    // Maps click
     const addrBtn = $("#spAddressBtn");
     if (addrBtn) addrBtn.onclick = () => window.open(buildDirectionsUrl(shop), "_blank", "noopener");
 
-    // Amenities row
     const row = $("#spAmenRow");
     const panel = $("#spAmenPanel");
     if (row && panel) {
@@ -549,28 +535,82 @@
     buildBottomSection(shop);
   }
 
+  // ---------------- data loading ----------------
+  async function fetchJsonFirstOk(urls) {
+    let lastErr = null;
+
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`${url} HTTP ${res.status}`);
+
+        // ensure we didn't get HTML
+        const ct = (res.headers.get("content-type") || "").toLowerCase();
+        if (!ct.includes("application/json") && !ct.includes("text/json") && !ct.includes("json")) {
+          // still may be JSON w/ wrong headers, so attempt parse safely:
+          const txt = await res.text();
+          try {
+            return JSON.parse(txt);
+          } catch {
+            throw new Error(`${url} returned non-JSON (content-type: ${ct || "unknown"})`);
+          }
+        }
+
+        return await res.json();
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+
+    throw lastErr || new Error("Unable to fetch shop data");
+  }
+
+  function findShop(list, slugParam) {
+    const want = slugify(slugParam);
+    if (!want) return null;
+
+    return (
+      list.find(s => slugify(s.slug) === want) ||
+      list.find(s => slugify(s.name || s.Shop) === want) ||
+      list.find(s => sanitizeLogoName(s.name || s.Shop) === sanitizeLogoName(want)) ||
+      null
+    );
+  }
+
   // ---------------- boot ----------------
   async function boot() {
-    const slug = (getParam("shop") || "").trim().toLowerCase();
+    const slugParam = (getParam("shop") || "").trim();
 
     try {
-      const res = await fetch("/shops/shops.json", { cache: "no-store" });
-      if (!res.ok) throw new Error(`shops.json HTTP ${res.status}`);
-      const list = await res.json();
+      // ✅ try the most likely places your data might live
+      const urls = [
+        `/shops/shops.json?v=${Date.now()}`,
+        `/shops.json?v=${Date.now()}`,
+        `./shops.json?v=${Date.now()}`,
+        `/data/shops.json?v=${Date.now()}`
+      ];
 
-      const shop =
-        list.find(s => String(s.slug || "").toLowerCase() === slug) ||
-        list.find(s => sanitizeLogoName(s.name || s.Shop) === sanitizeLogoName(slug)) ||
-        list.find(s => String(s.name || s.Shop || "").toLowerCase().includes(slug)) ||
-        list[0];
+      const list = await fetchJsonFirstOk(urls);
 
-      if (!shop) throw new Error("No shops found in shops.json");
+      if (!Array.isArray(list) || !list.length) {
+        throw new Error("Shop data loaded but was empty or not an array");
+      }
+
+      const shop = findShop(list, slugParam);
+
+      if (!shop) {
+        throw new Error(`No matching shop for slug: "${slugParam}"`);
+      }
 
       renderShop(shop);
     } catch (err) {
-      console.error(err);
+      console.error("SHOP PAGE ERROR:", err);
+
       const nameEl = $("#spName");
       if (nameEl) nameEl.textContent = "Shop not found";
+
+      const cityEl = $("#spCity");
+      if (cityEl) cityEl.textContent = "—";
     }
   }
 
