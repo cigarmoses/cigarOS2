@@ -40,50 +40,36 @@ body.shop-public{
   padding: 22px 22px 26px;
 }
 
-/* Pills */
+/* Pills (more iOS-native) */
 .sp-pill{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 16px;
-  border-radius: var(--pillRadius);
-  font-weight: 800;
-  font-size: 13px;
-  letter-spacing: .06em;
-  background: rgba(255,255,255,.9);
-  border: 1.5px solid #e5e5ea;
-  color: #c7c7cc;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 600;          /* was 800 */
+  font-size: 12px;           /* was 13 */
+  letter-spacing: 0;         /* was .06em */
+  background: rgba(255,255,255,.70);
+  border: 1px solid rgba(0,0,0,.06);
+  color: #8e8e93;            /* lighter system gray */
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
-.sp-pill-left{
-  position: absolute;
-  top: 22px;
-  left: 22px;
-}
-
-.sp-status{
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-}
-
+/* OPEN / CLOSED */
 .sp-pill-right{
-  border: none;
+  border: 1px solid rgba(0,0,0,.06);
   color: #fff;
-  padding: 7px 16px;
+  padding: 6px 14px;
 }
 
-#spStatusPill[data-status="open"]{ background: var(--green); }
-#spStatusPill[data-status="closed"]{ background: #c7c7cc; }
+#spStatusPill[data-status="open"]{
+  background: rgba(52,199,89,.92);      /* softer green */
+}
 
-.sp-taa{
-  width: 34px;
-  height: 34px;
-  display: none;
+#spStatusPill[data-status="closed"]{
+  background: rgba(142,142,147,.85);    /* system gray */
 }
 
 /* Logo */
@@ -111,7 +97,7 @@ body.shop-public{
   font-size: 44px; /* JS overrides per name length */
   line-height: 1.05;
   letter-spacing: -0.02em;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--ink);
 }
 
@@ -221,29 +207,21 @@ body.shop-public{
 
 /* Segmented control */
 .sp-seg{
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  background: rgba(255,255,255,.75);
-  border: 1px solid rgba(0,0,0,.06);
-  border-radius: 18px;
-  padding: 6px;
+  background: rgba(242,242,247,.75);
+  border: 1px solid rgba(0,0,0,.05);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
-.sp-seg-btn{
-  border: none;
-  background: transparent;
-  padding: 10px 8px;
-  border-radius: 14px;
-  font-weight: 900;
-  color: #1c1c1e;
-  opacity: .55;
+.sp-seg button{
+  font-weight: 700;
+  color: #8e8e93;
 }
 
-.sp-seg-btn.is-active{
-  background: #fff;
-  opacity: 1;
-  box-shadow: 0 10px 22px rgba(0,0,0,.08);
+.sp-seg button[aria-selected="true"]{
+  background: rgba(255,255,255,.9);
+  color: #0b0b0c;
+  box-shadow: none; /* key: remove shadow */
 }
 
 /* Panels + cards */
