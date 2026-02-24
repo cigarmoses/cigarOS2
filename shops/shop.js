@@ -1,11 +1,11 @@
 /* /shops/shop.js
-   Public Shop Page (Centered Layout + Bottom Section v9)
+   Public Shop Page (Centered Layout + Bottom Section v10)
 
    Fixes:
-   ✅ Robust data loading: tries multiple possible JSON paths
-   ✅ Robust slug matching: slugify name + uses slug field when present
-   ✅ No silent "list[0]" fallback (prevents wrong shop showing)
-   ✅ Fix dock click handler (data-action="brands" -> opens About tab)
+   ✅ Loads canonical per-shop JSON first: /data/shops/<canonical>.json (e.g. justthetip.json)
+   ✅ Keeps legacy fallback to shops.json array lists
+   ✅ Brands button opens a real Brands sheet (grid of SVG logos)
+   ✅ Removes faint black background/line behind the shop logo icon
 */
 
 (() => {
@@ -30,7 +30,7 @@
     return ["1", "true", "t", "yes", "y", "x", "✓", "check", "checked", "open"].includes(s);
   }
 
-  // removes all non-alnum (for logo filename matching)
+  // removes all non-alnum (for filenames + canonical ids)
   function sanitizeLogoName(name) {
     return String(name || "")
       .toLowerCase()
@@ -42,10 +42,15 @@
     return String(s || "")
       .trim()
       .toLowerCase()
-      .replace(/['’]/g, "")          // remove apostrophes
+      .replace(/['’]/g, "")
       .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "-")   // non-alnum -> hyphen
-      .replace(/^-+|-+$/g, "");      // trim hyphens
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  // Canonical shop id for file names: "just-the-tip" -> "justthetip"
+  function canonicalShopId(s) {
+    return sanitizeLogoName(String(s || "").trim().toLowerCase());
   }
 
   function normalizeKey(k) {
@@ -199,22 +204,37 @@
 
   // ---------------- injected styling ----------------
   function injectStylesOnce() {
-    if (document.getElementById("spInjectedV9")) return;
+    if (document.getElementById("spInjectedV10")) return;
 
     const css = `
       .sp-status { position: absolute !important; top: 18px !important; right: 18px !important; left: auto !important; }
       #spStatusPill { font-size: 12px !important; padding: 6px 14px !important; letter-spacing: 0 !important; font-weight: 600 !important; }
 
-      /* Your earlier request was "regular weight" city text */
-      .sp-city, .sp-city span, #spCity {
-        font-weight: 400 !important;
-        letter-spacing: -0.02em !important;
-      }
+      /* City text: regular weight */
+      .sp-city, .sp-city span, #spCity { font-weight: 400 !important; letter-spacing: -0.02em !important; }
       .sp-city { color: #8e8e93 !important; }
 
-      .sp-logo-center img { filter: none !important; -webkit-filter:none !important; }
+      /* ✅ Kill any faint black line/box behind the shop logo */
+      .sp-logo-center,
+      .sp-logo-center * {
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+        border: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+      }
+      #spLogo {
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+        border: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+      }
 
       .sp-bottom { margin-top: 18px; }
+
       .sp-dock {
         display:flex; gap:12px; justify-content:space-between;
         padding: 12px;
@@ -282,10 +302,85 @@
       .sp-card h3{ margin: 0 0 8px 0; font-size: 16px; font-weight: 900; letter-spacing: -0.01em; color:#0b0b0c; }
       .sp-muted{ color:#8e8e93; font-weight: 700; }
       .sp-hidden{ display:none !important; }
+
+      /* ✅ Brands sheet (bottom sheet) */
+      .sp-brands-overlay{
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.25);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: none;
+        z-index: 9999;
+      }
+      .sp-brands-sheet{
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,.96);
+        border-top-left-radius: 22px;
+        border-top-right-radius: 22px;
+        box-shadow: 0 -18px 60px rgba(0,0,0,.18);
+        max-height: 72vh;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,.06);
+      }
+      .sp-brands-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid rgba(0,0,0,.06);
+      }
+      .sp-brands-title{
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: -0.01em;
+        color: #0b0b0c;
+      }
+      .sp-brands-close{
+        border:none;
+        background: rgba(0,0,0,.06);
+        height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        font-weight: 900;
+        color:#0b0b0c;
+      }
+      .sp-brands-body{
+        padding: 14px 14px 22px;
+        overflow: auto;
+        max-height: calc(72vh - 54px);
+      }
+      .sp-brand-grid{
+        display:grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .sp-brand-tile{
+        background: rgba(242,242,247,.9);
+        border: 1px solid rgba(0,0,0,.05);
+        border-radius: 16px;
+        padding: 10px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        height: 74px;
+      }
+      .sp-brand-tile img{
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter:none;
+      }
+      .sp-brand-empty{
+        color:#8e8e93;
+        font-weight: 700;
+        padding: 10px 2px;
+      }
     `;
 
     const style = document.createElement("style");
-    style.id = "spInjectedV9";
+    style.id = "spInjectedV10";
     style.textContent = css;
     document.head.appendChild(style);
   }
@@ -356,6 +451,81 @@
     return toStr(shop.events) || toStr(shop.Events) || toStr(shop.update) || toStr(shop.Update) || toStr(shop.notes) || toStr(shop.Notes) || "";
   }
 
+  // ---------------- brands sheet ----------------
+  function ensureBrandsSheet() {
+    injectStylesOnce();
+    let overlay = document.querySelector(".sp-brands-overlay");
+    if (overlay) return overlay;
+
+    overlay = document.createElement("div");
+    overlay.className = "sp-brands-overlay";
+    overlay.innerHTML = `
+      <div class="sp-brands-sheet" role="dialog" aria-modal="true" aria-label="Brands">
+        <div class="sp-brands-head">
+          <div class="sp-brands-title">Brands</div>
+          <button type="button" class="sp-brands-close" aria-label="Close">Close</button>
+        </div>
+        <div class="sp-brands-body">
+          <div class="sp-brand-empty">No brands listed yet.</div>
+          <div class="sp-brand-grid" aria-label="Brand logos"></div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = overlay.querySelector(".sp-brands-close");
+    close.addEventListener("click", () => hideBrandsSheet());
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) hideBrandsSheet();
+    });
+
+    return overlay;
+  }
+
+  function showBrandsSheet(shop) {
+    const overlay = ensureBrandsSheet();
+    const grid = overlay.querySelector(".sp-brand-grid");
+    const empty = overlay.querySelector(".sp-brand-empty");
+
+    const slugs = parseBrands(shop);
+    grid.innerHTML = "";
+
+    if (!slugs.length) {
+      empty.style.display = "";
+      overlay.style.display = "block";
+      return;
+    }
+
+    empty.style.display = "none";
+
+    slugs.forEach((slug) => {
+      const s = sanitizeLogoName(slug); // safety
+      if (!s) return;
+
+      const tile = document.createElement("div");
+      tile.className = "sp-brand-tile";
+
+      const img = document.createElement("img");
+      img.src = `/img/icons/brands/${s}.svg`;
+      img.alt = s;
+
+      // if missing svg, just remove tile (no ugly broken image)
+      img.onerror = () => tile.remove();
+
+      tile.appendChild(img);
+      grid.appendChild(tile);
+    });
+
+    overlay.style.display = "block";
+  }
+
+  function hideBrandsSheet() {
+    const overlay = document.querySelector(".sp-brands-overlay");
+    if (overlay) overlay.style.display = "none";
+  }
+
   // ---------------- bottom section build ----------------
   function buildBottomSection(shop) {
     injectStylesOnce();
@@ -372,6 +542,7 @@
     const phone = getPhone(shop);
     const directions = buildDirectionsUrl(shop);
 
+    // Dock: Call | Brands | Directions
     const dock = document.createElement("div");
     dock.className = "sp-dock";
     dock.innerHTML = `
@@ -381,6 +552,7 @@
     `;
     bottom.appendChild(dock);
 
+    // Segmented: Hours | About | Events
     const seg = document.createElement("div");
     seg.className = "sp-seg";
     seg.innerHTML = `
@@ -393,6 +565,7 @@
     const panels = document.createElement("div");
     panels.className = "sp-panels";
 
+    // HOURS
     const hasAnyHours = getAnyHoursPresent(shop);
     const today = getTodayName();
     const todayHours = getHoursForDay(shop, today);
@@ -409,19 +582,16 @@
       }
     `;
 
-    const brands = parseBrands(shop);
+    // ABOUT
     const aboutCard = document.createElement("div");
     aboutCard.className = "sp-card sp-hidden";
     aboutCard.setAttribute("data-panel", "about");
     aboutCard.innerHTML = `
       <h3>About</h3>
-      ${
-        brands.length
-          ? `<div class="sp-muted">${escapeHtml(brands.slice(0, 24).join(", "))}</div>`
-          : `<div class="sp-muted">Details coming soon.</div>`
-      }
+      <div class="sp-muted">${escapeHtml(toStr(shop.about) || "Details coming soon.")}</div>
     `;
 
+    // EVENTS
     const eventsText = getEventsText(shop);
     const eventsCard = document.createElement("div");
     eventsCard.className = "sp-card sp-hidden";
@@ -452,12 +622,12 @@
       setTab(btn.dataset.tab);
     });
 
-    // ✅ Dock: Brands jumps to About tab
+    // ✅ Dock: Brands opens sheet
     dock.addEventListener("click", (e) => {
       const a = e.target.closest('a[data-action="brands"]');
       if (!a) return;
       e.preventDefault();
-      setTab("about");
+      showBrandsSheet(shop);
     });
 
     setTab("hours");
@@ -470,149 +640,5 @@
     const shopName = shop.name || shop.Shop || "Shop";
     const features = normalizeFeatures(shop);
 
-    const nameEl = $("#spName");
-    if (nameEl) applyNameClampAndSize(nameEl, shopName);
-
-    const cityEl = $("#spCity");
-    if (cityEl) {
-      const cityLine =
-        [toStr(shop.city || shop.City), toStr(shop.state || shop.ST || shop.State)]
-          .filter(Boolean)
-          .join(", ");
-      cityEl.textContent = cityLine || "—";
-    }
-
-    const status = getOpenClosed(shop);
-    const statusEl = $("#spStatusPill");
-    if (statusEl) {
-      statusEl.textContent = status;
-      statusEl.setAttribute("data-status", status.toLowerCase());
-    }
-
-    const taaEl = $("#spTaaIcon");
-    if (taaEl) taaEl.style.display = features.taa === true ? "" : "none";
-
-    const logoEl = $("#spLogo");
-    if (logoEl) {
-      const base = sanitizeLogoName(shopName);
-      const svgPath = `/img/icons/shops/${base}.svg`;
-      const pngPath = `/img/icons/shops/${base}.png`;
-
-      logoEl.src = svgPath;
-      logoEl.alt = `${shopName} logo`;
-
-      logoEl.onerror = function () {
-        if (logoEl.src.endsWith(".svg")) {
-          logoEl.src = pngPath;
-          return;
-        }
-        logoEl.onerror = null;
-        logoEl.src = "/img/icons/shops/default.png";
-      };
-    }
-
-    const addrBtn = $("#spAddressBtn");
-    if (addrBtn) addrBtn.onclick = () => window.open(buildDirectionsUrl(shop), "_blank", "noopener");
-
-    const row = $("#spAmenRow");
-    const panel = $("#spAmenPanel");
-    if (row && panel) {
-      row.innerHTML = "";
-      const enabled = AMENITIES.filter(a => features[a.key] === true);
-
-      enabled.forEach(a => {
-        const img = document.createElement("img");
-        img.className = "sp-amen-icon";
-        img.src = a.icon;
-        img.alt = a.label;
-        img.onerror = () => img.remove();
-        row.appendChild(img);
-      });
-
-      panel.style.display = enabled.length ? "" : "none";
-    }
-
-    buildBottomSection(shop);
-  }
-
-  // ---------------- data loading ----------------
-  async function fetchJsonFirstOk(urls) {
-    let lastErr = null;
-
-    for (const url of urls) {
-      try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(`${url} HTTP ${res.status}`);
-
-        // ensure we didn't get HTML
-        const ct = (res.headers.get("content-type") || "").toLowerCase();
-        if (!ct.includes("application/json") && !ct.includes("text/json") && !ct.includes("json")) {
-          // still may be JSON w/ wrong headers, so attempt parse safely:
-          const txt = await res.text();
-          try {
-            return JSON.parse(txt);
-          } catch {
-            throw new Error(`${url} returned non-JSON (content-type: ${ct || "unknown"})`);
-          }
-        }
-
-        return await res.json();
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-
-    throw lastErr || new Error("Unable to fetch shop data");
-  }
-
-  function findShop(list, slugParam) {
-    const want = slugify(slugParam);
-    if (!want) return null;
-
-    return (
-      list.find(s => slugify(s.slug) === want) ||
-      list.find(s => slugify(s.name || s.Shop) === want) ||
-      list.find(s => sanitizeLogoName(s.name || s.Shop) === sanitizeLogoName(want)) ||
-      null
-    );
-  }
-
-  // ---------------- boot ----------------
-  async function boot() {
-    const slugParam = (getParam("shop") || "").trim();
-
-    try {
-      // ✅ try the most likely places your data might live
-      const urls = [
-        `/shops/shops.json?v=${Date.now()}`,
-        `/shops.json?v=${Date.now()}`,
-        `./shops.json?v=${Date.now()}`,
-        `/data/shops.json?v=${Date.now()}`
-      ];
-
-      const list = await fetchJsonFirstOk(urls);
-
-      if (!Array.isArray(list) || !list.length) {
-        throw new Error("Shop data loaded but was empty or not an array");
-      }
-
-      const shop = findShop(list, slugParam);
-
-      if (!shop) {
-        throw new Error(`No matching shop for slug: "${slugParam}"`);
-      }
-
-      renderShop(shop);
-    } catch (err) {
-      console.error("SHOP PAGE ERROR:", err);
-
-      const nameEl = $("#spName");
-      if (nameEl) nameEl.textContent = "Shop not found";
-
-      const cityEl = $("#spCity");
-      if (cityEl) cityEl.textContent = "—";
-    }
-  }
-
-  boot();
-})();
+    // Name
+    const nameEl
