@@ -46443,7 +46443,7 @@
     "Alcohol": null,
     "BYOB": "X",
     "No alcohol": null,
-    "Food": null,
+    "Food": "X",
     "TVs": "X",
     "Outdoor": null,
     "Indoor": "X",
