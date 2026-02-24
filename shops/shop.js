@@ -1,17 +1,27 @@
 /* /shops/shop.js
-   Public Shop Page (Centered Layout + Bottom Section v11)
+   Public Shop Page (Centered Layout + Bottom Section v12)
 
-   ✅ Cache-proof behavior when used with: <script src="/shops/shop.js?v=11"></script>
+   ✅ Cache-proof behavior when used with: <script src="/shops/shop.js?v=12"></script>
 
    ✅ Loads per-shop JSON first (no dashes in filename):
       /data/shops/{fileSlug}.json  (ex: justthetip.json)
 
    ✅ Fallback to legacy /shops/shops.json list
 
-   ✅ Brands button opens bottom sheet with SVG grid:
-      /img/icons/brands/{brandSlug}.svg (fallback .png)
+   ✅ Brands button uses /img/icons/brands.svg
 
-   ✅ Fix black hairline/outline behind amenity icons (force-remove borders/filters/shadows)
+   ✅ Brands button opens bottom sheet with:
+      - Search bar
+      - SVG grid: /img/icons/brands/{brandSlug}.svg (fallback .png)
+      - Brand name under icon (SF Pro regular, -0.2 tracking)
+
+   ✅ Remove thin “outline” on dock buttons (keep subtle shadow)
+
+   ✅ Remove TAA icon from the middle amenities row (TAA stays top-right only)
+
+   ✅ Top-right TAA badge:
+      - width matches OPEN pill width (approx)
+      - moved down a bit
 */
 
 (() => {
@@ -71,6 +81,34 @@
       .replaceAll("'", "&#039;");
   }
 
+  function titleCaseWords(s) {
+    const clean = String(s || "").trim();
+    if (!clean) return "";
+    return clean
+      .split(/\s+/g)
+      .map(w => w ? (w[0].toUpperCase() + w.slice(1).toLowerCase()) : "")
+      .join(" ");
+  }
+
+  function prettyBrandLabel(slug) {
+    // If owner gave a nice label already (contains space / uppercase), keep it
+    const raw = String(slug || "").trim();
+    if (!raw) return "";
+    const hasSpace = /\s/.test(raw);
+    const hasUpper = /[A-Z]/.test(raw);
+    if (hasSpace || hasUpper) return raw;
+
+    // Otherwise, best-effort prettify
+    const spaced = raw
+      .replace(/[_-]+/g, " ")
+      .replace(/([a-z])([0-9])/g, "$1 $2")
+      .replace(/([0-9])([a-z])/g, "$1 $2")
+      .trim();
+
+    // Note: "blacklabeltradingco" stays "Blacklabeltradingco" (we don't have a dictionary yet)
+    return titleCaseWords(spaced || raw);
+  }
+
   function buildDirectionsUrl(shop) {
     const lat = Number(shop.latitude ?? shop.lat ?? shop.Latitude);
     const lng = Number(shop.longitude ?? shop.lng ?? shop.Longitude);
@@ -89,6 +127,7 @@
   }
 
   // ---------------- amenities ----------------
+  // NOTE: TAA is intentionally NOT in this list (it should NOT render in the middle row)
   const AMENITIES = [
     { key: "alcohol", icon: "/img/icons/alcohol.svg", label: "Alcohol" },
     { key: "byob", icon: "/img/icons/byob.svg", label: "BYOB" },
@@ -99,7 +138,6 @@
     { key: "indoor", icon: "/img/icons/indoorseating.svg", label: "Indoor" },
     { key: "quiet", icon: "/img/icons/quietzone.svg", label: "Quiet" },
     { key: "livemusic", icon: "/img/icons/livemusic.svg", label: "Live Music" },
-    { key: "taa", icon: "/img/icons/taa.svg", label: "TAA" },
   ];
 
   const FEATURE_ALIASES = {
@@ -112,6 +150,8 @@
     indoor: ["indoor", "indoorseating"],
     quiet: ["quiet", "quietzone"],
     livemusic: ["livemusic", "live", "music", "livemus"],
+
+    // Keep TAA parsing for the top-right badge:
     taa: ["taa"],
   };
 
@@ -136,7 +176,11 @@
     for (const rawKey of Object.keys(shop)) {
       const nk = normalizeKey(rawKey);
 
-      if (AMENITIES.some(a => a.key === nk)) {
+      // Only map keys we know
+      if (
+        AMENITIES.some(a => a.key === nk) ||
+        nk === "taa"
+      ) {
         bag[nk] = isTruthy(shop[rawKey]);
         continue;
       }
@@ -214,7 +258,7 @@
 
   // ---------------- injected styling ----------------
   function injectStylesOnce() {
-    if (document.getElementById("spInjectedV11")) return;
+    if (document.getElementById("spInjectedV12")) return;
 
     const css = `
       .sp-status { position: absolute !important; top: 18px !important; right: 18px !important; left: auto !important; }
@@ -225,8 +269,20 @@
 
       .sp-logo-center img { filter: none !important; -webkit-filter:none !important; }
 
-      /* ✅ HARD KILL: black outlines / shadows / filters on amenity icons */
-      #spAmenPanel, #spAmenRow { background: transparent !important; }
+      /* ✅ TAA badge: move down + approximate OPEN pill width */
+      #spTaaIcon{
+        position: absolute !important;
+        top: 54px !important;         /* moved down under OPEN */
+        right: 18px !important;
+        width: 78px !important;       /* approx OPEN pill width */
+        height: auto !important;
+        opacity: 1 !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+      }
+
+      /* ✅ HARD KILL: any hairline outline around amenity icons */
+      #spAmenPanel, #spAmenRow { background: transparent !important; border: none !important; box-shadow: none !important; }
       #spAmenRow img,
       .sp-amen-icon,
       .sp-amen-icon * {
@@ -236,14 +292,12 @@
         box-shadow: none !important;
         filter: none !important;
         -webkit-filter: none !important;
-        mix-blend-mode: normal !important;
       }
       .sp-amen-icon { display:block !important; border-radius: 0 !important; }
 
-      /* Also neutralize any inherited image styling */
-      img { box-shadow: none !important; outline: none !important; }
-
+      /* ---------------- Dock + Seg ---------------- */
       .sp-bottom { margin-top: 18px; }
+
       .sp-dock {
         display:flex; gap:12px; justify-content:space-between;
         padding: 12px;
@@ -254,12 +308,15 @@
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
       }
+
+      /* ✅ remove the little outline on the dock buttons (keep subtle shadow) */
       .sp-dock a{
         flex:1 1 0;
         height: 54px;
         border-radius: 16px;
-        border: 1px solid rgba(0,0,0,.05);
-        background: rgba(255,255,255,.80);
+        border: none !important;                         /* remove outline */
+        background: rgba(255,255,255,.84);
+        box-shadow: 0 10px 24px rgba(0,0,0,.06);         /* subtle shadow */
         display:flex; flex-direction:column; align-items:center; justify-content:center;
         gap: 6px;
         padding: 0;
@@ -268,8 +325,22 @@
         font-weight: 800;
         font-size: 12px;
       }
+
       .sp-dock .sp-dock-ico{ width: 22px; height: 22px; stroke: #0b0b0c; fill: none; }
       .sp-dock .sp-dock-ico-fill{ fill: #0b0b0c; stroke: none; }
+
+      .sp-dock .sp-dock-img{
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+        display:block;
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+      }
 
       .sp-seg {
         margin-top: 14px;
@@ -323,7 +394,7 @@
         padding: 10px;
       }
       .sp-sheet{
-        width: min(520px, 100%);
+        width: min(560px, 100%);
         background: rgba(255,255,255,.94);
         border: 1px solid rgba(0,0,0,.08);
         border-radius: 22px;
@@ -331,9 +402,14 @@
         overflow: hidden;
       }
       .sp-sheet-header{
-        display:flex; align-items:center; justify-content:space-between;
-        padding: 14px 14px 10px 16px;
+        padding: 14px 14px 12px 16px;
         border-bottom: 1px solid rgba(0,0,0,.06);
+        display:flex;
+        flex-direction:column;
+        gap: 10px;
+      }
+      .sp-sheet-topline{
+        display:flex; align-items:center; justify-content:space-between;
       }
       .sp-sheet-title{ font-size: 18px; font-weight: 900; letter-spacing: -0.01em; }
       .sp-sheet-close{
@@ -345,11 +421,38 @@
         font-size: 18px;
         cursor: pointer;
       }
+
+      .sp-sheet-search{
+        display:flex;
+        align-items:center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: rgba(242,242,247,.85);
+        border: 1px solid rgba(0,0,0,.06);
+      }
+      .sp-sheet-search input{
+        width: 100%;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: #0b0b0c;
+        font-family: inherit;
+      }
+      .sp-sheet-search input::placeholder{
+        color:#8e8e93;
+        font-weight: 600;
+      }
+
       .sp-sheet-body{
-        max-height: 46vh;
+        max-height: 52vh;
         overflow:auto;
         padding: 14px 14px 16px 14px;
       }
+
       .sp-brand-grid{
         display:grid;
         grid-template-columns: repeat(3, 1fr);
@@ -358,19 +461,22 @@
       @media (min-width: 420px){
         .sp-brand-grid{ grid-template-columns: repeat(4, 1fr); }
       }
+
       .sp-brand-tile{
         border: 1px solid rgba(0,0,0,.06);
-        background: rgba(255,255,255,.80);
+        background: rgba(255,255,255,.82);
         border-radius: 16px;
-        padding: 10px;
+        padding: 10px 10px 8px 10px;
         display:flex;
+        flex-direction:column;
         align-items:center;
         justify-content:center;
-        height: 64px;
+        gap: 8px;
+        min-height: 86px;
       }
       .sp-brand-tile img{
         max-width: 100%;
-        max-height: 100%;
+        max-height: 44px;
         object-fit: contain;
         border: none !important;
         outline: none !important;
@@ -379,6 +485,21 @@
         filter:none !important;
         -webkit-filter:none !important;
       }
+
+      /* ✅ Brand name under icon: SF Pro Display regular feel + -0.2 tracking */
+      .sp-brand-name{
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: -0.2px; /* tracking */
+        color: #6e6e73;
+        text-align: center;
+        line-height: 1.15;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
       .sp-brand-fallback{
         font-weight: 900;
         font-size: 11px;
@@ -389,12 +510,12 @@
     `;
 
     const style = document.createElement("style");
-    style.id = "spInjectedV11";
+    style.id = "spInjectedV12";
     style.textContent = css;
     document.head.appendChild(style);
   }
 
-  // ---------------- icons (dock) ----------------
+  // ---------------- dock icons ----------------
   function iconSvg(type) {
     const sw = 1.75;
 
@@ -404,400 +525,6 @@
       </svg>`;
     }
 
-    if (type === "cigar") {
-      return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3 14c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v2H3v-2z" stroke-width="${sw}" fill="none"/>
-        <path d="M17 12h3.2c.9 0 1.6.7 1.6 1.6V16c0 .9-.7 1.6-1.6 1.6H17V12z" stroke-width="${sw}" fill="none"/>
-        <path d="M6 12v5" stroke-width="${sw}" />
-        <path d="M10 12v5" stroke-width="${sw}" />
-        <path d="M14 12v5" stroke-width="${sw}" />
-      </svg>`;
-    }
-
+    // Directions pin
     return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" class="sp-dock-ico-fill"/>
-      <circle cx="12" cy="9" r="2.4" fill="#fff"/>
-    </svg>`;
-  }
-
-  // ---------------- data helpers ----------------
-  function parseBrands(shop) {
-    const raw = shop.brands ?? shop.Brands ?? shop["Cigar brands"] ?? shop["Cigar Brands"];
-    if (Array.isArray(raw)) return raw.map(toStr).filter(Boolean);
-
-    const s = toStr(raw);
-    if (!s) return [];
-    return s.split(/[,|\n/]+/g).map((x) => toStr(x)).filter(Boolean);
-  }
-
-  function getPhone(shop) {
-    return toStr(shop.cell || shop.Cell) || toStr(shop.phone || shop.Phone) || "";
-  }
-
-  function getHoursForDay(shop, dayName) {
-    // ✅ nested hours object support (mon/tue...)
-    if (shop.hours && typeof shop.hours === "object") {
-      const k = dayName.slice(0, 3).toLowerCase();
-      const v = toStr(shop.hours[k]);
-      if (v) return v;
-    }
-
-    const direct = toStr(shop[dayName] ?? shop[dayName.toLowerCase()]);
-    if (direct) return direct;
-
-    const short = dayName.slice(0, 3);
-    return toStr(shop[short] ?? shop[short.toLowerCase()]);
-  }
-
-  function getAnyHoursPresent(shop) {
-    const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-    return days.some(d => {
-      const v = getHoursForDay(shop, d);
-      const s = String(v || "").trim();
-      if (!s) return false;
-      if (["-", "—", "n/a", "na"].includes(s.toLowerCase())) return false;
-      return true;
-    });
-  }
-
-  function getTodayName() {
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    return days[new Date().getDay()];
-  }
-
-  function getEventsText(shop) {
-    return toStr(shop.events) || toStr(shop.Events) || toStr(shop.update) || toStr(shop.Update) || toStr(shop.notes) || toStr(shop.Notes) || "";
-  }
-
-  // ---------------- Brands sheet ----------------
-  function openBrandsSheet(brands) {
-    injectStylesOnce();
-
-    const existing = document.querySelector(".sp-sheet-backdrop");
-    if (existing) existing.remove();
-
-    const backdrop = document.createElement("div");
-    backdrop.className = "sp-sheet-backdrop";
-
-    const sheet = document.createElement("div");
-    sheet.className = "sp-sheet";
-
-    const header = document.createElement("div");
-    header.className = "sp-sheet-header";
-    header.innerHTML = `
-      <div class="sp-sheet-title">Brands</div>
-      <button type="button" class="sp-sheet-close" aria-label="Close">×</button>
-    `;
-
-    const body = document.createElement("div");
-    body.className = "sp-sheet-body";
-
-    if (!brands || !brands.length) {
-      body.innerHTML = `<div class="sp-muted">No brands listed yet.</div>`;
-    } else {
-      const grid = document.createElement("div");
-      grid.className = "sp-brand-grid";
-
-      brands.forEach((slug) => {
-        const clean = sanitizeLogoName(slug);
-        const tile = document.createElement("div");
-        tile.className = "sp-brand-tile";
-
-        const img = document.createElement("img");
-        img.alt = clean;
-        img.loading = "lazy";
-        img.src = `/img/icons/brands/${clean}.svg?v=${Date.now()}`;
-
-        img.onerror = () => {
-          if (img.src.includes(".svg")) {
-            img.src = `/img/icons/brands/${clean}.png?v=${Date.now()}`;
-            return;
-          }
-          tile.innerHTML = `<div class="sp-brand-fallback">${escapeHtml(clean)}</div>`;
-        };
-
-        tile.appendChild(img);
-        grid.appendChild(tile);
-      });
-
-      body.appendChild(grid);
-    }
-
-    sheet.appendChild(header);
-    sheet.appendChild(body);
-    backdrop.appendChild(sheet);
-    document.body.appendChild(backdrop);
-
-    function close() {
-      backdrop.remove();
-    }
-
-    header.querySelector(".sp-sheet-close")?.addEventListener("click", close);
-    backdrop.addEventListener("click", (e) => {
-      if (e.target === backdrop) close();
-    });
-
-    document.addEventListener("keydown", function onKey(e) {
-      if (e.key === "Escape") {
-        document.removeEventListener("keydown", onKey);
-        close();
-      }
-    });
-  }
-
-  // ---------------- bottom section build ----------------
-  function buildBottomSection(shop) {
-    injectStylesOnce();
-
-    const top = document.querySelector(".sp-top");
-    if (!top) return;
-
-    const existing = document.querySelector(".sp-bottom");
-    if (existing) existing.remove();
-
-    const bottom = document.createElement("div");
-    bottom.className = "sp-bottom";
-
-    const phone = getPhone(shop);
-    const directions = buildDirectionsUrl(shop);
-
-    const dock = document.createElement("div");
-    dock.className = "sp-dock";
-    dock.innerHTML = `
-      ${phone ? `<a href="tel:${phone.replace(/[^\d+]/g, "")}" aria-label="Call">${iconSvg("call")}<div>Call</div></a>` : ""}
-      <a href="#" data-action="brands" aria-label="Brands">${iconSvg("cigar")}<div>Brands</div></a>
-      <a href="${directions}" target="_blank" rel="noopener" aria-label="Directions">${iconSvg("dir")}<div>Directions</div></a>
-    `;
-    bottom.appendChild(dock);
-
-    const seg = document.createElement("div");
-    seg.className = "sp-seg";
-    seg.innerHTML = `
-      <button type="button" data-tab="hours" aria-selected="true">Hours</button>
-      <button type="button" data-tab="about" aria-selected="false">About</button>
-      <button type="button" data-tab="events" aria-selected="false">Events</button>
-    `;
-    bottom.appendChild(seg);
-
-    const panels = document.createElement("div");
-    panels.className = "sp-panels";
-
-    const hasAnyHours = getAnyHoursPresent(shop);
-    const today = getTodayName();
-    const todayHours = getHoursForDay(shop, today);
-
-    const hoursCard = document.createElement("div");
-    hoursCard.className = "sp-card";
-    hoursCard.setAttribute("data-panel", "hours");
-    hoursCard.innerHTML = `
-      <h3>Hours</h3>
-      ${
-        hasAnyHours
-          ? `<div class="sp-muted">${escapeHtml(today)} • ${escapeHtml(todayHours || "—")}</div>`
-          : `<div class="sp-muted">Coming soon</div>`
-      }
-    `;
-
-    const aboutCard = document.createElement("div");
-    aboutCard.className = "sp-card sp-hidden";
-    aboutCard.setAttribute("data-panel", "about");
-    aboutCard.innerHTML = `
-      <h3>About</h3>
-      <div class="sp-muted">${escapeHtml(toStr(shop.about || shop.About || "Details coming soon."))}</div>
-    `;
-
-    const eventsText = getEventsText(shop);
-    const eventsCard = document.createElement("div");
-    eventsCard.className = "sp-card sp-hidden";
-    eventsCard.setAttribute("data-panel", "events");
-    eventsCard.innerHTML = `
-      <h3>Events</h3>
-      ${eventsText ? `<div class="sp-muted">${escapeHtml(eventsText)}</div>` : `<div class="sp-muted">No events posted yet.</div>`}
-    `;
-
-    panels.appendChild(hoursCard);
-    panels.appendChild(aboutCard);
-    panels.appendChild(eventsCard);
-    bottom.appendChild(panels);
-    top.appendChild(bottom);
-
-    function setTab(tab) {
-      seg.querySelectorAll("button").forEach((b) => {
-        b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false");
-      });
-      panels.querySelectorAll("[data-panel]").forEach((p) => {
-        p.classList.toggle("sp-hidden", p.getAttribute("data-panel") !== tab);
-      });
-    }
-
-    seg.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-tab]");
-      if (!btn) return;
-      setTab(btn.dataset.tab);
-    });
-
-    setTab("hours");
-  }
-
-  // ---------------- render shop ----------------
-  function renderShop(shop) {
-    injectStylesOnce();
-
-    // Keep latest loaded shop globally for event delegation
-    window.__SHOP_CURRENT__ = shop;
-
-    const shopName = shop.name || shop.Shop || "Shop";
-    const features = normalizeFeatures(shop);
-
-    const nameEl = $("#spName");
-    if (nameEl) applyNameClampAndSize(nameEl, shopName);
-
-    const cityEl = $("#spCity");
-    if (cityEl) {
-      const cityLine =
-        [toStr(shop.city || shop.City), toStr(shop.state || shop.ST || shop.State)]
-          .filter(Boolean)
-          .join(", ");
-      cityEl.textContent = cityLine || "—";
-    }
-
-    const status = getOpenClosed(shop);
-    const statusEl = $("#spStatusPill");
-    if (statusEl) {
-      statusEl.textContent = status;
-      statusEl.setAttribute("data-status", status.toLowerCase());
-    }
-
-    const taaEl = $("#spTaaIcon");
-    if (taaEl) taaEl.style.display = features.taa === true ? "" : "none";
-
-    // Shop logo
-    const logoEl = $("#spLogo");
-    if (logoEl) {
-      const base = sanitizeLogoName(shopName);
-      const svgPath = `/img/icons/shops/${base}.svg?v=${Date.now()}`;
-      const pngPath = `/img/icons/shops/${base}.png?v=${Date.now()}`;
-
-      logoEl.src = svgPath;
-      logoEl.alt = `${shopName} logo`;
-
-      logoEl.onerror = function () {
-        if (logoEl.src.includes(".svg")) {
-          logoEl.src = pngPath;
-          return;
-        }
-        logoEl.onerror = null;
-        logoEl.src = "/img/icons/shops/default.png";
-      };
-    }
-
-    const addrBtn = $("#spAddressBtn");
-    if (addrBtn) addrBtn.onclick = () => window.open(buildDirectionsUrl(shop), "_blank", "noopener");
-
-    // Amenities row
-    const row = $("#spAmenRow");
-    const panel = $("#spAmenPanel");
-    if (row && panel) {
-      row.innerHTML = "";
-      const enabled = AMENITIES.filter(a => features[a.key] === true);
-
-      enabled.forEach(a => {
-        const img = document.createElement("img");
-        img.className = "sp-amen-icon";
-        img.src = `${a.icon}?v=${Date.now()}`;
-        img.alt = a.label;
-        img.onerror = () => img.remove();
-        row.appendChild(img);
-      });
-
-      panel.style.display = enabled.length ? "" : "none";
-    }
-
-    buildBottomSection(shop);
-  }
-
-  // ✅ Event delegation so Brands click always works even if DOM changes
-  function wireGlobalClicks() {
-    document.addEventListener("click", (e) => {
-      const a = e.target.closest('[data-action="brands"]');
-      if (!a) return;
-      e.preventDefault();
-
-      const shop = window.__SHOP_CURRENT__;
-      if (!shop) {
-        openBrandsSheet([]);
-        return;
-      }
-
-      const brands = parseBrands(shop);
-      openBrandsSheet(brands);
-    }, true);
-  }
-
-  // ---------------- data loading ----------------
-  async function fetchJson(url) {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`${url} HTTP ${res.status}`);
-    const txt = await res.text();
-    return JSON.parse(txt);
-  }
-
-  function findShop(list, slugParam) {
-    const want = slugify(slugParam);
-    if (!want) return null;
-
-    return (
-      list.find(s => slugify(s.slug) === want) ||
-      list.find(s => slugify(s.name || s.Shop) === want) ||
-      list.find(s => sanitizeLogoName(s.name || s.Shop) === sanitizeLogoName(want)) ||
-      null
-    );
-  }
-
-  // ---------------- boot ----------------
-  async function boot() {
-    wireGlobalClicks();
-
-    const slugParamRaw = (getParam("shop") || "").trim();
-    if (!slugParamRaw) {
-      const nameEl = $("#spName");
-      if (nameEl) nameEl.textContent = "Shop not found";
-      return;
-    }
-
-    // ✅ per-shop filename (no dashes)
-    const fileSlug = sanitizeLogoName(slugParamRaw);
-
-    // 1) Per-shop JSON first
-    try {
-      const obj = await fetchJson(`/data/shops/${fileSlug}.json?v=${Date.now()}`);
-      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
-        renderShop(obj);
-        return;
-      }
-    } catch {
-      // continue
-    }
-
-    // 2) Legacy list fallback
-    try {
-      const list = await fetchJson(`/shops/shops.json?v=${Date.now()}`);
-      if (!Array.isArray(list) || !list.length) throw new Error("shops.json empty or not array");
-
-      const shop = findShop(list, slugParamRaw);
-      if (!shop) throw new Error(`No matching shop for slug: "${slugParamRaw}"`);
-
-      renderShop(shop);
-    } catch (err) {
-      console.error("SHOP PAGE ERROR:", err);
-
-      const nameEl = $("#spName");
-      if (nameEl) nameEl.textContent = "Shop not found";
-
-      const cityEl = $("#spCity");
-      if (cityEl) cityEl.textContent = "—";
-    }
-  }
-
-  boot();
-})();
+      <path d="M12 2c-3.9 0-7 3.1-7 7
