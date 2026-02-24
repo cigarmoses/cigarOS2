@@ -1,12 +1,17 @@
 /* /shops/shop.js
-   Public Shop Page (Centered Layout + Bottom Section v10)
+   Public Shop Page (Centered Layout + Bottom Section v11)
 
-   ✅ Loads per-shop JSON first:
-      /data/shops/{fileSlug}.json  (no dashes in filename)
-   ✅ Fallback to /shops/shops.json list
-   ✅ Brands opens a bottom sheet w/ SVG grid:
+   ✅ Cache-proof behavior when used with: <script src="/shops/shop.js?v=11"></script>
+
+   ✅ Loads per-shop JSON first (no dashes in filename):
+      /data/shops/{fileSlug}.json  (ex: justthetip.json)
+
+   ✅ Fallback to legacy /shops/shops.json list
+
+   ✅ Brands button opens bottom sheet with SVG grid:
       /img/icons/brands/{brandSlug}.svg (fallback .png)
-   ✅ Hard-remove any hairline borders/shadows behind icons
+
+   ✅ Fix black hairline/outline behind amenity icons (force-remove borders/filters/shadows)
 */
 
 (() => {
@@ -113,7 +118,7 @@
   function normalizeFeatures(shop) {
     const bag = {};
 
-    // ✅ NEW: support nested amenities object from per-shop JSON
+    // ✅ per-shop nested amenities support
     if (shop.amenities && typeof shop.amenities === "object") {
       for (const k of Object.keys(shop.amenities)) {
         bag[normalizeKey(k)] = isTruthy(shop.amenities[k]);
@@ -209,7 +214,7 @@
 
   // ---------------- injected styling ----------------
   function injectStylesOnce() {
-    if (document.getElementById("spInjectedV10")) return;
+    if (document.getElementById("spInjectedV11")) return;
 
     const css = `
       .sp-status { position: absolute !important; top: 18px !important; right: 18px !important; left: auto !important; }
@@ -220,15 +225,23 @@
 
       .sp-logo-center img { filter: none !important; -webkit-filter:none !important; }
 
-      /* ✅ Kill any hairline borders/shadows behind icons/images */
-      img, svg { outline: none !important; }
-      .sp-amen-icon, .sp-amen-icon * {
+      /* ✅ HARD KILL: black outlines / shadows / filters on amenity icons */
+      #spAmenPanel, #spAmenRow { background: transparent !important; }
+      #spAmenRow img,
+      .sp-amen-icon,
+      .sp-amen-icon * {
         background: transparent !important;
-        border: none !important;
-        outline: none !important;
+        border: 0 !important;
+        outline: 0 !important;
         box-shadow: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+        mix-blend-mode: normal !important;
       }
-      .sp-amen-icon { display:block; }
+      .sp-amen-icon { display:block !important; border-radius: 0 !important; }
+
+      /* Also neutralize any inherited image styling */
+      img { box-shadow: none !important; outline: none !important; }
 
       .sp-bottom { margin-top: 18px; }
       .sp-dock {
@@ -363,6 +376,8 @@
         outline: none !important;
         background: transparent !important;
         box-shadow:none !important;
+        filter:none !important;
+        -webkit-filter:none !important;
       }
       .sp-brand-fallback{
         font-weight: 900;
@@ -374,7 +389,7 @@
     `;
 
     const style = document.createElement("style");
-    style.id = "spInjectedV10";
+    style.id = "spInjectedV11";
     style.textContent = css;
     document.head.appendChild(style);
   }
@@ -407,7 +422,6 @@
 
   // ---------------- data helpers ----------------
   function parseBrands(shop) {
-    // ✅ preferred: array of slugs
     const raw = shop.brands ?? shop.Brands ?? shop["Cigar brands"] ?? shop["Cigar Brands"];
     if (Array.isArray(raw)) return raw.map(toStr).filter(Boolean);
 
@@ -421,9 +435,9 @@
   }
 
   function getHoursForDay(shop, dayName) {
-    // ✅ support nested hours object from per-shop JSON
+    // ✅ nested hours object support (mon/tue...)
     if (shop.hours && typeof shop.hours === "object") {
-      const k = dayName.slice(0, 3).toLowerCase(); // mon/tue/...
+      const k = dayName.slice(0, 3).toLowerCase();
       const v = toStr(shop.hours[k]);
       if (v) return v;
     }
@@ -459,7 +473,6 @@
   function openBrandsSheet(brands) {
     injectStylesOnce();
 
-    // remove existing
     const existing = document.querySelector(".sp-sheet-backdrop");
     if (existing) existing.remove();
 
@@ -493,15 +506,13 @@
         const img = document.createElement("img");
         img.alt = clean;
         img.loading = "lazy";
-        img.src = `/img/icons/brands/${clean}.svg`;
+        img.src = `/img/icons/brands/${clean}.svg?v=${Date.now()}`;
 
         img.onerror = () => {
-          // try png fallback
-          if (img.src.endsWith(".svg")) {
-            img.src = `/img/icons/brands/${clean}.png`;
+          if (img.src.includes(".svg")) {
+            img.src = `/img/icons/brands/${clean}.png?v=${Date.now()}`;
             return;
           }
-          // final fallback: text
           tile.innerHTML = `<div class="sp-brand-fallback">${escapeHtml(clean)}</div>`;
         };
 
@@ -625,22 +636,15 @@
       setTab(btn.dataset.tab);
     });
 
-    // ✅ Dock: Brands opens brands sheet using shop.brands
-    dock.addEventListener("click", (e) => {
-      const a = e.target.closest('a[data-action="brands"]');
-      if (!a) return;
-      e.preventDefault();
-
-      const brands = parseBrands(shop);
-      openBrandsSheet(brands);
-    });
-
     setTab("hours");
   }
 
   // ---------------- render shop ----------------
   function renderShop(shop) {
     injectStylesOnce();
+
+    // Keep latest loaded shop globally for event delegation
+    window.__SHOP_CURRENT__ = shop;
 
     const shopName = shop.name || shop.Shop || "Shop";
     const features = normalizeFeatures(shop);
@@ -667,18 +671,18 @@
     const taaEl = $("#spTaaIcon");
     if (taaEl) taaEl.style.display = features.taa === true ? "" : "none";
 
-    // Shop logo (still uses shops icons folder)
+    // Shop logo
     const logoEl = $("#spLogo");
     if (logoEl) {
       const base = sanitizeLogoName(shopName);
-      const svgPath = `/img/icons/shops/${base}.svg`;
-      const pngPath = `/img/icons/shops/${base}.png`;
+      const svgPath = `/img/icons/shops/${base}.svg?v=${Date.now()}`;
+      const pngPath = `/img/icons/shops/${base}.png?v=${Date.now()}`;
 
       logoEl.src = svgPath;
       logoEl.alt = `${shopName} logo`;
 
       logoEl.onerror = function () {
-        if (logoEl.src.endsWith(".svg")) {
+        if (logoEl.src.includes(".svg")) {
           logoEl.src = pngPath;
           return;
         }
@@ -700,7 +704,7 @@
       enabled.forEach(a => {
         const img = document.createElement("img");
         img.className = "sp-amen-icon";
-        img.src = a.icon;
+        img.src = `${a.icon}?v=${Date.now()}`;
         img.alt = a.label;
         img.onerror = () => img.remove();
         row.appendChild(img);
@@ -712,16 +716,30 @@
     buildBottomSection(shop);
   }
 
+  // ✅ Event delegation so Brands click always works even if DOM changes
+  function wireGlobalClicks() {
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest('[data-action="brands"]');
+      if (!a) return;
+      e.preventDefault();
+
+      const shop = window.__SHOP_CURRENT__;
+      if (!shop) {
+        openBrandsSheet([]);
+        return;
+      }
+
+      const brands = parseBrands(shop);
+      openBrandsSheet(brands);
+    }, true);
+  }
+
   // ---------------- data loading ----------------
   async function fetchJson(url) {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`${url} HTTP ${res.status}`);
     const txt = await res.text();
-    try {
-      return JSON.parse(txt);
-    } catch {
-      throw new Error(`${url} returned non-JSON`);
-    }
+    return JSON.parse(txt);
   }
 
   function findShop(list, slugParam) {
@@ -738,6 +756,8 @@
 
   // ---------------- boot ----------------
   async function boot() {
+    wireGlobalClicks();
+
     const slugParamRaw = (getParam("shop") || "").trim();
     if (!slugParamRaw) {
       const nameEl = $("#spName");
@@ -748,7 +768,7 @@
     // ✅ per-shop filename (no dashes)
     const fileSlug = sanitizeLogoName(slugParamRaw);
 
-    // 1) Try per-shop JSON first
+    // 1) Per-shop JSON first
     try {
       const obj = await fetchJson(`/data/shops/${fileSlug}.json?v=${Date.now()}`);
       if (obj && typeof obj === "object" && !Array.isArray(obj)) {
@@ -756,7 +776,7 @@
         return;
       }
     } catch {
-      // continue to legacy list
+      // continue
     }
 
     // 2) Legacy list fallback
