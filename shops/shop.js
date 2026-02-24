@@ -2,10 +2,10 @@
    Public Shop Page (Centered Layout + Bottom Section v10)
 
    Fixes:
-   ✅ Loads canonical per-shop JSON first: /data/shops/<canonical>.json (e.g. justthetip.json)
-   ✅ Keeps legacy fallback to shops.json array lists
-   ✅ Brands button opens a real Brands sheet (grid of SVG logos)
-   ✅ Removes faint black background/line behind the shop logo icon
+   ✅ Loads per-shop JSON first: /data/shops/<normalized>.json  (e.g. justthetip.json)
+   ✅ Brands button opens a scrollable brand-logo sheet (from shop.brands slugs)
+   ✅ Hard-remove faint black outline/background behind the shop logo image
+   ✅ Keeps segmented tabs: Hours | About | Events
 */
 
 (() => {
@@ -30,7 +30,7 @@
     return ["1", "true", "t", "yes", "y", "x", "✓", "check", "checked", "open"].includes(s);
   }
 
-  // removes all non-alnum (for filenames + canonical ids)
+  // removes all non-alnum (for filenames / canonical IDs)
   function sanitizeLogoName(name) {
     return String(name || "")
       .toLowerCase()
@@ -46,11 +46,6 @@
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
-  }
-
-  // Canonical shop id for file names: "just-the-tip" -> "justthetip"
-  function canonicalShopId(s) {
-    return sanitizeLogoName(String(s || "").trim().toLowerCase());
   }
 
   function normalizeKey(k) {
@@ -126,7 +121,7 @@
     for (const rawKey of Object.keys(shop)) {
       const nk = normalizeKey(rawKey);
 
-      if (AMENITIES.some(a => a.key === nk)) {
+      if (AMENITIES.some((a) => a.key === nk)) {
         bag[nk] = isTruthy(shop[rawKey]);
         continue;
       }
@@ -149,9 +144,18 @@
 
     const open =
       isTruthy(shop.open ?? shop.isOpen ?? shop.Open) ||
-      String(shop.status || shop.Status || "").trim().toLowerCase() === "open";
+      String(shop.status || shop.Status || "")
+        .trim()
+        .toLowerCase() === "open";
 
-    if (!("open" in shop) && !("Open" in shop) && !("closed" in shop) && !("Closed" in shop) && !shop.status && !shop.Status) {
+    if (
+      !("open" in shop) &&
+      !("Open" in shop) &&
+      !("closed" in shop) &&
+      !("Closed" in shop) &&
+      !shop.status &&
+      !shop.Status
+    ) {
       return "OPEN";
     }
 
@@ -210,11 +214,14 @@
       .sp-status { position: absolute !important; top: 18px !important; right: 18px !important; left: auto !important; }
       #spStatusPill { font-size: 12px !important; padding: 6px 14px !important; letter-spacing: 0 !important; font-weight: 600 !important; }
 
-      /* City text: regular weight */
-      .sp-city, .sp-city span, #spCity { font-weight: 400 !important; letter-spacing: -0.02em !important; }
+      /* City: regular weight + tighter tracking */
+      .sp-city, .sp-city span, #spCity {
+        font-weight: 400 !important;
+        letter-spacing: -0.02em !important;
+      }
       .sp-city { color: #8e8e93 !important; }
 
-      /* ✅ Kill any faint black line/box behind the shop logo */
+      /* ✅ Kill the faint outline/shadow behind the shop logo */
       .sp-logo-center,
       .sp-logo-center * {
         background: transparent !important;
@@ -234,7 +241,6 @@
       }
 
       .sp-bottom { margin-top: 18px; }
-
       .sp-dock {
         display:flex; gap:12px; justify-content:space-between;
         padding: 12px;
@@ -303,79 +309,80 @@
       .sp-muted{ color:#8e8e93; font-weight: 700; }
       .sp-hidden{ display:none !important; }
 
-      /* ✅ Brands sheet (bottom sheet) */
-      .sp-brands-overlay{
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,.25);
+      /* -------- Brands sheet -------- */
+      .sp-sheet-mask{
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,.18);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
-        display: none;
+        display:none;
         z-index: 9999;
       }
-      .sp-brands-sheet{
+      .sp-sheet{
         position: absolute;
-        left: 0; right: 0; bottom: 0;
+        left: 12px; right: 12px; bottom: 12px;
+        max-height: 70vh;
         background: rgba(255,255,255,.96);
-        border-top-left-radius: 22px;
-        border-top-right-radius: 22px;
-        box-shadow: 0 -18px 60px rgba(0,0,0,.18);
-        max-height: 72vh;
-        overflow: hidden;
         border: 1px solid rgba(0,0,0,.06);
-      }
-      .sp-brands-head{
+        border-radius: 26px;
+        box-shadow: 0 30px 80px rgba(0,0,0,.20);
+        overflow: hidden;
         display:flex;
-        align-items:center;
-        justify-content:space-between;
-        padding: 14px 16px 10px;
+        flex-direction:column;
+      }
+      .sp-sheet-hd{
+        padding: 14px 16px 10px 16px;
+        display:flex; align-items:center; justify-content:space-between;
         border-bottom: 1px solid rgba(0,0,0,.06);
       }
-      .sp-brands-title{
-        font-size: 16px;
+      .sp-sheet-hd .t{
         font-weight: 900;
         letter-spacing: -0.01em;
-        color: #0b0b0c;
-      }
-      .sp-brands-close{
-        border:none;
-        background: rgba(0,0,0,.06);
-        height: 32px;
-        padding: 0 12px;
-        border-radius: 999px;
-        font-weight: 900;
+        font-size: 16px;
         color:#0b0b0c;
       }
-      .sp-brands-body{
-        padding: 14px 14px 22px;
-        overflow: auto;
-        max-height: calc(72vh - 54px);
+      .sp-sheet-close{
+        width: 34px; height: 34px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,.06);
+        background: rgba(255,255,255,.85);
+        font-weight: 900;
+        cursor: pointer;
+      }
+      .sp-sheet-bd{
+        padding: 14px 14px 18px 14px;
+        overflow:auto;
+        -webkit-overflow-scrolling: touch;
       }
       .sp-brand-grid{
         display:grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 12px;
       }
-      .sp-brand-tile{
-        background: rgba(242,242,247,.9);
-        border: 1px solid rgba(0,0,0,.05);
-        border-radius: 16px;
+      .sp-brand{
+        border: 1px solid rgba(0,0,0,.06);
+        background: rgba(255,255,255,.85);
+        border-radius: 18px;
         padding: 10px;
         display:flex;
         align-items:center;
         justify-content:center;
         height: 74px;
       }
-      .sp-brand-tile img{
-        width: 100%;
-        height: 100%;
+      .sp-brand img{
+        max-width: 100%;
+        max-height: 44px;
         object-fit: contain;
-        filter:none;
+        display:block;
+        background: transparent !important;
+        border: none !important;
+        box-shadow:none !important;
+        outline:none !important;
       }
-      .sp-brand-empty{
+      .sp-sheet-note{
         color:#8e8e93;
         font-weight: 700;
-        padding: 10px 2px;
+        font-size: 13px;
       }
     `;
 
@@ -395,6 +402,7 @@
       </svg>`;
     }
 
+    // cigar icon
     if (type === "cigar") {
       return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M3 14c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v2H3v-2z" stroke-width="${sw}" fill="none"/>
@@ -405,6 +413,7 @@
       </svg>`;
     }
 
+    // directions
     return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" class="sp-dock-ico-fill"/>
       <circle cx="12" cy="9" r="2.4" fill="#fff"/>
@@ -432,8 +441,8 @@
   }
 
   function getAnyHoursPresent(shop) {
-    const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-    return days.some(d => {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    return days.some((d) => {
       const v = getHoursForDay(shop, d);
       const s = String(v || "").trim();
       if (!s) return false;
@@ -448,82 +457,93 @@
   }
 
   function getEventsText(shop) {
-    return toStr(shop.events) || toStr(shop.Events) || toStr(shop.update) || toStr(shop.Update) || toStr(shop.notes) || toStr(shop.Notes) || "";
+    return (
+      toStr(shop.events) ||
+      toStr(shop.Events) ||
+      toStr(shop.update) ||
+      toStr(shop.Update) ||
+      toStr(shop.notes) ||
+      toStr(shop.Notes) ||
+      ""
+    );
   }
 
   // ---------------- brands sheet ----------------
   function ensureBrandsSheet() {
     injectStylesOnce();
-    let overlay = document.querySelector(".sp-brands-overlay");
-    if (overlay) return overlay;
+    let mask = document.querySelector(".sp-sheet-mask");
+    if (mask) return mask;
 
-    overlay = document.createElement("div");
-    overlay.className = "sp-brands-overlay";
-    overlay.innerHTML = `
-      <div class="sp-brands-sheet" role="dialog" aria-modal="true" aria-label="Brands">
-        <div class="sp-brands-head">
-          <div class="sp-brands-title">Brands</div>
-          <button type="button" class="sp-brands-close" aria-label="Close">Close</button>
+    mask = document.createElement("div");
+    mask.className = "sp-sheet-mask";
+    mask.innerHTML = `
+      <div class="sp-sheet" role="dialog" aria-modal="true" aria-label="Brands">
+        <div class="sp-sheet-hd">
+          <div class="t">Brands</div>
+          <button type="button" class="sp-sheet-close" aria-label="Close">✕</button>
         </div>
-        <div class="sp-brands-body">
-          <div class="sp-brand-empty">No brands listed yet.</div>
-          <div class="sp-brand-grid" aria-label="Brand logos"></div>
+        <div class="sp-sheet-bd">
+          <div class="sp-sheet-note">Loading…</div>
         </div>
       </div>
     `;
 
-    document.body.appendChild(overlay);
+    document.body.appendChild(mask);
 
-    const close = overlay.querySelector(".sp-brands-close");
-    close.addEventListener("click", () => hideBrandsSheet());
+    // close handlers
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) closeBrandsSheet();
+    });
+    mask.querySelector(".sp-sheet-close").addEventListener("click", closeBrandsSheet);
 
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) hideBrandsSheet();
+    // ESC
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeBrandsSheet();
     });
 
-    return overlay;
+    return mask;
   }
 
-  function showBrandsSheet(shop) {
-    const overlay = ensureBrandsSheet();
-    const grid = overlay.querySelector(".sp-brand-grid");
-    const empty = overlay.querySelector(".sp-brand-empty");
+  function openBrandsSheet(shop) {
+    const mask = ensureBrandsSheet();
+    const body = mask.querySelector(".sp-sheet-bd");
+    const brands = parseBrands(shop);
 
-    const slugs = parseBrands(shop);
-    grid.innerHTML = "";
+    if (!brands.length) {
+      body.innerHTML = `<div class="sp-sheet-note">No brands listed yet.</div>`;
+    } else {
+      body.innerHTML = `
+        <div class="sp-brand-grid">
+          ${brands
+            .map((slug) => {
+              const clean = sanitizeLogoName(slug);
+              const src = `/img/icons/brands/${clean}.svg`;
+              return `<div class="sp-brand"><img loading="lazy" src="${src}" alt="${escapeHtml(slug)}"></div>`;
+            })
+            .join("")}
+        </div>
+      `;
 
-    if (!slugs.length) {
-      empty.style.display = "";
-      overlay.style.display = "block";
-      return;
+      // Remove tiles that fail to load (prevents broken icon boxes)
+      body.querySelectorAll("img").forEach((img) => {
+        img.onerror = () => {
+          const tile = img.closest(".sp-brand");
+          if (tile) tile.remove();
+        };
+      });
     }
 
-    empty.style.display = "none";
-
-    slugs.forEach((slug) => {
-      const s = sanitizeLogoName(slug); // safety
-      if (!s) return;
-
-      const tile = document.createElement("div");
-      tile.className = "sp-brand-tile";
-
-      const img = document.createElement("img");
-      img.src = `/img/icons/brands/${s}.svg`;
-      img.alt = s;
-
-      // if missing svg, just remove tile (no ugly broken image)
-      img.onerror = () => tile.remove();
-
-      tile.appendChild(img);
-      grid.appendChild(tile);
-    });
-
-    overlay.style.display = "block";
+    mask.style.display = "block";
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
   }
 
-  function hideBrandsSheet() {
-    const overlay = document.querySelector(".sp-brands-overlay");
-    if (overlay) overlay.style.display = "none";
+  function closeBrandsSheet() {
+    const mask = document.querySelector(".sp-sheet-mask");
+    if (!mask) return;
+    mask.style.display = "none";
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
   }
 
   // ---------------- bottom section build ----------------
@@ -565,7 +585,7 @@
     const panels = document.createElement("div");
     panels.className = "sp-panels";
 
-    // HOURS
+    // HOURS panel
     const hasAnyHours = getAnyHoursPresent(shop);
     const today = getTodayName();
     const todayHours = getHoursForDay(shop, today);
@@ -582,16 +602,16 @@
       }
     `;
 
-    // ABOUT
+    // ABOUT panel (keep simple for now)
     const aboutCard = document.createElement("div");
     aboutCard.className = "sp-card sp-hidden";
     aboutCard.setAttribute("data-panel", "about");
     aboutCard.innerHTML = `
       <h3>About</h3>
-      <div class="sp-muted">${escapeHtml(toStr(shop.about) || "Details coming soon.")}</div>
+      <div class="sp-muted">${escapeHtml(toStr(shop.about || shop.About || "") || "Details coming soon.")}</div>
     `;
 
-    // EVENTS
+    // EVENTS panel
     const eventsText = getEventsText(shop);
     const eventsCard = document.createElement("div");
     eventsCard.className = "sp-card sp-hidden";
@@ -622,12 +642,12 @@
       setTab(btn.dataset.tab);
     });
 
-    // ✅ Dock: Brands opens sheet
+    // ✅ Dock: Brands opens brand logo sheet (does not change tabs)
     dock.addEventListener("click", (e) => {
       const a = e.target.closest('a[data-action="brands"]');
       if (!a) return;
       e.preventDefault();
-      showBrandsSheet(shop);
+      openBrandsSheet(shop);
     });
 
     setTab("hours");
@@ -641,4 +661,172 @@
     const features = normalizeFeatures(shop);
 
     // Name
-    const nameEl
+    const nameEl = $("#spName");
+    if (nameEl) applyNameClampAndSize(nameEl, shopName);
+
+    // City
+    const cityEl = $("#spCity");
+    if (cityEl) {
+      const cityLine = [toStr(shop.city || shop.City), toStr(shop.state || shop.ST || shop.State)]
+        .filter(Boolean)
+        .join(", ");
+      cityEl.textContent = cityLine || "—";
+    }
+
+    // Status pill
+    const status = getOpenClosed(shop);
+    const statusEl = $("#spStatusPill");
+    if (statusEl) {
+      statusEl.textContent = status;
+      statusEl.setAttribute("data-status", status.toLowerCase());
+    }
+
+    // TAA icon
+    const taaEl = $("#spTaaIcon");
+    if (taaEl) taaEl.style.display = features.taa === true ? "" : "none";
+
+    // Logo
+    const logoEl = $("#spLogo");
+    if (logoEl) {
+      // Prefer shop.slug if present, else filename from name
+      const base = sanitizeLogoName(shop.slug || shopName);
+      const svgPath = `/img/icons/shops/${base}.svg`;
+      const pngPath = `/img/icons/shops/${base}.png`;
+
+      logoEl.src = svgPath;
+      logoEl.alt = `${shopName} logo`;
+
+      logoEl.onerror = function () {
+        if (logoEl.src.endsWith(".svg")) {
+          logoEl.src = pngPath;
+          return;
+        }
+        logoEl.onerror = null;
+        logoEl.src = "/img/icons/shops/default.png";
+      };
+    }
+
+    // Maps click (if present)
+    const addrBtn = $("#spAddressBtn");
+    if (addrBtn) addrBtn.onclick = () => window.open(buildDirectionsUrl(shop), "_blank", "noopener");
+
+    // Amenities row
+    const row = $("#spAmenRow");
+    const panel = $("#spAmenPanel");
+    if (row && panel) {
+      row.innerHTML = "";
+      const enabled = AMENITIES.filter((a) => features[a.key] === true);
+
+      enabled.forEach((a) => {
+        const img = document.createElement("img");
+        img.className = "sp-amen-icon";
+        img.src = a.icon;
+        img.alt = a.label;
+        img.onerror = () => img.remove();
+        row.appendChild(img);
+      });
+
+      panel.style.display = enabled.length ? "" : "none";
+    }
+
+    buildBottomSection(shop);
+  }
+
+  // ---------------- data loading ----------------
+  async function fetchJson(url) {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`${url} HTTP ${res.status}`);
+
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    if (!ct.includes("json")) {
+      const txt = await res.text();
+      try {
+        return JSON.parse(txt);
+      } catch {
+        throw new Error(`${url} returned non-JSON (content-type: ${ct || "unknown"})`);
+      }
+    }
+
+    return await res.json();
+  }
+
+  // for array fallback
+  function findShop(list, slugParam) {
+    const want = slugify(slugParam);
+    if (!want) return null;
+
+    return (
+      list.find((s) => slugify(s.slug) === want) ||
+      list.find((s) => slugify(s.name || s.Shop) === want) ||
+      list.find((s) => sanitizeLogoName(s.name || s.Shop) === sanitizeLogoName(want)) ||
+      null
+    );
+  }
+
+  // ---------------- boot ----------------
+  async function boot() {
+    const slugParamRaw = (getParam("shop") || "").trim();
+
+    try {
+      if (!slugParamRaw) throw new Error("Missing ?shop= param");
+
+      // ✅ Canonical per-shop filename (no dashes)
+      const fileSlug = sanitizeLogoName(slugParamRaw);
+
+      // 1) Try per-shop object first (your new system)
+      const perShopUrls = [
+        `/data/shops/${fileSlug}.json?v=${Date.now()}`,
+      ];
+
+      for (const u of perShopUrls) {
+        try {
+          const obj = await fetchJson(u);
+          if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+            renderShop(obj);
+            return;
+          }
+        } catch {
+          // continue
+        }
+      }
+
+      // 2) Fallback: legacy array files
+      const listUrls = [
+        `/shops/shops.json?v=${Date.now()}`,
+        `/shops.json?v=${Date.now()}`,
+        `./shops.json?v=${Date.now()}`,
+        `/data/shops.json?v=${Date.now()}`,
+      ];
+
+      let list = null;
+      let lastErr = null;
+      for (const u of listUrls) {
+        try {
+          const data = await fetchJson(u);
+          if (Array.isArray(data) && data.length) {
+            list = data;
+            break;
+          }
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (!list) throw lastErr || new Error("Shop data loaded but was empty or not an array");
+
+      const shop = findShop(list, slugParamRaw);
+      if (!shop) throw new Error(`No matching shop for slug: "${slugParamRaw}"`);
+
+      renderShop(shop);
+    } catch (err) {
+      console.error("SHOP PAGE ERROR:", err);
+
+      const nameEl = $("#spName");
+      if (nameEl) nameEl.textContent = "Shop not found";
+
+      const cityEl = $("#spCity");
+      if (cityEl) cityEl.textContent = "—";
+    }
+  }
+
+  boot();
+})();
