@@ -1,11 +1,12 @@
 /* /shops/shop.js
    Public Shop Page (Centered Layout + Bottom Section v10)
 
-   Fixes:
-   ✅ Loads per-shop JSON first: /data/shops/<normalized>.json  (e.g. justthetip.json)
-   ✅ Brands button opens a scrollable brand-logo sheet (from shop.brands slugs)
-   ✅ Hard-remove faint black outline/background behind the shop logo image
-   ✅ Keeps segmented tabs: Hours | About | Events
+   ✅ Loads per-shop JSON first:
+      /data/shops/{fileSlug}.json  (no dashes in filename)
+   ✅ Fallback to /shops/shops.json list
+   ✅ Brands opens a bottom sheet w/ SVG grid:
+      /img/icons/brands/{brandSlug}.svg (fallback .png)
+   ✅ Hard-remove any hairline borders/shadows behind icons
 */
 
 (() => {
@@ -30,7 +31,7 @@
     return ["1", "true", "t", "yes", "y", "x", "✓", "check", "checked", "open"].includes(s);
   }
 
-  // removes all non-alnum (for filenames / canonical IDs)
+  // removes all non-alnum (for filenames + per-shop JSON filenames)
   function sanitizeLogoName(name) {
     return String(name || "")
       .toLowerCase()
@@ -112,16 +113,25 @@
   function normalizeFeatures(shop) {
     const bag = {};
 
+    // ✅ NEW: support nested amenities object from per-shop JSON
+    if (shop.amenities && typeof shop.amenities === "object") {
+      for (const k of Object.keys(shop.amenities)) {
+        bag[normalizeKey(k)] = isTruthy(shop.amenities[k]);
+      }
+    }
+
+    // legacy "features" object support
     if (shop.features && typeof shop.features === "object") {
       for (const k of Object.keys(shop.features)) {
         bag[normalizeKey(k)] = isTruthy(shop.features[k]);
       }
     }
 
+    // legacy flat columns support
     for (const rawKey of Object.keys(shop)) {
       const nk = normalizeKey(rawKey);
 
-      if (AMENITIES.some((a) => a.key === nk)) {
+      if (AMENITIES.some(a => a.key === nk)) {
         bag[nk] = isTruthy(shop[rawKey]);
         continue;
       }
@@ -144,18 +154,9 @@
 
     const open =
       isTruthy(shop.open ?? shop.isOpen ?? shop.Open) ||
-      String(shop.status || shop.Status || "")
-        .trim()
-        .toLowerCase() === "open";
+      String(shop.status || shop.Status || "").trim().toLowerCase() === "open";
 
-    if (
-      !("open" in shop) &&
-      !("Open" in shop) &&
-      !("closed" in shop) &&
-      !("Closed" in shop) &&
-      !shop.status &&
-      !shop.Status
-    ) {
+    if (!("open" in shop) && !("Open" in shop) && !("closed" in shop) && !("Closed" in shop) && !shop.status && !shop.Status) {
       return "OPEN";
     }
 
@@ -214,31 +215,20 @@
       .sp-status { position: absolute !important; top: 18px !important; right: 18px !important; left: auto !important; }
       #spStatusPill { font-size: 12px !important; padding: 6px 14px !important; letter-spacing: 0 !important; font-weight: 600 !important; }
 
-      /* City: regular weight + tighter tracking */
-      .sp-city, .sp-city span, #spCity {
-        font-weight: 400 !important;
-        letter-spacing: -0.02em !important;
-      }
+      .sp-city, .sp-city span, #spCity { font-weight: 400 !important; letter-spacing: -0.02em !important; }
       .sp-city { color: #8e8e93 !important; }
 
-      /* ✅ Kill the faint outline/shadow behind the shop logo */
-      .sp-logo-center,
-      .sp-logo-center * {
+      .sp-logo-center img { filter: none !important; -webkit-filter:none !important; }
+
+      /* ✅ Kill any hairline borders/shadows behind icons/images */
+      img, svg { outline: none !important; }
+      .sp-amen-icon, .sp-amen-icon * {
         background: transparent !important;
-        box-shadow: none !important;
-        outline: none !important;
         border: none !important;
-        filter: none !important;
-        -webkit-filter: none !important;
-      }
-      #spLogo {
-        background: transparent !important;
-        box-shadow: none !important;
         outline: none !important;
-        border: none !important;
-        filter: none !important;
-        -webkit-filter: none !important;
+        box-shadow: none !important;
       }
+      .sp-amen-icon { display:block; }
 
       .sp-bottom { margin-top: 18px; }
       .sp-dock {
@@ -310,79 +300,76 @@
       .sp-hidden{ display:none !important; }
 
       /* -------- Brands sheet -------- */
-      .sp-sheet-mask{
+      .sp-sheet-backdrop{
         position: fixed; inset: 0;
         background: rgba(0,0,0,.18);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
-        display:none;
         z-index: 9999;
+        display:flex; align-items:flex-end; justify-content:center;
+        padding: 10px;
       }
       .sp-sheet{
-        position: absolute;
-        left: 12px; right: 12px; bottom: 12px;
-        max-height: 70vh;
-        background: rgba(255,255,255,.96);
-        border: 1px solid rgba(0,0,0,.06);
-        border-radius: 26px;
-        box-shadow: 0 30px 80px rgba(0,0,0,.20);
+        width: min(520px, 100%);
+        background: rgba(255,255,255,.94);
+        border: 1px solid rgba(0,0,0,.08);
+        border-radius: 22px;
+        box-shadow: 0 24px 80px rgba(0,0,0,.20);
         overflow: hidden;
-        display:flex;
-        flex-direction:column;
       }
-      .sp-sheet-hd{
-        padding: 14px 16px 10px 16px;
+      .sp-sheet-header{
         display:flex; align-items:center; justify-content:space-between;
+        padding: 14px 14px 10px 16px;
         border-bottom: 1px solid rgba(0,0,0,.06);
       }
-      .sp-sheet-hd .t{
-        font-weight: 900;
-        letter-spacing: -0.01em;
-        font-size: 16px;
-        color:#0b0b0c;
-      }
+      .sp-sheet-title{ font-size: 18px; font-weight: 900; letter-spacing: -0.01em; }
       .sp-sheet-close{
-        width: 34px; height: 34px;
-        border-radius: 12px;
-        border: 1px solid rgba(0,0,0,.06);
+        width: 36px; height: 36px;
+        border-radius: 18px;
+        border: 1px solid rgba(0,0,0,.08);
         background: rgba(255,255,255,.85);
-        font-weight: 900;
+        display:grid; place-items:center;
+        font-size: 18px;
         cursor: pointer;
       }
-      .sp-sheet-bd{
-        padding: 14px 14px 18px 14px;
+      .sp-sheet-body{
+        max-height: 46vh;
         overflow:auto;
-        -webkit-overflow-scrolling: touch;
+        padding: 14px 14px 16px 14px;
       }
       .sp-brand-grid{
         display:grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 12px;
       }
-      .sp-brand{
+      @media (min-width: 420px){
+        .sp-brand-grid{ grid-template-columns: repeat(4, 1fr); }
+      }
+      .sp-brand-tile{
         border: 1px solid rgba(0,0,0,.06);
-        background: rgba(255,255,255,.85);
-        border-radius: 18px;
+        background: rgba(255,255,255,.80);
+        border-radius: 16px;
         padding: 10px;
         display:flex;
         align-items:center;
         justify-content:center;
-        height: 74px;
+        height: 64px;
       }
-      .sp-brand img{
+      .sp-brand-tile img{
         max-width: 100%;
-        max-height: 44px;
+        max-height: 100%;
         object-fit: contain;
-        display:block;
-        background: transparent !important;
         border: none !important;
+        outline: none !important;
+        background: transparent !important;
         box-shadow:none !important;
-        outline:none !important;
       }
-      .sp-sheet-note{
-        color:#8e8e93;
-        font-weight: 700;
-        font-size: 13px;
+      .sp-brand-fallback{
+        font-weight: 900;
+        font-size: 11px;
+        color:#6e6e73;
+        text-align:center;
+        line-height: 1.15;
       }
     `;
 
@@ -402,7 +389,6 @@
       </svg>`;
     }
 
-    // cigar icon
     if (type === "cigar") {
       return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M3 14c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v2H3v-2z" stroke-width="${sw}" fill="none"/>
@@ -413,7 +399,6 @@
       </svg>`;
     }
 
-    // directions
     return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" class="sp-dock-ico-fill"/>
       <circle cx="12" cy="9" r="2.4" fill="#fff"/>
@@ -422,8 +407,10 @@
 
   // ---------------- data helpers ----------------
   function parseBrands(shop) {
+    // ✅ preferred: array of slugs
     const raw = shop.brands ?? shop.Brands ?? shop["Cigar brands"] ?? shop["Cigar Brands"];
     if (Array.isArray(raw)) return raw.map(toStr).filter(Boolean);
+
     const s = toStr(raw);
     if (!s) return [];
     return s.split(/[,|\n/]+/g).map((x) => toStr(x)).filter(Boolean);
@@ -434,15 +421,23 @@
   }
 
   function getHoursForDay(shop, dayName) {
+    // ✅ support nested hours object from per-shop JSON
+    if (shop.hours && typeof shop.hours === "object") {
+      const k = dayName.slice(0, 3).toLowerCase(); // mon/tue/...
+      const v = toStr(shop.hours[k]);
+      if (v) return v;
+    }
+
     const direct = toStr(shop[dayName] ?? shop[dayName.toLowerCase()]);
     if (direct) return direct;
+
     const short = dayName.slice(0, 3);
     return toStr(shop[short] ?? shop[short.toLowerCase()]);
   }
 
   function getAnyHoursPresent(shop) {
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    return days.some((d) => {
+    const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+    return days.some(d => {
       const v = getHoursForDay(shop, d);
       const s = String(v || "").trim();
       if (!s) return false;
@@ -457,93 +452,86 @@
   }
 
   function getEventsText(shop) {
-    return (
-      toStr(shop.events) ||
-      toStr(shop.Events) ||
-      toStr(shop.update) ||
-      toStr(shop.Update) ||
-      toStr(shop.notes) ||
-      toStr(shop.Notes) ||
-      ""
-    );
+    return toStr(shop.events) || toStr(shop.Events) || toStr(shop.update) || toStr(shop.Update) || toStr(shop.notes) || toStr(shop.Notes) || "";
   }
 
-  // ---------------- brands sheet ----------------
-  function ensureBrandsSheet() {
+  // ---------------- Brands sheet ----------------
+  function openBrandsSheet(brands) {
     injectStylesOnce();
-    let mask = document.querySelector(".sp-sheet-mask");
-    if (mask) return mask;
 
-    mask = document.createElement("div");
-    mask.className = "sp-sheet-mask";
-    mask.innerHTML = `
-      <div class="sp-sheet" role="dialog" aria-modal="true" aria-label="Brands">
-        <div class="sp-sheet-hd">
-          <div class="t">Brands</div>
-          <button type="button" class="sp-sheet-close" aria-label="Close">✕</button>
-        </div>
-        <div class="sp-sheet-bd">
-          <div class="sp-sheet-note">Loading…</div>
-        </div>
-      </div>
+    // remove existing
+    const existing = document.querySelector(".sp-sheet-backdrop");
+    if (existing) existing.remove();
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "sp-sheet-backdrop";
+
+    const sheet = document.createElement("div");
+    sheet.className = "sp-sheet";
+
+    const header = document.createElement("div");
+    header.className = "sp-sheet-header";
+    header.innerHTML = `
+      <div class="sp-sheet-title">Brands</div>
+      <button type="button" class="sp-sheet-close" aria-label="Close">×</button>
     `;
 
-    document.body.appendChild(mask);
+    const body = document.createElement("div");
+    body.className = "sp-sheet-body";
 
-    // close handlers
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) closeBrandsSheet();
-    });
-    mask.querySelector(".sp-sheet-close").addEventListener("click", closeBrandsSheet);
-
-    // ESC
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeBrandsSheet();
-    });
-
-    return mask;
-  }
-
-  function openBrandsSheet(shop) {
-    const mask = ensureBrandsSheet();
-    const body = mask.querySelector(".sp-sheet-bd");
-    const brands = parseBrands(shop);
-
-    if (!brands.length) {
-      body.innerHTML = `<div class="sp-sheet-note">No brands listed yet.</div>`;
+    if (!brands || !brands.length) {
+      body.innerHTML = `<div class="sp-muted">No brands listed yet.</div>`;
     } else {
-      body.innerHTML = `
-        <div class="sp-brand-grid">
-          ${brands
-            .map((slug) => {
-              const clean = sanitizeLogoName(slug);
-              const src = `/img/icons/brands/${clean}.svg`;
-              return `<div class="sp-brand"><img loading="lazy" src="${src}" alt="${escapeHtml(slug)}"></div>`;
-            })
-            .join("")}
-        </div>
-      `;
+      const grid = document.createElement("div");
+      grid.className = "sp-brand-grid";
 
-      // Remove tiles that fail to load (prevents broken icon boxes)
-      body.querySelectorAll("img").forEach((img) => {
+      brands.forEach((slug) => {
+        const clean = sanitizeLogoName(slug);
+        const tile = document.createElement("div");
+        tile.className = "sp-brand-tile";
+
+        const img = document.createElement("img");
+        img.alt = clean;
+        img.loading = "lazy";
+        img.src = `/img/icons/brands/${clean}.svg`;
+
         img.onerror = () => {
-          const tile = img.closest(".sp-brand");
-          if (tile) tile.remove();
+          // try png fallback
+          if (img.src.endsWith(".svg")) {
+            img.src = `/img/icons/brands/${clean}.png`;
+            return;
+          }
+          // final fallback: text
+          tile.innerHTML = `<div class="sp-brand-fallback">${escapeHtml(clean)}</div>`;
         };
+
+        tile.appendChild(img);
+        grid.appendChild(tile);
       });
+
+      body.appendChild(grid);
     }
 
-    mask.style.display = "block";
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-  }
+    sheet.appendChild(header);
+    sheet.appendChild(body);
+    backdrop.appendChild(sheet);
+    document.body.appendChild(backdrop);
 
-  function closeBrandsSheet() {
-    const mask = document.querySelector(".sp-sheet-mask");
-    if (!mask) return;
-    mask.style.display = "none";
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
+    function close() {
+      backdrop.remove();
+    }
+
+    header.querySelector(".sp-sheet-close")?.addEventListener("click", close);
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) close();
+    });
+
+    document.addEventListener("keydown", function onKey(e) {
+      if (e.key === "Escape") {
+        document.removeEventListener("keydown", onKey);
+        close();
+      }
+    });
   }
 
   // ---------------- bottom section build ----------------
@@ -562,7 +550,6 @@
     const phone = getPhone(shop);
     const directions = buildDirectionsUrl(shop);
 
-    // Dock: Call | Brands | Directions
     const dock = document.createElement("div");
     dock.className = "sp-dock";
     dock.innerHTML = `
@@ -572,7 +559,6 @@
     `;
     bottom.appendChild(dock);
 
-    // Segmented: Hours | About | Events
     const seg = document.createElement("div");
     seg.className = "sp-seg";
     seg.innerHTML = `
@@ -585,7 +571,6 @@
     const panels = document.createElement("div");
     panels.className = "sp-panels";
 
-    // HOURS panel
     const hasAnyHours = getAnyHoursPresent(shop);
     const today = getTodayName();
     const todayHours = getHoursForDay(shop, today);
@@ -602,16 +587,14 @@
       }
     `;
 
-    // ABOUT panel (keep simple for now)
     const aboutCard = document.createElement("div");
     aboutCard.className = "sp-card sp-hidden";
     aboutCard.setAttribute("data-panel", "about");
     aboutCard.innerHTML = `
       <h3>About</h3>
-      <div class="sp-muted">${escapeHtml(toStr(shop.about || shop.About || "") || "Details coming soon.")}</div>
+      <div class="sp-muted">${escapeHtml(toStr(shop.about || shop.About || "Details coming soon."))}</div>
     `;
 
-    // EVENTS panel
     const eventsText = getEventsText(shop);
     const eventsCard = document.createElement("div");
     eventsCard.className = "sp-card sp-hidden";
@@ -642,12 +625,14 @@
       setTab(btn.dataset.tab);
     });
 
-    // ✅ Dock: Brands opens brand logo sheet (does not change tabs)
+    // ✅ Dock: Brands opens brands sheet using shop.brands
     dock.addEventListener("click", (e) => {
       const a = e.target.closest('a[data-action="brands"]');
       if (!a) return;
       e.preventDefault();
-      openBrandsSheet(shop);
+
+      const brands = parseBrands(shop);
+      openBrandsSheet(brands);
     });
 
     setTab("hours");
@@ -660,20 +645,18 @@
     const shopName = shop.name || shop.Shop || "Shop";
     const features = normalizeFeatures(shop);
 
-    // Name
     const nameEl = $("#spName");
     if (nameEl) applyNameClampAndSize(nameEl, shopName);
 
-    // City
     const cityEl = $("#spCity");
     if (cityEl) {
-      const cityLine = [toStr(shop.city || shop.City), toStr(shop.state || shop.ST || shop.State)]
-        .filter(Boolean)
-        .join(", ");
+      const cityLine =
+        [toStr(shop.city || shop.City), toStr(shop.state || shop.ST || shop.State)]
+          .filter(Boolean)
+          .join(", ");
       cityEl.textContent = cityLine || "—";
     }
 
-    // Status pill
     const status = getOpenClosed(shop);
     const statusEl = $("#spStatusPill");
     if (statusEl) {
@@ -681,15 +664,13 @@
       statusEl.setAttribute("data-status", status.toLowerCase());
     }
 
-    // TAA icon
     const taaEl = $("#spTaaIcon");
     if (taaEl) taaEl.style.display = features.taa === true ? "" : "none";
 
-    // Logo
+    // Shop logo (still uses shops icons folder)
     const logoEl = $("#spLogo");
     if (logoEl) {
-      // Prefer shop.slug if present, else filename from name
-      const base = sanitizeLogoName(shop.slug || shopName);
+      const base = sanitizeLogoName(shopName);
       const svgPath = `/img/icons/shops/${base}.svg`;
       const pngPath = `/img/icons/shops/${base}.png`;
 
@@ -706,7 +687,6 @@
       };
     }
 
-    // Maps click (if present)
     const addrBtn = $("#spAddressBtn");
     if (addrBtn) addrBtn.onclick = () => window.open(buildDirectionsUrl(shop), "_blank", "noopener");
 
@@ -715,9 +695,9 @@
     const panel = $("#spAmenPanel");
     if (row && panel) {
       row.innerHTML = "";
-      const enabled = AMENITIES.filter((a) => features[a.key] === true);
+      const enabled = AMENITIES.filter(a => features[a.key] === true);
 
-      enabled.forEach((a) => {
+      enabled.forEach(a => {
         const img = document.createElement("img");
         img.className = "sp-amen-icon";
         img.src = a.icon;
@@ -736,29 +716,22 @@
   async function fetchJson(url) {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`${url} HTTP ${res.status}`);
-
-    const ct = (res.headers.get("content-type") || "").toLowerCase();
-    if (!ct.includes("json")) {
-      const txt = await res.text();
-      try {
-        return JSON.parse(txt);
-      } catch {
-        throw new Error(`${url} returned non-JSON (content-type: ${ct || "unknown"})`);
-      }
+    const txt = await res.text();
+    try {
+      return JSON.parse(txt);
+    } catch {
+      throw new Error(`${url} returned non-JSON`);
     }
-
-    return await res.json();
   }
 
-  // for array fallback
   function findShop(list, slugParam) {
     const want = slugify(slugParam);
     if (!want) return null;
 
     return (
-      list.find((s) => slugify(s.slug) === want) ||
-      list.find((s) => slugify(s.name || s.Shop) === want) ||
-      list.find((s) => sanitizeLogoName(s.name || s.Shop) === sanitizeLogoName(want)) ||
+      list.find(s => slugify(s.slug) === want) ||
+      list.find(s => slugify(s.name || s.Shop) === want) ||
+      list.find(s => sanitizeLogoName(s.name || s.Shop) === sanitizeLogoName(want)) ||
       null
     );
   }
@@ -766,52 +739,30 @@
   // ---------------- boot ----------------
   async function boot() {
     const slugParamRaw = (getParam("shop") || "").trim();
+    if (!slugParamRaw) {
+      const nameEl = $("#spName");
+      if (nameEl) nameEl.textContent = "Shop not found";
+      return;
+    }
 
+    // ✅ per-shop filename (no dashes)
+    const fileSlug = sanitizeLogoName(slugParamRaw);
+
+    // 1) Try per-shop JSON first
     try {
-      if (!slugParamRaw) throw new Error("Missing ?shop= param");
-
-      // ✅ Canonical per-shop filename (no dashes)
-      const fileSlug = sanitizeLogoName(slugParamRaw);
-
-      // 1) Try per-shop object first (your new system)
-      const perShopUrls = [
-        `/data/shops/${fileSlug}.json?v=${Date.now()}`,
-      ];
-
-      for (const u of perShopUrls) {
-        try {
-          const obj = await fetchJson(u);
-          if (obj && typeof obj === "object" && !Array.isArray(obj)) {
-            renderShop(obj);
-            return;
-          }
-        } catch {
-          // continue
-        }
+      const obj = await fetchJson(`/data/shops/${fileSlug}.json?v=${Date.now()}`);
+      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+        renderShop(obj);
+        return;
       }
+    } catch {
+      // continue to legacy list
+    }
 
-      // 2) Fallback: legacy array files
-      const listUrls = [
-        `/shops/shops.json?v=${Date.now()}`,
-        `/shops.json?v=${Date.now()}`,
-        `./shops.json?v=${Date.now()}`,
-        `/data/shops.json?v=${Date.now()}`,
-      ];
-
-      let list = null;
-      let lastErr = null;
-      for (const u of listUrls) {
-        try {
-          const data = await fetchJson(u);
-          if (Array.isArray(data) && data.length) {
-            list = data;
-            break;
-          }
-        } catch (e) {
-          lastErr = e;
-        }
-      }
-      if (!list) throw lastErr || new Error("Shop data loaded but was empty or not an array");
+    // 2) Legacy list fallback
+    try {
+      const list = await fetchJson(`/shops/shops.json?v=${Date.now()}`);
+      if (!Array.isArray(list) || !list.length) throw new Error("shops.json empty or not array");
 
       const shop = findShop(list, slugParamRaw);
       if (!shop) throw new Error(`No matching shop for slug: "${slugParamRaw}"`);
