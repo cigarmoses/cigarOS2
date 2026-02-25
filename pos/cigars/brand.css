@@ -1,46 +1,31 @@
 /* /pos/cigars/brand.css
    FULL REPLACEMENT FILE
 
-   ✅ Changes in this version:
-   - SCOPES theme vars to body.brand-page (no global :root bleed)
-   - Keeps your current BRAND page layout + rows + cigar detail modal
-   - Keeps your existing .sheet system for BANDS (and any legacy sheets)
-   - Adds the MAIN CIGARS PAGE filter modal layout (.fm) for BRAND pages
-   - Prevents backdrop/z-index conflicts:
-       • .fm always sits above the pos-modal-open ::before dimmer
-       • when .fm is open, the pos-modal-open dimmer is disabled to avoid double overlays
+   ✅ Works with /css/theme.css (light + dark toggle)
+   ✅ No :has() usage
+   ✅ Keeps your layout + rows + cigar detail modal + sheets
+   ✅ Adds .fm modal support safely (uses body.fm-open to manage dimmer conflicts)
 */
 
 *{ box-sizing:border-box; }
 
 /* =========================================================
-   THEME (SCOPED — prevents global bleed)
+   PAGE BASE (uses global tokens)
    ========================================================= */
 body.brand-page{
-  --bg1:#071024;
-  --bg2:#0b1c3a;
-
-  --ink:#ffffff;
-  --muted:rgba(255,255,255,.65);
-  --hair:rgba(255,255,255,.10);
-
-  --card:rgba(255,255,255,.06);
-  --card-border:rgba(255,255,255,.12);
-
-  --pill:rgba(255,255,255,.07);
-  --pill-border:rgba(255,255,255,.14);
-
-  --accent:#0f7aff;
-  --green:#34c759;
-
   margin:0;
   min-height:100vh;
   color:var(--ink);
+  background:var(--bg);
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+}
+
+/* Optional: give Brand page that cool gradient ONLY in dark mode */
+html[data-theme="dark"] body.brand-page{
   background:
     radial-gradient(1200px 700px at 15% 5%, rgba(65,110,200,.35), transparent 55%),
     radial-gradient(900px 600px at 90% 10%, rgba(0,190,255,.16), transparent 55%),
-    linear-gradient(180deg, var(--bg2), var(--bg1));
-  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    linear-gradient(180deg, #0b1c3a, #071024);
 }
 
 /* =========================================================
@@ -49,11 +34,12 @@ body.brand-page{
 .brand-topbar{
   display:flex;
   align-items:center;
-  justify-content:flex-start;
+  justify-content:space-between;
+  gap:12px;
   padding:14px 14px 0;
 }
 
-/* ✅ scoped icon button */
+/* Back button */
 body.brand-page .icon-btn{
   width:44px;
   height:44px;
@@ -68,7 +54,7 @@ body.brand-page .icon-btn{
 body.brand-page .icon-btn svg{
   width:24px;
   height:24px;
-  stroke:rgba(255,255,255,.85);
+  stroke:color-mix(in srgb, var(--ink) 85%, transparent);
 }
 
 /* =========================================================
@@ -96,12 +82,13 @@ body.brand-page .icon-btn svg{
   width:54px;
   height:54px;
   border-radius:14px;
-  background:rgba(255,255,255,.10);
+  background:color-mix(in srgb, var(--surface) 60%, transparent);
   box-shadow:0 10px 24px rgba(0,0,0,.25);
   margin-top:10px;
   overflow:hidden;
   display:grid;
   place-items:center;
+  border:1px solid var(--hairline);
 }
 .brand-icon img{
   width:100%;
@@ -119,9 +106,10 @@ body.brand-page .icon-btn svg{
   gap:10px;
   padding:10px 12px;
   border-radius:18px;
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.12);
+  background:color-mix(in srgb, var(--surface2) 65%, transparent);
+  border:1px solid var(--hairline);
 }
+
 .search-ico{ opacity:.75; }
 
 #brand-search{
@@ -133,7 +121,7 @@ body.brand-page .icon-btn svg{
   font-size:16px;
   font-weight:700;
 }
-#brand-search::placeholder{ color:rgba(255,255,255,.45); }
+#brand-search::placeholder{ color:color-mix(in srgb, var(--muted) 75%, transparent); }
 
 /* =========================================================
    CONTROLS
@@ -148,9 +136,9 @@ body.brand-page .icon-btn svg{
 .pill-btn{
   height:40px;
   border-radius:16px;
-  border:1px solid var(--pill-border);
-  background:var(--pill);
-  color:rgba(255,255,255,.80);
+  border:1px solid var(--hairline);
+  background:color-mix(in srgb, var(--surface2) 65%, transparent);
+  color:color-mix(in srgb, var(--ink) 82%, transparent);
   font-size:13px;
   font-weight:800;
   display:flex;
@@ -166,8 +154,8 @@ body.brand-page .icon-btn svg{
 .seg{
   height:40px;
   border-radius:16px;
-  border:1px solid var(--pill-border);
-  background:var(--pill);
+  border:1px solid var(--hairline);
+  background:color-mix(in srgb, var(--surface2) 65%, transparent);
   display:grid;
   grid-template-columns:1fr 56px 1fr;
   align-items:center;
@@ -180,18 +168,18 @@ body.brand-page .icon-btn svg{
   background:transparent;
   font-size:12px;
   font-weight:900;
-  color:rgba(255,255,255,.45);
+  color:color-mix(in srgb, var(--muted) 90%, transparent);
 }
 .seg-btn[aria-pressed="true"]{
-  color:rgba(15,122,255,.95);
+  color:#0f7aff;
 }
 
 .seg-dot{
   width:56px;
   height:30px;
   border-radius:999px;
-  border:2px solid rgba(255,255,255,.22);
-  background:rgba(0,0,0,.18);
+  border:2px solid color-mix(in srgb, var(--hairline) 130%, transparent);
+  background:color-mix(in srgb, var(--ink) 10%, transparent);
   position:relative;
   margin:0 auto;
 }
@@ -226,7 +214,7 @@ body.brand-page .icon-btn svg{
   align-items:center;
   gap:12px;
   padding:14px 10px;
-  border-top:1px solid rgba(255,255,255,.10);
+  border-top:1px solid var(--hairline);
 }
 
 .row-ico{
@@ -235,7 +223,8 @@ body.brand-page .icon-btn svg{
   border-radius:14px;
   object-fit:cover;
   box-shadow:0 10px 24px rgba(0,0,0,.20);
-  background:rgba(255,255,255,.08);
+  background:color-mix(in srgb, var(--surface2) 70%, transparent);
+  border:1px solid var(--hairline);
   flex:0 0 auto;
 }
 
@@ -256,7 +245,7 @@ body.brand-page .icon-btn svg{
   font-weight:700;
   letter-spacing:-.01em;
   line-height:1.12;
-  color:rgba(255,255,255,.92);
+  color:color-mix(in srgb, var(--ink) 92%, transparent);
   white-space:normal;
   overflow:visible;
 }
@@ -264,7 +253,7 @@ body.brand-page .icon-btn svg{
 .brand-row-sub{
   font-size:12px;
   font-weight:700;
-  color:rgba(255,255,255,.55);
+  color:color-mix(in srgb, var(--muted) 88%, transparent);
   white-space:normal;
   overflow:visible;
 }
@@ -282,7 +271,7 @@ body.brand-page .icon-btn svg{
   padding-left:10px;
   font-size:16px;
   font-weight:600;
-  color:rgba(255,255,255,.92);
+  color:color-mix(in srgb, var(--ink) 92%, transparent);
   min-width:78px;
   text-align:right;
 }
@@ -294,7 +283,7 @@ body.brand-page .icon-btn svg{
   transform:translateY(-50%);
   width:1px;
   height:44px;
-  background:rgba(255,255,255,.20);
+  background:color-mix(in srgb, var(--hairline) 180%, transparent);
 }
 
 /* Add button */
@@ -303,7 +292,7 @@ body.brand-page .icon-btn svg{
   height:26px;
   border-radius:999px;
   border:none;
-  background:var(--green);
+  background:#34c759;
   color:#ffffff;
   font-size:16px;
   font-weight:900;
@@ -317,7 +306,7 @@ body.brand-page .icon-btn svg{
 /* Status */
 .brand-status{
   margin:16px 0 0;
-  color:rgba(255,255,255,.75);
+  color:color-mix(in srgb, var(--muted) 95%, transparent);
   font-weight:700;
 }
 
@@ -326,11 +315,10 @@ body.brand-page .icon-btn svg{
 
 /* =========================================================
    LEGACY SHEET SYSTEM (Bands + any existing sheets)
-   Keep working exactly as you have today.
    ========================================================= */
 body.pos-modal-open{ overflow:hidden; }
 
-/* Dim the page WITHOUT blur */
+/* Dim page for sheets */
 body.pos-modal-open::before{
   content:"";
   position:fixed;
@@ -339,10 +327,8 @@ body.pos-modal-open::before{
   z-index:10040;
 }
 
-/* ✅ If the MAIN FILTER MODAL (.fm) is open, disable this dim layer
-      (prevents double overlays and tap-blocking) */
-body.pos-modal-open .fm.is-open ~ *{} /* no-op (keeps selector valid on older engines) */
-body.pos-modal-open:has(.fm.is-open)::before{
+/* ✅ If FM is open, disable this dimmer to avoid double overlay */
+body.pos-modal-open.fm-open::before{
   content:none;
 }
 
@@ -360,15 +346,15 @@ body.pos-modal-open:has(.fm.is-open)::before{
   display:flex;
   flex-direction:column;
 
-  background:#ffffff;
+  background:var(--surface);
   border-radius:28px;
   box-shadow:0 30px 90px rgba(0,0,0,.45);
 
   z-index:10060;
   overflow:hidden;
 
-  color:#0f1a2c;
-  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  color:color-mix(in srgb, var(--ink) 92%, transparent);
+  border:1px solid var(--hairline);
 
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
@@ -380,7 +366,7 @@ body.pos-modal-open:has(.fm.is-open)::before{
   justify-content:space-between;
   gap:12px;
   padding:18px 18px 12px;
-  border-bottom:1px solid rgba(15,26,44,.06);
+  border-bottom:1px solid var(--hairline);
 }
 .sheet-header h2{
   margin:0;
@@ -394,8 +380,8 @@ body.pos-modal-open:has(.fm.is-open)::before{
   height:36px;
   border:none;
   border-radius:12px;
-  background:rgba(15,26,44,.06);
-  color:rgba(15,26,44,.70);
+  background:color-mix(in srgb, var(--surface2) 85%, transparent);
+  color:color-mix(in srgb, var(--muted) 95%, transparent);
   font-size:28px;
   font-weight:900;
   line-height:1;
@@ -414,8 +400,8 @@ body.pos-modal-open:has(.fm.is-open)::before{
 
 .sheet-footer{
   padding:14px 18px 18px;
-  background:#ffffff;
-  border-top:1px solid rgba(15,26,44,.06);
+  background:var(--surface);
+  border-top:1px solid var(--hairline);
 }
 .sheet-btn.primary{
   width:100%;
@@ -430,7 +416,7 @@ body.pos-modal-open:has(.fm.is-open)::before{
 .sheet-btn.primary:active{ transform:scale(.99); }
 
 /* =========================================================
-   BANDS SHEET CONTENT (unchanged)
+   BANDS SHEET CONTENT
    ========================================================= */
 .bands-list{
   display:flex;
@@ -449,7 +435,8 @@ body.pos-modal-open:has(.fm.is-open)::before{
 .band-art{
   width:100%;
   border-radius:18px;
-  background:#ffffff;
+  background:var(--surface);
+  border:1px solid var(--hairline);
 }
 
 .band-img{
@@ -470,7 +457,7 @@ body.pos-modal-open:has(.fm.is-open)::before{
 .band-label{
   font-size:16px;
   font-weight:800;
-  color:rgba(15,26,44,.70);
+  color:color-mix(in srgb, var(--muted) 95%, transparent);
   text-align:center;
   line-height:1.1;
 }
@@ -483,8 +470,7 @@ body.pos-modal-open:has(.fm.is-open)::before{
 }
 
 /* =========================================================
-   (Legacy) FILTERS SHEET CONTENT — retained, but not required
-   If you switch brand Filters to .fm, you can delete this later.
+   (Legacy) FILTERS SHEET CONTENT — retained
    ========================================================= */
 .filters-body{ padding-top:6px; }
 
@@ -501,9 +487,9 @@ body.pos-modal-open:has(.fm.is-open)::before{
 }
 
 .filter-pill{
-  border:1px solid rgba(15,26,44,.12);
-  background:rgba(15,26,44,.06);
-  color:rgba(15,26,44,.75);
+  border:1px solid var(--hairline);
+  background:color-mix(in srgb, var(--surface2) 85%, transparent);
+  color:color-mix(in srgb, var(--muted) 95%, transparent);
   border-radius:14px;
   height:38px;
   padding:0 14px;
@@ -530,9 +516,9 @@ body.pos-modal-open:has(.fm.is-open)::before{
 }
 
 .tog{
-  border:1px solid rgba(15,26,44,.12);
-  background:rgba(15,26,44,.06);
-  color:rgba(15,26,44,.75);
+  border:1px solid var(--hairline);
+  background:color-mix(in srgb, var(--surface2) 85%, transparent);
+  color:color-mix(in srgb, var(--muted) 95%, transparent);
   border-radius:14px;
   height:38px;
   padding:0 14px;
@@ -546,7 +532,7 @@ body.pos-modal-open:has(.fm.is-open)::before{
   width:10px;
   height:10px;
   border-radius:999px;
-  background:rgba(15,26,44,.22);
+  background:color-mix(in srgb, var(--muted) 40%, transparent);
 }
 .tog.is-on{
   border-color:rgba(15,122,255,.25);
@@ -560,8 +546,8 @@ body.pos-modal-open:has(.fm.is-open)::before{
   gap:10px;
   padding:10px 12px;
   border-radius:18px;
-  background:rgba(15,26,44,.06);
-  border:1px solid rgba(15,26,44,.10);
+  background:color-mix(in srgb, var(--surface2) 85%, transparent);
+  border:1px solid var(--hairline);
   margin:6px 0 12px;
 }
 .filters-search-ico{ opacity:.55; }
@@ -572,12 +558,12 @@ body.pos-modal-open:has(.fm.is-open)::before{
   outline:none;
   font-size:16px;
   font-weight:800;
-  color:#0f1a2c;
+  color:var(--ink);
 }
-#filters-search::placeholder{ color:rgba(15,26,44,.35); }
+#filters-search::placeholder{ color:color-mix(in srgb, var(--muted) 70%, transparent); }
 
 /* =========================================================
-   CIGAR DETAIL MODAL — “WHITE CARD” (unchanged)
+   CIGAR DETAIL MODAL — “WHITE CARD”
    ========================================================= */
 body.cigar-detail-open{ overflow:hidden; }
 
@@ -825,11 +811,14 @@ body.cigar-detail-open{ overflow:hidden; }
 
 /* =========================================================
    MAIN-PAGE STYLE FILTER MODAL (fm) — BRAND PAGES
+   NOTE: This CSS is ready; when you open fm in JS, add:
+         document.body.classList.add("fm-open");
+         and remove on close.
    ========================================================= */
 .fm{
   position: fixed;
   inset: 0;
-  z-index: 10100; /* ✅ above pos-modal-open::before (10040) */
+  z-index: 10100;
   display: block;
   pointer-events: none;
   opacity: 0;
@@ -853,8 +842,9 @@ body.cigar-detail-open{ overflow:hidden; }
   left:0;
   right:0;
   bottom:0;
-  background:#fff;
+  background:var(--surface);
   border-radius:22px 22px 0 0;
+  border:1px solid var(--hairline);
   box-shadow:0 -18px 60px rgba(15,26,44,.18);
   transform:translateY(110%);
   transition:transform 260ms cubic-bezier(0.2, 0.9, 0.2, 1);
@@ -870,7 +860,7 @@ body.cigar-detail-open{ overflow:hidden; }
   align-items:center;
   justify-content:space-between;
   padding:18px 18px 14px;
-  border-bottom:1px solid rgba(15,26,44,.06);
+  border-bottom:1px solid var(--hairline);
 }
 .fm__title{
   margin:0;
@@ -878,20 +868,20 @@ body.cigar-detail-open{ overflow:hidden; }
   letter-spacing:-0.02em;
   font-size:40px;
   line-height:1.05;
-  color:#0f1a2c;
+  color:var(--ink);
 }
 .fm__close{
   width:40px;
   height:40px;
   border-radius:14px;
-  border:1px solid rgba(15,26,44,.10);
-  background:rgba(255,255,255,.85);
+  border:1px solid var(--hairline);
+  background:color-mix(in srgb, var(--surface2) 90%, transparent);
   display:grid;
   place-items:center;
   cursor:pointer;
   padding:0;
 }
-.fm__close svg{ width:18px; height:18px; }
+.fm__close svg{ width:18px; height:18px; color:var(--muted); }
 
 .fm__body{
   display:grid;
@@ -911,9 +901,9 @@ body.cigar-detail-open{ overflow:hidden; }
   font-size:18px;
   padding:14px 12px;
   border-radius:18px;
-  border:1px solid rgba(15,26,44,.06);
-  background:#f3f6fb;
-  color:rgba(15,26,44,.60);
+  border:1px solid var(--hairline);
+  background:color-mix(in srgb, var(--surface2) 90%, transparent);
+  color:color-mix(in srgb, var(--muted) 95%, transparent);
   text-align:left;
   cursor:pointer;
 }
@@ -934,22 +924,22 @@ body.cigar-detail-open{ overflow:hidden; }
   grid-template-columns:22px 1fr 34px;
   gap:10px;
   align-items:center;
-  background:#f3f6fb;
-  border:1px solid rgba(15,26,44,.06);
+  background:color-mix(in srgb, var(--surface2) 90%, transparent);
+  border:1px solid var(--hairline);
   border-radius:18px;
   padding:12px 12px;
   margin:0 0 12px;
 }
-.fm__search-row svg{ width:18px; height:18px; color:rgba(15,26,44,.45); }
+.fm__search-row svg{ width:18px; height:18px; color:var(--muted); }
 .fm__search-input{
   font-weight:400;
   font-size:18px;
   border:none;
   outline:none;
   background:transparent;
-  color:#0f1a2c;
+  color:var(--ink);
 }
-.fm__search-input::placeholder{ color:rgba(15,26,44,.40); }
+.fm__search-input::placeholder{ color:color-mix(in srgb, var(--muted) 75%, transparent); }
 
 .fm__mic-btn{
   width:34px;
@@ -977,13 +967,13 @@ body.cigar-detail-open{ overflow:hidden; }
   cursor:pointer;
   user-select:none;
 }
-.fm__row:hover{ background:rgba(15,26,44,.03); }
+.fm__row:hover{ background:color-mix(in srgb, var(--surface2) 75%, transparent); }
 
 .fm__cb{
   width:22px;
   height:22px;
   border-radius:6px;
-  border:2px solid rgba(15,26,44,.25);
+  border:2px solid color-mix(in srgb, var(--muted) 40%, transparent);
   display:grid;
   place-items:center;
 }
@@ -1006,7 +996,7 @@ body.cigar-detail-open{ overflow:hidden; }
 .fm__label{
   font-weight:400;
   font-size:22px;
-  color:rgba(15,26,44,.55);
+  color:color-mix(in srgb, var(--muted) 95%, transparent);
 }
 .fm__row.is-selected .fm__label{ color:#007aff; }
 
@@ -1015,8 +1005,8 @@ body.cigar-detail-open{ overflow:hidden; }
   grid-template-columns:1fr 1fr;
   gap:14px;
   padding:14px 14px 16px;
-  border-top:1px solid rgba(15,26,44,.06);
-  background:#fff;
+  border-top:1px solid var(--hairline);
+  background:var(--surface);
 }
 .fm__btn{
   font-weight:400;
