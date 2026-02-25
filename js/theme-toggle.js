@@ -1,56 +1,77 @@
 /* /js/theme-toggle.js
-   Global theme toggler:
-   - uses localStorage when user toggles
-   - defaults to OS preference if no saved choice
+   Global theme toggle:
+   - Stores preference in localStorage: "theme" = "light" | "dark"
+   - Applies to <body data-theme="...">
 */
 
 (() => {
-  const STORAGE_KEY = "cigaros_theme"; // "dark" | "light"
+  const KEY = "theme";
 
-  function getSystemTheme(){
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  }
+  const getStored = () => {
+    try { return localStorage.getItem(KEY) || ""; } catch { return ""; }
+  };
 
-  function applyTheme(theme){
-    const isDark = theme === "dark";
-    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
-    const btn = document.querySelector("[data-theme-toggle]");
-    if (btn) btn.setAttribute("aria-pressed", String(isDark));
-  }
+  const setStored = (v) => {
+    try { localStorage.setItem(KEY, v); } catch {}
+  };
 
-  function getSavedTheme(){
-    try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }
-  }
-
-  function saveTheme(theme){
-    try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
-  }
-
-  function init(){
-    const saved = getSavedTheme();
-    const initial = saved || getSystemTheme();
-    applyTheme(initial);
-
-    // If user hasn't chosen, follow OS changes
-    if (!saved && window.matchMedia){
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      mq.addEventListener?.("change", () => applyTheme(getSystemTheme()));
+  const getSystemPref = () => {
+    try {
+      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    } catch {
+      return "light";
     }
+  };
 
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest?.("[data-theme-toggle]");
-      if (!btn) return;
+  const applyTheme = (theme) => {
+    const body = document.body;
+    if (!body) return;
 
-      const current = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-      const next = current === "dark" ? "light" : "dark";
-      saveTheme(next);
+    body.dataset.theme = theme;
+
+    const btn = document.getElementById("theme-toggle");
+    if (btn) {
+      btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+      // knob icon (sun/moon) inside the circle
+      const ico = btn.querySelector(".tt-knob-ico");
+      if (ico) {
+        ico.innerHTML =
+          theme === "dark"
+            ? `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                 <path d="M20 15.2A7.7 7.7 0 0 1 8.8 4a6.5 6.5 0 1 0 11.2 11.2Z"
+                       fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+               </svg>`
+            : `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                 <path d="M12 18a6 6 0 1 0 0-12a6 6 0 0 0 0 12Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                 <path d="M12 2.3v2.3M12 19.4v2.3M3.1 12h2.3M18.6 12h2.3M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M19.4 4.6l-1.6 1.6M6.2 17.8l-1.6 1.6"
+                       fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+               </svg>`;
+      }
+    }
+  };
+
+  const init = () => {
+    const body = document.body;
+    if (!body) return;
+
+    const saved = getStored();
+    const theme = saved === "dark" || saved === "light" ? saved : getSystemPref();
+    applyTheme(theme);
+
+    const btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+      const cur = body.dataset.theme === "dark" ? "dark" : "light";
+      const next = cur === "dark" ? "light" : "dark";
+      setStored(next);
       applyTheme(next);
     });
-  }
+  };
 
-  if (document.readyState === "loading"){
+  if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
