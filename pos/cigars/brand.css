@@ -1024,3 +1024,38 @@ body.cigar-detail-open{ overflow:hidden; }
   .fm__title{ font-size:36px; }
   .fm__label{ font-size:20px; }
 }
+
+/* =========================================================
+   TOP BAR — Back left, Toggle TRUE center
+   ========================================================= */
+.brand-topbar{
+  position: relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:14px 14px 0;
+}
+
+/* back stays on far left */
+.brand-topbar #brand-back{
+  position:absolute;
+  left:14px;
+  top:14px;
+}
+
+/* center container */
+.topbar-center{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+}
+
+/* right spacer equals back button footprint so center is mathematically centered */
+.topbar-right-spacer{
+  position:absolute;
+  right:14px;
+  top:14px;
+  width:44px;
+  height:44px;
+}
