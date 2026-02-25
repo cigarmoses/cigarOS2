@@ -9,29 +9,51 @@
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
 
-  <!-- ✅ Dark Mode -->
-  <link rel="stylesheet" href="/css/theme.css" />
-  <script src="/js/theme-toggle.js" defer></script>
+  <!-- ✅ Theme toggle styles -->
+  <link rel="stylesheet" href="/css/theme-toggle.css" />
 </head>
 
-<body class="brand-page">
+<body class="brand-page" data-theme="light">
 
   <header class="brand-topbar">
+    <!-- Left: Back -->
     <button type="button" class="icon-btn" id="brand-back" aria-label="Back">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
 
-    <!-- ✅ Dark mode toggle -->
-    <button class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" data-theme-toggle>
-      <span class="glow" aria-hidden="true"></span>
-      <span class="knob" aria-hidden="true"></span>
-      <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 2v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M7 5.5a8 8 0 1 0 10 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </button>
+    <!-- Center: Theme Toggle -->
+    <div class="topbar-center">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="false">
+        <span class="tt-track" aria-hidden="true">
+          <!-- sun (left) -->
+          <span class="tt-ico tt-ico--sun" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 18a6 6 0 1 0 0-12a6 6 0 0 0 0 12Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M12 2.3v2.3M12 19.4v2.3M3.1 12h2.3M18.6 12h2.3M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M19.4 4.6l-1.6 1.6M6.2 17.8l-1.6 1.6"
+                    fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </span>
+
+          <!-- moon (right) -->
+          <span class="tt-ico tt-ico--moon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 15.2A7.7 7.7 0 0 1 8.8 4a6.5 6.5 0 1 0 11.2 11.2Z"
+                    fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+
+          <!-- knob -->
+          <span class="tt-knob" aria-hidden="true">
+            <span class="tt-knob-ico" aria-hidden="true"></span>
+          </span>
+        </span>
+      </button>
+    </div>
+
+    <!-- Right spacer so center stays TRUE center -->
+    <div class="topbar-right-spacer" aria-hidden="true"></div>
   </header>
 
   <main class="brand-main">
@@ -83,89 +105,15 @@
     </footer>
   </section>
 
-  <!-- ✅ Filters sheet -->
-  <section class="sheet filters-sheet" id="sheet-filters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
-    <header class="sheet-header filters-header">
-      <button type="button" class="filters-back" id="filters-back" aria-label="Back" hidden>←</button>
-      <h2 id="filters-title">Filters</h2>
-      <button class="sheet-x filters-x" type="button" data-sheet-close aria-label="Close">×</button>
-    </header>
-
-    <div class="sheet-body filters-body">
-
-      <div class="filters-applied" id="filters-applied" hidden>
-        <div class="filters-applied-row" id="filters-applied-row"></div>
-      </div>
-
-      <div class="filters-home" id="filters-home">
-        <div class="filters-grid">
-          <div class="filters-row filters-row--3">
-            <button class="filter-pill" type="button" data-open-filter="RG">Ring</button>
-            <button class="filter-pill" type="button" data-open-filter="Length">Length</button>
-            <button class="filter-pill pill-nowrap pill-wide" type="button" data-open-filter="Wrapper Shade">Wrapper Shade</button>
-          </div>
-          <div class="filters-row filters-row--3">
-            <button class="filter-pill" type="button" data-open-filter="Shape">Shape</button>
-            <button class="filter-pill" type="button" data-open-filter="Vitola">Vitolas</button>
-            <button class="filter-pill" type="button" data-open-filter="Strength">Strength</button>
-          </div>
-        </div>
-
-        <div class="filters-toggles">
-          <div class="tog-row">
-            <button class="tog" type="button" data-toggle-key="Flavored">
-              <span class="tog-dot" aria-hidden="true"></span>
-              <span class="tog-label">Flavored</span>
-            </button>
-            <button class="tog" type="button" data-toggle-key="Tubo">
-              <span class="tog-dot" aria-hidden="true"></span>
-              <span class="tog-label">Tubo</span>
-            </button>
-            <button class="tog" type="button" data-toggle-key="Tin">
-              <span class="tog-dot" aria-hidden="true"></span>
-              <span class="tog-label">Tin</span>
-            </button>
-          </div>
-
-          <div class="tog-row">
-            <button class="tog" type="button" data-toggle-key="Box-Pressed">
-              <span class="tog-dot" aria-hidden="true"></span>
-              <span class="tog-label">Box-pressed</span>
-            </button>
-            <button class="tog" type="button" data-toggle-key="Pack">
-              <span class="tog-dot" aria-hidden="true"></span>
-              <span class="tog-label">Packs</span>
-            </button>
-            <button class="tog" type="button" data-toggle-key="Barber">
-              <span class="tog-dot" aria-hidden="true"></span>
-              <span class="tog-label">Barberpole</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="filters-detail" id="filters-detail" hidden>
-        <div class="filters-search">
-          <span class="filters-search-ico" aria-hidden="true">🔎</span>
-          <input id="filters-search" type="search" placeholder="search..." autocomplete="off" />
-        </div>
-
-        <div class="filters-list" id="filters-list"></div>
-      </div>
-
-    </div>
-
-    <footer class="sheet-footer filters-footer">
-      <button class="sheet-btn primary" type="button" id="filters-confirm" disabled>Confirm</button>
-    </footer>
-  </section>
-
   <!-- IMPORTANT:
        cart.js injects the single universal invoice button + invoice UI.
        Do NOT hardcode receipt/invoice markup here.
   -->
   <script defer src="/pos/cart.js"></script>
   <script defer src="/pos/cigars/brand.js"></script>
+
+  <!-- ✅ Theme toggle logic -->
+  <script defer src="/js/theme-toggle.js"></script>
 
 </body>
 </html>
