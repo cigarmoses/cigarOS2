@@ -1,26 +1,22 @@
 /* /shops/shop.js
-   Public Shop Page (Centered Layout + Bottom Section v12.2)
+   Public Shop Page (Centered Layout + Bottom Section v12.3)
 
-   ✅ Use with: <script src="/shops/shop.js?v=12.2"></script>
+   ✅ Use with: <script src="/shops/shop.js?v=12.3"></script>
 
    Data:
-   ✅ Loads per-shop JSON first (no dashes in filename):
+   ✅ Loads per-shop JSON first:
       /data/shops/{fileSlug}.json   (ex: justthetip.json)
-   ✅ Fallback to legacy list:
+   ✅ Fallback:
       /shops/shops.json  (array)
 
-   UI Changes:
-   1) Move SHOP pill + TAA badge to TOP RIGHT, stacked.
-      - SHOP pill stays same size
-      - TAA slightly smaller
-   2) Move OPEN/CLOSED into the dock row.
-      Dock order L→R: Status | Call | Directions | Brands
-   3) Bottom: remove default-open Hours panel.
-      Keep ONLY segmented bar visible by default (Hours/About/Events).
-      Nothing selected / no panel shown until tapped.
-   4) Remove thin black outline on shop logo background (SVG stroke on outer rect).
-      - Fetch SVG, strip stroke from top rects, render as data URL.
-      - Keeps subtle shadow from container.
+   UI (latest):
+   1) SHOP pill + TAA badge = top-right stacked
+   2) Status moved into dock row: Status | Call | Directions | Brands
+   3) No default-open panel (seg bar only until tap)
+   4) Strip thin outline from shop logo SVG outer rect
+   5) NEW: Remove the individual “button boxes” behind OPEN/CALL/DIRECTIONS/BRANDS
+      (keep ONLY the dock container background)
+   6) NEW: Segmented labels (Hours/About/Events) look like SF Pro Display Bold
 */
 
 (() => {
@@ -260,10 +256,9 @@
       const svg = doc.querySelector("svg");
       if (!svg) throw new Error("no svg root");
 
-      // remove stroke from first few rects (most shop icons have outer rounded background)
       const rects = Array.from(svg.querySelectorAll("rect"));
       rects.forEach((r, idx) => {
-        if (idx > 2) return;
+        if (idx > 3) return;
 
         const stroke = (r.getAttribute("stroke") || "").toLowerCase();
         if (stroke && stroke !== "none") {
@@ -298,7 +293,7 @@
 
   // ---------------- injected styling ----------------
   function injectStylesOnce() {
-    if (document.getElementById("spInjectedV12_2")) return;
+    if (document.getElementById("spInjectedV12_3")) return;
 
     const css = `
       /* SHOP pill -> top-right */
@@ -326,7 +321,10 @@
       }
 
       /* City typography */
-      .sp-city, .sp-city span, #spCity{ font-weight:400 !important; letter-spacing:-0.02em !important; }
+      .sp-city, .sp-city span, #spCity{
+        font-weight:400 !important;
+        letter-spacing:-0.02em !important;
+      }
       .sp-city{ color:#8e8e93 !important; }
 
       /* Amenities panel/icon outline kill */
@@ -345,8 +343,11 @@
       /* Bottom */
       .sp-bottom{ margin-top:18px; }
 
+      /* Dock container keeps background */
       .sp-dock{
-        display:flex; gap:12px; justify-content:space-between;
+        display:flex;
+        gap:12px;
+        justify-content:space-between;
         padding:12px;
         border-radius:22px;
         background: rgba(255,255,255,.70);
@@ -356,15 +357,19 @@
         -webkit-backdrop-filter: blur(20px);
       }
 
-      /* Dock buttons: no outline, keep subtle shadow */
-      .sp-dock a, .sp-dock .sp-dock-static{
+      /* ✅ NEW: remove the individual “button boxes” behind each item */
+      .sp-dock a,
+      .sp-dock .sp-dock-static{
         flex:1 1 0;
         height:54px;
         border-radius:16px;
         border:none !important;
-        background: rgba(255,255,255,.84);
-        box-shadow: 0 10px 24px rgba(0,0,0,.06);
-        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        background: transparent !important;
+        box-shadow: none !important;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
         gap:6px;
         padding:0;
         text-decoration:none;
@@ -373,7 +378,18 @@
         font-size:12px;
       }
 
-      .sp-dock .sp-dock-ico{ width:22px; height:22px; stroke:#0b0b0c; fill:none; }
+      .sp-dock .sp-dock-ico{
+        width:22px;
+        height:22px;
+        stroke:#0b0b0c;
+        fill:none;
+        opacity: .45; /* matches your muted icons */
+      }
+      .sp-dock a > div{
+        opacity: .55;
+      }
+
+      /* Brands icon image */
       .sp-dock .sp-dock-img{
         width:24px; height:24px;
         object-fit:contain;
@@ -384,32 +400,35 @@
         box-shadow:none !important;
         filter:none !important;
         -webkit-filter:none !important;
+        opacity: .65;
       }
 
-      /* Status pill inside dock */
+      /* Status pill inside dock stays visible */
       .sp-status-mini{
         display:inline-flex;
         align-items:center;
         justify-content:center;
-        padding:6px 12px;
+        padding:7px 14px;
         border-radius:999px;
         font-weight:900;
         font-size:12px;
         letter-spacing:0;
         color:#fff;
-        min-width:70px;
+        min-width:72px;
+        box-shadow: 0 10px 22px rgba(0,0,0,.10);
       }
       .sp-status-mini[data-status="open"]{ background: rgba(52,199,89,.92); }
       .sp-status-mini[data-status="closed"]{ background: rgba(142,142,147,.90); }
 
-      /* Segmented: no default selected */
+      /* ✅ Segmented: SF Pro Display Bold look */
       .sp-seg{
         margin-top:14px;
         padding:6px;
         border-radius:18px;
         background: rgba(242,242,247,.75);
         border:1px solid rgba(0,0,0,.05);
-        display:flex; gap:6px;
+        display:flex;
+        gap:6px;
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
       }
@@ -419,9 +438,12 @@
         border-radius:14px;
         border:none;
         background:transparent;
-        font-weight:800;
-        font-size:14px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif !important;
+        font-weight: 800 !important;          /* Bold */
+        font-size: 15px !important;
+        letter-spacing: -0.02em !important;   /* SF Pro vibe */
         color:#8e8e93;
+        -webkit-font-smoothing: antialiased;
       }
       .sp-seg button[aria-selected="true"]{
         background: rgba(255,255,255,.90);
@@ -439,11 +461,17 @@
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
       }
-      .sp-card h3{ margin:0 0 8px 0; font-size:16px; font-weight:900; letter-spacing:-0.01em; color:#0b0b0c; }
+      .sp-card h3{
+        margin:0 0 8px 0;
+        font-size:16px;
+        font-weight:900;
+        letter-spacing:-0.01em;
+        color:#0b0b0c;
+      }
       .sp-muted{ color:#8e8e93; font-weight:700; }
       .sp-hidden{ display:none !important; }
 
-      /* Brands sheet */
+      /* Brands sheet (unchanged) */
       .sp-sheet-backdrop{
         position:fixed; inset:0;
         background: rgba(0,0,0,.18);
@@ -481,7 +509,6 @@
         font-size:18px;
         cursor:pointer;
       }
-
       .sp-sheet-search{
         display:flex;
         align-items:center;
@@ -507,7 +534,6 @@
         overflow:auto;
         padding:14px 14px 16px 14px;
       }
-
       .sp-brand-grid{
         display:grid;
         grid-template-columns: repeat(3, 1fr);
@@ -516,7 +542,6 @@
       @media (min-width:420px){
         .sp-brand-grid{ grid-template-columns: repeat(4, 1fr); }
       }
-
       .sp-brand-tile{
         border: 1px solid rgba(0,0,0,.06);
         background: rgba(255,255,255,.82);
@@ -555,7 +580,7 @@
     `;
 
     const style = document.createElement("style");
-    style.id = "spInjectedV12_2";
+    style.id = "spInjectedV12_3";
     style.textContent = css;
     document.head.appendChild(style);
   }
@@ -692,7 +717,6 @@
             return;
           }
           img.remove();
-          // keep name underneath even if icon missing
         };
 
         tile.appendChild(img);
@@ -776,7 +800,7 @@
       call.innerHTML = `${iconSvg("call")}<div>Call</div>`;
     } else {
       call.href = "#";
-      call.style.opacity = "0.45";
+      call.style.opacity = "0.35";
       call.style.pointerEvents = "none";
       call.innerHTML = `${iconSvg("call")}<div>Call</div>`;
     }
@@ -813,7 +837,7 @@
     const panels = document.createElement("div");
     panels.className = "sp-panels";
 
-    // Hours panel (full list if present, else Coming soon)
+    // Hours panel
     const hoursCard = document.createElement("div");
     hoursCard.className = "sp-card sp-hidden";
     hoursCard.setAttribute("data-panel", "hours");
@@ -873,15 +897,11 @@
       if (!btn) return;
 
       const currentlySelected = btn.getAttribute("aria-selected") === "true";
-      if (currentlySelected) {
-        // tap again -> close all
-        setTab(null);
-        return;
-      }
+      if (currentlySelected) return setTab(null);
       setTab(btn.dataset.tab);
     });
 
-    // ✅ No default open:
+    // no default open
     setTab(null);
   }
 
@@ -904,14 +924,9 @@
       cityEl.textContent = cityLine || "—";
     }
 
-    // SHOP pill text stays "SHOP" (HTML already has it)
-    // Move handled by injected CSS
-
-    // TAA badge visibility
     const taaEl = $("#spTaaIcon");
     if (taaEl) taaEl.style.display = features.taa === true ? "" : "none";
 
-    // Address button
     const addrBtn = $("#spAddressBtn");
     if (addrBtn) addrBtn.onclick = () => window.open(buildDirectionsUrl(shop), "_blank", "noopener");
 
