@@ -8,6 +8,10 @@
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
+
+  <!-- ✅ Dark Mode Theme Tokens + Toggle UI -->
+  <link rel="stylesheet" href="/css/theme.css" />
+  <script src="/js/theme-toggle.js" defer></script>
 </head>
 
 <body class="brand-page">
@@ -16,6 +20,18 @@
     <button type="button" class="icon-btn" id="brand-back" aria-label="Back">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <!-- ✅ Dark mode toggle (top right) -->
+    <button class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" data-theme-toggle>
+      <span class="glow" aria-hidden="true"></span>
+      <span class="knob" aria-hidden="true"></span>
+
+      <!-- power icon -->
+      <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 2v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M7 5.5a8 8 0 1 0 10 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
     </button>
   </header>
