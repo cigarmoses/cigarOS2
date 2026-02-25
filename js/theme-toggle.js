@@ -1,36 +1,40 @@
-/* /js/theme-toggle.js */
+/* /js/theme-toggle.js
+   Global theme toggler:
+   - uses localStorage when user toggles
+   - defaults to OS preference if no saved choice
+*/
 
 (() => {
   const STORAGE_KEY = "cigaros_theme"; // "dark" | "light"
 
-  function getSystemTheme() {
+  function getSystemTheme(){
     return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
       : "light";
   }
 
-  function applyTheme(theme) {
+  function applyTheme(theme){
     const isDark = theme === "dark";
     document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
     const btn = document.querySelector("[data-theme-toggle]");
     if (btn) btn.setAttribute("aria-pressed", String(isDark));
   }
 
-  function getSavedTheme() {
+  function getSavedTheme(){
     try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }
   }
 
-  function saveTheme(theme) {
+  function saveTheme(theme){
     try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
   }
 
-  function init() {
+  function init(){
     const saved = getSavedTheme();
     const initial = saved || getSystemTheme();
     applyTheme(initial);
 
-    // Keep in sync with OS changes ONLY if user hasn't explicitly chosen
-    if (!saved && window.matchMedia) {
+    // If user hasn't chosen, follow OS changes
+    if (!saved && window.matchMedia){
       const mq = window.matchMedia("(prefers-color-scheme: dark)");
       mq.addEventListener?.("change", () => applyTheme(getSystemTheme()));
     }
@@ -46,7 +50,7 @@
     });
   }
 
-  if (document.readyState === "loading") {
+  if (document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
