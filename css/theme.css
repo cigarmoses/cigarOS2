@@ -1,6 +1,10 @@
-/* /css/theme.css */
+/* /css/theme.css
+   Global theme tokens + toggle styling
+*/
 
-/* 1) Theme tokens */
+/* -------------------------------
+   Theme tokens
+-------------------------------- */
 :root{
   --bg: #f2f2f7;
   --surface: #ffffff;
@@ -30,13 +34,16 @@ body{
   color: var(--ink);
 }
 
-.card, .panel, .sheet{
+/* Optional helpers (use if you have these classes) */
+.card, .panel, .sheet, .glass{
   background: var(--surface);
   border: 1px solid var(--hairline);
   box-shadow: var(--shadow);
 }
 
-/* 2) The toggle (matches your pill vibe) */
+/* -------------------------------
+   Toggle (pill)
+-------------------------------- */
 .theme-toggle{
   -webkit-tap-highlight-color: transparent;
   appearance: none;
@@ -57,8 +64,10 @@ body{
     inset 0 0 0 1px var(--hairline),
     0 8px 20px rgba(0,0,0,.10);
 
-  transition: background .2s ease, box-shadow .2s ease;
+  transition: background .2s ease, box-shadow .2s ease, transform .15s ease;
 }
+
+.theme-toggle:active{ transform: scale(.99); }
 
 html[data-theme="dark"] .theme-toggle{
   background: rgba(255,255,255,.10);
@@ -82,14 +91,16 @@ html[data-theme="dark"] .theme-toggle{
   transition: transform .22s ease, background .2s ease, box-shadow .2s ease;
 }
 
+/* Slide knob to the right when DARK is active */
 html[data-theme="dark"] .theme-toggle .knob{
+  transform: translateX(24px);
   background: rgba(255,255,255,.18);
   box-shadow:
     0 10px 22px rgba(0,0,0,.55),
     inset 0 0 0 1px rgba(255,255,255,.10);
 }
 
-/* glow when ON (similar to your left image) */
+/* Glow layer when ON (dark) */
 .theme-toggle .glow{
   position: absolute;
   inset: -14px -18px -14px -18px;
@@ -100,23 +111,17 @@ html[data-theme="dark"] .theme-toggle .knob{
   transition: opacity .2s ease;
 }
 
-html[data-theme="dark"] .theme-toggle .glow{
-  opacity: 1;
-}
+html[data-theme="dark"] .theme-toggle .glow{ opacity: 1; }
 
 .theme-toggle .icon{
   position: absolute;
   right: 8px;
   width: 14px;
   height: 14px;
-  opacity: .85;
-  color: rgba(255,255,255,.85);
+  opacity: .9;
+  color: rgba(0,0,0,.45);
 }
 
 html[data-theme="dark"] .theme-toggle .icon{
   color: rgba(255,255,255,.9);
-}
-
-html:not([data-theme="dark"]) .theme-toggle .icon{
-  color: rgba(0,0,0,.45);
 }
