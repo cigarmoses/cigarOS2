@@ -1,491 +1,115 @@
-<!doctype html>
-<html lang="en" data-theme="light">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="format-detection" content="telephone=no,email=no,address=no" />
-  <title>Brand • POS • CigarOS</title>
+/* /css/theme-toggle.css
+   Centered iOS-style Sun/Moon toggle
+   - Wider
+   - ~80% height vs old
+   - Only active side is "lit"
+   - Uses /img/icons/sun.svg and /img/icons/moon.svg
+*/
 
-  <!-- Type + global theme tokens -->
-  <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/css/theme.css" />
+.theme-toggle{
+  border:0;
+  background:transparent;
+  padding:0;
+  -webkit-tap-highlight-color: transparent;
+  cursor:pointer;
 
-  <!-- Your existing page styles (keep if you already have it) -->
-  <link rel="stylesheet" href="/pos/cigars/brand.css" />
+  position:absolute;
+  left:50%;
+  top: 18px;
+  transform: translateX(-50%);
+  z-index: 50;
+}
 
-  <!-- NEW: centered iOS toggle styling (scoped + safe) -->
-  <link rel="stylesheet" href="/css/theme-toggle.css" />
+.tt-track{
+  /* wider + shorter */
+  width: 92px;
+  height: 28px;
+  border-radius: 999px;
+  display:block;
+  position:relative;
 
-  <style>
-    /* -------------------------------------------------------
-       Brand page header layout (toggle centered + cart right)
-       ------------------------------------------------------- */
-    .brand-topbar{
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 16px 16px 10px;
-    }
+  background: rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,.10);
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+  overflow:hidden;
+}
 
-    .brand-topbar-left,
-    .brand-topbar-right{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      min-width: 84px; /* keeps center truly centered */
-    }
+html[data-theme="dark"] .tt-track{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.14);
+  box-shadow: 0 12px 28px rgba(0,0,0,.55);
+}
 
-    /* back bubble */
-    .pos-back,
-    #brand-back{
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.55);
-      box-shadow: var(--shadow);
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html[data-theme="dark"] .pos-back,
-    html[data-theme="dark"] #brand-back{
-      background: rgba(20,20,26,.60);
-    }
-    .pos-back svg, #brand-back svg{ width:20px; height:20px; }
+/* side icons (dim by default) */
+.tt-ico{
+  position:absolute;
+  top:50%;
+  transform: translateY(-50%);
+  width:16px;
+  height:16px;
+  opacity:.28;                 /* dim */
+  filter: none;
+  pointer-events:none;
+}
 
-    /* centered toggle holder */
-    .brand-topbar-center{
-      position:absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      pointer-events: none; /* only toggle itself clickable */
-    }
-    .brand-topbar-center .theme-toggle{ pointer-events:auto; }
+.tt-ico--sun{ left:12px; }
+.tt-ico--moon{ right:12px; }
 
-    /* cart/invoice button (same height as toggle) */
-    #invoice-pill{
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.55);
-      box-shadow: var(--shadow);
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html[data-theme="dark"] #invoice-pill{
-      background: rgba(20,20,26,.60);
-    }
-    #invoice-pill img{
-      width: 26px;
-      height: 26px;
-      display:block;
-    }
+/* active side "lit" */
+html[data-theme="light"] .tt-ico--sun{ opacity:.95; }
+html[data-theme="dark"]  .tt-ico--moon{ opacity:.95; }
 
-    /* -------------------------------------------------------
-       Title row + brand icon
-       ------------------------------------------------------- */
-    .brand-hero{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 14px;
-      padding: 0 16px 10px;
-    }
+/* knob */
+.tt-knob{
+  position:absolute;
+  top:50%;
+  transform: translateY(-50%);
+  left: 3px;
 
-    #brand-title{
-      margin: 4px 0 0;
-      font-size: 56px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      font-family: var(--font-display);
-      line-height: 1.02;
-    }
+  width: 22px;
+  height: 22px;
+  border-radius:999px;
 
-    #brand-icon{
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      overflow:hidden;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.60);
-      box-shadow: var(--shadow);
-      flex: 0 0 auto;
-      display:grid;
-      place-items:center;
-    }
-    html[data-theme="dark"] #brand-icon{
-      background: rgba(20,20,26,.55);
-    }
-    #brand-icon img{
-      width: 78%;
-      height: 78%;
-      object-fit: contain;
-      display:block;
-    }
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,.12);
+  box-shadow: 0 10px 18px rgba(0,0,0,.18);
+  transition: left 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
 
-    /* -------------------------------------------------------
-       Search + bubbles row (restores the “pill” look)
-       ------------------------------------------------------- */
-    .brand-tools{
-      padding: 0 16px 10px;
-    }
+/* knob slides right in dark mode */
+html[data-theme="dark"] .tt-knob{
+  left: calc(92px - 3px - 22px);
+  background: #141418;          /* dark dark grey behind moon */
+  border-color: rgba(255,255,255,.14);
+  box-shadow: 0 12px 22px rgba(0,0,0,.60);
+}
 
-    .brand-search{
-      width: 100%;
-      border-radius: 22px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.60);
-      box-shadow: var(--shadow);
-      padding: 14px 14px;
-      display:flex;
-      align-items:center;
-      gap: 10px;
-    }
-    html[data-theme="dark"] .brand-search{
-      background: rgba(20,20,26,.55);
-    }
+/* knob icon swap (prevents overlapping) */
+.tt-knob-ico{
+  position:absolute;
+  inset:0;
+  margin:auto;
+  width:14px;
+  height:14px;
+  opacity:0;
+  pointer-events:none;
+}
 
-    .brand-search svg{ width: 20px; height: 20px; opacity:.75; }
-    .brand-search input{
-      width: 100%;
-      border: 0;
-      outline: none;
-      background: transparent;
-      color: var(--ink);
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      font-family: var(--font-display);
-    }
-    .brand-search input::placeholder{ color: rgba(110,110,115,.85); }
-    html[data-theme="dark"] .brand-search input::placeholder{ color: rgba(235,235,245,.45); }
+html[data-theme="light"] .tt-knob-ico--sun{ opacity:1; }
+html[data-theme="dark"]  .tt-knob-ico--moon{ opacity:1; }
 
-    .brand-actions{
-      display:flex;
-      gap: 14px;
-      padding: 14px 0 8px;
-      flex-wrap: wrap;
-    }
+/* knob icon colors:
+   - sun stays dark in light mode
+   - moon becomes white in dark mode
+*/
+html[data-theme="light"] .tt-knob-ico--sun{
+  filter: none;
+}
 
-    .pill-btn{
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.60);
-      box-shadow: var(--shadow);
-      border-radius: 999px;
-      padding: 12px 22px;
-      font-family: var(--font-display);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      font-size: 18px;
-      color: var(--ink);
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html[data-theme="dark"] .pill-btn{
-      background: rgba(20,20,26,.55);
-    }
+html[data-theme="dark"] .tt-knob-ico--moon{
+  filter: brightness(0) invert(1);
+}
 
-    /* Maduro/Natural segmented */
-    #wrapper-seg{
-      display:flex;
-      border-radius: 999px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.60);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      height: 48px;
-      min-width: 320px;
-      max-width: 420px;
-    }
-    html[data-theme="dark"] #wrapper-seg{
-      background: rgba(20,20,26,.55);
-    }
-
-    #wrapper-seg button{
-      flex:1;
-      border:0;
-      background: transparent;
-      color: rgba(110,110,115,.85);
-      font-family: var(--font-display);
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      font-size: 18px;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html[data-theme="dark"] #wrapper-seg button{
-      color: rgba(235,235,245,.40);
-    }
-
-    #wrapper-seg .seg-dot{
-      width: 42px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border-left: 1px solid var(--hairline);
-      border-right: 1px solid var(--hairline);
-    }
-    #wrapper-seg .seg-dot span{
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      background: #8bb8ff;
-      display:block;
-      box-shadow: 0 8px 18px rgba(0,0,0,.18);
-    }
-
-    /* active state controlled by brand.js via aria-pressed */
-    #wrapper-seg button[aria-pressed="true"]{
-      color: var(--ink);
-      opacity: 1;
-    }
-
-    /* -------------------------------------------------------
-       List + status
-       ------------------------------------------------------- */
-    #brand-status{
-      padding: 14px 16px;
-      color: var(--muted);
-      font-family: var(--font-display);
-      font-weight: 700;
-      letter-spacing: -0.01em;
-    }
-
-    #brand-list{
-      padding: 0 0 20px;
-    }
-
-    /* Backdrop + sheets (Bands/Receipt) — keep your existing classes */
-    #sheet-backdrop{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.35);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      z-index: 9998;
-    }
-
-    .pos-sheet{
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 9999;
-      background: var(--surface);
-      border-top-left-radius: 22px;
-      border-top-right-radius: 22px;
-      border: 1px solid var(--hairline);
-      box-shadow: var(--shadow);
-      transform: translateY(110%);
-      transition: transform .25s ease;
-      max-height: 82vh;
-      overflow:auto;
-    }
-    .pos-sheet.is-open{ transform: translateY(0); }
-
-    .pos-sheet-header{
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      padding: 14px 16px 10px;
-      border-bottom: 1px solid var(--hairline);
-    }
-
-    .pos-sheet-title{
-      font-family: var(--font-display);
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      font-size: 20px;
-    }
-
-    .pos-sheet-close{
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.55);
-      cursor:pointer;
-      display:grid;
-      place-items:center;
-    }
-    html[data-theme="dark"] .pos-sheet-close{ background: rgba(20,20,26,.55); }
-
-    .pos-sheet-body{ padding: 12px 16px 18px; }
-
-    .pos-sheet-actions{
-      display:flex;
-      gap: 12px;
-      padding: 12px 16px 18px;
-      border-top: 1px solid var(--hairline);
-    }
-    .pos-sheet-actions .pill-btn{ flex:1; }
-  </style>
-</head>
-
-<body>
-  <!-- Top bar: back (left), centered theme toggle, cart (right) -->
-  <header class="brand-topbar">
-    <div class="brand-topbar-left">
-      <button type="button" class="pos-back" id="brand-back" aria-label="Back">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="brand-topbar-center">
-      <!-- Theme Toggle -->
-      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-        <span class="tt-track" aria-hidden="true">
-          <!-- side icons (dim/bright via CSS) -->
-          <span class="tt-side tt-side--sun">
-            <img src="/img/icons/sun.svg" alt="" />
-          </span>
-          <span class="tt-side tt-side--moon">
-            <img src="/img/icons/moon.svg" alt="" />
-          </span>
-
-          <!-- knob -->
-          <span class="tt-knob">
-            <span class="tt-knob-ico tt-knob-ico--sun">
-              <img src="/img/icons/sun.svg" alt="" />
-            </span>
-            <span class="tt-knob-ico tt-knob-ico--moon">
-              <img src="/img/icons/moon.svg" alt="" />
-            </span>
-          </span>
-        </span>
-      </button>
-    </div>
-
-    <div class="brand-topbar-right" style="justify-content:flex-end;">
-      <!-- Invoice / Cart -->
-      <button type="button" id="invoice-pill" aria-label="Invoice">
-        <img id="invoiceIcon" src="/img/icons/cart-blue.svg" alt="" />
-      </button>
-    </div>
-  </header>
-
-  <!-- Title + brand icon -->
-  <section class="brand-hero">
-    <h1 id="brand-title">Brand</h1>
-    <div id="brand-icon" aria-hidden="true"></div>
-  </section>
-
-  <!-- Search + Filters/Bands + Maduro/Natural segmented -->
-  <section class="brand-tools">
-    <div class="brand-search">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
-              fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-      </svg>
-      <input id="brand-search" placeholder="Search…" autocomplete="off" />
-    </div>
-
-    <div class="brand-actions">
-      <button type="button" class="pill-btn" id="btn-filters">Filters</button>
-      <button type="button" class="pill-btn" id="btn-bands">Bands</button>
-
-      <!-- Maduro/Natural segmented control -->
-      <div id="wrapper-seg" data-state="all" aria-label="Wrapper toggle">
-        <button type="button" id="seg-maduro" aria-pressed="false">Maduro</button>
-        <div class="seg-dot" id="seg-switch" aria-hidden="true"><span></span></div>
-        <button type="button" id="seg-natural" aria-pressed="false">Natural</button>
-      </div>
-    </div>
-  </section>
-
-  <div id="brand-status" hidden>Loading…</div>
-  <main id="brand-list" role="list"></main>
-
-  <!-- Sheets backdrop -->
-  <div id="sheet-backdrop" hidden></div>
-
-  <!-- Bands Sheet -->
-  <section id="sheet-bands" class="pos-sheet" hidden aria-hidden="true">
-    <div class="pos-sheet-header">
-      <div class="pos-sheet-title">Bands</div>
-      <button type="button" class="pos-sheet-close" data-sheet-close aria-label="Close">
-        <svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;">
-          <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </div>
-    <div class="pos-sheet-body">
-      <div id="bands-options"></div>
-    </div>
-    <div class="pos-sheet-actions">
-      <button type="button" class="pill-btn" id="bands-confirm">Apply</button>
-    </div>
-  </section>
-
-  <!-- Receipt Sheet (brand.js doesn’t “touch” it, but keeps close wiring safe) -->
-  <section id="sheet-receipt" class="pos-sheet" hidden aria-hidden="true">
-    <div class="pos-sheet-header">
-      <div class="pos-sheet-title">Invoice</div>
-      <button type="button" class="pos-sheet-close" data-sheet-close aria-label="Close">
-        <svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;">
-          <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </div>
-    <div class="pos-sheet-body">
-      <div style="color:var(--muted);font-family:var(--font-display);font-weight:700;">
-        (Receipt UI rendered elsewhere)
-      </div>
-    </div>
-  </section>
-
-  <!-- Theme toggle logic (kept tiny + safe) -->
-  <script>
-    (function(){
-      const root = document.documentElement;
-      const btn = document.getElementById("themeToggle");
-      const invoiceIcon = document.getElementById("invoiceIcon");
-
-      function applyTheme(theme){
-        root.setAttribute("data-theme", theme);
-
-        // Cart icon: light -> blue, dark -> red
-        if (invoiceIcon){
-          invoiceIcon.src = theme === "dark"
-            ? "/img/icons/cart-red.svg"
-            : "/img/icons/cart-blue.svg";
-        }
-
-        try { localStorage.setItem("theme", theme); } catch {}
-      }
-
-      function getInitialTheme(){
-        try {
-          const saved = localStorage.getItem("theme");
-          if (saved === "dark" || saved === "light") return saved;
-        } catch {}
-        return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      }
-
-      applyTheme(getInitialTheme());
-
-      btn && btn.addEventListener("click", function(){
-        const cur = root.getAttribute("data-theme") === "dark" ? "dark" : "light";
-        applyTheme(cur === "dark" ? "light" : "dark");
-      });
-    })();
-  </script>
-
-  <!-- Your controller -->
-  <script defer src="/pos/cigars/brand.js?v=1"></script>
-</body>
-</html>
+/* also dim the inactive knob icon *even if present* */
+html[data-theme="light"] .tt-knob-ico--moon{ opacity:0; }
+html[data-theme="dark"]  .tt-knob-ico--sun{ opacity:0; }
