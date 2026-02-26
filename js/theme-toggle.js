@@ -1,7 +1,7 @@
 /* /js/theme-toggle.js
-   Global theme toggle:
-   - Stores preference in localStorage: "theme" = "light" | "dark"
-   - Applies to <html data-theme="..."> (matches /css/theme.css)
+   Applies theme to <html data-theme="">
+   - localStorage "theme" = "light" | "dark" | "" (unset)
+   - if unset, follows system preference
 */
 
 (() => {
@@ -15,57 +15,44 @@
     try { localStorage.setItem(KEY, v); } catch {}
   };
 
+  const mq = () => {
+    try { return window.matchMedia("(prefers-color-scheme: dark)"); } catch { return null; }
+  };
+
   const getSystemPref = () => {
-    try {
-      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    } catch {
-      return "light";
-    }
+    const m = mq();
+    return m && m.matches ? "dark" : "light";
   };
 
   const applyTheme = (theme) => {
-    const root = document.documentElement; // ✅ <html>
-    if (!root) return;
-
-    root.dataset.theme = theme;
-
+    document.documentElement.dataset.theme = theme;
     const btn = document.getElementById("theme-toggle");
-    if (btn) {
-      btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
-
-      const ico = btn.querySelector(".tt-knob-ico");
-      if (ico) {
-        ico.innerHTML =
-          theme === "dark"
-            ? `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                 <path d="M20 15.2A7.7 7.7 0 0 1 8.8 4a6.5 6.5 0 1 0 11.2 11.2Z"
-                       fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-               </svg>`
-            : `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                 <path d="M12 18a6 6 0 1 0 0-12a6 6 0 0 0 0 12Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-                 <path d="M12 2.3v2.3M12 19.4v2.3M3.1 12h2.3M18.6 12h2.3M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M19.4 4.6l-1.6 1.6M6.2 17.8l-1.6 1.6"
-                       fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-               </svg>`;
-      }
-    }
+    if (btn) btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
   };
 
   const init = () => {
     const saved = getStored();
-    const theme = saved === "dark" || saved === "light" ? saved : getSystemPref();
-    applyTheme(theme);
+    const usingSystem = !(saved === "dark" || saved === "light");
+    applyTheme(usingSystem ? getSystemPref() : saved);
 
     const btn = document.getElementById("theme-toggle");
-    if (!btn) return;
+    if (btn) {
+      btn.addEventListener("click", () => {
+        const cur = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+        const next = cur === "dark" ? "light" : "dark";
+        setStored(next);
+        applyTheme(next);
+      });
+    }
 
-    btn.addEventListener("click", () => {
-      const cur = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-      const next = cur === "dark" ? "light" : "dark";
-      setStored(next);
-      applyTheme(next);
-    });
+    const m = mq();
+    if (m) {
+      m.addEventListener?.("change", () => {
+        const now = getStored();
+        const stillUsingSystem = !(now === "dark" || now === "light");
+        if (stillUsingSystem) applyTheme(getSystemPref());
+      });
+    }
   };
 
   if (document.readyState === "loading") {
