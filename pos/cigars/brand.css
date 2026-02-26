@@ -1,7 +1,8 @@
 /* /pos/cigars/brand.css
-   Key parts for your mockup:
-   - centered toggle
-   - invoice button top right (same visual height)
+   FULL REPLACEMENT FILE
+   - Restores glass/bubble styling
+   - Topbar = Back (L) / Toggle (Center) / Invoice (R)
+   - Uses html[data-theme] tokens (matches /css/theme.css)
 */
 
 *{ box-sizing:border-box; }
@@ -9,66 +10,390 @@
 body.brand-page{
   margin:0;
   min-height:100vh;
-  color:var(--ink);
-  background: var(--bg);
   font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
-/* TOP BAR: Back | Center Toggle | Invoice */
-.brand-topbar{
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  display:grid;
-  grid-template-columns: 44px 1fr 44px;
-  align-items:center;
-  gap:12px;
-  padding: 12px 14px 6px;
+/* =========================================================
+   BACKGROUND (LIGHT / DARK)
+   ========================================================= */
+html[data-theme="light"] body.brand-page{
+  color:#0b0b0f;
+  background:
+    radial-gradient(900px 520px at 12% 6%, rgba(120,170,255,.25), transparent 60%),
+    radial-gradient(700px 520px at 92% 8%, rgba(0,200,255,.14), transparent 60%),
+    linear-gradient(180deg, #f6f7fb, #eef0f7);
+  --glass: rgba(255,255,255,.68);
+  --glass2: rgba(255,255,255,.52);
+  --glassBorder: rgba(0,0,0,.08);
+  --ink: #0b0b0f;
+  --muted: rgba(0,0,0,.45);
+  --hair: rgba(0,0,0,.08);
+  --shadow: 0 14px 34px rgba(0,0,0,.10);
 }
 
-.icon-btn{
+html[data-theme="dark"] body.brand-page{
+  color:#ffffff;
+  background:
+    radial-gradient(1200px 700px at 15% 6%, rgba(65,110,200,.40), transparent 55%),
+    radial-gradient(900px 600px at 90% 10%, rgba(0,190,255,.18), transparent 55%),
+    linear-gradient(180deg, #0b1c3a, #071024);
+  --glass: rgba(15,24,44,.52);
+  --glass2: rgba(15,24,44,.40);
+  --glassBorder: rgba(255,255,255,.10);
+  --ink: rgba(255,255,255,.96);
+  --muted: rgba(255,255,255,.62);
+  --hair: rgba(255,255,255,.10);
+  --shadow: 0 18px 40px rgba(0,0,0,.40);
+}
+
+/* =========================================================
+   TOP BAR (grid: left / center / right)
+   ========================================================= */
+.brand-topbar{
+  display:grid;
+  grid-template-columns:44px 1fr 44px;
+  align-items:center;
+  gap:10px;
+  padding:14px 14px 0;
+}
+
+body.brand-page .icon-btn{
   width:44px;
   height:44px;
   display:grid;
   place-items:center;
   border:none;
   background:transparent;
-  color:var(--ink);
   padding:0;
   -webkit-tap-highlight-color:transparent;
 }
-.icon-btn svg{
+
+body.brand-page .icon-btn svg{
   width:24px;
   height:24px;
-  stroke: color-mix(in srgb, var(--ink) 82%, transparent);
+  stroke: var(--ink);
+  opacity:.9;
 }
 
-.topbar-center{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:44px;
+/* center the toggle */
+#theme-toggle{
+  justify-self:center;
 }
 
-/* invoice icon (same “height” feel as toggle) */
-.invoice-icon{
+/* invoice button (same height as toggle = 36) */
+.invoice-btn{
+  justify-self:end;
   width:44px;
   height:44px;
   border:none;
-  padding:0;
   background:transparent;
+  padding:0;
   display:grid;
   place-items:center;
-  cursor:pointer;
   -webkit-tap-highlight-color:transparent;
+  cursor:pointer;
 }
-.invoice-icon img{
+
+.invoice-btn img{
   width:36px;
   height:36px;
   display:block;
-  filter: drop-shadow(0 10px 18px rgba(0,0,0,.22));
+  object-fit:contain;
+  border-radius:12px;
+  box-shadow: var(--shadow);
+  background: var(--glass2);
+  border: 1px solid var(--glassBorder);
 }
-.invoice-icon:active{ transform: scale(.99); }
 
-/* --- rest of your page styles can remain below --- */
-.brand-main{ padding: 0 14px 120px; }
+/* =========================================================
+   MAIN
+   ========================================================= */
+.brand-main{ padding:0 14px 120px; }
+
+.brand-title-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:2px;
+}
+
+.brand-title{
+  margin:8px 0 12px;
+  font-size:56px;
+  line-height:.92;
+  letter-spacing:-.02em;
+  font-weight:800;
+  color:var(--ink);
+}
+
+.brand-icon{
+  width:54px;
+  height:54px;
+  border-radius:14px;
+  background: var(--glass2);
+  border: 1px solid var(--glassBorder);
+  box-shadow: var(--shadow);
+  margin-top:10px;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+}
+.brand-icon img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+/* =========================================================
+   SEARCH (glass)
+   ========================================================= */
+.brand-search .search-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 14px;
+  border-radius:22px;
+  background: var(--glass);
+  border: 1px solid var(--glassBorder);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.search-ico{ opacity:.75; }
+
+#brand-search{
+  width:100%;
+  border:none;
+  background:transparent;
+  outline:none;
+  color: var(--ink);
+  font-size:18px;
+  font-weight:800;
+}
+#brand-search::placeholder{ color: var(--muted); }
+
+/* =========================================================
+   CONTROLS (glass pills)
+   ========================================================= */
+.brand-controls{
+  display:grid;
+  grid-template-columns:1.05fr .72fr 1.7fr;
+  gap:10px;
+  margin-top:10px;
+}
+
+.pill-btn{
+  height:44px;
+  border-radius:18px;
+  border:1px solid var(--glassBorder);
+  background: var(--glass2);
+  color: var(--ink);
+  font-size:15px;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color:transparent;
+}
+.pill-btn:active{ transform:scale(.99); }
+
+/* =========================================================
+   MADURO / NATURAL TOGGLE (glass)
+   ========================================================= */
+.seg{
+  height:44px;
+  border-radius:18px;
+  border:1px solid var(--glassBorder);
+  background: var(--glass2);
+  box-shadow: var(--shadow);
+  display:grid;
+  grid-template-columns:1fr 64px 1fr;
+  align-items:center;
+  padding:0 8px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.seg-btn{
+  height:44px;
+  border:none;
+  background:transparent;
+  font-size:14px;
+  font-weight:900;
+  color: var(--muted);
+}
+
+.seg-btn[aria-pressed="true"]{
+  color: #2f6fe4;
+}
+
+.seg-dot{
+  width:64px;
+  height:32px;
+  border-radius:999px;
+  border:1px solid var(--glassBorder);
+  background: rgba(0,0,0,.06);
+  position:relative;
+  margin:0 auto;
+}
+
+html[data-theme="dark"] .seg-dot{
+  background: rgba(255,255,255,.06);
+}
+
+.seg-dot::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:26px;
+  height:26px;
+  border-radius:999px;
+  background: #2f6fe4;
+  left:4px;
+  transition:left .18s ease, opacity .18s ease;
+}
+
+#wrapper-seg[data-state="maduro"] .seg-dot::after{ left:4px; opacity:1; }
+#wrapper-seg[data-state="all"] .seg-dot::after{ left:19px; opacity:.55; }
+#wrapper-seg[data-state="natural"] .seg-dot::after{ left:34px; opacity:1; }
+
+/* =========================================================
+   LIST ROWS
+   ========================================================= */
+.brand-list{
+  margin-top:14px;
+  display:flex;
+  flex-direction:column;
+}
+
+.brand-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 10px;
+  border-top:1px solid var(--hair);
+}
+
+.row-ico{
+  width:54px;
+  height:54px;
+  border-radius:14px;
+  object-fit:cover;
+  box-shadow: var(--shadow);
+  background: var(--glass2);
+  border: 1px solid var(--glassBorder);
+  flex:0 0 auto;
+}
+
+.brand-row-left{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+  flex:1 1 auto;
+  cursor:pointer;
+}
+
+.brand-row-title{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.01em;
+  line-height:1.12;
+  color: var(--ink);
+  white-space:normal;
+  overflow:visible;
+}
+
+.brand-row-sub{
+  font-size:14px;
+  font-weight:800;
+  color: var(--muted);
+  white-space:normal;
+  overflow:visible;
+}
+
+.brand-row-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-left:14px;
+}
+
+.brand-row-msrp{
+  position:relative;
+  padding-left:10px;
+  font-size:18px;
+  font-weight:800;
+  color: var(--ink);
+  min-width:78px;
+  text-align:right;
+}
+
+.brand-row-msrp::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:50%;
+  transform:translateY(-50%);
+  width:1px;
+  height:44px;
+  background: var(--hair);
+}
+
+.brand-row .pos-add{
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  border:none;
+  background:#34c759;
+  color:#ffffff;
+  font-size:18px;
+  font-weight:900;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  box-shadow: 0 14px 28px rgba(0,0,0,.22);
+}
+.brand-row .pos-add:active{ transform:scale(.98); }
+
+.brand-status{
+  margin:16px 0 0;
+  color: var(--muted);
+  font-weight:800;
+}
+
+/* Utilities */
+[hidden]{ display:none !important; }
+
+/* =========================================================
+   CIGAR DETAIL MODAL (unchanged basics)
+   ========================================================= */
+body.cigar-detail-open{ overflow:hidden; }
+
+.cigar-detail-overlay{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease;
+}
+.cigar-detail-overlay.open{
+  opacity:1;
+  pointer-events:auto;
+}
+
+/* Keep your existing sheet + fm CSS below if you already rely on it */
