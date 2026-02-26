@@ -1,37 +1,197 @@
-/* /css/theme.css
-   Global theme tokens (NO toggle styling in this file)
+/* /css/theme-toggle.css
+   Centered iOS-style Sun/Moon toggle + invoice cart button
+   Uses:
+     /img/icons/sun.svg
+     /img/icons/moon.svg
 */
 
 :root{
-  --bg: #f2f2f7;
-  --surface: #ffffff;
-  --surface2: #f7f7fb;
-  --ink: #0b0b0f;
-  --muted: #6e6e73;
-  --hairline: rgba(0,0,0,.08);
-
-  --shadow: 0 10px 30px rgba(0,0,0,.10);
+  --tt-w: 92px;     /* ✅ wider */
+  --tt-h: 30px;     /* ✅ ~80% of your old 36px */
+  --tt-pad: 3px;
+  --tt-knob: 24px;  /* knob size within 30px track */
 }
 
-html[data-theme="dark"]{
-  --bg: #0b0b0f;
-  --surface: #14141a;
-  --surface2: #1a1a22;
-  --ink: #ffffff;
-  --muted: rgba(235,235,245,.65);
-  --hairline: rgba(255,255,255,.10);
-
-  --shadow: 0 12px 34px rgba(0,0,0,.55);
+/* wrapper positions (centered at top) */
+.pos-topbar{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 10px 14px 0;
 }
 
-body{
-  background: var(--bg);
-  color: var(--ink);
+/* center group (toggle) */
+.topbar-center{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
 }
 
-/* common surfaces */
-.card, .panel, .sheet, .glass{
-  background: var(--surface);
-  border: 1px solid var(--hairline);
-  box-shadow: var(--shadow);
+/* right group (invoice/cart) */
+.topbar-right{
+  position: absolute;
+  right: 14px;
+  top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---- Toggle button ---- */
+.theme-toggle{
+  border:0;
+  background:transparent;
+  padding:0;
+  -webkit-tap-highlight-color: transparent;
+  cursor:pointer;
+}
+
+.tt-track{
+  width: var(--tt-w);
+  height: var(--tt-h);
+  border-radius: 999px;
+  display:block;
+  position:relative;
+  overflow:hidden;
+
+  background: rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,.10);
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+}
+
+/* icon slots on the track (sun left, moon right) */
+.tt-ico{
+  position:absolute;
+  top:50%;
+  transform: translateY(-50%);
+  width:18px;
+  height:18px;
+  opacity:.35;                 /* default = NOT active */
+  color: rgba(0,0,0,.55);
+}
+
+/* icon artwork via mask so color is controlled (fixes “blue sun” issues) */
+.tt-ico::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: currentColor;
+  -webkit-mask: var(--mask) center / contain no-repeat;
+          mask: var(--mask) center / contain no-repeat;
+}
+
+.tt-ico--sun{ left:12px; --mask: url("/img/icons/sun.svg"); }
+.tt-ico--moon{ right:12px; --mask: url("/img/icons/moon.svg"); }
+
+/* knob */
+.tt-knob{
+  position:absolute;
+  top:50%;
+  transform: translateY(-50%);
+  left: var(--tt-pad);
+  width: calc(var(--tt-h) - (var(--tt-pad) * 2));
+  height: calc(var(--tt-h) - (var(--tt-pad) * 2));
+  border-radius: 999px;
+
+  background:#ffffff;
+  border: 1px solid rgba(0,0,0,.12);
+  box-shadow: 0 10px 18px rgba(0,0,0,.18);
+  transition: left 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+/* knob icon (same mask technique) */
+.tt-knob::before{
+  content:"";
+  position:absolute;
+  inset:5px;
+  background: currentColor;
+  color: rgba(0,0,0,.70);
+  -webkit-mask: var(--knobmask) center / contain no-repeat;
+          mask: var(--knobmask) center / contain no-repeat;
+}
+
+/* LIGHT state = sun active + sun in knob */
+html:not([data-theme="dark"]) .tt-ico--sun{
+  opacity:.95;
+}
+html:not([data-theme="dark"]) .tt-ico--moon{
+  opacity:.25;
+}
+
+html:not([data-theme="dark"]) .tt-knob{
+  background:#ffffff;
+}
+html:not([data-theme="dark"]) .tt-knob::before{
+  --knobmask: url("/img/icons/sun.svg");
+  color: rgba(0,0,0,.78);
+}
+
+/* DARK state = moon active + moon in knob + dark knob circle */
+html[data-theme="dark"] .tt-track{
+  background: rgba(0,0,0,.22);
+  border-color: rgba(255,255,255,.14);
+  box-shadow: 0 12px 28px rgba(0,0,0,.55);
+}
+
+html[data-theme="dark"] .tt-ico{
+  color: rgba(255,255,255,.80);
+}
+
+html[data-theme="dark"] .tt-ico--sun{
+  opacity:.22;                 /* ✅ sun NOT lit */
+}
+html[data-theme="dark"] .tt-ico--moon{
+  opacity:.95;                 /* ✅ moon lit */
+}
+
+html[data-theme="dark"] .tt-knob{
+  left: calc(var(--tt-w) - var(--tt-pad) - (var(--tt-h) - (var(--tt-pad) * 2)));
+  background: #141418;          /* ✅ dark dark grey behind moon */
+  border-color: rgba(255,255,255,.14);
+}
+
+html[data-theme="dark"] .tt-knob::before{
+  --knobmask: url("/img/icons/moon.svg");
+  color: #ffffff;               /* ✅ moon icon white */
+}
+
+/* ---- Invoice/cart button (glass square) ---- */
+.invoice-btn{
+  width: var(--tt-h);
+  height: var(--tt-h);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+
+  background: rgba(255,255,255,.22);
+  border: 1px solid rgba(255,255,255,.28);
+  box-shadow: 0 10px 26px rgba(0,0,0,.22);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+html[data-theme="dark"] .invoice-btn{
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.14);
+  box-shadow: 0 14px 32px rgba(0,0,0,.55);
+}
+
+.invoice-btn img{
+  width: 28px;
+  height: 28px;
+  display:block;
+}
+
+/* tap feel */
+.theme-toggle:active,
+.invoice-btn:active{
+  transform: scale(.98);
 }
