@@ -1,47 +1,49 @@
 /* /js/theme-toggle.js
-   - Toggles html[data-theme] between "light" and "dark"
-   - Persists to localStorage
+   Theme toggle (html[data-theme]) + cart icon swap
 */
 
 (() => {
-  const KEY = "cigaros_theme";
+  const HTML = document.documentElement;
 
-  function getTheme() {
-    const saved = localStorage.getItem(KEY);
-    if (saved === "dark" || saved === "light") return saved;
+  const CART_LIGHT = "/img/icons/cart-empty.svg";
+  const CART_DARK  = "/img/icons/cart-red.svg";
 
-    // fallback: prefer current html attr, else system
-    const html = document.documentElement;
-    const cur = html.getAttribute("data-theme");
-    if (cur === "dark" || cur === "light") return cur;
-
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
+  function setCartIcon(theme) {
+    const img = document.querySelector("#invoice-icon");
+    if (!img) return;
+    img.src = theme === "dark" ? CART_DARK : CART_LIGHT;
   }
 
-  function setTheme(next) {
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem(KEY, next);
+  function applyTheme(theme) {
+    if (theme === "dark") HTML.setAttribute("data-theme", "dark");
+    else HTML.removeAttribute("data-theme");
+
+    localStorage.setItem("theme", theme);
+    setCartIcon(theme);
+  }
+
+  function getInitialTheme() {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark" || saved === "light") return saved;
+
+    // fallback: system
+    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+    return prefersDark ? "dark" : "light";
   }
 
   function toggleTheme() {
-    const cur = getTheme();
-    setTheme(cur === "dark" ? "light" : "dark");
+    const cur = HTML.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    applyTheme(cur === "dark" ? "light" : "dark");
   }
 
-  function boot() {
-    // apply theme immediately
-    setTheme(getTheme());
+  // boot
+  applyTheme(getInitialTheme());
 
-    // bind button if present
-    const btn = document.getElementById("theme-toggle");
-    if (btn) btn.addEventListener("click", toggleTheme);
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  // bind
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest?.("#themeToggle");
+    if (!btn) return;
+    e.preventDefault();
+    toggleTheme();
+  });
 })();
