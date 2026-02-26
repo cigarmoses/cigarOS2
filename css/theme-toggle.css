@@ -50,7 +50,7 @@
   transition: left 180ms ease, background 180ms ease, border-color 180ms ease;
 }
 
-/* knob icon container (we swap via body[data-theme]) */
+/* knob icon container (we swap via theme-toggle.js) */
 .tt-knob-ico{
   position:absolute;
   inset:0;
@@ -64,26 +64,26 @@
    - knob becomes DARK DARK GREY
    - moon icon becomes WHITE
 */
-body[data-theme="dark"] .tt-track{
+html[data-theme="dark"] .tt-track{
   background: rgba(0,0,0,.22);
   border-color: rgba(255,255,255,.14);
 }
 
-body[data-theme="dark"] .tt-ico{
+html[data-theme="dark"] .tt-ico{
   color: rgba(255,255,255,.60);
   opacity:.75;
 }
 
-body[data-theme="dark"] .tt-knob{
+html[data-theme="dark"] .tt-knob{
   left: calc(74px - 3px - 30px);
   background: #141418;          /* ✅ dark dark grey behind moon */
   border-color: rgba(255,255,255,.14);
 }
 
-body[data-theme="dark"] .tt-knob-ico{
+html[data-theme="dark"] .tt-knob-ico{
   color:#ffffff;                /* ✅ moon icon white */
 }
 
 /* optional: make "active side" icon slightly stronger */
-body[data-theme="light"] .tt-ico--sun{ opacity:.9; }
-body[data-theme="dark"]  .tt-ico--moon{ opacity:.95; }
+html[data-theme="light"] .tt-ico--sun{ opacity:.9; }
+html[data-theme="dark"]  .tt-ico--moon{ opacity:.95; }
