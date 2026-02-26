@@ -1,112 +1,612 @@
+<!-- /pos/cigars/brand.html
+     Brand POS page (Cigars) — FULL REPLACEMENT
+-->
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>POS • Brand</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>Brand • POS • CigarOS2</title>
 
+  <!-- Type -->
   <link rel="stylesheet" href="/css/type.css" />
+
+  <!-- Theme tokens (your existing file is fine) -->
   <link rel="stylesheet" href="/css/theme.css" />
+
+  <!-- Sun/Moon toggle styling -->
   <link rel="stylesheet" href="/css/theme-toggle.css" />
 
-  <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/cigars/brand.css" />
+  <!-- Filters modal styling (brand.js creates the modal markup; this makes it visible) -->
+  <link rel="stylesheet" href="/css/filter-modal.css" />
+
+  <style>
+    /* ===============================
+       Page layout (self-contained)
+       =============================== */
+    :root{
+      --radius: 18px;
+      --radius-pill: 999px;
+      --pad: 18px;
+      --glass: rgba(255,255,255,.55);
+      --glass2: rgba(255,255,255,.38);
+      --glassDark: rgba(20,20,26,.45);
+      --glassDark2: rgba(20,20,26,.30);
+    }
+    html, body { height:100%; }
+    body{
+      margin:0;
+      font-family: var(--font-ui, system-ui);
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .brand-wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: calc(env(safe-area-inset-top) + 14px) var(--pad) 28px;
+    }
+
+    /* ===============================
+       Top bar
+       =============================== */
+    .brand-topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .brand-back{
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      border: 1px solid var(--hairline);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .brand-back svg{ width:20px; height:20px; opacity:.85; }
+
+    .brand-top-center{
+      flex:1;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .brand-top-right{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+
+    /* Invoice button (bubble) */
+    .invoice-btn{
+      width: 40px;             /* same height family as toggle */
+      height: 32px;
+      border-radius: 14px;
+      border: 1px solid var(--hairline);
+      background: rgba(255,255,255,.55);
+      box-shadow: 0 10px 24px rgba(0,0,0,.14);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      text-decoration:none;
+    }
+    .invoice-btn img{
+      width: 20px;
+      height: 20px;
+      display:block;
+    }
+    html[data-theme="dark"] .invoice-btn{
+      background: rgba(20,20,26,.45);
+      border-color: rgba(255,255,255,.12);
+      box-shadow: 0 14px 30px rgba(0,0,0,.55);
+    }
+
+    /* ===============================
+       Header row with brand title + icon
+       =============================== */
+    .brand-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      margin: 10px 0 10px;
+    }
+    h1#brand-title{
+      margin: 0;
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-family: var(--font-display, system-ui);
+      line-height: 1.02;
+    }
+    #brand-icon{
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      box-shadow: var(--shadow);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      flex: 0 0 auto;
+    }
+    #brand-icon img{
+      width: 56px;
+      height: 56px;
+      display:block;
+    }
+
+    /* ===============================
+       Search + controls
+       =============================== */
+    .brand-search{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      margin: 12px 0 12px;
+    }
+
+    .search-pill{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+      background: rgba(255,255,255,.58);
+      box-shadow: 0 10px 24px rgba(0,0,0,.10);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    html[data-theme="dark"] .search-pill{
+      background: rgba(20,20,26,.36);
+      box-shadow: 0 16px 34px rgba(0,0,0,.55);
+      border-color: rgba(255,255,255,.12);
+    }
+    .search-pill svg{ width:18px; height:18px; opacity:.7; }
+    #brand-search{
+      border:0;
+      outline:0;
+      background: transparent;
+      color: var(--ink);
+      width: 100%;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    #brand-search::placeholder{
+      color: rgba(110,110,115,.9);
+    }
+    html[data-theme="dark"] #brand-search::placeholder{
+      color: rgba(235,235,245,.55);
+    }
+
+    .controls-row{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      margin: 10px 0 12px;
+      flex-wrap: wrap;
+    }
+
+    .pill-btn{
+      border: 1px solid var(--hairline);
+      background: rgba(255,255,255,.60);
+      color: var(--ink);
+      box-shadow: 0 10px 24px rgba(0,0,0,.10);
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    html[data-theme="dark"] .pill-btn{
+      background: rgba(20,20,26,.36);
+      border-color: rgba(255,255,255,.12);
+      box-shadow: 0 16px 34px rgba(0,0,0,.55);
+    }
+
+    /* Wrapper segmented (Maduro/Natural) */
+    .seg{
+      display:flex;
+      align-items:center;
+      gap: 0;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+      background: rgba(255,255,255,.60);
+      box-shadow: 0 10px 24px rgba(0,0,0,.10);
+      overflow:hidden;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    html[data-theme="dark"] .seg{
+      background: rgba(20,20,26,.36);
+      border-color: rgba(255,255,255,.12);
+      box-shadow: 0 16px 34px rgba(0,0,0,.55);
+    }
+    .seg button{
+      border:0;
+      background: transparent;
+      color: var(--muted);
+      padding: 12px 18px;
+      font-size: 18px;
+      font-weight: 900;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .seg .seg-dot{
+      width: 44px;
+      height: 44px;
+      display:grid;
+      place-items:center;
+      border-left: 1px solid rgba(0,0,0,.06);
+      border-right: 1px solid rgba(0,0,0,.06);
+    }
+    html[data-theme="dark"] .seg .seg-dot{
+      border-left-color: rgba(255,255,255,.10);
+      border-right-color: rgba(255,255,255,.10);
+    }
+    .seg .seg-dot::before{
+      content:"";
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: #6ea8ff;
+      opacity: .65;
+      display:block;
+    }
+    .seg[data-state="maduro"] #seg-maduro,
+    .seg[data-state="natural"] #seg-natural{
+      color: var(--ink);
+    }
+    .seg[data-state="all"] #seg-maduro,
+    .seg[data-state="all"] #seg-natural{
+      color: var(--muted);
+    }
+
+    .divider{
+      height: 1px;
+      background: rgba(0,0,0,.08);
+      margin: 10px 0 4px;
+    }
+    html[data-theme="dark"] .divider{
+      background: rgba(255,255,255,.10);
+    }
+
+    /* ===============================
+       List
+       =============================== */
+    #brand-status{
+      margin: 14px 2px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    #brand-list{
+      margin-top: 4px;
+    }
+    .brand-row{
+      display:flex;
+      align-items:center;
+      gap: 14px;
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+    html[data-theme="dark"] .brand-row{
+      border-bottom-color: rgba(255,255,255,.10);
+    }
+
+    .row-ico{
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.60);
+      border: 1px solid var(--hairline);
+      box-shadow: 0 10px 22px rgba(0,0,0,.12);
+      flex: 0 0 auto;
+      object-fit: contain;
+    }
+    html[data-theme="dark"] .row-ico{
+      background: rgba(20,20,26,.40);
+      border-color: rgba(255,255,255,.12);
+      box-shadow: 0 14px 28px rgba(0,0,0,.55);
+    }
+
+    .brand-row-left{ flex:1; min-width:0; }
+    .brand-row-title{
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.06;
+    }
+    .brand-row-title > div{
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .brand-row-sub{
+      margin-top: 4px;
+      font-size: 20px;
+      font-weight: 800;
+      color: rgba(110,110,115,.95);
+    }
+    html[data-theme="dark"] .brand-row-sub{
+      color: rgba(235,235,245,.55);
+    }
+
+    .brand-row-right{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      flex: 0 0 auto;
+    }
+    .brand-row-msrp{
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      min-width: 84px;
+      text-align:right;
+    }
+
+    .pos-add{
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border:0;
+      background: #34c759;
+      color: #fff;
+      font-size: 28px;
+      font-weight: 900;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 10px 18px rgba(0,0,0,.18);
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ===============================
+       Sheets (bands/receipt) — minimal
+       =============================== */
+    #sheet-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 9998;
+    }
+    #sheet-backdrop[hidden]{ display:none; }
+
+    .pos-sheet{
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9999;
+      border-top-left-radius: 22px;
+      border-top-right-radius: 22px;
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      box-shadow: 0 18px 40px rgba(0,0,0,.22);
+      transform: translateY(110%);
+      transition: transform 220ms ease;
+      max-height: 78vh;
+      overflow:auto;
+    }
+    html[data-theme="dark"] .pos-sheet{
+      box-shadow: 0 22px 50px rgba(0,0,0,.70);
+    }
+    .pos-sheet.is-open{
+      transform: translateY(0);
+    }
+
+    .sheet-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+    html[data-theme="dark"] .sheet-head{
+      border-bottom-color: rgba(255,255,255,.10);
+    }
+    .sheet-head h3{
+      margin:0;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+    .sheet-close{
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+      background: rgba(255,255,255,.65);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+    }
+    html[data-theme="dark"] .sheet-close{
+      background: rgba(20,20,26,.40);
+      border-color: rgba(255,255,255,.12);
+    }
+
+    .sheet-body{ padding: 12px 16px 18px; }
+    .sheet-actions{
+      padding: 12px 16px 18px;
+      border-top: 1px solid rgba(0,0,0,.08);
+    }
+    html[data-theme="dark"] .sheet-actions{
+      border-top-color: rgba(255,255,255,.10);
+    }
+    .sheet-primary{
+      width:100%;
+      border:0;
+      border-radius: 14px;
+      padding: 14px 14px;
+      font-size: 18px;
+      font-weight: 900;
+      background: #0a84ff;
+      color:#fff;
+      cursor:pointer;
+    }
+  </style>
 </head>
 
-<body class="brand-page">
+<body>
+  <div class="brand-wrap">
 
-  <header class="brand-topbar">
-    <!-- LEFT: back -->
-    <button type="button" class="icon-btn" id="brand-back" aria-label="Back">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
+    <!-- Top bar: back | centered toggle | invoice -->
+    <div class="brand-topbar">
+      <button id="brand-back" class="brand-back" type="button" aria-label="Back">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
 
-    <!-- CENTER: theme toggle -->
-    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme">
-      <span class="tt-track" aria-hidden="true">
-        <span class="tt-ico tt-ico--sun" aria-hidden="true">
-          <img src="/img/icons/sun.svg" alt="" />
-        </span>
+      <div class="brand-top-center">
+        <!-- Toggle uses your uploaded SVGs -->
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+          <span class="tt-track" aria-hidden="true">
+            <span class="tt-ico tt-ico--sun"><img src="/img/icons/sun.svg" alt="" /></span>
+            <span class="tt-ico tt-ico--moon"><img src="/img/icons/moon.svg" alt="" /></span>
 
-        <span class="tt-ico tt-ico--moon" aria-hidden="true">
-          <img src="/img/icons/moon.svg" alt="" />
-        </span>
-
-        <span class="tt-knob" aria-hidden="true">
-          <span class="tt-knob-ico tt-knob-ico--sun" aria-hidden="true">
-            <img src="/img/icons/sun.svg" alt="" />
+            <span class="tt-knob">
+              <!-- Only one shows at a time (CSS) -->
+              <span class="tt-knob-ico tt-knob-ico--sun"><img src="/img/icons/sun.svg" alt="" /></span>
+              <span class="tt-knob-ico tt-knob-ico--moon"><img src="/img/icons/moon.svg" alt="" /></span>
+            </span>
           </span>
-          <span class="tt-knob-ico tt-knob-ico--moon" aria-hidden="true">
-            <img src="/img/icons/moon.svg" alt="" />
-          </span>
-        </span>
-      </span>
-    </button>
-
-    <!-- RIGHT: invoice cart -->
-    <button class="invoice-btn" id="invoice-btn" type="button" aria-label="Invoice">
-      <!-- You can swap these filenames if yours differ -->
-      <img id="invoice-icon" src="/img/icons/cart-empty.png" alt="" />
-    </button>
-  </header>
-
-  <main class="brand-main">
-
-    <section class="brand-title-row">
-      <h1 class="brand-title" id="brand-title">Brand</h1>
-      <div class="brand-icon" id="brand-icon" aria-hidden="true"></div>
-    </section>
-
-    <section class="brand-search">
-      <div class="search-wrap">
-        <span class="search-ico" aria-hidden="true">🔎</span>
-        <input id="brand-search" type="search" placeholder="Search…" autocomplete="off" />
+        </button>
       </div>
-    </section>
 
-    <section class="brand-controls" aria-label="Brand controls">
-      <button class="pill-btn" id="btn-filters" type="button" aria-haspopup="dialog">Filters</button>
-      <button class="pill-btn" id="btn-bands" type="button" aria-haspopup="dialog">Bands</button>
-
-      <div class="seg" id="wrapper-seg" data-state="all" role="group" aria-label="Wrapper toggle">
-        <button class="seg-btn" id="seg-maduro" type="button" aria-pressed="false">Maduro</button>
-        <button class="seg-dot" id="seg-switch" type="button" aria-label="Toggle Maduro/Natural"></button>
-        <button class="seg-btn" id="seg-natural" type="button" aria-pressed="false">Natural</button>
+      <div class="brand-top-right">
+        <!-- Brand.js will also bind "Invoice pill" clicks; keep this ID for compatibility -->
+        <a class="invoice-btn" id="invoice-pill" href="/pos/invoice.html" aria-label="Invoice">
+          <!-- put any icon here; you said you’ll add SVG carts next -->
+          <img src="/img/icons/cart-empty.svg" alt="" />
+        </a>
       </div>
-    </section>
-
-    <section class="brand-applied" id="brand-applied" aria-label="Applied filters" hidden>
-      <div class="applied-row" id="brand-applied-row"></div>
-    </section>
-
-    <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
-    <p class="brand-status" id="brand-status" hidden></p>
-  </main>
-
-  <!-- ✅ Bands sheet -->
-  <section class="sheet bands-sheet" id="sheet-bands" role="dialog" aria-modal="true" aria-label="Bands" hidden>
-    <header class="sheet-header bands-header">
-      <h2>Filter by band art</h2>
-      <button class="sheet-x bands-x" type="button" data-sheet-close aria-label="Close">×</button>
-    </header>
-
-    <div class="sheet-body bands-body">
-      <div class="bands-list" id="bands-options"></div>
     </div>
 
-    <footer class="sheet-footer bands-footer">
-      <button class="sheet-btn primary bands-confirm" type="button" id="bands-confirm">Confirm</button>
-    </footer>
+    <!-- Brand header -->
+    <div class="brand-header">
+      <h1 id="brand-title">Brand</h1>
+      <div id="brand-icon" aria-hidden="true"></div>
+    </div>
+
+    <!-- Search -->
+    <div class="brand-search">
+      <div class="search-pill">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
+                fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+        </svg>
+        <input id="brand-search" placeholder="Search…" autocomplete="off" />
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-row">
+      <button class="pill-btn" id="btn-filters" type="button">Filters</button>
+      <button class="pill-btn" id="btn-bands" type="button">Bands</button>
+
+      <div class="seg" id="wrapper-seg" data-state="all" role="group" aria-label="Wrapper">
+        <button id="seg-maduro" type="button" aria-pressed="false">Maduro</button>
+        <div class="seg-dot" id="seg-switch" aria-hidden="true"></div>
+        <button id="seg-natural" type="button" aria-pressed="false">Natural</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Status + List -->
+    <div id="brand-status" hidden>Loading…</div>
+    <div id="brand-list" role="list"></div>
+
+  </div>
+
+  <!-- Shared sheet backdrop (Bands + Receipt) -->
+  <div id="sheet-backdrop" hidden></div>
+
+  <!-- Bands sheet -->
+  <section id="sheet-bands" class="pos-sheet" hidden aria-label="Bands">
+    <div class="sheet-head">
+      <h3>Bands</h3>
+      <button class="sheet-close" type="button" data-sheet-close aria-label="Close">
+        ✕
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div id="bands-options"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="sheet-primary" id="bands-confirm" type="button">Apply Bands</button>
+    </div>
   </section>
 
-  <!-- IMPORTANT:
-       cart.js injects the single universal invoice button + invoice UI.
-       Do NOT hardcode receipt/invoice markup here.
-  -->
-  <script defer src="/js/theme-toggle.js"></script>
-  <script defer src="/pos/cart.js"></script>
-  <script defer src="/pos/cigars/brand.js"></script>
+  <!-- Receipt sheet (kept for compatibility; your other scripts can use it) -->
+  <section id="sheet-receipt" class="pos-sheet" hidden aria-label="Invoice">
+    <div class="sheet-head">
+      <h3>Invoice</h3>
+      <button class="sheet-close" type="button" data-sheet-close aria-label="Close">
+        ✕
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div id="receipt-body">—</div>
+    </div>
+  </section>
+
+  <!-- Theme toggle logic (safe + self-contained for this page) -->
+  <script>
+    (function(){
+      const root = document.documentElement;
+      const KEY = "cigaros_theme";
+
+      function getSaved(){
+        try { return localStorage.getItem(KEY) || ""; } catch(e){ return ""; }
+      }
+      function save(v){
+        try { localStorage.setItem(KEY, v); } catch(e){}
+      }
+      function applyTheme(v){
+        const next = (v === "dark") ? "dark" : "light";
+        root.setAttribute("data-theme", next);
+      }
+
+      // boot
+      const saved = getSaved();
+      if (saved) applyTheme(saved);
+
+      // click
+      const btn = document.getElementById("themeToggle");
+      btn && btn.addEventListener("click", () => {
+        const cur = root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+        const next = (cur === "dark") ? "light" : "dark";
+        applyTheme(next);
+        save(next);
+      });
+    })();
+  </script>
+
+  <!-- Brand controller -->
+  <script defer src="/pos/cigars/brand.js?v=1.0"></script>
 </body>
 </html>
