@@ -4,488 +4,104 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
-  <title>Brand • POS • CigarOS</title>
+  <title>Brand • CigarOS2</title>
 
-  <!-- Type + global theme tokens -->
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/css/theme.css" />
-
-  <!-- Your existing page styles (keep if you already have it) -->
-  <link rel="stylesheet" href="/pos/cigars/brand.css" />
-
-  <!-- NEW: centered iOS toggle styling (scoped + safe) -->
   <link rel="stylesheet" href="/css/theme-toggle.css" />
-
-  <style>
-    /* -------------------------------------------------------
-       Brand page header layout (toggle centered + cart right)
-       ------------------------------------------------------- */
-    .brand-topbar{
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 16px 16px 10px;
-    }
-
-    .brand-topbar-left,
-    .brand-topbar-right{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      min-width: 84px; /* keeps center truly centered */
-    }
-
-    /* back bubble */
-    .pos-back,
-    #brand-back{
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.55);
-      box-shadow: var(--shadow);
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html[data-theme="dark"] .pos-back,
-    html[data-theme="dark"] #brand-back{
-      background: rgba(20,20,26,.60);
-    }
-    .pos-back svg, #brand-back svg{ width:20px; height:20px; }
-
-    /* centered toggle holder */
-    .brand-topbar-center{
-      position:absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      pointer-events: none; /* only toggle itself clickable */
-    }
-    .brand-topbar-center .theme-toggle{ pointer-events:auto; }
-
-    /* cart/invoice button (same height as toggle) */
-    #invoice-pill{
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.55);
-      box-shadow: var(--shadow);
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html[data-theme="dark"] #invoice-pill{
-      background: rgba(20,20,26,.60);
-    }
-    #invoice-pill img{
-      width: 26px;
-      height: 26px;
-      display:block;
-    }
-
-    /* -------------------------------------------------------
-       Title row + brand icon
-       ------------------------------------------------------- */
-    .brand-hero{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 14px;
-      padding: 0 16px 10px;
-    }
-
-    #brand-title{
-      margin: 4px 0 0;
-      font-size: 56px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      font-family: var(--font-display);
-      line-height: 1.02;
-    }
-
-    #brand-icon{
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      overflow:hidden;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.60);
-      box-shadow: var(--shadow);
-      flex: 0 0 auto;
-      display:grid;
-      place-items:center;
-    }
-    html[data-theme="dark"] #brand-icon{
-      background: rgba(20,20,26,.55);
-    }
-    #brand-icon img{
-      width: 78%;
-      height: 78%;
-      object-fit: contain;
-      display:block;
-    }
-
-    /* -------------------------------------------------------
-       Search + bubbles row (restores the “pill” look)
-       ------------------------------------------------------- */
-    .brand-tools{
-      padding: 0 16px 10px;
-    }
-
-    .brand-search{
-      width: 100%;
-      border-radius: 22px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.60);
-      box-shadow: var(--shadow);
-      padding: 14px 14px;
-      display:flex;
-      align-items:center;
-      gap: 10px;
-    }
-    html[data-theme="dark"] .brand-search{
-      background: rgba(20,20,26,.55);
-    }
-
-    .brand-search svg{ width: 20px; height: 20px; opacity:.75; }
-    .brand-search input{
-      width: 100%;
-      border: 0;
-      outline: none;
-      background: transparent;
-      color: var(--ink);
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      font-family: var(--font-display);
-    }
-    .brand-search input::placeholder{ color: rgba(110,110,115,.85); }
-    html[data-theme="dark"] .brand-search input::placeholder{ color: rgba(235,235,245,.45); }
-
-    .brand-actions{
-      display:flex;
-      gap: 14px;
-      padding: 14px 0 8px;
-      flex-wrap: wrap;
-    }
-
-    .pill-btn{
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.60);
-      box-shadow: var(--shadow);
-      border-radius: 999px;
-      padding: 12px 22px;
-      font-family: var(--font-display);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      font-size: 18px;
-      color: var(--ink);
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html[data-theme="dark"] .pill-btn{
-      background: rgba(20,20,26,.55);
-    }
-
-    /* Maduro/Natural segmented */
-    #wrapper-seg{
-      display:flex;
-      border-radius: 999px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.60);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      height: 48px;
-      min-width: 320px;
-      max-width: 420px;
-    }
-    html[data-theme="dark"] #wrapper-seg{
-      background: rgba(20,20,26,.55);
-    }
-
-    #wrapper-seg button{
-      flex:1;
-      border:0;
-      background: transparent;
-      color: rgba(110,110,115,.85);
-      font-family: var(--font-display);
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      font-size: 18px;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html[data-theme="dark"] #wrapper-seg button{
-      color: rgba(235,235,245,.40);
-    }
-
-    #wrapper-seg .seg-dot{
-      width: 42px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border-left: 1px solid var(--hairline);
-      border-right: 1px solid var(--hairline);
-    }
-    #wrapper-seg .seg-dot span{
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      background: #8bb8ff;
-      display:block;
-      box-shadow: 0 8px 18px rgba(0,0,0,.18);
-    }
-
-    /* active state controlled by brand.js via aria-pressed */
-    #wrapper-seg button[aria-pressed="true"]{
-      color: var(--ink);
-      opacity: 1;
-    }
-
-    /* -------------------------------------------------------
-       List + status
-       ------------------------------------------------------- */
-    #brand-status{
-      padding: 14px 16px;
-      color: var(--muted);
-      font-family: var(--font-display);
-      font-weight: 700;
-      letter-spacing: -0.01em;
-    }
-
-    #brand-list{
-      padding: 0 0 20px;
-    }
-
-    /* Backdrop + sheets (Bands/Receipt) — keep your existing classes */
-    #sheet-backdrop{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.35);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      z-index: 9998;
-    }
-
-    .pos-sheet{
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 9999;
-      background: var(--surface);
-      border-top-left-radius: 22px;
-      border-top-right-radius: 22px;
-      border: 1px solid var(--hairline);
-      box-shadow: var(--shadow);
-      transform: translateY(110%);
-      transition: transform .25s ease;
-      max-height: 82vh;
-      overflow:auto;
-    }
-    .pos-sheet.is-open{ transform: translateY(0); }
-
-    .pos-sheet-header{
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      padding: 14px 16px 10px;
-      border-bottom: 1px solid var(--hairline);
-    }
-
-    .pos-sheet-title{
-      font-family: var(--font-display);
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      font-size: 20px;
-    }
-
-    .pos-sheet-close{
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      border: 1px solid var(--hairline);
-      background: rgba(255,255,255,.55);
-      cursor:pointer;
-      display:grid;
-      place-items:center;
-    }
-    html[data-theme="dark"] .pos-sheet-close{ background: rgba(20,20,26,.55); }
-
-    .pos-sheet-body{ padding: 12px 16px 18px; }
-
-    .pos-sheet-actions{
-      display:flex;
-      gap: 12px;
-      padding: 12px 16px 18px;
-      border-top: 1px solid var(--hairline);
-    }
-    .pos-sheet-actions .pill-btn{ flex:1; }
-  </style>
+  <link rel="stylesheet" href="/css/pos-brand.css" />
 </head>
 
-<body>
-  <!-- Top bar: back (left), centered theme toggle, cart (right) -->
-  <header class="brand-topbar">
-    <div class="brand-topbar-left">
-      <button type="button" class="pos-back" id="brand-back" aria-label="Back">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
+<body class="pos brand-pos">
+  <!-- top chrome -->
+  <header class="brand-topbar" role="banner">
+    <!-- back -->
+    <button id="brand-back" class="icon-btn icon-btn--back" type="button" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
 
-    <div class="brand-topbar-center">
-      <!-- Theme Toggle -->
-      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-        <span class="tt-track" aria-hidden="true">
-          <!-- side icons (dim/bright via CSS) -->
-          <span class="tt-side tt-side--sun">
-            <img src="/img/icons/sun.svg" alt="" />
-          </span>
-          <span class="tt-side tt-side--moon">
-            <img src="/img/icons/moon.svg" alt="" />
-          </span>
+    <!-- centered theme toggle -->
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="false">
+      <span class="tt-track" aria-hidden="true">
+        <img class="tt-ico tt-ico--sun" src="/img/icons/sun.svg" alt="" />
+        <img class="tt-ico tt-ico--moon" src="/img/icons/moon.svg" alt="" />
 
-          <!-- knob -->
-          <span class="tt-knob">
-            <span class="tt-knob-ico tt-knob-ico--sun">
-              <img src="/img/icons/sun.svg" alt="" />
-            </span>
-            <span class="tt-knob-ico tt-knob-ico--moon">
-              <img src="/img/icons/moon.svg" alt="" />
-            </span>
-          </span>
+        <span class="tt-knob" aria-hidden="true">
+          <img class="tt-knob-ico tt-knob-ico--sun" src="/img/icons/sun.svg" alt="" />
+          <img class="tt-knob-ico tt-knob-ico--moon" src="/img/icons/moon.svg" alt="" />
         </span>
-      </button>
-    </div>
+      </span>
+    </button>
 
-    <div class="brand-topbar-right" style="justify-content:flex-end;">
-      <!-- Invoice / Cart -->
-      <button type="button" id="invoice-pill" aria-label="Invoice">
-        <img id="invoiceIcon" src="/img/icons/cart-blue.svg" alt="" />
-      </button>
-    </div>
+    <!-- invoice/cart (top right) -->
+    <button id="invoice-pill" class="icon-btn icon-btn--cart" type="button" aria-label="Invoice">
+      <span class="cart-ico" aria-hidden="true">
+        <img class="cart-img cart-img--empty" src="/img/icons/cart-blue.svg" alt="" />
+        <img class="cart-img cart-img--hot" src="/img/icons/cart-red.svg" alt="" />
+      </span>
+    </button>
   </header>
 
-  <!-- Title + brand icon -->
-  <section class="brand-hero">
-    <h1 id="brand-title">Brand</h1>
-    <div id="brand-icon" aria-hidden="true"></div>
-  </section>
+  <main class="brand-wrap" role="main">
+    <div class="brand-head">
+      <div class="brand-title-row">
+        <h1 id="brand-title" class="brand-title">Brand</h1>
+        <div id="brand-icon" class="brand-icon" aria-hidden="true"></div>
+      </div>
 
-  <!-- Search + Filters/Bands + Maduro/Natural segmented -->
-  <section class="brand-tools">
-    <div class="brand-search">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
-              fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-      </svg>
-      <input id="brand-search" placeholder="Search…" autocomplete="off" />
-    </div>
+      <div class="brand-search bubble">
+        <svg class="brand-search-ico" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
+                fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+        </svg>
+        <input id="brand-search" type="search" placeholder="Search…" autocomplete="off" />
+      </div>
 
-    <div class="brand-actions">
-      <button type="button" class="pill-btn" id="btn-filters">Filters</button>
-      <button type="button" class="pill-btn" id="btn-bands">Bands</button>
+      <div class="brand-controls">
+        <button id="btn-filters" class="pill-btn bubble" type="button">Filters</button>
+        <button id="btn-bands" class="pill-btn bubble" type="button">Bands</button>
+      </div>
 
-      <!-- Maduro/Natural segmented control -->
-      <div id="wrapper-seg" data-state="all" aria-label="Wrapper toggle">
-        <button type="button" id="seg-maduro" aria-pressed="false">Maduro</button>
-        <div class="seg-dot" id="seg-switch" aria-hidden="true"><span></span></div>
-        <button type="button" id="seg-natural" aria-pressed="false">Natural</button>
+      <!-- Maduro / Natural segmented -->
+      <div id="wrapper-seg" class="seg bubble" data-state="all" role="group" aria-label="Wrapper filter">
+        <button id="seg-maduro" class="seg-btn" type="button" aria-pressed="false">Maduro</button>
+        <button id="seg-switch" class="seg-switch" type="button" aria-label="Switch wrapper filter">
+          <span class="seg-dot" aria-hidden="true"></span>
+        </button>
+        <button id="seg-natural" class="seg-btn" type="button" aria-pressed="false">Natural</button>
       </div>
     </div>
-  </section>
 
-  <div id="brand-status" hidden>Loading…</div>
-  <main id="brand-list" role="list"></main>
+    <div class="brand-divider"></div>
 
-  <!-- Sheets backdrop -->
-  <div id="sheet-backdrop" hidden></div>
+    <div id="brand-status" class="brand-status" aria-live="polite"></div>
+    <div id="brand-list" class="brand-list" role="list"></div>
+  </main>
 
-  <!-- Bands Sheet -->
-  <section id="sheet-bands" class="pos-sheet" hidden aria-hidden="true">
-    <div class="pos-sheet-header">
-      <div class="pos-sheet-title">Bands</div>
-      <button type="button" class="pos-sheet-close" data-sheet-close aria-label="Close">
-        <svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;">
-          <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-        </svg>
-      </button>
+  <!-- shared sheet backdrop used by Bands/Receipt -->
+  <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
+
+  <!-- Bands sheet -->
+  <section id="sheet-bands" class="sheet" hidden aria-hidden="true">
+    <div class="sheet-hd">
+      <div class="sheet-title">Bands</div>
+      <button type="button" class="sheet-x" data-sheet-close aria-label="Close">×</button>
     </div>
-    <div class="pos-sheet-body">
-      <div id="bands-options"></div>
+    <div class="sheet-bd">
+      <div id="bands-options" class="bands-options"></div>
     </div>
-    <div class="pos-sheet-actions">
-      <button type="button" class="pill-btn" id="bands-confirm">Apply</button>
+    <div class="sheet-ft">
+      <button id="bands-confirm" class="sheet-primary" type="button">Done</button>
     </div>
   </section>
 
-  <!-- Receipt Sheet (brand.js doesn’t “touch” it, but keeps close wiring safe) -->
-  <section id="sheet-receipt" class="pos-sheet" hidden aria-hidden="true">
-    <div class="pos-sheet-header">
-      <div class="pos-sheet-title">Invoice</div>
-      <button type="button" class="pos-sheet-close" data-sheet-close aria-label="Close">
-        <svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;">
-          <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </div>
-    <div class="pos-sheet-body">
-      <div style="color:var(--muted);font-family:var(--font-display);font-weight:700;">
-        (Receipt UI rendered elsewhere)
-      </div>
-    </div>
-  </section>
+  <!-- Receipt sheet placeholder (brand.js references it) -->
+  <section id="sheet-receipt" class="sheet" hidden aria-hidden="true"></section>
 
-  <!-- Theme toggle logic (kept tiny + safe) -->
-  <script>
-    (function(){
-      const root = document.documentElement;
-      const btn = document.getElementById("themeToggle");
-      const invoiceIcon = document.getElementById("invoiceIcon");
-
-      function applyTheme(theme){
-        root.setAttribute("data-theme", theme);
-
-        // Cart icon: light -> blue, dark -> red
-        if (invoiceIcon){
-          invoiceIcon.src = theme === "dark"
-            ? "/img/icons/cart-red.svg"
-            : "/img/icons/cart-blue.svg";
-        }
-
-        try { localStorage.setItem("theme", theme); } catch {}
-      }
-
-      function getInitialTheme(){
-        try {
-          const saved = localStorage.getItem("theme");
-          if (saved === "dark" || saved === "light") return saved;
-        } catch {}
-        return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      }
-
-      applyTheme(getInitialTheme());
-
-      btn && btn.addEventListener("click", function(){
-        const cur = root.getAttribute("data-theme") === "dark" ? "dark" : "light";
-        applyTheme(cur === "dark" ? "light" : "dark");
-      });
-    })();
-  </script>
-
-  <!-- Your controller -->
-  <script defer src="/pos/cigars/brand.js?v=1"></script>
+  <!-- scripts -->
+  <script defer src="/js/theme-toggle.js"></script>
+  <script defer src="/pos/cigars/brand.js?v=13.0"></script>
 </body>
 </html>
