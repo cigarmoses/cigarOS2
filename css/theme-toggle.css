@@ -1,5 +1,8 @@
 /* /css/theme-toggle.css
-   iOS-style Sun/Moon toggle (center-friendly)
+   iOS-style Sun/Moon toggle
+   Uses:
+   img/icons/sun.svg
+   img/icons/moon.svg
 */
 
 .theme-toggle{
@@ -22,20 +25,7 @@
   overflow:hidden;
 }
 
-.tt-ico{
-  position:absolute;
-  top:50%;
-  transform: translateY(-50%);
-  width:18px;
-  height:18px;
-  opacity:.7;
-  color: rgba(0,0,0,.55);
-}
-.tt-ico svg{ width:18px; height:18px; display:block; }
-
-.tt-ico--sun{ left:12px; }
-.tt-ico--moon{ right:12px; }
-
+/* knob */
 .tt-knob{
   position:absolute;
   top:50%;
@@ -48,42 +38,41 @@
   border: 1px solid rgba(0,0,0,.12);
   box-shadow: 0 10px 18px rgba(0,0,0,.18);
   transition: left 180ms ease, background 180ms ease, border-color 180ms ease;
-}
-
-/* knob icon container (we swap via theme-toggle.js) */
-.tt-knob-ico{
-  position:absolute;
-  inset:0;
   display:grid;
   place-items:center;
-  color: rgba(0,0,0,.65);
 }
 
-/* ===== DARK MODE STATE =====
-   - knob slides right
-   - knob becomes DARK DARK GREY
-   - moon icon becomes WHITE
-*/
+/* icon inside knob */
+.tt-knob-ico{
+  width:16px;
+  height:16px;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+}
+
+/* ===========================
+   LIGHT MODE (default)
+=========================== */
+html[data-theme="light"] .tt-knob-ico{
+  background-image: url("/img/icons/sun.svg");
+}
+
+/* ===========================
+   DARK MODE
+=========================== */
 html[data-theme="dark"] .tt-track{
   background: rgba(0,0,0,.22);
   border-color: rgba(255,255,255,.14);
 }
 
-html[data-theme="dark"] .tt-ico{
-  color: rgba(255,255,255,.60);
-  opacity:.75;
-}
-
 html[data-theme="dark"] .tt-knob{
   left: calc(74px - 3px - 30px);
-  background: #141418;          /* ✅ dark dark grey behind moon */
+  background: #141418;      /* dark dark grey circle */
   border-color: rgba(255,255,255,.14);
 }
 
 html[data-theme="dark"] .tt-knob-ico{
-  color:#ffffff;                /* ✅ moon icon white */
+  background-image: url("/img/icons/moon.svg");
+  filter: brightness(0) invert(1); /* force moon white */
 }
-
-/* optional: make "active side" icon slightly stronger */
-html[data-theme="light"] .tt-ico--sun{ opacity:.9; }
-html[data-theme="dark"]  .tt-ico--moon{ opacity:.95; }
