@@ -1,10 +1,7 @@
 /* /css/theme.css
-   Global theme tokens (NO toggle styling here)
+   Global theme tokens (NO toggle styling in this file)
 */
 
-/* -------------------------------
-   Theme tokens
--------------------------------- */
 :root{
   --bg: #f2f2f7;
   --surface: #ffffff;
@@ -16,7 +13,6 @@
   --shadow: 0 10px 30px rgba(0,0,0,.10);
 }
 
-/* Dark theme tokens */
 html[data-theme="dark"]{
   --bg: #0b0b0f;
   --surface: #14141a;
@@ -28,13 +24,12 @@ html[data-theme="dark"]{
   --shadow: 0 12px 34px rgba(0,0,0,.55);
 }
 
-/* Apply tokens */
 body{
   background: var(--bg);
   color: var(--ink);
 }
 
-/* Optional helpers */
+/* common surfaces */
 .card, .panel, .sheet, .glass{
   background: var(--surface);
   border: 1px solid var(--hairline);
