@@ -1,7 +1,7 @@
 /* /js/theme-toggle.js
    Global theme toggle:
    - Stores preference in localStorage: "theme" = "light" | "dark"
-   - Applies to <body data-theme="...">
+   - Applies to <html data-theme="..."> (matches /css/theme.css)
 */
 
 (() => {
@@ -26,15 +26,15 @@
   };
 
   const applyTheme = (theme) => {
-    const body = document.body;
-    if (!body) return;
+    const root = document.documentElement; // ✅ <html>
+    if (!root) return;
 
-    body.dataset.theme = theme;
+    root.dataset.theme = theme;
 
     const btn = document.getElementById("theme-toggle");
     if (btn) {
       btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
-      // knob icon (sun/moon) inside the circle
+
       const ico = btn.querySelector(".tt-knob-ico");
       if (ico) {
         ico.innerHTML =
@@ -53,9 +53,6 @@
   };
 
   const init = () => {
-    const body = document.body;
-    if (!body) return;
-
     const saved = getStored();
     const theme = saved === "dark" || saved === "light" ? saved : getSystemPref();
     applyTheme(theme);
@@ -64,7 +61,7 @@
     if (!btn) return;
 
     btn.addEventListener("click", () => {
-      const cur = body.dataset.theme === "dark" ? "dark" : "light";
+      const cur = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
       const next = cur === "dark" ? "light" : "dark";
       setStored(next);
       applyTheme(next);
