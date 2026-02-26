@@ -1,7 +1,7 @@
 /* /shops/shop.js
-   Public Shop Page (Centered Layout + Bottom Section v12.3)
+   Public Shop Page (Centered Layout + Bottom Section v12.4)
 
-   ✅ Use with: <script src="/shops/shop.js?v=12.3"></script>
+   ✅ Use with: <script src="/shops/shop.js?v=12.4"></script>
 
    Data:
    ✅ Loads per-shop JSON first:
@@ -102,6 +102,10 @@
   // Token-based spacing for common words inside smashed slugs.
   const BRAND_TOKENS = [
     "tradingcompany",
+    "blacklabel",
+    "rockypatel",
+    "hoyodemonterrey",
+    "oscarvalladares",
     "tradingco",
     "trading",
     "company",
@@ -110,6 +114,8 @@
     "label",
     "saints",
     "leaf",
+    "montecristo",
+    "monterrey",
     "de",
     "del",
     "la",
@@ -141,24 +147,24 @@
 
     // Heuristic: insert spaces around known tokens in smashed strings.
     let w = clean;
-    for (const t of BRAND_TOKENS) {
-      // add boundaries around token occurrences
-      w = w.replaceAll(t, ` ${t} `);
-    }
+    for (const t of BRAND_TOKENS) w = w.replaceAll(t, ` ${t} `);
 
-    // cleanup, title case
+    // cleanup
     w = w.replace(/\s+/g, " ").trim();
     if (!w) return titleCaseWords(clean);
 
-    // special casing
-    w = w
-      .replace(/\bst\b/gi, "St")
-      .replace(/\bco\b/gi, "Co")
-      .replace(/\bde\b/gi, "de")
-      .replace(/\bdel\b/gi, "del")
-      .replace(/\bla\b/gi, "la");
+    // Preserve small words
+    const parts = w.split(" ").filter(Boolean).map((p) => p.toLowerCase());
+    const keepLower = new Set(["de", "del", "la"]);
+    const out = parts.map((p) => {
+      if (keepLower.has(p)) return p;
+      if (p === "st") return "St";
+      if (p === "co") return "Co";
+      return p[0].toUpperCase() + p.slice(1);
+    });
 
-    return titleCaseWords(w);
+    // Special casing for “FeriO”
+    return out.join(" ").replace(/\bFerio\b/g, "FeriO");
   }
 
   // ---------------- url builders ----------------
@@ -361,7 +367,7 @@
 
   // ---------------- injected styling ----------------
   function injectStylesOnce() {
-    if (document.getElementById("spInjectedV12_3")) return;
+    if (document.getElementById("spInjectedV12_4")) return;
 
     const css = `
       /* Move SHOP pill to top-right */
@@ -449,6 +455,7 @@
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
       }
 
+      /* keep tap feel, but no card */
       .sp-dock a:active{ transform: scale(.99); }
 
       /* Icon + label sizing */
@@ -471,7 +478,7 @@
         line-height: 1;
       }
 
-      /* Status pill inside dock (this one keeps its own pill shape) */
+      /* Status pill inside dock (keeps pill shape) */
       .sp-status-mini{
         display:inline-flex;
         align-items:center;
@@ -505,8 +512,8 @@
         border:none;
         background:transparent;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
-        font-weight: 900;                 /* ✅ bolder */
-        font-size: 15px;                  /* ✅ slightly larger */
+        font-weight: 900;
+        font-size: 15px;
         letter-spacing: -0.02em;
         color:#8e8e93;
       }
@@ -580,7 +587,7 @@
         display:grid; place-items:center;
         font-size:20px;
         cursor:pointer;
-        color:#007aff; /* iOS blue */
+        color:#007aff;
       }
 
       .sp-sheet-search{
@@ -668,7 +675,7 @@
     `;
 
     const style = document.createElement("style");
-    style.id = "spInjectedV12_3";
+    style.id = "spInjectedV12_4";
     style.textContent = css;
     document.head.appendChild(style);
   }
@@ -887,9 +894,7 @@
     {
       const stat = document.createElement("div");
       stat.className = "sp-dock-static";
-      stat.innerHTML = `<div class="sp-status-mini" data-status="${status.toLowerCase()}">${escapeHtml(
-        status
-      )}</div>`;
+      stat.innerHTML = `<div class="sp-status-mini" data-status="${status.toLowerCase()}">${escapeHtml(status)}</div>`;
       dock.appendChild(stat);
     }
 
@@ -1060,7 +1065,6 @@
     if (taaEl) {
       taaEl.style.display = hasTaa ? "block" : "none";
       if (hasTaa) {
-        // If it’s not already set in HTML, set it
         if (!taaEl.getAttribute("src")) taaEl.setAttribute("src", "/img/icons/taa.svg");
         taaEl.setAttribute("alt", "TAA");
       }
@@ -1074,7 +1078,7 @@
       await loadLogoWithoutOutline(logoImg, svgUrl, pngUrl);
     }
 
-    // Amenities row (render up to 3 true items to match UI)
+    // Amenities row (render up to 3 true items)
     const amenRow = $("#spAmenRow") || $(".sp-amen-row");
     if (amenRow) {
       amenRow.innerHTML = "";
@@ -1122,13 +1126,8 @@
 
     try {
       const shop = await loadShopData(fileSlug);
-
-      // Move SHOP pill to top-right in case HTML had it left
-      // (We only reposition via CSS; no DOM change needed.)
-
       await renderTop(shop);
     } catch (e) {
-      // minimal fail UI
       const titleEl = $("#spTitle") || $(".sp-title-center");
       if (titleEl) titleEl.textContent = "Shop not found";
       const cityText = $("#spCity") || $(".sp-city");
