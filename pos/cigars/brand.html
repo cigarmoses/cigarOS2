@@ -1,63 +1,59 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>POS • Brand</title>
 
   <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/css/theme.css" />
+  <link rel="stylesheet" href="/css/theme-toggle.css" />
+
   <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
-
-  <!-- ✅ Theme toggle styles -->
-  <link rel="stylesheet" href="/css/theme-toggle.css" />
 </head>
 
-<body class="brand-page" data-theme="light">
+<body class="brand-page">
 
+  <!-- TOP BAR: Back | Center Toggle | Invoice -->
   <header class="brand-topbar">
-    <!-- Left: Back -->
     <button type="button" class="icon-btn" id="brand-back" aria-label="Back">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M15 18L9 12L15 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
 
-    <!-- Center: Theme Toggle -->
     <div class="topbar-center">
-      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="false">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">
         <span class="tt-track" aria-hidden="true">
-          <!-- sun (left) -->
+
+          <!-- track icons -->
           <span class="tt-ico tt-ico--sun" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 18a6 6 0 1 0 0-12a6 6 0 0 0 0 12Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-              <path d="M12 2.3v2.3M12 19.4v2.3M3.1 12h2.3M18.6 12h2.3M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M19.4 4.6l-1.6 1.6M6.2 17.8l-1.6 1.6"
-                    fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-            </svg>
+            <img src="/img/icons/sun.svg" alt="" />
           </span>
 
-          <!-- moon (right) -->
           <span class="tt-ico tt-ico--moon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 15.2A7.7 7.7 0 0 1 8.8 4a6.5 6.5 0 1 0 11.2 11.2Z"
-                    fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <img src="/img/icons/moon.svg" alt="" />
           </span>
 
           <!-- knob -->
           <span class="tt-knob" aria-hidden="true">
-            <span class="tt-knob-ico" aria-hidden="true"></span>
+            <span class="tt-knob-ico" aria-hidden="true">
+              <img id="tt-knob-img" src="/img/icons/sun.svg" alt="" />
+            </span>
           </span>
+
         </span>
       </button>
     </div>
 
-    <!-- Right spacer so center stays TRUE center -->
-    <div class="topbar-right-spacer" aria-hidden="true"></div>
+    <!-- invoice / cart -->
+    <button class="invoice-icon" id="invoice-icon" type="button" aria-label="Invoice">
+      <img id="invoice-icon-img" src="/img/icons/cart-light.png" alt="" />
+    </button>
   </header>
 
   <main class="brand-main">
-
     <section class="brand-title-row">
       <h1 class="brand-title" id="brand-title">Brand</h1>
       <div class="brand-icon" id="brand-icon" aria-hidden="true"></div>
@@ -81,15 +77,11 @@
       </div>
     </section>
 
-    <section class="brand-applied" id="brand-applied" aria-label="Applied filters" hidden>
-      <div class="applied-row" id="brand-applied-row"></div>
-    </section>
-
     <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
     <p class="brand-status" id="brand-status" hidden></p>
   </main>
 
-  <!-- ✅ Bands sheet -->
+  <!-- bands sheet (if you already have it) -->
   <section class="sheet bands-sheet" id="sheet-bands" role="dialog" aria-modal="true" aria-label="Bands" hidden>
     <header class="sheet-header bands-header">
       <h2>Filter by band art</h2>
@@ -105,15 +97,8 @@
     </footer>
   </section>
 
-  <!-- IMPORTANT:
-       cart.js injects the single universal invoice button + invoice UI.
-       Do NOT hardcode receipt/invoice markup here.
-  -->
+  <!-- cart system (needed so invoice opens) -->
   <script defer src="/pos/cart.js"></script>
   <script defer src="/pos/cigars/brand.js"></script>
-
-  <!-- ✅ Theme toggle logic -->
-  <script defer src="/js/theme-toggle.js"></script>
-
 </body>
 </html>
