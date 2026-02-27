@@ -25,7 +25,6 @@
   const openBtn = $("#btn-open-filters") || $(".cigars-filter-btn") || $("#cigars-filter-btn");
   const listRoot = $("#cigarsList");
   const appliedRoot = $("#cigarsAppliedFilters");
-  const sectionTitle = $("#cigarsSectionTitle");
 
   let modalRoot = $("#filter-modal");
 
@@ -334,8 +333,6 @@
   function renderBrandsGrid(summary) {
     if (!listRoot) return;
 
-    if (sectionTitle) sectionTitle.textContent = "Brands";
-
     listRoot.innerHTML = `
       <div class="brands-grid">
         ${summary.map((c) => {
@@ -356,8 +353,6 @@
 
   function renderResultsRows(summary) {
     if (!listRoot) return;
-
-    if (sectionTitle) sectionTitle.textContent = "Results";
 
     listRoot.innerHTML = `
       <div class="cigars-results">
@@ -400,7 +395,7 @@
     const filtersOn = hasActiveFilters(g);
 
     if (!summary.length) {
-      if (sectionTitle) sectionTitle.textContent = qOn || filtersOn ? "Results" : "Brands";
+      
       listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
       return;
     }
