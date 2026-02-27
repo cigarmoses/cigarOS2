@@ -2,443 +2,617 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>News • CigarOS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>News • CigarOS2</title>
 
-  <!-- Main POS styles -->
-  <link rel="stylesheet" href="/pos/pos.css" />
-  <!-- Global SF Pro type system -->
+  <!-- If you already load /css/type.css with SF Pro variables, keep it -->
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
-    :root {
-      --bg: #eaf2f6;
-      --ink: #0f1a2c;
-      --muted: #6a7586;
-      --card: #ffffff;
-      --pill: #f3f7fb;
-      --radius-lg: 20px;
+    :root{
+      /* Typography */
+      --font-display: var(--font-display, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif);
+      --font-text: var(--font-text, -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif);
+
+      /* Layout */
+      --max: 980px;
+      --pad: 18px;
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+
+      /* Light theme */
+      --bg: #f2f2f7;
+      --surface: rgba(255,255,255,0.92);
+      --surface2: #ffffff;
+      --ink: #0b1220;
+      --muted: rgba(11,18,32,0.62);
+      --hair: rgba(11,18,32,0.10);
+
+      --shadow: 0 10px 28px rgba(0,0,0,0.10);
+      --shadow2: 0 6px 16px rgba(0,0,0,0.08);
+
+      --chip: rgba(11,18,32,0.06);
+      --chipInk: rgba(11,18,32,0.82);
+
+      --accent: #ff2d55; /* iOS-ish pink/red */
+      --glass: rgba(255,255,255,0.64);
+      --glassStroke: rgba(255,255,255,0.50);
     }
 
-    * { box-sizing: border-box; }
+    /* Auto dark mode */
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg: #0b0b0f;
+        --surface: rgba(20,20,26,0.70);
+        --surface2: rgba(24,24,32,0.92);
+        --ink: #f5f7ff;
+        --muted: rgba(245,247,255,0.64);
+        --hair: rgba(245,247,255,0.10);
 
-    body {
-      margin: 0;
+        --shadow: 0 16px 40px rgba(0,0,0,0.55);
+        --shadow2: 0 10px 26px rgba(0,0,0,0.50);
+
+        --chip: rgba(245,247,255,0.10);
+        --chipInk: rgba(245,247,255,0.86);
+
+        --glass: rgba(24,24,32,0.62);
+        --glassStroke: rgba(245,247,255,0.14);
+      }
+    }
+
+    /* Manual override hooks (optional) */
+    html[data-theme="light"]{
+      color-scheme: light;
+    }
+    html[data-theme="dark"]{
+      color-scheme: dark;
+      --bg: #0b0b0f;
+      --surface: rgba(20,20,26,0.70);
+      --surface2: rgba(24,24,32,0.92);
+      --ink: #f5f7ff;
+      --muted: rgba(245,247,255,0.64);
+      --hair: rgba(245,247,255,0.10);
+      --shadow: 0 16px 40px rgba(0,0,0,0.55);
+      --shadow2: 0 10px 26px rgba(0,0,0,0.50);
+      --chip: rgba(245,247,255,0.10);
+      --chipInk: rgba(245,247,255,0.86);
+      --glass: rgba(24,24,32,0.62);
+      --glassStroke: rgba(245,247,255,0.14);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: var(--font-text);
       background: var(--bg);
       color: var(--ink);
-      font-family: var(--font-text); /* SF Pro Text via type.css */
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
-    .wrap {
-      max-width: 480px;
+    .wrap{
+      max-width: var(--max);
       margin: 0 auto;
-      padding: 12px 12px 80px;
+      padding: calc(var(--pad) + env(safe-area-inset-top)) var(--pad) calc(28px + env(safe-area-inset-bottom));
     }
 
-    /* Topbar */
-    .pos-topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 0 4px;
+    /* Top row */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 8px;
     }
 
-    .pos-back {
-      border: none;
-      background: transparent;
-      padding: 0;
-      font-size: 16px;
-      color: var(--muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
+    .back{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--chipInk);
+      text-decoration:none;
+      font-weight: 600;
     }
+    .back svg{ width: 18px; height: 18px; opacity: 0.9; }
 
-    .pos-back span.icon {
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    .pos-topbar-title {
+    .crumb{
       font-size: 13px;
-      text-transform: uppercase;
       letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: var(--muted);
+      font-weight: 700;
     }
 
-    header.news-header {
-      padding-top: 4px;
-      padding-bottom: 12px;
-    }
-
-    header.news-header h1.page-title {
-      margin: 4px 0 0;
+    /* Title — keep as you requested */
+    h1.page-title{
+      margin: 10px 0 14px;
       font-size: 56px;
       font-weight: 800;
       letter-spacing: -0.03em;
       font-family: var(--font-display); /* SF Pro Display */
+      line-height: 1.02;
     }
 
-    .news-section-label {
-      margin: 10px 0 8px;
-      font-size: 11px;
+    /* Pills row (optional like iOS News category chips) */
+    .chips{
+      display:flex;
+      gap: 10px;
+      overflow:auto;
+      padding: 2px 0 14px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .chips::-webkit-scrollbar{ display:none; }
+    .chip{
+      flex: 0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--chipInk);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      border: 1px solid rgba(255,255,255,0); /* keep clean */
+    }
+    .chip small{
+      font-weight: 700;
+      opacity: 0.8;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--muted);
+      font-size: 11px;
     }
 
-    .news-list {
-      display: flex;
-      flex-direction: column;
+    /* Featured */
+    .featured{
+      border-radius: var(--radius-xl);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      background: #000;
+      position: relative;
+      margin-bottom: 18px;
+      transform: translateZ(0);
+    }
+    .featured .img{
+      height: 260px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.0)), url("https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1400&q=70") center/cover no-repeat;
+      filter: saturate(1.05);
+    }
+    .featured .fade{
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.0) 22%, rgba(0,0,0,0.62) 64%, rgba(0,0,0,0.88) 100%);
+      pointer-events:none;
+    }
+    .featured .meta{
+      position:absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 14px;
+      display:flex;
+      flex-direction:column;
       gap: 10px;
     }
-
-    .news-card {
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      padding: 12px 12px 10px;
-      display: flex;
-      gap: 12px;
-      box-shadow:
-        0 14px 30px rgba(11, 27, 53, 0.08),
-        0 1px 0 rgba(255, 255, 255, 0.8);
-    }
-
-    .news-logo-wrap {
-      flex: 0 0 56px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .news-logo {
-      width: 52px;
-      height: 52px;
-      /* no background, svg as-is */
-      background: transparent;
-      border-radius: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .news-logo img {
-      max-width: 100%;
-      max-height: 100%;
-      display: block;
-    }
-
-    .news-content {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .news-card-top {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start; /* name + X icon inline */
-      gap: 8px;
-    }
-
-    .news-source-name {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      font-family: var(--font-display); /* Display for source labels */
-    }
-
-    .news-x-link {
-      font-size: 13px;
-      text-transform: none;
-      letter-spacing: 0;
-      background: transparent;
-      padding: 0;
-      border-radius: 0;
-      color: var(--muted);
-      text-decoration: none;
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .news-x-link span.icon {
-      font-size: 14px;
-      transform: translateY(-0.5px);
-    }
-
-    .news-links {
-      list-style: none;
-      padding: 0;
-      margin: 4px 0 0;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .news-links li {
-      font-size: 13px;
-      line-height: 1.3;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .news-links a {
-      color: var(--ink);
-      text-decoration: none;
-    }
-
-    .news-links a:hover,
-    .news-links a:active {
-      text-decoration: underline;
-    }
-
-    /* Tony floating icon bottom-left (global pattern) */
-    .tony-fab {
-      position: fixed;
-      left: 16px;
-      bottom: 16px;
-      width: 46px;
-      height: 46px;
+    .sourceBadge{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      width: fit-content;
+      padding: 8px 12px;
       border-radius: 999px;
-      background: transparent;
-      border: none;
-      padding: 0;
-      z-index: 40;
+      background: rgba(255,255,255,0.16);
+      border: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: -0.01em;
     }
-    .tony-fab img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      border-radius: inherit;
+    .sourceBadge img{
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+    }
+    .featured h2{
+      margin:0;
+      color:#fff;
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-size: 26px;
+      line-height: 1.12;
+      max-width: 22ch;
+    }
+    .featured p{
+      margin:0;
+      color: rgba(255,255,255,0.82);
+      font-size: 15px;
+      line-height: 1.35;
+      max-width: 56ch;
     }
 
-    @media (min-width: 520px) {
-      .wrap {
-        padding-top: 18px;
-      }
-      header.news-header h1.page-title {
-        font-size: 34px;
-      }
+    /* Sections */
+    .section{
+      margin: 18px 0 22px;
+    }
+    .sectionHead{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 10px;
+      margin: 0 4px 10px;
+    }
+    .sectionTitle{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-size: 22px;
+      line-height: 1.1;
+    }
+    .sectionTitle img{
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: rgba(255,255,255,0.08);
+    }
+    .seeAll{
+      font-weight: 800;
+      color: var(--accent);
+      text-decoration:none;
+      letter-spacing: -0.01em;
+      padding: 8px 10px;
+      border-radius: 999px;
+    }
+    .seeAll:active{ transform: scale(0.98); }
+
+    /* Stream cards (iOS News-like) */
+    .stream{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .story{
+      display:grid;
+      grid-template-columns: 92px 1fr;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-lg);
+      background: var(--surface2);
+      box-shadow: var(--shadow2);
+      border: 1px solid rgba(255,255,255,0.0);
+      transform: translateZ(0);
+      text-decoration:none;
+      color: inherit;
+    }
+
+    .story:active{
+      transform: scale(0.985);
+    }
+
+    .thumb{
+      width: 92px;
+      height: 68px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(0,0,0,0.10), rgba(0,0,0,0.0));
+      overflow:hidden;
+      position:relative;
+    }
+    .thumb::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      pointer-events:none;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+      filter: saturate(1.05);
+    }
+
+    .story h3{
+      margin:0 0 6px;
+      font-size: 17px;
+      line-height: 1.18;
+      letter-spacing: -0.01em;
+      font-weight: 800;
+      font-family: var(--font-text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow:hidden;
+    }
+    .story .sub{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+    .dot{
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--hair);
+      display:inline-block;
+    }
+
+    /* Glass “Sources” panel (optional) */
+    .sourcesPanel{
+      margin-top: 8px;
+      border-radius: var(--radius-xl);
+      background: var(--glass);
+      border: 1px solid var(--glassStroke);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 12px;
+    }
+    .sourcesRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 2px;
+    }
+    .sourcePill{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--ink);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      text-decoration:none;
+    }
+    .sourcePill img{
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+    }
+
+    /* Responsive */
+    @media (max-width: 420px){
+      h1.page-title{ font-size: 52px; }
+      .featured .img{ height: 240px; }
+      .featured h2{ font-size: 24px; }
+      .story{ grid-template-columns: 86px 1fr; }
+      .thumb{ width: 86px; height: 64px; }
     }
   </style>
 </head>
 
 <body>
   <div class="wrap">
-
-    <div class="pos-topbar">
-      <button class="pos-back" type="button" onclick="history.back()">
-        <span class="icon">←</span>
-        <span>Back</span>
-      </button>
-      <div class="pos-topbar-title">Home • News</div>
+    <div class="topbar">
+      <a class="back" href="/">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </a>
+      <div class="crumb">HOME • NEWS</div>
     </div>
 
-    <header class="news-header">
-      <h1 class="page-title">News</h1>
-      <div class="news-section-label">Sources</div>
-    </header>
+    <!-- KEEP THIS EXACT TITLE STYLE -->
+    <h1 class="page-title">News</h1>
 
-    <!-- JS will populate this -->
-    <section class="news-list" id="news-list"></section>
+    <!-- Optional iOS News-ish chips -->
+    <div class="chips" aria-label="News filters">
+      <div class="chip"><small>All</small></div>
+      <div class="chip">Releases</div>
+      <div class="chip">Industry</div>
+      <div class="chip">Events</div>
+      <div class="chip">Reviews</div>
+    </div>
 
+    <!-- Featured story -->
+    <a class="featured" href="#" aria-label="Featured story">
+      <div class="img"></div>
+      <div class="fade"></div>
+      <div class="meta">
+        <!-- Point these logo paths to your SVGs -->
+        <div class="sourceBadge">
+          <img src="/img/icons/news/halfwheel.svg" alt="Halfwheel" />
+          Halfwheel
+        </div>
+        <h2>New Release Roundup: What’s Landing This Week</h2>
+        <p>Quick hits on the newest drops, limited editions, and retailer arrivals—updated daily.</p>
+      </div>
+    </a>
+
+    <!-- Optional “Sources” glass panel like your current page, but iOS-glass -->
+    <div class="sourcesPanel">
+      <div class="sourcesRow">
+        <a class="sourcePill" href="#halfwheel"><img src="/img/icons/news/halfwheel.svg" alt="Halfwheel">Halfwheel</a>
+        <a class="sourcePill" href="#cigaraficionado"><img src="/img/icons/news/cigaraficionado.svg" alt="Cigar Aficionado">Cigar Aficionado</a>
+        <a class="sourcePill" href="#cigarjournal"><img src="/img/icons/news/cigarjournal.svg" alt="Cigar Journal">Cigar Journal</a>
+        <a class="sourcePill" href="#pca"><img src="/img/icons/news/pca.svg" alt="Premium Cigar Association">PCA</a>
+      </div>
+    </div>
+
+    <!-- Halfwheel section -->
+    <section class="section" id="halfwheel">
+      <div class="sectionHead">
+        <div class="sectionTitle">
+          <img src="/img/icons/news/halfwheel.svg" alt="" />
+          Halfwheel
+        </div>
+        <a class="seeAll" href="#">See all →</a>
+      </div>
+
+      <div class="stream">
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>S.T. Dupont Introduces $70,000 Jackpot Lighter</h3>
+            <div class="sub">Today <span class="dot"></span> 6 min read</div>
+          </div>
+        </a>
+
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1523905330026-b8bd1f5f320e?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>The Cigar Accessories I Use: Brooks Whittington</h3>
+            <div class="sub">Yesterday <span class="dot"></span> 4 min read</div>
+          </div>
+        </a>
+
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>The Cigar Accessories I Use: Patrick Lagreid</h3>
+            <div class="sub">Yesterday <span class="dot"></span> 5 min read</div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Cigar Aficionado section -->
+    <section class="section" id="cigaraficionado">
+      <div class="sectionHead">
+        <div class="sectionTitle">
+          <img src="/img/icons/news/cigaraficionado.svg" alt="" />
+          Cigar Aficionado
+        </div>
+        <a class="seeAll" href="#">See all →</a>
+      </div>
+
+      <div class="stream">
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>A Dozen Delightful Cigars You Need To Try Right Now</h3>
+            <div class="sub">Today <span class="dot"></span> 7 min read</div>
+          </div>
+        </a>
+
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>Rocky Patel Thirtieth Anniversary Heading To…</h3>
+            <div class="sub">2d ago <span class="dot"></span> 5 min read</div>
+          </div>
+        </a>
+
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>New Cuban Hoyo Debuts In Germany</h3>
+            <div class="sub">3d ago <span class="dot"></span> 4 min read</div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Cigar Journal section -->
+    <section class="section" id="cigarjournal">
+      <div class="sectionHead">
+        <div class="sectionTitle">
+          <img src="/img/icons/news/cigarjournal.svg" alt="" />
+          Cigar Journal
+        </div>
+        <a class="seeAll" href="#">See all →</a>
+      </div>
+
+      <div class="stream">
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1457449205106-d0aad138e99b?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>Tatuaje Releases “Sextooth”</h3>
+            <div class="sub">Today <span class="dot"></span> 3 min read</div>
+          </div>
+        </a>
+
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1520975916090-3105956dac38?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>10% Off Procigar Festival 2026 Registration</h3>
+            <div class="sub">1d ago <span class="dot"></span> 2 min read</div>
+          </div>
+        </a>
+
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>PCA × FIU Luxury Marketing & Experiences…</h3>
+            <div class="sub">4d ago <span class="dot"></span> 4 min read</div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- PCA section -->
+    <section class="section" id="pca">
+      <div class="sectionHead">
+        <div class="sectionTitle">
+          <img src="/img/icons/news/pca.svg" alt="" />
+          Premium Cigar Association
+        </div>
+        <a class="seeAll" href="#">See all →</a>
+      </div>
+
+      <div class="stream">
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1532635241-17e820acc59f?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>J.C. Newman Releases Limited-Edition “The …”</h3>
+            <div class="sub">Today <span class="dot"></span> 2 min read</div>
+          </div>
+        </a>
+
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>Duran Cigars Debuts Roberto Duran Reserva</h3>
+            <div class="sub">2d ago <span class="dot"></span> 3 min read</div>
+          </div>
+        </a>
+
+        <a class="story" href="#">
+          <div class="thumb"><img src="https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div>
+            <h3>Powstanie Cigars Unleashes the 2025 War Be…</h3>
+            <div class="sub">5d ago <span class="dot"></span> 4 min read</div>
+          </div>
+        </a>
+      </div>
+    </section>
   </div>
 
-  <!-- Tony floating icon (bottom-left, same across app) -->
-  <button class="tony-fab" id="tonyFab">
-    <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
-  </button>
-
   <script>
-    const NEWS_JSON_URL = "/pos/pos-news.json";
+    // OPTIONAL: if you already have a theme toggle elsewhere,
+    // you can set <html data-theme="dark"> or "light".
+    // This is just a helper if you want to persist a manual choice.
 
-    // Fallback data (keeps working even if JSON fetch fails)
-    const staticNewsSources = [
-      {
-        id: "halfwheel",
-        name: "Halfwheel",
-        icon: "/img/icons/halfwheel.svg",
-        xHandle: "@halfwheel",
-        xUrl: "https://x.com/halfwheel",
-        stories: [
-          {
-            title: "S.T. Dupont Introduces $70,000 Jackpot Lighter",
-            url: "https://halfwheel.com/s-t-dupont-introduces-70000-jackpot-lighter/457611/"
-          },
-          {
-            title: "The Cigar Accessories I Use: Brooks Whittington",
-            url: "https://halfwheel.com/the-cigar-accessories-i-use-brooks-whittington/456951/"
-          },
-          {
-            title: "The Cigar Accessories I Use: Patrick Lagreid",
-            url: "https://halfwheel.com/the-cigar-accessories-i-use-patrick-lagreid/457119/"
-          }
-        ]
-      },
-      {
-        id: "cigaraficionado",
-        name: "Cigar Aficionado",
-        icon: "/img/icons/cigaraficionado.svg",
-        xHandle: "@CigarAficMag",
-        xUrl: "https://x.com/CigarAficMag",
-        stories: [
-          {
-            title: "A Dozen Delightful Cigars You Need To Try Right Now",
-            url: "https://www.cigaraficionado.com/article/a-dozen-delightful-cigars-you-need-to-try-right-now"
-          },
-          {
-            title: "Rocky Patel Thirtieth Anniversary Heading To Shops",
-            url: "https://www.cigaraficionado.com/article/rocky-patel-thirtieth-anniversary-heading-to-shops"
-          },
-          {
-            title: "New Cuban Hoyo Debuts In Germany",
-            url: "https://www.cigaraficionado.com/article/new-cuban-hoyo-debuts-in-germany"
-          }
-        ]
-      },
-      {
-        id: "cigarjournal",
-        name: "Cigar Journal",
-        icon: "/img/icons/cigarjournal.svg",
-        xHandle: "@CigarJournalMag",
-        xUrl: "https://x.com/CigarJournalMag",
-        stories: [
-          {
-            title: "Tatuaje Releases “Sextooth”",
-            url: "https://www.cigarjournal.com/tatuaje-releases-sextooth/"
-          },
-          {
-            title: "10% Off Procigar Festival 2026 Registration – Black Friday Deal",
-            url: "https://www.cigarjournal.com/10-off-procigar-festival-2026-registration-black-friday-deal/"
-          },
-          {
-            title: "PCA × FIU Luxury Marketing & Experiences Masterclass",
-            url: "https://www.cigarjournal.com/pca-x-fiu-luxury-marketing-experiences-masterclass/"
-          }
-        ]
-      },
-      {
-        id: "pca",
-        name: "Premium Cigar Association",
-        icon: "/img/icons/pca.svg",
-        xHandle: "@PCA1933",
-        xUrl: "https://x.com/PCA1933",
-        stories: [
-          {
-            title: "J.C. Newman Releases Limited-Edition “The Brick House is on Fire” for TAA Retailers",
-            url: "https://premiumcigars.org/j-c-newman-releases-limited-edition-the-brick-house-is-on-fire-for-taa-retailers/"
-          },
-          {
-            title: "Duran Cigars Debuts Roberto Duran Reserva",
-            url: "https://premiumcigars.org/duran-cigars-debuts-roberto-duran-reserva/"
-          },
-          {
-            title: "Powstanie Cigars Unleashes the 2025 War Bear “War Bear of Mass Destruction”",
-            url: "https://premiumcigars.org/powstanie-cigars-unleashes-the-2025-war-bear-war-bear-of-mass-destruction/"
-          }
-        ]
-      }
-    ];
-
-    function createNewsCard(source) {
-      const article = document.createElement("article");
-      article.className = "news-card";
-
-      const logoWrap = document.createElement("div");
-      logoWrap.className = "news-logo-wrap";
-
-      const logo = document.createElement("div");
-      logo.className = "news-logo";
-
-      const img = document.createElement("img");
-      img.src = source.icon;
-      img.alt = source.name + " logo";
-      logo.appendChild(img);
-      logoWrap.appendChild(logo);
-
-      const content = document.createElement("div");
-      content.className = "news-content";
-
-      const top = document.createElement("div");
-      top.className = "news-card-top";
-
-      const nameEl = document.createElement("div");
-      nameEl.className = "news-source-name";
-      nameEl.textContent = source.name;
-
-      const xLink = document.createElement("a");
-      xLink.className = "news-x-link";
-      xLink.href = source.xUrl;
-      xLink.target = "_blank";
-      xLink.rel = "noopener noreferrer";
-      xLink.setAttribute("aria-label", (source.xHandle || source.name) + " on X");
-
-      const xIcon = document.createElement("span");
-      xIcon.className = "icon";
-      xIcon.textContent = "𝕏";
-
-      xLink.appendChild(xIcon);
-
-      top.appendChild(nameEl);
-      top.appendChild(xLink);
-
-      const ul = document.createElement("ul");
-      ul.className = "news-links";
-
-      (source.stories || []).forEach(story => {
-        const li = document.createElement("li");
-        const a = document.createElement("a");
-        a.href = story.url;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.textContent = story.title;
-        li.appendChild(a);
-        ul.appendChild(li);
-      });
-
-      content.appendChild(top);
-      content.appendChild(ul);
-
-      article.appendChild(logoWrap);
-      article.appendChild(content);
-
-      return article;
-    }
-
-    async function loadNews() {
-      const container = document.getElementById("news-list");
-      container.innerHTML = "";
-
-      let sources = staticNewsSources;
-
-      try {
-        const res = await fetch(NEWS_JSON_URL, { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && Array.isArray(data.sources) && data.sources.length) {
-            sources = data.sources;
-          }
-        }
-      } catch (err) {
-        console.warn("Using static fallback news data:", err);
+    (function(){
+      const key = "cigaros_theme";
+      const saved = localStorage.getItem(key);
+      if(saved === "dark" || saved === "light"){
+        document.documentElement.setAttribute("data-theme", saved);
       }
 
-      sources.forEach(src => {
-        container.appendChild(createNewsCard(src));
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", loadNews);
+      // Example usage elsewhere:
+      // localStorage.setItem(key, "dark"); document.documentElement.dataset.theme="dark";
+      // localStorage.setItem(key, "light"); document.documentElement.dataset.theme="light";
+      // localStorage.removeItem(key); document.documentElement.removeAttribute("data-theme");
+    })();
   </script>
-
-  <!-- Tony behavior -->
-  <script src="/js/tony.js" defer></script>
 </body>
 </html>
