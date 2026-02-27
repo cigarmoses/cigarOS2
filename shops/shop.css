@@ -47,42 +47,29 @@ body.shop-public{
   justify-content: center;
   padding: 6px 14px;
   border-radius: 999px;
-  font-weight: 600;          /* was 800 */
-  font-size: 12px;           /* was 13 */
-  letter-spacing: 0;         /* was .06em */
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0;
   background: rgba(255,255,255,.70);
   border: 1px solid rgba(0,0,0,.06);
-  color: #8e8e93;            /* lighter system gray */
+  color: #8e8e93;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
 
-/* OPEN / CLOSED */
-.sp-pill-right{
-  border: 1px solid rgba(0,0,0,.06);
-  color: #fff;
-  padding: 6px 14px;
-}
+/* OPEN / CLOSED pill styles removed (we now use text-only status) */
 
-#spStatusPill[data-status="open"]{
-  background: rgba(52,199,89,.92);      /* softer green */
-}
-
-#spStatusPill[data-status="closed"]{
-  background: rgba(142,142,147,.85);    /* system gray */
-}
-
-/* ✅ TAA badge: constrained, aligned right, under OPEN, same visual width */
+/* ✅ TAA badge: constrained, aligned right */
 #spTaaIcon{
   position: absolute !important;
-  top: 64px !important;         /* sits below OPEN */
+  top: 18px !important;
   right: 18px !important;
 
-  width: 72px !important;       /* matches OPEN pill width visually */
-  height: 72px !important;
+  width: 56px !important;
+  height: 56px !important;
 
   object-fit: contain !important;
-  display: block !important;
+  display: none; /* JS should turn on when applicable */
 
   z-index: 5 !important;
 
@@ -150,7 +137,7 @@ body.shop-public{
   display: flex;
   justify-content: center;
   width: 100%;
-  margin: 12px 0 18px;
+  margin: 12px 0 10px; /* slightly tighter because status text is below */
 }
 
 .sp-city:active{ transform: scale(.99); }
@@ -162,29 +149,57 @@ body.shop-public{
   flex: 0 0 auto;
 }
 
-/* Amenities */
+/* ✅ STATUS TEXT ONLY (replaces green pill) */
+.sp-status-text{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 12px;
+  line-height: 1;
+}
+
+#spStatusText{
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+#spStatusText.sp-open{ color: var(--green); }
+#spStatusText.sp-closed{ color: var(--red); }
+
+/* ---------- AMENITIES ---------- */
+/* Now: a simple label + icons row (no pill/box background) */
 .sp-amen-panel{
-  margin-top: 18px;
-  background: #ffffff;
-  border-radius: 28px;
-  padding: 18px 18px;
-  border: 1px solid #ededf0;
+  margin-top: 12px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: 0;
 
   box-shadow: none !important;
   outline: 0 !important;
 }
 
+.sp-amen-title{
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
 .sp-amen-row{
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  gap: 18px;
+  gap: 38px;
 }
 
 /* ✅ kill the black hairline/outline behind amenity icons */
 .sp-amen-icon{
-  width: 54px;
-  height: 54px;
+  width: 34px;
+  height: 34px;
   object-fit: contain;
   display: block;
 
@@ -271,7 +286,7 @@ body.shop-public{
 .sp-seg button[aria-selected="true"]{
   background: rgba(255,255,255,.9);
   color: #0b0b0c;
-  box-shadow: none; /* key: remove shadow */
+  box-shadow: none;
 }
 
 /* Panels + cards */
@@ -393,6 +408,15 @@ body.shop-public{
 
 @media (max-width: 390px){
   .sp-logo-center{ width: 155px; height: 155px; }
-  .sp-amen-icon{ width: 50px; height: 50px; }
-  #spTaaIcon{ width: 68px !important; height: 68px !important; top: 62px !important; }
+
+  /* smaller amenities icons on smaller devices */
+  .sp-amen-icon{ width: 32px; height: 32px; }
+
+  /* TAA slightly smaller and tucked */
+  #spTaaIcon{
+    width: 52px !important;
+    height: 52px !important;
+    top: 16px !important;
+    right: 16px !important;
+  }
 }
