@@ -1,644 +1,124 @@
-/* /pos/cigars/brand.css
-   FULL REPLACEMENT
-*/
+/* =========================================
+   BRAND PAGE
+   ========================================= */
 
-* { box-sizing: border-box; }
-
-html, body { height: 100%; }
-
-body.brand-page{
-  margin:0;
-  min-height:100vh;
-  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.brand-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
 }
 
-/* =========================================================
-   BACKGROUND (LIGHT / DARK)
-   ========================================================= */
-html[data-theme="light"] body.brand-page{
-  color:#0b0b0f;
-  background:
-    radial-gradient(900px 520px at 12% 6%, rgba(120,170,255,.25), transparent 60%),
-    radial-gradient(700px 520px at 92% 8%, rgba(0,200,255,.14), transparent 60%),
-    linear-gradient(180deg, #f6f7fb, #eef0f7);
-  --glass: rgba(255,255,255,.72);
-  --glass2: rgba(255,255,255,.56);
-  --glassBorder: rgba(0,0,0,.06);
-  --ink: #0b0b0f;
-  --muted: rgba(0,0,0,.45);
-  --hair: rgba(0,0,0,.08);
-  --shadow: 0 14px 34px rgba(0,0,0,.10);
-  --shadowSoft: 0 10px 26px rgba(0,0,0,.08);
+/* =============================
+   CART FIX (remove inner shadow)
+   ============================= */
+
+.invoice-btn {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
-html[data-theme="dark"] body.brand-page{
-  color:#ffffff;
-  background:
-    radial-gradient(1200px 700px at 15% 6%, rgba(65,110,200,.40), transparent 55%),
-    radial-gradient(900px 600px at 90% 10%, rgba(0,190,255,.18), transparent 55%),
-    linear-gradient(180deg, #0b1c3a, #071024);
-  --glass: rgba(15,24,44,.54);
-  --glass2: rgba(15,24,44,.42);
-  --glassBorder: rgba(255,255,255,.10);
-  --ink: rgba(255,255,255,.96);
-  --muted: rgba(255,255,255,.60);
-  --hair: rgba(255,255,255,.10);
-  --shadow: 0 18px 40px rgba(0,0,0,.40);
-  --shadowSoft: 0 14px 34px rgba(0,0,0,.32);
+#invoice-icon {
+  width: 36px;
+  height: 36px;
 }
 
-/* =========================================================
-   TOP BAR
-   ========================================================= */
-.brand-topbar{
-  display:grid;
-  grid-template-columns: 44px 1fr 44px;
-  align-items:center;
-  gap: 10px;
-  padding: 14px 14px 0;
+/* =============================
+   FILTERS SHEET (RESTORED)
+   ============================= */
+
+.sheet-filters .filters-layout {
+  display: flex;
+  gap: 20px;
+  padding: 16px 0;
 }
 
-.icon-btn{
-  width:44px;
-  height:44px;
-  display:grid;
-  place-items:center;
-  border:none;
-  background:transparent;
-  padding:0;
-  color: var(--ink);
-  -webkit-tap-highlight-color: transparent;
+.filters-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 140px;
 }
 
-.icon-btn svg{
-  width:24px;
-  height:24px;
-  stroke: currentColor;
-  opacity:.95;
+.filter-tab {
+  background: #f2f2f2;
+  border-radius: 16px;
+  padding: 12px;
+  font-weight: 600;
+  border: none;
 }
 
-/* =========================================================
-   THEME TOGGLE (wider + shorter)
-   ========================================================= */
-.theme-toggle{
-  justify-self:center;
-  border:none;
-  background:transparent;
-  padding:0;
-  -webkit-tap-highlight-color:transparent;
+.filter-tab.active {
+  background: #2f6bff;
+  color: white;
 }
 
-.tt-track{
-  width: 132px;           /* wider */
-  height: 30px;           /* ~80% of prior 36-38 */
-  border-radius: 999px;
-  background: var(--glass2);
-  box-shadow: var(--shadowSoft);
-  position: relative;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 0 12px;
-  overflow:hidden;
+.filters-panel {
+  flex: 1;
 }
 
-.tt-ico{
-  width:18px;
-  height:18px;
-  display:grid;
-  place-items:center;
-  opacity:.45;
-}
-
-.tt-ico img{
-  width:18px;
-  height:18px;
-  display:block;
-  filter: none;
-}
-
-/* only “active side” looks lit */
-html[data-theme="light"] .tt-sun { opacity: 1; }
-html[data-theme="light"] .tt-moon { opacity: .25; }
-html[data-theme="dark"]  .tt-sun { opacity: .25; }
-html[data-theme="dark"]  .tt-moon { opacity: 1; }
-
-.tt-knob{
-  position:absolute;
-  top:50%;
-  transform: translateY(-50%);
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.88);
-  box-shadow: 0 10px 24px rgba(0,0,0,.18);
-  display:grid;
-  place-items:center;
-  transition: left .18s ease;
-}
-
-/* knob background in dark */
-html[data-theme="dark"] .tt-knob{
-  background: rgba(10,14,26,.92);
-  box-shadow: 0 12px 28px rgba(0,0,0,.46);
-}
-
-.tt-knob img{
-  width:18px;
-  height:18px;
-  display:block;
-}
-
-/* knob position: left in light, right in dark */
-html[data-theme="light"] .tt-knob{ left: 6px; }
-html[data-theme="dark"]  .tt-knob{ left: calc(132px - 6px - 28px); }
-
-/* =========================================================
-   INVOICE BUTTON (bigger icon, no thin outline)
-   ========================================================= */
-.invoice-btn{
-  justify-self:end;
-  width:44px;
-  height:44px;
-  border:none;
-  background:transparent;
-  padding:0;
-  display:grid;
-  place-items:center;
-  -webkit-tap-highlight-color:transparent;
-  cursor:pointer;
-}
-
-.invoice-btn img{
-  width: 40px;
-  height: 40px;
-  display:block;
-  object-fit:contain;
+.filters-search input {
+  width: 100%;
+  padding: 12px;
   border-radius: 14px;
-  background: var(--glass2);     /* ensures visibility even if SVG is transparent */
-  box-shadow: var(--shadowSoft);
-  border: none;                  /* remove thin outline */
+  border: 1px solid #ddd;
+  margin-bottom: 16px;
 }
 
-/* =========================================================
-   MAIN
-   ========================================================= */
-.brand-main{ padding:0 14px 120px; }
-
-.brand-title-row{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  margin-top:2px;
+.filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.brand-title{
-  margin:8px 0 12px;
-  font-size:56px;
-  line-height:.92;
-  letter-spacing:-.02em;
-  font-weight:800;
-  color:var(--ink);
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
 }
 
-.brand-icon{
-  width:54px;
-  height:54px;
-  border-radius:14px;
-  background: var(--glass2);
-  box-shadow: var(--shadowSoft);
-  margin-top:10px;
-  overflow:hidden;
-  display:grid;
-  place-items:center;
-  border:none; /* remove thin outline */
-}
-.brand-icon img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
+.filter-option input {
+  width: 22px;
+  height: 22px;
 }
 
-/* =========================================================
-   SEARCH
-   ========================================================= */
-.brand-search .search-wrap{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:12px 14px;
-  border-radius:22px;
-  background: var(--glass);
-  border: 1px solid var(--glassBorder);
-  box-shadow: var(--shadowSoft);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+/* =============================
+   BANDS SHEET (BIG BAND CARDS)
+   ============================= */
+
+.bands-options {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 16px;
 }
 
-.search-ico{ opacity:.70; }
-
-#brand-search{
-  width:100%;
-  border:none;
-  background:transparent;
-  outline:none;
-  color: var(--ink);
-  font-size:18px;
-  font-weight:800;
-  font-family: inherit;
-}
-#brand-search::placeholder{ color: var(--muted); }
-
-/* =========================================================
-   CONTROLS ROW
-   ========================================================= */
-.brand-controls{
-  display:grid;
-  grid-template-columns: 1fr 1fr 1.55fr;
-  gap:10px;
-  margin-top:10px;
-  align-items:center;
+.band-card {
+  background: rgba(255,255,255,0.06);
+  border-radius: 22px;
+  padding: 18px;
 }
 
-.pill-btn{
-  height:44px;
-  border-radius:18px;
-  border:1px solid var(--glassBorder);
-  background: var(--glass2);
-  color: var(--ink);
-  font-size:15px;
-  font-weight:900;
-  font-family: inherit;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow: var(--shadowSoft);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  -webkit-tap-highlight-color:transparent;
-}
-.pill-btn:active{ transform:scale(.99); }
-
-/* =========================================================
-   MADURO / NATURAL TOGGLE (correct size + in-row)
-   ========================================================= */
-.seg{
-  height:44px;
-  border-radius:18px;
-  border:1px solid var(--glassBorder);
-  background: var(--glass2);
-  box-shadow: var(--shadowSoft);
-  display:grid;
-  grid-template-columns: 1fr 56px 1fr;  /* tighter */
-  align-items:center;
-  padding: 0 8px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.seg-btn{
-  height:44px;
-  border:none;
-  background:transparent;
-  font-size:14px;
-  font-weight:900;
-  font-family: inherit;
-  color: var(--muted);
-}
-
-.seg-btn[aria-pressed="true"]{
-  color: #2f6fe4;
-}
-
-.seg-dot{
-  width:56px;
-  height:30px;
-  border-radius:999px;
-  border:1px solid var(--glassBorder);
-  background: rgba(0,0,0,.06);
-  position:relative;
-  margin:0 auto;
-  padding:0;
-  cursor:pointer;
-}
-
-html[data-theme="dark"] .seg-dot{ background: rgba(255,255,255,.06); }
-
-.seg-dot::after{
-  content:"";
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  width:24px;
-  height:24px;
-  border-radius:999px;
-  background: #2f6fe4;
-  left:4px;
-  transition:left .18s ease, opacity .18s ease;
-}
-
-#wrapper-seg[data-state="maduro"] .seg-dot::after{ left:4px; opacity:1; }
-#wrapper-seg[data-state="all"] .seg-dot::after{ left:16px; opacity:.55; }
-#wrapper-seg[data-state="natural"] .seg-dot::after{ left:28px; opacity:1; }
-
-/* =========================================================
-   LIST
-   ========================================================= */
-.brand-list{
-  margin-top:14px;
-  display:flex;
-  flex-direction:column;
-}
-
-.brand-row{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:14px 10px;
-  border-top:1px solid var(--hair);
-}
-
-.row-ico{
-  width:54px;
-  height:54px;
-  border-radius:14px;
-  object-fit:cover;
-  box-shadow: var(--shadowSoft);
-  background: var(--glass2);
-  border:none;  /* remove thin outline */
-  flex:0 0 auto;
-}
-
-.brand-row-left{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  min-width:0;
-  flex:1 1 auto;
-  cursor:pointer;
-}
-
-.brand-row-title{
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:-.01em;
-  line-height:1.12;
-  color: var(--ink);
-  white-space:normal;
-}
-
-.brand-row-sub{
-  font-size:14px;
-  font-weight:800;
-  color: var(--muted);
-  white-space:normal;
-}
-
-.brand-row-right{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  margin-left:14px;
-}
-
-.brand-row-msrp{
-  position:relative;
-  padding-left:10px;
-  font-size:18px;
-  font-weight:800;
-  color: var(--ink);
-  min-width:78px;
-  text-align:right;
-}
-
-.brand-row-msrp::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:50%;
-  transform:translateY(-50%);
-  width:1px;
-  height:44px;
-  background: var(--hair);
-}
-
-.brand-row .pos-add{
-  width:30px;
-  height:30px;
-  border-radius:999px;
-  border:none;
-  background:#34c759;
-  color:#ffffff;
-  font-size:18px;
-  font-weight:900;
-  display:grid;
-  place-items:center;
-  cursor:pointer;
-  box-shadow: 0 14px 28px rgba(0,0,0,.22);
-}
-.brand-row .pos-add:active{ transform:scale(.98); }
-
-.brand-status{
-  margin:16px 0 0;
-  color: var(--muted);
-  font-weight:800;
-}
-
-/* =========================================================
-   SHEETS (Bands / Filters)
-   ========================================================= */
-body.pos-modal-open{ overflow:hidden; }
-
-.sheet{
-  position:fixed;
-  inset:0;
-  z-index:9999;
-  background: rgba(0,0,0,.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  opacity:0;
-  pointer-events:none;
-  transition: opacity .18s ease;
-  padding: 18px 14px 18px;
-}
-
-.sheet.is-open{
-  opacity:1;
-  pointer-events:auto;
-}
-
-.sheet-card{
-  width:min(720px, 100%);
-  border-radius: 26px;
-  background: var(--glass);
-  border: 1px solid var(--glassBorder);
-  box-shadow: var(--shadow);
-  overflow:hidden;
-}
-
-.sheet-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid var(--hair);
-}
-
-.sheet-title{
-  font-size:20px;
-  font-weight:900;
-  color: var(--ink);
-  letter-spacing:-.01em;
-}
-
-.sheet-x{
-  width:36px;
-  height:36px;
-  border-radius: 12px;
-  border:1px solid var(--glassBorder);
-  background: var(--glass2);
-  color: var(--ink);
-  font-size:22px;
-  line-height:1;
-  display:grid;
-  place-items:center;
-  cursor:pointer;
-}
-
-.sheet-foot{
-  padding: 14px 16px 16px;
-  border-top: 1px solid var(--hair);
-  display:flex;
-  justify-content:flex-end;
-}
-
-.sheet-foot-split{
-  display:flex;
-  gap:10px;
-  justify-content:space-between;
-}
-
-.sheet-apply{
-  height:44px;
-  padding: 0 18px;
-  border-radius: 16px;
-  border:none;
-  background:#2f6fe4;
-  color:#fff;
-  font-weight:900;
-  font-family: inherit;
-  cursor:pointer;
-}
-
-.sheet-secondary{
-  height:44px;
-  padding: 0 18px;
-  border-radius: 16px;
-  border:1px solid var(--glassBorder);
-  background: var(--glass2);
-  color: var(--ink);
-  font-weight:900;
-  font-family: inherit;
-  cursor:pointer;
-}
-
-/* BIG BANDS */
-.bands-options{
-  padding: 6px 8px 12px;
-}
-
-.bands-row{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding: 14px 10px;
-  border-bottom: 1px solid var(--hair);
-}
-
-.bands-art{
-  width:64px;
-  height:64px;
+.band-card img {
+  width: 100%;
   border-radius: 18px;
-  background: var(--glass2);
-  box-shadow: var(--shadowSoft);
-  display:grid;
-  place-items:center;
-  overflow:hidden;
 }
 
-.bands-img{
-  width:64px;
-  height:64px;
-  object-fit:cover;
-  display:block;
+.band-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  font-size: 20px;
+  font-weight: 600;
 }
 
-.bands-label{
-  font-size:20px;
-  font-weight:900;
-  color: var(--ink);
-  letter-spacing:-.01em;
+.sheet-apply {
+  width: 100%;
+  border-radius: 18px;
+  padding: 16px;
+  font-size: 18px;
 }
-
-.bands-meta{ flex:1 1 auto; min-width:0; }
-
-.bands-check{
-  width:26px;
-  height:26px;
-  accent-color:#2f6fe4;
-}
-
-/* FILTERS */
-.filters-wrap{
-  padding: 10px 16px 6px;
-}
-
-.filters-note{
-  font-size:13px;
-  font-weight:800;
-  color: var(--muted);
-  margin: 2px 0 10px;
-}
-
-.fgroup{ margin: 12px 0; }
-.fhead{
-  font-size:14px;
-  font-weight:900;
-  color: var(--ink);
-  margin-bottom: 8px;
-}
-
-.fchips{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-}
-
-.fchip{
-  height:36px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border:1px solid var(--glassBorder);
-  background: var(--glass2);
-  color: var(--ink);
-  font-weight:900;
-  font-family: inherit;
-  cursor:pointer;
-  box-shadow: 0 10px 22px rgba(0,0,0,.10);
-}
-
-.fchip.is-on{
-  background: rgba(47,111,228,.16);
-  border-color: rgba(47,111,228,.35);
-  color: #2f6fe4;
-}
-
-/* Utilities */
-[hidden]{ display:none !important; }
