@@ -1,8 +1,9 @@
 /* /pos/cigars/brand.js
-   FULL REPLACEMENT
-   - Fixes $/$$(root) support
-   - Adds centered theme toggle + invoice button wiring
-   - Keeps your existing logic (filters, bands, detail modal, add-to-cart)
+   FULL REPLACEMENT (fixes)
+   - Filters + Bands sheets work
+   - Add button actually adds to cart
+   - Row tap opens cigar detail
+   - No JSON-in-attribute escaping bugs
 */
 
 (() => {
@@ -32,9 +33,6 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#39;");
 
-  const escapeHTML = esc;
-  const escapeAttr = esc;
-
   // ---- brand context ----
   const BRAND = norm(qp("brand"));
   const BRAND_SLUG = slug(BRAND);
@@ -59,14 +57,17 @@
   const segNatural = $("#seg-natural");
   const segSwitch = $("#seg-switch");
 
-  // Bands sheet
-  const sheetBands = $("#sheet-bands");
-  const sheetReceipt = $("#sheet-receipt"); // may not exist, ok
+  // Sheets
+  const sheetFilters = $("#sheet-filters"); // must exist in HTML
+  const sheetBands = $("#sheet-bands");     // must exist in HTML
+  const sheetReceipt = $("#sheet-receipt"); // optional; ok if missing
+
+  // Bands content
   const bandsOptionsEl = $("#bands-options");
   const bandsConfirmBtn = $("#bands-confirm");
 
   // =========================================================
-  // Invoice open helpers (matches your prior behavior)
+  // Invoice open helpers
   // =========================================================
   function openInvoice() {
     const candidates = [
@@ -103,7 +104,6 @@
     });
   }
 
-  // optional: if cart exposes count, swap icon
   function refreshInvoiceIcon() {
     if (!invoiceIcon) return;
 
@@ -112,8 +112,8 @@
       Number(window.CigarOSCart?.items?.length) ||
       0;
 
-    // rename these if your filenames differ
-    invoiceIcon.src = count > 0 ? "/img/icons/cart-red.png" : "/img/icons/cart-empty.png";
+    // ✅ use your SVGs
+    invoiceIcon.src = count > 0 ? "/img/icons/cart-red.svg" : "/img/icons/cart-blue.svg";
   }
 
   // =========================================================
@@ -190,22 +190,8 @@
     return Number.isFinite(n) ? n : 0;
   };
 
-  function buildReceiptItem({ brand, line, cigar, vitola, msrp }) {
-    const key = `${slug(brand)}|${slug(line)}|${slug(cigar)}`;
-    return {
-      key,
-      type: "cigar",
-      category: "Cigars",
-      name: `${line ? line + " — " : ""}${cigar}`,
-      sub: vitola || "",
-      price: priceNum(msrp),
-      qty: 1,
-      meta: { brand, line, cigar, vitola },
-    };
-  }
-
   // =========================================================
-  // CIGAR DETAIL MODAL (same as your version)
+  // CIGAR DETAIL MODAL
   // =========================================================
   let detailOverlay = null;
   let detailSheet = null;
@@ -255,8 +241,8 @@
     const vv = (v || "").toString().trim() || "—";
     return `
       <div class="cd-kv">
-        <div class="k">${escapeHTML(k)}</div>
-        <div class="v">${escapeHTML(vv)}</div>
+        <div class="k">${esc(k)}</div>
+        <div class="v">${esc(vv)}</div>
       </div>
     `;
   }
@@ -265,20 +251,14 @@
     ensureCigarDetailModal();
     document.body.classList.add("cigar-detail-open");
 
-    const brand = norm(row?.brand || row?.Brand || BRAND || "Brand");
-    const cigarName = norm(
-      row?.cigarFull ||
-      row?.["Cigar Full"] ||
-      row?.cigar ||
-      row?.Cigar ||
-      ""
-    );
+    const brand = norm(row?.brand || BRAND || "Brand");
+    const cigarName = norm(row?.cigarFull || row?.cigar || "");
 
     const brandIcon = bestBrandHeaderIcon(row) || "";
     const picked = pickCigarImage(row);
 
     const nameForFile = slug(row?.cigarFull || row?.cigar || cigarName);
-    const brandForFolder = slug(row?.brand || row?.Brand || BRAND || "");
+    const brandForFolder = slug(row?.brand || BRAND || "");
 
     const imgCandidates = [
       picked,
@@ -289,16 +269,16 @@
 
     const cigarImg = imgCandidates[0] || "";
 
-    const rg = norm(row?.ring || row?.RG || row?.Ring || "");
-    const len = norm(row?.length || row?.Length || "");
-    const strength = norm(row?.strength || row?.Strength || "");
-    const vitola = norm(row?.vitola || row?.Vitola || "");
-    const shape = norm(row?.shape || row?.Shape || "");
-    const wrapper = norm(row?.wrapper || row?.Wrapper || "");
-    const binder = norm(row?.binder || row?.Binder || "");
-    const filler = norm(row?.filler || row?.Filler || "");
-    const origin = norm(row?.origin || row?.Origin || "");
-    const shade = norm(row?.wrapperShade || row?.["Wrapper Shade"] || "");
+    const rg = norm(row?.ring || "");
+    const len = norm(row?.length || "");
+    const strength = norm(row?.strength || "");
+    const vitola = norm(row?.vitola || "");
+    const shape = norm(row?.shape || "");
+    const wrapper = norm(row?.wrapper || "");
+    const binder = norm(row?.binder || "");
+    const filler = norm(row?.filler || "");
+    const origin = norm(row?.origin || "");
+    const shade = norm(row?.wrapperShade || "");
 
     detailSheet.innerHTML = `
       <button type="button" class="cigar-detail-x" aria-label="Close">×</button>
@@ -306,25 +286,25 @@
       <div class="cigar-detail-body">
         <div class="cd-headercard">
           <div class="cd-h-left">
-            <div class="cd-brand">${escapeHTML(brand)}</div>
-            <div class="cd-name">${escapeHTML(cigarName)}</div>
+            <div class="cd-brand">${esc(brand)}</div>
+            <div class="cd-name">${esc(cigarName)}</div>
           </div>
           <div class="cd-h-icon">
-            ${brandIcon ? `<img src="${escapeAttr(brandIcon)}" alt="">` : ``}
+            ${brandIcon ? `<img src="${esc(brandIcon)}" alt="">` : ``}
           </div>
         </div>
 
         <div class="cd-main">
           <div class="cd-img">
-            ${cigarImg ? `<img class="cigar-detail-stick" src="${escapeAttr(cigarImg)}" alt="">` : ``}
+            ${cigarImg ? `<img class="cigar-detail-stick" src="${esc(cigarImg)}" alt="">` : ``}
           </div>
 
           <div class="cd-right">
             <div class="cd-grid2">
-              <div class="cd-stat"><div class="k">RING</div><div class="v">${escapeHTML(String(rg))}</div></div>
-              <div class="cd-stat"><div class="k">LENGTH</div><div class="v">${escapeHTML(String(len))}</div></div>
-              <div class="cd-stat small"><div class="k">SHAPE</div><div class="v">${escapeHTML(String(shape))}</div></div>
-              <div class="cd-stat small"><div class="k">VITOLA</div><div class="v">${escapeHTML(String(vitola))}</div></div>
+              <div class="cd-stat"><div class="k">RING</div><div class="v">${esc(String(rg || "—"))}</div></div>
+              <div class="cd-stat"><div class="k">LENGTH</div><div class="v">${esc(String(len || "—"))}</div></div>
+              <div class="cd-stat small"><div class="k">SHAPE</div><div class="v">${esc(String(shape || "—"))}</div></div>
+              <div class="cd-stat small"><div class="k">VITOLA</div><div class="v">${esc(String(vitola || "—"))}</div></div>
             </div>
 
             <div class="cd-block">
@@ -350,14 +330,14 @@
     detailSheet.querySelector(".cigar-detail-x")?.addEventListener("click", closeCigarDetail);
 
     detailSheet.querySelector('[data-cd-action="add"]')?.addEventListener("click", () => {
-      const msrpVal = row?.msrp ?? row?.MSRP ?? row?.Price ?? row?.price ?? 0;
+      const msrpVal = row?.msrp ?? row?.price ?? 0;
 
       window.CigarOSCart?.add?.({
         id: row?.key || `${brand}-${cigarName}-${vitola}`,
         name: cigarName,
         brand: brand,
         category: "Cigars",
-        sub: vitola ? `${vitola} • ${len} × ${rg}` : "",
+        sub: vitola ? `${vitola}${len && rg ? ` • ${len} × ${rg}` : ""}` : "",
         price: Number(msrpVal || 0),
         img: "",
       });
@@ -375,6 +355,42 @@
     detailOverlay.classList.remove("open");
     detailOverlay.setAttribute("aria-hidden", "true");
     document.body.classList.remove("cigar-detail-open");
+  }
+
+  // =========================================================
+  // SHEETS (Filters / Bands)
+  // =========================================================
+  function openSheet(el) {
+    if (!el) return;
+    document.body.classList.add("pos-modal-open");
+    el.hidden = false;
+    el.classList.add("is-open");
+  }
+
+  function closeAllSheets() {
+    document.body.classList.remove("pos-modal-open");
+    [sheetFilters, sheetBands, sheetReceipt].forEach((el) => {
+      if (!el) return;
+      el.classList.remove("is-open");
+      el.hidden = true;
+    });
+  }
+
+  function bindSheetClosers() {
+    // close buttons
+    $$("[data-sheet-close]").forEach((btn) => btn.addEventListener("click", closeAllSheets));
+
+    // click outside sheet
+    [sheetFilters, sheetBands, sheetReceipt].forEach((wrap) => {
+      if (!wrap) return;
+      wrap.addEventListener("click", (e) => {
+        if (e.target === wrap) closeAllSheets();
+      });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAllSheets();
+    });
   }
 
   // =========================================================
@@ -402,7 +418,7 @@
   }
 
   // =========================================================
-  // WRAPPER TOGGLE
+  // WRAPPER TOGGLE (Maduro/Natural)
   // =========================================================
   function matchesWrapper(r) {
     const mode = state.wrapperState;
@@ -431,10 +447,20 @@
     if (!wrapperSeg) return;
 
     setWrapperState("all");
-    segMaduro?.addEventListener("click", () => setWrapperState("maduro"));
-    segNatural?.addEventListener("click", () => setWrapperState("natural"));
 
-    segSwitch?.addEventListener("click", () => {
+    segMaduro?.addEventListener("click", (e) => {
+      e.preventDefault();
+      setWrapperState("maduro");
+    });
+
+    segNatural?.addEventListener("click", (e) => {
+      e.preventDefault();
+      setWrapperState("natural");
+    });
+
+    // optional tap center dot cycles
+    segSwitch?.addEventListener("click", (e) => {
+      e.preventDefault();
       const cur = state.wrapperState;
       const next = cur === "all" ? "maduro" : cur === "maduro" ? "natural" : "all";
       setWrapperState(next);
@@ -455,7 +481,6 @@
 
   function bandKeyMatchesRow(bandKey, r) {
     const full = `${lower(getLine(r))} ${lower(getCigar(r))}`;
-
     switch (bandKey) {
       case "padron1926serieband": return full.includes("1926");
       case "padron1964anniversaryband": return full.includes("1964");
@@ -506,33 +531,18 @@
 
   function openBandsSheet() {
     renderBandsOptions();
-    document.body.classList.add("pos-modal-open");
-    if (sheetBands) {
-      sheetBands.hidden = false;
-      sheetBands.classList.add("is-open");
-    }
-  }
-
-  function closeBandAndReceiptSheets() {
-    document.body.classList.remove("pos-modal-open");
-    [sheetBands, sheetReceipt].forEach((el) => {
-      if (!el) return;
-      el.classList.remove("is-open");
-      el.hidden = true;
-    });
-  }
-
-  function bindBandSheetClosers() {
-    $$("[data-sheet-close]").forEach((btn) => btn.addEventListener("click", closeBandAndReceiptSheets));
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeBandAndReceiptSheets();
-    });
+    openSheet(sheetBands);
   }
 
   function bindBandsUI() {
-    bandsBtn?.addEventListener("click", openBandsSheet);
-    bandsConfirmBtn?.addEventListener("click", () => {
-      closeBandAndReceiptSheets();
+    bandsBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      openBandsSheet();
+    });
+
+    bandsConfirmBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeAllSheets();
       apply();
     });
   }
@@ -596,7 +606,7 @@
     }
     if (statusEl) statusEl.hidden = true;
 
-    listEl.innerHTML = state.view.map((r) => {
+    listEl.innerHTML = state.view.map((r, idx) => {
       const brand = norm(getBrand(r));
       const line = norm(getLine(r));
       const cigar = norm(getCigar(r));
@@ -616,44 +626,40 @@
       const msrp = norm(getMSRP(r));
       const image = norm(getImage(r));
 
-      const receiptItem = buildReceiptItem({ brand, line, cigar, vitola, msrp });
       const brandIconSrc = `/img/icons/brands/${slug(brand || BRAND)}.svg`;
 
       return `
-        <div class="brand-row"
-          data-row
-          data-brand="${esc(brand)}"
-          data-line="${esc(line)}"
-          data-cigar="${esc(cigar)}"
-          data-cigar-full="${esc(cigarFull)}"
-          data-wrapper="${esc(wrapper)}"
-          data-binder="${esc(binder)}"
-          data-filler="${esc(filler)}"
-          data-origin="${esc(origin)}"
-          data-ring="${esc(ring)}"
-          data-length="${esc(length)}"
-          data-shape="${esc(shape)}"
-          data-vitola="${esc(vitola)}"
-          data-strength="${esc(strength)}"
-          data-wrapper-shade="${esc(wrapperShade)}"
-          data-msrp="${esc(msrp)}"
-          data-image="${esc(image)}">
-
+        <div class="brand-row" data-row data-idx="${idx}">
           <img class="row-ico" alt="" src="${esc(brandIconSrc)}"
                onerror="this.style.visibility='hidden';" />
 
-          <div class="brand-row-left">
+          <div class="brand-row-left" data-open-detail="1">
             <div class="brand-row-title"><div>${esc(cigarFull || cigar)}</div></div>
             <div class="brand-row-sub"><div>${esc(vitola)}</div></div>
           </div>
 
           <div class="brand-row-right">
             <div class="brand-row-msrp">${esc(msrp)}</div>
-            <button type="button"
-              class="pos-add"
-              aria-label="Add to invoice"
-              data-receipt-item='${esc(JSON.stringify(receiptItem))}'>+</button>
+            <button type="button" class="pos-add" aria-label="Add to invoice" data-action="add" data-idx="${idx}">+</button>
           </div>
+
+          <div class="row-meta" hidden
+            data-brand="${esc(brand)}"
+            data-line="${esc(line)}"
+            data-cigar="${esc(cigar)}"
+            data-cigar-full="${esc(cigarFull)}"
+            data-wrapper="${esc(wrapper)}"
+            data-binder="${esc(binder)}"
+            data-filler="${esc(filler)}"
+            data-origin="${esc(origin)}"
+            data-ring="${esc(ring)}"
+            data-length="${esc(length)}"
+            data-shape="${esc(shape)}"
+            data-vitola="${esc(vitola)}"
+            data-strength="${esc(strength)}"
+            data-wrapper-shade="${esc(wrapperShade)}"
+            data-msrp="${esc(msrp)}"
+            data-image="${esc(image)}"></div>
         </div>
       `;
     }).join("");
@@ -663,39 +669,82 @@
     if (!listEl) return;
 
     listEl.addEventListener("click", (e) => {
-      const add = e.target.closest("[data-receipt-item]");
-      if (add) {
+      const addBtn = e.target.closest?.('[data-action="add"]');
+      if (addBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const idx = Number(addBtn.getAttribute("data-idx"));
+        const r = state.view[idx];
+        if (!r) return;
+
+        const brand = norm(getBrand(r) || BRAND);
+        const line = norm(getLine(r));
+        const cigar = norm(getCigar(r));
+        const cigarFull = `${line} ${cigar}`.trim();
+        const vitola = norm(getVitola(r));
+        const ring = norm(getRing(r));
+        const length = norm(getLength(r));
+        const msrp = getMSRP(r);
+
+        window.CigarOSCart?.add?.({
+          id: `${slug(brand)}-${slug(cigarFull || cigar)}-${slug(vitola)}`,
+          name: cigarFull || cigar,
+          brand,
+          category: "Cigars",
+          sub: vitola ? `${vitola}${length && ring ? ` • ${length} × ${ring}` : ""}` : "",
+          price: priceNum(msrp),
+          img: "",
+        });
+
         refreshInvoiceIcon();
         return;
       }
 
-      const row = e.target.closest("[data-row]");
+      const row = e.target.closest?.("[data-row]");
       if (!row) return;
 
-      const item = {
-        brand: norm(row.dataset.brand),
-        line: norm(row.dataset.line),
-        cigar: norm(row.dataset.cigar),
-        cigarFull: norm(row.dataset.cigarFull),
+      // ignore clicks on right-side pricing area if needed
+      const idx = Number(row.getAttribute("data-idx"));
+      const r = state.view[idx];
+      if (!r) return;
 
-        vitola: norm(row.dataset.vitola),
-        shape: norm(row.dataset.shape),
-        strength: norm(row.dataset.strength),
-        wrapperShade: norm(row.dataset.wrapperShade),
+      const brand = norm(getBrand(r) || BRAND);
+      const line = norm(getLine(r));
+      const cigar = norm(getCigar(r));
+      const cigarFull = `${line} ${cigar}`.trim();
 
-        wrapper: norm(row.dataset.wrapper),
-        binder: norm(row.dataset.binder),
-        filler: norm(row.dataset.filler),
-        origin: norm(row.dataset.origin),
-        ring: norm(row.dataset.ring),
-        length: norm(row.dataset.length),
-        msrp: norm(row.dataset.msrp),
-        image: norm(row.dataset.image),
+      openCigarDetail({
+        brand,
+        line,
+        cigar,
+        cigarFull,
+        vitola: norm(getVitola(r)),
+        shape: norm(getShape(r)),
+        strength: norm(getStrength(r)),
+        wrapperShade: norm(getWrapperShade(r)),
+        wrapper: norm(getWrapper(r)),
+        binder: norm(getBinder(r)),
+        filler: norm(getFiller(r)),
+        origin: norm(getOrigin(r)),
+        ring: norm(getRing(r)),
+        length: norm(getLength(r)),
+        msrp: norm(getMSRP(r)),
+        image: norm(getImage(r)),
+        key: `${slug(brand)}|${slug(line)}|${slug(cigarFull || cigar)}`,
+        price: priceNum(getMSRP(r)),
+      });
+    });
+  }
 
-        key: `${slug(row.dataset.brand)}|${slug(row.dataset.line)}|${slug(row.dataset.cigarFull || row.dataset.cigar)}`,
-      };
-
-      openCigarDetail(item);
+  // =========================================================
+  // FILTERS (placeholder open/close only for now)
+  // (your prior filter UI can live inside #sheet-filters)
+  // =========================================================
+  function bindFiltersUI() {
+    filtersBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      openSheet(sheetFilters);
     });
   }
 
@@ -713,9 +762,10 @@
 
     bindInvoiceButton();
     bindClicks();
-    bindBandSheetClosers();
+    bindSheetClosers();
     bindWrapperToggle();
     bindBandsUI();
+    bindFiltersUI();
 
     searchEl?.addEventListener("input", () => {
       state.q = norm(searchEl.value || "");
