@@ -1,115 +1,133 @@
 /* /css/theme-toggle.css
-   Centered iOS-style Sun/Moon toggle
-   - Wider
-   - ~80% height vs old
-   - Only active side is "lit"
-   - Uses /img/icons/sun.svg and /img/icons/moon.svg
+   Center header toggle + glass icon buttons (NO borders)
 */
 
-.theme-toggle{
+/* ---------- Header layout ---------- */
+.pos-header{
+  position: relative;
+  padding: 18px 18px 10px;
+}
+
+.pos-header-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+/* left + right icon buttons */
+.icon-btn{
+  width:44px;
+  height:44px;
+  border-radius:16px;
+  border:0;                 /* ✅ remove thin outline */
+  background: rgba(255,255,255,.10);
+  box-shadow: 0 18px 40px rgba(0,0,0,.25);
+  display:grid;
+  place-items:center;
+  padding:0;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html[data-theme="dark"] .icon-btn{
+  background: rgba(255,255,255,.07);
+  box-shadow: 0 18px 44px rgba(0,0,0,.55);
+}
+
+.icon-btn img{
+  width:22px;               /* ✅ cart not tiny */
+  height:22px;
+  display:block;
+}
+
+/* ---------- THEME TOGGLE ---------- */
+#themeToggle{
   border:0;
   background:transparent;
   padding:0;
-  -webkit-tap-highlight-color: transparent;
   cursor:pointer;
-
-  position:absolute;
-  left:50%;
-  top: 18px;
-  transform: translateX(-50%);
-  z-index: 50;
+  -webkit-tap-highlight-color: transparent;
 }
 
+/* wider + shorter (about 80% of the earlier tall pill) */
 .tt-track{
-  /* wider + shorter */
-  width: 92px;
-  height: 28px;
+  width: 92px;              /* ✅ wider */
+  height: 30px;             /* ✅ shorter */
   border-radius: 999px;
-  display:block;
-  position:relative;
-
-  background: rgba(0,0,0,.08);
-  border: 1px solid rgba(0,0,0,.10);
-  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+  position: relative;
   overflow:hidden;
+
+  border:0;                 /* ✅ no outline */
+  background: rgba(255,255,255,.12);
+  box-shadow: 0 18px 44px rgba(0,0,0,.25);
 }
 
 html[data-theme="dark"] .tt-track{
-  background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.14);
-  box-shadow: 0 12px 28px rgba(0,0,0,.55);
+  background: rgba(255,255,255,.07);
+  box-shadow: 0 18px 44px rgba(0,0,0,.55);
 }
 
-/* side icons (dim by default) */
+/* the static side icons */
 .tt-ico{
   position:absolute;
   top:50%;
   transform: translateY(-50%);
   width:16px;
   height:16px;
-  opacity:.28;                 /* dim */
-  filter: none;
+  opacity:.28;              /* default dim */
   pointer-events:none;
 }
+
+.tt-ico img{ width:16px; height:16px; display:block; }
 
 .tt-ico--sun{ left:12px; }
 .tt-ico--moon{ right:12px; }
 
-/* active side "lit" */
-html[data-theme="light"] .tt-ico--sun{ opacity:.95; }
-html[data-theme="dark"]  .tt-ico--moon{ opacity:.95; }
+/* highlight only the correct side */
+html:not([data-theme="dark"]) .tt-ico--sun{ opacity:.95; }
+html:not([data-theme="dark"]) .tt-ico--moon{ opacity:.18; }
+
+html[data-theme="dark"] .tt-ico--sun{ opacity:.18; }
+html[data-theme="dark"] .tt-ico--moon{ opacity:.95; }
 
 /* knob */
 .tt-knob{
   position:absolute;
   top:50%;
   transform: translateY(-50%);
-  left: 3px;
+  left:3px;
 
-  width: 22px;
-  height: 22px;
+  width:24px;
+  height:24px;
   border-radius:999px;
 
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,.12);
-  box-shadow: 0 10px 18px rgba(0,0,0,.18);
-  transition: left 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  border:0;                 /* ✅ no outline */
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 12px 24px rgba(0,0,0,.20);
+  transition: left 180ms ease, background 180ms ease, box-shadow 180ms ease;
+  display:grid;
+  place-items:center;
 }
 
-/* knob slides right in dark mode */
-html[data-theme="dark"] .tt-knob{
-  left: calc(92px - 3px - 22px);
-  background: #141418;          /* dark dark grey behind moon */
-  border-color: rgba(255,255,255,.14);
-  box-shadow: 0 12px 22px rgba(0,0,0,.60);
-}
-
-/* knob icon swap (prevents overlapping) */
-.tt-knob-ico{
-  position:absolute;
-  inset:0;
-  margin:auto;
+.tt-knob img{
   width:14px;
   height:14px;
-  opacity:0;
-  pointer-events:none;
+  display:block;
 }
 
-html[data-theme="light"] .tt-knob-ico--sun{ opacity:1; }
-html[data-theme="dark"]  .tt-knob-ico--moon{ opacity:1; }
-
-/* knob icon colors:
-   - sun stays dark in light mode
-   - moon becomes white in dark mode
-*/
-html[data-theme="light"] .tt-knob-ico--sun{
-  filter: none;
+/* dark state = knob right + dark-dark-grey behind moon */
+html[data-theme="dark"] .tt-knob{
+  left: calc(92px - 3px - 24px);
+  background: #141418;      /* ✅ dark dark grey */
+  box-shadow: 0 14px 26px rgba(0,0,0,.60);
 }
 
-html[data-theme="dark"] .tt-knob-ico--moon{
-  filter: brightness(0) invert(1);
+/* center the toggle between left/right buttons */
+.pos-header-center{
+  position:absolute;
+  left:50%;
+  top:18px;
+  transform: translateX(-50%);
+  z-index:2;
 }
-
-/* also dim the inactive knob icon *even if present* */
-html[data-theme="light"] .tt-knob-ico--moon{ opacity:0; }
-html[data-theme="dark"]  .tt-knob-ico--sun{ opacity:0; }
