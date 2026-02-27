@@ -5,11 +5,12 @@
 (() => {
   const HTML = document.documentElement;
 
-  const SUN  = "/img/icons/sun.svg";
-  const MOON = "/img/icons/moon.svg";
+  // Use SVGs you already have
+  const CART_LIGHT = "/img/icons/cart-blue.svg"; // visible on light
+  const CART_DARK  = "/img/icons/cart-red.svg";  // red on dark
 
-  const CART_LIGHT = "/img/icons/cart-empty.svg"; // blue
-  const CART_DARK  = "/img/icons/cart-red.svg";   // red
+  const SUN = "/img/icons/sun.svg";
+  const MOON = "/img/icons/moon.svg";
 
   function setCartIcon(theme) {
     const img = document.querySelector("#invoice-icon");
@@ -18,14 +19,14 @@
   }
 
   function setKnobIcon(theme) {
-    const knobImg = document.querySelector("#themeKnobIcon");
-    if (!knobImg) return;
-    knobImg.src = theme === "dark" ? MOON : SUN;
+    const img = document.querySelector("#themeKnobIcon");
+    if (!img) return;
+    img.src = theme === "dark" ? MOON : SUN;
   }
 
   function applyTheme(theme) {
     if (theme === "dark") HTML.setAttribute("data-theme", "dark");
-    else HTML.removeAttribute("data-theme");
+    else HTML.setAttribute("data-theme", "light");
 
     localStorage.setItem("theme", theme);
     setCartIcon(theme);
