@@ -293,7 +293,7 @@ body.brand-page{
   font-weight:900;
 }
 
-/* FILTERS â€” OLD iOS LAYOUT */
+/* FILTERS — OLD iOS LAYOUT */
 .filters-ios{
   display:flex;
   gap:16px;
@@ -373,7 +373,7 @@ body.brand-page{
   border-radius:6px;
 }
 
-/* BANDS â€” BIG CARDS */
+/* BANDS — BIG CARDS */
 .bands-big{
   padding:6px 18px 0;
   max-height:560px;

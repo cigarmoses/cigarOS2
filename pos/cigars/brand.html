@@ -8,8 +8,7 @@
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/css/theme.css" />
-  <link rel="stylesheet" href="/css/pos.css" />
-
+  <link rel="stylesheet" href="/pos/pos.css" />
   <link rel="stylesheet" href="/pos/cigars/brand.css" />
 </head>
 
@@ -79,64 +78,52 @@
   </main>
 
   <!-- ==============================
-       BANDS SHEET (BIG BANDS UI)
+       BANDS SHEET (BIG CARDS)
        ============================== -->
   <section id="sheet-bands" class="sheet" hidden>
-    <div class="sheet-card" role="dialog" aria-modal="true" aria-label="Bands">
+    <div class="sheet-card sheet-bands" role="dialog" aria-modal="true" aria-label="Bands">
       <div class="sheet-head">
         <div class="sheet-title">Bands</div>
         <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
       </div>
 
-      <div id="bands-options" class="bands-options"></div>
+      <div id="bands-options" class="bands-big"></div>
 
       <div class="sheet-foot">
-        <button id="bands-confirm" class="sheet-apply" type="button">Apply</button>
+        <button id="bands-confirm" class="sheet-apply" type="button">Confirm</button>
       </div>
     </div>
   </section>
 
   <!-- ==============================
-       FILTERS SHEET (matches POS feel)
+       FILTERS SHEET (OLD iOS LAYOUT)
        ============================== -->
   <section id="sheet-filters" class="sheet" hidden>
-    <div class="sheet-card" role="dialog" aria-modal="true" aria-label="Filters">
+    <div class="sheet-card sheet-filters" role="dialog" aria-modal="true" aria-label="Filters">
       <div class="sheet-head">
         <div class="sheet-title">Filters</div>
         <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
       </div>
 
-      <div class="filters-wrap">
-        <div class="filters-note">Applies to this brand only.</div>
-
-        <div class="fgroup">
-          <div class="fhead">Ring</div>
-          <div id="f-ring" class="fchips"></div>
+      <div class="filters-ios">
+        <!-- LEFT CATEGORY RAIL -->
+        <div class="filters-rail" role="tablist" aria-label="Filter categories">
+          <button class="rail-btn is-active" type="button" data-tab="vitola">Vitolas</button>
+          <button class="rail-btn" type="button" data-tab="ring">Ring</button>
+          <button class="rail-btn" type="button" data-tab="length">Length</button>
+          <button class="rail-btn" type="button" data-tab="strength">Strength</button>
+          <button class="rail-btn" type="button" data-tab="shape">Shape</button>
+          <button class="rail-btn" type="button" data-tab="shade">Wrap. Shade</button>
         </div>
 
-        <div class="fgroup">
-          <div class="fhead">Length</div>
-          <div id="f-length" class="fchips"></div>
-        </div>
+        <!-- RIGHT OPTIONS PANEL -->
+        <div class="filters-panel">
+          <div class="filters-search">
+            <span class="filters-search-ico" aria-hidden="true">🔎</span>
+            <input id="filters-search" type="search" placeholder="Search" autocomplete="off" />
+          </div>
 
-        <div class="fgroup">
-          <div class="fhead">Wrapper Shade</div>
-          <div id="f-shade" class="fchips"></div>
-        </div>
-
-        <div class="fgroup">
-          <div class="fhead">Shape</div>
-          <div id="f-shape" class="fchips"></div>
-        </div>
-
-        <div class="fgroup">
-          <div class="fhead">Vitola</div>
-          <div id="f-vitola" class="fchips"></div>
-        </div>
-
-        <div class="fgroup">
-          <div class="fhead">Strength</div>
-          <div id="f-strength" class="fchips"></div>
+          <div id="filters-options" class="filters-options" role="list"></div>
         </div>
       </div>
 
@@ -147,10 +134,8 @@
     </div>
   </section>
 
-  <!-- Theme + Cart swap -->
   <script defer src="/js/theme-toggle.js"></script>
-
-  <!-- Brand page logic -->
+  <script defer src="/pos/cart.js"></script>
   <script defer src="/pos/cigars/brand.js"></script>
 </body>
 </html>
