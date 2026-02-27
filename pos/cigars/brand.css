@@ -1,124 +1,404 @@
-/* =========================================
-   BRAND PAGE
-   ========================================= */
+/* /pos/cigars/brand.css
+   FULL REPLACEMENT FILE
+   - Restores iOS-style Filters (left rail + right options + search)
+   - Restores BIG Bands cards layout
+   - Removes inner shadow box behind cart icon & makes it larger
+*/
 
-.brand-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
+:root{
+  --glass1: rgba(255,255,255,.06);
+  --hair: rgba(255,255,255,.10);
+  --ink: rgba(255,255,255,.96);
+  --muted: rgba(255,255,255,.65);
+  --shadowCard: 0 18px 40px rgba(0,0,0,.35);
+  --blue:#0f7aff;
 }
 
-/* =============================
-   CART FIX (remove inner shadow)
-   ============================= */
+*{ box-sizing:border-box; }
 
-.invoice-btn {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
+body.brand-page{
+  margin:0;
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;
 }
 
-#invoice-icon {
-  width: 36px;
-  height: 36px;
+/* TOP BAR */
+.brand-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 18px;
 }
 
-/* =============================
-   FILTERS SHEET (RESTORED)
-   ============================= */
+.icon-btn{
+  width:44px;
+  height:44px;
+  border:none;
+  background:transparent;
+  color:var(--ink);
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.icon-btn:active{ opacity:.75; transform:scale(.99); }
 
-.sheet-filters .filters-layout {
-  display: flex;
-  gap: 20px;
-  padding: 16px 0;
+/* CART ICON FIX: remove shadow box + make larger */
+.invoice-btn{
+  width:52px;
+  height:52px;
+  border:none;
+  background:transparent;
+  padding:0;
+  display:grid;
+  place-items:center;
+  -webkit-tap-highlight-color:transparent;
+  cursor:pointer;
+}
+.invoice-btn img{
+  width:46px;
+  height:46px;
+  display:block;
+  object-fit:contain;
+  background:transparent;
+  box-shadow:none;
+  border-radius:0;
 }
 
-.filters-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 140px;
+/* MAIN */
+.brand-main{ padding:0 18px 26px; }
+
+.brand-title-row{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+  margin-top:8px;
 }
 
-.filter-tab {
-  background: #f2f2f2;
-  border-radius: 16px;
-  padding: 12px;
-  font-weight: 600;
-  border: none;
+.brand-title{
+  margin:0;
+  font-size:56px;
+  font-weight:800;
+  letter-spacing:-0.03em;
+  line-height:1;
 }
 
-.filter-tab.active {
-  background: #2f6bff;
-  color: white;
+.brand-icon img{
+  width:68px;
+  height:68px;
+  border-radius:18px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+  padding:12px;
 }
 
-.filters-panel {
-  flex: 1;
+/* Search */
+.brand-search{ margin-top:12px; }
+.search-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 16px;
+  border-radius:20px;
+  background:var(--glass1);
+  border:1px solid var(--hair);
+}
+.search-ico{ opacity:.65; }
+#brand-search{
+  width:100%;
+  border:none;
+  outline:none;
+  background:transparent;
+  color:var(--ink);
+  font-size:18px;
 }
 
-.filters-search input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 14px;
-  border: 1px solid #ddd;
-  margin-bottom: 16px;
+/* Controls */
+.brand-controls{
+  margin-top:12px;
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
 
-.filter-options {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.pill-btn{
+  border:none;
+  padding:12px 16px;
+  border-radius:18px;
+  background:var(--glass1);
+  border:1px solid var(--hair);
+  color:var(--ink);
+  font-weight:700;
+}
+.pill-btn:active{ opacity:.8; transform:scale(.99); }
+
+/* wrapper segmented */
+.seg{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:18px;
+  background:var(--glass1);
+  border:1px solid var(--hair);
+}
+.seg-btn{
+  border:none;
+  background:transparent;
+  color:var(--muted);
+  font-weight:800;
+}
+.seg[data-state="maduro"] #seg-maduro,
+.seg[data-state="natural"] #seg-natural{
+  color:var(--ink);
+}
+.seg-dot{
+  width:34px; height:22px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.12);
 }
 
-.filter-option {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 18px;
+/* list rows */
+.brand-status{ margin-top:16px; color:var(--muted); }
+.brand-list{ margin-top:14px; }
+
+.brand-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px 14px;
+  border-radius:20px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+  margin-bottom:14px;
 }
 
-.filter-option input {
-  width: 22px;
-  height: 22px;
+.row-ico{
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  object-fit:contain;
+  background:rgba(255,255,255,.08);
+  padding:8px;
 }
 
-/* =============================
-   BANDS SHEET (BIG BAND CARDS)
-   ============================= */
+.brand-row-left{ flex:1; min-width:0; cursor:pointer; }
 
-.bands-options {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding-top: 16px;
+.brand-row-title{
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-0.01em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.brand-row-sub{
+  margin-top:4px;
+  font-size:14px;
+  color:rgba(255,255,255,.55);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
-.band-card {
-  background: rgba(255,255,255,0.06);
-  border-radius: 22px;
-  padding: 18px;
+.brand-row-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.brand-row-msrp{
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:-0.02em;
 }
 
-.band-card img {
-  width: 100%;
-  border-radius: 18px;
+.pos-add{
+  width:40px;
+  height:40px;
+  border-radius:999px;
+  border:none;
+  background:#34c759;
+  color:#fff;
+  font-weight:900;
+  font-size:22px;
+  line-height:1;
+  display:grid;
+  place-items:center;
 }
 
-.band-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 14px;
-  font-size: 20px;
-  font-weight: 600;
+/* SHEETS */
+.sheet{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:18px;
+  z-index:999;
+}
+.sheet-card{
+  width:100%;
+  max-width:640px;
+  border-radius:26px;
+  background:rgba(15,25,45,.92);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:var(--shadowCard);
+  overflow:hidden;
+}
+.sheet-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 18px 10px;
+}
+.sheet-title{
+  font-size:38px;
+  font-weight:900;
+  letter-spacing:-0.03em;
+}
+.sheet-x{
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  color:var(--ink);
+  font-size:24px;
 }
 
-.sheet-apply {
-  width: 100%;
-  border-radius: 18px;
-  padding: 16px;
-  font-size: 18px;
+/* footer */
+.sheet-foot{ padding:14px 18px 18px; }
+.sheet-foot-split{ display:flex; gap:14px; }
+.sheet-secondary{
+  flex:1;
+  padding:16px 14px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:var(--ink);
+  font-weight:800;
 }
+.sheet-apply{
+  flex:1;
+  padding:16px 14px;
+  border-radius:18px;
+  border:none;
+  background:var(--blue);
+  color:#fff;
+  font-weight:900;
+}
+
+/* FILTERS â€” OLD iOS LAYOUT */
+.filters-ios{
+  display:flex;
+  gap:16px;
+  padding:12px 18px 4px;
+  min-height:420px;
+}
+
+.filters-rail{
+  width:150px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.rail-btn{
+  border:none;
+  text-align:left;
+  padding:12px 12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+  color:rgba(255,255,255,.75);
+  font-weight:800;
+}
+.rail-btn.is-active{
+  background:var(--blue);
+  color:#fff;
+}
+
+.filters-panel{ flex:1; min-width:0; }
+
+.filters-search{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 14px;
+  border-radius:18px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+}
+.filters-search-ico{ opacity:.7; }
+#filters-search{
+  width:100%;
+  border:none;
+  outline:none;
+  background:transparent;
+  color:var(--ink);
+  font-size:18px;
+}
+
+.filters-options{
+  margin-top:14px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  padding-right:6px;
+  max-height:520px;
+  overflow:auto;
+}
+.filters-opt{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  font-size:22px;
+  font-weight:700;
+  letter-spacing:-0.01em;
+}
+.filters-opt label{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  width:100%;
+}
+.filters-opt input{
+  width:24px;
+  height:24px;
+  border-radius:6px;
+}
+
+/* BANDS â€” BIG CARDS */
+.bands-big{
+  padding:6px 18px 0;
+  max-height:560px;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.band-card{
+  border-radius:24px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+  overflow:hidden;
+}
+.band-card img{ width:100%; height:auto; display:block; }
+.band-card-foot{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px 14px;
+}
+.band-name{
+  font-size:28px;
+  font-weight:900;
+  letter-spacing:-0.02em;
+}
+.band-check{ width:26px; height:26px; }
