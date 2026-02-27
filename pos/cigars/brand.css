@@ -1,5 +1,6 @@
 /* /pos/cigars/brand.css
-   FULL REPLACEMENT FILE
+   FULL REPLACEMENT
+   - FIXES: sheets stuck open by restoring [hidden] behavior
    - Restores iOS-style Filters (left rail + right options + search)
    - Restores BIG Bands cards layout
    - Removes inner shadow box behind cart icon & makes it larger
@@ -7,22 +8,27 @@
 
 :root{
   --glass1: rgba(255,255,255,.06);
+  --glass2: rgba(255,255,255,.08);
   --hair: rgba(255,255,255,.10);
   --ink: rgba(255,255,255,.96);
   --muted: rgba(255,255,255,.65);
+
+  --shadowSoft: 0 10px 26px rgba(0,0,0,.25);
   --shadowCard: 0 18px 40px rgba(0,0,0,.35);
+
   --blue:#0f7aff;
 }
 
 *{ box-sizing:border-box; }
-
 body.brand-page{
   margin:0;
   color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
 }
 
-/* TOP BAR */
+/* =========================
+   TOP BAR
+   ========================= */
 .brand-topbar{
   display:flex;
   align-items:center;
@@ -43,7 +49,9 @@ body.brand-page{
 }
 .icon-btn:active{ opacity:.75; transform:scale(.99); }
 
-/* CART ICON FIX: remove shadow box + make larger */
+/* =========================
+   CART ICON FIX
+   ========================= */
 .invoice-btn{
   width:52px;
   height:52px;
@@ -65,8 +73,10 @@ body.brand-page{
   border-radius:0;
 }
 
-/* MAIN */
-.brand-main{ padding:0 18px 26px; }
+/* =========================
+   MAIN / HEADER
+   ========================= */
+.brand-main{ padding: 0 18px 26px; }
 
 .brand-title-row{
   display:flex;
@@ -75,7 +85,6 @@ body.brand-page{
   gap:16px;
   margin-top:8px;
 }
-
 .brand-title{
   margin:0;
   font-size:56px;
@@ -83,13 +92,12 @@ body.brand-page{
   letter-spacing:-0.03em;
   line-height:1;
 }
-
 .brand-icon img{
   width:68px;
   height:68px;
   border-radius:18px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
   padding:12px;
 }
 
@@ -101,7 +109,7 @@ body.brand-page{
   gap:10px;
   padding:14px 16px;
   border-radius:20px;
-  background:var(--glass1);
+  background: var(--glass1);
   border:1px solid var(--hair);
 }
 .search-ico{ opacity:.65; }
@@ -121,19 +129,18 @@ body.brand-page{
   align-items:center;
   gap:12px;
 }
-
 .pill-btn{
   border:none;
   padding:12px 16px;
   border-radius:18px;
-  background:var(--glass1);
+  background: var(--glass1);
   border:1px solid var(--hair);
   color:var(--ink);
   font-weight:700;
 }
 .pill-btn:active{ opacity:.8; transform:scale(.99); }
 
-/* wrapper segmented */
+/* wrapper segmented (existing hooks) */
 .seg{
   margin-left:auto;
   display:flex;
@@ -141,7 +148,7 @@ body.brand-page{
   gap:10px;
   padding:10px 12px;
   border-radius:18px;
-  background:var(--glass1);
+  background: var(--glass1);
   border:1px solid var(--hair);
 }
 .seg-btn{
@@ -157,37 +164,38 @@ body.brand-page{
 .seg-dot{
   width:34px; height:22px;
   border-radius:999px;
-  background:rgba(255,255,255,.10);
+  background: rgba(255,255,255,.10);
   border:1px solid rgba(255,255,255,.12);
 }
 
-/* list rows */
-.brand-status{ margin-top:16px; color:var(--muted); }
+/* list */
+.brand-status{
+  margin-top:16px;
+  color:var(--muted);
+}
 .brand-list{ margin-top:14px; }
 
+/* Row style */
 .brand-row{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:14px;
-  padding:14px 14px;
+  padding: 14px 14px;
   border-radius:20px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
   margin-bottom:14px;
 }
-
 .row-ico{
   width:44px;
   height:44px;
   border-radius:14px;
   object-fit:contain;
-  background:rgba(255,255,255,.08);
+  background: rgba(255,255,255,.08);
   padding:8px;
 }
-
 .brand-row-left{ flex:1; min-width:0; cursor:pointer; }
-
 .brand-row-title{
   font-size:18px;
   font-weight:800;
@@ -199,12 +207,11 @@ body.brand-page{
 .brand-row-sub{
   margin-top:4px;
   font-size:14px;
-  color:rgba(255,255,255,.55);
+  color: rgba(255,255,255,.55);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
-
 .brand-row-right{
   display:flex;
   align-items:center;
@@ -216,6 +223,7 @@ body.brand-page{
   letter-spacing:-0.02em;
 }
 
+/* PLUS button */
 .pos-add{
   width:40px;
   height:40px;
@@ -230,31 +238,39 @@ body.brand-page{
   place-items:center;
 }
 
-/* SHEETS */
+/* =========================
+   SHEETS
+   ========================= */
 .sheet{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.35);
+  background: rgba(0,0,0,.35);
   display:flex;
   align-items:flex-end;
   justify-content:center;
-  padding:18px;
-  z-index:999;
+  padding: 18px;
+  z-index: 999;
 }
+
+/* ✅ CRITICAL FIX: respect hidden attribute */
+.sheet[hidden]{
+  display:none !important;
+}
+
 .sheet-card{
   width:100%;
-  max-width:640px;
+  max-width: 640px;
   border-radius:26px;
-  background:rgba(15,25,45,.92);
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:var(--shadowCard);
+  background: rgba(15, 25, 45, .92);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: var(--shadowCard);
   overflow:hidden;
 }
 .sheet-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:16px 18px 10px;
+  padding: 16px 18px 10px;
 }
 .sheet-title{
   font-size:38px;
@@ -266,43 +282,48 @@ body.brand-page{
   height:44px;
   border-radius:14px;
   border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
+  background: rgba(255,255,255,.06);
   color:var(--ink);
   font-size:24px;
 }
 
 /* footer */
-.sheet-foot{ padding:14px 18px 18px; }
-.sheet-foot-split{ display:flex; gap:14px; }
+.sheet-foot{ padding: 14px 18px 18px; }
+.sheet-foot-split{
+  display:flex;
+  gap:14px;
+}
 .sheet-secondary{
   flex:1;
-  padding:16px 14px;
+  padding: 16px 14px;
   border-radius:18px;
   border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.06);
-  color:var(--ink);
+  background: rgba(255,255,255,.06);
+  color: var(--ink);
   font-weight:800;
 }
 .sheet-apply{
   flex:1;
-  padding:16px 14px;
+  padding: 16px 14px;
   border-radius:18px;
   border:none;
-  background:var(--blue);
-  color:#fff;
+  background: var(--blue);
+  color: #fff;
   font-weight:900;
 }
 
-/* FILTERS — OLD iOS LAYOUT */
+/* =========================
+   FILTERS — OLD iOS LAYOUT
+   ========================= */
 .filters-ios{
   display:flex;
   gap:16px;
-  padding:12px 18px 4px;
-  min-height:420px;
+  padding: 12px 18px 4px;
+  min-height: 420px;
 }
 
 .filters-rail{
-  width:150px;
+  width: 150px;
   display:flex;
   flex-direction:column;
   gap:12px;
@@ -310,28 +331,31 @@ body.brand-page{
 .rail-btn{
   border:none;
   text-align:left;
-  padding:12px 12px;
+  padding: 12px 12px;
   border-radius:16px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.10);
-  color:rgba(255,255,255,.75);
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.10);
+  color: rgba(255,255,255,.75);
   font-weight:800;
 }
 .rail-btn.is-active{
-  background:var(--blue);
+  background: var(--blue);
   color:#fff;
 }
 
-.filters-panel{ flex:1; min-width:0; }
+.filters-panel{
+  flex:1;
+  min-width:0;
+}
 
 .filters-search{
   display:flex;
   align-items:center;
   gap:10px;
-  padding:12px 14px;
+  padding: 12px 14px;
   border-radius:18px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.10);
 }
 .filters-search-ico{ opacity:.7; }
 #filters-search{
@@ -348,8 +372,8 @@ body.brand-page{
   display:flex;
   flex-direction:column;
   gap:18px;
-  padding-right:6px;
-  max-height:520px;
+  padding-right: 6px;
+  max-height: 520px;
   overflow:auto;
 }
 .filters-opt{
@@ -373,10 +397,12 @@ body.brand-page{
   border-radius:6px;
 }
 
-/* BANDS — BIG CARDS */
+/* =========================
+   BANDS — BIG CARDS
+   ========================= */
 .bands-big{
-  padding:6px 18px 0;
-  max-height:560px;
+  padding: 6px 18px 0;
+  max-height: 560px;
   overflow:auto;
   display:flex;
   flex-direction:column;
@@ -384,21 +410,28 @@ body.brand-page{
 }
 .band-card{
   border-radius:24px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
   overflow:hidden;
 }
-.band-card img{ width:100%; height:auto; display:block; }
+.band-card img{
+  width:100%;
+  height:auto;
+  display:block;
+}
 .band-card-foot{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:14px;
-  padding:14px 14px;
+  padding: 14px 14px;
 }
 .band-name{
   font-size:28px;
   font-weight:900;
   letter-spacing:-0.02em;
 }
-.band-check{ width:26px; height:26px; }
+.band-check{
+  width:26px;
+  height:26px;
+}
