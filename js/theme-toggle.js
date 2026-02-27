@@ -1,41 +1,43 @@
 /* /js/theme-toggle.js
-   Theme toggle (html[data-theme]) + cart "has items" swap (body.has-cart-items)
-
-   Expects:
-   - Theme toggle button id: #theme-toggle
-   - Cart button uses two imgs:
-       .cart-img--empty (blue)
-       .cart-img--hot   (red)
-     CSS swaps them when body.has-cart-items is present.
+   Theme toggle (html[data-theme]) + cart icon swap + knob icon swap
 */
 
 (() => {
   const HTML = document.documentElement;
-  const BODY = document.body;
 
-  function getSavedTheme() {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark" || saved === "light") return saved;
-    return null;
+  const SUN  = "/img/icons/sun.svg";
+  const MOON = "/img/icons/moon.svg";
+
+  const CART_LIGHT = "/img/icons/cart-empty.svg"; // blue
+  const CART_DARK  = "/img/icons/cart-red.svg";   // red
+
+  function setCartIcon(theme) {
+    const img = document.querySelector("#invoice-icon");
+    if (!img) return;
+    img.src = theme === "dark" ? CART_DARK : CART_LIGHT;
   }
 
-  function getSystemTheme() {
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-    return prefersDark ? "dark" : "light";
-  }
-
-  function setAria(theme) {
-    const btn = document.querySelector("#theme-toggle");
-    if (!btn) return;
-    // aria-pressed=true means "dark mode on" in our UI
-    btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+  function setKnobIcon(theme) {
+    const knobImg = document.querySelector("#themeKnobIcon");
+    if (!knobImg) return;
+    knobImg.src = theme === "dark" ? MOON : SUN;
   }
 
   function applyTheme(theme) {
-    const next = theme === "dark" ? "dark" : "light";
-    HTML.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    setAria(next);
+    if (theme === "dark") HTML.setAttribute("data-theme", "dark");
+    else HTML.removeAttribute("data-theme");
+
+    localStorage.setItem("theme", theme);
+    setCartIcon(theme);
+    setKnobIcon(theme);
+  }
+
+  function getInitialTheme() {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark" || saved === "light") return saved;
+
+    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+    return prefersDark ? "dark" : "light";
   }
 
   function toggleTheme() {
@@ -43,49 +45,14 @@
     applyTheme(cur === "dark" ? "light" : "dark");
   }
 
-  // Cart state helper (red cart when items exist)
-  function setCartHasItems(hasItems) {
-    BODY.classList.toggle("has-cart-items", !!hasItems);
-  }
+  // boot
+  applyTheme(getInitialTheme());
 
-  // Expose helper so brand.js / receipt code can call it when cart changes
-  window.CigarOS_setCartHasItems = setCartHasItems;
-
-  // boot theme
-  const initial = getSavedTheme() || getSystemTheme();
-  applyTheme(initial);
-
-  // If user changes OS theme and they have NOT chosen a manual theme yet, follow system
-  try {
-    const mm = window.matchMedia?.("(prefers-color-scheme: dark)");
-    mm?.addEventListener?.("change", () => {
-      // only follow system when no manual choice exists
-      if (getSavedTheme()) return;
-      applyTheme(getSystemTheme());
-    });
-  } catch (_) {}
-
-  // bind click
+  // bind
   document.addEventListener("click", (e) => {
-    const btn = e.target?.closest?.("#theme-toggle");
+    const btn = e.target.closest?.("#themeToggle");
     if (!btn) return;
     e.preventDefault();
     toggleTheme();
   });
-
-  // bind keyboard (space/enter)
-  document.addEventListener("keydown", (e) => {
-    const active = document.activeElement;
-    if (!active || active.id !== "theme-toggle") return;
-    if (e.key !== "Enter" && e.key !== " ") return;
-    e.preventDefault();
-    toggleTheme();
-  });
-
-  // OPTIONAL: if you store cart in localStorage, you can auto-sync here.
-  // Leave OFF until you tell me your cart storage key/shape.
-  // Example:
-  // const raw = localStorage.getItem("pos_cart");
-  // setCartHasItems(!!raw && raw !== "[]" );
-
 })();
