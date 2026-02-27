@@ -1,20 +1,17 @@
 /* /pos/cigars/brand.css
-   FULL REPLACEMENT FILE (v2)
-   - Fixes theme toggle sizing + prevents “double icons” look
-   - Removes thin outline around invoice + brand icons (no borders)
-   - Keeps original overall sizing (no scaling surprises)
-   - Keeps glass/bubble styling + your layout
-   - Works with: #themeToggle, #invoice-btn/#invoice-icon, #wrapper-seg IDs from the new brand.html
+   FULL REPLACEMENT
 */
 
-*{ box-sizing:border-box; }
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
 
 body.brand-page{
   margin:0;
   min-height:100vh;
-  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* =========================================================
@@ -26,13 +23,14 @@ html[data-theme="light"] body.brand-page{
     radial-gradient(900px 520px at 12% 6%, rgba(120,170,255,.25), transparent 60%),
     radial-gradient(700px 520px at 92% 8%, rgba(0,200,255,.14), transparent 60%),
     linear-gradient(180deg, #f6f7fb, #eef0f7);
-  --glass: rgba(255,255,255,.68);
-  --glass2: rgba(255,255,255,.52);
-  --glassBorder: rgba(0,0,0,.08);
+  --glass: rgba(255,255,255,.72);
+  --glass2: rgba(255,255,255,.56);
+  --glassBorder: rgba(0,0,0,.06);
   --ink: #0b0b0f;
   --muted: rgba(0,0,0,.45);
   --hair: rgba(0,0,0,.08);
   --shadow: 0 14px 34px rgba(0,0,0,.10);
+  --shadowSoft: 0 10px 26px rgba(0,0,0,.08);
 }
 
 html[data-theme="dark"] body.brand-page{
@@ -41,27 +39,28 @@ html[data-theme="dark"] body.brand-page{
     radial-gradient(1200px 700px at 15% 6%, rgba(65,110,200,.40), transparent 55%),
     radial-gradient(900px 600px at 90% 10%, rgba(0,190,255,.18), transparent 55%),
     linear-gradient(180deg, #0b1c3a, #071024);
-  --glass: rgba(15,24,44,.52);
-  --glass2: rgba(15,24,44,.40);
+  --glass: rgba(15,24,44,.54);
+  --glass2: rgba(15,24,44,.42);
   --glassBorder: rgba(255,255,255,.10);
   --ink: rgba(255,255,255,.96);
-  --muted: rgba(255,255,255,.62);
+  --muted: rgba(255,255,255,.60);
   --hair: rgba(255,255,255,.10);
   --shadow: 0 18px 40px rgba(0,0,0,.40);
+  --shadowSoft: 0 14px 34px rgba(0,0,0,.32);
 }
 
 /* =========================================================
-   TOP BAR (grid: left / center / right)
+   TOP BAR
    ========================================================= */
 .brand-topbar{
   display:grid;
-  grid-template-columns:44px 1fr 44px;
+  grid-template-columns: 44px 1fr 44px;
   align-items:center;
-  gap:10px;
-  padding:14px 14px 0;
+  gap: 10px;
+  padding: 14px 14px 0;
 }
 
-body.brand-page .icon-btn{
+.icon-btn{
   width:44px;
   height:44px;
   display:grid;
@@ -69,99 +68,95 @@ body.brand-page .icon-btn{
   border:none;
   background:transparent;
   padding:0;
-  -webkit-tap-highlight-color:transparent;
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
 }
 
-body.brand-page .icon-btn svg{
+.icon-btn svg{
   width:24px;
   height:24px;
-  stroke: var(--ink);
-  opacity:.9;
+  stroke: currentColor;
+  opacity:.95;
 }
 
 /* =========================================================
-   THEME TOGGLE (center)
-   - Wider and shorter (requested)
-   - Sun/Moon in track only (no knob icon -> avoids “double moon”)
+   THEME TOGGLE (wider + shorter)
    ========================================================= */
-#themeToggle{
+.theme-toggle{
   justify-self:center;
-  width:140px;          /* a bit wider */
-  height:34px;          /* ~80% of old 44px */
-  border-radius:999px;
-  border:1px solid var(--glassBorder);
-  background: var(--glass2);
-  box-shadow: var(--shadow);
+  border:none;
+  background:transparent;
   padding:0;
-  display:grid;
-  place-items:center;
-  cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
-/* track */
-#themeToggle .tt-track{
-  position:relative;
-  width:calc(100% - 10px);
-  height:calc(100% - 10px);
-  border-radius:999px;
+.tt-track{
+  width: 132px;           /* wider */
+  height: 30px;           /* ~80% of prior 36-38 */
+  border-radius: 999px;
+  background: var(--glass2);
+  box-shadow: var(--shadowSoft);
+  position: relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 0 12px;
+  overflow:hidden;
 }
 
-/* icons (left/right) */
-#themeToggle .tt-ico{
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
+.tt-ico{
   width:18px;
   height:18px;
-  opacity:.35; /* default dim */
-  pointer-events:none;
-  filter: drop-shadow(0 2px 10px rgba(0,0,0,.15));
+  display:grid;
+  place-items:center;
+  opacity:.45;
 }
-#themeToggle .tt-ico--sun{ left:12px; }
-#themeToggle .tt-ico--moon{ right:12px; }
 
-#themeToggle .tt-ico img{
-  width:100%;
-  height:100%;
+.tt-ico img{
+  width:18px;
+  height:18px;
+  display:block;
+  filter: none;
+}
+
+/* only “active side” looks lit */
+html[data-theme="light"] .tt-sun { opacity: 1; }
+html[data-theme="light"] .tt-moon { opacity: .25; }
+html[data-theme="dark"]  .tt-sun { opacity: .25; }
+html[data-theme="dark"]  .tt-moon { opacity: 1; }
+
+.tt-knob{
+  position:absolute;
+  top:50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+  display:grid;
+  place-items:center;
+  transition: left .18s ease;
+}
+
+/* knob background in dark */
+html[data-theme="dark"] .tt-knob{
+  background: rgba(10,14,26,.92);
+  box-shadow: 0 12px 28px rgba(0,0,0,.46);
+}
+
+.tt-knob img{
+  width:18px;
+  height:18px;
   display:block;
 }
 
-/* knob */
-#themeToggle .tt-knob{
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  width:24px;
-  height:24px;
-  border-radius:999px;
-  background: rgba(255,255,255,.72);
-  border: 1px solid rgba(0,0,0,.06);
-  box-shadow: 0 10px 22px rgba(0,0,0,.18);
-  left:6px;
-  transition:left .18s ease, background .18s ease, border-color .18s ease;
-}
-
-/* Dark theme knob position */
-html[data-theme="dark"] #themeToggle .tt-knob{
-  left: calc(100% - 30px);
-  background: rgba(10,14,24,.75);
-  border-color: rgba(255,255,255,.10);
-}
-
-/* “Lit” icon rule (only one appears lit) */
-html[data-theme="light"] #themeToggle .tt-ico--sun{ opacity:1; }
-html[data-theme="light"] #themeToggle .tt-ico--moon{ opacity:.25; }
-
-html[data-theme="dark"] #themeToggle .tt-ico--moon{ opacity:1; }
-html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
+/* knob position: left in light, right in dark */
+html[data-theme="light"] .tt-knob{ left: 6px; }
+html[data-theme="dark"]  .tt-knob{ left: calc(132px - 6px - 28px); }
 
 /* =========================================================
-   INVOICE BUTTON (same height vibe as toggle)
-   - Remove thin outline (NO border)
-   - Increase icon size (was too small)
+   INVOICE BUTTON (bigger icon, no thin outline)
    ========================================================= */
 .invoice-btn{
   justify-self:end;
@@ -177,14 +172,14 @@ html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
 }
 
 .invoice-btn img{
-  width:40px;     /* bigger */
-  height:40px;
+  width: 40px;
+  height: 40px;
   display:block;
   object-fit:contain;
-  border-radius:14px;
-  box-shadow: var(--shadow);
-  background: var(--glass2);
-  border:none;    /* ✅ remove outline */
+  border-radius: 14px;
+  background: var(--glass2);     /* ensures visibility even if SVG is transparent */
+  box-shadow: var(--shadowSoft);
+  border: none;                  /* remove thin outline */
 }
 
 /* =========================================================
@@ -214,12 +209,12 @@ html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
   height:54px;
   border-radius:14px;
   background: var(--glass2);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadowSoft);
   margin-top:10px;
   overflow:hidden;
   display:grid;
   place-items:center;
-  border:none; /* ✅ remove outline */
+  border:none; /* remove thin outline */
 }
 .brand-icon img{
   width:100%;
@@ -229,7 +224,7 @@ html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
 }
 
 /* =========================================================
-   SEARCH (glass)
+   SEARCH
    ========================================================= */
 .brand-search .search-wrap{
   display:flex;
@@ -239,12 +234,12 @@ html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
   border-radius:22px;
   background: var(--glass);
   border: 1px solid var(--glassBorder);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadowSoft);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-.search-ico{ opacity:.75; }
+.search-ico{ opacity:.70; }
 
 #brand-search{
   width:100%;
@@ -254,17 +249,19 @@ html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
   color: var(--ink);
   font-size:18px;
   font-weight:800;
+  font-family: inherit;
 }
 #brand-search::placeholder{ color: var(--muted); }
 
 /* =========================================================
-   CONTROLS (glass pills)
+   CONTROLS ROW
    ========================================================= */
 .brand-controls{
   display:grid;
-  grid-template-columns:1.05fr .72fr 1.7fr;
+  grid-template-columns: 1fr 1fr 1.55fr;
   gap:10px;
   margin-top:10px;
+  align-items:center;
 }
 
 .pill-btn{
@@ -275,10 +272,11 @@ html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
   color: var(--ink);
   font-size:15px;
   font-weight:900;
+  font-family: inherit;
   display:flex;
   align-items:center;
   justify-content:center;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadowSoft);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   -webkit-tap-highlight-color:transparent;
@@ -286,20 +284,18 @@ html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
 .pill-btn:active{ transform:scale(.99); }
 
 /* =========================================================
-   MADURO / NATURAL TOGGLE (glass)
-   - Keep size stable (do NOT inflate)
-   - If you were seeing it “too big”, it was likely from wrong HTML/layout.
+   MADURO / NATURAL TOGGLE (correct size + in-row)
    ========================================================= */
 .seg{
   height:44px;
   border-radius:18px;
   border:1px solid var(--glassBorder);
   background: var(--glass2);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadowSoft);
   display:grid;
-  grid-template-columns:1fr 64px 1fr;
+  grid-template-columns: 1fr 56px 1fr;  /* tighter */
   align-items:center;
-  padding:0 8px;
+  padding: 0 8px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -310,6 +306,7 @@ html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
   background:transparent;
   font-size:14px;
   font-weight:900;
+  font-family: inherit;
   color: var(--muted);
 }
 
@@ -318,26 +315,26 @@ html[data-theme="dark"] #themeToggle .tt-ico--sun{ opacity:.25; }
 }
 
 .seg-dot{
-  width:64px;
-  height:32px;
+  width:56px;
+  height:30px;
   border-radius:999px;
   border:1px solid var(--glassBorder);
   background: rgba(0,0,0,.06);
   position:relative;
   margin:0 auto;
+  padding:0;
+  cursor:pointer;
 }
 
-html[data-theme="dark"] .seg-dot{
-  background: rgba(255,255,255,.06);
-}
+html[data-theme="dark"] .seg-dot{ background: rgba(255,255,255,.06); }
 
 .seg-dot::after{
   content:"";
   position:absolute;
   top:50%;
   transform:translateY(-50%);
-  width:26px;
-  height:26px;
+  width:24px;
+  height:24px;
   border-radius:999px;
   background: #2f6fe4;
   left:4px;
@@ -345,11 +342,11 @@ html[data-theme="dark"] .seg-dot{
 }
 
 #wrapper-seg[data-state="maduro"] .seg-dot::after{ left:4px; opacity:1; }
-#wrapper-seg[data-state="all"] .seg-dot::after{ left:19px; opacity:.55; }
-#wrapper-seg[data-state="natural"] .seg-dot::after{ left:34px; opacity:1; }
+#wrapper-seg[data-state="all"] .seg-dot::after{ left:16px; opacity:.55; }
+#wrapper-seg[data-state="natural"] .seg-dot::after{ left:28px; opacity:1; }
 
 /* =========================================================
-   LIST ROWS
+   LIST
    ========================================================= */
 .brand-list{
   margin-top:14px;
@@ -370,10 +367,10 @@ html[data-theme="dark"] .seg-dot{
   height:54px;
   border-radius:14px;
   object-fit:cover;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadowSoft);
   background: var(--glass2);
+  border:none;  /* remove thin outline */
   flex:0 0 auto;
-  border:none; /* ✅ remove outline */
 }
 
 .brand-row-left{
@@ -392,7 +389,6 @@ html[data-theme="dark"] .seg-dot{
   line-height:1.12;
   color: var(--ink);
   white-space:normal;
-  overflow:visible;
 }
 
 .brand-row-sub{
@@ -400,7 +396,6 @@ html[data-theme="dark"] .seg-dot{
   font-weight:800;
   color: var(--muted);
   white-space:normal;
-  overflow:visible;
 }
 
 .brand-row-right{
@@ -453,31 +448,197 @@ html[data-theme="dark"] .seg-dot{
   font-weight:800;
 }
 
-/* Utilities */
-[hidden]{ display:none !important; }
-
 /* =========================================================
-   CIGAR DETAIL MODAL (unchanged basics)
+   SHEETS (Bands / Filters)
    ========================================================= */
-body.cigar-detail-open{ overflow:hidden; }
+body.pos-modal-open{ overflow:hidden; }
 
-.cigar-detail-overlay{
+.sheet{
   position:fixed;
   inset:0;
   z-index:9999;
-  background:rgba(0,0,0,.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display:flex;
-  align-items:center;
+  align-items:flex-end;
   justify-content:center;
   opacity:0;
   pointer-events:none;
-  transition:opacity .18s ease;
+  transition: opacity .18s ease;
+  padding: 18px 14px 18px;
 }
-.cigar-detail-overlay.open{
+
+.sheet.is-open{
   opacity:1;
   pointer-events:auto;
 }
 
-/* Keep your existing sheet + fm CSS below if you already rely on it */
+.sheet-card{
+  width:min(720px, 100%);
+  border-radius: 26px;
+  background: var(--glass);
+  border: 1px solid var(--glassBorder);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+
+.sheet-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--hair);
+}
+
+.sheet-title{
+  font-size:20px;
+  font-weight:900;
+  color: var(--ink);
+  letter-spacing:-.01em;
+}
+
+.sheet-x{
+  width:36px;
+  height:36px;
+  border-radius: 12px;
+  border:1px solid var(--glassBorder);
+  background: var(--glass2);
+  color: var(--ink);
+  font-size:22px;
+  line-height:1;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+
+.sheet-foot{
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--hair);
+  display:flex;
+  justify-content:flex-end;
+}
+
+.sheet-foot-split{
+  display:flex;
+  gap:10px;
+  justify-content:space-between;
+}
+
+.sheet-apply{
+  height:44px;
+  padding: 0 18px;
+  border-radius: 16px;
+  border:none;
+  background:#2f6fe4;
+  color:#fff;
+  font-weight:900;
+  font-family: inherit;
+  cursor:pointer;
+}
+
+.sheet-secondary{
+  height:44px;
+  padding: 0 18px;
+  border-radius: 16px;
+  border:1px solid var(--glassBorder);
+  background: var(--glass2);
+  color: var(--ink);
+  font-weight:900;
+  font-family: inherit;
+  cursor:pointer;
+}
+
+/* BIG BANDS */
+.bands-options{
+  padding: 6px 8px 12px;
+}
+
+.bands-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--hair);
+}
+
+.bands-art{
+  width:64px;
+  height:64px;
+  border-radius: 18px;
+  background: var(--glass2);
+  box-shadow: var(--shadowSoft);
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+}
+
+.bands-img{
+  width:64px;
+  height:64px;
+  object-fit:cover;
+  display:block;
+}
+
+.bands-label{
+  font-size:20px;
+  font-weight:900;
+  color: var(--ink);
+  letter-spacing:-.01em;
+}
+
+.bands-meta{ flex:1 1 auto; min-width:0; }
+
+.bands-check{
+  width:26px;
+  height:26px;
+  accent-color:#2f6fe4;
+}
+
+/* FILTERS */
+.filters-wrap{
+  padding: 10px 16px 6px;
+}
+
+.filters-note{
+  font-size:13px;
+  font-weight:800;
+  color: var(--muted);
+  margin: 2px 0 10px;
+}
+
+.fgroup{ margin: 12px 0; }
+.fhead{
+  font-size:14px;
+  font-weight:900;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.fchips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.fchip{
+  height:36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border:1px solid var(--glassBorder);
+  background: var(--glass2);
+  color: var(--ink);
+  font-weight:900;
+  font-family: inherit;
+  cursor:pointer;
+  box-shadow: 0 10px 22px rgba(0,0,0,.10);
+}
+
+.fchip.is-on{
+  background: rgba(47,111,228,.16);
+  border-color: rgba(47,111,228,.35);
+  color: #2f6fe4;
+}
+
+/* Utilities */
+[hidden]{ display:none !important; }
