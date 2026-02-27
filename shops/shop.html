@@ -19,9 +19,9 @@
       <!-- Top Left: SHOP -->
       <div class="sp-pill sp-pill-left" id="spPillLeft">SHOP</div>
 
-      <!-- Top Right: OPEN/CLOSED + (optional) TAA icon below -->
+      <!-- Top Right: (optional) TAA icon -->
       <div class="sp-status" aria-label="Shop status">
-        <div class="sp-pill sp-pill-right" id="spStatusPill" data-status="open">OPEN</div>
+        <!-- OPEN pill removed per request -->
         <img class="sp-taa" id="spTaaIcon" src="/img/icons/taa.svg" alt="TAA" />
       </div>
 
@@ -42,8 +42,14 @@
         <span id="spCity">City, ST</span>
       </button>
 
-      <!-- Amenities panel -->
+      <!-- STATUS TEXT ONLY (replaces green pill) -->
+      <div class="sp-status-text" id="spStatusTextWrap" aria-label="Open/closed status">
+        <span id="spStatusText" class="sp-open">Open</span>
+      </div>
+
+      <!-- AMENITIES PANEL (NOW: title + row of icons, ABOVE dock visually) -->
       <div class="sp-amen-panel" id="spAmenPanel" aria-label="Amenities">
+        <div class="sp-amen-title">Amenities</div>
         <div class="sp-amen-row" id="spAmenRow"></div>
       </div>
 
