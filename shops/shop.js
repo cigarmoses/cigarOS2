@@ -1,7 +1,7 @@
 /* /shops/shop.js
-   Public Shop Page (Centered Layout + Bottom Section v12.4)
+   Public Shop Page (Centered Layout + Bottom Section v12.5)
 
-   ✅ Use with: <script src="/shops/shop.js?v=12.4"></script>
+   ✅ Use with: <script src="/shops/shop.js?v=12.5"></script>
 
    Data:
    ✅ Loads per-shop JSON first:
@@ -9,15 +9,12 @@
    ✅ Fallback:
       /shops/shops.json (array)
 
-   UI:
-   1) SHOP pill + TAA badge TOP RIGHT stacked (TAA smaller)
-   2) Status moved into dock row. Dock order: Status | Call | Directions | Brands
-   3) No default-open panel. Segmented shows, nothing selected until tap.
-   4) Remove thin black outline on shop logo background (strip SVG rect strokes when possible)
-   5) Dock: remove the individual “button background boxes” (icons/text float on bar)
-   6) Segmented labels use SF Pro Display Bold feel
-   7) Brands sheet: larger iOS-style title (SF Pro Display heavy)
-   8) Brand names: improved spacing (mapping + token heuristics)
+   UI (THIS VERSION):
+   ✅ Removes OPEN green pill (text-only "Open"/"Closed" in green/red)
+   ✅ Adds "Amenities" label + icons row (order: Indoor, TVs, BYOB)
+   ✅ Amenities row sits ABOVE dock (handled by HTML order)
+   ✅ TAA stays top-right (shows only if TAA truthy)
+   ✅ Uses existing HTML dock + segmented panels (Overview/Brands/Updates)
 */
 
 (() => {
@@ -85,8 +82,6 @@
   }
 
   // ---------------- brand label improvements ----------------
-  // Hand-map the most common “no-space” slugs that show up ugly in the sheet.
-  // (Add more anytime you see one.)
   const BRAND_LABEL_MAP = {
     aganorsaleaf: "Aganorsa Leaf",
     allsaints: "All Saints",
@@ -99,7 +94,6 @@
     blacklabeltradingcompany: "Black Label Trading Company",
   };
 
-  // Token-based spacing for common words inside smashed slugs.
   const BRAND_TOKENS = [
     "tradingcompany",
     "blacklabel",
@@ -127,15 +121,12 @@
     const raw = String(rawSlug || "").trim();
     if (!raw) return "";
 
-    // If already “nice” (contains spaces or uppercase), keep it.
     if (/\s/.test(raw) || /[A-Z]/.test(raw)) return raw;
 
     const clean = sanitizeLogoName(raw);
 
-    // Exact map first
     if (BRAND_LABEL_MAP[clean]) return BRAND_LABEL_MAP[clean];
 
-    // If it has separators, easy:
     if (/[_-]/.test(raw)) {
       const spaced = raw
         .replace(/[_-]+/g, " ")
@@ -145,15 +136,12 @@
       return titleCaseWords(spaced || raw);
     }
 
-    // Heuristic: insert spaces around known tokens in smashed strings.
     let w = clean;
     for (const t of BRAND_TOKENS) w = w.replaceAll(t, ` ${t} `);
 
-    // cleanup
     w = w.replace(/\s+/g, " ").trim();
     if (!w) return titleCaseWords(clean);
 
-    // Preserve small words
     const parts = w.split(" ").filter(Boolean).map((p) => p.toLowerCase());
     const keepLower = new Set(["de", "del", "la"]);
     const out = parts.map((p) => {
@@ -163,7 +151,6 @@
       return p[0].toUpperCase() + p.slice(1);
     });
 
-    // Special casing for “FeriO”
     return out.join(" ").replace(/\bFerio\b/g, "FeriO");
   }
 
@@ -185,20 +172,7 @@
     return `https://maps.apple.com/?daddr=${encodeURIComponent(q)}&dirflg=d`;
   }
 
-  // ---------------- amenities ----------------
-  // NOTE: TAA intentionally not here (top-right only)
-  const AMENITIES = [
-    { key: "alcohol", icon: "/img/icons/alcohol.svg", label: "Alcohol" },
-    { key: "byob", icon: "/img/icons/byob.svg", label: "BYOB" },
-    { key: "noalcohol", icon: "/img/icons/noalcohol.svg", label: "No Alcohol" },
-    { key: "food", icon: "/img/icons/food.svg", label: "Food" },
-    { key: "tvs", icon: "/img/icons/tv.svg", label: "TVs" },
-    { key: "outdoor", icon: "/img/icons/outdoorseating.svg", label: "Outdoor" },
-    { key: "indoor", icon: "/img/icons/indoorseating.svg", label: "Indoor" },
-    { key: "quiet", icon: "/img/icons/quietzone.svg", label: "Quiet" },
-    { key: "livemusic", icon: "/img/icons/livemusic.svg", label: "Live Music" },
-  ];
-
+  // ---------------- features / amenities ----------------
   const FEATURE_ALIASES = {
     alcohol: ["alcohol"],
     byob: ["byob"],
@@ -230,11 +204,13 @@
     for (const rawKey of Object.keys(shop)) {
       const nk = normalizeKey(rawKey);
 
-      if (AMENITIES.some((a) => a.key === nk) || nk === "taa") {
+      // direct known keys
+      if (nk in FEATURE_ALIASES) {
         bag[nk] = isTruthy(shop[rawKey]);
         continue;
       }
 
+      // alias match
       for (const targetKey of Object.keys(FEATURE_ALIASES)) {
         if (FEATURE_ALIASES[targetKey].includes(nk)) {
           bag[targetKey] = isTruthy(shop[rawKey]);
@@ -246,7 +222,7 @@
     return bag;
   }
 
-  // ---------------- open/closed ----------------
+  // ---------------- open/closed (text-only) ----------------
   function getOpenClosed(shop) {
     const closed = isTruthy(shop.closed ?? shop.Closed);
     if (closed) return "CLOSED";
@@ -255,7 +231,7 @@
       isTruthy(shop.open ?? shop.isOpen ?? shop.Open) ||
       String(shop.status || shop.Status || "").trim().toLowerCase() === "open";
 
-    // default
+    // default if no flags present
     if (
       !("open" in shop) &&
       !("Open" in shop) &&
@@ -268,6 +244,22 @@
     }
 
     return open ? "OPEN" : "CLOSED";
+  }
+
+  function setStatusText(shop) {
+    const el = $("#spStatusText");
+    if (!el) return;
+
+    const status = getOpenClosed(shop);
+    if (status === "OPEN") {
+      el.textContent = "Open";
+      el.classList.remove("sp-closed");
+      el.classList.add("sp-open");
+    } else {
+      el.textContent = "Closed";
+      el.classList.remove("sp-open");
+      el.classList.add("sp-closed");
+    }
   }
 
   // ---------------- name formatting ----------------
@@ -325,7 +317,6 @@
     const svg = doc.querySelector("svg");
     if (!svg) throw new Error("no svg root");
 
-    // remove stroke from first few rects (outer rounded backgrounds)
     const rects = Array.from(svg.querySelectorAll("rect"));
     rects.forEach((r, idx) => {
       if (idx > 2) return;
@@ -365,338 +356,6 @@
     }
   }
 
-  // ---------------- injected styling ----------------
-  function injectStylesOnce() {
-    if (document.getElementById("spInjectedV12_4")) return;
-
-    const css = `
-      /* Move SHOP pill to top-right */
-      .sp-pill-left{
-        position:absolute !important;
-        top:18px !important;
-        right:18px !important;
-        left:auto !important;
-      }
-
-      /* Hide legacy status pill (status now in dock) */
-      .sp-status{ display:none !important; }
-      #spStatusPill{ display:none !important; }
-
-      /* TAA badge stacked under SHOP pill (smaller) */
-      #spTaaIcon{
-        position:absolute !important;
-        top:54px !important;
-        right:18px !important;
-        width:62px !important;
-        height:auto !important;
-        opacity:1 !important;
-        filter:none !important;
-        -webkit-filter:none !important;
-      }
-
-      /* City */
-      .sp-city, .sp-city span, #spCity{
-        font-weight:400 !important;
-        letter-spacing:-0.02em !important;
-      }
-      .sp-city{ color:#8e8e93 !important; }
-
-      /* Amenities: kill any outline/background artifacts */
-      #spAmenPanel{ background:transparent !important; border:none !important; box-shadow:none !important; }
-      #spAmenRow{ background:transparent !important; }
-      #spAmenRow img, .sp-amen-icon, .sp-amen-icon *{
-        background:transparent !important;
-        border:0 !important;
-        outline:0 !important;
-        box-shadow:none !important;
-        filter:none !important;
-        -webkit-filter:none !important;
-      }
-      .sp-amen-icon{ display:block !important; border-radius:0 !important; }
-
-      /* Hide any legacy blocks */
-      .sp-legacy-hide{ display:none !important; }
-
-      /* Bottom */
-      .sp-bottom{ margin-top:18px; }
-
-      /* Dock bar */
-      .sp-dock{
-        display:flex;
-        gap:14px;
-        justify-content:space-between;
-        align-items:center;
-        padding: 12px 14px;
-        border-radius: 22px;
-        background: rgba(255,255,255,.70);
-        border: 1px solid rgba(0,0,0,.05);
-        box-shadow: 0 12px 30px rgba(0,0,0,.06);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-      }
-
-      /* ✅ Remove the individual “button boxes” in the dock */
-      .sp-dock a, .sp-dock .sp-dock-static{
-        flex:1 1 0;
-        min-width:0;
-        height: 56px;
-        border:none !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        gap: 6px;
-        padding: 0;
-        text-decoration:none;
-        color:#0b0b0c;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
-      }
-
-      /* keep tap feel, but no card */
-      .sp-dock a:active{ transform: scale(.99); }
-
-      /* Icon + label sizing */
-      .sp-dock .sp-dock-ico{ width:22px; height:22px; stroke:#0b0b0c; fill:none; }
-      .sp-dock .sp-dock-img{
-        width:24px; height:24px;
-        object-fit:contain;
-        display:block;
-        border:none !important;
-        outline:none !important;
-        background:transparent !important;
-        box-shadow:none !important;
-        filter:none !important;
-        -webkit-filter:none !important;
-      }
-      .sp-dock .sp-dock-label{
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: -0.01em;
-        line-height: 1;
-      }
-
-      /* Status pill inside dock (keeps pill shape) */
-      .sp-status-mini{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        padding: 8px 14px;
-        border-radius: 999px;
-        font-weight: 900;
-        font-size: 13px;
-        letter-spacing: 0;
-        color:#fff;
-        min-width: 92px;
-      }
-      .sp-status-mini[data-status="open"]{ background: rgba(52,199,89,.92); }
-      .sp-status-mini[data-status="closed"]{ background: rgba(142,142,147,.90); }
-
-      /* Segmented (no default selected) */
-      .sp-seg{
-        margin-top:14px;
-        padding:6px;
-        border-radius:18px;
-        background: rgba(242,242,247,.75);
-        border:1px solid rgba(0,0,0,.05);
-        display:flex; gap:6px;
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-      }
-      .sp-seg button{
-        flex:1 1 0;
-        height:38px;
-        border-radius:14px;
-        border:none;
-        background:transparent;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
-        font-weight: 900;
-        font-size: 15px;
-        letter-spacing: -0.02em;
-        color:#8e8e93;
-      }
-      .sp-seg button[aria-selected="true"]{
-        background: rgba(255,255,255,.90);
-        color:#0b0b0c;
-        box-shadow:none;
-      }
-
-      .sp-panels{ margin-top:12px; }
-      .sp-card{
-        background: rgba(255,255,255,.92);
-        border: 1px solid rgba(0,0,0,.05);
-        border-radius:24px;
-        padding:16px;
-        box-shadow: 0 14px 40px rgba(0,0,0,.06);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-      }
-      .sp-card + .sp-card{ margin-top:12px; }
-      .sp-card h3{
-        margin:0 0 8px 0;
-        font-size:16px;
-        font-weight:900;
-        letter-spacing:-0.01em;
-        color:#0b0b0c;
-      }
-      .sp-muted{ color:#8e8e93; font-weight:700; }
-      .sp-hidden{ display:none !important; }
-
-      /* Brands sheet */
-      .sp-sheet-backdrop{
-        position:fixed; inset:0;
-        background: rgba(0,0,0,.18);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        z-index:9999;
-        display:flex; align-items:flex-end; justify-content:center;
-        padding:10px;
-      }
-      .sp-sheet{
-        width: min(560px, 100%);
-        background: rgba(255,255,255,.94);
-        border: 1px solid rgba(0,0,0,.08);
-        border-radius: 22px;
-        box-shadow: 0 24px 80px rgba(0,0,0,.20);
-        overflow:hidden;
-      }
-      .sp-sheet-header{
-        padding: 16px 14px 12px 16px;
-        border-bottom: 1px solid rgba(0,0,0,.06);
-        display:flex;
-        flex-direction:column;
-        gap:12px;
-      }
-      .sp-sheet-topline{
-        display:flex; align-items:center; justify-content:space-between;
-      }
-      /* ✅ Larger iOS-like title */
-      .sp-sheet-title{
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
-        font-size: 26px;
-        font-weight: 950;
-        letter-spacing: -0.02em;
-      }
-      .sp-sheet-close{
-        width:40px; height:40px;
-        border-radius:20px;
-        border:1px solid rgba(0,0,0,.08);
-        background: rgba(255,255,255,.88);
-        display:grid; place-items:center;
-        font-size:20px;
-        cursor:pointer;
-        color:#007aff;
-      }
-
-      .sp-sheet-search{
-        display:flex;
-        align-items:center;
-        gap:10px;
-        padding:12px 14px;
-        border-radius:16px;
-        background: rgba(242,242,247,.90);
-        border:1px solid rgba(0,0,0,.06);
-      }
-      .sp-sheet-search input{
-        width:100%;
-        border:none;
-        outline:none;
-        background:transparent;
-        font-size:16px;
-        font-weight:600;
-        letter-spacing:-0.01em;
-        color:#0b0b0c;
-        font-family: inherit;
-      }
-      .sp-sheet-search input::placeholder{
-        color:#8e8e93;
-        font-weight:600;
-      }
-
-      .sp-sheet-body{
-        max-height: 52vh;
-        overflow:auto;
-        padding:14px 14px 16px 14px;
-      }
-
-      .sp-brand-grid{
-        display:grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap:12px;
-      }
-      @media (min-width:420px){
-        .sp-brand-grid{ grid-template-columns: repeat(4, 1fr); }
-      }
-
-      .sp-brand-tile{
-        border: 1px solid rgba(0,0,0,.06);
-        background: rgba(255,255,255,.82);
-        border-radius:16px;
-        padding:10px 10px 8px 10px;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        gap:8px;
-        min-height:86px;
-      }
-      .sp-brand-tile img{
-        max-width:100%;
-        max-height:44px;
-        object-fit:contain;
-        border:none !important;
-        outline:none !important;
-        background:transparent !important;
-        box-shadow:none !important;
-        filter:none !important;
-        -webkit-filter:none !important;
-      }
-      .sp-brand-name{
-        font-size:11px;
-        font-weight:400;
-        letter-spacing:-0.2px;
-        color:#6e6e73;
-        text-align:center;
-        line-height:1.15;
-        max-width:100%;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-      }
-      .sp-brand-fallback{
-        font-weight:900;
-        font-size:11px;
-        color:#6e6e73;
-        text-align:center;
-        line-height:1.15;
-      }
-    `;
-
-    const style = document.createElement("style");
-    style.id = "spInjectedV12_4";
-    style.textContent = css;
-    document.head.appendChild(style);
-  }
-
-  // ---------------- dock icons ----------------
-  function iconSvg(type) {
-    const sw = 1.75;
-
-    if (type === "call") {
-      return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M22 16.9v3a2 2 0 0 1-2.2 2c-9.2-.7-16.5-8-17.2-17.2A2 2 0 0 1 4.6 2h3a2 2 0 0 1 2 1.7c.2 1.2.5 2.4 1 3.5a2 2 0 0 1-.5 2.1L8.9 10.5a16 16 0 0 0 4.6 4.6l1.2-1.2a2 2 0 0 1 2.1-.5c1.1.5 2.3.8 3.5 1A2 2 0 0 1 22 16.9z" stroke-width="${sw}" fill="none"/>
-      </svg>`;
-    }
-
-    // Directions pin
-    return `<svg class="sp-dock-ico" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 21s7-7.7 7-13a7 7 0 0 0-14 0c0 5.3 7 13 7 13z" stroke-width="${sw}" fill="none"/>
-      <circle cx="12" cy="8.5" r="2.3" stroke-width="${sw}" fill="none"></circle>
-    </svg>`;
-  }
-
   // ---------------- data helpers ----------------
   function parseBrands(shop) {
     const raw = shop.brands ?? shop.Brands ?? shop["Cigar brands"] ?? shop["Cigar Brands"];
@@ -734,10 +393,147 @@
     });
   }
 
-  // ---------------- Brands sheet ----------------
-  function openBrandsSheet(brandsRaw) {
-    injectStylesOnce();
+  // ---------------- render: amenities (order exactly requested) ----------------
+  function renderAmenities(shop) {
+    const row = $("#spAmenRow");
+    const panel = $("#spAmenPanel");
+    if (!row || !panel) return;
 
+    const features = normalizeFeatures(shop);
+
+    // Order: Indoor seating, TVs, BYOB
+    const items = [
+      { ok: isTruthy(features.indoor), icon: "/img/icons/indoorseating.svg", label: "Indoor Seating" },
+      { ok: isTruthy(features.tvs), icon: "/img/icons/tv.svg", label: "TV" },
+      { ok: isTruthy(features.byob), icon: "/img/icons/byob.svg", label: "BYOB" },
+    ].filter((x) => x.ok);
+
+    row.innerHTML = "";
+
+    if (!items.length) {
+      // If nothing, hide the whole amenities block
+      panel.style.display = "none";
+      return;
+    }
+
+    panel.style.display = "";
+
+    items.forEach((a) => {
+      const img = document.createElement("img");
+      img.className = "sp-amen-icon";
+      img.src = `${a.icon}?v=${Date.now()}`;
+      img.alt = a.label;
+      row.appendChild(img);
+    });
+  }
+
+  // ---------------- render: TAA badge (top-right) ----------------
+  function renderTaa(shop) {
+    const taaEl = $("#spTaaIcon");
+    if (!taaEl) return;
+
+    const features = normalizeFeatures(shop);
+    const hasTaa = isTruthy(features.taa) || isTruthy(shop.TAA) || isTruthy(shop.taa);
+
+    taaEl.style.display = hasTaa ? "block" : "none";
+    if (hasTaa) {
+      if (!taaEl.getAttribute("src")) taaEl.setAttribute("src", "/img/icons/taa.svg");
+      taaEl.setAttribute("alt", "TAA");
+    }
+  }
+
+  // ---------------- render: overview section ----------------
+  function renderOverview(shop) {
+    // Contact values
+    const phone = getPhone(shop);
+    const website = toStr(shop.website || shop.Website);
+    const addr = [
+      toStr(shop.address1 || shop.address || shop.Address),
+      toStr(shop.city || shop.City),
+      toStr(shop.state || shop.ST || shop.State),
+      toStr(shop.zip || shop.Zip),
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    const phoneEl = $("#spPhoneVal");
+    const webEl = $("#spWebVal");
+    const addrEl = $("#spAddrVal");
+
+    if (phoneEl) phoneEl.textContent = phone || "—";
+    if (webEl) webEl.textContent = website || "—";
+    if (addrEl) addrEl.textContent = addr || "—";
+
+    // Hours
+    const hoursNowEl = $("#spHoursNow");
+    const hoursListEl = $("#spHoursList");
+
+    if (hoursNowEl) hoursNowEl.textContent = "—";
+
+    if (hoursListEl) {
+      hoursListEl.innerHTML = "";
+
+      const hasAnyHours = getAnyHoursPresent(shop);
+      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+      if (!hasAnyHours) {
+        // Show “Coming soon” as a single row
+        const row = document.createElement("div");
+        row.className = "sp-hour-row";
+        row.innerHTML = `<div class="sp-hour-d">Hours</div><div class="sp-hour-v">Coming soon</div>`;
+        hoursListEl.appendChild(row);
+        return;
+      }
+
+      days.forEach((d) => {
+        const v = toStr(getHoursForDay(shop, d));
+        const show = v && !["-", "—", "n/a", "na"].includes(v.trim().toLowerCase()) ? v : "—";
+        const row = document.createElement("div");
+        row.className = "sp-hour-row";
+        row.innerHTML = `<div class="sp-hour-d">${escapeHtml(d)}</div><div class="sp-hour-v">${escapeHtml(show)}</div>`;
+        hoursListEl.appendChild(row);
+      });
+    }
+  }
+
+  // ---------------- render: brands section ----------------
+  function renderBrands(shop) {
+    const chipsEl = $("#spBrandChips");
+    const emptyEl = $("#spBrandsEmpty");
+    const viewAllBtn = $("#spViewAllBrands");
+
+    if (!chipsEl || !emptyEl) return;
+
+    const brands = parseBrands(shop);
+
+    chipsEl.innerHTML = "";
+
+    if (!brands.length) {
+      emptyEl.style.display = "block";
+      if (viewAllBtn) viewAllBtn.style.display = "none";
+      return;
+    }
+
+    emptyEl.style.display = "none";
+    if (viewAllBtn) viewAllBtn.style.display = "";
+
+    // show up to 10 chips
+    const show = brands.slice(0, 10);
+    show.forEach((b) => {
+      const chip = document.createElement("div");
+      chip.className = "sp-chip";
+      chip.textContent = prettyBrandLabel(b) || b;
+      chipsEl.appendChild(chip);
+    });
+
+    // wire "View all" to open sheet modal (grid)
+    if (viewAllBtn) {
+      viewAllBtn.onclick = () => openBrandsSheet(brands);
+    }
+  }
+
+  // ---------------- Brands sheet modal (grid) ----------------
+  function openBrandsSheet(brandsRaw) {
     const brands = (brandsRaw || []).map(toStr).filter(Boolean);
 
     const existing = document.querySelector(".sp-sheet-backdrop");
@@ -818,6 +614,25 @@
     backdrop.appendChild(sheet);
     document.body.appendChild(backdrop);
 
+    // wire close
+    function close() {
+      backdrop.remove();
+    }
+
+    header.querySelector(".sp-sheet-close")?.addEventListener("click", close);
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) close();
+    });
+
+    document.addEventListener(
+      "keydown",
+      function onKey(e) {
+        if (e.key === "Escape") close();
+      },
+      { once: true }
+    );
+
+    // wire search
     const input = header.querySelector('input[type="search"]');
     if (input) {
       input.addEventListener("input", () => {
@@ -832,245 +647,123 @@
       });
       setTimeout(() => input.focus({ preventScroll: true }), 60);
     }
-
-    function close() {
-      backdrop.remove();
-    }
-
-    header.querySelector(".sp-sheet-close")?.addEventListener("click", close);
-    backdrop.addEventListener("click", (e) => {
-      if (e.target === backdrop) close();
-    });
-
-    document.addEventListener(
-      "keydown",
-      function onKey(e) {
-        if (e.key === "Escape") {
-          document.removeEventListener("keydown", onKey);
-          close();
-        }
-      },
-      { once: true }
-    );
   }
 
-  // ---------------- bottom section build ----------------
-  function buildBottomSection(shop) {
-    injectStylesOnce();
+  // ---------------- render: updates section ----------------
+  function renderUpdates(shop) {
+    const timeEl = $("#spUpdateTime");
+    const textEl = $("#spUpdateText");
+    const postBtn = $("#spPostUpdate");
 
-    const top = document.querySelector(".sp-top");
-    if (!top) return;
+    const updates = toStr(shop.updates || shop.Updates || shop.update || shop.Update || shop.notes || shop.Notes);
 
-    // Remove any previous bottom
-    const existing = document.querySelector(".sp-bottom");
-    if (existing) existing.remove();
+    if (timeEl) timeEl.textContent = "—";
+    if (textEl) textEl.textContent = updates || "No updates yet.";
 
-    // Hide/remove legacy sections if they exist in HTML
-    [
-      ".sp-actions",
-      ".sp-actions-row",
-      ".sp-tabs",
-      ".sp-tabs-row",
-      ".sp-overview",
-      ".sp-contact",
-      ".sp-section",
-      ".sp-panels-legacy",
-      "#spOverview",
-      "#spContact",
-    ].forEach((sel) => document.querySelectorAll(sel).forEach((el) => el.classList.add("sp-legacy-hide")));
+    // "Post update" is admin-only later; disable for now (visual only)
+    if (postBtn) {
+      postBtn.style.display = "none";
+    }
+  }
 
-    const bottom = document.createElement("div");
-    bottom.className = "sp-bottom";
-
+  // ---------------- dock wiring ----------------
+  function wireDock(shop) {
     const phone = getPhone(shop);
-    const directions = buildDirectionsUrl(shop);
-    const status = getOpenClosed(shop);
+    const directionsUrl = buildDirectionsUrl(shop);
 
-    // Dock order: Status | Call | Directions | Brands
-    const dock = document.createElement("div");
-    dock.className = "sp-dock";
+    const callBtn = $("#spActCall");
+    const webBtn = $("#spActWeb");
+    const msgBtn = $("#spActMsg");
+    const dirBtn = $("#spActDir");
 
-    // Status (static)
-    {
-      const stat = document.createElement("div");
-      stat.className = "sp-dock-static";
-      stat.innerHTML = `<div class="sp-status-mini" data-status="${status.toLowerCase()}">${escapeHtml(status)}</div>`;
-      dock.appendChild(stat);
-    }
-
-    // Call
-    {
-      const a = document.createElement("a");
-      a.setAttribute("aria-label", "Call");
-      if (phone) {
-        a.href = `tel:${phone.replace(/[^\d+]/g, "")}`;
-        a.innerHTML = `${iconSvg("call")}<div class="sp-dock-label">Call</div>`;
-      } else {
-        a.href = "#";
-        a.style.opacity = "0.35";
-        a.style.pointerEvents = "none";
-        a.innerHTML = `${iconSvg("call")}<div class="sp-dock-label">Call</div>`;
-      }
-      dock.appendChild(a);
-    }
-
-    // Directions
-    {
-      const a = document.createElement("a");
-      a.href = directions;
-      a.target = "_blank";
-      a.rel = "noopener";
-      a.setAttribute("aria-label", "Directions");
-      a.innerHTML = `${iconSvg("dir")}<div class="sp-dock-label">Directions</div>`;
-      dock.appendChild(a);
-    }
-
-    // Brands
-    {
-      const a = document.createElement("a");
-      a.href = "#";
-      a.dataset.action = "brands";
-      a.setAttribute("aria-label", "Brands");
-      a.innerHTML = `<img class="sp-dock-img" src="/img/icons/brands.svg?v=${Date.now()}" alt="" aria-hidden="true"/><div class="sp-dock-label">Brands</div>`;
-      dock.appendChild(a);
-    }
-
-    bottom.appendChild(dock);
-
-    // Segmented (no default selected)
-    const seg = document.createElement("div");
-    seg.className = "sp-seg";
-    seg.innerHTML = `
-      <button type="button" data-tab="hours" aria-selected="false">Hours</button>
-      <button type="button" data-tab="about" aria-selected="false">About</button>
-      <button type="button" data-tab="events" aria-selected="false">Events</button>
-    `;
-    bottom.appendChild(seg);
-
-    // Panels exist, but hidden by default until user taps
-    const panels = document.createElement("div");
-    panels.className = "sp-panels";
-
-    const hasAnyHours = getAnyHoursPresent(shop);
-
-    const hoursCard = document.createElement("div");
-    hoursCard.className = "sp-card sp-hidden";
-    hoursCard.setAttribute("data-panel", "hours");
-    if (!hasAnyHours) {
-      hoursCard.innerHTML = `<h3>Hours</h3><div class="sp-muted">Coming soon</div>`;
-    } else {
-      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-      const rows = days
-        .map((d) => {
-          const v = toStr(getHoursForDay(shop, d));
-          const show = v && !["-", "—", "n/a", "na"].includes(v.trim().toLowerCase()) ? v : "—";
-          return `<div style="display:flex;justify-content:space-between;border-top:1px solid rgba(0,0,0,.06);padding-top:10px;">
-              <div style="font-weight:900;color:#1c1c1e;">${escapeHtml(d)}</div>
-              <div style="font-weight:800;color:#8e8e93;text-align:right;max-width:60%;">${escapeHtml(show)}</div>
-            </div>`;
-        })
-        .join("");
-      hoursCard.innerHTML = `<h3>Hours</h3><div style="display:grid;gap:10px;">${rows.replace(
-        'border-top:1px solid rgba(0,0,0,.06);padding-top:10px;',
-        ""
-      )}</div>`;
-    }
-
-    const aboutCard = document.createElement("div");
-    aboutCard.className = "sp-card sp-hidden";
-    aboutCard.setAttribute("data-panel", "about");
     const website = toStr(shop.website || shop.Website);
-    const email = toStr(shop.email || shop.Email);
-    const addr = [
-      toStr(shop.address1 || shop.address || shop.Address),
-      toStr(shop.city || shop.City),
-      toStr(shop.state || shop.ST || shop.State),
-      toStr(shop.zip || shop.Zip),
-    ]
-      .filter(Boolean)
-      .join(", ");
-    aboutCard.innerHTML = `
-      <h3>About</h3>
-      <div class="sp-muted" style="display:grid;gap:10px;">
-        <div><strong style="color:#1c1c1e;">Phone</strong><div>${escapeHtml(phone || "—")}</div></div>
-        <div><strong style="color:#1c1c1e;">Website</strong><div>${website ? escapeHtml(website) : "—"}</div></div>
-        <div><strong style="color:#1c1c1e;">Email</strong><div>${email ? escapeHtml(email) : "—"}</div></div>
-        <div><strong style="color:#1c1c1e;">Address</strong><div>${addr ? escapeHtml(addr) : "—"}</div></div>
-      </div>
-    `;
 
-    const eventsCard = document.createElement("div");
-    eventsCard.className = "sp-card sp-hidden";
-    eventsCard.setAttribute("data-panel", "events");
-    const events = toStr(shop.events || shop.Events || shop.updates || shop.Updates);
-    eventsCard.innerHTML = `<h3>Events</h3><div class="sp-muted">${events ? escapeHtml(events) : "Coming soon"}</div>`;
-
-    panels.appendChild(hoursCard);
-    panels.appendChild(aboutCard);
-    panels.appendChild(eventsCard);
-
-    bottom.appendChild(panels);
-
-    top.parentElement?.appendChild(bottom);
-
-    // Wire dock: brands
-    dock.querySelector('[data-action="brands"]')?.addEventListener("click", (e) => {
-      e.preventDefault();
-      openBrandsSheet(parseBrands(shop));
-    });
-
-    // Seg interactions: no default; toggle selected & show panel
-    const segBtns = Array.from(seg.querySelectorAll("button"));
-    function setActive(tab) {
-      segBtns.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
-      Array.from(panels.querySelectorAll(".sp-card")).forEach((c) => c.classList.add("sp-hidden"));
-      const panel = panels.querySelector(`[data-panel="${tab}"]`);
-      if (panel) panel.classList.remove("sp-hidden");
+    if (callBtn) {
+      callBtn.addEventListener("click", () => {
+        if (!phone) return;
+        window.location.href = `tel:${phone.replace(/[^\d+]/g, "")}`;
+      });
+      if (!phone) callBtn.classList.add("is-disabled");
     }
 
-    segBtns.forEach((b) => {
-      b.addEventListener("click", () => setActive(b.dataset.tab));
+    if (webBtn) {
+      webBtn.addEventListener("click", () => {
+        if (!website) return;
+        const url = /^https?:\/\//i.test(website) ? website : `https://${website}`;
+        window.open(url, "_blank", "noopener");
+      });
+      if (!website) webBtn.classList.add("is-disabled");
+    }
+
+    if (msgBtn) {
+      msgBtn.addEventListener("click", () => {
+        if (!phone) return;
+        window.location.href = `sms:${phone.replace(/[^\d+]/g, "")}`;
+      });
+      if (!phone) msgBtn.classList.add("is-disabled");
+    }
+
+    if (dirBtn) {
+      dirBtn.addEventListener("click", () => {
+        window.open(directionsUrl, "_blank", "noopener");
+      });
+    }
+
+    // City line also opens directions
+    const addrBtn = $("#spAddressBtn");
+    if (addrBtn) {
+      addrBtn.addEventListener("click", () => {
+        window.open(directionsUrl, "_blank", "noopener");
+      });
+    }
+  }
+
+  // ---------------- segmented control wiring ----------------
+  function wireTabs() {
+    const tabOverview = $("#spTabOverview");
+    const tabBrands = $("#spTabBrands");
+    const tabUpdates = $("#spTabUpdates");
+
+    const panelOverview = $("#spPanelOverview");
+    const panelBrands = $("#spPanelBrands");
+    const panelUpdates = $("#spPanelUpdates");
+
+    const tabs = [
+      { btn: tabOverview, panel: panelOverview },
+      { btn: tabBrands, panel: panelBrands },
+      { btn: tabUpdates, panel: panelUpdates },
+    ].filter((x) => x.btn && x.panel);
+
+    function setActive(btnToActivate) {
+      tabs.forEach(({ btn, panel }) => {
+        const on = btn === btnToActivate;
+        btn.classList.toggle("is-active", on);
+        btn.setAttribute("aria-selected", on ? "true" : "false");
+        panel.classList.toggle("is-active", on);
+      });
+    }
+
+    tabs.forEach(({ btn }) => {
+      btn.addEventListener("click", () => setActive(btn));
     });
   }
 
   // ---------------- top section render ----------------
   async function renderTop(shop) {
-    injectStylesOnce();
-
-    // Elements (support either ids or classes)
-    const titleEl = $("#spTitle") || $(".sp-title-center");
-    const cityBtn = $("#spCityBtn") || $(".sp-city");
-    const cityText = $("#spCity") || cityBtn?.querySelector("span") || cityBtn;
-    const logoWrap = $(".sp-logo-center");
-    const logoImg = (logoWrap && logoWrap.querySelector("img")) || $("#spLogo") || $("#spLogoImg");
-    const taaEl = $("#spTaaIcon");
+    const nameEl = $("#spName");
+    const cityText = $("#spCity");
+    const logoImg = $("#spLogo");
 
     const name = toStr(shop.name || shop.Shop || shop.shop || shop.Title) || "Shop Name";
     const city = toStr(shop.city || shop.City) || "City";
     const st = toStr(shop.state || shop.ST || shop.State) || "ST";
 
-    if (titleEl) applyNameClampAndSize(titleEl, name);
+    if (nameEl) applyNameClampAndSize(nameEl, name);
     if (cityText) cityText.textContent = `${city}, ${st}`;
 
-    // directions click on city line
-    if (cityBtn) {
-      cityBtn.addEventListener("click", () => {
-        window.open(buildDirectionsUrl(shop), "_blank", "noopener");
-      });
-    }
+    renderTaa(shop);
 
-    // TAA badge show/hide (top-right only)
-    const features = normalizeFeatures(shop);
-    const hasTaa = isTruthy(features.taa) || isTruthy(shop.TAA) || isTruthy(shop.taa);
-    if (taaEl) {
-      taaEl.style.display = hasTaa ? "block" : "none";
-      if (hasTaa) {
-        if (!taaEl.getAttribute("src")) taaEl.setAttribute("src", "/img/icons/taa.svg");
-        taaEl.setAttribute("alt", "TAA");
-      }
-    }
-
-    // Load shop logo (center)
+    // Load shop logo
     if (logoImg) {
       const base = sanitizeLogoName(name);
       const svgUrl = `/img/icons/shops/${base}.svg?v=${Date.now()}`;
@@ -1078,21 +771,8 @@
       await loadLogoWithoutOutline(logoImg, svgUrl, pngUrl);
     }
 
-    // Amenities row (render up to 3 true items)
-    const amenRow = $("#spAmenRow") || $(".sp-amen-row");
-    if (amenRow) {
-      amenRow.innerHTML = "";
-      const show = AMENITIES.filter((a) => isTruthy(features[a.key])).slice(0, 3);
-      show.forEach((a) => {
-        const img = document.createElement("img");
-        img.className = "sp-amen-icon";
-        img.src = `${a.icon}?v=${Date.now()}`;
-        img.alt = a.label;
-        amenRow.appendChild(img);
-      });
-    }
-
-    buildBottomSection(shop);
+    setStatusText(shop);
+    renderAmenities(shop);
   }
 
   // ---------------- data loading ----------------
@@ -1122,16 +802,31 @@
   // ---------------- init ----------------
   async function init() {
     const fileSlug = toStr(getParam("shop")) || "shop";
-    injectStylesOnce();
 
     try {
       const shop = await loadShopData(fileSlug);
+
+      // top + header pieces
       await renderTop(shop);
+
+      // sections
+      renderOverview(shop);
+      renderBrands(shop);
+      renderUpdates(shop);
+
+      // interactions
+      wireDock(shop);
+      wireTabs();
     } catch (e) {
-      const titleEl = $("#spTitle") || $(".sp-title-center");
-      if (titleEl) titleEl.textContent = "Shop not found";
-      const cityText = $("#spCity") || $(".sp-city");
+      const nameEl = $("#spName");
+      if (nameEl) nameEl.textContent = "Shop not found";
+      const cityText = $("#spCity");
       if (cityText) cityText.textContent = "—";
+      const statusEl = $("#spStatusText");
+      if (statusEl) {
+        statusEl.textContent = "—";
+        statusEl.classList.remove("sp-open", "sp-closed");
+      }
       console.error(e);
     }
   }
