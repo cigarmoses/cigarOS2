@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>POS • Brand</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/css/theme.css" />
+  <link rel="stylesheet" href="/pos/pos.css" />
+  <link rel="stylesheet" href="/pos/cigars/brand.css" />
+</head>
+
+<body class="brand-page">
+  <!-- TOP BAR -->
+  <header class="brand-topbar">
+    <!-- Back -->
+    <button id="brand-back" class="icon-btn" type="button" aria-label="Back">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <!-- Center theme toggle -->
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">
+      <span class="tt-track" aria-hidden="true">
+        <span class="tt-ico tt-sun" aria-hidden="true">
+          <img src="/img/icons/sun.svg" alt="">
+        </span>
+
+        <span class="tt-ico tt-moon" aria-hidden="true">
+          <img src="/img/icons/moon.svg" alt="">
+        </span>
+
+        <!-- single knob -->
+        <span class="tt-knob" aria-hidden="true">
+          <img id="themeKnobIcon" src="/img/icons/sun.svg" alt="">
+        </span>
+      </span>
+    </button>
+
+    <!-- Invoice / Cart -->
+    <button id="invoice-btn" class="invoice-btn" type="button" aria-label="Invoice / Cart">
+      <img id="invoice-icon" src="/img/icons/cart-blue.svg" alt="" />
+    </button>
+  </header>
+
+  <main class="brand-main">
+    <div class="brand-title-row">
+      <h1 id="brand-title" class="brand-title">Brand</h1>
+      <div id="brand-icon" class="brand-icon" aria-hidden="true"></div>
+    </div>
+
+    <!-- Search -->
+    <div class="brand-search">
+      <div class="search-wrap">
+        <span class="search-ico" aria-hidden="true">🔎</span>
+        <input id="brand-search" type="search" placeholder="Search…" autocomplete="off" />
+      </div>
+    </div>
+
+    <!-- Controls row -->
+    <div class="brand-controls">
+      <button id="btn-filters" class="pill-btn" type="button">Filters</button>
+      <button id="btn-bands" class="pill-btn" type="button">Bands</button>
+
+      <!-- Maduro / Natural segmented -->
+      <div id="wrapper-seg" class="seg" data-state="all" aria-label="Wrapper filter">
+        <button id="seg-maduro" class="seg-btn" type="button" aria-pressed="false">Maduro</button>
+        <button id="seg-switch" class="seg-dot" type="button" aria-label="Toggle wrapper"></button>
+        <button id="seg-natural" class="seg-btn" type="button" aria-pressed="false">Natural</button>
+      </div>
+    </div>
+
+    <div id="brand-status" class="brand-status" hidden>Loading…</div>
+    <section id="brand-list" class="brand-list" aria-label="Cigars"></section>
+  </main>
+
+  <!-- ==============================
+       BANDS SHEET (BIG CARDS)
+       ============================== -->
+  <section id="sheet-bands" class="sheet" hidden>
+    <div class="sheet-card sheet-bands" role="dialog" aria-modal="true" aria-label="Bands">
+      <div class="sheet-head">
+        <div class="sheet-title">Bands</div>
+        <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+      </div>
+
+      <div id="bands-options" class="bands-big"></div>
+
+      <div class="sheet-foot">
+        <button id="bands-confirm" class="sheet-apply" type="button">Confirm</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==============================
+       FILTERS SHEET (OLD iOS LAYOUT)
+       ============================== -->
+  <section id="sheet-filters" class="sheet" hidden>
+    <div class="sheet-card sheet-filters" role="dialog" aria-modal="true" aria-label="Filters">
+      <div class="sheet-head">
+        <div class="sheet-title">Filters</div>
+        <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+      </div>
+
+      <div class="filters-ios">
+        <!-- LEFT CATEGORY RAIL -->
+        <div class="filters-rail" role="tablist" aria-label="Filter categories">
+          <button class="rail-btn is-active" type="button" data-tab="vitola">Vitolas</button>
+          <button class="rail-btn" type="button" data-tab="ring">Ring</button>
+          <button class="rail-btn" type="button" data-tab="length">Length</button>
+          <button class="rail-btn" type="button" data-tab="strength">Strength</button>
+          <button class="rail-btn" type="button" data-tab="shape">Shape</button>
+          <button class="rail-btn" type="button" data-tab="shade">Wrap. Shade</button>
+        </div>
+
+        <!-- RIGHT OPTIONS PANEL -->
+        <div class="filters-panel">
+          <div class="filters-search">
+            <span class="filters-search-ico" aria-hidden="true">🔎</span>
+            <input id="filters-search" type="search" placeholder="Search" autocomplete="off" />
+          </div>
+
+          <div id="filters-options" class="filters-options" role="list"></div>
+        </div>
+      </div>
+
+      <div class="sheet-foot sheet-foot-split">
+        <button id="filters-clear" class="sheet-secondary" type="button">Clear</button>
+        <button id="filters-apply" class="sheet-apply" type="button">Apply</button>
+      </div>
+    </div>
+  </section>
+
+  <script defer src="/js/theme-toggle.js"></script>
+  <script defer src="/pos/cart.js"></script>
+  <script defer src="/pos/cigars/brand.js"></script>
+</body>
+</html>
