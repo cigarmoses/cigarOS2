@@ -7,7 +7,7 @@
   <title>Shop • CigarOS</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/shops/shop.css?v=5" />
+  <link rel="stylesheet" href="/shops/shop.css?v=6" />
 </head>
 
 <body class="shop-public">
@@ -20,8 +20,7 @@
       <div class="sp-pill sp-pill-left" id="spPillLeft">SHOP</div>
 
       <!-- Top Right: (optional) TAA icon -->
-      <div class="sp-status" aria-label="Shop status">
-        <!-- OPEN pill removed per request -->
+      <div class="sp-status" aria-label="TAA status">
         <img class="sp-taa" id="spTaaIcon" src="/img/icons/taa.svg" alt="TAA" />
       </div>
 
@@ -30,7 +29,7 @@
         <img id="spLogo" alt="" />
       </div>
 
-      <!-- Center Name (max 2 lines, auto-sized by JS) -->
+      <!-- Center Name -->
       <h1 class="sp-title sp-title-center" id="spName">Shop Name</h1>
 
       <!-- City/state -->
@@ -42,24 +41,8 @@
         <span id="spCity">City, ST</span>
       </button>
 
-      <!-- STATUS TEXT ONLY (replaces green pill) -->
-      <div class="sp-status-text" id="spStatusTextWrap" aria-label="Open/closed status">
-        <span id="spStatusText" class="sp-open">Open</span>
-      </div>
-
-      <!-- AMENITIES PANEL (NOW: title + row of icons, ABOVE dock visually) -->
-      <div class="sp-amen-panel" id="spAmenPanel" aria-label="Amenities">
-        <div class="sp-amen-title">Amenities</div>
-        <div class="sp-amen-row" id="spAmenRow"></div>
-      </div>
-
-    </section>
-
-    <!-- BOTTOM SECTION -->
-    <section class="sp-bottom" aria-label="Shop details">
-
-      <!-- ACTION DOCK -->
-      <div class="sp-dock" role="group" aria-label="Quick actions">
+      <!-- ✅ ACTION BAR MOVED UP (DIRECTLY UNDER CITY) -->
+      <div class="sp-dock sp-dock-top" role="group" aria-label="Quick actions">
         <button class="sp-dock-btn" id="spActCall" type="button" aria-label="Call">
           <span class="sp-dock-ico" aria-hidden="true">📞</span>
           <span class="sp-dock-label">Call</span>
@@ -70,9 +53,10 @@
           <span class="sp-dock-label">Web</span>
         </button>
 
-        <button class="sp-dock-btn" id="spActMsg" type="button" aria-label="Message">
-          <span class="sp-dock-ico" aria-hidden="true">💬</span>
-          <span class="sp-dock-label">Message</span>
+        <!-- ✅ Brands added (replaces Message) -->
+        <button class="sp-dock-btn" id="spActBrands" type="button" aria-label="Brands">
+          <span class="sp-dock-ico" aria-hidden="true">🏷️</span>
+          <span class="sp-dock-label">Brands</span>
         </button>
 
         <button class="sp-dock-btn" id="spActDir" type="button" aria-label="Directions">
@@ -80,6 +64,16 @@
           <span class="sp-dock-label">Directions</span>
         </button>
       </div>
+
+      <!-- ✅ AMENITIES ICONS ONLY (MOVED DOWN INTO OLD DOCK SPOT) -->
+      <div class="sp-amen-panel" id="spAmenPanel" aria-label="Amenities">
+        <div class="sp-amen-row" id="spAmenRow"></div>
+      </div>
+
+    </section>
+
+    <!-- BOTTOM SECTION -->
+    <section class="sp-bottom" aria-label="Shop details">
 
       <!-- SEGMENTED CONTROL -->
       <div class="sp-seg" role="tablist" aria-label="Shop sections">
@@ -157,6 +151,6 @@
 
   </main>
 
-  <script src="/shops/shop.js?v=5"></script>
+  <script src="/shops/shop.js?v=12.6"></script>
 </body>
 </html>
