@@ -1,422 +1,83 @@
-:root{
-  --bg: #f2f2f7;
-  --surface: #ffffff;
-  --ink: #0b0b0c;
-  --muted: #8e8e93;
-  --shadow: 0 20px 60px rgba(0,0,0,.10);
-
-  --cardRadius: 34px;
-  --pillRadius: 999px;
-
-  --green: #34c759;
-  --red: #ff3b30;
-
-  --glass: rgba(255,255,255,.60);
-  --glassBorder: rgba(255,255,255,.55);
-  --line: rgba(0,0,0,.06);
-}
-
-html, body { height: 100%; }
-
-body.shop-public{
+body.shop-public {
   margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+  background: #f2f2f7;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
-.sp-wrap{
-  max-width: 430px;
-  margin: 0 auto;
-  padding: 28px 18px 60px;
+.sp-top {
+  background: #fff;
+  border-radius: 34px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.10);
 }
 
-/* ---------- TOP PROFILE CARD ---------- */
-.sp-top{
-  position: relative;
-  background: var(--surface);
-  border-radius: var(--cardRadius);
-  box-shadow: var(--shadow);
-  padding: 22px 22px 26px;
-}
-
-/* Pills (more iOS-native) */
-.sp-pill{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 12px;
+.sp-title {
+  margin: 0;
+  text-align: center;
+  font-weight: 900;
+  font-size: 38px;
   letter-spacing: 0;
-  background: rgba(255,255,255,.70);
-  border: 1px solid rgba(0,0,0,.06);
-  color: #8e8e93;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
-
-/* OPEN / CLOSED pill styles removed (we now use text-only status) */
-
-/* ✅ TAA badge: constrained, aligned right */
-#spTaaIcon{
-  position: absolute !important;
-  top: 18px !important;
-  right: 18px !important;
-
-  width: 56px !important;
-  height: 56px !important;
-
-  object-fit: contain !important;
-  display: none; /* JS should turn on when applicable */
-
-  z-index: 5 !important;
-
-  background: transparent !important;
-  border: 0 !important;
-  outline: 0 !important;
-  box-shadow: none !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-}
-
-/* Logo (remove “icon outline” while keeping subtle shadow) */
-.sp-logo-center{
-  width: 170px;
-  height: 170px;
-  border-radius: 42px;
-  overflow: hidden;
-  margin: 44px auto 18px;
-  background: #111;
-  box-shadow: 0 18px 50px rgba(0,0,0,.18);
-
-  border: 0 !important;
-  outline: 0 !important;
-}
-
-.sp-logo-center img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-
-  border: 0 !important;
-  outline: 0 !important;
-  box-shadow: none !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-}
-
-/* Title */
-.sp-title-center{
-  margin: 0;
-  text-align: center;
-  font-size: 44px; /* JS overrides per name length */
   line-height: 1.05;
-  letter-spacing: -0.02em;
-  font-weight: 800;
-  color: var(--ink);
 }
 
-/* City line */
-.sp-city{
+.sp-city {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
   border: none;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--muted);
-  font-weight: 700;
-  font-size: 22px;
+  background: none;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0;
+  color: #8e8e93;
+  margin: 10px 0 16px;
 }
 
-.sp-city-center{
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  margin: 12px 0 10px; /* slightly tighter because status text is below */
-}
-
-.sp-city:active{ transform: scale(.99); }
-
-.sp-gps{
-  width: 22px;
-  height: 22px;
-  color: var(--red);
-  flex: 0 0 auto;
-}
-
-/* ✅ STATUS TEXT ONLY (replaces green pill) */
-.sp-status-text{
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin: 4px 0 12px;
-  line-height: 1;
-}
-
-#spStatusText{
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
-
-#spStatusText.sp-open{ color: var(--green); }
-#spStatusText.sp-closed{ color: var(--red); }
-
-/* ---------- AMENITIES ---------- */
-/* Now: a simple label + icons row (no pill/box background) */
-.sp-amen-panel{
-  margin-top: 12px;
-  background: transparent;
-  border-radius: 0;
-  padding: 0;
-  border: 0;
-
-  box-shadow: none !important;
-  outline: 0 !important;
-}
-
-.sp-amen-title{
-  text-align: center;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: .02em;
-  color: var(--muted);
-  margin-bottom: 12px;
-}
-
-.sp-amen-row{
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 38px;
-}
-
-/* ✅ kill the black hairline/outline behind amenity icons */
-.sp-amen-icon{
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-  display: block;
-
-  background: transparent !important;
-  border: 0 !important;
-  outline: 0 !important;
-  box-shadow: none !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-  mix-blend-mode: normal !important;
-}
-
-/* ✅ Hide TAA if it ever appears in the amenities row */
-#spAmenRow img[src*="/img/icons/taa"],
-#spAmenRow img[src*="/img/icons/taa.svg"],
-#spAmenRow img[src*="/img/icons/taa.png"]{
-  display: none !important;
-}
-
-/* ---------- BOTTOM SECTION ---------- */
-.sp-bottom{
-  margin-top: 16px;
-}
-
-/* Action Dock (glass) */
-.sp-dock{
+.sp-dock {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   padding: 14px;
-  border-radius: 26px;
-
-  background: var(--glass);
-  border: 1px solid var(--glassBorder);
-  box-shadow: 0 14px 38px rgba(0,0,0,.10);
-
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  border-radius: 24px;
+  background: rgba(255,255,255,.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0,0,0,.05);
 }
 
-.sp-dock-btn{
+.sp-dock-btn {
+  background: rgba(255,255,255,.8);
   border: 1px solid rgba(0,0,0,.06);
-  background: rgba(255,255,255,.72);
   border-radius: 18px;
   padding: 12px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  color: #1c1c1e;
-  font-weight: 800;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
-.sp-dock-btn:active{ transform: scale(.99); }
-
-.sp-dock-btn.is-disabled{
-  opacity: .45;
-  pointer-events: none;
-}
-
-.sp-dock-ico{
-  font-size: 20px;
-  line-height: 1;
-}
-
-.sp-dock-label{
+.sp-dock-label {
   font-size: 13px;
-  letter-spacing: .01em;
 }
 
-/* Segmented control */
-.sp-seg{
-  background: rgba(242,242,247,.75);
-  border: 1px solid rgba(0,0,0,.05);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
-
-.sp-seg button{
-  font-weight: 700;
-  color: #8e8e93;
-}
-
-.sp-seg button[aria-selected="true"]{
-  background: rgba(255,255,255,.9);
-  color: #0b0b0c;
-  box-shadow: none;
-}
-
-/* Panels + cards */
-.sp-panels{ margin-top: 12px; }
-
-.sp-panel{ display: none; }
-.sp-panel.is-active{ display: block; }
-
-.sp-card{
-  background: rgba(255,255,255,.78);
-  border: 1px solid rgba(0,0,0,.06);
-  border-radius: 26px;
-  padding: 16px 16px;
-  box-shadow: 0 18px 44px rgba(0,0,0,.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  margin-bottom: 12px;
-}
-
-.sp-card-head{
+.sp-amen-panel {
+  margin-top: 14px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  justify-content: center;
 }
 
-.sp-card-title{
-  font-weight: 950;
-  font-size: 18px;
-  letter-spacing: -0.01em;
-}
-
-.sp-card-right{
-  font-weight: 900;
-  font-size: 14px;
-  color: var(--muted);
-}
-
-/* Hours list */
-.sp-hours{
-  display: grid;
-  gap: 10px;
-}
-
-.sp-hour-row{
+.sp-amen-row {
   display: flex;
-  justify-content: space-between;
-  border-top: 1px solid var(--line);
-  padding-top: 10px;
+  gap: 40px;
 }
 
-.sp-hour-row:first-child{
-  border-top: none;
-  padding-top: 0;
+.sp-amen-icon {
+  width: 38px;
+  height: 38px;
 }
 
-.sp-hour-d{
-  font-weight: 850;
-  color: #1c1c1e;
-}
-
-.sp-hour-v{
-  font-weight: 850;
-  color: var(--muted);
-}
-
-/* Key/value */
-.sp-kv{ display: grid; gap: 10px; }
-.sp-kv-row{
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid var(--line);
-  padding-top: 10px;
-}
-.sp-kv-row:first-child{ border-top: none; padding-top: 0; }
-.sp-kv-k{ font-weight: 850; color: #1c1c1e; }
-.sp-kv-v{ font-weight: 850; color: var(--muted); text-align: right; max-width: 62%; }
-
-/* Chips */
-.sp-chips{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.sp-chip{
-  padding: 10px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.9);
-  border: 1px solid rgba(0,0,0,.06);
-  font-weight: 900;
-  font-size: 13px;
-  color: #1c1c1e;
-}
-
-.sp-empty{
-  display: none;
-  margin-top: 10px;
-  font-weight: 800;
-  color: var(--muted);
-}
-
-.sp-update{
-  font-weight: 800;
-  color: #1c1c1e;
-  line-height: 1.35;
-}
-
-.sp-linkbtn{
-  border: none;
-  background: transparent;
-  color: #007aff;
-  font-weight: 900;
-  padding: 0;
-}
-
-.sp-linkbtn:active{ transform: scale(.99); }
-
-@media (max-width: 390px){
-  .sp-logo-center{ width: 155px; height: 155px; }
-
-  /* smaller amenities icons on smaller devices */
-  .sp-amen-icon{ width: 32px; height: 32px; }
-
-  /* TAA slightly smaller and tucked */
-  #spTaaIcon{
-    width: 52px !important;
-    height: 52px !important;
-    top: 16px !important;
-    right: 16px !important;
-  }
+.sp-seg-btn {
+  font-weight: 600;
+  letter-spacing: 0;
 }
