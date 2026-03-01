@@ -1,298 +1,186 @@
 /* /shops/shop.js
-   Public Shop Page – Data Loader + UI Wiring (FULL REPLACEMENT)
-   v12.6
-
-   ✅ Reads ?shop=slug
-   ✅ Loads /data/shops/{slug}.json first
-   ✅ Fallback: /shops/shops.json (find matching slug)
-   ✅ Supports NEW per-shop JSON (name/city/state/amenities/hours/brands)
-   ✅ Supports legacy shops.json rows (Shop/City/ST/Phone/Website/etc)
+   Shop page loader (FIXED)
+   - Uses ?shop=slug
+   - Tries /data/shops/{slug}.json first (since you clearly have that)
+   - Falls back to /shops/shops.json lookup by slug
 */
 
 (() => {
   "use strict";
-
   const $ = (sel) => document.querySelector(sel);
 
-  // ---------- utils ----------
   function getParam(name) {
-    const u = new URL(window.location.href);
-    return (u.searchParams.get(name) || "").trim();
-  }
-
-  function toStr(v) {
-    return v == null ? "" : String(v).trim();
-  }
-
-  function normalizeKey(k) {
-    return String(k || "")
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, "")
-      .replace(/[^a-z0-9]/g, "");
+    const url = new URL(window.location.href);
+    return (url.searchParams.get(name) || "").trim();
   }
 
   function isTruthy(v) {
     if (v === true) return true;
-    if (v === false || v == null) return false;
-    const s = String(v).trim().toLowerCase();
-    return ["1", "true", "t", "yes", "y", "x", "✓", "check", "checked", "open"].includes(s);
+    if (v === false) return false;
+    if (v == null) return false;
+    return ["1", "true", "yes", "y", "x"].includes(String(v).toLowerCase());
   }
 
-  function slugify(s) {
-    return String(s || "")
-      .trim()
-      .toLowerCase()
-      .replace(/['’]/g, "")
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+  function safeText(el, txt) {
+    if (!el) return;
+    el.textContent = (txt ?? "").toString();
   }
 
-  function sanitizeLogoName(name) {
-    return String(name || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-  }
+  function normalizeShop(obj, slug) {
+    // Supports BOTH formats:
+    // A) { slug, name, city, state, address, phone, website, amenities:{...} }
+    // B) { Shop, City, ST, Address, Phone, Website, Indoor, TVs, BYOB, ... }
 
-  async function fetchJson(url) {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Fetch failed: ${url}`);
-    return res.json();
-  }
+    const name = obj.name || obj.Shop || "";
+    const city = obj.city || obj.City || "";
+    const state = obj.state || obj.ST || "";
+    const address = obj.address || obj.Address || "";
+    const phone = obj.phone || obj.Phone || "";
+    const website = obj.website || obj.Website || "";
+    const brands = obj.brands || obj.Brands || [];
 
-  // ---------- data getters (new + legacy) ----------
-  function getName(shop) {
-    return (
-      toStr(shop.name) ||
-      toStr(shop.Shop) ||
-      toStr(shop.shop) ||
-      toStr(shop.Title) ||
-      "Shop"
-    );
-  }
+    const amenities = obj.amenities || {
+      indoor: obj.Indoor,
+      tvs: obj.TVs,
+      byob: obj.BYOB,
+      outdoor: obj.Outdoor,
+      food: obj.Food,
+      alcohol: obj.Alcohol,
+      noalcohol: obj["No Alcohol"] || obj.NoAlcohol,
+      quiet: obj.Quiet,
+      livemusic: obj["Live Music"] || obj.LiveMusic,
+      taa: obj.TAA
+    };
 
-  function getCity(shop) {
-    return toStr(shop.city) || toStr(shop.City) || "";
-  }
-
-  function getState(shop) {
-    return toStr(shop.state) || toStr(shop.ST) || toStr(shop.State) || "";
-  }
-
-  function getPhone(shop) {
-    return toStr(shop.phone) || toStr(shop.Phone) || toStr(shop.cell) || toStr(shop.Cell) || "";
-  }
-
-  function getWebsite(shop) {
-    return toStr(shop.website) || toStr(shop.Website) || "";
-  }
-
-  function getAddressString(shop) {
-    const addr =
-      toStr(shop.address) ||
-      toStr(shop.Address) ||
-      toStr(shop.address1) ||
-      toStr(shop.address_1) ||
-      "";
-
-    const city = getCity(shop);
-    const st = getState(shop);
-    const zip = toStr(shop.zip) || toStr(shop.Zip) || "";
-
-    const parts = [addr, city, st, zip].filter(Boolean);
-    return parts.join(", ").trim();
-  }
-
-  function getCoords(shop) {
-    const lat = Number(shop.latitude ?? shop.lat ?? shop.Latitude);
-    const lng = Number(shop.longitude ?? shop.lng ?? shop.Longitude);
-    const ok = Number.isFinite(lat) && Number.isFinite(lng);
-    return ok ? { lat, lng } : null;
-  }
-
-  function buildDirectionsUrl(shop) {
-    const coords = getCoords(shop);
-    const addr = getAddressString(shop);
-    const q = coords ? `${coords.lat},${coords.lng}` : (addr || getName(shop));
-    return `https://maps.apple.com/?daddr=${encodeURIComponent(q)}&dirflg=d`;
-  }
-
-  // ---------- amenities ----------
-  // Prefer NEW: shop.amenities = { byob:true, tvs:true, indoor:true, ... }
-  // Support LEGACY columns: BYOB, TVs, Indoor, Outdoor, Food, Alcohol, etc.
-  function getAmenityBag(shop) {
-    const bag = {};
-
-    // New structure
-    if (shop.amenities && typeof shop.amenities === "object") {
-      for (const k of Object.keys(shop.amenities)) {
-        bag[normalizeKey(k)] = isTruthy(shop.amenities[k]);
-      }
-    }
-
-    // Legacy columns on the row
-    for (const k of Object.keys(shop)) {
-      const nk = normalizeKey(k);
-      if (
-        nk === "byob" ||
-        nk === "tvs" ||
-        nk === "tv" ||
-        nk === "indoor" ||
-        nk === "outdoor" ||
-        nk === "food" ||
-        nk === "alcohol" ||
-        nk === "noalcohol" ||
-        nk === "quiet" ||
-        nk === "livemusic"
-      ) {
-        bag[nk === "tv" ? "tvs" : nk] = isTruthy(shop[k]);
-      }
-    }
-
-    // normalize
-    if (bag.noalcohol === true) bag.alcohol = false;
-
-    return bag;
+    return {
+      slug: obj.slug || slug || "",
+      name,
+      city,
+      state,
+      address,
+      phone,
+      website,
+      brands,
+      amenities
+    };
   }
 
   function renderAmenities(shop) {
     const row = $("#spAmenRow");
     if (!row) return;
-
     row.innerHTML = "";
 
-    const a = getAmenityBag(shop);
-
     const items = [
-      { ok: isTruthy(a.indoor), icon: "/img/icons/indoorseating.svg", alt: "Indoor" },
-      { ok: isTruthy(a.tvs), icon: "/img/icons/tv.svg", alt: "TVs" },
-      { ok: isTruthy(a.byob), icon: "/img/icons/byob.svg", alt: "BYOB" },
-    ].filter((i) => i.ok);
+      { ok: isTruthy(shop.amenities.indoor), icon: "/img/icons/indoorseating.svg", alt: "Indoor" },
+      { ok: isTruthy(shop.amenities.tvs), icon: "/img/icons/tv.svg", alt: "TVs" },
+      { ok: isTruthy(shop.amenities.byob), icon: "/img/icons/byob.svg", alt: "BYOB" }
+    ].filter(i => i.ok);
 
-    items.forEach((it) => {
+    items.forEach(a => {
       const img = document.createElement("img");
-      img.src = `${it.icon}?v=${Date.now()}`;
+      img.src = a.icon;
+      img.alt = a.alt;
       img.className = "sp-amen-icon";
-      img.alt = it.alt;
       row.appendChild(img);
     });
   }
 
-  // ---------- logo ----------
-  function setLogo(shop) {
-    const img = $("#spLogo");
-    if (!img) return;
-
-    const base = sanitizeLogoName(getName(shop));
-    const svg = `/img/icons/shops/${base}.svg?v=${Date.now()}`;
-    const png = `/img/icons/shops/${base}.png?v=${Date.now()}`;
-
-    img.onerror = () => {
-      if (img.src.includes(".svg")) {
-        img.src = png;
-        return;
-      }
-      img.onerror = null;
-    };
-
-    img.src = svg;
-  }
-
-  // ---------- dock ----------
   function wireDock(shop) {
     const callBtn = $("#spActCall");
     const webBtn = $("#spActWeb");
     const brandsBtn = $("#spActBrands");
     const dirBtn = $("#spActDir");
 
-    const phone = getPhone(shop);
-    const website = getWebsite(shop);
-    const dirUrl = buildDirectionsUrl(shop);
-
     if (callBtn) {
       callBtn.onclick = () => {
-        if (!phone) return;
-        window.location.href = `tel:${phone.replace(/[^\d+]/g, "")}`;
+        if (shop.phone) window.location.href = `tel:${shop.phone}`;
       };
-      callBtn.style.opacity = phone ? "1" : "0.35";
-      callBtn.style.pointerEvents = phone ? "auto" : "none";
     }
 
     if (webBtn) {
       webBtn.onclick = () => {
-        if (!website) return;
-        const url = /^https?:\/\//i.test(website) ? website : `https://${website}`;
-        window.open(url, "_blank", "noopener");
+        if (shop.website) window.open(shop.website, "_blank", "noopener");
       };
-      webBtn.style.opacity = website ? "1" : "0.35";
-      webBtn.style.pointerEvents = website ? "auto" : "none";
     }
 
     if (brandsBtn) {
       brandsBtn.onclick = () => {
-        // If your page has a Brands tab button, trigger it:
         const tab = document.getElementById("spTabBrands");
         if (tab) tab.click();
       };
     }
 
     if (dirBtn) {
-      dirBtn.onclick = () => window.open(dirUrl, "_blank", "noopener");
+      dirBtn.onclick = () => {
+        const dest = shop.address || `${shop.name} ${shop.city} ${shop.state}`;
+        window.open(`https://maps.apple.com/?daddr=${encodeURIComponent(dest)}`, "_blank", "noopener");
+      };
     }
   }
 
-  // ---------- load shop ----------
-  async function loadShopData(slug) {
-    // 1) per-shop json
+  async function fetchJson(url) {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    return r.json();
+  }
+
+  async function loadShop(slug) {
+    // 1) Preferred: per-shop JSON file
     try {
-      return await fetchJson(`/data/shops/${slug}.json?v=${Date.now()}`);
-    } catch (e) {
-      // 2) fallback list
-      const arr = await fetchJson(`/shops/shops.json?v=${Date.now()}`);
-      if (!Array.isArray(arr)) throw new Error("shops.json is not an array");
+      const obj = await fetchJson(`/data/shops/${slug}.json`);
+      return normalizeShop(obj, slug);
+    } catch (_) {}
 
-      const hit =
-        arr.find((s) => slugify(s.slug || s.shop || s.Shop || s.name || s.Name) === slug) ||
-        arr.find((s) => slugify(s.name || s.Shop || s.shop) === slug) ||
-        arr.find((s) => sanitizeLogoName(s.name || s.Shop || s.shop) === sanitizeLogoName(slug));
+    // 2) Fallback: find in /shops/shops.json
+    const arr = await fetchJson("/shops/shops.json");
+    const found =
+      arr.find(s => (s.slug || "").toLowerCase() === slug.toLowerCase()) ||
+      arr.find(s => (s.Shop || "").toLowerCase().replace(/\s/g, "") === slug.toLowerCase()) ||
+      arr.find(s => (s.name || "").toLowerCase().replace(/\s/g, "") === slug.toLowerCase());
 
-      if (!hit) throw new Error(`Shop not found: ${slug}`);
-      return hit;
-    }
+    if (!found) throw new Error(`Shop not found for slug: ${slug}`);
+    return normalizeShop(found, slug);
   }
 
-  // ---------- render ----------
-  function render(shop) {
-    const nameEl = $("#spName");
-    const cityEl = $("#spCity");
+  function setLogo(slug, shopName) {
+    const img = $("#spLogo");
+    if (!img) return;
 
-    const name = getName(shop);
-    const city = getCity(shop);
-    const st = getState(shop);
+    // Prefer slug-based icon naming: img/icons/shops/{slug}.svg
+    const cleanSlug = (slug || "").toLowerCase().replace(/\s/g, "");
+    const cleanName = (shopName || "").toLowerCase().replace(/\s/g, "");
 
-    if (nameEl) nameEl.textContent = name;
-    if (cityEl) cityEl.textContent = `${city}${city && st ? ", " : ""}${st}`;
+    const tryList = [
+      `/img/icons/shops/${cleanSlug}.svg`,
+      `/img/icons/shops/${cleanSlug}.png`,
+      `/img/icons/shops/${cleanName}.svg`,
+      `/img/icons/shops/${cleanName}.png`
+    ];
 
-    setLogo(shop);
+    let i = 0;
+    img.onerror = () => {
+      i++;
+      if (i < tryList.length) img.src = tryList[i];
+      else img.removeAttribute("src");
+    };
+
+    img.src = tryList[0];
+  }
+
+  async function init() {
+    const slug = getParam("shop") || "justthetip";
+
+    const shop = await loadShop(slug);
+
+    safeText($("#spName"), shop.name);
+    safeText($("#spCity"), `${shop.city}${shop.state ? `, ${shop.state}` : ""}`);
+
+    setLogo(shop.slug, shop.name);
     renderAmenities(shop);
     wireDock(shop);
   }
 
-  async function init() {
-    const slug = getParam("shop") || "shop";
-
-    try {
-      const shop = await loadShopData(slug);
-      render(shop);
-    } catch (err) {
-      console.error(err);
-      const nameEl = $("#spName");
-      const cityEl = $("#spCity");
-      if (nameEl) nameEl.textContent = "Shop not found";
-      if (cityEl) cityEl.textContent = "—";
-    }
-  }
-
-  init();
+  init().catch(err => {
+    console.error(err);
+  });
 })();
