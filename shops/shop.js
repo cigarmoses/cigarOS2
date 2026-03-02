@@ -1,4 +1,4 @@
-/* /shops/shop.js
+=/* /shops/shop.js
    FULL REPLACEMENT FILE (v13.1)
    - Loads the correct shop by ?shop=slug
    - Prefers /data/shops/{slug}.json, falls back to /shops/shops.json
