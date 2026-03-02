@@ -82,6 +82,7 @@ body.shop-public{
   color:#8e8e93;
   font-weight:600;
   font-size:18px;
+  letter-spacing: -0.01em;
 }
 .sp-gps{
   width:18px;
@@ -180,8 +181,8 @@ body.shop-public{
   background:transparent;
   border-radius:14px;
   padding:12px 10px;
-  font-weight:700;
-  font-size:16px;
+  font-weight:500;
+  font-size:15px;
   color:#8e8e93;
 }
 
@@ -225,8 +226,8 @@ body.shop-public{
   border-top:1px solid rgba(0,0,0,.06);
 }
 .sp-hours-row:first-child{ border-top:0; }
-.sp-hours-day{ font-weight:800; }
-.sp-hours-val{ color:#8e8e93; font-weight:700; }
+.sp-hours-day{ font-weight:600; }
+.sp-hours-val{ color:#8e8e93; font-weight:600; }
 
 /* About */
 .sp-about{
@@ -242,8 +243,8 @@ body.shop-public{
   border-top:1px solid rgba(0,0,0,.06);
 }
 .sp-about-item:first-child{ border-top:0; }
-.sp-about-k{ font-weight:800; }
-.sp-about-v{ color:#8e8e93; font-weight:700; text-align:right; }
+.sp-about-k{ font-weight:600; }
+.sp-about-v{ color:#8e8e93; font-weight:600; text-align:right; }
 
 /* Brands Modal */
 .sp-modal[hidden]{ display:none; }
