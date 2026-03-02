@@ -1,11 +1,12 @@
-=/* /shops/shop.js
-   FULL REPLACEMENT FILE (v13.1)
-   - Loads the correct shop by ?shop=slug
-   - Prefers /data/shops/{slug}.json, falls back to /shops/shops.json
-   - Uses slug for logo lookup (svg -> png fallback)
+/* /shops/shop.js
+   FULL REPLACEMENT FILE (v13.2)
+   - Loads correct shop by ?shop=slug
+   - Prefers /data/shops/{slug}.json, fallback /shops/shops.json
+   - Uses slug for shop logo lookup (svg -> png fallback)
    - Only shows TAA badge when true (spTaaIcon)
    - Panels CLOSED by default; tabs open panels
-   - Amenity icons clickable w/ toast descriptions
+   - Dock Brands opens modal grid (4 across) of brand SVG icons (no shading)
+   - Amenity icons clickable with toast descriptions
 */
 
 (() => {
@@ -33,7 +34,6 @@
         .toLowerCase();
 
     const name = (raw.name || raw.Shop || raw.shop || "").toString().trim();
-
     const city = (raw.city || raw.City || "").toString().trim();
     const state = (raw.state || raw.ST || raw.State || "").toString().trim();
 
@@ -43,6 +43,7 @@
     const email = (raw.email || raw.Email || "").toString().trim();
     const instagram = (raw.instagram || raw.Instagram || "").toString().trim();
 
+    // Amenities (support both nested and sheet-style columns)
     const amenities = raw.amenities && typeof raw.amenities === "object"
       ? raw.amenities
       : {
@@ -58,31 +59,25 @@
           taa: raw.TAA
         };
 
+    // Brands: array preferred; string fallback
     const brands = Array.isArray(raw.brands)
       ? raw.brands
-      : (typeof raw.Brands === "string" ? raw.Brands.split(",").map(s => s.trim()).filter(Boolean) : []);
+      : (typeof raw.Brands === "string"
+          ? raw.Brands.split(",").map(s => s.trim()).filter(Boolean)
+          : []);
 
-    const hours = raw.hours && typeof raw.hours === "object" ? raw.hours : (raw.Hours || null);
-    const about = (raw.about || raw.About || raw.events || raw.Events || "").toString().trim();
-    const updates = (raw.updates || raw.Updates || "").toString().trim();
-
-    return {
-      slug,
-      name,
-      city,
-      state,
-      address,
-      phone,
-      website,
-      email,
-      instagram,
-      amenities,
-      brands,
-      hours,
-      about,
-      updates,
-      raw
+    // Hours: support per-shop JSON "hours" or sheet fields Monday..Sunday
+    const hours = (raw.hours && typeof raw.hours === "object") ? raw.hours : {
+      mon: raw.mon || raw.Monday,
+      tue: raw.tue || raw.Tuesday,
+      wed: raw.wed || raw.Wednesday,
+      thu: raw.thu || raw.Thursday,
+      fri: raw.fri || raw.Friday,
+      sat: raw.sat || raw.Saturday,
+      sun: raw.sun || raw.Sunday,
     };
+
+    return { slug, name, city, state, address, phone, website, email, instagram, amenities, brands, hours, raw };
   }
 
   async function fetchJson(url) {
@@ -114,18 +109,15 @@
     return normalizeShop(arr[0], slug);
   }
 
-  async function setLogo(slug) {
+  async function setShopLogo(slug) {
     const img = $("#spLogo");
     if (!img || !slug) return;
 
     const svg = `/img/icons/shops/${slug}.svg`;
     const png = `/img/icons/shops/${slug}.png`;
 
-    img.style.display = "";
     img.onerror = () => {
-      img.onerror = () => {
-        img.style.display = "none";
-      };
+      img.onerror = () => { img.style.display = "none"; };
       img.src = png;
     };
     img.src = svg;
@@ -137,57 +129,50 @@
   }
 
   function renderTAABadge(shop) {
-    const icon = $("#spTaaIcon");
-    if (!icon) return;
+    const taaIcon = $("#spTaaIcon");
+    if (!taaIcon) return;
+
     const taa = isTruthy(shop.amenities?.taa) || isTruthy(shop.raw?.TAA);
-    icon.style.display = taa ? "" : "none";
+    taaIcon.style.display = taa ? "" : "none";
   }
 
-  function toast(msg) {
-    const el = $("#spAmenToast");
+  // Toast
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = $("#spToast");
     if (!el) return;
     el.textContent = msg;
-    el.classList.add("is-show");
-    window.clearTimeout(toast._t);
-    toast._t = window.setTimeout(() => el.classList.remove("is-show"), 1400);
+    el.hidden = false;
+
+    if (toastTimer) window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      el.hidden = true;
+    }, 1600);
   }
 
   function renderAmenities(shop) {
     const row = $("#spAmenRow");
     if (!row) return;
+
     row.innerHTML = "";
 
     const items = [
-      {
-        ok: isTruthy(shop.amenities?.indoor),
-        icon: "/img/icons/indoorseating.svg",
-        alt: "Indoor",
-        msg: "Indoor seating available"
-      },
-      {
-        ok: isTruthy(shop.amenities?.tvs),
-        icon: "/img/icons/tv.svg",
-        alt: "TV",
-        msg: "TVs available"
-      },
-      {
-        ok: isTruthy(shop.amenities?.byob),
-        icon: "/img/icons/byob.svg",
-        alt: "BYOB",
-        msg: "BYOB friendly"
-      }
+      { ok: isTruthy(shop.amenities?.indoor), icon: "/img/icons/indoorseating.svg", text: "Indoor seating available" },
+      { ok: isTruthy(shop.amenities?.tvs), icon: "/img/icons/tv.svg", text: "TVs available" },
+      { ok: isTruthy(shop.amenities?.byob), icon: "/img/icons/byob.svg", text: "BYOB allowed" },
+      { ok: isTruthy(shop.amenities?.food), icon: "/img/icons/food.svg", text: "Food available" },
+      { ok: isTruthy(shop.amenities?.alcohol), icon: "/img/icons/alcohol.svg", text: "Alcohol available" },
     ].filter(i => i.ok);
 
     items.forEach(a => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "sp-amen-btn";
-      btn.setAttribute("aria-label", a.msg);
-      btn.onclick = () => toast(a.msg);
+      btn.onclick = () => showToast(a.text);
 
       const img = document.createElement("img");
       img.src = a.icon;
-      img.alt = a.alt;
+      img.alt = a.text;
       img.className = "sp-amen-icon";
 
       btn.appendChild(img);
@@ -205,19 +190,20 @@
       callBtn.onclick = () => {
         if (shop.phone) window.location.href = `tel:${shop.phone}`;
       };
+      callBtn.disabled = !shop.phone;
+      callBtn.style.opacity = shop.phone ? "" : ".45";
     }
 
     if (webBtn) {
       webBtn.onclick = () => {
         if (shop.website) window.open(shop.website, "_blank", "noopener");
       };
+      webBtn.disabled = !shop.website;
+      webBtn.style.opacity = shop.website ? "" : ".45";
     }
 
     if (brandsBtn) {
-      brandsBtn.onclick = () => {
-        const tab = $("#spTabAbout"); // Brands button opens the About tab area by your current layout
-        if (tab) tab.click();
-      };
+      brandsBtn.onclick = () => openBrandsModal(shop.brands || []);
     }
 
     if (dirBtn) {
@@ -226,97 +212,207 @@
         if (!dest) return;
         window.open(`https://maps.apple.com/?daddr=${encodeURIComponent(dest)}`, "_blank", "noopener");
       };
-    }
-
-    const addrBtn = $("#spAddressBtn");
-    if (addrBtn) {
-      addrBtn.onclick = () => {
-        const dest = shop.address || [shop.city, shop.state].filter(Boolean).join(", ");
-        if (!dest) return;
-        window.open(`https://maps.apple.com/?q=${encodeURIComponent(dest)}`, "_blank", "noopener");
-      };
+      dirBtn.disabled = !(shop.address || shop.city || shop.state);
+      dirBtn.style.opacity = (shop.address || shop.city || shop.state) ? "" : ".45";
     }
   }
 
-  function setPanelsClosed(isClosed) {
-    const panels = $("#spPanels");
-    if (!panels) return;
-    panels.classList.toggle("is-closed", !!isClosed);
-  }
+  // Tabs CLOSED by default
+  function setActivePanel(which) {
+    const tabs = [
+      { key: "hours", tab: $("#spTabHours"), panel: $("#spPanelHours") },
+      { key: "about", tab: $("#spTabAbout"), panel: $("#spPanelAbout") },
+      { key: "updates", tab: $("#spTabUpdates"), panel: $("#spPanelUpdates") },
+    ];
 
-  function activateTab(which) {
-    const tabHours = $("#spTabHours");
-    const tabAbout = $("#spTabAbout");
-    const tabUpdates = $("#spTabUpdates");
-
-    const pHours = $("#spPanelHours");
-    const pAbout = $("#spPanelAbout");
-    const pUpdates = $("#spPanelUpdates");
-
-    [tabHours, tabAbout, tabUpdates].forEach(b => b && b.classList.remove("is-active"));
-    [pHours, pAbout, pUpdates].forEach(p => p && p.classList.remove("is-active"));
-
-    if (which === "hours") { tabHours?.classList.add("is-active"); pHours?.classList.add("is-active"); }
-    if (which === "about") { tabAbout?.classList.add("is-active"); pAbout?.classList.add("is-active"); }
-    if (which === "updates") { tabUpdates?.classList.add("is-active"); pUpdates?.classList.add("is-active"); }
-
-    setPanelsClosed(false);
+    tabs.forEach(t => {
+      const on = t.key === which;
+      if (t.tab) {
+        t.tab.classList.toggle("is-active", on);
+        t.tab.setAttribute("aria-selected", on ? "true" : "false");
+      }
+      if (t.panel) {
+        t.panel.classList.toggle("is-active", on);
+        t.panel.setAttribute("aria-hidden", on ? "false" : "true");
+      }
+    });
   }
 
   function wireTabs() {
-    const tabHours = $("#spTabHours");
-    const tabAbout = $("#spTabAbout");
-    const tabUpdates = $("#spTabUpdates");
+    const tHours = $("#spTabHours");
+    const tAbout = $("#spTabAbout");
+    const tUpdates = $("#spTabUpdates");
 
-    if (tabHours) tabHours.onclick = () => activateTab("hours");
-    if (tabAbout) tabAbout.onclick = () => activateTab("about");
-    if (tabUpdates) tabUpdates.onclick = () => activateTab("updates");
-
-    // CLOSED by default on load
-    setPanelsClosed(true);
+    if (tHours) tHours.onclick = () => setActivePanel("hours");
+    if (tAbout) tAbout.onclick = () => setActivePanel("about");
+    if (tUpdates) tUpdates.onclick = () => setActivePanel("updates");
   }
 
-  function renderAboutUpdates(shop) {
-    const about = $("#spAboutText");
-    const upd = $("#spUpdateText");
-    if (about) about.textContent = shop.about || "—";
-    if (upd) upd.textContent = shop.updates || "No updates yet.";
+  function cleanHourValue(v) {
+    if (v == null) return "";
+    const s = String(v).trim();
+    // Some of your older JSON had weird encoding like â€”; treat as empty
+    if (!s || s === "—" || s.toLowerCase() === "nan" || s.includes("â")) return "";
+    return s;
   }
 
-  function renderBrandsChips(shop) {
-    const wrap = $("#spBrandChips");
-    if (!wrap) return;
-    wrap.innerHTML = "";
-    (shop.brands || []).forEach(b => {
-      const div = document.createElement("div");
-      div.className = "sp-chip";
-      div.textContent = b;
-      wrap.appendChild(div);
+  function renderHours(shop) {
+    const list = $("#spHoursList");
+    const now = $("#spHoursNow");
+    if (!list) return;
+
+    const days = [
+      ["Monday", cleanHourValue(shop.hours?.mon)],
+      ["Tuesday", cleanHourValue(shop.hours?.tue)],
+      ["Wednesday", cleanHourValue(shop.hours?.wed)],
+      ["Thursday", cleanHourValue(shop.hours?.thu)],
+      ["Friday", cleanHourValue(shop.hours?.fri)],
+      ["Saturday", cleanHourValue(shop.hours?.sat)],
+      ["Sunday", cleanHourValue(shop.hours?.sun)],
+    ];
+
+    const any = days.some(d => d[1]);
+    list.innerHTML = "";
+
+    if (!any) {
+      list.innerHTML = `<div class="sp-hours-row"><div class="sp-hours-day">Coming soon</div><div class="sp-hours-val">—</div></div>`;
+      if (now) now.textContent = "—";
+      return;
+    }
+
+    days.forEach(([day, val]) => {
+      const v = val || "—";
+      const row = document.createElement("div");
+      row.className = "sp-hours-row";
+      row.innerHTML = `<div class="sp-hours-day">${day}</div><div class="sp-hours-val">${v}</div>`;
+      list.appendChild(row);
+    });
+
+    // simple “today” label (optional, safe)
+    if (now) now.textContent = "—";
+  }
+
+  function renderAbout(shop) {
+    const el = $("#spAbout");
+    if (!el) return;
+
+    const items = [
+      ["Address", shop.address || "—"],
+      ["Phone", shop.phone || "—"],
+      ["Website", shop.website || "—"],
+      ["Instagram", shop.instagram || "—"],
+      ["Email", shop.email || "—"],
+    ];
+
+    el.innerHTML = items.map(([k,v]) => `
+      <div class="sp-about-item">
+        <div class="sp-about-k">${k}</div>
+        <div class="sp-about-v">${escapeHtml(v)}</div>
+      </div>
+    `).join("");
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    }[c]));
+  }
+
+  // Brands Modal (4 across, SVG icons, no shading)
+  function openBrandsModal(brands) {
+    const modal = $("#spBrandsModal");
+    const grid = $("#spBrandsGrid");
+    if (!modal || !grid) return;
+
+    grid.innerHTML = "";
+
+    const list = Array.isArray(brands) ? brands : [];
+    if (!list.length) {
+      grid.innerHTML = `<div style="padding:10px 6px;color:#8e8e93;font-weight:700;">No brands listed.</div>`;
+    } else {
+      list.forEach((b) => {
+        const slug = String(b || "").trim();
+        if (!slug) return;
+
+        const item = document.createElement("div");
+        item.className = "sp-brand";
+
+        const img = document.createElement("img");
+        img.className = "sp-brand-ico";
+        img.alt = slug;
+
+        // Brand icon path (per your repo rule: /img/icons/brands)
+        const svg = `/img/icons/brands/${encodeURIComponent(slug)}.svg`;
+        const png = `/img/icons/brands/${encodeURIComponent(slug)}.png`;
+
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = png;
+        };
+        img.src = svg;
+
+        const name = document.createElement("div");
+        name.className = "sp-brand-name";
+        name.textContent = slug;
+
+        item.appendChild(img);
+        item.appendChild(name);
+        grid.appendChild(item);
+      });
+    }
+
+    modal.hidden = false;
+  }
+
+  function closeBrandsModal() {
+    const modal = $("#spBrandsModal");
+    if (modal) modal.hidden = true;
+  }
+
+  function wireBrandsModal() {
+    const bg = $("#spBrandsCloseBg");
+    const btn = $("#spBrandsCloseBtn");
+    if (bg) bg.onclick = closeBrandsModal;
+    if (btn) btn.onclick = closeBrandsModal;
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeBrandsModal();
     });
   }
 
   async function init() {
+    wireTabs();
+    wireBrandsModal();
+
     const slug = getSlugFromUrl();
     const shop = await loadShop(slug);
 
     renderHeader(shop);
-    await setLogo(shop.slug || slug);
+    await setShopLogo(shop.slug || slug);
     renderTAABadge(shop);
     renderAmenities(shop);
     wireDock(shop);
 
-    // Panels/tabs behavior
-    wireTabs();
+    renderHours(shop);
+    renderAbout(shop);
 
-    // Content
-    renderAboutUpdates(shop);
-
-    // If you later re-add a Brands panel grid, this is where we’ll hook it in.
-    // (Keeping chips function here in case you already have #spBrandChips elsewhere.)
-    renderBrandsChips(shop);
+    // CLOSED by default (user clicks Hours to open)
+    setActivePanel(null);
   }
 
-  init().catch(err => {
-    console.error("[shop.js] init failed:", err);
-  });
+  // Allow null to close all
+  const _setActivePanel = setActivePanel;
+  setActivePanel = (which) => {
+    if (!which) {
+      ["hours","about","updates"].forEach(k => _setActivePanel("__none__"));
+      const tabs = ["#spTabHours","#spTabAbout","#spTabUpdates"].map($);
+      const panels = ["#spPanelHours","#spPanelAbout","#spPanelUpdates"].map($);
+      tabs.forEach(t => t && (t.classList.remove("is-active"), t.setAttribute("aria-selected","false")));
+      panels.forEach(p => p && (p.classList.remove("is-active"), p.setAttribute("aria-hidden","true")));
+      return;
+    }
+    _setActivePanel(which);
+  };
+
+  init().catch(err => console.error("[shop.js] init failed:", err));
 })();
