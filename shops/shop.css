@@ -1,373 +1,117 @@
-:root{
-  --bg:#f2f2f7;
-  --surface:#ffffff;
-  --ink:#0b0b0c;
-  --muted:#8e8e93;
-  --line:rgba(0,0,0,.06);
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>Shop • CigarOS</title>
 
-  --shadow:0 20px 60px rgba(0,0,0,.10);
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/shops/shop.css?v=13.3" />
+</head>
 
-  --cardRadius:34px;
-  --pillRadius:999px;
+<body class="shop-public">
+  <main class="sp-wrap">
 
-  --glass:rgba(255,255,255,.70);
-  --glassBorder:rgba(0,0,0,.05);
-}
+    <section class="sp-top" aria-label="Shop header">
+      <div class="sp-pill sp-pill-left" aria-hidden="true">SHOP</div>
 
-html,body{height:100%;}
+      <!-- TAA badge (JS hides if not true) -->
+      <img class="sp-taa" id="spTaaIcon" src="/img/icons/taa.svg" alt="TAA" />
 
-body.shop-public{
-  margin:0;
-  background:var(--bg);
-  color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
-}
+      <div class="sp-logo" aria-hidden="true">
+        <img id="spLogo" alt="" />
+      </div>
 
-/* page wrap */
-.sp-wrap{
-  max-width:430px;
-  margin:0 auto;
-  padding:28px 18px 60px;
-}
+      <h1 class="sp-title" id="spName">Shop Name</h1>
 
-/* ---------- TOP CARD ---------- */
-.sp-top{
-  position:relative;
-  background:var(--surface);
-  border-radius:var(--cardRadius);
-  padding:24px;
-  box-shadow:var(--shadow);
-}
+      <button class="sp-city" id="spAddressBtn" type="button" aria-label="Open directions">
+        <svg viewBox="0 0 24 24" class="sp-gps" aria-hidden="true">
+          <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" />
+        </svg>
+        <span id="spCity">City, ST</span>
+      </button>
 
-/* SHOP pill */
-.sp-pill{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:6px 14px;
-  border-radius:var(--pillRadius);
-  font-size:12px;
-  font-weight:600;
-  letter-spacing:0;
-  color:#8e8e93;
-  background:rgba(255,255,255,.70);
-  border:1px solid rgba(0,0,0,.06);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-}
+      <div class="sp-dock sp-dock-top" role="group" aria-label="Quick actions">
+        <button class="sp-dock-btn" id="spActCall" type="button" aria-label="Call">
+          <span class="sp-dock-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="sp-ico">
+              <path d="M6.6 10.8c1.6 3 3.6 5 6.6 6.6l2.2-2.2c.3-.3.8-.4 1.2-.2 1.3.5 2.7.8 4.2.8.7 0 1.2.5 1.2 1.2V21c0 .7-.5 1.2-1.2 1.2C10.8 22.2 1.8 13.2 1.8 2.4 1.8 1.7 2.3 1.2 3 1.2h3.7c.7 0 1.2.5 1.2 1.2 0 1.5.3 2.9.8 4.2.1.4 0 .9-.3 1.2L6.6 10.8z"/>
+            </svg>
+          </span>
+          <span class="sp-dock-label">Call</span>
+        </button>
 
-.sp-pill-left{
-  position:absolute;
-  top:18px;
-  left:18px;
-}
+        <button class="sp-dock-btn" id="spActWeb" type="button" aria-label="Website">
+          <span class="sp-dock-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="sp-ico">
+              <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm7.9 9H16.8a15.5 15.5 0 00-1.2-6 8.1 8.1 0 014.3 6zM12 4c.9 1.2 1.8 3.4 2.3 7H9.7C10.2 7.4 11.1 5.2 12 4zM4.1 13h3.1a15.5 15.5 0 001.2 6 8.1 8.1 0 01-4.3-6zm3.1-2H4.1a8.1 8.1 0 014.3-6 15.5 15.5 0 00-1.2 6zM9.7 13h4.6c-.5 3.6-1.4 5.8-2.3 7-.9-1.2-1.8-3.4-2.3-7zm5.9 6a15.5 15.5 0 001.2-6h3.1a8.1 8.1 0 01-4.3 6zm1.2-8a15.9 15.9 0 00-1.1-6 8.1 8.1 0 014.2 6h-3.1z"/>
+            </svg>
+          </span>
+          <span class="sp-dock-label">Web</span>
+        </button>
 
-/* TAA badge (small, only if true) */
-.sp-taa{
-  position:absolute;
-  top:18px;
-  right:18px;
-  width:44px;
-  height:44px;
-  object-fit:contain;
-  background:transparent;
-  border:0;
-  outline:0;
-  box-shadow:none;
-}
+        <button class="sp-dock-btn" id="spActBrands" type="button" aria-label="Brands">
+          <span class="sp-dock-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="sp-ico">
+              <path d="M20.6 13.2l-7.4 7.4a2 2 0 01-2.8 0l-7-7A2 2 0 013 12.2V6a2 2 0 012-2h6.2a2 2 0 011.4.6l8 8a2 2 0 010 2.8zM7.5 8.8A1.3 1.3 0 107.5 6a1.3 1.3 0 000 2.6z"/>
+            </svg>
+          </span>
+          <span class="sp-dock-label">Brands</span>
+        </button>
 
-/* Logo */
-.sp-logo{
-  width:160px;
-  height:160px;
-  margin:46px auto 16px;
-  border-radius:42px;
-  overflow:hidden;
-  background:#111;
-  box-shadow:0 18px 50px rgba(0,0,0,.18);
-}
+        <button class="sp-dock-btn" id="spActDir" type="button" aria-label="Directions">
+          <span class="sp-dock-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="sp-ico">
+              <path d="M12 2l9 20-9-4-9 4 9-20zm0 6.2L8.8 16 12 14.7 15.2 16 12 8.2z"/>
+            </svg>
+          </span>
+          <span class="sp-dock-label">Directions</span>
+        </button>
+      </div>
 
-.sp-logo img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
+      <div class="sp-amen-panel">
+        <div class="sp-amen-row" id="spAmenRow"></div>
+      </div>
+    </section>
 
-/* Title */
-.sp-title{
-  margin:0;
-  text-align:center;
-  font-weight:900;        /* iOS large title weight */
-  font-size:38px;         /* 34–40 range */
-  letter-spacing:0;       /* iOS optical kerning */
-  line-height:1.05;
-}
+    <section class="sp-bottom">
+      <div class="sp-seg">
+        <button class="sp-seg-btn is-active" id="spTabOverview" type="button">Overview</button>
+        <button class="sp-seg-btn" id="spTabBrands" type="button">Brands</button>
+        <button class="sp-seg-btn" id="spTabUpdates" type="button">Updates</button>
+      </div>
 
-/* City */
-.sp-city{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:8px;
-  border:0;
-  background:transparent;
-  padding:0;
-  cursor:pointer;
+      <div class="sp-panels">
+        <div class="sp-panel is-active" id="spPanelOverview">
+          <div class="sp-card">
+            <div class="sp-card-head">
+              <div class="sp-card-title">Hours</div>
+              <div class="sp-card-right" id="spHoursNow">—</div>
+            </div>
+            <div id="spHoursList"></div>
+          </div>
+        </div>
 
-  font-weight:500;        /* NOT bold */
-  font-size:16px;         /* smaller */
-  letter-spacing:0;
-  color:var(--muted);
+        <!-- ✅ BRANDS PANEL: GRID (no chip pills) -->
+        <div class="sp-panel" id="spPanelBrands">
+          <div class="sp-card">
+            <div class="sp-card-title">Brands carried</div>
+            <div class="sp-brand-grid" id="spBrandGrid" aria-label="Brands grid"></div>
+          </div>
+        </div>
 
-  margin:10px 0 14px;
-}
+        <div class="sp-panel" id="spPanelUpdates">
+          <div class="sp-card">
+            <div class="sp-card-title">Updates</div>
+            <div id="spUpdateText">No updates yet.</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-.sp-city:active{transform:scale(.99);}
+  </main>
 
-.sp-gps{
-  width:18px;
-  height:18px;
-  fill:#ff3b30;
-}
-
-/* Dock (under city) */
-.sp-dock{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  padding:12px;
-  border-radius:24px;
-  background:var(--glass);
-  border:1px solid var(--glassBorder);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-}
-
-.sp-dock-btn{
-  background:rgba(255,255,255,.80);
-  border:1px solid rgba(0,0,0,.06);
-  border-radius:18px;
-  padding:12px 10px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-
-  font-weight:500;        /* regular */
-  letter-spacing:0;
-  color:#1c1c1e;
-}
-
-.sp-dock-btn:active{transform:scale(.99);}
-
-.sp-dock-btn.is-disabled{
-  opacity:.35;
-  pointer-events:none;
-}
-
-.sp-dock-ico{
-  font-size:20px;
-  line-height:1;
-}
-
-.sp-dock-label{
-  font-size:13px;
-  font-weight:500;        /* keep regular */
-  letter-spacing:0;
-  line-height:1;
-}
-
-/* Amenities (icons only) */
-.sp-amen-panel{
-  margin-top:14px;
-  display:flex;
-  justify-content:center;
-}
-
-.sp-amen-row{
-  display:flex;
-  gap:22px;               /* tighter */
-  align-items:center;
-}
-
-.sp-amen-icon{
-  width:28px;             /* smaller than before */
-  height:28px;
-  display:block;
-  object-fit:contain;
-}
-
-/* ---------- BOTTOM ---------- */
-.sp-bottom{
-  margin-top:16px;
-}
-
-.sp-seg{
-  display:flex;
-  gap:6px;
-  padding:6px;
-  border-radius:18px;
-  background:rgba(242,242,247,.75);
-  border:1px solid rgba(0,0,0,.05);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-}
-
-.sp-seg-btn{
-  flex:1 1 0;
-  height:38px;
-  border:0;
-  background:transparent;
-  border-radius:14px;
-
-  font-weight:600;
-  font-size:15px;
-  letter-spacing:0;
-  color:#8e8e93;
-
-  font-family:inherit;
-  cursor:pointer;
-}
-
-.sp-seg-btn.is-active{
-  background:rgba(255,255,255,.92);
-  color:#0b0b0c;
-  box-shadow:none;
-}
-
-.sp-panels{ margin-top:12px; }
-
-.sp-panel{ display:none; }
-.sp-panel.is-active{ display:block; }
-
-.sp-card{
-  background:rgba(255,255,255,.92);
-  border:1px solid rgba(0,0,0,.05);
-  border-radius:26px;
-  padding:16px;
-  box-shadow:0 14px 40px rgba(0,0,0,.06);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  margin-bottom:12px;
-}
-
-.sp-card-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:10px;
-}
-
-.sp-card-title{
-  font-weight:900;
-  font-size:18px;
-  letter-spacing:0;
-}
-
-.sp-card-right{
-  font-weight:700;
-  font-size:14px;
-  color:var(--muted);
-  letter-spacing:0;
-}
-
-/* Hours */
-.sp-hours{
-  display:grid;
-  gap:10px;
-}
-
-.sp-hour-row{
-  display:flex;
-  justify-content:space-between;
-  border-top:1px solid var(--line);
-  padding-top:10px;
-}
-
-.sp-hour-row:first-child{
-  border-top:none;
-  padding-top:0;
-}
-
-.sp-hour-d{
-  font-weight:800;
-  color:#1c1c1e;
-}
-
-.sp-hour-v{
-  font-weight:700;
-  color:var(--muted);
-  text-align:right;
-  max-width:60%;
-}
-
-/* Contact KV */
-.sp-kv{
-  display:grid;
-  gap:10px;
-}
-
-.sp-kv-row{
-  display:flex;
-  justify-content:space-between;
-  border-top:1px solid var(--line);
-  padding-top:10px;
-}
-
-.sp-kv-row:first-child{
-  border-top:none;
-  padding-top:0;
-}
-
-.sp-kv-k{
-  font-weight:800;
-  color:#1c1c1e;
-}
-
-.sp-kv-v{
-  font-weight:700;
-  color:var(--muted);
-  text-align:right;
-  max-width:62%;
-  word-break:break-word;
-}
-
-/* Brands chips */
-.sp-chips{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-}
-
-.sp-chip{
-  padding:10px 12px;
-  border-radius:999px;
-  background:rgba(255,255,255,.92);
-  border:1px solid rgba(0,0,0,.06);
-  font-weight:700;
-  font-size:13px;
-  letter-spacing:0;
-  color:#1c1c1e;
-}
-
-.sp-empty{
-  display:none;
-  margin-top:10px;
-  font-weight:700;
-  color:var(--muted);
-}
-
-.sp-update{
-  font-weight:600;
-  color:#1c1c1e;
-  line-height:1.35;
-}
-
-/* Mobile tweaks */
-@media (max-width:390px){
-  .sp-logo{ width:148px; height:148px; }
-  .sp-title{ font-size:36px; }
-}
+  <script src="/shops/shop.js?v=13.3"></script>
+</body>
+</html>
