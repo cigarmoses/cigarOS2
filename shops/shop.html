@@ -7,100 +7,113 @@
   <title>Shop • CigarOS</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/shops/shop.css?v=13.0" />
+  <link rel="stylesheet" href="/shops/shop.css?v=13.1" />
 </head>
 
 <body class="shop-public">
   <main class="sp-wrap">
 
-    <section class="sp-top">
+    <section class="sp-top" aria-label="Shop header">
 
       <!-- SHOP pill -->
-      <div class="sp-pill sp-pill-left">SHOP</div>
+      <div class="sp-pill sp-pill-left" aria-hidden="true">SHOP</div>
 
-      <!-- TAA badge -->
+      <!-- TAA badge (JS will hide if not true) -->
       <img class="sp-taa" id="spTaaIcon" src="/img/icons/taa.svg" alt="TAA" />
 
       <!-- Logo -->
-      <div class="sp-logo">
+      <div class="sp-logo" aria-hidden="true">
         <img id="spLogo" alt="" />
       </div>
 
       <!-- Shop Name -->
       <h1 class="sp-title" id="spName">Shop Name</h1>
 
-      <!-- City -->
-      <button class="sp-city" id="spAddressBtn">
-        <svg viewBox="0 0 24 24" class="sp-gps">
-          <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z"/>
+      <!-- City / State (centered, small) -->
+      <button class="sp-city" id="spAddressBtn" type="button" aria-label="Open directions">
+        <svg viewBox="0 0 24 24" class="sp-gps" aria-hidden="true">
+          <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" />
         </svg>
         <span id="spCity">City, ST</span>
       </button>
 
-      <!-- ✅ ACTION DOCK (MOVED UP) -->
-      <div class="sp-dock sp-dock-top">
+      <!-- ACTION DOCK (under city) -->
+      <div class="sp-dock sp-dock-top" role="group" aria-label="Quick actions">
 
-        <button class="sp-dock-btn" id="spActCall">
-          <span class="sp-dock-ico">📞</span>
+        <button class="sp-dock-btn" id="spActCall" type="button" aria-label="Call">
+          <span class="sp-dock-ico" aria-hidden="true">📞</span>
           <span class="sp-dock-label">Call</span>
         </button>
 
-        <button class="sp-dock-btn" id="spActWeb">
-          <span class="sp-dock-ico">🌐</span>
+        <button class="sp-dock-btn" id="spActWeb" type="button" aria-label="Website">
+          <span class="sp-dock-ico" aria-hidden="true">🌐</span>
           <span class="sp-dock-label">Web</span>
         </button>
 
-        <button class="sp-dock-btn" id="spActBrands">
-          <span class="sp-dock-ico">🏷️</span>
+        <button class="sp-dock-btn" id="spActBrands" type="button" aria-label="Brands">
+          <span class="sp-dock-ico" aria-hidden="true">🏷️</span>
           <span class="sp-dock-label">Brands</span>
         </button>
 
-        <button class="sp-dock-btn" id="spActDir">
-          <span class="sp-dock-ico">🧭</span>
+        <button class="sp-dock-btn" id="spActDir" type="button" aria-label="Directions">
+          <span class="sp-dock-ico" aria-hidden="true">🧭</span>
           <span class="sp-dock-label">Directions</span>
         </button>
 
       </div>
 
-      <!-- ✅ AMENITIES ICONS ONLY -->
-      <div class="sp-amen-panel">
+      <!-- AMENITIES ICONS ONLY -->
+      <div class="sp-amen-panel" aria-label="Amenities">
         <div class="sp-amen-row" id="spAmenRow"></div>
       </div>
 
     </section>
 
     <!-- Bottom Section -->
-    <section class="sp-bottom">
+    <section class="sp-bottom" aria-label="Shop details">
 
-      <div class="sp-seg">
-        <button class="sp-seg-btn is-active" id="spTabOverview">Overview</button>
-        <button class="sp-seg-btn" id="spTabBrands">Brands</button>
-        <button class="sp-seg-btn" id="spTabUpdates">Updates</button>
+      <div class="sp-seg" role="tablist" aria-label="Shop sections">
+        <button class="sp-seg-btn is-active" id="spTabOverview" type="button" role="tab" aria-selected="true">Overview</button>
+        <button class="sp-seg-btn" id="spTabBrands" type="button" role="tab" aria-selected="false">Brands</button>
+        <button class="sp-seg-btn" id="spTabUpdates" type="button" role="tab" aria-selected="false">Updates</button>
       </div>
 
       <div class="sp-panels">
 
-        <div class="sp-panel is-active" id="spPanelOverview">
+        <div class="sp-panel is-active" id="spPanelOverview" role="tabpanel">
           <div class="sp-card">
             <div class="sp-card-head">
               <div class="sp-card-title">Hours</div>
               <div class="sp-card-right" id="spHoursNow">—</div>
             </div>
-            <div id="spHoursList"></div>
+            <div class="sp-hours" id="spHoursList"></div>
+          </div>
+
+          <div class="sp-card">
+            <div class="sp-card-head">
+              <div class="sp-card-title">Contact</div>
+            </div>
+            <div class="sp-kv" id="spContactKv"></div>
           </div>
         </div>
 
-        <div class="sp-panel" id="spPanelBrands">
+        <div class="sp-panel" id="spPanelBrands" role="tabpanel">
           <div class="sp-card">
-            <div class="sp-card-title">Brands carried</div>
+            <div class="sp-card-head">
+              <div class="sp-card-title">Brands carried</div>
+            </div>
             <div class="sp-chips" id="spBrandChips"></div>
+            <div class="sp-empty" id="spBrandsEmpty">No brand data yet.</div>
           </div>
         </div>
 
-        <div class="sp-panel" id="spPanelUpdates">
+        <div class="sp-panel" id="spPanelUpdates" role="tabpanel">
           <div class="sp-card">
-            <div class="sp-card-title">Updates</div>
-            <div id="spUpdateText">No updates yet.</div>
+            <div class="sp-card-head">
+              <div class="sp-card-title">Updates</div>
+              <div class="sp-card-right" id="spUpdateTime">—</div>
+            </div>
+            <div class="sp-update" id="spUpdateText">No updates yet.</div>
           </div>
         </div>
 
@@ -109,6 +122,6 @@
 
   </main>
 
-  <script src="/shops/shop.js?v=13.0"></script>
+  <script src="/shops/shop.js?v=13.1"></script>
 </body>
 </html>
