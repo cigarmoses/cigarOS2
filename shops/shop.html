@@ -1,9 +1,3 @@
-<!-- /shops/shop.html
-     FULL REPLACEMENT FILE (v13.1)
-     - Segmented: Hours | About | Updates
-     - Panels CLOSED by default
-     - Dock icons: Brands + Directions use your SVGs
--->
 <!doctype html>
 <html lang="en">
 <head>
@@ -13,7 +7,7 @@
   <title>Shop • CigarOS</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/shops/shop.css?v=13.1" />
+  <link rel="stylesheet" href="/shops/shop.css?v=13.2" />
 </head>
 
 <body class="shop-public">
@@ -22,9 +16,9 @@
     <section class="sp-top">
 
       <!-- SHOP pill -->
-      <div class="sp-pill">SHOP</div>
+      <div class="sp-pill sp-pill-left">SHOP</div>
 
-      <!-- TAA badge (shown only when true) -->
+      <!-- TAA badge (TOP RIGHT) — only visible when taa=true -->
       <img class="sp-taa" id="spTaaIcon" src="/img/icons/taa.svg" alt="TAA" />
 
       <!-- Logo -->
@@ -35,40 +29,40 @@
       <!-- Shop Name -->
       <h1 class="sp-title" id="spName">Shop Name</h1>
 
-      <!-- City -->
-      <button class="sp-city" id="spAddressBtn" type="button">
+      <!-- City (CENTERED + SMALL) -->
+      <div class="sp-city" id="spCityRow" aria-label="City">
         <svg viewBox="0 0 24 24" class="sp-gps" aria-hidden="true">
           <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z"/>
         </svg>
         <span id="spCity">City, ST</span>
-      </button>
+      </div>
 
       <!-- ACTION DOCK -->
       <div class="sp-dock sp-dock-top">
 
         <button class="sp-dock-btn" id="spActCall" type="button">
-          <span class="sp-dock-ico" aria-hidden="true">📞</span>
+          <img class="sp-dock-ico" src="/img/icons/call.svg" alt="" />
           <span class="sp-dock-label">Call</span>
         </button>
 
         <button class="sp-dock-btn" id="spActWeb" type="button">
-          <span class="sp-dock-ico" aria-hidden="true">🌐</span>
+          <img class="sp-dock-ico" src="/img/icons/web.svg" alt="" />
           <span class="sp-dock-label">Web</span>
         </button>
 
         <button class="sp-dock-btn" id="spActBrands" type="button">
-          <img class="sp-dock-icon" src="/img/icons/brands.svg" alt="" />
+          <img class="sp-dock-ico" src="/img/icons/brands.svg" alt="" />
           <span class="sp-dock-label">Brands</span>
         </button>
 
         <button class="sp-dock-btn" id="spActDir" type="button">
-          <img class="sp-dock-icon" src="/img/icons/directions.svg" alt="" />
+          <img class="sp-dock-ico" src="/img/icons/directions.svg" alt="" />
           <span class="sp-dock-label">Directions</span>
         </button>
 
       </div>
 
-      <!-- AMENITIES ICONS ONLY -->
+      <!-- AMENITIES (ICONS ONLY) -->
       <div class="sp-amen-panel">
         <div class="sp-amen-row" id="spAmenRow"></div>
       </div>
@@ -78,16 +72,16 @@
     <!-- Bottom Section -->
     <section class="sp-bottom">
 
-      <div class="sp-seg">
-        <button class="sp-seg-btn" id="spTabHours" type="button">Hours</button>
-        <button class="sp-seg-btn" id="spTabAbout" type="button">About</button>
-        <button class="sp-seg-btn" id="spTabUpdates" type="button">Updates</button>
+      <div class="sp-seg" role="tablist" aria-label="Shop tabs">
+        <button class="sp-seg-btn" id="spTabHours" type="button" role="tab" aria-selected="false">Hours</button>
+        <button class="sp-seg-btn" id="spTabAbout" type="button" role="tab" aria-selected="false">About</button>
+        <button class="sp-seg-btn" id="spTabUpdates" type="button" role="tab" aria-selected="false">Updates</button>
       </div>
 
-      <!-- CLOSED by default -->
-      <div class="sp-panels is-closed" id="spPanels">
+      <div class="sp-panels">
 
-        <div class="sp-panel" id="spPanelHours">
+        <!-- CLOSED BY DEFAULT -->
+        <div class="sp-panel" id="spPanelHours" role="tabpanel" aria-hidden="true">
           <div class="sp-card">
             <div class="sp-card-head">
               <div class="sp-card-title">Hours</div>
@@ -97,14 +91,14 @@
           </div>
         </div>
 
-        <div class="sp-panel" id="spPanelAbout">
+        <div class="sp-panel" id="spPanelAbout" role="tabpanel" aria-hidden="true">
           <div class="sp-card">
             <div class="sp-card-title">About</div>
-            <div id="spAboutText">—</div>
+            <div class="sp-about" id="spAbout"></div>
           </div>
         </div>
 
-        <div class="sp-panel" id="spPanelUpdates">
+        <div class="sp-panel" id="spPanelUpdates" role="tabpanel" aria-hidden="true">
           <div class="sp-card">
             <div class="sp-card-title">Updates</div>
             <div id="spUpdateText">No updates yet.</div>
@@ -116,9 +110,22 @@
 
   </main>
 
-  <!-- Amenity tooltip/toast -->
-  <div class="sp-toast" id="spAmenToast" role="status" aria-live="polite"></div>
+  <!-- BRANDS MODAL (opens from Dock “Brands”) -->
+  <div class="sp-modal" id="spBrandsModal" hidden>
+    <div class="sp-modal-backdrop" id="spBrandsCloseBg" aria-hidden="true"></div>
+    <div class="sp-modal-sheet" role="dialog" aria-modal="true" aria-label="Brands">
+      <div class="sp-modal-head">
+        <div class="sp-modal-title">Brands</div>
+        <button class="sp-modal-close" id="spBrandsCloseBtn" type="button" aria-label="Close">✕</button>
+      </div>
 
-  <script src="/shops/shop.js?v=13.1"></script>
+      <div class="sp-brand-grid" id="spBrandsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Toast for amenities -->
+  <div class="sp-toast" id="spToast" hidden></div>
+
+  <script src="/shops/shop.js?v=13.2"></script>
 </body>
 </html>
