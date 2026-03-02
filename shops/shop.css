@@ -312,9 +312,10 @@ body.shop-public{
 .sp-brand-name{
   font-size:12px;
   font-weight:400;   /* regular */
+  letter-spacing:0;  /* make sure no added tracking */
   color:#111;
   text-align:center;
-  line-height:1.1;
+  line-height:1.2;
   max-width:88px;
   word-break:break-word;
 }
