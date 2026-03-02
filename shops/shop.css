@@ -116,11 +116,9 @@ body.shop-public{
 }
 
 .sp-dock-ico{
-  width:36px;
-  height:36px;
+  width:30px;
+  height:30px;
   object-fit:contain;
-  filter:grayscale(1) brightness(0); /* forces black icons */
-  opacity:.95;
 }
 
 .sp-dock-label{
