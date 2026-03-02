@@ -1,11 +1,11 @@
 /* /shops/shop.js
-   v13.1 FULL REPLACEMENT
-   - Loads correct shop by ?shop=slug
+   FULL REPLACEMENT FILE (v13.1)
+   - Loads the correct shop by ?shop=slug
    - Prefers /data/shops/{slug}.json, falls back to /shops/shops.json
-   - Uses slug for shop logo lookup (svg -> png fallback)
-   - ONLY shows TAA badge when true
-   - Dock: Call/Web/Brands/Directions (Brands opens sheet with 4-across brand SVG grid)
-   - Bottom segmented: Hours | About | Updates
+   - Uses slug for logo lookup (svg -> png fallback)
+   - Only shows TAA badge when true (spTaaIcon)
+   - Panels CLOSED by default; tabs open panels
+   - Amenity icons clickable w/ toast descriptions
 */
 
 (() => {
@@ -33,41 +33,56 @@
         .toLowerCase();
 
     const name = (raw.name || raw.Shop || raw.shop || "").toString().trim();
+
     const city = (raw.city || raw.City || "").toString().trim();
     const state = (raw.state || raw.ST || raw.State || "").toString().trim();
 
     const address = (raw.address || raw.Address || "").toString().trim();
     const phone = (raw.phone || raw.Phone || raw.Cell || "").toString().trim();
     const website = (raw.website || raw.Website || "").toString().trim();
+    const email = (raw.email || raw.Email || "").toString().trim();
+    const instagram = (raw.instagram || raw.Instagram || "").toString().trim();
 
-    const amenities =
-      raw.amenities && typeof raw.amenities === "object"
-        ? raw.amenities
-        : {
-            byob: raw.BYOB,
-            tvs: raw.TVs,
-            indoor: raw.Indoor,
-            outdoor: raw.Outdoor,
-            food: raw.Food,
-            alcohol: raw.Alcohol,
-            noalcohol: raw["No Alcohol"] || raw.NoAlcohol,
-            quiet: raw.Quiet,
-            livemusic: raw["Live Music"] || raw.LiveMusic,
-            taa: raw.TAA
-          };
+    const amenities = raw.amenities && typeof raw.amenities === "object"
+      ? raw.amenities
+      : {
+          byob: raw.BYOB,
+          tvs: raw.TVs,
+          indoor: raw.Indoor,
+          outdoor: raw.Outdoor,
+          food: raw.Food,
+          alcohol: raw.Alcohol,
+          noalcohol: raw["No Alcohol"] || raw.NoAlcohol,
+          quiet: raw.Quiet,
+          livemusic: raw["Live Music"] || raw.LiveMusic,
+          taa: raw.TAA
+        };
 
     const brands = Array.isArray(raw.brands)
       ? raw.brands
-      : (typeof raw.Brands === "string"
-          ? raw.Brands.split(",").map(s => s.trim()).filter(Boolean)
-          : []);
+      : (typeof raw.Brands === "string" ? raw.Brands.split(",").map(s => s.trim()).filter(Boolean) : []);
 
-    const about = (raw.about || raw.About || raw.notes || raw.Notes || "").toString().trim();
+    const hours = raw.hours && typeof raw.hours === "object" ? raw.hours : (raw.Hours || null);
+    const about = (raw.about || raw.About || raw.events || raw.Events || "").toString().trim();
     const updates = (raw.updates || raw.Updates || "").toString().trim();
 
-    const hours = raw.hours && typeof raw.hours === "object" ? raw.hours : null;
-
-    return { slug, name, city, state, address, phone, website, amenities, brands, about, updates, hours, raw };
+    return {
+      slug,
+      name,
+      city,
+      state,
+      address,
+      phone,
+      website,
+      email,
+      instagram,
+      amenities,
+      brands,
+      hours,
+      about,
+      updates,
+      raw
+    };
   }
 
   async function fetchJson(url) {
@@ -99,16 +114,18 @@
     return normalizeShop(arr[0], slug);
   }
 
-  async function setShopLogo(shopSlug) {
+  async function setLogo(slug) {
     const img = $("#spLogo");
-    if (!img) return;
+    if (!img || !slug) return;
 
-    const slug = (shopSlug || "").trim().toLowerCase();
     const svg = `/img/icons/shops/${slug}.svg`;
     const png = `/img/icons/shops/${slug}.png`;
 
+    img.style.display = "";
     img.onerror = () => {
-      img.onerror = () => { img.style.display = "none"; };
+      img.onerror = () => {
+        img.style.display = "none";
+      };
       img.src = png;
     };
     img.src = svg;
@@ -122,9 +139,17 @@
   function renderTAABadge(shop) {
     const icon = $("#spTaaIcon");
     if (!icon) return;
-
     const taa = isTruthy(shop.amenities?.taa) || isTruthy(shop.raw?.TAA);
-    icon.style.display = taa ? "block" : "none";
+    icon.style.display = taa ? "" : "none";
+  }
+
+  function toast(msg) {
+    const el = $("#spAmenToast");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add("is-show");
+    window.clearTimeout(toast._t);
+    toast._t = window.setTimeout(() => el.classList.remove("is-show"), 1400);
   }
 
   function renderAmenities(shop) {
@@ -133,23 +158,41 @@
     row.innerHTML = "";
 
     const items = [
-      { ok: isTruthy(shop.amenities?.indoor), icon: "/img/icons/indoorseating.svg", alt: "Indoor" },
-      { ok: isTruthy(shop.amenities?.tvs), icon: "/img/icons/tv.svg", alt: "TV" },
-      { ok: isTruthy(shop.amenities?.byob), icon: "/img/icons/byob.svg", alt: "BYOB" },
+      {
+        ok: isTruthy(shop.amenities?.indoor),
+        icon: "/img/icons/indoorseating.svg",
+        alt: "Indoor",
+        msg: "Indoor seating available"
+      },
+      {
+        ok: isTruthy(shop.amenities?.tvs),
+        icon: "/img/icons/tv.svg",
+        alt: "TV",
+        msg: "TVs available"
+      },
+      {
+        ok: isTruthy(shop.amenities?.byob),
+        icon: "/img/icons/byob.svg",
+        alt: "BYOB",
+        msg: "BYOB friendly"
+      }
     ].filter(i => i.ok);
 
     items.forEach(a => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "sp-amen-btn";
+      btn.setAttribute("aria-label", a.msg);
+      btn.onclick = () => toast(a.msg);
+
       const img = document.createElement("img");
       img.src = a.icon;
       img.alt = a.alt;
       img.className = "sp-amen-icon";
-      row.appendChild(img);
-    });
-  }
 
-  function setDockDisabled(btn, disabled) {
-    if (!btn) return;
-    btn.classList.toggle("is-disabled", !!disabled);
+      btn.appendChild(img);
+      row.appendChild(btn);
+    });
   }
 
   function wireDock(shop) {
@@ -157,9 +200,6 @@
     const webBtn = $("#spActWeb");
     const brandsBtn = $("#spActBrands");
     const dirBtn = $("#spActDir");
-
-    setDockDisabled(callBtn, !shop.phone);
-    setDockDisabled(webBtn, !shop.website);
 
     if (callBtn) {
       callBtn.onclick = () => {
@@ -174,7 +214,10 @@
     }
 
     if (brandsBtn) {
-      brandsBtn.onclick = () => openBrandsSheet();
+      brandsBtn.onclick = () => {
+        const tab = $("#spTabAbout"); // Brands button opens the About tab area by your current layout
+        if (tab) tab.click();
+      };
     }
 
     if (dirBtn) {
@@ -190,153 +233,65 @@
       addrBtn.onclick = () => {
         const dest = shop.address || [shop.city, shop.state].filter(Boolean).join(", ");
         if (!dest) return;
-        window.open(`https://maps.apple.com/?daddr=${encodeURIComponent(dest)}`, "_blank", "noopener");
+        window.open(`https://maps.apple.com/?q=${encodeURIComponent(dest)}`, "_blank", "noopener");
       };
     }
   }
 
-  function wireSegmented() {
-    const tabs = [
-      { tab: $("#spTabHours"), panel: $("#spPanelHours") },
-      { tab: $("#spTabAbout"), panel: $("#spPanelAbout") },
-      { tab: $("#spTabUpdates"), panel: $("#spPanelUpdates") },
-    ];
+  function setPanelsClosed(isClosed) {
+    const panels = $("#spPanels");
+    if (!panels) return;
+    panels.classList.toggle("is-closed", !!isClosed);
+  }
 
-    function activate(idx) {
-      tabs.forEach((t, i) => {
-        t.tab?.classList.toggle("is-active", i === idx);
-        t.panel?.classList.toggle("is-active", i === idx);
-      });
-    }
+  function activateTab(which) {
+    const tabHours = $("#spTabHours");
+    const tabAbout = $("#spTabAbout");
+    const tabUpdates = $("#spTabUpdates");
 
-    tabs.forEach((t, idx) => {
-      if (t.tab) t.tab.onclick = () => activate(idx);
-    });
+    const pHours = $("#spPanelHours");
+    const pAbout = $("#spPanelAbout");
+    const pUpdates = $("#spPanelUpdates");
 
-    activate(0);
+    [tabHours, tabAbout, tabUpdates].forEach(b => b && b.classList.remove("is-active"));
+    [pHours, pAbout, pUpdates].forEach(p => p && p.classList.remove("is-active"));
+
+    if (which === "hours") { tabHours?.classList.add("is-active"); pHours?.classList.add("is-active"); }
+    if (which === "about") { tabAbout?.classList.add("is-active"); pAbout?.classList.add("is-active"); }
+    if (which === "updates") { tabUpdates?.classList.add("is-active"); pUpdates?.classList.add("is-active"); }
+
+    setPanelsClosed(false);
+  }
+
+  function wireTabs() {
+    const tabHours = $("#spTabHours");
+    const tabAbout = $("#spTabAbout");
+    const tabUpdates = $("#spTabUpdates");
+
+    if (tabHours) tabHours.onclick = () => activateTab("hours");
+    if (tabAbout) tabAbout.onclick = () => activateTab("about");
+    if (tabUpdates) tabUpdates.onclick = () => activateTab("updates");
+
+    // CLOSED by default on load
+    setPanelsClosed(true);
   }
 
   function renderAboutUpdates(shop) {
-    const aboutEl = $("#spAboutText");
-    if (aboutEl) {
-      aboutEl.textContent = shop.about || "No details yet.";
-      if (!shop.about) aboutEl.classList.add("sp-about-muted");
-      else aboutEl.classList.remove("sp-about-muted");
-    }
-
-    const updEl = $("#spUpdateText");
-    if (updEl) updEl.textContent = shop.updates || "No updates yet.";
+    const about = $("#spAboutText");
+    const upd = $("#spUpdateText");
+    if (about) about.textContent = shop.about || "—";
+    if (upd) upd.textContent = shop.updates || "No updates yet.";
   }
 
-  function renderHours(shop) {
-    const wrap = $("#spHoursList");
+  function renderBrandsChips(shop) {
+    const wrap = $("#spBrandChips");
     if (!wrap) return;
-
-    // If you don’t have hours yet, show "Coming soon" (and keep the dashes off the rows)
-    const h = shop.hours;
-    if (!h) {
-      wrap.innerHTML = `<div class="sp-about-text sp-about-muted">Coming soon.</div>`;
-      const now = $("#spHoursNow");
-      if (now) now.textContent = "—";
-      return;
-    }
-
-    const order = [
-      ["mon", "Monday"],
-      ["tue", "Tuesday"],
-      ["wed", "Wednesday"],
-      ["thu", "Thursday"],
-      ["fri", "Friday"],
-      ["sat", "Saturday"],
-      ["sun", "Sunday"],
-    ];
-
     wrap.innerHTML = "";
-    order.forEach(([key, label]) => {
-      const val = (h[key] || h[label] || "—").toString().trim();
-      const row = document.createElement("div");
-      row.className = "sp-hours-row";
-      row.innerHTML = `
-        <div class="sp-hours-day">${label}</div>
-        <div class="sp-hours-val">${val || "—"}</div>
-      `;
-      wrap.appendChild(row);
-    });
-
-    const now = $("#spHoursNow");
-    if (now) now.textContent = "—";
-  }
-
-  // ===== Brands sheet (4-across SVG icons, no shading) =====
-  function openBrandsSheet() {
-    const sheet = $("#spBrandsSheet");
-    if (!sheet) return;
-    sheet.classList.add("is-open");
-    sheet.setAttribute("aria-hidden", "false");
-  }
-
-  function closeBrandsSheet() {
-    const sheet = $("#spBrandsSheet");
-    if (!sheet) return;
-    sheet.classList.remove("is-open");
-    sheet.setAttribute("aria-hidden", "true");
-  }
-
-  function brandIconPath(slug) {
-    const s = String(slug || "").trim().toLowerCase();
-    // per your repo convention: /img/icons/brands (plural)
-    return `/img/icons/brands/${s}.svg`;
-  }
-
-  function brandIconFallback(slug) {
-    const s = String(slug || "").trim().toLowerCase();
-    // fallback if you still have older path:
-    return `/img/icons/brand/${s}.svg`;
-  }
-
-  function renderBrandsGrid(shop) {
-    const grid = $("#spBrandGrid");
-    if (!grid) return;
-    grid.innerHTML = "";
-
-    const list = Array.isArray(shop.brands) ? shop.brands : [];
-    if (!list.length) {
-      grid.innerHTML = `<div class="sp-about-text sp-about-muted">No brands listed yet.</div>`;
-      return;
-    }
-
-    list.forEach((b) => {
-      const slug = String(b).trim().toLowerCase();
-      if (!slug) return;
-
-      const item = document.createElement("div");
-      item.className = "sp-brand-item";
-
-      const img = document.createElement("img");
-      img.className = "sp-brand-icon";
-      img.alt = slug;
-
-      img.onerror = () => {
-        img.onerror = () => { img.style.display = "none"; };
-        img.src = brandIconFallback(slug);
-      };
-      img.src = brandIconPath(slug);
-
-      const label = document.createElement("div");
-      label.className = "sp-brand-label";
-      label.textContent = slug;
-
-      item.appendChild(img);
-      item.appendChild(label);
-      grid.appendChild(item);
-    });
-  }
-
-  function wireBrandsSheet() {
-    $("#spBrandsClose")?.addEventListener("click", closeBrandsSheet);
-    $("#spBrandsBackdrop")?.addEventListener("click", closeBrandsSheet);
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeBrandsSheet();
+    (shop.brands || []).forEach(b => {
+      const div = document.createElement("div");
+      div.className = "sp-chip";
+      div.textContent = b;
+      wrap.appendChild(div);
     });
   }
 
@@ -345,18 +300,20 @@
     const shop = await loadShop(slug);
 
     renderHeader(shop);
-    await setShopLogo(shop.slug || slug);
-
+    await setLogo(shop.slug || slug);
     renderTAABadge(shop);
     renderAmenities(shop);
     wireDock(shop);
 
-    wireSegmented();
-    renderAboutUpdates(shop);
-    renderHours(shop);
+    // Panels/tabs behavior
+    wireTabs();
 
-    wireBrandsSheet();
-    renderBrandsGrid(shop);
+    // Content
+    renderAboutUpdates(shop);
+
+    // If you later re-add a Brands panel grid, this is where we’ll hook it in.
+    // (Keeping chips function here in case you already have #spBrandChips elsewhere.)
+    renderBrandsChips(shop);
   }
 
   init().catch(err => {
