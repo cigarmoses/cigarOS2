@@ -9,6 +9,40 @@
 (() => {
   "use strict";
 
+  // Shared cart storage with brand page
+  const CART_KEY = "cigaros_pos_cart";
+  function readCart() {
+    try {
+      const raw = localStorage.getItem(CART_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+  function writeCart(items) {
+    try { localStorage.setItem(CART_KEY, JSON.stringify(items || [])); } catch {}
+  }
+  function addToCart(item) {
+    const id = String(item?.id ?? "").trim();
+    if (!id) return;
+    const cart = readCart();
+    const idx = cart.findIndex((x) => String(x?.id ?? "").trim() === id && String(x?.type || "cigar") === "cigar");
+    if (idx >= 0) cart[idx].qty = (Number(cart[idx].qty) || 1) + 1;
+    else cart.push({ ...item, type: "cigar", qty: 1, addedAt: Date.now() });
+    writeCart(cart);
+  }
+
+  function brandSlug(brand) {
+    return String(brand || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
+  }
+
   // ✅ Canonical data source (your saved memory URL)
   const SHEET_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";

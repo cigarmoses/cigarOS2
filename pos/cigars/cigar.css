@@ -118,6 +118,93 @@ body.cigar-detail-page{
   gap: 10px;
   padding: 14px 16px 16px;
 }
+
+/* =========================
+   iOS-style "cards + stick" detail layout (used by updated cigar.js)
+   ========================= */
+.cd-ios-head{
+  padding: 18px 16px 10px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 14px;
+}
+.cd-ios-title{ min-width: 0; }
+.cd-ios-brand{
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--muted);
+}
+.cd-ios-name{
+  margin-top: 6px;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.35px;
+  line-height: 1.05;
+}
+.cd-ios-brand-ico{
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.cd-ios-body{
+  display:grid;
+  grid-template-columns: 140px 1fr;
+  gap: 14px;
+  padding: 8px 16px 0;
+  align-items:start;
+}
+.cd-stick{
+  width: 140px;
+  height: 320px;
+  object-fit: contain;
+  display:block;
+}
+.cd-stick--ph{
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
+}
+
+.cd-tiles{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.cd-tile{
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
+  padding: 12px 12px;
+}
+.cd-tile .cd-k{
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  color: rgba(0,0,0,.45);
+}
+.cd-tile .cd-v{ margin-top: 6px; font-size: 16px; font-weight: 800; }
+.cd-tile .cd-v.big{ font-size: 26px; letter-spacing: -0.02em; }
+
+.cd-list{ margin-top: 12px; display:grid; gap: 10px; }
+.cd-row{
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
+  padding: 10px 12px;
+}
+.cd-row .cd-k{ font-size: 12px; font-weight: 900; letter-spacing: .12em; color: rgba(0,0,0,.45); }
+.cd-row .cd-v{ font-size: 15px; font-weight: 800; color: rgba(0,0,0,.85); text-align:right; }
+.cd-row.wide{ margin-top: 12px; }
+
+@media (max-width: 420px){
+  .cd-ios-body{ grid-template-columns: 120px 1fr; }
+  .cd-stick{ width: 120px; height: 300px; }
+}
 .cd-btn{
   flex:1;
   border-radius: 14px;
