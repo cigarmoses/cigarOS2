@@ -29,8 +29,9 @@ body.shop-public{
   border-radius:999px;
   border:1px solid rgba(0,0,0,.08);
   background:rgba(255,255,255,.75);
-  font-weight:700;
-  letter-spacing:.08em;
+
+  font-weight:600;
+  letter-spacing:.02em;   /* tightened */
   font-size:12px;
   text-transform:uppercase;
 }
@@ -310,7 +311,7 @@ body.shop-public{
 }
 .sp-brand-name{
   font-size:12px;
-  font-weight:700;
+  font-weight:400;   /* regular */
   color:#111;
   text-align:center;
   line-height:1.1;
