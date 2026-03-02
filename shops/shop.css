@@ -1,26 +1,14 @@
 /* /shops/shop.css
-   v13.1 FULL REPLACEMENT
-   - iOS card layout
-   - Centered city
-   - Dock icons black/white, normal weight labels
-   - Amenities hard-sized (prevents huge icons)
-   - Segmented: Hours | About | Updates
-   - Brands opens as sheet with 4-across SVG grid, NO shading around SVG
+   FULL REPLACEMENT FILE (v13.1)
+   - Hours/About/Updates segmented
+   - Panels CLOSED by default (nothing open until a tab is tapped)
+   - Amenity icons clickable w/ small toast tooltip
+   - Dock icons: Brands + Directions use your SVGs
 */
 
-:root{
-  --bg: #f2f2f7;
-  --card: #ffffff;
-  --text: #111111;
-  --sub: #8e8e93;
-  --hair: rgba(0,0,0,.08);
-  --shadow: 0 20px 60px rgba(0,0,0,.10);
-}
-
-body.shop-public{
-  margin:0;
-  background: var(--bg);
-  color: var(--text);
+body.shop-public {
+  margin: 0;
+  background: #f2f2f7;
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -30,345 +18,279 @@ body.shop-public{
     sans-serif;
 }
 
-.sp-wrap{
+.sp-wrap {
   max-width: 720px;
   margin: 0 auto;
-  padding: 18px 16px 40px;
+  padding: 18px 16px 34px;
 }
 
-.sp-top{
+/* Top Card */
+.sp-top {
   position: relative;
-  background: var(--card);
+  background: #fff;
   border-radius: 34px;
-  padding: 22px 22px 18px;
-  box-shadow: var(--shadow);
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10);
 }
 
-.sp-pill{
-  position:absolute;
-  top: 16px;
-  left: 16px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  color: #111;
+/* SHOP pill */
+.sp-pill {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: .06em;
+  padding: 8px 14px;
+  border-radius: 999px;
   background: rgba(0,0,0,.04);
   border: 1px solid rgba(0,0,0,.06);
-  border-radius: 999px;
-  padding: 8px 12px;
+  color: #111;
 }
 
-/* TAA badge (top-right). Hidden by default, shown only when true via JS */
-.sp-taa{
-  position:absolute;
-  top: 16px;
-  right: 16px;
-  width: 26px;
-  height: 26px;
-  display: none;
+.sp-taa {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 22px;
+  height: 22px;
   opacity: .9;
 }
 
 /* Logo */
-.sp-logo{
-  display:flex;
-  justify-content:center;
-  margin-top: 34px;
-  margin-bottom: 10px;
+.sp-logo {
+  display: flex;
+  justify-content: center;
+  margin-top: 26px;
 }
-.sp-logo img{
-  width: 112px;
-  height: 112px;
+
+#spLogo {
+  width: 110px;
+  height: 110px;
   object-fit: contain;
   border-radius: 26px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.10);
-  background: transparent;
+  box-shadow: 0 18px 40px rgba(0,0,0,.10);
 }
 
-/* Title */
-.sp-title{
-  margin: 0;
+/* Title — iOS correct */
+.sp-title {
+  margin: 16px 0 0;
   text-align: center;
   font-weight: 900;
-  font-size: 44px;
+  font-size: 38px;
+  letter-spacing: 0;
   line-height: 1.05;
-  letter-spacing: -0.02em;
+  color: #111;
 }
 
-/* City (CENTERED + SMALL) */
-.sp-city{
-  width: 100%;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+/* City */
+.sp-city {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
   gap: 10px;
   border: none;
   background: none;
-  margin: 10px 0 16px;
-  padding: 0;
-  cursor: pointer;
-
   font-weight: 600;
-  font-size: 18px;
+  font-size: 20px;
   letter-spacing: 0;
-  color: var(--sub);
+  color: #8e8e93;
+  margin: 10px auto 16px;
+  width: 100%;
+  text-align: center;
 }
-.sp-gps{
+
+.sp-gps {
   width: 18px;
   height: 18px;
   fill: #ff3b30;
   flex: 0 0 auto;
 }
 
-/* Dock (icons BLACK/WHITE, labels regular) */
-.sp-dock{
-  display:grid;
+/* Dock */
+.sp-dock {
+  display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  padding: 12px;
+  padding: 14px;
   border-radius: 24px;
-  background: rgba(255,255,255,.75);
+  background: rgba(255,255,255,.7);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(0,0,0,.05);
 }
 
-.sp-dock-btn{
-  background: rgba(255,255,255,.9);
+.sp-dock-btn {
+  background: rgba(255,255,255,.8);
   border: 1px solid rgba(0,0,0,.06);
   border-radius: 18px;
-  padding: 10px 8px 9px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-}
-
-.sp-dock-btn:active{
-  transform: scale(.985);
-}
-
-.sp-dock-ico{
-  width: 22px;
-  height: 22px;
-  color: #111;
-  display:block;
-}
-.sp-dock-ico svg{
-  width: 22px;
-  height: 22px;
-  display:block;
-  fill: currentColor;
-}
-.sp-dock-label{
-  font-size: 13px;
-  font-weight: 500; /* regular-ish */
+  font-weight: 600;
   letter-spacing: 0;
   color: #111;
 }
 
-.sp-dock-btn.is-disabled{
-  opacity: .35;
-  pointer-events:none;
-}
-
-/* Amenities (HARD SIZE so they never blow up) */
-.sp-amen-panel{
-  margin-top: 14px;
-  display:flex;
-  justify-content:center;
-}
-.sp-amen-row{
-  display:flex;
-  gap: 34px;
-  align-items:center;
-}
-.sp-amen-icon{
-  width: 34px !important;
-  height: 34px !important;
-  max-width: 34px !important;
-  max-height: 34px !important;
-  object-fit: contain;
-  display:block;
-}
-
-/* Bottom */
-.sp-bottom{
-  margin-top: 16px;
-}
-
-.sp-seg{
-  background: rgba(255,255,255,.70);
-  border: 1px solid rgba(0,0,0,.06);
-  border-radius: 22px;
-  padding: 6px;
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  box-shadow: 0 18px 40px rgba(0,0,0,.06);
-}
-
-.sp-seg-btn{
-  border: none;
-  background: transparent;
-  border-radius: 16px;
-  padding: 12px 10px;
-  font-weight: 700;
-  font-size: 17px;
-  color: #8e8e93;
-}
-
-.sp-seg-btn.is-active{
-  background: #fff;
-  color: #111;
-  box-shadow: 0 10px 26px rgba(0,0,0,.08);
-}
-
-.sp-panels{
-  margin-top: 14px;
-}
-.sp-panel{
-  display:none;
-}
-.sp-panel.is-active{
-  display:block;
-}
-
-.sp-card{
-  background: #fff;
-  border-radius: 28px;
-  padding: 18px 18px;
-  box-shadow: var(--shadow);
-}
-
-.sp-card-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom: 10px;
-}
-.sp-card-title{
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: -0.01em;
-}
-.sp-card-right{
+.sp-dock-ico {
   font-size: 18px;
-  font-weight: 700;
-  color: var(--sub);
-}
-
-/* Hours list */
-.sp-hours-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding: 14px 2px;
-  border-top: 1px solid rgba(0,0,0,.06);
-}
-.sp-hours-row:first-child{
-  border-top:none;
-}
-.sp-hours-day{
-  font-size: 20px;
-  font-weight: 900;
-}
-.sp-hours-val{
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--sub);
-}
-
-/* About */
-.sp-about-text{
-  font-size: 17px;
-  line-height: 1.45;
-  color: #111;
-  white-space: pre-wrap;
-}
-.sp-about-muted{
-  color: var(--sub);
-}
-
-/* === BRANDS SHEET (4-across SVG grid, no shading around SVG) === */
-.sp-sheet{
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display:none;
-}
-.sp-sheet.is-open{
-  display:block;
-}
-.sp-sheet-backdrop{
-  position:absolute;
-  inset:0;
-  background: rgba(0,0,0,.35);
-  backdrop-filter: blur(10px);
-}
-.sp-sheet-card{
-  position:absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
-  background: rgba(255,255,255,.92);
-  border: 1px solid rgba(0,0,0,.08);
-  border-radius: 28px;
-  box-shadow: 0 40px 120px rgba(0,0,0,.25);
-  padding: 18px 16px 16px;
-}
-
-.sp-sheet-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom: 10px;
-}
-.sp-sheet-title{
-  font-size: 34px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-}
-.sp-sheet-close{
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.10);
-  background: rgba(255,255,255,.75);
-  font-size: 22px;
   line-height: 1;
 }
 
-.sp-brand-grid{
-  display:grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px 10px;
-  padding-top: 6px;
+.sp-dock-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
-.sp-brand-item{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap: 8px;
+.sp-dock-label {
+  font-size: 13px;
 }
 
-.sp-brand-icon{
-  width: 52px;
-  height: 52px;
-  object-fit: contain;
-  display:block;
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
+/* Amenities */
+.sp-amen-panel {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
 }
 
-.sp-brand-label{
-  font-size: 12px;
+.sp-amen-row {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  justify-content: center;
+}
+
+.sp-amen-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.sp-amen-icon {
+  width: 38px;
+  height: 38px;
+  display: block;
+}
+
+/* Bottom Section */
+.sp-bottom {
+  margin-top: 14px;
+}
+
+/* Segmented */
+.sp-seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 10px;
+  border-radius: 22px;
+  background: rgba(255,255,255,.65);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0,0,0,.05);
+}
+
+.sp-seg-btn {
+  border: 0;
+  background: transparent;
+  padding: 12px 10px;
+  border-radius: 18px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #8e8e93;
+}
+
+.sp-seg-btn.is-active {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 12px 30px rgba(0,0,0,.08);
+}
+
+/* Panels */
+.sp-panels {
+  margin-top: 12px;
+}
+
+/* CLOSED by default */
+.sp-panels.is-closed {
+  display: none;
+}
+
+.sp-panel {
+  display: none;
+}
+
+.sp-panel.is-active {
+  display: block;
+}
+
+.sp-card {
+  background: #fff;
+  border-radius: 26px;
+  padding: 18px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.10);
+}
+
+.sp-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sp-card-title {
+  font-weight: 900;
+  font-size: 22px;
+  color: #111;
+}
+
+.sp-card-right {
+  font-weight: 700;
+  color: #8e8e93;
+}
+
+/* Brand chips (kept for now) */
+.sp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.sp-chip {
+  border: 1px solid rgba(0,0,0,.10);
+  background: #fff;
+  padding: 10px 14px;
+  border-radius: 999px;
   font-weight: 700;
   color: #111;
-  text-align:center;
-  line-height: 1.1;
-  max-width: 90px;
+}
+
+/* Amenity toast */
+.sp-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 86px;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,.78);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0,0,0,.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+
+.sp-toast.is-show {
+  opacity: 1;
 }
