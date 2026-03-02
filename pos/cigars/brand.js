@@ -1,605 +1,628 @@
 /* /pos/cigars/brand.js
-   FULL REPLACEMENT
-   Fixes:
-   ✅ Sheets now close correctly (X / tap outside / Esc)
-   ✅ Filters: left rail + right options + search
-   ✅ Bands: big band cards + Confirm
-   ✅ Row tap navigates to cigar detail page
-   ✅ Cart button routes to /pos/invoice/
+   FULL REPLACEMENT FILE (v13)
+
+   Fixes (per your screenshots):
+   ✅ No "background boxes" behind brand SVG/PNG logos (CSS handles visuals)
+   ✅ Restore iOS-style Filters modal (same UX as /pos/cigars/, minus brand/manufacturer)
+   ✅ Big Bands UI: full-width band art + left title + right checkbox
+   ✅ Light mode uses black text and iOS paper background
+   ✅ Green add button is the correct size and WORKS (hooks into /pos/cart.js)
+   ✅ Clicking the cigar row/name navigates to cigar detail page (not image popup)
+   ✅ Maduro/Natural toggle works
+   ✅ Theme toggle uses the horizontal pill (via /css/theme-toggle.css)
 */
 
 (() => {
   "use strict";
 
-  const CSV_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-  const qp = (k) => new URLSearchParams(location.search).get(k) || "";
 
-  const norm = (s) => String(s ?? "").trim().replace(/\s+/g, " ");
-  const lower = (s) => norm(s).toLowerCase();
+  const esc = (s) => String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
-  const slug = (s) =>
-    lower(s)
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "")
-      .trim();
+  const uniq = (arr) => Array.from(new Set(arr));
 
-  const esc = (s = "") =>
-    String(s)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
+  const fmtMoney = (v) => {
+    const n = Number(v);
+    if(!Number.isFinite(n)) return "";
+    return n.toFixed(2);
+  };
 
-  const BRAND = norm(qp("brand"));
-  const BRAND_SLUG = slug(BRAND);
+  const includesCI = (hay, needle) =>
+    String(hay || "").toLowerCase().includes(String(needle || "").toLowerCase());
 
-  const brandTitleEl = $("#brand-title");
-  const brandIconWrap = $("#brand-icon");
-  const listEl = $("#brand-list");
-  const statusEl = $("#brand-status");
-  const searchEl = $("#brand-search");
-
-  const brandBackBtn = $("#brand-back");
-  const filtersBtn = $("#btn-filters");
-  const bandsBtn = $("#btn-bands");
-
-  const invoiceBtn = $("#invoice-btn");
-
-  const wrapperSeg = $("#wrapper-seg");
-  const segMaduro = $("#seg-maduro");
-  const segNatural = $("#seg-natural");
-  const segSwitch = $("#seg-switch");
-
-  const sheetFilters = $("#sheet-filters");
-  const sheetBands = $("#sheet-bands");
-
-  const railBtns = $$(".rail-btn");
-  const filtersSearch = $("#filters-search");
-  const filtersOptions = $("#filters-options");
-  const filtersClearBtn = $("#filters-clear");
-  const filtersApplyBtn = $("#filters-apply");
-
-  const bandsOptionsEl = $("#bands-options");
-  const bandsConfirmBtn = $("#bands-confirm");
-
-  // =========================
-  // CSV parsing
-  // =========================
-  function splitCsvLine(line) {
-    const out = [];
-    let cur = "";
-    let q = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      const nx = line[i + 1];
-      if (ch === '"') {
-        if (q && nx === '"') { cur += '"'; i++; }
-        else q = !q;
-        continue;
-      }
-      if (ch === "," && !q) { out.push(cur); cur = ""; continue; }
-      cur += ch;
-    }
-    out.push(cur);
-    return out;
+  function getParam(name){
+    try{ return new URL(window.location.href).searchParams.get(name) || ""; }
+    catch { return ""; }
   }
 
-  function csvToObjects(text) {
-    const lines = text.replace(/\r/g, "").split("\n").filter((l) => l.length);
-    if (!lines.length) return [];
-    const headers = splitCsvLine(lines[0]).map((h) => norm(h));
+  // ---------- CSV parsing (simple, robust enough for Google CSV) ------------
+  function parseCSV(text){
     const rows = [];
-    for (let i = 1; i < lines.length; i++) {
-      const cols = splitCsvLine(lines[i]);
-      const obj = {};
-      for (let c = 0; c < headers.length; c++) obj[headers[c]] = norm(cols[c] ?? "");
-      rows.push(obj);
+    let cur = [];
+    let field = "";
+    let inQuotes = false;
+
+    for(let i=0;i<text.length;i++){
+      const ch = text[i];
+      const next = text[i+1];
+      if(inQuotes){
+        if(ch === '"' && next === '"'){
+          field += '"';
+          i++;
+        } else if(ch === '"'){
+          inQuotes = false;
+        } else {
+          field += ch;
+        }
+      } else {
+        if(ch === '"') inQuotes = true;
+        else if(ch === ','){
+          cur.push(field);
+          field = "";
+        } else if(ch === '\n'){
+          cur.push(field);
+          rows.push(cur);
+          cur = [];
+          field = "";
+        } else if(ch !== '\r'){
+          field += ch;
+        }
+      }
     }
+    cur.push(field);
+    rows.push(cur);
     return rows;
   }
 
-  function pick(r, keys) {
-    for (const k of keys) if (r[k] != null && norm(r[k]) !== "") return r[k];
-    const ks = Object.keys(r);
-    for (const want of keys) {
-      const hit = ks.find((h) => lower(h) === lower(want));
-      if (hit && norm(r[hit]) !== "") return r[hit];
-    }
-    return "";
+  function normalizeHeader(h){
+    return String(h || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/[^a-z0-9 ]/g, "")
+      .replace(/ /g, "_");
   }
 
-  const getCigarId = (r) => pick(r, ["Cigar ID", "cigarId", "cigarid", "cigar_id", "key", "Key", "ID", "Id"]);
-  const getBrand = (r) => pick(r, ["Brand", "Brand AKA", "Manufacturer"]);
-  const getLine = (r) => pick(r, ["Line", "Series", "Collection"]);
-  const getCigar = (r) => pick(r, ["Cigar", "Name", "Cigar Name"]);
-  const getVitola = (r) => pick(r, ["Vitola", "Style"]);
-  const getStrength = (r) => pick(r, ["Strength"]);
-  const getShape = (r) => pick(r, ["Shape"]);
-  const getWrapperShade = (r) => pick(r, ["Wrapper Shade", "WrapperShade", "Shade"]);
-  const getRing = (r) => pick(r, ["Ring", "Ring Gauge", "RG"]);
-  const getLength = (r) => pick(r, ["Length"]);
-  const getMSRP = (r) => pick(r, ["MSRP", "Price"]);
-  const getImage = (r) => pick(r, ["Image", "Img", "Photo", "Cigar Image", "Cigar IMG"]);
+  function mapRows(csv){
+    const header = csv[0] || [];
+    const keys = header.map(normalizeHeader);
+    const out = [];
+    for(let i=1;i<csv.length;i++){
+      const r = csv[i];
+      if(!r || r.every(c => !String(c||"").trim())) continue;
+      const obj = {};
+      keys.forEach((k, idx) => { obj[k] = (r[idx] ?? "").trim(); });
+      out.push(obj);
+    }
+    return out;
+  }
 
-  // =========================
-  // STATE
-  // =========================
+  // ---------- UI elements ---------------------------------------------------
+  const backBtn = $("#back-btn");
+  const invoiceBtn = $("#invoice-btn");
+  const invoiceBadge = $("#invoice-badge");
+  const themeDock = $("#theme-dock");
+
+  const brandTitle = $("#brand-title");
+  const brandIconImg = $("#brand-icon-img");
+
+  const searchInput = $("#brand-search");
+  const btnFilters = $("#btn-filters");
+  const btnBands = $("#btn-bands");
+
+  const seg = $("#wrapper-seg");
+  const segSwitch = $("#wrapper-switch");
+  const segBtns = $$(".seg-btn", seg || document);
+
+  const listEl = $("#brand-list");
+
+  const sheetBands = $("#sheet-bands");
+  const bandsOptions = $("#bands-options");
+  const bandsConfirm = $("#bands-confirm");
+
   const state = {
-    all: [],
-    view: [],
-    q: "",
-    wrapperState: "all",
-    bandKeys: new Set(),
-    activeFilterTab: "vitola",
-    applied: {
+    brand: "",
+    rowsAll: [],
+
+    // UI state
+    search: "",
+    wrapperMode: "maduro", // "maduro" | "natural"
+    bandSelected: new Set(),
+    filters: {
       vitola: new Set(),
       ring: new Set(),
       length: new Set(),
       strength: new Set(),
       shape: new Set(),
       shade: new Set(),
-    }
+    },
   };
 
-  function inBrand(r) {
-    if (!BRAND) return true;
-    return slug(getBrand(r)) === BRAND_SLUG;
-  }
+  // ---------- Navigation + invoice -----------------------------------------
+  backBtn?.addEventListener("click", () => {
+    // Go back if possible; else go to POS cigars home
+    if(window.history.length > 1) window.history.back();
+    else window.location.href = "/pos/cigars/";
+  });
 
-  // =========================
-  // SHEETS open/close (BULLETPROOF)
-  // =========================
-  function openSheet(el) {
-    if (!el) return;
-    el.hidden = false; // relies on .sheet[hidden]{display:none}
-  }
+  invoiceBtn?.addEventListener("click", () => {
+    window.location.href = "/pos/invoice/";
+  });
 
-  function closeSheet(el) {
-    if (!el) return;
+  // Cart badge updates are handled by /pos/cart.js.
+  // BUT: brand page still needs an element for the badge, so leave it alone here.
+  void invoiceBadge;
+
+  // ---------- Bands sheet helpers ------------------------------------------
+  function openSheet(el){
+    if(!el) return;
+    el.hidden = false;
+    document.documentElement.classList.add("sheet-open");
+  }
+  function closeSheet(el){
+    if(!el) return;
     el.hidden = true;
+    document.documentElement.classList.remove("sheet-open");
   }
 
-  function closeAllSheets() {
-    closeSheet(sheetFilters);
-    closeSheet(sheetBands);
-  }
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+    if(t && t.matches && t.matches("[data-sheet-close]")) closeSheet(sheetBands);
+    if(t === sheetBands) closeSheet(sheetBands);
+  });
 
-  function bindSheetCloseHandlers() {
-    // Close buttons (X)
-    document.addEventListener("click", (e) => {
-      const closeBtn = e.target.closest("[data-sheet-close]");
-      if (closeBtn) closeAllSheets();
-    });
+  // ---------- Filter modal (iOS-style) -------------------------------------
+  let filterModal = null;
 
-    // Tap outside the card closes
-    [sheetFilters, sheetBands].forEach((sheet) => {
-      if (!sheet) return;
-      sheet.addEventListener("click", (e) => {
-        if (e.target === sheet) closeAllSheets();
-      });
-    });
+  function ensureFilterModal(){
+    if(filterModal) return filterModal;
 
-    // Escape closes
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeAllSheets();
-    });
-  }
-
-  // =========================
-  // Cart (localStorage) -> invoice
-  // =========================
-  const CART_KEY = "cigaros_pos_cart";
-
-  function readCart() {
-    try {
-      const raw = localStorage.getItem(CART_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function writeCart(items) {
-    try { localStorage.setItem(CART_KEY, JSON.stringify(items || [])); } catch {}
-  }
-
-  function addToCart(item) {
-    const id = norm(item?.id);
-    if (!id) return;
-
-    const cart = readCart();
-    const idx = cart.findIndex((x) => norm(x?.id) === id && norm(x?.type || "cigar") === "cigar");
-    if (idx >= 0) cart[idx].qty = (Number(cart[idx].qty) || 1) + 1;
-    else cart.push({ ...item, type: "cigar", qty: 1, addedAt: Date.now() });
-    writeCart(cart);
-  }
-  function bindInvoiceButton() {
-    invoiceBtn?.addEventListener("click", (e) => {
-      e.preventDefault();
-      location.href = "/pos/invoice/";
-    });
-  }
-
-  // =========================
-  // Wrapper segmented
-  // =========================
-  function matchesWrapper(r) {
-    const mode = state.wrapperState;
-    if (!mode) return true;
-
-    const blob = lower(`${getLine(r)} ${getCigar(r)} ${getWrapperShade(r)}`);
-    if (mode === "maduro") return blob.includes("maduro");
-    if (mode === "natural") return blob.includes("natural");
-    return true;
-  }
-
-  function setWrapperState(next) {
-    state.wrapperState = next;
-    if (wrapperSeg) wrapperSeg.dataset.state = next;
-    segMaduro?.setAttribute("aria-pressed", next === "maduro" ? "true" : "false");
-    segNatural?.setAttribute("aria-pressed", next === "natural" ? "true" : "false");
-    apply();
-  }
-
-  function bindWrapperToggle() {
-    if (!wrapperSeg) return;
-    // Two-state toggle (Maduro <-> Natural). Pick a smart default per brand.
-    const brandRows = state.all.filter(inBrand);
-    const hasMaduro = brandRows.some((r) => lower(`${getWrapperShade(r)} ${getLine(r)} ${getCigar(r)}`).includes("maduro"));
-    setWrapperState(hasMaduro ? "maduro" : "natural");
-
-    segMaduro?.addEventListener("click", () => setWrapperState("maduro"));
-    segNatural?.addEventListener("click", () => setWrapperState("natural"));
-    segSwitch?.addEventListener("click", () => setWrapperState(state.wrapperState === "maduro" ? "natural" : "maduro"));
-  }
-
-  // =========================
-  // Filters
-  // =========================
-  function uniqSorted(arr) {
-    const out = Array.from(new Set(arr.map(norm))).filter(Boolean);
-    out.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
-    return out;
-  }
-
-  function buildFilterOptionsForTab(tabKey) {
-    const rows = state.all.filter(inBrand);
-
-    switch (tabKey) {
-      case "vitola": return uniqSorted(rows.map(getVitola));
-      case "ring": return uniqSorted(rows.map(getRing));
-      case "length": return uniqSorted(rows.map(getLength));
-      case "strength": return uniqSorted(rows.map(getStrength));
-      case "shape": return uniqSorted(rows.map(getShape));
-      case "shade": return uniqSorted(rows.map(getWrapperShade));
-      default: return [];
-    }
-  }
-
-  function renderFiltersOptions() {
-    if (!filtersOptions) return;
-
-    const tab = state.activeFilterTab;
-    const q = lower(filtersSearch?.value || "");
-    const options = buildFilterOptionsForTab(tab).filter((v) => !q || lower(v).includes(q));
-    const set = state.applied[tab];
-
-    filtersOptions.innerHTML = options.map((v) => {
-      const checked = set.has(v);
-      return `
-        <div class="filters-opt" role="listitem">
-          <label>
-            <input type="checkbox" data-fk="${esc(tab)}" data-fv="${esc(v)}" ${checked ? "checked" : ""} />
-            <span>${esc(v)}</span>
-          </label>
+    const modal = document.createElement("div");
+    modal.className = "fm";
+    modal.hidden = true;
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.innerHTML = `
+      <div class="fm__backdrop" data-fm-close></div>
+      <div class="fm__card" role="document">
+        <div class="fm__head">
+          <div class="fm__title">Filters</div>
+          <button class="fm__close" type="button" data-fm-close aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
         </div>
-      `;
-    }).join("");
-  }
+        <div class="fm__body">
+          <div class="fm__left" role="tablist" aria-label="Filter categories"></div>
+          <div class="fm__right">
+            <div class="fm__search">
+              <span class="fm__searchIco" aria-hidden="true">🔎</span>
+              <input class="fm__searchInput" type="search" placeholder="Search" autocomplete="off" />
+            </div>
+            <div class="fm__list" role="list"></div>
+          </div>
+        </div>
+        <div class="fm__foot">
+          <button class="fm__btn fm__btn--ghost" type="button" data-fm-clear>Clear</button>
+          <button class="fm__btn fm__btn--primary" type="button" data-fm-apply>Apply</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
 
-  function setActiveTab(tabKey) {
-    state.activeFilterTab = tabKey;
-    railBtns.forEach((b) => b.classList.toggle("is-active", b.getAttribute("data-tab") === tabKey));
-    if (filtersSearch) filtersSearch.value = "";
-    renderFiltersOptions();
-  }
+    const left = $(".fm__left", modal);
+    const list = $(".fm__list", modal);
+    const input = $(".fm__searchInput", modal);
 
-  function openFiltersSheet() {
-    setActiveTab(state.activeFilterTab || "vitola");
-    openSheet(sheetFilters);
-  }
-
-  function bindFiltersSheet() {
-    railBtns.forEach((b) => {
-      b.addEventListener("click", () => setActiveTab(b.getAttribute("data-tab") || "vitola"));
-    });
-
-    filtersSearch?.addEventListener("input", renderFiltersOptions);
-
-    filtersOptions?.addEventListener("change", (e) => {
-      const cb = e.target.closest?.("input[type='checkbox']");
-      if (!cb) return;
-      const fk = cb.getAttribute("data-fk");
-      const fv = cb.getAttribute("data-fv");
-      if (!fk || !fv) return;
-      const set = state.applied[fk];
-      if (!set) return;
-      cb.checked ? set.add(fv) : set.delete(fv);
-    });
-
-    filtersClearBtn?.addEventListener("click", () => {
-      Object.values(state.applied).forEach((s) => s.clear());
-      renderFiltersOptions();
-    });
-
-    filtersApplyBtn?.addEventListener("click", () => {
-      closeAllSheets();
-      apply();
-    });
-  }
-
-  function rowPassesAppliedFilters(r) {
-    const want = state.applied;
-    const checks = [
-      ["vitola", getVitola],
-      ["ring", getRing],
-      ["length", getLength],
-      ["strength", getStrength],
-      ["shape", getShape],
-      ["shade", getWrapperShade],
+    const cats = [
+      { key: "vitola", label: "Vitolas" },
+      { key: "ring", label: "Ring" },
+      { key: "length", label: "Length" },
+      { key: "strength", label: "Strength" },
+      { key: "shape", label: "Shape" },
+      { key: "shade", label: "Wrap. Shade" },
     ];
 
-    for (const [k, fn] of checks) {
-      const set = want[k];
-      if (set && set.size) {
-        const v = norm(fn(r));
-        if (!set.has(v)) return false;
-      }
-    }
-    return true;
-  }
+    let activeKey = cats[0].key;
+    let dataByKey = {};
 
-  // =========================
-  // Bands (Padron demo mapping)
-  // =========================
-  const PADRON_BANDS = [
-    { key: "padronseriesband", label: "Padron Series", src: "/img/icons/padronseriesband.svg" },
-    { key: "padronfamilyreserveband", label: "Family Reserve", src: "/img/icons/padronfamilyreserveband.svg" },
-    { key: "padron1926serieband", label: "1926", src: "/img/icons/padron1926serieband.svg" },
-    { key: "padronblackseriesband", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
-    { key: "padron1964anniversaryband", label: "1964", src: "/img/icons/padron1964anniversaryband.svg" },
-    { key: "padrondamasoband", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
-  ];
-
-  function bandKeyMatchesRow(bandKey, r) {
-    const full = `${lower(getLine(r))} ${lower(getCigar(r))}`;
-    switch (bandKey) {
-      case "padron1926serieband": return full.includes("1926");
-      case "padron1964anniversaryband": return full.includes("1964");
-      case "padronfamilyreserveband": return full.includes("family reserve") || full.includes("familyreserve");
-      case "padrondamasoband": return full.includes("damaso");
-      case "padronblackseriesband": return full.includes("black");
-      case "padronseriesband":
-        return (
-          !bandKeyMatchesRow("padron1926serieband", r) &&
-          !bandKeyMatchesRow("padron1964anniversaryband", r) &&
-          !bandKeyMatchesRow("padronfamilyreserveband", r) &&
-          !bandKeyMatchesRow("padrondamasoband", r) &&
-          !bandKeyMatchesRow("padronblackseriesband", r)
-        );
-      default:
-        return false;
-    }
-  }
-
-  function renderBandsOptions() {
-    if (!bandsOptionsEl) return;
-
-    const items = BRAND_SLUG === "padron" ? PADRON_BANDS : [];
-
-    bandsOptionsEl.innerHTML = items.map((b) => {
-      const checked = state.bandKeys.has(b.key);
-      return `
-        <div class="band-card">
-          <img src="${esc(b.src)}" alt="${esc(b.label)}" />
-          <div class="band-card-foot">
-            <div class="band-name">${esc(b.label)}</div>
-            <input class="band-check" type="checkbox" data-band-key="${esc(b.key)}" ${checked ? "checked" : ""} />
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    $$("[data-band-key]", bandsOptionsEl).forEach((cb) => {
-      cb.addEventListener("change", () => {
-        const k = cb.getAttribute("data-band-key");
-        if (!k) return;
-        cb.checked ? state.bandKeys.add(k) : state.bandKeys.delete(k);
+    const renderLeft = () => {
+      left.innerHTML = "";
+      cats.forEach((c) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "fm__cat";
+        b.dataset.key = c.key;
+        b.textContent = c.label;
+        b.addEventListener("click", () => setActive(c.key));
+        left.appendChild(b);
       });
+    };
+
+    const setActive = (key) => {
+      activeKey = key;
+      $$(".fm__cat", left).forEach((b) => {
+        const on = b.dataset.key === key;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      input.value = "";
+      renderList();
+    };
+
+    const renderList = () => {
+      const q = String(input.value || "").trim().toLowerCase();
+      const values = (dataByKey[activeKey] || []).filter(v => !q || v.toLowerCase().includes(q));
+      list.innerHTML = "";
+      values.forEach((value) => {
+        const row = document.createElement("label");
+        row.className = "fm__row";
+        row.innerHTML = `
+          <input type="checkbox" class="fm__check" />
+          <span class="fm__val"></span>
+        `;
+        row.querySelector(".fm__val").textContent = value;
+        const cb = row.querySelector("input");
+        cb.checked = state.filters[activeKey].has(value);
+        cb.addEventListener("change", () => {
+          if(cb.checked) state.filters[activeKey].add(value);
+          else state.filters[activeKey].delete(value);
+        });
+        list.appendChild(row);
+      });
+    };
+
+    const open = (data) => {
+      dataByKey = data || {};
+      renderLeft();
+      setActive(activeKey);
+      modal.hidden = false;
+      document.documentElement.classList.add("fm-open");
+      requestAnimationFrame(() => input.focus());
+    };
+
+    const close = () => {
+      modal.hidden = true;
+      document.documentElement.classList.remove("fm-open");
+    };
+
+    modal.addEventListener("click", (e) => {
+      const t = e.target;
+      if(t && t.closest && t.closest("[data-fm-close]")) close();
+    });
+
+    input.addEventListener("input", renderList);
+
+    $("[data-fm-clear]", modal).addEventListener("click", () => {
+      Object.values(state.filters).forEach(set => set.clear());
+      renderList();
+    });
+
+    $("[data-fm-apply]", modal).addEventListener("click", () => {
+      close();
+      applyAll();
+    });
+
+    filterModal = { open, close };
+    return filterModal;
+  }
+
+  function buildFilterData(rows){
+    const norm = (v) => String(v || "").trim();
+    const uniqSorted = (vals, numeric=false) => {
+      const u = uniq(vals.map(norm).filter(Boolean));
+      return u.sort((a,b)=> numeric ? (parseFloat(a)-parseFloat(b)) : a.localeCompare(b));
+    };
+    return {
+      vitola: uniqSorted(rows.map(r => r.vitola || r.style || r.vitola_name), false),
+      ring: uniqSorted(rows.map(r => r.ring), true),
+      length: uniqSorted(rows.map(r => r.length), true),
+      strength: uniqSorted(rows.map(r => r.strength), false),
+      shape: uniqSorted(rows.map(r => r.shape), false),
+      shade: uniqSorted(rows.map(r => r.wrapper_shade || r.wrapperShade || r.wrapper), false),
+    };
+  }
+
+  // ---------- Apply filters -------------------------------------------------
+  function applyWrapperMode(rows){
+    const mode = state.wrapperMode;
+    return rows.filter(r => {
+      const shade = r.wrapper_shade || r.wrapperShade || r.wrapper || "";
+      if(mode === "maduro") return includesCI(shade, "maduro");
+      if(mode === "natural") return includesCI(shade, "natural");
+      return true;
     });
   }
 
-  function rowPassesBands(r) {
-    if (!state.bandKeys.size) return true;
-    for (const k of state.bandKeys) if (bandKeyMatchesRow(k, r)) return true;
-    return false;
-  }
-
-  function openBandsSheet() {
-    renderBandsOptions();
-    openSheet(sheetBands);
-  }
-
-  function bindBandsUI() {
-    bandsBtn?.addEventListener("click", openBandsSheet);
-    bandsConfirmBtn?.addEventListener("click", () => {
-      closeAllSheets();
-      apply();
+  function applySearch(rows){
+    const q = String(state.search || "").trim().toLowerCase();
+    if(!q) return rows;
+    return rows.filter(r => {
+      const name = r.cigar || r.name || r.title || "";
+      const vit = r.vitola || r.style || "";
+      return String(name).toLowerCase().includes(q) || String(vit).toLowerCase().includes(q);
     });
   }
 
-  // =========================
-  // Apply + render list
-  // =========================
-  function apply() {
-    const q = lower(state.q);
-
-    state.view = state.all
-      .filter(inBrand)
-      .filter(matchesWrapper)
-      .filter(rowPassesBands)
-      .filter(rowPassesAppliedFilters)
-      .filter((r) => {
-        if (!q) return true;
-        const blob = lower([
-          getLine(r), getCigar(r), getVitola(r), getRing(r), getLength(r),
-          getStrength(r), getShape(r), getWrapperShade(r), getMSRP(r)
-        ].join(" "));
-        return blob.includes(q);
-      });
-
-    render();
+  function applyBandSelected(rows){
+    if(!state.bandSelected.size) return rows;
+    return rows.filter(r => {
+      const key = String(r.band_key || r.band || r.band_group || "").trim();
+      return key && state.bandSelected.has(key);
+    });
   }
 
-  function render() {
-    if (!listEl) return;
+  function applyFilterSets(rows){
+    const f = state.filters;
+    const v = (x) => String(x || "").trim();
+    return rows.filter(r => {
+      const vitola = v(r.vitola || r.style || r.vitola_name);
+      const ring = v(r.ring);
+      const length = v(r.length);
+      const strength = v(r.strength);
+      const shape = v(r.shape);
+      const shade = v(r.wrapper_shade || r.wrapperShade || r.wrapper);
+      if(f.vitola.size && !f.vitola.has(vitola)) return false;
+      if(f.ring.size && !f.ring.has(ring)) return false;
+      if(f.length.size && !f.length.has(length)) return false;
+      if(f.strength.size && !f.strength.has(strength)) return false;
+      if(f.shape.size && !f.shape.has(shape)) return false;
+      if(f.shade.size && !f.shade.has(shade)) return false;
+      return true;
+    });
+  }
 
-    if (!state.view.length) {
-      listEl.innerHTML = "";
-      if (statusEl) {
-        statusEl.hidden = false;
-        statusEl.textContent = "No cigars found.";
-      }
+  function applyAll(){
+    let rows = [...state.rowsAll];
+    rows = applyWrapperMode(rows);
+    rows = applyFilterSets(rows);
+    rows = applyBandSelected(rows);
+    rows = applySearch(rows);
+    renderList(rows);
+  }
+
+  // ---------- Render list ---------------------------------------------------
+  function resolveRowIcon(r){
+    // prefer explicit icon fields
+    const candidates = [
+      r.brand_icon,
+      r.brandIcon,
+      r.icon,
+      r.logo,
+    ].filter(Boolean);
+    if(candidates.length) return candidates[0];
+
+    // fallback to brand icon from the page
+    return brandIconImg?.getAttribute("src") || "";
+  }
+
+  function resolveId(r){
+    return String(r.id || r.slug || r.cigar_id || r.row_id || "").trim();
+  }
+
+  function resolveName(r){
+    return String(r.cigar || r.name || r.title || "").trim();
+  }
+
+  function resolveVitola(r){
+    return String(r.vitola || r.style || r.vitola_name || "").trim();
+  }
+
+  function resolvePrice(r){
+    const p = r.msrp || r.price || r.cost || "";
+    const n = Number(p);
+    if(Number.isFinite(n)) return fmtMoney(n);
+    return "";
+  }
+
+  function resolveBand(r){
+    return String(r.band || r.band_key || r.band_group || "").trim();
+  }
+
+  function resolveBandArt(r){
+    return String(r.band_art || r.bandArt || r.band_image || r.band_img || "").trim();
+  }
+
+  function renderList(rows){
+    listEl.innerHTML = "";
+    if(!rows.length){
+      listEl.innerHTML = `<div class="empty">No results</div>`;
       return;
     }
-    if (statusEl) statusEl.hidden = true;
 
-    listEl.innerHTML = state.view.map((r) => {
-      const cigarId = norm(getCigarId(r));
-      const brand = norm(getBrand(r));
-      const line = norm(getLine(r));
-      const cigar = norm(getCigar(r));
-      const title = `${line ? line + " " : ""}${cigar}`.trim();
+    rows.forEach((r) => {
+      const id = resolveId(r);
+      const name = resolveName(r);
+      const vitola = resolveVitola(r);
+      const icon = resolveRowIcon(r);
+      const price = resolvePrice(r);
 
-      const vitola = norm(getVitola(r));
-      const msrp = norm(getMSRP(r));
-      const image = norm(getImage(r));
+      const cartItem = {
+        id: id || name,
+        name,
+        price: Number(r.msrp || r.price || 0) || 0,
+        img: r.img || r.photo || r.image || "",
+        brand: state.brand,
+      };
 
-      const brandIconSrc = `/img/icons/brands/${slug(brand || BRAND)}.svg`;
-
-      return `
-        <div class="brand-row" data-row data-id="${esc(cigarId)}">
-          <img class="row-ico" alt="" src="${esc(brandIconSrc)}" />
-          <div class="brand-row-left" data-open-detail="1">
-            <div class="brand-row-title">${esc(title || cigar)}</div>
-            <div class="brand-row-sub">${esc(vitola)}</div>
-          </div>
-          <div class="brand-row-right">
-            <div class="brand-row-msrp">${esc(msrp)}</div>
-            <button type="button"
-              class="pos-add add-to-cart"
-              aria-label="Add to invoice"
-              data-id="${esc(cigarId)}"
-              data-brand="${esc(brand || BRAND)}"
-              data-line="${esc(line)}"
-              data-name="${esc(cigar)}"
-              data-vitola="${esc(vitola)}"
-              data-msrp="${esc(msrp)}"
-              data-image="${esc(image)}">+</button>
-          </div>
+      const card = document.createElement("article");
+      card.className = "brand-row";
+      card.tabIndex = 0;
+      card.setAttribute("role", "button");
+      card.innerHTML = `
+        <img class="row-ico" src="${esc(icon)}" alt="" loading="lazy" />
+        <div class="row-main">
+          <div class="row-title">${esc(name)}</div>
+          <div class="row-sub">${esc(vitola)}</div>
+        </div>
+        <div class="brand-row-right">
+          <div class="brand-row-msrp">${esc(price)}</div>
+          <button class="pos-add" type="button" aria-label="Add"
+            data-add-cart
+            data-cart-item='${esc(JSON.stringify(cartItem))}'>
+            <span aria-hidden="true">+</span>
+          </button>
         </div>
       `;
-    }).join("");
-  }
 
-  function bindRowNav() {
-    if (!listEl) return;
+      const goDetail = () => {
+        if(!id) return;
+        window.location.href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
+      };
 
-    listEl.addEventListener("click", (e) => {
-      const addBtn = e.target.closest?.(".add-to-cart");
-      if (addBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        addToCart({
-          id: addBtn.getAttribute("data-id"),
-          brand: addBtn.getAttribute("data-brand"),
-          line: addBtn.getAttribute("data-line"),
-          name: addBtn.getAttribute("data-name"),
-          vitola: addBtn.getAttribute("data-vitola"),
-          msrp: addBtn.getAttribute("data-msrp"),
-          image: addBtn.getAttribute("data-image"),
-        });
-        return;
-      }
+      card.addEventListener("click", goDetail);
+      card.addEventListener("keydown", (e) => {
+        if(e.key === "Enter" || e.key === " "){
+          e.preventDefault();
+          goDetail();
+        }
+      });
 
-      const row = e.target.closest?.("[data-row]");
-      if (!row) return;
-
-      const id = norm(row.getAttribute("data-id") || "");
-      if (!id) return;
-
-      location.href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
+      listEl.appendChild(card);
     });
   }
 
-  // =========================
-  // Boot
-  // =========================
-  async function boot() {
-    if (brandTitleEl) brandTitleEl.textContent = BRAND || "Brand";
-    brandBackBtn?.addEventListener("click", () => history.back());
-
-    if (brandIconWrap && BRAND_SLUG) {
-      const src = `/img/icons/brands/${BRAND_SLUG}.svg`;
-      brandIconWrap.innerHTML = `<img src="${esc(src)}" alt="">`;
-    }
-
-    // Ensure sheets are closed on load no matter what
-    closeAllSheets();
-
-    bindSheetCloseHandlers();
-    bindInvoiceButton();
-    bindRowNav();
-    bindBandsUI();
-    bindFiltersSheet();
-
-    filtersBtn?.addEventListener("click", openFiltersSheet);
-
-    searchEl?.addEventListener("input", () => {
-      state.q = norm(searchEl.value || "");
-      apply();
+  // ---------- Bands options -------------------------------------------------
+  function getBandOptions(rows){
+    const map = new Map();
+    rows.forEach((r) => {
+      const key = resolveBand(r);
+      const art = resolveBandArt(r);
+      if(!key || !art) return;
+      if(!map.has(key)) map.set(key, { key, label: key, src: art });
     });
-
-    if (statusEl) {
-      statusEl.hidden = false;
-      statusEl.textContent = "Loading…";
-    }
-
-    try {
-      const res = await fetch(CSV_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
-      const text = await res.text();
-      state.all = csvToObjects(text);
-      bindWrapperToggle();
-      apply();
-      if (statusEl) statusEl.hidden = true;
-    } catch (e) {
-      console.error(e);
-      if (statusEl) {
-        statusEl.hidden = false;
-        statusEl.textContent = "Failed to load cigars.";
-      }
-    }
+    return Array.from(map.values());
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  function renderBandOptions(opts){
+    bandsOptions.innerHTML = "";
+    if(!opts.length){
+      bandsOptions.innerHTML = `<div class="filters-note">No bands available for this brand.</div>`;
+      return;
+    }
+
+    opts.forEach((b) => {
+      const card = document.createElement("div");
+      card.className = "band-card";
+      const checked = state.bandSelected.has(b.key);
+      card.innerHTML = `
+        <img class="band-art" src="${esc(b.src)}" alt="" loading="lazy" />
+        <div class="band-meta">
+          <div class="band-name">${esc(b.label)}</div>
+          <input class="band-check" type="checkbox" ${checked ? "checked" : ""} aria-label="${esc(b.label)}" />
+        </div>
+      `;
+      const cb = $("input", card);
+      cb.addEventListener("change", () => {
+        if(cb.checked) state.bandSelected.add(b.key);
+        else state.bandSelected.delete(b.key);
+      });
+      bandsOptions.appendChild(card);
+    });
+  }
+
+  // ---------- Controls wiring ----------------------------------------------
+  searchInput?.addEventListener("input", () => {
+    state.search = searchInput.value || "";
+    applyAll();
+  });
+
+  btnBands?.addEventListener("click", () => {
+    const opts = getBandOptions(state.rowsAll);
+    renderBandOptions(opts);
+    openSheet(sheetBands);
+  });
+
+  bandsConfirm?.addEventListener("click", () => {
+    closeSheet(sheetBands);
+    applyAll();
+  });
+
+  btnFilters?.addEventListener("click", () => {
+    // Filters are built from the *current wrapper mode* dataset
+    const base = applyWrapperMode([...state.rowsAll]);
+    const data = buildFilterData(base);
+    ensureFilterModal().open(data);
+  });
+
+  function setWrapperMode(mode){
+    state.wrapperMode = mode;
+    seg?.setAttribute("data-state", mode);
+    segBtns.forEach((b) => b.classList.toggle("is-on", b.dataset.state === mode));
+    applyAll();
+  }
+
+  segSwitch?.addEventListener("click", () => {
+    setWrapperMode(state.wrapperMode === "maduro" ? "natural" : "maduro");
+  });
+
+  segBtns.forEach((b) => {
+    b.addEventListener("click", () => setWrapperMode(b.dataset.state || "maduro"));
+  });
+
+  // ---------- Boot ----------------------------------------------------------
+  async function boot(){
+    // ensure theme toggle is visible and horizontal
+    themeDock?.classList.add("ready");
+
+    // brand can be passed as brand=Padron or b=padron
+    const brand = (getParam("brand") || getParam("b") || "").trim();
+    state.brand = brand;
+    brandTitle.textContent = brand || "Brand";
+
+    // brand icon, if passed
+    const icon = (getParam("icon") || "").trim();
+    if(icon) brandIconImg.src = icon;
+
+    // load data
+    const res = await fetch(CSV_URL, { cache: "no-store" });
+    const txt = await res.text();
+    const csv = parseCSV(txt);
+    const rows = mapRows(csv);
+
+    // Determine brand column
+    const brandKeys = ["brand", "brand_name", "manufacturer_brand", "cigar_brand"].filter(Boolean);
+    const getBrandVal = (r) => {
+      for(const k of brandKeys){
+        if(r[k]) return r[k];
+      }
+      return "";
+    };
+
+    const brandLower = brand.toLowerCase();
+    const filtered = rows.filter(r => getBrandVal(r).toLowerCase() === brandLower);
+
+    // If brand wasn't passed, try infer from the first row (still render)
+    if(!brand && filtered.length){
+      state.brand = getBrandVal(filtered[0]);
+      brandTitle.textContent = state.brand;
+    }
+
+    // decorate rows with the band key used for the bands filter
+    state.rowsAll = filtered.map((r) => {
+      const bandKey = resolveBand(r);
+      return {
+        ...r,
+        band_key: bandKey,
+        wrapper_shade: r.wrapper_shade || r.wrapperShade || r.wrapper || "",
+      };
+    });
+
+    // default wrapper mode
+    setWrapperMode(state.wrapperMode);
+
+    applyAll();
+  }
+
+  boot().catch((err) => {
+    console.error("Brand page boot failed:", err);
+    if(listEl) listEl.innerHTML = `<div class="empty">Error loading brand.</div>`;
+  });
 })();
