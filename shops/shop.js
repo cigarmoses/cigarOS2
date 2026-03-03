@@ -1,7 +1,7 @@
 /* /shops/shop.js
-   FULL REPLACEMENT FILE (v13.3)
+   FULL REPLACEMENT FILE (v13.4)
    - Loads correct shop by ?shop=slug
-   - Prefers /data/shops/{slug}.json, fallback /shops/shops.json
+   - Prefers /data/shops/{slug}.json, BUT merges missing fields from /shops/shops.json
    - Uses slug for shop logo lookup (svg -> png fallback)
    - Only shows TAA badge when true (spTaaIcon)
    - Panels CLOSED by default; tabs open panels
@@ -27,24 +27,24 @@
     return (u.searchParams.get("shop") || "").trim().toLowerCase();
   }
 
+  function cleanStr(v) {
+    const s = String(v ?? "").trim();
+    return s;
+  }
+
   function normalizeShop(raw, fallbackSlug) {
-    const slug =
-      (raw.slug || raw.Slug || raw.slug_id || fallbackSlug || "")
-        .toString()
-        .trim()
-        .toLowerCase();
+    const slug = cleanStr(raw.slug || raw.Slug || raw.slug_id || fallbackSlug).toLowerCase();
 
-    const name = (raw.name || raw.Shop || raw.shop || "").toString().trim();
-    const city = (raw.city || raw.City || "").toString().trim();
-    const state = (raw.state || raw.ST || raw.State || "").toString().trim();
+    const name = cleanStr(raw.name || raw.Shop || raw.shop);
+    const city = cleanStr(raw.city || raw.City);
+    const state = cleanStr(raw.state || raw.ST || raw.State);
 
-    const address = (raw.address || raw.Address || "").toString().trim();
-    const phone = (raw.phone || raw.Phone || raw.Cell || "").toString().trim();
-    const website = (raw.website || raw.Website || "").toString().trim();
-    const email = (raw.email || raw.Email || "").toString().trim();
-    const instagram = (raw.instagram || raw.Instagram || "").toString().trim();
+    const address = cleanStr(raw.address || raw.Address);
+    const phone = cleanStr(raw.phone || raw.Phone || raw.Cell);
+    const website = cleanStr(raw.website || raw.Website);
+    const email = cleanStr(raw.email || raw.Email);
+    const instagram = cleanStr(raw.instagram || raw.Instagram);
 
-    // Amenities (support both nested and sheet-style columns)
     const amenities =
       raw.amenities && typeof raw.amenities === "object"
         ? raw.amenities
@@ -61,14 +61,12 @@
             taa: raw.TAA,
           };
 
-    // Brands: array preferred; string fallback
     const brands = Array.isArray(raw.brands)
       ? raw.brands
       : typeof raw.Brands === "string"
       ? raw.Brands.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
 
-    // Hours: support per-shop JSON "hours" or sheet fields Monday..Sunday
     const hours =
       raw.hours && typeof raw.hours === "object"
         ? raw.hours
@@ -82,21 +80,40 @@
             sun: raw.sun || raw.Sunday,
           };
 
-    return {
-      slug,
-      name,
-      city,
-      state,
-      address,
-      phone,
-      website,
-      email,
-      instagram,
-      amenities,
-      brands,
-      hours,
-      raw,
+    return { slug, name, city, state, address, phone, website, email, instagram, amenities, brands, hours, raw };
+  }
+
+  function mergePreferA(a, b) {
+    // Prefer values from "a"; if missing/blank, use "b"
+    const out = { ...b, ...a };
+
+    const prefer = (key) => {
+      const av = cleanStr(a?.[key]);
+      const bv = cleanStr(b?.[key]);
+      out[key] = av ? av : bv;
     };
+
+    prefer("slug");
+    prefer("name");
+    prefer("city");
+    prefer("state");
+    prefer("address");
+    prefer("phone");
+    prefer("website");
+    prefer("email");
+    prefer("instagram");
+
+    // Merge amenities shallowly (prefer a values)
+    out.amenities = { ...(b?.amenities || {}), ...(a?.amenities || {}) };
+
+    // Brands/hours: if a has none, use b
+    out.brands = (Array.isArray(a?.brands) && a.brands.length) ? a.brands : (Array.isArray(b?.brands) ? b.brands : []);
+    out.hours = { ...(b?.hours || {}), ...(a?.hours || {}) };
+
+    // Keep raw around (prefer a.raw)
+    out.raw = a?.raw || b?.raw || {};
+
+    return out;
   }
 
   function withCacheBust(url) {
@@ -105,39 +122,63 @@
   }
 
   async function fetchJson(url) {
-    // Extra cache-bust helps when Netlify/CDN is sticky even with cache:no-store
     const res = await fetch(withCacheBust(url), { cache: "no-store" });
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
     return await res.json();
   }
 
+  function findInMaster(arr, slug) {
+    if (!Array.isArray(arr)) return null;
+    const s = String(slug || "").trim().toLowerCase();
+    if (!s) return null;
+
+    return (
+      arr.find((x) => String(x.slug || x.Slug || "").trim().toLowerCase() === s) ||
+      arr.find((x) => {
+        const name = String(x.Shop || x.name || "").trim().toLowerCase().replace(/\s+/g, "");
+        return name && name === s.replace(/\s+/g, "");
+      }) ||
+      null
+    );
+  }
+
   async function loadShop(slug) {
+    // Always load master list (used for merge + fallback)
+    let masterArr = [];
+    try {
+      masterArr = await fetchJson(`/shops/shops.json`);
+    } catch (e) {
+      masterArr = [];
+    }
+
+    // Try per-shop first
     if (slug) {
       try {
-        const per = await fetchJson(`/data/shops/${encodeURIComponent(slug)}.json`);
-        return normalizeShop(per, slug);
+        const perRaw = await fetchJson(`/data/shops/${encodeURIComponent(slug)}.json`);
+        const per = normalizeShop(perRaw, slug);
+
+        // Merge missing fields from master record (THIS is the fix)
+        const masterHitRaw = findInMaster(masterArr, slug);
+        if (masterHitRaw) {
+          const master = normalizeShop(masterHitRaw, slug);
+          return mergePreferA(per, master);
+        }
+
+        return per;
       } catch (e) {
-        // fall through
+        // fall through to master-only
       }
     }
 
-    const arr = await fetchJson(`/shops/shops.json`);
-    if (!Array.isArray(arr) || !arr.length) throw new Error("shops.json is empty");
+    // Master-only fallback
+    if (!Array.isArray(masterArr) || !masterArr.length) throw new Error("shops.json is empty or failed to load");
 
     if (slug) {
-      const hit =
-        arr.find((x) => String(x.slug || x.Slug || "").trim().toLowerCase() === slug) ||
-        arr.find(
-          (x) =>
-            String(x.Shop || x.name || "")
-              .trim()
-              .toLowerCase()
-              .replace(/\s+/g, "") === slug.replace(/\s+/g, "")
-        );
+      const hit = findInMaster(masterArr, slug);
       if (hit) return normalizeShop(hit, slug);
     }
 
-    return normalizeShop(arr[0], slug);
+    return normalizeShop(masterArr[0], slug);
   }
 
   async function setShopLogo(slug) {
@@ -148,9 +189,7 @@
     const png = `/img/icons/shops/${slug}.png`;
 
     img.onerror = () => {
-      img.onerror = () => {
-        img.style.display = "none";
-      };
+      img.onerror = () => { img.style.display = "none"; };
       img.src = png;
     };
     img.src = svg;
@@ -164,7 +203,6 @@
   function renderTAABadge(shop) {
     const taaIcon = $("#spTaaIcon");
     if (!taaIcon) return;
-
     const taa = isTruthy(shop.amenities?.taa) || isTruthy(shop.raw?.TAA);
     taaIcon.style.display = taa ? "" : "none";
   }
@@ -178,9 +216,7 @@
     el.hidden = false;
 
     if (toastTimer) window.clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => {
-      el.hidden = true;
-    }, 1600);
+    toastTimer = window.setTimeout(() => { el.hidden = true; }, 1600);
   }
 
   function renderAmenities(shop) {
@@ -213,17 +249,23 @@
     });
   }
 
+  function normalizeWebsiteUrl(v) {
+    const s = String(v || "").trim();
+    if (!s) return "";
+    if (/^https?:\/\//i.test(s)) return s;
+    return `https://${s}`;
+  }
+
   function normalizeInstagramUrl(v) {
     const s = String(v || "").trim();
     if (!s) return "";
 
-    // If it's already a URL, keep it
+    // already a URL
     if (/^https?:\/\//i.test(s)) return s;
 
-    // Handle @username or username
+    // handle (@name or name)
     const handle = s.replace(/^@/, "").trim();
     if (!handle) return "";
-
     return `https://instagram.com/${handle}`;
   }
 
@@ -232,57 +274,58 @@
     const webBtn = $("#spActWeb");
     const brandsBtn = $("#spActBrands");
     const dirBtn = $("#spActDir");
-    const igBtn = $("#spActInstagram"); // optional (only if present in HTML)
+    const igBtn = $("#spActInstagram");
 
-    // Call
+    // CALL
     if (callBtn) {
-      callBtn.onclick = () => {
-        if (shop.phone) window.location.href = `tel:${shop.phone}`;
-      };
-      callBtn.disabled = !shop.phone;
-      callBtn.style.opacity = shop.phone ? "" : ".45";
+      const phone = cleanStr(shop.phone);
+      callBtn.onclick = () => { if (phone) window.location.href = `tel:${phone}`; };
+      callBtn.disabled = !phone;
+      callBtn.style.opacity = phone ? "" : ".45";
     }
 
-    // Web
+    // WEB
     if (webBtn) {
-      webBtn.onclick = () => {
-        if (shop.website) window.open(shop.website, "_blank", "noopener");
-      };
-      webBtn.disabled = !shop.website;
-      webBtn.style.opacity = shop.website ? "" : ".45";
+      const url = normalizeWebsiteUrl(shop.website);
+      webBtn.onclick = () => { if (url) window.open(url, "_blank", "noopener"); };
+      webBtn.disabled = !url;
+      webBtn.style.opacity = url ? "" : ".45";
     }
 
-    // Brands
+    // BRANDS
     if (brandsBtn) {
       brandsBtn.onclick = () => openBrandsModal(shop.brands || []);
     }
 
-    // Directions
+    // DIRECTIONS
     if (dirBtn) {
+      const ok = !!(shop.address || shop.city || shop.state);
       dirBtn.onclick = () => {
         const dest = shop.address || [shop.city, shop.state].filter(Boolean).join(", ");
         if (!dest) return;
         window.open(`https://maps.apple.com/?daddr=${encodeURIComponent(dest)}`, "_blank", "noopener");
       };
-      dirBtn.disabled = !(shop.address || shop.city || shop.state);
-      dirBtn.style.opacity = shop.address || shop.city || shop.state ? "" : ".45";
+      dirBtn.disabled = !ok;
+      dirBtn.style.opacity = ok ? "" : ".45";
     }
 
-    // Instagram (HIDE if missing)
+    // INSTAGRAM
     if (igBtn) {
-      const url = normalizeInstagramUrl(shop.instagram);
-      if (!url) {
+      const igUrl = normalizeInstagramUrl(shop.instagram);
+
+      if (!igUrl) {
+        // Hide if missing
         igBtn.style.display = "none";
       } else {
         igBtn.style.display = "";
-        igBtn.onclick = () => window.open(url, "_blank", "noopener");
+        igBtn.onclick = () => window.open(igUrl, "_blank", "noopener");
         igBtn.disabled = false;
         igBtn.style.opacity = "";
       }
     }
   }
 
-  // Tabs CLOSED by default; tabs open panels
+  // Tabs
   function closeAllPanels() {
     const tabs = [
       { tab: $("#spTabHours"), panel: $("#spPanelHours") },
@@ -303,10 +346,7 @@
   }
 
   function setActivePanel(which) {
-    if (!which) {
-      closeAllPanels();
-      return;
-    }
+    if (!which) return closeAllPanels();
 
     const tabs = [
       { key: "hours", tab: $("#spTabHours"), panel: $("#spPanelHours") },
@@ -331,7 +371,6 @@
     const tHours = $("#spTabHours");
     const tAbout = $("#spTabAbout");
     const tUpdates = $("#spTabUpdates");
-
     if (tHours) tHours.onclick = () => setActivePanel("hours");
     if (tAbout) tAbout.onclick = () => setActivePanel("about");
     if (tUpdates) tUpdates.onclick = () => setActivePanel("updates");
@@ -340,9 +379,14 @@
   function cleanHourValue(v) {
     if (v == null) return "";
     const s = String(v).trim();
-    // Some older JSON had weird encoding like â€”; treat as empty
     if (!s || s === "—" || s.toLowerCase() === "nan" || s.includes("â")) return "";
     return s;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
   }
 
   function renderHours(shop) {
@@ -373,7 +417,7 @@
       const v = val || "—";
       const row = document.createElement("div");
       row.className = "sp-hours-row";
-      row.innerHTML = `<div class="sp-hours-day">${day}</div><div class="sp-hours-val">${escapeHtml(v)}</div>`;
+      row.innerHTML = `<div class="sp-hours-day">${escapeHtml(day)}</div><div class="sp-hours-val">${escapeHtml(v)}</div>`;
       list.appendChild(row);
     });
 
@@ -392,23 +436,15 @@
       ["Email", shop.email || "—"],
     ];
 
-    el.innerHTML = items
-      .map(
-        ([k, v]) => `
-        <div class="sp-about-item">
-          <div class="sp-about-k">${escapeHtml(k)}</div>
-          <div class="sp-about-v">${escapeHtml(v)}</div>
-        </div>
-      `
-      )
-      .join("");
+    el.innerHTML = items.map(([k, v]) => `
+      <div class="sp-about-item">
+        <div class="sp-about-k">${escapeHtml(k)}</div>
+        <div class="sp-about-v">${escapeHtml(v)}</div>
+      </div>
+    `).join("");
   }
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  }
-
-  // Brands Modal (4 across, SVG icons, no shading)
+  // Brands Modal
   function openBrandsModal(brands) {
     const modal = $("#spBrandsModal");
     const grid = $("#spBrandsGrid");
@@ -431,14 +467,10 @@
         img.className = "sp-brand-ico";
         img.alt = slug;
 
-        // Brand icon path: /img/icons/brands/{slug}.svg (png fallback)
         const svg = `/img/icons/brands/${encodeURIComponent(slug)}.svg`;
         const png = `/img/icons/brands/${encodeURIComponent(slug)}.png`;
 
-        img.onerror = () => {
-          img.onerror = null;
-          img.src = png;
-        };
+        img.onerror = () => { img.onerror = null; img.src = png; };
         img.src = svg;
 
         const name = document.createElement("div");
@@ -486,7 +518,6 @@
     renderHours(shop);
     renderAbout(shop);
 
-    // CLOSED by default (user taps Hours/About/Updates)
     setActivePanel(null);
   }
 
