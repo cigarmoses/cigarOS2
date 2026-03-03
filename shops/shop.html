@@ -7,8 +7,7 @@
   <title>Shop • CigarOS</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <!-- ✅ Match CSS version to JS so cache refreshes together -->
-  <link rel="stylesheet" href="/shops/shop.css?v=13.4" />
+  <link rel="stylesheet" href="/shops/shop.css?v=13.7" />
 </head>
 
 <body class="shop-public">
@@ -17,9 +16,9 @@
     <section class="sp-top">
 
       <!-- SHOP pill -->
-      <div class="sp-pill sp-pill-left">SHOP</div>
+      <div class="sp-pill sp-pill-left" id="spPill">SHOP</div>
 
-      <!-- ✅ TAA badge: hidden by default (JS will show only if taa=true) -->
+      <!-- TAA badge: hidden by default (JS will show only if features.taa=true) -->
       <img class="sp-taa" id="spTaaIcon" src="/img/icons/taa.svg" alt="TAA" style="display:none;" />
 
       <!-- Logo -->
@@ -30,50 +29,58 @@
       <!-- Shop Name -->
       <h1 class="sp-title" id="spName">Shop Name</h1>
 
-      <!-- City (CENTERED + SMALL) -->
-      <div class="sp-city" id="spCityRow" aria-label="City">
+      <!-- City row (CLICKABLE for directions) -->
+      <button class="sp-city" id="spAddressBtn" type="button" aria-label="Directions">
         <svg viewBox="0 0 24 24" class="sp-gps" aria-hidden="true">
           <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z"/>
         </svg>
         <span id="spCity">City, ST</span>
-      </div>
+      </button>
 
       <!-- ACTION DOCK -->
       <div class="sp-dock sp-dock-top">
 
         <button class="sp-dock-btn" id="spActCall" type="button" aria-label="Call">
-          <!-- ✅ remove hardcoded old cache param, let HTML version handle caching -->
-          <img class="sp-dock-ico" src="/img/icons/call.svg" alt="Call" />
+          <img class="sp-dock-ico" src="/img/icons/call.svg" alt="" />
           <span class="sp-dock-label">Call</span>
         </button>
 
-        <button class="sp-dock-btn" id="spActWeb" type="button" aria-label="Web">
-          <img class="sp-dock-ico" src="/img/icons/web.svg" alt="Web" />
+        <!-- Web uses an <a> so it can be truly clickable + accessible -->
+        <a class="sp-dock-btn" id="spWebsite" href="#" aria-label="Web">
+          <img class="sp-dock-ico" src="/img/icons/web.svg" alt="" />
           <span class="sp-dock-label">Web</span>
-        </button>
+        </a>
 
         <button class="sp-dock-btn" id="spActBrands" type="button" aria-label="Brands">
-          <img class="sp-dock-ico" src="/img/icons/brands.svg" alt="Brands" />
+          <img class="sp-dock-ico" src="/img/icons/brands.svg" alt="" />
           <span class="sp-dock-label">Brands</span>
         </button>
 
         <button class="sp-dock-btn" id="spActDir" type="button" aria-label="Directions">
-          <img class="sp-dock-ico" src="/img/icons/directions.svg" alt="Directions" />
+          <img class="sp-dock-ico" src="/img/icons/directions.svg" alt="" />
           <span class="sp-dock-label">Directions</span>
         </button>
 
-        <!-- ✅ Instagram stays in the row; JS will hide it if missing -->
         <button class="sp-dock-btn" id="spActInstagram" type="button" aria-label="Instagram">
-          <img class="sp-dock-ico" src="/img/icons/instagram.svg" alt="Instagram" />
+          <img class="sp-dock-ico" src="/img/icons/instagram.svg" alt="" />
           <span class="sp-dock-label">Instagram</span>
         </button>
 
       </div>
 
-      <!-- AMENITIES (ICONS ONLY) -->
-      <div class="sp-amen-panel">
-        <div class="sp-amen-row" id="spAmenRow"></div>
+      <!-- AMENITIES (GRID HOOK) -->
+      <div class="sp-amenities">
+        <div class="sp-amen-panel">
+          <!-- JS expects spAmenGrid -->
+          <div class="sp-amen-row" id="spAmenGrid"></div>
+        </div>
       </div>
+
+      <!-- Hidden hooks (JS expects these IDs; we keep them invisible) -->
+      <button id="spFollowBtn" type="button" style="display:none" aria-hidden="true" tabindex="-1">
+        <span id="spFollowText">Follow</span>
+      </button>
+      <button id="spMoreBtn" type="button" style="display:none" aria-hidden="true" tabindex="-1">More</button>
 
     </section>
 
@@ -88,7 +95,6 @@
 
       <div class="sp-panels">
 
-        <!-- CLOSED BY DEFAULT -->
         <div class="sp-panel" id="spPanelHours" role="tabpanel" aria-hidden="true">
           <div class="sp-card">
             <div class="sp-card-head">
@@ -118,7 +124,7 @@
 
   </main>
 
-  <!-- BRANDS MODAL (opens from Dock “Brands”) -->
+  <!-- BRANDS MODAL -->
   <div class="sp-modal" id="spBrandsModal" hidden>
     <div class="sp-modal-backdrop" id="spBrandsCloseBg" aria-hidden="true"></div>
     <div class="sp-modal-sheet" role="dialog" aria-modal="true" aria-label="Brands">
@@ -126,15 +132,13 @@
         <div class="sp-modal-title">Brands We Carry</div>
         <button class="sp-modal-close" id="spBrandsCloseBtn" type="button" aria-label="Close">✕</button>
       </div>
-
       <div class="sp-brand-grid" id="spBrandsGrid"></div>
     </div>
   </div>
 
-  <!-- Toast for amenities -->
+  <!-- Toast -->
   <div class="sp-toast" id="spToast" hidden></div>
 
-  <!-- ✅ Defer so DOM is ready before shop.js queries elements -->
-  <script src="/shops/shop.js?v=13.6" defer></script>
+  <script src="/shops/shop.js?v=13.7" defer></script>
 </body>
 </html>
