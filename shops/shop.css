@@ -82,7 +82,7 @@ body.shop-public{
   color:#8e8e93;
   font-weight:600;
   font-size:18px;
-  letter-spacing: -0.01em;
+  letter-spacing:-0.01em;
 }
 .sp-gps{
   width:18px;
@@ -91,12 +91,12 @@ body.shop-public{
   opacity:.9;
 }
 
-/* Dock */
+/* Dock (✅ 5 across, one row) */
 .sp-dock{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:12px;
-  padding:14px;
+  grid-template-columns:repeat(5,1fr);  /* ✅ was 4 */
+  gap:10px;                              /* slightly tighter */
+  padding:12px;                          /* slightly tighter */
   border-radius:26px;
   background:rgba(255,255,255,.7);
   backdrop-filter:blur(20px);
@@ -108,23 +108,25 @@ body.shop-public{
   background:transparent;   /* remove white box */
   border:0;                 /* remove border */
   border-radius:0;          /* remove rounded tile feel */
-  padding:14px 10px 12px;
+  padding:12px 6px 10px;    /* tighter to fit 5 */
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:10px;
+  gap:8px;                  /* tighter */
 }
 
 .sp-dock-ico{
-  width:30px;
-  height:30px;
+  width:28px;               /* slightly smaller so 5 fits */
+  height:28px;
   object-fit:contain;
 }
 
 .sp-dock-label{
-  font-size:13px;
-  font-weight:500; /* not bold */
+  font-size:12px;           /* slightly smaller so “Instagram” fits */
+  font-weight:500;
   color:#111;
+  line-height:1.1;
+  white-space:nowrap;       /* ✅ keep single line */
 }
 
 /* Amenities */
@@ -310,8 +312,8 @@ body.shop-public{
 }
 .sp-brand-name{
   font-size:12px;
-  font-weight:400;   /* regular */
-  letter-spacing:0;  /* make sure no added tracking */
+  font-weight:400;
+  letter-spacing:0;
   color:#111;
   text-align:center;
   line-height:1.2;
@@ -335,4 +337,11 @@ body.shop-public{
   z-index:1000;
   max-width:88vw;
   text-align:center;
+}
+
+/* ✅ Extra safety on smaller phones */
+@media (max-width:390px){
+  .sp-dock{ gap:8px; padding:10px; }
+  .sp-dock-ico{ width:26px; height:26px; }
+  .sp-dock-label{ font-size:11px; }
 }
