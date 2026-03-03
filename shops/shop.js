@@ -1,16 +1,14 @@
 /* /shops/shop.js
-   Public Shop Page (TOP section only) — Spreadsheet JSON compatible
-   Works with your exact keys:
-   Alcohol, BYOB, No Alcohol, Food, TVs, Outdoor, Indoor, Quiet, Live Music, Chain, TAA,
-   Shop, Address, City, ST, State, Zip, Phone, Latitude, Longitude,
-   Monday..Sunday, Website, Email, Instagram, etc.
+   Public Shop Page (TOP section only) — Supports BOTH schemas:
+   A) NEW clean schema (recommended):
+      { slug, name, logoKey, address1, city, state, zip, phone, website, email, instagram, lat, lng, hours:{mon..sun}, features:{...} }
 
-   Logo rule:
-   /img/icons/shops/<sanitized shop name>.svg  (fallback .png)
-   Example: "Fanatix cigar house" -> fanatixcigarhouse.svg
+   B) Old spreadsheet schema:
+      { Shop, Address, City, ST/State, Zip, Phone, Website, Email, Instagram, Latitude, Longitude, Monday..Sunday, Alcohol, Food, TAA, "No Alcohol"/"No alcohol", ... }
 
-   Data file:
-   /shops/shops.json  (recommended)
+   Logos:
+   /img/icons/shops/<logoKey>.svg (fallback .png)
+   If no logoKey, derives from name.
 */
 
 (() => {
@@ -35,12 +33,6 @@
     return ["1", "true", "t", "yes", "y", "x", "✓", "check", "checked"].includes(s);
   }
 
-  function sanitizeLogoName(name) {
-    return String(name || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-  }
-
   function slugify(name) {
     return String(name || "")
       .trim()
@@ -49,49 +41,148 @@
       .replace(/^-+|-+$/g, "");
   }
 
+  function sanitizeLogoKey(name) {
+    return String(name || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  }
+
   function normalizeState(row) {
-    const st = toStr(row.ST);
+    // NEW schema uses row.state; old uses ST/State
+    const st = toStr(row.state || row.ST);
     const state = toStr(row.State);
     return (st || state).toUpperCase();
   }
 
+  function getName(row) {
+    return toStr(row.name || row.Shop);
+  }
+
+  function getSlug(row) {
+    return toStr(row.slug) || slugify(getName(row));
+  }
+
+  function getLogoKey(row) {
+    // NEW schema: logoKey; fallback: derive from name
+    return toStr(row.logoKey) || sanitizeLogoKey(getName(row));
+  }
+
+  function getAddress1(row) {
+    return toStr(row.address1 || row.Address);
+  }
+
+  function getCity(row) {
+    return toStr(row.city || row.City);
+  }
+
+  function getZip(row) {
+    return toStr(row.zip || row.Zip);
+  }
+
+  function getPhone(row) {
+    return toStr(row.phone || row.Phone);
+  }
+
+  function getWebsite(row) {
+    return toStr(row.website || row.Website);
+  }
+
+  function getEmail(row) {
+    return toStr(row.email || row.Email);
+  }
+
+  function getInstagram(row) {
+    return toStr(row.instagram || row.Instagram);
+  }
+
+  function getLat(row) {
+    const v = row.lat ?? row.Latitude;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function getLng(row) {
+    const v = row.lng ?? row.Longitude;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function getHours(row) {
+    // NEW schema
+    if (row.hours && typeof row.hours === "object") return row.hours;
+
+    // OLD schema
+    return {
+      mon: toStr(row.Monday),
+      tue: toStr(row.Tuesday),
+      wed: toStr(row.Wednesday),
+      thu: toStr(row.Thursday),
+      fri: toStr(row.Friday),
+      sat: toStr(row.Saturday),
+      sun: toStr(row.Sunday),
+    };
+  }
+
+  function getFeatures(row) {
+    // NEW schema
+    if (row.features && typeof row.features === "object") return row.features;
+
+    // OLD schema (best-effort)
+    const noAlcohol =
+      isTruthy(row["No Alcohol"]) || isTruthy(row["No alcohol"]) || isTruthy(row["NoAlcohol"]);
+
+    const features = {
+      food: isTruthy(row.Food),
+      alcohol: isTruthy(row.Alcohol),
+      taa: isTruthy(row.TAA),
+      byob: isTruthy(row.BYOB),
+      noAlcohol
+    };
+
+    // override
+    if (features.noAlcohol) features.alcohol = false;
+
+    return features;
+  }
+
   function buildDirectionsUrl(row) {
-    const lat = Number(row.Latitude);
-    const lng = Number(row.Longitude);
+    const lat = getLat(row);
+    const lng = getLng(row);
     const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
 
     const address = [
-      toStr(row.Address),
-      toStr(row.City),
+      getAddress1(row),
+      getCity(row),
       normalizeState(row),
-      toStr(row.Zip),
+      getZip(row),
     ].filter(Boolean).join(", ");
 
-    const q = hasCoords ? `${lat},${lng}` : (address || toStr(row.Shop));
+    const q = hasCoords ? `${lat},${lng}` : (address || getName(row));
     return `https://maps.apple.com/?daddr=${encodeURIComponent(q)}&dirflg=d`;
   }
 
   // Only icons you said are READY right now:
   const AMENITIES = [
-    { key: "Food", label: "Food", icon: "/img/icons/food.svg" },
-    { key: "Alcohol", label: "Alcohol", icon: "/img/icons/alcohol.svg" },
-    { key: "TAA", label: "TAA", icon: "/img/icons/taa.svg" },
-    // Later you’ll add more icons + keys here:
-    // { key:"BYOB", label:"BYOB", icon:"/img/icons/byob.svg" }, etc.
+    { key: "food", label: "Food", icon: "/img/icons/food.svg" },
+    { key: "alcohol", label: "Alcohol", icon: "/img/icons/alcohol.svg" },
+    { key: "taa", label: "TAA", icon: "/img/icons/taa.svg" }
   ];
 
   function renderTop(row) {
-    // Title + SHOP pill
-    $("#spName").textContent = toStr(row.Shop) || "Shop";
+    const name = getName(row);
+    const state = normalizeState(row);
+    const city = getCity(row);
+
+    $("#spName").textContent = name || "Shop";
     $("#spPill").textContent = "SHOP";
 
-    // Address line (clickable)
-    const cityLine = [toStr(row.City), normalizeState(row)].filter(Boolean).join(", ");
-    $("#spCity").textContent = cityLine || toStr(row.Address) || "";
+    const cityLine = [city, state].filter(Boolean).join(", ");
+    $("#spCity").textContent = cityLine || getAddress1(row) || "";
 
     // Website
     const webEl = $("#spWebsite");
-    const websiteRaw = toStr(row.Website);
+    const websiteRaw = getWebsite(row);
     if (websiteRaw) {
       const url = websiteRaw.startsWith("http") ? websiteRaw : `https://${websiteRaw}`;
       webEl.textContent = url.replace(/^https?:\/\//, "");
@@ -101,14 +192,14 @@
       webEl.style.display = "none";
     }
 
-    // Logo (svg -> png -> default)
+    // Logo
     const logoEl = $("#spLogo");
-    const base = sanitizeLogoName(row.Shop);
-    const svgPath = `/img/icons/shops/${base}.svg`;
-    const pngPath = `/img/icons/shops/${base}.png`;
+    const key = getLogoKey(row);
+    const svgPath = `/img/icons/shops/${key}.svg`;
+    const pngPath = `/img/icons/shops/${key}.png`;
 
     logoEl.src = svgPath;
-    logoEl.alt = `${toStr(row.Shop) || "Shop"} logo`;
+    logoEl.alt = `${name || "Shop"} logo`;
     logoEl.onerror = function () {
       if (logoEl.src.endsWith(".svg")) {
         logoEl.src = pngPath;
@@ -118,12 +209,12 @@
       logoEl.src = "/img/icons/shops/default.png";
     };
 
-    // Address click -> Apple Maps directions
+    // Address click -> Apple Maps
     $("#spAddressBtn").onclick = () => {
       window.open(buildDirectionsUrl(row), "_blank", "noopener");
     };
 
-    // Follow (UI toggle placeholder)
+    // Follow toggle placeholder
     const followBtn = $("#spFollowBtn");
     followBtn.onclick = () => {
       const t = $("#spFollowText");
@@ -139,15 +230,12 @@
     const grid = $("#spAmenGrid");
     grid.innerHTML = "";
 
-    // No Alcohol overrides Alcohol
-    const noAlcohol = isTruthy(row["No Alcohol"]);
-    const alcohol = noAlcohol ? false : isTruthy(row.Alcohol);
+    const features = getFeatures(row);
 
-    const enabled = AMENITIES.filter(a => {
-      if (a.key === "Alcohol") return alcohol === true;
-      return isTruthy(row[a.key]);
-    });
+    // No Alcohol overrides Alcohol (NEW schema already should be correct, but enforce anyway)
+    if (features.noAlcohol) features.alcohol = false;
 
+    const enabled = AMENITIES.filter(a => features[a.key] === true);
     enabled.forEach(a => {
       const tile = document.createElement("div");
       tile.className = "sp-amen";
@@ -173,11 +261,11 @@
       const list = await res.json();
       if (!Array.isArray(list) || !list.length) throw new Error("No shops in shops.json");
 
-      // Match by slugified Shop name
       const row =
-        list.find(r => slugify(r.Shop) === wantedSlug) ||
-        list.find(r => toStr(r.Shop).toLowerCase() === wantedSlug) ||
+        list.find(r => getSlug(r).toLowerCase() === wantedSlug) ||
         list[0];
+
+      if (!row) throw new Error("No matching shop");
 
       renderTop(row);
     } catch (err) {
