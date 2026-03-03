@@ -1,13 +1,14 @@
 /* /shops/shop.js
    FULL REPLACEMENT FILE (v13.4)
    - Loads correct shop by ?shop=slug
-   - Prefers /data/shops/{slug}.json, BUT merges missing fields from /shops/shops.json
+   - Prefers /data/shops/{slug}.json, fallback /shops/shops.json
    - Uses slug for shop logo lookup (svg -> png fallback)
-   - Only shows TAA badge when true (spTaaIcon)
+   - TAA badge hidden by default; only shows when taa=true
    - Panels CLOSED by default; tabs open panels
    - Dock Brands opens modal grid (4 across) of brand SVG icons (no shading)
    - Amenity icons clickable with toast descriptions
-   - Dock Instagram button (spActInstagram) opens Instagram if present; hides if missing
+   - Dock Instagram button opens Instagram if present; hides if missing
+   - Stronger normalization for Phone/Website/Instagram fields + cache bust
 */
 
 (() => {
@@ -28,23 +29,91 @@
   }
 
   function cleanStr(v) {
-    const s = String(v ?? "").trim();
+    if (v == null) return "";
+    const s = String(v).trim();
+    if (!s) return "";
+    const low = s.toLowerCase();
+    if (low === "nan" || low === "null" || low === "undefined") return "";
     return s;
   }
 
-  function normalizeShop(raw, fallbackSlug) {
-    const slug = cleanStr(raw.slug || raw.Slug || raw.slug_id || fallbackSlug).toLowerCase();
+  function normalizePhone(v) {
+    const s = cleanStr(v);
+    if (!s) return "";
+    // Keep + and digits only (tel: works better)
+    const out = s.replace(/[^\d+]/g, "");
+    return out;
+  }
 
-    const name = cleanStr(raw.name || raw.Shop || raw.shop);
+  function normalizeWebsite(v) {
+    const s = cleanStr(v);
+    if (!s) return "";
+    if (/^https?:\/\//i.test(s)) return s;
+    // If someone stored "www.site.com" or "site.com"
+    return `https://${s.replace(/^\/+/, "")}`;
+  }
+
+  function normalizeInstagramUrl(v) {
+    const s = cleanStr(v);
+    if (!s) return "";
+
+    // Already a URL
+    if (/^https?:\/\//i.test(s)) return s;
+
+    // Handle @username or username
+    const handle = s.replace(/^@/, "").trim();
+    if (!handle) return "";
+
+    return `https://instagram.com/${handle}`;
+  }
+
+  function normalizeShop(raw, fallbackSlug) {
+    const slug =
+      cleanStr(raw.slug || raw.Slug || raw.slug_id || raw.fileSlug || fallbackSlug || "")
+        .toLowerCase();
+
+    const name = cleanStr(raw.name || raw.Shop || raw.shop || raw.Title);
     const city = cleanStr(raw.city || raw.City);
     const state = cleanStr(raw.state || raw.ST || raw.State);
 
     const address = cleanStr(raw.address || raw.Address);
-    const phone = cleanStr(raw.phone || raw.Phone || raw.Cell);
-    const website = cleanStr(raw.website || raw.Website);
-    const email = cleanStr(raw.email || raw.Email);
-    const instagram = cleanStr(raw.instagram || raw.Instagram);
 
+    // ✅ More robust phone/website field mapping
+    const phone = normalizePhone(
+      raw.phone ??
+      raw.Phone ??
+      raw["Phone"] ??
+      raw["Phone "] ??
+      raw.Cell ??
+      raw["Cell"] ??
+      raw["Cell "]
+    );
+
+    const website = normalizeWebsite(
+      raw.website ??
+      raw.Website ??
+      raw["Website"] ??
+      raw["website"] ??
+      raw["URL"] ??
+      raw.url
+    );
+
+    const email = cleanStr(raw.email || raw.Email);
+
+    // ✅ Instagram column support (Instagram / instagram / IG / handle)
+    const instagramRaw = cleanStr(
+      raw.instagram ??
+      raw.Instagram ??
+      raw["Instagram"] ??
+      raw.ig ??
+      raw.IG ??
+      raw["IG"] ??
+      raw["Instagram Handle"]
+    );
+    const instagram = instagramRaw; // keep raw for About panel
+    const instagramUrl = normalizeInstagramUrl(instagramRaw);
+
+    // Amenities (support both nested and sheet-style columns)
     const amenities =
       raw.amenities && typeof raw.amenities === "object"
         ? raw.amenities
@@ -61,12 +130,14 @@
             taa: raw.TAA,
           };
 
+    // Brands: array preferred; string fallback
     const brands = Array.isArray(raw.brands)
       ? raw.brands
       : typeof raw.Brands === "string"
       ? raw.Brands.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
 
+    // Hours: support per-shop JSON "hours" or sheet fields Monday..Sunday
     const hours =
       raw.hours && typeof raw.hours === "object"
         ? raw.hours
@@ -80,40 +151,22 @@
             sun: raw.sun || raw.Sunday,
           };
 
-    return { slug, name, city, state, address, phone, website, email, instagram, amenities, brands, hours, raw };
-  }
-
-  function mergePreferA(a, b) {
-    // Prefer values from "a"; if missing/blank, use "b"
-    const out = { ...b, ...a };
-
-    const prefer = (key) => {
-      const av = cleanStr(a?.[key]);
-      const bv = cleanStr(b?.[key]);
-      out[key] = av ? av : bv;
+    return {
+      slug,
+      name,
+      city,
+      state,
+      address,
+      phone,
+      website,
+      email,
+      instagram,
+      instagramUrl,
+      amenities,
+      brands,
+      hours,
+      raw,
     };
-
-    prefer("slug");
-    prefer("name");
-    prefer("city");
-    prefer("state");
-    prefer("address");
-    prefer("phone");
-    prefer("website");
-    prefer("email");
-    prefer("instagram");
-
-    // Merge amenities shallowly (prefer a values)
-    out.amenities = { ...(b?.amenities || {}), ...(a?.amenities || {}) };
-
-    // Brands/hours: if a has none, use b
-    out.brands = (Array.isArray(a?.brands) && a.brands.length) ? a.brands : (Array.isArray(b?.brands) ? b.brands : []);
-    out.hours = { ...(b?.hours || {}), ...(a?.hours || {}) };
-
-    // Keep raw around (prefer a.raw)
-    out.raw = a?.raw || b?.raw || {};
-
-    return out;
   }
 
   function withCacheBust(url) {
@@ -127,58 +180,31 @@
     return await res.json();
   }
 
-  function findInMaster(arr, slug) {
-    if (!Array.isArray(arr)) return null;
-    const s = String(slug || "").trim().toLowerCase();
-    if (!s) return null;
-
-    return (
-      arr.find((x) => String(x.slug || x.Slug || "").trim().toLowerCase() === s) ||
-      arr.find((x) => {
-        const name = String(x.Shop || x.name || "").trim().toLowerCase().replace(/\s+/g, "");
-        return name && name === s.replace(/\s+/g, "");
-      }) ||
-      null
-    );
-  }
-
   async function loadShop(slug) {
-    // Always load master list (used for merge + fallback)
-    let masterArr = [];
-    try {
-      masterArr = await fetchJson(`/shops/shops.json`);
-    } catch (e) {
-      masterArr = [];
-    }
-
-    // Try per-shop first
     if (slug) {
       try {
-        const perRaw = await fetchJson(`/data/shops/${encodeURIComponent(slug)}.json`);
-        const per = normalizeShop(perRaw, slug);
-
-        // Merge missing fields from master record (THIS is the fix)
-        const masterHitRaw = findInMaster(masterArr, slug);
-        if (masterHitRaw) {
-          const master = normalizeShop(masterHitRaw, slug);
-          return mergePreferA(per, master);
-        }
-
-        return per;
+        const per = await fetchJson(`/data/shops/${encodeURIComponent(slug)}.json`);
+        return normalizeShop(per, slug);
       } catch (e) {
-        // fall through to master-only
+        // fall through
       }
     }
 
-    // Master-only fallback
-    if (!Array.isArray(masterArr) || !masterArr.length) throw new Error("shops.json is empty or failed to load");
+    const arr = await fetchJson(`/shops/shops.json`);
+    if (!Array.isArray(arr) || !arr.length) throw new Error("shops.json is empty");
 
     if (slug) {
-      const hit = findInMaster(masterArr, slug);
+      const hit =
+        arr.find((x) => cleanStr(x.slug || x.Slug).toLowerCase() === slug) ||
+        arr.find((x) =>
+          cleanStr(x.Shop || x.name || x.Title)
+            .toLowerCase()
+            .replace(/\s+/g, "") === slug.replace(/\s+/g, "")
+        );
       if (hit) return normalizeShop(hit, slug);
     }
 
-    return normalizeShop(masterArr[0], slug);
+    return normalizeShop(arr[0], slug);
   }
 
   async function setShopLogo(slug) {
@@ -189,20 +215,30 @@
     const png = `/img/icons/shops/${slug}.png`;
 
     img.onerror = () => {
-      img.onerror = () => { img.style.display = "none"; };
+      img.onerror = () => {
+        img.style.display = "none";
+      };
       img.src = png;
     };
     img.src = svg;
   }
 
   function renderHeader(shop) {
-    if ($("#spName")) $("#spName").textContent = shop.name || "Shop";
-    if ($("#spCity")) $("#spCity").textContent = [shop.city, shop.state].filter(Boolean).join(", ");
+    const name = shop.name || "Shop";
+    const cityState = [shop.city, shop.state].filter(Boolean).join(", ") || "City, ST";
+
+    const nameEl = $("#spName");
+    const cityEl = $("#spCity");
+
+    if (nameEl) nameEl.textContent = name;
+    if (cityEl) cityEl.textContent = cityState;
   }
 
   function renderTAABadge(shop) {
     const taaIcon = $("#spTaaIcon");
     if (!taaIcon) return;
+
+    // default hidden (HTML already sets display:none; keep it safe)
     const taa = isTruthy(shop.amenities?.taa) || isTruthy(shop.raw?.TAA);
     taaIcon.style.display = taa ? "" : "none";
   }
@@ -216,7 +252,9 @@
     el.hidden = false;
 
     if (toastTimer) window.clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => { el.hidden = true; }, 1600);
+    toastTimer = window.setTimeout(() => {
+      el.hidden = true;
+    }, 1600);
   }
 
   function renderAmenities(shop) {
@@ -249,26 +287,6 @@
     });
   }
 
-  function normalizeWebsiteUrl(v) {
-    const s = String(v || "").trim();
-    if (!s) return "";
-    if (/^https?:\/\//i.test(s)) return s;
-    return `https://${s}`;
-  }
-
-  function normalizeInstagramUrl(v) {
-    const s = String(v || "").trim();
-    if (!s) return "";
-
-    // already a URL
-    if (/^https?:\/\//i.test(s)) return s;
-
-    // handle (@name or name)
-    const handle = s.replace(/^@/, "").trim();
-    if (!handle) return "";
-    return `https://instagram.com/${handle}`;
-  }
-
   function wireDock(shop) {
     const callBtn = $("#spActCall");
     const webBtn = $("#spActWeb");
@@ -276,56 +294,56 @@
     const dirBtn = $("#spActDir");
     const igBtn = $("#spActInstagram");
 
-    // CALL
+    // Call
     if (callBtn) {
-      const phone = cleanStr(shop.phone);
-      callBtn.onclick = () => { if (phone) window.location.href = `tel:${phone}`; };
-      callBtn.disabled = !phone;
-      callBtn.style.opacity = phone ? "" : ".45";
+      callBtn.onclick = () => {
+        if (shop.phone) window.location.href = `tel:${shop.phone}`;
+      };
+      callBtn.disabled = !shop.phone;
+      callBtn.style.opacity = shop.phone ? "" : ".45";
     }
 
-    // WEB
+    // Web
     if (webBtn) {
-      const url = normalizeWebsiteUrl(shop.website);
-      webBtn.onclick = () => { if (url) window.open(url, "_blank", "noopener"); };
-      webBtn.disabled = !url;
-      webBtn.style.opacity = url ? "" : ".45";
+      webBtn.onclick = () => {
+        if (shop.website) window.open(shop.website, "_blank", "noopener");
+      };
+      webBtn.disabled = !shop.website;
+      webBtn.style.opacity = shop.website ? "" : ".45";
     }
 
-    // BRANDS
+    // Brands
     if (brandsBtn) {
       brandsBtn.onclick = () => openBrandsModal(shop.brands || []);
     }
 
-    // DIRECTIONS
+    // Directions
     if (dirBtn) {
-      const ok = !!(shop.address || shop.city || shop.state);
       dirBtn.onclick = () => {
         const dest = shop.address || [shop.city, shop.state].filter(Boolean).join(", ");
         if (!dest) return;
         window.open(`https://maps.apple.com/?daddr=${encodeURIComponent(dest)}`, "_blank", "noopener");
       };
+      const ok = !!(shop.address || shop.city || shop.state);
       dirBtn.disabled = !ok;
       dirBtn.style.opacity = ok ? "" : ".45";
     }
 
-    // INSTAGRAM
+    // Instagram (hide if missing)
     if (igBtn) {
-      const igUrl = normalizeInstagramUrl(shop.instagram);
-
-      if (!igUrl) {
-        // Hide if missing
+      const url = shop.instagramUrl || "";
+      if (!url) {
         igBtn.style.display = "none";
       } else {
         igBtn.style.display = "";
-        igBtn.onclick = () => window.open(igUrl, "_blank", "noopener");
+        igBtn.onclick = () => window.open(url, "_blank", "noopener");
         igBtn.disabled = false;
         igBtn.style.opacity = "";
       }
     }
   }
 
-  // Tabs
+  // Tabs CLOSED by default; tabs open panels
   function closeAllPanels() {
     const tabs = [
       { tab: $("#spTabHours"), panel: $("#spPanelHours") },
@@ -346,7 +364,10 @@
   }
 
   function setActivePanel(which) {
-    if (!which) return closeAllPanels();
+    if (!which) {
+      closeAllPanels();
+      return;
+    }
 
     const tabs = [
       { key: "hours", tab: $("#spTabHours"), panel: $("#spPanelHours") },
@@ -371,21 +392,25 @@
     const tHours = $("#spTabHours");
     const tAbout = $("#spTabAbout");
     const tUpdates = $("#spTabUpdates");
+
     if (tHours) tHours.onclick = () => setActivePanel("hours");
     if (tAbout) tAbout.onclick = () => setActivePanel("about");
     if (tUpdates) tUpdates.onclick = () => setActivePanel("updates");
   }
 
   function cleanHourValue(v) {
-    if (v == null) return "";
-    const s = String(v).trim();
-    if (!s || s === "—" || s.toLowerCase() === "nan" || s.includes("â")) return "";
+    const s = cleanStr(v);
+    if (!s || s === "—" || s.includes("â")) return "";
     return s;
   }
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
     }[c]));
   }
 
@@ -436,15 +461,19 @@
       ["Email", shop.email || "—"],
     ];
 
-    el.innerHTML = items.map(([k, v]) => `
-      <div class="sp-about-item">
-        <div class="sp-about-k">${escapeHtml(k)}</div>
-        <div class="sp-about-v">${escapeHtml(v)}</div>
-      </div>
-    `).join("");
+    el.innerHTML = items
+      .map(
+        ([k, v]) => `
+          <div class="sp-about-item">
+            <div class="sp-about-k">${escapeHtml(k)}</div>
+            <div class="sp-about-v">${escapeHtml(v)}</div>
+          </div>
+        `
+      )
+      .join("");
   }
 
-  // Brands Modal
+  // Brands Modal (4 across, SVG icons, no shading)
   function openBrandsModal(brands) {
     const modal = $("#spBrandsModal");
     const grid = $("#spBrandsGrid");
@@ -457,7 +486,7 @@
       grid.innerHTML = `<div style="padding:10px 6px;color:#8e8e93;font-weight:600;">No brands listed.</div>`;
     } else {
       list.forEach((b) => {
-        const slug = String(b || "").trim();
+        const slug = cleanStr(b);
         if (!slug) return;
 
         const item = document.createElement("div");
@@ -470,7 +499,10 @@
         const svg = `/img/icons/brands/${encodeURIComponent(slug)}.svg`;
         const png = `/img/icons/brands/${encodeURIComponent(slug)}.png`;
 
-        img.onerror = () => { img.onerror = null; img.src = png; };
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = png;
+        };
         img.src = svg;
 
         const name = document.createElement("div");
