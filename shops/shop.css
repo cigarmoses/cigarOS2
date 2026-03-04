@@ -1,3 +1,10 @@
+/* /shops/shop.css  — FULL REPLACEMENT
+   - SF Pro Display
+   - City truly centered
+   - Dock evenly distributed (5 across) with small labels
+   - No duplicate selector overrides
+*/
+
 body.shop-public{
   margin:0;
   background:#f2f2f7;
@@ -31,7 +38,7 @@ body.shop-public{
   background:rgba(255,255,255,.75);
 
   font-weight:600;
-  letter-spacing:.02em;   /* tightened */
+  letter-spacing:.02em;
   font-size:12px;
   text-transform:uppercase;
 }
@@ -72,15 +79,15 @@ body.shop-public{
   line-height:1.05;
 }
 
-/* City centered + small (hard center, even if it has a pill bg) */
+/* City centered + small */
 .sp-city{
-  display:inline-flex;              /* key: make it shrink to content */
+  display:inline-flex;
   align-items:center;
   justify-content:center;
   gap:10px;
 
-  margin:12px auto 18px;           /* key: auto centers inline-flex */
-  width:fit-content;               /* ensures it doesn't stretch */
+  margin:12px auto 18px;
+  width:fit-content;
   text-align:center;
 
   color:#8e8e93;
@@ -107,8 +114,8 @@ body.shop-public{
   backdrop-filter:blur(20px);
   border:1px solid rgba(0,0,0,.05);
 
-  align-items:center;     /* vertical alignment */
-  justify-items:center;   /* centers items in each column */
+  align-items:center;
+  justify-items:center;
 }
 
 .sp-dock-btn{
@@ -117,26 +124,33 @@ body.shop-public{
   border:0;
   padding:10px 6px 8px;
 
-  width:100%;             /* key: fills the column evenly */
+  width:100%;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
   gap:7px;
+
+  transition:transform .15s ease, opacity .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.sp-dock-btn:active{
+  transform:scale(.95);
+  opacity:.8;
 }
 
 .sp-dock-ico{
-  width:26px;               /* slightly smaller so 5 fits */
+  width:26px;
   height:26px;
   object-fit:contain;
 }
 
 .sp-dock-label{
-  font-size:10px;           /* slightly smaller so “Instagram” fits */
+  font-size:10px;
   font-weight:500;
   color:#111;
   line-height:1.1;
-  white-space:nowrap;       /* ✅ keep single line */
+  white-space:nowrap;
 }
 
 /* Amenities */
@@ -157,10 +171,9 @@ body.shop-public{
   background:transparent;
   padding:6px;
   border-radius:12px;
+  -webkit-tap-highlight-color: transparent;
 }
-.sp-amen-btn:active{
-  transform:scale(.98);
-}
+.sp-amen-btn:active{ transform:scale(.98); }
 .sp-amen-icon{
   width:44px;
   height:44px;
@@ -301,7 +314,7 @@ body.shop-public{
   font-size:18px;
 }
 
-/* Brand grid: 4 across, no shading around SVG */
+/* Brand grid */
 .sp-brand-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -323,7 +336,6 @@ body.shop-public{
 .sp-brand-name{
   font-size:12px;
   font-weight:400;
-  letter-spacing:0;
   color:#111;
   text-align:center;
   line-height:1.2;
@@ -349,101 +361,9 @@ body.shop-public{
   text-align:center;
 }
 
-/* ✅ Extra safety on smaller phones */
+/* Smaller phones */
 @media (max-width:390px){
   .sp-dock{ gap:8px; padding:10px; }
-  .sp-dock-ico{ width:26px; height:26px; }
-  .sp-dock-label{ font-size:11px; }
-}
-/* =========================================
-   SHOP PAGE SPACING / ICON ALIGNMENT FIXES
-   ========================================= */
-
-/* DOCK CONTAINER */
-.sp-dock{
-  padding:18px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-/* DOCK BUTTON STACK */
-.sp-dock-btn{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  flex:1;
-}
-
-/* NORMALIZE DOCK ICON SIZE */
-.sp-dock-ico{
-  width:28px;
-  height:28px;
-  object-fit:contain;
-}
-
-/* DOCK LABEL */
-.sp-dock-label{
-  font-size:13px;
-  font-weight:500;
-  letter-spacing:-0.01em;
-}
-
-/* ADD BREATHING ROOM ABOVE DOCK */
-.sp-city{
-  margin-bottom:14px;
-}
-
-/* =========================================
-   AMENITIES SECTION
-   ========================================= */
-
-.sp-amen-panel{
-  margin-top:12px;
-}
-
-/* CENTER AMENITIES */
-.sp-amen-row{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:44px;
-}
-
-/* AMENITY ITEM */
-.sp-amen{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-}
-
-/* NORMALIZE AMENITY ICON SIZE */
-.sp-amen-ico img{
-  width:36px;
-  height:36px;
-  object-fit:contain;
-}
-
-/* AMENITY LABEL */
-.sp-amen-label{
-  font-size:15px;
-  font-weight:500;
-}
-
-/* =========================================
-   EXTRA IOS-LIKE TOUCH POLISH
-   ========================================= */
-
-/* subtle icon hover feedback */
-.sp-dock-btn:active{
-  transform:scale(.95);
-  opacity:.8;
-}
-
-/* nicer tap feel */
-.sp-dock-btn{
-  transition:transform .15s ease, opacity .15s ease;
+  .sp-dock-ico{ width:24px; height:24px; }
+  .sp-dock-label{ font-size:10px; }
 }
