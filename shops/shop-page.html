@@ -1,46 +1,123 @@
 <!doctype html>
 <html lang="en">
-
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>Shop • CigarOS</title>
 
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="format-detection" content="telephone=no,email=no,address=no" />
-
-<title>Shop • CigarOS</title>
-
-<link rel="stylesheet" href="/css/type.css" />
-<link rel="stylesheet" href="/shops/shop-page.css?v=2" />
-
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/shops/shop-page.css?v=3" />
 </head>
 
 <body class="shop-public">
+  <main class="sp-wrap">
 
-<main class="sp-wrap">
+    <section class="sp-top">
+      <div class="sp-pill sp-pill-left">SHOP</div>
 
-<section class="sp-top">
+      <!-- TAA badge (only show when true) -->
+      <img id="spTaa" class="sp-taa" hidden src="/img/icons/taa.svg" alt="TAA" />
 
-<a href="/shops/" class="sp-back" aria-label="Back">
-<span class="sp-backchev">‹</span>
-</a>
+      <!-- Logo -->
+      <div class="sp-logo"><img id="spLogo" alt="" /></div>
 
-<div class="sp-pill sp-pill-left">SHOP</div>
+      <!-- Name -->
+      <h1 id="spName" class="sp-title">Shop</h1>
 
-<img id="spTaa" class="sp-taa" hidden src="/img/icons/taa.svg" />
+      <!-- City -->
+      <div class="sp-city" aria-label="City">
+        <svg viewBox="0 0 24 24" class="sp-gps" aria-hidden="true">
+          <path d="M12 2c-3.9 0-7 3.1-7 7 0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z"/>
+        </svg>
+        <span id="spCity">—</span>
+      </div>
 
-<div class="sp-logo">
-<img id="spLogo" alt="Shop logo" hidden />
-</div>
+      <!-- ACTION DOCK -->
+      <div class="sp-dock">
+        <button class="sp-dock-btn" id="spActCall" type="button">
+          <img class="sp-dock-ico" src="/img/icons/call.svg" alt="Call" />
+          <span class="sp-dock-label">Call</span>
+        </button>
 
-<h1 id="spName" class="sp-title"></h1>
+        <button class="sp-dock-btn" id="spActWeb" type="button">
+          <img class="sp-dock-ico" src="/img/icons/web.svg" alt="Web" />
+          <span class="sp-dock-label">Web</span>
+        </button>
 
-<div id="spCity" class="sp-city"></div>
+        <button class="sp-dock-btn" id="spActBrands" type="button">
+          <img class="sp-dock-ico" src="/img/icons/brands.svg" alt="Brands" />
+          <span class="sp-dock-label">Brands</span>
+        </button>
 
-</section>
+        <button class="sp-dock-btn" id="spActDir" type="button">
+          <img class="sp-dock-ico" src="/img/icons/directions.svg" alt="Directions" />
+          <span class="sp-dock-label">Directions</span>
+        </button>
 
-</main>
+        <button class="sp-dock-btn" id="spActInstagram" type="button">
+          <img class="sp-dock-ico" src="/img/icons/instagram.svg?v=1" alt="Instagram" />
+          <span class="sp-dock-label">Instagram</span>
+        </button>
+      </div>
 
-<script src="/shops/shop-page.js?v=2"></script>
+      <!-- AMENITIES -->
+      <div class="sp-amen-panel">
+        <div class="sp-amen-row" id="spAmenRow"></div>
+      </div>
+    </section>
 
+    <!-- Bottom Section -->
+    <section class="sp-bottom">
+      <div class="sp-seg" role="tablist" aria-label="Shop tabs">
+        <button class="sp-seg-btn" id="spTabHours" type="button" role="tab" aria-selected="false">Hours</button>
+        <button class="sp-seg-btn" id="spTabAbout" type="button" role="tab" aria-selected="false">About</button>
+        <button class="sp-seg-btn" id="spTabUpdates" type="button" role="tab" aria-selected="false">Updates</button>
+      </div>
+
+      <div class="sp-panels">
+        <div class="sp-panel" id="spPanelHours" role="tabpanel" aria-hidden="true">
+          <div class="sp-card">
+            <div class="sp-card-head">
+              <div class="sp-card-title">Hours</div>
+              <div class="sp-card-right" id="spHoursNow">—</div>
+            </div>
+            <div id="spHoursList"></div>
+          </div>
+        </div>
+
+        <div class="sp-panel" id="spPanelAbout" role="tabpanel" aria-hidden="true">
+          <div class="sp-card">
+            <div class="sp-card-title">About</div>
+            <div class="sp-about" id="spAbout"></div>
+          </div>
+        </div>
+
+        <div class="sp-panel" id="spPanelUpdates" role="tabpanel" aria-hidden="true">
+          <div class="sp-card">
+            <div class="sp-card-title">Updates</div>
+            <div id="spUpdateText">No updates yet.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BRANDS MODAL -->
+  <div class="sp-modal" id="spBrandsModal" hidden>
+    <div class="sp-modal-backdrop" id="spBrandsCloseBg" aria-hidden="true"></div>
+    <div class="sp-modal-sheet" role="dialog" aria-modal="true" aria-label="Brands">
+      <div class="sp-modal-head">
+        <div class="sp-modal-title">Brands We Carry</div>
+        <button class="sp-modal-close" id="spBrandsCloseBtn" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="sp-brand-grid" id="spBrandsGrid"></div>
+    </div>
+  </div>
+
+  <div class="sp-toast" id="spToast" hidden></div>
+
+  <script src="/shops/shop-page.js?v=3"></script>
 </body>
 </html>
