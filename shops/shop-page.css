@@ -1,14 +1,14 @@
 /* /shops/shop-page.css  — FULL REPLACEMENT
    - SF Pro Display
    - City truly centered
-   - Dock evenly distributed (5 across) with small labels
-   - No duplicate selector overrides
+   - Dock evenly distributed (5 across)
+   - Smaller dock labels
 */
 
 body.shop-public{
   margin:0;
   background:#f2f2f7;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
+  font-family: var(--font-display), -apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
 }
 
 .sp-wrap{
@@ -36,7 +36,6 @@ body.shop-public{
   border-radius:999px;
   border:1px solid rgba(0,0,0,.08);
   background:rgba(255,255,255,.75);
-
   font-weight:600;
   letter-spacing:.02em;
   font-size:12px;
@@ -44,14 +43,14 @@ body.shop-public{
 }
 .sp-pill-left{ position:absolute; left:18px; top:18px; }
 
-/* TAA badge */
+/* TAA badge (double size) */
 .sp-taa{
   position:absolute;
   right:18px;
   top:18px;
-  width:22px;
-  height:22px;
-  opacity:.9;
+  width:44px;
+  height:44px;
+  opacity:.95;
 }
 
 /* Logo */
@@ -79,17 +78,15 @@ body.shop-public{
   line-height:1.05;
 }
 
-/* City centered + small */
+/* City centered (true center) */
 .sp-city{
   display:inline-flex;
   align-items:center;
   justify-content:center;
   gap:10px;
-
   margin:12px auto 18px;
   width:fit-content;
   text-align:center;
-
   color:#8e8e93;
   font-weight:600;
   font-size:18px;
@@ -102,18 +99,16 @@ body.shop-public{
   opacity:.9;
 }
 
-/* Dock (5 across, perfectly even) */
+/* Dock (5 across, evenly distributed) */
 .sp-dock{
   display:grid;
   grid-template-columns:repeat(5, 1fr);
   gap:10px;
   padding:12px;
   border-radius:26px;
-
   background:rgba(255,255,255,.7);
   backdrop-filter:blur(20px);
   border:1px solid rgba(0,0,0,.05);
-
   align-items:center;
   justify-items:center;
 }
@@ -123,14 +118,12 @@ body.shop-public{
   background:transparent;
   border:0;
   padding:10px 6px 8px;
-
   width:100%;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:7px;
-
+  gap:6px;
   transition:transform .15s ease, opacity .15s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -146,8 +139,8 @@ body.shop-public{
 }
 
 .sp-dock-label{
-  font-size:10px;
-  font-weight:500;
+  font-size:10px;      /* ✅ smaller labels */
+  font-weight:600;
   color:#111;
   line-height:1.1;
   white-space:nowrap;
@@ -198,17 +191,15 @@ body.shop-public{
   border-radius:18px;
   padding:8px;
 }
-
 .sp-seg-btn{
   border:0;
   background:transparent;
   border-radius:14px;
   padding:12px 10px;
-  font-weight:500;
+  font-weight:600;
   font-size:15px;
   color:#8e8e93;
 }
-
 .sp-seg-btn.is-active{
   background:#fff;
   color:#111;
@@ -249,8 +240,8 @@ body.shop-public{
   border-top:1px solid rgba(0,0,0,.06);
 }
 .sp-hours-row:first-child{ border-top:0; }
-.sp-hours-day{ font-weight:600; }
-.sp-hours-val{ color:#8e8e93; font-weight:600; }
+.sp-hours-day{ font-weight:700; }
+.sp-hours-val{ color:#8e8e93; font-weight:700; }
 
 /* About */
 .sp-about{
@@ -266,8 +257,8 @@ body.shop-public{
   border-top:1px solid rgba(0,0,0,.06);
 }
 .sp-about-item:first-child{ border-top:0; }
-.sp-about-k{ font-weight:600; }
-.sp-about-v{ color:#8e8e93; font-weight:600; text-align:right; }
+.sp-about-k{ font-weight:700; }
+.sp-about-v{ color:#8e8e93; font-weight:700; text-align:right; }
 
 /* Brands Modal */
 .sp-modal[hidden]{ display:none; }
@@ -335,7 +326,7 @@ body.shop-public{
 }
 .sp-brand-name{
   font-size:12px;
-  font-weight:400;
+  font-weight:600;
   color:#111;
   text-align:center;
   line-height:1.2;
@@ -354,7 +345,7 @@ body.shop-public{
   color:#fff;
   padding:10px 14px;
   border-radius:14px;
-  font-weight:700;
+  font-weight:800;
   font-size:14px;
   z-index:1000;
   max-width:88vw;
