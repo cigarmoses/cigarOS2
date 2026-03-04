@@ -1,43 +1,31 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>Shops • CigarOS</title>
 
-<title>Shops • CigarOS</title>
-
-<link rel="stylesheet" href="/css/type.css" />
-<link rel="stylesheet" href="/shops/shops.css?v=2" />
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/shops/shops.css?v=3" />
 </head>
 
 <body class="shops-page">
+  <main class="sh-wrap">
 
-<main class="sh-wrap">
+    <header class="sh-top">
+      <a class="sh-back" href="/" aria-label="Back"><span class="sh-backchev">‹</span></a>
+      <h1 class="sh-title">Shops</h1>
+    </header>
 
-<header class="sh-top">
-<a class="sh-back" href="/" aria-label="Back">
-<span class="sh-backchev">‹</span>
-</a>
+    <div class="sh-search">
+      <input id="shQuery" class="sh-input" type="search" placeholder="Search shops…" autocomplete="off" />
+    </div>
 
-<h1 class="sh-title">Shops</h1>
-</header>
+    <section id="shList" class="sh-list" aria-label="Shop results"></section>
 
-<div class="sh-search">
-<input
-id="shQuery"
-class="sh-input"
-type="search"
-placeholder="Search shops…"
-autocomplete="off"
-/>
-</div>
+  </main>
 
-<section id="shList" class="sh-list" aria-label="Shop results"></section>
-  
-</main>
-
-<script src="/shops/shop-search.js?v=2"></script>
-
+  <script src="/shops/shop-search.js?v=3"></script>
 </body>
 </html>
