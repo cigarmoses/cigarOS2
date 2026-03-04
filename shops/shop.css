@@ -72,13 +72,17 @@ body.shop-public{
   line-height:1.05;
 }
 
-/* City centered + small */
+/* City centered + small (hard center, even if it has a pill bg) */
 .sp-city{
-  display:flex;
-  justify-content:center;
+  display:inline-flex;              /* key: make it shrink to content */
   align-items:center;
+  justify-content:center;
   gap:10px;
-  margin:12px 0 18px;
+
+  margin:12px auto 18px;           /* key: auto centers inline-flex */
+  width:fit-content;               /* ensures it doesn't stretch */
+  text-align:center;
+
   color:#8e8e93;
   font-weight:600;
   font-size:18px;
@@ -91,38 +95,44 @@ body.shop-public{
   opacity:.9;
 }
 
-/* Dock (✅ 5 across, one row) */
+/* Dock (5 across, perfectly even) */
 .sp-dock{
   display:grid;
-  grid-template-columns:repeat(5,1fr);  /* ✅ was 4 */
-  gap:10px;                              /* slightly tighter */
-  padding:12px;                          /* slightly tighter */
+  grid-template-columns:repeat(5, 1fr);
+  gap:10px;
+  padding:12px;
   border-radius:26px;
+
   background:rgba(255,255,255,.7);
   backdrop-filter:blur(20px);
   border:1px solid rgba(0,0,0,.05);
+
+  align-items:center;     /* vertical alignment */
+  justify-items:center;   /* centers items in each column */
 }
 
 .sp-dock-btn{
   appearance:none;
-  background:transparent;   /* remove white box */
-  border:0;                 /* remove border */
-  border-radius:0;          /* remove rounded tile feel */
-  padding:12px 6px 10px;    /* tighter to fit 5 */
+  background:transparent;
+  border:0;
+  padding:10px 6px 8px;
+
+  width:100%;             /* key: fills the column evenly */
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:8px;                  /* tighter */
+  justify-content:center;
+  gap:7px;
 }
 
 .sp-dock-ico{
-  width:28px;               /* slightly smaller so 5 fits */
-  height:28px;
+  width:26px;               /* slightly smaller so 5 fits */
+  height:26px;
   object-fit:contain;
 }
 
 .sp-dock-label{
-  font-size:12px;           /* slightly smaller so “Instagram” fits */
+  font-size:11px;           /* slightly smaller so “Instagram” fits */
   font-weight:500;
   color:#111;
   line-height:1.1;
