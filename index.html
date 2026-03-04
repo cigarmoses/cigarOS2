@@ -4,16 +4,32 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Smoke Cigar Shop & Lounge</title>
+
+  <!-- SF Pro typography -->
+  <link rel="stylesheet" href="/css/type.css" />
+
   <style>
     :root {
       --bg: #eaf2f6;
       --ink: #0f1a2c;
       --muted: #607080;
     }
+
     body {
       margin: 0;
       background: var(--bg);
-      font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+      /* ✅ SF Pro system typography */
+      font-family:
+        "SF Pro Display",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -22,12 +38,14 @@
       padding-top: 28px;
     }
 
+    /* logo styling */
     .shop-logo {
       width: 64px;
       height: auto;
       margin-bottom: 24px;
     }
 
+    /* grid of main icons */
     .home-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -36,19 +54,26 @@
       margin-top: 24px;
     }
 
+    /* icon wrapper */
     .icon-tile {
       width: 140px;
       height: 140px;
       background: #ffffff;
       border-radius: 124px;
+
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease;
+
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      transition: transform .2s ease;
+
       -webkit-tap-highlight-color: transparent;
     }
-    .icon-tile:hover { transform: scale(1.05); }
+
+    .icon-tile:hover {
+      transform: scale(1.05);
+    }
 
     .icon-tile img {
       width: 80px;
@@ -57,22 +82,51 @@
     }
   </style>
 </head>
+
 <body>
+
+  <!-- shop logo -->
   <img src="/img/homescreenlogo.svg" alt="Smoke Cigar Shop & Lounge" class="shop-logo">
 
+  <!-- main home grid -->
   <div class="home-grid">
-    <a href="/pos/" class="icon-tile"><img src="/img/icons/pos.svg" alt="POS"></a>
-    <a href="/today/" class="icon-tile"><img src="/img/icons/today.svg" alt="Today"></a>
-    <a href="/loyalty/" class="icon-tile"><img src="/img/icons/loyalty.svg" alt="Loyalty"></a>
-    <a href="/hub/" class="icon-tile"><img src="/img/icons/hub.svg" alt="Hub"></a>
-    <a href="/reports/" class="icon-tile"><img src="/img/icons/reports.svg" alt="Reports"></a>
-    <a href="/learn/" class="icon-tile"><img src="/img/icons/learn.svg" alt="Learn"></a>
-    <a href="/news/" class="icon-tile"><img src="/img/icons/news.svg" alt="News"></a>
 
-    <!-- ✅ NEW: Shops -->
-    <a href="/shops/" class="icon-tile"><img src="/img/icons/shops.svg" alt="Shops"></a>
+    <a href="/pos/" class="icon-tile">
+      <img src="/img/icons/pos.svg" alt="POS">
+    </a>
+
+    <a href="/today/" class="icon-tile">
+      <img src="/img/icons/today.svg" alt="Today">
+    </a>
+
+    <a href="/loyalty/" class="icon-tile">
+      <img src="/img/icons/loyalty.svg" alt="Loyalty">
+    </a>
+
+    <a href="/hub/" class="icon-tile">
+      <img src="/img/icons/hub.svg" alt="Hub">
+    </a>
+
+    <a href="/reports/" class="icon-tile">
+      <img src="/img/icons/reports.svg" alt="Reports">
+    </a>
+
+    <a href="/learn/" class="icon-tile">
+      <img src="/img/icons/learn.svg" alt="Learn">
+    </a>
+
+    <a href="/news/" class="icon-tile">
+      <img src="/img/icons/news.svg" alt="News">
+    </a>
+
+    <!-- NEW SHOPS PAGE -->
+    <a href="/shops/" class="icon-tile">
+      <img src="/img/icons/shops.svg" alt="Shops">
+    </a>
+
   </div>
 
   <script src="/js/global.js" defer></script>
+
 </body>
 </html>
