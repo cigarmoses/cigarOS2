@@ -77,3 +77,23 @@
   from = "/hub/*"
   to = "/hub/index.html"
   status = 200
+
+# Shops (LIST page)
+[[redirects]]
+  from = "/shops"
+  to = "/shops/index.html"
+  status = 200
+
+# Shops (PRETTY shop page URLs)
+# IMPORTANT: keep this ABOVE /shops/* so it matches first
+[[redirects]]
+  from = "/shops/:slug"
+  to = "/shops/shop-page.html?shop=:slug"
+  status = 200
+  force = true
+
+# Shops (fallback SPA behavior inside /shops)
+[[redirects]]
+  from = "/shops/*"
+  to = "/shops/index.html"
+  status = 200
