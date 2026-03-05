@@ -1,8 +1,8 @@
 /* /shops/shop-page.js
    FULL REPLACEMENT
-   - Loads shop by ?shop=slug
+   - Loads shop by ?shop=slug  (slug has NO hyphens)
    - Uses /data/shops/{slug}.json when available, merges missing fields from /shops/shops.json
-   - Shop logo: tries SVG then PNG fallback (works even if you only have PNG)
+   - Shop logo: tries SVG then PNG fallback
    - Only shows TAA badge when true
 */
 
@@ -11,17 +11,18 @@
 
   const $ = (sel) => document.querySelector(sel);
 
-  function cleanStr(v){ return String(v ?? "").trim(); }
+  function cleanStr(v) { return String(v ?? "").trim(); }
 
   function isTruthy(v) {
     if (v === true) return true;
     if (v === false || v == null) return false;
     const s = String(v).trim().toLowerCase();
-    return ["1","true","yes","y","x"].includes(s);
+    return ["1", "true", "yes", "y", "x"].includes(s);
   }
 
   function getSlugFromUrl() {
     const u = new URL(window.location.href);
+    // IMPORTANT: your slugs are already no-hyphen; keep exactly as provided
     return (u.searchParams.get("shop") || "").trim().toLowerCase();
   }
 
@@ -41,6 +42,7 @@
   }
 
   function mergePreferA(a, b) {
+    // Prefer values from "a"; if missing/blank, use "b"
     const out = { ...b, ...a };
 
     const prefer = (key) => {
@@ -54,7 +56,10 @@
     prefer("city");
     prefer("state");
 
+    // Amenities shallow merge (prefer a)
     out.amenities = { ...(b?.amenities || {}), ...(a?.amenities || {}) };
+
+    // Keep raw
     out.raw = a?.raw || b?.raw || {};
 
     return out;
@@ -78,35 +83,38 @@
 
     return (
       arr.find((x) => String(x.slug || x.Slug || "").trim().toLowerCase() === s) ||
-      arr.find((x) => {
-        const name = String(x.Shop || x.name || "").trim().toLowerCase().replace(/\s+/g, "");
-        return name && name === s.replace(/\s+/g, "");
-      }) ||
       null
     );
   }
 
   async function loadShop(slug) {
     let masterArr = [];
-    try { masterArr = await fetchJson(`/shops/shops.json`); } catch(e){ masterArr = []; }
+    try {
+      masterArr = await fetchJson(`/shops/shops.json`);
+    } catch (e) {
+      masterArr = [];
+    }
 
-    // try per-shop json first
+    // Try per-shop first
     if (slug) {
       try {
         const perRaw = await fetchJson(`/data/shops/${encodeURIComponent(slug)}.json`);
         const per = normalizeShop(perRaw, slug);
 
+        // Merge missing fields from master
         const masterHitRaw = findInMaster(masterArr, slug);
         if (masterHitRaw) {
           const master = normalizeShop(masterHitRaw, slug);
           return mergePreferA(per, master);
         }
+
         return per;
       } catch (e) {
-        // fall back to master-only
+        // fall through to master-only
       }
     }
 
+    // Master-only fallback
     if (!Array.isArray(masterArr) || !masterArr.length) {
       return normalizeShop({ slug, name: "Shop", city: "", state: "" }, slug);
     }
@@ -123,15 +131,13 @@
     const img = $("#spLogo");
     if (!img || !slug) return;
 
-    // IMPORTANT: these are the paths your repo must contain
     const svg = `/img/icons/shops/${slug}.svg`;
     const png = `/img/icons/shops/${slug}.png`;
 
-    img.style.display = "";
     img.alt = slug;
 
-    // Try SVG first, then PNG fallback
     img.onerror = () => {
+      // if SVG fails, try PNG; if PNG fails, hide
       img.onerror = () => { img.style.display = "none"; };
       img.src = png;
     };
