@@ -85,14 +85,12 @@
   status = 200
 
 # Shops (PRETTY shop page URLs)
-# IMPORTANT: keep this ABOVE /shops/* so it matches first
 [[redirects]]
   from = "/shops/:slug"
   to = "/shops/shop-page.html?shop=:slug"
   status = 200
-  force = true
 
-# Shops (fallback SPA behavior inside /shops)
+# Shops fallback
 [[redirects]]
   from = "/shops/*"
   to = "/shops/index.html"
