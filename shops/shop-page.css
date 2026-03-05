@@ -71,11 +71,11 @@ body.shop-public{
 
 /* Title */
 .sp-title{
-  margin:4;
-  text-align:center;
-  font-weight:800;
-  font-size:38px;
-  line-height:1.05;
+  margin: 6px 0 0;
+  text-align: center;
+  font-weight: 800;
+  font-size: 38px;
+  line-height: 1.05;
 }
 
 /* City centered (true center) */
@@ -95,8 +95,11 @@ body.shop-public{
 .sp-gps{
   width:18px;
   height:18px;
-  fill:#ff3b30;
-  opacity:.9;
+  min-width:18px;
+  min-height:18px;
+  max-width:18px;
+  max-height:18px;
+  flex-shrink:0;
 }
 
 /* Dock (5 across, evenly distributed) */
@@ -117,7 +120,7 @@ body.shop-public{
   appearance:none;
   background:transparent;
   border:0;
-  padding:10px 6px 8px;
+  padding:12px 8px 10px;
   width:100%;
   display:flex;
   flex-direction:column;
@@ -136,7 +139,6 @@ body.shop-public{
   width:28px;
   height:28px;
   object-fit:contain;
-  background:none;
 }
 
 .sp-dock-label{
