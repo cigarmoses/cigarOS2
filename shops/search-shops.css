@@ -1,7 +1,8 @@
 /* /shops/search-shops.css — FULL REPLACEMENT
-   - SF Pro Display
-   - Header/title styled like your iOS pages
-   - Clean search + list rows
+   - iOS-style back button above title
+   - Title left aligned
+   - Search rows with optional logo on left
+   - City/state regular weight
 */
 
 :root{
@@ -16,7 +17,7 @@
 body.shops-page{
   margin:0;
   background:var(--bg);
-  font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
   color:var(--ink);
 }
 
@@ -27,41 +28,40 @@ body.shops-page{
 }
 
 .sh-top{
-  position:relative;
   display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:10px 0 14px;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
 }
 
 .sh-back{
-  position:absolute;
-  left:0;
-  top:50%;
-  transform:translateY(-50%);
-  width:44px;
-  height:44px;
+  width:32px;
+  height:32px;
   display:flex;
   align-items:center;
-  justify-content:center;
+  justify-content:flex-start;
   text-decoration:none;
   color:var(--ink);
-  border-radius:14px;
   -webkit-tap-highlight-color:transparent;
 }
+
 .sh-back:active{ opacity:.7; }
 
 .sh-backchev{
-  font-size:34px;
+  font-size:40px;
   line-height:1;
-  margin-top:-2px;
+  font-weight:500;
+  margin-top:-4px;
 }
 
 .sh-title{
   margin:0;
   font-size:56px;
+  line-height:1.02;
   font-weight:800;
   letter-spacing:-0.03em;
+  text-align:left;
 }
 
 .sh-search{
@@ -72,15 +72,19 @@ body.shops-page{
 .sh-input{
   width:100%;
   border:1px solid var(--hair);
-  background:rgba(255,255,255,.75);
+  background:rgba(255,255,255,.78);
   backdrop-filter:blur(16px);
   border-radius:18px;
   padding:14px 14px;
   font-size:16px;
   font-weight:600;
   outline:none;
+  box-sizing:border-box;
 }
-.sh-input::placeholder{ color:var(--muted); font-weight:600; }
+.sh-input::placeholder{
+  color:var(--muted);
+  font-weight:600;
+}
 
 .sh-list{
   background:var(--card);
@@ -104,7 +108,27 @@ body.shops-page{
 .sh-item:first-child{ border-top:0; }
 .sh-item:active{ background:rgba(0,0,0,.035); }
 
-.sh-item-left{ min-width:0; }
+.sh-item-main{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  flex:1;
+}
+
+.sh-item-logo{
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  object-fit:contain;
+  background:transparent;
+  flex:0 0 48px;
+}
+
+.sh-item-left{
+  min-width:0;
+  flex:1;
+}
 
 .sh-item-name{
   font-size:18px;
@@ -118,7 +142,7 @@ body.shops-page{
 .sh-item-sub{
   margin-top:4px;
   font-size:14px;
-  font-weight:650;
+  font-weight:400;
   color:var(--muted);
   white-space:nowrap;
   overflow:hidden;
@@ -131,8 +155,14 @@ body.shops-page{
   font-weight:900;
   line-height:1;
   margin-top:-2px;
+  flex:0 0 auto;
 }
 
 @media (max-width:390px){
   .sh-title{ font-size:50px; }
+  .sh-item-logo{
+    width:44px;
+    height:44px;
+    flex-basis:44px;
+  }
 }
