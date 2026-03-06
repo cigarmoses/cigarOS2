@@ -1,0 +1,138 @@
+/* /shops/search-shops.css — FULL REPLACEMENT
+   - SF Pro Display
+   - Header/title styled like your iOS pages
+   - Clean search + list rows
+*/
+
+:root{
+  --bg:#f2f2f7;
+  --card:#ffffff;
+  --ink:#0b0b0f;
+  --muted:#8e8e93;
+  --hair:rgba(0,0,0,.08);
+  --shadow:0 14px 44px rgba(0,0,0,.08);
+}
+
+body.shops-page{
+  margin:0;
+  background:var(--bg);
+  font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  color:var(--ink);
+}
+
+.sh-wrap{
+  max-width:920px;
+  margin:0 auto;
+  padding:18px 18px 40px;
+}
+
+.sh-top{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 0 14px;
+}
+
+.sh-back{
+  position:absolute;
+  left:0;
+  top:50%;
+  transform:translateY(-50%);
+  width:44px;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  color:var(--ink);
+  border-radius:14px;
+  -webkit-tap-highlight-color:transparent;
+}
+.sh-back:active{ opacity:.7; }
+
+.sh-backchev{
+  font-size:34px;
+  line-height:1;
+  margin-top:-2px;
+}
+
+.sh-title{
+  margin:0;
+  font-size:56px;
+  font-weight:800;
+  letter-spacing:-0.03em;
+}
+
+.sh-search{
+  margin-top:10px;
+  margin-bottom:14px;
+}
+
+.sh-input{
+  width:100%;
+  border:1px solid var(--hair);
+  background:rgba(255,255,255,.75);
+  backdrop-filter:blur(16px);
+  border-radius:18px;
+  padding:14px 14px;
+  font-size:16px;
+  font-weight:600;
+  outline:none;
+}
+.sh-input::placeholder{ color:var(--muted); font-weight:600; }
+
+.sh-list{
+  background:var(--card);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  border:1px solid rgba(0,0,0,.06);
+}
+
+.sh-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 14px;
+  text-decoration:none;
+  color:inherit;
+  border-top:1px solid rgba(0,0,0,.06);
+  -webkit-tap-highlight-color:transparent;
+}
+.sh-item:first-child{ border-top:0; }
+.sh-item:active{ background:rgba(0,0,0,.035); }
+
+.sh-item-left{ min-width:0; }
+
+.sh-item-name{
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-0.01em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.sh-item-sub{
+  margin-top:4px;
+  font-size:14px;
+  font-weight:650;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.sh-item-go{
+  font-size:26px;
+  color:var(--muted);
+  font-weight:900;
+  line-height:1;
+  margin-top:-2px;
+}
+
+@media (max-width:390px){
+  .sh-title{ font-size:50px; }
+}
