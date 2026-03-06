@@ -1,7 +1,8 @@
 /* /shops/shop-search.js — FULL REPLACEMENT
    - Loads /shops/shops.json
    - Filters by name / city / state / slug / logoKey
-   - Uses NO-HYPHEN canonical key for the link: /shops/{key}
+   - Uses NO-HYPHEN canonical key for link + logo lookup
+   - Shows shop icon on left when available
 */
 
 (() => {
@@ -11,7 +12,6 @@
 
   function cleanStr(v){ return String(v ?? "").trim(); }
 
-  // NO-HYPHEN key: keep only a-z0-9
   function canonicalKey(s){
     return cleanStr(s)
       .toLowerCase()
@@ -30,7 +30,6 @@
   }
 
   function shopKey(x){
-    // Prefer logoKey (your master file already has this and it’s no-hyphen)
     const lk = cleanStr(x.logoKey || x.LogoKey);
     if (lk) return canonicalKey(lk);
 
@@ -49,15 +48,26 @@
 
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, (c) => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
     }[c]));
+  }
+
+  function makeLogoHtml(key, name){
+    const svg = `/img/icons/shops/${encodeURIComponent(key)}.svg`;
+    const png = `/img/icons/shops/${encodeURIComponent(key)}.png`;
+
+    return `<img class="sh-item-logo" src="${svg}" alt="${escapeHtml(name)}" onerror="this.onerror=function(){this.style.display='none'};this.src='${png}'" />`;
   }
 
   function render(list, q){
     const el = $("#shList");
     if(!el) return;
 
-    const query = canonicalKey(q); // canonical search helps match hyphenated/odd inputs
+    const query = canonicalKey(q);
 
     const filtered = list.filter((x) => {
       const n = canonicalKey(shopName(x));
@@ -83,14 +93,15 @@
 
       const a = document.createElement("a");
       a.className = "sh-item";
-
-      // ✅ Pretty URL (Netlify rewrites to shop-page.html?shop=key)
       a.href = `/shops/${encodeURIComponent(key)}`;
 
       a.innerHTML = `
-        <div class="sh-item-left">
-          <div class="sh-item-name">${escapeHtml(name)}</div>
-          <div class="sh-item-sub">${escapeHtml(sub)}</div>
+        <div class="sh-item-main">
+          ${makeLogoHtml(key, name)}
+          <div class="sh-item-left">
+            <div class="sh-item-name">${escapeHtml(name)}</div>
+            <div class="sh-item-sub">${escapeHtml(sub)}</div>
+          </div>
         </div>
         <div class="sh-item-go">›</div>
       `;
