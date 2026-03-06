@@ -7,7 +7,7 @@
   <title>Shops • CigarOS</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/shops/shops.css?v=10" />
+  <link rel="stylesheet" href="/shops/search-shops.css?v=10" />
 </head>
 
 <body class="shops-page">
@@ -21,7 +21,14 @@
     </header>
 
     <div class="sh-search">
-      <input id="shQuery" class="sh-input" type="search" placeholder="Search shops…" autocomplete="off" />
+      <input
+        id="shQuery"
+        class="sh-input"
+        type="search"
+        placeholder="Search shops…"
+        autocomplete="off"
+        enterkeyhint="search"
+      />
     </div>
 
     <section id="shList" class="sh-list" aria-label="Shop results"></section>
