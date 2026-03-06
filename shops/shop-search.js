@@ -1,8 +1,7 @@
-/* /shops/shop-search.js
-   FULL REPLACEMENT
+/* /shops/shop-search.js — FULL REPLACEMENT
    - Loads /shops/shops.json
-   - Search filters by name / city / state / slug
-   - Click goes to /shops/shop-page.html?shop=SLUG
+   - Filters by name / city / state / slug / logoKey
+   - Uses NO-HYPHEN canonical key for the link: /shops/{key}
 */
 
 (() => {
@@ -11,6 +10,14 @@
   const $ = (sel) => document.querySelector(sel);
 
   function cleanStr(v){ return String(v ?? "").trim(); }
+
+  // NO-HYPHEN key: keep only a-z0-9
+  function canonicalKey(s){
+    return cleanStr(s)
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "");
+  }
 
   function shopName(x){
     return cleanStr(x.name || x.Shop || x.shop);
@@ -22,17 +29,15 @@
     return [city, st].filter(Boolean).join(", ");
   }
 
-  function slugifyShop(x){
-    const direct = cleanStr(x.slug || x.Slug || x.slug_id).toLowerCase();
-    if (direct) return direct;
+  function shopKey(x){
+    // Prefer logoKey (your master file already has this and it’s no-hyphen)
+    const lk = cleanStr(x.logoKey || x.LogoKey);
+    if (lk) return canonicalKey(lk);
 
-    // fallback: name -> slug
-    const n = shopName(x).toLowerCase();
-    return n
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
+    const slug = cleanStr(x.slug || x.Slug || x.slug_id);
+    if (slug) return canonicalKey(slug);
+
+    return canonicalKey(shopName(x));
   }
 
   async function fetchJson(url){
@@ -52,32 +57,35 @@
     const el = $("#shList");
     if(!el) return;
 
-    const query = cleanStr(q).toLowerCase();
+    const query = canonicalKey(q); // canonical search helps match hyphenated/odd inputs
 
     const filtered = list.filter((x) => {
-      const n = shopName(x).toLowerCase();
-      const cs = shopCityState(x).toLowerCase();
-      const s = slugifyShop(x).toLowerCase();
-      return !query || n.includes(query) || cs.includes(query) || s.includes(query);
+      const n = canonicalKey(shopName(x));
+      const cs = canonicalKey(shopCityState(x));
+      const s = canonicalKey(cleanStr(x.slug || x.Slug || x.slug_id));
+      const k = shopKey(x);
+      return !query || n.includes(query) || cs.includes(query) || s.includes(query) || k.includes(query);
     });
 
     el.innerHTML = "";
 
     if(!filtered.length){
-      el.innerHTML = `<div style="color:#8e8e93;font-weight:700;padding:8px 2px;">No matches.</div>`;
+      el.innerHTML = `<div style="color:#8e8e93;font-weight:800;padding:14px 14px;">No matches.</div>`;
       return;
     }
 
     filtered.forEach((x) => {
-      const slug = slugifyShop(x);
-      if (!slug) return;
+      const key = shopKey(x);
+      if (!key) return;
 
       const name = shopName(x) || "Shop";
       const sub = shopCityState(x) || "—";
 
       const a = document.createElement("a");
       a.className = "sh-item";
-      a.href = `/shops/shop-page.html?shop=${encodeURIComponent(slug)}`;
+
+      // ✅ Pretty URL (Netlify rewrites to shop-page.html?shop=key)
+      a.href = `/shops/${encodeURIComponent(key)}`;
 
       a.innerHTML = `
         <div class="sh-item-left">
