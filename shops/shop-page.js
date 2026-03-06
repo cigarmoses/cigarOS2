@@ -1,12 +1,13 @@
 /* /shops/shop-page.js — FULL REPLACEMENT
-   - NO-HYPHEN canonical key everywhere (a-z0-9 only)
-   - Loads shop by ?shop=key (or Netlify pretty URL -> passes ?shop=:slug)
-   - Prefers /data/shops/{key}.json, merges missing fields from /shops/shops.json
+   - Works with BOTH:
+     /shops/shop-page.html?shop=justthetip
+     /shops/justthetip
+   - NO-HYPHEN canonical key everywhere
+   - Prefers /data/shops/{key}.json, merges from /shops/shops.json
    - Shop logo: /img/icons/shops/{key}.svg then .png
-   - Brands icons: robust multi-try loader
-   - Only shows TAA badge when true
-   - Brands modal works
-   - Instagram opens if present (URL or handle); hides if missing
+   - Brand icons: robust multi-try loader
+   - TAA only when true
+   - Instagram opens if present
 */
 
 (() => {
@@ -30,10 +31,27 @@
     return ["1","true","yes","y","x"].includes(s);
   }
 
+  // ✅ FIX: support BOTH querystring and pretty URL pathname
   function getKeyFromUrl(){
     const u = new URL(window.location.href);
-    const raw = cleanStr(u.searchParams.get("shop") || "");
-    return canonicalKey(raw);
+
+    // 1) Query param version
+    const qs = canonicalKey(u.searchParams.get("shop") || "");
+    if (qs) return qs;
+
+    // 2) Pretty URL version: /shops/<slug>
+    const parts = u.pathname.split("/").filter(Boolean);
+    // examples:
+    // /shops/burnrockypatelpittsburgh -> ["shops","burnrockypatelpittsburgh"]
+    // /shops/shop-page.html -> ["shops","shop-page.html"]
+    if (parts.length >= 2 && parts[0] === "shops") {
+      const last = cleanStr(parts[1]);
+      if (last && last !== "shop-page.html" && last !== "index.html") {
+        return canonicalKey(last);
+      }
+    }
+
+    return "";
   }
 
   function withCacheBust(url){
