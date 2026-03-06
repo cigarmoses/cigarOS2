@@ -3,9 +3,9 @@
    - Loads shop by ?shop=key (or Netlify pretty URL -> passes ?shop=:slug)
    - Prefers /data/shops/{key}.json, merges missing fields from /shops/shops.json
    - Shop logo: /img/icons/shops/{key}.svg then .png
-   - Brands icons: /img/icons/brands/{brand}.svg then .png
+   - Brands icons: robust multi-try loader
    - Only shows TAA badge when true
-   - Brands modal works (Just The Tip list displays)
+   - Brands modal works
    - Instagram opens if present (URL or handle); hides if missing
 */
 
@@ -16,7 +16,6 @@
 
   function cleanStr(v){ return String(v ?? "").trim(); }
 
-  // ✅ NO-HYPHEN canonical key (keep only a-z0-9)
   function canonicalKey(s){
     return cleanStr(s)
       .toLowerCase()
@@ -49,7 +48,6 @@
   }
 
   function normalizeFromMaster(raw){
-    // master shops.json schema (yours) includes: slug, name, logoKey, address1, city, state, phone, website, instagram, email, hours, features
     const key = canonicalKey(raw.logoKey || raw.slug || raw.Slug || raw.slug_id || raw.name || raw.Shop || "");
     const name = cleanStr(raw.name || raw.Shop || raw.shop);
     const city = cleanStr(raw.city || raw.City);
@@ -64,7 +62,6 @@
     const email = cleanStr(raw.email || raw.Email);
     const instagram = cleanStr(raw.instagram || raw.Instagram);
 
-    // features -> amenities mapping
     const f = raw.features || raw.Features || {};
     const amenities = raw.amenities && typeof raw.amenities === "object"
       ? raw.amenities
@@ -103,7 +100,6 @@
   }
 
   function normalizeFromPerShop(raw, fallbackKey){
-    // per-shop JSON schema (your JustTheTip example) includes: slug, name, city, state, address, phone, website, instagram, email, amenities, hours, brands
     const key = canonicalKey(raw.slug || raw.Slug || raw.slug_id || fallbackKey);
     const name = cleanStr(raw.name || raw.Shop || raw.shop);
     const city = cleanStr(raw.city || raw.City);
@@ -141,7 +137,6 @@
   }
 
   function mergePreferA(a, b){
-    // Prefer values from A; fallback to B if empty
     const out = { ...b, ...a };
 
     const prefer = (k) => {
@@ -164,7 +159,6 @@
     if(!Array.isArray(masterArr) || !key) return null;
     const k = canonicalKey(key);
 
-    // match by logoKey OR slug OR name canonical
     return masterArr.find((x) => canonicalKey(x.logoKey || "") === k)
       || masterArr.find((x) => canonicalKey(x.slug || x.Slug || x.slug_id || "") === k)
       || masterArr.find((x) => canonicalKey(x.name || x.Shop || "") === k)
@@ -172,13 +166,10 @@
   }
 
   async function loadShop(key){
-    // always load master for merge + fallback
     let masterArr = [];
     try { masterArr = await fetchJson("/shops/shops.json"); } catch(e){ masterArr = []; }
 
-    // per-shop preferred
     if(key){
-      // try /data/shops/{key}.json
       try{
         const perRaw = await fetchJson(`/data/shops/${encodeURIComponent(key)}.json`);
         const per = normalizeFromPerShop(perRaw, key);
@@ -194,7 +185,6 @@
       }
     }
 
-    // master-only fallback
     if(Array.isArray(masterArr) && masterArr.length){
       if(key){
         const hit = findInMaster(masterArr, key);
@@ -240,7 +230,6 @@
     taaEl.hidden = !taa;
   }
 
-  // Toast
   let toastTimer = null;
   function showToast(msg){
     const el = $("#spToast");
@@ -305,7 +294,6 @@
     }[c]));
   }
 
-  // Tabs
   function closeAllPanels(){
     const tabs = [
       { tab: $("#spTabHours"), panel: $("#spPanelHours") },
@@ -419,7 +407,6 @@
     `).join("");
   }
 
-  // Brands Modal
   function openBrandsModal(brands){
     const modal = $("#spBrandsModal");
     const grid = $("#spBrandsGrid");
@@ -435,26 +422,43 @@
     }
 
     list.forEach((b) => {
-      const slug = canonicalKey(b); // brand ids are already like "aganorsaleaf" etc
-      if(!slug) return;
+      const raw = cleanStr(b);
+      if(!raw) return;
+
+      const exact = encodeURIComponent(raw);
+      const key = canonicalKey(raw);
+      const keyEnc = encodeURIComponent(key);
 
       const item = document.createElement("div");
       item.className = "sp-brand";
 
       const img = document.createElement("img");
       img.className = "sp-brand-ico";
-      img.alt = slug;
+      img.alt = raw;
 
-      // ✅ correct folder: /img/icons/brands (plural)
-      const svg = `/img/icons/brands/${encodeURIComponent(slug)}.svg`;
-      const png = `/img/icons/brands/${encodeURIComponent(slug)}.png`;
+      const candidates = [
+        `/img/icons/brands/${exact}.svg`,
+        `/img/icons/brands/${exact}.png`,
+        `/img/icons/brands/${keyEnc}.svg`,
+        `/img/icons/brands/${keyEnc}.png`
+      ];
 
-      img.onerror = () => { img.onerror = null; img.src = png; };
-      img.src = svg;
+      let idx = 0;
+      img.onerror = () => {
+        idx += 1;
+        if (idx < candidates.length) {
+          img.src = candidates[idx];
+        } else {
+          img.onerror = null;
+          img.style.display = "none";
+        }
+      };
+
+      img.src = candidates[0];
 
       const name = document.createElement("div");
       name.className = "sp-brand-name";
-      name.textContent = slug;
+      name.textContent = raw;
 
       item.appendChild(img);
       item.appendChild(name);
@@ -488,7 +492,6 @@
     const dirBtn = $("#spActDir");
     const igBtn = $("#spActInstagram");
 
-    // CALL
     if(callBtn){
       const phone = cleanStr(shop.phone);
       callBtn.onclick = () => { if(phone) window.location.href = `tel:${phone}`; };
@@ -496,7 +499,6 @@
       callBtn.style.opacity = phone ? "" : ".45";
     }
 
-    // WEB
     if(webBtn){
       const url = normalizeWebsiteUrl(shop.website);
       webBtn.onclick = () => { if(url) window.open(url, "_blank", "noopener"); };
@@ -504,7 +506,6 @@
       webBtn.style.opacity = url ? "" : ".45";
     }
 
-    // BRANDS
     if(brandsBtn){
       const list = Array.isArray(shop.brands) ? shop.brands : [];
       brandsBtn.onclick = () => openBrandsModal(list);
@@ -512,7 +513,6 @@
       brandsBtn.style.opacity = list.length ? "" : ".45";
     }
 
-    // MAP
     if(dirBtn){
       const dest = cleanStr(shop.address) || [shop.city, shop.state].filter(Boolean).join(", ");
       const ok = !!dest;
@@ -524,7 +524,6 @@
       dirBtn.style.opacity = ok ? "" : ".45";
     }
 
-    // INSTAGRAM
     if(igBtn){
       const igUrl = normalizeInstagramUrl(shop.instagram);
       if(!igUrl){
@@ -545,7 +544,6 @@
     const key = getKeyFromUrl();
     const shop = await loadShop(key);
 
-    // enforce no-hyphen key for assets
     const assetKey = canonicalKey(shop.key || key);
 
     renderHeader(shop);
@@ -558,7 +556,6 @@
 
     wireDock(shop);
 
-    // start closed
     setActivePanel(null);
   }
 
