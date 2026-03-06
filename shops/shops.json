@@ -1,7 +1,7 @@
 [
   {
     "slug": "11th-avenue-liquor",
-    "name": "11Th Avenue Liquor",
+    "name": "11th Ave Liquor",
     "logoKey": "11thavenueliquor",
     "address1": "1040 Se Hawthorne Blvd",
     "city": "Portland",
@@ -118,7 +118,7 @@
   },
   {
     "slug": "3-kings-cigar-corp",
-    "name": "3 Kings Cigar Corp",
+    "name": "3 Kings Cigar",
     "logoKey": "3kingscigarcorp",
     "address1": "550 Gramatan Avenue",
     "city": "Mount Vernon",
@@ -157,7 +157,7 @@
   },
   {
     "slug": "3-monkey-s-smoke-shop-6",
-    "name": "3 Monkey\u2019s Smoke Shop #6",
+    "name": "3 Monkey",
     "logoKey": "3monkeyssmokeshop6",
     "address1": "4400 Elverta Road Ste. 130",
     "city": "Antelope",
