@@ -78,13 +78,14 @@
   to = "/hub/index.html"
   status = 200
 
-# Shops (LIST page)
+# Shops (LIST)
 [[redirects]]
   from = "/shops"
   to = "/shops/index.html"
   status = 200
 
-# Shops (PRETTY shop page URLs)
+# Shops (PRETTY URL -> shop-page)
+# /shops/cigarsinternationalbridgeville  -> /shops/shop-page.html?shop=cigarsinternationalbridgeville
 [[redirects]]
   from = "/shops/:slug"
   to = "/shops/shop-page.html?shop=:slug"
