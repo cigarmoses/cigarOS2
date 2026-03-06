@@ -1,127 +1,56 @@
-/* /shops/shop-search.js — FULL REPLACEMENT
-   - Loads /shops/shops.json
-   - Filters by name / city / state / slug / logoKey
-   - Uses NO-HYPHEN canonical key for link + logo lookup
-   - Shows shop icon on left when available
-*/
 
-(() => {
-  "use strict";
+(async function(){
 
-  const $ = (sel) => document.querySelector(sel);
+const listEl=document.querySelector("#shList")
+const input=document.querySelector("#shQuery")
 
-  function cleanStr(v){ return String(v ?? "").trim(); }
+function clean(v){return (v||"").toString().trim()}
 
-  function canonicalKey(s){
-    return cleanStr(s)
-      .toLowerCase()
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "");
-  }
+function key(s){
+return clean(s).toLowerCase().replace(/[^a-z0-9]+/g,"")
+}
 
-  function shopName(x){
-    return cleanStr(x.name || x.Shop || x.shop);
-  }
+async function load(){
+const res=await fetch("/shops/shops.json")
+return await res.json()
+}
 
-  function shopCityState(x){
-    const city = cleanStr(x.city || x.City);
-    const st = cleanStr(x.state || x.ST || x.State);
-    return [city, st].filter(Boolean).join(", ");
-  }
+function render(data,q){
 
-  function shopKey(x){
-    const lk = cleanStr(x.logoKey || x.LogoKey);
-    if (lk) return canonicalKey(lk);
+const k=key(q)
+listEl.innerHTML=""
 
-    const slug = cleanStr(x.slug || x.Slug || x.slug_id);
-    if (slug) return canonicalKey(slug);
+data.filter(x=>{
+return !k || key(x.name).includes(k) || key(x.city).includes(k)
+}).forEach(x=>{
 
-    return canonicalKey(shopName(x));
-  }
+const slug=key(x.slug||x.name)
 
-  async function fetchJson(url){
-    const sep = url.includes("?") ? "&" : "?";
-    const res = await fetch(`${url}${sep}v=${Date.now()}`, { cache:"no-store" });
-    if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    return await res.json();
-  }
+const row=document.createElement("a")
+row.className="sh-item"
+row.href="/shops/"+slug
 
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, (c) => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#39;"
-    }[c]));
-  }
+row.innerHTML=`
+<div class="sh-item-main">
+<img class="sh-item-logo" src="/img/icons/shops/${slug}.svg"
+onerror="this.style.display='none'">
+<div>
+<div class="sh-item-name">${x.name}</div>
+<div class="sh-item-sub">${x.city}, ${x.state}</div>
+</div>
+</div>
+<div class="sh-item-go">›</div>
+`
 
-  function makeLogoHtml(key, name){
-    const svg = `/img/icons/shops/${encodeURIComponent(key)}.svg`;
-    const png = `/img/icons/shops/${encodeURIComponent(key)}.png`;
+listEl.appendChild(row)
 
-    return `<img class="sh-item-logo" src="${svg}" alt="${escapeHtml(name)}" onerror="this.onerror=function(){this.style.display='none'};this.src='${png}'" />`;
-  }
+})
 
-  function render(list, q){
-    const el = $("#shList");
-    if(!el) return;
+}
 
-    const query = canonicalKey(q);
+const data=await load()
+render(data,"")
 
-    const filtered = list.filter((x) => {
-      const n = canonicalKey(shopName(x));
-      const cs = canonicalKey(shopCityState(x));
-      const s = canonicalKey(cleanStr(x.slug || x.Slug || x.slug_id));
-      const k = shopKey(x);
-      return !query || n.includes(query) || cs.includes(query) || s.includes(query) || k.includes(query);
-    });
+input.addEventListener("input",()=>render(data,input.value))
 
-    el.innerHTML = "";
-
-    if(!filtered.length){
-      el.innerHTML = `<div style="color:#8e8e93;font-weight:800;padding:14px 14px;">No matches.</div>`;
-      return;
-    }
-
-    filtered.forEach((x) => {
-      const key = shopKey(x);
-      if (!key) return;
-
-      const name = shopName(x) || "Shop";
-      const sub = shopCityState(x) || "—";
-
-      const a = document.createElement("a");
-      a.className = "sh-item";
-      a.href = `/shops/${encodeURIComponent(key)}`;
-
-      a.innerHTML = `
-        <div class="sh-item-main">
-          ${makeLogoHtml(key, name)}
-          <div class="sh-item-left">
-            <div class="sh-item-name">${escapeHtml(name)}</div>
-            <div class="sh-item-sub">${escapeHtml(sub)}</div>
-          </div>
-        </div>
-        <div class="sh-item-go">›</div>
-      `;
-
-      el.appendChild(a);
-    });
-  }
-
-  async function init(){
-    const input = $("#shQuery");
-    const data = await fetchJson("/shops/shops.json");
-    const list = Array.isArray(data) ? data : [];
-
-    render(list, "");
-
-    if(input){
-      input.addEventListener("input", () => render(list, input.value));
-      input.addEventListener("search", () => render(list, input.value));
-    }
-  }
-
-  init().catch((e) => console.error("[shop-search.js] failed:", e));
-})();
+})()
