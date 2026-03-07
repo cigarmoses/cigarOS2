@@ -1,26 +1,54 @@
+function key(v){
 
-(async function(){
+return String(v ?? "")
+.toLowerCase()
+.replace(/[^a-z0-9]/g,"")
 
-function key(s){
-return (s||"").toLowerCase().replace(/[^a-z0-9]+/g,"")
 }
 
 function getSlug(){
-const p=location.pathname.split("/")
-return key(p[p.length-1])
+
+const parts=window.location.pathname.split("/")
+
+return key(parts[2])
+
 }
 
-async function load(){
-const res=await fetch("/shops/shops.json")
-return await res.json()
-}
+async function init(){
 
 const slug=getSlug()
-const data=await load()
 
-const shop=data.find(s=>key(s.slug||s.name)==slug) || data[0]
+const res=await fetch("/shops/shops.json?v="+Date.now())
 
-document.querySelector("#spName").textContent=shop.name
-document.querySelector("#spCity").textContent=shop.city+", "+shop.state
+const list=await res.json()
 
-})()
+const shop=list.find(s=>key(s.slug || s.name)===slug)
+
+if(!shop)return
+
+document.getElementById("spName").textContent=shop.name
+
+document.getElementById("spCity").textContent=`${shop.city}, ${shop.state}`
+
+const logoKey=key(shop.slug || shop.name)
+
+const logo=document.getElementById("spLogo")
+
+logo.src=`/img/icons/shops/${logoKey}.svg`
+
+logo.onerror=()=>{
+
+logo.src=`/img/icons/shops/${logoKey}.png`
+
+}
+
+document.getElementById("aboutContent").innerHTML=`
+
+<p>${shop.address}</p>
+<p>${shop.phone}</p>
+
+`
+
+}
+
+init()
