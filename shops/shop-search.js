@@ -4,10 +4,8 @@
 const listEl=document.querySelector("#shList")
 const input=document.querySelector("#shQuery")
 
-function clean(v){return (v||"").toString().trim()}
-
 function key(s){
-return clean(s).toLowerCase().replace(/[^a-z0-9]+/g,"")
+return (s||"").toLowerCase().replace(/[^a-z0-9]+/g,"")
 }
 
 async function load(){
@@ -33,7 +31,7 @@ row.href="/shops/"+slug
 row.innerHTML=`
 <div class="sh-item-main">
 <img class="sh-item-logo" src="/img/icons/shops/${slug}.svg"
-onerror="this.style.display='none'">
+onerror="this.onerror=null;this.src='/img/icons/shops/${slug}.png'">
 <div>
 <div class="sh-item-name">${x.name}</div>
 <div class="sh-item-sub">${x.city}, ${x.state}</div>

@@ -1,7 +1,7 @@
 
 :root{
 --bg:#f2f2f7;
---card:#fff;
+--card:#ffffff;
 --ink:#000;
 --muted:#8e8e93;
 --hair:rgba(0,0,0,.08);
@@ -17,17 +17,11 @@ color:var(--ink);
 .sh-wrap{
 max-width:900px;
 margin:auto;
-padding:20px;
-}
-
-.sh-top{
-display:flex;
-flex-direction:column;
-gap:10px;
+padding:calc(env(safe-area-inset-top) + 18px) 20px 40px;
 }
 
 .sh-backchev{
-font-size:36px;
+font-size:42px;
 }
 
 .sh-title{
@@ -72,8 +66,8 @@ gap:12px;
 }
 
 .sh-item-logo{
-width:46px;
-height:46px;
+width:48px;
+height:48px;
 object-fit:contain;
 }
 
