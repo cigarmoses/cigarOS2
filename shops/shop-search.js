@@ -1,43 +1,76 @@
+const listEl = document.querySelector("#shList")
+const searchInput = document.querySelector("#shQuery")
 
-(async function(){
-
-const listEl=document.querySelector("#shList")
-const input=document.querySelector("#shQuery")
-
-function key(s){
-return (s||"").toLowerCase().replace(/[^a-z0-9]+/g,"")
+function clean(v){
+return String(v ?? "").trim()
 }
 
-async function load(){
-const res=await fetch("/shops/shops.json")
-return await res.json()
+function slugKey(v){
+
+return clean(v)
+.toLowerCase()
+.replace(/&/g,"and")
+.replace(/[^a-z0-9]/g,"")
+
 }
 
-function render(data,q){
+function logoHtml(key,name){
 
-const k=key(q)
+const svg=`/img/icons/shops/${key}.svg`
+const png=`/img/icons/shops/${key}.png`
+
+return `
+<img
+class="sh-item-logo"
+src="${svg}"
+alt="${name}"
+onerror="this.onerror=null;this.src='${png}'"
+/>
+`
+
+}
+
+function render(list,q){
+
+const query=slugKey(q)
+
 listEl.innerHTML=""
 
-data.filter(x=>{
-return !k || key(x.name).includes(k) || key(x.city).includes(k)
-}).forEach(x=>{
+const filtered=list.filter(shop=>{
 
-const slug=key(x.slug||x.name)
+const n=slugKey(shop.name)
+const c=slugKey(shop.city)
+
+return !query || n.includes(query) || c.includes(query)
+
+})
+
+filtered.forEach(shop=>{
+
+const key=slugKey(shop.slug || shop.name)
 
 const row=document.createElement("a")
+
 row.className="sh-item"
-row.href="/shops/"+slug
+
+row.href=`/shops/${key}`
 
 row.innerHTML=`
+
 <div class="sh-item-main">
-<img class="sh-item-logo" src="/img/icons/shops/${slug}.svg"
-onerror="this.onerror=null;this.src='/img/icons/shops/${slug}.png'">
+
+${logoHtml(key,shop.name)}
+
 <div>
-<div class="sh-item-name">${x.name}</div>
-<div class="sh-item-sub">${x.city}, ${x.state}</div>
+
+<div class="sh-item-name">${shop.name}</div>
+
+<div class="sh-item-sub">${shop.city}, ${shop.state}</div>
+
 </div>
+
 </div>
-<div class="sh-item-go">›</div>
+
 `
 
 listEl.appendChild(row)
@@ -46,9 +79,20 @@ listEl.appendChild(row)
 
 }
 
-const data=await load()
+async function init(){
+
+const res = await fetch("/shops/shops.json?v="+Date.now())
+
+const data = await res.json()
+
 render(data,"")
 
-input.addEventListener("input",()=>render(data,input.value))
+searchInput.addEventListener("input",()=>{
 
-})()
+render(data,searchInput.value)
+
+})
+
+}
+
+init()
