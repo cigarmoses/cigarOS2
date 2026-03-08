@@ -539,6 +539,16 @@ html[data-theme="light"] .sheet-card{
   overflow: visible;         /* sheet-body handles scroll */
 }
 
+.bands-options{
+  display:grid;
+  gap:16px;
+  padding:18px;
+  overflow-y:auto;
+
+  /* FIX */
+  min-height:220px;
+}
+
 .band-card{
   padding: 14px;
   border-radius: 22px;
