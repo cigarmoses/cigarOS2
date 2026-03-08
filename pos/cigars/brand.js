@@ -28,7 +28,7 @@
   const includesCI = (hay, needle) =>
     String(hay || "").toLowerCase().includes(String(needle || "").toLowerCase());
 
-  function getParam(name){
+  function getParam(name) {
     try {
       return new URL(window.location.href).searchParams.get(name) || "";
     } catch {
@@ -36,7 +36,7 @@
     }
   }
 
-  function parseCSV(text){
+  function parseCSV(text) {
     const rows = [];
     let cur = [];
     let field = "";
@@ -77,7 +77,7 @@
     return rows;
   }
 
-  function normalizeHeader(h){
+  function normalizeHeader(h) {
     return String(h || "")
       .trim()
       .toLowerCase()
@@ -86,7 +86,7 @@
       .replace(/ /g, "_");
   }
 
-  function mapRows(csv){
+  function mapRows(csv) {
     const header = csv[0] || [];
     const keys = header.map(normalizeHeader);
     const out = [];
@@ -143,14 +143,14 @@
     },
   };
 
-  function getStoredTheme(){
+  function getStoredTheme() {
     const attrTheme = document.documentElement.getAttribute("data-theme");
     const stored = localStorage.getItem("theme") || localStorage.getItem("appearance");
     if (stored === "light" || stored === "dark") return stored;
     return attrTheme === "light" ? "light" : "dark";
   }
 
-  function applyTheme(theme){
+  function applyTheme(theme) {
     const next = theme === "light" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
@@ -163,7 +163,7 @@
     }
   }
 
-  function ensureMoonToggle(){
+  function ensureMoonToggle() {
     if (!themeDock) return;
 
     themeDock.innerHTML = `
@@ -197,13 +197,13 @@
 
   void invoiceBadge;
 
-  function openSheet(el){
+  function openSheet(el) {
     if (!el) return;
     el.hidden = false;
     document.documentElement.classList.add("sheet-open");
   }
 
-  function closeSheet(el){
+  function closeSheet(el) {
     if (!el) return;
     el.hidden = true;
     document.documentElement.classList.remove("sheet-open");
@@ -224,7 +224,7 @@
 
   let filterModal = null;
 
-  function ensureFilterModal(){
+  function ensureFilterModal() {
     if (filterModal) return filterModal;
 
     const modal = document.createElement("div");
@@ -276,11 +276,11 @@
     let dataMap = {};
     let localSearch = "";
 
-    function selectedSetFor(key){
+    function selectedSetFor(key) {
       return state.filters[key];
     }
 
-    function renderTabs(){
+    function renderTabs() {
       left.innerHTML = "";
       cats.forEach(([key, label]) => {
         const b = document.createElement("button");
@@ -296,7 +296,7 @@
       });
     }
 
-    function renderList(){
+    function renderList() {
       const items = Array.isArray(dataMap[currentKey]) ? dataMap[currentKey] : [];
       const q = localSearch.trim().toLowerCase();
       const filtered = q ? items.filter((x) => String(x).toLowerCase().includes(q)) : items;
@@ -324,7 +324,7 @@
       });
     }
 
-    function open(data){
+    function open(data) {
       dataMap = data || {};
       currentKey = "vitola";
       localSearch = "";
@@ -335,7 +335,7 @@
       document.documentElement.classList.add("sheet-open");
     }
 
-    function close(){
+    function close() {
       modal.hidden = true;
       document.documentElement.classList.remove("sheet-open");
     }
@@ -367,7 +367,7 @@
     return filterModal;
   }
 
-  function buildFilterData(rows){
+  function buildFilterData(rows) {
     const norm = (v) => String(v || "").trim();
     const uniqSorted = (vals, numeric = false) => {
       const u = uniq(vals.map(norm).filter(Boolean));
@@ -384,7 +384,7 @@
     };
   }
 
-  function applyWrapperMode(rows){
+  function applyWrapperMode(rows) {
     const mode = state.wrapperMode;
     return rows.filter((r) => {
       const shade = r.wrapper_shade || r.wrapperShade || r.wrapper || "";
@@ -394,7 +394,7 @@
     });
   }
 
-  function applySearch(rows){
+  function applySearch(rows) {
     const q = String(state.search || "").trim().toLowerCase();
     if (!q) return rows;
 
@@ -405,7 +405,7 @@
     });
   }
 
-  function applyBandSelected(rows){
+  function applyBandSelected(rows) {
     if (!state.bandSelected.size) return rows;
 
     return rows.filter((r) => {
@@ -414,7 +414,7 @@
     });
   }
 
-  function applyFilterSets(rows){
+  function applyFilterSets(rows) {
     const f = state.filters;
     const v = (x) => String(x || "").trim();
 
@@ -437,7 +437,7 @@
     });
   }
 
-  function applyAll(){
+  function applyAll() {
     let rows = [...state.rowsAll];
     rows = applyWrapperMode(rows);
     rows = applyFilterSets(rows);
@@ -446,7 +446,7 @@
     renderList(rows);
   }
 
-  function resolveRowIcon(r){
+  function resolveRowIcon(r) {
     const candidates = [
       r.brand_icon,
       r.brandIcon,
@@ -458,34 +458,34 @@
     return candidates[0] || "";
   }
 
-  function resolveId(r){
+  function resolveId(r) {
     return String(r.id || r.slug || r.cigar_id || r.row_id || "").trim();
   }
 
-  function resolveName(r){
+  function resolveName(r) {
     return String(r.cigar || r.name || r.title || "").trim();
   }
 
-  function resolveVitola(r){
+  function resolveVitola(r) {
     return String(r.vitola || r.style || r.vitola_name || "").trim();
   }
 
-  function resolvePrice(r){
+  function resolvePrice(r) {
     const p = r.msrp || r.price || r.cost || "";
     const n = Number(p);
     if (Number.isFinite(n)) return fmtMoney(n);
     return "";
   }
 
-  function resolveBandLabel(r){
+  function resolveBandLabel(r) {
     return String(r.band || r.band_group || r.band_key || "").trim();
   }
 
-  function resolveBandArt(r){
+  function resolveBandArt(r) {
     return String(r.band_art || r.bandArt || r.band_image || r.band_img || "").trim();
   }
 
-  function renderList(rows){
+  function renderList(rows) {
     listEl.innerHTML = "";
 
     if (!rows.length) {
@@ -562,7 +562,7 @@
     });
   }
 
-  function getBandOptions(rows){
+  function getBandOptions(rows) {
     const map = new Map();
 
     rows.forEach((r) => {
@@ -579,7 +579,7 @@
     return Array.from(map.values());
   }
 
-  function renderBandOptions(opts){
+  function renderBandOptions(opts) {
     bandsOptions.innerHTML = "";
 
     if (!opts.length) {
@@ -640,7 +640,7 @@
     ensureFilterModal().open(data);
   });
 
-  function setWrapperMode(mode){
+  function setWrapperMode(mode) {
     state.wrapperMode = mode;
     seg?.setAttribute("data-state", mode);
     segBtns.forEach((b) => b.classList.toggle("is-on", b.dataset.state === mode));
@@ -655,7 +655,7 @@
     b.addEventListener("click", () => setWrapperMode(b.dataset.state || "maduro"));
   });
 
-  async function boot(){
+  async function boot() {
     ensureMoonToggle();
 
     const brand = (getParam("brand") || getParam("b") || "").trim();
