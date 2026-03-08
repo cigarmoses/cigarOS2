@@ -1,96 +1,145 @@
-body.shop-page{
-
+body.shop-public{
 margin:0;
-
 background:#f2f2f7;
-
-font-family:var(--font-display),-apple-system,"SF Pro Display","SF Pro Text";
-
+font-family:var(--font-display),-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
 }
 
 .sp-wrap{
+padding:calc(env(safe-area-inset-top) + 22px) 18px 40px;
+max-width:920px;
+margin:0 auto;
+}
 
-max-width:900px;
-margin:auto;
-
-padding:22px;
-
+.sp-top{
+position:relative;
+background:#fff;
+border-radius:34px;
+padding:24px;
+box-shadow:0 20px 60px rgba(0,0,0,.10);
+text-align:center;
 }
 
 .sp-pill{
+position:absolute;
+left:18px;
+top:18px;
 
-font-size:12px;
-
-color:#8e8e93;
-
-font-weight:500;
-
-}
-
-.sp-logo img{
-
-width:120px;
-height:120px;
-
-object-fit:contain;
-
-}
-
-.sp-title{
-
-font-size:36px;
-font-weight:800;
-
-}
-
-.sp-city{
-
-display:flex;
+display:inline-flex;
 align-items:center;
 justify-content:center;
 
-gap:8px;
+height:34px;
+padding:0 16px;
+
+border-radius:999px;
+border:1px solid rgba(0,0,0,.08);
+
+background:rgba(255,255,255,.75);
 
 color:#8e8e93;
+font-weight:500;
+letter-spacing:.01em;
+font-size:12px;
+text-transform:uppercase;
+}
 
+.sp-logo{
+display:flex;
+justify-content:center;
+margin-top:28px;
+margin-bottom:14px;
+}
+
+#spLogo{
+width:120px;
+height:120px;
+object-fit:contain;
+border-radius:28px;
+box-shadow:0 18px 60px rgba(0,0,0,.12);
+background:transparent;
+}
+
+.sp-title{
+margin:6px auto 0;
+font-weight:800;
+font-size:38px;
+line-height:1.05;
+letter-spacing:-0.03em;
+max-width:12ch;
+}
+
+.sp-city{
+display:flex;
+align-items:center;
+justify-content:center;  /* <-- THIS IS THE ONLY CHANGE NEEDED */
+
+gap:10px;
+margin:12px auto 18px;
+
+color:#8e8e93;
+font-weight:500;
+font-size:17px;
+letter-spacing:-0.01em;
 }
 
 .sp-gps{
-
 width:18px;
 height:18px;
-
 fill:#ff3b30;
-
 }
 
-.sp-actions{
+.sp-dock{
+display:flex;
+justify-content:center;
+align-items:stretch;
+
+gap:18px;
+padding:16px 14px;
+
+border-radius:26px;
+
+background:rgba(255,255,255,.7);
+backdrop-filter:blur(20px);
+
+border:1px solid rgba(0,0,0,.05);
+}
+
+.sp-dock-btn{
+appearance:none;
+background:transparent;
+border:0;
+
+padding:12px 8px 10px;
+
+min-width:74px;
 
 display:flex;
-justify-content:space-evenly;
+flex-direction:column;
+align-items:center;
+justify-content:center;
 
-margin-top:20px;
+gap:6px;
 
+transition:transform .15s ease, opacity .15s ease;
+
+-webkit-tap-highlight-color:transparent;
 }
 
-.sp-about{
-
-margin-top:30px;
-
+.sp-dock-btn:active{
+transform:scale(.95);
+opacity:.8;
 }
 
-.sp-about h2{
-
-font-size:22px;
-
-font-weight:700;
-
+.sp-dock-ico{
+width:28px;
+height:28px;
+object-fit:contain;
 }
 
-.sp-about p{
-
-font-weight:400;
-
-color:#333;
-
+.sp-dock-label{
+font-size:11px;
+font-weight:600;
+color:#111;
+line-height:1.1;
+white-space:nowrap;
 }
