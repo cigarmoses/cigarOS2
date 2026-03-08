@@ -1,36 +1,35 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>POS • Brand</title>
 
-  <!-- Keep these aligned with /pos/cigars/index.html so the UI matches across POS -->
-  <link rel="stylesheet" href="/css/type.css?v=13" />
-  <link rel="stylesheet" href="/css/theme.css?v=13" />
-  <link rel="stylesheet" href="/css/theme-toggle.css?v=13" />
-  <link rel="stylesheet" href="/pos/pos.css?v=13" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=13" />
-  <link rel="stylesheet" href="/pos/cigars/brand.css?v=13" />
+  <link rel="stylesheet" href="/css/type.css?v=14" />
+  <link rel="stylesheet" href="/css/theme.css?v=14" />
+  <link rel="stylesheet" href="/css/theme-toggle.css?v=14" />
+  <link rel="stylesheet" href="/pos/pos.css?v=14" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=14" />
+  <link rel="stylesheet" href="/pos/cigars/brand.css?v=14" />
 </head>
 
 <body class="brand-page">
   <header class="brand-topbar">
     <button id="back-btn" class="icon-btn" type="button" aria-label="Back">
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-        <path d="M15.5 19.5L8 12l7.5-7.5" fill="none" stroke="currentColor" stroke-width="2.6"
-          stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M15.5 19.5L8 12l7.5-7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </button>
 
-    <div id="theme-dock" class="theme-dock">
-      <!-- theme-toggle.js populates/controls this -->
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">
-        <span class="theme-toggle__sun" aria-hidden="true">☀︎</span>
-        <span class="theme-toggle__track" aria-hidden="true"></span>
-        <span class="theme-toggle__moon" aria-hidden="true">☾</span>
+    <div id="theme-dock" class="theme-dock" aria-label="Theme toggle">
+      <button id="theme-toggle" class="theme-toggle moon-toggle" type="button" aria-label="Toggle theme" aria-pressed="true">
+        <span class="moon-track" aria-hidden="true"></span>
+        <span class="moon-knob" aria-hidden="true">
+          <svg class="moon-icon" viewBox="0 0 24 24" width="14" height="14">
+            <path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"></path>
+          </svg>
+        </span>
       </button>
     </div>
 
@@ -71,13 +70,9 @@
     <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
   </main>
 
-  <!-- ==============================
-       BANDS SHEET (big bands)
-       ============================== -->
   <section id="sheet-bands" class="sheet" hidden>
     <div class="sheet-card" role="dialog" aria-modal="true" aria-label="Bands">
-      <div class="sheet-head">
-        <div class="sheet-title">Bands</div>
+      <div class="sheet-head sheet-head--icon-only">
         <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
       </div>
 
@@ -89,14 +84,8 @@
     </div>
   </section>
 
-  <!-- Theme toggle -->
-  <script defer src="/js/theme-toggle.js"></script>
-
-  <!-- Cart (invoice) behavior + badge + add-to-cart capture handlers -->
-  <script defer src="/pos/cart.js?v=13"></script>
-
-  <!-- Brand page logic -->
-  <script defer src="/pos/cigars/brand.js?v=13"></script>
+  <script defer src="/js/theme-toggle.js?v=14"></script>
+  <script defer src="/pos/cart.js?v=14"></script>
+  <script defer src="/pos/cigars/brand.js?v=14"></script>
 </body>
-
 </html>
