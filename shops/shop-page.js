@@ -21,21 +21,22 @@
     return ["1","true","yes","y","x"].includes(s);
   }
 
-  function getKeyFromUrl(){
-    const u = new URL(window.location.href);
+function getKeyFromUrl(){
+  const u = new URL(window.location.href);
 
-    const qs = canonicalKey(u.searchParams.get("shop") || "");
-    if (qs) return qs;
+  /* query string support */
+  const qs = canonicalKey(u.searchParams.get("shop") || "");
+  if (qs) return qs;
 
-    const parts = u.pathname.split("/").filter(Boolean);
-    if (parts.length >= 2 && parts[0] === "shops") {
-      const last = cleanStr(parts[1]);
-      if (last && last !== "shop-page.html" && last !== "index.html") {
-        return canonicalKey(last);
-      }
-    }
-    return "";
+  /* slug support: /shops/{slug} */
+  const parts = u.pathname.split("/").filter(Boolean);
+
+  if (parts.length >= 2 && parts[0] === "shops") {
+    return canonicalKey(parts[1]);
   }
+
+  return "";
+}
 
   function withCacheBust(url){
     const sep = url.includes("?") ? "&" : "?";
