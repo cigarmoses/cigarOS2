@@ -2,14 +2,12 @@ const SHEET_URL =
 "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv"
 
 const params = new URLSearchParams(location.search)
-let brand = params.get("brand")
+let brand = params.get("brand") || "Padron"
 
 const list = document.getElementById("brand-list")
 const searchInput = document.getElementById("brand-search")
 const title = document.getElementById("brand-title")
 const icon = document.getElementById("brand-icon-img")
-
-if (!brand) brand = "Padron"
 
 title.textContent = brand
 icon.src = `/img/icons/brands/${brand.toLowerCase()}.svg`
@@ -17,8 +15,6 @@ icon.src = `/img/icons/brands/${brand.toLowerCase()}.svg`
 let cigars = []
 
 async function load() {
-
-try {
 
 const res = await fetch(SHEET_URL)
 const text = await res.text()
@@ -44,7 +40,7 @@ cigars = data.filter(c => c.brand === brand)
 if (!cigars.length) {
 
 list.innerHTML =
-`<div style="opacity:.6;padding:20px">No cigars found for ${brand}</div>`
+`<div style="padding:20px;opacity:.6">No cigars found for ${brand}</div>`
 
 return
 
@@ -52,27 +48,18 @@ return
 
 render(cigars)
 
-} catch (err) {
-
-console.error(err)
-
-list.innerHTML =
-`<div style="padding:20px">Failed to load cigars</div>`
-
 }
 
-}
+function render(rows){
 
-function render(rows) {
+list.innerHTML=""
 
-list.innerHTML = ""
+rows.forEach(c=>{
 
-rows.forEach(c => {
+const row=document.createElement("div")
+row.className="brand-row"
 
-const row = document.createElement("div")
-row.className = "brand-row"
-
-row.innerHTML = `
+row.innerHTML=`
 <img src="/img/icons/brands/${brand.toLowerCase()}.svg">
 
 <div class="brand-row-main">
@@ -91,7 +78,9 @@ row.innerHTML = `
 </div>
 `
 
-row.querySelector(".brand-row-title").onclick = () => openCigar(c)
+row.querySelector(".brand-row-title").onclick=()=>{
+openSheet(c)
+}
 
 list.appendChild(row)
 
@@ -99,43 +88,89 @@ list.appendChild(row)
 
 }
 
-function openCigar(c) {
+function openSheet(c){
 
-const modal = document.getElementById("cigar-modal")
-const card = document.getElementById("cigar-modal-card")
+let sheet=document.getElementById("cigar-sheet")
 
-card.innerHTML = `
+if(!sheet){
 
-<img src="${c.image || ""}" style="width:100%;margin-bottom:20px">
+sheet=document.createElement("div")
+sheet.id="cigar-sheet"
+
+sheet.innerHTML=`
+
+<div class="sheet-backdrop"></div>
+
+<div class="sheet">
+
+<div class="sheet-handle"></div>
+
+<div id="sheet-content"></div>
+
+</div>
+`
+
+document.body.appendChild(sheet)
+
+sheet.querySelector(".sheet-backdrop").onclick=closeSheet
+
+}
+
+const content=document.getElementById("sheet-content")
+
+content.innerHTML=`
+
+<img src="${c.image || ""}" class="sheet-stick">
 
 <h2>${c.cigar}</h2>
 
-<div>Ring ${c.ring}</div>
-<div>Length ${c.length}</div>
-<div>${c.shape}</div>
-<div>${c.wrapper}</div>
+<div class="sheet-spec">
+<span>Ring</span>
+<span>${c.ring}</span>
+</div>
 
-<button onclick="closeCigar()">Close</button>
+<div class="sheet-spec">
+<span>Length</span>
+<span>${c.length}</span>
+</div>
+
+<div class="sheet-spec">
+<span>Shape</span>
+<span>${c.shape}</span>
+</div>
+
+<div class="sheet-spec">
+<span>Wrapper</span>
+<span>${c.wrapper}</span>
+</div>
+
+<div class="sheet-actions">
+
+<button class="sheet-btn">Add</button>
+<button class="sheet-btn">Edit</button>
+<button class="sheet-btn">Compare</button>
+
+</div>
 
 `
 
-modal.classList.add("show")
+sheet.classList.add("show")
 
 }
 
-function closeCigar() {
+function closeSheet(){
 
-document.getElementById("cigar-modal").classList.remove("show")
+document.getElementById("cigar-sheet").classList.remove("show")
 
 }
 
-searchInput.addEventListener("input", e => {
+searchInput.addEventListener("input",e=>{
 
-const q = e.target.value.toLowerCase()
+const q=e.target.value.toLowerCase()
 
 render(
-cigars.filter(c =>
-(c.cigar || "").toLowerCase().includes(q)
+cigars.filter(c=>
+(c.cigar||"").toLowerCase().includes(q)
 )
 )
 
