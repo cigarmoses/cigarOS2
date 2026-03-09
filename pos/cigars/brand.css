@@ -359,6 +359,8 @@ html[data-theme="light"] .brand-row{
   letter-spacing:-.02em;
   line-height:1.08;
   cursor:pointer;
+  word-break:normal;
+  overflow-wrap:break-word;
 }
 .row-sub{
   margin-top:5px;
