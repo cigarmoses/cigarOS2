@@ -808,9 +808,10 @@ html[data-theme="light"] .brand-row{
 
 @media (max-width:700px){
   .brand-title{font-size:50px}
-  .brand-controls{
-    grid-template-columns:auto auto;
-  }
+.brand-controls{
+  grid-template-columns:auto auto 1fr;
+}
+  
 .seg{
   width:auto;
   height:46px;
