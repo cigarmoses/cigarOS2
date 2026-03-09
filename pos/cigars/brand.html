@@ -6,12 +6,12 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>POS • Brand</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=14" />
-  <link rel="stylesheet" href="/css/theme.css?v=14" />
-  <link rel="stylesheet" href="/css/theme-toggle.css?v=14" />
-  <link rel="stylesheet" href="/pos/pos.css?v=14" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=14" />
-  <link rel="stylesheet" href="/pos/cigars/brand.css?v=14" />
+  <link rel="stylesheet" href="/css/type.css?v=15" />
+  <link rel="stylesheet" href="/css/theme.css?v=15" />
+  <link rel="stylesheet" href="/css/theme-toggle.css?v=15" />
+  <link rel="stylesheet" href="/pos/pos.css?v=15" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=15" />
+  <link rel="stylesheet" href="/pos/cigars/brand.css?v=15" />
 </head>
 
 <body class="brand-page">
@@ -22,7 +22,7 @@
       </svg>
     </button>
 
-    <div id="theme-dock" class="theme-dock">
+    <div class="theme-dock">
       <button id="theme-toggle" class="theme-toggle moon-toggle" type="button" aria-label="Toggle theme">
         <span class="moon-track" aria-hidden="true"></span>
         <span class="moon-knob" aria-hidden="true">
@@ -89,8 +89,9 @@
     <div class="detail-sheet__backdrop" data-detail-close></div>
     <div class="detail-sheet__card" role="dialog" aria-modal="true" aria-label="Cigar detail">
       <div class="detail-sheet__handle"></div>
+
       <div class="detail-sheet__head">
-        <div>
+        <div class="detail-copy">
           <div id="detail-brand" class="detail-brand"></div>
           <h2 id="detail-name" class="detail-name"></h2>
           <div id="detail-vitola" class="detail-vitola"></div>
@@ -108,14 +109,17 @@
             <div class="detail-box__label">Ring</div>
             <div id="detail-ring" class="detail-box__value"></div>
           </div>
+
           <div class="detail-box">
             <div class="detail-box__label">Length</div>
             <div id="detail-length" class="detail-box__value"></div>
           </div>
+
           <div class="detail-box">
             <div class="detail-box__label">Shape</div>
             <div id="detail-shape" class="detail-box__value detail-box__value--sm"></div>
           </div>
+
           <div class="detail-box">
             <div class="detail-box__label">Vitola</div>
             <div id="detail-vitola-box" class="detail-box__value detail-box__value--sm"></div>
@@ -148,8 +152,7 @@
     </div>
   </section>
 
-  <script defer src="/js/theme-toggle.js?v=14"></script>
-  <script defer src="/pos/cart.js?v=14"></script>
-  <script defer src="/pos/cigars/brand.js?v=14"></script>
+  <script defer src="/pos/cart.js?v=15"></script>
+  <script defer src="/pos/cigars/brand.js?v=15"></script>
 </body>
 </html>
