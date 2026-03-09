@@ -320,8 +320,8 @@ html[data-theme="light"] .moon-knob{
 .row-main{flex:1;min-width:0}
 .row-title{
   font-family:var(--font-display);
-  font-size:18px;
-  font-weight:800;
+  font-size:20px;
+  font-weight:700;
   letter-spacing:-.02em;
   line-height:1.08;
   cursor:pointer;
@@ -329,7 +329,7 @@ html[data-theme="light"] .moon-knob{
 .row-sub{
   margin-top:5px;
   font-family:var(--font-display);
-  font-size:14px;
+  font-size:15px;
   font-weight:400;
   color:var(--muted2);
   letter-spacing:-.01em;
@@ -342,8 +342,8 @@ html[data-theme="light"] .moon-knob{
 }
 .brand-row-msrp{
   font-family:var(--font-display);
-  font-size:18px;
-  font-weight:800;
+  font-size:17px;
+  font-weight:700;
   letter-spacing:-.02em;
   min-width:64px;
   text-align:right;
