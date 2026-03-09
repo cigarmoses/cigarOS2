@@ -269,7 +269,7 @@ html[data-theme="light"] .moon-knob{
 }
 .seg-btn.is-on{color:#e8eefc}
 .seg-switch{
-  width:72px;
+  width:62px;
   height:34px;
   border-radius:999px;
   border:1px solid var(--glassBorder);
@@ -811,9 +811,18 @@ html[data-theme="light"] .brand-row{
   .brand-controls{
     grid-template-columns:auto auto;
   }
-  .seg{
-    grid-column:1 / -1;
-  }
+.seg{
+  width:auto;
+  height:46px;
+  border-radius:18px;
+  border:1px solid var(--glassBorder);
+  background:var(--glass2);
+  box-shadow:var(--shadowSoft);
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  gap:16px;
+}
   .fm__body{grid-template-columns:1fr}
   .fm__left{
     border-right:0;
