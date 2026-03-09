@@ -3,6 +3,8 @@ font-family:var(--font-display);
 padding:20px;
 }
 
+/* HEADER */
+
 .brand-header{
 display:flex;
 align-items:center;
@@ -19,33 +21,50 @@ gap:12px;
 .brand-icon{
 width:60px;
 height:60px;
+border-radius:16px;
 }
 
 .brand-title-wrap h1{
-font-size:42px;
+font-size:40px;
 font-weight:700;
+letter-spacing:-0.02em;
+}
+
+/* SEARCH */
+
+.brand-search{
+margin-top:14px;
 }
 
 .brand-search input{
 width:100%;
-padding:14px;
+padding:14px 16px;
 border-radius:16px;
 border:none;
 background:rgba(255,255,255,.08);
 font-size:16px;
+color:white;
+outline:none;
 }
+
+/* FILTER CONTROLS */
 
 .brand-controls{
 display:flex;
 gap:10px;
-margin:14px 0;
+margin:14px 0 20px 0;
+align-items:center;
 }
 
 .brand-btn{
 padding:10px 16px;
 border-radius:14px;
 background:rgba(255,255,255,.08);
+font-size:15px;
+cursor:pointer;
 }
+
+/* CIGAR LIST */
 
 .brand-list{
 display:flex;
@@ -65,6 +84,7 @@ gap:12px;
 .brand-row img{
 width:46px;
 height:46px;
+border-radius:12px;
 }
 
 .brand-row-main{
@@ -93,6 +113,8 @@ font-size:18px;
 font-weight:600;
 }
 
+/* ADD BUTTON */
+
 .pos-add{
 width:34px;
 height:34px;
@@ -102,13 +124,25 @@ color:white;
 display:flex;
 align-items:center;
 justify-content:center;
+font-size:18px;
+cursor:pointer;
 }
+
+/* CART ICON FIX */
 
 .invoice-btn{
 background:none;
 box-shadow:none;
 border:none;
+padding:0;
 }
+
+.invoice-btn svg{
+width:34px;
+height:34px;
+}
+
+/* MODALS */
 
 .modal{
 display:none;
@@ -117,16 +151,93 @@ inset:0;
 background:rgba(0,0,0,.6);
 align-items:center;
 justify-content:center;
+z-index:100;
 }
 
 .modal-card{
 background:#111;
 padding:24px;
 border-radius:20px;
-max-width:400px;
+max-width:420px;
 width:90%;
 }
 
 .modal.show{
 display:flex;
+}
+
+/* IOS STYLE DETAIL SHEET */
+
+#cigar-sheet{
+position:fixed;
+inset:0;
+display:none;
+z-index:200;
+}
+
+#cigar-sheet.show{
+display:block;
+}
+
+.sheet-backdrop{
+position:absolute;
+inset:0;
+background:rgba(0,0,0,.5);
+}
+
+.sheet{
+position:absolute;
+bottom:0;
+left:0;
+right:0;
+background:#111;
+border-radius:28px 28px 0 0;
+padding:24px;
+animation:sheetUp .25s ease;
+max-height:80vh;
+overflow:auto;
+}
+
+@keyframes sheetUp{
+from{transform:translateY(100%)}
+to{transform:translateY(0)}
+}
+
+.sheet-handle{
+width:40px;
+height:5px;
+background:#666;
+border-radius:4px;
+margin:auto;
+margin-bottom:20px;
+}
+
+.sheet-stick{
+width:120px;
+display:block;
+margin:auto;
+margin-bottom:20px;
+}
+
+.sheet-spec{
+display:flex;
+justify-content:space-between;
+padding:10px 0;
+border-bottom:1px solid rgba(255,255,255,.08);
+font-size:15px;
+}
+
+.sheet-actions{
+display:flex;
+gap:10px;
+margin-top:20px;
+}
+
+.sheet-btn{
+flex:1;
+padding:12px;
+border-radius:14px;
+background:#222;
+font-size:14px;
+cursor:pointer;
 }
