@@ -1,102 +1,155 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" data-theme="dark">
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>POS • Brand</title>
 
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Brand</title>
-
-<link rel="stylesheet" href="/css/type.css">
-<link rel="stylesheet" href="/css/theme.css">
-<link rel="stylesheet" href="/css/pos.css">
-<link rel="stylesheet" href="/pos/cigars/brand.css">
-
+  <link rel="stylesheet" href="/css/type.css?v=14" />
+  <link rel="stylesheet" href="/css/theme.css?v=14" />
+  <link rel="stylesheet" href="/css/theme-toggle.css?v=14" />
+  <link rel="stylesheet" href="/pos/pos.css?v=14" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=14" />
+  <link rel="stylesheet" href="/pos/cigars/brand.css?v=14" />
 </head>
 
 <body class="brand-page">
+  <header class="brand-topbar">
+    <button id="back-btn" class="icon-btn" type="button" aria-label="Back">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+        <path d="M15.5 19.5L8 12l7.5-7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
 
-<header class="brand-header">
+    <div id="theme-dock" class="theme-dock">
+      <button id="theme-toggle" class="theme-toggle moon-toggle" type="button" aria-label="Toggle theme">
+        <span class="moon-track" aria-hidden="true"></span>
+        <span class="moon-knob" aria-hidden="true">
+          <svg class="moon-icon" viewBox="0 0 24 24" width="14" height="14">
+            <path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"></path>
+          </svg>
+        </span>
+      </button>
+    </div>
 
-<button id="back-btn" class="icon-btn">
-←
-</button>
+    <button id="invoice-btn" class="invoice-btn" type="button" aria-label="Invoice">
+      <img id="invoice-icon" src="/img/icons/cart.svg" alt="" />
+      <span id="invoice-badge" class="invoice-badge" hidden>0</span>
+    </button>
+  </header>
 
-<div class="brand-title-wrap">
-<img id="brand-icon-img" class="brand-icon">
-<h1 id="brand-title">Brand</h1>
-</div>
+  <main class="brand-main">
+    <section class="brand-header">
+      <div class="brand-title-row">
+        <h1 id="brand-title" class="brand-title">Brand</h1>
+        <div id="brand-icon" class="brand-icon">
+          <img id="brand-icon-img" src="" alt="" />
+        </div>
+      </div>
 
-<button id="invoice-btn" class="invoice-btn">
-<svg viewBox="0 0 24 24">
-<path d="M7 4h-2l-1 2v2h2l3.6 7.6-1.35 2.45A2 2 0 0 0 10 21h10v-2H10.42a.25.25 0 0 1-.22-.37L11.1 17h5.45a2 2 0 0 0 1.8-1.1L21 9H7.42l-.94-2z"/>
-</svg>
-</button>
+      <div class="brand-search">
+        <div class="search-wrap">
+          <span class="search-ico" aria-hidden="true">🔎</span>
+          <input id="brand-search" type="search" placeholder="Search…" autocomplete="off" />
+        </div>
+      </div>
 
-</header>
+      <div class="brand-controls">
+        <button id="btn-filters" class="pill-btn" type="button">Filters</button>
+        <button id="btn-bands" class="pill-btn" type="button">Bands</button>
 
-<div class="brand-search">
+        <div id="wrapper-seg" class="seg" data-state="all">
+          <button class="seg-btn" type="button" data-state="maduro">Maduro</button>
+          <button id="wrapper-switch" class="seg-switch" type="button" aria-label="Toggle wrapper"></button>
+          <button class="seg-btn" type="button" data-state="natural">Natural</button>
+        </div>
+      </div>
+    </section>
 
-<input id="brand-search" placeholder="Search cigars">
+    <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
+  </main>
 
-</div>
+  <section id="sheet-bands" class="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-label="Bands">
+      <div class="sheet-head">
+        <div class="sheet-title">Bands</div>
+        <button class="sheet-x" type="button" data-sheet-close aria-label="Close">×</button>
+      </div>
 
-<div class="brand-controls">
+      <div id="bands-options" class="bands-options"></div>
 
-<button id="btn-filters" class="brand-btn">Filters</button>
+      <div class="sheet-foot">
+        <button id="bands-confirm" class="sheet-apply" type="button">Confirm</button>
+      </div>
+    </div>
+  </section>
 
-<button id="btn-bands" class="brand-btn">Bands</button>
+  <section id="sheet-detail" class="detail-sheet" hidden>
+    <div class="detail-sheet__backdrop" data-detail-close></div>
+    <div class="detail-sheet__card" role="dialog" aria-modal="true" aria-label="Cigar detail">
+      <div class="detail-sheet__handle"></div>
+      <div class="detail-sheet__head">
+        <div>
+          <div id="detail-brand" class="detail-brand"></div>
+          <h2 id="detail-name" class="detail-name"></h2>
+          <div id="detail-vitola" class="detail-vitola"></div>
+        </div>
+        <button class="sheet-x" type="button" data-detail-close aria-label="Close">×</button>
+      </div>
 
-<div id="wrapper-switch" class="wrapper-toggle">
-Maduro
-</div>
+      <div class="detail-sheet__body">
+        <div class="detail-stick-wrap">
+          <img id="detail-image" class="detail-stick" src="" alt="" />
+        </div>
 
-</div>
+        <div class="detail-grid">
+          <div class="detail-box">
+            <div class="detail-box__label">Ring</div>
+            <div id="detail-ring" class="detail-box__value"></div>
+          </div>
+          <div class="detail-box">
+            <div class="detail-box__label">Length</div>
+            <div id="detail-length" class="detail-box__value"></div>
+          </div>
+          <div class="detail-box">
+            <div class="detail-box__label">Shape</div>
+            <div id="detail-shape" class="detail-box__value detail-box__value--sm"></div>
+          </div>
+          <div class="detail-box">
+            <div class="detail-box__label">Vitola</div>
+            <div id="detail-vitola-box" class="detail-box__value detail-box__value--sm"></div>
+          </div>
 
-<div id="brand-list" class="brand-list"></div>
+          <div class="detail-panel">
+            <div class="detail-panel__row"><span>Wrapper</span><strong id="detail-wrapper"></strong></div>
+            <div class="detail-panel__row"><span>Binder</span><strong id="detail-binder"></strong></div>
+            <div class="detail-panel__row"><span>Filler</span><strong id="detail-filler"></strong></div>
+            <div class="detail-panel__row"><span>Origin</span><strong id="detail-origin"></strong></div>
+          </div>
 
-<!-- FILTER MODAL -->
+          <div class="detail-box detail-box--wide">
+            <div class="detail-box__label">Strength</div>
+            <div id="detail-strength" class="detail-box__value detail-box__value--sm"></div>
+          </div>
 
-<div id="filters-modal" class="modal">
+          <div class="detail-box detail-box--wide">
+            <div class="detail-box__label">Wrapper Shade</div>
+            <div id="detail-shade" class="detail-box__value detail-box__value--sm"></div>
+          </div>
+        </div>
+      </div>
 
-<div class="modal-card">
+      <div class="detail-actions">
+        <button class="detail-btn" type="button">Add</button>
+        <button class="detail-btn" type="button">Edit</button>
+        <button class="detail-btn" type="button">Compare</button>
+      </div>
+    </div>
+  </section>
 
-<h2>Filters</h2>
-
-<div id="filters-body"></div>
-
-<button id="filters-close">Close</button>
-
-</div>
-
-</div>
-
-<!-- BANDS MODAL -->
-
-<div id="bands-modal" class="modal">
-
-<div class="modal-card">
-
-<h2>Bands</h2>
-
-<div id="bands-options"></div>
-
-<button id="bands-close">Close</button>
-
-</div>
-
-</div>
-
-<!-- CIGAR MODAL -->
-
-<div id="cigar-modal" class="modal">
-
-<div class="modal-card" id="cigar-modal-card"></div>
-
-</div>
-
-<script defer src="/pos/cart.js"></script>
-<script defer src="/pos/cigars/brand.js"></script>
-
+  <script defer src="/js/theme-toggle.js?v=14"></script>
+  <script defer src="/pos/cart.js?v=14"></script>
+  <script defer src="/pos/cigars/brand.js?v=14"></script>
 </body>
 </html>
