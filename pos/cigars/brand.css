@@ -85,11 +85,14 @@ html[data-theme="light"] .moon-toggle{
   background:rgba(0,0,0,.08);
   border-color:rgba(0,0,0,.10);
 }
-.moon-track{
-  position:absolute;
-  inset:0;
-  border-radius:999px;
+
+/* hide anything extra inside the track */
+.moon-track,
+.moon-track svg,
+.moon-track img{
+  display:none !important;
 }
+
 .moon-knob{
   position:absolute;
   top:3px;
@@ -104,10 +107,18 @@ html[data-theme="light"] .moon-toggle{
   justify-content:center;
 }
 
+html[data-theme="dark"] .moon-knob{
+  transform:translateX(0);
+}
+
+html[data-theme="light"] .moon-knob{
+  transform:translateX(32px);
+}
+
 .moon-knob::before{
   content:"";
-  width:16px;
-  height:16px;
+  width:18px;
+  height:18px;
   background:url("/img/icons/moon.svg") center/contain no-repeat;
 }
 
@@ -244,9 +255,8 @@ html[data-theme="light"] .moon-knob::before{
   letter-spacing:-.01em;
   cursor:pointer;
 }
+
 .seg{
-  width:auto;
-  min-width:0;
   height:46px;
   border-radius:18px;
   border:1px solid var(--glassBorder);
@@ -255,8 +265,9 @@ html[data-theme="light"] .moon-knob::before{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:0 12px;
-  gap:10px;
+  padding:0 16px;
+  gap:12px;
+  min-width:200px;
 }
 
 .seg-btn{
@@ -272,16 +283,7 @@ html[data-theme="light"] .moon-knob::before{
 }
 
 .seg-btn.is-on{color:#e8eefc}
-.seg-switch{
-  width:58px;
-  height:34px;
-  border-radius:999px;
-  border:1px solid var(--glassBorder);
-  background:rgba(47,111,228,.22);
-  position:relative;
-  cursor:pointer;
-  flex:0 0 auto;
-}
+
 .seg-switch{
   width:56px;
   height:32px;
@@ -292,9 +294,24 @@ html[data-theme="light"] .moon-knob::before{
   cursor:pointer;
   flex:0 0 auto;
 }
-.seg[data-state="natural"] .seg-switch::after{left:32px}
+
+.seg-switch::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:2px;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  background:#4778e4;
+  transform:translateY(-50%);
+  box-shadow:0 8px 14px rgba(0,0,0,.20);
+  transition:left .18s ease;
+}
+
+.seg[data-state="natural"] .seg-switch::after{left:26px}
 .seg[data-state="maduro"] .seg-switch::after{left:2px}
-.seg[data-state="all"] .seg-switch::after{left:17px}
+.seg[data-state="all"] .seg-switch::after{left:14px}
 
 .brand-list{padding:8px 2px 0}
 
@@ -303,12 +320,10 @@ html[data-theme="light"] .moon-knob::before{
   align-items:center;
   gap:14px;
   padding:20px 4px;
-
   border:0;
   border-radius:0;
   background:transparent;
   box-shadow:none;
-
   border-bottom:1px solid rgba(255,255,255,.08);
 }
 
@@ -809,24 +824,25 @@ html[data-theme="light"] .brand-row{
 
 @media (max-width:700px){
   .brand-title{font-size:50px}
-.brand-controls{
-  grid-template-columns:auto auto 1fr;
-}
-  
-.seg{
-  width:auto;
-  min-width:0;
-  height:46px;
-  border-radius:18px;
-  border:1px solid var(--glassBorder);
-  background:var(--glass2);
-  box-shadow:var(--shadowSoft);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:0 10px;
-  gap:8px;
-}
+  .brand-controls{
+    grid-template-columns:auto auto 1fr;
+  }
+
+  .seg{
+    width:auto;
+    min-width:0;
+    height:46px;
+    border-radius:18px;
+    border:1px solid var(--glassBorder);
+    background:var(--glass2);
+    box-shadow:var(--shadowSoft);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 10px;
+    gap:8px;
+  }
+
   .fm__body{grid-template-columns:1fr}
   .fm__left{
     border-right:0;
