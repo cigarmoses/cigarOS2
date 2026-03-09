@@ -239,8 +239,8 @@ html[data-theme="light"] .moon-knob{
   box-shadow:var(--shadowSoft);
   color:var(--ink);
   font-family:var(--font-display);
-  font-size:16px;
-  font-weight:700;
+  font-size:15px;
+  font-weight:600;
   letter-spacing:-.01em;
   cursor:pointer;
 }
@@ -349,13 +349,13 @@ html[data-theme="light"] .moon-knob{
   text-align:right;
 }
 .pos-add{
-  width:36px;
-  height:36px;
+  width:20px;
+  height:20px;
   border-radius:999px;
   display:grid;
   place-items:center;
-  font-size:20px;
-  font-weight:900;
+  font-size:12px;
+  font-weight:700;
   border:none;
   background:#35c759;
   color:#fff;
