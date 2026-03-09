@@ -26,7 +26,7 @@
     brand: "",
     rowsAll: [],
     search: "",
-    wrapperMode: "all",
+    wrapperMode: "maduro",
     bandSelected: new Set(),
     filters: {
       vitola: new Set(),
@@ -197,32 +197,45 @@
     return getField(r, ["image", "img", "photo", "cigar_image"]);
   }
 
-function resolveBand(r){
-  return getField(r, ["band", "band_key", "band_group", "band_name"]);
-}
+  function resolveBand(r){
+    const direct = getField(r, ["band", "band_key", "band_group", "band_name"]);
+    if (direct) return direct;
 
-function resolveBandArt(r){
-  const direct = getField(r, [
-    "band_art",
-    "band_image",
-    "band_img",
-    "band_art_url",
-    "band_url"
-  ]);
-  if (direct) return direct;
+    if (normalizeBrand(state.brand) !== "padron") return "";
 
-  if (normalizeBrand(state.brand) !== "padron") return "";
+    const full = `${resolveName(r)} ${resolveVitola(r)} ${resolveShade(r)}`.toLowerCase();
 
-  const name = (resolveName(r) + " " + resolveVitola(r) + " " + resolveShade(r)).toLowerCase();
+    if (full.includes("family reserve")) return "Family Reserve";
+    if (full.includes("1964") || full.includes("anniversary")) return "1964 Anniversary";
+    if (full.includes("1926")) return "1926";
+    if (full.includes("black")) return "Black Series";
+    if (full.includes("damaso")) return "Damaso";
 
-  if (name.includes("1926")) return "/img/icons/padron1926serieband.svg";
-  if (name.includes("1964") || name.includes("anniversary")) return "/img/icons/padron1964anniversaryband.svg";
-  if (name.includes("black")) return "/img/icons/padronblackseriesband.svg";
-  if (name.includes("damaso")) return "/img/icons/padrondamasoband.svg";
-  if (name.includes("family reserve")) return "/img/icons/padronfamilyreserveband.svg";
+    return "Padron Series";
+  }
 
-  return "/img/icons/padronseriesband.svg";
-}
+  function resolveBandArt(r){
+    const direct = getField(r, [
+      "band_art",
+      "band_image",
+      "band_img",
+      "band_art_url",
+      "band_url"
+    ]);
+    if (direct) return direct;
+
+    if (normalizeBrand(state.brand) !== "padron") return "";
+
+    const full = `${resolveName(r)} ${resolveVitola(r)} ${resolveShade(r)}`.toLowerCase();
+
+    if (full.includes("family reserve")) return "/img/icons/padronfamilyreserveband.svg";
+    if (full.includes("1964") || full.includes("anniversary")) return "/img/icons/padron1964anniversaryband.svg";
+    if (full.includes("1926")) return "/img/icons/padron1926serieband.svg";
+    if (full.includes("black")) return "/img/icons/padronblackseriesband.svg";
+    if (full.includes("damaso")) return "/img/icons/padrondamasoband.svg";
+
+    return "/img/icons/padronseriesband.svg";
+  }
 
   function brandIconPath(){
     return `/img/icons/brands/${normalizeBrand(state.brand)}.svg`;
@@ -256,10 +269,25 @@ function resolveBandArt(r){
   }
 
   function openDetail(r){
-    $("#detail-brand").textContent = state.brand;
-    $("#detail-name").textContent = resolveName(r);
-    $("#detail-vitola").textContent = `${resolveVitola(r)}${resolvePrice(r) ? ` • ${resolvePrice(r)}` : ""}`;
-    $("#detail-image").src = resolveImage(r) || brandIconPath();
+    const detailBrand = $("#detail-brand");
+    const detailName = $("#detail-name");
+    const detailImage = $("#detail-image");
+    const detailBrandIcon = $("#detail-brand-icon");
+
+    if (detailBrand) detailBrand.textContent = state.brand;
+    if (detailName) detailName.textContent = resolveName(r);
+
+    if (detailBrandIcon) {
+      detailBrandIcon.src = brandIconPath();
+      detailBrandIcon.onerror = () => {
+        detailBrandIcon.style.visibility = "hidden";
+      };
+    }
+
+    if (detailImage) {
+      detailImage.src = resolveImage(r) || brandIconPath();
+    }
+
     $("#detail-ring").textContent = resolveRing(r) || "—";
     $("#detail-length").textContent = resolveLength(r) || "—";
     $("#detail-shape").textContent = resolveShape(r) || "—";
@@ -270,6 +298,7 @@ function resolveBandArt(r){
     $("#detail-origin").textContent = resolveOrigin(r) || "—";
     $("#detail-strength").textContent = resolveStrength(r) || "—";
     $("#detail-shade").textContent = resolveShade(r) || "—";
+
     detailSheet.hidden = false;
   }
 
@@ -413,11 +442,20 @@ function resolveBandArt(r){
   }
 
   function applyWrapperMode(rows){
-    if(state.wrapperMode === "all") return rows;
+    if (state.wrapperMode === "all") return rows;
+
     return rows.filter((r) => {
       const shade = resolveShade(r).toLowerCase();
-      if(state.wrapperMode === "maduro") return shade.includes("maduro");
-      if(state.wrapperMode === "natural") return shade.includes("natural");
+      const name = resolveName(r).toLowerCase();
+
+      if (state.wrapperMode === "maduro") {
+        return shade.includes("maduro") || name.includes("maduro");
+      }
+
+      if (state.wrapperMode === "natural") {
+        return shade.includes("natural") || name.includes("natural");
+      }
+
       return true;
     });
   }
@@ -433,6 +471,14 @@ function resolveBandArt(r){
 
   function applyBandSelected(rows){
     if(!state.bandSelected.size) return rows;
+
+    if (normalizeBrand(state.brand) === "padron") {
+      return rows.filter((r) => {
+        const band = resolveBand(r);
+        return state.bandSelected.has(band);
+      });
+    }
+
     return rows.filter((r) => state.bandSelected.has(resolveBand(r)));
   }
 
@@ -504,6 +550,41 @@ function resolveBandArt(r){
   }
 
   function getBandOptions(rows){
+    if (normalizeBrand(state.brand) === "padron") {
+      return [
+        {
+          key: "Padron Series",
+          label: "Padron Series",
+          src: "/img/icons/padronseriesband.svg"
+        },
+        {
+          key: "Family Reserve",
+          label: "Family Reserve",
+          src: "/img/icons/padronfamilyreserveband.svg"
+        },
+        {
+          key: "1926",
+          label: "1926",
+          src: "/img/icons/padron1926serieband.svg"
+        },
+        {
+          key: "Black Series",
+          label: "Black Series",
+          src: "/img/icons/padronblackseriesband.svg"
+        },
+        {
+          key: "Damaso",
+          label: "Damaso",
+          src: "/img/icons/padrondamasoband.svg"
+        },
+        {
+          key: "1964 Anniversary",
+          label: "1964 Anniversary",
+          src: "/img/icons/padron1964anniversaryband.svg"
+        }
+      ];
+    }
+
     const map = new Map();
 
     rows.forEach((r) => {
@@ -557,7 +638,11 @@ function resolveBandArt(r){
   function setWrapperMode(mode){
     state.wrapperMode = mode;
     seg.setAttribute("data-state", mode);
-    segBtns.forEach((b) => b.classList.toggle("is-on", b.dataset.state === mode));
+
+    segBtns.forEach((b) => {
+      b.classList.toggle("is-on", b.dataset.state === mode);
+    });
+
     applyAll();
   }
 
@@ -580,7 +665,8 @@ function resolveBandArt(r){
   });
 
   btnBands?.addEventListener("click", () => {
-    renderBandOptions(getBandOptions(state.rowsAll));
+    const opts = getBandOptions(state.rowsAll);
+    renderBandOptions(opts);
     openBandsSheet();
   });
 
@@ -590,12 +676,11 @@ function resolveBandArt(r){
   });
 
   segSwitch?.addEventListener("click", () => {
-    const next = state.wrapperMode === "maduro" ? "natural" : state.wrapperMode === "natural" ? "all" : "maduro";
-    setWrapperMode(next);
+    setWrapperMode(state.wrapperMode === "maduro" ? "natural" : "maduro");
   });
 
   segBtns.forEach((b) => {
-    b.addEventListener("click", () => setWrapperMode(b.dataset.state || "all"));
+    b.addEventListener("click", () => setWrapperMode(b.dataset.state || "maduro"));
   });
 
   document.addEventListener("click", (e) => {
