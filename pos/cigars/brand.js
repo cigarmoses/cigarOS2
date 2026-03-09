@@ -19,6 +19,8 @@
   const bandsOptions = $("#bands-options");
   const bandsConfirm = $("#bands-confirm");
   const detailSheet = $("#sheet-detail");
+  const themeToggle = $("#theme-toggle");
+  const backBtn = $("#back-btn");
 
   const state = {
     brand: "",
@@ -136,13 +138,7 @@
   }
 
   function resolveBrandVal(r){
-    return getField(r, [
-      "brand",
-      "brand_name",
-      "manufacturer_brand",
-      "cigar_brand",
-      "manufacturer"
-    ]);
+    return getField(r, ["brand", "brand_name", "manufacturer_brand", "cigar_brand", "manufacturer"]);
   }
 
   function resolveId(r){
@@ -219,6 +215,17 @@
     brandIconImg.onerror = () => { brandIconImg.style.visibility = "hidden"; };
   }
 
+  function getSavedTheme(){
+    return localStorage.getItem("theme") || document.documentElement.getAttribute("data-theme") || "dark";
+  }
+
+  function applyTheme(theme){
+    const next = theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    themeToggle?.setAttribute("aria-pressed", String(next === "dark"));
+  }
+
   function openBandsSheet(){
     sheetBands.hidden = false;
     document.documentElement.classList.add("sheet-open");
@@ -229,20 +236,27 @@
     document.documentElement.classList.remove("sheet-open");
   }
 
-  document.addEventListener("click", (e) => {
-    const t = e.target;
-    if(t && t.closest && t.closest("[data-sheet-close]")) closeBandsSheet();
-    if(t === sheetBands) closeBandsSheet();
-    if(t && t.closest && t.closest("[data-detail-close]")) closeDetail();
-  });
+  function openDetail(r){
+    $("#detail-brand").textContent = state.brand;
+    $("#detail-name").textContent = resolveName(r);
+    $("#detail-vitola").textContent = `${resolveVitola(r)}${resolvePrice(r) ? ` • ${resolvePrice(r)}` : ""}`;
+    $("#detail-image").src = resolveImage(r) || brandIconPath();
+    $("#detail-ring").textContent = resolveRing(r) || "—";
+    $("#detail-length").textContent = resolveLength(r) || "—";
+    $("#detail-shape").textContent = resolveShape(r) || "—";
+    $("#detail-vitola-box").textContent = resolveVitola(r) || "—";
+    $("#detail-wrapper").textContent = resolveWrapper(r) || "—";
+    $("#detail-binder").textContent = resolveBinder(r) || "—";
+    $("#detail-filler").textContent = resolveFiller(r) || "—";
+    $("#detail-origin").textContent = resolveOrigin(r) || "—";
+    $("#detail-strength").textContent = resolveStrength(r) || "—";
+    $("#detail-shade").textContent = resolveShade(r) || "—";
+    detailSheet.hidden = false;
+  }
 
-  document.addEventListener("keydown", (e) => {
-    if(e.key === "Escape"){
-      closeBandsSheet();
-      closeDetail();
-      if(filterModal) filterModal.close();
-    }
-  });
+  function closeDetail(){
+    detailSheet.hidden = true;
+  }
 
   let filterModal = null;
 
@@ -423,30 +437,6 @@
     });
   }
 
-  function openDetail(r){
-    $("#detail-brand").textContent = state.brand;
-    $("#detail-name").textContent = resolveName(r);
-    $("#detail-vitola").textContent = `${resolveVitola(r)}${resolvePrice(r) ? ` • ${resolvePrice(r)}` : ""}`;
-    $("#detail-image").src = resolveImage(r) || brandIconPath();
-    $("#detail-ring").textContent = resolveRing(r) || "—";
-    $("#detail-length").textContent = resolveLength(r) || "—";
-    $("#detail-shape").textContent = resolveShape(r) || "—";
-    $("#detail-vitola-box").textContent = resolveVitola(r) || "—";
-    $("#detail-wrapper").textContent = resolveWrapper(r) || "—";
-    $("#detail-binder").textContent = resolveBinder(r) || "—";
-    $("#detail-filler").textContent = resolveFiller(r) || "—";
-    $("#detail-origin").textContent = resolveOrigin(r) || "—";
-    $("#detail-strength").textContent = resolveStrength(r) || "—";
-    $("#detail-shade").textContent = resolveShade(r) || "—";
-    detailSheet.hidden = false;
-  }
-
-  function closeDetail(){
-    detailSheet.hidden = true;
-  }
-
-  window.closeDetail = closeDetail;
-
   function renderList(rows){
     listEl.innerHTML = "";
 
@@ -552,6 +542,15 @@
     applyAll();
   }
 
+  backBtn?.addEventListener("click", () => {
+    if(history.length > 1) history.back();
+    else location.href = "/pos/cigars/";
+  });
+
+  themeToggle?.addEventListener("click", () => {
+    applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
+  });
+
   searchInput?.addEventListener("input", () => {
     state.search = searchInput.value || "";
     applyAll();
@@ -580,7 +579,24 @@
     b.addEventListener("click", () => setWrapperMode(b.dataset.state || "all"));
   });
 
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+    if(t && t.closest && t.closest("[data-sheet-close]")) closeBandsSheet();
+    if(t === sheetBands) closeBandsSheet();
+    if(t && t.closest && t.closest("[data-detail-close]")) closeDetail();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape"){
+      closeBandsSheet();
+      closeDetail();
+      if(filterModal) filterModal.close();
+    }
+  });
+
   async function boot(){
+    applyTheme(getSavedTheme());
+
     state.brand = (getParam("brand") || "Padron").trim();
     setBrandHeader();
 
@@ -592,7 +608,10 @@
     const rows = mapRows(parseCSV(txt));
 
     const exact = rows.filter((r) => normalizeBrand(resolveBrandVal(r)) === normalizedPageBrand);
-    const fuzzy = rows.filter((r) => normalizeBrand(resolveBrandVal(r)).includes(normalizedPageBrand) || normalizedPageBrand.includes(normalizeBrand(resolveBrandVal(r))));
+    const fuzzy = rows.filter((r) => {
+      const rb = normalizeBrand(resolveBrandVal(r));
+      return rb.includes(normalizedPageBrand) || normalizedPageBrand.includes(rb);
+    });
 
     state.rowsAll = (exact.length ? exact : fuzzy).map((r) => ({
       ...r,
