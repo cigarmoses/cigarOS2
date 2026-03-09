@@ -1,179 +1,101 @@
-const SHEET_URL =
-"https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv"
+const urlParams = new URLSearchParams(window.location.search);
+const brandName = (urlParams.get("brand") || "").toLowerCase();
 
-const params = new URLSearchParams(location.search)
-let brand = params.get("brand") || "Padron"
+const brandTitle = document.querySelector(".brand-title");
+const cigarList = document.querySelector(".brand-list");
+const searchInput = document.querySelector(".brand-search input");
 
-const list = document.getElementById("brand-list")
-const searchInput = document.getElementById("brand-search")
-const title = document.getElementById("brand-title")
-const icon = document.getElementById("brand-icon-img")
+let cigars = [];
+let filtered = [];
 
-title.textContent = brand
-icon.src = `/img/icons/brands/${brand.toLowerCase()}.svg`
+async function loadCigars(){
 
-let cigars = []
+const res = await fetch("/data/cigars.json");
+cigars = await res.json();
 
-async function load() {
-
-const res = await fetch(SHEET_URL)
-const text = await res.text()
-
-const rows = text.split("\n").map(r => r.split(","))
-
-const headers = rows.shift()
-
-const data = rows.map(row => {
-
-let obj = {}
-
-headers.forEach((h,i)=>{
-obj[h.trim()] = row[i]
-})
-
-return obj
-
-})
-
-cigars = data.filter(c => c.brand === brand)
-
-if (!cigars.length) {
-
-list.innerHTML =
-`<div style="padding:20px;opacity:.6">No cigars found for ${brand}</div>`
-
-return
+render();
 
 }
 
-render(cigars)
+function render(){
 
+filtered = cigars.filter(c =>
+(c.brand || "").toLowerCase() === brandName
+);
+
+const search = searchInput.value?.toLowerCase() || "";
+
+if(search){
+filtered = filtered.filter(c =>
+c.name.toLowerCase().includes(search)
+);
 }
 
-function render(rows){
+if(filtered.length === 0){
 
-list.innerHTML=""
+cigarList.innerHTML =
+`<div style="opacity:.6;font-size:18px">
+No cigars found for ${brandName.charAt(0).toUpperCase()+brandName.slice(1)}
+</div>`;
 
-rows.forEach(c=>{
+return;
+}
 
-const row=document.createElement("div")
-row.className="brand-row"
+cigarList.innerHTML = filtered.map(c => `
+<div class="brand-row">
 
-row.innerHTML=`
-<img src="/img/icons/brands/${brand.toLowerCase()}.svg">
+<img src="${c.icon}" />
 
 <div class="brand-row-main">
 
-<div class="brand-row-title">${c.cigar}</div>
-<div class="brand-row-sub">${c.vitola}</div>
+<div class="brand-row-title"
+onclick="openCigar('${c.id}')">
+${c.name}
+</div>
+
+<div class="brand-row-sub">
+${c.vitola}
+</div>
 
 </div>
 
 <div class="brand-row-right">
 
-<div class="brand-row-price">${c.msrp}</div>
+<div class="brand-row-price">
+${c.price.toFixed(2)}
+</div>
 
-<button class="pos-add">+</button>
+<div class="pos-add"
+onclick="addToInvoice('${c.id}')">
++
+</div>
 
 </div>
-`
-
-row.querySelector(".brand-row-title").onclick=()=>{
-openSheet(c)
-}
-
-list.appendChild(row)
-
-})
-
-}
-
-function openSheet(c){
-
-let sheet=document.getElementById("cigar-sheet")
-
-if(!sheet){
-
-sheet=document.createElement("div")
-sheet.id="cigar-sheet"
-
-sheet.innerHTML=`
-
-<div class="sheet-backdrop"></div>
-
-<div class="sheet">
-
-<div class="sheet-handle"></div>
-
-<div id="sheet-content"></div>
 
 </div>
-`
-
-document.body.appendChild(sheet)
-
-sheet.querySelector(".sheet-backdrop").onclick=closeSheet
+`).join("");
 
 }
 
-const content=document.getElementById("sheet-content")
+function openCigar(id){
 
-content.innerHTML=`
+const cigar = cigars.find(c => c.id === id);
 
-<img src="${c.image || ""}" class="sheet-stick">
+const sheet = document.getElementById("cigar-sheet");
 
-<h2>${c.cigar}</h2>
+sheet.querySelector(".sheet-title").innerText = cigar.name;
+sheet.querySelector(".sheet-stick").src = cigar.image;
 
-<div class="sheet-spec">
-<span>Ring</span>
-<span>${c.ring}</span>
-</div>
-
-<div class="sheet-spec">
-<span>Length</span>
-<span>${c.length}</span>
-</div>
-
-<div class="sheet-spec">
-<span>Shape</span>
-<span>${c.shape}</span>
-</div>
-
-<div class="sheet-spec">
-<span>Wrapper</span>
-<span>${c.wrapper}</span>
-</div>
-
-<div class="sheet-actions">
-
-<button class="sheet-btn">Add</button>
-<button class="sheet-btn">Edit</button>
-<button class="sheet-btn">Compare</button>
-
-</div>
-
-`
-
-sheet.classList.add("show")
+sheet.classList.add("show");
 
 }
 
 function closeSheet(){
 
-document.getElementById("cigar-sheet").classList.remove("show")
+document.getElementById("cigar-sheet").classList.remove("show");
 
 }
 
-searchInput.addEventListener("input",e=>{
+searchInput.addEventListener("input", render);
 
-const q=e.target.value.toLowerCase()
-
-render(
-cigars.filter(c=>
-(c.cigar||"").toLowerCase().includes(q)
-)
-)
-
-})
-
-load()
+loadCigars();
