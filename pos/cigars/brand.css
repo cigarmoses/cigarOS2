@@ -310,8 +310,8 @@ html[data-theme="light"] .moon-knob::before{
   position:absolute;
   top:50%;
   left:2px;
-  width:28px;
-  height:28px;
+  width:22px;
+  height:22px;
   border-radius:999px;
   background:#4778e4;
   transform:translateY(-50%);
@@ -319,9 +319,9 @@ html[data-theme="light"] .moon-knob::before{
   transition:left .18s ease;
 }
 
-.seg[data-state="natural"] .seg-switch::after{left:26px}
+.seg[data-state="natural"] .seg-switch::after{left:30px}
 .seg[data-state="maduro"] .seg-switch::after{left:2px}
-.seg[data-state="all"] .seg-switch::after{left:14px}
+.seg[data-state="all"] .seg-switch::after{left:16px}
 
 .brand-list{padding:8px 2px 0}
 
