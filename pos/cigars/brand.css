@@ -296,20 +296,28 @@ html[data-theme="light"] .moon-knob{
 .seg[data-state="all"] .seg-switch::after{left:20px}
 
 .brand-list{padding:8px 2px 0}
+
 .brand-row{
   display:flex;
   align-items:center;
-  gap:12px;
-  padding:16px 14px;
-  border-radius:22px;
-  border:1px solid var(--glassBorder);
-  background:var(--glass2);
-  box-shadow:var(--shadowSoft);
-  margin-bottom:12px;
+  gap:14px;
+  padding:20px 4px;
+
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
+
+html[data-theme="light"] .brand-row{
+  border-bottom:1px solid rgba(0,0,0,.08);
+}
+
 .row-ico{
-  width:52px;
-  height:52px;
+  width:46px;
+  height:46px;
   border-radius:14px;
   object-fit:contain;
   background:transparent !important;
