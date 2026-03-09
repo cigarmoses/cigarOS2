@@ -1,6 +1,7 @@
-const brandName=new URLSearchParams(location.search).get("brand")
+const brand=new URLSearchParams(location.search).get("brand")
 
 const list=document.getElementById("brand-list")
+const search=document.getElementById("brand-search")
 
 let cigars=[]
 
@@ -9,7 +10,7 @@ async function load(){
 const res=await fetch("/data/cigars.json")
 const data=await res.json()
 
-cigars=data.filter(c=>c.brand===brandName)
+cigars=data.filter(c=>c.brand===brand)
 
 render(cigars)
 
@@ -25,7 +26,7 @@ const row=document.createElement("div")
 row.className="brand-row"
 
 row.innerHTML=`
-<img src="/img/icons/brands/${c.brand.toLowerCase()}.svg">
+<img src="/img/icons/brands/${brand.toLowerCase()}.svg">
 
 <div class="brand-row-main">
 
@@ -55,33 +56,38 @@ list.appendChild(row)
 
 function openCigar(c){
 
-const modal=document.createElement("div")
+const modal=document.getElementById("cigar-modal")
+const card=document.getElementById("cigar-modal-card")
 
-modal.className="cigar-modal"
+card.innerHTML=`
 
-modal.innerHTML=`
+<img src="${c.image}" style="width:100%">
 
-<div class="cigar-modal-card">
-
-<img src="${c.image}" class="cigar-stick">
-
-<div class="cigar-specs">
+<h2>${c.name}</h2>
 
 <div>Ring ${c.ring}</div>
 <div>Length ${c.length}</div>
 <div>${c.shape}</div>
 <div>${c.wrapper}</div>
 
-</div>
-
-<button onclick="this.closest('.cigar-modal').remove()">Close</button>
-
-</div>
+<button onclick="closeCigar()">Close</button>
 
 `
 
-document.body.appendChild(modal)
+modal.classList.add("show")
 
+}
+
+function closeCigar(){
+document.getElementById("cigar-modal").classList.remove("show")
+}
+
+search.oninput=()=>{
+const q=search.value.toLowerCase()
+
+render(
+cigars.filter(c=>c.name.toLowerCase().includes(q))
+)
 }
 
 load()
