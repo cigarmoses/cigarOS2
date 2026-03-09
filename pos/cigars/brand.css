@@ -86,10 +86,14 @@ html[data-theme="light"] .moon-toggle{
   border-color:rgba(0,0,0,.10);
 }
 
-/* hide anything extra inside the track */
+/* hide anything extra inside the toggle */
 .moon-track,
 .moon-track svg,
-.moon-track img{
+.moon-track img,
+.moon-icon,
+.moon-toggle__icon,
+.moon-knob svg,
+.moon-knob img{
   display:none !important;
 }
 
@@ -117,8 +121,8 @@ html[data-theme="light"] .moon-knob{
 
 .moon-knob::before{
   content:"";
-  width:18px;
-  height:18px;
+  width:20px;
+  height:20px;
   background:url("/img/icons/moon.svg") center/contain no-repeat;
 }
 
