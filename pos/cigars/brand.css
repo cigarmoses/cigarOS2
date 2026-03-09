@@ -96,11 +96,9 @@ html[data-theme="light"] .moon-toggle{
   left:3px;
   width:26px;
   height:26px;
-  border-radius:50%;
-  background:#05070b;
-  box-shadow:0 8px 16px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.05);
+  background:transparent;
+  box-shadow:none;
   transition:transform .22s ease;
-
   display:flex;
   align-items:center;
   justify-content:center;
@@ -239,7 +237,7 @@ html[data-theme="light"] .moon-knob::before{
   border:1px solid var(--glassBorder);
   background:var(--glass2);
   box-shadow:var(--shadowSoft);
-  color:var(--ink);
+  color:var(--muted2);
   font-family:var(--font-display);
   font-size:15px;
   font-weight:600;
@@ -256,9 +254,9 @@ html[data-theme="light"] .moon-knob::before{
   box-shadow:var(--shadowSoft);
   display:flex;
   align-items:center;
-  justify-content:flex-start;
+  justify-content:center;
   padding:0 12px;
-  gap:12px;
+  gap:10px;
 }
 
 .seg-btn{
@@ -266,10 +264,13 @@ html[data-theme="light"] .moon-knob::before{
   background:transparent;
   color:var(--muted2);
   font-family:var(--font-display);
-  font-size:16px;
-  font-weight:400;
+  font-size:15px;
+  font-weight:600;
   cursor:pointer;
+  padding:0;
+  white-space:nowrap;
 }
+
 .seg-btn.is-on{color:#e8eefc}
 .seg-switch{
   width:58px;
@@ -281,22 +282,19 @@ html[data-theme="light"] .moon-knob::before{
   cursor:pointer;
   flex:0 0 auto;
 }
-.seg-switch::after{
-  content:"";
-  width:32px;
+.seg-switch{
+  width:56px;
   height:32px;
   border-radius:999px;
-  background:#2f6fe4;
-  position:absolute;
-  top:50%;
-  left:2px;
-  transform:translateY(-50%);
-  transition:left .18s ease;
-  box-shadow:0 10px 16px rgba(0,0,0,.22);
+  border:1px solid var(--glassBorder);
+  background:rgba(47,111,228,.22);
+  position:relative;
+  cursor:pointer;
+  flex:0 0 auto;
 }
-.seg[data-state="natural"] .seg-switch::after{left:38px}
+.seg[data-state="natural"] .seg-switch::after{left:32px}
 .seg[data-state="maduro"] .seg-switch::after{left:2px}
-.seg[data-state="all"] .seg-switch::after{left:20px}
+.seg[data-state="all"] .seg-switch::after{left:17px}
 
 .brand-list{padding:8px 2px 0}
 
@@ -817,6 +815,7 @@ html[data-theme="light"] .brand-row{
   
 .seg{
   width:auto;
+  min-width:0;
   height:46px;
   border-radius:18px;
   border:1px solid var(--glassBorder);
@@ -824,8 +823,9 @@ html[data-theme="light"] .brand-row{
   box-shadow:var(--shadowSoft);
   display:flex;
   align-items:center;
-  padding:0 16px;
-  gap:16px;
+  justify-content:center;
+  padding:0 10px;
+  gap:8px;
 }
   .fm__body{grid-template-columns:1fr}
   .fm__left{
