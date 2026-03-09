@@ -197,13 +197,32 @@
     return getField(r, ["image", "img", "photo", "cigar_image"]);
   }
 
-  function resolveBand(r){
-    return getField(r, ["band", "band_key", "band_group", "band_name"]);
-  }
+function resolveBand(r){
+  return getField(r, ["band", "band_key", "band_group", "band_name"]);
+}
 
-  function resolveBandArt(r){
-    return getField(r, ["band_art", "band_image", "band_img", "band_art_url", "band_url"]);
-  }
+function resolveBandArt(r){
+  const direct = getField(r, [
+    "band_art",
+    "band_image",
+    "band_img",
+    "band_art_url",
+    "band_url"
+  ]);
+  if (direct) return direct;
+
+  if (normalizeBrand(state.brand) !== "padron") return "";
+
+  const name = (resolveName(r) + " " + resolveVitola(r) + " " + resolveShade(r)).toLowerCase();
+
+  if (name.includes("1926")) return "/img/icons/padron1926serieband.svg";
+  if (name.includes("1964") || name.includes("anniversary")) return "/img/icons/padron1964anniversaryband.svg";
+  if (name.includes("black")) return "/img/icons/padronblackseriesband.svg";
+  if (name.includes("damaso")) return "/img/icons/padrondamasoband.svg";
+  if (name.includes("family reserve")) return "/img/icons/padronfamilyreserveband.svg";
+
+  return "/img/icons/padronseriesband.svg";
+}
 
   function brandIconPath(){
     return `/img/icons/brands/${normalizeBrand(state.brand)}.svg`;
