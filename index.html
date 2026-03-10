@@ -9,15 +9,14 @@
 
   <style>
     :root{
-      --bg:#020611;
-      --bg2:#061120;
-      --ink:#eef5ff;
-      --muted:rgba(222,236,255,.78);
-      --tile-size:140px;
-      --icon-size:140px;
-      --label-size:17px;
-      --grid-gap-x:26px;
-      --grid-gap-y:24px;
+      --tile-size: 140px;
+      --icon-size: 140px;
+      --label-size: 17px;
+      --grid-gap-x: 26px;
+      --grid-gap-y: 24px;
+      --logo-size: 72px;
+      --max-width: 420px;
+      --radius: 28px;
     }
 
     *{ box-sizing:border-box; }
@@ -28,10 +27,6 @@
     }
 
     body{
-      background:
-        radial-gradient(1200px 700px at 50% -10%, #0a1c38 0%, rgba(10,28,56,0) 55%),
-        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 42%, #000 100%);
-      color:var(--ink);
       font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
       display:flex;
       justify-content:flex-start;
@@ -40,21 +35,65 @@
       padding:28px 20px 42px;
       -webkit-font-smoothing:antialiased;
       text-rendering:optimizeLegibility;
+      transition: background .25s ease, color .25s ease;
+    }
+
+    /* =========================
+       DARK MODE
+    ========================== */
+    body{
+      --bg-top: #0a1730;
+      --bg-mid: #050c18;
+      --bg-bottom: #000000;
+      --ink: #eef5ff;
+      --muted: rgba(226,237,255,.82);
+      --label-shadow: 0 1px 0 rgba(0,0,0,.35);
+      --logo-filter: drop-shadow(0 10px 24px rgba(60,120,255,.10));
+      background:
+        radial-gradient(1200px 700px at 50% -10%, var(--bg-top) 0%, rgba(10,23,48,0) 55%),
+        linear-gradient(180deg, #091325 0%, var(--bg-mid) 38%, var(--bg-bottom) 100%);
+      color: var(--ink);
+    }
+
+    /* =========================
+       LIGHT / DAY MODE
+    ========================== */
+    @media (prefers-color-scheme: light){
+      body{
+        --bg-top: #f8fbff;
+        --bg-mid: #eef4f9;
+        --bg-bottom: #e7eef5;
+        --ink: #102038;
+        --muted: rgba(16,32,56,.78);
+        --label-shadow: 0 1px 0 rgba(255,255,255,.65);
+        --logo-filter: drop-shadow(0 8px 18px rgba(90,120,170,.08));
+        background:
+          radial-gradient(1200px 700px at 50% -10%, #ffffff 0%, rgba(255,255,255,0) 58%),
+          linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 44%, var(--bg-bottom) 100%);
+        color: var(--ink);
+      }
+
+      .home-item img{
+        filter:
+          drop-shadow(0 10px 20px rgba(84,112,160,.08))
+          drop-shadow(0 2px 6px rgba(255,255,255,.65));
+      }
     }
 
     .home-shell{
       width:100%;
-      max-width:420px;
+      max-width:var(--max-width);
       display:flex;
       flex-direction:column;
       align-items:center;
     }
 
     .shop-logo{
-      width:72px;
+      width:var(--logo-size);
       height:auto;
       margin:8px 0 26px;
       display:block;
+      filter: var(--logo-filter);
     }
 
     .home-grid{
@@ -76,12 +115,12 @@
       text-decoration:none;
       color:var(--ink);
       -webkit-tap-highlight-color:transparent;
-      transition:transform .16s ease, opacity .16s ease;
+      transition:transform .16s ease, opacity .16s ease, filter .16s ease;
     }
 
     .home-item:active{
-      transform:scale(.98);
-      opacity:.96;
+      transform:scale(.985);
+      opacity:.97;
     }
 
     .home-item img{
@@ -105,14 +144,16 @@
       letter-spacing:-0.02em;
       color:var(--muted);
       text-align:center;
+      text-shadow: var(--label-shadow);
     }
 
     @media (max-width:390px){
       :root{
-        --icon-size:128px;
-        --label-size:16px;
-        --grid-gap-x:18px;
-        --grid-gap-y:20px;
+        --icon-size: 128px;
+        --label-size: 16px;
+        --grid-gap-x: 18px;
+        --grid-gap-y: 20px;
+        --logo-size: 66px;
       }
 
       body{
@@ -121,7 +162,6 @@
       }
 
       .shop-logo{
-        width:66px;
         margin-bottom:22px;
       }
     }
