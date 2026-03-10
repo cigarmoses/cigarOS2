@@ -5,79 +5,175 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CigarOS</title>
 
-  <!-- SF Pro Display rules live here -->
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
     :root{
-      --bg:#eaf2f6;
-      --ink:#0f1a2c;
-      --muted:#607080;
+      --bg:#020611;
+      --bg2:#061120;
+      --ink:#eef5ff;
+      --muted:rgba(222,236,255,.78);
+      --tile-size:140px;
+      --icon-size:140px;
+      --label-size:17px;
+      --grid-gap-x:26px;
+      --grid-gap-y:24px;
     }
-    body{
+
+    *{ box-sizing:border-box; }
+
+    html, body{
       margin:0;
-      background:var(--bg);
-      font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display","SF Pro Text", system-ui, sans-serif;
+      min-height:100%;
+    }
+
+    body{
+      background:
+        radial-gradient(1200px 700px at 50% -10%, #0a1c38 0%, rgba(10,28,56,0) 55%),
+        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 42%, #000 100%);
+      color:var(--ink);
+      font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+      display:flex;
+      justify-content:flex-start;
+      align-items:center;
+      flex-direction:column;
+      padding:28px 20px 42px;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    .home-shell{
+      width:100%;
+      max-width:420px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .shop-logo{
+      width:72px;
+      height:auto;
+      margin:8px 0 26px;
+      display:block;
+    }
+
+    .home-grid{
+      width:100%;
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:var(--grid-gap-y) var(--grid-gap-x);
+      justify-items:center;
+      align-items:start;
+      padding-bottom:24px;
+    }
+
+    .home-item{
+      width:100%;
       display:flex;
       flex-direction:column;
       align-items:center;
       justify-content:flex-start;
-      min-height:100vh;
-      padding-top:28px;
+      text-decoration:none;
+      color:var(--ink);
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .16s ease, opacity .16s ease;
     }
 
-    .shop-logo{
-      width:64px;
-      height:auto;
-      margin-bottom:24px;
+    .home-item:active{
+      transform:scale(.98);
+      opacity:.96;
     }
 
-    .home-grid{
-      display:grid;
-      grid-template-columns:repeat(2, 1fr);
-      gap:28px 36px;
-      justify-items:center;
-      margin-top:24px;
-      padding-bottom:36px;
-    }
-
-    .icon-tile{
-      width:140px;
-      height:140px;
-      background:#fff;
-      border-radius:124px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      box-shadow:0 2px 6px rgba(0,0,0,.10);
-      transition:transform .15s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .icon-tile:active{ transform:scale(.98); }
-
-    .icon-tile img{
-      width:80px;
-      height:80px;
+    .home-item img{
+      width:var(--icon-size);
+      height:var(--icon-size);
       object-fit:contain;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
+      filter:
+        drop-shadow(0 8px 18px rgba(25,120,255,.08))
+        drop-shadow(0 2px 8px rgba(255,255,255,.03));
+    }
+
+    .home-item span{
+      display:block;
+      margin-top:10px;
+      font-size:var(--label-size);
+      line-height:1.15;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    @media (max-width:390px){
+      :root{
+        --icon-size:128px;
+        --label-size:16px;
+        --grid-gap-x:18px;
+        --grid-gap-y:20px;
+      }
+
+      body{
+        padding-left:16px;
+        padding-right:16px;
+      }
+
+      .shop-logo{
+        width:66px;
+        margin-bottom:22px;
+      }
     }
   </style>
 </head>
 
 <body>
-  <img src="/img/homescreenlogo.svg" alt="CigarOS" class="shop-logo" />
+  <main class="home-shell">
+    <img src="/img/homescreenlogo.svg" alt="CigarOS" class="shop-logo" />
 
-  <div class="home-grid">
-    <a href="/pos/" class="icon-tile"><img src="/img/icons/pos.svg" alt="POS"></a>
-    <a href="/today/" class="icon-tile"><img src="/img/icons/today.svg" alt="Today"></a>
-    <a href="/loyalty/" class="icon-tile"><img src="/img/icons/loyalty.svg" alt="Loyalty"></a>
-    <a href="/hub/" class="icon-tile"><img src="/img/icons/hub.svg" alt="Hub"></a>
-    <a href="/reports/" class="icon-tile"><img src="/img/icons/reports.svg" alt="Reports"></a>
-    <a href="/learn/" class="icon-tile"><img src="/img/icons/learn.svg" alt="Learn"></a>
-    <a href="/news/" class="icon-tile"><img src="/img/icons/news.svg" alt="News"></a>
+    <section class="home-grid" aria-label="CigarOS Home">
+      <a href="/pos/" class="home-item">
+        <img src="/img/icons/glass/pos.png" alt="POS" />
+        <span>POS</span>
+      </a>
 
-    <!-- ✅ NEW: Shops (PNG is fine) -->
-    <a href="/shops/" class="icon-tile"><img src="/img/icons/shops.png" alt="Shops"></a>
-  </div>
+      <a href="/today/" class="home-item">
+        <img src="/img/icons/glass/today.png" alt="Today" />
+        <span>Today</span>
+      </a>
+
+      <a href="/loyalty/" class="home-item">
+        <img src="/img/icons/glass/loyalty.png" alt="Loyalty" />
+        <span>Loyalty</span>
+      </a>
+
+      <a href="/inventory/" class="home-item">
+        <img src="/img/icons/glass/inventory.png" alt="Inventory" />
+        <span>Inventory</span>
+      </a>
+
+      <a href="/reports/" class="home-item">
+        <img src="/img/icons/glass/reports.png" alt="Reports" />
+        <span>Reports</span>
+      </a>
+
+      <a href="/learn/" class="home-item">
+        <img src="/img/icons/glass/learn.png" alt="Learn" />
+        <span>Learn</span>
+      </a>
+
+      <a href="/news/" class="home-item">
+        <img src="/img/icons/glass/news.png" alt="News" />
+        <span>News</span>
+      </a>
+
+      <a href="/social/" class="home-item">
+        <img src="/img/icons/glass/messages.png" alt="Cigar Social" />
+        <span>Cigar Social</span>
+      </a>
+    </section>
+  </main>
 
   <script src="/js/global.js" defer></script>
 </body>
