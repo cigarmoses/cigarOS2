@@ -15,28 +15,28 @@
       --screen-max: 430px;
 
       --bg: #edf2f6;
-      --panel-bg: rgba(255,255,255,.18);
+      --panel-bg: rgba(255,255,255,.16);
       --ink: #16263d;
-      --muted: #4f6179;
+      --muted: #4d5f77;
 
       --toggle-bg: rgba(196,206,217,.95);
       --toggle-dot: #ffffff;
       --toggle-icon: #0f172a;
       --toggle-shadow: 0 6px 16px rgba(61,81,105,.16);
 
-      --logo-w: 92px;
+      --logo-w: 88px;
 
-      --tile-size: 108px;
-      --grid-gap-x: 34px;
-      --grid-gap-y: 14px;
+      --tile-size: 140px;
+      --grid-gap-x: 28px;
+      --grid-gap-y: 10px;
 
-      --label-size: 14px;
+      --label-size: 15px;
       --label-weight: 700;
 
       --panel-radius: 24px;
-      --panel-pad-top: 14px;
-      --panel-pad-x: 18px;
-      --panel-pad-bottom: 18px;
+      --panel-pad-top: 8px;
+      --panel-pad-x: 16px;
+      --panel-pad-bottom: 12px;
     }
 
     body.dark{
@@ -66,7 +66,8 @@
       font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: hidden;
       transition: background .25s ease, color .25s ease;
     }
 
@@ -78,13 +79,13 @@
       padding:
         calc(var(--safe-top) + 8px)
         14px
-        calc(var(--safe-bottom) + 68px);
+        calc(var(--safe-bottom) + 62px);
       display:flex;
       flex-direction:column;
       align-items:center;
       justify-content:flex-start;
-      position:relative;
       gap:10px;
+      position:relative;
     }
 
     .topbar{
@@ -93,7 +94,7 @@
       justify-content:flex-end;
       align-items:center;
       min-height:34px;
-      margin-bottom:6px;
+      margin-bottom:4px;
       padding-right:2px;
     }
 
@@ -245,41 +246,8 @@
     }
 
     @media (max-height: 860px){
-      :root{
-        --logo-w: 84px;
-        --tile-size: 102px;
-        --grid-gap-x: 30px;
-        --grid-gap-y: 12px;
-        --label-size: 13px;
-        --panel-pad-top: 12px;
-      }
-
       .screen{
-        padding-bottom: calc(var(--safe-bottom) + 64px);
-      }
-    }
-
-    @media (max-height: 780px){
-      :root{
-        --logo-w: 76px;
-        --tile-size: 94px;
-        --grid-gap-x: 26px;
-        --grid-gap-y: 10px;
-        --label-size: 12px;
-        --panel-pad-top: 10px;
-        --panel-pad-x: 14px;
-        --panel-pad-bottom: 14px;
-      }
-
-      .screen{
-        padding-left: 12px;
-        padding-right: 12px;
         padding-bottom: calc(var(--safe-bottom) + 58px);
-        gap:8px;
-      }
-
-      .icon-label{
-        margin-top:3px;
       }
     }
 
