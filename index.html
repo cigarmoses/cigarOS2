@@ -1,220 +1,211 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>CigarOS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>CigarOS</title>
 
-  <link rel="stylesheet" href="/css/type.css" />
+<link rel="stylesheet" href="/css/type.css" />
 
-  <style>
-    :root{
-      --tile-size: 140px;
-      --icon-size: 140px;
-      --label-size: 17px;
-      --grid-gap-x: 26px;
-      --grid-gap-y: 24px;
-      --logo-size: 72px;
-      --max-width: 420px;
-      --radius: 28px;
-    }
+<style>
 
-    *{ box-sizing:border-box; }
+:root{
+  --bg:#eaf2f6;
+  --ink:#0f1a2c;
+  --muted:#607080;
+}
 
-    html, body{
-      margin:0;
-      min-height:100%;
-    }
+body.dark{
+  --bg:#020617;
+  --ink:#ffffff;
+  --muted:#8ca0b5;
+}
 
-    body{
-      font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
-      display:flex;
-      justify-content:flex-start;
-      align-items:center;
-      flex-direction:column;
-      padding:28px 20px 42px;
-      -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
-      transition: background .25s ease, color .25s ease;
-    }
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-display), -apple-system, BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
 
-    /* =========================
-       DARK MODE
-    ========================== */
-    body{
-      --bg-top: #0a1730;
-      --bg-mid: #050c18;
-      --bg-bottom: #000000;
-      --ink: #eef5ff;
-      --muted: rgba(226,237,255,.82);
-      --label-shadow: 0 1px 0 rgba(0,0,0,.35);
-      --logo-filter: drop-shadow(0 10px 24px rgba(60,120,255,.10));
-      background:
-        radial-gradient(1200px 700px at 50% -10%, var(--bg-top) 0%, rgba(10,23,48,0) 55%),
-        linear-gradient(180deg, #091325 0%, var(--bg-mid) 38%, var(--bg-bottom) 100%);
-      color: var(--ink);
-    }
+  display:flex;
+  flex-direction:column;
+  align-items:center;
 
-    /* =========================
-       LIGHT / DAY MODE
-    ========================== */
-    @media (prefers-color-scheme: light){
-      body{
-        --bg-top: #f8fbff;
-        --bg-mid: #eef4f9;
-        --bg-bottom: #e7eef5;
-        --ink: #102038;
-        --muted: rgba(16,32,56,.78);
-        --label-shadow: 0 1px 0 rgba(255,255,255,.65);
-        --logo-filter: drop-shadow(0 8px 18px rgba(90,120,170,.08));
-        background:
-          radial-gradient(1200px 700px at 50% -10%, #ffffff 0%, rgba(255,255,255,0) 58%),
-          linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 44%, var(--bg-bottom) 100%);
-        color: var(--ink);
-      }
+  height:100vh;
+  overflow:hidden;
+}
 
-      .home-item img{
-        filter:
-          drop-shadow(0 10px 20px rgba(84,112,160,.08))
-          drop-shadow(0 2px 6px rgba(255,255,255,.65));
-      }
-    }
+/* top bar */
 
-    .home-shell{
-      width:100%;
-      max-width:var(--max-width);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-    }
+.topbar{
+  width:100%;
+  display:flex;
+  justify-content:flex-start;
+  padding:16px 18px 0 18px;
+}
 
-    .shop-logo{
-      width:var(--logo-size);
-      height:auto;
-      margin:8px 0 26px;
-      display:block;
-      filter: var(--logo-filter);
-    }
+.theme-toggle{
+  width:42px;
+  height:26px;
+  border-radius:20px;
+  background:#d5dde4;
+  position:relative;
+  cursor:pointer;
+  transition:.25s;
+}
 
-    .home-grid{
-      width:100%;
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-      gap:var(--grid-gap-y) var(--grid-gap-x);
-      justify-items:center;
-      align-items:start;
-      padding-bottom:24px;
-    }
+body.dark .theme-toggle{
+  background:#1c2c44;
+}
 
-    .home-item{
-      width:100%;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:flex-start;
-      text-decoration:none;
-      color:var(--ink);
-      -webkit-tap-highlight-color:transparent;
-      transition:transform .16s ease, opacity .16s ease, filter .16s ease;
-    }
+.toggle-dot{
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:white;
+  position:absolute;
+  top:3px;
+  left:3px;
+  transition:.25s;
+}
 
-    .home-item:active{
-      transform:scale(.985);
-      opacity:.97;
-    }
+body.dark .toggle-dot{
+  left:19px;
+  background:#0b1f3f;
+}
 
-    .home-item img{
-      width:var(--icon-size);
-      height:var(--icon-size);
-      object-fit:contain;
-      display:block;
-      user-select:none;
-      -webkit-user-drag:none;
-      filter:
-        drop-shadow(0 8px 18px rgba(25,120,255,.08))
-        drop-shadow(0 2px 8px rgba(255,255,255,.03));
-    }
+/* logo */
 
-    .home-item span{
-      display:block;
-      margin-top:10px;
-      font-size:var(--label-size);
-      line-height:1.15;
-      font-weight:600;
-      letter-spacing:-0.02em;
-      color:var(--muted);
-      text-align:center;
-      text-shadow: var(--label-shadow);
-    }
+.shop-logo{
+  width:70px;
+  margin-top:4px;
+  margin-bottom:10px;
+}
 
-    @media (max-width:390px){
-      :root{
-        --icon-size: 128px;
-        --label-size: 16px;
-        --grid-gap-x: 18px;
-        --grid-gap-y: 20px;
-        --logo-size: 66px;
-      }
+/* grid */
 
-      body{
-        padding-left:16px;
-        padding-right:16px;
-      }
+.home-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px 34px;
+  justify-items:center;
+}
 
-      .shop-logo{
-        margin-bottom:22px;
-      }
-    }
-  </style>
+/* icon tile */
+
+.icon-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.icon-tile{
+  width:118px;
+  height:118px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.15s;
+}
+
+.icon-tile:active{
+  transform:scale(.95);
+}
+
+.icon-tile img{
+  width:118px;
+  height:118px;
+}
+
+/* labels */
+
+.icon-label{
+  margin-top:8px;
+  font-size:17px;
+  font-weight:600;
+  color:var(--muted);
+}
+
+</style>
 </head>
 
 <body>
-  <main class="home-shell">
-    <img src="/img/homescreenlogo.svg" alt="CigarOS" class="shop-logo" />
 
-    <section class="home-grid" aria-label="CigarOS Home">
-      <a href="/pos/" class="home-item">
-        <img src="/img/icons/glass/pos.png" alt="POS" />
-        <span>POS</span>
-      </a>
+<div class="topbar">
+  <div class="theme-toggle" onclick="toggleTheme()">
+    <div class="toggle-dot"></div>
+  </div>
+</div>
 
-      <a href="/today/" class="home-item">
-        <img src="/img/icons/glass/today.png" alt="Today" />
-        <span>Today</span>
-      </a>
+<img src="/img/homescreenlogo.svg" class="shop-logo">
 
-      <a href="/loyalty/" class="home-item">
-        <img src="/img/icons/glass/loyalty.png" alt="Loyalty" />
-        <span>Loyalty</span>
-      </a>
+<div class="home-grid">
 
-      <a href="/inventory/" class="home-item">
-        <img src="/img/icons/glass/inventory.png" alt="Inventory" />
-        <span>Inventory</span>
-      </a>
+<div class="icon-wrap">
+<a href="/pos/" class="icon-tile">
+<img src="/img/icons/glass/pos.png">
+</a>
+<div class="icon-label">POS</div>
+</div>
 
-      <a href="/reports/" class="home-item">
-        <img src="/img/icons/glass/reports.png" alt="Reports" />
-        <span>Reports</span>
-      </a>
+<div class="icon-wrap">
+<a href="/today/" class="icon-tile">
+<img src="/img/icons/glass/today.png">
+</a>
+<div class="icon-label">Today</div>
+</div>
 
-      <a href="/learn/" class="home-item">
-        <img src="/img/icons/glass/learn.png" alt="Learn" />
-        <span>Learn</span>
-      </a>
+<div class="icon-wrap">
+<a href="/loyalty/" class="icon-tile">
+<img src="/img/icons/glass/loyalty.png">
+</a>
+<div class="icon-label">Loyalty</div>
+</div>
 
-      <a href="/news/" class="home-item">
-        <img src="/img/icons/glass/news.png" alt="News" />
-        <span>News</span>
-      </a>
+<div class="icon-wrap">
+<a href="/inventory/" class="icon-tile">
+<img src="/img/icons/glass/inventory.png">
+</a>
+<div class="icon-label">Inventory</div>
+</div>
 
-      <a href="/social/" class="home-item">
-        <img src="/img/icons/glass/messages.png" alt="Cigar Social" />
-        <span>Cigar Social</span>
-      </a>
-    </section>
-  </main>
+<div class="icon-wrap">
+<a href="/reports/" class="icon-tile">
+<img src="/img/icons/glass/reports.png">
+</a>
+<div class="icon-label">Reports</div>
+</div>
 
-  <script src="/js/global.js" defer></script>
+<div class="icon-wrap">
+<a href="/learn/" class="icon-tile">
+<img src="/img/icons/glass/learn.png">
+</a>
+<div class="icon-label">Learn</div>
+</div>
+
+<div class="icon-wrap">
+<a href="/news/" class="icon-tile">
+<img src="/img/icons/glass/news.png">
+</a>
+<div class="icon-label">News</div>
+</div>
+
+<div class="icon-wrap">
+<a href="/social/" class="icon-tile">
+<img src="/img/icons/glass/messages.png">
+</a>
+<div class="icon-label">Cigar Social</div>
+</div>
+
+</div>
+
+<script>
+
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+}
+
+</script>
+
 </body>
 </html>
