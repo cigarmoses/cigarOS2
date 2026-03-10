@@ -1,211 +1,354 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>CigarOS</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CigarOS</title>
 
-<link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/css/type.css" />
 
-<style>
+  <style>
+    :root{
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-:root{
-  --bg:#eaf2f6;
-  --ink:#0f1a2c;
-  --muted:#607080;
-}
+      --bg: #eef3f7;
+      --bg-panel: rgba(255,255,255,.22);
+      --ink: #12233b;
+      --muted: #516176;
 
-body.dark{
-  --bg:#020617;
-  --ink:#ffffff;
-  --muted:#8ca0b5;
-}
+      --toggle-bg: rgba(196,206,217,.95);
+      --toggle-dot: #ffffff;
+      --toggle-shadow: 0 6px 16px rgba(61,81,105,.16);
 
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--ink);
-  font-family:var(--font-display), -apple-system, BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
+      --logo-w: 88px;
 
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+      --tile-size: 116px;
+      --tile-gap-x: 30px;
+      --tile-gap-y: 16px;
 
-  height:100vh;
-  overflow:hidden;
-}
+      --label-size: 15px;
+      --label-weight: 700;
 
-/* top bar */
+      --panel-radius: 22px;
+      --panel-pad-x: 18px;
+      --panel-pad-y: 12px;
 
-.topbar{
-  width:100%;
-  display:flex;
-  justify-content:flex-start;
-  padding:16px 18px 0 18px;
-}
+      --screen-max: 430px;
+    }
 
-.theme-toggle{
-  width:42px;
-  height:26px;
-  border-radius:20px;
-  background:#d5dde4;
-  position:relative;
-  cursor:pointer;
-  transition:.25s;
-}
+    body.dark{
+      --bg:
+        radial-gradient(1200px 620px at 50% -10%, #0d1c36 0%, rgba(13,28,54,0) 55%),
+        linear-gradient(180deg, #07111f 0%, #030914 48%, #000000 100%);
+      --bg-panel: rgba(255,255,255,.04);
+      --ink: #f2f7ff;
+      --muted: #aebcd0;
 
-body.dark .theme-toggle{
-  background:#1c2c44;
-}
+      --toggle-bg: rgba(33,50,77,.95);
+      --toggle-dot: #dce9ff;
+      --toggle-shadow: 0 8px 18px rgba(0,0,0,.28);
+    }
 
-.toggle-dot{
-  width:20px;
-  height:20px;
-  border-radius:50%;
-  background:white;
-  position:absolute;
-  top:3px;
-  left:3px;
-  transition:.25s;
-}
+    *{ box-sizing:border-box; }
 
-body.dark .toggle-dot{
-  left:19px;
-  background:#0b1f3f;
-}
+    html, body{
+      margin:0;
+      min-height:100%;
+    }
 
-/* logo */
+    body{
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow: hidden;
+      transition: background .25s ease, color .25s ease;
+    }
 
-.shop-logo{
-  width:70px;
-  margin-top:4px;
-  margin-bottom:10px;
-}
+    .screen{
+      width:100%;
+      max-width: var(--screen-max);
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding:
+        calc(var(--safe-top) + 10px)
+        14px
+        calc(var(--safe-bottom) + 12px);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      gap:8px;
+      position:relative;
+    }
 
-/* grid */
+    .topbar{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      min-height:34px;
+      margin-bottom:2px;
+    }
 
-.home-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:20px 34px;
-  justify-items:center;
-}
+    .theme-toggle{
+      width:48px;
+      height:28px;
+      border:none;
+      border-radius:999px;
+      background: var(--toggle-bg);
+      box-shadow: var(--toggle-shadow);
+      position:relative;
+      cursor:pointer;
+      padding:0;
+      appearance:none;
+      -webkit-appearance:none;
+      transition: background .25s ease, box-shadow .25s ease, transform .15s ease;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
 
-/* icon tile */
+    .theme-toggle:active{
+      transform: scale(.97);
+    }
 
-.icon-wrap{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
+    .theme-toggle-dot{
+      position:absolute;
+      top:3px;
+      left:3px;
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      background: var(--toggle-dot);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.55),
+        0 2px 8px rgba(0,0,0,.18);
+      transition: left .22s ease, background .25s ease, transform .15s ease;
+    }
 
-.icon-tile{
-  width:118px;
-  height:118px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition:.15s;
-}
+    body.dark .theme-toggle-dot{
+      left:23px;
+    }
 
-.icon-tile:active{
-  transform:scale(.95);
-}
+    .shop-logo{
+      width: var(--logo-w);
+      height:auto;
+      display:block;
+      margin: 2px 0 6px;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
 
-.icon-tile img{
-  width:118px;
-  height:118px;
-}
+    .home-panel{
+      width:100%;
+      flex:1;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      background: var(--bg-panel);
+      border-radius: var(--panel-radius);
+      padding: var(--panel-pad-y) var(--panel-pad-x);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background .25s ease;
+      overflow:hidden;
+    }
 
-/* labels */
+    .home-grid{
+      width:100%;
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      justify-items:center;
+      align-content:start;
+      gap: var(--tile-gap-y) var(--tile-gap-x);
+    }
 
-.icon-label{
-  margin-top:8px;
-  font-size:17px;
-  font-weight:600;
-  color:var(--muted);
-}
+    .home-item{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      text-decoration:none;
+      color:var(--ink);
+      -webkit-tap-highlight-color: transparent;
+      transform: translateZ(0);
+      will-change: transform, filter;
+    }
 
-</style>
+    .home-item:active .tile-img{
+      transform: translateY(1px) scale(.965);
+      filter:
+        drop-shadow(0 10px 18px rgba(33,122,255,.10))
+        drop-shadow(0 4px 10px rgba(255,255,255,.03));
+    }
+
+    .tile-img{
+      width: var(--tile-size);
+      height: var(--tile-size);
+      display:block;
+      object-fit:contain;
+      user-select:none;
+      -webkit-user-drag:none;
+      transition: transform .16s ease, filter .18s ease;
+      filter:
+        drop-shadow(0 14px 22px rgba(33,122,255,.08))
+        drop-shadow(0 4px 10px rgba(255,255,255,.025));
+      animation: floatIdle 5.2s ease-in-out infinite;
+    }
+
+    .home-item:nth-child(2) .tile-img{ animation-delay: .25s; }
+    .home-item:nth-child(3) .tile-img{ animation-delay: .45s; }
+    .home-item:nth-child(4) .tile-img{ animation-delay: .65s; }
+    .home-item:nth-child(5) .tile-img{ animation-delay: .2s; }
+    .home-item:nth-child(6) .tile-img{ animation-delay: .5s; }
+    .home-item:nth-child(7) .tile-img{ animation-delay: .75s; }
+    .home-item:nth-child(8) .tile-img{ animation-delay: .35s; }
+
+    .icon-label{
+      margin-top: 6px;
+      font-size: var(--label-size);
+      line-height: 1.05;
+      font-weight: var(--label-weight);
+      letter-spacing: -.03em;
+      color: var(--muted);
+      text-align:center;
+      transition: color .25s ease;
+    }
+
+    @keyframes floatIdle{
+      0%, 100%{ transform: translateY(0); }
+      50%{ transform: translateY(-1.5px); }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .tile-img{
+        animation:none;
+      }
+      .theme-toggle,
+      .theme-toggle-dot,
+      .home-item,
+      .tile-img{
+        transition:none;
+      }
+    }
+
+    /* Slightly shorter phones */
+    @media (max-height: 860px){
+      :root{
+        --logo-w: 78px;
+        --tile-size: 108px;
+        --tile-gap-x: 28px;
+        --tile-gap-y: 12px;
+        --label-size: 14px;
+        --panel-pad-y: 10px;
+      }
+      .shop-logo{
+        margin-bottom: 4px;
+      }
+    }
+
+    /* Very short phones */
+    @media (max-height: 780px){
+      :root{
+        --logo-w: 72px;
+        --tile-size: 98px;
+        --tile-gap-x: 24px;
+        --tile-gap-y: 10px;
+        --label-size: 13px;
+        --panel-pad-x: 14px;
+        --panel-pad-y: 8px;
+      }
+      .screen{
+        gap:6px;
+      }
+      .icon-label{
+        margin-top:4px;
+      }
+    }
+  </style>
 </head>
 
-<body>
+<body class="day">
+  <main class="screen">
+    <div class="topbar">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle day and night mode" type="button">
+        <span class="theme-toggle-dot"></span>
+      </button>
+    </div>
 
-<div class="topbar">
-  <div class="theme-toggle" onclick="toggleTheme()">
-    <div class="toggle-dot"></div>
-  </div>
-</div>
+    <img src="/img/homescreenlogo.svg" alt="CigarOS" class="shop-logo" />
 
-<img src="/img/homescreenlogo.svg" class="shop-logo">
+    <section class="home-panel" aria-label="CigarOS Home">
+      <div class="home-grid">
+        <a href="/pos/" class="home-item">
+          <img src="/img/icons/glass/pos.png" alt="POS" class="tile-img" />
+          <div class="icon-label">POS</div>
+        </a>
 
-<div class="home-grid">
+        <a href="/today/" class="home-item">
+          <img src="/img/icons/glass/today.png" alt="Today" class="tile-img" />
+          <div class="icon-label">Today</div>
+        </a>
 
-<div class="icon-wrap">
-<a href="/pos/" class="icon-tile">
-<img src="/img/icons/glass/pos.png">
-</a>
-<div class="icon-label">POS</div>
-</div>
+        <a href="/loyalty/" class="home-item">
+          <img src="/img/icons/glass/loyalty.png" alt="Loyalty" class="tile-img" />
+          <div class="icon-label">Loyalty</div>
+        </a>
 
-<div class="icon-wrap">
-<a href="/today/" class="icon-tile">
-<img src="/img/icons/glass/today.png">
-</a>
-<div class="icon-label">Today</div>
-</div>
+        <a href="/inventory/" class="home-item">
+          <img src="/img/icons/glass/inventory.png" alt="Inventory" class="tile-img" />
+          <div class="icon-label">Inventory</div>
+        </a>
 
-<div class="icon-wrap">
-<a href="/loyalty/" class="icon-tile">
-<img src="/img/icons/glass/loyalty.png">
-</a>
-<div class="icon-label">Loyalty</div>
-</div>
+        <a href="/reports/" class="home-item">
+          <img src="/img/icons/glass/reports.png" alt="Reports" class="tile-img" />
+          <div class="icon-label">Reports</div>
+        </a>
 
-<div class="icon-wrap">
-<a href="/inventory/" class="icon-tile">
-<img src="/img/icons/glass/inventory.png">
-</a>
-<div class="icon-label">Inventory</div>
-</div>
+        <a href="/learn/" class="home-item">
+          <img src="/img/icons/glass/learn.png" alt="Learn" class="tile-img" />
+          <div class="icon-label">Learn</div>
+        </a>
 
-<div class="icon-wrap">
-<a href="/reports/" class="icon-tile">
-<img src="/img/icons/glass/reports.png">
-</a>
-<div class="icon-label">Reports</div>
-</div>
+        <a href="/news/" class="home-item">
+          <img src="/img/icons/glass/news.png" alt="News" class="tile-img" />
+          <div class="icon-label">News</div>
+        </a>
 
-<div class="icon-wrap">
-<a href="/learn/" class="icon-tile">
-<img src="/img/icons/glass/learn.png">
-</a>
-<div class="icon-label">Learn</div>
-</div>
+        <a href="/social/" class="home-item">
+          <img src="/img/icons/glass/messages.png" alt="Cigar Social" class="tile-img" />
+          <div class="icon-label">Cigar Social</div>
+        </a>
+      </div>
+    </section>
+  </main>
 
-<div class="icon-wrap">
-<a href="/news/" class="icon-tile">
-<img src="/img/icons/glass/news.png">
-</a>
-<div class="icon-label">News</div>
-</div>
+  <script src="/js/global.js" defer></script>
+  <script>
+    (function () {
+      const body = document.body;
+      const toggle = document.getElementById('themeToggle');
+      const savedTheme = localStorage.getItem('cigaros-home-theme');
 
-<div class="icon-wrap">
-<a href="/social/" class="icon-tile">
-<img src="/img/icons/glass/messages.png">
-</a>
-<div class="icon-label">Cigar Social</div>
-</div>
+      if (savedTheme === 'dark') {
+        body.classList.add('dark');
+        body.classList.remove('day');
+      } else {
+        body.classList.add('day');
+        body.classList.remove('dark');
+      }
 
-</div>
+      toggle.addEventListener('click', function () {
+        body.classList.toggle('dark');
+        body.classList.toggle('day');
 
-<script>
-
-function toggleTheme(){
-  document.body.classList.toggle("dark");
-}
-
-</script>
-
+        const isDark = body.classList.contains('dark');
+        localStorage.setItem('cigaros-home-theme', isDark ? 'dark' : 'day');
+      });
+    })();
+  </script>
 </body>
 </html>
