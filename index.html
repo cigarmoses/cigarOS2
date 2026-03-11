@@ -17,14 +17,14 @@
       --bg: #edf2f6;
       --panel-bg: transparent;
       --ink: #16263d;
-      --muted: #4d5f77;
+      --muted: #51647f;
 
       --toggle-bg: #c8d0db;
-      --toggle-shadow: 0 8px 18px rgba(61,81,105,.14);
+      --toggle-shadow: 0 10px 24px rgba(0,0,0,.18);
 
-      --tile-size: 126px;
+      --tile-size: 132px;
       --grid-gap-x: 28px;
-      --grid-gap-y: 20px;
+      --grid-gap-y: 26px;
 
       --label-size: 16px;
       --label-weight: 600;
@@ -33,9 +33,9 @@
     }
 
     body.dark{
-      --bg:
-        radial-gradient(1200px 620px at 50% -10%, #0d1c36 0%, rgba(13,28,54,0) 55%),
-        linear-gradient(180deg, #07111f 0%, #030914 48%, #000000 100%);
+--bg:
+  radial-gradient(1200px 700px at 50% -20%, #0e2244 0%, rgba(14,34,68,0) 55%),
+  linear-gradient(180deg, #06152d 0%, #020912 60%, #000000 100%);
       --panel-bg: transparent;
       --ink: #eef5ff;
       --muted: #acbbd0;
@@ -127,7 +127,7 @@
       height: 32px;
       display:block;
       object-fit:contain;
-      transition: left .22s ease, opacity .2s ease, transform .2s ease;
+      transition: left .28s cubic-bezier(.22,.8,.25,1)
       filter: drop-shadow(0 1px 4px rgba(0,0,0,.12));
     }
 
@@ -195,36 +195,35 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .tile-img{
-      width: var(--tile-size);
-      height: var(--tile-size);
-      display:block;
-      object-fit:contain;
-      user-select:none;
-      -webkit-user-drag:none;
-      filter:
-        drop-shadow(0 10px 16px rgba(33,122,255,.08))
-        drop-shadow(0 3px 7px rgba(255,255,255,.02));
-      transition: transform .16s ease, filter .18s ease;
-    }
+.tile-img{
+  width: var(--tile-size);
+  height: var(--tile-size);
+  display:block;
+  object-fit:contain;
+  user-select:none;
+  -webkit-user-drag:none;
+
+  filter:
+    drop-shadow(0 14px 24px rgba(0,0,0,.25))
+    drop-shadow(0 2px 6px rgba(255,255,255,.08));
+
+  transition: transform .18s ease, filter .18s ease;
+}
 
     .home-item:active .tile-img{
-      transform: translateY(1px) scale(.97);
-      filter:
-        drop-shadow(0 8px 12px rgba(33,122,255,.10))
-        drop-shadow(0 2px 6px rgba(255,255,255,.03));
-    }
+  transform: scale(.95);
+}
 
-    .icon-label{
-      margin-top: 6px;
-      font-size: var(--label-size);
-      line-height: 1.05;
-      font-weight: var(--label-weight);
-      letter-spacing: -.03em;
-      color: var(--muted);
-      text-align:center;
-      transition: color .25s ease;
-    }
+.icon-label{
+  margin-top: 8px;
+  font-size: var(--label-size);
+  line-height: 1.15;
+  font-weight: var(--label-weight);
+  letter-spacing: -.01em;
+  color: var(--muted);
+  text-align:center;
+  transition: color .25s ease;
+}
 
     @media (max-height: 900px){
       .screen{
