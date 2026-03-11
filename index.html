@@ -22,19 +22,21 @@
       --toggle-bg: #c8d0db;
       --toggle-shadow: 0 8px 18px rgba(61,81,105,.14);
 
-      --tile-size: 126px; /* ~10% smaller */
+      --tile-size: 126px;
       --grid-gap-x: 28px;
       --grid-gap-y: 20px;
 
       --label-size: 15px;
       --label-weight: 700;
+
+      --grid-top-offset: 200px;
     }
 
     body.dark{
       --bg:
         radial-gradient(1200px 620px at 50% -10%, #0d1c36 0%, rgba(13,28,54,0) 55%),
         linear-gradient(180deg, #07111f 0%, #030914 48%, #000000 100%);
-      --panel-bg: transparent; /* remove shaded panel in dark mode */
+      --panel-bg: transparent;
       --ink: #eef5ff;
       --muted: #acbbd0;
 
@@ -69,7 +71,7 @@
       min-height: 100dvh;
       margin: 0 auto;
       padding:
-        calc(var(--safe-top) + 200px)
+        calc(var(--safe-top) + var(--grid-top-offset))
         14px
         calc(var(--safe-bottom) + 92px);
       display:flex;
@@ -93,7 +95,6 @@
       pointer-events:none;
     }
 
-    /* shorter toggle like POS brand page */
     .theme-toggle{
       width: 86px;
       height: 42px;
@@ -118,7 +119,6 @@
       transform: scale(.97);
     }
 
-    /* no extra circle underneath; just the svg asset itself */
     .theme-icon{
       position:absolute;
       top: 5px;
@@ -228,7 +228,7 @@
 
     @media (max-height: 900px){
       .screen{
-        padding-top: calc(var(--safe-top) + 58px);
+        padding-top: calc(var(--safe-top) + var(--grid-top-offset));
         padding-bottom: calc(var(--safe-bottom) + 98px);
       }
       .tile-img{
@@ -239,7 +239,7 @@
 
     @media (max-height: 860px){
       .screen{
-        padding-top: calc(var(--safe-top) + 60px);
+        padding-top: calc(var(--safe-top) + var(--grid-top-offset));
         padding-bottom: calc(var(--safe-bottom) + 104px);
       }
       .tile-img{
@@ -335,8 +335,6 @@
     (function () {
       const body = document.body;
       const toggle = document.getElementById('themeToggle');
-      const sun = document.querySelector('.theme-icon.sun');
-      const moon = document.querySelector('.theme-icon.moon');
       const savedTheme = localStorage.getItem('cigaros-home-theme');
 
       if (savedTheme === 'dark') {
