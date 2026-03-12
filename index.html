@@ -33,9 +33,9 @@
     }
 
     body.dark{
---bg:
-  radial-gradient(1200px 700px at 50% -20%, #0e2244 0%, rgba(14,34,68,0) 55%),
-  linear-gradient(180deg, #06152d 0%, #020912 60%, #000000 100%);
+      --bg:
+        radial-gradient(1200px 700px at 50% -20%, #0e2244 0%, rgba(14,34,68,0) 55%),
+        linear-gradient(180deg, #06152d 0%, #020912 60%, #000000 100%);
       --panel-bg: transparent;
       --ink: #eef5ff;
       --muted: #acbbd0;
@@ -127,7 +127,7 @@
       height: 32px;
       display:block;
       object-fit:contain;
-      transition: left .28s cubic-bezier(.22,.8,.25,1)
+      transition: left .28s cubic-bezier(.22,.8,.25,1), opacity .2s ease, transform .2s ease;
       filter: drop-shadow(0 1px 4px rgba(0,0,0,.12));
     }
 
@@ -195,35 +195,33 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-.tile-img{
-  width: var(--tile-size);
-  height: var(--tile-size);
-  display:block;
-  object-fit:contain;
-  user-select:none;
-  -webkit-user-drag:none;
-
-  filter:
-    drop-shadow(0 14px 24px rgba(0,0,0,.25))
-    drop-shadow(0 2px 6px rgba(255,255,255,.08));
-
-  transition: transform .18s ease, filter .18s ease;
-}
+    .tile-img{
+      width: var(--tile-size);
+      height: var(--tile-size);
+      display:block;
+      object-fit:contain;
+      user-select:none;
+      -webkit-user-drag:none;
+      filter:
+        drop-shadow(0 14px 24px rgba(0,0,0,.25))
+        drop-shadow(0 2px 6px rgba(255,255,255,.08));
+      transition: transform .18s ease, filter .18s ease;
+    }
 
     .home-item:active .tile-img{
-  transform: scale(.95);
-}
+      transform: scale(.95);
+    }
 
-.icon-label{
-  margin-top: 8px;
-  font-size: var(--label-size);
-  line-height: 1.15;
-  font-weight: var(--label-weight);
-  letter-spacing: -.01em;
-  color: var(--muted);
-  text-align:center;
-  transition: color .25s ease;
-}
+    .icon-label{
+      margin-top: 8px;
+      font-size: var(--label-size);
+      line-height: 1.15;
+      font-weight: var(--label-weight);
+      letter-spacing: -.01em;
+      color: var(--muted);
+      text-align:center;
+      transition: color .25s ease;
+    }
 
     @media (max-height: 900px){
       .screen{
