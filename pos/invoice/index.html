@@ -4,22 +4,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Invoice</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=13" />
-  <link rel="stylesheet" href="/pos/pos.css?v=13" />
-  <!-- ✅ cache bust -->
-  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=13" />
+  <link rel="stylesheet" href="/css/type.css?v=14" />
+  <link rel="stylesheet" href="/pos/pos.css?v=14" />
+  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=14" />
 </head>
 
 <body class="inv-page">
-  <!-- Back button (top-left) -->
   <button
     class="inv-back"
     type="button"
     aria-label="Back"
     onclick="history.back()"
-  >←</button>
+  >
+    <span aria-hidden="true">‹</span>
+  </button>
 
   <main class="inv-wrap" role="main">
     <header class="inv-head">
@@ -29,16 +30,14 @@
       <div class="inv-num" id="invNum">INV# —</div>
     </header>
 
-    <button class="inv-customer" type="button">
+    <button class="inv-customer" type="button" aria-label="Attach saved customer">
       ATTACH SAVED CUSTOMER
     </button>
 
-    <!-- Items -->
-    <section class="inv-items" id="invItems">
-      <!-- invoice.js will render rows here -->
+    <section class="inv-items" id="invItems" aria-label="Invoice items">
+      <!-- invoice.js renders rows -->
     </section>
 
-    <!-- Totals -->
     <section class="inv-totals" aria-label="Totals">
       <div class="trow"><div>TOBACCO</div><div id="tTobacco">$0.00</div></div>
       <div class="trow"><div>ALCOHOL</div><div id="tAlcohol">$0.00</div></div>
@@ -47,20 +46,18 @@
       <div class="trow"><div>TAX</div><div id="tTax">$0.00</div></div>
 
       <div class="grand">
-        <div class="glabel">GRAND<br/>TOTAL</div>
+        <div class="glabel">GRAND<br />TOTAL</div>
         <div class="gval" id="tGrand">$0.00</div>
       </div>
     </section>
   </main>
 
-  <!-- Bottom actions -->
   <footer class="inv-actions">
     <button class="inv-action" type="button">SAVE AS DRAFT</button>
     <button class="inv-action" type="button">CASH OUT</button>
   </footer>
 
-  <!-- ✅ cache bust scripts too -->
-  <script src="/pos/cart.js?v=13" defer></script>
-  <script src="/pos/invoice/invoice.js?v=13" defer></script>
+  <script src="/pos/cart.js?v=14" defer></script>
+  <script src="/pos/invoice/invoice.js?v=14" defer></script>
 </body>
 </html>
