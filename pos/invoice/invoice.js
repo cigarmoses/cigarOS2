@@ -3,15 +3,7 @@
 (() => {
   "use strict";
 
-  const CART_KEYS = [
-    "cigaros_pos_cart_v3",
-    "cigaros_pos_cart_v2",
-    "cigaros_pos_cart",
-    "cigaros_cart",
-    "pos_cart",
-    "cart"
-  ];
-
+  const CART_KEY = "cigaros_pos_cart_v3";
   const SHOP_KEYS = [
     "cigaros_pos_shop_name",
     "cigaros_shop_name",
@@ -21,12 +13,30 @@
   const INV_KEY = "cigaros_pos_invoice_number";
   const POS_TAX_RATE = 0.07;
 
+  const CUSTOMER_KEYS = [
+    "cigaros_pos_customers_v3",
+    "cigaros_pos_customers_v2",
+    "cigaros_pos_customers_v1",
+    "cigaros_pos_customers",
+    "cigaros_customers",
+    "customers"
+  ];
+
+  const SELECTED_CUSTOMER_KEY = "cigaros_pos_invoice_customer";
+
   const $ = (sel, root = document) => root.querySelector(sel);
 
   const itemsEl = $("#invItems");
-  const metaEl  = $("#invMeta");
-  const shopEl  = $("#invShop");
-  const numEl   = $("#invNum");
+  const metaEl = $("#invMeta");
+  const shopEl = $("#invShop");
+  const numEl = $("#invNum");
+
+  const customerBtn = $("#invCustomerBtn");
+  const customerLabel = $("#invCustomerLabel");
+  const customerMenu = $("#invCustomerMenu");
+  const customerList = $("#invCustomerList");
+  const customerSearch = $("#invCustomerSearch");
+  const customerSelected = $("#invCustomerSelected");
 
   const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
@@ -38,7 +48,7 @@
     }
   }
 
-  function normalizeText(value, fallback = "") {
+  function normStr(value, fallback = "") {
     if (value == null) return fallback;
     const out = String(value).trim();
     return out || fallback;
@@ -49,152 +59,24 @@
     return Number.isFinite(n) ? n : fallback;
   }
 
-  function normalizeItem(raw, index = 0) {
-    if (!raw || typeof raw !== "object") return null;
-
-    const brand = normalizeText(raw.brand || raw.maker || raw.company || "");
-    const name =
-      normalizeText(
-        raw.name ||
-        raw.title ||
-        raw.productName ||
-        raw.product ||
-        raw.label ||
-        "Item"
-      );
-
-    const vitola =
-      normalizeText(
-        raw.vitola ||
-        raw.size ||
-        raw.sub ||
-        raw.subtitle ||
-        raw.style ||
-        raw.line ||
-        ""
-      );
-
-    const category =
-      normalizeText(
-        raw.category ||
-        raw.group ||
-        raw.bucket ||
-        raw.department ||
-        ""
-      );
-
-    const type =
-      normalizeText(
-        raw.type ||
-        raw.kind ||
-        (category.toLowerCase().includes("cigar") ? "cigar" : "")
-      );
-
-    const image =
-      normalizeText(
-        raw.image ||
-        raw.img ||
-        raw.photo ||
-        raw.icon ||
-        raw.logo ||
-        ""
-      );
-
-    const price = numberFrom(
-      raw.msrp ??
-      raw.price ??
-      raw.unitPrice ??
-      raw.unit_price ??
-      raw.cost ??
-      0,
-      0
-    );
-
-    const qty = Math.max(
-      0,
-      Math.round(
-        numberFrom(raw.qty ?? raw.quantity ?? raw.count ?? 1, 1)
-      )
-    );
-
-    const key = normalizeText(
-      raw.key ||
-      raw.id ||
-      raw.sku ||
-      raw.slug ||
-      `${brand}|${name}|${vitola}|${price}|${index}`
-    );
-
-    return {
-      key,
-      brand,
-      name,
-      vitola,
-      category,
-      type,
-      image,
-      msrp: price,
-      qty
-    };
-  }
-
-  function cartArrayFromUnknownShape(value) {
-    if (Array.isArray(value)) {
-      return value.map(normalizeItem).filter(Boolean);
+  function toAbsUrl(url) {
+    const u = normStr(url);
+    if (!u) return "";
+    try {
+      return new URL(u, window.location.origin).href;
+    } catch {
+      return u;
     }
-
-    if (!value || typeof value !== "object") {
-      return [];
-    }
-
-    if (Array.isArray(value.items)) {
-      return value.items.map(normalizeItem).filter(Boolean);
-    }
-
-    if (Array.isArray(value.cart)) {
-      return value.cart.map(normalizeItem).filter(Boolean);
-    }
-
-    const vals = Object.values(value);
-    if (vals.every((v) => v && typeof v === "object")) {
-      return vals.map(normalizeItem).filter(Boolean);
-    }
-
-    return [];
-  }
-
-  function getActiveCartKey() {
-    for (const key of CART_KEYS) {
-      const raw = localStorage.getItem(key);
-      if (!raw) continue;
-      const parsed = safeJSONParse(raw, null);
-      const arr = cartArrayFromUnknownShape(parsed);
-      if (arr.length) return key;
-    }
-
-    return CART_KEYS[0];
   }
 
   function loadCart() {
-    for (const key of CART_KEYS) {
-      const raw = localStorage.getItem(key);
-      if (!raw) continue;
-      const parsed = safeJSONParse(raw, null);
-      const arr = cartArrayFromUnknownShape(parsed);
-      if (arr.length) return arr;
-    }
-
-    return [];
+    return safeJSONParse(localStorage.getItem(CART_KEY), []) || [];
   }
 
   function saveCart(cart) {
-    const activeKey = getActiveCartKey();
-    localStorage.setItem(activeKey, JSON.stringify(cart));
-
-    const detail = { cart, key: activeKey };
-
-    document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail }));
-    window.dispatchEvent(new CustomEvent("cigaros:cart", { detail }));
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart } }));
+    window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart } }));
   }
 
   function nowStamp() {
@@ -211,7 +93,7 @@
     if (h === 0) h = 12;
 
     const min = String(d.getMinutes()).padStart(2, "0");
-    return `${day}  ${mm}/${dd}/${yyyy}  ${h}:${min} ${ampm}`;
+    return `${day} ${mm}/${dd}/${yyyy} ${h}:${min} ${ampm}`;
   }
 
   function getShopName() {
@@ -252,31 +134,58 @@
   }
 
   function isCigarItem(item) {
-    const t = normalizeText(item.type).toLowerCase();
-    const c = normalizeText(item.category).toLowerCase();
+    const t = normStr(item.type).toLowerCase();
+    const c = normStr(item.category).toLowerCase();
 
     return (
       t === "cigar" ||
       c.includes("cigar") ||
       c.includes("tobacco") ||
-      normalizeText(item.vitola) !== ""
+      normStr(item.vitola) !== ""
     );
+  }
+
+  function lineNameFor(item) {
+    const a = normStr(item.line);
+    const b = normStr(item.name);
+
+    if (a && b) {
+      if (b.toLowerCase().startsWith(a.toLowerCase())) return b;
+      return `${a} ${b}`;
+    }
+    return b || a || "Cigar";
+  }
+
+  function buildDescMiddle(item) {
+    const text = lineNameFor(item);
+    const url = toAbsUrl(item.url || item.href || item.link || "");
+
+    if (!url) {
+      const div = document.createElement("div");
+      div.className = "t2";
+      div.textContent = text;
+      return div;
+    }
+
+    const a = document.createElement("a");
+    a.className = "t2-link";
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = text;
+    return a;
   }
 
   function buildRow(item) {
     const isCigar = isCigarItem(item);
 
-    let t1, t2, t3;
+    const t1 = isCigar
+      ? (item.brand ? item.brand : "Cigars")
+      : (item.category || "Other");
 
-    if (isCigar) {
-      t1 = item.brand ? `Cigars - ${item.brand}` : "Cigars";
-      t2 = item.name || "Cigar";
-      t3 = item.vitola || "";
-    } else {
-      t1 = item.category || "Other";
-      t2 = item.brand || "-";
-      t3 = item.name || "Item";
-    }
+    const t3 = isCigar
+      ? (item.vitola || "")
+      : (item.brand || "");
 
     const unit = numberFrom(item.msrp, 0);
     const qty = Math.max(0, Math.round(numberFrom(item.qty, 0)));
@@ -290,16 +199,16 @@
 
       <div class="inv-desc">
         <div class="t1"></div>
-        <div class="t2"></div>
         <div class="t3"></div>
       </div>
 
-      <div class="inv-unit">${fmt(unit)}</div>
-
-      <div class="inv-qty" aria-label="Quantity">
-        <button class="dec" type="button" aria-label="Decrease">−</button>
-        <div class="qnum">${qty}</div>
-        <button class="inc" type="button" aria-label="Increase">+</button>
+      <div class="inv-side">
+        <div class="inv-unit">${fmt(unit)}</div>
+        <div class="inv-qty" aria-label="Quantity">
+          <button class="dec" type="button" aria-label="Decrease">−</button>
+          <div class="qnum">${qty}</div>
+          <button class="inc" type="button" aria-label="Increase">+</button>
+        </div>
       </div>
 
       <div class="inv-total">${fmt(total)}</div>
@@ -313,7 +222,10 @@
     };
 
     row.querySelector(".t1").textContent = t1;
-    row.querySelector(".t2").textContent = t2;
+
+    const middle = buildDescMiddle(item);
+    row.querySelector(".inv-desc .t1").after(middle);
+
     row.querySelector(".t3").textContent = t3;
 
     row.querySelector(".dec").addEventListener("click", () => {
@@ -410,9 +322,173 @@
     if (tTobacco)  tTobacco.textContent  = fmt(t.tobacco);
     if (tAlcohol)  tAlcohol.textContent  = fmt(t.alcohol);
     if (tOther)    tOther.textContent    = fmt(t.other);
-    if (tSubtotal) tTobacco && (tSubtotal.textContent = fmt(t.subtotal));
+    if (tSubtotal) tSubtotal.textContent = fmt(t.subtotal);
     if (tTax)      tTax.textContent      = fmt(t.tax);
     if (tGrand)    tGrand.textContent    = fmt(t.grand);
+  }
+
+  function collectCustomersFromValue(value) {
+    if (!value) return [];
+
+    if (Array.isArray(value)) return value;
+
+    if (Array.isArray(value.items)) return value.items;
+    if (Array.isArray(value.customers)) return value.customers;
+    if (Array.isArray(value.results)) return value.results;
+
+    if (typeof value === "object") {
+      return Object.values(value).filter((v) => v && typeof v === "object");
+    }
+
+    return [];
+  }
+
+  function normalizeCustomer(raw, index = 0) {
+    if (!raw || typeof raw !== "object") return null;
+
+    const id = normStr(raw.id || raw.customerId || raw.customer_id || `cust-${index}`);
+    const first = normStr(raw.firstName || raw.first_name || "");
+    const last = normStr(raw.lastName || raw.last_name || "");
+    const full =
+      normStr(raw.name || raw.fullName || raw.full_name || `${first} ${last}`.trim());
+
+    const phone = normStr(raw.phone || raw.phoneNumber || raw.mobile || "");
+    const email = normStr(raw.email || "");
+    const cigarsocial = normStr(raw.cigarsocial || raw.username || raw.handle || "");
+
+    const name = full || email || phone || "Unnamed customer";
+    const sub = [phone, email, cigarsocial].filter(Boolean).join(" • ");
+
+    return { id, name, phone, email, cigarsocial, sub, raw };
+  }
+
+  function loadCustomers() {
+    for (const key of CUSTOMER_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+
+      const parsed = safeJSONParse(raw, null);
+      const arr = collectCustomersFromValue(parsed).map(normalizeCustomer).filter(Boolean);
+
+      if (arr.length) return arr;
+    }
+    return [];
+  }
+
+  function loadSelectedCustomer() {
+    const raw = localStorage.getItem(SELECTED_CUSTOMER_KEY);
+    return safeJSONParse(raw, null);
+  }
+
+  function saveSelectedCustomer(customer) {
+    localStorage.setItem(SELECTED_CUSTOMER_KEY, JSON.stringify(customer || null));
+  }
+
+  function closeCustomerMenu() {
+    if (!customerMenu || !customerBtn) return;
+    customerMenu.hidden = true;
+    customerBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function openCustomerMenu() {
+    if (!customerMenu || !customerBtn) return;
+    customerMenu.hidden = false;
+    customerBtn.setAttribute("aria-expanded", "true");
+    if (customerSearch) customerSearch.focus();
+  }
+
+  function renderSelectedCustomer() {
+    if (!customerSelected || !customerLabel) return;
+
+    const selected = loadSelectedCustomer();
+
+    if (!selected || !selected.name) {
+      customerLabel.textContent = "ATTACH SAVED CUSTOMER";
+      customerSelected.hidden = true;
+      customerSelected.innerHTML = "";
+      return;
+    }
+
+    customerLabel.textContent = selected.name.toUpperCase();
+    customerSelected.hidden = false;
+    customerSelected.innerHTML = `
+      <div class="cust-name">${selected.name}</div>
+      <div class="cust-sub">${selected.sub || "Saved customer attached"}</div>
+    `;
+  }
+
+  function renderCustomerList(filterText = "") {
+    if (!customerList) return;
+
+    const q = normStr(filterText).toLowerCase();
+    const customers = loadCustomers().filter((c) => {
+      if (!q) return true;
+      return (
+        c.name.toLowerCase().includes(q) ||
+        c.sub.toLowerCase().includes(q)
+      );
+    });
+
+    customerList.innerHTML = "";
+
+    if (!customers.length) {
+      const empty = document.createElement("div");
+      empty.className = "inv-customer-empty";
+      empty.innerHTML = `
+        <div class="inv-customer-name">No saved customers</div>
+        <div class="inv-customer-sub">Nothing matched your search.</div>
+      `;
+      customerList.appendChild(empty);
+      return;
+    }
+
+    for (const customer of customers) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "inv-customer-item";
+      btn.innerHTML = `
+        <div class="inv-customer-name">${customer.name}</div>
+        <div class="inv-customer-sub">${customer.sub || "Saved customer"}</div>
+      `;
+      btn.addEventListener("click", () => {
+        saveSelectedCustomer(customer);
+        renderSelectedCustomer();
+        closeCustomerMenu();
+      });
+      customerList.appendChild(btn);
+    }
+  }
+
+  function setupCustomerMenu() {
+    if (!customerBtn || !customerMenu) return;
+
+    renderSelectedCustomer();
+    renderCustomerList("");
+
+    customerBtn.addEventListener("click", () => {
+      if (customerMenu.hidden) {
+        renderCustomerList(customerSearch ? customerSearch.value : "");
+        openCustomerMenu();
+      } else {
+        closeCustomerMenu();
+      }
+    });
+
+    if (customerSearch) {
+      customerSearch.addEventListener("input", () => {
+        renderCustomerList(customerSearch.value);
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!customerMenu.hidden && !e.target.closest(".inv-customer-wrap")) {
+        closeCustomerMenu();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeCustomerMenu();
+    });
   }
 
   function render() {
@@ -420,11 +496,13 @@
     renderHeader();
     renderItems(cart);
     renderTotals(cart);
+    renderSelectedCustomer();
   }
 
   function handleStorage(e) {
-    if (!e || !e.key || CART_KEYS.includes(e.key) || SHOP_KEYS.includes(e.key) || e.key === INV_KEY) {
+    if (!e || !e.key || e.key === CART_KEY || SHOP_KEYS.includes(e.key) || e.key === INV_KEY || CUSTOMER_KEYS.includes(e.key) || e.key === SELECTED_CUSTOMER_KEY) {
       render();
+      renderCustomerList(customerSearch ? customerSearch.value : "");
     }
   }
 
@@ -434,5 +512,9 @@
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) render();
   });
-  document.addEventListener("DOMContentLoaded", render);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    setupCustomerMenu();
+    render();
+  });
 })();
