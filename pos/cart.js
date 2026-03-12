@@ -2,11 +2,12 @@
    Global POS cart + invoice badge + add-to-cart wiring (ALL pages)
 
    Fixes:
-   ✅ CAPTURE click handler so stopPropagation can't block add-to-cart
+   ✅ Capture click handler so stopPropagation can't block add-to-cart
    ✅ Writes cart to localStorage (cigaros_pos_cart_v3)
-   ✅ Also mirrors to legacy window.cigarOSCart ARRAY if it exists (pos.js compatibility)
+   ✅ Mirrors to legacy window.cigarOSCart ARRAY if it exists
    ✅ Invoice icon navigates to /pos/invoice/
-   ✅ More forgiving add-button detection for plain "+" buttons inside cigar rows
+   ✅ More forgiving add-button detection for plain "+" buttons
+   ✅ Carries cigar URL into cart item when available
 */
 
 (() => {
@@ -35,6 +36,16 @@
     const m = t.match(/\$?\s*([0-9]+(?:\.[0-9]{1,2})?)/);
     if (!m) return 0;
     return Number(m[1] || 0) || 0;
+  }
+
+  function toAbsUrl(url) {
+    const u = normStr(url);
+    if (!u) return "";
+    try {
+      return new URL(u, window.location.origin).href;
+    } catch {
+      return u;
+    }
   }
 
   function getKey(item) {
@@ -94,7 +105,8 @@
       name: normStr(item.name),
       vitola: normStr(item.vitola),
       msrp: price,
-      image: normStr(item.image)
+      image: normStr(item.image),
+      url: toAbsUrl(item.url || item.href || "")
     };
 
     const key = getKey(normalized);
@@ -109,6 +121,7 @@
       existing.vitola = normalized.vitola;
       existing.msrp = normalized.msrp;
       existing.image = normalized.image;
+      if (normalized.url) existing.url = normalized.url;
     } else {
       cart.push({ key, qty: qtyAdd, ...normalized });
     }
@@ -119,6 +132,22 @@
 
     document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart } }));
     window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart } }));
+  }
+
+  function findBestRowLink(row) {
+    if (!row) return "";
+
+    const preferred =
+      row.querySelector(".cigar-title a[href]") ||
+      row.querySelector(".row-title a[href]") ||
+      row.querySelector(".title a[href]") ||
+      row.querySelector("h3 a[href]") ||
+      row.querySelector("h2 a[href]") ||
+      row.querySelector("a[data-cigar-link][href]") ||
+      row.querySelector("a[href]");
+
+    if (!preferred) return "";
+    return toAbsUrl(preferred.getAttribute("href") || "");
   }
 
   function scrapeFromCigarRow(btn) {
@@ -165,7 +194,6 @@
     const titleText = normStr(titleEl ? titleEl.textContent : row.textContent);
     const vitolaText = normStr(vitolaEl ? vitolaEl.textContent : "");
     const priceText = normStr(priceEl ? (priceEl.getAttribute("data-price") || priceEl.textContent) : "");
-
     const msrp = priceText ? parsePriceFromText(priceText) : parsePriceFromText(row.textContent);
 
     const item = {
@@ -174,7 +202,8 @@
       line: "",
       name: titleText,
       vitola: vitolaText,
-      msrp
+      msrp,
+      url: findBestRowLink(row)
     };
 
     const img = row.querySelector("img");
@@ -225,11 +254,17 @@
       modal.querySelector(".modal-price") ||
       modal.querySelector(".price");
 
+    const linkEl =
+      modal.querySelector("a[data-cigar-link][href]") ||
+      modal.querySelector(".modal-title a[href]") ||
+      modal.querySelector("a[href]");
+
     const name = normStr(nameEl ? nameEl.textContent : "");
     const vitola = normStr(vitolaEl ? vitolaEl.textContent : "");
     const msrp = parsePriceFromText(priceEl ? priceEl.textContent : modal.textContent);
+    const url = toAbsUrl(linkEl ? linkEl.getAttribute("href") || "" : "");
 
-    return name ? { type: "cigar", brand: "", line: "", name, vitola, msrp } : null;
+    return name ? { type: "cigar", brand: "", line: "", name, vitola, msrp, url } : null;
   }
 
   function itemFromDataset(ds) {
@@ -238,6 +273,7 @@
     const line = normStr(ds.line || "");
     const vitola = normStr(ds.vitola || "");
     const msrp = Number(ds.msrp || ds.price || 0) || 0;
+    const url = toAbsUrl(ds.url || ds.href || ds.link || "");
 
     if (!name && !brand) return null;
 
@@ -250,7 +286,8 @@
       name: name || brand,
       vitola,
       msrp,
-      image: ds.image || ""
+      image: ds.image || "",
+      url
     };
   }
 
