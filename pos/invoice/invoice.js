@@ -12,19 +12,7 @@
   const INV_KEY = "cigaros_pos_invoice_number";
   const POS_TAX_RATE = 0.07;
 
-  const CUSTOMER_KEYS = [
-    "cigaros_pos_customers_v3",
-    "cigaros_pos_customers_v2",
-    "cigaros_pos_customers_v1",
-    "cigaros_pos_customers",
-    "cigaros_customers",
-    "customers",
-    "customer_list",
-    "saved_customers",
-    "loyalty_customers",
-    "cigaros_loyalty_customers"
-  ];
-
+  const CONTACTS_URL = "/loyalty/loyalty-contacts.json";
   const SELECTED_CUSTOMER_KEY = "cigaros_pos_invoice_customer";
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -42,6 +30,8 @@
   const customerSelected = $("#invCustomerSelected");
 
   const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
+
+  let loyaltyCustomersCache = [];
 
   function safeJSONParse(value, fallback) {
     try {
@@ -320,62 +310,58 @@
     if (tGrand)    tGrand.textContent    = fmt(t.grand);
   }
 
-  function collectCustomersFromValue(value) {
-    if (!value) return [];
-
-    if (Array.isArray(value)) return value;
-    if (Array.isArray(value.items)) return value.items;
-    if (Array.isArray(value.customers)) return value.customers;
-    if (Array.isArray(value.results)) return value.results;
-    if (Array.isArray(value.data)) return value.data;
-
-    if (typeof value === "object") {
-      const vals = Object.values(value);
-      if (vals.some((v) => v && typeof v === "object")) return vals;
-    }
-
-    return [];
-  }
-
   function normalizeCustomer(raw, index = 0) {
     if (!raw || typeof raw !== "object") return null;
 
-    const id = normStr(raw.id || raw.customerId || raw.customer_id || `cust-${index}`);
+    const id = normStr(raw.id || raw.customerId || raw.customer_id || raw.loyaltyId || `cust-${index}`);
     const first = normStr(raw.firstName || raw.first_name || "");
     const last = normStr(raw.lastName || raw.last_name || "");
-    const name = normStr(raw.name || raw.fullName || raw.full_name || `${first} ${last}`.trim());
+    const displayName = normStr(
+      raw.name ||
+      raw.fullName ||
+      raw.full_name ||
+      raw.contactName ||
+      `${first} ${last}`.trim()
+    );
 
     const phone = normStr(raw.phone || raw.phoneNumber || raw.mobile || raw.cell || "");
     const email = normStr(raw.email || raw.emailAddress || "");
     const cigarsocial = normStr(raw.cigarsocial || raw.username || raw.handle || raw.cigarSocial || "");
-    const loyaltyId = normStr(raw.loyaltyId || raw.loyalty_id || "");
+    const birthday = normStr(raw.birthday || "");
+    const notes = normStr(raw.notes || raw.quickNote || "");
 
-    const displayName = name || email || phone || loyaltyId || "Unnamed customer";
-    const sub = [phone, email, cigarsocial, loyaltyId].filter(Boolean).join(" • ");
+    const name = displayName || email || phone || "Unnamed customer";
+    const sub = [phone, email, cigarsocial].filter(Boolean).join(" • ");
 
-    return { id, name: displayName, phone, email, cigarsocial, loyaltyId, sub, raw };
+    return { id, name, phone, email, cigarsocial, birthday, notes, sub, raw };
   }
 
-  function loadCustomers() {
-    const all = [];
+  async function loadCustomers() {
+    if (loyaltyCustomersCache.length) return loyaltyCustomersCache;
 
-    for (const key of CUSTOMER_KEYS) {
-      const raw = localStorage.getItem(key);
-      if (!raw) continue;
+    try {
+      const res = await fetch(CONTACTS_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const parsed = safeJSONParse(raw, null);
-      const arr = collectCustomersFromValue(parsed)
-        .map(normalizeCustomer)
-        .filter(Boolean);
+      const data = await res.json();
 
-      for (const customer of arr) {
-        if (!all.some((x) => x.id === customer.id || (x.name === customer.name && x.sub === customer.sub))) {
-          all.push(customer);
-        }
+      let arr = [];
+      if (Array.isArray(data)) arr = data;
+      else if (Array.isArray(data.contacts)) arr = data.contacts;
+      else if (Array.isArray(data.customers)) arr = data.customers;
+      else if (Array.isArray(data.items)) arr = data.items;
+      else if (Array.isArray(data.results)) arr = data.results;
+      else if (data && typeof data === "object") {
+        arr = Object.values(data).filter((v) => v && typeof v === "object");
       }
-    }
 
-    return all;
+      loyaltyCustomersCache = arr.map(normalizeCustomer).filter(Boolean);
+      return loyaltyCustomersCache;
+    } catch (err) {
+      console.error("Failed to load loyalty contacts:", err);
+      loyaltyCustomersCache = [];
+      return [];
+    }
   }
 
   function loadSelectedCustomer() {
@@ -419,15 +405,20 @@
     `;
   }
 
-  function renderCustomerList(filterText = "") {
+  async function renderCustomerList(filterText = "") {
     if (!customerList) return;
 
     const q = normStr(filterText).toLowerCase();
-    const customers = loadCustomers().filter((c) => {
+    const allCustomers = await loadCustomers();
+
+    const customers = allCustomers.filter((c) => {
       if (!q) return true;
       return (
         c.name.toLowerCase().includes(q) ||
-        c.sub.toLowerCase().includes(q)
+        c.sub.toLowerCase().includes(q) ||
+        c.phone.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        c.cigarsocial.toLowerCase().includes(q)
       );
     });
 
@@ -465,12 +456,11 @@
     if (!customerBtn || !customerMenu) return;
 
     renderSelectedCustomer();
-    renderCustomerList("");
 
-    customerBtn.addEventListener("click", () => {
+    customerBtn.addEventListener("click", async () => {
       if (customerMenu.hidden) {
         if (customerSearch) customerSearch.value = "";
-        renderCustomerList("");
+        await renderCustomerList("");
         openCustomerMenu();
       } else {
         closeCustomerMenu();
@@ -478,8 +468,8 @@
     });
 
     if (customerSearch) {
-      customerSearch.addEventListener("input", () => {
-        renderCustomerList(customerSearch.value);
+      customerSearch.addEventListener("input", async () => {
+        await renderCustomerList(customerSearch.value);
       });
     }
 
@@ -508,11 +498,9 @@
       e.key === CART_KEY ||
       SHOP_KEYS.includes(e.key) ||
       e.key === INV_KEY ||
-      CUSTOMER_KEYS.includes(e.key) ||
       e.key === SELECTED_CUSTOMER_KEY
     ) {
       render();
-      renderCustomerList(customerSearch ? customerSearch.value : "");
     }
   }
 
@@ -524,8 +512,9 @@
     if (!document.hidden) render();
   });
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
     setupCustomerMenu();
     render();
+    await loadCustomers();
   });
 })();
