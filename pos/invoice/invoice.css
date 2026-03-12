@@ -1,17 +1,15 @@
 /* /pos/invoice/invoice.css
-   iOS-style polish pass
-   - keeps same invoice structure + row order
-   - refines typography, spacing, radius, color, and controls
+   iOS-style refinement pass 2
+   - keeps same row order/structure
+   - smaller qty control
+   - regular-weight row text + attach customer text
+   - smaller bottom buttons
 */
 
 :root{
   --bg:#f5f5f7;
   --surface:#ffffff;
-  --surface-2:#f2f2f7;
-  --surface-3:#eef2f8;
-
   --ink:#15213d;
-  --ink-soft:rgba(21,33,61,.78);
   --muted:rgba(21,33,61,.48);
   --muted-2:rgba(21,33,61,.34);
   --hair:rgba(21,33,61,.08);
@@ -23,7 +21,6 @@
   --pillBorder:rgba(21,33,61,.08);
 
   --qtyBg:#eef3fb;
-  --accent:#0a84ff;
   --danger:#ff453a;
   --navy:#182544;
 
@@ -37,7 +34,7 @@
   --wHeavy:800;
   --wBold:700;
   --wMed:600;
-  --wReg:500;
+  --wReg:400;
 }
 
 *{ box-sizing:border-box; }
@@ -56,13 +53,11 @@ body.inv-page{
   font-family:var(--text-font);
 }
 
-/* Back button */
 .inv-back{
   position:fixed;
   left:14px;
   top:max(12px, env(safe-area-inset-top));
   z-index:40;
-
   width:44px;
   height:44px;
   padding:0;
@@ -70,7 +65,6 @@ body.inv-page{
   background:transparent;
   display:grid;
   place-items:center;
-
   color:rgba(21,33,61,.42);
   font-family:var(--display-font);
   font-size:38px;
@@ -85,10 +79,9 @@ body.inv-page{
   padding:
     calc(44px + env(safe-area-inset-top))
     18px
-    calc(126px + env(safe-area-inset-bottom));
+    calc(110px + env(safe-area-inset-bottom));
 }
 
-/* Header */
 .inv-head{
   text-align:center;
   padding-top:10px;
@@ -109,7 +102,7 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:20px;
   line-height:1.15;
-  font-weight:var(--wBold);
+  font-weight:var(--wMed);
   letter-spacing:-0.03em;
   color:rgba(21,33,61,.52);
 }
@@ -119,7 +112,7 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:28px;
   line-height:1.02;
-  font-weight:var(--wBold);
+  font-weight:var(--wMed);
   letter-spacing:-0.04em;
   color:rgba(21,33,61,.58);
 }
@@ -129,12 +122,11 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:22px;
   line-height:1.05;
-  font-weight:var(--wBold);
+  font-weight:var(--wMed);
   letter-spacing:-0.03em;
   color:rgba(21,33,61,.30);
 }
 
-/* Customer */
 .inv-customer-wrap{
   position:relative;
   margin:18px 0 18px;
@@ -142,7 +134,7 @@ body.inv-page{
 
 .inv-customer{
   width:100%;
-  min-height:64px;
+  min-height:62px;
   border-radius:999px;
   border:1px solid var(--pillBorder);
   background:var(--pill);
@@ -160,8 +152,8 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:18px;
   line-height:1;
-  font-weight:var(--wBold);
-  letter-spacing:.06em;
+  font-weight:var(--wReg);
+  letter-spacing:.045em;
   color:rgba(21,33,61,.42);
   text-transform:uppercase;
 }
@@ -206,7 +198,7 @@ body.inv-page{
   color:var(--ink);
   font-family:var(--text-font);
   font-size:16px;
-  font-weight:var(--wMed);
+  font-weight:var(--wReg);
   letter-spacing:-0.015em;
 }
 
@@ -243,7 +235,7 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:17px;
   line-height:1.1;
-  font-weight:var(--wBold);
+  font-weight:var(--wMed);
   letter-spacing:-0.025em;
   color:var(--ink);
 }
@@ -252,7 +244,7 @@ body.inv-page{
   font-family:var(--text-font);
   font-size:14px;
   line-height:1.25;
-  font-weight:var(--wMed);
+  font-weight:var(--wReg);
   letter-spacing:-0.01em;
   color:rgba(21,33,61,.50);
 }
@@ -269,7 +261,7 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:17px;
   line-height:1.08;
-  font-weight:var(--wBold);
+  font-weight:var(--wMed);
   letter-spacing:-0.02em;
   color:var(--ink);
 }
@@ -279,11 +271,10 @@ body.inv-page{
   font-family:var(--text-font);
   font-size:14px;
   line-height:1.24;
-  font-weight:var(--wMed);
+  font-weight:var(--wReg);
   color:rgba(21,33,61,.50);
 }
 
-/* Items card */
 .inv-items{
   width:100%;
   margin:0 0 18px;
@@ -298,19 +289,18 @@ body.inv-page{
   padding:18px 16px;
   font-family:var(--text-font);
   font-size:15px;
-  font-weight:var(--wMed);
+  font-weight:var(--wReg);
   color:rgba(21,33,61,.42);
   background:var(--rowA);
 }
 
-/* Row order preserved:
-   icon | text block | msrp+qty stack | total */
+/* Same row order preserved */
 .inv-row{
   width:100%;
   display:grid;
   align-items:center;
-  grid-template-columns: 70px minmax(0,1fr) 118px 96px;
-  gap:16px;
+  grid-template-columns: 70px minmax(0,1fr) 92px 88px;
+  gap:14px;
   padding:18px 18px;
   background:var(--rowA);
 }
@@ -348,7 +338,7 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:19px;
   line-height:1.02;
-  font-weight:var(--wHeavy);
+  font-weight:var(--wReg);
   letter-spacing:-0.04em;
   color:var(--navy);
 }
@@ -358,7 +348,7 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:16px;
   line-height:1.06;
-  font-weight:var(--wBold);
+  font-weight:var(--wReg);
   letter-spacing:-0.028em;
   color:rgba(21,33,61,.88);
   text-decoration:none;
@@ -368,7 +358,7 @@ body.inv-page{
 
 .inv-desc .t2-link{
   text-decoration:underline;
-  text-decoration-thickness:1.25px;
+  text-decoration-thickness:1px;
   text-underline-offset:2px;
 }
 
@@ -376,7 +366,7 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:14px;
   line-height:1.08;
-  font-weight:var(--wBold);
+  font-weight:var(--wReg);
   letter-spacing:-0.018em;
   color:rgba(21,33,61,.52);
   white-space:normal;
@@ -387,41 +377,41 @@ body.inv-page{
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:10px;
+  gap:8px;
 }
 
 .inv-unit{
   font-family:var(--display-font);
-  font-size:15px;
+  font-size:13px;
   line-height:1;
-  font-weight:var(--wHeavy);
-  letter-spacing:-0.03em;
+  font-weight:var(--wMed);
+  letter-spacing:-0.02em;
   color:var(--navy);
   white-space:nowrap;
 }
 
 .inv-qty{
-  min-width:104px;
-  height:40px;
-  border-radius:18px;
+  min-width:78px;
+  height:32px;
+  border-radius:15px;
   background:var(--qtyBg);
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:10px;
-  padding:0 10px;
+  gap:6px;
+  padding:0 8px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
 }
 
 .inv-qty button{
-  width:26px;
-  height:26px;
+  width:20px;
+  height:20px;
   border:none;
   background:transparent;
   color:rgba(21,33,61,.62);
   font-family:var(--display-font);
-  font-size:18px;
-  font-weight:var(--wHeavy);
+  font-size:15px;
+  font-weight:var(--wMed);
   line-height:1;
   display:grid;
   place-items:center;
@@ -430,12 +420,12 @@ body.inv-page{
 }
 
 .inv-qty .qnum{
-  min-width:18px;
+  min-width:16px;
   text-align:center;
   font-family:var(--display-font);
-  font-size:15px;
-  font-weight:var(--wHeavy);
-  letter-spacing:-0.02em;
+  font-size:13px;
+  font-weight:var(--wMed);
+  letter-spacing:-0.01em;
   color:rgba(21,33,61,.74);
 }
 
@@ -445,13 +435,12 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:16px;
   line-height:1;
-  font-weight:var(--wHeavy);
+  font-weight:var(--wMed);
   letter-spacing:-0.03em;
   color:var(--navy);
   white-space:nowrap;
 }
 
-/* Totals */
 .inv-totals{
   margin-top:20px;
   padding:6px 10px 0;
@@ -466,7 +455,7 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:22px;
   line-height:1;
-  font-weight:var(--wHeavy);
+  font-weight:var(--wMed);
   letter-spacing:-0.045em;
   color:rgba(21,33,61,.72);
 }
@@ -495,7 +484,7 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:26px;
   line-height:.96;
-  font-weight:var(--wHeavy);
+  font-weight:var(--wMed);
   letter-spacing:-0.05em;
   color:var(--navy);
 }
@@ -506,12 +495,11 @@ body.inv-page{
   font-family:var(--display-font);
   font-size:34px;
   line-height:1;
-  font-weight:var(--wHeavy);
+  font-weight:var(--wMed);
   letter-spacing:-0.055em;
   color:var(--danger);
 }
 
-/* Bottom actions */
 .inv-actions{
   position:fixed;
   left:0;
@@ -533,15 +521,15 @@ body.inv-page{
 .inv-action{
   flex:1;
   max-width:420px;
-  height:62px;
+  height:54px;
   border-radius:999px;
   border:1px solid rgba(21,33,61,.08);
   background:#efeff4;
   color:rgba(21,33,61,.66);
   font-family:var(--display-font);
-  font-size:15px;
-  font-weight:var(--wBold);
-  letter-spacing:.04em;
+  font-size:13px;
+  font-weight:var(--wMed);
+  letter-spacing:.03em;
   text-transform:uppercase;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
@@ -554,7 +542,6 @@ body.inv-page{
   color:#fff;
 }
 
-/* Safety */
 .inv-wrap,
 .inv-items,
 .inv-row,
@@ -571,100 +558,70 @@ body.inv-page{
     padding:
       calc(36px + env(safe-area-inset-top))
       14px
-      calc(118px + env(safe-area-inset-bottom));
+      calc(108px + env(safe-area-inset-bottom));
   }
 
-  .inv-title{
-    font-size:31px;
-  }
-
-  .inv-meta{
-    margin-top:12px;
-    font-size:17px;
-  }
-
-  .inv-shop{
-    margin-top:6px;
-    font-size:22px;
-  }
-
-  .inv-num{
-    margin-top:6px;
-    font-size:18px;
-  }
+  .inv-title{ font-size:31px; }
+  .inv-meta{ margin-top:12px; font-size:17px; }
+  .inv-shop{ margin-top:6px; font-size:22px; }
+  .inv-num{ margin-top:6px; font-size:18px; }
 
   .inv-customer{
-    min-height:56px;
-    border-radius:999px;
+    min-height:54px;
   }
 
   .inv-customer-label{
     font-size:15px;
-    letter-spacing:.055em;
-  }
-
-  .inv-customer-caret{
-    border-left-width:9px;
-    border-right-width:9px;
-    border-top-width:12px;
+    letter-spacing:.04em;
   }
 
   .inv-row{
-    grid-template-columns: 60px minmax(0,1fr) 98px 82px;
-    gap:12px;
-    padding:16px 14px;
+    grid-template-columns: 58px minmax(0,1fr) 82px 80px;
+    gap:10px;
+    padding:15px 14px;
   }
 
   .inv-icon{
-    width:50px;
-    height:50px;
+    width:48px;
+    height:48px;
     border-radius:14px;
   }
 
-  .inv-desc .t1{
-    font-size:17px;
-  }
-
+  .inv-desc .t1{ font-size:17px; }
   .inv-desc .t2,
-  .inv-desc .t2-link{
-    font-size:15px;
-  }
+  .inv-desc .t2-link{ font-size:15px; }
+  .inv-desc .t3{ font-size:13px; }
 
-  .inv-desc .t3{
-    font-size:13px;
-  }
-
-  .inv-unit{
-    font-size:14px;
-  }
+  .inv-unit{ font-size:12px; }
 
   .inv-qty{
-    min-width:92px;
-    height:38px;
-    gap:8px;
-    border-radius:17px;
+    min-width:72px;
+    height:30px;
+    gap:5px;
+    padding:0 7px;
+    border-radius:14px;
+  }
+
+  .inv-qty button{
+    width:18px;
+    height:18px;
+    font-size:14px;
   }
 
   .inv-qty .qnum{
-    font-size:14px;
+    font-size:12px;
+    min-width:14px;
   }
 
-  .inv-total{
-    font-size:15px;
-  }
+  .inv-total{ font-size:15px; }
 
   .trow{
     font-size:19px;
     gap:14px;
   }
 
-  .trow > div:first-child{
-    min-width:126px;
-  }
-
-  .trow > div:last-child{
-    min-width:90px;
-  }
+  .trow > div:first-child{ min-width:126px; }
+  .trow > div:last-child{ min-width:90px; }
 
   .glabel{
     min-width:126px;
@@ -677,9 +634,9 @@ body.inv-page{
   }
 
   .inv-action{
-    height:58px;
-    font-size:14px;
-    letter-spacing:.035em;
+    height:50px;
+    font-size:12px;
+    letter-spacing:.025em;
   }
 
   .inv-back{
