@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Brands</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
+
+  <style>
+    :root{
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+      --screen-max: 430px;
+
+      --bg: #edf2f6;
+      --ink: #16263d;
+      --muted: #51647f;
+
+      --toggle-bg: #c8d0db;
+      --toggle-shadow: 0 10px 24px rgba(0,0,0,.18);
+    }
+
+    body.dark{
+      --bg:
+        radial-gradient(1200px 700px at 50% -20%, #0e2244 0%, rgba(14,34,68,0) 55%),
+        linear-gradient(180deg, #06152d 0%, #020912 60%, #000000 100%);
+      --ink: #eef5ff;
+      --muted: #acbbd0;
+      --toggle-bg: #24385e;
+      --toggle-shadow: 0 10px 20px rgba(0,0,0,.24);
+    }
+
+    *{ box-sizing:border-box; }
+
+    html, body{
+      margin:0;
+      min-height:100%;
+    }
+
+    body{
+      min-height:100dvh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+      overflow-y: auto;
+      transition: background .25s ease, color .25s ease;
+    }
+
+    .screen{
+      width:100%;
+      max-width: var(--screen-max);
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding:
+        calc(var(--safe-top) + 72px)
+        18px
+        calc(var(--safe-bottom) + 40px);
+      position:relative;
+    }
+
+    .topbar{
+      position:fixed;
+      top: calc(var(--safe-top) + 18px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(calc(100vw - 28px), var(--screen-max));
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:0 2px;
+      z-index: 50;
+      pointer-events:none;
+    }
+
+    .back-btn,
+    .theme-toggle{
+      pointer-events:auto;
+    }
+
+    .back-btn{
+      width:48px;
+      height:48px;
+      border:none;
+      border-radius:16px;
+      background:rgba(255,255,255,.14);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      box-shadow:0 10px 24px rgba(0,0,0,.12);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-decoration:none;
+      color:var(--ink);
+      font-size:28px;
+      line-height:1;
+    }
+
+    body.dark .back-btn{
+      background:rgba(255,255,255,.08);
+    }
+
+    .theme-toggle{
+      width: 86px;
+      height: 42px;
+      border:none;
+      border-radius:999px;
+      background: var(--toggle-bg);
+      box-shadow: var(--toggle-shadow);
+      position: relative;
+      cursor:pointer;
+      padding:0;
+      appearance:none;
+      -webkit-appearance:none;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .theme-icon{
+      position:absolute;
+      top: 5px;
+      left: 5px;
+      width: 32px;
+      height: 32px;
+      object-fit:contain;
+      transition: left .28s cubic-bezier(.22,.8,.25,1), opacity .2s ease, transform .2s ease;
+      filter: drop-shadow(0 1px 4px rgba(0,0,0,.12));
+    }
+
+    body.dark .theme-icon{
+      left:49px;
+    }
+
+    .theme-icon.sun{
+      opacity:1;
+      transform:scale(1) rotate(0deg);
+    }
+
+    .theme-icon.moon{
+      opacity:0;
+      transform:scale(.85) rotate(-18deg);
+    }
+
+    body.dark .theme-icon.sun{
+      opacity:0;
+      transform:scale(.85) rotate(18deg);
+    }
+
+    body.dark .theme-icon.moon{
+      opacity:1;
+      transform:scale(1) rotate(0deg);
+    }
+
+    .title{
+      margin: 20px 0 10px;
+      font-size: 56px;
+      line-height: .95;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      color: var(--ink);
+    }
+
+    .sub{
+      font-size: 20px;
+      line-height: 1.35;
+      color: var(--muted);
+      font-weight: 500;
+      max-width: 18ch;
+    }
+  </style>
+</head>
+
+<body class="day">
+  <main class="screen">
+    <div class="topbar">
+      <a href="/social/" class="back-btn" aria-label="Back">‹</a>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle day and night mode" type="button">
+        <img class="theme-icon sun" src="/img/icons/sun.svg" alt="" aria-hidden="true" />
+        <img class="theme-icon moon" src="/img/icons/moon.svg" alt="" aria-hidden="true" />
+      </button>
+    </div>
+
+    <h1 class="title">Brands</h1>
+    <div class="sub">Coming soon.</div>
+  </main>
+
+  <script>
+    (function () {
+      const body = document.body;
+      const toggle = document.getElementById('themeToggle');
+      const savedTheme = localStorage.getItem('cigaros-home-theme');
+
+      if (savedTheme === 'dark') {
+        body.classList.add('dark');
+        body.classList.remove('day');
+      } else {
+        body.classList.add('day');
+        body.classList.remove('dark');
+      }
+
+      toggle.addEventListener('click', function () {
+        body.classList.toggle('dark');
+        body.classList.toggle('day');
+
+        const isDark = body.classList.contains('dark');
+        localStorage.setItem('cigaros-home-theme', isDark ? 'dark' : 'day');
+      });
+    })();
+  </script>
+</body>
+</html>
