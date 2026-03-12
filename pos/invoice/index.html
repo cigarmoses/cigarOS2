@@ -7,9 +7,9 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Invoice</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=14" />
-  <link rel="stylesheet" href="/pos/pos.css?v=14" />
-  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=14" />
+  <link rel="stylesheet" href="/css/type.css?v=15" />
+  <link rel="stylesheet" href="/pos/pos.css?v=15" />
+  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=15" />
 </head>
 
 <body class="inv-page">
@@ -30,9 +30,27 @@
       <div class="inv-num" id="invNum">INV# —</div>
     </header>
 
-    <button class="inv-customer" type="button" aria-label="Attach saved customer">
-      ATTACH SAVED CUSTOMER
-    </button>
+    <section class="inv-customer-wrap" aria-label="Customer selector">
+      <button class="inv-customer" id="invCustomerBtn" type="button" aria-expanded="false" aria-controls="invCustomerMenu">
+        <span class="inv-customer-label" id="invCustomerLabel">ATTACH SAVED CUSTOMER</span>
+        <span class="inv-customer-caret" aria-hidden="true"></span>
+      </button>
+
+      <div class="inv-customer-menu" id="invCustomerMenu" hidden>
+        <div class="inv-customer-search-wrap">
+          <input
+            id="invCustomerSearch"
+            class="inv-customer-search"
+            type="search"
+            placeholder="Search customers"
+            autocomplete="off"
+          />
+        </div>
+        <div class="inv-customer-list" id="invCustomerList"></div>
+      </div>
+
+      <div class="inv-customer-selected" id="invCustomerSelected" hidden></div>
+    </section>
 
     <section class="inv-items" id="invItems" aria-label="Invoice items">
       <!-- invoice.js renders rows -->
@@ -57,7 +75,7 @@
     <button class="inv-action" type="button">CASH OUT</button>
   </footer>
 
-  <script src="/pos/cart.js?v=14" defer></script>
-  <script src="/pos/invoice/invoice.js?v=14" defer></script>
+  <script src="/pos/cart.js?v=15" defer></script>
+  <script src="/pos/invoice/invoice.js?v=15" defer></script>
 </body>
 </html>
