@@ -1,7 +1,4 @@
-/* /pos/invoice/invoice.css
-   Mobile-first, no horizontal scroll
-   SF Pro Display: Heavy + Medium (via font-weight)
-*/
+/* /pos/invoice/invoice.css */
 
 :root{
   --bg:#ffffff;
@@ -21,19 +18,24 @@
 
   --maxw:820px;
 
-  /* Only two weights in use */
-  --wHeavy:800; /* "SF Pro Display Heavy" */
-  --wMed:600;   /* "SF Pro Display Medium" */
+  --wHeavy:800;
+  --wMed:600;
 }
 
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
+
+html{
+  overflow-x:hidden;
+}
 
 body.inv-page{
   margin:0;
   background:var(--bg);
   color:var(--ink);
   overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
 
   font-family:
     -apple-system,
@@ -46,41 +48,41 @@ body.inv-page{
     sans-serif;
 }
 
-/* Back arrow (simple, no pill) */
 .inv-back{
   position:fixed;
   left:12px;
-  top:10px;
+  top:max(10px, env(safe-area-inset-top));
   z-index:20;
 
-  width:40px;
-  height:40px;
-
-  display:grid;
-  place-items:center;
-
+  width:42px;
+  height:42px;
   border:none;
   background:transparent;
   box-shadow:none;
+  display:grid;
+  place-items:center;
+  padding:0;
 
-  color:rgba(16,24,40,.55);
-  font-size:24px;
+  color:rgba(16,24,40,.58);
+  font-size:34px;
   font-weight:var(--wHeavy);
+  line-height:1;
 
   -webkit-tap-highlight-color:transparent;
 }
 
-/* Wrapper */
 .inv-wrap{
   max-width:var(--maxw);
   margin:0 auto;
-  padding:18px 14px 104px;
+  padding:
+    calc(18px + env(safe-area-inset-top))
+    14px
+    calc(112px + env(safe-area-inset-bottom));
 }
 
-/* SECTION 1: Header (smaller + cleaner) */
 .inv-head{
   text-align:center;
-  padding-top:6px;
+  padding-top:8px;
   padding-bottom:10px;
 }
 
@@ -112,11 +114,10 @@ body.inv-page{
   color:rgba(16,24,40,.38);
 }
 
-/* SECTION 2: Customer pill */
 .inv-customer{
   width:100%;
   height:50px;
-
+  margin:12px 0 14px;
   border-radius:999px;
   border:1px solid var(--pillBorder);
   background:var(--pill);
@@ -131,54 +132,44 @@ body.inv-page{
   letter-spacing:.06em;
   color:rgba(16,24,40,.55);
 
-  margin:12px 0 14px;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
 }
 
-/* caret (no HTML change needed) */
 .inv-customer::after{
   content:"";
-  width:0;height:0;
+  width:0;
+  height:0;
   border-left:6px solid transparent;
   border-right:6px solid transparent;
   border-top:8px solid rgba(16,24,40,.35);
-  transform: translateY(1px);
+  transform:translateY(1px);
 }
 
-/* SECTION 3: Items list + striped rows */
 .inv-items{
   width:100%;
   margin:0 0 14px;
   border-radius:16px;
   overflow:hidden;
   border:1px solid var(--hair);
+  background:#fff;
 }
 
 .inv-empty{
-  padding:14px 14px;
+  padding:16px 14px;
   font-weight:var(--wMed);
   font-size:14px;
   color:rgba(16,24,40,.45);
   background:var(--rowA);
 }
 
-/* 5-column row: icon | text | msrp | qty | total */
 .inv-row{
   width:100%;
   display:grid;
   align-items:center;
-
-  grid-template-columns:
-    62px
-    minmax(0, 1fr)
-    70px
-    92px
-    78px;
-
+  grid-template-columns: 62px minmax(0,1fr) 74px 96px 82px;
   gap:10px;
   padding:10px 12px;
-
   background:var(--rowA);
 }
 
@@ -186,7 +177,6 @@ body.inv-page{
   background:var(--rowB);
 }
 
-/* Icon */
 .inv-icon{
   width:52px;
   height:52px;
@@ -200,11 +190,10 @@ body.inv-page{
 .inv-icon img{
   width:100%;
   height:100%;
-  object-fit:contain;
+  object-fit:cover;
   display:block;
 }
 
-/* Text (3 lines) */
 .inv-desc{
   min-width:0;
   display:flex;
@@ -239,7 +228,6 @@ body.inv-page{
   word-break:break-word;
 }
 
-/* Prices */
 .inv-unit,
 .inv-total{
   font-weight:var(--wMed);
@@ -248,7 +236,6 @@ body.inv-page{
   text-align:right;
 }
 
-/* Qty */
 .inv-qty{
   height:34px;
   border-radius:12px;
@@ -284,7 +271,6 @@ body.inv-page{
   color:rgba(16,24,40,.75);
 }
 
-/* SECTION 4: Totals */
 .inv-totals{
   margin-top:10px;
   padding:6px 4px 0;
@@ -296,7 +282,6 @@ body.inv-page{
   justify-content:flex-end;
   gap:18px;
   padding:6px 0;
-
   font-size:16px;
   font-weight:var(--wHeavy);
   color:rgba(16,24,40,.75);
@@ -339,7 +324,6 @@ body.inv-page{
   color:var(--danger);
 }
 
-/* SECTION 5: Bottom actions */
 .inv-actions{
   position:fixed;
   left:0;
@@ -348,7 +332,8 @@ body.inv-page{
   z-index:30;
 
   padding:12px 12px calc(12px + env(safe-area-inset-bottom));
-  background:linear-gradient(to top,
+  background:linear-gradient(
+    to top,
     rgba(255,255,255,1),
     rgba(255,255,255,.92),
     rgba(255,255,255,0)
@@ -363,31 +348,64 @@ body.inv-page{
   flex:1;
   max-width:420px;
   height:56px;
-
   border-radius:999px;
   border:1px solid rgba(16,24,40,.10);
-
   background:#f3f4f6;
   color:rgba(16,24,40,.70);
-
   font-weight:var(--wHeavy);
   font-size:14px;
   letter-spacing:.06em;
-
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
 }
 
-/* Primary: Cash out */
 .inv-actions .inv-action:nth-child(2){
   background:rgba(16,24,40,.92);
   border-color:rgba(16,24,40,.92);
   color:#fff;
 }
 
-/* Safety */
 .inv-wrap,
 .inv-items,
 .inv-row,
-.inv-desc{ max-width:100%; }
-.inv-desc *{ max-width:100%; }
+.inv-desc{
+  max-width:100%;
+}
+
+.inv-desc *{
+  max-width:100%;
+}
+
+@media (max-width: 640px){
+  .inv-row{
+    grid-template-columns: 56px minmax(0,1fr) 64px 90px 74px;
+    gap:8px;
+    padding:10px 10px;
+  }
+
+  .inv-icon{
+    width:48px;
+    height:48px;
+    border-radius:12px;
+  }
+
+  .inv-desc .t1{
+    font-size:13px;
+  }
+
+  .inv-desc .t2,
+  .inv-desc .t3,
+  .inv-unit,
+  .inv-total,
+  .inv-qty .qnum{
+    font-size:12px;
+  }
+
+  .trow{
+    font-size:15px;
+  }
+
+  .gval{
+    font-size:24px;
+  }
+}
