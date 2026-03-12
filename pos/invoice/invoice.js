@@ -1,4 +1,9 @@
-/* /pos/invoice/invoice.js */
+/* /pos/invoice/invoice.js
+   Invoice page
+   - reads cart from localStorage
+   - fetches loyalty contacts from /loyalty/loyalty-contacts.json
+   - maps exact column names from loyalty export
+*/
 
 (() => {
   "use strict";
@@ -32,6 +37,7 @@
   const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
   let loyaltyCustomersCache = [];
+  let customersLoadingPromise = null;
 
   function safeJSONParse(value, fallback) {
     try {
@@ -60,6 +66,37 @@
     } catch {
       return u;
     }
+  }
+
+  function cleanPhone(value) {
+    const raw = normStr(value);
+    if (!raw) return "";
+
+    return raw
+      .replace(/^'\+?/, "+")
+      .replace(/^'+/, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function titleCaseWord(word) {
+    const w = normStr(word);
+    if (!w) return "";
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }
+
+  function buildTags(raw) {
+    const tags = [];
+
+    if (normStr(raw["Locker"])) tags.push(`Locker ${normStr(raw["Locker"])}`);
+    if (normStr(raw["Regular"]).toUpperCase() === "X") tags.push("Regular");
+    if (normStr(raw["Military"]).toUpperCase() === "X") tags.push("Military");
+    if (normStr(raw["Police"]).toUpperCase() === "X") tags.push("Police");
+    if (normStr(raw["Firefighter"]).toUpperCase() === "X") tags.push("Firefighter");
+    if (normStr(raw["Paramedic"]).toUpperCase() === "X") tags.push("Paramedic");
+    if (normStr(raw["Rewards"]).toUpperCase() === "X") tags.push("Rewards");
+
+    return tags;
   }
 
   function loadCart() {
@@ -313,55 +350,101 @@
   function normalizeCustomer(raw, index = 0) {
     if (!raw || typeof raw !== "object") return null;
 
-    const id = normStr(raw.id || raw.customerId || raw.customer_id || raw.loyaltyId || `cust-${index}`);
-    const first = normStr(raw.firstName || raw.first_name || "");
-    const last = normStr(raw.lastName || raw.last_name || "");
-    const displayName = normStr(
-      raw.name ||
-      raw.fullName ||
-      raw.full_name ||
-      raw.contactName ||
-      `${first} ${last}`.trim()
-    );
+    const first = normStr(raw["First Name"]);
+    const last = normStr(raw["Last Name"]);
+    const nickname = normStr(raw["Nickname “aka”"] || raw['Nickname "aka"'] || raw["Nickname"]);
+    const email = normStr(raw["Email"]);
+    const phone = cleanPhone(raw["Phone"]);
+    const birthday = normStr(raw["Birthday"]);
+    const company = normStr(raw["Company"]);
+    const labels = normStr(raw["Labels"]);
+    const favBrand1 = normStr(raw["Fav brand 1"]);
+    const favBrand2 = normStr(raw["Fav brand 2"]);
+    const favBrand3 = normStr(raw["Fav brand 3"]);
+    const favCigar1 = normStr(raw["Fav cigar"]);
+    const favCigar2 = normStr(raw["Fav cigar 2"]);
+    const favCigar3 = normStr(raw["Fav cigar 3"]);
+    const lastPurchase = normStr(raw["Last Purchase"]);
+    const locker = normStr(raw["Locker"]);
 
-    const phone = normStr(raw.phone || raw.phoneNumber || raw.mobile || raw.cell || "");
-    const email = normStr(raw.email || raw.emailAddress || "");
-    const cigarsocial = normStr(raw.cigarsocial || raw.username || raw.handle || raw.cigarSocial || "");
-    const birthday = normStr(raw.birthday || "");
-    const notes = normStr(raw.notes || raw.quickNote || "");
+    const fullName = [first, last].filter(Boolean).join(" ").trim();
+    const displayName = nickname || fullName || email || phone || `Customer ${index + 1}`;
 
-    const name = displayName || email || phone || "Unnamed customer";
-    const sub = [phone, email, cigarsocial].filter(Boolean).join(" • ");
+    const tags = buildTags(raw);
+    const subParts = [
+      phone,
+      email,
+      company,
+      tags.join(" • ")
+    ].filter(Boolean);
 
-    return { id, name, phone, email, cigarsocial, birthday, notes, sub, raw };
+    const searchBlob = [
+      first,
+      last,
+      nickname,
+      fullName,
+      email,
+      phone,
+      birthday,
+      company,
+      labels,
+      favBrand1,
+      favBrand2,
+      favBrand3,
+      favCigar1,
+      favCigar2,
+      favCigar3,
+      lastPurchase,
+      locker,
+      ...tags
+    ].join(" ").toLowerCase();
+
+    return {
+      id: `${displayName}|${email}|${phone}|${index}`,
+      name: displayName,
+      formalName: fullName || displayName,
+      first,
+      last,
+      nickname,
+      email,
+      phone,
+      birthday,
+      company,
+      labels,
+      locker,
+      tags,
+      lastPurchase,
+      favorites: [favBrand1, favBrand2, favBrand3, favCigar1, favCigar2, favCigar3].filter(Boolean),
+      sub: subParts.join(" • "),
+      searchBlob,
+      raw
+    };
   }
 
   async function loadCustomers() {
     if (loyaltyCustomersCache.length) return loyaltyCustomersCache;
+    if (customersLoadingPromise) return customersLoadingPromise;
 
-    try {
-      const res = await fetch(CONTACTS_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    customersLoadingPromise = fetch(CONTACTS_URL, { cache: "no-store" })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const arr = Array.isArray(data) ? data : [];
+        loyaltyCustomersCache = arr.map(normalizeCustomer).filter(Boolean);
+        return loyaltyCustomersCache;
+      })
+      .catch((err) => {
+        console.error("Failed to load loyalty contacts:", err);
+        loyaltyCustomersCache = [];
+        return [];
+      })
+      .finally(() => {
+        customersLoadingPromise = null;
+      });
 
-      const data = await res.json();
-
-      let arr = [];
-      if (Array.isArray(data)) arr = data;
-      else if (Array.isArray(data.contacts)) arr = data.contacts;
-      else if (Array.isArray(data.customers)) arr = data.customers;
-      else if (Array.isArray(data.items)) arr = data.items;
-      else if (Array.isArray(data.results)) arr = data.results;
-      else if (data && typeof data === "object") {
-        arr = Object.values(data).filter((v) => v && typeof v === "object");
-      }
-
-      loyaltyCustomersCache = arr.map(normalizeCustomer).filter(Boolean);
-      return loyaltyCustomersCache;
-    } catch (err) {
-      console.error("Failed to load loyalty contacts:", err);
-      loyaltyCustomersCache = [];
-      return [];
-    }
+    return customersLoadingPromise;
   }
 
   function loadSelectedCustomer() {
@@ -409,17 +492,18 @@
     if (!customerList) return;
 
     const q = normStr(filterText).toLowerCase();
+    customerList.innerHTML = `
+      <div class="inv-customer-empty">
+        <div class="inv-customer-name">Loading customers…</div>
+        <div class="inv-customer-sub">Please wait.</div>
+      </div>
+    `;
+
     const allCustomers = await loadCustomers();
 
     const customers = allCustomers.filter((c) => {
       if (!q) return true;
-      return (
-        c.name.toLowerCase().includes(q) ||
-        c.sub.toLowerCase().includes(q) ||
-        c.phone.toLowerCase().includes(q) ||
-        c.email.toLowerCase().includes(q) ||
-        c.cigarsocial.toLowerCase().includes(q)
-      );
+      return c.searchBlob.includes(q);
     });
 
     customerList.innerHTML = "";
@@ -435,13 +519,13 @@
       return;
     }
 
-    for (const customer of customers) {
+    for (const customer of customers.slice(0, 100)) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "inv-customer-item";
       btn.innerHTML = `
         <div class="inv-customer-name">${customer.name}</div>
-        <div class="inv-customer-sub">${customer.sub || "Saved customer"}</div>
+        <div class="inv-customer-sub">${customer.sub || customer.formalName || "Saved customer"}</div>
       `;
       btn.addEventListener("click", () => {
         saveSelectedCustomer(customer);
@@ -460,8 +544,8 @@
     customerBtn.addEventListener("click", async () => {
       if (customerMenu.hidden) {
         if (customerSearch) customerSearch.value = "";
-        await renderCustomerList("");
         openCustomerMenu();
+        await renderCustomerList("");
       } else {
         closeCustomerMenu();
       }
