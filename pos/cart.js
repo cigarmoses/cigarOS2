@@ -6,6 +6,7 @@
    ✅ Writes cart to localStorage (cigaros_pos_cart_v3)
    ✅ Also mirrors to legacy window.cigarOSCart ARRAY if it exists (pos.js compatibility)
    ✅ Invoice icon navigates to /pos/invoice/
+   ✅ More forgiving add-button detection for plain "+" buttons inside cigar rows
 */
 
 (() => {
@@ -13,9 +14,6 @@
 
   const CART_KEY = "cigaros_pos_cart_v3";
 
-  // -------------------------
-  // helpers
-  // -------------------------
   function safeJSONParse(s, fallback) {
     try { return JSON.parse(s); } catch { return fallback; }
   }
@@ -54,7 +52,6 @@
     return parts.join("|");
   }
 
-  // Distinct item count (qty > 0)
   function getCartCount(cartMaybe) {
     const cart = cartMaybe || loadCart();
     return cart.reduce((sum, it) => (Number(it?.qty || 0) > 0 ? sum + 1 : sum), 0);
@@ -76,11 +73,7 @@
     });
   }
 
-  // -------------------------
-  // legacy bridge (pos.js used window.cigarOSCart = [])
-  // -------------------------
   function mirrorToLegacyArray(cart) {
-    // If some other script set window.cigarOSCart as an array, keep it updated
     if (Array.isArray(window.cigarOSCart)) {
       window.cigarOSCart.length = 0;
       for (const it of cart) window.cigarOSCart.push(it);
@@ -125,16 +118,17 @@
     updateBadges(cart);
 
     document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart } }));
+    window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart } }));
   }
 
-  // -------------------------
-  // DOM scrape fallbacks
-  // -------------------------
   function scrapeFromCigarRow(btn) {
     const row =
       btn.closest(".cigar-row") ||
       btn.closest(".cigars-row") ||
       btn.closest(".brand-row") ||
+      btn.closest(".product-row") ||
+      btn.closest(".menu-row") ||
+      btn.closest(".item-row") ||
       btn.closest("li") ||
       btn.closest(".row") ||
       btn.closest("[role='listitem']");
@@ -144,6 +138,8 @@
     const titleEl =
       row.querySelector(".cigar-title") ||
       row.querySelector(".row-title") ||
+      row.querySelector(".product-title") ||
+      row.querySelector(".item-title") ||
       row.querySelector("h3") ||
       row.querySelector("h2") ||
       row.querySelector(".title") ||
@@ -152,6 +148,8 @@
     const vitolaEl =
       row.querySelector(".cigar-subtitle") ||
       row.querySelector(".row-sub") ||
+      row.querySelector(".product-subtitle") ||
+      row.querySelector(".item-subtitle") ||
       row.querySelector(".subtitle") ||
       row.querySelector(".sub") ||
       row.querySelector("small");
@@ -159,6 +157,8 @@
     const priceEl =
       row.querySelector(".cigar-price") ||
       row.querySelector(".row-price") ||
+      row.querySelector(".product-price") ||
+      row.querySelector(".item-price") ||
       row.querySelector(".price") ||
       row.querySelector("[data-price]");
 
@@ -182,6 +182,19 @@
       item.image = img.getAttribute("src") || "";
       const alt = normStr(img.getAttribute("alt") || img.getAttribute("title") || "");
       if (alt && !item.brand) item.brand = alt;
+    }
+
+    const brandEl =
+      row.querySelector("[data-brand-name]") ||
+      row.querySelector(".brand-name") ||
+      row.querySelector(".brand-logo");
+
+    if (!item.brand && brandEl) {
+      item.brand = normStr(
+        brandEl.getAttribute?.("data-brand-name") ||
+        brandEl.getAttribute?.("alt") ||
+        brandEl.textContent
+      );
     }
 
     return item.name ? item : null;
@@ -241,9 +254,6 @@
     };
   }
 
-  // -------------------------
-  // Invoice nav
-  // -------------------------
   function wireInvoiceNav(root = document) {
     const candidates = [
       ...root.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn, a[href*='invoice']")
@@ -266,28 +276,39 @@
     });
   }
 
-  // -------------------------
-  // Add-to-cart handler (CAPTURE ✅)
-  // -------------------------
-  function handleAddClick(e) {
-    let btn = e.target.closest("[data-cart-add], [data-receipt-item]");
-    if (!btn) {
-      btn = e.target.closest(
-        ".row-add, .pos-add, .cigar-add, .add-btn, .plus-btn, button[aria-label='Add'], button[title='Add']"
-      );
+  function looksLikePlusButton(btn) {
+    if (!btn) return false;
+
+    const text = normStr(btn.textContent).replace(/\s+/g, "");
+    const aria = normStr(btn.getAttribute("aria-label")).toLowerCase();
+    const title = normStr(btn.getAttribute("title")).toLowerCase();
+    const cls = normStr(btn.className).toLowerCase();
+
+    if (
+      btn.hasAttribute("data-cart-add") ||
+      btn.hasAttribute("data-receipt-item") ||
+      cls.includes("row-add") ||
+      cls.includes("pos-add") ||
+      cls.includes("cigar-add") ||
+      cls.includes("add-btn") ||
+      cls.includes("plus-btn")
+    ) {
+      return true;
     }
+
+    if (text === "+" || text === "＋") return true;
+    if (aria.includes("add")) return true;
+    if (title.includes("add")) return true;
+
+    return false;
+  }
+
+  function handleAddClick(e) {
+    const btn = e.target.closest("button, [role='button'], .row-add, .pos-add, .cigar-add, .add-btn, .plus-btn, [data-cart-add], [data-receipt-item]");
     if (!btn) return;
 
     if (btn.matches("[data-invoice-btn], #invoice-btn, .pos-invoice-btn")) return;
-
-    const btnText = normStr(btn.textContent).toLowerCase();
-    const looksLikeAdd =
-      btn.hasAttribute("data-cart-add") ||
-      btn.hasAttribute("data-receipt-item") ||
-      btnText === "+" ||
-      btnText.includes("add");
-
-    if (!looksLikeAdd) return;
+    if (!looksLikePlusButton(btn)) return;
 
     const dsItem = itemFromDataset(btn.dataset);
     const rowItem = scrapeFromCigarRow(btn);
@@ -301,9 +322,6 @@
 
   document.addEventListener("click", handleAddClick, true);
 
-  // -------------------------
-  // Init
-  // -------------------------
   const initial = loadCart();
   mirrorToLegacyArray(initial);
   updateBadges(initial);
@@ -319,7 +337,6 @@
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
-  // Expose API without breaking legacy array
   if (!Array.isArray(window.cigarOSCart)) {
     window.cigarOSCart = window.cigarOSCart || {};
     window.cigarOSCart.add = addToCart;
