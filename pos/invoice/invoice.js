@@ -1,18 +1,24 @@
-/* /pos/invoice/invoice.js
-   Invoice page renderer (reads cart from localStorage)
-
-   Works with the NEW /pos/cart.js (cart stored under "cigaros_pos_cart_v3")
-   ✅ Renders rows into #invItems
-   ✅ Qty +/- updates localStorage + triggers re-render
-   ✅ Totals + 7% tax (simple default)
-*/
+/* /pos/invoice/invoice.js */
 
 (() => {
   "use strict";
 
-  const CART_KEY = "cigaros_pos_cart_v3";
-  const SHOP_KEY = "cigaros_pos_shop_name";
-  const INV_KEY  = "cigaros_pos_invoice_number";
+  const CART_KEYS = [
+    "cigaros_pos_cart_v3",
+    "cigaros_pos_cart_v2",
+    "cigaros_pos_cart",
+    "cigaros_cart",
+    "pos_cart",
+    "cart"
+  ];
+
+  const SHOP_KEYS = [
+    "cigaros_pos_shop_name",
+    "cigaros_shop_name",
+    "shop_name"
+  ];
+
+  const INV_KEY = "cigaros_pos_invoice_number";
   const POS_TAX_RATE = 0.07;
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -24,17 +30,171 @@
 
   const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
-  function safeJSONParse(s, fallback) {
-    try { return JSON.parse(s); } catch { return fallback; }
+  function safeJSONParse(value, fallback) {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  }
+
+  function normalizeText(value, fallback = "") {
+    if (value == null) return fallback;
+    const out = String(value).trim();
+    return out || fallback;
+  }
+
+  function numberFrom(value, fallback = 0) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function normalizeItem(raw, index = 0) {
+    if (!raw || typeof raw !== "object") return null;
+
+    const brand = normalizeText(raw.brand || raw.maker || raw.company || "");
+    const name =
+      normalizeText(
+        raw.name ||
+        raw.title ||
+        raw.productName ||
+        raw.product ||
+        raw.label ||
+        "Item"
+      );
+
+    const vitola =
+      normalizeText(
+        raw.vitola ||
+        raw.size ||
+        raw.sub ||
+        raw.subtitle ||
+        raw.style ||
+        raw.line ||
+        ""
+      );
+
+    const category =
+      normalizeText(
+        raw.category ||
+        raw.group ||
+        raw.bucket ||
+        raw.department ||
+        ""
+      );
+
+    const type =
+      normalizeText(
+        raw.type ||
+        raw.kind ||
+        (category.toLowerCase().includes("cigar") ? "cigar" : "")
+      );
+
+    const image =
+      normalizeText(
+        raw.image ||
+        raw.img ||
+        raw.photo ||
+        raw.icon ||
+        raw.logo ||
+        ""
+      );
+
+    const price = numberFrom(
+      raw.msrp ??
+      raw.price ??
+      raw.unitPrice ??
+      raw.unit_price ??
+      raw.cost ??
+      0,
+      0
+    );
+
+    const qty = Math.max(
+      0,
+      Math.round(
+        numberFrom(raw.qty ?? raw.quantity ?? raw.count ?? 1, 1)
+      )
+    );
+
+    const key = normalizeText(
+      raw.key ||
+      raw.id ||
+      raw.sku ||
+      raw.slug ||
+      `${brand}|${name}|${vitola}|${price}|${index}`
+    );
+
+    return {
+      key,
+      brand,
+      name,
+      vitola,
+      category,
+      type,
+      image,
+      msrp: price,
+      qty
+    };
+  }
+
+  function cartArrayFromUnknownShape(value) {
+    if (Array.isArray(value)) {
+      return value.map(normalizeItem).filter(Boolean);
+    }
+
+    if (!value || typeof value !== "object") {
+      return [];
+    }
+
+    if (Array.isArray(value.items)) {
+      return value.items.map(normalizeItem).filter(Boolean);
+    }
+
+    if (Array.isArray(value.cart)) {
+      return value.cart.map(normalizeItem).filter(Boolean);
+    }
+
+    const vals = Object.values(value);
+    if (vals.every((v) => v && typeof v === "object")) {
+      return vals.map(normalizeItem).filter(Boolean);
+    }
+
+    return [];
+  }
+
+  function getActiveCartKey() {
+    for (const key of CART_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = safeJSONParse(raw, null);
+      const arr = cartArrayFromUnknownShape(parsed);
+      if (arr.length) return key;
+    }
+
+    return CART_KEYS[0];
   }
 
   function loadCart() {
-    return safeJSONParse(localStorage.getItem(CART_KEY), []) || [];
+    for (const key of CART_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = safeJSONParse(raw, null);
+      const arr = cartArrayFromUnknownShape(parsed);
+      if (arr.length) return arr;
+    }
+
+    return [];
   }
 
   function saveCart(cart) {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart } }));
+    const activeKey = getActiveCartKey();
+    localStorage.setItem(activeKey, JSON.stringify(cart));
+
+    const detail = { cart, key: activeKey };
+
+    document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail }));
+    window.dispatchEvent(new CustomEvent("cigaros:cart", { detail }));
   }
 
   function nowStamp() {
@@ -44,19 +204,25 @@
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
     const yyyy = d.getFullYear();
+
     let h = d.getHours();
     const ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12; if (h === 0) h = 12;
+    h = h % 12;
+    if (h === 0) h = 12;
+
     const min = String(d.getMinutes()).padStart(2, "0");
     return `${day}  ${mm}/${dd}/${yyyy}  ${h}:${min} ${ampm}`;
   }
 
   function getShopName() {
-    return localStorage.getItem(SHOP_KEY) || "Shop";
+    for (const key of SHOP_KEYS) {
+      const value = localStorage.getItem(key);
+      if (value && value.trim()) return value.trim();
+    }
+    return "Shop";
   }
 
   function getInvoiceNumber() {
-    // Keep it stable until cleared; generate a readable number if missing
     let inv = localStorage.getItem(INV_KEY);
     if (inv) return inv;
 
@@ -71,52 +237,56 @@
   }
 
   function iconFor(item) {
-    // Prefer explicit image if stored by cart.js / dataset
     if (item.image) return item.image;
 
-    // Fallbacks by type/category
-    const t = String(item.type || item.category || "").toLowerCase();
+    const t = `${item.type} ${item.category}`.toLowerCase();
+
     if (t.includes("cigar")) return "/img/icons/categories/cigars.png";
     if (t.includes("accessor")) return "/img/icons/categories/accessories.png";
     if (t.includes("ash")) return "/img/icons/categories/ashtrays.png";
     if (t.includes("pipe")) return "/img/icons/categories/pipes.png";
     if (t.includes("food") || t.includes("bev")) return "/img/icons/categories/foodandbevs.png";
+    if (t.includes("alcohol")) return "/img/icons/categories/foodandbevs.png";
+
     return "/img/icons/categories/other.png";
   }
 
   function isCigarItem(item) {
-    const t = String(item.type || "").toLowerCase();
-    if (t === "cigar") return true;
-    const c = String(item.category || "").toLowerCase();
-    return c.includes("cigar");
+    const t = normalizeText(item.type).toLowerCase();
+    const c = normalizeText(item.category).toLowerCase();
+
+    return (
+      t === "cigar" ||
+      c.includes("cigar") ||
+      c.includes("tobacco") ||
+      normalizeText(item.vitola) !== ""
+    );
   }
 
   function buildRow(item) {
     const isCigar = isCigarItem(item);
 
-    // TEXT RULES (your spec)
     let t1, t2, t3;
+
     if (isCigar) {
-      const brand = item.brand ? String(item.brand) : "";
-      t1 = brand ? `Cigars - ${brand}` : "Cigars";
-      // name is stored as line+name in your cart add flow sometimes; keep as-is
-      t2 = String(item.name || "Cigar");
-      t3 = String(item.vitola || item.sub || "");
+      t1 = item.brand ? `Cigars - ${item.brand}` : "Cigars";
+      t2 = item.name || "Cigar";
+      t3 = item.vitola || "";
     } else {
-      t1 = String(item.category || "Other");
-      t2 = String(item.brand || "-");
-      t3 = String(item.name || "Item");
+      t1 = item.category || "Other";
+      t2 = item.brand || "-";
+      t3 = item.name || "Item";
     }
 
-    const unit = Number(item.msrp ?? item.price ?? 0);
-    const qty  = Number(item.qty || 0);
+    const unit = numberFrom(item.msrp, 0);
+    const qty = Math.max(0, Math.round(numberFrom(item.qty, 0)));
     const total = unit * qty;
 
     const row = document.createElement("article");
     row.className = "inv-row";
 
     row.innerHTML = `
-      <div class="inv-icon"><img alt="" loading="lazy" decoding="async"></div>
+      <div class="inv-icon"><img alt="" loading="lazy" decoding="async" /></div>
 
       <div class="inv-desc">
         <div class="t1"></div>
@@ -137,6 +307,10 @@
 
     const img = row.querySelector(".inv-icon img");
     img.src = iconFor(item);
+    img.onerror = () => {
+      img.onerror = null;
+      img.src = "/img/icons/categories/other.png";
+    };
 
     row.querySelector(".t1").textContent = t1;
     row.querySelector(".t2").textContent = t2;
@@ -156,9 +330,10 @@
   function setQty(itemKey, newQty) {
     const cart = loadCart();
     const idx = cart.findIndex((x) => x.key === itemKey);
+
     if (idx === -1) return;
 
-    const q = Number(newQty || 0);
+    const q = Math.max(0, Math.round(numberFrom(newQty, 0)));
 
     if (q <= 0) {
       cart.splice(idx, 1);
@@ -171,20 +346,20 @@
   }
 
   function computeBuckets(cart) {
-    let tobacco = 0, alcohol = 0, other = 0;
+    let tobacco = 0;
+    let alcohol = 0;
+    let other = 0;
 
     for (const it of cart) {
-      const unit = Number(it.msrp ?? it.price ?? 0);
-      const line = unit * Number(it.qty || 0);
+      const unit = numberFrom(it.msrp, 0);
+      const qty = Math.max(0, Math.round(numberFrom(it.qty, 0)));
+      const line = unit * qty;
 
-      const bucket = String(it.bucket || it.category || it.type || "").toLowerCase();
+      const bucket = `${it.category} ${it.type}`.toLowerCase();
 
       if (bucket.includes("alcohol")) {
         alcohol += line;
-      } else if (bucket.includes("tobacco") || bucket.includes("cigar")) {
-        tobacco += line;
-      } else if (isCigarItem(it)) {
-        // Treat cigars as tobacco even if bucket is missing
+      } else if (bucket.includes("tobacco") || bucket.includes("cigar") || isCigarItem(it)) {
         tobacco += line;
       } else {
         other += line;
@@ -192,25 +367,21 @@
     }
 
     const subtotal = tobacco + alcohol + other;
-
-    // Simple default: 7% sales tax on subtotal
-    // If you later implement category-specific tax rules, adjust here.
     const tax = subtotal * POS_TAX_RATE;
     const grand = subtotal + tax;
 
     return { tobacco, alcohol, other, subtotal, tax, grand };
   }
 
-  function render() {
-    const cart = loadCart();
-
-    // header
+  function renderHeader() {
     if (metaEl) metaEl.textContent = nowStamp();
     if (shopEl) shopEl.textContent = getShopName();
-    if (numEl)  numEl.textContent  = `INV# ${getInvoiceNumber()}`;
+    if (numEl) numEl.textContent = `INV# ${getInvoiceNumber()}`;
+  }
 
-    // items
+  function renderItems(cart) {
     if (!itemsEl) return;
+
     itemsEl.innerHTML = "";
 
     if (!cart.length) {
@@ -218,12 +389,17 @@
       empty.className = "inv-empty";
       empty.textContent = "No items yet.";
       itemsEl.appendChild(empty);
-    } else {
-      for (const it of cart) itemsEl.appendChild(buildRow(it));
+      return;
     }
 
-    // totals
+    for (const item of cart) {
+      itemsEl.appendChild(buildRow(item));
+    }
+  }
+
+  function renderTotals(cart) {
     const t = computeBuckets(cart);
+
     const tTobacco  = $("#tTobacco");
     const tAlcohol  = $("#tAlcohol");
     const tOther    = $("#tOther");
@@ -234,16 +410,29 @@
     if (tTobacco)  tTobacco.textContent  = fmt(t.tobacco);
     if (tAlcohol)  tAlcohol.textContent  = fmt(t.alcohol);
     if (tOther)    tOther.textContent    = fmt(t.other);
-    if (tSubtotal) tSubtotal.textContent = fmt(t.subtotal);
+    if (tSubtotal) tTobacco && (tSubtotal.textContent = fmt(t.subtotal));
     if (tTax)      tTax.textContent      = fmt(t.tax);
     if (tGrand)    tGrand.textContent    = fmt(t.grand);
   }
 
-  // Re-render when cart changes (new cart.js emits this)
+  function render() {
+    const cart = loadCart();
+    renderHeader();
+    renderItems(cart);
+    renderTotals(cart);
+  }
+
+  function handleStorage(e) {
+    if (!e || !e.key || CART_KEYS.includes(e.key) || SHOP_KEYS.includes(e.key) || e.key === INV_KEY) {
+      render();
+    }
+  }
+
   document.addEventListener("cigaros:cart-changed", render);
-
-  // Back-compat: if anything emits this older event
   window.addEventListener("cigaros:cart", render);
-
+  window.addEventListener("storage", handleStorage);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) render();
+  });
   document.addEventListener("DOMContentLoaded", render);
 })();
