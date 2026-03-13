@@ -29,13 +29,19 @@
       </button>
     </div>
 
-    <button id="invoice-btn" class="invoice-btn" type="button" aria-label="Open invoice">
+    <button
+      id="invoice-btn"
+      class="invoice-btn pos-invoice-btn"
+      data-invoice-btn
+      type="button"
+      aria-label="Invoice"
+    >
       <svg id="invoice-icon" viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
         <path d="M7 6h14l-1.7 6.8a2 2 0 0 1-1.94 1.52H10.1a2 2 0 0 1-1.95-1.57L6.1 4.5H3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx="10" cy="18.5" r="1.6" fill="currentColor"/>
         <circle cx="17.5" cy="18.5" r="1.6" fill="currentColor"/>
       </svg>
-      <span id="invoice-badge" class="invoice-badge" hidden>0</span>
+      <span id="invoice-badge" class="invoice-badge" data-cart-badge hidden>0</span>
     </button>
   </header>
 
