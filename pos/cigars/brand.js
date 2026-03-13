@@ -21,6 +21,7 @@
   const detailSheet = $("#sheet-detail");
   const themeToggle = $("#theme-toggle");
   const backBtn = $("#back-btn");
+  const invoiceBtn = $("#invoice-btn");
 
   const state = {
     brand: "",
@@ -197,6 +198,10 @@
     return getField(r, ["image", "img", "photo", "cigar_image"]);
   }
 
+  function resolveUrl(r){
+    return getField(r, ["url", "link", "href", "page_url", "product_url", "slug_url"]);
+  }
+
   function resolveBand(r){
     const direct = getField(r, ["band", "band_key", "band_group", "band_name"]);
     if (direct) return direct;
@@ -273,9 +278,11 @@
     const detailName = $("#detail-name");
     const detailImage = $("#detail-image");
     const detailBrandIcon = $("#detail-brand-icon");
+    const detailVitola = $("#detail-vitola");
 
     if (detailBrand) detailBrand.textContent = state.brand;
     if (detailName) detailName.textContent = resolveName(r);
+    if (detailVitola) detailVitola.textContent = resolveVitola(r) || "—";
 
     if (detailBrandIcon) {
       detailBrandIcon.src = brandIconPath();
@@ -286,6 +293,9 @@
 
     if (detailImage) {
       detailImage.src = resolveImage(r) || brandIconPath();
+      detailImage.onerror = () => {
+        detailImage.src = brandIconPath();
+      };
     }
 
     $("#detail-ring").textContent = resolveRing(r) || "—";
@@ -502,6 +512,20 @@
     });
   }
 
+  function buildCartDataset(r){
+    return {
+      type: "cigar",
+      id: resolveId(r),
+      brand: state.brand,
+      line: "",
+      name: resolveName(r),
+      vitola: resolveVitola(r),
+      price: Number(resolvePrice(r) || 0) || 0,
+      image: resolveImage(r) || brandIconPath(),
+      url: resolveUrl(r) || ""
+    };
+  }
+
   function renderList(rows){
     listEl.innerHTML = "";
 
@@ -514,13 +538,7 @@
       const card = document.createElement("article");
       card.className = "brand-row";
 
-      const cartItem = {
-        id: resolveId(r),
-        name: resolveName(r),
-        price: Number(resolvePrice(r) || 0) || 0,
-        img: resolveImage(r) || "",
-        brand: state.brand,
-      };
+      const cartItem = buildCartDataset(r);
 
       card.innerHTML = `
         <img class="row-ico" src="${esc(brandIconPath())}" alt="" loading="lazy" />
@@ -530,9 +548,21 @@
         </div>
         <div class="brand-row-right">
           <div class="brand-row-msrp">${esc(resolvePrice(r))}</div>
-          <button class="pos-add" type="button" aria-label="Add"
-            data-add-cart
-            data-cart-item='${esc(JSON.stringify(cartItem))}'>+</button>
+          <button
+            class="pos-add"
+            type="button"
+            aria-label="Add"
+            data-cart-add
+            data-id="${esc(cartItem.id)}"
+            data-type="${esc(cartItem.type)}"
+            data-brand="${esc(cartItem.brand)}"
+            data-line="${esc(cartItem.line)}"
+            data-name="${esc(cartItem.name)}"
+            data-vitola="${esc(cartItem.vitola)}"
+            data-price="${esc(cartItem.price)}"
+            data-image="${esc(cartItem.image)}"
+            data-url="${esc(cartItem.url)}"
+          >+</button>
         </div>
       `;
 
@@ -541,8 +571,9 @@
         openDetail(r);
       });
 
-      $(".pos-add", card)?.addEventListener("click", (e) => {
+      $(".row-sub", card)?.addEventListener("click", (e) => {
         e.stopPropagation();
+        openDetail(r);
       });
 
       listEl.appendChild(card);
@@ -552,36 +583,12 @@
   function getBandOptions(rows){
     if (normalizeBrand(state.brand) === "padron") {
       return [
-        {
-          key: "Padron Series",
-          label: "Padron Series",
-          src: "/img/icons/padronseriesband.svg"
-        },
-        {
-          key: "Family Reserve",
-          label: "Family Reserve",
-          src: "/img/icons/padronfamilyreserveband.svg"
-        },
-        {
-          key: "1926",
-          label: "1926",
-          src: "/img/icons/padron1926serieband.svg"
-        },
-        {
-          key: "Black Series",
-          label: "Black Series",
-          src: "/img/icons/padronblackseriesband.svg"
-        },
-        {
-          key: "Damaso",
-          label: "Damaso",
-          src: "/img/icons/padrondamasoband.svg"
-        },
-        {
-          key: "1964 Anniversary",
-          label: "1964 Anniversary",
-          src: "/img/icons/padron1964anniversaryband.svg"
-        }
+        { key: "Padron Series", label: "Padron Series", src: "/img/icons/padronseriesband.svg" },
+        { key: "Family Reserve", label: "Family Reserve", src: "/img/icons/padronfamilyreserveband.svg" },
+        { key: "1926", label: "1926", src: "/img/icons/padron1926serieband.svg" },
+        { key: "Black Series", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
+        { key: "Damaso", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
+        { key: "1964 Anniversary", label: "1964 Anniversary", src: "/img/icons/padron1964anniversaryband.svg" }
       ];
     }
 
@@ -637,7 +644,7 @@
 
   function setWrapperMode(mode){
     state.wrapperMode = mode;
-    seg.setAttribute("data-state", mode);
+    seg?.setAttribute("data-state", mode);
 
     segBtns.forEach((b) => {
       b.classList.toggle("is-on", b.dataset.state === mode);
@@ -653,6 +660,12 @@
 
   themeToggle?.addEventListener("click", () => {
     applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
+  });
+
+  invoiceBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = "/pos/invoice/";
   });
 
   searchInput?.addEventListener("input", () => {
@@ -704,12 +717,16 @@
     state.brand = (getParam("brand") || "Padron").trim();
     setBrandHeader();
 
-    const normalizedPageBrand = normalizeBrand(state.brand);
-    btnBands.style.display = normalizedPageBrand === "padron" ? "" : "none";
+    if (btnBands) {
+      const normalizedPageBrand = normalizeBrand(state.brand);
+      btnBands.style.display = normalizedPageBrand === "padron" ? "" : "none";
+    }
 
     const res = await fetch(CSV_URL, { cache: "no-store" });
     const txt = await res.text();
     const rows = mapRows(parseCSV(txt));
+
+    const normalizedPageBrand = normalizeBrand(state.brand);
 
     const exact = rows.filter((r) => normalizeBrand(resolveBrandVal(r)) === normalizedPageBrand);
     const fuzzy = rows.filter((r) => {
