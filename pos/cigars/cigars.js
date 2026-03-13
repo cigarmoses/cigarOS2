@@ -12,8 +12,8 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const CSV_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+const CSV_URL =
+"https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/export?format=csv";
 
   const SHEET_CACHE_KEY = "cigaros_sheet_rows_v1";
   const SHEET_CACHE_TS_KEY = "cigaros_sheet_rows_v1_ts";
