@@ -1,8 +1,9 @@
 /* /pos/cigars/cigars.js
-   POS Cigars (Main) — optimized
+   POS Cigars (Main) — hardened + cached
    - keeps current UI/filters/brands grid/results rows
-   - adds sessionStorage caching for sheet data
-   - avoids repeated no-store Google fetches
+   - adds sessionStorage caching
+   - adds visible loading and visible failure states
+   - adds fetch timeout so page does not hang silently
 */
 
 (() => {
@@ -16,11 +17,8 @@
 
   const SHEET_CACHE_KEY = "cigaros_sheet_rows_v1";
   const SHEET_CACHE_TS_KEY = "cigaros_sheet_rows_v1_ts";
-  const SHEET_CACHE_TTL_MS = 1000 * 60 * 15; // 15 minutes
+  const SHEET_CACHE_TTL_MS = 1000 * 60 * 15;
 
-  // -----------------------------
-  // DOM
-  // -----------------------------
   const searchInput = $("#cigars-search-input");
   const openBtn = $("#btn-open-filters") || $(".cigars-filter-btn") || $("#cigars-filter-btn");
   const listRoot = $("#cigarsList");
@@ -28,16 +26,10 @@
 
   let modalRoot = $("#filter-modal");
 
-  // -----------------------------
-  // Data
-  // -----------------------------
   let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__)
     ? window.__CIGAR_SHEET_ROWS__
     : [];
 
-  // -----------------------------
-  // Global filter state contract
-  // -----------------------------
   function ensureGlobalState() {
     if (!window.__CIGAR_FILTER_STATE__) {
       window.__CIGAR_FILTER_STATE__ = {
@@ -77,9 +69,6 @@
     }
   }
 
-  // -----------------------------
-  // Utilities
-  // -----------------------------
   function norm(v) {
     return String(v ?? "").trim().replace(/\s+/g, " ");
   }
@@ -177,9 +166,6 @@
     return true;
   }
 
-  // -----------------------------
-  // CSV parsing
-  // -----------------------------
   function parseCSV(text) {
     const rows = [];
     let i = 0;
@@ -260,8 +246,21 @@
     try {
       sessionStorage.setItem(SHEET_CACHE_KEY, JSON.stringify(rows));
       sessionStorage.setItem(SHEET_CACHE_TS_KEY, String(Date.now()));
-    } catch {
-      // ignore quota errors
+    } catch {}
+  }
+
+  async function fetchWithTimeout(url, timeoutMs = 12000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const res = await fetch(url, {
+        signal: controller.signal,
+        cache: "default"
+      });
+      return res;
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -276,20 +275,22 @@
       return cached;
     }
 
-    const res = await fetch(CSV_URL);
+    const res = await fetchWithTimeout(CSV_URL, 12000);
     if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+
     const text = await res.text();
     const parsed = parseCSV(text);
     const rows = rowsToObjects(parsed);
+
+    if (!Array.isArray(rows) || !rows.length) {
+      throw new Error("CSV returned no rows");
+    }
 
     window.__CIGAR_SHEET_ROWS__ = rows;
     setCachedRows(rows);
     return rows;
   }
 
-  // -----------------------------
-  // Render: Brands grid OR Results list
-  // -----------------------------
   function buildBrandSummary(rows) {
     const map = new Map();
 
@@ -445,9 +446,6 @@
     else renderBrandsGrid(summary);
   }
 
-  // -----------------------------
-  // Bottom Sheet Filter Modal
-  // -----------------------------
   const state = {
     selected: {
       manufacturer: new Set(),
@@ -465,18 +463,8 @@
   };
 
   const WRAPPER_SHADE_ORDER = [
-    "Natural",
-    "Connecticut",
-    "Maduro",
-    "Oscuro",
-    "Connecticut Shade",
-    "EMS",
-    "Claro",
-    "Colorado",
-    "Colorado Claro",
-    "Colorado Maduro",
-    "Mixed",
-    "Candela",
+    "Natural","Connecticut","Maduro","Oscuro","Connecticut Shade","EMS","Claro",
+    "Colorado","Colorado Claro","Colorado Maduro","Mixed","Candela",
   ];
 
   function orderWrapperShades(values) {
@@ -579,7 +567,6 @@
     if (!modalRoot.querySelector(".fm__sheet")) {
       modalRoot.innerHTML = `
         <div class="fm__backdrop" data-fm-close></div>
-
         <div class="fm__sheet" role="dialog" aria-modal="true" aria-label="Filters">
           <div class="fm__header">
             <h2 class="fm__title">Filters</h2>
@@ -599,9 +586,7 @@
                   <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
                         fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
                 </svg>
-
                 <input class="fm__search-input" id="fm-search" placeholder="Search" autocomplete="off" />
-
                 <button class="fm__mic-btn" type="button" aria-label="Voice search (coming soon)">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z"
@@ -630,7 +615,6 @@
     modalRoot.classList.remove("fm--hidden");
     modalRoot.classList.add("is-open");
     modalRoot.setAttribute("aria-hidden", "false");
-
     renderCats();
     setActiveCategory(state.activeKey);
 
@@ -653,9 +637,7 @@
 
     catsEl.innerHTML = CATEGORIES.map((c) => {
       const active = c.key === state.activeKey ? "is-active" : "";
-      return `<button class="fm__cat-btn ${active}" type="button" data-cat="${escapeHtml(
-        c.key
-      )}">${escapeHtml(c.label)}</button>`;
+      return `<button class="fm__cat-btn ${active}" type="button" data-cat="${escapeHtml(c.key)}">${escapeHtml(c.label)}</button>`;
     }).join("");
 
     $$(".fm__cat-btn", catsEl).forEach((btn) => {
@@ -681,10 +663,10 @@
     });
 
     state.activeValues = getValuesForKey(key);
-    renderList();
+    renderFilterList();
   }
 
-  function renderList() {
+  function renderFilterList() {
     const listEl = $("#fm-list", modalRoot);
     if (!listEl) return;
 
@@ -769,12 +751,9 @@
 
   function resetLocalSelections() {
     for (const k of Object.keys(state.selected)) state.selected[k].clear();
-    renderList();
+    renderFilterList();
   }
 
-  // -----------------------------
-  // Event bindings
-  // -----------------------------
   searchInput?.addEventListener("input", () => {
     ensureGlobalState();
     window.__CIGAR_FILTER_STATE__.q = (searchInput.value || "").toString();
@@ -805,7 +784,7 @@
     if (!(t instanceof HTMLInputElement)) return;
     if (t.id !== "fm-search") return;
     state.activeSearch = t.value || "";
-    renderList();
+    renderFilterList();
   });
 
   document.addEventListener("click", (e) => {
@@ -825,21 +804,26 @@
     }
   });
 
-  // -----------------------------
-  // Init
-  // -----------------------------
   async function init() {
     try {
       ensureGlobalState();
 
       if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
 
+      if (listRoot) {
+        listRoot.innerHTML = `<div class="cigars-empty">Loading brands…</div>`;
+      }
+
       DATA_ROWS = await fetchRowsFast();
       renderAll();
     } catch (err) {
       console.error("cigars.js init error:", err);
+
+      if (listRoot) {
+        listRoot.innerHTML = `<div class="cigars-empty">Unable to load cigars right now.</div>`;
+      }
+
       ensureGlobalState();
-      renderAll();
     }
   }
 
