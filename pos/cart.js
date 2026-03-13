@@ -1,13 +1,11 @@
 /* /pos/cart.js
-   Global POS cart + invoice badge + add-to-cart wiring (ALL pages)
+   Universal POS cart + invoice badge + invoice navigation
 
-   Fixes:
-   ✅ Capture click handler so stopPropagation can't block add-to-cart
-   ✅ Writes cart to localStorage (cigaros_pos_cart_v3)
-   ✅ Mirrors to legacy window.cigarOSCart ARRAY if it exists
-   ✅ Invoice icon navigates to /pos/invoice/
-   ✅ More forgiving add-button detection for plain "+" buttons
-   ✅ Carries cigar URL into cart item when available
+   - Persists cart in localStorage
+   - Universal invoice icon support across all POS pages
+   - More forgiving add-to-cart detection
+   - Updates all cart badges
+   - Routes invoice button clicks to /pos/invoice/
 */
 
 (() => {
@@ -65,7 +63,7 @@
 
   function getCartCount(cartMaybe) {
     const cart = cartMaybe || loadCart();
-    return cart.reduce((sum, it) => (Number(it?.qty || 0) > 0 ? sum + 1 : sum), 0);
+    return cart.reduce((sum, it) => sum + Math.max(0, Number(it?.qty || 0)), 0);
   }
 
   function updateBadges(cartMaybe) {
@@ -77,10 +75,12 @@
 
     document.querySelectorAll("[data-cart-badge]").forEach((el) => {
       el.textContent = String(count);
+      el.hidden = count <= 0;
     });
 
     document.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn").forEach((btn) => {
       btn.classList.toggle("has-items", count > 0);
+      btn.setAttribute("data-cart-count", String(count));
     });
   }
 
@@ -106,7 +106,7 @@
       vitola: normStr(item.vitola),
       msrp: price,
       image: normStr(item.image),
-      url: toAbsUrl(item.url || item.href || "")
+      url: toAbsUrl(item.url || item.href || item.link || "")
     };
 
     const key = getKey(normalized);
@@ -291,28 +291,6 @@
     };
   }
 
-  function wireInvoiceNav(root = document) {
-    const candidates = [
-      ...root.querySelectorAll("[data-invoice-btn], #invoice-btn, .pos-invoice-btn, a[href*='invoice']")
-    ];
-
-    candidates.forEach((el) => {
-      if (el.__invoiceNavBound) return;
-      el.__invoiceNavBound = true;
-
-      if (el.tagName === "A") {
-        const href = el.getAttribute("href") || "";
-        if (href.includes("invoice.html")) el.setAttribute("href", "/pos/invoice/");
-      }
-
-      el.addEventListener("click", (e) => {
-        if (el.tagName === "A" && (e.metaKey || e.ctrlKey)) return;
-        e.preventDefault();
-        window.location.href = "/pos/invoice/";
-      }, { passive: false });
-    });
-  }
-
   function looksLikePlusButton(btn) {
     if (!btn) return false;
 
@@ -340,6 +318,56 @@
     return false;
   }
 
+  function wireInvoiceNav(root = document) {
+    const candidates = [
+      ...root.querySelectorAll(
+        "[data-invoice-btn], #invoice-btn, .pos-invoice-btn, a[href*='/pos/invoice'], a[href*='invoice']"
+      )
+    ];
+
+    candidates.forEach((el) => {
+      if (el.__invoiceNavBound) return;
+      el.__invoiceNavBound = true;
+
+      if (el.tagName === "A") {
+        el.setAttribute("href", "/pos/invoice/");
+      }
+
+      el.addEventListener("click", (e) => {
+        if (el.tagName === "A" && (e.metaKey || e.ctrlKey)) return;
+        e.preventDefault();
+        window.location.href = "/pos/invoice/";
+      }, { passive: false });
+    });
+  }
+
+  function ensureUniversalInvoiceButtons(root = document) {
+    const existing = root.querySelector?.("[data-invoice-btn], #invoice-btn, .pos-invoice-btn");
+    if (existing) return;
+
+    const likelyHolders = [
+      ...root.querySelectorAll?.(".top-right, .page-actions, .brand-actions, .header-actions, .pos-actions, .nav-actions, .actions, header") || []
+    ];
+
+    likelyHolders.forEach((holder) => {
+      const iconish = holder.querySelector("a[aria-label*='invoice' i], button[aria-label*='invoice' i], a[aria-label*='cart' i], button[aria-label*='cart' i]");
+      if (!iconish || iconish.__invoiceNormalized) return;
+
+      iconish.__invoiceNormalized = true;
+      iconish.classList.add("pos-invoice-btn");
+      iconish.setAttribute("data-invoice-btn", "");
+      if (iconish.tagName === "A") iconish.setAttribute("href", "/pos/invoice/");
+
+      if (!iconish.querySelector("[data-cart-badge]")) {
+        const badge = document.createElement("span");
+        badge.setAttribute("data-cart-badge", "");
+        badge.textContent = "0";
+        badge.hidden = true;
+        iconish.appendChild(badge);
+      }
+    });
+  }
+
   function handleAddClick(e) {
     const btn = e.target.closest("button, [role='button'], .row-add, .pos-add, .cigar-add, .add-btn, .plus-btn, [data-cart-add], [data-receipt-item]");
     if (!btn) return;
@@ -361,16 +389,19 @@
 
   const initial = loadCart();
   mirrorToLegacyArray(initial);
-  updateBadges(initial);
+  ensureUniversalInvoiceButtons(document);
   wireInvoiceNav(document);
+  updateBadges(initial);
 
   const mo = new MutationObserver((mutations) => {
     for (const m of mutations) {
       for (const n of m.addedNodes) {
         if (!(n instanceof Element)) continue;
+        ensureUniversalInvoiceButtons(n);
         wireInvoiceNav(n);
       }
     }
+    updateBadges(loadCart());
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
@@ -379,5 +410,11 @@
     window.cigarOSCart.add = addToCart;
     window.cigarOSCart.items = () => loadCart();
     window.cigarOSCart.count = () => getCartCount(loadCart());
+    window.cigarOSCart.clear = () => {
+      localStorage.setItem(CART_KEY, JSON.stringify([]));
+      updateBadges([]);
+      document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart: [] } }));
+      window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart: [] } }));
+    };
   }
 })();
