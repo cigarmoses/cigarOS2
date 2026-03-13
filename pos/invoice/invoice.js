@@ -79,12 +79,6 @@
       .trim();
   }
 
-  function titleCaseWord(word) {
-    const w = normStr(word);
-    if (!w) return "";
-    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
-  }
-
   function buildTags(raw) {
     const tags = [];
 
