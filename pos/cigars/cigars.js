@@ -1,10 +1,12 @@
 /* /pos/cigars/cigars.js
-   POS Cigars (Main) — production-style cached loader
-   - uses Google Sheets CSV export endpoint
-   - caches parsed rows in localStorage + memory
-   - reuses same cache across cigars landing + brand pages
-   - keeps current UI: brands grid / results rows / filters
-   - adds stale-cache fallback + secondary fetch endpoint
+   POS Cigars (Main) — Filters Bottom Sheet + Brands Grid + Results Rows
+
+   FIX:
+   - Restores the expected main-page UI: title actions, search bar, Brands heading
+   - Renders:
+       * Brands GRID when no search + no filters
+       * Results ROWS (brand-row style) when search/filters are active
+   - Keeps your existing bottom-sheet filter modal implementation
 */
 
 (() => {
@@ -13,14 +15,8 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const CSV_URLS = [
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/export?format=csv",
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv"
-  ];
-
-  const SHEET_CACHE_KEY = "cigaros_sheet_rows_v3";
-  const SHEET_CACHE_TS_KEY = "cigaros_sheet_rows_v3_ts";
-  const SHEET_CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
+  const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   // -----------------------------
   // DOM
@@ -38,122 +34,6 @@
   let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__)
     ? window.__CIGAR_SHEET_ROWS__
     : [];
-
-  // -----------------------------
-  // Shared sheet cache helpers
-  // -----------------------------
-  function getMemoryRows() {
-    return Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length
-      ? window.__CIGAR_SHEET_ROWS__
-      : null;
-  }
-
-  function setMemoryRows(rows) {
-    window.__CIGAR_SHEET_ROWS__ = rows;
-  }
-
-  function getStorageRows() {
-    try {
-      const raw = localStorage.getItem(SHEET_CACHE_KEY);
-      const ts = Number(localStorage.getItem(SHEET_CACHE_TS_KEY) || 0);
-      if (!raw || !ts) return null;
-      if (Date.now() - ts > SHEET_CACHE_TTL_MS) return null;
-
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed) || !parsed.length) return null;
-      return parsed;
-    } catch {
-      return null;
-    }
-  }
-
-  function getStaleStorageRows() {
-    try {
-      const raw = localStorage.getItem(SHEET_CACHE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed) || !parsed.length) return null;
-      return parsed;
-    } catch {
-      return null;
-    }
-  }
-
-  function setStorageRows(rows) {
-    try {
-      localStorage.setItem(SHEET_CACHE_KEY, JSON.stringify(rows));
-      localStorage.setItem(SHEET_CACHE_TS_KEY, String(Date.now()));
-    } catch {
-      // ignore storage quota issues
-    }
-  }
-
-  async function fetchWithTimeout(url, timeoutMs = 12000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-      const res = await fetch(url, {
-        signal: controller.signal,
-        cache: "default"
-      });
-      return res;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  async function fetchCsvText() {
-    let lastError = null;
-
-    for (const url of CSV_URLS) {
-      try {
-        const res = await fetchWithTimeout(url, 12000);
-        if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
-
-        const text = await res.text();
-        if (!text || !text.trim()) throw new Error("Empty CSV response");
-
-        return text;
-      } catch (err) {
-        lastError = err;
-      }
-    }
-
-    throw lastError || new Error("All CSV fetch attempts failed");
-  }
-
-  async function loadSheetRows() {
-    const memory = getMemoryRows();
-    if (memory) return memory;
-
-    const cached = getStorageRows();
-    if (cached) {
-      setMemoryRows(cached);
-      return cached;
-    }
-
-    try {
-      const text = await fetchCsvText();
-      const parsed = parseCSV(text);
-      const rows = rowsToObjects(parsed);
-
-      if (!Array.isArray(rows) || !rows.length) {
-        throw new Error("CSV returned no rows");
-      }
-
-      setMemoryRows(rows);
-      setStorageRows(rows);
-      return rows;
-    } catch (err) {
-      const stale = getStaleStorageRows();
-      if (stale) {
-        setMemoryRows(stale);
-        return stale;
-      }
-      throw err;
-    }
-  }
 
   // -----------------------------
   // Global filter state contract
@@ -362,7 +242,7 @@
   }
 
   // -----------------------------
-  // Render: Brands grid OR Results list
+  // ✅ Render: Brands grid OR Results list
   // -----------------------------
   function buildBrandSummary(rows) {
     const map = new Map();
@@ -386,7 +266,8 @@
     const chips = [];
     const f = g.filters || {};
 
-    for (const key of ["manufacturer", "brand", "vitola", "ring", "length", "strength", "shape", "shade"]) {
+    // chips for active sets
+    for (const key of ["manufacturer","brand","vitola","ring","length","strength","shape","shade"]) {
       const set = f[key];
       if (!(set instanceof Set) || !set.size) continue;
 
@@ -405,6 +286,7 @@
       }
     }
 
+    // clear all
     if ((g.q && g.q.trim()) || hasActiveFilters(g)) {
       chips.push(`
         <div class="af-chip af-clear">
@@ -420,6 +302,7 @@
 
     appliedRoot.innerHTML = chips.join("");
 
+    // handlers
     $$(".af-chip", appliedRoot).forEach((chip) => {
       const xBtn = $(".af-chip__x", chip);
       if (!xBtn) return;
@@ -502,6 +385,7 @@
     ensureGlobalState();
     const g = window.__CIGAR_FILTER_STATE__;
 
+    // applied chips
     renderAppliedChips(g);
 
     const filteredRows = (DATA_ROWS || []).filter((r) => rowMatchesFilters(r, g));
@@ -511,6 +395,7 @@
     const filtersOn = hasActiveFilters(g);
 
     if (!summary.length) {
+      
       listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
       return;
     }
@@ -520,7 +405,7 @@
   }
 
   // -----------------------------
-  // Bottom Sheet Filter Modal
+  // Bottom Sheet Filter Modal (your existing logic)
   // -----------------------------
   const state = {
     selected: {
@@ -573,9 +458,9 @@
   }
 
   const VITOLA_ORDER = [
-    "Toro", "Robusto", "Gordo", "Churchill", "Corona", "Petit Corona", "Corona Gorda", "Lonsdale",
-    "Lancero", "Panetela", "Belicoso", "Torpedo", "Piramide", "Perfecto", "Diadema", "Figurado",
-    "Double Corona", "Petit Robusto", "Short Robusto",
+    "Toro","Robusto","Gordo","Churchill","Corona","Petit Corona","Corona Gorda","Lonsdale",
+    "Lancero","Panetela","Belicoso","Torpedo","Piramide","Perfecto","Diadema","Figurado",
+    "Double Corona","Petit Robusto","Short Robusto",
   ];
 
   function orderVitolas(values) {
@@ -755,10 +640,10 @@
     });
 
     state.activeValues = getValuesForKey(key);
-    renderFilterList();
+    renderList();
   }
 
-  function renderFilterList() {
+  function renderList() {
     const listEl = $("#fm-list", modalRoot);
     if (!listEl) return;
 
@@ -843,7 +728,7 @@
 
   function resetLocalSelections() {
     for (const k of Object.keys(state.selected)) state.selected[k].clear();
-    renderFilterList();
+    renderList();
   }
 
   // -----------------------------
@@ -879,7 +764,7 @@
     if (!(t instanceof HTMLInputElement)) return;
     if (t.id !== "fm-search") return;
     state.activeSearch = t.value || "";
-    renderFilterList();
+    renderList();
   });
 
   document.addEventListener("click", (e) => {
@@ -906,20 +791,25 @@
     try {
       ensureGlobalState();
 
+      // hydrate search input
       if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
 
-      if (listRoot) {
-        listRoot.innerHTML = `<div class="cigars-empty">Loading brands…</div>`;
+      if (Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length) {
+        DATA_ROWS = window.__CIGAR_SHEET_ROWS__;
+      } else {
+        const res = await fetch(CSV_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+        const text = await res.text();
+        const parsed = parseCSV(text);
+        DATA_ROWS = rowsToObjects(parsed);
+        window.__CIGAR_SHEET_ROWS__ = DATA_ROWS;
       }
 
-      DATA_ROWS = await loadSheetRows();
       renderAll();
     } catch (err) {
       console.error("cigars.js init error:", err);
-
-      if (listRoot) {
-        listRoot.innerHTML = `<div class="cigars-empty">Unable to load cigars right now.</div>`;
-      }
+      ensureGlobalState();
+      renderAll();
     }
   }
 
