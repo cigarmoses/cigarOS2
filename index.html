@@ -1,310 +1,132 @@
 <!doctype html>
 <html lang="en">
 <head>
+
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>CigarOS</title>
 
-<link rel="stylesheet" href="/css/type.css" />
+<title>Cigars</title>
 
-<style>
-:root{
---safe-top: env(safe-area-inset-top, 0px);
---safe-bottom: env(safe-area-inset-bottom, 0px);
+<link rel="stylesheet" href="/css/type.css?v=18" />
+<link rel="stylesheet" href="/pos/pos.css?v=18" />
+<link rel="stylesheet" href="/pos/cigars/cigars.css?v=18" />
 
---screen-max: 430px;
-
---bg: #edf2f6;
---panel-bg: transparent;
---ink: #16263d;
---muted: #51647f;
-
---toggle-bg: #c8d0db;
---toggle-shadow: 0 10px 24px rgba(0,0,0,.18);
-
---tile-size: 132px;
---grid-gap-x: 28px;
---grid-gap-y: 26px;
-
---label-size: 16px;
---label-weight: 600;
-
---grid-top-offset: 100px;
-}
-
-body.dark{
---bg:
-radial-gradient(1200px 700px at 50% -20%, #0e2244 0%, rgba(14,34,68,0) 55%),
-linear-gradient(180deg, #06152d 0%, #020912 60%, #000000 100%);
---panel-bg: transparent;
---ink: #eef5ff;
---muted: #acbbd0;
-
---toggle-bg: #24385e;
---toggle-shadow: 0 10px 20px rgba(0,0,0,.24);
-}
-
-*{box-sizing:border-box;}
-
-html,body{
-margin:0;
-min-height:100%;
-}
-
-body{
-min-height:100dvh;
-background:var(--bg);
-color:var(--ink);
-font-family:var(--font-display),-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
--webkit-font-smoothing:antialiased;
-text-rendering:optimizeLegibility;
-overflow-x:hidden;
-overflow-y:auto;
-overscroll-behavior-y:none;
--webkit-overflow-scrolling:touch;
-transition:background .25s ease,color .25s ease;
-}
-
-.screen{
-width:100%;
-max-width:var(--screen-max);
-min-height:100dvh;
-margin:0 auto;
-padding:
-calc(var(--safe-top) + var(--grid-top-offset))
-14px
-calc(var(--safe-bottom) + 92px);
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:flex-start;
-position:relative;
-}
-
-.topbar{
-position:fixed;
-top:calc(var(--safe-top) + 18px);
-left:50%;
-transform:translateX(-50%);
-width:min(calc(100vw - 28px), var(--screen-max));
-display:flex;
-justify-content:flex-end;
-align-items:center;
-padding-right:2px;
-z-index:50;
-pointer-events:none;
-}
-
-.theme-toggle{
-width:86px;
-height:42px;
-border:none;
-border-radius:999px;
-background:var(--toggle-bg);
-box-shadow:var(--toggle-shadow);
-position:relative;
-cursor:pointer;
-padding:0;
-appearance:none;
--webkit-appearance:none;
-transition:background .25s ease,box-shadow .25s ease,transform .15s ease;
-backdrop-filter:blur(10px);
--webkit-backdrop-filter:blur(10px);
-display:inline-flex;
-align-items:center;
-pointer-events:auto;
-}
-
-.theme-toggle:active{
-transform:scale(.97);
-}
-
-.theme-icon{
-position:absolute;
-top:5px;
-left:5px;
-width:32px;
-height:32px;
-display:block;
-object-fit:contain;
-transition:left .28s cubic-bezier(.22,.8,.25,1),opacity .2s ease,transform .2s ease;
-filter:drop-shadow(0 1px 4px rgba(0,0,0,.12));
-}
-
-body.dark .theme-icon{
-left:49px;
-}
-
-.theme-icon.sun{
-opacity:1;
-transform:scale(1) rotate(0deg);
-}
-
-.theme-icon.moon{
-opacity:0;
-transform:scale(.85) rotate(-18deg);
-}
-
-body.dark .theme-icon.sun{
-opacity:0;
-transform:scale(.85) rotate(18deg);
-}
-
-body.dark .theme-icon.moon{
-opacity:1;
-transform:scale(1) rotate(0deg);
-}
-
-.menu-wrap{
-width:100%;
-display:flex;
-flex-direction:column;
-align-items:center;
-}
-
-.home-panel{
-width:100%;
-display:flex;
-justify-content:center;
-align-items:flex-start;
-background:var(--panel-bg);
-border-radius:24px;
-padding:8px 12px 12px;
-overflow:visible;
-}
-
-.home-grid{
-width:100%;
-display:grid;
-grid-template-columns:repeat(2,minmax(0,1fr));
-justify-items:center;
-align-content:start;
-gap:var(--grid-gap-y) var(--grid-gap-x);
-}
-
-.home-item{
-width:100%;
-display:flex;
-flex-direction:column;
-align-items:center;
-text-decoration:none;
-color:var(--ink);
--webkit-tap-highlight-color:transparent;
-}
-
-.tile-img{
-width:var(--tile-size);
-height:var(--tile-size);
-display:block;
-object-fit:contain;
-filter:
-drop-shadow(0 14px 24px rgba(0,0,0,.25))
-drop-shadow(0 2px 6px rgba(255,255,255,.08));
-transition:transform .18s ease;
-}
-
-.home-item:active .tile-img{
-transform:scale(.95);
-}
-
-.icon-label{
-margin-top:8px;
-font-size:var(--label-size);
-font-weight:var(--label-weight);
-letter-spacing:-.01em;
-color:var(--muted);
-text-align:center;
-}
-</style>
 </head>
 
-<body class="day">
+<body class="cigars-page">
 
-<main class="screen">
+<header class="cigars-topbar">
 
-<div class="topbar">
-<button class="theme-toggle" id="themeToggle">
-<img class="theme-icon sun" src="/img/icons/sun.svg">
-<img class="theme-icon moon" src="/img/icons/moon.svg">
+<button
+type="button"
+class="pos-back"
+aria-label="Back"
+onclick="history.back()"
+>
+<span class="pos-back-icon">←</span>
 </button>
+
+<button
+type="button"
+class="pos-invoice-btn"
+data-invoice-btn
+aria-label="Invoice"
+>
+<img
+class="pos-cart-ico"
+src="/img/icons/cart-blue.svg"
+alt=""
+/>
+
+<span data-cart-badge hidden>0</span>
+
+</button>
+
+</header>
+
+
+<main class="cigars-main" role="main">
+
+<div class="cigars-title-row">
+
+<h1 class="cigars-title">Cigars</h1>
+
+<div class="cigars-title-actions">
+
+<button
+type="button"
+class="cigars-filter-btn"
+id="btn-open-filters"
+aria-label="Filters"
+>
+
+<svg viewBox="0 0 24 24" aria-hidden="true">
+<path
+d="M4 6h16M7 12h10M10 18h4"
+fill="none"
+stroke="currentColor"
+stroke-width="2.2"
+stroke-linecap="round"
+/>
+</svg>
+
+</button>
+
+<a
+class="cigars-fav-btn"
+href="/pos/cigars/favorites/"
+aria-label="Favorites"
+>
+★
+</a>
+
 </div>
 
-<div class="menu-wrap">
+</div>
 
-<section class="home-panel">
-<div class="home-grid">
 
-<a href="/pos/" class="home-item">
-<img src="/img/icons/glass/pos.png" class="tile-img">
-<div class="icon-label">POS</div>
-</a>
+<div class="cigars-search-wrap">
 
-<a href="/today/" class="home-item">
-<img src="/img/icons/glass/today.png" class="tile-img">
-<div class="icon-label">Today</div>
-</a>
+<div class="cigars-search-bar">
 
-<a href="/loyalty/" class="home-item">
-<img src="/img/icons/glass/loyalty.png" class="tile-img">
-<div class="icon-label">Loyalty</div>
-</a>
+<div class="cigars-search-icon">
+🔍
+</div>
 
-<a href="/inventory/" class="home-item">
-<img src="/img/icons/glass/inventory.png" class="tile-img">
-<div class="icon-label">Inventory</div>
-</a>
-
-<a href="/reports/" class="home-item">
-<img src="/img/icons/glass/reports.png" class="tile-img">
-<div class="icon-label">Reports</div>
-</a>
-
-<a href="/learn/" class="home-item">
-<img src="/img/icons/glass/learn.png" class="tile-img">
-<div class="icon-label">Learn</div>
-</a>
-
-<a href="/news/" class="home-item">
-<img src="/img/icons/glass/news.png" class="tile-img">
-<div class="icon-label">News</div>
-</a>
-
-<a href="/social/" class="home-item">
-<img src="/img/icons/glass/cigarsocialglass.png" class="tile-img">
-<div class="icon-label">Cigar Social</div>
-</a>
+<input
+id="cigars-search-input"
+type="search"
+inputmode="search"
+autocomplete="off"
+placeholder=""
+aria-label="Search cigars"
+/>
 
 </div>
+
+<div
+class="cigars-applied-filters"
+id="cigarsAppliedFilters"
+aria-label="Applied filters"
+>
+</div>
+
+</div>
+
+
+<section
+class="cigars-list"
+id="cigarsList"
+>
 </section>
 
-</div>
 </main>
 
-<script src="/js/global.js" defer></script>
 
-<script>
-(function(){
-const body=document.body;
-const toggle=document.getElementById("themeToggle");
-const savedTheme=localStorage.getItem("cigaros-home-theme");
+<script src="/pos/cart.js?v=18" defer></script>
 
-if(savedTheme==="dark"){
-body.classList.add("dark");
-body.classList.remove("day");
-}else{
-body.classList.add("day");
-body.classList.remove("dark");
-}
+<script src="/pos/cigars/cigars.js?v=18" defer></script>
 
-toggle.addEventListener("click",function(){
-body.classList.toggle("dark");
-body.classList.toggle("day");
-
-const isDark=body.classList.contains("dark");
-localStorage.setItem("cigaros-home-theme",isDark?"dark":"day");
-});
-})();
-</script>
 
 </body>
 </html>
