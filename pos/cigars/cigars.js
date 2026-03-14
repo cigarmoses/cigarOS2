@@ -4,6 +4,7 @@
    - caches parsed rows in localStorage + memory
    - reuses same cache across cigars landing + brand pages
    - keeps current UI: brands grid / results rows / filters
+   - adds stale-cache fallback + secondary fetch endpoint
 */
 
 (() => {
@@ -12,11 +13,13 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const CSV_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/export?format=csv";
+  const CSV_URLS = [
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/export?format=csv",
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv"
+  ];
 
-  const SHEET_CACHE_KEY = "cigaros_sheet_rows_v2";
-  const SHEET_CACHE_TS_KEY = "cigaros_sheet_rows_v2_ts";
+  const SHEET_CACHE_KEY = "cigaros_sheet_rows_v3";
+  const SHEET_CACHE_TS_KEY = "cigaros_sheet_rows_v3_ts";
   const SHEET_CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
 
   // -----------------------------
@@ -64,6 +67,18 @@
     }
   }
 
+  function getStaleStorageRows() {
+    try {
+      const raw = localStorage.getItem(SHEET_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed) || !parsed.length) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
   function setStorageRows(rows) {
     try {
       localStorage.setItem(SHEET_CACHE_KEY, JSON.stringify(rows));
@@ -88,6 +103,26 @@
     }
   }
 
+  async function fetchCsvText() {
+    let lastError = null;
+
+    for (const url of CSV_URLS) {
+      try {
+        const res = await fetchWithTimeout(url, 12000);
+        if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+
+        const text = await res.text();
+        if (!text || !text.trim()) throw new Error("Empty CSV response");
+
+        return text;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    throw lastError || new Error("All CSV fetch attempts failed");
+  }
+
   async function loadSheetRows() {
     const memory = getMemoryRows();
     if (memory) return memory;
@@ -98,20 +133,26 @@
       return cached;
     }
 
-    const res = await fetchWithTimeout(CSV_URL, 12000);
-    if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+    try {
+      const text = await fetchCsvText();
+      const parsed = parseCSV(text);
+      const rows = rowsToObjects(parsed);
 
-    const text = await res.text();
-    const parsed = parseCSV(text);
-    const rows = rowsToObjects(parsed);
+      if (!Array.isArray(rows) || !rows.length) {
+        throw new Error("CSV returned no rows");
+      }
 
-    if (!Array.isArray(rows) || !rows.length) {
-      throw new Error("CSV returned no rows");
+      setMemoryRows(rows);
+      setStorageRows(rows);
+      return rows;
+    } catch (err) {
+      const stale = getStaleStorageRows();
+      if (stale) {
+        setMemoryRows(stale);
+        return stale;
+      }
+      throw err;
     }
-
-    setMemoryRows(rows);
-    setStorageRows(rows);
-    return rows;
   }
 
   // -----------------------------
@@ -345,7 +386,7 @@
     const chips = [];
     const f = g.filters || {};
 
-    for (const key of ["manufacturer","brand","vitola","ring","length","strength","shape","shade"]) {
+    for (const key of ["manufacturer", "brand", "vitola", "ring", "length", "strength", "shape", "shade"]) {
       const set = f[key];
       if (!(set instanceof Set) || !set.size) continue;
 
@@ -532,9 +573,9 @@
   }
 
   const VITOLA_ORDER = [
-    "Toro","Robusto","Gordo","Churchill","Corona","Petit Corona","Corona Gorda","Lonsdale",
-    "Lancero","Panetela","Belicoso","Torpedo","Piramide","Perfecto","Diadema","Figurado",
-    "Double Corona","Petit Robusto","Short Robusto",
+    "Toro", "Robusto", "Gordo", "Churchill", "Corona", "Petit Corona", "Corona Gorda", "Lonsdale",
+    "Lancero", "Panetela", "Belicoso", "Torpedo", "Piramide", "Perfecto", "Diadema", "Figurado",
+    "Double Corona", "Petit Robusto", "Short Robusto",
   ];
 
   function orderVitolas(values) {
