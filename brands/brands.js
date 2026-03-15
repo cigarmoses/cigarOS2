@@ -84,7 +84,7 @@ function renderBrandsPage() {
 
 function renderBrandCard(brand) {
   return `
-    <a class="brand-card" href="/brands/${brand.slug}/" aria-label="${escapeHtml(brand.name)}">
+    <a class="brand-card" href="/brands/brandpage-index.html?brand=${encodeURIComponent(brand.slug)}" aria-label="${escapeHtml(brand.name)}">
       <div class="brand-icon-wrap">
         <img
           class="brand-icon"
