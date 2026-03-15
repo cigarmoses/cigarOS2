@@ -3,49 +3,49 @@ const BRANDS = [
     slug: "padron",
     name: "Padron",
     meta: "Estelí, Nicaragua",
-    icon: "/img/brands/padron.png"
+    icon: "/img/icons/brands/padron.svg"
   },
   {
     slug: "arturofuente",
     name: "Arturo Fuente",
     meta: "Dominican Republic",
-    icon: "/img/brands/arturofuente.png"
+    icon: "/img/icons/brands/arturofuente.svg"
   },
   {
     slug: "davidoff",
     name: "Davidoff",
     meta: "Dominican Republic",
-    icon: "/img/brands/davidoff.png"
+    icon: "/img/icons/brands/davidoff.svg"
   },
   {
     slug: "myfather",
     name: "My Father",
     meta: "Estelí, Nicaragua",
-    icon: "/img/brands/myfather.png"
+    icon: "/img/icons/brands/myfather.svg"
   },
   {
     slug: "oliva",
     name: "Oliva",
     meta: "Nicaragua",
-    icon: "/img/brands/oliva.png"
+    icon: "/img/icons/brands/oliva.svg"
   },
   {
     slug: "romeoyjulieta",
     name: "Romeo y Julieta",
     meta: "Dominican Republic",
-    icon: "/img/brands/romeoyjulieta.png"
+    icon: "/img/icons/brands/romeoyjulieta.svg"
   },
   {
     slug: "montecristo",
     name: "Montecristo",
     meta: "Dominican Republic",
-    icon: "/img/brands/montecristo.png"
+    icon: "/img/icons/brands/montecristo.svg"
   },
   {
     slug: "perdomo",
     name: "Perdomo",
     meta: "Nicaragua",
-    icon: "/img/brands/perdomo.png"
+    icon: "/img/icons/brands/perdomo.svg"
   }
 ];
 
@@ -91,7 +91,6 @@ function renderBrandCard(brand) {
           src="${brand.icon}"
           alt="${escapeHtml(brand.name)} logo"
           loading="lazy"
-          onerror="this.onerror=null;this.src='/img/brands/default-brand.png';"
         >
       </div>
 
