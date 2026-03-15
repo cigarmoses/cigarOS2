@@ -6,10 +6,10 @@ const BRANDS = [
     icon: "/img/brands/padron.png"
   },
   {
-    slug: "arturo-fuente",
+    slug: "arturofuente",
     name: "Arturo Fuente",
     meta: "Dominican Republic",
-    icon: "/img/brands/arturo-fuente.png"
+    icon: "/img/brands/arturofuente.png"
   },
   {
     slug: "davidoff",
@@ -18,10 +18,10 @@ const BRANDS = [
     icon: "/img/brands/davidoff.png"
   },
   {
-    slug: "my-father",
+    slug: "myfather",
     name: "My Father",
     meta: "Estelí, Nicaragua",
-    icon: "/img/brands/my-father.png"
+    icon: "/img/brands/myfather.png"
   },
   {
     slug: "oliva",
@@ -30,10 +30,10 @@ const BRANDS = [
     icon: "/img/brands/oliva.png"
   },
   {
-    slug: "romeo-y-julieta",
+    slug: "romeoyjulieta",
     name: "Romeo y Julieta",
     meta: "Dominican Republic",
-    icon: "/img/brands/romeo-y-julieta.png"
+    icon: "/img/brands/romeoyjulieta.png"
   },
   {
     slug: "montecristo",
