@@ -7,7 +7,7 @@ const BRAND_DATA = {
     instagram: "",
     about: [
       "Padrón is one of the most respected premium cigar brands in the world, known for box-pressed cigars, Nicaraguan tobacco, and exceptional consistency.",
-      "This public brand page mirrors the shop profile layout, but is focused specifically on the cigar brand itself."
+      "This public brand page mirrors the shop page structure, but is focused specifically on the cigar brand itself."
     ],
     updates: [
       {
@@ -17,10 +17,10 @@ const BRAND_DATA = {
     ]
   },
 
-  "arturo-fuente": {
+  "arturofuente": {
     name: "Arturo Fuente",
     subtitle: "Dominican Republic",
-    icon: "/img/brands/arturo-fuente.png",
+    icon: "/img/brands/arturofuente.png",
     website: "https://arturofuente.com/",
     instagram: "",
     about: [
@@ -51,10 +51,10 @@ const BRAND_DATA = {
     ]
   },
 
-  "my-father": {
+  "myfather": {
     name: "My Father",
     subtitle: "Estelí, Nicaragua",
-    icon: "/img/brands/my-father.png",
+    icon: "/img/brands/myfather.png",
     website: "https://myfathercigars.com/",
     instagram: "",
     about: [
@@ -85,10 +85,10 @@ const BRAND_DATA = {
     ]
   },
 
-  "romeo-y-julieta": {
+  "romeoyjulieta": {
     name: "Romeo y Julieta",
     subtitle: "Dominican Republic",
-    icon: "/img/brands/romeo-y-julieta.png",
+    icon: "/img/brands/romeoyjulieta.png",
     website: "https://www.altadisusa.com/brands/romeo-y-julieta/",
     instagram: "",
     about: [
@@ -196,7 +196,12 @@ function renderBrandPage() {
         <a class="back-chip" href="/brands/">Brands</a>
 
         <div class="brand-hero">
-          <img class="brand-icon" src="${brand.icon}" alt="${escapeHtml(brand.name)} logo" onerror="this.onerror=null;this.src='/img/brands/default-brand.png';">
+          <img
+            class="brand-icon"
+            src="${brand.icon}"
+            alt="${escapeHtml(brand.name)} logo"
+            onerror="this.onerror=null;this.src='/img/brands/default-brand.png';"
+          >
 
           <h1 class="brand-name">${escapeHtml(brand.name)}</h1>
 
