@@ -8,7 +8,8 @@
   --hair:rgba(0,0,0,.08);
   --shadow:0 10px 30px rgba(0,0,0,.05);
 
-  --radius-xl:34px;
+  --radius-xxl:34px;
+  --radius-xl:28px;
   --radius-lg:24px;
   --radius-md:18px;
 
@@ -38,20 +39,20 @@ a{color:inherit}
 .hero-card,
 .tabs-shell{
   background:var(--card);
-  border-radius:var(--radius-xl);
+  border-radius:var(--radius-xxl);
   box-shadow:var(--shadow);
 }
 
 .hero-card{
   position:relative;
-  min-height:720px;
-  padding:28px 24px 36px;
+  min-height:640px;
+  padding:28px 24px 34px;
 }
 
 .back-chip{
   position:absolute;
-  top:28px;
-  left:28px;
+  top:26px;
+  left:26px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -70,8 +71,8 @@ a{color:inherit}
 
 .brand-hero{
   width:100%;
-  max-width:720px;
-  margin:40px auto 0;
+  max-width:760px;
+  margin:38px auto 0;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -79,28 +80,31 @@ a{color:inherit}
 }
 
 .brand-icon{
-  width:168px;
-  height:168px;
-  border-radius:40px;
-  object-fit:cover;
+  width:170px;
+  height:170px;
+  border-radius:38px;
+  object-fit:contain;
   display:block;
   margin:0 auto 26px;
-  background:#ffffff;
+  background:#fff;
+  padding:16px;
 }
 
 .brand-name{
   margin:0;
   font-family:var(--font-display);
-  font-size:76px;
+  font-size:66px;
   line-height:.95;
   font-weight:800;
   letter-spacing:-0.05em;
+  max-width:700px;
+  text-wrap:balance;
 }
 
 .brand-subtitle{
-  margin:18px 0 0;
+  margin:16px 0 0;
   color:var(--muted);
-  font-size:24px;
+  font-size:22px;
   line-height:1.2;
   font-weight:600;
   letter-spacing:-0.02em;
@@ -112,6 +116,10 @@ a{color:inherit}
   gap:22px;
   flex-wrap:wrap;
   justify-content:center;
+}
+
+.brand-links:empty{
+  display:none;
 }
 
 .link-icon{
@@ -145,8 +153,8 @@ a{color:inherit}
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:0;
-  background:#ededf1;
-  border-radius:24px;
+  background:#ececf1;
+  border-radius:22px;
   overflow:hidden;
 }
 
@@ -157,7 +165,7 @@ a{color:inherit}
   padding:22px 18px;
   color:#8a8a90;
   font-family:var(--font-display);
-  font-size:24px;
+  font-size:22px;
   font-weight:700;
   letter-spacing:-0.03em;
   cursor:pointer;
@@ -165,12 +173,12 @@ a{color:inherit}
 
 .tab-btn.active{
   color:#000;
-  background:rgba(255,255,255,.35);
+  background:rgba(255,255,255,.4);
 }
 
 .tab-panel{
   display:none;
-  padding:26px 12px 8px;
+  padding:26px 12px 6px;
 }
 
 .tab-panel.active{
@@ -178,9 +186,9 @@ a{color:inherit}
 }
 
 .section-copy{
-  max-width:920px;
+  max-width:960px;
   margin:0 auto;
-  font-size:22px;
+  font-size:21px;
   line-height:1.55;
   letter-spacing:-0.02em;
   color:#222;
@@ -190,8 +198,12 @@ a{color:inherit}
   margin:0 0 18px;
 }
 
+.section-copy p:last-child{
+  margin-bottom:0;
+}
+
 .update-list{
-  max-width:920px;
+  max-width:960px;
   margin:0 auto;
   display:grid;
   gap:16px;
@@ -214,10 +226,16 @@ a{color:inherit}
 }
 
 .update-text{
-  font-size:20px;
+  font-size:19px;
   line-height:1.45;
   letter-spacing:-0.02em;
   color:#111;
+}
+
+@media (max-width: 1100px){
+  .brand-name{
+    font-size:58px;
+  }
 }
 
 @media (max-width: 900px){
@@ -240,17 +258,19 @@ a{color:inherit}
 
   .brand-hero{
     margin-top:42px;
+    max-width:100%;
   }
 
   .brand-icon{
-    width:128px;
-    height:128px;
+    width:126px;
+    height:126px;
     border-radius:30px;
+    padding:12px;
     margin-bottom:20px;
   }
 
   .brand-name{
-    font-size:56px;
+    font-size:50px;
   }
 
   .brand-subtitle{
@@ -280,9 +300,17 @@ a{color:inherit}
     padding:16px;
   }
 
+  .tabs-bar{
+    border-radius:20px;
+  }
+
   .tab-btn{
     font-size:18px;
     padding:18px 10px;
+  }
+
+  .tab-panel{
+    padding:20px 6px 4px;
   }
 
   .section-copy{
@@ -290,6 +318,16 @@ a{color:inherit}
   }
 
   .update-text{
+    font-size:17px;
+  }
+}
+
+@media (max-width: 520px){
+  .brand-name{
+    font-size:42px;
+  }
+
+  .brand-subtitle{
     font-size:17px;
   }
 }
