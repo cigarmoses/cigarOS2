@@ -2,7 +2,7 @@ const BRAND_DATA = {
   "padron": {
     name: "Padron",
     subtitle: "Estelí, Nicaragua",
-    icon: "/img/brands/padron.png",
+    icon: "/img/icons/brands/padron.svg",
     website: "https://padron.com/",
     instagram: "",
     about: [
@@ -20,7 +20,7 @@ const BRAND_DATA = {
   "arturofuente": {
     name: "Arturo Fuente",
     subtitle: "Dominican Republic",
-    icon: "/img/brands/arturofuente.png",
+    icon: "/img/icons/brands/arturofuente.svg",
     website: "https://arturofuente.com/",
     instagram: "",
     about: [
@@ -37,7 +37,7 @@ const BRAND_DATA = {
   "davidoff": {
     name: "Davidoff",
     subtitle: "Dominican Republic",
-    icon: "/img/brands/davidoff.png",
+    icon: "/img/icons/brands/davidoff.svg",
     website: "https://www.davidoffgeneva.com/",
     instagram: "",
     about: [
@@ -54,7 +54,7 @@ const BRAND_DATA = {
   "myfather": {
     name: "My Father",
     subtitle: "Estelí, Nicaragua",
-    icon: "/img/brands/myfather.png",
+    icon: "/img/icons/brands/myfather.svg",
     website: "https://myfathercigars.com/",
     instagram: "",
     about: [
@@ -71,7 +71,7 @@ const BRAND_DATA = {
   "oliva": {
     name: "Oliva",
     subtitle: "Nicaragua",
-    icon: "/img/brands/oliva.png",
+    icon: "/img/icons/brands/oliva.svg",
     website: "https://olivacigar.com/",
     instagram: "",
     about: [
@@ -88,7 +88,7 @@ const BRAND_DATA = {
   "romeoyjulieta": {
     name: "Romeo y Julieta",
     subtitle: "Dominican Republic",
-    icon: "/img/brands/romeoyjulieta.png",
+    icon: "/img/icons/brands/romeoyjulieta.svg",
     website: "https://www.altadisusa.com/brands/romeo-y-julieta/",
     instagram: "",
     about: [
@@ -105,7 +105,7 @@ const BRAND_DATA = {
   "montecristo": {
     name: "Montecristo",
     subtitle: "Dominican Republic",
-    icon: "/img/brands/montecristo.png",
+    icon: "/img/icons/brands/montecristo.svg",
     website: "https://www.altadisusa.com/brands/montecristo/",
     instagram: "",
     about: [
@@ -122,7 +122,7 @@ const BRAND_DATA = {
   "perdomo": {
     name: "Perdomo",
     subtitle: "Nicaragua",
-    icon: "/img/brands/perdomo.png",
+    icon: "/img/icons/brands/perdomo.svg",
     website: "https://perdomocigars.com/",
     instagram: "",
     about: [
@@ -200,7 +200,6 @@ function renderBrandPage() {
             class="brand-icon"
             src="${brand.icon}"
             alt="${escapeHtml(brand.name)} logo"
-            onerror="this.onerror=null;this.src='/img/brands/default-brand.png';"
           >
 
           <h1 class="brand-name">${escapeHtml(brand.name)}</h1>
