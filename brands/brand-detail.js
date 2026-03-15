@@ -138,8 +138,8 @@ const BRAND_DATA = {
 };
 
 function getBrandSlug() {
-  const parts = window.location.pathname.split("/").filter(Boolean);
-  return parts[1] || "";
+  const params = new URLSearchParams(window.location.search);
+  return params.get("brand");
 }
 
 function renderBrandPage() {
