@@ -1,5 +1,5 @@
 const DEFAULT_BRAND_DATA = {
-  "padron": {
+  padron: {
     name: "Padron",
     subtitle: "Estelí, Nicaragua",
     mapKey: "nicaragua-esteli",
@@ -22,7 +22,7 @@ const DEFAULT_BRAND_DATA = {
     ]
   },
 
-  "arturofuente": {
+  arturofuente: {
     name: "Arturo Fuente",
     subtitle: "Santiago, Dominican Republic",
     mapKey: "dominican-santiago",
@@ -44,7 +44,7 @@ const DEFAULT_BRAND_DATA = {
     ]
   },
 
-  "davidoff": {
+  davidoff: {
     name: "Davidoff",
     subtitle: "Santiago, Dominican Republic",
     mapKey: "dominican-santiago",
@@ -66,7 +66,7 @@ const DEFAULT_BRAND_DATA = {
     ]
   },
 
-  "myfather": {
+  myfather: {
     name: "My Father",
     subtitle: "Estelí, Nicaragua",
     mapKey: "nicaragua-esteli",
@@ -88,7 +88,7 @@ const DEFAULT_BRAND_DATA = {
     ]
   },
 
-  "oliva": {
+  oliva: {
     name: "Oliva",
     subtitle: "Estelí, Nicaragua",
     mapKey: "nicaragua-esteli",
@@ -110,7 +110,7 @@ const DEFAULT_BRAND_DATA = {
     ]
   },
 
-  "romeoyjulieta": {
+  romeoyjulieta: {
     name: "Romeo y Julieta",
     subtitle: "Dominican Republic",
     mapKey: "dominican-republic",
@@ -132,7 +132,7 @@ const DEFAULT_BRAND_DATA = {
     ]
   },
 
-  "montecristo": {
+  montecristo: {
     name: "Montecristo",
     subtitle: "Dominican Republic",
     mapKey: "dominican-republic",
@@ -154,7 +154,7 @@ const DEFAULT_BRAND_DATA = {
     ]
   },
 
-  "perdomo": {
+  perdomo: {
     name: "Perdomo",
     subtitle: "Estelí, Nicaragua",
     mapKey: "nicaragua-esteli",
@@ -180,7 +180,7 @@ const DEFAULT_BRAND_DATA = {
 const MAP_ART = {
   "nicaragua-esteli": `
     <div class="map-modal-body">
-      <div class="map-card map-card--regional">
+      <div class="map-card">
         <svg class="map-svg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
             <linearGradient id="waterGrad" x1="0" x2="0" y1="0" y2="1">
@@ -204,17 +204,7 @@ const MAP_ART = {
             <path d="M590 474 L690 455 L760 472 L734 502 L635 510 L570 498 Z" fill="#d9ddd2"/>
             <path d="M510 138 L655 112 L750 124 L742 146 L612 160 L520 154 Z" fill="#d9ddd2"/>
             <path d="M610 252 L690 248 L700 266 L620 272 Z" fill="#d9ddd2"/>
-
-            <path d="M338 378
-                     L406 364
-                     L462 372
-                     L496 410
-                     L485 470
-                     L452 498
-                     L395 506
-                     L350 482
-                     L320 438
-                     L326 396 Z" fill="#3f8f6b"/>
+            <path d="M338 378 L406 364 L462 372 L496 410 L485 470 L452 498 L395 506 L350 482 L320 438 L326 396 Z" fill="#3f8f6b"/>
           </g>
 
           <g font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#6f7783">
@@ -246,10 +236,9 @@ const MAP_ART = {
       </div>
     </div>
   `,
-
   "dominican-santiago": `
     <div class="map-modal-body">
-      <div class="map-card map-card--regional">
+      <div class="map-card">
         <svg class="map-svg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
             <linearGradient id="waterGradDR" x1="0" x2="0" y1="0" y2="1">
@@ -295,10 +284,9 @@ const MAP_ART = {
       </div>
     </div>
   `,
-
   "dominican-republic": `
     <div class="map-modal-body">
-      <div class="map-card map-card--regional">
+      <div class="map-card">
         <svg class="map-svg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
             <linearGradient id="waterGradDR2" x1="0" x2="0" y1="0" y2="1">
@@ -352,7 +340,7 @@ const EDITABLE_FIELDS = {
 
 function getBrandSlug() {
   const params = new URLSearchParams(window.location.search);
-  return params.get("brand");
+  return params.get("brand") || "padron";
 }
 
 function isAdminMode() {
@@ -371,7 +359,6 @@ function deepClone(obj) {
 function getBrandData(slug) {
   const base = DEFAULT_BRAND_DATA[slug];
   if (!base) return null;
-
   const saved = localStorage.getItem(storageKey(slug));
   if (!saved) return deepClone(base);
 
@@ -380,10 +367,6 @@ function getBrandData(slug) {
   } catch {
     return deepClone(base);
   }
-}
-
-function saveBrandData(slug, data) {
-  localStorage.setItem(storageKey(slug), JSON.stringify(data));
 }
 
 function setTempState(slug, data) {
@@ -399,6 +382,19 @@ function currentBrandState(slug) {
   return getTempState(slug) || getBrandData(slug);
 }
 
+function saveBrandData(slug, data) {
+  localStorage.setItem(storageKey(slug), JSON.stringify(data));
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function editorButton(fieldKey, label = "Edit") {
   if (!isAdminMode()) return "";
   return `
@@ -412,27 +408,41 @@ function editorButton(fieldKey, label = "Edit") {
   `;
 }
 
-function renderHeroQuickLinks(brand) {
-  const links = Array.isArray(brand.quickLinks) ? brand.quickLinks : [];
+function renderQuickLinks(brand) {
+  const items = Array.isArray(brand.quickLinks) ? brand.quickLinks : [];
   return `
-    <div class="hero-quick-links editable-zone">
+    <div class="quick-links editable-zone ${isAdminMode() ? "editable-outline" : ""}">
       ${editorButton("quickLinks", "Edit hero quick links")}
-      ${links.map(item => `<div class="hero-quick-link">${escapeHtml(item)}</div>`).join("")}
+      ${items.map(item => `
+        <div class="quick-link">
+          <div class="quick-link-label">${escapeHtml(item)}</div>
+        </div>
+      `).join("")}
     </div>
   `;
 }
 
-function renderTabContentParagraphs(items) {
+function renderParagraphs(items) {
   const list = Array.isArray(items) ? items : [];
+  if (!list.length) {
+    return `<p class="empty-copy">Nothing added yet.</p>`;
+  }
   return list.map(p => `<p>${escapeHtml(p)}</p>`).join("");
 }
 
 function renderUpdates(items) {
   const list = Array.isArray(items) ? items : [];
+  if (!list.length) {
+    return `
+      <article class="content-item">
+        <div class="content-item-copy empty-copy">No updates have been added yet.</div>
+      </article>
+    `;
+  }
   return list.map(item => `
-    <article class="update-card">
-      <div class="update-date">${escapeHtml(item.date || "")}</div>
-      <div class="update-text">${escapeHtml(item.text || "")}</div>
+    <article class="content-item">
+      <div class="content-item-title">${escapeHtml(item.date || "")}</div>
+      <div class="content-item-copy">${escapeHtml(item.text || "")}</div>
     </article>
   `).join("");
 }
@@ -442,10 +452,11 @@ function renderAdminBar() {
 
   return `
     <div class="admin-floating-bar">
-      <div class="admin-floating-title">Edit Mode</div>
-      <div class="admin-floating-actions">
-        <button class="admin-action-btn is-active" type="button" id="previewModeBtn">Preview</button>
-        <button class="admin-action-btn is-active" type="button" id="saveBrandBtn">Save</button>
+      <div class="admin-floating-shell">
+        <div class="admin-floating-actions">
+          <button class="admin-action-btn" type="button" id="previewModeBtn">Preview</button>
+          <button class="admin-action-btn" type="button" id="saveBrandBtn">Save</button>
+        </div>
       </div>
     </div>
   `;
@@ -456,15 +467,13 @@ function renderBrandPage() {
   const brand = currentBrandState(slug);
 
   if (!brand) {
-    document.body.innerHTML = `
-      <main class="page">
-        <section class="hero-card" style="display:flex;align-items:center;justify-content:center;text-align:center;">
-          <div>
-            <h1 class="brand-name" style="font-size:48px;">Brand Not Found</h1>
-            <p class="brand-subtitle">This brand page has not been created yet.</p>
-            <p style="margin-top:24px;">
-              <a class="back-chip" href="/brands/" style="position:static;">Brands</a>
-            </p>
+    document.getElementById("app").innerHTML = `
+      <main class="page-shell brand-page">
+        <section class="surface-card surface-card--hero">
+          <a class="glass-pill back-pill" href="/brands/">Brands</a>
+          <div class="center-stack">
+            <h1 class="hero-title">Brand Not Found</h1>
+            <p class="hero-subtitle">This brand page has not been created yet.</p>
           </div>
         </section>
       </main>
@@ -474,9 +483,10 @@ function renderBrandPage() {
 
   document.title = `${brand.name} | CigarOS`;
 
-  const websiteIcon = brand.website
-    ? `
-      <a class="link-icon" href="${brand.website}" target="_blank" rel="noopener noreferrer" aria-label="Website">
+  const websiteAction = brand.website ? `
+    <div class="hero-action-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
+      ${editorButton("website", "Edit website")}
+      <a class="icon-tile icon-tile--lg" href="${escapeHtml(brand.website)}" target="_blank" rel="noopener noreferrer" aria-label="Website">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="9"></circle>
           <path d="M3 12h18"></path>
@@ -484,88 +494,77 @@ function renderBrandPage() {
           <path d="M12 3a15 15 0 0 0 0 18"></path>
         </svg>
       </a>
-    `
-    : "";
-
-  const subtitleMarkup = brand.subtitle
-    ? `
-      <button
-        class="brand-subtitle brand-map-trigger editable-zone"
-        type="button"
-        aria-label="Open location map for ${escapeHtml(brand.subtitle)}"
-      >
-        ${editorButton("subtitle", "Edit location")}
-        <span class="brand-subtitle-pin">📍</span>
-        <span>${escapeHtml(brand.subtitle)}</span>
-      </button>
-    `
-    : "";
+    </div>
+  ` : "";
 
   document.getElementById("app").innerHTML = `
     ${renderAdminBar()}
 
-    <main class="page">
-      <section class="hero-card">
-        <a class="back-chip" href="/brands/">Brands</a>
+    <main class="page-shell brand-page">
+      <section class="surface-card surface-card--hero fade-in">
+        <a class="glass-pill back-pill" href="/brands/">Brands</a>
 
-        <div class="brand-hero">
-          <div class="editable-zone editable-zone--hero-icon">
+        <div class="center-stack">
+          <div class="hero-icon-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
             ${editorButton("icon", "Edit brand icon")}
-            <img class="brand-icon" src="${escapeHtml(brand.icon)}" alt="${escapeHtml(brand.name)} logo">
+            <img class="hero-icon" src="${escapeHtml(brand.icon)}" alt="${escapeHtml(brand.name)} logo">
           </div>
 
-          <div class="editable-zone editable-zone--title">
+          <div class="editable-zone ${isAdminMode() ? "editable-outline" : ""}" style="margin-top:26px;">
             ${editorButton("name", "Edit brand name")}
-            <h1 class="brand-name">${escapeHtml(brand.name)}</h1>
+            <h1 class="hero-title">${escapeHtml(brand.name)}</h1>
           </div>
 
-          ${subtitleMarkup}
-
-          <div class="brand-links">
-            <div class="editable-zone editable-zone--website">
-              ${editorButton("website", "Edit website")}
-              ${websiteIcon}
-            </div>
+          <div class="editable-zone ${isAdminMode() ? "editable-outline" : ""}" style="margin-top:16px;">
+            ${editorButton("subtitle", "Edit location")}
+            <button class="hero-subtitle hero-location-btn" type="button" data-open-modal="brandMapModal" aria-label="Open location map for ${escapeHtml(brand.subtitle)}">
+              <span class="hero-location-pin">📍</span>
+              <span>${escapeHtml(brand.subtitle)}</span>
+            </button>
           </div>
 
-          ${renderHeroQuickLinks(brand)}
+          <div class="hero-actions">
+            ${websiteAction}
+          </div>
+
+          ${renderQuickLinks(brand)}
         </div>
       </section>
 
-      <section class="tabs-shell">
-        <div class="tabs-bar tabs-bar--three">
-          <button class="tab-btn active" data-tab="about">About</button>
-          <button class="tab-btn" data-tab="new-releases">New Releases</button>
-          <button class="tab-btn" data-tab="updates">Updates</button>
+      <section class="surface-card surface-card--section brand-panels fade-in">
+        <div class="segmented three" data-segmented="brand-main">
+          <button class="segment-btn active" data-segment-btn="about">About</button>
+          <button class="segment-btn" data-segment-btn="new-releases">New Releases</button>
+          <button class="segment-btn" data-segment-btn="updates">Updates</button>
         </div>
 
-        <div class="tab-panel active editable-zone" id="panel-about">
+        <div class="panel-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
           ${editorButton("about", "Edit About")}
-          <div class="section-copy">
-            ${renderTabContentParagraphs(brand.about)}
+          <div class="body-copy active" data-segment-panel="brand-main" data-segment-value="about">
+            ${renderParagraphs(brand.about)}
           </div>
         </div>
 
-        <div class="tab-panel editable-zone" id="panel-new-releases">
+        <div class="panel-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
           ${editorButton("newReleases", "Edit New Releases")}
-          <div class="section-copy">
-            ${renderTabContentParagraphs(brand.newReleases)}
+          <div class="body-copy" data-segment-panel="brand-main" data-segment-value="new-releases">
+            ${renderParagraphs(brand.newReleases)}
           </div>
         </div>
 
-        <div class="tab-panel editable-zone" id="panel-updates">
+        <div class="panel-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
           ${editorButton("updates", "Edit Updates")}
-          <div class="update-list">
+          <div class="content-list" data-segment-panel="brand-main" data-segment-value="updates">
             ${renderUpdates(brand.updates)}
           </div>
         </div>
       </section>
     </main>
 
-    <div class="map-modal" id="mapModal" aria-hidden="true">
-      <div class="map-modal-backdrop" data-close-map></div>
-      <div class="map-modal-dialog" role="dialog" aria-modal="true" aria-label="Location map">
-        <button class="map-modal-close" type="button" aria-label="Close map" data-close-map>×</button>
+    <div class="modal map-modal" id="brandMapModal" aria-hidden="true">
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-label="Location map">
+        <button class="modal-close" type="button" data-close-modal aria-label="Close map">×</button>
         ${MAP_ART[brand.mapKey] || `
           <div class="map-modal-body">
             <div class="map-card">
@@ -579,94 +578,36 @@ function renderBrandPage() {
       </div>
     </div>
 
-    <div class="editor-modal" id="editorModal" aria-hidden="true">
-      <div class="editor-modal-backdrop" data-close-editor></div>
-      <div class="editor-modal-dialog" role="dialog" aria-modal="true" aria-label="Edit field">
+    <div class="modal editor-modal" id="editorModal" aria-hidden="true">
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-label="Edit field">
+        <button class="modal-close" type="button" data-close-modal aria-label="Close editor">×</button>
         <div class="editor-modal-head">
           <div class="editor-modal-title" id="editorModalTitle">Edit</div>
-          <button class="editor-modal-close" type="button" aria-label="Close editor" data-close-editor>×</button>
         </div>
         <div class="editor-modal-body" id="editorModalBody"></div>
         <div class="editor-modal-actions">
-          <button class="editor-btn editor-btn--secondary" type="button" data-close-editor>Cancel</button>
+          <button class="editor-btn editor-btn--secondary" type="button" data-close-modal>Cancel</button>
           <button class="editor-btn" type="button" id="editorSaveBtn">Save Changes</button>
         </div>
       </div>
     </div>
   `;
 
-  bindTabs();
-  bindMapModal();
+  IOS26UI.boot(document);
   bindEditor(slug);
   bindAdminActions(slug);
-}
-
-function bindTabs() {
-  const buttons = document.querySelectorAll(".tab-btn");
-  const panels = {
-    "about": document.getElementById("panel-about"),
-    "new-releases": document.getElementById("panel-new-releases"),
-    "updates": document.getElementById("panel-updates")
-  };
-
-  buttons.forEach(button => {
-    button.addEventListener("click", () => {
-      buttons.forEach(btn => btn.classList.remove("active"));
-      button.classList.add("active");
-
-      const tab = button.dataset.tab;
-      Object.entries(panels).forEach(([key, panel]) => {
-        if (!panel) return;
-        panel.classList.toggle("active", key === tab);
-      });
-    });
-  });
-}
-
-function bindMapModal() {
-  const trigger = document.querySelector(".brand-map-trigger");
-  const modal = document.getElementById("mapModal");
-  const closeButtons = document.querySelectorAll("[data-close-map]");
-
-  if (!trigger || !modal) return;
-
-  trigger.addEventListener("click", (event) => {
-    if (event.target.closest(".edit-pencil")) return;
-    modal.classList.add("is-open");
-    modal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("map-modal-open");
-  });
-
-  closeButtons.forEach(button => {
-    button.addEventListener("click", () => {
-      modal.classList.remove("is-open");
-      modal.setAttribute("aria-hidden", "true");
-      document.body.classList.remove("map-modal-open");
-    });
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && modal.classList.contains("is-open")) {
-      modal.classList.remove("is-open");
-      modal.setAttribute("aria-hidden", "true");
-      document.body.classList.remove("map-modal-open");
-    }
-  });
 }
 
 function bindAdminActions(slug) {
   if (!isAdminMode()) return;
 
-  const saveBtn = document.getElementById("saveBrandBtn");
-  const previewBtn = document.getElementById("previewModeBtn");
-
-  saveBtn?.addEventListener("click", () => {
-    const temp = currentBrandState(slug);
-    saveBrandData(slug, temp);
+  document.getElementById("saveBrandBtn")?.addEventListener("click", () => {
+    saveBrandData(slug, currentBrandState(slug));
     alert("Changes saved for this brand.");
   });
 
-  previewBtn?.addEventListener("click", () => {
+  document.getElementById("previewModeBtn")?.addEventListener("click", () => {
     const params = new URLSearchParams(window.location.search);
     params.delete("admin");
     window.location.search = params.toString();
@@ -676,16 +617,13 @@ function bindAdminActions(slug) {
 function bindEditor(slug) {
   if (!isAdminMode()) return;
 
-  const editButtons = document.querySelectorAll("[data-edit-field]");
   const modal = document.getElementById("editorModal");
   const modalTitle = document.getElementById("editorModalTitle");
   const modalBody = document.getElementById("editorModalBody");
   const saveBtn = document.getElementById("editorSaveBtn");
-  const closeButtons = document.querySelectorAll("[data-close-editor]");
-
   let activeField = null;
 
-  editButtons.forEach(button => {
+  document.querySelectorAll("[data-edit-field]").forEach(button => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -697,63 +635,45 @@ function bindEditor(slug) {
 
       modalTitle.textContent = config.label;
       modalBody.innerHTML = buildEditorMarkup(activeField, brand[activeField], config);
-
       modal.classList.add("is-open");
-      modal.setAttribute("aria-hidden", "false");
-      document.body.classList.add("editor-modal-open");
+      document.body.classList.add("modal-open");
     });
-  });
-
-  closeButtons.forEach(button => {
-    button.addEventListener("click", () => closeEditor(modal));
   });
 
   saveBtn?.addEventListener("click", () => {
     if (!activeField) return;
-
     const brand = currentBrandState(slug);
     brand[activeField] = readEditorValue(activeField);
     setTempState(slug, brand);
-    closeEditor(modal);
+    modal.classList.remove("is-open");
+    document.body.classList.remove("modal-open");
     renderBrandPage();
   });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && modal.classList.contains("is-open")) {
-      closeEditor(modal);
-    }
-  });
-}
-
-function closeEditor(modal) {
-  modal.classList.remove("is-open");
-  modal.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("editor-modal-open");
 }
 
 function buildEditorMarkup(field, value, config) {
   if (config.type === "text") {
     return `
-      <label class="editor-label" for="editorInput">${escapeHtml(config.label)}</label>
-      <input class="editor-input" id="editorInput" type="text" value="${escapeHtml(value || "")}">
+      <label class="field-label" for="editorInput">${escapeHtml(config.label)}</label>
+      <input class="input" id="editorInput" type="text" value="${escapeHtml(value || "")}">
     `;
   }
 
   if (config.type === "list-simple") {
     const text = Array.isArray(value) ? value.join("\n") : "";
     return `
-      <label class="editor-label" for="editorTextarea">${escapeHtml(config.label)}</label>
+      <label class="field-label" for="editorTextarea">${escapeHtml(config.label)}</label>
       <p class="editor-help">One item per line.</p>
-      <textarea class="editor-textarea" id="editorTextarea">${escapeHtml(text)}</textarea>
+      <textarea class="textarea" id="editorTextarea">${escapeHtml(text)}</textarea>
     `;
   }
 
   if (config.type === "list-paragraphs") {
     const text = Array.isArray(value) ? value.join("\n\n") : "";
     return `
-      <label class="editor-label" for="editorTextarea">${escapeHtml(config.label)}</label>
+      <label class="field-label" for="editorTextarea">${escapeHtml(config.label)}</label>
       <p class="editor-help">Separate paragraphs with a blank line.</p>
-      <textarea class="editor-textarea editor-textarea--lg" id="editorTextarea">${escapeHtml(text)}</textarea>
+      <textarea class="textarea editor-textarea-lg" id="editorTextarea">${escapeHtml(text)}</textarea>
     `;
   }
 
@@ -762,13 +682,13 @@ function buildEditorMarkup(field, value, config) {
       ? value.map(item => `${item.date || ""} | ${item.text || ""}`).join("\n")
       : "";
     return `
-      <label class="editor-label" for="editorTextarea">${escapeHtml(config.label)}</label>
+      <label class="field-label" for="editorTextarea">${escapeHtml(config.label)}</label>
       <p class="editor-help">One update per line. Format: Date | Text</p>
-      <textarea class="editor-textarea editor-textarea--lg" id="editorTextarea">${escapeHtml(text)}</textarea>
+      <textarea class="textarea editor-textarea-lg" id="editorTextarea">${escapeHtml(text)}</textarea>
     `;
   }
 
-  return `<div>Unsupported field type.</div>`;
+  return `<div>Unsupported field.</div>`;
 }
 
 function readEditorValue(field) {
@@ -782,17 +702,11 @@ function readEditorValue(field) {
   const raw = document.getElementById("editorTextarea")?.value || "";
 
   if (config.type === "list-simple") {
-    return raw
-      .split("\n")
-      .map(v => v.trim())
-      .filter(Boolean);
+    return raw.split("\n").map(v => v.trim()).filter(Boolean);
   }
 
   if (config.type === "list-paragraphs") {
-    return raw
-      .split(/\n\s*\n/g)
-      .map(v => v.trim())
-      .filter(Boolean);
+    return raw.split(/\n\s*\n/g).map(v => v.trim()).filter(Boolean);
   }
 
   if (config.type === "updates-list") {
@@ -810,15 +724,6 @@ function readEditorValue(field) {
   }
 
   return raw;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 renderBrandPage();
