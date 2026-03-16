@@ -6,7 +6,7 @@ const DEFAULT_BRAND_DATA = {
     icon: "/img/icons/brands/padron.svg",
     website: "https://padron.com/",
     instagram: "",
-    quickLinks: ["Band Artwork", "Portfolio", "Accolades"],
+    quickLinks: ["Band Art", "Portfolio", "Accolades"],
     about: [
       "Padrón is one of the most respected premium cigar brands in the world, known for box-pressed cigars, Nicaraguan tobacco, and exceptional consistency.",
       "This public brand page mirrors the shop page structure, but is focused specifically on the cigar brand itself."
@@ -29,7 +29,7 @@ const DEFAULT_BRAND_DATA = {
     icon: "/img/icons/brands/arturofuente.svg",
     website: "https://arturofuente.com/",
     instagram: "",
-    quickLinks: ["Band Artwork", "Portfolio", "Accolades"],
+    quickLinks: ["Band Art", "Portfolio", "Accolades"],
     about: [
       "Arturo Fuente is one of the most iconic family-owned premium cigar companies, known for Fuente Fuente OpusX, Don Carlos, Hemingway, and a long Dominican cigar legacy."
     ],
@@ -51,7 +51,7 @@ const DEFAULT_BRAND_DATA = {
     icon: "/img/icons/brands/davidoff.svg",
     website: "https://www.davidoffgeneva.com/",
     instagram: "",
-    quickLinks: ["Band Artwork", "Portfolio", "Accolades"],
+    quickLinks: ["Band Art", "Portfolio", "Accolades"],
     about: [
       "Davidoff is a globally recognized luxury cigar brand known for refined blending, elegant presentation, and a strong Dominican portfolio."
     ],
@@ -73,7 +73,7 @@ const DEFAULT_BRAND_DATA = {
     icon: "/img/icons/brands/myfather.svg",
     website: "https://myfathercigars.com/",
     instagram: "",
-    quickLinks: ["Band Artwork", "Portfolio", "Accolades"],
+    quickLinks: ["Band Art", "Portfolio", "Accolades"],
     about: [
       "My Father Cigars is known for bold Nicaraguan blending and the García family’s major influence on the premium cigar industry."
     ],
@@ -95,7 +95,7 @@ const DEFAULT_BRAND_DATA = {
     icon: "/img/icons/brands/oliva.svg",
     website: "https://olivacigar.com/",
     instagram: "",
-    quickLinks: ["Band Artwork", "Portfolio", "Accolades"],
+    quickLinks: ["Band Art", "Portfolio", "Accolades"],
     about: [
       "Oliva is widely respected for delivering strong value and consistency across core lines such as Serie V, Serie O, and Serie G."
     ],
@@ -117,7 +117,7 @@ const DEFAULT_BRAND_DATA = {
     icon: "/img/icons/brands/romeoyjulieta.svg",
     website: "https://www.altadisusa.com/brands/romeo-y-julieta/",
     instagram: "",
-    quickLinks: ["Band Artwork", "Portfolio", "Accolades"],
+    quickLinks: ["Band Art", "Portfolio", "Accolades"],
     about: [
       "Romeo y Julieta is one of the most recognized names in premium cigars, offering a broad portfolio with long-standing popularity."
     ],
@@ -139,7 +139,7 @@ const DEFAULT_BRAND_DATA = {
     icon: "/img/icons/brands/montecristo.svg",
     website: "https://www.altadisusa.com/brands/montecristo/",
     instagram: "",
-    quickLinks: ["Band Artwork", "Portfolio", "Accolades"],
+    quickLinks: ["Band Art", "Portfolio", "Accolades"],
     about: [
       "Montecristo is one of the most historic and recognizable cigar brands in the world, with both classic heritage and modern portfolio depth."
     ],
@@ -161,7 +161,7 @@ const DEFAULT_BRAND_DATA = {
     icon: "/img/icons/brands/perdomo.svg",
     website: "https://perdomocigars.com/",
     instagram: "",
-    quickLinks: ["Band Artwork", "Portfolio", "Accolades"],
+    quickLinks: ["Band Art", "Portfolio", "Accolades"],
     about: [
       "Perdomo is known for vertically integrated tobacco production, Nicaraguan craftsmanship, and a wide portfolio of box-pressed and traditional cigars."
     ],
@@ -410,14 +410,30 @@ function editorButton(fieldKey, label = "Edit") {
 
 function renderQuickLinks(brand) {
   const items = Array.isArray(brand.quickLinks) ? brand.quickLinks : [];
+  const firstThree = items.slice(0, 3);
+
+  const websiteTile = brand.website ? `
+    <a class="quick-link quick-link--icon" href="${escapeHtml(brand.website)}" target="_blank" rel="noopener noreferrer" aria-label="Website">
+      <span class="icon-tile icon-tile--lg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M3 12h18"></path>
+          <path d="M12 3a15 15 0 0 1 0 18"></path>
+          <path d="M12 3a15 15 0 0 0 0 18"></path>
+        </svg>
+      </span>
+    </a>
+  ` : "";
+
   return `
     <div class="quick-links editable-zone ${isAdminMode() ? "editable-outline" : ""}">
       ${editorButton("quickLinks", "Edit hero quick links")}
-      ${items.map(item => `
+      ${firstThree.map(item => `
         <div class="quick-link">
           <div class="quick-link-label">${escapeHtml(item)}</div>
         </div>
       `).join("")}
+      ${websiteTile}
     </div>
   `;
 }
@@ -471,9 +487,11 @@ function renderBrandPage() {
       <main class="page-shell brand-page">
         <section class="surface-card surface-card--hero">
           <a class="glass-pill back-pill" href="/brands/">Brands</a>
-          <div class="center-stack">
-            <h1 class="hero-title">Brand Not Found</h1>
-            <p class="hero-subtitle">This brand page has not been created yet.</p>
+          <div class="hero-compact">
+            <div class="center-stack">
+              <h1 class="hero-title">Brand Not Found</h1>
+              <p class="hero-subtitle">This brand page has not been created yet.</p>
+            </div>
           </div>
         </section>
       </main>
@@ -483,20 +501,6 @@ function renderBrandPage() {
 
   document.title = `${brand.name} | CigarOS`;
 
-  const websiteAction = brand.website ? `
-    <div class="hero-action-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
-      ${editorButton("website", "Edit website")}
-      <a class="icon-tile icon-tile--lg" href="${escapeHtml(brand.website)}" target="_blank" rel="noopener noreferrer" aria-label="Website">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="9"></circle>
-          <path d="M3 12h18"></path>
-          <path d="M12 3a15 15 0 0 1 0 18"></path>
-          <path d="M12 3a15 15 0 0 0 0 18"></path>
-        </svg>
-      </a>
-    </div>
-  ` : "";
-
   document.getElementById("app").innerHTML = `
     ${renderAdminBar()}
 
@@ -504,27 +508,27 @@ function renderBrandPage() {
       <section class="surface-card surface-card--hero fade-in">
         <a class="glass-pill back-pill" href="/brands/">Brands</a>
 
-        <div class="center-stack">
-          <div class="hero-icon-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
-            ${editorButton("icon", "Edit brand icon")}
-            <img class="hero-icon" src="${escapeHtml(brand.icon)}" alt="${escapeHtml(brand.name)} logo">
-          </div>
+        <div class="hero-compact">
+          <div class="hero-top">
+            <div class="hero-icon-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
+              ${editorButton("icon", "Edit brand icon")}
+              <img class="hero-icon" src="${escapeHtml(brand.icon)}" alt="${escapeHtml(brand.name)} logo">
+            </div>
 
-          <div class="editable-zone ${isAdminMode() ? "editable-outline" : ""}" style="margin-top:26px;">
-            ${editorButton("name", "Edit brand name")}
-            <h1 class="hero-title">${escapeHtml(brand.name)}</h1>
-          </div>
+            <div class="hero-copy">
+              <div class="hero-title-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
+                ${editorButton("name", "Edit brand name")}
+                <h1 class="hero-title">${escapeHtml(brand.name)}</h1>
+              </div>
 
-          <div class="editable-zone ${isAdminMode() ? "editable-outline" : ""}" style="margin-top:16px;">
-            ${editorButton("subtitle", "Edit location")}
-            <button class="hero-subtitle hero-location-btn" type="button" data-open-modal="brandMapModal" aria-label="Open location map for ${escapeHtml(brand.subtitle)}">
-              <span class="hero-location-pin">📍</span>
-              <span>${escapeHtml(brand.subtitle)}</span>
-            </button>
-          </div>
-
-          <div class="hero-actions">
-            ${websiteAction}
+              <div class="hero-location-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
+                ${editorButton("subtitle", "Edit location")}
+                <button class="hero-subtitle hero-location-btn" type="button" data-open-modal="brandMapModal" aria-label="Open location map for ${escapeHtml(brand.subtitle)}">
+                  <span class="hero-location-pin">📍</span>
+                  <span>${escapeHtml(brand.subtitle)}</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           ${renderQuickLinks(brand)}
