@@ -15,11 +15,6 @@
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-      --bg-1: #0e0a09;
-      --bg-2: #26120c;
-      --bg-3: #4a210f;
-      --bg-4: #1e120d;
-
       --ink: rgba(255,255,255,.98);
       --muted: rgba(255,255,255,.72);
 
@@ -134,13 +129,13 @@
       font-family:var(--font-display);
       font-size:clamp(52px, 9vw, 74px);
       line-height:.95;
-      letter-spacing:-0.055em;
+      letter-spacing:-0.075em;
       font-weight:900;
     }
 
     .hero p{
       margin:12px 0 0;
-      max-width:300px;
+      max-width:320px;
       color:var(--muted);
       font-size:15px;
       line-height:1.35;
@@ -217,22 +212,15 @@
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      gap:18px;
+      gap:16px;
       text-align:center;
     }
 
-    .learn-icon-shell{
-      width:132px;
-      height:132px;
-      border-radius:30px;
+    .learn-icon{
+      width:92px;
+      height:92px;
       display:grid;
       place-items:center;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
-      border:1px solid rgba(255,255,255,.16);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.12),
-        0 10px 24px rgba(0,0,0,.18);
       flex-shrink:0;
     }
 
@@ -285,7 +273,7 @@
       font-size:14px;
       line-height:1.3;
       margin-top:8px;
-      max-width:220px;
+      max-width:240px;
     }
 
     @media (max-width:380px){
@@ -297,10 +285,9 @@
         padding:18px 14px 16px;
       }
 
-      .learn-icon-shell{
-        width:118px;
-        height:118px;
-        border-radius:26px;
+      .learn-icon{
+        width:82px;
+        height:82px;
       }
 
       .learn-icon svg{
@@ -316,7 +303,12 @@
 <body>
   <main class="screen">
     <header class="topbar">
-      <button type="button" class="glass-btn" aria-label="Back" onclick="history.back()">
+      <button
+        type="button"
+        class="glass-btn"
+        aria-label="Back"
+        onclick="history.length > 1 ? history.back() : location.href='/'"
+      >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15 5L8 12L15 19"></path>
         </svg>
@@ -342,13 +334,11 @@
       <!-- Vitolas -->
       <a class="learn-card" href="/learn/vitolas/">
         <div class="learn-card-inner">
-          <div class="learn-icon-shell">
-            <div class="learn-icon" aria-hidden="true">
-              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <rect x="8" y="30" width="48" height="6" rx="3" fill="white"/>
-                <circle cx="10" cy="33" r="4" fill="white"/>
-              </svg>
-            </div>
+          <div class="learn-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="30" width="48" height="6" rx="3" fill="white"/>
+              <circle cx="10" cy="33" r="4" fill="white"/>
+            </svg>
           </div>
           <div>
             <div class="learn-title">Vitolas</div>
@@ -357,20 +347,17 @@
         </div>
       </a>
 
-      <!-- Shapes -->
-      <a class="learn-card" href="/learn/shapes/">
+      <!-- Ring moved to top right -->
+      <a class="learn-card" href="/learn/ring/">
         <div class="learn-card-inner">
-          <div class="learn-icon-shell">
-            <div class="learn-icon" aria-hidden="true">
-              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <rect x="8" y="30" width="28" height="6" rx="3" fill="white"/>
-                <path d="M40 33 L56 30 L56 36 Z" fill="white"/>
-              </svg>
-            </div>
+          <div class="learn-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="14" fill="none" stroke="white" stroke-width="3"/>
+            </svg>
           </div>
           <div>
-            <div class="learn-title">Shapes</div>
-            <div class="learn-subtitle">Parejo & figurado</div>
+            <div class="learn-title">Ring</div>
+            <div class="learn-subtitle">Diameter & gauge</div>
           </div>
         </div>
       </a>
@@ -378,14 +365,12 @@
       <!-- Colors -->
       <a class="learn-card" href="/learn/colors/">
         <div class="learn-card-inner">
-          <div class="learn-icon-shell">
-            <div class="learn-icon" aria-hidden="true">
-              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="32" r="8" fill="white" opacity="0.9"/>
-                <circle cx="32" cy="32" r="8" fill="white" opacity="0.62"/>
-                <circle cx="44" cy="32" r="8" fill="white" opacity="0.32"/>
-              </svg>
-            </div>
+          <div class="learn-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="20" cy="32" r="8" fill="white" opacity="0.9"/>
+              <circle cx="32" cy="32" r="8" fill="white" opacity="0.62"/>
+              <circle cx="44" cy="32" r="8" fill="white" opacity="0.32"/>
+            </svg>
           </div>
           <div>
             <div class="learn-title">Colors</div>
@@ -397,15 +382,13 @@
       <!-- Anatomy -->
       <a class="learn-card" href="/learn/anatomy/">
         <div class="learn-card-inner">
-          <div class="learn-icon-shell">
-            <div class="learn-icon" aria-hidden="true">
-              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <rect x="10" y="28" width="44" height="8" rx="4"
-                      fill="none" stroke="white" stroke-width="2.4"/>
-                <line x1="22" y1="26" x2="22" y2="38" stroke="white" stroke-width="2"/>
-                <line x1="40" y1="26" x2="40" y2="38" stroke="white" stroke-width="2"/>
-              </svg>
-            </div>
+          <div class="learn-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="28" width="44" height="8" rx="4"
+                    fill="none" stroke="white" stroke-width="2.4"/>
+              <line x1="22" y1="26" x2="22" y2="38" stroke="white" stroke-width="2"/>
+              <line x1="40" y1="26" x2="40" y2="38" stroke="white" stroke-width="2"/>
+            </svg>
           </div>
           <div>
             <div class="learn-title">Anatomy</div>
@@ -414,19 +397,18 @@
         </div>
       </a>
 
-      <!-- Ring -->
-      <a class="learn-card" href="/learn/ring/">
+      <!-- Shapes moved to bottom left -->
+      <a class="learn-card" href="/learn/shapes/">
         <div class="learn-card-inner">
-          <div class="learn-icon-shell">
-            <div class="learn-icon" aria-hidden="true">
-              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="32" cy="32" r="14" fill="none" stroke="white" stroke-width="3"/>
-              </svg>
-            </div>
+          <div class="learn-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="30" width="28" height="6" rx="3" fill="white"/>
+              <path d="M40 33 L56 30 L56 36 Z" fill="white"/>
+            </svg>
           </div>
           <div>
-            <div class="learn-title">Ring</div>
-            <div class="learn-subtitle">Diameter & gauge</div>
+            <div class="learn-title">Shapes</div>
+            <div class="learn-subtitle">Parejo & figurado</div>
           </div>
         </div>
       </a>
@@ -434,16 +416,14 @@
       <!-- Glossary -->
       <a class="learn-card" href="/learn/glossary/">
         <div class="learn-card-inner">
-          <div class="learn-icon-shell">
-            <div class="learn-icon" aria-hidden="true">
-              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <rect x="14" y="14" width="36" height="36" rx="6"
-                      fill="none" stroke="white" stroke-width="2.2"/>
-                <line x1="22" y1="26" x2="42" y2="26" stroke="white" stroke-width="2"/>
-                <line x1="22" y1="34" x2="38" y2="34" stroke="white" stroke-width="2"/>
-                <line x1="22" y1="42" x2="36" y2="42" stroke="white" stroke-width="2"/>
-              </svg>
-            </div>
+          <div class="learn-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <rect x="14" y="14" width="36" height="36" rx="6"
+                    fill="none" stroke="white" stroke-width="2.2"/>
+              <line x1="22" y1="26" x2="42" y2="26" stroke="white" stroke-width="2"/>
+              <line x1="22" y1="34" x2="38" y2="34" stroke="white" stroke-width="2"/>
+              <line x1="22" y1="42" x2="36" y2="42" stroke="white" stroke-width="2"/>
+            </svg>
           </div>
           <div>
             <div class="learn-title">Glossary</div>
@@ -455,22 +435,20 @@
       <!-- Tobacco Regions -->
       <a class="learn-card tile-wide" href="/learn/tobaccoregions/">
         <div class="learn-card-inner">
-          <div class="learn-icon-shell">
-            <div class="learn-icon" aria-hidden="true">
-              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 18 L22 12 L42 18 L58 12 L58 46 L42 52 L22 46 L6 52 Z"
-                      fill="none"
-                      stroke="white"
-                      stroke-width="2.4"
-                      stroke-linejoin="round"/>
-                <path d="M32 20
-                         C27 20 24 23 24 27
-                         C24 33 32 42 32 42
-                         C32 42 40 33 40 27
-                         C40 23 37 20 32 20 Z"
-                      fill="white"/>
-              </svg>
-            </div>
+          <div class="learn-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 18 L22 12 L42 18 L58 12 L58 46 L42 52 L22 46 L6 52 Z"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="2.4"
+                    stroke-linejoin="round"/>
+              <path d="M32 20
+                       C27 20 24 23 24 27
+                       C24 33 32 42 32 42
+                       C32 42 40 33 40 27
+                       C40 23 37 20 32 20 Z"
+                    fill="white"/>
+            </svg>
           </div>
 
           <div class="learn-copy">
