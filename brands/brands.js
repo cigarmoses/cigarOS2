@@ -55,13 +55,10 @@ function renderBrandsPage() {
   app.innerHTML = `
     <main class="page">
       <section class="hero-card">
-        <a class="back-chip" href="/">Home</a>
+        <a class="back-chip" href="/">Back</a>
 
         <div class="hero-inner">
           <h1 class="page-title">Brands</h1>
-          <p class="page-subtitle">
-            Explore cigar brands through individual public profile pages.
-          </p>
         </div>
       </section>
 
@@ -84,7 +81,7 @@ function renderBrandsPage() {
 
 function renderBrandCard(brand) {
   return `
-    <a class="brand-card" href="/brands/brandpage-index.html?brand=${encodeURIComponent(brand.slug)}" aria-label="${escapeHtml(brand.name)}">
+    <a class="brand-card" href="/brands/${brand.slug}/" aria-label="${escapeHtml(brand.name)}">
       <div class="brand-icon-wrap">
         <img
           class="brand-icon"
@@ -97,8 +94,6 @@ function renderBrandCard(brand) {
       <h2 class="brand-name">${escapeHtml(brand.name)}</h2>
 
       ${brand.meta ? `<div class="brand-meta">${escapeHtml(brand.meta)}</div>` : ""}
-
-      <div class="brand-cta">Open Brand</div>
     </a>
   `;
 }
