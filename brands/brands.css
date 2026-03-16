@@ -82,9 +82,9 @@ a{color:inherit}
 .page-title{
   margin:0;
   font-family:var(--font-display);
-  font-size:76px;
+  font-size:66px;
   line-height:.95;
-  font-weight:800;
+  font-weight:900;
   letter-spacing:-0.05em;
 }
 
