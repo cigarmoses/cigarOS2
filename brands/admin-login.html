@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Brand Admin Login | CigarOS</title>
+  <style>
+    :root{
+      --bg:#efeff4;
+      --card:#f7f7f8;
+      --chip:#f3f3f4;
+      --chip-border:rgba(0,0,0,.08);
+      --text:#000;
+      --muted:#8e8e93;
+      --shadow:0 10px 30px rgba(0,0,0,.05);
+      --radius:34px;
+      --font-display:"SF Pro Display","Inter","Helvetica Neue",Arial,sans-serif;
+      --font-text:"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:var(--font-text);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    .page{
+      width:min(100%, 820px);
+      margin:0 auto;
+      padding:20px 16px 40px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:28px 22px;
+    }
+
+    h1{
+      margin:0 0 12px;
+      font-family:var(--font-display);
+      font-size:48px;
+      line-height:.96;
+      letter-spacing:-0.05em;
+    }
+
+    p{
+      margin:0 0 20px;
+      color:var(--muted);
+      font-size:18px;
+      line-height:1.45;
+    }
+
+    .field{
+      margin-bottom:16px;
+    }
+
+    label{
+      display:block;
+      margin-bottom:8px;
+      font-size:14px;
+      font-weight:700;
+      color:#555;
+    }
+
+    input, select{
+      width:100%;
+      height:54px;
+      border-radius:18px;
+      border:1px solid rgba(0,0,0,.08);
+      background:#fff;
+      padding:0 16px;
+      font-size:16px;
+      font-family:inherit;
+    }
+
+    .actions{
+      display:flex;
+      gap:12px;
+      margin-top:18px;
+      flex-wrap:wrap;
+    }
+
+    button{
+      height:52px;
+      padding:0 20px;
+      border-radius:999px;
+      border:0;
+      background:#111827;
+      color:#fff;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .secondary{
+      background:#fff;
+      color:#111;
+      border:1px solid rgba(0,0,0,.08);
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <h1>Brand Admin</h1>
+      <p>Sign in to edit your public brand page. This prototype routes you directly into edit mode for your brand.</p>
+
+      <div class="field">
+        <label for="brand">Brand</label>
+        <select id="brand">
+          <option value="padron">Padron</option>
+          <option value="arturofuente">Arturo Fuente</option>
+          <option value="davidoff">Davidoff</option>
+          <option value="myfather">My Father</option>
+          <option value="oliva">Oliva</option>
+          <option value="romeoyjulieta">Romeo y Julieta</option>
+          <option value="montecristo">Montecristo</option>
+          <option value="perdomo">Perdomo</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="name@brand.com">
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="••••••••">
+      </div>
+
+      <div class="actions">
+        <button id="loginBtn" type="button">Open Brand Editor</button>
+        <button id="publicBtn" class="secondary" type="button">Open Public Page</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const brand = document.getElementById("brand");
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      location.href = `/brands/brandpage-index.html?brand=${encodeURIComponent(brand.value)}&admin=1`;
+    });
+    document.getElementById("publicBtn").addEventListener("click", () => {
+      location.href = `/brands/brandpage-index.html?brand=${encodeURIComponent(brand.value)}`;
+    });
+  </script>
+</body>
+</html>
