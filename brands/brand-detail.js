@@ -207,26 +207,26 @@ const MAP_ART = {
             <path d="M338 378 L406 364 L462 372 L496 410 L485 470 L452 498 L395 506 L350 482 L320 438 L326 396 Z" fill="#3f8f6b"/>
           </g>
 
-          <g font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#6f7783">
-            <text x="120" y="160" font-size="28">Mexico</text>
-            <text x="228" y="342" font-size="20">Belize</text>
-            <text x="150" y="410" font-size="24">Guatemala</text>
-            <text x="306" y="292" font-size="26">Honduras</text>
-            <text x="198" y="448" font-size="20">El Salvador</text>
-            <text x="454" y="555" font-size="24">Costa Rica</text>
-            <text x="628" y="535" font-size="24">Panama</text>
-            <text x="602" y="102" font-size="22">Cuba</text>
-            <text x="622" y="238" font-size="18">Jamaica</text>
-          </g>
+<g font-weight="700" fill="#6f7783">
+  <text x="120" y="160" font-size="28">Mexico</text>
+  <text x="228" y="342" font-size="20">Belize</text>
+  <text x="150" y="410" font-size="24">Guatemala</text>
+  <text x="306" y="292" font-size="26">Honduras</text>
+  <text x="198" y="448" font-size="20">El Salvador</text>
+  <text x="454" y="555" font-size="24">Costa Rica</text>
+  <text x="628" y="535" font-size="24">Panama</text>
+  <text x="602" y="102" font-size="22">Cuba</text>
+  <text x="622" y="238" font-size="18">Jamaica</text>
+</g>
 
-          <text x="342" y="548" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" fill="#205d46">Nicaragua</text>
+<text x="342" y="548"
 
           <g transform="translate(392 395)">
             <path d="M0 -26 C14 -26 25 -15 25 -1 C25 18 0 42 0 42 C0 42 -25 18 -25 -1 C-25 -15 -14 -26 0 -26 Z" fill="#0b6bff"/>
             <circle cx="0" cy="-2" r="9" fill="#ffffff"/>
           </g>
 
-          <text x="425" y="392" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="800" fill="#0b6bff">Estelí</text>
+          <text x="425" y="392" font-size="28" font-weight="800" fill="#0b6bff">Estelí</text>
         </svg>
 
         <div class="map-caption">
