@@ -20,6 +20,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
+
 body{
   background:var(--bg);
   color:var(--text);
@@ -177,13 +178,13 @@ a{color:inherit}
   font-weight:600;
 }
 
-@media (max-width: 1200px){
+@media (max-width:1200px){
   .brands-grid{
     grid-template-columns:repeat(3,minmax(0,1fr));
   }
 }
 
-@media (max-width: 900px){
+@media (max-width:900px){
   .page{
     padding:14px 14px 28px;
   }
@@ -242,7 +243,7 @@ a{color:inherit}
   }
 }
 
-@media (max-width: 520px){
+@media (max-width:520px){
   .brands-grid{
     grid-template-columns:1fr 1fr;
   }
