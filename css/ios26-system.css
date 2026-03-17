@@ -67,6 +67,10 @@ body{
   padding-bottom:var(--safe-bottom);
 }
 
+svg text{
+  font-family:"SF Pro Display",-apple-system,system-ui,sans-serif;
+}
+
 img{
   max-width:100%;
   display:block;
