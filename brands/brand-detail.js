@@ -177,154 +177,133 @@ const DEFAULT_BRAND_DATA = {
   }
 };
 
+function renderMapShell(svg, title, text) {
+  return `
+    <div class="map-modal-body">
+      <div class="map-card">
+        ${svg}
+        <div class="map-caption">
+          <div class="map-caption-title">${title}</div>
+          <div class="map-caption-text">${text}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function nicaraguaMapSvg() {
+  return `
+    <svg class="map-svg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="waterGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#dbeeff"/>
+          <stop offset="100%" stop-color="#c8def7"/>
+        </linearGradient>
+        <filter id="shadowSoft" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="rgba(0,0,0,.14)"/>
+        </filter>
+      </defs>
+
+      <rect width="900" height="620" fill="url(#waterGrad)"/>
+
+      <g filter="url(#shadowSoft)">
+        <path d="M80 180 L185 145 L280 165 L330 210 L305 280 L240 315 L155 300 L105 250 Z" fill="#d9ddd2"/>
+        <path d="M238 300 L265 290 L278 335 L250 368 L232 350 Z" fill="#d9ddd2"/>
+        <path d="M170 325 L238 300 L232 350 L175 378 L145 350 Z" fill="#d9ddd2"/>
+        <path d="M290 330 L412 302 L482 320 L456 372 L334 388 L278 360 Z" fill="#d9ddd2"/>
+        <path d="M220 392 L282 384 L292 402 L240 418 L208 410 Z" fill="#d9ddd2"/>
+        <path d="M470 455 L555 435 L592 462 L565 520 L498 532 L452 495 Z" fill="#d9ddd2"/>
+        <path d="M590 474 L690 455 L760 472 L734 502 L635 510 L570 498 Z" fill="#d9ddd2"/>
+        <path d="M510 138 L655 112 L750 124 L742 146 L612 160 L520 154 Z" fill="#d9ddd2"/>
+        <path d="M610 252 L690 248 L700 266 L620 272 Z" fill="#d9ddd2"/>
+        <path d="M338 378 L406 364 L462 372 L496 410 L485 470 L452 498 L395 506 L350 482 L320 438 L326 396 Z" fill="#3f8f6b"/>
+      </g>
+
+      <g font-weight="700" fill="#6f7783">
+        <text x="120" y="160" font-size="28">Mexico</text>
+        <text x="228" y="342" font-size="20">Belize</text>
+        <text x="150" y="410" font-size="24">Guatemala</text>
+        <text x="306" y="292" font-size="26">Honduras</text>
+        <text x="198" y="448" font-size="20">El Salvador</text>
+        <text x="454" y="555" font-size="24">Costa Rica</text>
+        <text x="628" y="535" font-size="24">Panama</text>
+        <text x="602" y="102" font-size="22">Cuba</text>
+        <text x="622" y="238" font-size="18">Jamaica</text>
+      </g>
+
+      <text x="342" y="548" font-size="34" font-weight="800" fill="#205d46">Nicaragua</text>
+
+      <g transform="translate(392 395)">
+        <path d="M0 -26 C14 -26 25 -15 25 -1 C25 18 0 42 0 42 C0 42 -25 18 -25 -1 C-25 -15 -14 -26 0 -26 Z" fill="#0b6bff"/>
+        <circle cx="0" cy="-2" r="9" fill="#ffffff"/>
+      </g>
+
+      <text x="425" y="392" font-size="28" font-weight="800" fill="#0b6bff">Estelí</text>
+    </svg>
+  `;
+}
+
+function dominicanMapBaseSvg(includeSantiagoPin = false) {
+  return `
+    <svg class="map-svg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="${includeSantiagoPin ? "waterGradDR" : "waterGradDR2"}" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#dbeeff"/>
+          <stop offset="100%" stop-color="#c8def7"/>
+        </linearGradient>
+        <filter id="${includeSantiagoPin ? "shadowSoftDR" : "shadowSoftDR2"}" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="rgba(0,0,0,.14)"/>
+        </filter>
+      </defs>
+
+      <rect width="900" height="620" fill="url(#${includeSantiagoPin ? "waterGradDR" : "waterGradDR2"})"/>
+
+      <g filter="url(#${includeSantiagoPin ? "shadowSoftDR" : "shadowSoftDR2"})">
+        <path d="M130 160 L330 128 L470 136 L456 170 L255 184 L150 178 Z" fill="#d9ddd2"/>
+        <path d="M210 355 L310 350 L320 372 L220 378 Z" fill="#d9ddd2"/>
+        <path d="M668 286 L790 280 L800 305 L678 312 Z" fill="#d9ddd2"/>
+        <path d="M350 235 L452 206 L520 214 L528 270 L465 298 L382 288 Z" fill="#d9ddd2"/>
+        <path d="M518 214 L642 215 L716 240 L700 298 L602 320 L522 270 Z" fill="#3f8f6b"/>
+      </g>
+
+      <g font-weight="700" fill="#6f7783">
+        <text x="238" y="110" font-size="24">Cuba</text>
+        <text x="218" y="338" font-size="20">Jamaica</text>
+        <text x="688" y="265" font-size="20">Puerto Rico</text>
+        <text x="386" y="196" font-size="20">Haiti</text>
+      </g>
+
+      <text x="498" y="366" font-size="30" font-weight="800" fill="#205d46">Dominican Republic</text>
+
+      ${includeSantiagoPin ? `
+        <g transform="translate(584 232)">
+          <path d="M0 -24 C13 -24 23 -14 23 -1 C23 16 0 38 0 38 C0 38 -23 16 -23 -1 C-23 -14 -13 -24 0 -24 Z" fill="#0b6bff"/>
+          <circle cx="0" cy="-2" r="8" fill="#ffffff"/>
+        </g>
+        <text x="608" y="228" font-size="26" font-weight="800" fill="#0b6bff">Santiago</text>
+      ` : ""}
+    </svg>
+  `;
+}
+
 const MAP_ART = {
-  "nicaragua-esteli": `
-    <div class="map-modal-body">
-      <div class="map-card">
-        <svg class="map-svg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="waterGrad" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="#dbeeff"/>
-              <stop offset="100%" stop-color="#c8def7"/>
-            </linearGradient>
-            <filter id="shadowSoft" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="rgba(0,0,0,.14)"/>
-            </filter>
-          </defs>
+  "nicaragua-esteli": renderMapShell(
+    nicaraguaMapSvg(),
+    "Estelí, Nicaragua",
+    "Nicaragua is highlighted, with Estelí marked in the north-central part of the country."
+  ),
 
-          <rect width="900" height="620" fill="url(#waterGrad)"/>
+  "dominican-santiago": renderMapShell(
+    dominicanMapBaseSvg(true),
+    "Santiago, Dominican Republic",
+    "The Dominican Republic is highlighted, with Santiago marked in the northern interior."
+  ),
 
-          <g filter="url(#shadowSoft)">
-            <path d="M80 180 L185 145 L280 165 L330 210 L305 280 L240 315 L155 300 L105 250 Z" fill="#d9ddd2"/>
-            <path d="M238 300 L265 290 L278 335 L250 368 L232 350 Z" fill="#d9ddd2"/>
-            <path d="M170 325 L238 300 L232 350 L175 378 L145 350 Z" fill="#d9ddd2"/>
-            <path d="M290 330 L412 302 L482 320 L456 372 L334 388 L278 360 Z" fill="#d9ddd2"/>
-            <path d="M220 392 L282 384 L292 402 L240 418 L208 410 Z" fill="#d9ddd2"/>
-            <path d="M470 455 L555 435 L592 462 L565 520 L498 532 L452 495 Z" fill="#d9ddd2"/>
-            <path d="M590 474 L690 455 L760 472 L734 502 L635 510 L570 498 Z" fill="#d9ddd2"/>
-            <path d="M510 138 L655 112 L750 124 L742 146 L612 160 L520 154 Z" fill="#d9ddd2"/>
-            <path d="M610 252 L690 248 L700 266 L620 272 Z" fill="#d9ddd2"/>
-            <path d="M338 378 L406 364 L462 372 L496 410 L485 470 L452 498 L395 506 L350 482 L320 438 L326 396 Z" fill="#3f8f6b"/>
-          </g>
-
-<g font-weight="700" fill="#6f7783">
-  <text x="120" y="160" font-size="28">Mexico</text>
-  <text x="228" y="342" font-size="20">Belize</text>
-  <text x="150" y="410" font-size="24">Guatemala</text>
-  <text x="306" y="292" font-size="26">Honduras</text>
-  <text x="198" y="448" font-size="20">El Salvador</text>
-  <text x="454" y="555" font-size="24">Costa Rica</text>
-  <text x="628" y="535" font-size="24">Panama</text>
-  <text x="602" y="102" font-size="22">Cuba</text>
-  <text x="622" y="238" font-size="18">Jamaica</text>
-</g>
-
-<text x="342" y="548"
-
-          <g transform="translate(392 395)">
-            <path d="M0 -26 C14 -26 25 -15 25 -1 C25 18 0 42 0 42 C0 42 -25 18 -25 -1 C-25 -15 -14 -26 0 -26 Z" fill="#0b6bff"/>
-            <circle cx="0" cy="-2" r="9" fill="#ffffff"/>
-          </g>
-
-          <text x="425" y="392" font-size="28" font-weight="800" fill="#0b6bff">Estelí</text>
-        </svg>
-
-        <div class="map-caption">
-          <div class="map-caption-title">Estelí, Nicaragua</div>
-          <div class="map-caption-text">Nicaragua is highlighted, with Estelí marked in the north-central part of the country.</div>
-        </div>
-      </div>
-    </div>
-  `,
-  "dominican-santiago": `
-    <div class="map-modal-body">
-      <div class="map-card">
-        <svg class="map-svg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="waterGradDR" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="#dbeeff"/>
-              <stop offset="100%" stop-color="#c8def7"/>
-            </linearGradient>
-            <filter id="shadowSoftDR" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="rgba(0,0,0,.14)"/>
-            </filter>
-          </defs>
-
-          <rect width="900" height="620" fill="url(#waterGradDR)"/>
-
-          <g filter="url(#shadowSoftDR)">
-            <path d="M130 160 L330 128 L470 136 L456 170 L255 184 L150 178 Z" fill="#d9ddd2"/>
-            <path d="M210 355 L310 350 L320 372 L220 378 Z" fill="#d9ddd2"/>
-            <path d="M668 286 L790 280 L800 305 L678 312 Z" fill="#d9ddd2"/>
-            <path d="M350 235 L452 206 L520 214 L528 270 L465 298 L382 288 Z" fill="#d9ddd2"/>
-            <path d="M518 214 L642 215 L716 240 L700 298 L602 320 L522 270 Z" fill="#3f8f6b"/>
-          </g>
-
-          <g font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#6f7783">
-            <text x="238" y="110" font-size="24">Cuba</text>
-            <text x="218" y="338" font-size="20">Jamaica</text>
-            <text x="688" y="265" font-size="20">Puerto Rico</text>
-            <text x="386" y="196" font-size="20">Haiti</text>
-          </g>
-
-          <text x="498" y="366" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#205d46">Dominican Republic</text>
-
-          <g transform="translate(584 232)">
-            <path d="M0 -24 C13 -24 23 -14 23 -1 C23 16 0 38 0 38 C0 38 -23 16 -23 -1 C-23 -14 -13 -24 0 -24 Z" fill="#0b6bff"/>
-            <circle cx="0" cy="-2" r="8" fill="#ffffff"/>
-          </g>
-
-          <text x="608" y="228" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="800" fill="#0b6bff">Santiago</text>
-        </svg>
-
-        <div class="map-caption">
-          <div class="map-caption-title">Santiago, Dominican Republic</div>
-          <div class="map-caption-text">The Dominican Republic is highlighted, with Santiago marked in the northern interior.</div>
-        </div>
-      </div>
-    </div>
-  `,
-  "dominican-republic": `
-    <div class="map-modal-body">
-      <div class="map-card">
-        <svg class="map-svg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="waterGradDR2" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="#dbeeff"/>
-              <stop offset="100%" stop-color="#c8def7"/>
-            </linearGradient>
-            <filter id="shadowSoftDR2" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="rgba(0,0,0,.14)"/>
-            </filter>
-          </defs>
-
-          <rect width="900" height="620" fill="url(#waterGradDR2)"/>
-
-          <g filter="url(#shadowSoftDR2)">
-            <path d="M130 160 L330 128 L470 136 L456 170 L255 184 L150 178 Z" fill="#d9ddd2"/>
-            <path d="M210 355 L310 350 L320 372 L220 378 Z" fill="#d9ddd2"/>
-            <path d="M668 286 L790 280 L800 305 L678 312 Z" fill="#d9ddd2"/>
-            <path d="M350 235 L452 206 L520 214 L528 270 L465 298 L382 288 Z" fill="#d9ddd2"/>
-            <path d="M518 214 L642 215 L716 240 L700 298 L602 320 L522 270 Z" fill="#3f8f6b"/>
-          </g>
-
-          <g font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#6f7783">
-            <text x="238" y="110" font-size="24">Cuba</text>
-            <text x="218" y="338" font-size="20">Jamaica</text>
-            <text x="688" y="265" font-size="20">Puerto Rico</text>
-            <text x="386" y="196" font-size="20">Haiti</text>
-          </g>
-
-          <text x="498" y="366" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#205d46">Dominican Republic</text>
-        </svg>
-
-        <div class="map-caption">
-          <div class="map-caption-title">Dominican Republic</div>
-          <div class="map-caption-text">The country is highlighted against the surrounding Caribbean region.</div>
-        </div>
-      </div>
-    </div>
-  `
+  "dominican-republic": renderMapShell(
+    dominicanMapBaseSvg(false),
+    "Dominican Republic",
+    "The country is highlighted against the surrounding Caribbean region."
+  )
 };
 
 const EDITABLE_FIELDS = {
