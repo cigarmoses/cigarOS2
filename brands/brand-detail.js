@@ -318,8 +318,14 @@ const EDITABLE_FIELDS = {
 };
 
 function getBrandSlug() {
+  const pathParts = window.location.pathname.split("/").filter(Boolean);
+
+  if (pathParts[0] === "brands" && pathParts[1] && pathParts[1] !== "detail.html") {
+    return pathParts[1].toLowerCase();
+  }
+
   const params = new URLSearchParams(window.location.search);
-  return params.get("brand") || "padron";
+  return (params.get("brand") || "padron").toLowerCase();
 }
 
 function isAdminMode() {
