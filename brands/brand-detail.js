@@ -11,15 +11,8 @@ const DEFAULT_BRAND_DATA = {
       "Padrón is one of the most respected premium cigar brands in the world, known for box-pressed cigars, Nicaraguan tobacco, and exceptional consistency.",
       "This public brand page mirrors the shop page structure, but is focused specifically on the cigar brand itself."
     ],
-    newReleases: [
-      "No new releases have been added yet."
-    ],
-    updates: [
-      {
-        date: "Latest",
-        text: "Brand profile page is now live."
-      }
-    ]
+    newReleases: [],
+    updates: []
   },
 
   arturofuente: {
@@ -33,15 +26,8 @@ const DEFAULT_BRAND_DATA = {
     about: [
       "Arturo Fuente is one of the most iconic family-owned premium cigar companies, known for Fuente Fuente OpusX, Don Carlos, Hemingway, and a long Dominican cigar legacy."
     ],
-    newReleases: [
-      "No new releases have been added yet."
-    ],
-    updates: [
-      {
-        date: "Latest",
-        text: "Brand profile page is now live."
-      }
-    ]
+    newReleases: [],
+    updates: []
   },
 
   davidoff: {
@@ -55,15 +41,8 @@ const DEFAULT_BRAND_DATA = {
     about: [
       "Davidoff is a globally recognized luxury cigar brand known for refined blending, elegant presentation, and a strong Dominican portfolio."
     ],
-    newReleases: [
-      "No new releases have been added yet."
-    ],
-    updates: [
-      {
-        date: "Latest",
-        text: "Brand profile page is now live."
-      }
-    ]
+    newReleases: [],
+    updates: []
   },
 
   myfather: {
@@ -77,15 +56,8 @@ const DEFAULT_BRAND_DATA = {
     about: [
       "My Father Cigars is known for bold Nicaraguan blending and the García family’s major influence on the premium cigar industry."
     ],
-    newReleases: [
-      "No new releases have been added yet."
-    ],
-    updates: [
-      {
-        date: "Latest",
-        text: "Brand profile page is now live."
-      }
-    ]
+    newReleases: [],
+    updates: []
   },
 
   oliva: {
@@ -99,15 +71,8 @@ const DEFAULT_BRAND_DATA = {
     about: [
       "Oliva is widely respected for delivering strong value and consistency across core lines such as Serie V, Serie O, and Serie G."
     ],
-    newReleases: [
-      "No new releases have been added yet."
-    ],
-    updates: [
-      {
-        date: "Latest",
-        text: "Brand profile page is now live."
-      }
-    ]
+    newReleases: [],
+    updates: []
   },
 
   romeoyjulieta: {
@@ -121,15 +86,8 @@ const DEFAULT_BRAND_DATA = {
     about: [
       "Romeo y Julieta is one of the most recognized names in premium cigars, offering a broad portfolio with long-standing popularity."
     ],
-    newReleases: [
-      "No new releases have been added yet."
-    ],
-    updates: [
-      {
-        date: "Latest",
-        text: "Brand profile page is now live."
-      }
-    ]
+    newReleases: [],
+    updates: []
   },
 
   montecristo: {
@@ -143,15 +101,8 @@ const DEFAULT_BRAND_DATA = {
     about: [
       "Montecristo is one of the most historic and recognizable cigar brands in the world, with both classic heritage and modern portfolio depth."
     ],
-    newReleases: [
-      "No new releases have been added yet."
-    ],
-    updates: [
-      {
-        date: "Latest",
-        text: "Brand profile page is now live."
-      }
-    ]
+    newReleases: [],
+    updates: []
   },
 
   perdomo: {
@@ -165,15 +116,8 @@ const DEFAULT_BRAND_DATA = {
     about: [
       "Perdomo is known for vertically integrated tobacco production, Nicaraguan craftsmanship, and a wide portfolio of box-pressed and traditional cigars."
     ],
-    newReleases: [
-      "No new releases have been added yet."
-    ],
-    updates: [
-      {
-        date: "Latest",
-        text: "Brand profile page is now live."
-      }
-    ]
+    newReleases: [],
+    updates: []
   }
 };
 
@@ -426,7 +370,7 @@ function renderQuickLinks(brand) {
 function renderParagraphs(items) {
   const list = Array.isArray(items) ? items : [];
   if (!list.length) {
-    return `<p class="empty-copy">Nothing added yet.</p>`;
+    return ``;
   }
   return list.map(p => `<p>${escapeHtml(p)}</p>`).join("");
 }
@@ -434,11 +378,7 @@ function renderParagraphs(items) {
 function renderUpdates(items) {
   const list = Array.isArray(items) ? items : [];
   if (!list.length) {
-    return `
-      <article class="content-item">
-        <div class="content-item-copy empty-copy">No updates have been added yet.</div>
-      </article>
-    `;
+    return ``;
   }
   return list.map(item => `
     <article class="content-item">
@@ -446,6 +386,14 @@ function renderUpdates(items) {
       <div class="content-item-copy">${escapeHtml(item.text || "")}</div>
     </article>
   `).join("");
+}
+
+function hasRealNewReleases(brand) {
+  return Array.isArray(brand.newReleases) && brand.newReleases.length > 0;
+}
+
+function hasRealUpdates(brand) {
+  return Array.isArray(brand.updates) && brand.updates.length > 0;
 }
 
 function renderAdminBar() {
@@ -471,7 +419,9 @@ function renderBrandPage() {
     document.getElementById("app").innerHTML = `
       <main class="page-shell brand-page">
         <section class="surface-card surface-card--hero">
-          <a class="glass-pill back-pill" href="/brands/">Brands</a>
+          <button class="glass-pill back-pill universal-back" type="button" id="brandBackBtn" aria-label="Go back">
+            <span class="back-chevron">‹</span>
+          </button>
           <div class="hero-compact">
             <div class="center-stack">
               <h1 class="hero-title">Brand Not Found</h1>
@@ -491,7 +441,9 @@ function renderBrandPage() {
 
     <main class="page-shell brand-page">
       <section class="surface-card surface-card--hero fade-in">
-        <a class="glass-pill back-pill" href="/brands/">Brands</a>
+        <button class="glass-pill back-pill universal-back" type="button" id="brandBackBtn" aria-label="Go back">
+          <span class="back-chevron">‹</span>
+        </button>
 
         <div class="hero-compact">
           <div class="hero-top">
@@ -523,28 +475,32 @@ function renderBrandPage() {
       <section class="surface-card surface-card--section brand-panels fade-in">
         <div class="segmented three" data-segmented="brand-main">
           <button class="segment-btn active" data-segment-btn="about">About</button>
-          <button class="segment-btn" data-segment-btn="new-releases">New Releases</button>
-          <button class="segment-btn" data-segment-btn="updates">Updates</button>
+          <button class="segment-btn ${hasRealNewReleases(brand) ? "" : "is-empty"}" data-segment-btn="new-releases">
+            ${hasRealNewReleases(brand) ? "New Releases" : ""}
+          </button>
+          <button class="segment-btn ${hasRealUpdates(brand) ? "" : "is-empty"}" data-segment-btn="updates">
+            ${hasRealUpdates(brand) ? "Updates" : ""}
+          </button>
         </div>
 
         <div class="panel-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
           ${editorButton("about", "Edit About")}
           <div class="body-copy active" data-segment-panel="brand-main" data-segment-value="about">
-            ${renderParagraphs(brand.about)}
+            ${renderParagraphs((brand.about || []).slice(0, 1))}
           </div>
         </div>
 
         <div class="panel-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
           ${editorButton("newReleases", "Edit New Releases")}
           <div class="body-copy" data-segment-panel="brand-main" data-segment-value="new-releases">
-            ${renderParagraphs(brand.newReleases)}
+            ${hasRealNewReleases(brand) ? renderParagraphs(brand.newReleases) : ""}
           </div>
         </div>
 
         <div class="panel-wrap editable-zone ${isAdminMode() ? "editable-outline" : ""}">
           ${editorButton("updates", "Edit Updates")}
           <div class="content-list" data-segment-panel="brand-main" data-segment-value="updates">
-            ${renderUpdates(brand.updates)}
+            ${hasRealUpdates(brand) ? renderUpdates(brand.updates) : ""}
           </div>
         </div>
       </section>
@@ -584,8 +540,41 @@ function renderBrandPage() {
   `;
 
   IOS26UI.boot(document);
+
+  document.getElementById("brandBackBtn")?.addEventListener("click", () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = "/brands/";
+    }
+  });
+
   bindEditor(slug);
   bindAdminActions(slug);
+  bindTabs();
+}
+
+function bindTabs() {
+  const buttons = document.querySelectorAll("[data-segment-btn]");
+  const panels = document.querySelectorAll("[data-segment-panel='brand-main']");
+
+  buttons.forEach(button => {
+    if (button.classList.contains("is-empty")) return;
+
+    button.addEventListener("click", () => {
+      const value = button.getAttribute("data-segment-btn");
+
+      buttons.forEach(btn => btn.classList.remove("active"));
+      button.classList.add("active");
+
+      panels.forEach(panel => {
+        panel.classList.toggle(
+          "active",
+          panel.getAttribute("data-segment-value") === value
+        );
+      });
+    });
+  });
 }
 
 function bindAdminActions(slug) {
