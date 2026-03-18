@@ -36,6 +36,25 @@ ol {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.hero-title,
+.page-title,
+.brand-name,
+.quick-link-label,
+.segment-btn,
+.glass-pill,
+.back-pill,
+.back-chip,
+.search-bar input {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    "Helvetica Neue",
+    Arial,
+    sans-serif !important;
+}
+
 :root{
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -292,6 +311,19 @@ a{
   top:18px;
   left:18px;
   z-index:3;
+}
+
+.universal-back{
+  min-width:56px;
+  width:56px;
+  padding:0;
+}
+
+.back-chevron{
+  font-size:28px;
+  line-height:1;
+  font-weight:700;
+  transform:translateX(-1px);
 }
 
 /* icon tiles */
