@@ -1,110 +1,59 @@
 const BRANDS = [
-  {
-    slug: "padron",
-    name: "Padron",
-    meta: "Estelí, Nicaragua",
-    icon: "/img/icons/brands/padron.svg"
-  },
-  {
-    slug: "arturofuente",
-    name: "Arturo Fuente",
-    meta: "Dominican Republic",
-    icon: "/img/icons/brands/arturofuente.svg"
-  },
-  {
-    slug: "davidoff",
-    name: "Davidoff",
-    meta: "Dominican Republic",
-    icon: "/img/icons/brands/davidoff.svg"
-  },
-  {
-    slug: "myfather",
-    name: "My Father",
-    meta: "Estelí, Nicaragua",
-    icon: "/img/icons/brands/myfather.svg"
-  },
-  {
-    slug: "oliva",
-    name: "Oliva",
-    meta: "Nicaragua",
-    icon: "/img/icons/brands/oliva.svg"
-  },
-  {
-    slug: "romeoyjulieta",
-    name: "Romeo y Julieta",
-    meta: "Dominican Republic",
-    icon: "/img/icons/brands/romeoyjulieta.svg"
-  },
-  {
-    slug: "montecristo",
-    name: "Montecristo",
-    meta: "Dominican Republic",
-    icon: "/img/icons/brands/montecristo.svg"
-  },
-  {
-    slug: "perdomo",
-    name: "Perdomo",
-    meta: "Nicaragua",
-    icon: "/img/icons/brands/perdomo.svg"
-  }
+  { slug: "padron", name: "Padron", icon: "/img/icons/brands/padron.svg" },
+  { slug: "arturofuente", name: "Arturo Fuente", icon: "/img/icons/brands/arturofuente.svg" },
+  { slug: "davidoff", name: "Davidoff", icon: "/img/icons/brands/davidoff.svg" },
+  { slug: "myfather", name: "My Father", icon: "/img/icons/brands/myfather.svg" },
+  { slug: "oliva", name: "Oliva", icon: "/img/icons/brands/oliva.svg" },
+  { slug: "romeoyjulieta", name: "Romeo y Julieta", icon: "/img/icons/brands/romeoyjulieta.svg" },
+  { slug: "montecristo", name: "Montecristo", icon: "/img/icons/brands/montecristo.svg" },
+  { slug: "perdomo", name: "Perdomo", icon: "/img/icons/brands/perdomo.svg" }
 ];
 
 function renderBrandsPage() {
   const app = document.getElementById("app");
 
   app.innerHTML = `
-    <main class="page">
-      <section class="hero-card">
-        <a class="back-chip" href="/">Back</a>
+    <main class="brands-page">
 
-        <div class="hero-inner">
-          <h1 class="page-title">Brands</h1>
+      <div class="brands-header">
+        <h1>Brands</h1>
+
+        <div class="search-bar">
+          <input type="text" placeholder="Search brands" id="brandSearch">
         </div>
-      </section>
+      </div>
 
-      <section class="grid-shell">
-        ${
-          BRANDS.length
-            ? `
-              <div class="brands-grid">
-                ${BRANDS.map(renderBrandCard).join("")}
-              </div>
-            `
-            : `
-              <div class="empty-state">No brands have been added yet.</div>
-            `
-        }
-      </section>
+      <div class="brands-grid" id="brandsGrid">
+        ${BRANDS.map(renderBrandCard).join("")}
+      </div>
+
     </main>
   `;
+
+  bindSearch();
 }
 
 function renderBrandCard(brand) {
   return `
-    <a class="brand-card" href="/brands/detail.html?brand=${brand.slug}" aria-label="${escapeHtml(brand.name)}">
-      <div class="brand-icon-wrap">
-        <img
-          class="brand-icon"
-          src="${brand.icon}"
-          alt="${escapeHtml(brand.name)} logo"
-          loading="lazy"
-        >
-      </div>
-
-      <h2 class="brand-name">${escapeHtml(brand.name)}</h2>
-
-      ${brand.meta ? `<div class="brand-meta">${escapeHtml(brand.meta)}</div>` : ""}
+    <a class="brand-card" href="/brands/detail.html?brand=${brand.slug}">
+      <img src="${brand.icon}" class="brand-icon">
+      <div class="brand-name">${brand.name}</div>
     </a>
   `;
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+function bindSearch() {
+  const input = document.getElementById("brandSearch");
+  const grid = document.getElementById("brandsGrid");
+
+  input.addEventListener("input", () => {
+    const q = input.value.toLowerCase();
+
+    grid.innerHTML = BRANDS
+      .filter(b => b.name.toLowerCase().includes(q))
+      .map(renderBrandCard)
+      .join("");
+  });
 }
 
 renderBrandsPage();
