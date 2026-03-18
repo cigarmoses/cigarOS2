@@ -13,31 +13,53 @@ function renderBrandsPage() {
   const app = document.getElementById("app");
 
   app.innerHTML = `
-    <main class="brands-page">
+    <main class="page">
+      <section class="hero-card">
+        <button class="glass-pill back-pill universal-back" type="button" id="brandsBackBtn" aria-label="Go back">
+          <span class="back-chevron">‹</span>
+        </button>
 
-      <div class="brands-header">
-        <h1>Brands</h1>
+        <div class="hero-inner">
+          <h1 class="page-title">Brands</h1>
 
-        <div class="search-bar">
-          <input type="text" placeholder="Search brands" id="brandSearch">
+          <div class="search-bar" style="max-width:560px;margin:18px auto 0;">
+            <input type="text" placeholder="Search brands" id="brandSearch">
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="brands-grid" id="brandsGrid">
-        ${BRANDS.map(renderBrandCard).join("")}
-      </div>
-
+      <section class="grid-shell">
+        <div class="brands-grid" id="brandsGrid">
+          ${BRANDS.map(renderBrandCard).join("")}
+        </div>
+      </section>
     </main>
   `;
+
+  document.getElementById("brandsBackBtn")?.addEventListener("click", () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = "/";
+    }
+  });
 
   bindSearch();
 }
 
 function renderBrandCard(brand) {
   return `
-    <a class="brand-card" href="/brands/detail.html?brand=${brand.slug}">
-      <img src="${brand.icon}" class="brand-icon">
-      <div class="brand-name">${brand.name}</div>
+    <a class="brand-card" href="/brands/detail.html?brand=${brand.slug}" aria-label="${escapeHtml(brand.name)}">
+      <div class="brand-icon-wrap">
+        <img
+          class="brand-icon"
+          src="${brand.icon}"
+          alt="${escapeHtml(brand.name)} logo"
+          loading="lazy"
+        >
+      </div>
+
+      <h2 class="brand-name">${escapeHtml(brand.name)}</h2>
     </a>
   `;
 }
@@ -46,14 +68,24 @@ function bindSearch() {
   const input = document.getElementById("brandSearch");
   const grid = document.getElementById("brandsGrid");
 
-  input.addEventListener("input", () => {
-    const q = input.value.toLowerCase();
+  input?.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
 
-    grid.innerHTML = BRANDS
-      .filter(b => b.name.toLowerCase().includes(q))
-      .map(renderBrandCard)
-      .join("");
+    const filtered = BRANDS.filter(brand =>
+      brand.name.toLowerCase().includes(q)
+    );
+
+    grid.innerHTML = filtered.map(renderBrandCard).join("");
   });
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 renderBrandsPage();
