@@ -1,95 +1,69 @@
+<!-- /pos/cigars/index.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>POS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Cigars</title>
 
-  <!-- Global SF Pro -->
-  <link rel="stylesheet" href="/css/type.css" />
-  <!-- POS global styles -->
-  <link rel="stylesheet" href="/pos/pos.css" />
+  <link rel="stylesheet" href="/css/type.css?v=19" />
+  <link rel="stylesheet" href="/pos/pos.css?v=19" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=19" />
 </head>
 
-<body class="pos-home">
-
-  <!-- Top bar (back arrow only, no "Back" text) -->
-  <header class="pos-topbar">
-    <button type="button" class="pos-back" id="pos-back" aria-label="Back">
+<body class="cigars-page">
+  <header class="cigars-topbar">
+    <button type="button" class="pos-back" aria-label="Back" onclick="history.back()">
       <span class="pos-back-icon">←</span>
+    </button>
+
+    <button
+      type="button"
+      class="pos-invoice-btn"
+      data-invoice-btn
+      aria-label="Invoice"
+    >
+      <img class="pos-cart-ico" src="/img/icons/cart-blue.svg" alt="" />
+      <span data-cart-badge hidden>0</span>
     </button>
   </header>
 
-  <main class="pos-main">
-    <h1 class="pos-title">POS</h1>
+  <main class="cigars-main" role="main">
+    <div class="cigars-title-row">
+      <h1 class="cigars-title">Cigars</h1>
 
-    <!-- Card grid (Learn-style) -->
-    <section class="pos-grid" aria-label="POS sections">
+      <div class="cigars-title-actions">
+        <button type="button" class="cigars-filter-btn" id="btn-open-filters" aria-label="Filters">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16M7 12h10M10 18h4"
+                  fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
 
-      <button class="pos-card" type="button" data-href="/pos/cigars/">
-        <div class="pos-card-icon">
-          <img src="/img/icons/categories/cigarsiconnew.svg" alt="" />
-        </div>
-        <div class="pos-card-title">Cigars</div>
-      </button>
+        <a class="cigars-fav-btn" href="/pos/cigars/favorites/" aria-label="Favorites">★</a>
+      </div>
+    </div>
 
-      <button class="pos-card" type="button" data-href="/pos/foodandbevs/">
-        <div class="pos-card-icon">
-          <img src="/img/icons/foodandbevs.svg" alt="" />
-        </div>
-        <div class="pos-card-title">Food &amp; Bevs</div>
-      </button>
+    <div class="cigars-search-wrap">
+      <div class="cigars-search-bar">
+        <div class="cigars-search-icon">🔍</div>
+        <input
+          id="cigars-search-input"
+          type="search"
+          inputmode="search"
+          autocomplete="off"
+          placeholder=""
+          aria-label="Search cigars"
+        />
+      </div>
 
-      <button class="pos-card" type="button" data-href="/pos/accessories/">
-        <div class="pos-card-icon">
-          <img src="/img/icons/categories/accessories.svg" alt="" />
-        </div>
-        <div class="pos-card-title">Accessories</div>
-      </button>
+      <div class="cigars-applied-filters" id="cigarsAppliedFilters" aria-label="Applied filters"></div>
+    </div>
 
-      <button class="pos-card" type="button" data-href="/pos/ashtrays/">
-        <div class="pos-card-icon">
-          <img src="/img/icons/categories/ashtrays.svg" alt="" />
-        </div>
-        <div class="pos-card-title">Ashtrays</div>
-      </button>
-
-      <button class="pos-card" type="button" data-href="/pos/pipes/">
-        <div class="pos-card-icon">
-          <img src="/img/icons/categories/pipes.svg" alt="" />
-        </div>
-        <div class="pos-card-title">Pipes</div>
-      </button>
-
-      <button class="pos-card" type="button" data-href="/pos/packs/">
-        <div class="pos-card-icon">
-          <img src="/img/icons/categories/packs.svg" alt="" />
-        </div>
-        <div class="pos-card-title">Packs</div>
-      </button>
-
-    </section>
+    <section class="cigars-list" id="cigarsList"></section>
   </main>
 
-  <script>
-    // Back arrow behavior
-    document.addEventListener("DOMContentLoaded", () => {
-      const backBtn = document.getElementById("pos-back");
-      if (backBtn) {
-        backBtn.addEventListener("click", () => {
-          if (window.history.length > 1) window.history.back();
-          else window.location.href = "/";
-        });
-      }
-
-      // Card navigation
-      document.querySelectorAll(".pos-card").forEach((card) => {
-        card.addEventListener("click", () => {
-          const href = card.getAttribute("data-href");
-          if (href) window.location.href = href;
-        });
-      });
-    });
-  </script>
+  <script src="/pos/cart.js?v=19" defer></script>
+  <script src="/pos/cigars/cigars.js?v=19" defer></script>
 </body>
 </html>

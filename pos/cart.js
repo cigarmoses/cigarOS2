@@ -405,16 +405,16 @@
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
-  if (!Array.isArray(window.cigarOSCart)) {
-    window.cigarOSCart = window.cigarOSCart || {};
-    window.cigarOSCart.add = addToCart;
-    window.cigarOSCart.items = () => loadCart();
-    window.cigarOSCart.count = () => getCartCount(loadCart());
-    window.cigarOSCart.clear = () => {
-      localStorage.setItem(CART_KEY, JSON.stringify([]));
-      updateBadges([]);
-      document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart: [] } }));
-      window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart: [] } }));
-    };
-  }
+  window.cigarOSCart = window.cigarOSCart || {};
+  window.cigarOSCart.add = addToCart;
+  window.cigarOSCart.items = () => loadCart();
+  window.cigarOSCart.count = () => getCartCount(loadCart());
+  window.cigarOSCart.updateBadges = () => updateBadges(loadCart());
+  window.cigarOSCart.key = CART_KEY;
+  window.cigarOSCart.clear = () => {
+    localStorage.setItem(CART_KEY, JSON.stringify([]));
+    updateBadges([]);
+    document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart: [] } }));
+    window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart: [] } }));
+  };
 })();

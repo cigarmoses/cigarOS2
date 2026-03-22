@@ -23,9 +23,8 @@
   }
 
   function getCartProductCount() {
-    // count of distinct products with qty > 0
     const cart = loadCart();
-    return cart.reduce((sum, item) => (Number(item?.qty || 0) > 0 ? sum + 1 : sum), 0);
+    return cart.reduce((sum, item) => sum + Math.max(0, Number(item?.qty || 0)), 0);
   }
 
   function updateInvoiceBadges() {
@@ -38,6 +37,7 @@
     // New universal badge selector (we used this across pages)
     document.querySelectorAll("[data-cart-badge]").forEach((el) => {
       el.textContent = String(count);
+      if ("hidden" in el) el.hidden = count <= 0;
     });
   }
 
