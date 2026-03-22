@@ -143,7 +143,7 @@
   }
 
   function resolveId(r){
-    return getField(r, ["id", "slug", "cigar_id", "row_id"]) || resolveName(r);
+    return getField(r, ["id", "slug", "cigar_id", "row_id", "key"]) || resolveName(r);
   }
 
   function resolveName(r){
@@ -274,8 +274,8 @@
   }
 
   function openDetail(r){
-    const key = getField(r, ["key", "cigar_id", "id", "row_id", "slug"]) || resolveId(r);
-    const href = `/pos/cigars/cigar.html?key=${encodeURIComponent(key)}`;
+    const id = resolveId(r);
+    const href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
     window.location.href = href;
   }
 
