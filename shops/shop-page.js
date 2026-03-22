@@ -433,10 +433,12 @@
 
     const any = days.some((d) => d[1]);
     if (!any) {
-      list.innerHTML = `<div class="sp-hours-row"><div class="sp-hours-day">Coming soon</div><div class="sp-hours-val">—</div></div>`;
-      if (now) now.textContent = "—";
-      return;
-    }
+list.innerHTML = `
+  <div class="sp-hours-row">
+    <div class="sp-hours-day">Coming soon</div>
+    <div class="sp-hours-val">—</div>
+  </div>
+`;
 
     days.forEach(([day, val]) => {
       const v = val || "—";
@@ -449,23 +451,33 @@
     if (now) now.textContent = "—";
   }
 
-  function renderAbout(shop) {
-    const el = $("#spAbout");
-    if (!el) return;
+function renderAbout(shop) {
+  const el = $("#spAbout");
+  if (!el) return;
 
-    const items = [
-      ["Address", shop.address || "—"],
-      ["Phone", shop.phone || "—"],
-      ["Email", shop.email || "—"],
-    ];
+  const rows = [
+    ["Address", shop.address],
+    ["Phone", shop.phone],
+    ["Email", shop.email]
+  ];
 
-    el.innerHTML = items.map(([k, v]) => `
-      <div class="sp-about-item">
-        <div class="sp-about-k">${escapeHtml(k)}</div>
-        <div class="sp-about-v">${escapeHtml(v)}</div>
-      </div>
-    `).join("");
+  const validRows = rows.filter(([_, v]) => {
+    const s = String(v || "").trim();
+    return s && s !== "—";
+  });
+
+  if (!validRows.length) {
+    el.innerHTML = ""; // nothing shown at all
+    return;
   }
+
+  el.innerHTML = validRows.map(([k, v]) => `
+    <div class="sp-about-item">
+      <div class="sp-about-k">${k}</div>
+      <div class="sp-about-v">${v}</div>
+    </div>
+  `).join("");
+}
 
   function openBrandsModal(brands) {
     const modal = $("#spBrandsModal");
