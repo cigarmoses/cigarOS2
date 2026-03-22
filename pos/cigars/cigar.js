@@ -1,49 +1,13 @@
-/* /cigars/cigar.js
-   Canonical cigar pages (PWA-safe)
-   - Routes:
-       /cigars/<slug>  (via _redirects -> cigar.html?slug=:splat)
-       /cigars/cigar.html?id=<CIGAR_ID>
-   - Data source: Google Sheets CSV export (canonical)
+/* /pos/cigars/cigar.js
+   Canonical cigar detail page
+   - Reads Google Sheets CSV
+   - Opens by ?id= or ?slug=
+   - Uses universal /pos/cart.js cart
 */
 
 (() => {
   "use strict";
 
-  // Shared cart storage with brand page
-  const CART_KEY = "cigaros_pos_cart";
-  function readCart() {
-    try {
-      const raw = localStorage.getItem(CART_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
-  }
-  function writeCart(items) {
-    try { localStorage.setItem(CART_KEY, JSON.stringify(items || [])); } catch {}
-  }
-  function addToCart(item) {
-    const id = String(item?.id ?? "").trim();
-    if (!id) return;
-    const cart = readCart();
-    const idx = cart.findIndex((x) => String(x?.id ?? "").trim() === id && String(x?.type || "cigar") === "cigar");
-    if (idx >= 0) cart[idx].qty = (Number(cart[idx].qty) || 1) + 1;
-    else cart.push({ ...item, type: "cigar", qty: 1, addedAt: Date.now() });
-    writeCart(cart);
-  }
-
-  function brandSlug(brand) {
-    return String(brand || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "")
-      .trim();
-  }
-
-  // ✅ Canonical data source (your saved memory URL)
   const SHEET_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
@@ -51,6 +15,7 @@
   const card = $("#cdCard");
   const loading = $("#cdLoading");
   const backBtn = $("#cdBack");
+  const topbarTitle = $("#cdTopbarTitle");
 
   function getParam(name) {
     const u = new URL(window.location.href);
@@ -61,13 +26,28 @@
     return String(s || "")
       .trim()
       .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
-      .replace(/['"]/g, "")
+      .replace(/["']/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
   }
 
-  // CSV parser that handles quoted commas
+  function escapeHTML(s) {
+    return (s ?? "")
+      .toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function escapeAttr(s) {
+    return escapeHTML(s);
+  }
+
   function parseCSV(text) {
     const rows = [];
     let row = [];
@@ -107,7 +87,6 @@
       cur += ch;
     }
 
-    // last cell
     if (cur.length || row.length) {
       row.push(cur);
       rows.push(row);
@@ -133,89 +112,93 @@
       const obj = {};
       for (let j = 0; j < headers.length; j++) {
         obj[headers[j]] = r[j] ?? "";
-        obj[normHeaders[j]] = r[j] ?? ""; // normalized alias
+        obj[normHeaders[j]] = r[j] ?? "";
       }
       data.push(obj);
     }
     return data;
   }
 
+  function getField(rec, keys) {
+    for (const key of keys) {
+      const value = rec?.[key];
+      if (value != null && String(value).trim() !== "") return String(value).trim();
+    }
+    return "";
+  }
+
   function getCigarId(rec) {
-    // Accept: "Cigar ID" or "cigarId" etc
-    return (
-      rec["Cigar ID"] ??
-      rec["cigarId"] ??
-      rec["cigarid"] ??
-      rec["cigar_id"] ??
-      rec["key"] ??
-      rec["Key"] ??
-      ""
-    ).toString().trim();
+    return getField(rec, ["Cigar ID", "cigarId", "cigarid", "cigar_id", "key", "Key"]);
   }
 
   function getBrand(rec) {
-    return (rec["Brand"] ?? rec["brand"] ?? rec["brandname"] ?? "").toString().trim();
+    return getField(rec, ["Brand", "brand", "brandname"]);
   }
 
   function getLine(rec) {
-    return (rec["Line"] ?? rec["line"] ?? rec["Series"] ?? rec["series"] ?? "").toString().trim();
+    return getField(rec, ["Line", "line", "Series", "series"]);
   }
 
   function getName(rec) {
-    return (rec["Name"] ?? rec["name"] ?? rec["Cigar"] ?? rec["cigar"] ?? "").toString().trim();
+    return getField(rec, ["Name", "name", "Cigar", "cigar"]);
   }
 
   function getVitola(rec) {
-    return (rec["Vitola"] ?? rec["vitola"] ?? rec["Style"] ?? rec["style"] ?? rec["Size"] ?? rec["size"] ?? "").toString().trim();
+    return getField(rec, ["Vitola", "vitola", "Style", "style", "Size", "size", "Shape", "shape"]);
   }
 
   function getWrapper(rec) {
-    return (rec["Wrapper"] ?? rec["wrapper"] ?? rec["Wrapper Type"] ?? rec["wrappertypet"] ?? "").toString().trim();
+    return getField(rec, ["Wrapper", "wrapper", "Wrapper Type", "wrappertypet"]);
   }
 
   function getBinder(rec) {
-    return (rec["Binder"] ?? rec["binder"] ?? "").toString().trim();
+    return getField(rec, ["Binder", "binder"]);
   }
 
   function getFiller(rec) {
-    return (rec["Filler"] ?? rec["filler"] ?? "").toString().trim();
+    return getField(rec, ["Filler", "filler"]);
   }
 
   function getStrength(rec) {
-    return (rec["Strength"] ?? rec["strength"] ?? "").toString().trim();
+    return getField(rec, ["Strength", "strength"]);
   }
 
   function getRing(rec) {
-    return (rec["Ring"] ?? rec["ring"] ?? rec["RG"] ?? rec["rg"] ?? "").toString().trim();
+    return getField(rec, ["Ring", "ring", "RG", "rg"]);
   }
 
   function getLength(rec) {
-    return (rec["Length"] ?? rec["length"] ?? "").toString().trim();
+    return getField(rec, ["Length", "length"]);
   }
 
   function getOrigin(rec) {
-    return (rec["Origin"] ?? rec["origin"] ?? rec["Country"] ?? rec["country"] ?? "").toString().trim();
+    return getField(rec, ["Origin", "origin", "Country", "country"]);
+  }
+
+  function getImage(rec) {
+    return getField(rec, ["Cigar IMG", "cigarimg", "Image", "image", "Photo", "photo"]);
+  }
+
+  function getPrice(rec) {
+    const raw = getField(rec, ["MSRP", "msrp", "Price", "price"]);
+    const num = Number(String(raw).replace(/[^0-9.]/g, ""));
+    return Number.isFinite(num) ? num : 0;
   }
 
   function bestTitle(rec) {
     const brand = getBrand(rec);
     const line = getLine(rec);
     const name = getName(rec);
-
-    const parts = [brand, line, name].filter(Boolean);
-    return parts.join(" • ") || "Cigar";
+    return [brand, line, name].filter(Boolean).join(" • ") || "Cigar";
   }
 
   function makeSlugFromRecord(rec) {
-    // Uses cigarId to guarantee uniqueness (since it’s your canonical key)
     const id = getCigarId(rec);
     const brand = getBrand(rec);
     const line = getLine(rec);
     const name = getName(rec);
     const vitola = getVitola(rec);
-
-    const base = [brand, line, name, vitola, id].filter(Boolean).join(" ");
-    return slugify(base);
+    return slugify([brand, line, name, vitola, id].filter(Boolean).join(" "));
   }
 
   function findById(records, id) {
@@ -228,13 +211,33 @@
     const target = String(slug || "").trim();
     if (!target) return null;
 
-    // exact match on computed slug
     let found = records.find((r) => makeSlugFromRecord(r) === target);
     if (found) return found;
 
-    // fallback: try slugify(cigarId) match (if someone uses that shorter link)
     found = records.find((r) => slugify(getCigarId(r)) === target);
     return found || null;
+  }
+
+  function addCurrentCigarToCart(rec) {
+    const cartApi = window.cigarOSCart;
+    if (!cartApi || typeof cartApi.add !== "function") return;
+
+    const brand = getBrand(rec);
+    const line = getLine(rec);
+    const name = getName(rec);
+    const vitola = getVitola(rec);
+
+    cartApi.add({
+      type: "cigar",
+      id: getCigarId(rec),
+      brand,
+      line,
+      name: [line, name].filter(Boolean).join(" ").trim() || name || line || brand,
+      vitola,
+      price: getPrice(rec),
+      image: getImage(rec),
+      url: window.location.href
+    });
   }
 
   function render(rec) {
@@ -243,13 +246,7 @@
     const line = getLine(rec);
     const name = getName(rec);
     const vitola = getVitola(rec);
-
-    document.title = bestTitle(rec);
-
-    // Optional: if you later add an image column in sheet, map it here
-    const img =
-      (rec["Image"] ?? rec["image"] ?? rec["Photo"] ?? rec["photo"] ?? "").toString().trim();
-
+    const img = getImage(rec);
     const wrapper = getWrapper(rec);
     const binder = getBinder(rec);
     const filler = getFiller(rec);
@@ -257,6 +254,9 @@
     const ring = getRing(rec);
     const length = getLength(rec);
     const origin = getOrigin(rec);
+
+    document.title = bestTitle(rec);
+    if (topbarTitle) topbarTitle.textContent = brand || "Cigar";
 
     const displayName = [line, name].filter(Boolean).join(" ").trim() || name || line || "—";
     const sub = [vitola, ring && `RG ${ring}`, length && `${length}"`].filter(Boolean).join(" • ");
@@ -296,35 +296,15 @@
       </div>
     `;
 
-    // Wire buttons (non-destructive placeholders until we hook into your POS logic)
     $("#cdCompare")?.addEventListener("click", () => alert("Compare (hook coming next)"));
     $("#cdEdit")?.addEventListener("click", () => alert("Edit (hook coming next)"));
-    $("#cdAdd")?.addEventListener("click", () => alert("Add to cart (hook coming next)"));
-  }
-
-  function escapeHTML(s) {
-    return (s ?? "")
-      .toString()
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-  function escapeAttr(s) {
-    return (s ?? "")
-      .toString()
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    $("#cdAdd")?.addEventListener("click", () => addCurrentCigarToCart(rec));
   }
 
   async function load() {
     backBtn?.addEventListener("click", () => history.back());
 
-    const idParam = getParam("id");
+    const idParam = getParam("id") || getParam("key");
     const slugParam = getParam("slug");
 
     try {
@@ -336,12 +316,8 @@
       const records = rowsToObjects(rows);
 
       let rec = null;
-
       if (idParam) rec = findById(records, idParam);
       if (!rec && slugParam) rec = findBySlug(records, slugParam);
-
-      // If Netlify redirect passed full path pieces, slug might include slashes
-      // Already slugified, but ensure we try last segment too.
       if (!rec && slugParam && slugParam.includes("/")) {
         const last = slugParam.split("/").filter(Boolean).slice(-1)[0];
         rec = findBySlug(records, last);
@@ -352,28 +328,19 @@
           <div class="cd-loading" style="color:#111;">
             Cigar not found.<br><br>
             Try opening from a Brand page, or use:<br>
-            <span style="color:#8e8e93;">/cigars/cigar?id=&lt;Cigar ID&gt;</span>
+            <span style="color:#8e8e93;">/pos/cigars/cigar.html?id=&lt;Cigar ID&gt;</span>
           </div>
         `;
         return;
       }
 
-      // Update URL to canonical pretty route if we were opened with ?id=
-      // (Non-breaking; keeps query compatibility.)
-      const canonicalSlug = makeSlugFromRecord(rec);
-      const wantedPath = `/pos/cigars/${canonicalSlug}`;
-      if (!window.location.pathname.startsWith("/pos/cigars/") || window.location.search.includes("id=")) {
-        // Keep it nice, but don’t break back button.
-        history.replaceState(null, "", `${wantedPath}`);
-      }
-
       render(rec);
     } catch (e) {
       card.innerHTML = `<div class="cd-loading" style="color:#b00020;">Error loading cigar data.</div>`;
-      // eslint-disable-next-line no-console
       console.warn("[cigar detail] load error:", e);
     } finally {
       if (loading) loading.style.display = "none";
+      if (window.cigarOSCart?.updateBadges) window.cigarOSCart.updateBadges();
     }
   }
 
