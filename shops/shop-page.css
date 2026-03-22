@@ -150,13 +150,22 @@ body.shop-public{
   display:flex;
   justify-content:center;
 }
+
 .sp-amen-row{
   display:flex;
-  gap:54px;
+  gap:28px;
   align-items:center;
   justify-content:center;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;   /* FORCE ONE ROW */
+  overflow:hidden;
 }
+
+.sp-amen-icon{
+  width:42px;   /* slightly bigger than top row */
+  height:42px;
+  object-fit:contain;
+}
+
 .sp-amen-btn{
   appearance:none;
   border:0;
@@ -408,4 +417,10 @@ body.shop-public{
   .sp-about-v{
     max-width:58%;
   }
+/* REMOVE DUPLICATE SECTION TITLES */
+#spPanelHours .sp-card-title,
+#spPanelAbout .sp-card-title{
+  display:none;
+}
+  
 }
