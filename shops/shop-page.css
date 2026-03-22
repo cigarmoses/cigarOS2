@@ -139,7 +139,6 @@ body.shop-public{
   object-fit:contain;
 }
 
-/* NO CAPTIONS UNDER TOP ICONS */
 .sp-dock-label{
   display:none !important;
 }
@@ -156,14 +155,8 @@ body.shop-public{
   gap:28px;
   align-items:center;
   justify-content:center;
-  flex-wrap:nowrap;   /* FORCE ONE ROW */
+  flex-wrap:nowrap;
   overflow:hidden;
-}
-
-.sp-amen-icon{
-  width:42px;   /* slightly bigger than top row */
-  height:42px;
-  object-fit:contain;
 }
 
 .sp-amen-btn{
@@ -173,13 +166,16 @@ body.shop-public{
   padding:0;
   border-radius:12px;
   -webkit-tap-highlight-color:transparent;
+  transition:transform .15s ease, opacity .15s ease;
 }
 .sp-amen-btn:active{
-  transform:scale(.98);
+  transform:scale(.97);
+  opacity:.9;
 }
+
 .sp-amen-icon{
-  width:52px;
-  height:52px;
+  width:42px;
+  height:42px;
   object-fit:contain;
 }
 
@@ -209,6 +205,7 @@ body.shop-public{
   font-weight:600;
   font-size:15px;
   color:#8e8e93;
+  transition:background .15s ease, color .15s ease, box-shadow .15s ease;
 }
 
 .sp-seg-btn.is-active{
@@ -250,6 +247,12 @@ body.shop-public{
 .sp-card-right{
   color:#8e8e93;
   font-weight:600;
+}
+
+/* REMOVE DUPLICATE SECTION TITLES */
+#spPanelHours .sp-card-title,
+#spPanelAbout .sp-card-title{
+  display:none;
 }
 
 /* HOURS */
@@ -412,15 +415,13 @@ body.shop-public{
     height:34px;
   }
   .sp-amen-row{
-    gap:38px;
+    gap:20px;
+  }
+  .sp-amen-icon{
+    width:38px;
+    height:38px;
   }
   .sp-about-v{
     max-width:58%;
   }
-/* REMOVE DUPLICATE SECTION TITLES */
-#spPanelHours .sp-card-title,
-#spPanelAbout .sp-card-title{
-  display:none;
-}
-  
 }
