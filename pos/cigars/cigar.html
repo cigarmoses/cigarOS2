@@ -7,7 +7,7 @@
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/cigars/cigar.css" />
+  <link rel="stylesheet" href="/pos/cigars/cigar.css?v=26" />
 </head>
 
 <body class="cigar-detail-page">
@@ -17,18 +17,16 @@
         <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
       </svg>
     </button>
-
+    <div class="cd-topbar-title" id="cdTopbarTitle">Cigar</div>
     <div class="cd-topbar-spacer"></div>
-
-    <button type="button" class="cd-topbar-btn" id="cdShare" aria-label="Share" style="display:none;"></button>
   </header>
 
   <main class="cd-wrap">
-    <section class="cd-card" id="cdCard">
+    <section class="cd-shell" id="cdCard">
       <div class="cd-loading" id="cdLoading">Loading cigar…</div>
     </section>
   </main>
 
-  <script defer src="/pos/cigars/cigar.js"></script>
+  <script defer src="/pos/cigars/cigar-detail.js?v=26"></script>
 </body>
 </html>

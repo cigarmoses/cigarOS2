@@ -274,46 +274,13 @@
   }
 
   function openDetail(r){
-    const detailBrand = $("#detail-brand");
-    const detailName = $("#detail-name");
-    const detailImage = $("#detail-image");
-    const detailBrandIcon = $("#detail-brand-icon");
-    const detailVitola = $("#detail-vitola");
-
-    if (detailBrand) detailBrand.textContent = state.brand;
-    if (detailName) detailName.textContent = resolveName(r);
-    if (detailVitola) detailVitola.textContent = resolveVitola(r) || "—";
-
-    if (detailBrandIcon) {
-      detailBrandIcon.src = brandIconPath();
-      detailBrandIcon.onerror = () => {
-        detailBrandIcon.style.visibility = "hidden";
-      };
-    }
-
-    if (detailImage) {
-      detailImage.src = resolveImage(r) || brandIconPath();
-      detailImage.onerror = () => {
-        detailImage.src = brandIconPath();
-      };
-    }
-
-    $("#detail-ring").textContent = resolveRing(r) || "—";
-    $("#detail-length").textContent = resolveLength(r) || "—";
-    $("#detail-shape").textContent = resolveShape(r) || "—";
-    $("#detail-vitola-box").textContent = resolveVitola(r) || "—";
-    $("#detail-wrapper").textContent = resolveWrapper(r) || "—";
-    $("#detail-binder").textContent = resolveBinder(r) || "—";
-    $("#detail-filler").textContent = resolveFiller(r) || "—";
-    $("#detail-origin").textContent = resolveOrigin(r) || "—";
-    $("#detail-strength").textContent = resolveStrength(r) || "—";
-    $("#detail-shade").textContent = resolveShade(r) || "—";
-
-    detailSheet.hidden = false;
+    const key = getField(r, ["key", "cigar_id", "id", "row_id", "slug"]) || resolveId(r);
+    const href = `/pos/cigars/cigar.html?key=${encodeURIComponent(key)}`;
+    window.location.href = href;
   }
 
   function closeDetail(){
-    detailSheet.hidden = true;
+    if (detailSheet) detailSheet.hidden = true;
   }
 
   let filterModal = null;
@@ -566,13 +533,9 @@
         </div>
       `;
 
-      $(".row-title", card)?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openDetail(r);
-      });
-
-      $(".row-sub", card)?.addEventListener("click", (e) => {
-        e.stopPropagation();
+      card.addEventListener("click", (e) => {
+        const addBtn = e.target && e.target.closest ? e.target.closest("[data-cart-add]") : null;
+        if (addBtn) return;
         openDetail(r);
       });
 
