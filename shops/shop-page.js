@@ -226,7 +226,7 @@
         }
         return per;
       } catch (e) {
-        // fallback to master-only below
+        // fallback below
       }
     }
 
@@ -306,7 +306,6 @@
     const items = [
       { ok: isTruthy(shop.amenities?.indoor), icon: "/img/icons/indoorseating.svg", text: "Indoor seating available" },
       { ok: isTruthy(shop.amenities?.tvs), icon: "/img/icons/tv.svg", text: "TVs available" },
-      { ok: isTruthy(shop.amenities?.byob), icon: "/img/icons/byob.svg", text: "BYOB allowed" },
       { ok: isTruthy(shop.amenities?.food), icon: "/img/icons/food.svg", text: "Food available" },
       { ok: isTruthy(shop.amenities?.alcohol), icon: "/img/icons/alcohol.svg", text: "Alcohol available" },
       { ok: isTruthy(shop.amenities?.quiet), icon: "/img/icons/quiet.svg", text: "Quiet space available" },
@@ -332,14 +331,14 @@
   function normalizeWebsiteUrl(v) {
     const s = cleanStr(v);
     if (!s) return "";
-    if (/^https?:\/\//i.test(s)) return s;
+    if (/^https?:\\/\\//i.test(s)) return s;
     return `https://${s}`;
   }
 
   function normalizeInstagramUrl(v) {
     const s = cleanStr(v);
     if (!s) return "";
-    if (/^https?:\/\//i.test(s)) return s;
+    if (/^https?:\\/\\//i.test(s)) return s;
 
     const handle = s.replace(/^@/, "").trim();
     if (!handle) return "";
@@ -348,11 +347,11 @@
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
     }[c]));
   }
 
@@ -433,12 +432,10 @@
 
     const any = days.some((d) => d[1]);
     if (!any) {
-list.innerHTML = `
-  <div class="sp-hours-row">
-    <div class="sp-hours-day">Coming soon</div>
-    <div class="sp-hours-val">—</div>
-  </div>
-`;
+      list.innerHTML = `<div class="sp-hours-row"><div class="sp-hours-day">Coming soon</div><div class="sp-hours-val">—</div></div>`;
+      if (now) now.textContent = "—";
+      return;
+    }
 
     days.forEach(([day, val]) => {
       const v = val || "—";
@@ -451,33 +448,33 @@ list.innerHTML = `
     if (now) now.textContent = "—";
   }
 
-function renderAbout(shop) {
-  const el = $("#spAbout");
-  if (!el) return;
+  function renderAbout(shop) {
+    const el = $("#spAbout");
+    if (!el) return;
 
-  const rows = [
-    ["Address", shop.address],
-    ["Phone", shop.phone],
-    ["Email", shop.email]
-  ];
+    const rows = [
+      ["Address", shop.address],
+      ["Phone", shop.phone],
+      ["Email", shop.email]
+    ];
 
-  const validRows = rows.filter(([_, v]) => {
-    const s = String(v || "").trim();
-    return s && s !== "—";
-  });
+    const validRows = rows.filter(([_, v]) => {
+      const s = String(v || "").trim();
+      return s && s !== "—";
+    });
 
-  if (!validRows.length) {
-    el.innerHTML = ""; // nothing shown at all
-    return;
+    if (!validRows.length) {
+      el.innerHTML = "";
+      return;
+    }
+
+    el.innerHTML = validRows.map(([k, v]) => `
+      <div class="sp-about-item">
+        <div class="sp-about-k">${escapeHtml(k)}</div>
+        <div class="sp-about-v">${escapeHtml(v)}</div>
+      </div>
+    `).join("");
   }
-
-  el.innerHTML = validRows.map(([k, v]) => `
-    <div class="sp-about-item">
-      <div class="sp-about-k">${k}</div>
-      <div class="sp-about-v">${v}</div>
-    </div>
-  `).join("");
-}
 
   function openBrandsModal(brands) {
     const modal = $("#spBrandsModal");
@@ -608,9 +605,9 @@ function renderAbout(shop) {
     wireTabs();
     wireBrandsModal();
 
-    const urlKey = getKeyFromUrl();
-    const shop = await loadShop(urlKey);
-    const assetKey = canonicalKey(shop.key || urlKey);
+    const key = getKeyFromUrl();
+    const shop = await loadShop(key);
+    const assetKey = canonicalKey(shop.key || key);
 
     renderHeader(shop);
     setShopLogo(assetKey);
