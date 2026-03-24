@@ -316,7 +316,10 @@
       const records = rowsToObjects(rows);
 
       let rec = null;
+
       if (idParam) rec = findById(records, idParam);
+      if (!rec && idParam) rec = findBySlug(records, idParam);
+
       if (!rec && slugParam) rec = findBySlug(records, slugParam);
       if (!rec && slugParam && slugParam.includes("/")) {
         const last = slugParam.split("/").filter(Boolean).slice(-1)[0];
@@ -340,7 +343,6 @@
       console.warn("[cigar detail] load error:", e);
     } finally {
       if (loading) loading.style.display = "none";
-      if (window.cigarOSCart?.updateBadges) window.cigarOSCart.updateBadges();
     }
   }
 
