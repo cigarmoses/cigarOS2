@@ -125,11 +125,12 @@
       if (value != null && String(value).trim() !== "") return String(value).trim();
     }
     return "";
+
   }
 
-  function getCigarId(rec) {
-    return getField(rec, ["Cigar ID", "cigarId", "cigarid", "cigar_id", "key", "Key"]);
-  }
+function getCigarId(rec) {
+  return getField(rec, ["Cigar ID", "cigarId", "cigarid", "cigar_id", "key", "Key", "id", "row_id"]);
+}
 
   function getBrand(rec) {
     return getField(rec, ["Brand", "brand", "brandname"]);
@@ -202,10 +203,18 @@
   }
 
   function findById(records, id) {
-    const target = String(id || "").trim();
-    if (!target) return null;
-    return records.find((r) => getCigarId(r) === target) || null;
-  }
+  const target = String(id || "").trim();
+  if (!target) return null;
+
+  return records.find((r) => {
+    const candidates = [
+      getField(r, ["Cigar ID", "cigarId", "cigarid", "cigar_id", "key", "Key", "id", "row_id"]),
+      getField(r, ["Name", "name", "Cigar", "cigar"])
+    ].filter(Boolean).map((v) => String(v).trim());
+
+    return candidates.includes(target);
+  }) || null;
+}
 
   function findBySlug(records, slug) {
     const target = String(slug || "").trim();
