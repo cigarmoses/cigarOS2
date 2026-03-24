@@ -1,154 +1,350 @@
-// ---------- CONFIG ----------
-const DATA_URL = "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+/* /pos/cigars/cigar.js
+   Canonical cigar detail page
+   - Reads Google Sheets CSV
+   - Opens by ?id= or ?slug=
+   - Uses universal /pos/cart.js cart
+*/
 
-// ROLE CONTROL
-const USER_ROLE = "pos"; // consumer | pos | manufacturer
+(() => {
+  "use strict";
 
-// ---------- HELPERS ----------
-function getField(obj, keys){
-  for(const k of keys){
-    if(obj[k] != null && obj[k] !== "") return obj[k];
-  }
-  return "";
-}
+  const SHEET_CSV_URL =
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
-function findById(rows, id){
-  return rows.find(r =>
-    String(getField(r, ["key","cigar_id","id","row_id"])) === String(id)
-  );
-}
+  const $ = (sel) => document.querySelector(sel);
+  const card = $("#cdCard");
+  const loading = $("#cdLoading");
+  const backBtn = $("#cdBack");
+  const topbarTitle = $("#cdTopbarTitle");
 
-function findBySlug(rows, slug){
-  return rows.find(r =>
-    String(getField(r, ["slug","Slug"])).toLowerCase() === String(slug).toLowerCase()
-  );
-}
-
-// ---------- FAVORITES ----------
-function getFavorites(){
-  return JSON.parse(localStorage.getItem("favorites") || "[]");
-}
-
-function toggleFavorite(id){
-  let favs = getFavorites();
-
-  if(favs.includes(id)){
-    favs = favs.filter(f => f !== id);
-  } else {
-    favs.push(id);
+  function getParam(name) {
+    const u = new URL(window.location.href);
+    return u.searchParams.get(name);
   }
 
-  localStorage.setItem("favorites", JSON.stringify(favs));
-}
-
-// ---------- LOAD ----------
-async function load(){
-
-  const params = new URLSearchParams(window.location.search);
-  const idParam = params.get("id");
-  const slugParam = params.get("slug");
-
-  const res = await fetch(DATA_URL);
-  const text = await res.text();
-
-  const rows = text.split("\n").map(r => r.split(","));
-  const headers = rows[0];
-  const records = rows.slice(1).map(r => {
-    let obj = {};
-    headers.forEach((h,i)=> obj[h.trim()] = r[i]);
-    return obj;
-  });
-
-  let rec = null;
-
-  if(idParam) rec = findById(records, idParam);
-  if(!rec && idParam) rec = findBySlug(records, idParam);
-  if(!rec && slugParam) rec = findBySlug(records, slugParam);
-
-  if(!rec){
-    document.getElementById("cdCard").innerHTML = `<div>Cigar not found.</div>`;
-    return;
+  function slugify(s) {
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/["']/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
-  render(rec);
-}
+  function escapeHTML(s) {
+    return (s ?? "")
+      .toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
-// ---------- RENDER ----------
-function render(r){
+  function escapeAttr(s) {
+    return escapeHTML(s);
+  }
 
-  const id = getField(r, ["key","cigar_id","id"]);
-  const brand = getField(r, ["Brand"]);
-  const name = getField(r, ["Cigar"]);
-  const vitola = getField(r, ["Vitola"]);
-  const ring = getField(r, ["RG"]);
-  const length = getField(r, ["Length"]);
-  const shape = getField(r, ["Shape"]);
-  const wrapper = getField(r, ["Wrapper"]);
-  const binder = getField(r, ["Binder"]);
-  const filler = getField(r, ["Filler"]);
-  const origin = getField(r, ["Origin"]);
-  const strength = getField(r, ["Strength"]);
-  const shade = getField(r, ["Wrapper Shade"]);
-  const img = getField(r, ["Cigar IMG"]);
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cur = "";
+    let inQuotes = false;
 
-  const isFav = getFavorites().includes(id);
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i + 1];
 
-  document.getElementById("cdCard").innerHTML = `
-    <div class="cd-header">
-      <div>
-        <div class="cd-brand">${brand}</div>
-        <div class="cd-name">${name}</div>
-      </div>
-      <img class="cd-brand-icon" src="/img/icons/brands/${brand.toLowerCase()}.svg">
-    </div>
+      if (ch === '"' && inQuotes && next === '"') {
+        cur += '"';
+        i++;
+        continue;
+      }
 
-    <div class="cd-body">
-      <img class="cd-image" src="${img}" />
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+        continue;
+      }
 
-      <div class="cd-stats">
-        <div>Ring ${ring}</div>
-        <div>Length ${length}</div>
-        <div>Shape ${shape}</div>
-        <div>Vitola ${vitola}</div>
-        <div>Wrapper ${wrapper}</div>
-        <div>Binder ${binder}</div>
-        <div>Filler ${filler}</div>
-        <div>Origin ${origin}</div>
-        <div>Strength ${strength}</div>
-        <div>Shade ${shade || "-"}</div>
-      </div>
-    </div>
+      if (ch === "," && !inQuotes) {
+        row.push(cur);
+        cur = "";
+        continue;
+      }
 
-    <div class="cd-actions">
-      <button id="favBtn">${isFav ? "❤️" : "🤍"}</button>
-      <button id="addBtn">ADD</button>
-      ${USER_ROLE !== "consumer" ? `<button id="editBtn">EDIT</button>` : ``}
-      <button id="compareBtn">COMPARE</button>
-    </div>
-  `;
+      if ((ch === "\n" || ch === "\r") && !inQuotes) {
+        if (ch === "\r" && next === "\n") i++;
+        row.push(cur);
+        rows.push(row);
+        row = [];
+        cur = "";
+        continue;
+      }
 
-  // FAVORITE
-  document.getElementById("favBtn").onclick = () => {
-    toggleFavorite(id);
-    location.reload();
-  };
-
-  // ADD
-  document.getElementById("addBtn").onclick = () => {
-    if(window.addToCart){
-      window.addToCart({ id, name, price: 0 });
+      cur += ch;
     }
-  };
-}
 
-// ---------- BACK BUTTON ----------
-document.getElementById("cdBack").onclick = () => {
-  if(history.length > 1){
-    history.back();
-  } else {
-    window.location.href = "/pos/cigars/";
+    if (cur.length || row.length) {
+      row.push(cur);
+      rows.push(row);
+    }
+
+    return rows;
   }
-};
 
-// INIT
-load();
+  function normalizeHeader(h) {
+    return String(h || "").trim().toLowerCase().replace(/\s+/g, "");
+  }
+
+  function rowsToObjects(rows) {
+    if (!rows || rows.length < 2) return [];
+    const headers = rows[0].map((h) => String(h || "").trim());
+    const normHeaders = headers.map(normalizeHeader);
+
+    const data = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || r.every((c) => !String(c || "").trim())) continue;
+
+      const obj = {};
+      for (let j = 0; j < headers.length; j++) {
+        obj[headers[j]] = r[j] ?? "";
+        obj[normHeaders[j]] = r[j] ?? "";
+      }
+      data.push(obj);
+    }
+    return data;
+  }
+
+  function getField(rec, keys) {
+    for (const key of keys) {
+      const value = rec?.[key];
+      if (value != null && String(value).trim() !== "") return String(value).trim();
+    }
+    return "";
+  }
+
+  function getCigarId(rec) {
+    return getField(rec, ["Cigar ID", "cigarId", "cigarid", "cigar_id", "key", "Key"]);
+  }
+
+  function getBrand(rec) {
+    return getField(rec, ["Brand", "brand", "brandname"]);
+  }
+
+  function getLine(rec) {
+    return getField(rec, ["Line", "line", "Series", "series"]);
+  }
+
+  function getName(rec) {
+    return getField(rec, ["Name", "name", "Cigar", "cigar"]);
+  }
+
+  function getVitola(rec) {
+    return getField(rec, ["Vitola", "vitola", "Style", "style", "Size", "size", "Shape", "shape"]);
+  }
+
+  function getWrapper(rec) {
+    return getField(rec, ["Wrapper", "wrapper", "Wrapper Type", "wrappertypet"]);
+  }
+
+  function getBinder(rec) {
+    return getField(rec, ["Binder", "binder"]);
+  }
+
+  function getFiller(rec) {
+    return getField(rec, ["Filler", "filler"]);
+  }
+
+  function getStrength(rec) {
+    return getField(rec, ["Strength", "strength"]);
+  }
+
+  function getRing(rec) {
+    return getField(rec, ["Ring", "ring", "RG", "rg"]);
+  }
+
+  function getLength(rec) {
+    return getField(rec, ["Length", "length"]);
+  }
+
+  function getOrigin(rec) {
+    return getField(rec, ["Origin", "origin", "Country", "country"]);
+  }
+
+  function getImage(rec) {
+    return getField(rec, ["Cigar IMG", "cigarimg", "Image", "image", "Photo", "photo"]);
+  }
+
+  function getPrice(rec) {
+    const raw = getField(rec, ["MSRP", "msrp", "Price", "price"]);
+    const num = Number(String(raw).replace(/[^0-9.]/g, ""));
+    return Number.isFinite(num) ? num : 0;
+  }
+
+  function bestTitle(rec) {
+    const brand = getBrand(rec);
+    const line = getLine(rec);
+    const name = getName(rec);
+    return [brand, line, name].filter(Boolean).join(" • ") || "Cigar";
+  }
+
+  function makeSlugFromRecord(rec) {
+    const id = getCigarId(rec);
+    const brand = getBrand(rec);
+    const line = getLine(rec);
+    const name = getName(rec);
+    const vitola = getVitola(rec);
+    return slugify([brand, line, name, vitola, id].filter(Boolean).join(" "));
+  }
+
+  function findById(records, id) {
+    const target = String(id || "").trim();
+    if (!target) return null;
+    return records.find((r) => getCigarId(r) === target) || null;
+  }
+
+  function findBySlug(records, slug) {
+    const target = String(slug || "").trim();
+    if (!target) return null;
+
+    let found = records.find((r) => makeSlugFromRecord(r) === target);
+    if (found) return found;
+
+    found = records.find((r) => slugify(getCigarId(r)) === target);
+    return found || null;
+  }
+
+  function addCurrentCigarToCart(rec) {
+    const cartApi = window.cigarOSCart;
+    if (!cartApi || typeof cartApi.add !== "function") return;
+
+    const brand = getBrand(rec);
+    const line = getLine(rec);
+    const name = getName(rec);
+    const vitola = getVitola(rec);
+
+    cartApi.add({
+      type: "cigar",
+      id: getCigarId(rec),
+      brand,
+      line,
+      name: [line, name].filter(Boolean).join(" ").trim() || name || line || brand,
+      vitola,
+      price: getPrice(rec),
+      image: getImage(rec),
+      url: window.location.href
+    });
+  }
+
+  function render(rec) {
+    const id = getCigarId(rec);
+    const brand = getBrand(rec);
+    const line = getLine(rec);
+    const name = getName(rec);
+    const vitola = getVitola(rec);
+    const img = getImage(rec);
+    const wrapper = getWrapper(rec);
+    const binder = getBinder(rec);
+    const filler = getFiller(rec);
+    const strength = getStrength(rec);
+    const ring = getRing(rec);
+    const length = getLength(rec);
+    const origin = getOrigin(rec);
+
+    document.title = bestTitle(rec);
+    if (topbarTitle) topbarTitle.textContent = brand || "Cigar";
+
+    const displayName = [line, name].filter(Boolean).join(" ").trim() || name || line || "—";
+    const sub = [vitola, ring && `RG ${ring}`, length && `${length}"`].filter(Boolean).join(" • ");
+
+    card.innerHTML = `
+      <div class="cd-head">
+        <div class="cd-brand">${escapeHTML(brand || "—")}</div>
+        <div class="cd-name">${escapeHTML(displayName)}</div>
+        <div class="cd-sub">${escapeHTML(sub || "")}</div>
+      </div>
+
+      ${img ? `
+        <div class="cd-hero">
+          <img src="${escapeAttr(img)}" alt="${escapeAttr(displayName)}" loading="lazy">
+        </div>
+      ` : ""}
+
+      <div class="cd-actions">
+        <button class="cd-btn" type="button" id="cdCompare">COMPARE</button>
+        <button class="cd-btn" type="button" id="cdEdit">EDIT</button>
+        <button class="cd-btn primary" type="button" id="cdAdd">ADD</button>
+      </div>
+
+      <div class="cd-section">
+        <div class="cd-section-title">Details</div>
+        <div class="cd-grid">
+          <div class="cd-kv"><div class="cd-k">Cigar ID</div><div class="cd-v" title="${escapeAttr(id)}">${escapeHTML(id || "—")}</div></div>
+          <div class="cd-kv"><div class="cd-k">Vitola</div><div class="cd-v" title="${escapeAttr(vitola)}">${escapeHTML(vitola || "—")}</div></div>
+          <div class="cd-kv"><div class="cd-k">Ring</div><div class="cd-v" title="${escapeAttr(ring)}">${escapeHTML(ring || "—")}</div></div>
+          <div class="cd-kv"><div class="cd-k">Length</div><div class="cd-v" title="${escapeAttr(length)}">${escapeHTML(length || "—")}</div></div>
+          <div class="cd-kv"><div class="cd-k">Wrapper</div><div class="cd-v" title="${escapeAttr(wrapper)}">${escapeHTML(wrapper || "—")}</div></div>
+          <div class="cd-kv"><div class="cd-k">Binder</div><div class="cd-v" title="${escapeAttr(binder)}">${escapeHTML(binder || "—")}</div></div>
+          <div class="cd-kv"><div class="cd-k">Filler</div><div class="cd-v" title="${escapeAttr(filler)}">${escapeHTML(filler || "—")}</div></div>
+          <div class="cd-kv"><div class="cd-k">Strength</div><div class="cd-v" title="${escapeAttr(strength)}">${escapeHTML(strength || "—")}</div></div>
+          <div class="cd-kv"><div class="cd-k">Origin</div><div class="cd-v" title="${escapeAttr(origin)}">${escapeHTML(origin || "—")}</div></div>
+        </div>
+      </div>
+    `;
+
+    $("#cdCompare")?.addEventListener("click", () => alert("Compare (hook coming next)"));
+    $("#cdEdit")?.addEventListener("click", () => alert("Edit (hook coming next)"));
+    $("#cdAdd")?.addEventListener("click", () => addCurrentCigarToCart(rec));
+  }
+
+  async function load() {
+    backBtn?.addEventListener("click", () => history.back());
+
+    const idParam = getParam("id") || getParam("key");
+    const slugParam = getParam("slug");
+
+    try {
+      const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+      const csvText = await res.text();
+
+      const rows = parseCSV(csvText);
+      const records = rowsToObjects(rows);
+
+      let rec = null;
+
+      if (idParam) rec = findById(records, idParam);
+      if (!rec && idParam) rec = findBySlug(records, idParam);
+
+      if (!rec && slugParam) rec = findBySlug(records, slugParam);
+      if (!rec && slugParam && slugParam.includes("/")) {
+        const last = slugParam.split("/").filter(Boolean).slice(-1)[0];
+        rec = findBySlug(records, last);
+      }
+
+      if (!rec) {
+        card.innerHTML = `
+          <div class="cd-loading" style="color:#111;">
+            Cigar not found.<br><br>
+            Try opening from a Brand page, or use:<br>
+            <span style="color:#8e8e93;">/pos/cigars/cigar.html?id=&lt;Cigar ID&gt;</span>
+          </div>
+        `;
+        return;
+      }
+
+      render(rec);
+    } catch (e) {
+      card.innerHTML = `<div class="cd-loading" style="color:#b00020;">Error loading cigar data.</div>`;
+      console.warn("[cigar detail] load error:", e);
+    } finally {
+      if (loading) loading.style.display = "none";
+    }
+  }
+
+  load();
+})();
