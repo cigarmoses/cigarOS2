@@ -143,7 +143,7 @@
   }
 
   function resolveId(r){
-    return getField(r, ["id", "slug", "cigar_id", "row_id", "key"]) || resolveName(r);
+    return getField(r, ["key", "cigar_id", "id", "row_id"]) || resolveName(r);
   }
 
   function resolveName(r){
