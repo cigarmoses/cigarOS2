@@ -142,9 +142,9 @@
     return getField(r, ["brand", "brand_name", "manufacturer_brand", "cigar_brand", "manufacturer"]);
   }
 
-  function resolveId(r){
-    return getField(r, ["key", "cigar_id", "id", "row_id"]) || resolveName(r);
-  }
+function resolveId(r){
+  return getField(r, ["key", "cigar_id", "id", "row_id", "name", "cigar", "title"]);
+}
 
   function resolveName(r){
     return getField(r, ["cigar", "name", "title"]);
