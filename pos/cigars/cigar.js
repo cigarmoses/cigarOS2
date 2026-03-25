@@ -20,10 +20,22 @@
   const loading = $("#cdLoading");
   const backBtn = $("#cdBack");
   const topbarTitle = $("#cdTopbarTitle");
+  const themeToggle = $("#theme-toggle");
 
   function getParam(name) {
     const u = new URL(window.location.href);
     return u.searchParams.get(name);
+  }
+
+  function getSavedTheme() {
+    return localStorage.getItem("theme") || document.documentElement.getAttribute("data-theme") || "dark";
+  }
+
+  function applyTheme(theme) {
+    const next = theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    themeToggle?.setAttribute("aria-pressed", String(next === "dark"));
   }
 
   function slugify(s) {
@@ -516,6 +528,12 @@
   }
 
   async function load() {
+    applyTheme(getSavedTheme());
+
+    themeToggle?.addEventListener("click", () => {
+      applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
+    });
+
     backBtn?.addEventListener("click", () => {
       if (history.length > 1) history.back();
       else window.location.href = "/pos/cigars/";
