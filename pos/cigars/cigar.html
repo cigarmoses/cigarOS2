@@ -1,13 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Cigar</title>
 
-  <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/pos/pos.css" />
-  <link rel="stylesheet" href="/pos/cigars/cigar.css?v=27" />
+  <link rel="stylesheet" href="/css/type.css?v=28" />
+  <link rel="stylesheet" href="/css/theme.css?v=28" />
+  <link rel="stylesheet" href="/css/theme-toggle.css?v=28" />
+  <link rel="stylesheet" href="/pos/pos.css?v=28" />
+  <link rel="stylesheet" href="/pos/cigars/cigar.css?v=28" />
 </head>
 
 <body class="cigar-detail-page">
@@ -17,7 +20,14 @@
         <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
       </svg>
     </button>
-    <div class="cd-topbar-title" id="cdTopbarTitle">Cigar</div>
+
+    <div class="theme-dock cd-theme-dock">
+      <button id="theme-toggle" class="moon-toggle" type="button" aria-label="Toggle theme">
+        <span class="moon-track" aria-hidden="true"></span>
+        <span class="moon-knob" aria-hidden="true"></span>
+      </button>
+    </div>
+
     <div class="cd-topbar-spacer"></div>
   </header>
 
@@ -27,7 +37,7 @@
     </section>
   </main>
 
-  <script defer src="/pos/cart.js?v=27"></script>
+  <script defer src="/pos/cart.js?v=28"></script>
   <script defer src="/pos/cigars/cigar.js?v=28"></script>
 </body>
 </html>
