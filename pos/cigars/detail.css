@@ -1,0 +1,231 @@
+/* /pos/cigars/detail.css — FULL REPLACEMENT (matches your clean iOS card layout) */
+
+:root{
+  --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --bg: #F4F5F7;
+  --text: #0B0F18;
+  --muted: rgba(11,15,24,0.58);
+  --card: rgba(255,255,255,0.78);
+  --stroke: rgba(0,0,0,0.08);
+  --shadow: 0 18px 55px rgba(0,0,0,0.16);
+
+  --blue: #0A84FF;
+  --green: #34C759;
+}
+
+html, body { height:100%; }
+body{
+  margin:0;
+  font-family: var(--font-text);
+  background: radial-gradient(1100px 800px at 30% -10%, rgba(255,255,255,0.8), rgba(255,255,255,0) 60%),
+              linear-gradient(180deg, #F7F8FB, #F0F2F7);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.topbar{
+  padding: env(safe-area-inset-top) 16px 6px;
+}
+
+.icon-btn{
+  width:44px; height:44px;
+  border:0;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.70);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.chev{
+  width:12px; height:12px;
+  border-left: 3px solid currentColor;
+  border-bottom: 3px solid currentColor;
+  transform: rotate(45deg);
+  margin-left: 4px;
+  opacity: 0.9;
+}
+
+.detail{
+  padding: 0 16px env(safe-area-inset-bottom);
+}
+
+.hero{
+  margin-top: 8px;
+  padding: 16px 16px 10px;
+  border-radius: 28px;
+  background: rgba(255,255,255,0.75);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--stroke);
+}
+
+.hero-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+}
+
+.brand{
+  margin:0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 52px;
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+}
+
+.name{
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  color: rgba(11,15,24,0.60);
+}
+
+.logo{
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow:none !important;
+}
+
+.grid{
+  margin-top: 14px;
+  display:grid;
+  grid-template-columns: 112px 1fr;
+  gap: 14px;
+  align-items:start;
+}
+
+.stick{
+  border-radius: 26px;
+  background: rgba(255,255,255,0.70);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--stroke);
+  padding: 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height: 360px;
+}
+
+.stick img{
+  max-width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  display:block;
+}
+
+.specs{
+  display:flex;
+  flex-direction:column;
+  gap: 12px;
+}
+
+.spec-row{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.spec{
+  border-radius: 24px;
+  background: rgba(255,255,255,0.70);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--stroke);
+  padding: 14px 14px;
+}
+
+.k{
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: 0.10em;
+  font-size: 14px;
+  color: rgba(11,15,24,0.42);
+}
+
+.v{
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 44px;
+  letter-spacing: -0.03em;
+}
+
+.spec-col{
+  border-radius: 26px;
+  background: rgba(255,255,255,0.70);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--stroke);
+  padding: 14px 16px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.kv{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+}
+
+.kv .k{
+  letter-spacing: 0.10em;
+  font-size: 13px;
+}
+.kv .v{
+  font-size: 22px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.spec-wide{
+  border-radius: 26px;
+  background: rgba(255,255,255,0.70);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--stroke);
+  padding: 14px 16px;
+}
+
+.actions{
+  margin-top: 14px;
+  display:flex;
+  gap: 12px;
+}
+
+.ghost{
+  flex:1;
+  height: 54px;
+  border-radius: 18px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.65);
+  box-shadow: var(--shadow);
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: rgba(11,15,24,0.82);
+}
+
+.primary{
+  flex:1;
+  height: 54px;
+  border-radius: 18px;
+  border: 0;
+  background: var(--green);
+  color:#fff;
+  box-shadow: 0 22px 46px rgba(0,0,0,0.18);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 18px;
+}

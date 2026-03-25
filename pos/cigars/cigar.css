@@ -56,8 +56,6 @@ body.cigar-detail-page{
   font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
 }
 
-/* ---------- top bar ---------- */
-
 .cd-topbar{
   position:sticky;
   top:0;
@@ -85,15 +83,9 @@ body.cigar-detail-page{
   cursor:pointer;
 }
 
-.cd-back svg{
-  width:22px;
-  height:22px;
-}
+.cd-back svg{ width:22px; height:22px; }
 
-.cd-topbar-spacer{
-  width:44px;
-  height:44px;
-}
+.cd-topbar-spacer{ width:44px; height:44px; }
 
 .cd-theme-dock,
 .theme-dock{
@@ -102,7 +94,6 @@ body.cigar-detail-page{
   align-items:center;
 }
 
-/* force the brand-page toggle style to render correctly here too */
 #theme-toggle.moon-toggle,
 .moon-toggle{
   position:relative;
@@ -143,25 +134,19 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   transform:translateX(26px);
 }
 
-/* ---------- page ---------- */
-
 .cd-wrap{
   width:min(430px, calc(100% - 22px));
   margin:0 auto;
   padding:6px 0 calc(28px + var(--safe-bottom));
 }
 
-.cd-shell{
-  min-height:1px;
-}
+.cd-shell{ min-height:1px; }
 
 .cd-loading{
   padding:28px 8px;
   font:700 18px/1.35 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   color:var(--muted);
 }
-
-/* ---------- header ---------- */
 
 .cd-head{
   display:flex;
@@ -215,8 +200,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   flex:0 0 84px;
 }
 
-/* ---------- main grid ---------- */
-
 .cd-grid{
   display:grid;
   grid-template-columns:132px 1fr;
@@ -252,9 +235,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   font:700 14px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
 }
 
-.cd-right{
-  min-width:0;
-}
+.cd-right{ min-width:0; }
 
 .cd-stat-grid{
   display:grid;
@@ -268,8 +249,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   gap:12px;
   margin-top:12px;
 }
-
-/* ---------- cards ---------- */
 
 .cd-card{
   position:relative;
@@ -293,9 +272,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   flex-direction:column;
 }
 
-.cd-stat .cd-card-label{
-  text-align:right;
-}
+.cd-stat .cd-card-label{ text-align:right; }
 
 .cd-stat-value{
   margin-top:auto;
@@ -312,9 +289,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   flex-direction:column;
 }
 
-.cd-mini .cd-card-label{
-  text-align:right;
-}
+.cd-mini .cd-card-label{ text-align:right; }
 
 .cd-mini-value{
   margin-top:auto;
@@ -325,20 +300,13 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   overflow-wrap:anywhere;
 }
 
-/* ---------- tobacco block ---------- */
-
 .cd-tobaccos{
   margin-top:14px;
   padding:16px;
 }
 
-.cd-tobacco-row + .cd-tobacco-row{
-  margin-top:18px;
-}
-
-.cd-tobacco-row .cd-card-label{
-  text-align:right;
-}
+.cd-tobacco-row + .cd-tobacco-row{ margin-top:18px; }
+.cd-tobacco-row .cd-card-label{ text-align:right; }
 
 .cd-tobacco-value{
   margin-top:6px;
@@ -349,8 +317,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   word-break:normal;
   overflow-wrap:anywhere;
 }
-
-/* ---------- origin / shade / accolades ---------- */
 
 .cd-origin,
 .cd-shade,
@@ -363,9 +329,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   padding:16px;
 }
 
-.cd-origin .cd-card-label{
-  text-align:right;
-}
+.cd-origin .cd-card-label{ text-align:right; }
 
 .cd-origin-row{
   margin-top:12px;
@@ -384,19 +348,14 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   overflow-wrap:anywhere;
 }
 
-.cd-flag{
-  font-size:24px;
-  line-height:1;
-}
+.cd-flag{ font-size:24px; line-height:1; }
 
 .cd-shade{
   min-height:96px;
   padding:16px;
 }
 
-.cd-shade .cd-card-label{
-  text-align:right;
-}
+.cd-shade .cd-card-label{ text-align:right; }
 
 .cd-shade-value{
   margin-top:12px;
@@ -449,8 +408,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   font:700 14px/1.25 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
 }
 
-/* ---------- actions ---------- */
-
 .cd-actions{
   display:grid;
   grid-template-columns:44px 1fr 1fr 1fr;
@@ -469,9 +426,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   text-transform:uppercase;
 }
 
-.cd-action:active{
-  transform:scale(.985);
-}
+.cd-action:active{ transform:scale(.985); }
 
 .cd-action.is-on{
   background:var(--surface-soft);
@@ -482,8 +437,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   font-size:18px;
   padding:0;
 }
-
-/* ---------- responsive ---------- */
 
 @media (max-width:390px){
   .cd-wrap{ width:calc(100% - 18px); }
