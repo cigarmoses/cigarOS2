@@ -9,6 +9,15 @@
   --safe-bottom:env(safe-area-inset-bottom,0px);
 }
 
+html[data-theme="light"]{
+  --bg:#f5f7fb;
+  --card-a:#eceff4;
+  --card-b:#e2e7ee;
+  --text:#0f1a2c;
+  --muted:#657086;
+  --hair:rgba(15,26,44,.12);
+}
+
 *{ box-sizing:border-box; }
 html,body{ min-height:100%; }
 
@@ -28,7 +37,7 @@ body.cigar-detail-page{
   gap:10px;
   padding:10px 16px 8px;
   padding-top:calc(10px + var(--safe-top));
-  background:rgba(0,0,0,.88);
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter:blur(24px);
 }
 
@@ -41,21 +50,34 @@ body.cigar-detail-page{
   display:grid;
   place-items:center;
   background:rgba(255,255,255,.06);
-  color:#fff;
+  color:var(--text);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
   -webkit-tap-highlight-color:transparent;
 }
-.cd-back svg{ width:22px; height:22px; }
-.cd-topbar-title{
-  font:800 17px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.02em;
+
+html[data-theme="light"] .cd-back{
+  background:rgba(15,26,44,.05);
+  box-shadow:inset 0 0 0 1px rgba(15,26,44,.08);
 }
+
+.cd-back svg{ width:22px; height:22px; }
+
+.cd-theme-dock{
+  display:flex;
+  align-items:center;
+  margin-left:2px;
+}
+
 .cd-topbar-spacer{ flex:1; }
 
 .cd-wrap{
   max-width:430px;
   margin:0 auto;
   padding:8px 18px calc(34px + var(--safe-bottom));
+}
+
+.cd-shell{
+  min-height:1px;
 }
 
 .cd-loading{
@@ -93,7 +115,7 @@ body.cigar-detail-page{
 
 .cd-grid{
   display:grid;
-  grid-template-columns: 1.08fr 1.92fr;
+  grid-template-columns:1.08fr 1.92fr;
   gap:18px;
   align-items:start;
 }
@@ -131,6 +153,10 @@ body.cigar-detail-page{
   overflow:hidden;
 }
 
+html[data-theme="light"] .cd-card{
+  box-shadow:inset 0 0 0 1px rgba(15,26,44,.04);
+}
+
 .cd-card-label{
   font:900 12px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.01em;
@@ -166,7 +192,9 @@ body.cigar-detail-page{
   display:flex;
   flex-direction:column;
 }
+
 .cd-mini .cd-card-label{ text-align:right; }
+
 .cd-mini-value{
   margin-top:auto;
   font:500 28px/.98 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
@@ -177,14 +205,18 @@ body.cigar-detail-page{
   margin-top:18px;
   padding:22px 22px 22px;
 }
+
 .cd-tobacco-row + .cd-tobacco-row{ margin-top:30px; }
+
 .cd-tobacco-row .cd-card-label{ text-align:right; }
+
 .cd-tobacco-value{
   margin-top:6px;
   text-align:right;
   font:500 48px/.92 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.05em;
-  word-break:break-word;
+  word-break:normal;
+  overflow-wrap:anywhere;
 }
 
 .cd-origin,
@@ -197,7 +229,9 @@ body.cigar-detail-page{
   min-height:116px;
   padding:18px 22px;
 }
+
 .cd-origin .cd-card-label{ text-align:right; }
+
 .cd-origin-row{
   margin-top:16px;
   display:flex;
@@ -205,10 +239,14 @@ body.cigar-detail-page{
   justify-content:flex-end;
   gap:14px;
 }
+
 .cd-origin-value{
   font:500 48px/.92 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.05em;
+  word-break:normal;
+  overflow-wrap:anywhere;
 }
+
 .cd-flag{
   font-size:32px;
   line-height:1;
@@ -218,7 +256,9 @@ body.cigar-detail-page{
   min-height:114px;
   padding:18px 22px;
 }
+
 .cd-shade .cd-card-label{ text-align:right; }
+
 .cd-shade-value{
   margin-top:18px;
   text-align:center;
@@ -230,32 +270,38 @@ body.cigar-detail-page{
   min-height:180px;
   padding:18px 18px 18px;
 }
+
 .cd-accolades .cd-card-label{
   text-align:right;
   font-size:14px;
 }
+
 .cd-accolade-list{
   margin-top:22px;
   display:grid;
   gap:18px;
 }
+
 .cd-accolade-row{
   display:grid;
   grid-template-columns:minmax(0,1fr) auto auto;
   align-items:end;
   gap:12px;
 }
+
 .cd-accolade-media{
   font:700 15px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  color:#efefef;
+  color:var(--text);
   opacity:.92;
 }
+
 .cd-accolade-year,
 .cd-accolade-rank{
   font:500 28px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.03em;
   white-space:nowrap;
 }
+
 .cd-accolade-empty{
   color:var(--muted);
   font:700 16px/1.2 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
@@ -267,20 +313,27 @@ body.cigar-detail-page{
   gap:12px;
   margin-top:18px;
 }
+
 .cd-action{
   min-height:68px;
   border-radius:16px;
   border:1px solid var(--hair);
   background:transparent;
-  color:#d9d9de;
+  color:color-mix(in srgb, var(--text) 84%, transparent);
   font:800 14px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.02em;
   text-transform:uppercase;
 }
+
 .cd-action:active{ transform:scale(.985); }
+
 .cd-action.is-on{
   background:rgba(255,255,255,.08);
-  color:#fff;
+  color:var(--text);
+}
+
+html[data-theme="light"] .cd-action.is-on{
+  background:rgba(15,26,44,.08);
 }
 
 @media (max-width:390px){
