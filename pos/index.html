@@ -1,35 +1,552 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>POS</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>POS</title>
 
-<link rel="stylesheet" href="/css/type.css" />
-<link rel="stylesheet" href="/pos/pos.css" />
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/pos/pos.css" />
+
+  <style>
+    :root{
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+      --bg:#0b1323;
+      --bg-grad-1:rgba(72,117,210,.30);
+      --bg-grad-2:rgba(0,185,255,.10);
+
+      --surface:#0f1b33;
+      --surface-2:#13223f;
+      --surface-3:#172949;
+      --surface-soft:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.10);
+
+      --text:#ffffff;
+      --muted:rgba(255,255,255,.62);
+      --muted-2:rgba(255,255,255,.42);
+
+      --toggle-track:#c7d1de;
+      --toggle-knob:#ffffff;
+
+      --shadow:0 18px 40px rgba(0,0,0,.26);
+      --card-shadow:0 14px 34px rgba(0,0,0,.22);
+    }
+
+    html[data-theme="light"]{
+      --bg:#eef2f7;
+      --bg-grad-1:rgba(117,152,214,.18);
+      --bg-grad-2:rgba(60,140,255,.06);
+
+      --surface:#ffffff;
+      --surface-2:#f3f5f9;
+      --surface-3:#eceff5;
+      --surface-soft:rgba(15,26,44,.04);
+      --border:rgba(15,26,44,.08);
+
+      --text:#101828;
+      --muted:rgba(16,24,40,.62);
+      --muted-2:rgba(16,24,40,.42);
+
+      --toggle-track:#c7d1de;
+      --toggle-knob:#ffffff;
+
+      --shadow:0 14px 32px rgba(15,26,44,.10);
+      --card-shadow:0 12px 26px rgba(15,26,44,.08);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ min-height:100%; }
+
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 5%, var(--bg-grad-1), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, var(--bg-grad-2), transparent 55%),
+        var(--bg);
+      font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    }
+
+    .pos-page{
+      width:min(430px, calc(100% - 22px));
+      margin:0 auto;
+      padding:calc(12px + var(--safe-top)) 0 calc(28px + var(--safe-bottom));
+    }
+
+    .pos-topbar{
+      display:grid;
+      grid-template-columns:44px 1fr 44px;
+      align-items:center;
+      gap:10px;
+      padding:0 0 12px;
+    }
+
+    .pos-back{
+      width:44px;
+      height:44px;
+      border:0;
+      border-radius:14px;
+      padding:0;
+      display:grid;
+      place-items:center;
+      background:transparent;
+      color:var(--text);
+      -webkit-tap-highlight-color:transparent;
+      cursor:pointer;
+    }
+
+    .pos-back svg{
+      width:22px;
+      height:22px;
+    }
+
+    .pos-topbar-spacer{
+      width:44px;
+      height:44px;
+    }
+
+    .pos-theme-dock{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    #theme-toggle{
+      position:relative;
+      width:58px;
+      height:32px;
+      border:0;
+      padding:0;
+      border-radius:999px;
+      background:transparent;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    #theme-toggle .track{
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      background:var(--toggle-track);
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+    }
+
+    #theme-toggle .knob{
+      position:absolute;
+      top:3px;
+      left:3px;
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      background:var(--toggle-knob);
+      box-shadow:0 3px 8px rgba(0,0,0,.18);
+      transition:transform .22s ease;
+    }
+
+    html[data-theme="dark"] #theme-toggle .knob{
+      transform:translateX(26px);
+    }
+
+    .pos-head{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      padding:2px 2px 12px;
+    }
+
+    .pos-title{
+      margin:0;
+      font:900 48px/.92 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+      letter-spacing:-.055em;
+      color:var(--text);
+    }
+
+    .pos-cart-btn{
+      position:relative;
+      width:44px;
+      height:44px;
+      border:0;
+      padding:0;
+      border-radius:14px;
+      background:transparent;
+      display:grid;
+      place-items:center;
+      color:var(--text);
+      cursor:pointer;
+      text-decoration:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .pos-cart-btn svg{
+      width:28px;
+      height:28px;
+    }
+
+    .pos-cart-badge{
+      position:absolute;
+      top:2px;
+      right:1px;
+      min-width:18px;
+      height:18px;
+      padding:0 5px;
+      border-radius:999px;
+      background:#ff453a;
+      color:#fff;
+      font:800 11px/18px "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+      text-align:center;
+      box-shadow:0 6px 16px rgba(0,0,0,.18);
+    }
+
+    .pos-controls{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 44px 44px;
+      gap:10px;
+      align-items:center;
+      padding-bottom:14px;
+    }
+
+    .pos-search{
+      min-width:0;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-height:44px;
+      padding:0 14px;
+      border-radius:16px;
+      background:var(--surface-soft);
+      border:1px solid var(--border);
+      box-shadow:var(--card-shadow);
+    }
+
+    .pos-search svg{
+      width:18px;
+      height:18px;
+      color:var(--muted);
+      flex:0 0 auto;
+    }
+
+    .pos-search input{
+      width:100%;
+      min-width:0;
+      border:0;
+      outline:0;
+      background:transparent;
+      color:var(--text);
+      font:700 16px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    }
+
+    .pos-search input::placeholder{
+      color:var(--muted);
+    }
+
+    .pos-icon-btn{
+      width:44px;
+      height:44px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:var(--surface-soft);
+      color:var(--text);
+      display:grid;
+      place-items:center;
+      box-shadow:var(--card-shadow);
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .pos-icon-btn svg{
+      width:18px;
+      height:18px;
+    }
+
+    .pos-icon-btn.is-on{
+      background:linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+    }
+
+    .pos-categories{
+      display:flex;
+      gap:10px;
+      overflow-x:auto;
+      padding:0 2px 16px;
+      scrollbar-width:none;
+      -ms-overflow-style:none;
+    }
+
+    .pos-categories::-webkit-scrollbar{
+      display:none;
+    }
+
+    .pos-chip{
+      flex:0 0 auto;
+      min-height:36px;
+      padding:0 14px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--border);
+      background:var(--surface-soft);
+      color:var(--text);
+      text-decoration:none;
+      font:800 13px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+      letter-spacing:-.02em;
+      box-shadow:var(--card-shadow);
+    }
+
+    .pos-chip.is-active{
+      background:linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+    }
+
+    .pos-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:14px;
+    }
+
+    .pos-card{
+      display:flex;
+      flex-direction:column;
+      min-height:168px;
+      border-radius:22px;
+      padding:16px 14px 14px;
+      background:linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+      box-shadow:var(--shadow);
+      text-decoration:none;
+      color:var(--text);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .pos-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      box-shadow:inset 0 0 0 1px var(--border);
+      border-radius:22px;
+    }
+
+    .pos-card-icon{
+      width:54px;
+      height:54px;
+      border-radius:16px;
+      background:var(--surface-soft);
+      border:1px solid var(--border);
+      display:grid;
+      place-items:center;
+      margin-bottom:16px;
+      flex:0 0 auto;
+    }
+
+    .pos-card-icon svg{
+      width:26px;
+      height:26px;
+      color:var(--text);
+      opacity:.9;
+    }
+
+    .pos-card-title{
+      font:800 18px/1.05 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+      letter-spacing:-.03em;
+      color:var(--text);
+    }
+
+    .pos-card-sub{
+      margin-top:6px;
+      font:700 13px/1.1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+      color:var(--muted);
+    }
+
+    .pos-card-arrow{
+      margin-top:auto;
+      padding-top:18px;
+      display:flex;
+      justify-content:flex-end;
+      color:var(--muted);
+      font:900 22px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    }
+
+    @media (max-width:390px){
+      .pos-page{ width:calc(100% - 18px); }
+      .pos-title{ font-size:42px; }
+      .pos-grid{ gap:12px; }
+      .pos-card{ min-height:154px; padding:14px 12px 12px; }
+      .pos-card-title{ font-size:17px; }
+    }
+  </style>
 </head>
 
 <body>
+  <main class="pos-page">
+    <header class="pos-topbar">
+      <button type="button" class="pos-back" aria-label="Back" onclick="history.back()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </button>
 
-<main class="screen">
+      <div class="pos-theme-dock">
+        <button id="theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="true">
+          <span class="track" aria-hidden="true"></span>
+          <span class="knob" aria-hidden="true"></span>
+        </button>
+      </div>
 
-  <div class="pos-categories">
+      <div class="pos-topbar-spacer"></div>
+    </header>
 
-    <a href="/pos/cigars/" class="pos-card">Cigars</a>
+    <section class="pos-head">
+      <h1 class="pos-title">POS</h1>
 
-    <a href="/pos/foodandbevs/" class="pos-card">Food & Bevs</a>
+      <a href="/pos/invoice/" class="pos-cart-btn" aria-label="Invoice">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 6h14l-1.7 6.8a2 2 0 0 1-1.94 1.52H10.1a2 2 0 0 1-1.95-1.57L6.1 4.5H3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="10" cy="18.5" r="1.6" fill="currentColor"/>
+          <circle cx="17.5" cy="18.5" r="1.6" fill="currentColor"/>
+        </svg>
+        <span class="pos-cart-badge" data-cart-badge hidden>0</span>
+      </a>
+    </section>
 
-    <a href="/pos/accessories/" class="pos-card">Accessories</a>
+    <section class="pos-controls">
+      <div class="pos-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+        </svg>
+        <input type="search" placeholder="Search POS" aria-label="Search POS" />
+      </div>
 
-    <a href="/pos/ashtrays/" class="pos-card">Ashtrays</a>
+      <button type="button" class="pos-icon-btn" aria-label="Favorites">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 18.2 6.1 21l1.1-6.3L2.6 10l6.4-.9L12 3.4l3 5.7 6.4.9-4.6 4.7 1.1 6.3z" fill="currentColor"/>
+        </svg>
+      </button>
 
-    <a href="/pos/pipes/" class="pos-card">Pipes</a>
+      <button type="button" class="pos-icon-btn" aria-label="Filters">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </section>
 
-    <a href="/pos/packs/" class="pos-card">Packs</a>
+    <nav class="pos-categories" aria-label="POS categories">
+      <a href="/pos/" class="pos-chip is-active">All</a>
+      <a href="/pos/cigars/" class="pos-chip">Cigars</a>
+      <a href="/pos/products/" class="pos-chip">Products</a>
+      <a href="/pos/foodandbevs/" class="pos-chip">Food &amp; Bevs</a>
+      <a href="/pos/accessories/" class="pos-chip">Accessories</a>
+      <a href="/pos/ashtrays/" class="pos-chip">Ashtrays</a>
+      <a href="/pos/pipes/" class="pos-chip">Pipes</a>
+      <a href="/pos/packs/" class="pos-chip">Packs</a>
+    </nav>
 
-  </div>
+    <section class="pos-grid">
+      <a href="/pos/cigars/" class="pos-card">
+        <div class="pos-card-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="6" y="10" width="12" height="4" rx="2" fill="currentColor"></rect>
+            <rect x="16.5" y="10.7" width="1.8" height="2.6" rx=".8" fill="rgba(255,255,255,.35)"></rect>
+          </svg>
+        </div>
+        <div class="pos-card-title">Cigars</div>
+        <div class="pos-card-sub">Browse brands and add sticks</div>
+        <div class="pos-card-arrow">›</div>
+      </a>
 
-</main>
+      <a href="/pos/products/" class="pos-card">
+        <div class="pos-card-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 7h10v10H7z" fill="none" stroke="currentColor" stroke-width="1.8"></path>
+            <path d="M7 11h10M11 7v10" fill="none" stroke="currentColor" stroke-width="1.8"></path>
+          </svg>
+        </div>
+        <div class="pos-card-title">Products</div>
+        <div class="pos-card-sub">Unified non-cigar products</div>
+        <div class="pos-card-arrow">›</div>
+      </a>
 
+      <a href="/pos/foodandbevs/" class="pos-card">
+        <div class="pos-card-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 4v6a3 3 0 0 0 3 3v7M12 4v6M16 4v6a3 3 0 0 1-3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="pos-card-title">Food &amp; Bevs</div>
+        <div class="pos-card-sub">Drinks, snacks, and more</div>
+        <div class="pos-card-arrow">›</div>
+      </a>
+
+      <a href="/pos/accessories/" class="pos-card">
+        <div class="pos-card-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 17 17 7M8 8l8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="pos-card-title">Accessories</div>
+        <div class="pos-card-sub">Lighters, cutters, and tools</div>
+        <div class="pos-card-arrow">›</div>
+      </a>
+
+      <a href="/pos/ashtrays/" class="pos-card">
+        <div class="pos-card-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <ellipse cx="12" cy="12" rx="7" ry="4.5" fill="none" stroke="currentColor" stroke-width="1.8"></ellipse>
+          </svg>
+        </div>
+        <div class="pos-card-title">Ashtrays</div>
+        <div class="pos-card-sub">Ceramic and branded trays</div>
+        <div class="pos-card-arrow">›</div>
+      </a>
+
+      <a href="/pos/pipes/" class="pos-card">
+        <div class="pos-card-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 9h7a3 3 0 0 1 0 6H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="8" cy="15" r="2" fill="none" stroke="currentColor" stroke-width="1.8"></circle>
+          </svg>
+        </div>
+        <div class="pos-card-title">Pipes</div>
+        <div class="pos-card-sub">Pipes and pipe tobacco</div>
+        <div class="pos-card-arrow">›</div>
+      </a>
+
+      <a href="/pos/packs/" class="pos-card">
+        <div class="pos-card-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="7" y="5" width="10" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+            <path d="M9 9h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="pos-card-title">Packs</div>
+        <div class="pos-card-sub">Fresh packs and bundles</div>
+        <div class="pos-card-arrow">›</div>
+      </a>
+    </section>
+  </main>
+
+  <script src="/pos/cart.js" defer></script>
+  <script>
+    (function(){
+      const root = document.documentElement;
+      const toggle = document.getElementById("theme-toggle");
+      const saved = localStorage.getItem("theme") || "dark";
+
+      function applyTheme(theme){
+        const next = theme === "light" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        if(toggle) toggle.setAttribute("aria-pressed", String(next === "dark"));
+      }
+
+      applyTheme(saved);
+
+      toggle?.addEventListener("click", function(){
+        applyTheme((root.getAttribute("data-theme") || "dark") === "dark" ? "light" : "dark");
+      });
+    })();
+  </script>
 </body>
 </html>
