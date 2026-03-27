@@ -1,0 +1,71 @@
+let PRODUCTS = [];
+let activeCategory = "All";
+let favoritesOnly = false;
+let search = "";
+
+async function loadProducts(){
+  const res = await fetch("/pos-products.json");
+  PRODUCTS = await res.json();
+
+  renderCategories();
+  renderProducts();
+}
+
+function renderCategories(){
+  const cats = ["All", ...new Set(PRODUCTS.map(p => p.category))];
+
+  categoryRow.innerHTML = cats.map(c => `
+    <button class="${c===activeCategory?'active':''}"
+      onclick="setCategory('${c}')">${c}</button>
+  `).join("");
+}
+
+function setCategory(c){
+  activeCategory = c;
+  renderProducts();
+  renderCategories();
+}
+
+function renderProducts(){
+  let list = PRODUCTS;
+
+  if(activeCategory !== "All"){
+    list = list.filter(p => p.category === activeCategory);
+  }
+
+  if(search){
+    list = list.filter(p =>
+      p.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  productGrid.innerHTML = list.map(p => `
+    <div class="pos-card">
+      <div class="img"></div>
+
+      <div class="body">
+        <div class="name">${p.name}</div>
+        <div class="brand">${p.brand || ""}</div>
+        <div class="price">$${p.price.toFixed(2)}</div>
+      </div>
+
+      <div class="qty">
+        <button>-</button>
+        <span>1</span>
+        <button>+</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+searchInput.addEventListener("input", e=>{
+  search = e.target.value;
+  renderProducts();
+});
+
+favToggle.onclick = ()=>{
+  favoritesOnly = !favoritesOnly;
+  renderProducts();
+};
+
+loadProducts();
