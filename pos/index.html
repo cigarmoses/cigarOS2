@@ -1,69 +1,35 @@
-<!-- /pos/cigars/index.html -->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Cigars</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>POS</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=19" />
-  <link rel="stylesheet" href="/pos/pos.css?v=19" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=19" />
+<link rel="stylesheet" href="/css/type.css" />
+<link rel="stylesheet" href="/pos/pos.css" />
 </head>
 
-<body class="cigars-page">
-  <header class="cigars-topbar">
-    <button type="button" class="pos-back" aria-label="Back" onclick="history.back()">
-      <span class="pos-back-icon">←</span>
-    </button>
+<body>
 
-    <button
-      type="button"
-      class="pos-invoice-btn"
-      data-invoice-btn
-      aria-label="Invoice"
-    >
-      <img class="pos-cart-ico" src="/img/icons/cart-blue.svg" alt="" />
-      <span data-cart-badge hidden>0</span>
-    </button>
-  </header>
+<main class="screen">
 
-  <main class="cigars-main" role="main">
-    <div class="cigars-title-row">
-      <h1 class="cigars-title">Cigars</h1>
+  <div class="pos-categories">
 
-      <div class="cigars-title-actions">
-        <button type="button" class="cigars-filter-btn" id="btn-open-filters" aria-label="Filters">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 6h16M7 12h10M10 18h4"
-                  fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-          </svg>
-        </button>
+    <a href="/pos/cigars/" class="pos-card">Cigars</a>
 
-        <a class="cigars-fav-btn" href="/pos/cigars/favorites/" aria-label="Favorites">★</a>
-      </div>
-    </div>
+    <a href="/pos/foodandbevs/" class="pos-card">Food & Bevs</a>
 
-    <div class="cigars-search-wrap">
-      <div class="cigars-search-bar">
-        <div class="cigars-search-icon">🔍</div>
-        <input
-          id="cigars-search-input"
-          type="search"
-          inputmode="search"
-          autocomplete="off"
-          placeholder=""
-          aria-label="Search cigars"
-        />
-      </div>
+    <a href="/pos/accessories/" class="pos-card">Accessories</a>
 
-      <div class="cigars-applied-filters" id="cigarsAppliedFilters" aria-label="Applied filters"></div>
-    </div>
+    <a href="/pos/ashtrays/" class="pos-card">Ashtrays</a>
 
-    <section class="cigars-list" id="cigarsList"></section>
-  </main>
+    <a href="/pos/pipes/" class="pos-card">Pipes</a>
 
-  <script src="/pos/cart.js?v=19" defer></script>
-  <script src="/pos/cigars/cigars.js?v=19" defer></script>
+    <a href="/pos/packs/" class="pos-card">Packs</a>
+
+  </div>
+
+</main>
+
 </body>
 </html>
