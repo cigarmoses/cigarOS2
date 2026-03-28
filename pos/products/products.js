@@ -12,7 +12,7 @@
 (() => {
   "use strict";
 
-  const DATA_URL = "/pos/products/products.json";
+  const DATA_URL = "/pos/products.json";
   const FAVORITES_KEY = "cigaros_product_favorites";
   const QTY_KEY = "cigaros_product_qty";
 
