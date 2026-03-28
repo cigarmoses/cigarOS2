@@ -135,30 +135,30 @@
     return Number.isFinite(num) ? `$${num.toFixed(2)}` : "$0.00";
   }
 
-  function normalizeCategory(value) {
-    const v = String(value || "").trim();
+function normalizeCategory(value) {
+  const v = String(value || "").trim();
 
-    if (!v) return "Accessories";
-    if (v === "Food & Bevs") return "Drinks";
-    if (v === "Lighters") return "Accessories";
-    if (v === "Cutters") return "Accessories";
+  if (!v) return "Accessories";
+  if (v === "Lighters") return "Accessories";
+  if (v === "Cutters") return "Accessories";
+  if (v === "Food & Bevs") return "Food";
 
-    return v;
-  }
+  return v;
+}
 
-  function getImagePath(product) {
-    if (product.image) return product.image;
+function getImagePath(product) {
+  if (product.image) return product.image;
 
-    const byKey = slugify(product.key);
-    const byName = slugify(product.name);
-    const byBrand = slugify(product.brand);
+  const byKey = slugify(product.key);
+  const byName = slugify(product.name);
+  const byBrand = slugify(product.brand);
 
-    if (byName) return `/IMG/icons/${byName}.png`;
-    if (byKey) return `/IMG/icons/${byKey}.png`;
-    if (byBrand) return `/IMG/icons/${byBrand}.png`;
+  if (byName) return `/img/icons/${byName}.png`;
+  if (byKey) return `/img/icons/${byKey}.png`;
+  if (byBrand) return `/img/icons/${byBrand}.png`;
 
-    return "";
-  }
+  return "";
+}
 
   function getProductQty(key) {
     const n = Number(state.qty[key] || 0);
