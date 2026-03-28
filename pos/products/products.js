@@ -12,19 +12,20 @@
 (() => {
   "use strict";
 
-  const DATA_URL = "/pos/products.json";
+  const DATA_URL = "/pos/products/products.json";
   const FAVORITES_KEY = "cigaros_product_favorites";
   const QTY_KEY = "cigaros_product_qty";
 
   const CATEGORY_ORDER = [
     "All",
+    "Alcohol",
+    "Ashtrays",
+    "Cutters",
     "Drinks",
     "Food",
-    "Alcohol",
-    "Accessories",
-    "Ashtrays",
-    "Pipes",
-    "Packs"
+    "Lighters",
+    "Packs",
+    "Pipes"
   ];
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -135,23 +136,24 @@
     return Number.isFinite(num) ? `$${num.toFixed(2)}` : "$0.00";
   }
 
-function normalizeCategory(value) {
-  return String(value || "").trim();
-}
+  function normalizeCategory(value) {
+    return String(value || "").trim();
+  }
 
-function getImagePath(product) {
-  if (product.image) return product.image;
+  function getImagePath(product) {
+    if (product.image) return product.image;
+    if (product.brandIcon) return product.brandIcon;
 
-  const byKey = slugify(product.key);
-  const byName = slugify(product.name);
-  const byBrand = slugify(product.brand);
+    const byName = slugify(product.name);
+    const byKey = slugify(product.key);
+    const byBrand = slugify(product.brand);
 
-  if (byName) return `/img/icons/${byName}.png`;
-  if (byKey) return `/img/icons/${byKey}.png`;
-  if (byBrand) return `/img/icons/${byBrand}.png`;
+    if (byName) return `/img/icons/${byName}.png`;
+    if (byKey) return `/img/icons/${byKey}.png`;
+    if (byBrand) return `/img/icons/${byBrand}.png`;
 
-  return "";
-}
+    return "";
+  }
 
   function getProductQty(key) {
     const n = Number(state.qty[key] || 0);
@@ -418,6 +420,7 @@ function getImagePath(product) {
       type: "product",
       taxable: Boolean(p.taxable),
       image: String(p.image || "").trim(),
+      brandIcon: String(p.brandIcon || "").trim(),
       inventory: Number(p.inventory) || 0,
       status: String(p.status || "Active").trim()
     })).filter((p) => p.key && p.name);
