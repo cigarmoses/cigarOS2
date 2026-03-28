@@ -136,14 +136,7 @@
   }
 
 function normalizeCategory(value) {
-  const v = String(value || "").trim();
-
-  if (!v) return "Accessories";
-  if (v === "Lighters") return "Accessories";
-  if (v === "Cutters") return "Accessories";
-  if (v === "Food & Bevs") return "Food";
-
-  return v;
+  return String(value || "").trim();
 }
 
 function getImagePath(product) {
