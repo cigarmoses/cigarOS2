@@ -132,13 +132,14 @@ body.products-page{
   width:26px;
   height:26px;
   border-radius:999px;
-  background:#ffffff;
+  background:#ffffff url("/uxui/sun.svg") center/16px 16px no-repeat;
   box-shadow:0 3px 8px rgba(0,0,0,.18);
-  transition:transform 220ms ease;
+  transition:transform 220ms ease, background-image 220ms ease;
 }
 
 html[data-theme="dark"] .products-theme-toggle .knob{
   transform:translateX(18px);
+  background-image:url("/uxui/moon.svg");
 }
 
 .products-mini-btn{
@@ -199,11 +200,23 @@ html[data-theme="dark"] .products-theme-toggle .knob{
   box-shadow:var(--products-shadow-sm);
 }
 
-.products-search svg{
+.products-search-submit{
+  flex:0 0 auto;
+  width:20px;
+  height:20px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--products-muted);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+
+.products-search-submit svg{
   width:18px;
   height:18px;
-  color:var(--products-muted);
-  flex:0 0 auto;
+  display:block;
 }
 
 .products-search input{
@@ -220,7 +233,7 @@ html[data-theme="dark"] .products-theme-toggle .knob{
 }
 
 .products-search input::placeholder{
-  color:transparent;
+  color:var(--products-muted);
 }
 
 .products-icon-btn{
