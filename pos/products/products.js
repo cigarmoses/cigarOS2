@@ -15,7 +15,6 @@
   const DATA_URL = "/pos/products/products.json";
   const FAVORITES_KEY = "cigaros_product_favorites";
   const QTY_KEY = "cigaros_product_qty";
-  const HOME_URL = "https://cigaros2.netlify.app/";
 
   const CATEGORY_ORDER = [
     "All",
@@ -28,6 +27,69 @@
     "Lighters",
     "Pipes"
   ];
+
+  const PRODUCT_IMAGE_OVERRIDES = {
+    ashtraysopusx20thanniversaryashtrayopusx: [
+      "/img/icons/ashtrays/opusx20thanniversaryashtray.jpg"
+    ],
+    ashtraysrockypatelluxuryluminosoashtrayrockypatel: [
+      "/img/icons/ashtrays/rockypatelluxuryluminosoashtray.jpg"
+    ],
+
+    cutterslotuscyclopspunchlotus: [
+      "/img/icons/cutters/lotuscyclopspunch.png"
+    ],
+    cuttersstdupontcutterstandslimgoldstdupont: [
+      "/img/icons/cutters/stdupontcutterstandslimgold.svg"
+    ],
+
+    lighterseliebleuopusxangelssharelightereliebleu: [
+      "/img/icons/lighters/elliebleuopusxangelssharelighter.png"
+    ],
+    lighterseliebleuopusxhemingwaylightereliebleu: [
+      "/img/icons/lighters/elliebleuopusxhemingwaylighter.png"
+    ],
+    lightersexcaliburdoubletorchvcutterlighter: [
+      "/img/icons/lighters/excaliburdoubletorchvcutlighter.png"
+    ],
+    lightersstdupontligne1guillochelightergoldstdupont: [
+      "/img/icons/lighters/stdupontligne1guillochelightergold.svg"
+    ],
+    lightersstdupontslim7lacqueredsnakelighterstdupont: [
+      "/img/icons/lighters/slim7lacqueredsnakelighter.png"
+    ],
+    lightersvertigoboxertripletorchvertigo: [
+      "/img/icons/lighters/vertigoboxertripletorch.png"
+    ],
+    lightersvertigocyclonetripletorchvertigo: [
+      "/img/icons/lighters/vertigocyclonetripletorch.png"
+    ],
+    lightersvertigodaggerdoublejetvertigo: [
+      "/img/icons/lighters/vertigodaggerdoublejet.png"
+    ],
+
+    packspadronfamilyreservepackpadron: [
+      "/img/icons/packs/padronfamilyreservepack.svg",
+      "/img/icons/packs/padronfamilyreservepack.png",
+      "/img/icons/packs/padronfamilyreservepack.jpg"
+    ],
+    packsperdomofreshpackchampagneperdomo: [
+      "/img/icons/packs/perdomofreshpackchampagne.png"
+    ],
+    packsperdomofreshpackmaduroperdomo: [
+      "/img/icons/packs/perdomofreshpackmaduro.png"
+    ],
+    packssharkpackarturofuente: [
+      "/img/icons/packs/sharkpack.jpg"
+    ],
+
+    pipesmrconsulpipe: [
+      "/img/icons/pipes/mrconsulpipe.svg"
+    ],
+    pipespipetobacco: [
+      "/img/icons/pipes/pipetobacco.svg"
+    ]
+  };
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -42,14 +104,6 @@
   const addToBillBtn = $("#addToBill") || $("#addToBillBtn");
   const cartBadge = $("[data-cart-badge]");
   const globalSearchBtn = $("#globalSearchBtn");
-  const homeBtn =
-    $("#homeBtn") ||
-    $("#productsHomeBtn") ||
-    $("[data-home-btn]") ||
-    $(".products-topbar-center a[href='/']") ||
-    $(".products-topbar-center a[href='/index.html']") ||
-    $(".products-topbar-center .products-mini-btn[href='/']") ||
-    $(".products-topbar-center .products-mini-btn[href='/index.html']");
 
   const state = {
     allProducts: [],
@@ -145,7 +199,17 @@
     return "";
   }
 
+  function unique(values) {
+    return Array.from(new Set(values.filter(Boolean)));
+  }
+
   function getImageCandidates(product) {
+    const key = String(product.key || "").trim();
+
+    if (PRODUCT_IMAGE_OVERRIDES[key]) {
+      return PRODUCT_IMAGE_OVERRIDES[key];
+    }
+
     if (product.image) return [product.image];
     if (product.brandIcon) return [product.brandIcon];
 
@@ -154,12 +218,14 @@
 
     if (!folder || !fileName) return [];
 
-    return [
+    return unique([
       `/img/icons/${folder}/${fileName}.svg`,
       `/img/icons/${folder}/${fileName}.png`,
+      `/img/icons/${folder}/${fileName}.jpg`,
       `/icons/${folder}/${fileName}.svg`,
-      `/icons/${folder}/${fileName}.png`
-    ];
+      `/icons/${folder}/${fileName}.png`,
+      `/icons/${folder}/${fileName}.jpg`
+    ]);
   }
 
   function getProductQty(key) {
@@ -415,19 +481,6 @@
     updateAddToBillLabel();
   }
 
-  function bindHomeButton() {
-    if (!homeBtn) return;
-
-    if (homeBtn.tagName === "A") {
-      homeBtn.setAttribute("href", HOME_URL);
-    }
-
-    homeBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      window.location.href = HOME_URL;
-    });
-  }
-
   function bindStaticControls() {
     themeToggle?.addEventListener("click", () => {
       applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
@@ -437,13 +490,10 @@
       window.location.href = "/search/";
     });
 
-    if (searchInput) {
-      searchInput.setAttribute("placeholder", "");
-      searchInput.addEventListener("input", (e) => {
-        state.search = String(e.target.value || "").trim();
-        renderProducts();
-      });
-    }
+    searchInput?.addEventListener("input", (e) => {
+      state.search = String(e.target.value || "").trim();
+      renderProducts();
+    });
 
     favoritesBtn?.addEventListener("click", () => {
       state.favoritesOnly = !state.favoritesOnly;
@@ -469,8 +519,6 @@
       writeQtyMap();
       renderProducts();
     });
-
-    bindHomeButton();
   }
 
   function normalizeProducts(raw) {
