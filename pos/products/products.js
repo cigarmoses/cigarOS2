@@ -33,33 +33,14 @@
 
   const root = document.documentElement;
   const themeToggle = $("#theme-toggle");
-
-  const categoryRow =
-    $("#categoryRow") ||
-    $(".pos-categories");
-
-  const searchInput =
-    $("#searchInput") ||
-    $("#productSearch") ||
-    $("#productsSearch");
-
-  const grid =
-    $("#productGrid") ||
-    $(".pos-grid");
-
-  const favoritesBtn =
-    $("#favToggle") ||
-    $("#productsFavToggle");
-
-  const filterBtn =
-    $("#filterBtn") ||
-    $("#productsFilterBtn");
-
-  const addToBillBtn =
-    $("#addToBill") ||
-    $("#addToBillBtn");
-
+  const categoryRow = $("#categoryRow") || $(".pos-categories");
+  const searchInput = $("#searchInput") || $("#productSearch") || $("#productsSearch");
+  const grid = $("#productGrid") || $(".pos-grid");
+  const favoritesBtn = $("#favToggle") || $("#productsFavToggle");
+  const filterBtn = $("#filterBtn") || $("#productsFilterBtn");
+  const addToBillBtn = $("#addToBill") || $("#addToBillBtn");
   const cartBadge = $("[data-cart-badge]");
+  const globalSearchBtn = $("#globalSearchBtn");
 
   const state = {
     allProducts: [],
@@ -71,11 +52,11 @@
   };
 
   function getSavedTheme() {
-    return localStorage.getItem("theme") || root.getAttribute("data-theme") || "dark";
+    return localStorage.getItem("theme") || root.getAttribute("data-theme") || "light";
   }
 
   function applyTheme(theme) {
-    const next = theme === "light" ? "light" : "dark";
+    const next = theme === "dark" ? "dark" : "light";
     root.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
     themeToggle?.setAttribute("aria-pressed", String(next === "dark"));
@@ -155,16 +136,21 @@
     return "";
   }
 
-  function getImagePath(product) {
-    if (product.image) return product.image;
-    if (product.brandIcon) return product.brandIcon;
+  function getImageCandidates(product) {
+    if (product.image) return [product.image];
+    if (product.brandIcon) return [product.brandIcon];
 
     const folder = getCategoryFolder(product.category);
     const fileName = slugify(product.name);
 
-    if (!folder || !fileName) return "";
+    if (!folder || !fileName) return [];
 
-    return `/img/icons/${folder}/${fileName}.svg`;
+    return [
+      `/img/icons/${folder}/${fileName}.svg`,
+      `/img/icons/${folder}/${fileName}.png`,
+      `/icons/${folder}/${fileName}.svg`,
+      `/icons/${folder}/${fileName}.png`
+    ];
   }
 
   function getProductQty(key) {
@@ -175,11 +161,8 @@
   function setProductQty(key, value) {
     const next = Math.max(0, Number(value) || 0);
 
-    if (next <= 0) {
-      delete state.qty[key];
-    } else {
-      state.qty[key] = next;
-    }
+    if (next <= 0) delete state.qty[key];
+    else state.qty[key] = next;
 
     writeQtyMap();
   }
@@ -194,8 +177,7 @@
 
   function updateAddToBillLabel() {
     if (!addToBillBtn) return;
-    const count = getSelectedCount();
-    addToBillBtn.textContent = `Add to Bill (${count})`;
+    addToBillBtn.textContent = `Add to Bill (${getSelectedCount()})`;
   }
 
   function updateFavoritesUI() {
@@ -209,6 +191,16 @@
 
     const badge = cartBadge || $("[data-cart-badge]");
     if (!badge) return;
+
+    let count = 0;
+
+    try {
+      const raw = JSON.parse(localStorage.getItem("cigaros_cart") || "[]");
+      if (Array.isArray(raw)) count = raw.length;
+    } catch {}
+
+    badge.textContent = String(count);
+    badge.hidden = count <= 0;
   }
 
   function buildCategoryList(products) {
@@ -270,6 +262,9 @@
     const cartApi = window.cigarOSCart;
     if (!cartApi || typeof cartApi.add !== "function") return;
 
+    const imageCandidates = getImageCandidates(product);
+    const image = imageCandidates[0] || "";
+
     for (let i = 0; i < qty; i++) {
       cartApi.add({
         type: "product",
@@ -280,7 +275,7 @@
         name: product.name || "",
         vitola: "",
         price: Number(product.price) || 0,
-        image: getImagePath(product),
+        image,
         url: window.location.href,
         category: product.category || ""
       });
@@ -307,6 +302,34 @@
     renderProducts();
   }
 
+  function attachImageFallbacks() {
+    $$("[data-image-candidates]", grid).forEach((img) => {
+      const candidates = (img.getAttribute("data-image-candidates") || "")
+        .split("|")
+        .filter(Boolean);
+
+      if (!candidates.length) return;
+
+      let index = 0;
+
+      const setSrc = () => {
+        if (index >= candidates.length) {
+          img.style.display = "none";
+          img.parentElement?.classList.add("is-fallback");
+          return;
+        }
+        img.src = candidates[index];
+      };
+
+      img.addEventListener("error", () => {
+        index += 1;
+        setSrc();
+      });
+
+      setSrc();
+    });
+  }
+
   function renderProducts() {
     if (!grid) return;
 
@@ -314,7 +337,7 @@
 
     if (!filtered.length) {
       grid.innerHTML = `
-        <div class="products-empty" style="grid-column:1/-1;padding:20px 4px;color:var(--muted);font-weight:700;">
+        <div class="products-empty">
           No products found.
         </div>
       `;
@@ -325,18 +348,20 @@
     grid.innerHTML = filtered.map((p) => {
       const qty = getProductQty(p.key);
       const isFavorite = state.favorites.has(p.key);
-      const imagePath = getImagePath(p);
+      const imageCandidates = getImageCandidates(p);
+      const encodedCandidates = imageCandidates.map(escapeHTML).join("|");
       const showBrand = String(p.brand || "").trim().length > 0;
 
       return `
-        <article class="product-card pos-card" data-key="${escapeHTML(p.key)}">
+        <article class="product-card" data-key="${escapeHTML(p.key)}">
           <div class="product-card-media">
             ${
-              imagePath
-                ? `<img class="product-card-image" src="${escapeHTML(imagePath)}" alt="${escapeHTML(p.name)}" loading="lazy" onerror="this.style.display='none'; this.parentElement.classList.add('is-fallback');">`
+              imageCandidates.length
+                ? `<img class="product-card-image" data-image-candidates="${encodedCandidates}" alt="${escapeHTML(p.name)}" loading="lazy">`
                 : ``
             }
-            <div class="product-card-fallback${imagePath ? "" : " is-visible"}">
+
+            <div class="product-card-fallback${imageCandidates.length ? "" : " is-visible"}">
               ${escapeHTML((p.name || "?").slice(0, 1))}
             </div>
 
@@ -366,29 +391,28 @@
     }).join("");
 
     $$("[data-plus]", grid).forEach((btn) => {
-      btn.addEventListener("click", () => {
-        onIncrement(btn.getAttribute("data-plus") || "");
-      });
+      btn.addEventListener("click", () => onIncrement(btn.getAttribute("data-plus") || ""));
     });
 
     $$("[data-minus]", grid).forEach((btn) => {
-      btn.addEventListener("click", () => {
-        onDecrement(btn.getAttribute("data-minus") || "");
-      });
+      btn.addEventListener("click", () => onDecrement(btn.getAttribute("data-minus") || ""));
     });
 
     $$("[data-favorite]", grid).forEach((btn) => {
-      btn.addEventListener("click", () => {
-        onToggleFavorite(btn.getAttribute("data-favorite") || "");
-      });
+      btn.addEventListener("click", () => onToggleFavorite(btn.getAttribute("data-favorite") || ""));
     });
 
+    attachImageFallbacks();
     updateAddToBillLabel();
   }
 
   function bindStaticControls() {
     themeToggle?.addEventListener("click", () => {
       applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
+    });
+
+    globalSearchBtn?.addEventListener("click", () => {
+      window.location.href = "/search/";
     });
 
     searchInput?.addEventListener("input", (e) => {
@@ -454,7 +478,7 @@
       console.error("products.js load error:", err);
       if (grid) {
         grid.innerHTML = `
-          <div class="products-empty" style="grid-column:1/-1;padding:20px 4px;color:#ff6b6b;font-weight:700;">
+          <div class="products-empty" style="color:#ff3b30;">
             Error loading products.
           </div>
         `;
