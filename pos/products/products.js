@@ -140,19 +140,31 @@
     return String(value || "").trim();
   }
 
+  function getCategoryFolder(category) {
+    const cat = String(category || "").trim().toLowerCase();
+
+    if (cat === "alcohol") return "alcohol";
+    if (cat === "ashtrays") return "ashtrays";
+    if (cat === "cutters") return "cutters";
+    if (cat === "drinks") return "drinks";
+    if (cat === "food") return "food";
+    if (cat === "lighters") return "lighters";
+    if (cat === "packs") return "packs";
+    if (cat === "pipes") return "pipes";
+
+    return "";
+  }
+
   function getImagePath(product) {
     if (product.image) return product.image;
     if (product.brandIcon) return product.brandIcon;
 
-    const byName = slugify(product.name);
-    const byKey = slugify(product.key);
-    const byBrand = slugify(product.brand);
+    const folder = getCategoryFolder(product.category);
+    const fileName = slugify(product.name);
 
-    if (byName) return `/img/icons/${byName}.png`;
-    if (byKey) return `/img/icons/${byKey}.png`;
-    if (byBrand) return `/img/icons/${byBrand}.png`;
+    if (!folder || !fileName) return "";
 
-    return "";
+    return `/img/icons/${folder}/${fileName}.svg`;
   }
 
   function getProductQty(key) {
@@ -268,7 +280,7 @@
         name: product.name || "",
         vitola: "",
         price: Number(product.price) || 0,
-        image: product.image || "",
+        image: getImagePath(product),
         url: window.location.href,
         category: product.category || ""
       });
