@@ -375,12 +375,12 @@
     "distributor": "Aldo’s Food Services"
   },
   {
-    "key": "drinksldwatercanliquiddeath",
+    "key": "drinkswatercanliquiddeath",
     "category": "Drinks",
-    "name": "LD Water Can",
+    "name": "Water Can",
     "brand": "Liquid Death",
     "price": 1.99,
-    "image": "/img/icons/drinks/ldwatercan.svg",
+    "image": "/img/icons/drinks/watercan.svg",
     "brandIcon": "",
     "status": "Active",
     "taxable": true,
@@ -392,10 +392,10 @@
     {
     "key": "drinksldmountainwaterseltzerliquiddeath",
     "category": "Drinks",
-    "name": "LD Mountain Water Seltzer",
+    "name": "Mountain Water Seltzer",
     "brand": "Liquid Death",
     "price": 1.99,
-    "image": "/img/icons/drinks/ldmountainwaterseltzer.svg",
+    "image": "/img/icons/drinks/mountainwaterseltzer.svg",
     "brandIcon": "",
     "status": "Active",
     "taxable": true,
