@@ -419,6 +419,21 @@
     "notes": "",
     "distributor": "Aldo’s Food Services"
   },
+    {
+    "key": "drinkspoppipepsico",
+    "category": "Drinks",
+    "name": "Poppi",
+    "brand": "PepsiCo",
+    "price": 1.99,
+    "image": "",
+    "brandIcon": "",
+    "status": "Active",
+    "taxable": true,
+    "inventory": 89,
+    "bucket": "Soda",
+    "notes": "",
+    "distributor": "Aldo’s Food Services"
+  },
   {
     "key": "drinksredbull",
     "category": "Drinks",
