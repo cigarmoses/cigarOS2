@@ -18,13 +18,13 @@
 
   const CATEGORY_ORDER = [
     "All",
+    "Drinks",
+    "Food",
+    "Packs",
     "Alcohol",
     "Ashtrays",
     "Cutters",
-    "Drinks",
-    "Food",
     "Lighters",
-    "Packs",
     "Pipes"
   ];
 
