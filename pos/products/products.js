@@ -15,6 +15,7 @@
   const DATA_URL = "/pos/products/products.json";
   const FAVORITES_KEY = "cigaros_product_favorites";
   const QTY_KEY = "cigaros_product_qty";
+  const HOME_URL = "https://cigaros2.netlify.app/";
 
   const CATEGORY_ORDER = [
     "All",
@@ -41,6 +42,14 @@
   const addToBillBtn = $("#addToBill") || $("#addToBillBtn");
   const cartBadge = $("[data-cart-badge]");
   const globalSearchBtn = $("#globalSearchBtn");
+  const homeBtn =
+    $("#homeBtn") ||
+    $("#productsHomeBtn") ||
+    $("[data-home-btn]") ||
+    $(".products-topbar-center a[href='/']") ||
+    $(".products-topbar-center a[href='/index.html']") ||
+    $(".products-topbar-center .products-mini-btn[href='/']") ||
+    $(".products-topbar-center .products-mini-btn[href='/index.html']");
 
   const state = {
     allProducts: [],
@@ -406,6 +415,19 @@
     updateAddToBillLabel();
   }
 
+  function bindHomeButton() {
+    if (!homeBtn) return;
+
+    if (homeBtn.tagName === "A") {
+      homeBtn.setAttribute("href", HOME_URL);
+    }
+
+    homeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = HOME_URL;
+    });
+  }
+
   function bindStaticControls() {
     themeToggle?.addEventListener("click", () => {
       applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
@@ -415,10 +437,13 @@
       window.location.href = "/search/";
     });
 
-    searchInput?.addEventListener("input", (e) => {
-      state.search = String(e.target.value || "").trim();
-      renderProducts();
-    });
+    if (searchInput) {
+      searchInput.setAttribute("placeholder", "");
+      searchInput.addEventListener("input", (e) => {
+        state.search = String(e.target.value || "").trim();
+        renderProducts();
+      });
+    }
 
     favoritesBtn?.addEventListener("click", () => {
       state.favoritesOnly = !state.favoritesOnly;
@@ -444,6 +469,8 @@
       writeQtyMap();
       renderProducts();
     });
+
+    bindHomeButton();
   }
 
   function normalizeProducts(raw) {
