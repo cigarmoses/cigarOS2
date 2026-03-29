@@ -15,7 +15,12 @@
 <body class="products-page">
   <main class="products-page-wrap">
     <header class="products-topbar">
-      <button type="button" class="products-back icon-tile" aria-label="Back" onclick="history.length > 1 ? history.back() : window.location.href='/pos/'">
+      <button
+        type="button"
+        class="products-back icon-tile"
+        aria-label="Back"
+        onclick="history.length > 1 ? history.back() : window.location.href='/pos/'"
+      >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15.5 19.5L8 12l7.5-7.5" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -67,19 +72,22 @@
     </section>
 
     <section class="products-controls">
-      <div class="products-search">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-        </svg>
+      <form id="productsSearchForm" class="products-search" role="search" action="/search/" method="get">
+        <button id="productsSearchSubmit" type="submit" class="products-search-submit" aria-label="Search entire CigarOS">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+          </svg>
+        </button>
         <input
           id="searchInput"
+          name="q"
           type="search"
           inputmode="search"
           autocomplete="off"
-          placeholder=""
-          aria-label="Search products"
+          placeholder="Search CigarOS"
+          aria-label="Search CigarOS"
         />
-      </div>
+      </form>
 
       <button id="filterBtn" type="button" class="products-icon-btn" aria-label="Filters">
         <svg viewBox="0 0 24 24" aria-hidden="true">
