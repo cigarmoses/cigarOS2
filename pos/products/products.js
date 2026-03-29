@@ -7,12 +7,15 @@
    - Favorites toggle
    - Qty stepper per product
    - Shared cart hook support
+   - Global search redirect
 */
 
 (() => {
   "use strict";
 
   const DATA_URL = "/pos/products/products.json";
+  const SEARCH_URL = "/search/";
+  const SEARCH_QUERY_PARAM = "q";
   const FAVORITES_KEY = "cigaros_product_favorites";
   const QTY_KEY = "cigaros_product_qty";
 
@@ -97,6 +100,7 @@
   const root = document.documentElement;
   const themeToggle = $("#theme-toggle");
   const categoryRow = $("#categoryRow") || $(".pos-categories");
+  const searchForm = $("#productsSearchForm");
   const searchInput = $("#searchInput") || $("#productSearch") || $("#productsSearch");
   const grid = $("#productGrid") || $(".pos-grid");
   const favoritesBtn = $("#favToggle") || $("#productsFavToggle");
@@ -226,6 +230,18 @@
       `/icons/${folder}/${fileName}.png`,
       `/icons/${folder}/${fileName}.jpg`
     ]);
+  }
+
+  function goToGlobalSearch(query) {
+    const q = String(query || "").trim();
+    if (!q) {
+      window.location.href = SEARCH_URL;
+      return;
+    }
+
+    const url = new URL(SEARCH_URL, window.location.origin);
+    url.searchParams.set(SEARCH_QUERY_PARAM, q);
+    window.location.href = url.toString();
   }
 
   function getProductQty(key) {
@@ -487,7 +503,12 @@
     });
 
     globalSearchBtn?.addEventListener("click", () => {
-      window.location.href = "/search/";
+      goToGlobalSearch(searchInput?.value || "");
+    });
+
+    searchForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      goToGlobalSearch(searchInput?.value || "");
     });
 
     searchInput?.addEventListener("input", (e) => {
