@@ -54,13 +54,19 @@
     return normalizeLoose(s).replace(/\s+/g, "-");
   }
 
-  function normalizeBrand(v) {
-    return String(v || "")
+  function compactKey(s) {
+    return String(s || "")
+      .trim()
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
+      .replace(/["'’]/g, "")
       .replace(/[^a-z0-9]+/g, "");
+  }
+
+  function normalizeBrand(v) {
+    return compactKey(v);
   }
 
   function escapeHTML(s) {
@@ -225,11 +231,7 @@
   }
 
   function getBrandImage(rec) {
-    const fromSheet = getField(rec, ["Brand IMG", "brandimg", "brand_image"]);
-    if (fromSheet) return fromSheet;
-
-    const brand = getBrand(rec);
-    return brand ? `/img/icons/brands/${normalizeBrand(brand)}.svg` : "";
+    return getField(rec, ["Brand IMG", "brandimg", "brand_image"]);
   }
 
   function getPrice(rec) {
@@ -373,6 +375,48 @@
     `).join("");
   }
 
+  function buildBrandIconCandidates(rec) {
+    const fromSheet = getBrandImage(rec);
+    const brand = getBrand(rec);
+    const brandKey = normalizeBrand(brand);
+
+    const out = [];
+    if (fromSheet) out.push(fromSheet);
+
+    if (brandKey) {
+      out.push(`/img/icons/brands/${brandKey}.svg`);
+      out.push(`/img/icons/brands/${brandKey}.png`);
+    }
+
+    return Array.from(new Set(out.filter(Boolean)));
+  }
+
+  function buildCigarImageCandidates(rec) {
+    const fromSheet = getImage(rec);
+    const brand = getBrand(rec);
+    const line = getLine(rec);
+    const name = getName(rec);
+    const vitola = getVitola(rec);
+
+    const brandFolder = normalizeBrand(brand);
+    const comboMain = compactKey([brand, line, name].filter(Boolean).join(" "));
+    const comboWithVitola = compactKey([brand, line, name, vitola].filter(Boolean).join(" "));
+    const comboNameOnly = compactKey([brand, name].filter(Boolean).join(" "));
+    const comboLineNameVitola = compactKey([brand, line, vitola].filter(Boolean).join(" "));
+
+    const out = [];
+    if (fromSheet) out.push(fromSheet);
+
+    if (brandFolder) {
+      if (comboMain) out.push(`/img/cigars/${brandFolder}/${comboMain}.png`);
+      if (comboWithVitola) out.push(`/img/cigars/${brandFolder}/${comboWithVitola}.png`);
+      if (comboNameOnly) out.push(`/img/cigars/${brandFolder}/${comboNameOnly}.png`);
+      if (comboLineNameVitola) out.push(`/img/cigars/${brandFolder}/${comboLineNameVitola}.png`);
+    }
+
+    return Array.from(new Set(out.filter(Boolean)));
+  }
+
   function addCurrentCigarToCart(rec) {
     const cartApi = window.cigarOSCart;
     if (!cartApi || typeof cartApi.add !== "function") return;
@@ -390,7 +434,7 @@
       name: [line, name].filter(Boolean).join(" ").trim() || name || line || brand,
       vitola,
       price: getPrice(rec),
-      image: getImage(rec),
+      image: buildCigarImageCandidates(rec)[0] || "",
       url: window.location.href
     });
   }
@@ -409,8 +453,8 @@
     const shade = getShade(rec) || "—";
     const ring = getRing(rec) || "—";
     const length = getLength(rec) || "—";
-    const cigarImg = getImage(rec);
-    const brandImg = getBrandImage(rec);
+    const cigarImgCandidates = buildCigarImageCandidates(rec);
+    const brandImgCandidates = buildBrandIconCandidates(rec);
     const flag = flagForCountry(origin);
     const accolades = collectAccolades(records, rec);
 
@@ -420,13 +464,20 @@
 
     card.innerHTML = `
       <div class="cd-head">
-        <div>
-          <div class="cd-brand">${escapeHTML(brand || "—")}</div>
-          <div class="cd-name">${escapeHTML(displayName)}</div>
+        <div class="cd-head-copy">
+          <div class="cd-brand" title="${escapeAttr(brand || "—")}">${escapeHTML(brand || "—")}</div>
+          <div class="cd-name" title="${escapeAttr(displayName)}">${escapeHTML(displayName)}</div>
         </div>
+
         ${
-          brandImg
-            ? `<img class="cd-badge" src="${escapeAttr(brandImg)}" alt="${escapeAttr(brand)}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cd-badge-placeholder',textContent:'Brand'}))">`
+          brandImgCandidates.length
+            ? `<img class="cd-badge"
+                id="cdBrandBadge"
+                src="${escapeAttr(brandImgCandidates[0])}"
+                data-fallbacks='${escapeAttr(JSON.stringify(brandImgCandidates.slice(1)))}'
+                alt="${escapeAttr(brand)}"
+                loading="lazy"
+                decoding="async">`
             : `<div class="cd-badge-placeholder">Brand</div>`
         }
       </div>
@@ -434,8 +485,14 @@
       <div class="cd-grid">
         <div class="cd-left">
           ${
-            cigarImg
-              ? `<img class="cd-stick" src="${escapeAttr(cigarImg)}" alt="${escapeAttr(displayName)}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cd-stick-placeholder',textContent:'No image'}))">`
+            cigarImgCandidates.length
+              ? `<img class="cd-stick"
+                  id="cdStickImage"
+                  src="${escapeAttr(cigarImgCandidates[0])}"
+                  data-fallbacks='${escapeAttr(JSON.stringify(cigarImgCandidates.slice(1)))}'
+                  alt="${escapeAttr(displayName)}"
+                  loading="lazy"
+                  decoding="async">`
               : `<div class="cd-stick-placeholder">No image</div>`
           }
         </div>
@@ -444,55 +501,55 @@
           <div class="cd-stat-grid">
             <div class="cd-card cd-stat">
               <div class="cd-card-label">Ring</div>
-              <div class="cd-stat-value">${escapeHTML(ring)}</div>
+              <div class="cd-stat-value" title="${escapeAttr(ring)}">${escapeHTML(ring)}</div>
             </div>
 
             <div class="cd-card cd-stat">
               <div class="cd-card-label">Length</div>
-              <div class="cd-stat-value">${escapeHTML(length)}</div>
+              <div class="cd-stat-value" title="${escapeAttr(length)}">${escapeHTML(length)}</div>
             </div>
           </div>
 
           <div class="cd-mini-grid">
             <div class="cd-card cd-mini">
               <div class="cd-card-label">Strength</div>
-              <div class="cd-mini-value">${escapeHTML(strength)}</div>
+              <div class="cd-mini-value" title="${escapeAttr(strength)}">${escapeHTML(strength)}</div>
             </div>
 
             <div class="cd-card cd-mini">
               <div class="cd-card-label">Vitola</div>
-              <div class="cd-mini-value">${escapeHTML(vitola)}</div>
+              <div class="cd-mini-value" title="${escapeAttr(vitola)}">${escapeHTML(vitola)}</div>
             </div>
           </div>
 
           <div class="cd-card cd-tobaccos">
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Wrapper</div>
-              <div class="cd-tobacco-value">${escapeHTML(wrapper)}</div>
+              <div class="cd-tobacco-value" title="${escapeAttr(wrapper)}">${escapeHTML(wrapper)}</div>
             </div>
 
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Binder</div>
-              <div class="cd-tobacco-value">${escapeHTML(binder)}</div>
+              <div class="cd-tobacco-value" title="${escapeAttr(binder)}">${escapeHTML(binder)}</div>
             </div>
 
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Filler</div>
-              <div class="cd-tobacco-value">${escapeHTML(filler)}</div>
+              <div class="cd-tobacco-value" title="${escapeAttr(filler)}">${escapeHTML(filler)}</div>
             </div>
           </div>
 
           <div class="cd-card cd-origin">
             <div class="cd-card-label">Origin</div>
             <div class="cd-origin-row">
-              <div class="cd-origin-value">${escapeHTML(origin)}</div>
+              <div class="cd-origin-value" title="${escapeAttr(origin)}">${escapeHTML(origin)}</div>
               ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
             </div>
           </div>
 
           <div class="cd-card cd-shade">
             <div class="cd-card-label">Wrapper Shade</div>
-            <div class="cd-shade-value">${escapeHTML(shade)}</div>
+            <div class="cd-shade-value" title="${escapeAttr(shade)}">${escapeHTML(shade)}</div>
           </div>
 
           <div class="cd-card cd-accolades">
@@ -550,6 +607,37 @@
     });
 
     syncUI();
+
+    wireImageFallback($("#cdBrandBadge"), "cd-badge-placeholder", "Brand");
+    wireImageFallback($("#cdStickImage"), "cd-stick-placeholder", "No image");
+  }
+
+  function wireImageFallback(img, fallbackClass, fallbackText) {
+    if (!img) return;
+
+    function tryNext() {
+      let fallbacks = [];
+      try {
+        fallbacks = JSON.parse(img.dataset.fallbacks || "[]");
+      } catch {
+        fallbacks = [];
+      }
+
+      const next = fallbacks.shift();
+      img.dataset.fallbacks = JSON.stringify(fallbacks);
+
+      if (next) {
+        img.src = next;
+        return;
+      }
+
+      const fallback = document.createElement("div");
+      fallback.className = fallbackClass;
+      fallback.textContent = fallbackText;
+      img.replaceWith(fallback);
+    }
+
+    img.addEventListener("error", tryNext, { once: false });
   }
 
   async function load() {
