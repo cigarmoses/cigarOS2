@@ -7,15 +7,12 @@
    - Favorites toggle
    - Qty stepper per product
    - Shared cart hook support
-   - Global search redirect
 */
 
 (() => {
   "use strict";
 
   const DATA_URL = "/pos/products/products.json";
-  const SEARCH_URL = "/search/";
-  const SEARCH_QUERY_PARAM = "q";
   const FAVORITES_KEY = "cigaros_product_favorites";
   const QTY_KEY = "cigaros_product_qty";
 
@@ -97,17 +94,12 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const root = document.documentElement;
-  const themeToggle = $("#theme-toggle");
   const categoryRow = $("#categoryRow") || $(".pos-categories");
-  const searchForm = $("#productsSearchForm");
   const searchInput = $("#searchInput") || $("#productSearch") || $("#productsSearch");
   const grid = $("#productGrid") || $(".pos-grid");
   const favoritesBtn = $("#favToggle") || $("#productsFavToggle");
   const filterBtn = $("#filterBtn") || $("#productsFilterBtn");
   const addToBillBtn = $("#addToBill") || $("#addToBillBtn");
-  const cartBadge = $("[data-cart-badge]");
-  const globalSearchBtn = $("#globalSearchBtn");
 
   const state = {
     allProducts: [],
@@ -117,17 +109,6 @@
     favorites: readSet(FAVORITES_KEY),
     qty: readQtyMap()
   };
-
-  function getSavedTheme() {
-    return localStorage.getItem("theme") || root.getAttribute("data-theme") || "light";
-  }
-
-  function applyTheme(theme) {
-    const next = theme === "dark" ? "dark" : "light";
-    root.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    themeToggle?.setAttribute("aria-pressed", String(next === "dark"));
-  }
 
   function slugify(value) {
     return String(value || "")
@@ -232,18 +213,6 @@
     ]);
   }
 
-  function goToGlobalSearch(query) {
-    const q = String(query || "").trim();
-    if (!q) {
-      window.location.href = SEARCH_URL;
-      return;
-    }
-
-    const url = new URL(SEARCH_URL, window.location.origin);
-    url.searchParams.set(SEARCH_QUERY_PARAM, q);
-    window.location.href = url.toString();
-  }
-
   function getProductQty(key) {
     const n = Number(state.qty[key] || 0);
     return Number.isFinite(n) && n > 0 ? n : 0;
@@ -273,25 +242,6 @@
 
   function updateFavoritesUI() {
     favoritesBtn?.classList.toggle("is-on", state.favoritesOnly);
-  }
-
-  function updateCartBadge() {
-    if (window.cigarOSCart?.updateBadges) {
-      window.cigarOSCart.updateBadges();
-    }
-
-    const badge = cartBadge || $("[data-cart-badge]");
-    if (!badge) return;
-
-    let count = 0;
-
-    try {
-      const raw = JSON.parse(localStorage.getItem("cigaros_cart") || "[]");
-      if (Array.isArray(raw)) count = raw.length;
-    } catch {}
-
-    badge.textContent = String(count);
-    badge.hidden = count <= 0;
   }
 
   function buildCategoryList(products) {
@@ -372,7 +322,9 @@
       });
     }
 
-    updateCartBadge();
+    if (window.CigarOSTopbar?.refresh) {
+      window.CigarOSTopbar.refresh();
+    }
   }
 
   function onIncrement(productKey) {
@@ -498,19 +450,6 @@
   }
 
   function bindStaticControls() {
-    themeToggle?.addEventListener("click", () => {
-      applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
-    });
-
-    globalSearchBtn?.addEventListener("click", () => {
-      goToGlobalSearch(searchInput?.value || "");
-    });
-
-    searchForm?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      goToGlobalSearch(searchInput?.value || "");
-    });
-
     searchInput?.addEventListener("input", (e) => {
       state.search = String(e.target.value || "").trim();
       renderProducts();
@@ -539,6 +478,10 @@
       state.qty = {};
       writeQtyMap();
       renderProducts();
+
+      if (window.CigarOSTopbar?.refresh) {
+        window.CigarOSTopbar.refresh();
+      }
     });
   }
 
@@ -569,7 +512,10 @@
       renderCategories();
       updateFavoritesUI();
       renderProducts();
-      updateCartBadge();
+
+      if (window.CigarOSTopbar?.refresh) {
+        window.CigarOSTopbar.refresh();
+      }
     } catch (err) {
       console.error("products.js load error:", err);
       if (grid) {
@@ -583,7 +529,6 @@
   }
 
   function init() {
-    applyTheme(getSavedTheme());
     bindStaticControls();
     loadProducts();
   }
