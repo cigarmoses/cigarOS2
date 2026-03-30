@@ -37,16 +37,21 @@
     themeToggle?.setAttribute("aria-pressed", String(next === "dark"));
   }
 
-  function slugify(s) {
+  function normalizeLoose(s) {
     return String(s || "")
       .trim()
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/["']/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+      .replace(/&/g, " and ")
+      .replace(/["'’]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function slugify(s) {
+    return normalizeLoose(s).replace(/\s+/g, "-");
   }
 
   function normalizeBrand(v) {
@@ -250,18 +255,31 @@
   }
 
   function findById(records, id) {
-    const target = String(id || "").trim();
-    if (!target) return null;
+    const targetRaw = String(id || "").trim();
+    if (!targetRaw) return null;
+
+    const targetLoose = normalizeLoose(targetRaw);
+    const targetSlug = slugify(targetRaw);
 
     return records.find((r) => {
       const candidates = [
         getField(r, ["Cigar ID", "cigarId", "cigarid", "cigar_id", "key", "Key", "id", "row_id"]),
-        getField(r, ["Name", "name", "Cigar", "cigar"])
+        getField(r, ["Name", "name", "Cigar", "cigar"]),
+        [getLine(r), getName(r)].filter(Boolean).join(" ").trim(),
+        [getBrand(r), getLine(r), getName(r)].filter(Boolean).join(" ").trim(),
+        [getBrand(r), getName(r)].filter(Boolean).join(" ").trim(),
+        [getName(r), getVitola(r)].filter(Boolean).join(" ").trim()
       ]
         .filter(Boolean)
         .map((v) => String(v).trim());
 
-      return candidates.includes(target);
+      return candidates.some((value) => {
+        return (
+          value === targetRaw ||
+          normalizeLoose(value) === targetLoose ||
+          slugify(value) === targetSlug
+        );
+      });
     }) || null;
   }
 
@@ -269,10 +287,12 @@
     const target = String(slug || "").trim();
     if (!target) return null;
 
-    let found = records.find((r) => makeSlugFromRecord(r) === target);
+    const targetSlug = slugify(target);
+
+    let found = records.find((r) => makeSlugFromRecord(r) === targetSlug);
     if (found) return found;
 
-    found = records.find((r) => slugify(getCigarId(r)) === target);
+    found = records.find((r) => slugify(getCigarId(r)) === targetSlug);
     return found || null;
   }
 
