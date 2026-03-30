@@ -8,76 +8,23 @@
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/css/ios26-system.css" />
-  <link rel="stylesheet" href="/pos/pos.css" />
+  <link rel="stylesheet" href="/uxui/topbar/topbar.css" />
   <link rel="stylesheet" href="/pos/products/products.css" />
 </head>
 
 <body class="products-page">
   <main class="products-page-wrap">
-    <header class="products-topbar">
-      <button
-        type="button"
-        class="products-back icon-tile"
-        aria-label="Back"
-        onclick="history.length > 1 ? history.back() : window.location.href='/pos/'"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M15.5 19.5L8 12l7.5-7.5" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-
-      <div class="products-topbar-center">
-        <button id="theme-toggle" class="products-theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="false">
-          <span class="track" aria-hidden="true"></span>
-          <span class="knob" aria-hidden="true"></span>
-        </button>
-
-        <a id="productsHomeBtn" href="https://cigaros2.netlify.app/" class="products-mini-btn" aria-label="Home">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z" fill="currentColor"/>
-          </svg>
-        </a>
-
-        <button id="globalSearchBtn" class="products-mini-btn" type="button" aria-label="Search CigarOS">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-          </svg>
-        </button>
-
-        <a href="/today/" class="products-mini-btn" aria-label="Today">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 4.5v3M17 4.5v3M5 8h14M6 6h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
-
-        <button id="favToggle" class="products-mini-btn" type="button" aria-label="Favorites">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 18.2 6.1 21l1.1-6.3L2.6 10l6.4-.9L12 3.4l3 5.7 6.4.9-4.6 4.7 1.1 6.3z" fill="currentColor"/>
-          </svg>
-        </button>
-      </div>
-
-      <a href="/pos/invoice/" class="products-cart-btn icon-tile" aria-label="Invoice">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M7 6h14l-1.7 6.8a2 2 0 0 1-1.94 1.52H10.1a2 2 0 0 1-1.95-1.57L6.1 4.5H3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="10" cy="18.5" r="1.6" fill="currentColor"/>
-          <circle cx="17.5" cy="18.5" r="1.6" fill="currentColor"/>
-        </svg>
-        <span class="products-cart-badge" data-cart-badge hidden>0</span>
-      </a>
-    </header>
+    <div id="universalTopbar"></div>
 
     <section class="products-head">
       <h1 class="products-title">Products</h1>
     </section>
 
     <section class="products-controls">
-      <form id="productsSearchForm" class="products-search" role="search" action="/search/" method="get">
-        <button id="productsSearchSubmit" type="submit" class="products-search-submit" aria-label="Search entire CigarOS">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-          </svg>
-        </button>
+      <div class="products-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+        </svg>
         <input
           id="searchInput"
           name="q"
@@ -85,9 +32,9 @@
           inputmode="search"
           autocomplete="off"
           placeholder=""
-          aria-label="Search CigarOS"
+          aria-label="Search products"
         />
-      </form>
+      </div>
 
       <button id="filterBtn" type="button" class="products-icon-btn" aria-label="Filters">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -105,7 +52,20 @@
     <button id="addToBill" type="button" class="products-billbtn">Add to Bill (0)</button>
   </div>
 
+  <script src="/uxui/topbar/topbar.js" defer></script>
   <script src="/pos/cart.js" defer></script>
   <script src="/pos/products/products.js" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.CigarOSTopbar) {
+        window.CigarOSTopbar.mount("#universalTopbar", {
+          homeHref: "/pos/",
+          searchHref: "/search/",
+          favoritesHref: "/pos/favorites/",
+          cartHref: "/pos/invoice/"
+        });
+      }
+    });
+  </script>
 </body>
 </html>
