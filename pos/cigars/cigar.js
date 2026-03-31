@@ -69,6 +69,13 @@
     return compactKey(v);
   }
 
+  function normalizeAssetPath(path) {
+    const value = String(path || "").trim();
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value)) return value;
+    return value.startsWith("/") ? value : `/${value}`;
+  }
+
   function escapeHTML(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -376,7 +383,7 @@
   }
 
   function buildBrandIconCandidates(rec) {
-    const fromSheet = getBrandImage(rec);
+    const fromSheet = normalizeAssetPath(getBrandImage(rec));
     const brand = getBrand(rec);
     const brandKey = normalizeBrand(brand);
 
@@ -392,26 +399,43 @@
   }
 
   function buildCigarImageCandidates(rec) {
-    const fromSheet = getImage(rec);
+    const fromSheet = normalizeAssetPath(getImage(rec));
     const brand = getBrand(rec);
     const line = getLine(rec);
     const name = getName(rec);
     const vitola = getVitola(rec);
+    const shade = getShade(rec);
 
     const brandFolder = normalizeBrand(brand);
-    const comboMain = compactKey([brand, line, name].filter(Boolean).join(" "));
-    const comboWithVitola = compactKey([brand, line, name, vitola].filter(Boolean).join(" "));
-    const comboNameOnly = compactKey([brand, name].filter(Boolean).join(" "));
-    const comboLineNameVitola = compactKey([brand, line, vitola].filter(Boolean).join(" "));
+    const lineKey = compactKey(line);
 
     const out = [];
     if (fromSheet) out.push(fromSheet);
 
     if (brandFolder) {
-      if (comboMain) out.push(`/img/cigars/${brandFolder}/${comboMain}.png`);
-      if (comboWithVitola) out.push(`/img/cigars/${brandFolder}/${comboWithVitola}.png`);
-      if (comboNameOnly) out.push(`/img/cigars/${brandFolder}/${comboNameOnly}.png`);
-      if (comboLineNameVitola) out.push(`/img/cigars/${brandFolder}/${comboLineNameVitola}.png`);
+      const combos = [
+        compactKey([brand, line, name].join(" ")),
+        compactKey([brand, line, name, vitola].join(" ")),
+        compactKey([brand, name].join(" ")),
+        compactKey([brand, name, vitola].join(" ")),
+        compactKey([brand, vitola].join(" ")),
+        compactKey([brand, name, shade].join(" ")),
+        compactKey([brand, vitola, shade].join(" ")),
+        compactKey([brand, line, vitola, shade].join(" "))
+      ];
+
+      if (lineKey.includes("1964")) {
+        combos.push(compactKey([brand, "1964", name].join(" ")));
+        combos.push(compactKey([brand, "1964", vitola].join(" ")));
+        combos.push(compactKey([brand, "1964", name, shade].join(" ")));
+        combos.push(compactKey([brand, "1964", vitola, shade].join(" ")));
+      }
+
+      combos
+        .filter(Boolean)
+        .forEach((key) => {
+          out.push(`/img/cigars/${brandFolder}/${key}.png`);
+        });
     }
 
     return Array.from(new Set(out.filter(Boolean)));
