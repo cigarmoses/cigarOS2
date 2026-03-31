@@ -251,39 +251,38 @@ html[data-theme="dark"] .product-favorite{
   padding:16px 14px 12px;
   display:flex;
   flex-direction:column;
-  gap:4px;
+  gap:2px;
 }
 
 .product-name{
   font-family:var(--font-display);
   font-weight:500;
-  font-size:16px;
-  line-height:1.15;
-  letter-spacing:-0.02em;
+  font-size:15px;
+  line-height:1.05;
+  letter-spacing:0.04em;
+
+  text-transform:uppercase; /* 🔥 ALL CAPS */
+
   color:var(--products-text);
-  -webkit-font-smoothing:antialiased;
-  text-rendering:optimizeLegibility;
 }
 
 .product-brand{
-  min-height:15px;
+  min-height:14px;
   font-family:var(--font-text);
   font-weight:400;
   font-size:12px;
-  line-height:1.2;
+  line-height:1.1;
   color:var(--products-muted);
 }
 
 .product-price{
-  margin-top:4px;
+  margin-top:2px; /* 🔥 reduced from 4px */
   font-family:var(--font-display);
   font-weight:500;
-  font-size:17px;
-  line-height:1.1;
-  letter-spacing:-0.02em;
+  font-size:16px;
+  line-height:1.05;
+  letter-spacing:-0.01em;
   color:var(--products-text);
-  -webkit-font-smoothing:antialiased;
-  text-rendering:optimizeLegibility;
 }
 
 .product-card-footer{
