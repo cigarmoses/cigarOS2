@@ -170,12 +170,12 @@
 
   function getCigarId(rec) {
     return getField(rec, [
+      "Key",
+      "key",
       "Cigar ID",
       "cigarId",
       "cigarid",
       "cigar_id",
-      "key",
-      "Key",
       "id",
       "row_id"
     ]);
@@ -190,7 +190,7 @@
   }
 
   function getName(rec) {
-    return getField(rec, ["Name", "name", "Cigar", "cigar"]);
+    return getField(rec, ["Cigar", "cigar", "Name", "name"]);
   }
 
   function getVitola(rec) {
@@ -263,6 +263,22 @@
     return slugify([brand, line, name, vitola, id].filter(Boolean).join(" "));
   }
 
+  function scoreRecord(rec) {
+    let score = 0;
+    if (getRing(rec)) score += 5;
+    if (getLength(rec)) score += 5;
+    if (getImage(rec)) score += 5;
+    if (getPrice(rec)) score += 4;
+    if (getVitola(rec)) score += 3;
+    if (getWrapper(rec)) score += 2;
+    if (getBinder(rec)) score += 2;
+    if (getFiller(rec)) score += 2;
+    if (getOrigin(rec)) score += 1;
+    if (getShade(rec)) score += 1;
+    if (getStrength(rec)) score += 1;
+    return score;
+  }
+
   function findById(records, id) {
     const targetRaw = String(id || "").trim();
     if (!targetRaw) return null;
@@ -270,10 +286,10 @@
     const targetLoose = normalizeLoose(targetRaw);
     const targetSlug = slugify(targetRaw);
 
-    return records.find((r) => {
+    const matches = records.filter((r) => {
       const candidates = [
-        getField(r, ["Cigar ID", "cigarId", "cigarid", "cigar_id", "key", "Key", "id", "row_id"]),
-        getField(r, ["Name", "name", "Cigar", "cigar"]),
+        getField(r, ["Key", "key", "Cigar ID", "cigarId", "cigarid", "cigar_id", "id", "row_id"]),
+        getField(r, ["Cigar", "cigar", "Name", "name"]),
         [getLine(r), getName(r)].filter(Boolean).join(" ").trim(),
         [getBrand(r), getLine(r), getName(r)].filter(Boolean).join(" ").trim(),
         [getBrand(r), getName(r)].filter(Boolean).join(" ").trim(),
@@ -289,7 +305,11 @@
           slugify(value) === targetSlug
         );
       });
-    }) || null;
+    });
+
+    if (!matches.length) return null;
+    matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
+    return matches[0];
   }
 
   function findBySlug(records, slug) {
@@ -298,11 +318,16 @@
 
     const targetSlug = slugify(target);
 
-    let found = records.find((r) => makeSlugFromRecord(r) === targetSlug);
-    if (found) return found;
+    const matches = records.filter((r) => {
+      return (
+        makeSlugFromRecord(r) === targetSlug ||
+        slugify(getCigarId(r)) === targetSlug
+      );
+    });
 
-    found = records.find((r) => slugify(getCigarId(r)) === targetSlug);
-    return found || null;
+    if (!matches.length) return null;
+    matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
+    return matches[0];
   }
 
   function readSet(key) {
