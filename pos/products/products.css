@@ -257,9 +257,9 @@ html[data-theme="dark"] .product-favorite{
 .product-name{
   font-family:var(--font-display);
   font-weight:500;
-  font-size:15px;
+  font-size:16px;
   line-height:1.05;
-  letter-spacing:0.04em;
+  letter-spacing:0.02em;
 
   text-transform:uppercase; /* 🔥 ALL CAPS */
 
@@ -276,7 +276,7 @@ html[data-theme="dark"] .product-favorite{
 }
 
 .product-price{
-  margin-top:2px; /* 🔥 reduced from 4px */
+  margin-top:3px; /* 🔥 reduced from 4px */
   font-family:var(--font-display);
   font-weight:500;
   font-size:16px;
