@@ -68,4 +68,74 @@
     });
   </script>
 </body>
+</html><!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>Products</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/css/ios26-system.css" />
+  <link rel="stylesheet" href="/uxui/topbar/topbar.css" />
+  <link rel="stylesheet" href="/pos/products/products.css" />
+</head>
+
+<body class="products-page">
+  <main class="products-page-wrap">
+    <div id="universalTopbar"></div>
+
+    <section class="products-head">
+      <h1 class="products-title">Products</h1>
+    </section>
+
+    <section class="products-controls">
+      <div class="products-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+        </svg>
+        <input
+          id="searchInput"
+          name="q"
+          type="text"
+          inputmode="search"
+          autocomplete="off"
+          placeholder=""
+          aria-label="Search products"
+        />
+      </div>
+
+      <button id="filterBtn" type="button" class="products-icon-btn" aria-label="Filters">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </section>
+
+    <nav id="categoryRow" class="pos-categories" aria-label="Product categories"></nav>
+
+    <section id="productGrid" class="pos-grid" aria-label="Products grid"></section>
+  </main>
+
+  <div class="products-billbar">
+    <button id="addToBill" type="button" class="products-billbtn">Add to Bill (0)</button>
+  </div>
+
+  <script src="/uxui/topbar/topbar.js" defer></script>
+  <script src="/pos/cart.js" defer></script>
+  <script src="/pos/products/products.js" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.CigarOSTopbar) {
+        window.CigarOSTopbar.mount("#universalTopbar", {
+          homeHref: "/pos/",
+          searchHref: "/search/",
+          favoritesHref: "/pos/favorites/",
+          cartHref: "/pos/cart/"
+        });
+      }
+    });
+  </script>
+</body>
 </html>
