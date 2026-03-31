@@ -1,59 +1,34 @@
 (() => {
   "use strict";
 
-  const ICON_BASE = "/uxui/topbar";
-  const THEME_KEY = "theme";
+  const STORAGE_KEY = "cigaros-theme";
 
   function getTheme() {
-    const saved = localStorage.getItem(THEME_KEY);
-    if (saved === "dark" || saved === "light") return saved;
-    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+
+    const docTheme = document.documentElement.getAttribute("data-theme");
+    if (docTheme === "light" || docTheme === "dark") return docTheme;
+
+    return "light";
   }
 
   function setTheme(theme) {
-    const next = theme === "dark" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem(THEME_KEY, next);
-    syncTopbarIcons();
+    const nextTheme = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    localStorage.setItem(STORAGE_KEY, nextTheme);
+
+    document.querySelectorAll(".cigaros-theme-toggle").forEach((btn) => {
+      btn.setAttribute("aria-pressed", String(nextTheme === "dark"));
+      btn.setAttribute(
+        "aria-label",
+        nextTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+      );
+    });
   }
 
-  function iconPath(name, theme) {
-    const color = theme === "dark" ? "white" : "black";
-    return `${ICON_BASE}/${name}-${color}.svg`;
-  }
-
-  function moonSunPath(theme) {
-    return theme === "dark"
-      ? `${ICON_BASE}/dark-moon.svg`
-      : `${ICON_BASE}/light-sun.svg`;
-  }
-
-  function syncTopbarIcons(root = document) {
-    const theme = getTheme();
-
-    root.querySelectorAll("[data-utb-icon='back']").forEach((img) => {
-      img.src = iconPath("back", theme);
-    });
-
-    root.querySelectorAll("[data-utb-icon='home']").forEach((img) => {
-      img.src = iconPath("home", theme);
-    });
-
-    root.querySelectorAll("[data-utb-icon='search']").forEach((img) => {
-      img.src = iconPath("search", theme);
-    });
-
-    root.querySelectorAll("[data-utb-icon='favorites']").forEach((img) => {
-      img.src = iconPath("favorites", theme);
-    });
-
-    root.querySelectorAll("[data-utb-icon='cart']").forEach((img) => {
-      img.src = iconPath("cart", theme);
-    });
-
-    root.querySelectorAll("[data-utb-icon='theme']").forEach((img) => {
-      img.src = moonSunPath(theme);
-    });
+  function toggleTheme() {
+    setTheme(getTheme() === "dark" ? "light" : "dark");
   }
 
   function getCartCount() {
@@ -67,7 +42,7 @@
 
   function syncCartBadges(root = document) {
     const count = getCartCount();
-    root.querySelectorAll("[data-utb-cart-badge]").forEach((badge) => {
+    root.querySelectorAll(".cigaros-topbar-cart-badge").forEach((badge) => {
       badge.textContent = String(count);
       badge.hidden = count <= 0;
     });
@@ -77,101 +52,120 @@
     const {
       homeHref = "/",
       searchHref = "/search/",
-      favoritesHref = "/pos/favorites/",
-      cartHref = "/pos/invoice/",
-      backHref = "",
-      backMode = "history"
+      favoritesHref = "/favorites/",
+      cartHref = "/cart/"
     } = options;
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "utb-wrap";
-    wrapper.innerHTML = `
-      <div class="utb">
-        ${
-          backMode === "link" && backHref
-            ? `<a class="utb-link" href="${backHref}" aria-label="Back">
-                 <img class="utb-icon" data-utb-icon="back" alt="" />
-               </a>`
-            : `<button class="utb-btn" type="button" data-utb-back aria-label="Back">
-                 <img class="utb-icon" data-utb-icon="back" alt="" />
-               </button>`
-        }
+    const wrap = document.createElement("header");
+    wrap.className = "cigaros-topbar";
+    wrap.innerHTML = `
+      <button
+        type="button"
+        class="cigaros-topbar-btn cigaros-topbar-back"
+        aria-label="Back">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15.5 19.5L8 12l7.5-7.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
 
-        <div class="utb-dock">
-          <button class="utb-theme" type="button" data-utb-theme-toggle aria-label="Toggle theme" aria-pressed="false">
-            <span class="utb-theme-track" aria-hidden="true"></span>
-            <span class="utb-theme-thumb" aria-hidden="true">
-              <img class="utb-icon" data-utb-icon="theme" alt="" />
+      <div class="cigaros-topbar-center" aria-label="Primary navigation">
+        <button
+          type="button"
+          class="cigaros-theme-toggle"
+          aria-label="Toggle dark mode"
+          aria-pressed="false">
+          <span class="cigaros-theme-toggle-track">
+            <span class="cigaros-theme-toggle-knob">
+              <svg class="cigaros-theme-icon cigaros-theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4.25" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 2.75v2.1M12 19.15v2.1M21.25 12h-2.1M4.85 12h-2.1M18.54 5.46l-1.49 1.49M6.95 17.05l-1.49 1.49M18.54 18.54l-1.49-1.49M6.95 6.95L5.46 5.46" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg class="cigaros-theme-icon cigaros-theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.2 14.2A7.8 7.8 0 0 1 9.8 3.8a8.8 8.8 0 1 0 10.4 10.4Z" fill="currentColor" stroke="none"/>
+              </svg>
             </span>
-          </button>
+          </span>
+        </button>
 
-          <a class="utb-mini" href="${homeHref}" aria-label="Home">
-            <img class="utb-icon" data-utb-icon="home" alt="" />
-          </a>
+        <a href="${homeHref}" class="cigaros-topbar-link" aria-label="Home">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4.75 10.25 12 4l7.25 6.25v8a1 1 0 0 1-1 1h-4.5v-5H10.25v5h-4.5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
 
-          <a class="utb-mini" href="${searchHref}" aria-label="Search">
-            <img class="utb-icon" data-utb-icon="search" alt="" />
-          </a>
+        <a href="${searchHref}" class="cigaros-topbar-link" aria-label="Search">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10.5" cy="10.5" r="5.75" fill="none" stroke="currentColor"/>
+            <path d="M15 15l4.25 4.25" fill="none" stroke="currentColor" stroke-linecap="round"/>
+          </svg>
+        </a>
 
-          <a class="utb-mini" href="${favoritesHref}" aria-label="Favorites">
-            <img class="utb-icon" data-utb-icon="favorites" alt="" />
-          </a>
-        </div>
-
-        <a class="utb-link utb-cart" href="${cartHref}" aria-label="Invoice">
-          <img class="utb-icon" data-utb-icon="cart" alt="" />
-          <span class="utb-cart-badge" data-utb-cart-badge hidden>0</span>
+        <a href="${favoritesHref}" class="cigaros-topbar-link" aria-label="Favorites">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 3.9 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.9l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76z" fill="none" stroke="currentColor" stroke-linejoin="round"/>
+          </svg>
         </a>
       </div>
+
+      <a href="${cartHref}" class="cigaros-topbar-cart" aria-label="Cart">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3.5 5h2l2.1 9.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.77L20 8H7.1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="10" cy="18.5" r="1.25" fill="currentColor" stroke="none"/>
+          <circle cx="17.25" cy="18.5" r="1.25" fill="currentColor" stroke="none"/>
+        </svg>
+        <span class="cigaros-topbar-cart-badge" hidden>0</span>
+      </a>
     `;
 
-    wrapper.querySelector("[data-utb-theme-toggle]")?.addEventListener("click", () => {
-      const next = getTheme() === "dark" ? "light" : "dark";
-      setTheme(next);
+    const backBtn = wrap.querySelector(".cigaros-topbar-back");
+    const toggleBtn = wrap.querySelector(".cigaros-theme-toggle");
+
+    backBtn.addEventListener("click", () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = homeHref;
+      }
     });
 
-    wrapper.querySelector("[data-utb-back]")?.addEventListener("click", () => {
-      if (history.length > 1) history.back();
-      else window.location.href = homeHref;
+    toggleBtn.addEventListener("click", () => {
+      toggleTheme();
+      syncCartBadges(document);
     });
 
-    syncTopbarIcons(wrapper);
-    syncCartBadges(wrapper);
-
-    const toggle = wrapper.querySelector("[data-utb-theme-toggle]");
-    if (toggle) {
-      toggle.setAttribute("aria-pressed", String(getTheme() === "dark"));
-    }
-
-    return wrapper;
+    syncCartBadges(wrap);
+    return wrap;
   }
 
-  window.CigarOSTopbar = {
-    mount(selector, options = {}) {
-      const target = typeof selector === "string" ? document.querySelector(selector) : selector;
-      if (!target) return null;
-      const topbar = buildTopbar(options);
-      target.innerHTML = "";
-      target.appendChild(topbar);
-      return topbar;
-    },
-    refresh() {
-      syncTopbarIcons();
-      syncCartBadges();
-    },
-    setTheme,
-    getTheme
-  };
+  function mount(selector, options = {}) {
+    const target = typeof selector === "string"
+      ? document.querySelector(selector)
+      : selector;
+
+    if (!target) return;
+
+    target.innerHTML = "";
+    target.appendChild(buildTopbar(options));
+    setTheme(getTheme());
+    syncCartBadges(target);
+  }
 
   document.addEventListener("DOMContentLoaded", () => {
-    syncTopbarIcons();
-    syncCartBadges();
+    setTheme(getTheme());
+    syncCartBadges(document);
   });
 
   window.addEventListener("storage", (e) => {
-    if (e.key === THEME_KEY || e.key === "cigaros_cart") {
-      syncTopbarIcons();
-      syncCartBadges();
+    if (e.key === STORAGE_KEY || e.key === "cigaros_cart") {
+      setTheme(getTheme());
+      syncCartBadges(document);
     }
   });
+
+  window.CigarOSTopbar = {
+    mount,
+    setTheme,
+    getTheme,
+    refresh: () => syncCartBadges(document)
+  };
 })();
