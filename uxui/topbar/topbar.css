@@ -1,139 +1,348 @@
-(() => {
-  "use strict";
+:root{
+  --topbar-safe-top: env(safe-area-inset-top, 0px);
 
-  const STORAGE_KEY = "cigaros-theme";
+  --topbar-icon-light: #0b1730;
+  --topbar-icon-dark: #ffffff;
 
-  function getTheme() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "light" || saved === "dark") return saved;
+  --topbar-tile-bg-light: rgba(255,255,255,.88);
+  --topbar-pill-bg-light: rgba(255,255,255,.88);
 
-    const docTheme = document.documentElement.getAttribute("data-theme");
-    if (docTheme === "light" || docTheme === "dark") return docTheme;
+  --topbar-tile-bg-dark: rgba(25,55,114,.88);
+  --topbar-pill-bg-dark: rgba(23,49,102,.92);
 
-    return "light";
+  --topbar-tile-shadow-light:
+    0 10px 28px rgba(31,41,55,.08),
+    inset 0 0 0 1px rgba(15,23,42,.06);
+
+  --topbar-pill-shadow-light:
+    0 10px 28px rgba(31,41,55,.08),
+    inset 0 0 0 1px rgba(15,23,42,.06);
+
+  --topbar-tile-shadow-dark:
+    0 12px 32px rgba(0,0,0,.28),
+    inset 0 0 0 1px rgba(120,160,255,.12);
+
+  --topbar-pill-shadow-dark:
+    0 12px 32px rgba(0,0,0,.24),
+    inset 0 0 0 1px rgba(120,160,255,.12);
+
+  --toggle-track-light: #d9e1ec;
+  --toggle-track-dark: #090b11;
+
+  --toggle-track-border-light: rgba(15,23,42,.06);
+  --toggle-track-border-dark: rgba(255,255,255,.06);
+
+  --toggle-knob-light: #ffffff;
+  --toggle-knob-dark: #0f2d63;
+
+  --cart-badge-bg: #ff453a;
+  --cart-badge-text: #ffffff;
+}
+
+[data-theme="light"]{
+  --topbar-icon: var(--topbar-icon-light);
+  --topbar-tile-bg: var(--topbar-tile-bg-light);
+  --topbar-pill-bg: var(--topbar-pill-bg-light);
+  --topbar-tile-shadow: var(--topbar-tile-shadow-light);
+  --topbar-pill-shadow: var(--topbar-pill-shadow-light);
+  --toggle-track: var(--toggle-track-light);
+  --toggle-track-border: var(--toggle-track-border-light);
+  --toggle-knob: var(--toggle-knob-light);
+}
+
+[data-theme="dark"]{
+  --topbar-icon: var(--topbar-icon-dark);
+  --topbar-tile-bg: var(--topbar-tile-bg-dark);
+  --topbar-pill-bg: var(--topbar-pill-bg-dark);
+  --topbar-tile-shadow: var(--topbar-tile-shadow-dark);
+  --topbar-pill-shadow: var(--topbar-pill-shadow-dark);
+  --toggle-track: var(--toggle-track-dark);
+  --toggle-track-border: var(--toggle-track-border-dark);
+  --toggle-knob: var(--toggle-knob-dark);
+}
+
+#universalTopbar{
+  position: relative;
+  z-index: 20;
+}
+
+#universalTopbar .cigaros-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:calc(var(--topbar-safe-top) + 12px) 20px 10px;
+}
+
+#universalTopbar .cigaros-topbar-btn,
+#universalTopbar .cigaros-topbar-cart{
+  width:64px;
+  height:64px;
+  flex:0 0 64px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:22px;
+  background:var(--topbar-tile-bg);
+  color:var(--topbar-icon);
+  box-shadow:var(--topbar-tile-shadow);
+  text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+  overflow:hidden;
+  padding:0;
+  margin:0;
+  appearance:none;
+  line-height:0;
+  position: relative;
+}
+
+#universalTopbar .cigaros-topbar-center{
+  min-width:0;
+  flex:1 1 auto;
+  height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:4px;
+  padding:8px 10px;
+  border-radius:24px;
+  background:var(--topbar-pill-bg);
+  box-shadow:var(--topbar-pill-shadow);
+  overflow:hidden;
+}
+
+#universalTopbar .cigaros-topbar-link{
+  width:52px;
+  height:52px;
+  flex:0 0 52px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:18px;
+  background:transparent;
+  color:var(--topbar-icon);
+  text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+  overflow:hidden;
+  padding:0;
+  margin:0;
+  appearance:none;
+  line-height:0;
+}
+
+#universalTopbar .cigaros-theme-toggle{
+  width:96px;
+  height:48px;
+  flex:0 0 96px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  margin:0;
+  border:0;
+  background:transparent;
+  color:var(--topbar-icon);
+  border-radius:999px;
+  -webkit-tap-highlight-color:transparent;
+  appearance:none;
+  line-height:0;
+  overflow:hidden;
+}
+
+#universalTopbar .cigaros-theme-toggle-track{
+  position:relative;
+  width:96px;
+  height:48px;
+  display:block;
+  border-radius:999px;
+  background:var(--toggle-track);
+  box-shadow:inset 0 0 0 1px var(--toggle-track-border);
+  overflow:hidden;
+}
+
+#universalTopbar .cigaros-theme-toggle-knob{
+  position:absolute;
+  top:4px;
+  left:4px;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:var(--toggle-knob);
+  box-shadow:0 4px 14px rgba(0,0,0,.16);
+  display:grid;
+  place-items:center;
+  transform:translateX(0);
+  transition:transform .22s ease, background .22s ease;
+  overflow:hidden;
+}
+
+[data-theme="dark"] #universalTopbar .cigaros-theme-toggle-knob{
+  transform:translateX(48px);
+}
+
+#universalTopbar .cigaros-theme-icon{
+  position:absolute;
+  width:22px !important;
+  height:22px !important;
+  display:block !important;
+  flex:none !important;
+  transition:opacity .18s ease, transform .22s ease;
+}
+
+#universalTopbar .cigaros-theme-icon-sun{
+  opacity:1;
+  transform:scale(1);
+}
+
+#universalTopbar .cigaros-theme-icon-moon{
+  opacity:0;
+  transform:scale(.8);
+}
+
+[data-theme="dark"] #universalTopbar .cigaros-theme-icon-sun{
+  opacity:0;
+  transform:scale(.8);
+}
+
+[data-theme="dark"] #universalTopbar .cigaros-theme-icon-moon{
+  opacity:1;
+  transform:scale(1);
+}
+
+/* Hard lock topbar SVG sizing */
+#universalTopbar .cigaros-topbar svg{
+  display:block !important;
+  width:auto !important;
+  height:auto !important;
+  max-width:none !important;
+  max-height:none !important;
+  flex:none !important;
+}
+
+#universalTopbar .cigaros-topbar-btn svg,
+#universalTopbar .cigaros-topbar-cart > svg{
+  width:34px !important;
+  height:34px !important;
+  min-width:34px !important;
+  min-height:34px !important;
+  max-width:34px !important;
+  max-height:34px !important;
+  stroke-width:1.9;
+}
+
+#universalTopbar .cigaros-topbar-link svg{
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  min-height:30px !important;
+  max-width:30px !important;
+  max-height:30px !important;
+  stroke-width:1.9;
+}
+
+#universalTopbar .cigaros-topbar-cart-badge{
+  position:absolute;
+  top:10px;
+  right:10px;
+  min-width:18px;
+  height:18px;
+  padding:0 5px;
+  border-radius:999px;
+  background:var(--cart-badge-bg);
+  color:var(--cart-badge-text);
+  font-size:11px;
+  font-weight:700;
+  line-height:18px;
+  text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+}
+
+#universalTopbar .cigaros-topbar-cart-badge[hidden]{
+  display:none !important;
+}
+
+#universalTopbar .cigaros-topbar-btn:hover,
+#universalTopbar .cigaros-topbar-cart:hover,
+#universalTopbar .cigaros-topbar-link:hover,
+#universalTopbar .cigaros-theme-toggle:hover{
+  opacity:.97;
+}
+
+#universalTopbar .cigaros-topbar-btn:active,
+#universalTopbar .cigaros-topbar-cart:active,
+#universalTopbar .cigaros-topbar-link:active,
+#universalTopbar .cigaros-theme-toggle:active{
+  transform:scale(.985);
+}
+
+@media (max-width: 430px){
+  #universalTopbar .cigaros-topbar{
+    padding-left:16px;
+    padding-right:16px;
+    gap:12px;
   }
 
-  function setTheme(theme) {
-    const nextTheme = theme === "dark" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", nextTheme);
-    localStorage.setItem(STORAGE_KEY, nextTheme);
-
-    document.querySelectorAll(".cigaros-theme-toggle").forEach((btn) => {
-      btn.setAttribute("aria-pressed", String(nextTheme === "dark"));
-      btn.setAttribute(
-        "aria-label",
-        nextTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"
-      );
-    });
+  #universalTopbar .cigaros-topbar-btn,
+  #universalTopbar .cigaros-topbar-cart{
+    width:58px;
+    height:58px;
+    flex-basis:58px;
+    border-radius:20px;
   }
 
-  function toggleTheme() {
-    setTheme(getTheme() === "dark" ? "light" : "dark");
+  #universalTopbar .cigaros-topbar-btn svg,
+  #universalTopbar .cigaros-topbar-cart > svg{
+    width:32px !important;
+    height:32px !important;
+    min-width:32px !important;
+    min-height:32px !important;
+    max-width:32px !important;
+    max-height:32px !important;
   }
 
-  function buildTopbar(options = {}) {
-    const {
-      homeHref = "/",
-      searchHref = "/search/",
-      favoritesHref = "/favorites/",
-      cartHref = "/cart/"
-    } = options;
-
-    const wrap = document.createElement("header");
-    wrap.className = "cigaros-topbar";
-    wrap.innerHTML = `
-      <button
-        type="button"
-        class="cigaros-topbar-btn cigaros-topbar-back"
-        aria-label="Back">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M15.5 19.5L8 12l7.5-7.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-
-      <div class="cigaros-topbar-center" aria-label="Primary navigation">
-        <button
-          type="button"
-          class="cigaros-theme-toggle"
-          aria-label="Toggle dark mode"
-          aria-pressed="false">
-          <span class="cigaros-theme-toggle-track">
-            <span class="cigaros-theme-toggle-knob">
-              <svg class="cigaros-theme-icon cigaros-theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="4.25" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 2.75v2.1M12 19.15v2.1M21.25 12h-2.1M4.85 12h-2.1M18.54 5.46l-1.49 1.49M6.95 17.05l-1.49 1.49M18.54 18.54l-1.49-1.49M6.95 6.95L5.46 5.46" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <svg class="cigaros-theme-icon cigaros-theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20.2 14.2A7.8 7.8 0 0 1 9.8 3.8a8.8 8.8 0 1 0 10.4 10.4Z" fill="currentColor" stroke="none"/>
-              </svg>
-            </span>
-          </span>
-        </button>
-
-        <a href="${homeHref}" class="cigaros-topbar-link" aria-label="Home">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4.75 10.25 12 4l7.25 6.25v8a1 1 0 0 1-1 1h-4.5v-5H10.25v5h-4.5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
-
-        <a href="${searchHref}" class="cigaros-topbar-link" aria-label="Search">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="10.5" cy="10.5" r="5.75" fill="none" stroke="currentColor"/>
-            <path d="M15 15l4.25 4.25" fill="none" stroke="currentColor" stroke-linecap="round"/>
-          </svg>
-        </a>
-
-        <a href="${favoritesHref}" class="cigaros-topbar-link" aria-label="Favorites">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m12 3.9 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.9l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76z" fill="none" stroke="currentColor" stroke-linejoin="round"/>
-          </svg>
-        </a>
-      </div>
-
-      <a href="${cartHref}" class="cigaros-topbar-cart" aria-label="Cart">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3.5 5h2l2.1 9.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.77L20 8H7.1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="10" cy="18.5" r="1.25" fill="currentColor" stroke="none"/>
-          <circle cx="17.25" cy="18.5" r="1.25" fill="currentColor" stroke="none"/>
-        </svg>
-      </a>
-    `;
-
-    const backBtn = wrap.querySelector(".cigaros-topbar-back");
-    const toggleBtn = wrap.querySelector(".cigaros-theme-toggle");
-
-    backBtn.addEventListener("click", () => {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = homeHref;
-      }
-    });
-
-    toggleBtn.addEventListener("click", toggleTheme);
-
-    return wrap;
+  #universalTopbar .cigaros-topbar-center{
+    height:58px;
+    padding:6px 8px;
+    border-radius:22px;
   }
 
-  function mount(selector, options = {}) {
-    const target = typeof selector === "string"
-      ? document.querySelector(selector)
-      : selector;
-
-    if (!target) return;
-
-    target.innerHTML = "";
-    target.appendChild(buildTopbar(options));
-    setTheme(getTheme());
+  #universalTopbar .cigaros-topbar-link{
+    width:46px;
+    height:46px;
+    flex-basis:46px;
+    border-radius:16px;
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    setTheme(getTheme());
-  });
+  #universalTopbar .cigaros-topbar-link svg{
+    width:28px !important;
+    height:28px !important;
+    min-width:28px !important;
+    min-height:28px !important;
+    max-width:28px !important;
+    max-height:28px !important;
+  }
 
-  window.CigarOSTopbar = {
-    mount,
-    setTheme,
-    getTheme
-  };
-})();
+  #universalTopbar .cigaros-theme-toggle{
+    width:88px;
+    height:46px;
+    flex-basis:88px;
+  }
+
+  #universalTopbar .cigaros-theme-toggle-track{
+    width:88px;
+    height:46px;
+  }
+
+  #universalTopbar .cigaros-theme-toggle-knob{
+    width:38px;
+    height:38px;
+  }
+
+  [data-theme="dark"] #universalTopbar .cigaros-theme-toggle-knob{
+    transform:translateX(42px);
+  }
+
+  #universalTopbar .cigaros-topbar-cart-badge{
+    top:8px;
+    right:8px;
+  }
+}
