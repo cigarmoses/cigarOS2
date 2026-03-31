@@ -66,6 +66,10 @@
   z-index: 20;
 }
 
+#universalTopbar *{
+  box-sizing:border-box;
+}
+
 #universalTopbar .cigaros-topbar{
   display:flex;
   align-items:center;
