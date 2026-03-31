@@ -60,11 +60,11 @@
   padding: 10px 12px 0;
   display:flex;
   align-items:center;
-  justify-content: flex-end; /* ✅ push X to right */
+  justify-content: flex-end;
   border-bottom: none;
 }
 #sheet-receipt .sheet-header h2{
-  display:none !important; /* ✅ removes top-left “Invoice/Receipt” text */
+  display:none !important;
 }
 #sheet-receipt .sheet-x{
   width: 34px;
@@ -86,25 +86,25 @@
 #sheet-receipt .inv-title{
   font-weight: 900;
   letter-spacing: -0.02em;
-  font-size: 14px;  /* ✅ smaller */
+  font-size: 14px;
   line-height: 1.1;
 }
 #sheet-receipt .inv-shop{
   margin-top: 4px;
   font-weight: 800;
-  font-size: 14px;  /* ✅ smaller */
+  font-size: 14px;
   letter-spacing: -0.02em;
 }
 #sheet-receipt .inv-date{
   margin-top: 2px;
   font-weight: 800;
-  font-size: 14px;  /* ✅ smaller */
+  font-size: 14px;
   letter-spacing: -0.02em;
 }
 #sheet-receipt .inv-num{
   margin-top: 4px;
   font-weight: 800;
-  font-size: 14px;  /* ✅ smaller */
+  font-size: 14px;
   color: rgba(15,26,44,.55);
 }
 
@@ -141,7 +141,7 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 170px; /* sits under header block */
+  top: 170px;
   width: min(680px, calc(100% - 28px));
   background: #fff;
   border-radius: 18px;
@@ -244,7 +244,7 @@
 
 /* Body */
 #sheet-receipt .sheet-body{
-  padding: 0 0 0;
+  padding: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   flex: 1 1 auto;
@@ -261,18 +261,17 @@
 /* ✅ Invoice rows: COMPACT 3 columns (mobile-friendly) */
 #sheet-receipt .inv-row{
   display:grid;
-  grid-template-columns: 72px 1fr 150px; /* ✅ smaller right column */
+  grid-template-columns: 72px 1fr 150px;
   gap: 12px;
   align-items:center;
-
-  padding: 10px 14px; /* ✅ smaller */
+  padding: 10px 14px;
   border-top: 1px solid rgba(0,0,0,.08);
 }
 #sheet-receipt .inv-ico{
-  width: 64px;         /* ✅ smaller */
+  width: 64px;
   height: 64px;
   border-radius: 18px;
-  background: rgba(0,0,0,0.06); /* ✅ neutral */
+  background: rgba(0,0,0,0.06);
   display:grid;
   place-items:center;
   overflow:hidden;
@@ -287,7 +286,7 @@
 /* middle 3-line text */
 #sheet-receipt .inv-cat{
   font-weight: 900;
-  font-size: 16px;   /* ✅ smaller */
+  font-size: 16px;
   letter-spacing: -0.02em;
   white-space: nowrap;
   overflow:hidden;
@@ -296,7 +295,7 @@
 #sheet-receipt .inv-name{
   margin-top: 2px;
   font-weight: 800;
-  font-size: 13px;   /* ✅ smaller */
+  font-size: 13px;
   color: rgba(15,26,44,.55);
   white-space: nowrap;
   overflow:hidden;
@@ -305,14 +304,14 @@
 #sheet-receipt .inv-msrp{
   margin-top: 4px;
   font-weight: 900;
-  font-size: 13px;   /* ✅ smaller */
+  font-size: 13px;
   color: rgba(15,26,44,.35);
 }
 
 /* right: qty adjuster above line total */
 #sheet-receipt .inv-right{
   display:flex;
-  flex-direction: column;   /* ✅ qty above total */
+  flex-direction: column;
   align-items:flex-end;
   gap: 6px;
 }
@@ -348,11 +347,11 @@
 }
 #sheet-receipt .inv-total-top{
   font-weight: 900;
-  font-size: 16px; /* ✅ smaller */
+  font-size: 16px;
   color:#0f1a2c;
 }
 #sheet-receipt .inv-total-sub{
-  display:none; /* optional */
+  display:none;
 }
 
 /* Footer */
@@ -379,9 +378,6 @@
 
 /* =========================================================
    ✅ RECEIPT / INVOICE FAB (PNG ONLY, bottom-right)
-   - No background plate
-   - Badge overlays on top-right
-   - Red state handled by .has-items class (optional)
    ========================================================= */
 
 #receipt-open{
@@ -389,11 +385,9 @@
   right: 16px !important;
   bottom: calc(16px + env(safe-area-inset-bottom)) !important;
   z-index: 100000 !important;
-
   width: 64px !important;
   height: 64px !important;
   padding: 0 !important;
-
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -415,32 +409,28 @@
   position: absolute !important;
   right: 2px !important;
   top: 2px !important;
-
   min-width: 18px !important;
   height: 18px !important;
   padding: 0 5px !important;
-
   border-radius: 999px !important;
   background: #ff3b30 !important;
   color: #fff !important;
   font-weight: 900 !important;
   font-size: 12px !important;
   line-height: 1 !important;
-
   border: 2px solid #fff !important;
   display: grid !important;
   place-items: center !important;
 }
 
-/* Optional “has items” state (keep subtle; do NOT recolor PNG) */
+/* Optional “has items” state */
 #receipt-open.has-items{
   filter: drop-shadow(0 12px 30px rgba(255,59,48,.22));
 }
 
 /* =========================================
    POS HOME — FORCE TILE GRID LAYOUT (OVERRIDE)
-   Fixes the "tiny horizontal strip" bug
-========================================= */
+   ========================================= */
 body.pos-home .pos-main{
   width: min(980px, calc(100% - 36px));
   margin: 0 auto;
@@ -464,126 +454,128 @@ body.pos-home .pos-card-icon{
 }
 
 /* =========================================================
-   GLOBAL POS TOPBAR FIX
+   GLOBAL POS TOPBAR FIX — CLEANED / TIGHTENED
    ========================================================= */
 
-.pos-topbar,
+/* only affect actual POS topbars */
 .products-topbar,
-.page-topbar,
-.pos-headerbar{
+.pos-topbar{
   display:grid;
-  grid-template-columns:auto 1fr auto;
+  grid-template-columns:52px minmax(0,1fr) 52px;
   align-items:center;
-  gap:8px;
+  gap:10px;
   width:100%;
-  padding:6px 0 10px;
+  padding:0;
+  margin:0 0 14px;
 }
 
-.pos-topbar-left,
+/* left / center / right wrappers */
 .products-topbar-left,
-.topbar-left-group,
-.left-group{
+.pos-topbar-left{
   display:flex;
   align-items:center;
-  gap:6px;
-  min-width:0;
+  justify-content:flex-start;
 }
 
-.pos-topbar-center,
 .products-topbar-center,
-.topbar-center-group{
+.pos-topbar-center{
   min-width:0;
   display:flex;
   align-items:center;
 }
 
-.pos-topbar-right,
 .products-topbar-right,
-.topbar-right-group{
+.pos-topbar-right{
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  gap:8px;
 }
 
-/* icon tiles */
-.icon-tile,
-.topbar-icon,
-.topbar-btn{
-  width:46px;
-  height:46px;
-  border-radius:16px;
+/* back / cart tiles */
+.products-topbar .icon-tile,
+.pos-topbar .icon-tile,
+.products-topbar .topbar-btn,
+.pos-topbar .topbar-btn{
+  width:52px;
+  height:52px;
+  border-radius:18px;
   border:1px solid rgba(0,0,0,.08);
-  background:rgba(255,255,255,.82);
+  background:rgba(255,255,255,.96);
   color:#000;
   display:grid;
   place-items:center;
-  box-shadow:0 8px 20px rgba(0,0,0,.04);
-  -webkit-backdrop-filter:blur(18px);
-  backdrop-filter:blur(18px);
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
+  box-shadow:0 10px 24px rgba(0,0,0,.06);
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
   flex:0 0 auto;
 }
 
-.icon-tile svg,
-.topbar-icon svg,
-.topbar-btn svg{
-  width:22px;
-  height:22px;
+.products-topbar .icon-tile svg,
+.pos-topbar .icon-tile svg,
+.products-topbar .topbar-btn svg,
+.pos-topbar .topbar-btn svg{
+  width:24px;
+  height:24px;
+  stroke:currentColor;
+  fill:none;
 }
 
-html[data-theme="dark"] .icon-tile,
-html[data-theme="dark"] .topbar-icon,
-html[data-theme="dark"] .topbar-btn{
+.products-topbar .icon-tile svg path,
+.pos-topbar .icon-tile svg path,
+.products-topbar .topbar-btn svg path,
+.pos-topbar .topbar-btn svg path{
+  stroke:currentColor;
+}
+
+html[data-theme="dark"] .products-topbar .icon-tile,
+html[data-theme="dark"] .pos-topbar .icon-tile,
+html[data-theme="dark"] .products-topbar .topbar-btn,
+html[data-theme="dark"] .pos-topbar .topbar-btn{
   border:1px solid rgba(255,255,255,.10);
-  background:rgba(19,34,63,.92);
+  background:#173161;
   color:#fff;
-  box-shadow:0 10px 24px rgba(0,0,0,.24);
+  box-shadow:0 12px 28px rgba(0,0,0,.24);
 }
 
 /* segmented nav shell */
-.topbar-segment,
-.pos-topbar-nav,
 .products-topbar-nav,
+.pos-topbar-nav,
 .glass-segment{
   min-width:0;
-  min-height:46px;
+  height:52px;
   display:flex;
   align-items:center;
-  gap:4px;
-  padding:4px;
+  gap:2px;
+  padding:4px 6px 4px 4px;
   border-radius:999px;
   border:1px solid rgba(0,0,0,.08);
-  background:rgba(255,255,255,.82);
-  box-shadow:0 8px 20px rgba(0,0,0,.04);
-  -webkit-backdrop-filter:blur(18px);
-  backdrop-filter:blur(18px);
+  background:rgba(255,255,255,.96);
+  box-shadow:0 10px 24px rgba(0,0,0,.06);
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  overflow:hidden;
 }
 
-html[data-theme="dark"] .topbar-segment,
-html[data-theme="dark"] .pos-topbar-nav,
 html[data-theme="dark"] .products-topbar-nav,
+html[data-theme="dark"] .pos-topbar-nav,
 html[data-theme="dark"] .glass-segment{
   border:1px solid rgba(255,255,255,.10);
-  background:rgba(19,34,63,.92);
-  box-shadow:0 10px 24px rgba(0,0,0,.24);
+  background:#173161;
+  box-shadow:0 12px 28px rgba(0,0,0,.24);
 }
 
-/* theme toggle */
+/* toggle */
 .theme-toggle,
 .mode-toggle,
 .appearance-toggle{
   position:relative;
-  width:112px;
-  height:38px;
+  width:160px;
+  height:44px;
   border:0;
   padding:0;
   margin:0;
   background:transparent;
   box-shadow:none;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
   flex:0 0 auto;
 }
 
@@ -594,15 +586,14 @@ html[data-theme="dark"] .glass-segment{
   width:100%;
   height:100%;
   border-radius:999px;
-  background:#cfd6e3;
-  transition:background-color .2s ease;
+  background:#c8d1df;
 }
 
 html[data-theme="dark"] .theme-toggle-track,
 html[data-theme="dark"] .mode-toggle-track,
 html[data-theme="dark"] .appearance-toggle-track{
-  background:#17365a;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+  background:#0e0f14;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
 }
 
 .theme-toggle-thumb,
@@ -611,14 +602,14 @@ html[data-theme="dark"] .appearance-toggle-track{
   position:absolute;
   top:4px;
   left:4px;
-  width:30px;
-  height:30px;
+  width:36px;
+  height:36px;
   border-radius:999px;
   background:#fff;
   display:grid;
   place-items:center;
-  box-shadow:0 4px 10px rgba(0,0,0,.12);
-  transition:transform .22s ease, background-color .22s ease;
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+  transition:transform .2s ease, background-color .2s ease;
 }
 
 html[data-theme="dark"] .theme-toggle-thumb,
@@ -630,23 +621,10 @@ html[data-theme="dark"] .appearance-toggle-thumb{
 html[data-theme="dark"] .theme-toggle.is-dark .theme-toggle-thumb,
 html[data-theme="dark"] .mode-toggle.is-dark .mode-toggle-thumb,
 html[data-theme="dark"] .appearance-toggle.is-dark .appearance-toggle-thumb{
-  transform:translateX(74px);
+  transform:translateX(116px);
 }
 
-html[data-theme="light"] .theme-toggle.is-light .theme-toggle-thumb,
-html[data-theme="light"] .mode-toggle.is-light .mode-toggle-thumb,
-html[data-theme="light"] .appearance-toggle.is-light .appearance-toggle-thumb{
-  transform:translateX(0);
-}
-
-.theme-toggle-thumb svg,
-.mode-toggle-thumb svg,
-.appearance-toggle-thumb svg{
-  width:16px;
-  height:16px;
-}
-
-/* nav icons inside segmented bar */
+/* nav icon buttons inside pill */
 .segment-icon-btn,
 .topbar-segment-btn,
 .pos-nav-btn{
@@ -655,19 +633,26 @@ html[data-theme="light"] .appearance-toggle.is-light .appearance-toggle-thumb{
   border:0;
   border-radius:999px;
   background:transparent;
-  color:inherit;
+  color:#000;
   display:grid;
   place-items:center;
-  cursor:pointer;
   flex:0 0 auto;
-  -webkit-tap-highlight-color:transparent;
+  padding:0;
 }
 
 .segment-icon-btn svg,
 .topbar-segment-btn svg,
 .pos-nav-btn svg{
-  width:22px;
-  height:22px;
+  width:24px;
+  height:24px;
+  stroke:currentColor;
+  fill:none;
+}
+
+.segment-icon-btn svg path,
+.topbar-segment-btn svg path,
+.pos-nav-btn svg path{
+  stroke:currentColor;
 }
 
 html[data-theme="dark"] .segment-icon-btn,
@@ -676,31 +661,125 @@ html[data-theme="dark"] .pos-nav-btn{
   color:#fff;
 }
 
+/* tighten spacing around the icons after the toggle */
+.products-topbar-nav .segment-icon-btn,
+.products-topbar-nav .topbar-segment-btn,
+.products-topbar-nav .pos-nav-btn,
+.pos-topbar-nav .segment-icon-btn,
+.pos-topbar-nav .topbar-segment-btn,
+.pos-topbar-nav .pos-nav-btn{
+  margin-left:2px;
+}
+
+/* =========================================================
+   PRODUCTS PAGE SPACING RESET
+   fixes the scrunched-in layout
+   ========================================================= */
+
+.products-page-wrap{
+  width:min(100%, 520px);
+  margin:0 auto;
+  padding:10px 24px calc(88px + var(--safe-bottom));
+  min-height:100dvh;
+}
+
+.products-head{
+  padding:8px 2px 12px;
+}
+
+.products-title{
+  margin:0;
+}
+
+/* search + filter row */
+.products-controls{
+  gap:12px;
+  padding-bottom:16px;
+}
+
+/* category row */
+.pos-categories{
+  padding:0 2px 18px;
+  gap:12px;
+}
+
+/* card grid breathing room */
+.pos-grid{
+  gap:16px;
+}
+
+.product-card{
+  min-height:252px;
+}
+
+.product-card-body{
+  padding:16px 14px 12px;
+  gap:4px;
+}
+
+.product-card-footer{
+  padding:0 14px 14px;
+}
+
 @media (max-width: 420px){
   body.pos-home .pos-grid{
     gap: 14px !important;
   }
 }
 
+/* small phones */
 @media (max-width:390px){
-  .pos-topbar,
+  .products-page-wrap{
+    padding:10px 16px calc(88px + var(--safe-bottom));
+  }
+
   .products-topbar,
-  .page-topbar,
-  .pos-headerbar{
-    gap:6px;
-    padding-top:4px;
-    padding-bottom:8px;
+  .pos-topbar{
+    grid-template-columns:48px minmax(0,1fr) 48px;
+    gap:8px;
+    margin-bottom:12px;
+  }
+
+  .products-topbar .icon-tile,
+  .pos-topbar .icon-tile,
+  .products-topbar .topbar-btn,
+  .pos-topbar .topbar-btn{
+    width:48px;
+    height:48px;
+    border-radius:16px;
+  }
+
+  .products-topbar-nav,
+  .pos-topbar-nav,
+  .glass-segment{
+    height:48px;
+    padding:4px;
   }
 
   .theme-toggle,
   .mode-toggle,
   .appearance-toggle{
-    width:104px;
+    width:142px;
+    height:40px;
+  }
+
+  .theme-toggle-thumb,
+  .mode-toggle-thumb,
+  .appearance-toggle-thumb{
+    width:32px;
+    height:32px;
   }
 
   html[data-theme="dark"] .theme-toggle.is-dark .theme-toggle-thumb,
   html[data-theme="dark"] .mode-toggle.is-dark .mode-toggle-thumb,
   html[data-theme="dark"] .appearance-toggle.is-dark .appearance-toggle-thumb{
-    transform:translateX(66px);
+    transform:translateX(102px);
+  }
+
+  .segment-icon-btn,
+  .topbar-segment-btn,
+  .pos-nav-btn{
+    width:34px;
+    height:34px;
   }
 }
