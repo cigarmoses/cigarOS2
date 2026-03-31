@@ -51,6 +51,13 @@
       .replace(/[^a-z0-9]+/g, "");
   }
 
+    function normalizeAssetPath(path){
+    const value = String(path || "").trim();
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value)) return value;
+    return value.startsWith("/") ? value : `/${value}`;
+  }
+
   function esc(s){
     return String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -195,7 +202,11 @@ function resolveId(r){
   }
 
   function resolveImage(r){
-    return getField(r, ["image", "img", "photo", "cigar_image"]);
+    return getField(r, ["cigar_img", "image", "img", "photo", "cigar_image"]);
+  }
+
+    function resolveBrandImage(r){
+    return getField(r, ["brand_img", "brand_image", "brandicon", "brand_icon"]);
   }
 
   function resolveUrl(r){
@@ -243,6 +254,9 @@ function resolveId(r){
   }
 
   function brandIconPath(){
+    const row = state.rowsAll.find((r) => normalizeBrand(resolveBrandVal(r)) === normalizeBrand(state.brand));
+    const fromSheet = normalizeAssetPath(row ? resolveBrandImage(row) : "");
+    if (fromSheet) return fromSheet;
     return `/img/icons/brands/${normalizeBrand(state.brand)}.svg`;
   }
 
@@ -488,7 +502,7 @@ function resolveId(r){
       name: resolveName(r),
       vitola: resolveVitola(r),
       price: Number(resolvePrice(r) || 0) || 0,
-      image: resolveImage(r) || brandIconPath(),
+      image: normalizeAssetPath(resolveImage(r)) || brandIconPath(),
       url: resolveUrl(r) || ""
     };
   }
@@ -508,7 +522,7 @@ function resolveId(r){
       const cartItem = buildCartDataset(r);
 
       card.innerHTML = `
-        <img class="row-ico" src="${esc(brandIconPath())}" alt="" loading="lazy" />
+        <img class="row-ico" src="${esc(normalizeAssetPath(resolveImage(r)) || brandIconPath())}" alt="" loading="lazy" />
         <div class="row-main">
           <div class="row-title">${esc(resolveName(r))}</div>
           <div class="row-sub">${esc(resolveVitola(r))}</div>
