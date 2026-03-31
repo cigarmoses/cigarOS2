@@ -522,7 +522,7 @@ function resolveId(r){
       const cartItem = buildCartDataset(r);
 
       card.innerHTML = `
-        <img class="row-ico" src="${esc(normalizeAssetPath(resolveImage(r)) || brandIconPath())}" alt="" loading="lazy" />
+        <img class="row-ico" src="${esc(brandIconPath())}" alt="" loading="lazy" />
         <div class="row-main">
           <div class="row-title">${esc(resolveName(r))}</div>
           <div class="row-sub">${esc(resolveVitola(r))}</div>
