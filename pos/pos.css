@@ -395,8 +395,8 @@
   padding: 0 !important;
 
   border: none !important;
-  background: transparent !important;   /* ✅ no backplate */
-  box-shadow: none !important;          /* ✅ PNG already has shadow */
+  background: transparent !important;
+  box-shadow: none !important;
   display: grid !important;
   place-items: center !important;
   overflow: visible !important;
@@ -463,8 +463,244 @@ body.pos-home .pos-card-icon{
   place-items: center;
 }
 
+/* =========================================================
+   GLOBAL POS TOPBAR FIX
+   ========================================================= */
+
+.pos-topbar,
+.products-topbar,
+.page-topbar,
+.pos-headerbar{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  padding:6px 0 10px;
+}
+
+.pos-topbar-left,
+.products-topbar-left,
+.topbar-left-group,
+.left-group{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+
+.pos-topbar-center,
+.products-topbar-center,
+.topbar-center-group{
+  min-width:0;
+  display:flex;
+  align-items:center;
+}
+
+.pos-topbar-right,
+.products-topbar-right,
+.topbar-right-group{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+/* icon tiles */
+.icon-tile,
+.topbar-icon,
+.topbar-btn{
+  width:46px;
+  height:46px;
+  border-radius:16px;
+  border:1px solid rgba(0,0,0,.08);
+  background:rgba(255,255,255,.82);
+  color:#000;
+  display:grid;
+  place-items:center;
+  box-shadow:0 8px 20px rgba(0,0,0,.04);
+  -webkit-backdrop-filter:blur(18px);
+  backdrop-filter:blur(18px);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  flex:0 0 auto;
+}
+
+.icon-tile svg,
+.topbar-icon svg,
+.topbar-btn svg{
+  width:22px;
+  height:22px;
+}
+
+html[data-theme="dark"] .icon-tile,
+html[data-theme="dark"] .topbar-icon,
+html[data-theme="dark"] .topbar-btn{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(19,34,63,.92);
+  color:#fff;
+  box-shadow:0 10px 24px rgba(0,0,0,.24);
+}
+
+/* segmented nav shell */
+.topbar-segment,
+.pos-topbar-nav,
+.products-topbar-nav,
+.glass-segment{
+  min-width:0;
+  min-height:46px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:4px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.08);
+  background:rgba(255,255,255,.82);
+  box-shadow:0 8px 20px rgba(0,0,0,.04);
+  -webkit-backdrop-filter:blur(18px);
+  backdrop-filter:blur(18px);
+}
+
+html[data-theme="dark"] .topbar-segment,
+html[data-theme="dark"] .pos-topbar-nav,
+html[data-theme="dark"] .products-topbar-nav,
+html[data-theme="dark"] .glass-segment{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(19,34,63,.92);
+  box-shadow:0 10px 24px rgba(0,0,0,.24);
+}
+
+/* theme toggle */
+.theme-toggle,
+.mode-toggle,
+.appearance-toggle{
+  position:relative;
+  width:112px;
+  height:38px;
+  border:0;
+  padding:0;
+  margin:0;
+  background:transparent;
+  box-shadow:none;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  flex:0 0 auto;
+}
+
+.theme-toggle-track,
+.mode-toggle-track,
+.appearance-toggle-track{
+  position:relative;
+  width:100%;
+  height:100%;
+  border-radius:999px;
+  background:#cfd6e3;
+  transition:background-color .2s ease;
+}
+
+html[data-theme="dark"] .theme-toggle-track,
+html[data-theme="dark"] .mode-toggle-track,
+html[data-theme="dark"] .appearance-toggle-track{
+  background:#17365a;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+}
+
+.theme-toggle-thumb,
+.mode-toggle-thumb,
+.appearance-toggle-thumb{
+  position:absolute;
+  top:4px;
+  left:4px;
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  background:#fff;
+  display:grid;
+  place-items:center;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+  transition:transform .22s ease, background-color .22s ease;
+}
+
+html[data-theme="dark"] .theme-toggle-thumb,
+html[data-theme="dark"] .mode-toggle-thumb,
+html[data-theme="dark"] .appearance-toggle-thumb{
+  background:#0f2440;
+}
+
+html[data-theme="dark"] .theme-toggle.is-dark .theme-toggle-thumb,
+html[data-theme="dark"] .mode-toggle.is-dark .mode-toggle-thumb,
+html[data-theme="dark"] .appearance-toggle.is-dark .appearance-toggle-thumb{
+  transform:translateX(74px);
+}
+
+html[data-theme="light"] .theme-toggle.is-light .theme-toggle-thumb,
+html[data-theme="light"] .mode-toggle.is-light .mode-toggle-thumb,
+html[data-theme="light"] .appearance-toggle.is-light .appearance-toggle-thumb{
+  transform:translateX(0);
+}
+
+.theme-toggle-thumb svg,
+.mode-toggle-thumb svg,
+.appearance-toggle-thumb svg{
+  width:16px;
+  height:16px;
+}
+
+/* nav icons inside segmented bar */
+.segment-icon-btn,
+.topbar-segment-btn,
+.pos-nav-btn{
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:999px;
+  background:transparent;
+  color:inherit;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  flex:0 0 auto;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.segment-icon-btn svg,
+.topbar-segment-btn svg,
+.pos-nav-btn svg{
+  width:22px;
+  height:22px;
+}
+
+html[data-theme="dark"] .segment-icon-btn,
+html[data-theme="dark"] .topbar-segment-btn,
+html[data-theme="dark"] .pos-nav-btn{
+  color:#fff;
+}
+
 @media (max-width: 420px){
   body.pos-home .pos-grid{
     gap: 14px !important;
+  }
+}
+
+@media (max-width:390px){
+  .pos-topbar,
+  .products-topbar,
+  .page-topbar,
+  .pos-headerbar{
+    gap:6px;
+    padding-top:4px;
+    padding-bottom:8px;
+  }
+
+  .theme-toggle,
+  .mode-toggle,
+  .appearance-toggle{
+    width:104px;
+  }
+
+  html[data-theme="dark"] .theme-toggle.is-dark .theme-toggle-thumb,
+  html[data-theme="dark"] .mode-toggle.is-dark .mode-toggle-thumb,
+  html[data-theme="dark"] .appearance-toggle.is-dark .appearance-toggle-thumb{
+    transform:translateX(66px);
   }
 }
