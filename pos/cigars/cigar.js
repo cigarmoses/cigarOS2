@@ -390,6 +390,21 @@
       out.push({ media, year, rank });
     });
 
+    out.sort((a, b) => {
+      const rankA = parseInt(a.rank, 10);
+      const rankB = parseInt(b.rank, 10);
+      const yearA = parseInt(a.year, 10);
+      const yearB = parseInt(b.year, 10);
+
+      if (Number.isFinite(rankA) && Number.isFinite(rankB) && rankA !== rankB) {
+        return rankA - rankB;
+      }
+      if (Number.isFinite(yearA) && Number.isFinite(yearB) && yearA !== yearB) {
+        return yearB - yearA;
+      }
+      return String(a.media).localeCompare(String(b.media));
+    });
+
     return out.slice(0, 2);
   }
 
@@ -398,13 +413,13 @@
       return `<div class="cd-accolade-empty">No accolades listed.</div>`;
     }
 
-    return accolades.map((item) => `
-      <div class="cd-accolade-row">
-        <div class="cd-accolade-media">${escapeHTML(item.media || "—")}</div>
-        <div class="cd-accolade-year">${escapeHTML(item.year || "—")}</div>
-        <div class="cd-accolade-rank">${escapeHTML(item.rank || "—")}</div>
-      </div>
-    `).join("");
+    return accolades.map((item) => {
+      const bits = [];
+      if (item.rank) bits.push(`#${escapeHTML(item.rank)}`);
+      if (item.year) bits.push(escapeHTML(item.year));
+      if (item.media) bits.push(escapeHTML(item.media));
+      return `<div class="cd-accolade-line">${bits.join(" - ")}</div>`;
+    }).join("");
   }
 
   function buildBrandIconCandidates(rec) {
@@ -510,6 +525,8 @@
     document.title = bestTitle(rec);
 
     const displayName = [line, name].filter(Boolean).join(" ").trim() || name || line || "—";
+    const msrp = getPrice(rec);
+    const msrpText = Number.isFinite(msrp) && msrp > 0 ? `$${msrp.toFixed(2)}` : "";
 
     card.innerHTML = `
       <div class="cd-head">
@@ -607,11 +624,12 @@
           </div>
 
           <div class="cd-actions">
-            <button class="cd-action cd-action--icon" type="button" id="cdFavorite" aria-label="Favorite">♥</button>
             <button class="cd-action" type="button" id="cdCompare">Compare</button>
-            <button class="cd-action" type="button" id="cdWishlist">Wishlist</button>
-            <button class="cd-action" type="button" id="cdConnect">Connect</button>
+            <button class="cd-action" type="button" id="cdFavorite">+ Favorites</button>
+            <button class="cd-action" type="button" id="cdWishlist">+ Wishlist</button>
           </div>
+
+          ${msrpText ? `<div class="cd-msrp">MSRP ${escapeHTML(msrpText)}</div>` : ``}
         </div>
       </div>
     `;
@@ -622,7 +640,6 @@
     const favoriteBtn = $("#cdFavorite");
     const compareBtn = $("#cdCompare");
     const wishlistBtn = $("#cdWishlist");
-    const connectBtn = $("#cdConnect");
 
     function syncUI() {
       favoriteBtn?.classList.toggle("is-on", favoriteSet.has(id));
@@ -649,10 +666,6 @@
 
     wishlistBtn?.addEventListener("click", () => {
       addCurrentCigarToCart(rec);
-    });
-
-    connectBtn?.addEventListener("click", () => {
-      alert("Connect feature comes next.");
     });
 
     syncUI();
