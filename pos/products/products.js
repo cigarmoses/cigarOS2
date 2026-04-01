@@ -17,7 +17,6 @@
   const QTY_KEY = "cigaros_product_qty";
 
   const CATEGORY_ORDER = [
-    "All",
     "Drinks",
     "Food",
     "Packs",
@@ -25,7 +24,8 @@
     "Ashtrays",
     "Cutters",
     "Lighters",
-    "Pipes"
+    "Pipes",
+    "All",
   ];
 
   const PRODUCT_IMAGE_OVERRIDES = {
