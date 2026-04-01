@@ -52,8 +52,8 @@
     const {
       homeHref = "/",
       searchHref = "/search/",
-      favoritesHref = "/favorites/",
-      cartHref = "/cart/"
+      favoritesHref = "/pos/favorites/",
+      cartHref = "/pos/cart/"
     } = options;
 
     const wrap = document.createElement("header");
