@@ -889,3 +889,11 @@ body.cigar-detail-open{ overflow:hidden; }
   display:block;
   object-fit:contain;
 }
+html[data-theme="dark"] .cigars-page,
+html[data-theme="dark"] .cigars-main{
+  background: transparent !important;
+}
+
+#universalTopbar + .cigars-main{
+  padding-top: 6px;
+}
