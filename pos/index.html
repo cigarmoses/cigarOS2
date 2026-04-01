@@ -249,10 +249,26 @@
       display:block;
     }
 
-    .icon-light{ display:none; }
+.pos-card-icon .icon-dark,
+.pos-card-icon .icon-light{
+  display:none;
+}
 
-    html[data-theme="light"] .icon-dark{ display:none; }
-    html[data-theme="light"] .icon-light{ display:block; }
+html[data-theme="dark"] .pos-card-icon .icon-dark{
+  display:block !important;
+}
+
+html[data-theme="dark"] .pos-card-icon .icon-light{
+  display:none !important;
+}
+
+html[data-theme="light"] .pos-card-icon .icon-dark{
+  display:none !important;
+}
+
+html[data-theme="light"] .pos-card-icon .icon-light{
+  display:block !important;
+}
 
     .pos-card-title{
       font:900 22px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
