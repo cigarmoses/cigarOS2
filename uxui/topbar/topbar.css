@@ -71,18 +71,20 @@
 }
 
 #universalTopbar .cigaros-topbar{
+  position:relative;
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  padding:calc(var(--topbar-safe-top) + 6px) 18px 4px;
+  justify-content:center;
+  min-height:52px;
+  padding:calc(var(--topbar-safe-top) + 6px) 0 4px;
 }
 
 #universalTopbar .cigaros-topbar-btn,
 #universalTopbar .cigaros-topbar-cart{
+  position:absolute;
+  top:calc(var(--topbar-safe-top) + 10px);
   width:44px;
   height:44px;
-  flex:0 0 44px;
   display:grid;
   place-items:center;
   border:0;
@@ -97,7 +99,15 @@
   margin:0;
   appearance:none;
   line-height:0;
-  position:relative;
+  z-index:2;
+}
+
+#universalTopbar .cigaros-topbar-btn{
+  left:18px;
+}
+
+#universalTopbar .cigaros-topbar-cart{
+  right:18px;
 }
 
 #universalTopbar .cigaros-topbar-center{
