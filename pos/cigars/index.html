@@ -1,32 +1,19 @@
-<!-- /pos/cigars/index.html -->
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Cigars</title>
 
   <link rel="stylesheet" href="/css/type.css?v=19" />
   <link rel="stylesheet" href="/pos/pos.css?v=19" />
+  <link rel="stylesheet" href="/uxui/topbar/topbar.css" />
   <link rel="stylesheet" href="/pos/cigars/cigars.css?v=19" />
 </head>
 
 <body class="cigars-page">
-  <header class="cigars-topbar">
-    <button type="button" class="pos-back" aria-label="Back" onclick="history.back()">
-      <span class="pos-back-icon">←</span>
-    </button>
-
-    <button
-      type="button"
-      class="pos-invoice-btn"
-      data-invoice-btn
-      aria-label="Invoice"
-    >
-      <img class="pos-cart-ico" src="/img/icons/cart-blue.svg" alt="" />
-      <span data-cart-badge hidden>0</span>
-    </button>
-  </header>
+  <div id="universalTopbar"></div>
 
   <main class="cigars-main" role="main">
     <div class="cigars-title-row">
@@ -39,8 +26,6 @@
                   fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
           </svg>
         </button>
-
-        <a class="cigars-fav-btn" href="/pos/cigars/favorites/" aria-label="Favorites">★</a>
       </div>
     </div>
 
@@ -63,7 +48,20 @@
     <section class="cigars-list" id="cigarsList"></section>
   </main>
 
+  <script src="/uxui/topbar/topbar.js" defer></script>
   <script src="/pos/cart.js?v=19" defer></script>
   <script src="/pos/cigars/cigars.js?v=19" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.CigarOSTopbar) {
+        window.CigarOSTopbar.mount("#universalTopbar", {
+          homeHref: "/",
+          searchHref: "/search/",
+          favoritesHref: "/pos/favorites/",
+          cartHref: "/pos/invoice/"
+        });
+      }
+    });
+  </script>
 </body>
 </html>
