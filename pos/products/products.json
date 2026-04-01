@@ -195,6 +195,36 @@
     "distributor": "DeBlasio Beverage Co."
   },
   {
+    "key": "alcoholiclight",
+    "category": "Alcohol",
+    "name": "IC Light",
+    "brand": "",
+    "price": 4.99,
+    "image": "/img/icons/alcohol/iclight.svg",
+    "brandIcon": "",
+    "status": "Active",
+    "taxable": true,
+    "inventory": 89,
+    "bucket": "Beer",
+    "notes": "",
+    "distributor": "DeBlasio Beverage Co."
+  },
+  {
+    "key": "alcoholironcity",
+    "category": "Alcohol",
+    "name": "Iron City",
+    "brand": "",
+    "price": 4.99,
+    "image": "/img/icons/alcohol/ironcity.svg",
+    "brandIcon": "",
+    "status": "Active",
+    "taxable": true,
+    "inventory": 89,
+    "bucket": "Beer",
+    "notes": "",
+    "distributor": "DeBlasio Beverage Co."
+  },
+  {
     "key": "alcoholkahlua",
     "category": "Alcohol",
     "name": "Kahlua",
