@@ -3,6 +3,27 @@
 
   const STORAGE_KEY = "cigaros-theme";
 
+  const ASSETS = {
+    light: {
+      background: "/uxui/topbar/lightmode/lightmodebackground.svg",
+      back: "/uxui/topbar/lightmode/lightmodeback.svg",
+      cart: "/uxui/topbar/lightmode/lightmodecart.svg",
+      favorites: "/uxui/topbar/lightmode/lightmodefavorites.svg",
+      home: "/uxui/topbar/lightmode/lightmodehome.svg",
+      search: "/uxui/topbar/lightmode/lightmodesearch.svg",
+      toggle: "/uxui/topbar/lightmode/lightmodesuntoggle.svg"
+    },
+    dark: {
+      background: "/uxui/topbar/darkmode/darkmodebackground.svg",
+      back: "/uxui/topbar/darkmode/darkmodeback.svg",
+      cart: "/uxui/topbar/darkmode/darkmodecart.svg",
+      favorites: "/uxui/topbar/darkmode/darkmodefavorites.svg",
+      home: "/uxui/topbar/darkmode/darkmodehome.svg",
+      search: "/uxui/topbar/darkmode/darkmodesearch.svg",
+      toggle: "/uxui/topbar/darkmode/darkmodemoontoggle.svg"
+    }
+  };
+
   function getTheme() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "light" || saved === "dark") return saved;
@@ -13,18 +34,15 @@
     return "light";
   }
 
+  function getAssetSet() {
+    return getTheme() === "dark" ? ASSETS.dark : ASSETS.light;
+  }
+
   function setTheme(theme) {
     const nextTheme = theme === "dark" ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", nextTheme);
     localStorage.setItem(STORAGE_KEY, nextTheme);
-
-    document.querySelectorAll(".cigaros-theme-toggle").forEach((btn) => {
-      btn.setAttribute("aria-pressed", String(nextTheme === "dark"));
-      btn.setAttribute(
-        "aria-label",
-        nextTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"
-      );
-    });
+    syncTopbarAssets();
   }
 
   function toggleTheme() {
@@ -48,6 +66,47 @@
     });
   }
 
+  function syncTopbarAssets(root = document) {
+    const assets = getAssetSet();
+    const theme = getTheme();
+
+    root.querySelectorAll("[data-topbar-role='background']").forEach((img) => {
+      img.src = assets.background;
+    });
+
+    root.querySelectorAll("[data-topbar-role='back']").forEach((img) => {
+      img.src = assets.back;
+    });
+
+    root.querySelectorAll("[data-topbar-role='home']").forEach((img) => {
+      img.src = assets.home;
+    });
+
+    root.querySelectorAll("[data-topbar-role='search']").forEach((img) => {
+      img.src = assets.search;
+    });
+
+    root.querySelectorAll("[data-topbar-role='favorites']").forEach((img) => {
+      img.src = assets.favorites;
+    });
+
+    root.querySelectorAll("[data-topbar-role='cart']").forEach((img) => {
+      img.src = assets.cart;
+    });
+
+    root.querySelectorAll("[data-topbar-role='toggle']").forEach((img) => {
+      img.src = assets.toggle;
+    });
+
+    root.querySelectorAll(".cigaros-topbar-toggle").forEach((btn) => {
+      btn.setAttribute("aria-pressed", String(theme === "dark"));
+      btn.setAttribute(
+        "aria-label",
+        theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+      );
+    });
+  }
+
   function buildTopbar(options = {}) {
     const {
       homeHref = "/",
@@ -61,66 +120,70 @@
     wrap.innerHTML = `
       <button
         type="button"
-        class="cigaros-topbar-btn cigaros-topbar-back"
+        class="cigaros-topbar-side cigaros-topbar-back"
         aria-label="Back">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M15.5 19.5L8 12l7.5-7.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img
+          class="cigaros-topbar-icon cigaros-topbar-back-icon"
+          data-topbar-role="back"
+          alt=""
+          draggable="false" />
       </button>
 
       <div class="cigaros-topbar-center" aria-label="Primary navigation">
+        <img
+          class="cigaros-topbar-background"
+          data-topbar-role="background"
+          alt=""
+          draggable="false" />
+
         <button
           type="button"
-          class="cigaros-theme-toggle"
+          class="cigaros-topbar-toggle"
           aria-label="Toggle dark mode"
           aria-pressed="false">
-          <span class="cigaros-theme-toggle-track">
-            <span class="cigaros-theme-toggle-knob">
-              <svg class="cigaros-theme-icon cigaros-theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="4.25" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 2.75v2.1M12 19.15v2.1M21.25 12h-2.1M4.85 12h-2.1M18.54 5.46l-1.49 1.49M6.95 17.05l-1.49 1.49M18.54 18.54l-1.49-1.49M6.95 6.95L5.46 5.46" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <svg class="cigaros-theme-icon cigaros-theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20.2 14.2A7.8 7.8 0 0 1 9.8 3.8a8.8 8.8 0 1 0 10.4 10.4Z" fill="currentColor" stroke="none"/>
-              </svg>
-            </span>
-          </span>
+          <img
+            class="cigaros-topbar-icon cigaros-topbar-toggle-icon"
+            data-topbar-role="toggle"
+            alt=""
+            draggable="false" />
         </button>
 
-        <a href="${homeHref}" class="cigaros-topbar-link" aria-label="Home">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4.75 10.25 12 4l7.25 6.25v8a1 1 0 0 1-1 1h-4.5v-5H10.25v5h-4.5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+        <a href="${homeHref}" class="cigaros-topbar-link cigaros-topbar-home" aria-label="Home">
+          <img
+            class="cigaros-topbar-icon"
+            data-topbar-role="home"
+            alt=""
+            draggable="false" />
         </a>
 
-        <a href="${searchHref}" class="cigaros-topbar-link" aria-label="Search">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="10.5" cy="10.5" r="5.75" fill="none" stroke="currentColor"/>
-            <path d="M15 15l4.25 4.25" fill="none" stroke="currentColor" stroke-linecap="round"/>
-          </svg>
+        <a href="${searchHref}" class="cigaros-topbar-link cigaros-topbar-search" aria-label="Search">
+          <img
+            class="cigaros-topbar-icon"
+            data-topbar-role="search"
+            alt=""
+            draggable="false" />
         </a>
 
-        <a href="${favoritesHref}" class="cigaros-topbar-link" aria-label="Favorites">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m12 3.9 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.9l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76z" fill="none" stroke="currentColor" stroke-linejoin="round"/>
-          </svg>
+        <a href="${favoritesHref}" class="cigaros-topbar-link cigaros-topbar-favorites" aria-label="Favorites">
+          <img
+            class="cigaros-topbar-icon"
+            data-topbar-role="favorites"
+            alt=""
+            draggable="false" />
         </a>
       </div>
 
-      <a href="${cartHref}" class="cigaros-topbar-cart" aria-label="Cart">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3.5 5h2l2.1 9.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.77L20 8H7.1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="10" cy="18.5" r="1.25" fill="currentColor" stroke="none"/>
-          <circle cx="17.25" cy="18.5" r="1.25" fill="currentColor" stroke="none"/>
-        </svg>
+      <a href="${cartHref}" class="cigaros-topbar-side cigaros-topbar-cart" aria-label="Cart">
+        <img
+          class="cigaros-topbar-icon cigaros-topbar-cart-icon"
+          data-topbar-role="cart"
+          alt=""
+          draggable="false" />
         <span class="cigaros-topbar-cart-badge" hidden>0</span>
       </a>
     `;
 
-    const backBtn = wrap.querySelector(".cigaros-topbar-back");
-    const toggleBtn = wrap.querySelector(".cigaros-theme-toggle");
-
-    backBtn.addEventListener("click", () => {
+    wrap.querySelector(".cigaros-topbar-back")?.addEventListener("click", () => {
       if (window.history.length > 1) {
         window.history.back();
       } else {
@@ -128,44 +191,56 @@
       }
     });
 
-    toggleBtn.addEventListener("click", () => {
+    wrap.querySelector(".cigaros-topbar-toggle")?.addEventListener("click", () => {
       toggleTheme();
       syncCartBadges(document);
     });
 
+    syncTopbarAssets(wrap);
     syncCartBadges(wrap);
+
     return wrap;
   }
 
   function mount(selector, options = {}) {
-    const target = typeof selector === "string"
-      ? document.querySelector(selector)
-      : selector;
+    const target =
+      typeof selector === "string" ? document.querySelector(selector) : selector;
 
-    if (!target) return;
+    if (!target) return null;
 
     target.innerHTML = "";
-    target.appendChild(buildTopbar(options));
-    setTheme(getTheme());
+    const node = buildTopbar(options);
+    target.appendChild(node);
+
+    syncTopbarAssets(target);
     syncCartBadges(target);
+
+    return node;
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    setTheme(getTheme());
+    const theme = getTheme();
+    document.documentElement.setAttribute("data-theme", theme);
+    syncTopbarAssets(document);
     syncCartBadges(document);
   });
 
   window.addEventListener("storage", (e) => {
     if (e.key === STORAGE_KEY || e.key === "cigaros_cart") {
-      setTheme(getTheme());
+      const theme = getTheme();
+      document.documentElement.setAttribute("data-theme", theme);
+      syncTopbarAssets(document);
       syncCartBadges(document);
     }
   });
 
   window.CigarOSTopbar = {
     mount,
-    setTheme,
     getTheme,
-    refresh: () => syncCartBadges(document)
+    setTheme,
+    refresh() {
+      syncTopbarAssets(document);
+      syncCartBadges(document);
+    }
   };
 })();
