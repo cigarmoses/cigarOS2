@@ -19,7 +19,7 @@
   --toggle-track:#c7d1de;
   --toggle-knob:#ffffff;
 
-  --shadow:0 12px 28px rgba(0,0,0,.22);
+  --shadow:0 10px 24px rgba(0,0,0,.18);
 }
 
 html[data-theme="light"]{
@@ -40,7 +40,7 @@ html[data-theme="light"]{
   --toggle-track:#c7d1de;
   --toggle-knob:#ffffff;
 
-  --shadow:0 12px 26px rgba(15,26,44,.08);
+  --shadow:0 10px 22px rgba(15,26,44,.08);
 }
 
 *{ box-sizing:border-box; }
@@ -54,6 +54,7 @@ body.cigar-detail-page{
     radial-gradient(900px 600px at 90% 10%, var(--bg-grad-2), transparent 55%),
     var(--bg);
   font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  overflow:hidden;
 }
 
 .cd-topbar{
@@ -61,30 +62,31 @@ body.cigar-detail-page{
   top:0;
   z-index:20;
   display:grid;
-  grid-template-columns:44px 1fr 44px;
+  grid-template-columns:48px 1fr 48px;
   align-items:center;
-  gap:10px;
-  padding:10px 14px 8px;
-  padding-top:calc(10px + var(--safe-top));
+  gap:8px;
+  padding:8px 14px 6px;
+  padding-top:calc(8px + var(--safe-top));
   background:transparent;
 }
 
 .cd-back{
-  width:44px;
-  height:44px;
+  width:48px;
+  height:48px;
   border:0;
-  border-radius:14px;
+  border-radius:16px;
   padding:0;
   display:grid;
   place-items:center;
-  background:transparent;
+  background:rgba(255,255,255,.04);
   color:var(--text);
   -webkit-tap-highlight-color:transparent;
   cursor:pointer;
+  box-shadow:var(--shadow);
 }
 
 .cd-back svg{ width:22px; height:22px; }
-.cd-topbar-spacer{ width:44px; height:44px; }
+.cd-topbar-spacer{ width:48px; height:48px; }
 
 .cd-theme-dock,
 .theme-dock{
@@ -97,7 +99,7 @@ body.cigar-detail-page{
 .moon-toggle{
   position:relative;
   width:58px;
-  height:32px;
+  height:34px;
   border:0;
   padding:0;
   border-radius:999px;
@@ -120,8 +122,8 @@ body.cigar-detail-page{
   position:absolute;
   top:3px;
   left:3px;
-  width:26px;
-  height:26px;
+  width:28px;
+  height:28px;
   border-radius:999px;
   background:var(--toggle-knob);
   box-shadow:0 3px 8px rgba(0,0,0,.18);
@@ -130,16 +132,26 @@ body.cigar-detail-page{
 
 html[data-theme="dark"] #theme-toggle.moon-toggle .moon-knob,
 html[data-theme="dark"] .moon-toggle .moon-knob{
-  transform:translateX(26px);
+  transform:translateX(24px);
 }
 
 .cd-wrap{
-  width:min(430px, calc(100% - 16px));
+  width:min(430px, calc(100% - 14px));
   margin:0 auto;
-  padding:2px 0 calc(18px + var(--safe-bottom));
+  height:calc(100dvh - var(--safe-top) - 64px);
+  padding:2px 0 calc(8px + var(--safe-bottom));
 }
 
-.cd-shell{ min-height:1px; }
+.cd-shell{
+  height:100%;
+  min-height:1px;
+}
+
+#cdCard{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+}
 
 .cd-loading{
   padding:24px 8px;
@@ -151,8 +163,9 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  gap:12px;
-  padding:0 2px 10px;
+  gap:10px;
+  padding:0 2px 8px;
+  flex:0 0 auto;
 }
 
 .cd-head-copy{
@@ -161,7 +174,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-brand{
-  font:700 34px/.94 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:800 32px/.92 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.045em;
   color:var(--text);
   white-space:nowrap;
@@ -170,9 +183,9 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-name{
-  margin-top:6px;
-  font:500 18px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.025em;
+  margin-top:4px;
+  font:500 15px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.02em;
   color:var(--muted);
   white-space:nowrap;
   overflow:hidden;
@@ -180,17 +193,17 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-badge{
-  width:70px;
-  height:70px;
+  width:72px;
+  height:72px;
   object-fit:contain;
   object-position:center;
-  flex:0 0 70px;
+  flex:0 0 72px;
 }
 
 .cd-badge-placeholder{
-  width:70px;
-  height:70px;
-  border-radius:16px;
+  width:72px;
+  height:72px;
+  border-radius:18px;
   display:grid;
   place-items:center;
   color:var(--muted-2);
@@ -198,14 +211,16 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   background:var(--surface-soft);
   font:700 11px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   text-transform:uppercase;
-  flex:0 0 70px;
+  flex:0 0 72px;
 }
 
 .cd-grid{
   display:grid;
-  grid-template-columns:92px 1fr;
+  grid-template-columns:116px 1fr;
   gap:10px;
   align-items:start;
+  flex:1 1 auto;
+  min-height:0;
 }
 
 .cd-left{
@@ -213,21 +228,24 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   display:flex;
   justify-content:center;
   align-items:flex-start;
-  padding-top:2px;
+  height:100%;
 }
 
 .cd-stick{
   display:block;
-  width:100%;
-  max-width:76px;
+  width:auto;
+  max-width:108px;
+  max-height:min(56dvh, 620px);
   height:auto;
   object-fit:contain;
+  object-position:top center;
 }
 
 .cd-stick-placeholder{
-  width:76px;
-  height:220px;
-  border-radius:16px;
+  width:108px;
+  height:min(56dvh, 620px);
+  min-height:360px;
+  border-radius:18px;
   display:grid;
   place-items:center;
   color:var(--muted-2);
@@ -238,19 +256,24 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   padding:8px;
 }
 
-.cd-right{ min-width:0; }
+.cd-right{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:0;
+}
 
 .cd-stat-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px;
+  gap:8px;
 }
 
 .cd-mini-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:10px;
+  gap:8px;
 }
 
 .cd-card{
@@ -270,7 +293,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-stat{
-  min-height:102px;
+  min-height:86px;
   padding:12px 14px 10px;
   display:flex;
   flex-direction:column;
@@ -281,8 +304,8 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 .cd-stat-value{
   margin-top:auto;
   text-align:right;
-  font:700 38px/.9 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.045em;
+  font:800 28px/.9 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.04em;
   color:var(--text);
   white-space:nowrap;
   overflow:hidden;
@@ -290,7 +313,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-mini{
-  min-height:72px;
+  min-height:68px;
   padding:12px 14px 10px;
   display:flex;
   flex-direction:column;
@@ -301,7 +324,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 .cd-mini-value{
   margin-top:auto;
   text-align:right;
-  font:600 15px/1.04 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:700 14px/1.04 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.015em;
   color:var(--text);
   white-space:nowrap;
@@ -310,17 +333,17 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-tobaccos{
-  margin-top:10px;
-  padding:14px;
+  padding:12px 14px;
+  min-height:150px;
 }
 
-.cd-tobacco-row + .cd-tobacco-row{ margin-top:14px; }
+.cd-tobacco-row + .cd-tobacco-row{ margin-top:10px; }
 .cd-tobacco-row .cd-card-label{ text-align:right; }
 
 .cd-tobacco-value{
-  margin-top:6px;
+  margin-top:4px;
   text-align:right;
-  font:600 15px/1.04 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:700 14px/1.06 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.015em;
   color:var(--text);
   white-space:nowrap;
@@ -329,34 +352,35 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-origin,
-.cd-shade,
-.cd-accolades{
-  margin-top:10px;
+.cd-shade{
+  min-height:74px;
+  padding:12px 14px;
 }
 
-.cd-origin{
-  min-height:78px;
-  padding:14px;
-}
-
-.cd-origin .cd-card-label{ text-align:right; }
+.cd-origin .cd-card-label,
+.cd-shade .cd-card-label{ text-align:right; }
 
 .cd-origin-row{
-  margin-top:10px;
+  margin-top:8px;
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  gap:8px;
+  gap:7px;
 }
 
-.cd-origin-value{
+.cd-origin-value,
+.cd-shade-value{
   text-align:right;
-  font:600 15px/1.04 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:700 14px/1.04 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.015em;
   color:var(--text);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+}
+
+.cd-shade-value{
+  margin-top:8px;
 }
 
 .cd-flag{
@@ -365,62 +389,28 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   flex:0 0 auto;
 }
 
-.cd-shade{
-  min-height:78px;
-  padding:14px;
-}
-
-.cd-shade .cd-card-label{ text-align:right; }
-
-.cd-shade-value{
-  margin-top:10px;
-  text-align:right;
-  font:600 15px/1.04 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.015em;
-  color:var(--text);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
 .cd-accolades{
-  min-height:108px;
-  padding:14px;
+  min-height:74px;
+  padding:12px 14px;
 }
 
 .cd-accolades .cd-card-label{
   text-align:right;
-  font-size:10px;
 }
 
 .cd-accolade-list{
-  margin-top:12px;
+  margin-top:8px;
   display:grid;
-  gap:10px;
+  gap:6px;
 }
 
-.cd-accolade-row{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto auto;
-  align-items:end;
-  gap:8px;
-}
-
-.cd-accolade-media{
-  font:600 12px/1.12 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+.cd-accolade-line{
+  font:600 12px/1.15 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   color:var(--text);
-  opacity:.92;
+  opacity:.94;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-}
-
-.cd-accolade-year,
-.cd-accolade-rank{
-  font:600 14px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.02em;
-  white-space:nowrap;
-  color:var(--text);
 }
 
 .cd-accolade-empty{
@@ -430,18 +420,18 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 
 .cd-actions{
   display:grid;
-  grid-template-columns:40px 1fr 1fr 1fr;
+  grid-template-columns:1fr 1fr 1fr;
   gap:8px;
-  margin-top:10px;
+  margin-top:auto;
 }
 
 .cd-action{
-  min-height:42px;
+  min-height:44px;
   border-radius:14px;
   border:1px solid var(--border);
   background:transparent;
-  color:color-mix(in srgb, var(--text) 84%, transparent);
-  font:700 10px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  color:color-mix(in srgb, var(--text) 88%, transparent);
+  font:700 11px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.01em;
   text-transform:uppercase;
   white-space:nowrap;
@@ -454,21 +444,24 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   color:var(--text);
 }
 
-.cd-action--icon{
-  font-size:16px;
-  padding:0;
+.cd-msrp{
+  margin-top:6px;
+  text-align:right;
+  color:var(--muted);
+  font:600 11px/1.1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
 }
 
 @media (max-width:390px){
-  .cd-wrap{ width:calc(100% - 14px); }
-  .cd-brand{ font-size:31px; }
-  .cd-name{ font-size:17px; }
-  .cd-grid{ grid-template-columns:84px 1fr; gap:9px; }
-  .cd-stick{ max-width:70px; }
-  .cd-stick-placeholder{ width:70px; height:206px; }
-  .cd-stat-value{ font-size:34px; }
+  .cd-wrap{ width:calc(100% - 12px); }
+  .cd-brand{ font-size:30px; }
+  .cd-name{ font-size:14px; }
+  .cd-grid{ grid-template-columns:108px 1fr; gap:8px; }
+  .cd-stick{ max-width:100px; }
+  .cd-stick-placeholder{ width:100px; min-height:340px; }
+  .cd-stat-value{ font-size:24px; }
   .cd-mini-value,
   .cd-tobacco-value,
   .cd-origin-value,
-  .cd-shade-value{ font-size:14px; }
+  .cd-shade-value{ font-size:13px; }
+  .cd-accolade-line{ font-size:11px; }
 }
