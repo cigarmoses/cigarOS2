@@ -28,6 +28,9 @@
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "light" || saved === "dark") return saved;
 
+    const legacy = localStorage.getItem("theme");
+    if (legacy === "light" || legacy === "dark") return legacy;
+
     const docTheme = document.documentElement.getAttribute("data-theme");
     if (docTheme === "light" || docTheme === "dark") return docTheme;
 
@@ -42,6 +45,7 @@
     const nextTheme = theme === "dark" ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", nextTheme);
     localStorage.setItem(STORAGE_KEY, nextTheme);
+    localStorage.setItem("theme", nextTheme);
     syncTopbarAssets();
   }
 
@@ -112,7 +116,7 @@
       homeHref = "/",
       searchHref = "/search/",
       favoritesHref = "/pos/favorites/",
-      cartHref = "/pos/cart/"
+      cartHref = "/pos/invoice/"
     } = options;
 
     const wrap = document.createElement("header");
@@ -194,6 +198,7 @@
     wrap.querySelector(".cigaros-topbar-toggle")?.addEventListener("click", () => {
       toggleTheme();
       syncCartBadges(document);
+      document.dispatchEvent(new CustomEvent("cigaros:theme-changed", { detail: { theme: getTheme() } }));
     });
 
     syncTopbarAssets(wrap);
@@ -226,7 +231,7 @@
   });
 
   window.addEventListener("storage", (e) => {
-    if (e.key === STORAGE_KEY || e.key === "cigaros_cart") {
+    if (e.key === STORAGE_KEY || e.key === "theme" || e.key === "cigaros_cart") {
       const theme = getTheme();
       document.documentElement.setAttribute("data-theme", theme);
       syncTopbarAssets(document);
