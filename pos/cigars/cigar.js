@@ -3,7 +3,9 @@
    - Reads Google Sheets CSV
    - Opens by ?id= or ?slug=
    - Uses universal /pos/cart.js cart
-   - Matches current cigar.css layout
+   - Inline edit mode on page
+   - Save currently updates the live page/local record immediately
+   - To save back to Google Sheets, add an Apps Script/webhook URL below
 */
 
 (() => {
@@ -12,14 +14,26 @@
   const SHEET_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
+  // Optional: paste your Apps Script / webhook URL here later.
+  // Example:
+  // const SHEET_SAVE_ENDPOINT = "https://script.google.com/macros/s/XXXXX/exec";
+  const SHEET_SAVE_ENDPOINT = "";
+
   const FAVORITES_KEY = "cigaros_favorite_keys";
   const COMPARE_KEY = "cigaros_compare_keys";
 
   const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
   const card = $("#cdCard");
   const loading = $("#cdLoading");
   const backBtn = $("#cdBack");
   const themeToggle = $("#theme-toggle");
+
+  let recordsCache = [];
+  let activeRecord = null;
+  let editMode = false;
+  let draft = null;
 
   function getParam(name) {
     const u = new URL(window.location.href);
@@ -166,6 +180,11 @@
       if (value != null && String(value).trim() !== "") return String(value).trim();
     }
     return "";
+  }
+
+  function setField(rec, primaryKey, value) {
+    rec[primaryKey] = value;
+    rec[normalizeHeader(primaryKey)] = value;
   }
 
   function getCigarId(rec) {
@@ -482,6 +501,182 @@
     return Array.from(new Set(out.filter(Boolean)));
   }
 
+  function makeDraftFromRecord(rec) {
+    return {
+      brand: getBrand(rec),
+      line: getLine(rec),
+      name: getName(rec),
+      vitola: getVitola(rec),
+      shape: getShape(rec),
+      wrapper: getWrapper(rec),
+      binder: getBinder(rec),
+      filler: getFiller(rec),
+      origin: getOrigin(rec),
+      shade: getShade(rec),
+      strength: getStrength(rec),
+      ring: getRing(rec),
+      length: getLength(rec),
+      msrp: getPrice(rec) > 0 ? String(getPrice(rec)) : ""
+    };
+  }
+
+  function applyDraftToRecord(rec, nextDraft) {
+    setField(rec, "Brand", nextDraft.brand);
+    setField(rec, "Line", nextDraft.line);
+    setField(rec, "Cigar", nextDraft.name);
+    setField(rec, "Vitola", nextDraft.vitola);
+    setField(rec, "Shape", nextDraft.shape);
+    setField(rec, "Wrapper", nextDraft.wrapper);
+    setField(rec, "Binder", nextDraft.binder);
+    setField(rec, "Filler", nextDraft.filler);
+    setField(rec, "Origin", nextDraft.origin);
+    setField(rec, "Wrapper Shade", nextDraft.shade);
+    setField(rec, "Strength", nextDraft.strength);
+    setField(rec, "Ring", nextDraft.ring);
+    setField(rec, "Length", nextDraft.length);
+    setField(rec, "MSRP", nextDraft.msrp);
+  }
+
+  async function persistDraftToSheet(rec, nextDraft) {
+    if (!SHEET_SAVE_ENDPOINT) return false;
+
+    const payload = {
+      key: getCigarId(rec),
+      brand: nextDraft.brand,
+      line: nextDraft.line,
+      cigar: nextDraft.name,
+      vitola: nextDraft.vitola,
+      shape: nextDraft.shape,
+      wrapper: nextDraft.wrapper,
+      binder: nextDraft.binder,
+      filler: nextDraft.filler,
+      origin: nextDraft.origin,
+      wrapperShade: nextDraft.shade,
+      strength: nextDraft.strength,
+      ring: nextDraft.ring,
+      length: nextDraft.length,
+      msrp: nextDraft.msrp
+    };
+
+    const res = await fetch(SHEET_SAVE_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+    return true;
+  }
+
+  function renderTextInput(field, value, cls = "cd-inline-input", placeholder = "") {
+    return `<input
+      class="${cls}"
+      data-edit-field="${field}"
+      type="text"
+      value="${escapeAttr(value || "")}"
+      placeholder="${escapeAttr(placeholder)}"
+      autocapitalize="off"
+      autocomplete="off"
+      spellcheck="false"
+    >`;
+  }
+
+  function renderTopCopy(brand, line, name) {
+    if (!editMode || !draft) {
+      const displayName = [line, name].filter(Boolean).join(" ").trim() || name || line || "—";
+      return `
+        <div class="cd-head-copy">
+          <div class="cd-brand" title="${escapeAttr(brand || "—")}">${escapeHTML(brand || "—")}</div>
+          <div class="cd-name" title="${escapeAttr(displayName)}">${escapeHTML(displayName)}</div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="cd-head-copy cd-head-copy--editing">
+        ${renderTextInput("brand", draft.brand, "cd-brand-input", "Brand")}
+        <div class="cd-head-edit-grid">
+          ${renderTextInput("line", draft.line, "cd-name-input", "Line")}
+          ${renderTextInput("name", draft.name, "cd-name-input", "Cigar")}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSpecCard(label, fieldKey, value, opts = {}) {
+    const valueClass = opts.text ? "cd-spec-value spec-text" : "cd-spec-value";
+    const renderedValue = editMode && draft
+      ? renderTextInput(fieldKey, draft[fieldKey], `cd-edit-input ${opts.text ? "is-text" : ""}`, label)
+      : `<div class="${valueClass}" title="${escapeAttr(value)}">${escapeHTML(value)}</div>`;
+
+    return `
+      <div class="cd-card cd-spec">
+        <div class="cd-card-label">${label}</div>
+        ${renderedValue}
+      </div>
+    `;
+  }
+
+  function renderTobaccoRow(label, fieldKey, value) {
+    const renderedValue = editMode && draft
+      ? `<textarea class="cd-edit-textarea" data-edit-field="${fieldKey}" rows="2" placeholder="${escapeAttr(label)}">${escapeHTML(draft[fieldKey] || "")}</textarea>`
+      : `<div class="cd-tobacco-value wrap-text" title="${escapeAttr(value)}">${escapeHTML(value)}</div>`;
+
+    return `
+      <div class="cd-tobacco-row">
+        <div class="cd-card-label">${label}</div>
+        ${renderedValue}
+      </div>
+    `;
+  }
+
+  function renderOriginCard(origin, flag) {
+    if (editMode && draft) {
+      return `
+        <div class="cd-card cd-origin">
+          <div class="cd-card-label">Origin</div>
+          <div class="cd-origin-row is-editing">
+            ${renderTextInput("origin", draft.origin, "cd-edit-input cd-edit-input--origin", "Country")}
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="cd-card cd-origin">
+        <div class="cd-card-label">Origin</div>
+        <div class="cd-origin-row">
+          <div class="cd-origin-value" title="Rolled in ${escapeAttr(origin)}">
+            Rolled in ${escapeHTML(origin)}
+          </div>
+          ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderActionRow() {
+    if (editMode) {
+      return `
+        <div class="cd-actions is-editing">
+          <button class="cd-action" type="button" id="cdCancelEdit">Cancel</button>
+          <button class="cd-action cd-action--primary" type="button" id="cdSaveEdit">Save</button>
+          <button class="cd-action" type="button" id="cdFavorite">+ Favorites</button>
+          <button class="cd-action" type="button" id="cdWishlist">+ Wishlist</button>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="cd-actions">
+        <button class="cd-action" type="button" id="cdCompare">Compare</button>
+        <button class="cd-action" type="button" id="cdFavorite">+ Favorites</button>
+        <button class="cd-action" type="button" id="cdWishlist">+ Wishlist</button>
+        <button class="cd-action" type="button" id="cdEdit">Edit</button>
+      </div>
+    `;
+  }
+
   function addCurrentCigarToCart(rec) {
     const cartApi = window.cigarOSCart;
     if (!cartApi || typeof cartApi.add !== "function") return;
@@ -504,7 +699,19 @@
     });
   }
 
+  function bindDraftInputs() {
+    $$("[data-edit-field]", card).forEach((el) => {
+      const field = el.dataset.editField;
+      el.addEventListener("input", (e) => {
+        if (!draft) return;
+        draft[field] = e.target.value;
+      });
+    });
+  }
+
   function render(records, rec) {
+    activeRecord = rec;
+
     const id = getCigarId(rec);
     const brand = getBrand(rec);
     const line = getLine(rec);
@@ -521,21 +728,20 @@
     const length = getLength(rec) || "—";
     const cigarImgCandidates = buildCigarImageCandidates(rec);
     const brandImgCandidates = buildBrandIconCandidates(rec);
-    const flag = flagForCountry(origin);
+    const flag = flagForCountry(editMode && draft ? draft.origin : origin);
     const accolades = collectAccolades(records, rec);
 
     document.title = bestTitle(rec);
 
-    const displayName = [line, name].filter(Boolean).join(" ").trim() || name || line || "—";
-    const msrp = getPrice(rec);
+    const msrp = editMode && draft
+      ? Number(String(draft.msrp).replace(/[^0-9.]/g, ""))
+      : getPrice(rec);
+
     const msrpText = Number.isFinite(msrp) && msrp > 0 ? `$${msrp.toFixed(2)}` : "";
 
     card.innerHTML = `
       <div class="cd-head">
-        <div class="cd-head-copy">
-          <div class="cd-brand" title="${escapeAttr(brand || "—")}">${escapeHTML(brand || "—")}</div>
-          <div class="cd-name" title="${escapeAttr(displayName)}">${escapeHTML(displayName)}</div>
-        </div>
+        ${renderTopCopy(brand, line, name)}
 
         ${
           brandImgCandidates.length
@@ -558,7 +764,7 @@
                   id="cdStickImage"
                   src="${escapeAttr(cigarImgCandidates[0])}"
                   data-fallbacks='${escapeAttr(JSON.stringify(cigarImgCandidates.slice(1)))}'
-                  alt="${escapeAttr(displayName)}"
+                  alt="${escapeAttr([line, name].filter(Boolean).join(" ").trim() || name || line || "Cigar")}"
                   loading="lazy"
                   decoding="async">`
               : `<div class="cd-stick-placeholder">No image</div>`
@@ -567,72 +773,22 @@
 
         <div class="cd-right">
           <div class="cd-spec-grid">
-            <div class="cd-card cd-spec">
-              <div class="cd-card-label">Ring</div>
-              <div class="cd-spec-value" title="${escapeAttr(ring)}">${escapeHTML(ring)}</div>
-            </div>
-
-            <div class="cd-card cd-spec">
-              <div class="cd-card-label">Length</div>
-              <div class="cd-spec-value" title="${escapeAttr(length)}">${escapeHTML(length)}</div>
-            </div>
-
-            <div class="cd-card cd-spec">
-              <div class="cd-card-label">Vitola</div>
-              <div class="cd-spec-value spec-text" title="${escapeAttr(vitola)}">${escapeHTML(vitola)}</div>
-            </div>
-
-            <div class="cd-card cd-spec">
-              <div class="cd-card-label">Wrapper Shade</div>
-              <div class="cd-spec-value spec-text" title="${escapeAttr(shade)}">${escapeHTML(shade)}</div>
-            </div>
-
-            <div class="cd-card cd-spec">
-              <div class="cd-card-label">Strength</div>
-              <div class="cd-spec-value spec-text" title="${escapeAttr(strength)}">${escapeHTML(strength)}</div>
-            </div>
-
-            <div class="cd-card cd-spec">
-              <div class="cd-card-label">Shape</div>
-              <div class="cd-spec-value spec-text" title="${escapeAttr(shape)}">${escapeHTML(shape)}</div>
-            </div>
+            ${renderSpecCard("Ring", "ring", editMode && draft ? draft.ring || "—" : ring)}
+            ${renderSpecCard("Length", "length", editMode && draft ? draft.length || "—" : length)}
+            ${renderSpecCard("Vitola", "vitola", editMode && draft ? draft.vitola || "—" : vitola, { text: true })}
+            ${renderSpecCard("Wrapper Shade", "shade", editMode && draft ? draft.shade || "—" : shade, { text: true })}
+            ${renderSpecCard("Strength", "strength", editMode && draft ? draft.strength || "—" : strength, { text: true })}
+            ${renderSpecCard("Shape", "shape", editMode && draft ? draft.shape || "—" : shape, { text: true })}
           </div>
 
           <div class="cd-card cd-tobaccos">
-            <div class="cd-tobacco-row">
-              <div class="cd-card-label">Wrapper</div>
-              <div class="cd-tobacco-value wrap-text" title="${escapeAttr(wrapper)}">${escapeHTML(wrapper)}</div>
-            </div>
-
-            <div class="cd-tobacco-row">
-              <div class="cd-card-label">Binder</div>
-              <div class="cd-tobacco-value wrap-text" title="${escapeAttr(binder)}">${escapeHTML(binder)}</div>
-            </div>
-
-            <div class="cd-tobacco-row">
-              <div class="cd-card-label">Filler</div>
-              <div class="cd-tobacco-value wrap-text" title="${escapeAttr(filler)}">${escapeHTML(filler)}</div>
-            </div>
+            ${renderTobaccoRow("Wrapper", "wrapper", wrapper)}
+            ${renderTobaccoRow("Binder", "binder", binder)}
+            ${renderTobaccoRow("Filler", "filler", filler)}
           </div>
 
-<div class="cd-meta-stack">
-  <div class="cd-card cd-origin">
-    <div class="cd-card-label">Origin</div>
-
-    <div class="cd-origin-row">
-      <div class="cd-origin-value" title="Rolled in ${escapeAttr(origin)}">
-        Rolled in ${escapeHTML(origin)}
-      </div>
-
-      ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
-    </div>
-  </div>
-
-  <div class="cd-card cd-accolades">
-    <div class="cd-card-label">Accolades</div>
-    <div class="cd-accolade-list">${renderAccolades(accolades)}</div>
-  </div>
-</div>
+          <div class="cd-meta-stack">
+            ${renderOriginCard(editMode && draft ? draft.origin || "—" : origin, flag)}
 
             <div class="cd-card cd-accolades">
               <div class="cd-card-label">Accolades</div>
@@ -640,14 +796,18 @@
             </div>
           </div>
 
-<div class="cd-actions">
-  <button class="cd-action" type="button" id="cdCompare">Compare</button>
-  <button class="cd-action" type="button" id="cdFavorite">+ Favorites</button>
-  <button class="cd-action" type="button" id="cdWishlist">+ Wishlist</button>
-  <button class="cd-action" type="button" id="cdEdit">Edit</button>
-</div>
+          ${renderActionRow()}
 
-          ${msrpText ? `<div class="cd-msrp">MSRP ${escapeHTML(msrpText)}</div>` : ``}
+          ${
+            editMode
+              ? `<div class="cd-msrp-edit">
+                  <div class="cd-card-label">MSRP</div>
+                  ${renderTextInput("msrp", draft?.msrp || "", "cd-edit-input cd-edit-input--msrp", "MSRP")}
+                </div>`
+              : msrpText
+                ? `<div class="cd-msrp">MSRP ${escapeHTML(msrpText)}</div>`
+                : ``
+          }
         </div>
       </div>
     `;
@@ -659,6 +819,8 @@
     const compareBtn = $("#cdCompare");
     const wishlistBtn = $("#cdWishlist");
     const editBtn = $("#cdEdit");
+    const cancelEditBtn = $("#cdCancelEdit");
+    const saveEditBtn = $("#cdSaveEdit");
 
     function syncUI() {
       favoriteBtn?.classList.toggle("is-on", favoriteSet.has(id));
@@ -687,12 +849,44 @@
       addCurrentCigarToCart(rec);
     });
 
-editBtn?.addEventListener("click", () => {
-  // placeholder — hook your editor here
-  alert("Edit mode coming next");
-});
-     
+    editBtn?.addEventListener("click", () => {
+      draft = makeDraftFromRecord(rec);
+      editMode = true;
+      render(recordsCache, activeRecord);
+    });
+
+    cancelEditBtn?.addEventListener("click", () => {
+      editMode = false;
+      draft = null;
+      render(recordsCache, activeRecord);
+    });
+
+    saveEditBtn?.addEventListener("click", async () => {
+      if (!activeRecord || !draft) return;
+
+      applyDraftToRecord(activeRecord, draft);
+
+      try {
+        const wroteToSheet = await persistDraftToSheet(activeRecord, draft);
+        editMode = false;
+        draft = null;
+        render(recordsCache, activeRecord);
+
+        if (!wroteToSheet) {
+          alert("Saved on page. To save back to Google Sheets too, add your Apps Script/webhook URL to SHEET_SAVE_ENDPOINT in cigar.js.");
+        }
+      } catch (err) {
+        console.warn("[cigar detail] sheet save error:", err);
+        editMode = false;
+        draft = null;
+        render(recordsCache, activeRecord);
+        alert("Saved on page, but sheet save failed.");
+      }
+    });
+
     syncUI();
+
+    if (editMode) bindDraftInputs();
 
     wireImageFallback($("#cdBrandBadge"), "cd-badge-placeholder", "Brand");
     wireImageFallback($("#cdStickImage"), "cd-stick-placeholder", "No image");
@@ -748,6 +942,7 @@ editBtn?.addEventListener("click", () => {
 
       const rows = parseCSV(csvText);
       const records = rowsToObjects(rows);
+      recordsCache = records;
 
       let rec = null;
 
@@ -765,6 +960,7 @@ editBtn?.addEventListener("click", () => {
         return;
       }
 
+      activeRecord = rec;
       render(records, rec);
     } catch (e) {
       card.innerHTML = `<div class="cd-loading">Error loading cigar data.</div>`;
