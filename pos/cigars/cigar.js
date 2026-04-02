@@ -615,14 +615,19 @@
             </div>
           </div>
 
-          <div class="cd-meta-grid">
-            <div class="cd-card cd-origin">
-              <div class="cd-card-label">Origin</div>
-              <div class="cd-origin-row">
-                <div class="cd-origin-value" title="${escapeAttr(origin)}">${escapeHTML(origin)}</div>
-                ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
-              </div>
-            </div>
+<div class="cd-meta-grid">
+  <div class="cd-card cd-origin">
+    <div class="cd-card-label">Origin</div>
+
+    <div class="cd-origin-row">
+      <div class="cd-origin-value" title="Rolled in ${escapeAttr(origin)}">
+        Rolled in ${escapeHTML(origin)}
+      </div>
+
+      ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
+    </div>
+  </div>
+</div>
 
             <div class="cd-card cd-accolades">
               <div class="cd-card-label">Accolades</div>
