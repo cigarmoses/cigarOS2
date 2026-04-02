@@ -39,26 +39,31 @@
     },
   };
 
-  function getParam(name){
-    try { return new URL(window.location.href).searchParams.get(name) || ""; }
-    catch { return ""; }
+  function getParam(name) {
+    try {
+      return new URL(window.location.href).searchParams.get(name) || "";
+    } catch {
+      return "";
+    }
   }
 
-  function normalizeBrand(v){
+  function normalizeBrand(v) {
     return String(v || "")
       .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "");
   }
 
-    function normalizeAssetPath(path){
+  function normalizeAssetPath(path) {
     const value = String(path || "").trim();
     if (!value) return "";
     if (/^https?:\/\//i.test(value)) return value;
     return value.startsWith("/") ? value : `/${value}`;
   }
 
-  function esc(s){
+  function esc(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
@@ -67,42 +72,49 @@
       .replaceAll("'", "&#039;");
   }
 
-  function fmtMoney(v){
-    const n = Number(v);
-    return Number.isFinite(n) ? n.toFixed(2) : "";
+  function parseMoneyValue(v) {
+    const cleaned = String(v || "").replace(/[^0-9.-]/g, "").trim();
+    if (!cleaned) return 0;
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : 0;
   }
 
-  function parseCSV(text){
+  function fmtMoney(v) {
+    const n = parseMoneyValue(v);
+    return Number.isFinite(n) && n > 0 ? n.toFixed(2) : "";
+  }
+
+  function parseCSV(text) {
     const rows = [];
     let cur = [];
     let field = "";
     let inQuotes = false;
 
-    for(let i = 0; i < text.length; i++){
+    for (let i = 0; i < text.length; i++) {
       const ch = text[i];
       const next = text[i + 1];
 
-      if(inQuotes){
-        if(ch === '"' && next === '"'){
+      if (inQuotes) {
+        if (ch === '"' && next === '"') {
           field += '"';
           i++;
-        } else if(ch === '"'){
+        } else if (ch === '"') {
           inQuotes = false;
         } else {
           field += ch;
         }
       } else {
-        if(ch === '"'){
+        if (ch === '"') {
           inQuotes = true;
-        } else if(ch === ","){
+        } else if (ch === ",") {
           cur.push(field);
           field = "";
-        } else if(ch === "\n"){
+        } else if (ch === "\n") {
           cur.push(field);
           rows.push(cur);
           cur = [];
           field = "";
-        } else if(ch !== "\r"){
+        } else if (ch !== "\r") {
           field += ch;
         }
       }
@@ -113,7 +125,7 @@
     return rows;
   }
 
-  function normalizeHeader(h){
+  function normalizeHeader(h) {
     return String(h || "")
       .trim()
       .toLowerCase()
@@ -122,98 +134,104 @@
       .replace(/ /g, "_");
   }
 
-  function mapRows(csv){
+  function mapRows(csv) {
     const header = csv[0] || [];
     const keys = header.map(normalizeHeader);
     const out = [];
 
-    for(let i = 1; i < csv.length; i++){
+    for (let i = 1; i < csv.length; i++) {
       const r = csv[i];
-      if(!r || r.every((c) => !String(c || "").trim())) continue;
+      if (!r || r.every((c) => !String(c || "").trim())) continue;
       const obj = {};
-      keys.forEach((k, idx) => { obj[k] = (r[idx] ?? "").trim(); });
+      keys.forEach((k, idx) => {
+        obj[k] = (r[idx] ?? "").trim();
+      });
       out.push(obj);
     }
 
     return out;
   }
 
-  function getField(r, keys){
-    for(const k of keys){
-      if(r[k]) return String(r[k]).trim();
+  function getField(r, keys) {
+    for (const k of keys) {
+      if (r[k]) return String(r[k]).trim();
     }
     return "";
   }
 
-  function resolveBrandVal(r){
+  function resolveBrandVal(r) {
     return getField(r, ["brand", "brand_name", "manufacturer_brand", "cigar_brand", "manufacturer"]);
   }
 
-function resolveId(r){
-  return getField(r, ["key", "cigar_id", "id", "row_id", "name", "cigar", "title"]);
-}
+  function resolveId(r) {
+    return getField(r, ["key", "cigar_id", "id", "row_id", "name", "cigar", "title"]);
+  }
 
-  function resolveName(r){
+  function resolveName(r) {
     return getField(r, ["cigar", "name", "title"]);
   }
 
-  function resolveVitola(r){
+  function resolveVitola(r) {
     return getField(r, ["vitola", "style", "vitola_name"]);
   }
 
-  function resolvePrice(r){
-    return fmtMoney(getField(r, ["msrp", "price", "cost"]));
+  function resolvePrice(r) {
+    return fmtMoney(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
   }
 
-  function resolveRing(r){
+  function resolvePriceNumber(r) {
+    return parseMoneyValue(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
+  }
+
+  function resolveRing(r) {
     return getField(r, ["ring", "ring_gauge", "rg"]);
   }
 
-  function resolveLength(r){
+  function resolveLength(r) {
     return getField(r, ["length"]);
   }
 
-  function resolveShape(r){
+  function resolveShape(r) {
     return getField(r, ["shape"]);
   }
 
-  function resolveWrapper(r){
+  function resolveWrapper(r) {
     return getField(r, ["wrapper"]);
   }
 
-  function resolveBinder(r){
+  function resolveBinder(r) {
     return getField(r, ["binder"]);
   }
 
-  function resolveFiller(r){
+  function resolveFiller(r) {
     return getField(r, ["filler"]);
   }
 
-  function resolveOrigin(r){
+  function resolveOrigin(r) {
     return getField(r, ["origin", "country_of_origin", "country"]);
   }
 
-  function resolveStrength(r){
+  function resolveStrength(r) {
     return getField(r, ["strength"]);
   }
 
-  function resolveShade(r){
+  function resolveShade(r) {
     return getField(r, ["wrapper_shade", "wrapper_shade_type", "shade", "wrapper"]);
   }
 
-  function resolveImage(r){
+  function resolveImage(r) {
     return getField(r, ["cigar_img", "image", "img", "photo", "cigar_image"]);
   }
 
-    function resolveBrandImage(r){
+  function resolveBrandImage(r) {
     return getField(r, ["brand_img", "brand_image", "brandicon", "brand_icon"]);
   }
 
-  function resolveUrl(r){
+  function resolveUrl(r) {
     return getField(r, ["url", "link", "href", "page_url", "product_url", "slug_url"]);
   }
 
-  function resolveBand(r){
+  function resolveBand(r) {
     const direct = getField(r, ["band", "band_key", "band_group", "band_name"]);
     if (direct) return direct;
 
@@ -230,7 +248,7 @@ function resolveId(r){
     return "Padron Series";
   }
 
-  function resolveBandArt(r){
+  function resolveBandArt(r) {
     const direct = getField(r, [
       "band_art",
       "band_image",
@@ -253,88 +271,108 @@ function resolveId(r){
     return "/img/icons/padronseriesband.svg";
   }
 
-  function brandIconPath(){
+  function brandIconPath() {
     const row = state.rowsAll.find((r) => normalizeBrand(resolveBrandVal(r)) === normalizeBrand(state.brand));
     const fromSheet = normalizeAssetPath(row ? resolveBrandImage(row) : "");
     if (fromSheet) return fromSheet;
     return `/img/icons/brands/${normalizeBrand(state.brand)}.svg`;
   }
 
-  function setBrandHeader(){
+  function setBrandHeader() {
     brandTitle.textContent = state.brand || "Brand";
     brandIconImg.src = brandIconPath();
-    brandIconImg.onerror = () => { brandIconImg.style.visibility = "hidden"; };
+    brandIconImg.onerror = () => {
+      brandIconImg.style.visibility = "hidden";
+    };
   }
 
-  function getSavedTheme(){
+  function getSavedTheme() {
     return localStorage.getItem("theme") || document.documentElement.getAttribute("data-theme") || "dark";
   }
 
-  function applyTheme(theme){
+  function applyTheme(theme) {
     const next = theme === "light" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
     themeToggle?.setAttribute("aria-pressed", String(next === "dark"));
   }
 
-  function openBandsSheet(){
+  function openBandsSheet() {
     sheetBands.hidden = false;
     document.documentElement.classList.add("sheet-open");
   }
 
-  function closeBandsSheet(){
+  function closeBandsSheet() {
     sheetBands.hidden = true;
     document.documentElement.classList.remove("sheet-open");
   }
 
-  function openDetail(r){
+  function openDetail(r) {
     const id = resolveId(r);
     const href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
     window.location.href = href;
   }
 
-  function closeDetail(){
+  function closeDetail() {
     if (detailSheet) detailSheet.hidden = true;
   }
 
   let filterModal = null;
 
-  function ensureFilterModal(){
-    if(filterModal) return filterModal;
+  function ensureFilterModal() {
+    if (filterModal) return filterModal;
 
     const modal = document.createElement("div");
-    modal.className = "fm";
-    modal.hidden = true;
+    modal.className = "fm fm--hidden";
+    modal.setAttribute("aria-hidden", "true");
     modal.innerHTML = `
       <div class="fm__backdrop" data-fm-close></div>
-      <div class="fm__card" role="dialog" aria-modal="true" aria-label="Filters">
-        <div class="fm__head">
-          <div class="fm__title">Filters</div>
-          <button class="fm__close" type="button" data-fm-close aria-label="Close">×</button>
+      <div class="fm__sheet" role="dialog" aria-modal="true" aria-label="Filters">
+        <div class="fm__header">
+          <h2 class="fm__title">Filters</h2>
+          <button class="fm__close" type="button" data-fm-close aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
+            </svg>
+          </button>
         </div>
+
         <div class="fm__body">
-          <div class="fm__left"></div>
-          <div class="fm__right">
-            <div class="fm__search">
-              <span aria-hidden="true">🔎</span>
-              <input class="fm__searchInput" type="search" placeholder="Search" />
+          <div class="fm__cats"></div>
+
+          <div class="fm__panel">
+            <div class="fm__search-row">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M16 16l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              </svg>
+              <input class="fm__search-input" type="search" placeholder="Search" />
+              <button class="fm__mic-btn" type="button" aria-label="Clear search">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 15a3 3 0 0 0 3-3V8a3 3 0 1 0-6 0v4a3 3 0 0 0 3 3Z" fill="currentColor"></path>
+                  <path d="M19 11a7 7 0 0 1-14 0M12 18v3M9 21h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+              </button>
             </div>
+
             <div class="fm__list"></div>
           </div>
         </div>
-        <div class="fm__foot">
-          <button class="fm__btn fm__btn--ghost" type="button" data-fm-clear>Clear</button>
-          <button class="fm__btn fm__btn--primary" type="button" data-fm-apply>Apply</button>
+
+        <div class="fm__actions">
+          <button class="fm__btn fm__btn--reset" type="button" data-fm-clear>Reset</button>
+          <button class="fm__btn fm__btn--apply" type="button" data-fm-apply>Apply</button>
         </div>
       </div>
     `;
     document.body.appendChild(modal);
 
-    const left = $(".fm__left", modal);
+    const cats = $(".fm__cats", modal);
     const list = $(".fm__list", modal);
-    const input = $(".fm__searchInput", modal);
+    const input = $(".fm__search-input", modal);
+    const micBtn = $(".fm__mic-btn", modal);
 
-    const cats = [
+    const categoryDefs = [
       { key: "vitola", label: "Vitolas" },
       { key: "ring", label: "Ring" },
       { key: "length", label: "Length" },
@@ -346,52 +384,86 @@ function resolveId(r){
     let activeKey = "vitola";
     let dataByKey = {};
 
-    const renderLeft = () => {
-      left.innerHTML = "";
-      cats.forEach((c) => {
+    function renderCats() {
+      cats.innerHTML = "";
+      categoryDefs.forEach((c) => {
         const b = document.createElement("button");
         b.type = "button";
-        b.className = `fm__cat${activeKey === c.key ? " is-on" : ""}`;
+        b.className = `fm__cat-btn${activeKey === c.key ? " is-active" : ""}`;
         b.textContent = c.label;
         b.addEventListener("click", () => {
           activeKey = c.key;
-          renderLeft();
+          renderCats();
           renderList();
         });
-        left.appendChild(b);
+        cats.appendChild(b);
       });
-    };
+    }
 
-    const renderList = () => {
+    function renderList() {
       const q = String(input.value || "").trim().toLowerCase();
       const values = (dataByKey[activeKey] || []).filter((v) => !q || v.toLowerCase().includes(q));
       list.innerHTML = "";
 
       values.forEach((value) => {
-        const row = document.createElement("label");
-        row.className = "fm__row";
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = `fm__row${state.filters[activeKey].has(value) ? " is-selected" : ""}`;
         row.innerHTML = `
-          <input type="checkbox" class="fm__check" />
-          <span>${esc(value)}</span>
+          <span class="fm__cb${state.filters[activeKey].has(value) ? " is-checked" : ""}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </span>
+          <span class="fm__icon"></span>
+          <span class="fm__label">${esc(value)}</span>
         `;
-        const cb = $("input", row);
-        cb.checked = state.filters[activeKey].has(value);
-        cb.addEventListener("change", () => {
-          if(cb.checked) state.filters[activeKey].add(value);
-          else state.filters[activeKey].delete(value);
+
+        row.addEventListener("click", () => {
+          if (state.filters[activeKey].has(value)) state.filters[activeKey].delete(value);
+          else state.filters[activeKey].add(value);
+          renderList();
         });
+
         list.appendChild(row);
       });
-    };
+    }
+
+    function open(data) {
+      dataByKey = data;
+      activeKey = "vitola";
+      input.value = "";
+      renderCats();
+      renderList();
+      modal.hidden = false;
+      modal.classList.remove("fm--hidden");
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("cigar-detail-open");
+    }
+
+    function close() {
+      modal.classList.remove("is-open");
+      modal.classList.add("fm--hidden");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("cigar-detail-open");
+      window.setTimeout(() => {
+        if (!modal.classList.contains("is-open")) modal.hidden = true;
+      }, 260);
+    }
 
     modal.addEventListener("click", (e) => {
       const t = e.target;
-      if(t && t.closest && t.closest("[data-fm-close]")) close();
-      if(t && t.closest && t.closest("[data-fm-clear]")){
+      if (t && t.closest && t.closest("[data-fm-close]")) {
+        close();
+        return;
+      }
+      if (t && t.closest && t.closest("[data-fm-clear]")) {
         Object.values(state.filters).forEach((set) => set.clear());
         renderList();
+        return;
       }
-      if(t && t.closest && t.closest("[data-fm-apply]")){
+      if (t && t.closest && t.closest("[data-fm-apply]")) {
         close();
         applyAll();
       }
@@ -399,29 +471,22 @@ function resolveId(r){
 
     input.addEventListener("input", renderList);
 
-    function open(data){
-      dataByKey = data;
-      activeKey = "vitola";
+    micBtn?.addEventListener("click", () => {
       input.value = "";
-      renderLeft();
       renderList();
-      modal.hidden = false;
-    }
-
-    function close(){
-      modal.hidden = true;
-    }
+      input.focus();
+    });
 
     filterModal = { open, close };
     return filterModal;
   }
 
-  function uniqSorted(vals, numeric = false){
+  function uniqSorted(vals, numeric = false) {
     const a = Array.from(new Set(vals.map((v) => String(v || "").trim()).filter(Boolean)));
-    return a.sort((x, y) => numeric ? (parseFloat(x) - parseFloat(y)) : x.localeCompare(y));
+    return a.sort((x, y) => (numeric ? parseFloat(x) - parseFloat(y) : x.localeCompare(y)));
   }
 
-  function buildFilterData(rows){
+  function buildFilterData(rows) {
     return {
       vitola: uniqSorted(rows.map(resolveVitola)),
       ring: uniqSorted(rows.map(resolveRing), true),
@@ -432,7 +497,7 @@ function resolveId(r){
     };
   }
 
-  function applyWrapperMode(rows){
+  function applyWrapperMode(rows) {
     if (state.wrapperMode === "all") return rows;
 
     return rows.filter((r) => {
@@ -451,17 +516,18 @@ function resolveId(r){
     });
   }
 
-  function applySearch(rows){
+  function applySearch(rows) {
     const q = String(state.search || "").trim().toLowerCase();
-    if(!q) return rows;
+    if (!q) return rows;
+
     return rows.filter((r) =>
       resolveName(r).toLowerCase().includes(q) ||
       resolveVitola(r).toLowerCase().includes(q)
     );
   }
 
-  function applyBandSelected(rows){
-    if(!state.bandSelected.size) return rows;
+  function applyBandSelected(rows) {
+    if (!state.bandSelected.size) return rows;
 
     if (normalizeBrand(state.brand) === "padron") {
       return rows.filter((r) => {
@@ -473,7 +539,7 @@ function resolveId(r){
     return rows.filter((r) => state.bandSelected.has(resolveBand(r)));
   }
 
-  function applyFilterSets(rows){
+  function applyFilterSets(rows) {
     return rows.filter((r) => {
       const vitola = resolveVitola(r);
       const ring = resolveRing(r);
@@ -482,18 +548,18 @@ function resolveId(r){
       const shape = resolveShape(r);
       const shade = resolveShade(r);
 
-      if(state.filters.vitola.size && !state.filters.vitola.has(vitola)) return false;
-      if(state.filters.ring.size && !state.filters.ring.has(ring)) return false;
-      if(state.filters.length.size && !state.filters.length.has(length)) return false;
-      if(state.filters.strength.size && !state.filters.strength.has(strength)) return false;
-      if(state.filters.shape.size && !state.filters.shape.has(shape)) return false;
-      if(state.filters.shade.size && !state.filters.shade.has(shade)) return false;
+      if (state.filters.vitola.size && !state.filters.vitola.has(vitola)) return false;
+      if (state.filters.ring.size && !state.filters.ring.has(ring)) return false;
+      if (state.filters.length.size && !state.filters.length.has(length)) return false;
+      if (state.filters.strength.size && !state.filters.strength.has(strength)) return false;
+      if (state.filters.shape.size && !state.filters.shape.has(shape)) return false;
+      if (state.filters.shade.size && !state.filters.shade.has(shade)) return false;
 
       return true;
     });
   }
 
-  function buildCartDataset(r){
+  function buildCartDataset(r) {
     return {
       type: "cigar",
       id: resolveId(r),
@@ -501,17 +567,17 @@ function resolveId(r){
       line: "",
       name: resolveName(r),
       vitola: resolveVitola(r),
-      price: Number(resolvePrice(r) || 0) || 0,
+      price: resolvePriceNumber(r),
       image: normalizeAssetPath(resolveImage(r)) || brandIconPath(),
       url: resolveUrl(r) || ""
     };
   }
 
-  function renderList(rows){
+  function renderList(rows) {
     listEl.innerHTML = "";
 
-    if(!rows.length){
-      listEl.innerHTML = `<div class="empty">No cigars found for ${esc(state.brand)}</div>`;
+    if (!rows.length) {
+      listEl.innerHTML = `<div class="cigars-empty">No cigars found for ${esc(state.brand)}</div>`;
       return;
     }
 
@@ -520,15 +586,16 @@ function resolveId(r){
       card.className = "brand-row";
 
       const cartItem = buildCartDataset(r);
+      const priceText = resolvePrice(r) || "—";
 
       card.innerHTML = `
         <img class="row-ico" src="${esc(brandIconPath())}" alt="" loading="lazy" />
-        <div class="row-main">
-          <div class="row-title">${esc(resolveName(r))}</div>
-          <div class="row-sub">${esc(resolveVitola(r))}</div>
+        <div class="brand-row-left">
+          <div class="brand-row-title">${esc(resolveName(r))}</div>
+          <div class="brand-row-sub">${esc(resolveVitola(r))}</div>
         </div>
         <div class="brand-row-right">
-          <div class="brand-row-msrp">${esc(resolvePrice(r))}</div>
+          <div class="brand-row-msrp">${esc(priceText)}</div>
           <button
             class="pos-add"
             type="button"
@@ -547,7 +614,7 @@ function resolveId(r){
         </div>
       `;
 
-      const rowMain = $(".row-main", card);
+      const rowMain = $(".brand-row-left", card);
       const rowIcon = $(".row-ico", card);
       const addBtn = $(".pos-add", card);
 
@@ -562,7 +629,7 @@ function resolveId(r){
     });
   }
 
-  function getBandOptions(rows){
+  function getBandOptions(rows) {
     if (normalizeBrand(state.brand) === "padron") {
       return [
         { key: "Padron Series", label: "Padron Series", src: "/img/icons/padronseriesband.svg" },
@@ -579,8 +646,8 @@ function resolveId(r){
     rows.forEach((r) => {
       const label = resolveBand(r);
       const art = resolveBandArt(r);
-      if(!label || !art) return;
-      if(!map.has(label)){
+      if (!label || !art) return;
+      if (!map.has(label)) {
         map.set(label, { key: label, label, src: art });
       }
     });
@@ -588,10 +655,10 @@ function resolveId(r){
     return Array.from(map.values());
   }
 
-  function renderBandOptions(opts){
+  function renderBandOptions(opts) {
     bandsOptions.innerHTML = "";
 
-    if(!opts.length){
+    if (!opts.length) {
       bandsOptions.innerHTML = `<div class="empty">No bands available for this brand.</div>`;
       return;
     }
@@ -608,14 +675,14 @@ function resolveId(r){
       `;
       const cb = $(".band-check", card);
       cb?.addEventListener("change", () => {
-        if(cb.checked) state.bandSelected.add(b.key);
+        if (cb.checked) state.bandSelected.add(b.key);
         else state.bandSelected.delete(b.key);
       });
       bandsOptions.appendChild(card);
     });
   }
 
-  function applyAll(){
+  function applyAll() {
     let rows = [...state.rowsAll];
     rows = applyWrapperMode(rows);
     rows = applyFilterSets(rows);
@@ -624,7 +691,7 @@ function resolveId(r){
     renderList(rows);
   }
 
-  function setWrapperMode(mode){
+  function setWrapperMode(mode) {
     state.wrapperMode = mode;
     seg?.setAttribute("data-state", mode);
 
@@ -636,7 +703,7 @@ function resolveId(r){
   }
 
   backBtn?.addEventListener("click", () => {
-    if(history.length > 1) history.back();
+    if (history.length > 1) history.back();
     else location.href = "/pos/cigars/";
   });
 
@@ -680,20 +747,20 @@ function resolveId(r){
 
   document.addEventListener("click", (e) => {
     const t = e.target;
-    if(t && t.closest && t.closest("[data-sheet-close]")) closeBandsSheet();
-    if(t === sheetBands) closeBandsSheet();
-    if(t && t.closest && t.closest("[data-detail-close]")) closeDetail();
+    if (t && t.closest && t.closest("[data-sheet-close]")) closeBandsSheet();
+    if (t === sheetBands) closeBandsSheet();
+    if (t && t.closest && t.closest("[data-detail-close]")) closeDetail();
   });
 
   document.addEventListener("keydown", (e) => {
-    if(e.key === "Escape"){
+    if (e.key === "Escape") {
       closeBandsSheet();
       closeDetail();
-      if(filterModal) filterModal.close();
+      if (filterModal) filterModal.close();
     }
   });
 
-  async function boot(){
+  async function boot() {
     applyTheme(getSavedTheme());
 
     state.brand = (getParam("brand") || "Padron").trim();
@@ -726,6 +793,6 @@ function resolveId(r){
 
   boot().catch((err) => {
     console.error("Brand page boot failed:", err);
-    listEl.innerHTML = `<div class="empty">Error loading brand.</div>`;
+    listEl.innerHTML = `<div class="cigars-empty cigars-empty--error">Error loading brand.</div>`;
   });
 })();
