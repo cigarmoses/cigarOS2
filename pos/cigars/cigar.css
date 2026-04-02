@@ -273,12 +273,12 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-card-label {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
   opacity: 0.55;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 .cd-spec-grid{
