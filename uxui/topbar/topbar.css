@@ -1,9 +1,9 @@
 :root{
   --topbar-safe-top: env(safe-area-inset-top, 0px);
-  --topbar-side-size: 32px;
+  --topbar-side-size: 30px;
   --topbar-side-offset: 10px;
-  --topbar-center-width: 246px;
-  --topbar-center-height: 38px;
+  --topbar-center-width: 232px;
+  --topbar-center-height: 34px;
 
   --topbar-cart-badge-bg: #ff453a;
   --topbar-cart-badge-text: #ffffff;
@@ -38,13 +38,13 @@ html[data-theme="dark"] .cigars-main{
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(var(--topbar-safe-top) + 38px);
+  min-height: calc(var(--topbar-safe-top) + 34px);
   padding: calc(var(--topbar-safe-top) + 4px) 0 0;
 }
 
 #universalTopbar .cigaros-topbar-side{
   position: absolute;
-  top: calc(var(--topbar-safe-top) + 7px);
+  top: calc(var(--topbar-safe-top) + 6px);
   width: var(--topbar-side-size);
   height: var(--topbar-side-size);
   display: grid;
@@ -109,16 +109,16 @@ html[data-theme="dark"] .cigars-main{
 }
 
 #universalTopbar .cigaros-topbar-toggle{
-  width: 52px;
-  height: 26px;
-  flex: 0 0 52px;
+  width: 46px;
+  height: 22px;
+  flex: 0 0 46px;
   margin-right: 2px;
 }
 
 #universalTopbar .cigaros-topbar-link{
-  width: 38px;
-  height: 30px;
-  flex: 0 0 38px;
+  width: 34px;
+  height: 26px;
+  flex: 0 0 34px;
 }
 
 #universalTopbar .cigaros-topbar-icon{
@@ -134,8 +134,8 @@ html[data-theme="dark"] .cigars-main{
 
 #universalTopbar .cigaros-topbar-back-icon,
 #universalTopbar .cigaros-topbar-cart-icon{
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 #universalTopbar .cigaros-topbar-toggle-icon{
@@ -147,23 +147,23 @@ html[data-theme="dark"] .cigars-main{
 #universalTopbar .cigaros-topbar-home .cigaros-topbar-icon,
 #universalTopbar .cigaros-topbar-search .cigaros-topbar-icon,
 #universalTopbar .cigaros-topbar-favorites .cigaros-topbar-icon{
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 #universalTopbar .cigaros-topbar-cart-badge{
   position: absolute;
-  top: -1px;
-  right: -3px;
-  min-width: 16px;
-  height: 16px;
+  top: -2px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
   padding: 0 4px;
   border-radius: 999px;
   background: var(--topbar-cart-badge-bg);
   color: var(--topbar-cart-badge-text);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 15px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0,0,0,.18);
   z-index: 4;
@@ -181,31 +181,31 @@ html[data-theme="dark"] .cigars-main{
 
 @media (max-width: 430px){
   :root{
-    --topbar-side-size: 32px;
+    --topbar-side-size: 30px;
     --topbar-side-offset: 10px;
-    --topbar-center-width: 246px;
-    --topbar-center-height: 38px;
+    --topbar-center-width: 232px;
+    --topbar-center-height: 34px;
   }
 
   #universalTopbar .cigaros-topbar{
-    min-height: calc(var(--topbar-safe-top) + 38px);
+    min-height: calc(var(--topbar-safe-top) + 34px);
     padding: calc(var(--topbar-safe-top) + 4px) 0 0;
   }
 
   #universalTopbar .cigaros-topbar-side{
-    top: calc(var(--topbar-safe-top) + 7px);
+    top: calc(var(--topbar-safe-top) + 6px);
   }
 
   #universalTopbar .cigaros-topbar-back-icon,
   #universalTopbar .cigaros-topbar-cart-icon{
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 
   #universalTopbar .cigaros-topbar-toggle{
-    width: 52px;
-    height: 26px;
-    flex-basis: 52px;
+    width: 46px;
+    height: 22px;
+    flex-basis: 46px;
     margin-right: 2px;
   }
 
@@ -215,20 +215,20 @@ html[data-theme="dark"] .cigars-main{
   }
 
   #universalTopbar .cigaros-topbar-link{
-    width: 38px;
-    height: 30px;
-    flex-basis: 38px;
+    width: 34px;
+    height: 26px;
+    flex-basis: 34px;
   }
 
   #universalTopbar .cigaros-topbar-home .cigaros-topbar-icon,
   #universalTopbar .cigaros-topbar-search .cigaros-topbar-icon,
   #universalTopbar .cigaros-topbar-favorites .cigaros-topbar-icon{
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 
   #universalTopbar .cigaros-topbar-cart-badge{
-    top: -1px;
-    right: -3px;
+    top: -2px;
+    right: -4px;
   }
 }
