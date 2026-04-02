@@ -49,7 +49,7 @@ html[data-theme="light"] .cigars-main{
 }
 
 #universalTopbar + .cigars-main{
-  padding-top: 8px;
+  padding-top: 70px;
 }
 
 .cigars-main{
@@ -66,10 +66,10 @@ html[data-theme="light"] .cigars-main{
 }
 
 .cigars-title{
-  margin:10px 0 12px;
-  font-size:56px;
+  margin:12px 0 14px;
+  font-size:64;
   line-height:.92;
-  letter-spacing:-.035em;
+  letter-spacing:-0.04em;
   font-weight:800;
   color:var(--ink);
 }
@@ -963,7 +963,7 @@ body.cigar-detail-open{
   }
 
   #universalTopbar + .cigars-main{
-    padding-top: 8px;
+    padding-top: 70px;
   }
 
   .cigars-title{
