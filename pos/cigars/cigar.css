@@ -274,8 +274,8 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 
 .cd-card-label {
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 550;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
   opacity: 0.55;
   margin-bottom: 5px;
@@ -302,8 +302,9 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 .cd-spec-value{
   margin-top:6px;
   text-align:right;
-  font:800 24px/.95 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.03em;
+  font-size: 14px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
   color:var(--text);
   white-space:nowrap;
   overflow:hidden;
