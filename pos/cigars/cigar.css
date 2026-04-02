@@ -61,13 +61,17 @@ body.cigar-detail-page{
   position:sticky;
   top:0;
   z-index:20;
+  width:min(430px, calc(100% - 14px));
+  margin:0 auto;
   display:grid;
   grid-template-columns:48px 1fr 48px;
   align-items:center;
   gap:8px;
-  padding:8px 14px 6px;
+  padding:8px 14px 8px;
   padding-top:calc(8px + var(--safe-top));
-  background:transparent;
+  border-radius:18px;
+  background:linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+  box-shadow:var(--shadow);
 }
 
 .cd-back{
@@ -137,8 +141,8 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 
 .cd-wrap{
   width:min(430px, calc(100% - 14px));
-  margin:0 auto;
-  height:calc(100dvh - var(--safe-top) - 64px);
+  margin:8px auto 0;
+  height:calc(100dvh - var(--safe-top) - 86px);
   padding:2px 0 calc(8px + var(--safe-bottom));
 }
 
@@ -163,14 +167,30 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  gap:10px;
-  padding:0 2px 8px;
+  gap:12px;
+  padding:14px 16px;
   flex:0 0 auto;
+  border-radius:18px;
+  background:linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+  box-shadow:var(--shadow);
+  margin-bottom:10px;
 }
 
 .cd-head-copy{
   min-width:0;
   flex:1 1 auto;
+}
+
+.cd-head-copy--editing{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.cd-head-edit-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
 }
 
 .cd-brand{
@@ -190,6 +210,32 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+}
+
+.cd-brand-input,
+.cd-name-input,
+.cd-edit-input,
+.cd-edit-textarea{
+  width:100%;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  outline:none;
+  border-radius:12px;
+  font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+}
+
+.cd-brand-input{
+  padding:10px 12px;
+  font-size:28px;
+  font-weight:800;
+  letter-spacing:-.035em;
+}
+
+.cd-name-input{
+  padding:9px 11px;
+  font-size:14px;
+  font-weight:600;
 }
 
 .cd-badge{
@@ -216,8 +262,8 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 
 .cd-grid{
   display:grid;
-  grid-template-columns:122px 1fr;
-  gap:10px;
+  grid-template-columns:132px 1fr;
+  gap:12px;
   align-items:start;
   flex:1 1 auto;
   min-height:0;
@@ -234,17 +280,17 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 .cd-stick{
   display:block;
   width:auto;
-  max-width:116px;
-  max-height:min(61dvh, 690px);
+  max-width:128px;
+  max-height:min(68dvh, 760px);
   height:auto;
   object-fit:contain;
   object-position:top center;
 }
 
 .cd-stick-placeholder{
-  width:116px;
-  height:min(61dvh, 690px);
-  min-height:360px;
+  width:128px;
+  height:min(68dvh, 760px);
+  min-height:420px;
   border-radius:18px;
   display:grid;
   place-items:center;
@@ -260,7 +306,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   min-width:0;
   display:flex;
   flex-direction:column;
-  gap:8px;
+  gap:10px;
   min-height:0;
 }
 
@@ -272,13 +318,13 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   overflow:hidden;
 }
 
-.cd-card-label {
-  font-size: 13px;
-  font-weight: 550;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-  opacity: 0.55;
-  margin-bottom: 5px;
+.cd-card-label{
+  font-size:14px;
+  font-weight:650;
+  letter-spacing:-0.01em;
+  text-transform:uppercase;
+  opacity:0.62;
+  margin-bottom:6px;
 }
 
 .cd-spec-grid{
@@ -288,8 +334,8 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-spec{
-  min-height:64px;
-  padding:10px 12px;
+  min-height:70px;
+  padding:11px 13px;
   display:flex;
   flex-direction:column;
   justify-content:flex-start;
@@ -302,9 +348,9 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 .cd-spec-value{
   margin-top:6px;
   text-align:right;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size:19px;
+  font-weight:700;
+  letter-spacing:-0.01em;
   color:var(--text);
   white-space:nowrap;
   overflow:hidden;
@@ -312,24 +358,46 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-spec-value.spec-text{
-  font-size:13px;
-  line-height:1.06;
+  font-size:18px;
+  line-height:1.08;
   letter-spacing:-.01em;
   white-space:nowrap;
 }
 
-.cd-tobaccos{
-  padding:10px 12px;
-  min-height:132px;
+.cd-edit-input{
+  padding:9px 11px;
+  text-align:right;
+  font-size:20px;
+  font-weight:700;
+  letter-spacing:-.01em;
 }
 
-.cd-tobacco-row + .cd-tobacco-row{ margin-top:8px; }
+.cd-edit-input.is-text{
+  font-size:17px;
+}
+
+.cd-edit-input--origin{
+  text-align:left;
+}
+
+.cd-edit-input--msrp{
+  text-align:right;
+  max-width:140px;
+  margin-left:auto;
+}
+
+.cd-tobaccos{
+  padding:11px 13px;
+  min-height:144px;
+}
+
+.cd-tobacco-row + .cd-tobacco-row{ margin-top:9px; }
 .cd-tobacco-row .cd-card-label{ text-align:right; }
 
 .cd-tobacco-value{
   margin-top:4px;
   text-align:right;
-  font:700 13px/1.18 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:700 15px/1.18 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.01em;
   color:var(--text);
 }
@@ -341,15 +409,25 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   word-break:break-word;
 }
 
-.cd-meta-grid{
+.cd-edit-textarea{
+  padding:9px 11px;
+  resize:none;
+  min-height:54px;
+  text-align:right;
+  font-size:15px;
+  font-weight:700;
+  line-height:1.2;
+}
+
+.cd-meta-stack{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:1fr;
   gap:8px;
 }
 
 .cd-origin{
-  min-height:72px;
-  padding:10px 12px;
+  min-height:80px;
+  padding:11px 13px;
 }
 
 .cd-origin .cd-card-label{ text-align:right; }
@@ -362,9 +440,13 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   gap:7px;
 }
 
+.cd-origin-row.is-editing{
+  justify-content:stretch;
+}
+
 .cd-origin-value{
   text-align:right;
-  font:700 13px/1.08 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:700 16px/1.08 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.01em;
   color:var(--text);
   white-space:nowrap;
@@ -379,8 +461,8 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-accolades{
-  min-height:72px;
-  padding:10px 12px;
+  min-height:80px;
+  padding:11px 13px;
 }
 
 .cd-accolades .cd-card-label{
@@ -394,7 +476,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-accolade-line{
-  font:600 11px/1.12 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:600 13px/1.15 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   color:var(--text);
   opacity:.94;
   white-space:nowrap;
@@ -404,12 +486,12 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 
 .cd-accolade-empty{
   color:var(--muted);
-  font:600 11px/1.2 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:600 13px/1.2 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
 }
 
 .cd-actions{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns:repeat(4, 1fr);
   gap:8px;
   margin-top:auto;
 }
@@ -433,6 +515,11 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   color:var(--text);
 }
 
+.cd-action--primary{
+  background:rgba(255,255,255,.12);
+  color:var(--text);
+}
+
 .cd-msrp{
   margin-top:6px;
   text-align:right;
@@ -440,16 +527,65 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   font:600 11px/1.1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
 }
 
+.cd-msrp-edit{
+  margin-top:2px;
+  text-align:right;
+}
+
+.cd-msrp-edit .cd-card-label{
+  text-align:right;
+  margin-bottom:6px;
+}
+
 @media (max-width:390px){
-  .cd-wrap{ width:calc(100% - 12px); }
+  .cd-topbar,
+  .cd-wrap{
+    width:calc(100% - 12px);
+  }
+
   .cd-brand{ font-size:30px; }
   .cd-name{ font-size:14px; }
-  .cd-grid{ grid-template-columns:114px 1fr; gap:8px; }
-  .cd-stick{ max-width:108px; }
-  .cd-stick-placeholder{ width:108px; min-height:340px; }
-  .cd-spec-value{ font-size:22px; }
-  .cd-spec-value.spec-text{ font-size:12px; }
+
+  .cd-grid{
+    grid-template-columns:122px 1fr;
+    gap:8px;
+  }
+
+  .cd-stick{
+    max-width:116px;
+  }
+
+  .cd-stick-placeholder{
+    width:116px;
+    min-height:390px;
+  }
+
+  .cd-card-label{
+    font-size:13px;
+  }
+
+  .cd-spec-value{
+    font-size:18px;
+  }
+
+  .cd-spec-value.spec-text{
+    font-size:16px;
+  }
+
+  .cd-edit-input{
+    font-size:18px;
+  }
+
+  .cd-edit-input.is-text{
+    font-size:15px;
+  }
+
   .cd-tobacco-value,
-  .cd-origin-value{ font-size:12px; }
-  .cd-accolade-line{ font-size:10.5px; }
+  .cd-origin-value{
+    font-size:14px;
+  }
+
+  .cd-accolade-line{
+    font-size:12px;
+  }
 }
