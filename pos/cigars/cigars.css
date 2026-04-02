@@ -1,6 +1,6 @@
 /* /pos/cigars/cigars.css
    POS Cigars
-   cleaned for native iOS feel
+   matched to Products page spacing / iOS feel
 */
 
 :root{
@@ -49,7 +49,7 @@ html[data-theme="light"] .cigars-main{
 }
 
 #universalTopbar + .cigars-main{
-  padding-top:16px;
+  padding-top: 8px;
 }
 
 .cigars-main{
@@ -66,10 +66,10 @@ html[data-theme="light"] .cigars-main{
 }
 
 .cigars-title{
-  margin:14px 0 14px;
-  font-size:66px;
-  line-height:.90;
-  letter-spacing:-.045em;
+  margin:10px 0 12px;
+  font-size:56px;
+  line-height:.92;
+  letter-spacing:-.035em;
   font-weight:800;
   color:var(--ink);
 }
@@ -82,7 +82,7 @@ html[data-theme="light"] .cigars-title{
   display:flex;
   align-items:flex-end;
   gap:10px;
-  margin-bottom:12px;
+  margin-bottom:10px;
 }
 
 .cigars-filter-btn{
@@ -115,7 +115,7 @@ html[data-theme="light"] .cigars-filter-btn{
 
 /* search */
 .cigars-search-wrap{
-  margin:0 0 18px;
+  margin:0 0 16px;
 }
 
 .cigars-search-bar{
@@ -221,7 +221,6 @@ html[data-theme="light"] .af-clear{
   border-color:rgba(15,26,44,.12);
 }
 
-/* section title */
 .cigars-brands-title{
   font-weight:800;
   font-size:32px;
@@ -234,12 +233,12 @@ html[data-theme="light"] .cigars-brands-title{
   color:#0f1728;
 }
 
-/* brands grid */
+/* 3 per row grid */
 .brands-grid{
   display:grid;
   grid-template-columns:repeat(3, minmax(0,1fr));
   gap:28px 20px;
-  padding:6px 0 22px;
+  padding:8px 0 22px;
 }
 
 .brands-grid > a,
@@ -253,8 +252,8 @@ html[data-theme="light"] .cigars-brands-title{
 }
 
 .brands-grid img{
-  width:102px;
-  height:102px;
+  width:96px;
+  height:96px;
   object-fit:contain;
   display:block;
   background:transparent;
@@ -267,11 +266,11 @@ html[data-theme="light"] .cigars-brands-title{
   margin-top:12px;
   font-weight:700;
   font-size:17px;
-  line-height:1.08;
-  letter-spacing:-0.025em;
-  max-width:132px;
+  line-height:1.06;
+  letter-spacing:-0.03em;
+  max-width:118px;
   word-break:break-word;
-  color:rgba(255,255,255,.90);
+  color:rgba(255,255,255,.92);
 }
 
 html[data-theme="light"] .brands-grid .category-name{
@@ -964,14 +963,14 @@ body.cigar-detail-open{
   }
 
   #universalTopbar + .cigars-main{
-    padding-top:18px;
+    padding-top: 8px;
   }
 
   .cigars-title{
-    margin:12px 0 12px;
-    font-size:64px;
-    line-height:.90;
-    letter-spacing:-.05em;
+    margin:10px 0 12px;
+    font-size:56px;
+    line-height:.92;
+    letter-spacing:-.045em;
   }
 
   .cigars-title-actions{
@@ -989,7 +988,7 @@ body.cigar-detail-open{
   }
 
   .cigars-search-wrap{
-    margin-bottom:18px;
+    margin-bottom:16px;
   }
 
   .cigars-search-bar{
@@ -1012,9 +1011,9 @@ body.cigar-detail-open{
     margin-top:12px;
     font-size:17px;
     font-weight:700;
-    line-height:1.08;
-    letter-spacing:-.025em;
-    max-width:112px;
+    line-height:1.06;
+    letter-spacing:-.03em;
+    max-width:118px;
   }
 
   .fm__body{
