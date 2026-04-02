@@ -270,12 +270,13 @@
     if (getImage(rec)) score += 5;
     if (getPrice(rec)) score += 4;
     if (getVitola(rec)) score += 3;
+    if (getShape(rec)) score += 3;
+    if (getShade(rec)) score += 3;
+    if (getStrength(rec)) score += 3;
     if (getWrapper(rec)) score += 2;
     if (getBinder(rec)) score += 2;
     if (getFiller(rec)) score += 2;
     if (getOrigin(rec)) score += 1;
-    if (getShade(rec)) score += 1;
-    if (getStrength(rec)) score += 1;
     return score;
   }
 
@@ -515,6 +516,7 @@
     const origin = getOrigin(rec) || "—";
     const strength = getStrength(rec) || "—";
     const shade = getShade(rec) || "—";
+    const shape = getShape(rec) || "—";
     const ring = getRing(rec) || "—";
     const length = getLength(rec) || "—";
     const cigarImgCandidates = buildCigarImageCandidates(rec);
@@ -564,63 +566,68 @@
         </div>
 
         <div class="cd-right">
-          <div class="cd-stat-grid">
-            <div class="cd-card cd-stat">
+          <div class="cd-spec-grid">
+            <div class="cd-card cd-spec">
               <div class="cd-card-label">Ring</div>
-              <div class="cd-stat-value" title="${escapeAttr(ring)}">${escapeHTML(ring)}</div>
+              <div class="cd-spec-value" title="${escapeAttr(ring)}">${escapeHTML(ring)}</div>
             </div>
 
-            <div class="cd-card cd-stat">
+            <div class="cd-card cd-spec">
               <div class="cd-card-label">Length</div>
-              <div class="cd-stat-value" title="${escapeAttr(length)}">${escapeHTML(length)}</div>
-            </div>
-          </div>
-
-          <div class="cd-mini-grid">
-            <div class="cd-card cd-mini">
-              <div class="cd-card-label">Strength</div>
-              <div class="cd-mini-value" title="${escapeAttr(strength)}">${escapeHTML(strength)}</div>
+              <div class="cd-spec-value" title="${escapeAttr(length)}">${escapeHTML(length)}</div>
             </div>
 
-            <div class="cd-card cd-mini">
+            <div class="cd-card cd-spec">
               <div class="cd-card-label">Vitola</div>
-              <div class="cd-mini-value" title="${escapeAttr(vitola)}">${escapeHTML(vitola)}</div>
+              <div class="cd-spec-value spec-text" title="${escapeAttr(vitola)}">${escapeHTML(vitola)}</div>
+            </div>
+
+            <div class="cd-card cd-spec">
+              <div class="cd-card-label">Wrapper Shade</div>
+              <div class="cd-spec-value spec-text" title="${escapeAttr(shade)}">${escapeHTML(shade)}</div>
+            </div>
+
+            <div class="cd-card cd-spec">
+              <div class="cd-card-label">Strength</div>
+              <div class="cd-spec-value spec-text" title="${escapeAttr(strength)}">${escapeHTML(strength)}</div>
+            </div>
+
+            <div class="cd-card cd-spec">
+              <div class="cd-card-label">Shape</div>
+              <div class="cd-spec-value spec-text" title="${escapeAttr(shape)}">${escapeHTML(shape)}</div>
             </div>
           </div>
 
           <div class="cd-card cd-tobaccos">
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Wrapper</div>
-              <div class="cd-tobacco-value" title="${escapeAttr(wrapper)}">${escapeHTML(wrapper)}</div>
+              <div class="cd-tobacco-value wrap-text" title="${escapeAttr(wrapper)}">${escapeHTML(wrapper)}</div>
             </div>
 
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Binder</div>
-              <div class="cd-tobacco-value" title="${escapeAttr(binder)}">${escapeHTML(binder)}</div>
+              <div class="cd-tobacco-value wrap-text" title="${escapeAttr(binder)}">${escapeHTML(binder)}</div>
             </div>
 
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Filler</div>
-              <div class="cd-tobacco-value" title="${escapeAttr(filler)}">${escapeHTML(filler)}</div>
+              <div class="cd-tobacco-value wrap-text" title="${escapeAttr(filler)}">${escapeHTML(filler)}</div>
             </div>
           </div>
 
-          <div class="cd-card cd-origin">
-            <div class="cd-card-label">Origin</div>
-            <div class="cd-origin-row">
-              <div class="cd-origin-value" title="${escapeAttr(origin)}">${escapeHTML(origin)}</div>
-              ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
+          <div class="cd-meta-grid">
+            <div class="cd-card cd-origin">
+              <div class="cd-card-label">Origin</div>
+              <div class="cd-origin-row">
+                <div class="cd-origin-value" title="${escapeAttr(origin)}">${escapeHTML(origin)}</div>
+                ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
+              </div>
             </div>
-          </div>
 
-          <div class="cd-card cd-shade">
-            <div class="cd-card-label">Wrapper Shade</div>
-            <div class="cd-shade-value" title="${escapeAttr(shade)}">${escapeHTML(shade)}</div>
-          </div>
-
-          <div class="cd-card cd-accolades">
-            <div class="cd-card-label">Accolades</div>
-            <div class="cd-accolade-list">${renderAccolades(accolades)}</div>
+            <div class="cd-card cd-accolades">
+              <div class="cd-card-label">Accolades</div>
+              <div class="cd-accolade-list">${renderAccolades(accolades)}</div>
+            </div>
           </div>
 
           <div class="cd-actions">
