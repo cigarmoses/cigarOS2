@@ -615,7 +615,7 @@
             </div>
           </div>
 
-<div class="cd-meta-grid">
+<div class="cd-meta-stack">
   <div class="cd-card cd-origin">
     <div class="cd-card-label">Origin</div>
 
@@ -627,6 +627,11 @@
       ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
     </div>
   </div>
+
+  <div class="cd-card cd-accolades">
+    <div class="cd-card-label">Accolades</div>
+    <div class="cd-accolade-list">${renderAccolades(accolades)}</div>
+  </div>
 </div>
 
             <div class="cd-card cd-accolades">
@@ -635,11 +640,12 @@
             </div>
           </div>
 
-          <div class="cd-actions">
-            <button class="cd-action" type="button" id="cdCompare">Compare</button>
-            <button class="cd-action" type="button" id="cdFavorite">+ Favorites</button>
-            <button class="cd-action" type="button" id="cdWishlist">+ Wishlist</button>
-          </div>
+<div class="cd-actions">
+  <button class="cd-action" type="button" id="cdCompare">Compare</button>
+  <button class="cd-action" type="button" id="cdFavorite">+ Favorites</button>
+  <button class="cd-action" type="button" id="cdWishlist">+ Wishlist</button>
+  <button class="cd-action" type="button" id="cdEdit">Edit</button>
+</div>
 
           ${msrpText ? `<div class="cd-msrp">MSRP ${escapeHTML(msrpText)}</div>` : ``}
         </div>
@@ -652,6 +658,7 @@
     const favoriteBtn = $("#cdFavorite");
     const compareBtn = $("#cdCompare");
     const wishlistBtn = $("#cdWishlist");
+    const editBtn = $("#cdEdit");
 
     function syncUI() {
       favoriteBtn?.classList.toggle("is-on", favoriteSet.has(id));
@@ -680,6 +687,11 @@
       addCurrentCigarToCart(rec);
     });
 
+editBtn?.addEventListener("click", () => {
+  // placeholder — hook your editor here
+  alert("Edit mode coming next");
+});
+     
     syncUI();
 
     wireImageFallback($("#cdBrandBadge"), "cd-badge-placeholder", "Brand");
