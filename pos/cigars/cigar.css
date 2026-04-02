@@ -273,8 +273,8 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-card-label{
-  font:700 10px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.01em;
+  font:500 10px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-0.04em;
   color:var(--muted);
   text-transform:uppercase;
   white-space:nowrap;
