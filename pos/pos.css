@@ -3,15 +3,21 @@
    Matches your original invoice mockup (and fixes FAB issues)
    ========================================================= */
 
+/* GLOBAL DARK THEME BACKGROUND */
+html[data-theme="dark"] body{
+  background:
+    radial-gradient(1200px 540px at 50% -8%, rgba(63,108,194,.28) 0%, rgba(20,44,92,.22) 28%, rgba(4,13,34,0) 58%),
+    linear-gradient(180deg, #0f2856 0%, #07142f 48%, #041027 100%);
+  background-attachment: fixed;
+}
+
 /* Backdrop */
 #sheet-backdrop{
   position: fixed;
   inset: 0;
 
-  /* ✅ Keep darkening, REMOVE blur (blur is what makes iOS render everything soft) */
   background: rgba(0,0,0,.35);
 
-  /* ❌ REMOVE these (they are the reason your modals look blurred on iPhone) */
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 
@@ -25,7 +31,7 @@
   opacity: 1;
 }
 
-/* ✅ Tall modal (near top + bottom safe areas) */
+/* Tall modal */
 #sheet-receipt{
   position: fixed;
   left: 50%;
@@ -55,7 +61,7 @@
   pointer-events: auto;
 }
 
-/* Header row (we keep the X, but REMOVE the left “Invoice/Receipt” word) */
+/* Header row */
 #sheet-receipt .sheet-header{
   padding: 10px 12px 0;
   display:flex;
@@ -78,7 +84,7 @@
   line-height: 1;
 }
 
-/* ✅ Invoice heading block (SMALL like “Attach Saved Customer”) */
+/* Invoice heading block */
 #sheet-receipt .inv-head{
   padding: 6px 14px 10px;
   text-align: center;
@@ -258,7 +264,7 @@
   font-weight: 900;
 }
 
-/* ✅ Invoice rows: COMPACT 3 columns (mobile-friendly) */
+/* Invoice rows */
 #sheet-receipt .inv-row{
   display:grid;
   grid-template-columns: 72px 1fr 150px;
@@ -283,7 +289,6 @@
   display:block;
 }
 
-/* middle 3-line text */
 #sheet-receipt .inv-cat{
   font-weight: 900;
   font-size: 16px;
@@ -308,7 +313,6 @@
   color: rgba(15,26,44,.35);
 }
 
-/* right: qty adjuster above line total */
 #sheet-receipt .inv-right{
   display:flex;
   flex-direction: column;
@@ -377,7 +381,7 @@
 }
 
 /* =========================================================
-   ✅ RECEIPT / INVOICE FAB (PNG ONLY, bottom-right)
+   RECEIPT / INVOICE FAB (PNG ONLY, bottom-right)
    ========================================================= */
 
 #receipt-open{
@@ -404,7 +408,6 @@
   background: transparent !important;
 }
 
-/* Badge */
 #receipt-count{
   position: absolute !important;
   right: 2px !important;
@@ -423,7 +426,6 @@
   place-items: center !important;
 }
 
-/* Optional “has items” state */
 #receipt-open.has-items{
   filter: drop-shadow(0 12px 30px rgba(255,59,48,.22));
 }
@@ -454,226 +456,270 @@ body.pos-home .pos-card-icon{
 }
 
 /* =========================================================
-   GLOBAL POS TOPBAR FIX — CLEANED / TIGHTENED
+   UNIVERSAL SITE TOPBAR
+   New standard:
+   - back button top left
+   - smaller toggle top right
+   - sun / moon inside knob
+   - nothing else in top bar
    ========================================================= */
 
-/* only affect actual POS topbars */
+.uos-topbar{
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px 0;
+  padding-top: calc(10px + env(safe-area-inset-top));
+}
+
+.uos-back{
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.uos-back svg{
+  width: 22px;
+  height: 22px;
+}
+
+.uos-toggle{
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.10);
+  padding: 0;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.uos-track{
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+}
+
+.uos-knob{
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  color: #0b1323;
+  display: grid;
+  place-items: center;
+  transition: transform .25s ease;
+  box-shadow: 0 3px 10px rgba(0,0,0,.16);
+}
+
+.uos-sun,
+.uos-moon{
+  position: absolute;
+  width: 12px;
+  height: 12px;
+}
+
+.uos-moon{
+  display: none;
+}
+
+html[data-theme="dark"] .uos-knob{
+  transform: translateX(20px);
+}
+
+html[data-theme="dark"] .uos-sun{
+  display: none;
+}
+
+html[data-theme="dark"] .uos-moon{
+  display: block;
+}
+
+html[data-theme="light"] .uos-back{
+  border: 1px solid rgba(15,26,44,.08);
+  background: rgba(255,255,255,.96);
+  color: #101828;
+  box-shadow: 0 10px 24px rgba(15,26,44,.06);
+}
+
+html[data-theme="light"] .uos-toggle{
+  border: 1px solid rgba(15,26,44,.08);
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 10px 24px rgba(15,26,44,.06);
+}
+
+/* =========================================================
+   LEGACY POS / PRODUCTS TOPBAR RESET
+   Keeps old layouts from forcing large segmented controls
+   ========================================================= */
+
 .products-topbar,
 .pos-topbar{
-  display:grid;
-  grid-template-columns:52px minmax(0,1fr) 52px;
-  align-items:center;
-  gap:10px;
-  width:100%;
-  padding:0;
-  margin:0 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 14px;
 }
 
-/* left / center / right wrappers */
 .products-topbar-left,
-.pos-topbar-left{
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-}
-
+.pos-topbar-left,
 .products-topbar-center,
-.pos-topbar-center{
-  min-width:0;
-  display:flex;
-  align-items:center;
-}
-
+.pos-topbar-center,
 .products-topbar-right,
 .pos-topbar-right{
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
+  display: flex;
+  align-items: center;
 }
 
-/* back / cart tiles */
 .products-topbar .icon-tile,
 .pos-topbar .icon-tile,
 .products-topbar .topbar-btn,
 .pos-topbar .topbar-btn{
-  width:52px;
-  height:52px;
-  border-radius:18px;
-  border:1px solid rgba(0,0,0,.08);
-  background:rgba(255,255,255,.96);
-  color:#000;
-  display:grid;
-  place-items:center;
-  box-shadow:0 10px 24px rgba(0,0,0,.06);
-  -webkit-backdrop-filter:none;
-  backdrop-filter:none;
-  flex:0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.96);
+  color: #000;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 24px rgba(0,0,0,.06);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  flex: 0 0 auto;
 }
 
 .products-topbar .icon-tile svg,
 .pos-topbar .icon-tile svg,
 .products-topbar .topbar-btn svg,
 .pos-topbar .topbar-btn svg{
-  width:24px;
-  height:24px;
-  stroke:currentColor;
-  fill:none;
-}
-
-.products-topbar .icon-tile svg path,
-.pos-topbar .icon-tile svg path,
-.products-topbar .topbar-btn svg path,
-.pos-topbar .topbar-btn svg path{
-  stroke:currentColor;
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
 }
 
 html[data-theme="dark"] .products-topbar .icon-tile,
 html[data-theme="dark"] .pos-topbar .icon-tile,
 html[data-theme="dark"] .products-topbar .topbar-btn,
 html[data-theme="dark"] .pos-topbar .topbar-btn{
-  border:1px solid rgba(255,255,255,.10);
-  background:#173161;
-  color:#fff;
-  box-shadow:0 12px 28px rgba(0,0,0,.24);
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(0,0,0,.24);
 }
 
-/* segmented nav shell */
+/* old segmented nav shells disabled down to simple wrappers */
 .products-topbar-nav,
 .pos-topbar-nav,
 .glass-segment{
-  min-width:0;
-  height:52px;
-  display:flex;
-  align-items:center;
-  gap:2px;
-  padding:4px 6px 4px 4px;
-  border-radius:999px;
-  border:1px solid rgba(0,0,0,.08);
-  background:rgba(255,255,255,.96);
-  box-shadow:0 10px 24px rgba(0,0,0,.06);
-  -webkit-backdrop-filter:none;
-  backdrop-filter:none;
-  overflow:hidden;
+  min-width: 0;
+  height: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
 }
 
-html[data-theme="dark"] .products-topbar-nav,
-html[data-theme="dark"] .pos-topbar-nav,
-html[data-theme="dark"] .glass-segment{
-  border:1px solid rgba(255,255,255,.10);
-  background:#173161;
-  box-shadow:0 12px 28px rgba(0,0,0,.24);
-}
-
-/* toggle */
 .theme-toggle,
 .mode-toggle,
 .appearance-toggle{
-  position:relative;
-  width:160px;
-  height:44px;
-  border:0;
-  padding:0;
-  margin:0;
-  background:transparent;
-  box-shadow:none;
-  flex:0 0 auto;
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
+  flex: 0 0 auto;
 }
 
 .theme-toggle-track,
 .mode-toggle-track,
 .appearance-toggle-track{
-  position:relative;
-  width:100%;
-  height:100%;
-  border-radius:999px;
-  background:#c8d1df;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
 }
 
-html[data-theme="dark"] .theme-toggle-track,
-html[data-theme="dark"] .mode-toggle-track,
-html[data-theme="dark"] .appearance-toggle-track{
-  background:#0e0f14;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+html[data-theme="light"] .theme-toggle-track,
+html[data-theme="light"] .mode-toggle-track,
+html[data-theme="light"] .appearance-toggle-track{
+  background: rgba(16,24,40,.10);
 }
 
 .theme-toggle-thumb,
 .mode-toggle-thumb,
 .appearance-toggle-thumb{
-  position:absolute;
-  top:4px;
-  left:4px;
-  width:36px;
-  height:36px;
-  border-radius:999px;
-  background:#fff;
-  display:grid;
-  place-items:center;
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
-  transition:transform .2s ease, background-color .2s ease;
-}
-
-html[data-theme="dark"] .theme-toggle-thumb,
-html[data-theme="dark"] .mode-toggle-thumb,
-html[data-theme="dark"] .appearance-toggle-thumb{
-  background:#0f2440;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  transition: transform .2s ease, background-color .2s ease;
 }
 
 html[data-theme="dark"] .theme-toggle.is-dark .theme-toggle-thumb,
 html[data-theme="dark"] .mode-toggle.is-dark .mode-toggle-thumb,
 html[data-theme="dark"] .appearance-toggle.is-dark .appearance-toggle-thumb{
-  transform:translateX(116px);
+  transform: translateX(20px);
 }
 
-/* nav icon buttons inside pill */
 .segment-icon-btn,
 .topbar-segment-btn,
 .pos-nav-btn{
-  width:38px;
-  height:38px;
-  border:0;
-  border-radius:999px;
-  background:transparent;
-  color:#000;
-  display:grid;
-  place-items:center;
-  flex:0 0 auto;
-  padding:0;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: currentColor;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0;
 }
 
 .segment-icon-btn svg,
 .topbar-segment-btn svg,
 .pos-nav-btn svg{
-  width:24px;
-  height:24px;
-  stroke:currentColor;
-  fill:none;
-}
-
-.segment-icon-btn svg path,
-.topbar-segment-btn svg path,
-.pos-nav-btn svg path{
-  stroke:currentColor;
-}
-
-html[data-theme="dark"] .segment-icon-btn,
-html[data-theme="dark"] .topbar-segment-btn,
-html[data-theme="dark"] .pos-nav-btn{
-  color:#fff;
-}
-
-/* tighten spacing around the icons after the toggle */
-.products-topbar-nav .segment-icon-btn,
-.products-topbar-nav .topbar-segment-btn,
-.products-topbar-nav .pos-nav-btn,
-.pos-topbar-nav .segment-icon-btn,
-.pos-topbar-nav .topbar-segment-btn,
-.pos-topbar-nav .pos-nav-btn{
-  margin-left:2px;
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
 }
 
 /* =========================================================
    PRODUCTS PAGE SPACING RESET
-   fixes the scrunched-in layout
    ========================================================= */
 
 .products-page-wrap{
@@ -691,19 +737,16 @@ html[data-theme="dark"] .pos-nav-btn{
   margin:0;
 }
 
-/* search + filter row */
 .products-controls{
   gap:12px;
   padding-bottom:16px;
 }
 
-/* category row */
 .pos-categories{
   padding:0 2px 18px;
   gap:12px;
 }
 
-/* card grid breathing room */
 .pos-grid{
   gap:16px;
 }
@@ -735,7 +778,6 @@ html[data-theme="dark"] .pos-nav-btn{
 
   .products-topbar,
   .pos-topbar{
-    grid-template-columns:48px minmax(0,1fr) 48px;
     gap:8px;
     margin-bottom:12px;
   }
@@ -744,36 +786,29 @@ html[data-theme="dark"] .pos-nav-btn{
   .pos-topbar .icon-tile,
   .products-topbar .topbar-btn,
   .pos-topbar .topbar-btn{
-    width:48px;
-    height:48px;
-    border-radius:16px;
-  }
-
-  .products-topbar-nav,
-  .pos-topbar-nav,
-  .glass-segment{
-    height:48px;
-    padding:4px;
+    width:40px;
+    height:40px;
+    border-radius:12px;
   }
 
   .theme-toggle,
   .mode-toggle,
   .appearance-toggle{
-    width:142px;
-    height:40px;
+    width:48px;
+    height:28px;
   }
 
   .theme-toggle-thumb,
   .mode-toggle-thumb,
   .appearance-toggle-thumb{
-    width:32px;
-    height:32px;
+    width:22px;
+    height:22px;
   }
 
   html[data-theme="dark"] .theme-toggle.is-dark .theme-toggle-thumb,
   html[data-theme="dark"] .mode-toggle.is-dark .mode-toggle-thumb,
   html[data-theme="dark"] .appearance-toggle.is-dark .appearance-toggle-thumb{
-    transform:translateX(102px);
+    transform:translateX(20px);
   }
 
   .segment-icon-btn,
@@ -781,5 +816,30 @@ html[data-theme="dark"] .pos-nav-btn{
   .pos-nav-btn{
     width:34px;
     height:34px;
+  }
+
+  .uos-topbar{
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+  }
+
+  .uos-back{
+    width: 38px;
+    height: 38px;
+  }
+
+  .uos-toggle{
+    width: 46px;
+    height: 27px;
+  }
+
+  .uos-knob{
+    width: 21px;
+    height: 21px;
+  }
+
+  html[data-theme="dark"] .uos-knob{
+    transform: translateX(19px);
   }
 }
