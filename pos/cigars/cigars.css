@@ -34,7 +34,7 @@ body.cigars-page{
   min-height:100vh;
   color:var(--ink);
   background:
-    radial-gradient(1200px 540px at 50% -8%, rgba(63,108,194,.28) 0%, rgba(20,44,92,.22) 28%, rgba(4,13,34,0) 58%),
+    radial-gradient(1200px 540px at 50% -8%, rgba(63,108,194,.22) 0%, rgba(20,44,92,.16) 28%, rgba(4,13,34,0) 58%),
     linear-gradient(180deg, #0f2856 0%, #07142f 48%, #041027 100%);
   background-attachment:fixed;
   font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
@@ -66,143 +66,8 @@ html[data-theme="light"] .cigars-main{
   background:transparent;
 }
 
-/* top bar */
-.cigars-topbar{
-  position:sticky;
-  top:0;
-  z-index:1000;
-  padding:10px 12px 8px;
-  padding-top:calc(10px + env(safe-area-inset-top));
-  backdrop-filter:blur(24px) saturate(1.12);
-  -webkit-backdrop-filter:blur(24px) saturate(1.12);
-  background:linear-gradient(180deg, rgba(8,13,24,.74), rgba(8,13,24,.46));
-  border-bottom:1px solid rgba(255,255,255,.06);
-}
-
-html[data-theme="light"] .cigars-topbar{
-  background:linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.62));
-  border-bottom:1px solid rgba(15,26,44,.06);
-}
-
-.cigars-topbar-inner{
-  width:min(430px, calc(100% - 2px));
-  margin:0 auto;
-  display:grid;
-  grid-template-columns:auto 1fr auto;
-  align-items:center;
-  gap:10px;
-}
-
-.ct-group{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.ct-group-left{ justify-content:flex-start; }
-.ct-group-right{ justify-content:flex-end; }
-
-.ct-icon-btn{
-  width:42px;
-  height:42px;
-  border-radius:14px;
-  border:1px solid var(--glass-border);
-  background:var(--glass-2);
-  color:var(--ink);
-  display:grid;
-  place-items:center;
-  text-decoration:none;
-  box-shadow:var(--glass-shadow);
-  transition:transform .16s ease, background .16s ease, border-color .16s ease;
-  -webkit-tap-highlight-color:transparent;
-}
-
-.ct-icon-btn svg{
-  width:20px;
-  height:20px;
-}
-
-.ct-icon-btn:active{
-  transform:scale(.96);
-}
-
-.ct-center-pill{
-  min-width:0;
-  display:grid;
-  grid-template-columns:repeat(4, 1fr);
-  gap:6px;
-  padding:6px;
-  border-radius:18px;
-  border:1px solid var(--glass-border);
-  background:var(--glass);
-  box-shadow:var(--glass-shadow);
-  backdrop-filter:blur(18px) saturate(1.08);
-  -webkit-backdrop-filter:blur(18px) saturate(1.08);
-}
-
-.ct-pill-btn{
-  min-width:0;
-  height:38px;
-  padding:0 8px;
-  border-radius:12px;
-  text-decoration:none;
-  color:var(--ink);
-  display:grid;
-  place-items:center;
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:-.01em;
-  white-space:nowrap;
-  opacity:.86;
-  transition:transform .16s ease, background .16s ease, opacity .16s ease;
-}
-
-.ct-pill-btn:active{
-  transform:scale(.97);
-}
-
-.ct-pill-btn:hover{
-  background:rgba(255,255,255,.07);
-  opacity:1;
-}
-
-html[data-theme="light"] .ct-pill-btn:hover{
-  background:rgba(15,23,40,.05);
-}
-
-.ct-toggle{
-  position:relative;
-  width:54px;
-  height:32px;
-  border:1px solid var(--glass-border);
-  background:var(--glass-2);
-  border-radius:999px;
-  padding:0;
-  cursor:pointer;
-  box-shadow:var(--glass-shadow);
-  -webkit-tap-highlight-color:transparent;
-}
-
-.ct-toggle-track{
-  position:absolute;
-  inset:0;
-  border-radius:999px;
-}
-
-.ct-toggle-knob{
-  position:absolute;
-  top:3px;
-  left:3px;
-  width:24px;
-  height:24px;
-  border-radius:50%;
-  background:#fff;
-  box-shadow:0 3px 8px rgba(0,0,0,.18);
-  transition:transform .22s ease;
-}
-
-html[data-theme="dark"] .ct-toggle-knob{
-  transform:translateX(22px);
+#universalTopbar + .cigars-main{
+  padding-top: 16px;
 }
 
 .cigars-main{
@@ -957,16 +822,6 @@ html[data-theme="light"] .cb-nav-btn:hover{
     line-height:1.06;
     letter-spacing:-.03em;
     max-width:118px;
-  }
-
-  .ct-center-pill{
-    gap:4px;
-    padding:5px;
-  }
-
-  .ct-pill-btn{
-    font-size:11px;
-    padding:0 4px;
   }
 
   .cb-nav-btn{
