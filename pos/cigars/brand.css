@@ -339,6 +339,19 @@ html[data-theme="light"] .moon-knob::before{
   border-bottom:1px solid rgba(255,255,255,.08);
 }
 
+.brand-row-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-left:auto;
+  justify-content:flex-end;
+}
+
+.brand-row-left{
+  flex:1 1 auto;
+  min-width:0;
+}
+
 html[data-theme="light"] .brand-row{
   border-bottom:1px solid rgba(0,0,0,.08);
 }
@@ -380,7 +393,8 @@ html[data-theme="light"] .brand-row{
   display:flex;
   align-items:center;
   gap:12px;
-  flex:0 0 auto;
+  margin-left:auto;
+  justify-content:flex-end;
 }
 
 .brand-row-msrp{
