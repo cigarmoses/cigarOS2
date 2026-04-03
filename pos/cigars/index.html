@@ -6,10 +6,10 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Cigars</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=19" />
-  <link rel="stylesheet" href="/pos/pos.css?v=19" />
-  <link rel="stylesheet" href="/uxui/topbar/topbar.css" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=19" />
+  <link rel="stylesheet" href="/css/type.css?v=20" />
+  <link rel="stylesheet" href="/pos/pos.css?v=20" />
+  <link rel="stylesheet" href="/uxui/topbar/topbar.css?v=20" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=20" />
 </head>
 
 <body class="cigars-page">
@@ -48,17 +48,18 @@
     <section class="cigars-list" id="cigarsList"></section>
   </main>
 
-  <script src="/uxui/topbar/topbar.js" defer></script>
-  <script src="/pos/cart.js?v=19" defer></script>
-  <script src="/pos/cigars/cigars.js?v=19" defer></script>
+  <script src="/uxui/topbar/topbar.js?v=20" defer></script>
+  <script src="/pos/cart.js?v=20" defer></script>
+  <script src="/pos/cigars/cigars.js?v=20" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       if (window.CigarOSTopbar) {
         window.CigarOSTopbar.mount("#universalTopbar", {
-          homeHref: "/",
           searchHref: "/search/",
+          homeHref: "/",
           favoritesHref: "/pos/favorites/",
-          cartHref: "/pos/invoice/"
+          cartHref: "/pos/invoice/",
+          showThemeToggle: true
         });
       }
     });
