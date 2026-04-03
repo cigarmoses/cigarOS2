@@ -20,6 +20,7 @@
   --toggle-knob:#ffffff;
 
   --shadow:0 10px 22px rgba(0,0,0,.18);
+  --glass-shadow:0 10px 30px rgba(0,0,0,.22);
 }
 
 html[data-theme="light"]{
@@ -41,6 +42,7 @@ html[data-theme="light"]{
   --toggle-knob:#ffffff;
 
   --shadow:0 10px 22px rgba(15,26,44,.08);
+  --glass-shadow:0 10px 24px rgba(15,26,44,.10);
 }
 
 *{ box-sizing:border-box; }
@@ -140,7 +142,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   margin:0 auto;
   height:auto;
   min-height:calc(100dvh - var(--safe-top) - 64px);
-  padding:2px 0 calc(84px + var(--safe-bottom));
+  padding:2px 0 calc(104px + var(--safe-bottom));
 }
 
 .cd-shell{
@@ -315,10 +317,10 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 .cd-card-label{
   font-size:11px;
   font-weight:500;
-  letter-spacing:.08em;
+  letter-spacing:.10em;
   text-transform:uppercase;
-  opacity:.5;
-  margin-bottom:5px;
+  opacity:.48;
+  margin-bottom:4px;
 }
 
 .cd-spec-grid{
@@ -342,9 +344,9 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 .cd-spec-value{
   margin-top:4px;
   text-align:right;
-  font-size:15px;
-  font-weight:600;
-  letter-spacing:-.01em;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-.02em;
   color:var(--text);
   white-space:nowrap;
   overflow:hidden;
@@ -352,9 +354,9 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-spec-value.spec-text{
-  font-size:15px;
+  font-size:17px;
   line-height:1.08;
-  letter-spacing:-.01em;
+  letter-spacing:-.02em;
   white-space:nowrap;
 }
 
@@ -388,7 +390,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-origin{
-  min-height:60px;
+  min-height:54px;
   padding:8px 12px;
 }
 
@@ -397,7 +399,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-origin-row{
-  margin-top:4px;
+  margin-top:2px;
   display:flex;
   align-items:center;
   justify-content:flex-end;
@@ -410,7 +412,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 
 .cd-origin-value{
   text-align:right;
-  font:700 14px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:700 13px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.01em;
   color:var(--text);
   white-space:nowrap;
@@ -454,11 +456,25 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-actions{
+  position:sticky;
+  bottom:calc(10px + var(--safe-bottom));
+  z-index:12;
   display:grid;
   grid-template-columns:repeat(4, 1fr);
-  gap:6px;
+  gap:8px;
   margin-top:6px;
-  padding-bottom:2px;
+  padding:10px;
+  border-radius:22px;
+  background:rgba(20, 30, 52, .58);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(18px) saturate(1.2);
+  -webkit-backdrop-filter:blur(18px) saturate(1.2);
+  box-shadow:var(--glass-shadow);
+}
+
+html[data-theme="light"] .cd-actions{
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(15,26,44,.08);
 }
 
 .cd-actions.is-editing{
@@ -466,18 +482,30 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-action{
-  min-height:40px;
-  border-radius:13px;
-  border:1px solid var(--border);
-  background:transparent;
-  color:color-mix(in srgb, var(--text) 88%, transparent);
-  font:700 10px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.01em;
+  min-height:42px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  color:color-mix(in srgb, var(--text) 92%, transparent);
+  font:800 10px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:.02em;
   text-transform:uppercase;
   white-space:nowrap;
+  transition:transform .16s ease, background .16s ease, border-color .16s ease;
 }
 
-.cd-action:active{ transform:scale(.985); }
+html[data-theme="light"] .cd-action{
+  border:1px solid rgba(15,26,44,.08);
+  background:rgba(255,255,255,.55);
+}
+
+.cd-action:active{
+  transform:scale(.97);
+}
+
+.cd-action:hover{
+  background:rgba(255,255,255,.08);
+}
 
 .cd-action.is-on{
   background:var(--surface-soft);
@@ -485,7 +513,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-action--primary{
-  background:rgba(255,255,255,.08);
+  background:rgba(255,255,255,.12);
   color:var(--text);
 }
 
@@ -562,20 +590,20 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 
   .cd-spec-value,
   .cd-spec-value.spec-text,
-  .cd-tobacco-value,
+  .cd-tobacco-value{
+    font-size:16px;
+  }
+
   .cd-origin-value{
-    font-size:14px;
+    font-size:12px;
   }
 
   .cd-accolade-line{
     font-size:11px;
   }
 
-  .cd-actions{
-    gap:6px;
-  }
-
   .cd-action{
-    font-size:10px;
+    font-size:9px;
+    min-height:40px;
   }
 }
