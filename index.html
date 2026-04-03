@@ -1,310 +1,346 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>CigarOS</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CigarOS</title>
 
-<link rel="stylesheet" href="/css/type.css" />
+  <link rel="stylesheet" href="/css/type.css" />
 
-<style>
-:root{
---safe-top: env(safe-area-inset-top, 0px);
---safe-bottom: env(safe-area-inset-bottom, 0px);
+  <style>
+    :root{
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
 
---screen-max: 430px;
+      --screen-max: 430px;
 
---bg: #edf2f6;
---panel-bg: transparent;
---ink: #16263d;
---muted: #51647f;
+      --bg: #edf2f6;
+      --panel-bg: transparent;
+      --ink: #16263d;
+      --muted: #51647f;
 
---toggle-bg: #c8d0db;
---toggle-shadow: 0 10px 24px rgba(0,0,0,.18);
+      --toggle-bg: rgba(255,255,255,.92);
+      --toggle-shadow: 0 10px 24px rgba(15,26,44,.08);
 
---tile-size: 132px;
---grid-gap-x: 28px;
---grid-gap-y: 26px;
+      --tile-size: 132px;
+      --grid-gap-x: 28px;
+      --grid-gap-y: 26px;
 
---label-size: 16px;
---label-weight: 600;
+      --label-size: 16px;
+      --label-weight: 600;
 
---grid-top-offset: 100px;
-}
+      --grid-top-offset: 104px;
+    }
 
-body.dark{
---bg:
-radial-gradient(1200px 700px at 50% -20%, #0e2244 0%, rgba(14,34,68,0) 55%),
-linear-gradient(180deg, #06152d 0%, #020912 60%, #000000 100%);
---panel-bg: transparent;
---ink: #eef5ff;
---muted: #acbbd0;
+    html[data-theme="dark"]{
+      --bg:
+        radial-gradient(1200px 700px at 50% -20%, #0e2244 0%, rgba(14,34,68,0) 55%),
+        linear-gradient(180deg, #06152d 0%, #020912 60%, #000000 100%);
+      --panel-bg: transparent;
+      --ink: #eef5ff;
+      --muted: #acbbd0;
 
---toggle-bg: #24385e;
---toggle-shadow: 0 10px 20px rgba(0,0,0,.24);
-}
+      --toggle-bg: rgba(255,255,255,.10);
+      --toggle-shadow: 0 10px 20px rgba(0,0,0,.24);
+    }
 
-*{box-sizing:border-box;}
+    *{ box-sizing:border-box; }
 
-html,body{
-margin:0;
-min-height:100%;
-}
+    html,body{
+      margin:0;
+      min-height:100%;
+    }
 
-body{
-min-height:100dvh;
-background:var(--bg);
-color:var(--ink);
-font-family:var(--font-display),-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
--webkit-font-smoothing:antialiased;
-text-rendering:optimizeLegibility;
-overflow-x:hidden;
-overflow-y:auto;
-overscroll-behavior-y:none;
--webkit-overflow-scrolling:touch;
-transition:background .25s ease,color .25s ease;
-}
+    body{
+      min-height:100dvh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior-y: none;
+      -webkit-overflow-scrolling: touch;
+      transition: background .25s ease, color .25s ease;
+    }
 
-.screen{
-width:100%;
-max-width:var(--screen-max);
-min-height:100dvh;
-margin:0 auto;
-padding:
-calc(var(--safe-top) + var(--grid-top-offset))
-14px
-calc(var(--safe-bottom) + 92px);
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:flex-start;
-position:relative;
-}
+    .screen{
+      width:100%;
+      max-width:var(--screen-max);
+      min-height:100dvh;
+      margin:0 auto;
+      padding:
+        calc(var(--safe-top) + var(--grid-top-offset))
+        14px
+        calc(var(--safe-bottom) + 92px);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      position:relative;
+    }
 
-.topbar{
-position:fixed;
-top:calc(var(--safe-top) + 18px);
-left:50%;
-transform:translateX(-50%);
-width:min(calc(100vw - 28px), var(--screen-max));
-display:flex;
-justify-content:flex-end;
-align-items:center;
-padding-right:2px;
-z-index:50;
-pointer-events:none;
-}
+    /* universal top bar */
+    .uos-topbar{
+      position:fixed;
+      top:0;
+      left:50%;
+      transform:translateX(-50%);
+      width:min(calc(100vw - 28px), var(--screen-max));
+      z-index:100;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 2px 0;
+      padding-top:calc(10px + var(--safe-top));
+    }
 
-.theme-toggle{
-width:86px;
-height:42px;
-border:none;
-border-radius:999px;
-background:var(--toggle-bg);
-box-shadow:var(--toggle-shadow);
-position:relative;
-cursor:pointer;
-padding:0;
-appearance:none;
--webkit-appearance:none;
-transition:background .25s ease,box-shadow .25s ease,transform .15s ease;
-backdrop-filter:blur(10px);
--webkit-backdrop-filter:blur(10px);
-display:inline-flex;
-align-items:center;
-pointer-events:auto;
-}
+    .uos-back{
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      border:1px solid rgba(15,26,44,.08);
+      background:rgba(255,255,255,.96);
+      color:#101828;
+      display:grid;
+      place-items:center;
+      box-shadow:0 10px 24px rgba(15,26,44,.06);
+      -webkit-tap-highlight-color:transparent;
+      cursor:pointer;
+      padding:0;
+    }
 
-.theme-toggle:active{
-transform:scale(.97);
-}
+    .uos-back svg{
+      width:22px;
+      height:22px;
+    }
 
-.theme-icon{
-position:absolute;
-top:5px;
-left:5px;
-width:32px;
-height:32px;
-display:block;
-object-fit:contain;
-transition:left .28s cubic-bezier(.22,.8,.25,1),opacity .2s ease,transform .2s ease;
-filter:drop-shadow(0 1px 4px rgba(0,0,0,.12));
-}
+    html[data-theme="dark"] .uos-back{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      box-shadow:0 12px 28px rgba(0,0,0,.24);
+    }
 
-body.dark .theme-icon{
-left:49px;
-}
+    .uos-toggle{
+      position:relative;
+      width:48px;
+      height:28px;
+      border-radius:999px;
+      border:1px solid rgba(15,26,44,.08);
+      background:var(--toggle-bg);
+      padding:0;
+      box-shadow:var(--toggle-shadow);
+      -webkit-tap-highlight-color:transparent;
+      cursor:pointer;
+    }
 
-.theme-icon.sun{
-opacity:1;
-transform:scale(1) rotate(0deg);
-}
+    html[data-theme="dark"] .uos-toggle{
+      border:1px solid rgba(255,255,255,.10);
+    }
 
-.theme-icon.moon{
-opacity:0;
-transform:scale(.85) rotate(-18deg);
-}
+    .uos-track{
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+    }
 
-body.dark .theme-icon.sun{
-opacity:0;
-transform:scale(.85) rotate(18deg);
-}
+    .uos-knob{
+      position:absolute;
+      top:2px;
+      left:2px;
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      background:#fff;
+      color:#0b1323;
+      display:grid;
+      place-items:center;
+      transition:transform .25s ease;
+      box-shadow:0 3px 10px rgba(0,0,0,.16);
+    }
 
-body.dark .theme-icon.moon{
-opacity:1;
-transform:scale(1) rotate(0deg);
-}
+    html[data-theme="dark"] .uos-knob{
+      transform:translateX(20px);
+    }
 
-.menu-wrap{
-width:100%;
-display:flex;
-flex-direction:column;
-align-items:center;
-}
+    .uos-sun,
+    .uos-moon{
+      position:absolute;
+      width:12px;
+      height:12px;
+    }
 
-.home-panel{
-width:100%;
-display:flex;
-justify-content:center;
-align-items:flex-start;
-background:var(--panel-bg);
-border-radius:24px;
-padding:8px 12px 12px;
-overflow:visible;
-}
+    .uos-moon{ display:none; }
 
-.home-grid{
-width:100%;
-display:grid;
-grid-template-columns:repeat(2,minmax(0,1fr));
-justify-items:center;
-align-content:start;
-gap:var(--grid-gap-y) var(--grid-gap-x);
-}
+    html[data-theme="dark"] .uos-sun{ display:none; }
+    html[data-theme="dark"] .uos-moon{ display:block; }
 
-.home-item{
-width:100%;
-display:flex;
-flex-direction:column;
-align-items:center;
-text-decoration:none;
-color:var(--ink);
--webkit-tap-highlight-color:transparent;
-}
+    .menu-wrap{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
 
-.tile-img{
-width:var(--tile-size);
-height:var(--tile-size);
-display:block;
-object-fit:contain;
-filter:
-drop-shadow(0 14px 24px rgba(0,0,0,.25))
-drop-shadow(0 2px 6px rgba(255,255,255,.08));
-transition:transform .18s ease;
-}
+    .home-panel{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      background:var(--panel-bg);
+      border-radius:24px;
+      padding:8px 12px 12px;
+      overflow:visible;
+    }
 
-.home-item:active .tile-img{
-transform:scale(.95);
-}
+    .home-grid{
+      width:100%;
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      justify-items:center;
+      align-content:start;
+      gap:var(--grid-gap-y) var(--grid-gap-x);
+    }
 
-.icon-label{
-margin-top:8px;
-font-size:var(--label-size);
-font-weight:var(--label-weight);
-letter-spacing:-.01em;
-color:var(--muted);
-text-align:center;
-}
-</style>
+    .home-item{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-decoration:none;
+      color:var(--ink);
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .tile-img{
+      width:var(--tile-size);
+      height:var(--tile-size);
+      display:block;
+      object-fit:contain;
+      filter:
+        drop-shadow(0 14px 24px rgba(0,0,0,.25))
+        drop-shadow(0 2px 6px rgba(255,255,255,.08));
+      transition:transform .18s ease;
+    }
+
+    .home-item:active .tile-img{
+      transform:scale(.95);
+    }
+
+    .icon-label{
+      margin-top:8px;
+      font-size:var(--label-size);
+      font-weight:var(--label-weight);
+      letter-spacing:-.01em;
+      color:var(--muted);
+      text-align:center;
+    }
+  </style>
 </head>
 
-<body class="day">
+<body>
+  <header class="uos-topbar">
+    <button class="uos-back" id="uosBack" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+      </svg>
+    </button>
 
-<main class="screen">
+    <button class="uos-toggle" id="themeToggle" aria-label="Toggle theme" aria-pressed="false">
+      <span class="uos-track"></span>
+      <span class="uos-knob">
+        <svg class="uos-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="5" fill="currentColor"/>
+        </svg>
+        <svg class="uos-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"/>
+        </svg>
+      </span>
+    </button>
+  </header>
 
-<div class="topbar">
-<button class="theme-toggle" id="themeToggle">
-<img class="theme-icon sun" src="/img/icons/sun.svg">
-<img class="theme-icon moon" src="/img/icons/moon.svg">
-</button>
-</div>
+  <main class="screen">
+    <div class="menu-wrap">
+      <section class="home-panel">
+        <div class="home-grid">
 
-<div class="menu-wrap">
+          <a href="/pos/" class="home-item">
+            <img src="/img/icons/glass/pos.png" class="tile-img">
+            <div class="icon-label">POS</div>
+          </a>
 
-<section class="home-panel">
-<div class="home-grid">
+          <a href="/today/" class="home-item">
+            <img src="/img/icons/glass/today.png" class="tile-img">
+            <div class="icon-label">Today</div>
+          </a>
 
-<a href="/pos/" class="home-item">
-<img src="/img/icons/glass/pos.png" class="tile-img">
-<div class="icon-label">POS</div>
-</a>
+          <a href="/loyalty/" class="home-item">
+            <img src="/img/icons/glass/loyalty.png" class="tile-img">
+            <div class="icon-label">Loyalty</div>
+          </a>
 
-<a href="/today/" class="home-item">
-<img src="/img/icons/glass/today.png" class="tile-img">
-<div class="icon-label">Today</div>
-</a>
+          <a href="/inventory/" class="home-item">
+            <img src="/img/icons/glass/inventory.png" class="tile-img">
+            <div class="icon-label">Inventory</div>
+          </a>
 
-<a href="/loyalty/" class="home-item">
-<img src="/img/icons/glass/loyalty.png" class="tile-img">
-<div class="icon-label">Loyalty</div>
-</a>
+          <a href="/reports/" class="home-item">
+            <img src="/img/icons/glass/reports.png" class="tile-img">
+            <div class="icon-label">Reports</div>
+          </a>
 
-<a href="/inventory/" class="home-item">
-<img src="/img/icons/glass/inventory.png" class="tile-img">
-<div class="icon-label">Inventory</div>
-</a>
+          <a href="/learn/" class="home-item">
+            <img src="/img/icons/glass/learn.png" class="tile-img">
+            <div class="icon-label">Learn</div>
+          </a>
 
-<a href="/reports/" class="home-item">
-<img src="/img/icons/glass/reports.png" class="tile-img">
-<div class="icon-label">Reports</div>
-</a>
+          <a href="/news/" class="home-item">
+            <img src="/img/icons/glass/news.png" class="tile-img">
+            <div class="icon-label">News</div>
+          </a>
 
-<a href="/learn/" class="home-item">
-<img src="/img/icons/glass/learn.png" class="tile-img">
-<div class="icon-label">Learn</div>
-</a>
+          <a href="/social/" class="home-item">
+            <img src="/img/icons/glass/cigarsocialglass.png" class="tile-img">
+            <div class="icon-label">Cigar Social</div>
+          </a>
 
-<a href="/news/" class="home-item">
-<img src="/img/icons/glass/news.png" class="tile-img">
-<div class="icon-label">News</div>
-</a>
+        </div>
+      </section>
+    </div>
+  </main>
 
-<a href="/social/" class="home-item">
-<img src="/img/icons/glass/cigarsocialglass.png" class="tile-img">
-<div class="icon-label">Cigar Social</div>
-</a>
+  <script src="/js/global.js" defer></script>
 
-</div>
-</section>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const toggle = document.getElementById("themeToggle");
+      const backBtn = document.getElementById("uosBack");
 
-</div>
-</main>
+      function getTheme() {
+        return localStorage.getItem("theme") || root.getAttribute("data-theme") || "light";
+      }
 
-<script src="/js/global.js" defer></script>
+      function applyTheme(theme) {
+        const next = theme === "dark" ? "dark" : "light";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        toggle?.setAttribute("aria-pressed", String(next === "dark"));
+      }
 
-<script>
-(function(){
-const body=document.body;
-const toggle=document.getElementById("themeToggle");
-const savedTheme=localStorage.getItem("cigaros-home-theme");
+      applyTheme(getTheme());
 
-if(savedTheme==="dark"){
-body.classList.add("dark");
-body.classList.remove("day");
-}else{
-body.classList.add("day");
-body.classList.remove("dark");
-}
+      toggle?.addEventListener("click", () => {
+        applyTheme(getTheme() === "dark" ? "light" : "dark");
+      });
 
-toggle.addEventListener("click",function(){
-body.classList.toggle("dark");
-body.classList.toggle("day");
-
-const isDark=body.classList.contains("dark");
-localStorage.setItem("cigaros-home-theme",isDark?"dark":"day");
-});
-})();
-</script>
-
+      backBtn?.addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else window.location.href = "/";
+      });
+    })();
+  </script>
 </body>
 </html>
