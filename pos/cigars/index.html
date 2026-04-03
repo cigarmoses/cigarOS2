@@ -13,20 +13,35 @@
 </head>
 
 <body class="cigars-page">
-  <div id="universalTopbar"></div>
+
+  <!-- ✅ NEW TOPBAR -->
+  <header class="cigars-topbar">
+    <div class="ct-left">
+      <button class="ct-btn" onclick="window.location.href='/'">🏠</button>
+      <button class="ct-btn" onclick="window.location.href='/search/'">🔍</button>
+    </div>
+
+    <div class="ct-center">
+      <button class="ct-btn" onclick="window.location.href='/pos/favorites/'">⭐</button>
+      <button class="ct-btn" onclick="window.location.href='/pos/invoice/'">🧾</button>
+    </div>
+
+    <div class="ct-right">
+      <button id="theme-toggle" class="ct-toggle" aria-label="Toggle theme"></button>
+    </div>
+  </header>
 
   <main class="cigars-main" role="main">
+
     <div class="cigars-title-row">
       <h1 class="cigars-title">Cigars</h1>
 
-      <div class="cigars-title-actions">
-        <button type="button" class="cigars-filter-btn" id="btn-open-filters" aria-label="Filters">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 6h16M7 12h10M10 18h4"
-                  fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
+      <button type="button" class="cigars-filter-btn" id="btn-open-filters">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 6h16M7 12h10M10 18h4"
+            fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
 
     <div class="cigars-search-wrap">
@@ -35,34 +50,26 @@
         <input
           id="cigars-search-input"
           type="search"
-          inputmode="search"
-          autocomplete="off"
-          placeholder=""
-          aria-label="Search cigars"
+          placeholder="Search cigars"
         />
       </div>
 
-      <div class="cigars-applied-filters" id="cigarsAppliedFilters" aria-label="Applied filters"></div>
+      <div id="cigarsAppliedFilters"></div>
     </div>
 
-    <section class="cigars-list" id="cigarsList"></section>
+    <section id="cigarsList"></section>
   </main>
 
-  <script src="/uxui/topbar/topbar.js?v=20" defer></script>
+  <!-- ✅ GLASS BOTTOM BAR -->
+  <nav class="cigars-bottom-bar">
+    <button onclick="window.location.href='/'">Home</button>
+    <button onclick="window.location.href='/search/'">Search</button>
+    <button onclick="window.location.href='/pos/favorites/'">Favorites</button>
+    <button onclick="window.location.href='/pos/invoice/'">Invoice</button>
+  </nav>
+
   <script src="/pos/cart.js?v=20" defer></script>
   <script src="/pos/cigars/cigars.js?v=20" defer></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      if (window.CigarOSTopbar) {
-        window.CigarOSTopbar.mount("#universalTopbar", {
-          searchHref: "/search/",
-          homeHref: "/",
-          favoritesHref: "/pos/favorites/",
-          cartHref: "/pos/invoice/",
-          showThemeToggle: true
-        });
-      }
-    });
-  </script>
+
 </body>
 </html>
