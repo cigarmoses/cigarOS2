@@ -490,6 +490,13 @@ html[data-theme="light"] .cigars-empty{
   transition:transform .16s ease, background .16s ease;
 }
 
+.cb-nav-icon{
+  width:22px;
+  height:22px;
+  display:block;
+  object-fit:contain;
+}
+
 .cb-nav-btn svg{
   width:19px;
   height:19px;
