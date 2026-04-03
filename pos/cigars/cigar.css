@@ -140,7 +140,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   margin:0 auto;
   height:auto;
   min-height:calc(100dvh - var(--safe-top) - 64px);
-  padding:2px 0 calc(12px + var(--safe-bottom));
+  padding:2px 0 calc(84px + var(--safe-bottom));
 }
 
 .cd-shell{
@@ -388,8 +388,8 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-origin{
-  min-height:72px;
-  padding:10px 12px;
+  min-height:60px;
+  padding:8px 12px;
 }
 
 .cd-origin .cd-card-label{
@@ -397,7 +397,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-origin-row{
-  margin-top:8px;
+  margin-top:4px;
   display:flex;
   align-items:center;
   justify-content:flex-end;
@@ -410,7 +410,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 
 .cd-origin-value{
   text-align:right;
-  font:700 15px/1.08 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:700 14px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.01em;
   color:var(--text);
   white-space:nowrap;
@@ -425,7 +425,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-accolades{
-  min-height:72px;
+  min-height:64px;
   padding:10px 12px;
 }
 
@@ -456,8 +456,9 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 .cd-actions{
   display:grid;
   grid-template-columns:repeat(4, 1fr);
-  gap:8px;
-  margin-top:auto;
+  gap:6px;
+  margin-top:6px;
+  padding-bottom:2px;
 }
 
 .cd-actions.is-editing{
@@ -465,12 +466,12 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 }
 
 .cd-action{
-  min-height:44px;
-  border-radius:14px;
+  min-height:40px;
+  border-radius:13px;
   border:1px solid var(--border);
   background:transparent;
   color:color-mix(in srgb, var(--text) 88%, transparent);
-  font:700 11px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font:700 10px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.01em;
   text-transform:uppercase;
   white-space:nowrap;
@@ -541,6 +542,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 
 @media (max-width:390px){
   .cd-wrap{ width:calc(100% - 12px); }
+
   .cd-brand{ font-size:30px; }
   .cd-name{ font-size:14px; }
 
