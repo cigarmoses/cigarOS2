@@ -6,70 +6,142 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Cigars</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=20" />
-  <link rel="stylesheet" href="/pos/pos.css?v=20" />
-  <link rel="stylesheet" href="/uxui/topbar/topbar.css?v=20" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=20" />
+  <link rel="stylesheet" href="/css/type.css?v=21" />
+  <link rel="stylesheet" href="/pos/pos.css?v=21" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=21" />
 </head>
 
 <body class="cigars-page">
-
-  <!-- ✅ NEW TOPBAR -->
   <header class="cigars-topbar">
-    <div class="ct-left">
-      <button class="ct-btn" onclick="window.location.href='/'">🏠</button>
-      <button class="ct-btn" onclick="window.location.href='/search/'">🔍</button>
-    </div>
+    <div class="cigars-topbar-inner">
+      <div class="ct-group ct-group-left">
+        <a class="ct-icon-btn" href="/search/" aria-label="Search">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"></circle>
+            <path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
+          </svg>
+        </a>
 
-    <div class="ct-center">
-      <button class="ct-btn" onclick="window.location.href='/pos/favorites/'">⭐</button>
-      <button class="ct-btn" onclick="window.location.href='/pos/invoice/'">🧾</button>
-    </div>
+        <a class="ct-icon-btn" href="/" aria-label="Home">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 10.5L12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1v-8.5Z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"></path>
+          </svg>
+        </a>
+      </div>
 
-    <div class="ct-right">
-      <button id="theme-toggle" class="ct-toggle" aria-label="Toggle theme"></button>
+      <div class="ct-center-pill" aria-label="Quick navigation">
+        <a class="ct-pill-btn" href="/search/">Search</a>
+        <a class="ct-pill-btn" href="/">Home</a>
+        <a class="ct-pill-btn" href="/pos/favorites/">Favorites</a>
+        <a class="ct-pill-btn" href="/pos/invoice/">Invoice</a>
+      </div>
+
+      <div class="ct-group ct-group-right">
+        <button id="theme-toggle" class="ct-toggle" type="button" aria-label="Toggle theme" aria-pressed="false">
+          <span class="ct-toggle-track" aria-hidden="true"></span>
+          <span class="ct-toggle-knob" aria-hidden="true"></span>
+        </button>
+      </div>
     </div>
   </header>
 
   <main class="cigars-main" role="main">
-
     <div class="cigars-title-row">
       <h1 class="cigars-title">Cigars</h1>
 
-      <button type="button" class="cigars-filter-btn" id="btn-open-filters">
-        <svg viewBox="0 0 24 24">
-          <path d="M4 6h16M7 12h10M10 18h4"
-            fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-        </svg>
-      </button>
+      <div class="cigars-title-actions">
+        <button type="button" class="cigars-filter-btn" id="btn-open-filters" aria-label="Filters">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16M7 12h10M10 18h4"
+              fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <div class="cigars-search-wrap">
       <div class="cigars-search-bar">
-        <div class="cigars-search-icon">🔍</div>
+        <div class="cigars-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2.1"></circle>
+            <path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"></path>
+          </svg>
+        </div>
+
         <input
           id="cigars-search-input"
           type="search"
+          inputmode="search"
+          autocomplete="off"
           placeholder="Search cigars"
+          aria-label="Search cigars"
         />
       </div>
 
-      <div id="cigarsAppliedFilters"></div>
+      <div class="cigars-applied-filters" id="cigarsAppliedFilters" aria-label="Applied filters"></div>
     </div>
 
-    <section id="cigarsList"></section>
+    <section class="cigars-list" id="cigarsList"></section>
   </main>
 
-  <!-- ✅ GLASS BOTTOM BAR -->
-  <nav class="cigars-bottom-bar">
-    <button onclick="window.location.href='/'">Home</button>
-    <button onclick="window.location.href='/search/'">Search</button>
-    <button onclick="window.location.href='/pos/favorites/'">Favorites</button>
-    <button onclick="window.location.href='/pos/invoice/'">Invoice</button>
+  <nav class="cigars-bottom-bar" aria-label="Bottom navigation">
+    <div class="cigars-bottom-bar-inner">
+      <a class="cb-nav-btn" href="/search/">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2.1"></circle>
+          <path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"></path>
+        </svg>
+        <span>Search</span>
+      </a>
+
+      <a class="cb-nav-btn" href="/">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 10.5L12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1v-8.5Z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"></path>
+        </svg>
+        <span>Home</span>
+      </a>
+
+      <a class="cb-nav-btn" href="/pos/favorites/">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 20.5 4.8 13.7a4.7 4.7 0 0 1 6.6-6.7L12 7.6l.6-.6a4.7 4.7 0 0 1 6.6 6.7Z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"></path>
+        </svg>
+        <span>Favorites</span>
+      </a>
+
+      <a class="cb-nav-btn" href="/pos/invoice/">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 3.5h8.5L19 7v13l-2.2-1.3L14.6 20l-2.2-1.3L10.2 20 8 18.7 5.8 20V4.5a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="2.05" stroke-linejoin="round"></path>
+          <path d="M9 9h6M9 12.5h6M9 16h4.5" fill="none" stroke="currentColor" stroke-width="2.05" stroke-linecap="round"></path>
+        </svg>
+        <span>Invoice</span>
+      </a>
+    </div>
   </nav>
 
-  <script src="/pos/cart.js?v=20" defer></script>
-  <script src="/pos/cigars/cigars.js?v=20" defer></script>
+  <script src="/pos/cart.js?v=21" defer></script>
+  <script src="/pos/cigars/cigars.js?v=21" defer></script>
+  <script>
+    (() => {
+      const toggle = document.getElementById("theme-toggle");
+      const root = document.documentElement;
 
+      function getTheme() {
+        return localStorage.getItem("theme") || root.getAttribute("data-theme") || "light";
+      }
+
+      function applyTheme(theme) {
+        const next = theme === "dark" ? "dark" : "light";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        toggle?.setAttribute("aria-pressed", String(next === "dark"));
+      }
+
+      applyTheme(getTheme());
+
+      toggle?.addEventListener("click", () => {
+        applyTheme(getTheme() === "dark" ? "light" : "dark");
+      });
+    })();
+  </script>
 </body>
 </html>
