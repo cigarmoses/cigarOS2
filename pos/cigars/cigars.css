@@ -202,7 +202,7 @@ html[data-theme="light"] #cigars-search-input{
 }
 
 #cigars-search-input::placeholder{
-  color:var(--muted);
+  color:transparent !important;
 }
 
 /* filters applied */
@@ -402,7 +402,8 @@ html[data-theme="light"] .cigars-results .brand-row-sub{
   display:flex;
   align-items:center;
   gap:12px;
-  margin-left:10px;
+  margin-left:auto;
+  justify-content:flex-end;
 }
 
 .cigars-results .brand-row-msrp{
@@ -495,11 +496,6 @@ html[data-theme="light"] .cigars-empty{
   height:22px;
   display:block;
   object-fit:contain;
-}
-
-.cb-nav-btn svg{
-  width:19px;
-  height:19px;
 }
 
 .cb-nav-btn:active{
