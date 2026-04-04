@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta
@@ -15,39 +15,53 @@
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-      --ink: rgba(255,255,255,.98);
-      --muted: rgba(255,255,255,.72);
+      --bg-light:#eff2f7;
+      --ink-light:#111827;
+      --muted-light:rgba(17,24,39,.62);
+      --glass-light:rgba(255,255,255,.88);
+      --glass-light-2:rgba(255,255,255,.96);
+      --glass-light-border:rgba(15,23,40,.10);
+      --shadow-light:0 12px 30px rgba(15,26,44,.08);
 
-      --glass-stroke: rgba(255,255,255,.20);
-      --shadow: 0 18px 40px rgba(0,0,0,.30);
-
-      --tile-radius: 34px;
-      --tile-min-h: 220px;
-
-      --content-max: 460px;
-
-      --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-        "Segoe UI", sans-serif;
-      --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Segoe UI", sans-serif;
-    }
-
-    *{ box-sizing:border-box; }
-    html, body{ margin:0; padding:0; }
-
-    body{
-      min-height:100vh;
-      color:var(--ink);
-      font-family:var(--font-text);
-      background:
+      --bg-dark:
         radial-gradient(1100px 700px at 80% 10%, rgba(187,83,23,.38), transparent 55%),
         radial-gradient(900px 900px at 15% 50%, rgba(140,53,11,.28), transparent 48%),
         radial-gradient(700px 700px at 50% 85%, rgba(255,120,40,.10), transparent 45%),
         linear-gradient(180deg, #05070d 0%, #150b08 18%, #2b1208 48%, #140b08 100%);
-      overflow-x:hidden;
+      --ink-dark:rgba(255,255,255,.98);
+      --muted-dark:rgba(255,255,255,.72);
+      --glass-dark:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.07));
+      --glass-dark-2:rgba(255,255,255,.08);
+      --glass-dark-border:rgba(255,255,255,.20);
+      --shadow-dark:0 18px 40px rgba(0,0,0,.30);
+
+      --tile-radius:34px;
+      --tile-min-h:220px;
+      --content-max:460px;
     }
 
-    body::before{
+    *{ box-sizing:border-box; }
+    html, body{ margin:0; padding:0; min-height:100%; }
+
+    body{
+      min-height:100vh;
+      overflow-x:hidden;
+      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    html[data-theme="light"] body{
+      background:var(--bg-light);
+      color:var(--ink-light);
+    }
+
+    html[data-theme="dark"] body{
+      background:var(--bg-dark);
+      color:var(--ink-dark);
+    }
+
+    html[data-theme="dark"] body::before{
       content:"";
       position:fixed;
       inset:0;
@@ -69,55 +83,115 @@
     a{
       color:inherit;
       text-decoration:none;
-      -webkit-tap-highlight-color: transparent;
+      -webkit-tap-highlight-color:transparent;
     }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      width:min(430px, calc(100% - 28px));
+      margin:0 auto;
+      padding-top:calc(10px + var(--safe-top));
+      padding-bottom:8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:transparent;
+    }
+
+    .tb-btn{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      padding:0;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      border:1px solid transparent;
+      color:inherit;
+    }
+
+    html[data-theme="light"] .tb-btn{
+      background:var(--glass-light-2);
+      border-color:var(--glass-light-border);
+      box-shadow:var(--shadow-light);
+    }
+
+    html[data-theme="dark"] .tb-btn{
+      background:var(--glass-dark-2);
+      border-color:var(--glass-dark-border);
+      box-shadow:var(--shadow-dark);
+      backdrop-filter:blur(18px) saturate(1.1);
+      -webkit-backdrop-filter:blur(18px) saturate(1.1);
+    }
+
+    .tb-btn svg{
+      width:20px;
+      height:20px;
+      display:block;
+    }
+
+    .theme-toggle{
+      position:relative;
+      width:58px;
+      height:34px;
+      border:0;
+      padding:0;
+      border-radius:999px;
+      background:transparent;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .theme-toggle-track{
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      background:#c7d1de;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+    }
+
+    html[data-theme="dark"] .theme-toggle-track{
+      background:rgba(255,255,255,.18);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+    }
+
+    .theme-toggle-knob{
+      position:absolute;
+      top:3px;
+      left:3px;
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      background:#ffffff;
+      box-shadow:0 3px 8px rgba(0,0,0,.18);
+      transition:transform .22s ease;
+      display:grid;
+      place-items:center;
+      color:#0f1728;
+    }
+
+    html[data-theme="dark"] .theme-toggle-knob{
+      transform:translateX(24px);
+    }
+
+    .theme-icon{
+      position:absolute;
+      width:14px;
+      height:14px;
+    }
+
+    .theme-icon-moon{ display:none; }
+    html[data-theme="dark"] .theme-icon-sun{ display:none; }
+    html[data-theme="dark"] .theme-icon-moon{ display:block; }
 
     .screen{
       width:min(100%, var(--content-max));
       margin:0 auto;
-      padding:
-        calc(var(--safe-top) + 18px)
-        18px
-        calc(var(--safe-bottom) + 28px);
+      padding:8px 18px calc(var(--safe-bottom) + 28px);
       position:relative;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:20px;
-    }
-
-    .glass-btn{
-      width:56px;
-      height:56px;
-      border-radius:50%;
-      display:grid;
-      place-items:center;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.07));
-      border:1px solid rgba(255,255,255,.18);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.16),
-        0 10px 30px rgba(0,0,0,.22);
-      backdrop-filter: blur(18px) saturate(1.1);
-      -webkit-backdrop-filter: blur(18px) saturate(1.1);
-      transition: transform .16s ease, background .16s ease, border-color .16s ease;
-      cursor:pointer;
-    }
-
-    .glass-btn:active{
-      transform:scale(.96);
-    }
-
-    .glass-btn svg{
-      width:26px;
-      height:26px;
-      stroke:white;
-      stroke-width:2.7;
-      fill:none;
-      opacity:.96;
     }
 
     .hero{
@@ -126,7 +200,7 @@
 
     .hero h1{
       margin:0;
-      font-family:var(--font-display);
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
       font-size:clamp(52px, 9vw, 74px);
       line-height:.95;
       letter-spacing:-0.075em;
@@ -136,11 +210,13 @@
     .hero p{
       margin:12px 0 0;
       max-width:320px;
-      color:var(--muted);
       font-size:15px;
       line-height:1.35;
       letter-spacing:-0.01em;
     }
+
+    html[data-theme="light"] .hero p{ color:var(--muted-light); }
+    html[data-theme="dark"] .hero p{ color:var(--muted-dark); }
 
     .learn-grid{
       display:grid;
@@ -154,35 +230,49 @@
       border-radius:var(--tile-radius);
       overflow:hidden;
       padding:22px 18px 20px;
+      transform:translateZ(0);
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+      isolation:isolate;
+    }
+
+    html[data-theme="light"] .learn-card{
+      background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.84));
+      border:1px solid var(--glass-light-border);
+      box-shadow:var(--shadow-light);
+    }
+
+    html[data-theme="dark"] .learn-card{
       background:
         linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06)),
         linear-gradient(135deg, rgba(255,179,122,.08), rgba(255,255,255,.03) 40%, rgba(130,55,14,.10));
-      border:1px solid var(--glass-stroke);
+      border:1px solid var(--glass-dark-border);
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.18),
         inset 0 -1px 0 rgba(255,255,255,.04),
-        var(--shadow);
-      backdrop-filter: blur(20px) saturate(1.1);
-      -webkit-backdrop-filter: blur(20px) saturate(1.1);
-      transform:translateZ(0);
-      transition:
-        transform .18s ease,
-        box-shadow .18s ease,
-        border-color .18s ease,
-        background .18s ease;
-      isolation:isolate;
+        var(--shadow-dark);
+      backdrop-filter:blur(20px) saturate(1.1);
+      -webkit-backdrop-filter:blur(20px) saturate(1.1);
     }
 
     .learn-card::before{
       content:"";
       position:absolute;
       inset:0;
-      background:
-        radial-gradient(220px 120px at 20% 0%, rgba(255,255,255,.16), transparent 55%),
-        radial-gradient(260px 180px at 100% 100%, rgba(166,78,20,.18), transparent 55%);
       opacity:.9;
       pointer-events:none;
       z-index:0;
+    }
+
+    html[data-theme="light"] .learn-card::before{
+      background:
+        radial-gradient(220px 120px at 20% 0%, rgba(255,255,255,.28), transparent 55%),
+        radial-gradient(260px 180px at 100% 100%, rgba(84,120,220,.08), transparent 55%);
+    }
+
+    html[data-theme="dark"] .learn-card::before{
+      background:
+        radial-gradient(220px 120px at 20% 0%, rgba(255,255,255,.16), transparent 55%),
+        radial-gradient(260px 180px at 100% 100%, rgba(166,78,20,.18), transparent 55%);
     }
 
     .learn-card::after{
@@ -190,18 +280,20 @@
       position:absolute;
       inset:1px;
       border-radius:calc(var(--tile-radius) - 1px);
-      border:1px solid rgba(255,255,255,.08);
       pointer-events:none;
       z-index:0;
     }
 
+    html[data-theme="light"] .learn-card::after{
+      border:1px solid rgba(255,255,255,.40);
+    }
+
+    html[data-theme="dark"] .learn-card::after{
+      border:1px solid rgba(255,255,255,.08);
+    }
+
     .learn-card:active{
       transform:scale(.985);
-      border-color:rgba(255,255,255,.28);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.22),
-        inset 0 -1px 0 rgba(255,255,255,.05),
-        0 12px 28px rgba(0,0,0,.24);
     }
 
     .learn-card-inner{
@@ -228,11 +320,11 @@
       width:74px;
       height:74px;
       opacity:.96;
-      filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));
+      filter:drop-shadow(0 4px 10px rgba(0,0,0,.22));
     }
 
     .learn-title{
-      font-family:var(--font-display);
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
       font-size:18px;
       line-height:1.05;
       font-weight:800;
@@ -241,10 +333,17 @@
 
     .learn-subtitle{
       margin-top:4px;
-      color:rgba(255,255,255,.64);
       font-size:12px;
       line-height:1.2;
       letter-spacing:-0.01em;
+    }
+
+    html[data-theme="light"] .learn-subtitle{
+      color:rgba(17,24,39,.58);
+    }
+
+    html[data-theme="dark"] .learn-subtitle{
+      color:rgba(255,255,255,.64);
     }
 
     .tile-wide{
@@ -301,27 +400,32 @@
   </style>
 </head>
 <body>
+  <header class="topbar">
+    <button
+      type="button"
+      class="tb-btn"
+      id="backBtn"
+      aria-label="Back"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" aria-pressed="false">
+      <span class="theme-toggle-track" aria-hidden="true"></span>
+      <span class="theme-toggle-knob" aria-hidden="true">
+        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="5" fill="currentColor"></circle>
+        </svg>
+        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
+        </svg>
+      </span>
+    </button>
+  </header>
+
   <main class="screen">
-    <header class="topbar">
-      <button
-        type="button"
-        class="glass-btn"
-        aria-label="Back"
-        onclick="history.length > 1 ? history.back() : location.href='/'"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M15 5L8 12L15 19"></path>
-        </svg>
-      </button>
-
-      <a class="glass-btn" href="/search/" aria-label="Search">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="11" cy="11" r="6.5"></circle>
-          <path d="M16 16L21 21"></path>
-        </svg>
-      </a>
-    </header>
-
     <section class="hero">
       <h1>Learn</h1>
       <p>
@@ -331,13 +435,12 @@
     </section>
 
     <section class="learn-grid">
-      <!-- Vitolas -->
       <a class="learn-card" href="/learn/vitolas/">
         <div class="learn-card-inner">
           <div class="learn-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-              <rect x="8" y="30" width="48" height="6" rx="3" fill="white"/>
-              <circle cx="10" cy="33" r="4" fill="white"/>
+              <rect x="8" y="30" width="48" height="6" rx="3" fill="currentColor"/>
+              <circle cx="10" cy="33" r="4" fill="currentColor"/>
             </svg>
           </div>
           <div>
@@ -347,12 +450,11 @@
         </div>
       </a>
 
-      <!-- Ring moved to top right -->
       <a class="learn-card" href="/learn/ring/">
         <div class="learn-card-inner">
           <div class="learn-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="32" cy="32" r="14" fill="none" stroke="white" stroke-width="3"/>
+              <circle cx="32" cy="32" r="14" fill="none" stroke="currentColor" stroke-width="3"/>
             </svg>
           </div>
           <div>
@@ -362,14 +464,13 @@
         </div>
       </a>
 
-      <!-- Colors -->
       <a class="learn-card" href="/learn/colors/">
         <div class="learn-card-inner">
           <div class="learn-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="20" cy="32" r="8" fill="white" opacity="0.9"/>
-              <circle cx="32" cy="32" r="8" fill="white" opacity="0.62"/>
-              <circle cx="44" cy="32" r="8" fill="white" opacity="0.32"/>
+              <circle cx="20" cy="32" r="8" fill="currentColor" opacity="0.9"/>
+              <circle cx="32" cy="32" r="8" fill="currentColor" opacity="0.62"/>
+              <circle cx="44" cy="32" r="8" fill="currentColor" opacity="0.32"/>
             </svg>
           </div>
           <div>
@@ -379,15 +480,14 @@
         </div>
       </a>
 
-      <!-- Anatomy -->
       <a class="learn-card" href="/learn/anatomy/">
         <div class="learn-card-inner">
           <div class="learn-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
               <rect x="10" y="28" width="44" height="8" rx="4"
-                    fill="none" stroke="white" stroke-width="2.4"/>
-              <line x1="22" y1="26" x2="22" y2="38" stroke="white" stroke-width="2"/>
-              <line x1="40" y1="26" x2="40" y2="38" stroke="white" stroke-width="2"/>
+                    fill="none" stroke="currentColor" stroke-width="2.4"/>
+              <line x1="22" y1="26" x2="22" y2="38" stroke="currentColor" stroke-width="2"/>
+              <line x1="40" y1="26" x2="40" y2="38" stroke="currentColor" stroke-width="2"/>
             </svg>
           </div>
           <div>
@@ -397,13 +497,12 @@
         </div>
       </a>
 
-      <!-- Shapes moved to bottom left -->
       <a class="learn-card" href="/learn/shapes/">
         <div class="learn-card-inner">
           <div class="learn-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-              <rect x="8" y="30" width="28" height="6" rx="3" fill="white"/>
-              <path d="M40 33 L56 30 L56 36 Z" fill="white"/>
+              <rect x="8" y="30" width="28" height="6" rx="3" fill="currentColor"/>
+              <path d="M40 33 L56 30 L56 36 Z" fill="currentColor"/>
             </svg>
           </div>
           <div>
@@ -413,16 +512,15 @@
         </div>
       </a>
 
-      <!-- Glossary -->
       <a class="learn-card" href="/learn/glossary/">
         <div class="learn-card-inner">
           <div class="learn-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
               <rect x="14" y="14" width="36" height="36" rx="6"
-                    fill="none" stroke="white" stroke-width="2.2"/>
-              <line x1="22" y1="26" x2="42" y2="26" stroke="white" stroke-width="2"/>
-              <line x1="22" y1="34" x2="38" y2="34" stroke="white" stroke-width="2"/>
-              <line x1="22" y1="42" x2="36" y2="42" stroke="white" stroke-width="2"/>
+                    fill="none" stroke="currentColor" stroke-width="2.2"/>
+              <line x1="22" y1="26" x2="42" y2="26" stroke="currentColor" stroke-width="2"/>
+              <line x1="22" y1="34" x2="38" y2="34" stroke="currentColor" stroke-width="2"/>
+              <line x1="22" y1="42" x2="36" y2="42" stroke="currentColor" stroke-width="2"/>
             </svg>
           </div>
           <div>
@@ -432,14 +530,13 @@
         </div>
       </a>
 
-      <!-- Tobacco Regions -->
       <a class="learn-card tile-wide" href="/learn/tobaccoregions/">
         <div class="learn-card-inner">
           <div class="learn-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
               <path d="M6 18 L22 12 L42 18 L58 12 L58 46 L42 52 L22 46 L6 52 Z"
                     fill="none"
-                    stroke="white"
+                    stroke="currentColor"
                     stroke-width="2.4"
                     stroke-linejoin="round"/>
               <path d="M32 20
@@ -447,7 +544,7 @@
                        C24 33 32 42 32 42
                        C32 42 40 33 40 27
                        C40 23 37 20 32 20 Z"
-                    fill="white"/>
+                    fill="currentColor"/>
             </svg>
           </div>
 
@@ -462,5 +559,37 @@
       </a>
     </section>
   </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const root = document.documentElement;
+      const toggle = document.getElementById("themeToggle");
+      const backBtn = document.getElementById("backBtn");
+
+      function getSavedTheme() {
+        return localStorage.getItem("theme") || root.getAttribute("data-theme") || "dark";
+      }
+
+      function applyTheme(theme) {
+        const next = theme === "light" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        toggle?.setAttribute("aria-pressed", String(next === "dark"));
+      }
+
+      applyTheme(getSavedTheme());
+
+      toggle?.addEventListener("click", () => {
+        applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
+      });
+
+      backBtn?.addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else window.location.href = "/";
+      });
+    })();
+  </script>
 </body>
 </html>
