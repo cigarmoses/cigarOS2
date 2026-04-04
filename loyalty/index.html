@@ -199,16 +199,18 @@
       border-radius:999px;
       cursor:pointer;
       color:var(--muted);
-      font-weight:700;
+      font-weight:600;
       min-width:0;
       flex:1 1 0;
-      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      letter-spacing:-0.02em;
     }
 
     .mode-btn.active{
       background:#ffffff;
       color:#111;
       box-shadow:0 1px 1px rgba(0,0,0,.12);
+      font-weight:700;
     }
 
     html[data-theme="dark"] .mode-btn.active{
@@ -224,8 +226,8 @@
       color:var(--ink);
       border-radius:999px;
       padding:0 14px;
-      font-size:14px;
-      font-weight:800;
+      font-size:15px;
+      font-weight:600;
       line-height:1;
       cursor:pointer;
       display:inline-flex;
@@ -234,6 +236,8 @@
       box-shadow:var(--surface-shadow);
       -webkit-tap-highlight-color:transparent;
       white-space:nowrap;
+      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      letter-spacing:-0.02em;
     }
 
     .filters-btn .dot{
@@ -296,11 +300,13 @@
 
     .summary{
       margin-top:8px;
-      font-size:12px;
+      font-size:15px;
       color:var(--muted);
       padding-left:4px;
       user-select:none;
-      font-weight:700;
+      font-weight:600;
+      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      letter-spacing:-0.02em;
     }
 
     .chips{
@@ -1132,4 +1138,4 @@
     }, true);
   </script>
 </body>
-</html>p
+</html>
