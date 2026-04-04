@@ -146,11 +146,13 @@
       transform:translateX(24px);
     }
 
-    .theme-icon{
-      position:absolute;
-      width:14px;
-      height:14px;
-    }
+.theme-icon{
+  position:absolute;
+  width:16px;
+  height:16px;
+  object-fit:contain;
+  pointer-events:none;
+}
 
     .theme-icon-moon{ display:none; }
     html[data-theme="dark"] .theme-icon-sun{ display:none; }
@@ -951,12 +953,20 @@
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" aria-pressed="false">
       <span class="theme-toggle-track" aria-hidden="true"></span>
       <span class="theme-toggle-knob" aria-hidden="true">
-        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="5" fill="currentColor"></circle>
-        </svg>
-        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
-        </svg>
+
+<img
+  class="theme-icon theme-icon-sun"
+  src="/uxui/lightmode/newsun.svg"
+  alt=""
+  aria-hidden="true"
+/>
+<img
+  class="theme-icon theme-icon-moon"
+  src="/uxui/darkmode/newmoon.svg"
+  alt=""
+  aria-hidden="true"
+/>
+        
       </span>
     </button>
   </header>
