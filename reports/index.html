@@ -1,177 +1,260 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <title>Reports • CigarOS</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 
-  <!-- Main POS styles -->
-  <link rel="stylesheet" href="/pos/pos.css" />
-  <!-- Global SF Pro type system -->
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
-    :root {
-      --bg: #f5f6fa;
-      --tile: #ffffff;
-      --radius: 20px;
-      --sh: 0 4px 10px rgba(0,0,0,0.08);
-      --sh2: 0 6px 16px rgba(0,0,0,0.10);
-      --ink: #111111;
-      --muted: #6a7586;
+    :root{
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+      --bg:#eff2f7;
+      --ink:#101828;
+      --muted:rgba(16,24,40,.58);
+
+      --surface:rgba(255,255,255,.86);
+      --surface-2:rgba(255,255,255,.94);
+      --surface-border:rgba(15,23,40,.08);
+      --surface-shadow:0 12px 30px rgba(15,26,44,.08);
+
+      --tile-accent:#2f8cff;
     }
 
-    * { box-sizing: border-box; }
+    html[data-theme="dark"]{
+      --bg:
+        radial-gradient(1200px 540px at 50% -8%, rgba(63,108,194,.22) 0%, rgba(20,44,92,.16) 28%, rgba(4,13,34,0) 58%),
+        linear-gradient(180deg, #0f2856 0%, #07142f 48%, #041027 100%);
+      --ink:#ffffff;
+      --muted:rgba(255,255,255,.64);
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      font-family: var(--font-text); /* SF Pro Text */
-      color: var(--ink);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
+      --surface:rgba(13,21,39,.58);
+      --surface-2:rgba(255,255,255,.08);
+      --surface-border:rgba(255,255,255,.12);
+      --surface-shadow:0 12px 34px rgba(0,0,0,.26);
+
+      --tile-accent:#7db8ff;
     }
 
-    .wrap {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 12px 12px 80px;
-      display: flex;
-      flex-direction: column;
+    *{ box-sizing:border-box; }
+
+    html, body{
+      margin:0;
+      min-height:100%;
     }
 
-    /* Topbar */
-    .pos-topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 0 4px;
+    body{
+      min-height:100dvh;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      -webkit-font-smoothing:antialiased;
     }
 
-    .pos-back {
-      border: none;
-      background: transparent;
-      padding: 0;
-      font-size: 16px;
-      color: var(--muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      width:min(430px, calc(100% - 28px));
+      margin:0 auto;
+      padding-top:calc(10px + var(--safe-top));
+      padding-bottom:8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:transparent;
     }
 
-    .pos-back span.icon {
-      font-size: 18px;
-      line-height: 1;
+    .tb-btn{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      border:1px solid var(--surface-border);
+      background:var(--surface-2);
+      box-shadow:var(--surface-shadow);
+      display:grid;
+      place-items:center;
+      padding:0;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
     }
 
-    .pos-topbar-title {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--muted);
+    .tb-btn svg{
+      width:20px;
+      height:20px;
+      display:block;
     }
 
-    header.reports-header {
-      padding-top: 4px;
-      padding-bottom: 14px;
+    .theme-toggle{
+      position:relative;
+      width:58px;
+      height:34px;
+      border:0;
+      padding:0;
+      border-radius:999px;
+      background:transparent;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
     }
 
-    header.reports-header h1.page-title {
-      margin: 4px 0 0;
-      font-size: 56px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      font-family: var(--font-display); /* SF Pro Display */
+    .theme-toggle-track{
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      background:#c7d1de;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
     }
 
-    .subtitle {
-      margin-top: 4px;
-      font-size: 13px;
-      color: var(--muted);
+    .theme-toggle-knob{
+      position:absolute;
+      top:3px;
+      left:3px;
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      background:#ffffff;
+      box-shadow:0 3px 8px rgba(0,0,0,.18);
+      transition:transform .22s ease;
+      display:grid;
+      place-items:center;
+      color:#0f1728;
     }
 
-    /* Grid of tiles */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 130px);
-      gap: 28px;
-      justify-content: center;
-      margin-top: 8px;
+    html[data-theme="dark"] .theme-toggle-knob{
+      transform:translateX(24px);
     }
 
-    .tile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 130px;
-      height: 130px;
-      background: var(--tile);
-      border-radius: var(--radius);
-      box-shadow: var(--sh);
-      text-decoration: none;
-      color: #111;
-      transition: 0.15s transform, 0.2s box-shadow;
+    .theme-icon{
+      position:absolute;
+      width:14px;
+      height:14px;
     }
 
-    .tile:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--sh2);
+    .theme-icon-moon{ display:none; }
+    html[data-theme="dark"] .theme-icon-sun{ display:none; }
+    html[data-theme="dark"] .theme-icon-moon{ display:block; }
+
+    .wrap{
+      width:min(430px, calc(100% - 28px));
+      margin:0 auto;
+      padding:6px 0 calc(40px + var(--safe-bottom));
     }
 
-    .tile svg {
-      width: 40px;
-      height: 40px;
-      margin-bottom: 10px;
+    .reports-header{
+      padding:6px 2px 16px;
     }
 
-    .label {
-      font-weight: 800;
-      font-size: 14px;
-      font-family: var(--font-display); /* Display for tile labels */
+    .page-title{
+      margin:0;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size:58px;
+      line-height:.92;
+      font-weight:800;
+      letter-spacing:-.05em;
+      color:var(--ink);
     }
 
-    /* Tony floating icon bottom-left */
-    .tony-fab {
-      position: fixed;
-      left: 16px;
-      bottom: 16px;
-      width: 46px;
-      height: 46px;
-      border-radius: 999px;
-      background: transparent;
-      border: none;
-      padding: 0;
-      z-index: 40;
-    }
-    .tony-fab img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      border-radius: inherit;
+    .subtitle{
+      margin-top:8px;
+      font-size:14px;
+      font-weight:600;
+      color:var(--muted);
     }
 
-    @media (min-width: 520px) {
-      .wrap {
-        padding-top: 18px;
-      }
-      header.reports-header h1.page-title {
-        font-size: 34px;
-      }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:14px;
+    }
+
+    .tile{
+      min-height:144px;
+      border-radius:24px;
+      border:1px solid var(--surface-border);
+      background:var(--surface);
+      box-shadow:var(--surface-shadow);
+      text-decoration:none;
+      color:var(--ink);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      backdrop-filter:blur(18px) saturate(1.05);
+      -webkit-backdrop-filter:blur(18px) saturate(1.05);
+      transition:transform .16s ease, box-shadow .16s ease;
+    }
+
+    .tile:active{
+      transform:scale(.985);
+    }
+
+    .tile svg{
+      width:40px;
+      height:40px;
+      display:block;
+    }
+
+    .tile-label{
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size:15px;
+      font-weight:800;
+      letter-spacing:-.02em;
+      color:var(--ink);
+    }
+
+    .tony-fab{
+      position:fixed;
+      left:16px;
+      bottom:calc(16px + var(--safe-bottom));
+      width:46px;
+      height:46px;
+      border-radius:999px;
+      background:transparent;
+      border:none;
+      padding:0;
+      z-index:40;
+    }
+
+    .tony-fab img{
+      width:100%;
+      height:100%;
+      display:block;
+      border-radius:inherit;
+    }
+
+    @media (max-width:390px){
+      .page-title{ font-size:52px; }
+      .tile{ min-height:132px; }
     }
   </style>
 </head>
-<body>
-  <div class="wrap">
-    <div class="pos-topbar">
-      <button class="pos-back" type="button" onclick="history.back()">
-        <span class="icon">←</span>
-        <span>Back</span>
-      </button>
-      <div class="pos-topbar-title">Home • Reports</div>
-    </div>
 
+<body>
+  <header class="topbar">
+    <button class="tb-btn" id="backBtn" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" aria-pressed="false">
+      <span class="theme-toggle-track" aria-hidden="true"></span>
+      <span class="theme-toggle-knob" aria-hidden="true">
+        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5" fill="currentColor"></circle>
+        </svg>
+        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24">
+          <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
+        </svg>
+      </span>
+    </button>
+  </header>
+
+  <div class="wrap">
     <header class="reports-header">
       <h1 class="page-title">Reports</h1>
       <div class="subtitle">Select a report</div>
@@ -179,44 +262,68 @@
 
     <main class="grid">
       <a href="#" class="tile">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M4 19h16M6 19V7a1 1 0 011-1h2v13M14 19V5h2a1 1 0 011 1v13" stroke="#2f8cff" stroke-width="1.5"/>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 19h16M6 19V7a1 1 0 011-1h2v13M14 19V5h2a1 1 0 011 1v13" stroke="var(--tile-accent)" stroke-width="1.7"/>
         </svg>
-        <div class="label">Sales</div>
+        <div class="tile-label">Sales</div>
       </a>
 
       <a href="#" class="tile">
-        <svg viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="4" width="18" height="16" rx="2" stroke="#2f8cff" stroke-width="1.5"/>
-          <path d="M7 9h10M7 13h6M7 17h8" stroke="#2f8cff" stroke-width="1.5" stroke-linecap="round"/>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="2" stroke="var(--tile-accent)" stroke-width="1.7"/>
+          <path d="M7 9h10M7 13h6M7 17h8" stroke="var(--tile-accent)" stroke-width="1.7" stroke-linecap="round"/>
         </svg>
-        <div class="label">Inventory</div>
+        <div class="tile-label">Inventory</div>
       </a>
 
       <a href="#" class="tile">
-        <svg viewBox="0 0 24 24" fill="none">
-          <circle cx="8" cy="10" r="3" stroke="#2f8cff" stroke-width="1.5"/>
-          <path d="M3 20c1.5-3 4-4.5 6-4.5s4.5 1.5 6 4.5" stroke="#2f8cff" stroke-width="1.5"/>
-          <rect x="14" y="8" width="7" height="7" rx="1.5" fill="#a7d0ff"/>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="8" cy="10" r="3" stroke="var(--tile-accent)" stroke-width="1.7"/>
+          <path d="M3 20c1.5-3 4-4.5 6-4.5s4.5 1.5 6 4.5" stroke="var(--tile-accent)" stroke-width="1.7"/>
+          <rect x="14" y="8" width="7" height="7" rx="1.5" fill="var(--tile-accent)" opacity=".22"/>
         </svg>
-        <div class="label">Customers</div>
+        <div class="tile-label">Customers</div>
       </a>
 
       <a href="#" class="tile">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M6 7h12M6 12h12M6 17h12" stroke="#2f8cff" stroke-width="1.5" stroke-linecap="round"/>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 7h12M6 12h12M6 17h12" stroke="var(--tile-accent)" stroke-width="1.7" stroke-linecap="round"/>
         </svg>
-        <div class="label">Exports</div>
+        <div class="tile-label">Exports</div>
       </a>
     </main>
   </div>
 
-  <!-- Tony floating icon (bottom-left, same across app) -->
   <button class="tony-fab" id="tonyFab">
     <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
   </button>
 
-  <!-- Tony behavior -->
-  <script src="/js/tony.js" defer></script>
+  <script>
+    function getTheme() {
+      return localStorage.getItem("theme") || document.documentElement.getAttribute("data-theme") || "light";
+    }
+
+    function applyTheme(theme) {
+      const next = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+      document.getElementById("themeToggle")?.setAttribute("aria-pressed", String(next === "dark"));
+    }
+
+    applyTheme(getTheme());
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      applyTheme(getTheme() === "dark" ? "light" : "dark");
+    });
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      if (history.length > 1) history.back();
+      else window.location.href = "/";
+    });
+
+    document.getElementById("tonyFab").addEventListener("click", () => {
+      window.location.href = "/tony/";
+    });
+  </script>
 </body>
 </html>
