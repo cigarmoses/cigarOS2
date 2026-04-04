@@ -1,337 +1,439 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Today • CigarOS 2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>Today • CigarOS</title>
 
-  <!-- Global typography system for SF Pro Display/Text -->
   <link rel="stylesheet" href="/css/type.css" />
 
   <style>
-    :root {
-      --bg: #f5f5f7;
-      --surface: #ffffff;
-      --ink: #0f1a2c;
-      --muted: #8e8e93;
+    :root{
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+      --bg: #eff2f7;
+      --ink: #101828;
+      --muted: rgba(16,24,40,.58);
+      --muted-2: rgba(16,24,40,.42);
+
+      --surface: rgba(255,255,255,.86);
+      --surface-2: rgba(255,255,255,.94);
+      --surface-border: rgba(15,23,40,.08);
+      --surface-shadow: 0 12px 30px rgba(15,26,44,.08);
+
       --accent: #7c5cff;
-      --accent-soft: #efe8ff;
-      --link-blue: #007aff;
-      --radius-lg: 24px;
-      --radius-md: 18px;
+      --link: #007aff;
     }
 
-    * { box-sizing: border-box; }
+    html[data-theme="dark"]{
+      --bg:
+        radial-gradient(1200px 540px at 50% -8%, rgba(63,108,194,.22) 0%, rgba(20,44,92,.16) 28%, rgba(4,13,34,0) 58%),
+        linear-gradient(180deg, #0f2856 0%, #07142f 48%, #041027 100%);
+      --ink: #ffffff;
+      --muted: rgba(255,255,255,.64);
+      --muted-2: rgba(255,255,255,.42);
 
-    body {
-      margin: 0;
+      --surface: rgba(13,21,39,.58);
+      --surface-2: rgba(255,255,255,.08);
+      --surface-border: rgba(255,255,255,.12);
+      --surface-shadow: 0 12px 34px rgba(0,0,0,.26);
+
+      --accent: #9a84ff;
+      --link: #7db8ff;
+    }
+
+    *{ box-sizing:border-box; }
+
+    html, body{
+      margin:0;
+      min-height:100%;
+    }
+
+    body{
+      min-height:100dvh;
       background: var(--bg);
       color: var(--ink);
-      /* Base text uses SF Pro Text via global type.css */
-      font-family: var(--font-text);
+      font-family: var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
-    .wrap {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 10px 12px 40px;
+    .page{
+      width:min(430px, calc(100% - 28px));
+      margin:0 auto;
+      padding:0 0 calc(32px + var(--safe-bottom));
     }
 
-    /* Top bar */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 4px 2px 10px;
-    }
-    .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .back-btn {
-      border: none;
-      background: #e4e4ea;
-      border-radius: 999px;
-      padding: 6px 12px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--ink);
-    }
-    .back-arrow {
-      font-size: 16px;
-      margin-bottom: 1px;
-    }
-    .top-title {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: normal;
-    }
-    .history-btn {
-      border: none;
-      background: transparent;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--link-blue);
-      padding: 6px 4px;
-      text-decoration: underline;
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      width:min(430px, calc(100% - 28px));
+      margin:0 auto;
+      padding-top:calc(10px + var(--safe-top));
+      padding-bottom:8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:transparent;
     }
 
-    /* Date headline */
-    .date-headline {
-      margin: 10px 2px 14px;
-    }
-    .date-headline .month {
-      font-size: 13px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 600;
-    }
-    .date-headline .dow {
-      font-size: 52px;
-      font-weight: 800;
-      letter-spacing: 0.02em;
+    .tb-btn{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      border:1px solid var(--surface-border);
+      background:var(--surface-2);
+      box-shadow:var(--surface-shadow);
+      display:grid;
+      place-items:center;
+      padding:0;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
     }
 
-    /* Hidden date picker */
-    #datePicker {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-      width: 0;
-      height: 0;
+    .tb-btn svg{
+      width:20px;
+      height:20px;
+      display:block;
     }
 
-    /* Cards */
-    .card {
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      padding: 14px 14px;
-      box-shadow: 0 12px 30px rgba(15, 26, 44, 0.08);
+    .theme-toggle{
+      position:relative;
+      width:58px;
+      height:34px;
+      border:0;
+      padding:0;
+      border-radius:999px;
+      background:transparent;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
     }
 
-    .card-label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--ink);      /* black */
-      font-weight: 700;       /* bold */
-      margin-bottom: 2px;
-    }
-    .card-value {
-      font-size: 32px;
-      font-weight: 800;
-      line-height: 1.15;
+    .theme-toggle-track{
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      background:#c7d1de;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
     }
 
-    /* Section labels (Vitola / Brand / History header inside card) */
-    .section-label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--ink);
-      font-weight: 700;
-      margin-bottom: 6px;
+    .theme-toggle-knob{
+      position:absolute;
+      top:3px;
+      left:3px;
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      background:#ffffff;
+      box-shadow:0 3px 8px rgba(0,0,0,.18);
+      transition:transform .22s ease;
+      display:grid;
+      place-items:center;
+      color:#0f1728;
     }
 
-    /* Top stats row: Cigars / Sales / Avg */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 14px;
+    html[data-theme="dark"] .theme-toggle-knob{
+      transform:translateX(24px);
     }
 
-    /* Lower grid */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .full-row {
-      grid-column: 1 / -1;
+    .theme-icon{
+      position:absolute;
+      width:14px;
+      height:14px;
     }
 
-    /* Lists */
-    .simple-list {
-      list-style: none;
-      padding: 0;
-      margin: 4px 0 0;
-      font-size: 15px;
-    }
-    .simple-list li {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      padding: 3px 0;
-    }
-    .simple-list .label {
-      font-weight: 500;
-    }
-    .simple-list .meta {
-      font-size: 13px;
-      color: var(--muted);
-      margin-left: 8px;
+    .theme-icon-moon{ display:none; }
+    html[data-theme="dark"] .theme-icon-sun{ display:none; }
+    html[data-theme="dark"] .theme-icon-moon{ display:block; }
+
+    .content{
+      padding-top:6px;
     }
 
-    /* History block */
-    .history-card {
-      border-left: 4px solid var(--accent);
-      padding-left: 10px;
-    }
-    .history-list {
-      list-style: none;
-      padding: 0;
-      margin: 4px 0 0;
-      font-size: 15px;
-    }
-    .history-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 5px 0;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    .history-row:active {
-      background: rgba(124, 92, 255, 0.08);
-    }
-    .history-name {
-      font-weight: 600;
-    }
-    .history-amount {
-      font-variant-numeric: tabular-nums;
-      font-size: 14px;
+    .date-headline{
+      margin:8px 2px 18px;
     }
 
-    /* Link-style button (View all transactions) */
-    .link-btn {
-      border: none;
-      background: transparent;
-      padding: 6px 0 0;
-      margin-top: 4px;
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--link-blue);
-      text-decoration: underline;
-      cursor: pointer;
-      text-align: left;
+    .date-month{
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-weight:700;
+      color:var(--muted);
     }
 
-    /* Tony floating icon bottom-left */
-    .tony-fab {
-      position: fixed;
-      left: 16px;
-      bottom: 16px;
-      width: 46px;
-      height: 46px;
-      border-radius: 999px;
-      background: transparent;
-      border: none;
-      padding: 0;
-      z-index: 40;
-    }
-    .tony-fab img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      border-radius: inherit;
+    .date-dow{
+      margin-top:2px;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size:58px;
+      line-height:.92;
+      font-weight:800;
+      letter-spacing:-.05em;
+      color:var(--ink);
     }
 
-    @media (max-width: 360px) {
-      .card-value { font-size: 28px; }
-      .history-list, .simple-list { font-size: 14px; }
+    .actions-row{
+      display:flex;
+      justify-content:flex-end;
+      margin:-4px 2px 14px;
+    }
+
+    .history-link{
+      border:none;
+      background:transparent;
+      color:var(--link);
+      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      font-size:15px;
+      font-weight:700;
+      padding:0;
+      cursor:pointer;
+      text-decoration:underline;
+    }
+
+    .stats-row{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:10px;
+    }
+
+    .full-row{
+      grid-column:1 / -1;
+    }
+
+    .card{
+      background:var(--surface);
+      border:1px solid var(--surface-border);
+      border-radius:24px;
+      box-shadow:var(--surface-shadow);
+      padding:14px 14px 13px;
+      backdrop-filter:blur(18px) saturate(1.05);
+      -webkit-backdrop-filter:blur(18px) saturate(1.05);
+    }
+
+    .card-label,
+    .section-label{
+      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      font-weight:700;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+
+    .card-value{
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size:34px;
+      line-height:1;
+      font-weight:800;
+      letter-spacing:-.04em;
+      color:var(--ink);
+    }
+
+    .simple-list,
+    .history-list{
+      list-style:none;
+      padding:0;
+      margin:4px 0 0;
+    }
+
+    .simple-list li{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      padding:4px 0;
+    }
+
+    .simple-label{
+      font-size:15px;
+      font-weight:600;
+      color:var(--ink);
+    }
+
+    .simple-meta{
+      font-size:13px;
+      font-weight:700;
+      color:var(--muted);
+    }
+
+    .history-card{
+      border-left:4px solid var(--accent);
+      padding-left:12px;
+    }
+
+    .history-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:7px 0;
+      cursor:pointer;
+      border-radius:10px;
+    }
+
+    .history-row:active{
+      opacity:.72;
+    }
+
+    .history-name{
+      font-size:15px;
+      font-weight:700;
+      color:var(--ink);
+    }
+
+    .history-amount{
+      font-size:14px;
+      font-weight:700;
+      color:var(--muted);
+      font-variant-numeric:tabular-nums;
+    }
+
+    .link-btn{
+      border:none;
+      background:transparent;
+      color:var(--link);
+      font-size:15px;
+      font-weight:700;
+      padding:6px 0 0;
+      margin-top:4px;
+      cursor:pointer;
+      text-decoration:underline;
+      text-align:left;
+    }
+
+    #datePicker{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+      width:0;
+      height:0;
+    }
+
+    .tony-fab{
+      position:fixed;
+      left:16px;
+      bottom:calc(16px + var(--safe-bottom));
+      width:46px;
+      height:46px;
+      border-radius:999px;
+      background:transparent;
+      border:none;
+      padding:0;
+      z-index:40;
+    }
+
+    .tony-fab img{
+      width:100%;
+      height:100%;
+      display:block;
+      border-radius:inherit;
+    }
+
+    @media (max-width:390px){
+      .date-dow{ font-size:52px; }
+      .card-value{ font-size:30px; }
     }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="back-btn" id="backBtn">
-          <span class="back-arrow">‹</span>
-          <span>Back</span>
-        </button>
+  <header class="topbar">
+    <button class="tb-btn" id="backBtn" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" aria-pressed="false">
+      <span class="theme-toggle-track" aria-hidden="true"></span>
+      <span class="theme-toggle-knob" aria-hidden="true">
+        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5" fill="currentColor"></circle>
+        </svg>
+        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24">
+          <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
+        </svg>
+      </span>
+    </button>
+  </header>
+
+  <main class="page">
+    <div class="content">
+      <section class="date-headline">
+        <div class="date-month" id="headlineMonth">DECEMBER 1</div>
+        <div class="date-dow" id="headlineDow">MON</div>
+      </section>
+
+      <div class="actions-row">
+        <button class="history-link" id="historyBtn">History</button>
+        <input type="date" id="datePicker" />
       </div>
-      <div class="top-title">Today</div>
-      <button class="history-btn" id="historyBtn">History</button>
-      <input type="date" id="datePicker" />
-    </header>
 
-    <!-- Date headline -->
-    <section class="date-headline">
-      <div class="month" id="headlineMonth">DECEMBER 1</div>
-      <div class="dow" id="headlineDow">MON</div>
-    </section>
+      <section class="stats-row">
+        <article class="card">
+          <div class="card-label">Cigars</div>
+          <div class="card-value" id="cigarsCount">0</div>
+        </article>
 
-    <!-- Top stats row: Cigars / Sales / Avg -->
-    <section class="stats-row">
-      <article class="card">
-        <div class="card-label">Cigars</div>
-        <div class="card-value" id="cigarsCount">0</div>
-      </article>
+        <article class="card">
+          <div class="card-label">Sales</div>
+          <div class="card-value" id="salesTotal">0</div>
+        </article>
 
-      <article class="card">
-        <div class="card-label">Sales</div>
-        <div class="card-value" id="salesTotal">0</div>
-      </article>
+        <article class="card">
+          <div class="card-label">Avg</div>
+          <div class="card-value" id="avgSale">0</div>
+        </article>
+      </section>
 
-      <article class="card">
-        <div class="card-label">Avg</div>
-        <div class="card-value" id="avgSale">0</div>
-      </article>
-    </section>
+      <section class="grid">
+        <article class="card">
+          <div class="section-label">Vitola</div>
+          <ul class="simple-list" id="vitolaList"></ul>
+        </article>
 
-    <!-- Lower grid: Vitola + Brand side by side, History full width -->
-    <section class="grid">
-      <!-- Vitola -->
-      <article class="card">
-        <div class="section-label">Vitola</div>
-        <ul class="simple-list" id="vitolaList"></ul>
-      </article>
+        <article class="card">
+          <div class="section-label">Brand</div>
+          <ul class="simple-list" id="brandList"></ul>
+        </article>
 
-      <!-- Brand -->
-      <article class="card">
-        <div class="section-label">Brand</div>
-        <ul class="simple-list" id="brandList"></ul>
-      </article>
+        <article class="card history-card full-row">
+          <div class="section-label">History</div>
+          <ul class="history-list" id="historyList"></ul>
+          <button class="link-btn" id="viewAllBtn">View all transactions</button>
+        </article>
+      </section>
+    </div>
+  </main>
 
-      <!-- History -->
-      <article class="card history-card full-row">
-        <div class="section-label">History</div>
-        <ul class="history-list" id="historyList"></ul>
-        <button class="link-btn" id="viewAllBtn">View all transactions</button>
-      </article>
-    </section>
-  </div>
-
-  <!-- Tony floating icon (bottom-left, same on all pages) -->
   <button class="tony-fab" id="tonyFab">
     <img src="/uxui/pop-up-ask-tony-grey-border.svg" alt="Ask Tony" />
   </button>
 
   <script>
-    /************************************************************
-     * SAMPLE SALES DATA
-     ************************************************************/
-
     const CUSTOMER_POOL = [
-      { id: "moses",   first: "Alex",  last: "Moses"   },
-      { id: "nguyen",  first: "Linh",  last: "Nguyen"  },
+      { id: "moses", first: "Alex", last: "Moses" },
+      { id: "nguyen", first: "Linh", last: "Nguyen" },
       { id: "sibbett", first: "Jamie", last: "Sibbett" },
-      { id: "mcclure", first: "Pat",   last: "McClure" },
+      { id: "mcclure", first: "Pat", last: "McClure" },
       { id: "kennedy", first: "Chris", last: "Kennedy" },
-      { id: "brown",   first: "Taylor",last: "Brown"   },
-      { id: "rodriguez",first:"Carlos",last:"Rodriguez"},
-      { id: "lee",     first: "Jordan",last: "Lee"     },
-      { id: "smith",   first: "Morgan",last: "Smith"   },
-      { id: "guest",   first: "Guest", last: "Guest"   }
+      { id: "brown", first: "Taylor", last: "Brown" },
+      { id: "rodriguez", first: "Carlos", last: "Rodriguez" },
+      { id: "lee", first: "Jordan", last: "Lee" },
+      { id: "smith", first: "Morgan", last: "Smith" },
+      { id: "guest", first: "Guest", last: "Guest" }
     ];
 
     const PRODUCT_POOL = [
@@ -344,7 +446,7 @@
       },
       {
         id: "padron-1964-toro",
-        name: "Padrón 1964 Anniversary Toro Maduro",
+        name: "Padron 1964 Anniversary Toro Maduro",
         brand: "Padron",
         vitola: "Toro",
         msrp: 18.50
@@ -365,7 +467,7 @@
       },
       {
         id: "padron-3000-natural",
-        name: "Padrón 3000 Natural",
+        name: "Padron 3000 Natural",
         brand: "Padron",
         vitola: "Robusto",
         msrp: 11.50
@@ -390,11 +492,8 @@
         const qty = Math.max(1, Math.floor(Math.random() * maxQty) + 1);
         remainingCigars -= qty;
 
-        const customer =
-          CUSTOMER_POOL[Math.floor(Math.random() * CUSTOMER_POOL.length)];
-        const product =
-          PRODUCT_POOL[Math.floor(Math.random() * PRODUCT_POOL.length)];
-
+        const customer = CUSTOMER_POOL[Math.floor(Math.random() * CUSTOMER_POOL.length)];
+        const product = PRODUCT_POOL[Math.floor(Math.random() * PRODUCT_POOL.length)];
         const ticketTime = new Date(base.getTime() + ticketIndex * 7 * 60000);
         const lineTotal = product.msrp * qty;
 
@@ -405,17 +504,15 @@
           customerId: customer.id,
           customerFirst: customer.first,
           customerLast: customer.last,
-          items: [
-            {
-              sku: product.id,
-              name: product.name,
-              brand: product.brand,
-              vitola: product.vitola,
-              qty,
-              msrp: product.msrp,
-              lineTotal
-            }
-          ],
+          items: [{
+            sku: product.id,
+            name: product.name,
+            brand: product.brand,
+            vitola: product.vitola,
+            qty,
+            msrp: product.msrp,
+            lineTotal
+          }],
           ticketTotal: lineTotal
         });
 
@@ -425,10 +522,6 @@
     }
 
     const SALES_DATA = generateSampleSalesForDay("2025-12-01");
-
-    /************************************************************
-     * UI + AGGREGATION
-     ************************************************************/
 
     const cigarsCountEl = document.getElementById("cigarsCount");
     const salesTotalEl = document.getElementById("salesTotal");
@@ -441,6 +534,17 @@
     const datePickerEl = document.getElementById("datePicker");
 
     let currentDate = "2025-12-01";
+
+    function getTheme() {
+      return localStorage.getItem("theme") || document.documentElement.getAttribute("data-theme") || "light";
+    }
+
+    function applyTheme(theme) {
+      const next = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+      document.getElementById("themeToggle")?.setAttribute("aria-pressed", String(next === "dark"));
+    }
 
     function formatCurrency(num) {
       return num.toLocaleString(undefined, {
@@ -471,13 +575,13 @@
       headlineMonthEl.textContent = formatMonthAndDay(dateStr);
       headlineDowEl.textContent = formatDow(dateStr);
 
-      if (tickets.length === 0) {
+      if (!tickets.length) {
         cigarsCountEl.textContent = "0";
         salesTotalEl.textContent = "0";
         avgSaleEl.textContent = "0";
-        vitolaListEl.innerHTML = "<li><span class='meta'>No sales</span></li>";
-        brandListEl.innerHTML = "<li><span class='meta'>No sales</span></li>";
-        historyListEl.innerHTML = "<li><span class='meta'>No sales</span></li>";
+        vitolaListEl.innerHTML = "<li><span class='simple-meta'>No sales</span></li>";
+        brandListEl.innerHTML = "<li><span class='simple-meta'>No sales</span></li>";
+        historyListEl.innerHTML = "<li><span class='simple-meta'>No sales</span></li>";
         return;
       }
 
@@ -490,55 +594,36 @@
         totalSales += t.ticketTotal;
         t.items.forEach(item => {
           totalCigars += item.qty;
-          vitolaCounts[item.vitola] =
-            (vitolaCounts[item.vitola] || 0) + item.qty;
-          brandCounts[item.brand] =
-            (brandCounts[item.brand] || 0) + item.qty;
+          vitolaCounts[item.vitola] = (vitolaCounts[item.vitola] || 0) + item.qty;
+          brandCounts[item.brand] = (brandCounts[item.brand] || 0) + item.qty;
         });
       });
 
-      const avgSale =
-        tickets.length > 0 ? totalSales / tickets.length : 0;
+      const avgSale = tickets.length ? totalSales / tickets.length : 0;
 
       cigarsCountEl.textContent = totalCigars;
-      const thousands = totalSales / 1000;
-      salesTotalEl.textContent = thousands.toFixed(1);
+      salesTotalEl.textContent = (totalSales / 1000).toFixed(1);
       avgSaleEl.textContent = Math.round(avgSale);
 
-      // Vitola list (top 3)
-      const vitolaEntries = Object.entries(vitolaCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3);
-
+      const vitolaEntries = Object.entries(vitolaCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
       vitolaListEl.innerHTML = "";
       vitolaEntries.forEach(([name, count]) => {
         const li = document.createElement("li");
-        li.innerHTML =
-          `<span class="label">${name}</span>` +
-          `<span class="meta">${count}</span>`;
+        li.innerHTML = `<span class="simple-label">${name}</span><span class="simple-meta">${count}</span>`;
         vitolaListEl.appendChild(li);
       });
 
-      // Brand list (top 3)
-      const brandEntries = Object.entries(brandCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3);
-
+      const brandEntries = Object.entries(brandCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
       brandListEl.innerHTML = "";
       brandEntries.forEach(([name, count]) => {
         const li = document.createElement("li");
-        li.innerHTML =
-          `<span class="label">${name}</span>` +
-          `<span class="meta">${count}</span>`;
+        li.innerHTML = `<span class="simple-label">${name}</span><span class="simple-meta">${count}</span>`;
         brandListEl.appendChild(li);
       });
 
-      // Last 10 sales (first + last name)
-      const lastTen = [...tickets]
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        .slice(-10);
-
+      const lastTen = [...tickets].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).slice(-10);
       historyListEl.innerHTML = "";
+
       lastTen.forEach(t => {
         const li = document.createElement("li");
         li.className = "history-row";
@@ -556,29 +641,29 @@
         li.appendChild(amtSpan);
 
         li.addEventListener("click", () => {
-          const url = `/loyalty/?customer=${encodeURIComponent(t.customerId)}`;
-          window.location.href = url;
+          window.location.href = `/loyalty/?customer=${encodeURIComponent(t.customerId)}`;
         });
 
         historyListEl.appendChild(li);
       });
     }
 
-    // Back button
+    applyTheme(getTheme());
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      applyTheme(getTheme() === "dark" ? "light" : "dark");
+    });
+
     document.getElementById("backBtn").addEventListener("click", () => {
-      window.location.href = "/"; // home
+      if (history.length > 1) history.back();
+      else window.location.href = "/";
     });
 
-    // History button -> open date picker
     document.getElementById("historyBtn").addEventListener("click", () => {
-      try {
-        datePickerEl.showPicker();
-      } catch (e) {
-        datePickerEl.click();
-      }
+      try { datePickerEl.showPicker(); }
+      catch { datePickerEl.click(); }
     });
 
-    // Date picker change
     datePickerEl.addEventListener("change", e => {
       const ds = e.target.value;
       if (!ds) return;
@@ -586,20 +671,15 @@
       updateSummaryForDate(ds);
     });
 
-    // View all transactions link
     document.getElementById("viewAllBtn").addEventListener("click", () => {
-      // Update this path to wherever your full transaction list lives
       window.location.href = "/reports/transactions/";
     });
 
-    // Tony FAB – route to Tony / Ask Tony overlay
     document.getElementById("tonyFab").addEventListener("click", () => {
-      // Update this to your Tony page or overlay trigger
       window.location.href = "/tony/";
     });
 
-    // Initial load
-    (function init() {
+    (() => {
       datePickerEl.value = currentDate;
       updateSummaryForDate(currentDate);
     })();
