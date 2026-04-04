@@ -1,414 +1,491 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
-  <title>News • CigarOS2</title>
+  <title>News • CigarOS</title>
 
-  <!-- correct path from /news/index.html -->
-  <link rel="stylesheet" href="../css/type.css" />
+  <link rel="stylesheet" href="/css/type.css" />
 
   <style>
-    /* ===== HARD TYPO OVERRIDE (fixes the serif/Times issue) ===== */
     :root{
-      --sf-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
-      --sf-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-      --max: 980px;
-      --pad: 18px;
+      --bg:#eff2f7;
+      --ink:#101828;
+      --muted:rgba(16,24,40,.58);
+      --muted-2:rgba(16,24,40,.42);
 
-      --radius-xl: 28px;
-      --radius-lg: 22px;
+      --surface:rgba(255,255,255,.86);
+      --surface-2:rgba(255,255,255,.94);
+      --surface-border:rgba(15,23,40,.08);
+      --surface-shadow:0 12px 30px rgba(15,26,44,.08);
 
-      /* Light */
-      --bg: #f2f2f7;
-      --surface2: #ffffff;
-      --ink: #0b1220;
-      --muted: rgba(11,18,32,0.62);
-      --hair: rgba(11,18,32,0.10);
+      --chip:#eef2f7;
+      --chip-ink:#101828;
+      --accent:#ff2d55;
 
-      --shadow: 0 10px 28px rgba(0,0,0,0.10);
-      --shadow2: 0 6px 16px rgba(0,0,0,0.08);
-
-      --chip: rgba(11,18,32,0.06);
-      --chipInk: rgba(11,18,32,0.82);
-
-      --accent: #ff2d55;
-
-      --glass: rgba(255,255,255,0.64);
-      --glassStroke: rgba(255,255,255,0.50);
-
-      /* if any svg disappears in dark, set invert(1) */
-      --logo-filter-dark: none;
+      --glass:rgba(255,255,255,.66);
+      --glass-stroke:rgba(15,23,40,.08);
     }
 
-    @media (prefers-color-scheme: dark){
-      :root{
-        --bg: #0b0b0f;
-        --surface2: rgba(24,24,32,0.92);
-        --ink: #f5f7ff;
-        --muted: rgba(245,247,255,0.64);
-        --hair: rgba(245,247,255,0.10);
+    html[data-theme="dark"]{
+      --bg:
+        radial-gradient(1200px 540px at 50% -8%, rgba(63,108,194,.22) 0%, rgba(20,44,92,.16) 28%, rgba(4,13,34,0) 58%),
+        linear-gradient(180deg, #0f2856 0%, #07142f 48%, #041027 100%);
+      --ink:#ffffff;
+      --muted:rgba(255,255,255,.64);
+      --muted-2:rgba(255,255,255,.42);
 
-        --shadow: 0 16px 40px rgba(0,0,0,0.55);
-        --shadow2: 0 10px 26px rgba(0,0,0,0.50);
+      --surface:rgba(13,21,39,.58);
+      --surface-2:rgba(255,255,255,.08);
+      --surface-border:rgba(255,255,255,.12);
+      --surface-shadow:0 12px 34px rgba(0,0,0,.26);
 
-        --chip: rgba(245,247,255,0.10);
-        --chipInk: rgba(245,247,255,0.86);
+      --chip:rgba(255,255,255,.08);
+      --chip-ink:rgba(255,255,255,.92);
+      --accent:#ff5c7c;
 
-        --glass: rgba(24,24,32,0.62);
-        --glassStroke: rgba(245,247,255,0.14);
-      }
+      --glass:rgba(13,21,39,.58);
+      --glass-stroke:rgba(255,255,255,.12);
     }
 
     *{ box-sizing:border-box; }
+    html, body{ margin:0; min-height:100%; }
 
-    /* Scope everything to this page so global CSS can’t override it */
-    body.news-page{
-      margin:0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: var(--sf-text) !important;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
+    body{
+      min-height:100dvh;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
     }
 
-    body.news-page,
-    body.news-page button,
-    body.news-page input,
-    body.news-page select,
-    body.news-page textarea{
-      font-family: var(--sf-text) !important;
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      width:min(430px, calc(100% - 28px));
+      margin:0 auto;
+      padding-top:calc(10px + var(--safe-top));
+      padding-bottom:8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:transparent;
     }
 
-    /* Kill any global serif/heading rules */
-    body.news-page h1,
-    body.news-page h2,
-    body.news-page h3,
-    body.news-page h4,
-    body.news-page h5,
-    body.news-page h6{
-      font-family: var(--sf-display) !important;
-      font-style: normal !important;
-      text-transform: none !important;
-      letter-spacing: normal;
+    .tb-btn{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      border:1px solid var(--surface-border);
+      background:var(--surface-2);
+      box-shadow:var(--surface-shadow);
+      display:grid;
+      place-items:center;
+      padding:0;
+      cursor:pointer;
+      color:var(--ink);
+      -webkit-tap-highlight-color:transparent;
     }
 
-    body.news-page p,
-    body.news-page span,
-    body.news-page a,
-    body.news-page div{
-      font-family: inherit;
+    .tb-btn svg{
+      width:20px;
+      height:20px;
+      display:block;
     }
 
-    /* ===== Layout ===== */
+    .theme-toggle{
+      position:relative;
+      width:58px;
+      height:34px;
+      border:0;
+      padding:0;
+      border-radius:999px;
+      background:transparent;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .theme-toggle-track{
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      background:#c7d1de;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+    }
+
+    .theme-toggle-knob{
+      position:absolute;
+      top:3px;
+      left:3px;
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      background:#ffffff;
+      box-shadow:0 3px 8px rgba(0,0,0,.18);
+      transition:transform .22s ease;
+      display:grid;
+      place-items:center;
+      color:#0f1728;
+    }
+
+    html[data-theme="dark"] .theme-toggle-knob{
+      transform:translateX(24px);
+    }
+
+    .theme-icon{
+      position:absolute;
+      width:14px;
+      height:14px;
+    }
+
+    .theme-icon-moon{ display:none; }
+    html[data-theme="dark"] .theme-icon-sun{ display:none; }
+    html[data-theme="dark"] .theme-icon-moon{ display:block; }
+
     .wrap{
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: calc(var(--pad) + env(safe-area-inset-top)) var(--pad) calc(28px + env(safe-area-inset-bottom));
+      width:min(430px, calc(100% - 28px));
+      margin:0 auto;
+      padding:6px 0 calc(34px + var(--safe-bottom));
     }
 
-    /* Header: icon-only back + your existing News header */
     .news-header{
       display:flex;
       align-items:flex-start;
-      gap: 12px;
-      margin-bottom: 12px;
+      justify-content:space-between;
+      gap:10px;
+      margin:0 2px 12px;
     }
 
-    .back-btn{
-      width: 38px;
-      height: 38px;
-      border-radius: 999px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      background: var(--chip);
-      color: var(--chipInk);
-      text-decoration:none;
-      flex: 0 0 auto;
-      margin-top: 2px;
+    .header-copy{
+      flex:1 1 auto;
+      min-width:0;
     }
-    .back-btn svg{ width: 20px; height: 20px; }
-    .back-btn:active{ transform: scale(0.96); }
 
-    /* This is your “perfect” News title */
-    h1.page-title{
-      margin: 0;
-      font-size: 56px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.02;
-      font-family: var(--sf-display) !important;
+    .page-title{
+      margin:0;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size:58px;
+      line-height:.92;
+      font-weight:800;
+      letter-spacing:-.05em;
+      color:var(--ink);
     }
 
     .subhead{
-      margin-top: 10px;
-      font-size: 13px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 800;
-      font-family: var(--sf-display) !important;
+      margin-top:8px;
+      font-size:13px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color:var(--muted);
+      font-weight:800;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     }
 
-    /* Chips */
     .chips{
       display:flex;
-      gap: 10px;
+      gap:10px;
       overflow:auto;
-      padding: 10px 0 14px;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .chips::-webkit-scrollbar{ display:none; }
-    .chip{
-      flex: 0 0 auto;
-      display:inline-flex;
-      align-items:center;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: var(--chip);
-      color: var(--chipInk);
-      font-weight: 800;
-      letter-spacing: -0.01em;
-      font-family: var(--sf-display) !important;
-      font-size: 16px;
-      line-height: 1;
+      padding:6px 0 14px;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
     }
 
-    /* Featured (this is what was “red” in your screenshot — now locked down) */
+    .chips::-webkit-scrollbar{ display:none; }
+
+    .chip{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      padding:10px 14px;
+      border-radius:999px;
+      background:var(--chip);
+      color:var(--chip-ink);
+      font-weight:800;
+      font-size:15px;
+      letter-spacing:-.01em;
+      border:1px solid var(--surface-border);
+    }
+
     .featured{
-      border-radius: var(--radius-xl);
+      display:block;
+      border-radius:28px;
       overflow:hidden;
-      box-shadow: var(--shadow);
-      background: #000;
-      position: relative;
-      margin: 0 0 18px;
+      box-shadow:var(--surface-shadow);
+      background:#000;
+      position:relative;
+      margin:0 0 18px;
       text-decoration:none;
-      color: inherit;
+      color:inherit;
     }
+
     .featured .img{
-      height: 260px;
+      height:250px;
       background:
-        linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.0)),
-        url("https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1400&q=70")
+        linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,0)),
+        url("https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=1400&q=70")
         center/cover no-repeat;
-      filter: saturate(1.05);
     }
+
     .featured .fade{
       position:absolute;
       inset:0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.0) 22%, rgba(0,0,0,0.62) 64%, rgba(0,0,0,0.88) 100%);
+      background:linear-gradient(180deg, rgba(0,0,0,0) 22%, rgba(0,0,0,.62) 64%, rgba(0,0,0,.88) 100%);
       pointer-events:none;
     }
+
     .featured .meta{
       position:absolute;
-      left: 16px;
-      right: 16px;
-      bottom: 14px;
+      left:16px;
+      right:16px;
+      bottom:14px;
       display:flex;
       flex-direction:column;
-      gap: 10px;
+      gap:10px;
     }
+
     .sourceBadge{
       display:inline-flex;
       align-items:center;
-      gap: 10px;
-      width: fit-content;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.16);
-      border: 1px solid rgba(255,255,255,0.18);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      color: #fff;
-      font-weight: 900;
-      letter-spacing: -0.01em;
-      font-family: var(--sf-display) !important;
-      font-size: 14px;
-      line-height: 1;
+      gap:10px;
+      width:fit-content;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.16);
+      border:1px solid rgba(255,255,255,.18);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      color:#fff;
+      font-weight:900;
+      font-size:14px;
+      letter-spacing:-.01em;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     }
+
     .sourceBadge img{
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
-      padding: 3px;
-      object-fit: contain;
-      background: rgba(255,255,255,0.10);
+      width:22px;
+      height:22px;
+      border-radius:6px;
+      padding:3px;
+      object-fit:contain;
+      background:rgba(255,255,255,.10);
     }
+
     .featured h2{
       margin:0;
       color:#fff;
-      font-family: var(--sf-display) !important;
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      font-size: 26px;
-      line-height: 1.12;
-      max-width: 24ch;
-    }
-    .featured p{
-      margin:0;
-      color: rgba(255,255,255,0.82);
-      font-size: 15px;
-      line-height: 1.35;
-      max-width: 58ch;
-      font-family: var(--sf-text) !important;
-      font-weight: 500;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-weight:900;
+      letter-spacing:-.02em;
+      font-size:25px;
+      line-height:1.12;
+      max-width:24ch;
     }
 
-    /* Sources panel */
-    .sourcesPanel{
-      border-radius: var(--radius-xl);
-      background: var(--glass);
-      border: 1px solid var(--glassStroke);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      padding: 12px;
-      margin-bottom: 18px;
+    .featured p{
+      margin:0;
+      color:rgba(255,255,255,.82);
+      font-size:15px;
+      line-height:1.35;
+      max-width:58ch;
+      font-weight:500;
     }
+
+    .sourcesPanel{
+      border-radius:28px;
+      background:var(--glass);
+      border:1px solid var(--glass-stroke);
+      box-shadow:var(--surface-shadow);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      padding:12px;
+      margin-bottom:18px;
+    }
+
     .sourcesRow{
       display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      padding: 2px;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:2px;
     }
+
     .sourcePill{
       display:inline-flex;
       align-items:center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.10);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: var(--ink);
-      font-weight: 900;
-      letter-spacing: -0.01em;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--surface-border);
+      color:var(--ink);
+      font-weight:900;
+      letter-spacing:-.01em;
       text-decoration:none;
-      font-family: var(--sf-display) !important;
-      font-size: 16px;
-    }
-    .sourcePill img{
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
-      padding: 3px;
-      object-fit: contain;
-      background: rgba(255,255,255,0.08);
-    }
-    @media (prefers-color-scheme: dark){
-      .sourcePill img{ filter: var(--logo-filter-dark); }
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size:15px;
     }
 
-    /* Streams */
-    .section{ margin: 18px 0 22px; }
+    .sourcePill img{
+      width:22px;
+      height:22px;
+      border-radius:6px;
+      padding:3px;
+      object-fit:contain;
+      background:rgba(255,255,255,.08);
+    }
+
+    .section{
+      margin:18px 0 22px;
+    }
+
     .sectionHead{
       display:flex;
       align-items:flex-end;
       justify-content:space-between;
-      gap: 10px;
-      margin: 0 4px 10px;
+      gap:10px;
+      margin:0 4px 10px;
     }
+
     .sectionTitle{
       display:flex;
       align-items:center;
-      gap: 10px;
-      font-family: var(--sf-display) !important;
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      font-size: 22px;
-      line-height: 1.1;
-    }
-    .logo{
-      width: 26px;
-      height: 26px;
-      border-radius: 7px;
-      padding: 4px;
-      object-fit: contain;
-      background: rgba(255,255,255,0.08);
-    }
-    .seeAll{
-      font-weight: 900;
-      color: var(--accent);
-      text-decoration:none;
-      letter-spacing: -0.01em;
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-family: var(--sf-display) !important;
-      font-size: 16px;
+      gap:10px;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-weight:900;
+      letter-spacing:-.02em;
+      font-size:22px;
+      line-height:1.1;
     }
 
-    .stream{ display:flex; flex-direction:column; gap: 10px; }
+    .logo{
+      width:26px;
+      height:26px;
+      border-radius:7px;
+      padding:4px;
+      object-fit:contain;
+      background:rgba(255,255,255,.08);
+    }
+
+    .seeAll{
+      font-weight:900;
+      color:var(--accent);
+      text-decoration:none;
+      letter-spacing:-.01em;
+      padding:8px 10px;
+      border-radius:999px;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size:15px;
+    }
+
+    .stream{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
 
     .story{
       display:grid;
-      grid-template-columns: 92px 1fr;
-      gap: 12px;
-      padding: 12px;
-      border-radius: var(--radius-lg);
-      background: var(--surface2);
-      box-shadow: var(--shadow2);
+      grid-template-columns:92px 1fr;
+      gap:12px;
+      padding:12px;
+      border-radius:22px;
+      background:var(--surface);
+      border:1px solid var(--surface-border);
+      box-shadow:var(--surface-shadow);
       text-decoration:none;
-      color: inherit;
+      color:inherit;
+      backdrop-filter:blur(18px) saturate(1.05);
+      -webkit-backdrop-filter:blur(18px) saturate(1.05);
     }
+
     .thumb{
-      width: 92px;
-      height: 68px;
-      border-radius: 14px;
+      width:92px;
+      height:68px;
+      border-radius:14px;
       overflow:hidden;
-      background: linear-gradient(135deg, rgba(0,0,0,0.10), rgba(0,0,0,0.0));
+      background:linear-gradient(135deg, rgba(0,0,0,.10), rgba(0,0,0,0));
     }
-    .thumb img{ width:100%; height:100%; object-fit: cover; display:block; }
+
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
 
     .story h3{
       margin:0 0 6px;
-      font-size: 17px;
-      line-height: 1.18;
-      letter-spacing: -0.01em;
-      font-weight: 900;
-      font-family: var(--sf-display) !important;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      font-size:17px;
+      line-height:1.18;
+      letter-spacing:-.01em;
+      font-weight:900;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
       overflow:hidden;
+      color:var(--ink);
     }
+
     .story .sub{
       display:flex;
       align-items:center;
-      gap: 10px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      font-family: var(--sf-text) !important;
+      gap:10px;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:-.01em;
     }
-    .dot{ width:4px; height:4px; border-radius:50%; background: var(--hair); display:inline-block; }
 
-    @media (max-width: 420px){
-      h1.page-title{ font-size: 52px; }
-      .featured .img{ height: 240px; }
-      .featured h2{ font-size: 24px; }
-      .story{ grid-template-columns: 86px 1fr; }
-      .thumb{ width: 86px; height: 64px; }
+    .dot{
+      width:4px;
+      height:4px;
+      border-radius:50%;
+      background:var(--surface-border);
+      display:inline-block;
+    }
+
+    @media (max-width:420px){
+      .page-title{ font-size:52px; }
+      .featured .img{ height:236px; }
+      .featured h2{ font-size:23px; }
+      .story{ grid-template-columns:86px 1fr; }
+      .thumb{ width:86px; height:64px; }
     }
   </style>
 </head>
 
-<body class="news-page">
-  <div class="wrap">
+<body>
+  <header class="topbar">
+    <button class="tb-btn" id="backBtn" aria-label="Back">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
 
-    <div class="news-header">
-      <!-- icon-only iOS back -->
-      <a class="back-btn" href="../index.html" aria-label="Back">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" aria-pressed="false">
+      <span class="theme-toggle-track" aria-hidden="true"></span>
+      <span class="theme-toggle-knob" aria-hidden="true">
+        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="5" fill="currentColor"></circle>
         </svg>
-      </a>
+        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
+        </svg>
+      </span>
+    </button>
+  </header>
 
-      <div style="flex:1 1 auto;">
+  <div class="wrap">
+    <div class="news-header">
+      <div class="header-copy">
         <h1 class="page-title">News</h1>
+        <div class="subhead">Latest cigar headlines</div>
       </div>
     </div>
 
@@ -420,29 +497,32 @@
       <div class="chip">Reviews</div>
     </div>
 
-    <a class="featured" href="#" 
+    <a class="featured" href="#">
       <div class="img"></div>
       <div class="fade"></div>
       <div class="meta">
         <div class="sourceBadge">
-          <img src="../img/icons/halfwheel.svg" alt="Halfwheel" />
+          <img src="/img/icons/halfwheel.svg" alt="Halfwheel" />
           Halfwheel
         </div>
+        <h2>S.T. Dupont Introduces $70,000 Jackpot Lighter</h2>
+        <p>A luxury accessory launch grabs attention with a high-end collector focus and big visual appeal.</p>
+      </div>
     </a>
 
     <div class="sourcesPanel">
       <div class="sourcesRow">
-        <a class="sourcePill" href="#halfwheel"><img src="../img/icons/halfwheel.svg" alt="Halfwheel">Halfwheel</a>
-        <a class="sourcePill" href="#cigaraficionado"><img src="../img/icons/cigaraficionado.svg" alt="Cigar Aficionado">Cigar Aficionado</a>
-        <a class="sourcePill" href="#cigarjournal"><img src="../img/icons/cigarjournal.svg" alt="Cigar Journal">Cigar Journal</a>
-        <a class="sourcePill" href="#pca"><img src="../img/icons/pca.svg" alt="PCA">PCA</a>
+        <a class="sourcePill" href="#halfwheel"><img src="/img/icons/halfwheel.svg" alt="Halfwheel">Halfwheel</a>
+        <a class="sourcePill" href="#cigaraficionado"><img src="/img/icons/cigaraficionado.svg" alt="Cigar Aficionado">Cigar Aficionado</a>
+        <a class="sourcePill" href="#cigarjournal"><img src="/img/icons/cigarjournal.svg" alt="Cigar Journal">Cigar Journal</a>
+        <a class="sourcePill" href="#pca"><img src="/img/icons/pca.svg" alt="PCA">PCA</a>
       </div>
     </div>
 
     <section class="section" id="halfwheel">
       <div class="sectionHead">
         <div class="sectionTitle">
-          <img class="logo" src="../img/icons/halfwheel.svg" alt="" />
+          <img class="logo" src="/img/icons/halfwheel.svg" alt="" />
           Halfwheel
         </div>
         <a class="seeAll" href="#">See all →</a>
@@ -450,15 +530,50 @@
 
       <div class="stream">
         <a class="story" href="#">
-          <div class="thumb"><img src="https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=70" alt=""></div>
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=70" alt="">
+          </div>
           <div>
             <h3>S.T. Dupont Introduces $70,000 Jackpot Lighter</h3>
             <div class="sub">Today <span class="dot"></span> 6 min read</div>
           </div>
         </a>
+
+        <a class="story" href="#">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=800&q=70" alt="">
+          </div>
+          <div>
+            <h3>New Limited Release Heads to Retailers This Week</h3>
+            <div class="sub">Today <span class="dot"></span> 4 min read</div>
+          </div>
+        </a>
       </div>
     </section>
-
   </div>
+
+  <script>
+    function getTheme() {
+      return localStorage.getItem("theme") || document.documentElement.getAttribute("data-theme") || "light";
+    }
+
+    function applyTheme(theme) {
+      const next = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+      document.getElementById("themeToggle")?.setAttribute("aria-pressed", String(next === "dark"));
+    }
+
+    applyTheme(getTheme());
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      applyTheme(getTheme() === "dark" ? "light" : "dark");
+    });
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      if (history.length > 1) history.back();
+      else window.location.href = "/";
+    });
+  </script>
 </body>
 </html>
