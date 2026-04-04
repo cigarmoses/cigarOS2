@@ -1,13 +1,240 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Brands | CigarOS</title>
-  <link rel="stylesheet" href="/brands/brands.css">
+
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="format-detection" content="telephone=no,email=no,address=no"/>
+
+<title>Brands • CigarOS</title>
+
+<link rel="stylesheet" href="/css/type.css"/>
+<link rel="stylesheet" href="/shops/search-shops.css?v=30"/>
+
+<style>
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --bg-light:#eff2f7;
+  --ink-light:#111827;
+  --glass-light:#ffffff;
+  --glass-light-border:rgba(0,0,0,.08);
+
+  --bg-dark:#07142f;
+  --ink-dark:#ffffff;
+  --glass-dark:rgba(255,255,255,.08);
+  --glass-dark-border:rgba(255,255,255,.12);
+}
+
+/* Base */
+html,body{
+  margin:0;
+  min-height:100%;
+}
+
+body{
+  font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+/* Themes */
+html[data-theme="light"] body{
+  background:var(--bg-light);
+  color:var(--ink-light);
+}
+
+html[data-theme="dark"] body{
+  background:var(--bg-dark);
+  color:var(--ink-dark);
+}
+
+/* Topbar */
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:50;
+
+  width:min(430px, calc(100% - 28px));
+  margin:0 auto;
+
+  padding-top:calc(10px + var(--safe-top));
+  padding-bottom:8px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+/* Buttons */
+.tb-btn{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  border:1px solid transparent;
+}
+
+html[data-theme="light"] .tb-btn{
+  background:var(--glass-light);
+  border-color:var(--glass-light-border);
+}
+
+html[data-theme="dark"] .tb-btn{
+  background:var(--glass-dark);
+  border-color:var(--glass-dark-border);
+}
+
+.tb-btn svg{
+  width:20px;
+  height:20px;
+}
+
+/* Toggle */
+.theme-toggle{
+  position:relative;
+  width:58px;
+  height:34px;
+  border-radius:999px;
+  border:none;
+  cursor:pointer;
+}
+
+.theme-toggle-track{
+  position:absolute;
+  inset:0;
+  border-radius:999px;
+  background:#c7d1de;
+}
+
+html[data-theme="dark"] .theme-toggle-track{
+  background:rgba(255,255,255,.2);
+}
+
+.theme-toggle-knob{
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  background:#fff;
+  transition:transform .2s ease;
+  display:grid;
+  place-items:center;
+}
+
+html[data-theme="dark"] .theme-toggle-knob{
+  transform:translateX(24px);
+}
+
+/* Layout shell */
+.shell{
+  width:min(430px, calc(100% - 28px));
+  margin:0 auto;
+  padding-bottom:calc(28px + var(--safe-bottom));
+}
+
+/* Title */
+.sh-title{
+  font-family:var(--font-display);
+  font-size:48px;
+  font-weight:800;
+  letter-spacing:-0.04em;
+  margin:8px 0 16px;
+}
+
+/* Search spacing fix */
+.sh-search{
+  margin-bottom:12px;
+}
+</style>
+
 </head>
-<body>
-  <div id="app"></div>
-  <script src="/brands/brands.js"></script>
+
+<body class="brands-page">
+
+<!-- TOPBAR -->
+<header class="topbar">
+
+  <button id="backBtn" class="tb-btn" aria-label="Back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15 18L9 12L15 6"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <button class="theme-toggle" id="themeToggle">
+    <span class="theme-toggle-track"></span>
+    <span class="theme-toggle-knob"></span>
+  </button>
+
+</header>
+
+<!-- CONTENT -->
+<div class="shell">
+
+<main class="sh-wrap">
+
+<header class="sh-top">
+  <h1 class="sh-title">Brands</h1>
+</header>
+
+<div class="sh-search">
+
+<input
+id="shQuery"
+class="sh-input"
+type="search"
+placeholder="Search brands…"
+autocomplete="off"
+enterkeyhint="search"
+/>
+
+</div>
+
+<section id="shList" class="sh-list"></section>
+
+</main>
+
+</div>
+
+<!-- THEME + BACK -->
+<script>
+(() => {
+  const root = document.documentElement;
+  const toggle = document.getElementById("themeToggle");
+  const backBtn = document.getElementById("backBtn");
+
+  function getTheme(){
+    return localStorage.getItem("theme") || "light";
+  }
+
+  function setTheme(t){
+    root.setAttribute("data-theme", t);
+    localStorage.setItem("theme", t);
+  }
+
+  setTheme(getTheme());
+
+  toggle.addEventListener("click", () => {
+    setTheme(getTheme() === "dark" ? "light" : "dark");
+  });
+
+  backBtn.addEventListener("click", () => {
+    if (history.length > 1) history.back();
+    else location.href = "/";
+  });
+
+})();
+</script>
+
+<script src="/shops/shop-search.js?v=30"></script>
+
 </body>
 </html>
