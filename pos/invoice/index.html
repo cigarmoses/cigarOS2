@@ -1,26 +1,19 @@
-<!-- /pos/invoice/index.html -->
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Invoice</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=16" />
-  <link rel="stylesheet" href="/pos/pos.css?v=16" />
-  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=16" />
+  <link rel="stylesheet" href="/css/type.css?v=17" />
+  <link rel="stylesheet" href="/pos/pos.css?v=17" />
+  <link rel="stylesheet" href="/uxui/topbar/topbar.css?v=17" />
+  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=17" />
 </head>
 
 <body class="inv-page">
-  <button
-    class="inv-back"
-    type="button"
-    aria-label="Back"
-    onclick="history.back()"
-  >
-    <span aria-hidden="true">‹</span>
-  </button>
+  <div id="universalTopbar"></div>
 
   <main class="inv-wrap" role="main">
     <header class="inv-head">
@@ -31,7 +24,13 @@
     </header>
 
     <section class="inv-customer-wrap" aria-label="Customer selector">
-      <button class="inv-customer" id="invCustomerBtn" type="button" aria-expanded="false" aria-controls="invCustomerMenu">
+      <button
+        class="inv-customer"
+        id="invCustomerBtn"
+        type="button"
+        aria-expanded="false"
+        aria-controls="invCustomerMenu"
+      >
         <span class="inv-customer-label" id="invCustomerLabel">ATTACH SAVED CUSTOMER</span>
         <span class="inv-customer-caret" aria-hidden="true"></span>
       </button>
@@ -75,7 +74,21 @@
     <button class="inv-action" type="button">CASH OUT</button>
   </footer>
 
-  <script src="/pos/cart.js?v=16" defer></script>
-  <script src="/pos/invoice/invoice.js?v=16" defer></script>
+  <script src="/uxui/topbar/topbar.js?v=17" defer></script>
+  <script src="/pos/cart.js?v=17" defer></script>
+  <script src="/pos/invoice/invoice.js?v=17" defer></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.CigarOSTopbar) {
+        window.CigarOSTopbar.mount("#universalTopbar", {
+          homeHref: "/",
+          favoritesHref: "/pos/favorites/",
+          cartHref: "/pos/invoice/",
+          searchAction: "modal"
+        });
+      }
+    });
+  </script>
 </body>
 </html>
