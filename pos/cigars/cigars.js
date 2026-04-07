@@ -1,12 +1,5 @@
 /* /pos/cigars/cigars.js
    POS Cigars (Main) — Filters Bottom Sheet + Brands Grid + Results Rows
-
-   FIX:
-   - Restores the expected main-page UI: title actions, search bar, Brands heading
-   - Renders:
-       * Brands GRID when no search + no filters
-       * Results ROWS (brand-row style) when search/filters are active
-   - Keeps your existing bottom-sheet filter modal implementation
 */
 
 (() => {
@@ -18,9 +11,6 @@
   const CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
-  // -----------------------------
-  // DOM
-  // -----------------------------
   const searchInput = $("#cigars-search-input");
   const openBtn = $("#btn-open-filters") || $(".cigars-filter-btn") || $("#cigars-filter-btn");
   const listRoot = $("#cigarsList");
@@ -28,16 +18,10 @@
 
   let modalRoot = $("#filter-modal");
 
-  // -----------------------------
-  // Data
-  // -----------------------------
   let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__)
     ? window.__CIGAR_SHEET_ROWS__
     : [];
 
-  // -----------------------------
-  // Global filter state contract
-  // -----------------------------
   function ensureGlobalState() {
     if (!window.__CIGAR_FILTER_STATE__) {
       window.__CIGAR_FILTER_STATE__ = {
@@ -77,9 +61,6 @@
     }
   }
 
-  // -----------------------------
-  // Utilities
-  // -----------------------------
   function norm(v) {
     return String(v ?? "").trim().replace(/\s+/g, " ");
   }
@@ -177,9 +158,6 @@
     return true;
   }
 
-  // -----------------------------
-  // CSV parsing
-  // -----------------------------
   function parseCSV(text) {
     const rows = [];
     let i = 0;
@@ -241,9 +219,6 @@
     });
   }
 
-  // -----------------------------
-  // ✅ Render: Brands grid OR Results list
-  // -----------------------------
   function buildBrandSummary(rows) {
     const map = new Map();
 
@@ -266,8 +241,7 @@
     const chips = [];
     const f = g.filters || {};
 
-    // chips for active sets
-    for (const key of ["manufacturer","brand","vitola","ring","length","strength","shape","shade"]) {
+    for (const key of ["manufacturer", "brand", "vitola", "ring", "length", "strength", "shape", "shade"]) {
       const set = f[key];
       if (!(set instanceof Set) || !set.size) continue;
 
@@ -286,7 +260,6 @@
       }
     }
 
-    // clear all
     if ((g.q && g.q.trim()) || hasActiveFilters(g)) {
       chips.push(`
         <div class="af-chip af-clear">
@@ -302,7 +275,6 @@
 
     appliedRoot.innerHTML = chips.join("");
 
-    // handlers
     $$(".af-chip", appliedRoot).forEach((chip) => {
       const xBtn = $(".af-chip__x", chip);
       if (!xBtn) return;
@@ -385,7 +357,6 @@
     ensureGlobalState();
     const g = window.__CIGAR_FILTER_STATE__;
 
-    // applied chips
     renderAppliedChips(g);
 
     const filteredRows = (DATA_ROWS || []).filter((r) => rowMatchesFilters(r, g));
@@ -395,7 +366,6 @@
     const filtersOn = hasActiveFilters(g);
 
     if (!summary.length) {
-      
       listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
       return;
     }
@@ -404,9 +374,6 @@
     else renderBrandsGrid(summary);
   }
 
-  // -----------------------------
-  // Bottom Sheet Filter Modal (your existing logic)
-  // -----------------------------
   const state = {
     selected: {
       manufacturer: new Set(),
@@ -458,9 +425,9 @@
   }
 
   const VITOLA_ORDER = [
-    "Toro","Robusto","Gordo","Churchill","Corona","Petit Corona","Corona Gorda","Lonsdale",
-    "Lancero","Panetela","Belicoso","Torpedo","Piramide","Perfecto","Diadema","Figurado",
-    "Double Corona","Petit Robusto","Short Robusto",
+    "Toro", "Robusto", "Gordo", "Churchill", "Corona", "Petit Corona", "Corona Gorda", "Lonsdale",
+    "Lancero", "Panetela", "Belicoso", "Torpedo", "Piramide", "Perfecto", "Diadema", "Figurado",
+    "Double Corona", "Petit Robusto", "Short Robusto",
   ];
 
   function orderVitolas(values) {
@@ -612,9 +579,7 @@
 
     catsEl.innerHTML = CATEGORIES.map((c) => {
       const active = c.key === state.activeKey ? "is-active" : "";
-      return `<button class="fm__cat-btn ${active}" type="button" data-cat="${escapeHtml(
-        c.key
-      )}">${escapeHtml(c.label)}</button>`;
+      return `<button class="fm__cat-btn ${active}" type="button" data-cat="${escapeHtml(c.key)}">${escapeHtml(c.label)}</button>`;
     }).join("");
 
     $$(".fm__cat-btn", catsEl).forEach((btn) => {
@@ -731,9 +696,6 @@
     renderList();
   }
 
-  // -----------------------------
-  // Event bindings
-  // -----------------------------
   searchInput?.addEventListener("input", () => {
     ensureGlobalState();
     window.__CIGAR_FILTER_STATE__.q = (searchInput.value || "").toString();
@@ -784,14 +746,10 @@
     }
   });
 
-  // -----------------------------
-  // Init
-  // -----------------------------
   async function init() {
     try {
       ensureGlobalState();
 
-      // hydrate search input
       if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
 
       if (Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length) {
