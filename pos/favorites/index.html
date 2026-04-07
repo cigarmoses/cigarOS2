@@ -2,28 +2,98 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Favorites</title>
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/uxui/topbar/topbar.css" />
-</head>
 
+  <style>
+    :root{
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --bg:#eff2f7;
+      --ink:#101828;
+      --muted:rgba(16,24,40,.58);
+      --surface:rgba(255,255,255,.92);
+      --surface-border:rgba(15,23,40,.08);
+      --surface-shadow:0 12px 30px rgba(15,26,44,.08);
+    }
+
+    html[data-theme="dark"]{
+      --bg:
+        radial-gradient(1200px 540px at 50% -8%, rgba(63,108,194,.22) 0%, rgba(20,44,92,.16) 28%, rgba(4,13,34,0) 58%),
+        linear-gradient(180deg, #0f2856 0%, #07142f 48%, #041027 100%);
+      --ink:#ffffff;
+      --muted:rgba(255,255,255,.64);
+      --surface:rgba(13,21,39,.58);
+      --surface-border:rgba(255,255,255,.12);
+      --surface-shadow:0 12px 34px rgba(0,0,0,.26);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ margin:0; min-height:100%; }
+
+    body{
+      min-height:100dvh;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    .wrap{
+      width:min(430px, calc(100% - 28px));
+      margin:0 auto;
+      padding:6px 0 calc(34px + var(--safe-bottom));
+    }
+
+    .page-title{
+      margin:8px 2px 18px;
+      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size:58px;
+      line-height:.92;
+      font-weight:800;
+      letter-spacing:-.05em;
+      color:var(--ink);
+    }
+
+    .card{
+      border-radius:24px;
+      background:var(--surface);
+      border:1px solid var(--surface-border);
+      box-shadow:var(--surface-shadow);
+      padding:18px 16px;
+    }
+
+    .empty{
+      font-size:15px;
+      line-height:1.4;
+      color:var(--muted);
+      font-weight:600;
+    }
+  </style>
+</head>
 <body>
   <div id="universalTopbar"></div>
 
-  <main style="padding:20px;">
-    <h1>Favorites</h1>
-    <p>No favorites yet.</p>
+  <main class="wrap">
+    <h1 class="page-title">Favorites</h1>
+
+    <section class="card">
+      <div class="empty">No favorites yet.</div>
+    </section>
   </main>
 
   <script src="/uxui/topbar/topbar.js"></script>
   <script>
-    CigarOSTopbar.mount("#universalTopbar", {
-      homeHref: "/",
-      favoritesHref: "/pos/favorites/",
-      cartHref: "/pos/invoice/",
-      searchAction: "modal"
+    document.addEventListener("DOMContentLoaded", () => {
+      window.CigarOSTopbar?.mount("#universalTopbar", {
+        homeHref: "/",
+        favoritesHref: "/pos/favorites/",
+        cartHref: "/pos/invoice/",
+        searchAction: "modal"
+      });
     });
   </script>
 </body>
