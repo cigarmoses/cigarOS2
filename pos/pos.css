@@ -15,14 +15,10 @@ html[data-theme="dark"] body{
 #sheet-backdrop{
   position: fixed;
   inset: 0;
-
   background: rgba(0,0,0,.35);
-
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-
   z-index: 9998;
-
   pointer-events: none;
   opacity: 0;
 }
@@ -38,22 +34,17 @@ html[data-theme="dark"] body{
   top: calc(10px + env(safe-area-inset-top));
   bottom: calc(10px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
-
   width: min(760px, calc(100% - 20px));
   background: rgba(255,255,255,0.96);
   color: #0f1a2c;
-
   border-radius: 26px;
   box-shadow: 0 20px 70px rgba(0,0,0,0.35);
   z-index: 9999;
-
   opacity: 0;
   pointer-events: none;
-
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
   transition: opacity .18s ease, transform .18s ease;
 }
 #sheet-receipt.open{
@@ -457,11 +448,6 @@ body.pos-home .pos-card-icon{
 
 /* =========================================================
    UNIVERSAL SITE TOPBAR
-   New standard:
-   - back button top left
-   - smaller toggle top right
-   - sun / moon inside knob
-   - nothing else in top bar
    ========================================================= */
 
 .uos-topbar{
@@ -476,29 +462,41 @@ body.pos-home .pos-card-icon{
 }
 
 .uos-back{
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.08);
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
   color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+  box-shadow: none;
   -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  padding: 0;
 }
 
 .uos-back svg{
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.uos-back--plain{
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
 }
 
 .uos-toggle{
   position: relative;
   width: 48px;
   height: 28px;
-  border-radius: 999px;
   border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
   background: rgba(255,255,255,.10);
   padding: 0;
   box-shadow: 0 10px 24px rgba(0,0,0,.18);
@@ -550,10 +548,7 @@ html[data-theme="dark"] .uos-moon{
 }
 
 html[data-theme="light"] .uos-back{
-  border: 1px solid rgba(15,26,44,.08);
-  background: rgba(255,255,255,.96);
   color: #101828;
-  box-shadow: 0 10px 24px rgba(15,26,44,.06);
 }
 
 html[data-theme="light"] .uos-toggle{
@@ -564,7 +559,6 @@ html[data-theme="light"] .uos-toggle{
 
 /* =========================================================
    LEGACY POS / PRODUCTS TOPBAR RESET
-   Keeps old layouts from forcing large segmented controls
    ========================================================= */
 
 .products-topbar,
@@ -626,7 +620,6 @@ html[data-theme="dark"] .pos-topbar .topbar-btn{
   box-shadow: 0 12px 28px rgba(0,0,0,.24);
 }
 
-/* old segmented nav shells disabled down to simple wrappers */
 .products-topbar-nav,
 .pos-topbar-nav,
 .glass-segment{
@@ -825,8 +818,13 @@ html[data-theme="dark"] .appearance-toggle.is-dark .appearance-toggle-thumb{
   }
 
   .uos-back{
-    width: 38px;
-    height: 38px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .uos-back svg{
+    width: 22px;
+    height: 22px;
   }
 
   .uos-toggle{
