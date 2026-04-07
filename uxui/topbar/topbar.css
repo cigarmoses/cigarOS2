@@ -1,174 +1,210 @@
+/* /uxui/topbar/topbar.css */
+
 :root{
   --topbar-safe-top: env(safe-area-inset-top, 0px);
-  --topbar-side-offset: 14px;
-
-  --topbar-btn-size: 42px;
-  --topbar-toggle-width: 54px;
-  --topbar-toggle-height: 32px;
-  --topbar-toggle-knob: 24px;
-
-  --cigaros-dark-bg:
-    radial-gradient(1200px 540px at 50% -8%, rgba(63,108,194,.22) 0%, rgba(20,44,92,.16) 28%, rgba(4,13,34,0) 58%),
-    linear-gradient(180deg, #0f2856 0%, #07142f 48%, #041027 100%);
-}
-
-html[data-theme="dark"] body.products-page,
-html[data-theme="dark"] body.cigars-page{
-  background: var(--cigaros-dark-bg) !important;
-  background-attachment: fixed !important;
-}
-
-html[data-theme="dark"] .products-page-wrap,
-html[data-theme="dark"] .cigars-main{
-  background: transparent !important;
 }
 
 #universalTopbar{
-  position: relative;
-  z-index: 1100;
-}
-
-#universalTopbar *{
-  box-sizing: border-box;
-}
-
-#universalTopbar .cigaros-topbar{
-  position: relative;
-  width: min(430px, calc(100% - 0px));
+  width: min(430px, calc(100% - 28px));
   margin: 0 auto;
-  min-height: calc(var(--topbar-safe-top) + 52px);
-  padding-top: calc(var(--topbar-safe-top) + 10px);
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+  padding-top: calc(10px + var(--topbar-safe-top));
+  padding-bottom: 8px;
+  background: transparent;
 }
 
-#universalTopbar .cigaros-topbar-side{
-  position: absolute;
-  top: calc(var(--topbar-safe-top) + 10px);
-  width: var(--topbar-btn-size);
-  height: var(--topbar-btn-size);
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(15,26,44,.08);
-  border-radius: 14px;
+.topbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.topbar-right{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-btn{
+  width: 24px;
+  height: 24px;
+  border: 0;
   padding: 0;
   margin: 0;
-  background: rgba(255,255,255,.96);
-  box-shadow: 0 10px 24px rgba(15,26,44,.06);
-  appearance: none;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-  overflow: hidden;
-  z-index: 3;
-}
-
-#universalTopbar .cigaros-topbar-back{
-  left: var(--topbar-side-offset);
-}
-
-#universalTopbar .cigaros-topbar-right{
-  right: var(--topbar-side-offset);
-}
-
-html[data-theme="dark"] #universalTopbar .cigaros-topbar-side{
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.08);
-  box-shadow: 0 12px 28px rgba(0,0,0,.24);
-}
-
-#universalTopbar .cigaros-topbar-icon{
-  display: block;
-  width: 20px;
-  height: 20px;
-  user-select: none;
-  -webkit-user-drag: none;
-  pointer-events: none;
-}
-
-#universalTopbar .cigaros-topbar-toggle{
-  position: absolute;
-  top: calc(var(--topbar-safe-top) + 15px);
-  right: calc(var(--topbar-side-offset) + 2px);
-  width: var(--topbar-toggle-width);
-  height: var(--topbar-toggle-height);
-  border: 1px solid rgba(15,26,44,.08);
-  border-radius: 999px;
-  background: rgba(255,255,255,.96);
-  box-shadow: 0 10px 24px rgba(15,26,44,.06);
-  padding: 0;
-  appearance: none;
-  -webkit-tap-highlight-color: transparent;
-  z-index: 4;
-}
-
-html[data-theme="dark"] #universalTopbar .cigaros-topbar-toggle{
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.08);
-  box-shadow: 0 12px 28px rgba(0,0,0,.24);
-}
-
-#universalTopbar .cigaros-topbar-toggle-track{
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-}
-
-#universalTopbar .cigaros-topbar-toggle-knob{
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: var(--topbar-toggle-knob);
-  height: var(--topbar-toggle-knob);
-  border-radius: 999px;
-  background: #ffffff;
+  background: transparent;
+  color: var(--text, var(--ink, #101828));
   display: grid;
   place-items: center;
-  box-shadow: 0 3px 8px rgba(0,0,0,.18);
-  transition: transform .22s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
-html[data-theme="dark"] #universalTopbar .cigaros-topbar-toggle-knob{
-  transform: translateX(22px);
-  background: #ffffff;
-}
-
-#universalTopbar .cigaros-topbar-toggle-icon{
-  width: 14px;
-  height: 14px;
+.topbar-btn svg{
+  width: 24px;
+  height: 24px;
   display: block;
-  user-select: none;
-  -webkit-user-drag: none;
-  pointer-events: none;
 }
 
-#universalTopbar .cigaros-topbar-side:active,
-#universalTopbar .cigaros-topbar-toggle:active{
-  transform: scale(.985);
+.topbar-toggle{
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
 }
 
-@media (max-width: 430px){
-  :root{
-    --topbar-side-offset: 14px;
-    --topbar-btn-size: 40px;
-    --topbar-toggle-width: 52px;
-    --topbar-toggle-height: 30px;
-    --topbar-toggle-knob: 22px;
+html[data-theme="light"] .topbar-toggle{
+  border: 1px solid rgba(15,26,44,.08);
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 10px 24px rgba(15,26,44,.06);
+}
+
+.topbar-toggle-knob{
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(0,0,0,.16);
+  transition: transform .25s ease;
+}
+
+html[data-theme="dark"] .topbar-toggle-knob{
+  transform: translateX(20px);
+}
+
+/* global search modal */
+#globalSearchModal{
+  display: none;
+}
+
+#globalSearchModal .search-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.34);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 16px 16px;
+  z-index: 9999;
+}
+
+#globalSearchModal .search-shell{
+  width: min(680px, 100%);
+}
+
+#globalSearchModal .search-box{
+  width: 100%;
+  min-height: 58px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(13,21,39,.82);
+  box-shadow: 0 20px 50px rgba(0,0,0,.24);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+html[data-theme="light"] #globalSearchModal .search-box{
+  border: 1px solid rgba(15,23,40,.08);
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 18px 40px rgba(15,26,44,.12);
+}
+
+#globalSearchModal .search-icon{
+  width: 20px;
+  height: 20px;
+  color: rgba(255,255,255,.62);
+  flex: 0 0 auto;
+}
+
+html[data-theme="light"] #globalSearchModal .search-icon{
+  color: rgba(16,24,40,.48);
+}
+
+#globalSearchModal .search-box input{
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #fff;
+  font: 600 18px/1.2 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+}
+
+html[data-theme="light"] #globalSearchModal .search-box input{
+  color: #101828;
+}
+
+#globalSearchModal .search-box input::placeholder{
+  color: rgba(255,255,255,.56);
+}
+
+html[data-theme="light"] #globalSearchModal .search-box input::placeholder{
+  color: rgba(16,24,40,.46);
+}
+
+#globalSearchModal .search-close{
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.7);
+  font: 700 15px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  cursor: pointer;
+  padding: 0;
+}
+
+html[data-theme="light"] #globalSearchModal .search-close{
+  color: rgba(16,24,40,.62);
+}
+
+@media (max-width: 390px){
+  #universalTopbar{
+    width: calc(100% - 18px);
   }
 
-  #universalTopbar .cigaros-topbar{
-    width: calc(100% - 0px);
-    min-height: calc(var(--topbar-safe-top) + 50px);
-    padding-top: calc(var(--topbar-safe-top) + 10px);
+  .topbar-right{
+    gap: 10px;
   }
 
-  #universalTopbar .cigaros-topbar-side{
-    top: calc(var(--topbar-safe-top) + 10px);
-    border-radius: 14px;
+  .topbar-btn{
+    width: 22px;
+    height: 22px;
   }
 
-  #universalTopbar .cigaros-topbar-toggle{
-    top: calc(var(--topbar-safe-top) + 15px);
+  .topbar-btn svg{
+    width: 22px;
+    height: 22px;
   }
 
-  html[data-theme="dark"] #universalTopbar .cigaros-topbar-toggle-knob{
-    transform: translateX(22px);
+  .topbar-toggle{
+    width: 46px;
+    height: 27px;
+  }
+
+  .topbar-toggle-knob{
+    width: 21px;
+    height: 21px;
+  }
+
+  html[data-theme="dark"] .topbar-toggle-knob{
+    transform: translateX(19px);
   }
 }
