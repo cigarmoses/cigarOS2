@@ -44,7 +44,6 @@
     </section>
 
     <nav id="categoryRow" class="pos-categories" aria-label="Product categories"></nav>
-
     <section id="productGrid" class="pos-grid" aria-label="Products grid"></section>
   </main>
 
@@ -57,14 +56,12 @@
   <script src="/pos/products/products.js" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      if (window.CigarOSTopbar) {
-        window.CigarOSTopbar.mount("#universalTopbar", {
-          homeHref: "/",
-searchAction: "modal",
-favoritesHref: "/pos/favorites/",
-          cartHref: "/pos/invoice/"
-        });
-      }
+      window.CigarOSTopbar?.mount("#universalTopbar", {
+        homeHref: "/",
+        favoritesHref: "/pos/favorites/",
+        cartHref: "/pos/invoice/",
+        searchAction: "modal"
+      });
     });
   </script>
 </body>
