@@ -24,13 +24,7 @@
     </header>
 
     <section class="inv-customer-wrap" aria-label="Customer selector">
-      <button
-        class="inv-customer"
-        id="invCustomerBtn"
-        type="button"
-        aria-expanded="false"
-        aria-controls="invCustomerMenu"
-      >
+      <button class="inv-customer" id="invCustomerBtn" type="button" aria-expanded="false" aria-controls="invCustomerMenu">
         <span class="inv-customer-label" id="invCustomerLabel">ATTACH SAVED CUSTOMER</span>
         <span class="inv-customer-caret" aria-hidden="true"></span>
       </button>
@@ -51,9 +45,7 @@
       <div class="inv-customer-selected" id="invCustomerSelected" hidden></div>
     </section>
 
-    <section class="inv-items" id="invItems" aria-label="Invoice items">
-      <!-- invoice.js renders rows -->
-    </section>
+    <section class="inv-items" id="invItems" aria-label="Invoice items"></section>
 
     <section class="inv-totals" aria-label="Totals">
       <div class="trow"><div>TOBACCO</div><div id="tTobacco">$0.00</div></div>
@@ -77,17 +69,14 @@
   <script src="/uxui/topbar/topbar.js?v=17" defer></script>
   <script src="/pos/cart.js?v=17" defer></script>
   <script src="/pos/invoice/invoice.js?v=17" defer></script>
-
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      if (window.CigarOSTopbar) {
-        window.CigarOSTopbar.mount("#universalTopbar", {
-          homeHref: "/",
-          favoritesHref: "/pos/favorites/",
-          cartHref: "/pos/invoice/",
-          searchAction: "modal"
-        });
-      }
+      window.CigarOSTopbar?.mount("#universalTopbar", {
+        homeHref: "/",
+        favoritesHref: "/pos/favorites/",
+        cartHref: "/pos/invoice/",
+        searchAction: "modal"
+      });
     });
   </script>
 </body>
