@@ -8,41 +8,12 @@
 
   <link rel="stylesheet" href="/css/type.css?v=21" />
   <link rel="stylesheet" href="/pos/pos.css?v=22" />
+  <link rel="stylesheet" href="/uxui/topbar/topbar.css?v=22" />
   <link rel="stylesheet" href="/pos/cigars/cigars.css?v=21" />
 </head>
 
 <body class="cigars-page">
-  <header class="cigars-topbar uos-topbar" aria-label="Top bar">
-    <button type="button" class="ct-icon-btn uos-back uos-back--plain" id="cigars-back-btn" aria-label="Back">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-      </svg>
-    </button>
-
-    <div class="ct-spacer" aria-hidden="true"></div>
-
-    <button
-      type="button"
-      class="ct-theme-toggle uos-toggle"
-      id="theme-toggle"
-      aria-label="Toggle theme"
-      aria-pressed="false"
-    >
-      <span class="ct-theme-toggle-track uos-track" aria-hidden="true"></span>
-      <span class="ct-theme-toggle-knob uos-knob" aria-hidden="true">
-        <svg class="ct-theme-icon ct-theme-icon-sun uos-sun" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
-          <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-            <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
-          </g>
-        </svg>
-
-        <svg class="ct-theme-icon ct-theme-icon-moon uos-moon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
-        </svg>
-      </span>
-    </button>
-  </header>
+  <div id="universalTopbar"></div>
 
   <main class="cigars-main" role="main">
     <div class="cigars-title-row">
@@ -51,13 +22,7 @@
       <div class="cigars-title-actions">
         <button type="button" class="cigars-filter-btn" id="btn-open-filters" aria-label="Filters">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M4 6h16M7 12h10M10 18h4"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.2"
-              stroke-linecap="round"
-            />
+            <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
           </svg>
         </button>
       </div>
@@ -67,13 +32,7 @@
       <div class="cigars-search-bar">
         <div class="cigars-search-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.2"
-              stroke-linecap="round"
-            />
+            <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
           </svg>
         </div>
 
@@ -93,62 +52,18 @@
     <section class="cigars-list" id="cigarsList"></section>
   </main>
 
-  <nav class="cigars-bottom-bar" aria-label="Primary">
-    <div class="cigars-bottom-bar-inner">
-      <a class="cb-nav-btn" href="/search/" aria-label="Search">
-        <img src="/uxui/darkmode/dark-bottom-bar-search.svg" alt="" class="cb-nav-icon" />
-        <span>Search</span>
-      </a>
-
-      <a class="cb-nav-btn" href="/" aria-label="Home">
-        <img src="/uxui/darkmode/dark-bottom-bar-home.svg" alt="" class="cb-nav-icon" />
-        <span>Home</span>
-      </a>
-
-      <a class="cb-nav-btn" href="/pos/favorites/" aria-label="Favorites">
-        <img src="/uxui/darkmode/dark-bottom-bar-favorites.svg" alt="" class="cb-nav-icon" />
-        <span>Favorites</span>
-      </a>
-
-      <a class="cb-nav-btn" href="/pos/invoice/" aria-label="Cart">
-        <img src="/uxui/darkmode/dark-bottom-bar-cart.svg" alt="" class="cb-nav-icon" />
-        <span>Cart</span>
-      </a>
-    </div>
-  </nav>
-
+  <script src="/uxui/topbar/topbar.js?v=22" defer></script>
   <script src="/pos/cart.js?v=21" defer></script>
   <script src="/pos/cigars/cigars.js?v=22" defer></script>
   <script>
-    (() => {
-      "use strict";
-
-      const root = document.documentElement;
-      const toggle = document.getElementById("theme-toggle");
-      const backBtn = document.getElementById("cigars-back-btn");
-
-      function getSavedTheme() {
-        return localStorage.getItem("theme") || root.getAttribute("data-theme") || "light";
-      }
-
-      function applyTheme(theme) {
-        const next = theme === "dark" ? "dark" : "light";
-        root.setAttribute("data-theme", next);
-        localStorage.setItem("theme", next);
-        toggle?.setAttribute("aria-pressed", String(next === "dark"));
-      }
-
-      applyTheme(getSavedTheme());
-
-      toggle?.addEventListener("click", () => {
-        applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
+    document.addEventListener("DOMContentLoaded", () => {
+      window.CigarOSTopbar?.mount("#universalTopbar", {
+        homeHref: "/",
+        favoritesHref: "/pos/favorites/",
+        cartHref: "/pos/invoice/",
+        searchAction: "modal"
       });
-
-      backBtn?.addEventListener("click", () => {
-        if (history.length > 1) history.back();
-        else window.location.href = "/";
-      });
-    })();
+    });
   </script>
 </body>
 </html>
