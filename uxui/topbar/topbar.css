@@ -16,16 +16,21 @@
 }
 
 .topbar{
-  display: flex;
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
+}
+
+.topbar-spacer{
+  width: 24px;
+  height: 24px;
 }
 
 .topbar-right{
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: flex-end;
 }
 
 .topbar-btn{
@@ -180,8 +185,8 @@ html[data-theme="light"] #globalSearchModal .search-close{
     width: calc(100% - 18px);
   }
 
-  .topbar-right{
-    gap: 10px;
+  .topbar{
+    grid-template-columns: 22px 1fr auto;
   }
 
   .topbar-btn{
@@ -190,6 +195,11 @@ html[data-theme="light"] #globalSearchModal .search-close{
   }
 
   .topbar-btn svg{
+    width: 22px;
+    height: 22px;
+  }
+
+  .topbar-spacer{
     width: 22px;
     height: 22px;
   }
