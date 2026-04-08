@@ -2,7 +2,7 @@
    Universal POS cart + invoice badge + shared qty control
 
    - Persists cart in localStorage
-   - Supports add(), setQty(), remove(), clear()
+   - Supports add(), setQty(), getItemQty(), remove(), clear()
    - Updates all cart badges
    - Keeps invoice page in sync
 */
@@ -23,19 +23,6 @@
   function loadCart() {
     const cart = safeJSONParse(localStorage.getItem(CART_KEY), []);
     return Array.isArray(cart) ? cart : [];
-  }
-
-  function saveCart(cart) {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    mirrorLegacy(cart);
-    updateBadges(cart);
-
-    document.dispatchEvent(
-      new CustomEvent("cigaros:cart-changed", { detail: { cart } })
-    );
-    window.dispatchEvent(
-      new CustomEvent("cigaros:cart", { detail: { cart } })
-    );
   }
 
   function norm(value) {
@@ -148,11 +135,26 @@
     }
   }
 
+  function emitCartEvents(cart) {
+    document.dispatchEvent(
+      new CustomEvent("cigaros:cart-changed", { detail: { cart } })
+    );
+    window.dispatchEvent(
+      new CustomEvent("cigaros:cart", { detail: { cart } })
+    );
+  }
+
+  function saveCart(cart) {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    mirrorLegacy(cart);
+    updateBadges(cart);
+    emitCartEvents(cart);
+  }
+
   function add(item, qtyToAdd = 1) {
     const cart = loadCart();
     const normalized = normalizeItem(item);
     const qtyAdd = Math.max(1, Math.round(toNumber(qtyToAdd, 1)));
-
     const idx = findIndex(cart, normalized);
 
     if (idx >= 0) {
@@ -201,6 +203,14 @@
     }
 
     saveCart(cart);
+  }
+
+  function getItemQty(item) {
+    const cart = loadCart();
+    const normalized = normalizeItem(item);
+    const idx = findIndex(cart, normalized);
+    if (idx < 0) return 0;
+    return Math.max(0, toNumber(cart[idx].qty, 0));
   }
 
   function remove(item) {
@@ -259,6 +269,7 @@
     count,
     add,
     setQty,
+    getItemQty,
     remove,
     clear,
     updateBadges: () => updateBadges(loadCart())
