@@ -272,11 +272,13 @@
   }
 
   function setBrandHeader() {
-    brandTitle.textContent = state.brand || "Brand";
-    brandIconImg.src = brandIconPath();
-    brandIconImg.onerror = () => {
-      brandIconImg.style.visibility = "hidden";
-    };
+    if (brandTitle) brandTitle.textContent = state.brand || "Brand";
+    if (brandIconImg) {
+      brandIconImg.src = brandIconPath();
+      brandIconImg.onerror = () => {
+        brandIconImg.style.visibility = "hidden";
+      };
+    }
   }
 
   function getSavedTheme() {
@@ -291,11 +293,13 @@
   }
 
   function openBandsSheet() {
+    if (!sheetBands) return;
     sheetBands.hidden = false;
     document.documentElement.classList.add("sheet-open");
   }
 
   function closeBandsSheet() {
+    if (!sheetBands) return;
     sheetBands.hidden = true;
     document.documentElement.classList.remove("sheet-open");
   }
@@ -615,14 +619,14 @@
 
       plusBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
-        window.cigarOSCart?.setQty?.(item, qty + 1);
-        renderList(rows);
+        const current = window.cigarOSCart?.getItemQty?.(item) || 0;
+        window.cigarOSCart?.setQty?.(item, current + 1);
       });
 
       minusBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
-        window.cigarOSCart?.setQty?.(item, Math.max(0, qty - 1));
-        renderList(rows);
+        const current = window.cigarOSCart?.getItemQty?.(item) || 0;
+        window.cigarOSCart?.setQty?.(item, Math.max(0, current - 1));
       });
 
       listEl.appendChild(row);
@@ -653,6 +657,8 @@
   }
 
   function renderBandOptions(opts) {
+    if (!bandsOptions) return;
+
     bandsOptions.innerHTML = "";
 
     if (!opts.length) {
