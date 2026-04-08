@@ -79,13 +79,13 @@ html[data-theme="light"] .cigars-main{
 }
 
 #universalTopbar + .cigars-main{
-  padding-top: 16px;
+  padding-top: 8px;
 }
 
 .cigars-main{
   width:min(430px, calc(100% - 28px));
   margin:0 auto;
-  padding:14px 0 120px;
+  padding:6px 0 120px;
 }
 
 /* title */
@@ -477,6 +477,8 @@ html[data-theme="light"] .cigars-empty{
 .cb-nav-btn{
   min-height:54px;
   border-radius:18px;
+  border:0;
+  background:transparent;
   text-decoration:none;
   color:var(--ink);
   display:flex;
@@ -489,13 +491,13 @@ html[data-theme="light"] .cigars-empty{
   letter-spacing:.02em;
   text-transform:uppercase;
   transition:transform .16s ease, background .16s ease;
+  cursor:pointer;
 }
 
-.cb-nav-icon{
+.cb-nav-svg{
   width:22px;
   height:22px;
   display:block;
-  object-fit:contain;
 }
 
 .cb-nav-btn:active{
