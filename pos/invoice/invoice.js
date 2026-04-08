@@ -35,7 +35,11 @@
   let customersLoadingPromise = null;
 
   function safeJSONParse(value, fallback) {
-    try { return JSON.parse(value); } catch { return fallback; }
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
   }
 
   function normStr(value, fallback = "") {
@@ -52,17 +56,31 @@
   function toAbsUrl(url) {
     const u = normStr(url);
     if (!u) return "";
-    try { return new URL(u, window.location.origin).href; } catch { return u; }
+    try {
+      return new URL(u, window.location.origin).href;
+    } catch {
+      return u;
+    }
   }
 
   function loadCart() {
-    return safeJSONParse(localStorage.getItem(CART_KEY), []) || [];
+    const cart = safeJSONParse(localStorage.getItem(CART_KEY), []);
+    return Array.isArray(cart) ? cart : [];
   }
 
   function saveCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart } }));
-    window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart } }));
+
+    document.dispatchEvent(
+      new CustomEvent("cigaros:cart-changed", { detail: { cart } })
+    );
+    window.dispatchEvent(
+      new CustomEvent("cigaros:cart", { detail: { cart } })
+    );
+
+    if (window.cigarOSCart?.updateBadges) {
+      window.cigarOSCart.updateBadges();
+    }
   }
 
   function nowStamp() {
@@ -108,6 +126,7 @@
     return (
       normStr(item.type).toLowerCase() === "cigar" ||
       normStr(item.category).toLowerCase().includes("cigar") ||
+      normStr(item.category).toLowerCase().includes("tobacco") ||
       normStr(item.vitola) !== ""
     );
   }
@@ -124,10 +143,12 @@
   function itemLineName(item) {
     const line = normStr(item.line);
     const name = normStr(item.name);
+
     if (line && name) {
       if (name.toLowerCase().startsWith(line.toLowerCase())) return name;
       return `${line} ${name}`;
     }
+
     return name || line || "Item";
   }
 
@@ -140,11 +161,13 @@
     if (isCigarItem(item)) {
       const ring = normStr(item.ring);
       const length = normStr(item.length);
+
       if (ring && length) return `${ring} x ${length}`;
       if (ring) return ring;
       if (length) return length;
       return "";
     }
+
     return "";
   }
 
@@ -245,8 +268,12 @@
     if (idx === -1) return;
 
     const q = Math.max(0, Math.round(numberFrom(newQty, 0)));
-    if (q <= 0) cart.splice(idx, 1);
-    else cart[idx].qty = q;
+
+    if (q <= 0) {
+      cart.splice(idx, 1);
+    } else {
+      cart[idx].qty = q;
+    }
 
     saveCart(cart);
     render();
@@ -263,9 +290,13 @@
       const line = unit * qty;
       const bucket = `${it.category} ${it.type}`.toLowerCase();
 
-      if (bucket.includes("alcohol")) alcohol += line;
-      else if (bucket.includes("tobacco") || bucket.includes("cigar") || isCigarItem(it)) tobacco += line;
-      else other += line;
+      if (bucket.includes("alcohol")) {
+        alcohol += line;
+      } else if (bucket.includes("tobacco") || bucket.includes("cigar") || isCigarItem(it)) {
+        tobacco += line;
+      } else {
+        other += line;
+      }
     }
 
     const subtotal = tobacco + alcohol + other;
@@ -283,6 +314,7 @@
 
   function renderItems(cart) {
     if (!itemsEl) return;
+
     itemsEl.innerHTML = "";
 
     if (!cart.length) {
@@ -293,17 +325,27 @@
       return;
     }
 
-    cart.forEach((item) => itemsEl.appendChild(buildRow(item)));
+    cart.forEach((item) => {
+      itemsEl.appendChild(buildRow(item));
+    });
   }
 
   function renderTotals(cart) {
     const t = computeBuckets(cart);
-    $("#tTobacco").textContent = fmt(t.tobacco);
-    $("#tAlcohol").textContent = fmt(t.alcohol);
-    $("#tOther").textContent = fmt(t.other);
-    $("#tSubtotal").textContent = fmt(t.subtotal);
-    $("#tTax").textContent = fmt(t.tax);
-    $("#tGrand").textContent = fmt(t.grand);
+
+    const tTobacco = $("#tTobacco");
+    const tAlcohol = $("#tAlcohol");
+    const tOther = $("#tOther");
+    const tSubtotal = $("#tSubtotal");
+    const tTax = $("#tTax");
+    const tGrand = $("#tGrand");
+
+    if (tTobacco) tTobacco.textContent = fmt(t.tobacco);
+    if (tAlcohol) tAlcohol.textContent = fmt(t.alcohol);
+    if (tOther) tOther.textContent = fmt(t.other);
+    if (tSubtotal) tSubtotal.textContent = fmt(t.subtotal);
+    if (tTax) tTax.textContent = fmt(t.tax);
+    if (tGrand) tGrand.textContent = fmt(t.grand);
   }
 
   function normalizeCustomer(raw, index = 0) {
@@ -315,7 +357,13 @@
     const email = normStr(raw["Email"]);
     const phone = normStr(raw["Phone"]);
 
-    const displayName = nickname || [first, last].filter(Boolean).join(" ").trim() || email || phone || `Customer ${index + 1}`;
+    const displayName =
+      nickname ||
+      [first, last].filter(Boolean).join(" ").trim() ||
+      email ||
+      phone ||
+      `Customer ${index + 1}`;
+
     const sub = [phone, email].filter(Boolean).join(" • ");
     const searchBlob = [first, last, nickname, email, phone].join(" ").toLowerCase();
 
@@ -376,7 +424,9 @@
 
   function renderSelectedCustomer() {
     const selected = loadSelectedCustomer();
-    customerLabel.textContent = selected?.name || "Attach Saved Customer";
+    if (customerLabel) {
+      customerLabel.textContent = selected?.name || "Attach Saved Customer";
+    }
   }
 
   async function renderCustomerList(filterText = "") {
@@ -416,7 +466,7 @@
     renderSelectedCustomer();
 
     customerBtn?.addEventListener("click", async () => {
-      if (customerMenu.hidden) {
+      if (customerMenu?.hidden) {
         if (customerSearch) customerSearch.value = "";
         openCustomerMenu();
         await renderCustomerList("");
@@ -430,7 +480,7 @@
     });
 
     document.addEventListener("click", (e) => {
-      if (!customerMenu.hidden && !e.target.closest(".inv-customer-wrap")) {
+      if (customerMenu && !customerMenu.hidden && !e.target.closest(".inv-customer-wrap")) {
         closeCustomerMenu();
       }
     });
@@ -450,7 +500,8 @@
 
   function handleStorage(e) {
     if (
-      !e || !e.key ||
+      !e ||
+      !e.key ||
       e.key === CART_KEY ||
       SHOP_KEYS.includes(e.key) ||
       e.key === INV_KEY ||
