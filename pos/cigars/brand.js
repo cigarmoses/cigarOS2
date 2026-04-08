@@ -18,10 +18,9 @@
   const sheetBands = $("#sheet-bands");
   const bandsOptions = $("#bands-options");
   const bandsConfirm = $("#bands-confirm");
-  const detailSheet = $("#sheet-detail");
   const themeToggle = $("#theme-toggle");
   const backBtn = $("#back-btn");
-  const invoiceBtn = $("#invoice-btn");
+  const brandSearchBtn = $("#brandSearchBtn");
 
   const state = {
     brand: "",
@@ -77,11 +76,6 @@
     if (!cleaned) return 0;
     const n = Number(cleaned);
     return Number.isFinite(n) ? n : 0;
-  }
-
-  function fmtMoney(v) {
-    const n = parseMoneyValue(v);
-    return Number.isFinite(n) && n > 0 ? n.toFixed(2) : "";
   }
 
   function parseCSV(text) {
@@ -175,10 +169,6 @@
     return getField(r, ["vitola", "style", "vitola_name"]);
   }
 
-  function resolvePrice(r) {
-    return fmtMoney(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
-  }
-
   function resolvePriceNumber(r) {
     return parseMoneyValue(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
   }
@@ -193,22 +183,6 @@
 
   function resolveShape(r) {
     return getField(r, ["shape"]);
-  }
-
-  function resolveWrapper(r) {
-    return getField(r, ["wrapper"]);
-  }
-
-  function resolveBinder(r) {
-    return getField(r, ["binder"]);
-  }
-
-  function resolveFiller(r) {
-    return getField(r, ["filler"]);
-  }
-
-  function resolveOrigin(r) {
-    return getField(r, ["origin", "country_of_origin", "country"]);
   }
 
   function resolveStrength(r) {
@@ -249,7 +223,13 @@
   }
 
   function resolveBandArt(r) {
-    const direct = getField(r, ["band_art", "band_image", "band_img", "band_art_url", "band_url"]);
+    const direct = getField(r, [
+      "band_art",
+      "band_image",
+      "band_img",
+      "band_art_url",
+      "band_url"
+    ]);
     if (direct) return direct;
 
     if (normalizeBrand(state.brand) !== "padron") return "";
@@ -299,16 +279,6 @@
   function closeBandsSheet() {
     sheetBands.hidden = true;
     document.documentElement.classList.remove("sheet-open");
-  }
-
-  function openDetail(r) {
-    const id = resolveId(r);
-    const href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
-    window.location.href = href;
-  }
-
-  function closeDetail() {
-    if (detailSheet) detailSheet.hidden = true;
   }
 
   let filterModal = null;
@@ -524,10 +494,7 @@
     if (!state.bandSelected.size) return rows;
 
     if (normalizeBrand(state.brand) === "padron") {
-      return rows.filter((r) => {
-        const band = resolveBand(r);
-        return state.bandSelected.has(band);
-      });
+      return rows.filter((r) => state.bandSelected.has(resolveBand(r)));
     }
 
     return rows.filter((r) => state.bandSelected.has(resolveBand(r)));
@@ -555,35 +522,27 @@
 
   function buildCartItem(r) {
     return {
+      key: resolveId(r),
       type: "cigar",
       id: resolveId(r),
-      category: "Cigars",
       brand: state.brand,
       line: "",
       name: resolveName(r),
       vitola: resolveVitola(r),
-      ring: resolveRing(r),
-      length: resolveLength(r),
-      shape: resolveShape(r),
-      wrapper: resolveWrapper(r),
-      binder: resolveBinder(r),
-      filler: resolveFiller(r),
-      origin: resolveOrigin(r),
-      shade: resolveShade(r),
-      strength: resolveStrength(r),
       msrp: resolvePriceNumber(r),
       image: normalizeAssetPath(resolveImage(r)) || brandIconPath(),
-      url: resolveUrl(r) || `/pos/cigars/cigar.html?id=${encodeURIComponent(resolveId(r))}`
+      url: resolveUrl(r) || "",
+      category: "Cigars"
     };
   }
 
-  function getRowQty(item) {
-    const api = window.cigarOSCart;
-    if (!api || typeof api.items !== "function") return 0;
-    const cart = api.items();
-    const key = item.id || "";
-    const found = cart.find((x) => x.id === key || (x.name === item.name && x.vitola === item.vitola && x.brand === item.brand));
-    return found ? Number(found.qty || 0) : 0;
+  function getQty(r) {
+    return window.cigarOSCart?.getItemQty?.(resolveId(r)) || 0;
+  }
+
+  function setQty(r, qty) {
+    const item = buildCartItem(r);
+    window.cigarOSCart?.setQty?.(item, qty);
   }
 
   function renderList(rows) {
@@ -595,49 +554,51 @@
     }
 
     rows.forEach((r) => {
-      const item = buildCartItem(r);
-      const qty = getRowQty(item);
-      const priceText = resolvePrice(r) || "—";
+      const qty = getQty(r);
 
-      const row = document.createElement("article");
-      row.className = "brand-row";
-      row.innerHTML = `
+      const card = document.createElement("article");
+      card.className = "brand-row";
+
+      card.innerHTML = `
         <img class="row-ico" src="${esc(brandIconPath())}" alt="" loading="lazy" />
         <div class="brand-row-left">
           <div class="brand-row-title">${esc(resolveName(r))}</div>
           <div class="brand-row-sub">${esc(resolveVitola(r))}</div>
         </div>
         <div class="brand-row-right">
-          <div class="brand-row-msrp">${esc(priceText)}</div>
-          <div class="brand-row-qty">
-            <button class="qty-btn qty-btn--minus" type="button" aria-label="Decrease">−</button>
-            <span class="qty-value">${qty}</span>
-            <button class="qty-btn qty-btn--plus" type="button" aria-label="Increase">+</button>
+          <div class="brand-stepper">
+            <button class="brand-stepper-btn js-dec" type="button" aria-label="Decrease">
+              <span class="brand-stepper-minus" aria-hidden="true"></span>
+            </button>
+            <div class="brand-stepper-qty">${qty}</div>
+            <button class="brand-stepper-btn js-inc" type="button" aria-label="Increase">+</button>
           </div>
         </div>
       `;
 
-      const left = $(".brand-row-left", row);
-      const icon = $(".row-ico", row);
-      const minusBtn = $(".qty-btn--minus", row);
-      const plusBtn = $(".qty-btn--plus", row);
+      $(".brand-row-left", card)?.addEventListener("click", () => {
+        const id = resolveId(r);
+        window.location.href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
+      });
 
-      left?.addEventListener("click", () => openDetail(r));
-      icon?.addEventListener("click", () => openDetail(r));
+      $(".row-ico", card)?.addEventListener("click", () => {
+        const id = resolveId(r);
+        window.location.href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
+      });
 
-      plusBtn?.addEventListener("click", (e) => {
+      $(".js-inc", card)?.addEventListener("click", (e) => {
         e.stopPropagation();
-        window.cigarOSCart?.setQty(item, qty + 1);
+        setQty(r, qty + 1);
         renderList(rows);
       });
 
-      minusBtn?.addEventListener("click", (e) => {
+      $(".js-dec", card)?.addEventListener("click", (e) => {
         e.stopPropagation();
-        window.cigarOSCart?.setQty(item, Math.max(0, qty - 1));
+        setQty(r, Math.max(0, qty - 1));
         renderList(rows);
       });
 
-      listEl.appendChild(row);
+      listEl.appendChild(card);
     });
   }
 
@@ -654,11 +615,14 @@
     }
 
     const map = new Map();
+
     rows.forEach((r) => {
       const label = resolveBand(r);
       const art = resolveBandArt(r);
       if (!label || !art) return;
-      if (!map.has(label)) map.set(label, { key: label, label, src: art });
+      if (!map.has(label)) {
+        map.set(label, { key: label, label, src: art });
+      }
     });
 
     return Array.from(map.values());
@@ -720,12 +684,6 @@
     applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
   });
 
-  invoiceBtn?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.location.href = "/pos/invoice/";
-  });
-
   searchInput?.addEventListener("input", () => {
     state.search = searchInput.value || "";
     applyAll();
@@ -754,21 +712,24 @@
     b.addEventListener("click", () => setWrapperMode(b.dataset.state || "maduro"));
   });
 
+  brandSearchBtn?.addEventListener("click", () => {
+    window.openGlobalSearch?.();
+  });
+
   document.addEventListener("click", (e) => {
     const t = e.target;
     if (t && t.closest && t.closest("[data-sheet-close]")) closeBandsSheet();
     if (t === sheetBands) closeBandsSheet();
-    if (t && t.closest && t.closest("[data-detail-close]")) closeDetail();
   });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeBandsSheet();
-      closeDetail();
       if (filterModal) filterModal.close();
     }
   });
 
+  window.addEventListener("cigaros:cart", () => applyAll());
   document.addEventListener("cigaros:cart-changed", () => applyAll());
 
   async function boot() {
