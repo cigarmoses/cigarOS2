@@ -1,11 +1,9 @@
 /* /pos/cart.js
-   Universal POS cart + invoice badge + invoice navigation
-
+   Universal POS cart
    - Persists cart in localStorage
-   - Universal invoice icon support across all POS pages
-   - More forgiving add-to-cart detection
-   - Updates all cart badges
-   - Routes invoice button clicks to /pos/invoice/
+   - Supports add / setQty / remove
+   - Keeps invoice badges synced
+   - Preserves richer fields for invoice rendering
 */
 
 (() => {
@@ -23,17 +21,14 @@
 
   function saveCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    mirrorToLegacyArray(cart);
+    updateBadges(cart);
+    document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart } }));
+    window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart } }));
   }
 
   function normStr(s) {
     return String(s || "").trim();
-  }
-
-  function parsePriceFromText(txt) {
-    const t = String(txt || "");
-    const m = t.match(/\$?\s*([0-9]+(?:\.[0-9]{1,2})?)/);
-    if (!m) return 0;
-    return Number(m[1] || 0) || 0;
   }
 
   function toAbsUrl(url) {
@@ -46,19 +41,57 @@
     }
   }
 
+  function parsePriceFromText(txt) {
+    const t = String(txt || "");
+    const m = t.match(/\$?\s*([0-9]+(?:\.[0-9]{1,2})?)/);
+    if (!m) return 0;
+    return Number(m[1] || 0) || 0;
+  }
+
   function getKey(item) {
     const sku = normStr(item.sku || item.id);
     if (sku) return sku.toLowerCase();
 
     const parts = [
-      item.type || "cigar",
+      item.type || "item",
+      item.category || "",
       item.brand || "",
       item.line || "",
       item.name || "",
-      item.vitola || ""
+      item.vitola || "",
+      item.variation || ""
     ].map((x) => normStr(x).toLowerCase());
 
     return parts.join("|");
+  }
+
+  function normalizeItem(item) {
+    const price = Number(item.msrp ?? item.price ?? 0) || 0;
+
+    return {
+      type: item.type || "item",
+      id: item.id || "",
+      sku: item.sku || "",
+      key: item.key || "",
+      category: normStr(item.category),
+      brand: normStr(item.brand),
+      line: normStr(item.line),
+      name: normStr(item.name),
+      vitola: normStr(item.vitola),
+      variation: normStr(item.variation),
+      ring: normStr(item.ring),
+      length: normStr(item.length),
+      shape: normStr(item.shape),
+      wrapper: normStr(item.wrapper),
+      binder: normStr(item.binder),
+      filler: normStr(item.filler),
+      origin: normStr(item.origin),
+      shade: normStr(item.shade),
+      strength: normStr(item.strength),
+      msrp: price,
+      image: normStr(item.image),
+      url: toAbsUrl(item.url || item.href || item.link || "")
+    };
   }
 
   function getCartCount(cartMaybe) {
@@ -85,186 +118,70 @@
   }
 
   function mirrorToLegacyArray(cart) {
-    if (Array.isArray(window.cigarOSCart)) {
-      window.cigarOSCart.length = 0;
-      for (const it of cart) window.cigarOSCart.push(it);
+    if (Array.isArray(window.cigarOSCartItems)) {
+      window.cigarOSCartItems.length = 0;
+      for (const it of cart) window.cigarOSCartItems.push(it);
     }
+  }
+
+  function findIndex(cart, key) {
+    return cart.findIndex((x) => x.key === key);
   }
 
   function addToCart(item, qtyToAdd = 1) {
     const cart = loadCart();
+    const normalized = normalizeItem(item);
+    const key = normalized.key || getKey(normalized);
     const qtyAdd = Math.max(1, Number(qtyToAdd || 1));
-    const price = Number(item.msrp || item.price || 0) || 0;
 
-    const normalized = {
-      type: item.type || "cigar",
-      id: item.id || "",
-      sku: item.sku || "",
-      brand: normStr(item.brand),
-      line: normStr(item.line),
-      name: normStr(item.name),
-      vitola: normStr(item.vitola),
-      msrp: price,
-      image: normStr(item.image),
-      url: toAbsUrl(item.url || item.href || item.link || "")
-    };
-
-    const key = getKey(normalized);
-
-    const existing = cart.find((x) => x.key === key);
-    if (existing) {
-      existing.qty = Number(existing.qty || 0) + qtyAdd;
-      existing.type = normalized.type;
-      existing.brand = normalized.brand;
-      existing.line = normalized.line;
-      existing.name = normalized.name;
-      existing.vitola = normalized.vitola;
-      existing.msrp = normalized.msrp;
-      existing.image = normalized.image;
-      if (normalized.url) existing.url = normalized.url;
+    const existingIdx = findIndex(cart, key);
+    if (existingIdx >= 0) {
+      cart[existingIdx] = {
+        ...cart[existingIdx],
+        ...normalized,
+        key,
+        qty: Number(cart[existingIdx].qty || 0) + qtyAdd
+      };
     } else {
-      cart.push({ key, qty: qtyAdd, ...normalized });
+      cart.push({
+        ...normalized,
+        key,
+        qty: qtyAdd
+      });
     }
 
     saveCart(cart);
-    mirrorToLegacyArray(cart);
-    updateBadges(cart);
-
-    document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart } }));
-    window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart } }));
   }
 
-  function findBestRowLink(row) {
-    if (!row) return "";
+  function setQty(itemOrKey, nextQty) {
+    const cart = loadCart();
+    const key = typeof itemOrKey === "string"
+      ? itemOrKey
+      : (itemOrKey.key || getKey(normalizeItem(itemOrKey)));
 
-    const preferred =
-      row.querySelector(".cigar-title a[href]") ||
-      row.querySelector(".row-title a[href]") ||
-      row.querySelector(".title a[href]") ||
-      row.querySelector("h3 a[href]") ||
-      row.querySelector("h2 a[href]") ||
-      row.querySelector("a[data-cigar-link][href]") ||
-      row.querySelector("a[href]");
+    const qty = Math.max(0, Number(nextQty || 0));
+    const idx = findIndex(cart, key);
 
-    if (!preferred) return "";
-    return toAbsUrl(preferred.getAttribute("href") || "");
-  }
-
-  function scrapeFromCigarRow(btn) {
-    const row =
-      btn.closest(".cigar-row") ||
-      btn.closest(".cigars-row") ||
-      btn.closest(".brand-row") ||
-      btn.closest(".product-row") ||
-      btn.closest(".menu-row") ||
-      btn.closest(".item-row") ||
-      btn.closest("li") ||
-      btn.closest(".row") ||
-      btn.closest("[role='listitem']");
-
-    if (!row) return null;
-
-    const titleEl =
-      row.querySelector(".cigar-title") ||
-      row.querySelector(".row-title") ||
-      row.querySelector(".product-title") ||
-      row.querySelector(".item-title") ||
-      row.querySelector("h3") ||
-      row.querySelector("h2") ||
-      row.querySelector(".title") ||
-      row.querySelector("strong");
-
-    const vitolaEl =
-      row.querySelector(".cigar-subtitle") ||
-      row.querySelector(".row-sub") ||
-      row.querySelector(".product-subtitle") ||
-      row.querySelector(".item-subtitle") ||
-      row.querySelector(".subtitle") ||
-      row.querySelector(".sub") ||
-      row.querySelector("small");
-
-    const priceEl =
-      row.querySelector(".cigar-price") ||
-      row.querySelector(".row-price") ||
-      row.querySelector(".product-price") ||
-      row.querySelector(".item-price") ||
-      row.querySelector(".price") ||
-      row.querySelector("[data-price]");
-
-    const titleText = normStr(titleEl ? titleEl.textContent : row.textContent);
-    const vitolaText = normStr(vitolaEl ? vitolaEl.textContent : "");
-    const priceText = normStr(priceEl ? (priceEl.getAttribute("data-price") || priceEl.textContent) : "");
-    const msrp = priceText ? parsePriceFromText(priceText) : parsePriceFromText(row.textContent);
-
-    const item = {
-      type: "cigar",
-      brand: "",
-      line: "",
-      name: titleText,
-      vitola: vitolaText,
-      msrp,
-      url: findBestRowLink(row)
-    };
-
-    const img = row.querySelector("img");
-    if (img) {
-      item.image = img.getAttribute("src") || "";
-      const alt = normStr(img.getAttribute("alt") || img.getAttribute("title") || "");
-      if (alt && !item.brand) item.brand = alt;
+    if (idx >= 0) {
+      if (qty <= 0) cart.splice(idx, 1);
+      else cart[idx].qty = qty;
+      saveCart(cart);
+      return;
     }
 
-    const brandEl =
-      row.querySelector("[data-brand-name]") ||
-      row.querySelector(".brand-name") ||
-      row.querySelector(".brand-logo");
+    if (qty <= 0 || typeof itemOrKey === "string") return;
 
-    if (!item.brand && brandEl) {
-      item.brand = normStr(
-        brandEl.getAttribute?.("data-brand-name") ||
-        brandEl.getAttribute?.("alt") ||
-        brandEl.textContent
-      );
-    }
-
-    return item.name ? item : null;
+    const normalized = normalizeItem(itemOrKey);
+    cart.push({
+      ...normalized,
+      key,
+      qty
+    });
+    saveCart(cart);
   }
 
-  function scrapeFromModal(btn) {
-    const modal =
-      btn.closest(".modal") ||
-      btn.closest(".pos-modal") ||
-      btn.closest(".cigar-modal") ||
-      document.querySelector(".modal.open, .pos-modal.open, .cigar-modal.open");
-
-    if (!modal) return null;
-
-    const nameEl =
-      modal.querySelector(".cigar-name") ||
-      modal.querySelector(".modal-title") ||
-      modal.querySelector("h2") ||
-      modal.querySelector("h3");
-
-    const vitolaEl =
-      modal.querySelector(".cigar-vitola") ||
-      modal.querySelector(".modal-subtitle") ||
-      modal.querySelector(".subtitle");
-
-    const priceEl =
-      modal.querySelector(".cigar-msrp") ||
-      modal.querySelector(".modal-price") ||
-      modal.querySelector(".price");
-
-    const linkEl =
-      modal.querySelector("a[data-cigar-link][href]") ||
-      modal.querySelector(".modal-title a[href]") ||
-      modal.querySelector("a[href]");
-
-    const name = normStr(nameEl ? nameEl.textContent : "");
-    const vitola = normStr(vitolaEl ? vitolaEl.textContent : "");
-    const msrp = parsePriceFromText(priceEl ? priceEl.textContent : modal.textContent);
-    const url = toAbsUrl(linkEl ? linkEl.getAttribute("href") || "" : "");
-
-    return name ? { type: "cigar", brand: "", line: "", name, vitola, msrp, url } : null;
+  function remove(itemOrKey) {
+    setQty(itemOrKey, 0);
   }
 
   function itemFromDataset(ds) {
@@ -272,19 +189,35 @@
     const brand = normStr(ds.brand || "");
     const line = normStr(ds.line || "");
     const vitola = normStr(ds.vitola || "");
+    const category = normStr(ds.category || "");
+    const variation = normStr(ds.variation || "");
+    const ring = normStr(ds.ring || "");
+    const length = normStr(ds.length || "");
+    const shape = normStr(ds.shape || "");
+    const strength = normStr(ds.strength || "");
+    const shade = normStr(ds.shade || "");
+    const origin = normStr(ds.origin || "");
     const msrp = Number(ds.msrp || ds.price || 0) || 0;
     const url = toAbsUrl(ds.url || ds.href || ds.link || "");
 
     if (!name && !brand) return null;
 
     return {
-      type: ds.type || "cigar",
+      type: ds.type || "item",
       id: ds.id || "",
       sku: ds.sku || "",
+      category,
       brand,
       line,
       name: name || brand,
       vitola,
+      variation,
+      ring,
+      length,
+      shape,
+      strength,
+      shade,
+      origin,
       msrp,
       image: ds.image || "",
       url
@@ -301,21 +234,76 @@
 
     if (
       btn.hasAttribute("data-cart-add") ||
-      btn.hasAttribute("data-receipt-item") ||
       cls.includes("row-add") ||
       cls.includes("pos-add") ||
       cls.includes("cigar-add") ||
       cls.includes("add-btn") ||
       cls.includes("plus-btn")
-    ) {
-      return true;
-    }
+    ) return true;
 
     if (text === "+" || text === "＋") return true;
     if (aria.includes("add")) return true;
     if (title.includes("add")) return true;
 
     return false;
+  }
+
+  function scrapeFromRow(btn) {
+    const row =
+      btn.closest(".cigar-row") ||
+      btn.closest(".brand-row") ||
+      btn.closest(".product-row") ||
+      btn.closest(".item-row") ||
+      btn.closest(".row") ||
+      btn.closest("[role='listitem']");
+
+    if (!row) return null;
+
+    const titleEl =
+      row.querySelector(".cigar-title") ||
+      row.querySelector(".brand-row-title") ||
+      row.querySelector(".product-title") ||
+      row.querySelector(".item-title") ||
+      row.querySelector(".title") ||
+      row.querySelector("h3") ||
+      row.querySelector("h2");
+
+    const subEl =
+      row.querySelector(".cigar-subtitle") ||
+      row.querySelector(".brand-row-sub") ||
+      row.querySelector(".product-subtitle") ||
+      row.querySelector(".sub");
+
+    const priceEl =
+      row.querySelector(".cigar-price") ||
+      row.querySelector(".brand-row-msrp") ||
+      row.querySelector(".product-price") ||
+      row.querySelector(".price");
+
+    const img = row.querySelector("img");
+
+    const item = {
+      type: "item",
+      name: normStr(titleEl?.textContent || ""),
+      vitola: normStr(subEl?.textContent || ""),
+      msrp: parsePriceFromText(priceEl?.textContent || row.textContent),
+      image: img?.getAttribute("src") || "",
+      url: row.querySelector("a[href]")?.getAttribute("href") || ""
+    };
+
+    return item.name ? item : null;
+  }
+
+  function handleAddClick(e) {
+    const btn = e.target.closest("button, [role='button'], .row-add, .pos-add, .cigar-add, .add-btn, .plus-btn, [data-cart-add]");
+    if (!btn) return;
+    if (btn.matches("[data-invoice-btn], #invoice-btn, .pos-invoice-btn")) return;
+    if (!looksLikePlusButton(btn)) return;
+
+    const item = itemFromDataset(btn.dataset) || scrapeFromRow(btn);
+    if (!item || !item.name) return;
+
+    addToCart(item, btn.dataset.qty || 1);
   }
 
   function wireInvoiceNav(root = document) {
@@ -341,55 +329,10 @@
     });
   }
 
-  function ensureUniversalInvoiceButtons(root = document) {
-    const existing = root.querySelector?.("[data-invoice-btn], #invoice-btn, .pos-invoice-btn");
-    if (existing) return;
-
-    const likelyHolders = [
-      ...root.querySelectorAll?.(".top-right, .page-actions, .brand-actions, .header-actions, .pos-actions, .nav-actions, .actions, header") || []
-    ];
-
-    likelyHolders.forEach((holder) => {
-      const iconish = holder.querySelector("a[aria-label*='invoice' i], button[aria-label*='invoice' i], a[aria-label*='cart' i], button[aria-label*='cart' i]");
-      if (!iconish || iconish.__invoiceNormalized) return;
-
-      iconish.__invoiceNormalized = true;
-      iconish.classList.add("pos-invoice-btn");
-      iconish.setAttribute("data-invoice-btn", "");
-      if (iconish.tagName === "A") iconish.setAttribute("href", "/pos/invoice/");
-
-      if (!iconish.querySelector("[data-cart-badge]")) {
-        const badge = document.createElement("span");
-        badge.setAttribute("data-cart-badge", "");
-        badge.textContent = "0";
-        badge.hidden = true;
-        iconish.appendChild(badge);
-      }
-    });
-  }
-
-  function handleAddClick(e) {
-    const btn = e.target.closest("button, [role='button'], .row-add, .pos-add, .cigar-add, .add-btn, .plus-btn, [data-cart-add], [data-receipt-item]");
-    if (!btn) return;
-
-    if (btn.matches("[data-invoice-btn], #invoice-btn, .pos-invoice-btn")) return;
-    if (!looksLikePlusButton(btn)) return;
-
-    const dsItem = itemFromDataset(btn.dataset);
-    const rowItem = scrapeFromCigarRow(btn);
-    const modalItem = scrapeFromModal(btn);
-
-    const item = dsItem || rowItem || modalItem;
-    if (!item || !item.name) return;
-
-    addToCart(item, btn.dataset.qty || 1);
-  }
-
   document.addEventListener("click", handleAddClick, true);
 
   const initial = loadCart();
   mirrorToLegacyArray(initial);
-  ensureUniversalInvoiceButtons(document);
   wireInvoiceNav(document);
   updateBadges(initial);
 
@@ -397,7 +340,6 @@
     for (const m of mutations) {
       for (const n of m.addedNodes) {
         if (!(n instanceof Element)) continue;
-        ensureUniversalInvoiceButtons(n);
         wireInvoiceNav(n);
       }
     }
@@ -405,16 +347,14 @@
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
-  window.cigarOSCart = window.cigarOSCart || {};
-  window.cigarOSCart.add = addToCart;
-  window.cigarOSCart.items = () => loadCart();
-  window.cigarOSCart.count = () => getCartCount(loadCart());
-  window.cigarOSCart.updateBadges = () => updateBadges(loadCart());
-  window.cigarOSCart.key = CART_KEY;
-  window.cigarOSCart.clear = () => {
-    localStorage.setItem(CART_KEY, JSON.stringify([]));
-    updateBadges([]);
-    document.dispatchEvent(new CustomEvent("cigaros:cart-changed", { detail: { cart: [] } }));
-    window.dispatchEvent(new CustomEvent("cigaros:cart", { detail: { cart: [] } }));
+  window.cigarOSCart = {
+    add: addToCart,
+    setQty,
+    remove,
+    items: () => loadCart(),
+    count: () => getCartCount(loadCart()),
+    updateBadges: () => updateBadges(loadCart()),
+    clear: () => saveCart([]),
+    key: CART_KEY
   };
 })();
