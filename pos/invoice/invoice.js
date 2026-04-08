@@ -1,19 +1,15 @@
 /* /pos/invoice/invoice.js
    Invoice page
-   - reads cart from localStorage
-   - fetches loyalty contacts from /loyalty/loyalty-contacts.json
-   - maps exact column names from loyalty export
+   - approved Nike-style row layout
+   - reads live cart
+   - renders cigar + product rows
 */
 
 (() => {
   "use strict";
 
   const CART_KEY = "cigaros_pos_cart_v3";
-  const SHOP_KEYS = [
-    "cigaros_pos_shop_name",
-    "cigaros_shop_name",
-    "shop_name"
-  ];
+  const SHOP_KEYS = ["cigaros_pos_shop_name", "cigaros_shop_name", "shop_name"];
   const INV_KEY = "cigaros_pos_invoice_number";
   const POS_TAX_RATE = 0.07;
 
@@ -32,7 +28,6 @@
   const customerMenu = $("#invCustomerMenu");
   const customerList = $("#invCustomerList");
   const customerSearch = $("#invCustomerSearch");
-  const customerSelected = $("#invCustomerSelected");
 
   const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
@@ -40,11 +35,7 @@
   let customersLoadingPromise = null;
 
   function safeJSONParse(value, fallback) {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return fallback;
-    }
+    try { return JSON.parse(value); } catch { return fallback; }
   }
 
   function normStr(value, fallback = "") {
@@ -61,36 +52,7 @@
   function toAbsUrl(url) {
     const u = normStr(url);
     if (!u) return "";
-    try {
-      return new URL(u, window.location.origin).href;
-    } catch {
-      return u;
-    }
-  }
-
-  function cleanPhone(value) {
-    const raw = normStr(value);
-    if (!raw) return "";
-
-    return raw
-      .replace(/^'\+?/, "+")
-      .replace(/^'+/, "")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function buildTags(raw) {
-    const tags = [];
-
-    if (normStr(raw["Locker"])) tags.push(`Locker ${normStr(raw["Locker"])}`);
-    if (normStr(raw["Regular"]).toUpperCase() === "X") tags.push("Regular");
-    if (normStr(raw["Military"]).toUpperCase() === "X") tags.push("Military");
-    if (normStr(raw["Police"]).toUpperCase() === "X") tags.push("Police");
-    if (normStr(raw["Firefighter"]).toUpperCase() === "X") tags.push("Firefighter");
-    if (normStr(raw["Paramedic"]).toUpperCase() === "X") tags.push("Paramedic");
-    if (normStr(raw["Rewards"]).toUpperCase() === "X") tags.push("Rewards");
-
-    return tags;
+    try { return new URL(u, window.location.origin).href; } catch { return u; }
   }
 
   function loadCart() {
@@ -105,7 +67,7 @@
 
   function nowStamp() {
     const d = new Date();
-    const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
     const day = days[d.getDay()];
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
@@ -125,7 +87,7 @@
       const value = localStorage.getItem(key);
       if (value && value.trim()) return value.trim();
     }
-    return "Shop";
+    return "Smoke Cigar Lounge";
   }
 
   function getInvoiceNumber() {
@@ -142,57 +104,63 @@
     return inv;
   }
 
-  function iconFor(item) {
-    if (item.image) return item.image;
-
-    const t = `${item.type} ${item.category}`.toLowerCase();
-
-    if (t.includes("cigar")) return "/img/icons/categories/cigars.png";
-    if (t.includes("accessor")) return "/img/icons/categories/accessories.png";
-    if (t.includes("ash")) return "/img/icons/categories/ashtrays.png";
-    if (t.includes("pipe")) return "/img/icons/categories/pipes.png";
-    if (t.includes("food") || t.includes("bev")) return "/img/icons/categories/foodandbevs.png";
-    if (t.includes("alcohol")) return "/img/icons/categories/foodandbevs.png";
-
-    return "/img/icons/categories/other.png";
-  }
-
   function isCigarItem(item) {
-    const t = normStr(item.type).toLowerCase();
-    const c = normStr(item.category).toLowerCase();
-
     return (
-      t === "cigar" ||
-      c.includes("cigar") ||
-      c.includes("tobacco") ||
+      normStr(item.type).toLowerCase() === "cigar" ||
+      normStr(item.category).toLowerCase().includes("cigar") ||
       normStr(item.vitola) !== ""
     );
   }
 
-  function lineNameFor(item) {
-    const a = normStr(item.line);
-    const b = normStr(item.name);
-
-    if (a && b) {
-      if (b.toLowerCase().startsWith(a.toLowerCase())) return b;
-      return `${a} ${b}`;
-    }
-    return b || a || "Cigar";
+  function itemCategory(item) {
+    if (isCigarItem(item)) return "Cigars";
+    return normStr(item.category) || "Other";
   }
 
-  function buildDescMiddle(item) {
-    const text = lineNameFor(item);
-    const url = toAbsUrl(item.url || item.href || item.link || "");
+  function itemBrand(item) {
+    return normStr(item.brand) || "—";
+  }
+
+  function itemLineName(item) {
+    const line = normStr(item.line);
+    const name = normStr(item.name);
+    if (line && name) {
+      if (name.toLowerCase().startsWith(line.toLowerCase())) return name;
+      return `${line} ${name}`;
+    }
+    return name || line || "Item";
+  }
+
+  function itemThirdLine(item) {
+    if (isCigarItem(item)) return normStr(item.vitola) || "—";
+    return normStr(item.variation) || "";
+  }
+
+  function itemFourthLine(item) {
+    if (isCigarItem(item)) {
+      const ring = normStr(item.ring);
+      const length = normStr(item.length);
+      if (ring && length) return `${ring} x ${length}`;
+      if (ring) return ring;
+      if (length) return length;
+      return "";
+    }
+    return "";
+  }
+
+  function buildLineOne(item) {
+    const text = itemLineName(item);
+    const url = toAbsUrl(item.url || "");
 
     if (!url) {
       const div = document.createElement("div");
-      div.className = "t2";
+      div.className = "inv-line1";
       div.textContent = text;
       return div;
     }
 
     const a = document.createElement("a");
-    a.className = "t2-link";
+    a.className = "inv-line1 inv-line1-link";
     a.href = url;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
@@ -201,11 +169,6 @@
   }
 
   function buildRow(item) {
-    const isCigar = isCigarItem(item);
-
-    const t1 = isCigar ? (item.brand ? item.brand : "Cigars") : (item.category || "Other");
-    const t3 = isCigar ? (item.vitola || "") : (item.brand || "");
-
     const unit = numberFrom(item.msrp, 0);
     const qty = Math.max(0, Math.round(numberFrom(item.qty, 0)));
     const total = unit * qty;
@@ -214,43 +177,63 @@
     row.className = "inv-row";
 
     row.innerHTML = `
-      <div class="inv-icon"><img alt="" loading="lazy" decoding="async" /></div>
+      <div class="inv-thumb"><img alt="" loading="lazy" decoding="async" /></div>
 
-      <div class="inv-desc">
-        <div class="t1"></div>
-        <div class="t3"></div>
-      </div>
+      <div class="inv-copy">
+        <div class="inv-line2"></div>
+        <div class="inv-line3"></div>
+        <div class="inv-line4"></div>
 
-      <div class="inv-side">
-        <div class="inv-unit">${fmt(unit)}</div>
-        <div class="inv-qty" aria-label="Quantity">
-          <button class="dec" type="button" aria-label="Decrease">−</button>
-          <div class="qnum">${qty}</div>
-          <button class="inc" type="button" aria-label="Increase">+</button>
+        <div class="inv-meta-row">
+          <div class="inv-qty-wrap">
+            <label>QTY</label>
+            <select class="inv-qty-select" aria-label="Quantity"></select>
+          </div>
+
+          <div class="inv-msrp-wrap">
+            <label>MSRP</label>
+            <div class="inv-msrp">${fmt(unit)}</div>
+          </div>
+
+          <div class="inv-total-wrap">
+            <div class="inv-total">${fmt(total)}</div>
+          </div>
         </div>
       </div>
-
-      <div class="inv-total">${fmt(total)}</div>
     `;
 
-    const img = row.querySelector(".inv-icon img");
-    img.src = iconFor(item);
+    const img = row.querySelector(".inv-thumb img");
+    img.src = normStr(item.image) || "/img/icons/categories/other.png";
     img.onerror = () => {
       img.onerror = null;
       img.src = "/img/icons/categories/other.png";
     };
 
-    row.querySelector(".t1").textContent = t1;
-    const middle = buildDescMiddle(item);
-    row.querySelector(".inv-desc .t1").after(middle);
-    row.querySelector(".t3").textContent = t3;
+    const line1 = buildLineOne(item);
+    row.querySelector(".inv-copy").prepend(line1);
 
-    row.querySelector(".dec").addEventListener("click", () => {
-      setQty(item.key, qty - 1);
-    });
+    row.querySelector(".inv-line2").textContent = `${itemCategory(item)} - ${itemBrand(item)}`;
 
-    row.querySelector(".inc").addEventListener("click", () => {
-      setQty(item.key, qty + 1);
+    const line3 = itemThirdLine(item);
+    const line4 = itemFourthLine(item);
+
+    row.querySelector(".inv-line3").textContent = line3;
+    row.querySelector(".inv-line3").style.display = line3 ? "" : "none";
+
+    row.querySelector(".inv-line4").textContent = line4;
+    row.querySelector(".inv-line4").style.display = line4 ? "" : "none";
+
+    const select = row.querySelector(".inv-qty-select");
+    for (let i = 0; i <= 24; i++) {
+      const opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = `(${i})`;
+      if (i === qty) opt.selected = true;
+      select.appendChild(opt);
+    }
+
+    select.addEventListener("change", () => {
+      setQty(item.key, Number(select.value));
     });
 
     return row;
@@ -262,11 +245,8 @@
     if (idx === -1) return;
 
     const q = Math.max(0, Math.round(numberFrom(newQty, 0)));
-    if (q <= 0) {
-      cart.splice(idx, 1);
-    } else {
-      cart[idx].qty = q;
-    }
+    if (q <= 0) cart.splice(idx, 1);
+    else cart[idx].qty = q;
 
     saveCart(cart);
     render();
@@ -283,13 +263,9 @@
       const line = unit * qty;
       const bucket = `${it.category} ${it.type}`.toLowerCase();
 
-      if (bucket.includes("alcohol")) {
-        alcohol += line;
-      } else if (bucket.includes("tobacco") || bucket.includes("cigar") || isCigarItem(it)) {
-        tobacco += line;
-      } else {
-        other += line;
-      }
+      if (bucket.includes("alcohol")) alcohol += line;
+      else if (bucket.includes("tobacco") || bucket.includes("cigar") || isCigarItem(it)) tobacco += line;
+      else other += line;
     }
 
     const subtotal = tobacco + alcohol + other;
@@ -302,12 +278,11 @@
   function renderHeader() {
     if (metaEl) metaEl.textContent = nowStamp();
     if (shopEl) shopEl.textContent = getShopName();
-    if (numEl) numEl.textContent = `INV# ${getInvoiceNumber()}`;
+    if (numEl) numEl.textContent = `INV #${getInvoiceNumber()}`;
   }
 
   function renderItems(cart) {
     if (!itemsEl) return;
-
     itemsEl.innerHTML = "";
 
     if (!cart.length) {
@@ -318,27 +293,17 @@
       return;
     }
 
-    for (const item of cart) {
-      itemsEl.appendChild(buildRow(item));
-    }
+    cart.forEach((item) => itemsEl.appendChild(buildRow(item)));
   }
 
   function renderTotals(cart) {
     const t = computeBuckets(cart);
-
-    const tTobacco  = $("#tTobacco");
-    const tAlcohol  = $("#tAlcohol");
-    const tOther    = $("#tOther");
-    const tSubtotal = $("#tSubtotal");
-    const tTax      = $("#tTax");
-    const tGrand    = $("#tGrand");
-
-    if (tTobacco)  tTobacco.textContent  = fmt(t.tobacco);
-    if (tAlcohol)  tAlcohol.textContent  = fmt(t.alcohol);
-    if (tOther)    tOther.textContent    = fmt(t.other);
-    if (tSubtotal) tSubtotal.textContent = fmt(t.subtotal);
-    if (tTax)      tTax.textContent      = fmt(t.tax);
-    if (tGrand)    tGrand.textContent    = fmt(t.grand);
+    $("#tTobacco").textContent = fmt(t.tobacco);
+    $("#tAlcohol").textContent = fmt(t.alcohol);
+    $("#tOther").textContent = fmt(t.other);
+    $("#tSubtotal").textContent = fmt(t.subtotal);
+    $("#tTax").textContent = fmt(t.tax);
+    $("#tGrand").textContent = fmt(t.grand);
   }
 
   function normalizeCustomer(raw, index = 0) {
@@ -348,70 +313,17 @@
     const last = normStr(raw["Last Name"]);
     const nickname = normStr(raw["Nickname “aka”"] || raw['Nickname "aka"'] || raw["Nickname"]);
     const email = normStr(raw["Email"]);
-    const phone = cleanPhone(raw["Phone"]);
-    const birthday = normStr(raw["Birthday"]);
-    const company = normStr(raw["Company"]);
-    const labels = normStr(raw["Labels"]);
-    const favBrand1 = normStr(raw["Fav brand 1"]);
-    const favBrand2 = normStr(raw["Fav brand 2"]);
-    const favBrand3 = normStr(raw["Fav brand 3"]);
-    const favCigar1 = normStr(raw["Fav cigar"]);
-    const favCigar2 = normStr(raw["Fav cigar 2"]);
-    const favCigar3 = normStr(raw["Fav cigar 3"]);
-    const lastPurchase = normStr(raw["Last Purchase"]);
-    const locker = normStr(raw["Locker"]);
+    const phone = normStr(raw["Phone"]);
 
-    const fullName = [first, last].filter(Boolean).join(" ").trim();
-    const displayName = nickname || fullName || email || phone || `Customer ${index + 1}`;
-
-    const tags = buildTags(raw);
-    const subParts = [
-      phone,
-      email,
-      company,
-      tags.join(" • ")
-    ].filter(Boolean);
-
-    const searchBlob = [
-      first,
-      last,
-      nickname,
-      fullName,
-      email,
-      phone,
-      birthday,
-      company,
-      labels,
-      favBrand1,
-      favBrand2,
-      favBrand3,
-      favCigar1,
-      favCigar2,
-      favCigar3,
-      lastPurchase,
-      locker,
-      ...tags
-    ].join(" ").toLowerCase();
+    const displayName = nickname || [first, last].filter(Boolean).join(" ").trim() || email || phone || `Customer ${index + 1}`;
+    const sub = [phone, email].filter(Boolean).join(" • ");
+    const searchBlob = [first, last, nickname, email, phone].join(" ").toLowerCase();
 
     return {
       id: `${displayName}|${email}|${phone}|${index}`,
       name: displayName,
-      formalName: fullName || displayName,
-      first,
-      last,
-      nickname,
-      email,
-      phone,
-      birthday,
-      company,
-      labels,
-      locker,
-      tags,
-      lastPurchase,
-      favorites: [favBrand1, favBrand2, favBrand3, favCigar1, favCigar2, favCigar3].filter(Boolean),
-      sub: subParts.join(" • "),
-      searchBlob,
-      raw
+      sub,
+      searchBlob
     };
   }
 
@@ -459,67 +371,37 @@
     if (!customerMenu || !customerBtn) return;
     customerMenu.hidden = false;
     customerBtn.setAttribute("aria-expanded", "true");
-    if (customerSearch) customerSearch.focus();
+    customerSearch?.focus();
   }
 
   function renderSelectedCustomer() {
-    if (!customerSelected || !customerLabel) return;
-
     const selected = loadSelectedCustomer();
-
-    if (!selected || !selected.name) {
-      customerLabel.textContent = "ATTACH SAVED CUSTOMER";
-      customerSelected.hidden = true;
-      customerSelected.innerHTML = "";
-      return;
-    }
-
-    customerLabel.textContent = selected.name.toUpperCase();
-    customerSelected.hidden = false;
-    customerSelected.innerHTML = `
-      <div class="cust-name">${selected.name}</div>
-      <div class="cust-sub">${selected.sub || "Saved customer attached"}</div>
-    `;
+    customerLabel.textContent = selected?.name || "Attach Saved Customer";
   }
 
   async function renderCustomerList(filterText = "") {
     if (!customerList) return;
 
     const q = normStr(filterText).toLowerCase();
-    customerList.innerHTML = `
-      <div class="inv-customer-empty">
-        <div class="inv-customer-name">Loading customers…</div>
-        <div class="inv-customer-sub">Please wait.</div>
-      </div>
-    `;
+    customerList.innerHTML = `<div class="inv-customer-empty">Loading customers…</div>`;
 
     const allCustomers = await loadCustomers();
-
-    const customers = allCustomers.filter((c) => {
-      if (!q) return true;
-      return c.searchBlob.includes(q);
-    });
+    const customers = allCustomers.filter((c) => !q || c.searchBlob.includes(q));
 
     customerList.innerHTML = "";
 
     if (!customers.length) {
-      const empty = document.createElement("div");
-      empty.className = "inv-customer-empty";
-      empty.innerHTML = `
-        <div class="inv-customer-name">No saved customers</div>
-        <div class="inv-customer-sub">Nothing matched your search.</div>
-      `;
-      customerList.appendChild(empty);
+      customerList.innerHTML = `<div class="inv-customer-empty">No saved customers</div>`;
       return;
     }
 
-    for (const customer of customers.slice(0, 100)) {
+    customers.slice(0, 100).forEach((customer) => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "inv-customer-item";
       btn.innerHTML = `
         <div class="inv-customer-name">${customer.name}</div>
-        <div class="inv-customer-sub">${customer.sub || customer.formalName || "Saved customer"}</div>
+        <div class="inv-customer-sub">${customer.sub || "Saved customer"}</div>
       `;
       btn.addEventListener("click", () => {
         saveSelectedCustomer(customer);
@@ -527,15 +409,13 @@
         closeCustomerMenu();
       });
       customerList.appendChild(btn);
-    }
+    });
   }
 
   function setupCustomerMenu() {
-    if (!customerBtn || !customerMenu) return;
-
     renderSelectedCustomer();
 
-    customerBtn.addEventListener("click", async () => {
+    customerBtn?.addEventListener("click", async () => {
       if (customerMenu.hidden) {
         if (customerSearch) customerSearch.value = "";
         openCustomerMenu();
@@ -545,11 +425,9 @@
       }
     });
 
-    if (customerSearch) {
-      customerSearch.addEventListener("input", async () => {
-        await renderCustomerList(customerSearch.value);
-      });
-    }
+    customerSearch?.addEventListener("input", async () => {
+      await renderCustomerList(customerSearch.value);
+    });
 
     document.addEventListener("click", (e) => {
       if (!customerMenu.hidden && !e.target.closest(".inv-customer-wrap")) {
