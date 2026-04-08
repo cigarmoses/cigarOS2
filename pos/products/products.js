@@ -1,9 +1,9 @@
 /* /pos/products/products.js
    Products page
-   - Immediate live cart
+   - Loads /pos/products/products.json
+   - Live cart qty controls
    - Favorites toggle
-   - Category/search filtering
-   - Bottom CTA goes to invoice
+   - Search + category filtering
 */
 
 (() => {
@@ -21,7 +21,7 @@
     "Cutters",
     "Lighters",
     "Pipes",
-    "All",
+    "All"
   ];
 
   const PRODUCT_IMAGE_OVERRIDES = {
@@ -52,18 +52,15 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const categoryRow = $("#categoryRow") || $(".pos-categories");
-  const searchInput = $("#searchInput") || $("#productSearch") || $("#productsSearch");
-  const grid = $("#productGrid") || $(".pos-grid");
-  const favoritesBtn = $("#favToggle") || $("#productsFavToggle");
-  const filterBtn = $("#filterBtn") || $("#productsFilterBtn");
-  const addToBillBtn = $("#addToBill") || $("#addToBillBtn");
+  const categoryRow = $("#categoryRow");
+  const searchInput = $("#searchInput");
+  const grid = $("#productGrid");
+  const filterBtn = $("#filterBtn");
 
   const state = {
     allProducts: [],
     activeCategory: "All",
     search: "",
-    favoritesOnly: false,
     favorites: readSet(FAVORITES_KEY)
   };
 
@@ -130,7 +127,6 @@
 
   function getImageCandidates(product) {
     const key = String(product.key || "").trim();
-
     if (PRODUCT_IMAGE_OVERRIDES[key]) return PRODUCT_IMAGE_OVERRIDES[key];
     if (product.image) return [product.image];
     if (product.brandIcon) return [product.brandIcon];
@@ -147,45 +143,6 @@
       `/icons/${folder}/${fileName}.png`,
       `/icons/${folder}/${fileName}.jpg`
     ]);
-  }
-
-  function productToCartItem(product) {
-    const imageCandidates = getImageCandidates(product);
-    return {
-      type: "product",
-      id: product.key,
-      category: product.category || "Other",
-      brand: product.brand || "",
-      line: "",
-      name: product.name || "",
-      vitola: "",
-      variation: "",
-      msrp: Number(product.price) || 0,
-      image: imageCandidates[0] || "",
-      url: window.location.href
-    };
-  }
-
-  function getProductQty(product) {
-    const api = window.cigarOSCart;
-    if (!api || typeof api.items !== "function") return 0;
-    const cart = api.items();
-    const found = cart.find((x) => x.id === product.key);
-    return found ? Number(found.qty || 0) : 0;
-  }
-
-  function getSelectedCount() {
-    const api = window.cigarOSCart;
-    return api?.count?.() || 0;
-  }
-
-  function updateAddToBillLabel() {
-    if (!addToBillBtn) return;
-    addToBillBtn.textContent = `Add to Bill (${getSelectedCount()})`;
-  }
-
-  function updateFavoritesUI() {
-    favoritesBtn?.classList.toggle("is-on", state.favoritesOnly);
   }
 
   function buildCategoryList(products) {
@@ -230,25 +187,46 @@
       });
     }
 
-    if (state.favoritesOnly) {
-      list = list.filter((p) => state.favorites.has(p.key));
-    }
-
     return list;
   }
 
-  function onIncrement(product) {
-    const item = productToCartItem(product);
-    const current = getProductQty(product);
-    window.cigarOSCart?.setQty(item, current + 1);
+  function getLiveQty(product) {
+    return window.cigarOSCart?.getItemQty?.(product.key) || 0;
+  }
+
+  function setLiveQty(product, qty) {
+    if (!window.cigarOSCart?.setQty) return;
+
+    const imageCandidates = getImageCandidates(product);
+    const image = imageCandidates[0] || "";
+
+    window.cigarOSCart.setQty({
+      key: product.key,
+      type: "product",
+      id: product.key,
+      brand: product.brand || "",
+      line: "",
+      name: product.name || "",
+      vitola: "",
+      msrp: Number(product.price) || 0,
+      image,
+      url: window.location.href,
+      category: product.category || ""
+    }, qty);
+
     renderProducts();
   }
 
-  function onDecrement(product) {
-    const item = productToCartItem(product);
-    const current = getProductQty(product);
-    window.cigarOSCart?.setQty(item, Math.max(0, current - 1));
-    renderProducts();
+  function onIncrement(productKey) {
+    const product = state.allProducts.find((p) => p.key === productKey);
+    if (!product) return;
+    setLiveQty(product, getLiveQty(product) + 1);
+  }
+
+  function onDecrement(productKey) {
+    const product = state.allProducts.find((p) => p.key === productKey);
+    if (!product) return;
+    setLiveQty(product, Math.max(0, getLiveQty(product) - 1));
   }
 
   function onToggleFavorite(productKey) {
@@ -261,10 +239,7 @@
 
   function attachImageFallbacks() {
     $$("[data-image-candidates]", grid).forEach((img) => {
-      const candidates = (img.getAttribute("data-image-candidates") || "")
-        .split("|")
-        .filter(Boolean);
-
+      const candidates = (img.getAttribute("data-image-candidates") || "").split("|").filter(Boolean);
       if (!candidates.length) return;
 
       let index = 0;
@@ -294,12 +269,11 @@
 
     if (!filtered.length) {
       grid.innerHTML = `<div class="products-empty">No products found.</div>`;
-      updateAddToBillLabel();
       return;
     }
 
     grid.innerHTML = filtered.map((p) => {
-      const qty = getProductQty(p);
+      const qty = getLiveQty(p);
       const isFavorite = state.favorites.has(p.key);
       const imageCandidates = getImageCandidates(p);
       const encodedCandidates = imageCandidates.map(escapeHTML).join("|");
@@ -344,15 +318,11 @@
     }).join("");
 
     $$("[data-plus]", grid).forEach((btn) => {
-      const product = state.allProducts.find((p) => p.key === (btn.getAttribute("data-plus") || ""));
-      if (!product) return;
-      btn.addEventListener("click", () => onIncrement(product));
+      btn.addEventListener("click", () => onIncrement(btn.getAttribute("data-plus") || ""));
     });
 
     $$("[data-minus]", grid).forEach((btn) => {
-      const product = state.allProducts.find((p) => p.key === (btn.getAttribute("data-minus") || ""));
-      if (!product) return;
-      btn.addEventListener("click", () => onDecrement(product));
+      btn.addEventListener("click", () => onDecrement(btn.getAttribute("data-minus") || ""));
     });
 
     $$("[data-favorite]", grid).forEach((btn) => {
@@ -360,7 +330,6 @@
     });
 
     attachImageFallbacks();
-    updateAddToBillLabel();
   }
 
   function bindStaticControls() {
@@ -369,21 +338,17 @@
       renderProducts();
     });
 
-    favoritesBtn?.addEventListener("click", () => {
-      state.favoritesOnly = !state.favoritesOnly;
-      updateFavoritesUI();
-      renderProducts();
-    });
-
     filterBtn?.addEventListener("click", () => {
       filterBtn.classList.toggle("is-on");
     });
 
-    addToBillBtn?.addEventListener("click", () => {
-      window.location.href = "/pos/invoice/";
+    window.addEventListener("cigaros:cart", () => {
+      renderProducts();
     });
 
-    document.addEventListener("cigaros:cart-changed", updateAddToBillLabel);
+    document.addEventListener("cigaros:cart-changed", () => {
+      renderProducts();
+    });
   }
 
   function normalizeProducts(raw) {
@@ -411,9 +376,7 @@
       state.allProducts = normalizeProducts(Array.isArray(raw) ? raw : []);
 
       renderCategories();
-      updateFavoritesUI();
       renderProducts();
-      updateAddToBillLabel();
     } catch (err) {
       console.error("products.js load error:", err);
       if (grid) {
