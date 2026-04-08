@@ -78,6 +78,11 @@
     return Number.isFinite(n) ? n : 0;
   }
 
+  function fmtMoney(v) {
+    const n = parseMoneyValue(v);
+    return Number.isFinite(n) && n > 0 ? n.toFixed(2) : "";
+  }
+
   function parseCSV(text) {
     const rows = [];
     let cur = [];
@@ -169,6 +174,10 @@
     return getField(r, ["vitola", "style", "vitola_name"]);
   }
 
+  function resolvePrice(r) {
+    return fmtMoney(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
+  }
+
   function resolvePriceNumber(r) {
     return parseMoneyValue(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
   }
@@ -183,6 +192,22 @@
 
   function resolveShape(r) {
     return getField(r, ["shape"]);
+  }
+
+  function resolveWrapper(r) {
+    return getField(r, ["wrapper"]);
+  }
+
+  function resolveBinder(r) {
+    return getField(r, ["binder"]);
+  }
+
+  function resolveFiller(r) {
+    return getField(r, ["filler"]);
+  }
+
+  function resolveOrigin(r) {
+    return getField(r, ["origin", "country_of_origin", "country"]);
   }
 
   function resolveStrength(r) {
@@ -223,13 +248,7 @@
   }
 
   function resolveBandArt(r) {
-    const direct = getField(r, [
-      "band_art",
-      "band_image",
-      "band_img",
-      "band_art_url",
-      "band_url"
-    ]);
+    const direct = getField(r, ["band_art", "band_image", "band_img", "band_art_url", "band_url"]);
     if (direct) return direct;
 
     if (normalizeBrand(state.brand) !== "padron") return "";
@@ -279,6 +298,12 @@
   function closeBandsSheet() {
     sheetBands.hidden = true;
     document.documentElement.classList.remove("sheet-open");
+  }
+
+  function openDetail(r) {
+    const id = resolveId(r);
+    const href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
+    window.location.href = href;
   }
 
   let filterModal = null;
@@ -403,14 +428,12 @@
       modal.classList.remove("fm--hidden");
       modal.classList.add("is-open");
       modal.setAttribute("aria-hidden", "false");
-      document.body.classList.add("cigar-detail-open");
     }
 
     function close() {
       modal.classList.remove("is-open");
       modal.classList.add("fm--hidden");
       modal.setAttribute("aria-hidden", "true");
-      document.body.classList.remove("cigar-detail-open");
       window.setTimeout(() => {
         if (!modal.classList.contains("is-open")) modal.hidden = true;
       }, 260);
@@ -494,7 +517,10 @@
     if (!state.bandSelected.size) return rows;
 
     if (normalizeBrand(state.brand) === "padron") {
-      return rows.filter((r) => state.bandSelected.has(resolveBand(r)));
+      return rows.filter((r) => {
+        const band = resolveBand(r);
+        return state.bandSelected.has(band);
+      });
     }
 
     return rows.filter((r) => state.bandSelected.has(resolveBand(r)));
@@ -522,83 +548,84 @@
 
   function buildCartItem(r) {
     return {
-      key: resolveId(r),
       type: "cigar",
       id: resolveId(r),
+      category: "Cigars",
       brand: state.brand,
       line: "",
       name: resolveName(r),
       vitola: resolveVitola(r),
+      ring: resolveRing(r),
+      length: resolveLength(r),
+      shape: resolveShape(r),
+      wrapper: resolveWrapper(r),
+      binder: resolveBinder(r),
+      filler: resolveFiller(r),
+      origin: resolveOrigin(r),
+      shade: resolveShade(r),
+      strength: resolveStrength(r),
       msrp: resolvePriceNumber(r),
       image: normalizeAssetPath(resolveImage(r)) || brandIconPath(),
-      url: resolveUrl(r) || "",
-      category: "Cigars"
+      url: resolveUrl(r) || `/pos/cigars/cigar.html?id=${encodeURIComponent(resolveId(r))}`
     };
   }
 
-  function getQty(r) {
-    return window.cigarOSCart?.getItemQty?.(resolveId(r)) || 0;
-  }
-
-  function setQty(r, qty) {
-    const item = buildCartItem(r);
-    window.cigarOSCart?.setQty?.(item, qty);
+  function getRowQty(item) {
+    return window.cigarOSCart?.getItemQty?.(item) || 0;
   }
 
   function renderList(rows) {
     listEl.innerHTML = "";
 
     if (!rows.length) {
-      listEl.innerHTML = `<div class="cigars-empty">No cigars found for ${esc(state.brand)}</div>`;
+      listEl.innerHTML = `<div class="empty">No cigars found for ${esc(state.brand)}</div>`;
       return;
     }
 
     rows.forEach((r) => {
-      const qty = getQty(r);
+      const item = buildCartItem(r);
+      const qty = getRowQty(item);
+      const priceText = resolvePrice(r) || "—";
 
-      const card = document.createElement("article");
-      card.className = "brand-row";
-
-      card.innerHTML = `
+      const row = document.createElement("article");
+      row.className = "brand-row";
+      row.innerHTML = `
         <img class="row-ico" src="${esc(brandIconPath())}" alt="" loading="lazy" />
         <div class="brand-row-left">
           <div class="brand-row-title">${esc(resolveName(r))}</div>
           <div class="brand-row-sub">${esc(resolveVitola(r))}</div>
         </div>
         <div class="brand-row-right">
-          <div class="brand-stepper">
-            <button class="brand-stepper-btn js-dec" type="button" aria-label="Decrease">
-              <span class="brand-stepper-minus" aria-hidden="true"></span>
-            </button>
-            <div class="brand-stepper-qty">${qty}</div>
-            <button class="brand-stepper-btn js-inc" type="button" aria-label="Increase">+</button>
+          <div class="brand-row-msrp">${esc(priceText)}</div>
+          <div class="brand-row-qty">
+            <button class="qty-btn qty-btn--minus" type="button" aria-label="Decrease">−</button>
+            <span class="qty-value">${qty}</span>
+            <button class="qty-btn qty-btn--plus" type="button" aria-label="Increase">+</button>
           </div>
         </div>
       `;
 
-      $(".brand-row-left", card)?.addEventListener("click", () => {
-        const id = resolveId(r);
-        window.location.href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
-      });
+      const left = $(".brand-row-left", row);
+      const icon = $(".row-ico", row);
+      const minusBtn = $(".qty-btn--minus", row);
+      const plusBtn = $(".qty-btn--plus", row);
 
-      $(".row-ico", card)?.addEventListener("click", () => {
-        const id = resolveId(r);
-        window.location.href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
-      });
+      left?.addEventListener("click", () => openDetail(r));
+      icon?.addEventListener("click", () => openDetail(r));
 
-      $(".js-inc", card)?.addEventListener("click", (e) => {
+      plusBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
-        setQty(r, qty + 1);
+        window.cigarOSCart?.setQty?.(item, qty + 1);
         renderList(rows);
       });
 
-      $(".js-dec", card)?.addEventListener("click", (e) => {
+      minusBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
-        setQty(r, Math.max(0, qty - 1));
+        window.cigarOSCart?.setQty?.(item, Math.max(0, qty - 1));
         renderList(rows);
       });
 
-      listEl.appendChild(card);
+      listEl.appendChild(row);
     });
   }
 
@@ -615,14 +642,11 @@
     }
 
     const map = new Map();
-
     rows.forEach((r) => {
       const label = resolveBand(r);
       const art = resolveBandArt(r);
       if (!label || !art) return;
-      if (!map.has(label)) {
-        map.set(label, { key: label, label, src: art });
-      }
+      if (!map.has(label)) map.set(label, { key: label, label, src: art });
     });
 
     return Array.from(map.values());
@@ -729,7 +753,6 @@
     }
   });
 
-  window.addEventListener("cigaros:cart", () => applyAll());
   document.addEventListener("cigaros:cart-changed", () => applyAll());
 
   async function boot() {
@@ -765,6 +788,6 @@
 
   boot().catch((err) => {
     console.error("Brand page boot failed:", err);
-    listEl.innerHTML = `<div class="cigars-empty cigars-empty--error">Error loading brand.</div>`;
+    listEl.innerHTML = `<div class="empty">Error loading brand.</div>`;
   });
 })();
