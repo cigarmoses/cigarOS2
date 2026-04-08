@@ -1,13 +1,15 @@
+<!-- /pos/invoice/index.html -->
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Invoice</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=30" />
-  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=30" />
+  <link rel="stylesheet" href="/css/type.css?v=16" />
+  <link rel="stylesheet" href="/pos/pos.css?v=16" />
+  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=16" />
 </head>
 
 <body class="inv-page">
@@ -15,13 +17,18 @@
     <header class="inv-head">
       <div class="inv-title">INVOICE</div>
       <div class="inv-meta" id="invMeta">—</div>
-      <div class="inv-shop" id="invShop">Shop</div>
+      <div class="inv-shop" id="invShop">Smoke Cigar Lounge</div>
       <div class="inv-num" id="invNum">INV #—</div>
     </header>
 
     <section class="inv-customer-wrap" aria-label="Customer selector">
-      <button class="inv-customer" id="invCustomerBtn" type="button" aria-expanded="false" aria-controls="invCustomerMenu">
-        <span class="inv-customer-prefix">Loyalty Profile:</span>
+      <button
+        class="inv-customer"
+        id="invCustomerBtn"
+        type="button"
+        aria-expanded="false"
+        aria-controls="invCustomerMenu"
+      >
         <span class="inv-customer-label" id="invCustomerLabel">Attach Saved Customer</span>
       </button>
 
@@ -41,7 +48,7 @@
 
     <section class="inv-items" id="invItems" aria-label="Invoice items"></section>
 
-    <section class="inv-summary-area">
+    <section class="inv-summary-area" aria-label="Invoice summary">
       <button class="inv-split-link" type="button">Split invoice by category</button>
 
       <section class="inv-totals" aria-label="Totals">
@@ -50,7 +57,11 @@
         <div class="trow"><div>Other:</div><div id="tOther">$0.00</div></div>
         <div class="trow"><div>Subtotal:</div><div id="tSubtotal">$0.00</div></div>
         <div class="trow"><div>Tax:</div><div id="tTax">$0.00</div></div>
-        <div class="grand"><div>Total:</div><div id="tGrand">$0.00</div></div>
+
+        <div class="grand">
+          <div>Total:</div>
+          <div id="tGrand">$0.00</div>
+        </div>
       </section>
     </section>
   </main>
@@ -60,7 +71,7 @@
     <button class="inv-action inv-action--primary" type="button">CASH OUT</button>
   </footer>
 
-  <script src="/pos/cart.js?v=30" defer></script>
-  <script src="/pos/invoice/invoice.js?v=30" defer></script>
+  <script src="/pos/cart.js?v=16" defer></script>
+  <script src="/pos/invoice/invoice.js?v=16" defer></script>
 </body>
 </html>
