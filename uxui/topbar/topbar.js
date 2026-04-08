@@ -1,4 +1,4 @@
-(function () {
+\(function () {
   const root = document.documentElement;
 
   function getTheme() {
@@ -7,7 +7,12 @@
 
   function applyTheme(theme) {
     const next = theme === "dark" ? "dark" : "light";
-    root.setAttribute("data-theme", next);
+
+    // ✅ prevent unnecessary full repaint
+    if (root.getAttribute("data-theme") !== next) {
+      root.setAttribute("data-theme", next);
+    }
+
     localStorage.setItem("theme", next);
 
     document.querySelectorAll(".topbar-toggle").forEach((toggle) => {
@@ -146,12 +151,21 @@
 
     container.appendChild(bar);
 
-    applyTheme(getTheme());
+    // ✅ DO NOT force repaint on mount
+    // Only sync toggle state
+    document.querySelectorAll(".topbar-toggle").forEach((t) => {
+      t.setAttribute("aria-pressed", String(getTheme() === "dark"));
+    });
   }
 
   function refresh() {
     applyTheme(getTheme());
   }
+
+  // ✅ apply theme ONCE, safely, outside heavy render timing
+  requestAnimationFrame(() => {
+    applyTheme(getTheme());
+  });
 
   window.openGlobalSearch = openGlobalSearch;
   window.CigarOSTopbar = { mount, refresh };
