@@ -249,13 +249,7 @@
   }
 
   function resolveBandArt(r) {
-    const direct = getField(r, [
-      "band_art",
-      "band_image",
-      "band_img",
-      "band_art_url",
-      "band_url"
-    ]);
+    const direct = getField(r, ["band_art", "band_image", "band_img", "band_art_url", "band_url"]);
     if (direct) return direct;
 
     if (normalizeBrand(state.brand) !== "padron") return "";
@@ -559,18 +553,37 @@
     });
   }
 
-  function buildCartDataset(r) {
+  function buildCartItem(r) {
     return {
       type: "cigar",
       id: resolveId(r),
+      category: "Cigars",
       brand: state.brand,
       line: "",
       name: resolveName(r),
       vitola: resolveVitola(r),
-      price: resolvePriceNumber(r),
+      ring: resolveRing(r),
+      length: resolveLength(r),
+      shape: resolveShape(r),
+      wrapper: resolveWrapper(r),
+      binder: resolveBinder(r),
+      filler: resolveFiller(r),
+      origin: resolveOrigin(r),
+      shade: resolveShade(r),
+      strength: resolveStrength(r),
+      msrp: resolvePriceNumber(r),
       image: normalizeAssetPath(resolveImage(r)) || brandIconPath(),
-      url: resolveUrl(r) || ""
+      url: resolveUrl(r) || `/pos/cigars/cigar.html?id=${encodeURIComponent(resolveId(r))}`
     };
+  }
+
+  function getRowQty(item) {
+    const api = window.cigarOSCart;
+    if (!api || typeof api.items !== "function") return 0;
+    const cart = api.items();
+    const key = item.id || "";
+    const found = cart.find((x) => x.id === key || (x.name === item.name && x.vitola === item.vitola && x.brand === item.brand));
+    return found ? Number(found.qty || 0) : 0;
   }
 
   function renderList(rows) {
@@ -582,13 +595,13 @@
     }
 
     rows.forEach((r) => {
-      const card = document.createElement("article");
-      card.className = "brand-row";
-
-      const cartItem = buildCartDataset(r);
+      const item = buildCartItem(r);
+      const qty = getRowQty(item);
       const priceText = resolvePrice(r) || "—";
 
-      card.innerHTML = `
+      const row = document.createElement("article");
+      row.className = "brand-row";
+      row.innerHTML = `
         <img class="row-ico" src="${esc(brandIconPath())}" alt="" loading="lazy" />
         <div class="brand-row-left">
           <div class="brand-row-title">${esc(resolveName(r))}</div>
@@ -596,36 +609,35 @@
         </div>
         <div class="brand-row-right">
           <div class="brand-row-msrp">${esc(priceText)}</div>
-          <button
-            class="pos-add"
-            type="button"
-            aria-label="Add"
-            data-cart-add
-            data-id="${esc(cartItem.id)}"
-            data-type="${esc(cartItem.type)}"
-            data-brand="${esc(cartItem.brand)}"
-            data-line="${esc(cartItem.line)}"
-            data-name="${esc(cartItem.name)}"
-            data-vitola="${esc(cartItem.vitola)}"
-            data-price="${esc(cartItem.price)}"
-            data-image="${esc(cartItem.image)}"
-            data-url="${esc(cartItem.url)}"
-          >+</button>
+          <div class="brand-row-qty">
+            <button class="qty-btn qty-btn--minus" type="button" aria-label="Decrease">−</button>
+            <span class="qty-value">${qty}</span>
+            <button class="qty-btn qty-btn--plus" type="button" aria-label="Increase">+</button>
+          </div>
         </div>
       `;
 
-      const rowMain = $(".brand-row-left", card);
-      const rowIcon = $(".row-ico", card);
-      const addBtn = $(".pos-add", card);
+      const left = $(".brand-row-left", row);
+      const icon = $(".row-ico", row);
+      const minusBtn = $(".qty-btn--minus", row);
+      const plusBtn = $(".qty-btn--plus", row);
 
-      rowMain?.addEventListener("click", () => openDetail(r));
-      rowIcon?.addEventListener("click", () => openDetail(r));
+      left?.addEventListener("click", () => openDetail(r));
+      icon?.addEventListener("click", () => openDetail(r));
 
-      addBtn?.addEventListener("click", (e) => {
+      plusBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
+        window.cigarOSCart?.setQty(item, qty + 1);
+        renderList(rows);
       });
 
-      listEl.appendChild(card);
+      minusBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.cigarOSCart?.setQty(item, Math.max(0, qty - 1));
+        renderList(rows);
+      });
+
+      listEl.appendChild(row);
     });
   }
 
@@ -642,14 +654,11 @@
     }
 
     const map = new Map();
-
     rows.forEach((r) => {
       const label = resolveBand(r);
       const art = resolveBandArt(r);
       if (!label || !art) return;
-      if (!map.has(label)) {
-        map.set(label, { key: label, label, src: art });
-      }
+      if (!map.has(label)) map.set(label, { key: label, label, src: art });
     });
 
     return Array.from(map.values());
@@ -759,6 +768,8 @@
       if (filterModal) filterModal.close();
     }
   });
+
+  document.addEventListener("cigaros:cart-changed", () => applyAll());
 
   async function boot() {
     applyTheme(getSavedTheme());
