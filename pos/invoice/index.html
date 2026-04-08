@@ -6,27 +6,23 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Invoice</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=17" />
-  <link rel="stylesheet" href="/pos/pos.css?v=17" />
-  <link rel="stylesheet" href="/uxui/topbar/topbar.css?v=17" />
-  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=17" />
+  <link rel="stylesheet" href="/css/type.css?v=30" />
+  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=30" />
 </head>
 
 <body class="inv-page">
-  <div id="universalTopbar"></div>
-
   <main class="inv-wrap" role="main">
     <header class="inv-head">
       <div class="inv-title">INVOICE</div>
       <div class="inv-meta" id="invMeta">—</div>
       <div class="inv-shop" id="invShop">Shop</div>
-      <div class="inv-num" id="invNum">INV# —</div>
+      <div class="inv-num" id="invNum">INV #—</div>
     </header>
 
     <section class="inv-customer-wrap" aria-label="Customer selector">
       <button class="inv-customer" id="invCustomerBtn" type="button" aria-expanded="false" aria-controls="invCustomerMenu">
-        <span class="inv-customer-label" id="invCustomerLabel">ATTACH SAVED CUSTOMER</span>
-        <span class="inv-customer-caret" aria-hidden="true"></span>
+        <span class="inv-customer-prefix">Loyalty Profile:</span>
+        <span class="inv-customer-label" id="invCustomerLabel">Attach Saved Customer</span>
       </button>
 
       <div class="inv-customer-menu" id="invCustomerMenu" hidden>
@@ -41,43 +37,30 @@
         </div>
         <div class="inv-customer-list" id="invCustomerList"></div>
       </div>
-
-      <div class="inv-customer-selected" id="invCustomerSelected" hidden></div>
     </section>
 
     <section class="inv-items" id="invItems" aria-label="Invoice items"></section>
 
-    <section class="inv-totals" aria-label="Totals">
-      <div class="trow"><div>TOBACCO</div><div id="tTobacco">$0.00</div></div>
-      <div class="trow"><div>ALCOHOL</div><div id="tAlcohol">$0.00</div></div>
-      <div class="trow"><div>OTHER</div><div id="tOther">$0.00</div></div>
-      <div class="trow"><div>SUBTOTAL</div><div id="tSubtotal">$0.00</div></div>
-      <div class="trow"><div>TAX</div><div id="tTax">$0.00</div></div>
+    <section class="inv-summary-area">
+      <button class="inv-split-link" type="button">Split invoice by category</button>
 
-      <div class="grand">
-        <div class="glabel">GRAND<br />TOTAL</div>
-        <div class="gval" id="tGrand">$0.00</div>
-      </div>
+      <section class="inv-totals" aria-label="Totals">
+        <div class="trow"><div>Tobacco:</div><div id="tTobacco">$0.00</div></div>
+        <div class="trow"><div>Alcohol:</div><div id="tAlcohol">$0.00</div></div>
+        <div class="trow"><div>Other:</div><div id="tOther">$0.00</div></div>
+        <div class="trow"><div>Subtotal:</div><div id="tSubtotal">$0.00</div></div>
+        <div class="trow"><div>Tax:</div><div id="tTax">$0.00</div></div>
+        <div class="grand"><div>Total:</div><div id="tGrand">$0.00</div></div>
+      </section>
     </section>
   </main>
 
   <footer class="inv-actions">
     <button class="inv-action" type="button">SAVE AS DRAFT</button>
-    <button class="inv-action" type="button">CASH OUT</button>
+    <button class="inv-action inv-action--primary" type="button">CASH OUT</button>
   </footer>
 
-  <script src="/uxui/topbar/topbar.js?v=17" defer></script>
-  <script src="/pos/cart.js?v=17" defer></script>
-  <script src="/pos/invoice/invoice.js?v=17" defer></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      window.CigarOSTopbar?.mount("#universalTopbar", {
-        homeHref: "/",
-        favoritesHref: "/pos/favorites/",
-        cartHref: "/pos/invoice/",
-        searchAction: "modal"
-      });
-    });
-  </script>
+  <script src="/pos/cart.js?v=30" defer></script>
+  <script src="/pos/invoice/invoice.js?v=30" defer></script>
 </body>
 </html>
