@@ -69,10 +69,7 @@ body.inv-page{
   gap:10px;
   font-weight:700;
   color:#101828;
-}
-
-.inv-customer-prefix{
-  color:#101828;
+  cursor:pointer;
 }
 
 .inv-customer-label{
@@ -103,7 +100,7 @@ body.inv-page{
   border-radius:12px;
   border:1px solid rgba(15,23,40,.10);
   padding:0 12px;
-  font:600 15px/1 var(--font-text);
+  font:600 15px/1 var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .inv-customer-list{
@@ -119,6 +116,7 @@ body.inv-page{
   text-align:left;
   padding:12px 14px;
   border-bottom:1px solid var(--hair);
+  cursor:pointer;
 }
 
 .inv-customer-item:last-child{
@@ -150,7 +148,7 @@ body.inv-page{
 
 .inv-row{
   display:grid;
-  grid-template-columns: 168px minmax(0, 1fr);
+  grid-template-columns:168px minmax(0, 1fr);
   gap:18px;
   align-items:start;
   padding:18px 0;
@@ -203,7 +201,7 @@ body.inv-page{
 .inv-meta-row{
   margin-top:18px;
   display:grid;
-  grid-template-columns: 1fr 140px 160px;
+  grid-template-columns:1fr 140px 160px;
   gap:16px;
   align-items:end;
 }
@@ -257,7 +255,7 @@ body.inv-page{
 
 .inv-summary-area{
   display:grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns:1fr 320px;
   gap:24px;
   align-items:end;
   padding-top:18px;
@@ -270,6 +268,7 @@ body.inv-page{
   font-size:16px;
   text-align:right;
   text-decoration:none;
+  cursor:pointer;
 }
 
 .inv-totals{
@@ -312,8 +311,9 @@ body.inv-page{
   border:1px solid rgba(15,23,40,.12);
   background:#eef1f5;
   color:#6d7484;
-  font:800 20px/1 var(--font-display);
+  font:800 20px/1 var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   letter-spacing:.02em;
+  cursor:pointer;
 }
 
 .inv-action--primary{
@@ -321,7 +321,7 @@ body.inv-page{
   color:#fff;
 }
 
-@media (max-width: 760px){
+@media (max-width:760px){
   .inv-wrap{
     width:calc(100% - 24px);
     padding-bottom:calc(120px + var(--safe-bottom));
@@ -332,7 +332,7 @@ body.inv-page{
   }
 
   .inv-row{
-    grid-template-columns: 92px minmax(0, 1fr);
+    grid-template-columns:92px minmax(0, 1fr);
     gap:14px;
     padding:16px 0;
   }
@@ -361,13 +361,13 @@ body.inv-page{
   }
 
   .inv-meta-row{
-    grid-template-columns: 1fr 90px 110px;
+    grid-template-columns:1fr 90px 110px;
     gap:10px;
     margin-top:12px;
   }
 
   .inv-summary-area{
-    grid-template-columns: 1fr;
+    grid-template-columns:1fr;
     gap:12px;
   }
 
