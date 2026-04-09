@@ -1,5 +1,3 @@
-// GLOBAL CART (WORKS EVERYWHERE)
-
 const CART_KEY = "pos_cart";
 
 export function getCart(){
@@ -30,4 +28,8 @@ export function addToCart(item){
 
 export function clearCart(){
   localStorage.removeItem(CART_KEY);
+}
+
+export function getCartTotal(){
+  return getCart().reduce((sum, i) => sum + (i.price * i.qty), 0);
 }
