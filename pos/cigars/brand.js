@@ -27,7 +27,6 @@
   const sheetBands = $("#sheet-bands");
   const bandsOptions = $("#bands-options");
   const bandsConfirm = $("#bands-confirm");
-  const themeToggle = $("#theme-toggle");
   const backBtn = $("#back-btn");
   const brandSearchBtn = $("#brandSearchBtn");
 
@@ -296,17 +295,6 @@
     brandIconImg.onerror = () => {
       brandIconImg.style.visibility = "hidden";
     };
-  }
-
-  function getSavedTheme() {
-    return localStorage.getItem("theme") || document.documentElement.getAttribute("data-theme") || "dark";
-  }
-
-  function applyTheme(theme) {
-    const next = theme === "light" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    themeToggle?.setAttribute("aria-pressed", String(next === "dark"));
   }
 
   function openBandsSheet() {
@@ -740,10 +728,6 @@
     else window.location.href = "/pos/cigars/";
   });
 
-  themeToggle?.addEventListener("click", () => {
-    applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
-  });
-
   searchInput?.addEventListener("input", () => {
     state.search = searchInput.value || "";
     applyAll();
@@ -795,8 +779,6 @@
 
   async function boot() {
     if (!listEl) return;
-
-    applyTheme(getSavedTheme());
 
     state.brand = (getParam("brand") || "Padron").trim();
     setBrandHeader();
