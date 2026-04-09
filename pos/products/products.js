@@ -223,7 +223,7 @@
     if (state.search) {
       const q = state.search.toLowerCase();
       list = list.filter((p) => {
-        const hay = [p.name, p.brand, p.category, p.key].join(" ").toLowerCase();
+        const hay = [p.name, p.brand, p.category, p.key, p.bucket, p.distributor].join(" ").toLowerCase();
         return hay.includes(q);
       });
     }
@@ -237,11 +237,12 @@
 
   function buildCartItem(product) {
     const imageCandidates = getImageCandidates(product);
+
     return {
-      key: product.key,
+      key: String(product.key || "").trim().toLowerCase(),
       type: "product",
       category: product.category || "",
-      id: product.key,
+      id: product.key || product.name || "",
       brand: product.brand || "",
       line: "",
       name: product.name || "",
@@ -254,11 +255,8 @@
 
   function getCartQty(product) {
     const api = window.cigarOSCart;
-    if (!api || typeof api.items !== "function") return 0;
-
-    const cart = api.items();
-    const found = cart.find((x) => x.key === String(product.key).toLowerCase());
-    return found ? Number(found.qty || 0) : 0;
+    if (!api || typeof api.getItemQty !== "function") return 0;
+    return Number(api.getItemQty(buildCartItem(product)) || 0);
   }
 
   function setCartQty(product, qty) {
@@ -418,7 +416,9 @@
       image: String(p.image || "").trim(),
       brandIcon: String(p.brandIcon || "").trim(),
       inventory: Number(p.inventory) || 0,
-      status: String(p.status || "Active").trim()
+      status: String(p.status || "Active").trim(),
+      bucket: String(p.bucket || "").trim(),
+      distributor: String(p.distributor || "").trim()
     })).filter((p) => p.key && p.name);
   }
 
