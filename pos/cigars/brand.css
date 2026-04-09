@@ -1,3 +1,29 @@
+/* ============================= */
+/* FIX FILTER PANEL POSITION */
+/* ============================= */
+
+.cigars-filter-panel,
+.filters-panel {
+  position: fixed !important;
+  top: 0;
+  right: 0;
+  width: 88%;
+  max-width: 420px;
+  height: 100%;
+  z-index: 9999;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.cigars-filter-panel.open,
+.filters-panel.open {
+  transform: translateX(0);
+}
+
+/* ============================= */
+/* ORIGINAL FILE BELOW (UNCHANGED) */
+/* ============================= */
+
 :root{
   --bg1:#071b33;
   --bg2:#0b2a4f;
