@@ -78,8 +78,111 @@ html[data-theme="light"] .cigars-main{
   background:transparent;
 }
 
-#universalTopbar + .cigars-main{
-  padding-top: 8px;
+/* built-in cigars page topbar */
+.cigars-topbar{
+  width:min(430px, calc(100% - 28px));
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:24px 1fr 48px;
+  align-items:center;
+  gap:10px;
+  padding-top:calc(10px + env(safe-area-inset-top, 0px));
+  padding-bottom:8px;
+}
+
+.cigars-back{
+  width:24px;
+  height:24px;
+  border:0;
+  padding:0;
+  display:grid;
+  place-items:center;
+  background:transparent;
+  color:var(--ink);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:none;
+  border-radius:0;
+}
+
+.cigars-back svg{
+  width:24px;
+  height:24px;
+  display:block;
+}
+
+.cigars-topbar-spacer{
+  width:24px;
+  height:24px;
+}
+
+.cigars-theme-dock{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+}
+
+#theme-toggle{
+  position:relative;
+  width:48px;
+  height:28px;
+  border:1px solid rgba(255,255,255,.10);
+  padding:0;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:0 10px 24px rgba(0,0,0,.18);
+}
+
+html[data-theme="light"] #theme-toggle{
+  border:1px solid rgba(15,26,44,.08);
+  background:rgba(255,255,255,.96);
+  box-shadow:0 10px 24px rgba(15,26,44,.06);
+}
+
+#theme-toggle .track{
+  position:absolute;
+  inset:0;
+  border-radius:999px;
+}
+
+#theme-toggle .knob{
+  position:absolute;
+  top:2px;
+  left:2px;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  background:#fff;
+  color:#0b1323;
+  box-shadow:0 3px 10px rgba(0,0,0,.16);
+  transition:transform .25s ease;
+  display:grid;
+  place-items:center;
+}
+
+#theme-toggle .icon-sun,
+#theme-toggle .icon-moon{
+  position:absolute;
+  width:12px;
+  height:12px;
+}
+
+#theme-toggle .icon-moon{
+  display:none;
+}
+
+html[data-theme="dark"] #theme-toggle .knob{
+  transform:translateX(20px);
+}
+
+html[data-theme="dark"] #theme-toggle .icon-sun{
+  display:none;
+}
+
+html[data-theme="dark"] #theme-toggle .icon-moon{
+  display:block;
 }
 
 .cigars-main{
@@ -791,6 +894,10 @@ html[data-theme="light"] .cb-nav-btn:hover{
 }
 
 @media (max-width: 430px){
+  .cigars-topbar{
+    width:calc(100% - 28px);
+  }
+
   .cigars-main{
     width:calc(100% - 28px);
     padding-bottom:118px;
@@ -861,5 +968,37 @@ html[data-theme="light"] .cb-nav-btn:hover{
 
   .fm__label{
     font-size:20px;
+  }
+}
+
+@media (max-width: 390px){
+  .cigars-topbar{
+    width:calc(100% - 18px);
+    grid-template-columns:22px 1fr 46px;
+  }
+
+  .cigars-back,
+  .cigars-topbar-spacer{
+    width:22px;
+    height:22px;
+  }
+
+  .cigars-back svg{
+    width:22px;
+    height:22px;
+  }
+
+  #theme-toggle{
+    width:46px;
+    height:27px;
+  }
+
+  #theme-toggle .knob{
+    width:21px;
+    height:21px;
+  }
+
+  html[data-theme="dark"] #theme-toggle .knob{
+    transform:translateX(19px);
   }
 }
