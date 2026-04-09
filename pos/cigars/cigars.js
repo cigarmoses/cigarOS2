@@ -1,5 +1,9 @@
 /* /pos/cigars/cigars.js
-   POS Cigars (Main) — Filters Bottom Sheet + Brands Grid + Results Rows
+   POS Cigars (Main)
+   - Loads cigar sheet CSV
+   - Brands grid
+   - Search + filter bottom sheet
+   - Main-page filter button works
 */
 
 (() => {
@@ -36,7 +40,6 @@
           shape: new Set(),
           strength: new Set(),
         },
-        toggles: {},
       };
     } else {
       const g = window.__CIGAR_FILTER_STATE__;
@@ -214,7 +217,9 @@
     const headers = rows[0].map((h) => String(h || "").trim());
     return rows.slice(1).map((r) => {
       const obj = {};
-      headers.forEach((h, idx) => (obj[h] = r[idx] ?? ""));
+      headers.forEach((h, idx) => {
+        obj[h] = r[idx] ?? "";
+      });
       return obj;
     });
   }
@@ -366,7 +371,7 @@
     const filtersOn = hasActiveFilters(g);
 
     if (!summary.length) {
-      listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
+      if (listRoot) listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
       return;
     }
 
@@ -498,6 +503,7 @@
       modalRoot = document.createElement("div");
       modalRoot.id = "filter-modal";
       modalRoot.className = "fm fm--hidden";
+      modalRoot.hidden = true;
       modalRoot.setAttribute("aria-hidden", "true");
       document.body.appendChild(modalRoot);
     }
@@ -528,7 +534,7 @@
 
                 <input class="fm__search-input" id="fm-search" placeholder="Search" autocomplete="off" />
 
-                <button class="fm__mic-btn" type="button" aria-label="Voice search (coming soon)">
+                <button class="fm__mic-btn" type="button" aria-label="Clear search">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z"
                           fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
@@ -553,9 +559,11 @@
 
   function openModal() {
     ensureModal();
+    modalRoot.hidden = false;
     modalRoot.classList.remove("fm--hidden");
     modalRoot.classList.add("is-open");
     modalRoot.setAttribute("aria-hidden", "false");
+    document.documentElement.classList.add("sheet-open");
 
     renderCats();
     setActiveCategory(state.activeKey);
@@ -571,6 +579,12 @@
     modalRoot.classList.remove("is-open");
     modalRoot.classList.add("fm--hidden");
     modalRoot.setAttribute("aria-hidden", "true");
+    document.documentElement.classList.remove("sheet-open");
+    window.setTimeout(() => {
+      if (!modalRoot.classList.contains("is-open")) {
+        modalRoot.hidden = true;
+      }
+    }, 260);
   }
 
   function renderCats() {
@@ -620,36 +634,34 @@
     const values = state.activeValues || [];
     const filtered = !q ? values : values.filter((v) => norm(v).toLowerCase().includes(q));
 
-    listEl.innerHTML = filtered
-      .map((v) => {
-        const label = norm(v);
-        const isSelected = selectedSet.has(label);
-        const iconSrc = showIcons ? iconPathFor(key, label) : "";
+    listEl.innerHTML = filtered.map((v) => {
+      const label = norm(v);
+      const isSelected = selectedSet.has(label);
+      const iconSrc = showIcons ? iconPathFor(key, label) : "";
 
-        const cb = isSelected
-          ? `<div class="fm__cb is-checked" aria-hidden="true">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>`
-          : `<div class="fm__cb" aria-hidden="true"></div>`;
+      const cb = isSelected
+        ? `<div class="fm__cb is-checked" aria-hidden="true">
+             <svg viewBox="0 0 24 24" aria-hidden="true">
+               <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+             </svg>
+           </div>`
+        : `<div class="fm__cb" aria-hidden="true"></div>`;
 
-        const icon = showIcons
-          ? `<div class="fm__icon">
-               <img src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
-                    onerror="this.style.display='none';" />
-             </div>`
-          : `<div class="fm__icon" aria-hidden="true"></div>`;
+      const icon = showIcons
+        ? `<div class="fm__icon">
+             <img src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
+                  onerror="this.style.display='none';" />
+           </div>`
+        : `<div class="fm__icon" aria-hidden="true"></div>`;
 
-        return `
-          <div class="fm__row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(label)}">
-            ${cb}
-            ${icon}
-            <div class="fm__label">${escapeHtml(label)}</div>
-          </div>
-        `;
-      })
-      .join("");
+      return `
+        <div class="fm__row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(label)}">
+          ${cb}
+          ${icon}
+          <div class="fm__label">${escapeHtml(label)}</div>
+        </div>
+      `;
+    }).join("");
 
     $$(".fm__row", listEl).forEach((row) => {
       row.addEventListener("click", () => {
@@ -661,9 +673,8 @@
 
         row.classList.toggle("is-selected");
         const cb = $(".fm__cb", row);
-        if (cb) cb.classList.toggle("is-checked", selectedSet.has(val));
-
         if (cb) {
+          cb.classList.toggle("is-checked", selectedSet.has(val));
           cb.innerHTML = selectedSet.has(val)
             ? `<svg viewBox="0 0 24 24" aria-hidden="true">
                  <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -686,13 +697,17 @@
   function pushLocalToGlobal() {
     ensureGlobalState();
     const g = window.__CIGAR_FILTER_STATE__;
-    for (const k of Object.keys(state.selected)) g.filters[k] = new Set([...state.selected[k]]);
+    for (const k of Object.keys(state.selected)) {
+      g.filters[k] = new Set([...state.selected[k]]);
+    }
     g.q = (searchInput?.value || g.q || "").toString();
     renderAll();
   }
 
   function resetLocalSelections() {
-    for (const k of Object.keys(state.selected)) state.selected[k].clear();
+    for (const k of Object.keys(state.selected)) {
+      state.selected[k].clear();
+    }
     renderList();
   }
 
@@ -742,7 +757,6 @@
     if (t.closest("#fm-apply")) {
       pushLocalToGlobal();
       closeModal();
-      return;
     }
   });
 
@@ -766,8 +780,7 @@
       renderAll();
     } catch (err) {
       console.error("cigars.js init error:", err);
-      ensureGlobalState();
-      renderAll();
+      if (listRoot) listRoot.innerHTML = `<div class="cigars-empty">Failed to load cigars.</div>`;
     }
   }
 
