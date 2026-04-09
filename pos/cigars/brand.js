@@ -1,3 +1,12 @@
+/* /pos/cigars/brand.js
+   Brand page
+   - Loads cigar rows from Google Sheets CSV
+   - Brand-specific filtering
+   - Bands sheet
+   - Bottom-sheet filters
+   - Cart qty steppers
+*/
+
 (() => {
   "use strict";
 
@@ -26,7 +35,7 @@
     brand: "",
     rowsAll: [],
     search: "",
-    wrapperMode: "maduro",
+    wrapperMode: "all",
     bandSelected: new Set(),
     filters: {
       vitola: new Set(),
@@ -141,6 +150,7 @@
     for (let i = 1; i < csv.length; i++) {
       const r = csv[i];
       if (!r || r.every((c) => !String(c || "").trim())) continue;
+
       const obj = {};
       keys.forEach((k, idx) => {
         obj[k] = (r[idx] ?? "").trim();
@@ -153,13 +163,19 @@
 
   function getField(r, keys) {
     for (const k of keys) {
-      if (r[k]) return String(r[k]).trim();
+      if (r && r[k] != null && String(r[k]).trim() !== "") {
+        return String(r[k]).trim();
+      }
     }
     return "";
   }
 
   function resolveBrandVal(r) {
-    return getField(r, ["brand", "brand_name", "manufacturer_brand", "cigar_brand", "manufacturer"]);
+    return getField(r, ["brand", "brand_name", "manufacturer_brand", "cigar_brand"]);
+  }
+
+  function resolveManufacturerVal(r) {
+    return getField(r, ["manufacturer", "maker"]);
   }
 
   function resolveId(r) {
@@ -273,12 +289,13 @@
 
   function setBrandHeader() {
     if (brandTitle) brandTitle.textContent = state.brand || "Brand";
-    if (brandIconImg) {
-      brandIconImg.src = brandIconPath();
-      brandIconImg.onerror = () => {
-        brandIconImg.style.visibility = "hidden";
-      };
-    }
+    if (!brandIconImg) return;
+
+    brandIconImg.style.visibility = "";
+    brandIconImg.src = brandIconPath();
+    brandIconImg.onerror = () => {
+      brandIconImg.style.visibility = "hidden";
+    };
   }
 
   function getSavedTheme() {
@@ -306,8 +323,8 @@
 
   function openDetail(r) {
     const id = resolveId(r);
-    const href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
-    window.location.href = href;
+    if (!id) return;
+    window.location.href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
   }
 
   let filterModal = null;
@@ -317,6 +334,7 @@
 
     const modal = document.createElement("div");
     modal.className = "fm fm--hidden";
+    modal.hidden = true;
     modal.setAttribute("aria-hidden", "true");
     modal.innerHTML = `
       <div class="fm__backdrop" data-fm-close></div>
@@ -432,12 +450,14 @@
       modal.classList.remove("fm--hidden");
       modal.classList.add("is-open");
       modal.setAttribute("aria-hidden", "false");
+      document.documentElement.classList.add("sheet-open");
     }
 
     function close() {
       modal.classList.remove("is-open");
       modal.classList.add("fm--hidden");
       modal.setAttribute("aria-hidden", "true");
+      document.documentElement.classList.remove("sheet-open");
       window.setTimeout(() => {
         if (!modal.classList.contains("is-open")) modal.hidden = true;
       }, 260);
@@ -473,8 +493,11 @@
   }
 
   function uniqSorted(vals, numeric = false) {
-    const a = Array.from(new Set(vals.map((v) => String(v || "").trim()).filter(Boolean)));
-    return a.sort((x, y) => (numeric ? parseFloat(x) - parseFloat(y) : x.localeCompare(y)));
+    const arr = Array.from(new Set(vals.map((v) => String(v || "").trim()).filter(Boolean)));
+    return arr.sort((a, b) => {
+      if (!numeric) return a.localeCompare(b);
+      return parseFloat(a) - parseFloat(b);
+    });
   }
 
   function buildFilterData(rows) {
@@ -511,23 +534,27 @@
     const q = String(state.search || "").trim().toLowerCase();
     if (!q) return rows;
 
-    return rows.filter((r) =>
-      resolveName(r).toLowerCase().includes(q) ||
-      resolveVitola(r).toLowerCase().includes(q)
-    );
+    return rows.filter((r) => {
+      const name = resolveName(r).toLowerCase();
+      const vitola = resolveVitola(r).toLowerCase();
+      const ring = resolveRing(r).toLowerCase();
+      const length = resolveLength(r).toLowerCase();
+      return (
+        name.includes(q) ||
+        vitola.includes(q) ||
+        ring.includes(q) ||
+        length.includes(q)
+      );
+    });
   }
 
   function applyBandSelected(rows) {
     if (!state.bandSelected.size) return rows;
 
-    if (normalizeBrand(state.brand) === "padron") {
-      return rows.filter((r) => {
-        const band = resolveBand(r);
-        return state.bandSelected.has(band);
-      });
-    }
-
-    return rows.filter((r) => state.bandSelected.has(resolveBand(r)));
+    return rows.filter((r) => {
+      const band = resolveBand(r);
+      return band && state.bandSelected.has(band);
+    });
   }
 
   function applyFilterSets(rows) {
@@ -552,9 +579,10 @@
 
   function buildCartItem(r) {
     return {
+      key: resolveId(r) || `${normalizeBrand(state.brand)}|${resolveName(r)}|${resolveVitola(r)}`,
       type: "cigar",
-      id: resolveId(r),
       category: "Cigars",
+      id: resolveId(r) || resolveName(r),
       brand: state.brand,
       line: "",
       name: resolveName(r),
@@ -570,7 +598,7 @@
       strength: resolveStrength(r),
       msrp: resolvePriceNumber(r),
       image: normalizeAssetPath(resolveImage(r)) || brandIconPath(),
-      url: resolveUrl(r) || `/pos/cigars/cigar.html?id=${encodeURIComponent(resolveId(r))}`
+      url: resolveUrl(r) || `/pos/cigars/cigar.html?id=${encodeURIComponent(resolveId(r) || "")}`
     };
   }
 
@@ -579,6 +607,7 @@
   }
 
   function renderList(rows) {
+    if (!listEl) return;
     listEl.innerHTML = "";
 
     if (!rows.length) {
@@ -590,14 +619,15 @@
       const item = buildCartItem(r);
       const qty = getRowQty(item);
       const priceText = resolvePrice(r) || "—";
+      const cigarImg = normalizeAssetPath(resolveImage(r)) || brandIconPath();
 
       const row = document.createElement("article");
       row.className = "brand-row";
       row.innerHTML = `
-        <img class="row-ico" src="${esc(brandIconPath())}" alt="" loading="lazy" />
+        <img class="row-ico" src="${esc(cigarImg)}" alt="" loading="lazy" />
         <div class="brand-row-left">
-          <div class="brand-row-title">${esc(resolveName(r))}</div>
-          <div class="brand-row-sub">${esc(resolveVitola(r))}</div>
+          <div class="brand-row-title">${esc(resolveName(r) || "Unnamed cigar")}</div>
+          <div class="brand-row-sub">${esc(resolveVitola(r) || "—")}</div>
         </div>
         <div class="brand-row-right">
           <div class="brand-row-msrp">${esc(priceText)}</div>
@@ -707,7 +737,7 @@
 
   backBtn?.addEventListener("click", () => {
     if (history.length > 1) history.back();
-    else location.href = "/pos/cigars/";
+    else window.location.href = "/pos/cigars/";
   });
 
   themeToggle?.addEventListener("click", () => {
@@ -735,11 +765,13 @@
   });
 
   segSwitch?.addEventListener("click", () => {
-    setWrapperMode(state.wrapperMode === "maduro" ? "natural" : "maduro");
+    if (state.wrapperMode === "maduro") setWrapperMode("natural");
+    else if (state.wrapperMode === "natural") setWrapperMode("all");
+    else setWrapperMode("maduro");
   });
 
   segBtns.forEach((b) => {
-    b.addEventListener("click", () => setWrapperMode(b.dataset.state || "maduro"));
+    b.addEventListener("click", () => setWrapperMode(b.dataset.state || "all"));
   });
 
   brandSearchBtn?.addEventListener("click", () => {
@@ -762,38 +794,52 @@
   document.addEventListener("cigaros:cart-changed", () => applyAll());
 
   async function boot() {
+    if (!listEl) return;
+
     applyTheme(getSavedTheme());
 
     state.brand = (getParam("brand") || "Padron").trim();
     setBrandHeader();
 
     if (btnBands) {
-      const normalizedPageBrand = normalizeBrand(state.brand);
-      btnBands.style.display = normalizedPageBrand === "padron" ? "" : "none";
+      btnBands.style.display = normalizeBrand(state.brand) === "padron" ? "" : "none";
     }
 
+    if (seg) seg.setAttribute("data-state", state.wrapperMode);
+    segBtns.forEach((b) => b.classList.toggle("is-on", b.dataset.state === state.wrapperMode));
+
     const res = await fetch(CSV_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+
     const txt = await res.text();
     const rows = mapRows(parseCSV(txt));
-
     const normalizedPageBrand = normalizeBrand(state.brand);
 
     const exact = rows.filter((r) => normalizeBrand(resolveBrandVal(r)) === normalizedPageBrand);
     const fuzzy = rows.filter((r) => {
       const rb = normalizeBrand(resolveBrandVal(r));
-      return rb.includes(normalizedPageBrand) || normalizedPageBrand.includes(rb);
+      return rb && (rb.includes(normalizedPageBrand) || normalizedPageBrand.includes(rb));
     });
 
-    state.rowsAll = (exact.length ? exact : fuzzy).map((r) => ({
+    const manufacturerFallback = rows.filter((r) => normalizeBrand(resolveManufacturerVal(r)) === normalizedPageBrand);
+
+    state.rowsAll = (exact.length ? exact : fuzzy.length ? fuzzy : manufacturerFallback).map((r) => ({
       ...r,
       wrapper_shade: resolveShade(r),
     }));
+
+    if (!state.rowsAll.length) {
+      listEl.innerHTML = `<div class="empty">No cigars found for ${esc(state.brand)}</div>`;
+      return;
+    }
 
     applyAll();
   }
 
   boot().catch((err) => {
     console.error("Brand page boot failed:", err);
-    listEl.innerHTML = `<div class="empty">Error loading brand.</div>`;
+    if (listEl) {
+      listEl.innerHTML = `<div class="empty">Error loading brand.</div>`;
+    }
   });
 })();
