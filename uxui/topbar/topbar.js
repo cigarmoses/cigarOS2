@@ -8,16 +8,16 @@
   function applyTheme(theme) {
     const next = theme === "dark" ? "dark" : "light";
 
-    // ✅ prevent unnecessary full repaint
     if (root.getAttribute("data-theme") !== next) {
       root.setAttribute("data-theme", next);
     }
 
     localStorage.setItem("theme", next);
 
-    document.querySelectorAll(".topbar-toggle").forEach((toggle) => {
+    const toggle = document.getElementById("themeToggle");
+    if (toggle) {
       toggle.setAttribute("aria-pressed", String(next === "dark"));
-    });
+    }
   }
 
   function createIcon(svgPath) {
@@ -108,6 +108,43 @@
     return btn;
   }
 
+  function createThemeToggle() {
+    const dock = document.createElement("div");
+    dock.className = "theme-dock";
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.id = "themeToggle";
+    toggle.setAttribute("aria-label", "Toggle theme");
+    toggle.setAttribute("aria-pressed", "false");
+
+    const track = document.createElement("span");
+    track.className = "tt-track";
+
+    const sun = document.createElement("span");
+    sun.className = "tt-ico tt-ico--sun";
+    sun.innerHTML = `<img src="/uxui/topbar/lightmode/lightmodesuntoggle.svg" alt="">`;
+
+    const moon = document.createElement("span");
+    moon.className = "tt-ico tt-ico--moon";
+    moon.innerHTML = `<img src="/uxui/topbar/darkmode/darkmodemoontoggle.svg" alt="">`;
+
+    const knob = document.createElement("span");
+    knob.className = "tt-knob";
+
+    track.appendChild(sun);
+    track.appendChild(moon);
+    track.appendChild(knob);
+    toggle.appendChild(track);
+
+    toggle.addEventListener("click", () => {
+      applyTheme(getTheme() === "dark" ? "light" : "dark");
+    });
+
+    dock.appendChild(toggle);
+    return dock;
+  }
+
   function mount(selector, config = {}) {
     const container = document.querySelector(selector);
     if (!container) return;
@@ -129,7 +166,7 @@
     const right = document.createElement("div");
     right.className = "topbar-right";
 
-    
+    right.appendChild(createThemeToggle());
 
     bar.appendChild(backBtn);
     bar.appendChild(spacer);
@@ -137,18 +174,13 @@
 
     container.appendChild(bar);
 
-    // ✅ DO NOT force repaint on mount
-    // Only sync toggle state
-    document.querySelectorAll(".topbar-toggle").forEach((t) => {
-      t.setAttribute("aria-pressed", String(getTheme() === "dark"));
-    });
+    applyTheme(getTheme());
   }
 
   function refresh() {
     applyTheme(getTheme());
   }
 
-  // ✅ apply theme ONCE, safely, outside heavy render timing
   requestAnimationFrame(() => {
     applyTheme(getTheme());
   });
