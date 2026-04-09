@@ -131,3 +131,17 @@ html[data-theme="dark"] .tt-knob{
   transform: translateX(-50%);
   z-index:2;
 }
+
+.theme-dock{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+}
+
+#themeToggle{
+  border:0;
+  background:transparent;
+  padding:0;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
