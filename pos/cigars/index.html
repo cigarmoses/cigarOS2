@@ -8,12 +8,41 @@
 
   <link rel="stylesheet" href="/css/type.css?v=21" />
   <link rel="stylesheet" href="/pos/pos.css?v=22" />
-  <link rel="stylesheet" href="/uxui/topbar/topbar.css?v=30" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=30" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=31" />
 </head>
 
 <body class="cigars-page">
-  <div id="universalTopbar"></div>
+  <header class="cigars-topbar">
+    <button
+      type="button"
+      class="cigars-back"
+      aria-label="Back"
+      onclick="history.length > 1 ? history.back() : window.location.href='/'"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+
+    <div class="cigars-topbar-spacer" aria-hidden="true"></div>
+
+    <div class="cigars-theme-dock">
+      <button id="theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="false">
+        <span class="track" aria-hidden="true"></span>
+        <span class="knob" aria-hidden="true">
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
+            <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
+            </g>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </header>
 
   <main class="cigars-main" role="main">
     <div class="cigars-title-row">
@@ -86,19 +115,33 @@
     </div>
   </nav>
 
-  <script src="/uxui/topbar/topbar.js?v=30" defer></script>
   <script src="/pos/cart.js?v=30" defer></script>
   <script src="/pos/cigars/cigars.js?v=22" defer></script>
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      window.CigarOSTopbar?.mount("#universalTopbar", {
-        backHref: "/"
+    (() => {
+      const root = document.documentElement;
+      const toggle = document.getElementById("theme-toggle");
+      const saved = localStorage.getItem("theme") || root.getAttribute("data-theme") || "light";
+
+      function applyTheme(theme) {
+        const next = theme === "dark" ? "dark" : "light";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        if (toggle) toggle.setAttribute("aria-pressed", String(next === "dark"));
+      }
+
+      applyTheme(saved);
+
+      toggle?.addEventListener("click", () => {
+        applyTheme((root.getAttribute("data-theme") || "light") === "dark" ? "light" : "dark");
       });
 
       document.getElementById("cbSearchBtn")?.addEventListener("click", () => {
-        window.openGlobalSearch?.();
+        if (typeof window.openGlobalSearch === "function") {
+          window.openGlobalSearch();
+        }
       });
-    });
+    })();
   </script>
 </body>
 </html>
