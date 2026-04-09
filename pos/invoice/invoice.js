@@ -1,8 +1,10 @@
 /* /pos/invoice/invoice.js
    Invoice page
-   - approved Nike-style row layout
-   - reads live cart
-   - renders cigar + product rows
+   - 3-section invoice layout
+   - loyalty profile dropdown
+   - cigar + product row rendering
+   - split bill popup state
+   - keep tab open / save to profile hooks
 */
 
 (() => {
@@ -16,7 +18,13 @@
   const CONTACTS_URL = "/loyalty/loyalty-contacts.json";
   const SELECTED_CUSTOMER_KEY = "cigaros_pos_invoice_customer";
 
+  const SPLIT_MODE_KEY = "cigaros_pos_invoice_split_mode";
+  const OPEN_TABS_KEY = "cigaros_pos_open_tabs_v1";
+  const OPEN_ORDERS_KEY = "cigaros_pos_open_orders_v1";
+  const CUSTOMER_ORDER_HISTORY_KEY = "cigaros_pos_customer_order_history_v1";
+
   const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
   const itemsEl = $("#invItems");
   const metaEl = $("#invMeta");
@@ -28,6 +36,16 @@
   const customerMenu = $("#invCustomerMenu");
   const customerList = $("#invCustomerList");
   const customerSearch = $("#invCustomerSearch");
+
+  const splitLink = $("#invSplitLink");
+  const splitModeEl = $("#invSplitMode");
+  const splitBillBtn = $("#splitBillBtn");
+  const splitBillPopup = $("#splitBillPopup");
+  const splitBillOptions = $$(".split-bill-option");
+
+  const keepTabOpenBtn = $("#keepTabOpenBtn");
+  const saveToProfileBtn = $("#saveToProfileBtn");
+  const cashOutBtn = $("#cashOutBtn");
 
   const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
@@ -51,6 +69,15 @@
   function numberFrom(value, fallback = 0) {
     const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
+  }
+
+  function readList(key) {
+    const data = safeJSONParse(localStorage.getItem(key), []);
+    return Array.isArray(data) ? data : [];
+  }
+
+  function writeList(key, value) {
+    localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
   }
 
   function toAbsUrl(url) {
@@ -83,10 +110,12 @@
     }
   }
 
-  function nowStamp() {
+  function formatHeaderStamp() {
     const d = new Date();
-    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const day = days[d.getDay()];
+
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
     const yyyy = d.getFullYear();
@@ -97,7 +126,8 @@
     if (h === 0) h = 12;
 
     const min = String(d.getMinutes()).padStart(2, "0");
-    return `${day} ${mm}/${dd}/${yyyy} ${h}:${min} ${ampm}`;
+
+    return `${day} ${mm}-${dd}-${yyyy} ${h}:${min} ${ampm}`;
   }
 
   function getShopName() {
@@ -137,38 +167,44 @@
   }
 
   function itemBrand(item) {
-    return normStr(item.brand) || "—";
+    return normStr(item.brand);
   }
 
   function itemLineName(item) {
-    const line = normStr(item.line);
-    const name = normStr(item.name);
-
-    if (line && name) {
-      if (name.toLowerCase().startsWith(line.toLowerCase())) return name;
-      return `${line} ${name}`;
-    }
-
-    return name || line || "Item";
-  }
-
-  function itemThirdLine(item) {
-    if (isCigarItem(item)) return normStr(item.vitola) || "—";
-    return normStr(item.variation) || "";
-  }
-
-  function itemFourthLine(item) {
     if (isCigarItem(item)) {
-      const ring = normStr(item.ring);
-      const length = normStr(item.length);
+      const line = normStr(item.line);
+      const name = normStr(item.name);
 
-      if (ring && length) return `${ring} x ${length}`;
-      if (ring) return ring;
-      if (length) return length;
-      return "";
+      if (line && name) {
+        if (name.toLowerCase().startsWith(line.toLowerCase())) return name;
+        return `${line} ${name}`;
+      }
+
+      return name || line || "Cigar";
     }
 
-    return "";
+    return normStr(item.name) || normStr(item.line) || "Item";
+  }
+
+  function itemLineTwo(item) {
+    if (isCigarItem(item)) {
+      return itemBrand(item) || "—";
+    }
+
+    return itemBrand(item) || itemCategory(item) || "—";
+  }
+
+  function itemLineThree(item) {
+    if (isCigarItem(item)) {
+      const vitola = normStr(item.vitola);
+      return `Cigars - ${vitola || "—"}`;
+    }
+
+    const category = itemCategory(item);
+    const variation = normStr(item.variation);
+
+    if (variation) return `${category} - ${variation}`;
+    return category || "";
   }
 
   function buildLineOne(item) {
@@ -208,14 +244,15 @@
         <div class="inv-line4"></div>
 
         <div class="inv-meta-row">
-          <div class="inv-qty-wrap">
-            <label>QTY</label>
-            <select class="inv-qty-select" aria-label="Quantity"></select>
-          </div>
-
           <div class="inv-msrp-wrap">
             <label>MSRP</label>
             <div class="inv-msrp">${fmt(unit)}</div>
+          </div>
+
+          <div class="inv-qty-wrap">
+            <span class="inv-qty-label">QTY</span>
+            <label>QTY</label>
+            <select class="inv-qty-select" aria-label="Quantity"></select>
           </div>
 
           <div class="inv-total-wrap">
@@ -235,16 +272,12 @@
     const line1 = buildLineOne(item);
     row.querySelector(".inv-copy").prepend(line1);
 
-    row.querySelector(".inv-line2").textContent = `${itemCategory(item)} - ${itemBrand(item)}`;
+    const line2 = itemLineTwo(item);
+    const line3 = itemLineThree(item);
 
-    const line3 = itemThirdLine(item);
-    const line4 = itemFourthLine(item);
-
-    row.querySelector(".inv-line3").textContent = line3;
+    row.querySelector(".inv-line2").textContent = line2 || "—";
+    row.querySelector(".inv-line3").textContent = line3 || "";
     row.querySelector(".inv-line3").style.display = line3 ? "" : "none";
-
-    row.querySelector(".inv-line4").textContent = line4;
-    row.querySelector(".inv-line4").style.display = line4 ? "" : "none";
 
     const select = row.querySelector(".inv-qty-select");
     for (let i = 0; i <= 24; i++) {
@@ -307,7 +340,7 @@
   }
 
   function renderHeader() {
-    if (metaEl) metaEl.textContent = nowStamp();
+    if (metaEl) metaEl.textContent = formatHeaderStamp();
     if (shopEl) shopEl.textContent = getShopName();
     if (numEl) numEl.textContent = `INV #${getInvoiceNumber()}`;
   }
@@ -425,7 +458,7 @@
   function renderSelectedCustomer() {
     const selected = loadSelectedCustomer();
     if (customerLabel) {
-      customerLabel.textContent = selected?.name || "Attach Saved Customer";
+      customerLabel.textContent = selected?.name || "Select Profile";
     }
   }
 
@@ -490,12 +523,212 @@
     });
   }
 
+  function getSplitMode() {
+    return normStr(localStorage.getItem(SPLIT_MODE_KEY));
+  }
+
+  function setSplitMode(mode) {
+    localStorage.setItem(SPLIT_MODE_KEY, normStr(mode));
+    renderSplitMode();
+  }
+
+  function splitModeLabel(mode) {
+    switch (mode) {
+      case "alcohol-separate":
+        return "Alcohol Separate selected";
+      case "tobacco-separate":
+        return "Tobacco Separate selected";
+      case "food-separate":
+        return "Food Separate selected";
+      case "custom-split":
+        return "Custom Split selected";
+      default:
+        return "No split selected";
+    }
+  }
+
+  function renderSplitMode() {
+    const mode = getSplitMode();
+
+    if (splitModeEl) {
+      splitModeEl.textContent = splitModeLabel(mode);
+    }
+
+    splitBillOptions.forEach((btn) => {
+      btn.classList.toggle("is-selected", btn.dataset.splitMode === mode);
+    });
+  }
+
+  function openSplitBillPopup() {
+    if (!splitBillPopup || !splitBillBtn) return;
+    splitBillPopup.classList.add("is-open");
+    splitBillBtn.setAttribute("aria-expanded", "true");
+  }
+
+  function closeSplitBillPopup() {
+    if (!splitBillPopup || !splitBillBtn) return;
+    splitBillPopup.classList.remove("is-open");
+    splitBillBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleSplitBillPopup() {
+    if (!splitBillPopup) return;
+    if (splitBillPopup.classList.contains("is-open")) {
+      closeSplitBillPopup();
+    } else {
+      openSplitBillPopup();
+    }
+  }
+
+  function setupSplitBillPopup() {
+    splitBillBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleSplitBillPopup();
+    });
+
+    splitLink?.addEventListener("click", () => {
+      openSplitBillPopup();
+    });
+
+    splitBillOptions.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const mode = normStr(btn.dataset.splitMode);
+        setSplitMode(mode);
+        closeSplitBillPopup();
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (
+        splitBillPopup?.classList.contains("is-open") &&
+        !e.target.closest(".inv-action-wrap") &&
+        !e.target.closest(".inv-summary-left")
+      ) {
+        closeSplitBillPopup();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeSplitBillPopup();
+    });
+
+    renderSplitMode();
+  }
+
+  function buildOrderSnapshot(cart) {
+    const totals = computeBuckets(cart);
+    const selectedCustomer = loadSelectedCustomer();
+
+    return {
+      id: `ord_${Date.now()}`,
+      invoiceNumber: getInvoiceNumber(),
+      createdAt: new Date().toISOString(),
+      createdAtLabel: formatHeaderStamp(),
+      shopName: getShopName(),
+      customer: selectedCustomer || null,
+      splitMode: getSplitMode() || "",
+      items: cart.map((item) => ({
+        ...item,
+        qty: Math.max(0, Math.round(numberFrom(item.qty, 0))),
+        msrp: numberFrom(item.msrp, 0)
+      })),
+      totals
+    };
+  }
+
+  function handleKeepTabOpen() {
+    const cart = loadCart();
+    if (!cart.length) {
+      window.alert("There are no items on this invoice yet.");
+      return;
+    }
+
+    const note = window.prompt("Add a note for this open tab:");
+    if (note == null) return;
+
+    const tabs = readList(OPEN_TABS_KEY);
+    const nextNumber = tabs.length + 1;
+    const order = buildOrderSnapshot(cart);
+
+    tabs.unshift({
+      id: `tab_${Date.now()}`,
+      tabNumber: nextNumber,
+      label: `Open Tab #${nextNumber}${normStr(note) ? ` — ${normStr(note)}` : ""}`,
+      note: normStr(note),
+      status: "open-tab",
+      ...order
+    });
+
+    writeList(OPEN_TABS_KEY, tabs);
+    window.alert("Tab saved to Open Tabs.");
+  }
+
+  function handleSaveToProfile() {
+    const cart = loadCart();
+    if (!cart.length) {
+      window.alert("There are no items on this invoice yet.");
+      return;
+    }
+
+    const customer = loadSelectedCustomer();
+    if (!customer) {
+      window.alert("Select a loyalty profile first.");
+      return;
+    }
+
+    const order = buildOrderSnapshot(cart);
+
+    const openOrders = readList(OPEN_ORDERS_KEY);
+    openOrders.unshift({
+      id: `open_${Date.now()}`,
+      status: "open-order",
+      ...order
+    });
+    writeList(OPEN_ORDERS_KEY, openOrders);
+
+    const history = safeJSONParse(localStorage.getItem(CUSTOMER_ORDER_HISTORY_KEY), {});
+    const list = Array.isArray(history[customer.id]) ? history[customer.id] : [];
+    list.unshift(order);
+    history[customer.id] = list;
+    localStorage.setItem(CUSTOMER_ORDER_HISTORY_KEY, JSON.stringify(history));
+
+    window.alert(`Order saved to ${customer.name}'s profile and Open Orders.`);
+  }
+
+  function handleCashOut() {
+    const cart = loadCart();
+    if (!cart.length) {
+      window.alert("There are no items on this invoice yet.");
+      return;
+    }
+
+    document.dispatchEvent(
+      new CustomEvent("cigaros:invoice-cashout", {
+        detail: {
+          invoiceNumber: getInvoiceNumber(),
+          cart,
+          totals: computeBuckets(cart),
+          splitMode: getSplitMode()
+        }
+      })
+    );
+
+    window.alert("Cash Out is ready to connect to your payment flow next.");
+  }
+
+  function setupActionButtons() {
+    keepTabOpenBtn?.addEventListener("click", handleKeepTabOpen);
+    saveToProfileBtn?.addEventListener("click", handleSaveToProfile);
+    cashOutBtn?.addEventListener("click", handleCashOut);
+  }
+
   function render() {
     const cart = loadCart();
     renderHeader();
     renderItems(cart);
     renderTotals(cart);
     renderSelectedCustomer();
+    renderSplitMode();
   }
 
   function handleStorage(e) {
@@ -505,7 +738,8 @@
       e.key === CART_KEY ||
       SHOP_KEYS.includes(e.key) ||
       e.key === INV_KEY ||
-      e.key === SELECTED_CUSTOMER_KEY
+      e.key === SELECTED_CUSTOMER_KEY ||
+      e.key === SPLIT_MODE_KEY
     ) {
       render();
     }
@@ -521,6 +755,8 @@
 
   document.addEventListener("DOMContentLoaded", async () => {
     setupCustomerMenu();
+    setupSplitBillPopup();
+    setupActionButtons();
     render();
     await loadCustomers();
   });
