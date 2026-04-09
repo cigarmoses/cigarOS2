@@ -1,4 +1,4 @@
-\(function () {
+(function () {
   const root = document.documentElement;
 
   function getTheme() {
