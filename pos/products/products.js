@@ -1,37 +1,21 @@
 import { addToCart } from "../cart.js";
 
-const CSV_URL = "/data/products.csv";
-
 const grid = document.getElementById("productGrid");
 const searchInput = document.getElementById("searchInput");
 
 let PRODUCTS = [];
 
-// ---------- CSV ----------
-function parseCSV(text){
-  const rows = text.trim().split("\n");
-  const headers = rows.shift().split(",").map(h => h.trim());
-
-  return rows.map(row => {
-    const values = row.split(",");
-    const obj = {};
-    headers.forEach((h,i)=> obj[h] = values[i]?.trim());
-    return obj;
-  });
-}
-
-// ---------- LOAD ----------
+// ---------- LOAD JSON ----------
 async function loadProducts(){
   try{
-    const res = await fetch(CSV_URL);
-    const text = await res.text();
-
-    PRODUCTS = parseCSV(text);
+    const res = await fetch("/pos/products/products.json");
+    PRODUCTS = await res.json();
 
     render(PRODUCTS);
 
   }catch(e){
-    grid.innerHTML = `<div style="color:red">Error loading products</div>`;
+    grid.innerHTML = `<div style="color:red">Failed to load products</div>`;
+    console.error(e);
   }
 }
 
@@ -44,15 +28,15 @@ function render(list){
     el.className = "pos-card";
 
     el.innerHTML = `
-      <div class="pos-name">${p.name || p.Name}</div>
-      <div class="pos-price">$${p.price || p.Price}</div>
+      <div class="pos-name">${p.name}</div>
+      <div class="pos-price">$${p.price}</div>
     `;
 
     el.onclick = () => {
       addToCart({
-        id: p.id || p.ID || p.name,
-        name: p.name || p.Name,
-        price: parseFloat(p.price || p.Price)
+        id: p.id,
+        name: p.name,
+        price: p.price
       });
     };
 
@@ -65,13 +49,10 @@ if(searchInput){
   searchInput.addEventListener("input", e => {
     const q = e.target.value.toLowerCase();
 
-    const filtered = PRODUCTS.filter(p =>
-      (p.name || p.Name || "").toLowerCase().includes(q)
-    );
-
-    render(filtered);
+    render(PRODUCTS.filter(p =>
+      p.name.toLowerCase().includes(q)
+    ));
   });
 }
 
-// ---------- INIT ----------
 loadProducts();
