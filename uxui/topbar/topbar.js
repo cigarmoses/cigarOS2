@@ -129,21 +129,7 @@
     const right = document.createElement("div");
     right.className = "topbar-right";
 
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "topbar-toggle";
-    toggle.setAttribute("aria-label", "Toggle theme");
-    toggle.setAttribute("aria-pressed", "false");
-
-    const knob = document.createElement("span");
-    knob.className = "topbar-toggle-knob";
-    toggle.appendChild(knob);
-
-    toggle.addEventListener("click", () => {
-      applyTheme(getTheme() === "dark" ? "light" : "dark");
-    });
-
-    right.appendChild(toggle);
+    
 
     bar.appendChild(backBtn);
     bar.appendChild(spacer);
