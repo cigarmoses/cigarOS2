@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no,email=no,address=no" />
+  <title>Open Tabs</title>
+
+  <link rel="stylesheet" href="/css/type.css?v=23" />
+  <link rel="stylesheet" href="/pos/pos.css?v=23" />
+</head>
+
+<body>
+  <main class="open-tabs-page">
+    <header class="open-tabs-topbar">
+      <button type="button" class="open-tabs-back" aria-label="Back" onclick="history.length > 1 ? history.back() : window.location.href='/pos/'">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </button>
+
+      <div class="open-tabs-spacer" aria-hidden="true"></div>
+
+      <div class="open-tabs-theme-dock">
+        <button id="theme-toggle" class="uos-toggle" type="button" aria-label="Toggle theme" aria-pressed="true">
+          <span class="uos-track" aria-hidden="true"></span>
+          <span class="uos-knob" aria-hidden="true">
+            <svg class="uos-sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
+              <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
+              </g>
+            </svg>
+            <svg class="uos-moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <section class="open-tabs-head">
+      <h1 class="open-tabs-title">Open Tabs</h1>
+    </section>
+
+    <section class="open-tabs-groups">
+      <section class="open-tabs-group">
+        <h2 class="open-tabs-group-title">Today</h2>
+        <div class="open-tabs-list" id="todayTabsList"></div>
+      </section>
+
+      <section class="open-tabs-group">
+        <h2 class="open-tabs-group-title">Orders</h2>
+        <div class="open-tabs-list" id="ordersTabsList"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/pos/pos.js?v=23" defer></script>
+  <script>
+    (() => {
+      const OPEN_TABS_KEY = "cigaros_pos_open_tabs_v1";
+      const OPEN_ORDERS_KEY = "cigaros_pos_open_orders_v1";
+
+      const todayList = document.getElementById("todayTabsList");
+      const ordersList = document.getElementById("ordersTabsList");
+      const toggle = document.getElementById("theme-toggle");
+      const root = document.documentElement;
+
+      function safeJSONParse(value, fallback) {
+        try { return JSON.parse(value); } catch { return fallback; }
+      }
+
+      function readList(key) {
+        const data = safeJSONParse(localStorage.getItem(key), []);
+        return Array.isArray(data) ? data : [];
+      }
+
+      function fmt(n) {
+        return `$${Number(n || 0).toFixed(2)}`;
+      }
+
+      function itemCount(order) {
+        return Array.isArray(order?.items)
+          ? order.items.reduce((sum, item) => sum + Math.max(0, Number(item?.qty || 0)), 0)
+          : 0;
+      }
+
+      function isTodayIso(isoString) {
+        if (!isoString) return false;
+        const d = new Date(isoString);
+        if (Number.isNaN(d.getTime())) return false;
+
+        const now = new Date();
+        return (
+          d.getFullYear() === now.getFullYear() &&
+          d.getMonth() === now.getMonth() &&
+          d.getDate() === now.getDate()
+        );
+      }
+
+      function renderEmpty(el, label) {
+        el.innerHTML = `<div class="open-tabs-empty">No ${label.toLowerCase()} yet.</div>`;
+      }
+
+      function renderList(el, items, typeLabel) {
+        if (!items.length) {
+          renderEmpty(el, typeLabel);
+          return;
+        }
+
+        el.innerHTML = items.map((item) => {
+          const title =
+            item.label ||
+            item.customer?.name ||
+            `${typeLabel} #${item.invoiceNumber || "—"}`;
+
+          const sub =
+            item.customer?.name ||
+            item.note ||
+            item.createdAtLabel ||
+            "Open order";
+
+          return `
+            <a class="open-tabs-item" href="/pos/invoice/">
+              <div class="open-tabs-item-top">
+                <div>
+                  <div class="open-tabs-item-title">${title}</div>
+                  <div class="open-tabs-item-sub">${sub}</div>
+                </div>
+                <div class="open-tabs-item-total">${fmt(item?.totals?.grand || 0)}</div>
+              </div>
+
+              <div class="open-tabs-item-meta">
+                <div class="open-tabs-item-count">${itemCount(item)} items</div>
+                <div class="open-tabs-item-arrow">›</div>
+              </div>
+            </a>
+          `;
+        }).join("");
+      }
+
+      function renderPage() {
+        const allToday = readList(OPEN_TABS_KEY).filter((item) => isTodayIso(item.createdAt));
+        const allOrders = readList(OPEN_ORDERS_KEY);
+
+        renderList(todayList, allToday, "Today");
+        renderList(ordersList, allOrders, "Orders");
+      }
+
+      function applyTheme(theme) {
+        const next = theme === "light" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        if (toggle) toggle.setAttribute("aria-pressed", String(next === "dark"));
+      }
+
+      const saved = localStorage.getItem("theme") || "dark";
+      applyTheme(saved);
+
+      toggle?.addEventListener("click", () => {
+        applyTheme((root.getAttribute("data-theme") || "dark") === "dark" ? "light" : "dark");
+      });
+
+      window.addEventListener("storage", renderPage);
+      document.addEventListener("DOMContentLoaded", renderPage);
+      renderPage();
+    })();
+  </script>
+</body>
+</html>
