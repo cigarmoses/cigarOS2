@@ -67,7 +67,14 @@
   }
 
   function numberFrom(value, fallback = 0) {
-    const n = Number(value);
+    if (value == null || value === "") return fallback;
+
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    const cleaned = String(value).replace(/[$,]/g, "").trim();
+    const n = Number(cleaned);
     return Number.isFinite(n) ? n : fallback;
   }
 
@@ -112,22 +119,10 @@
 
   function formatHeaderStamp() {
     const d = new Date();
-
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const day = days[d.getDay()];
-
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    const yyyy = d.getFullYear();
-
-    let h = d.getHours();
-    const ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12;
-    if (h === 0) h = 12;
-
-    const min = String(d.getMinutes()).padStart(2, "0");
-
-    return `${day} ${mm}-${dd}-${yyyy} ${h}:${min} ${ampm}`;
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${m}-${day}-${yy}`;
   }
 
   function getShopName() {
@@ -207,11 +202,26 @@
     return category || "";
   }
 
+  function itemUnitPrice(item) {
+    return numberFrom(
+      item.msrp ??
+      item.MSRP ??
+      item.price ??
+      item.Price ??
+      item.unitPrice ??
+      item.unit_price ??
+      item.retailPrice ??
+      item.retail_price ??
+      0,
+      0
+    );
+  }
+
   function buildLineOne(item) {
     const text = itemLineName(item);
-    const url = toAbsUrl(item.url || "");
+    const url = toAbsUrl(item.url || item.link || "");
 
-    if (!url) {
+    if (!isCigarItem(item) || !url) {
       const div = document.createElement("div");
       div.className = "inv-line1";
       div.textContent = text;
@@ -228,7 +238,7 @@
   }
 
   function buildRow(item) {
-    const unit = numberFrom(item.msrp, 0);
+    const unit = itemUnitPrice(item);
     const qty = Math.max(0, Math.round(numberFrom(item.qty, 0)));
     const total = unit * qty;
 
@@ -318,7 +328,7 @@
     let other = 0;
 
     for (const it of cart) {
-      const unit = numberFrom(it.msrp, 0);
+      const unit = itemUnitPrice(it);
       const qty = Math.max(0, Math.round(numberFrom(it.qty, 0)));
       const line = unit * qty;
       const bucket = `${it.category} ${it.type}`.toLowerCase();
@@ -630,7 +640,7 @@
       items: cart.map((item) => ({
         ...item,
         qty: Math.max(0, Math.round(numberFrom(item.qty, 0))),
-        msrp: numberFrom(item.msrp, 0)
+        msrp: itemUnitPrice(item)
       })),
       totals
     };
