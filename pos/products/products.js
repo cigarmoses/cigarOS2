@@ -5,6 +5,8 @@
    - Search filtering
    - Favorites toggle
    - Qty stepper writes directly to shared cart
+   - Theme toggle
+   - Live cart count badge
 */
 
 (() => {
@@ -12,6 +14,8 @@
 
   const DATA_URL = "/pos/products/products.json";
   const FAVORITES_KEY = "cigaros_product_favorites";
+  const CART_KEY = "cigaros_pos_cart_v3";
+  const THEME_KEYS = ["cigaros_theme", "theme"];
 
   const CATEGORY_ORDER = [
     "Drinks",
@@ -87,10 +91,15 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+  const htmlEl = document.documentElement;
   const categoryRow = $("#categoryRow");
   const searchInput = $("#searchInput");
   const grid = $("#productGrid");
   const filterBtn = $("#filterBtn");
+  const backBtn = $("#productsBackBtn");
+  const themeBtn = $("#productsThemeBtn");
+  const searchBtn = $("#productsSearchBtn");
+  const cartBadge = $("#productsCartBadge");
   const addToBillBar = document.querySelector(".products-billbar");
 
   const state = {
@@ -265,6 +274,48 @@
     api.setQty(buildCartItem(product), qty);
   }
 
+  function getCartTotalQty() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      if (!Array.isArray(raw)) return 0;
+      return raw.reduce((sum, item) => sum + Math.max(0, Number(item.qty) || 0), 0);
+    } catch {
+      return 0;
+    }
+  }
+
+  function updateCartBadge() {
+    if (!cartBadge) return;
+    const totalQty = getCartTotalQty();
+    cartBadge.textContent = String(totalQty);
+    cartBadge.hidden = totalQty <= 0;
+  }
+
+  function readTheme() {
+    for (const key of THEME_KEYS) {
+      const value = localStorage.getItem(key);
+      if (value === "light" || value === "dark") return value;
+    }
+    return htmlEl.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+
+  function writeTheme(theme) {
+    htmlEl.setAttribute("data-theme", theme);
+    THEME_KEYS.forEach((key) => {
+      try {
+        localStorage.setItem(key, theme);
+      } catch {}
+    });
+
+    if (themeBtn) {
+      themeBtn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+    }
+  }
+
+  function toggleTheme() {
+    writeTheme(readTheme() === "dark" ? "light" : "dark");
+  }
+
   function onToggleFavorite(productKey) {
     if (state.favorites.has(productKey)) state.favorites.delete(productKey);
     else state.favorites.add(productKey);
@@ -308,6 +359,7 @@
 
     if (!filtered.length) {
       grid.innerHTML = `<div class="products-empty">No products found.</div>`;
+      updateCartBadge();
       return;
     }
 
@@ -383,6 +435,7 @@
     });
 
     attachImageFallbacks();
+    updateCartBadge();
   }
 
   function bindStaticControls() {
@@ -395,12 +448,45 @@
       filterBtn.classList.toggle("is-on");
     });
 
+    backBtn?.addEventListener("click", () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = "/";
+      }
+    });
+
+    themeBtn?.addEventListener("click", () => {
+      toggleTheme();
+    });
+
+    searchBtn?.addEventListener("click", () => {
+      if (typeof window.openGlobalSearch === "function") {
+        window.openGlobalSearch();
+      } else {
+        searchInput?.focus();
+      }
+    });
+
     if (addToBillBar) {
       addToBillBar.remove();
     }
 
     document.addEventListener("cigaros:cart-changed", () => {
+      updateCartBadge();
       renderProducts();
+    });
+
+    window.addEventListener("cigaros:cart", () => {
+      updateCartBadge();
+      renderProducts();
+    });
+
+    window.addEventListener("storage", (e) => {
+      if (!e.key || e.key === CART_KEY) {
+        updateCartBadge();
+        renderProducts();
+      }
     });
   }
 
@@ -437,11 +523,14 @@
       if (grid) {
         grid.innerHTML = `<div class="products-empty" style="color:#ff3b30;">Error loading products.</div>`;
       }
+      updateCartBadge();
     }
   }
 
   function init() {
+    writeTheme(readTheme());
     bindStaticControls();
+    updateCartBadge();
     loadProducts();
   }
 
