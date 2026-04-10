@@ -6,15 +6,39 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Products</title>
 
-  <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/css/ios26-system.css" />
-  <link rel="stylesheet" href="/uxui/topbar/topbar.css?v=31" />
-  <link rel="stylesheet" href="/pos/products/products.css?v=31" />
+  <link rel="stylesheet" href="/css/type.css?v=34" />
+  <link rel="stylesheet" href="/css/ios26-system.css?v=34" />
+  <link rel="stylesheet" href="/pos/products/products.css?v=34" />
 </head>
 
 <body class="products-page">
   <main class="products-page-wrap">
-    <div id="universalTopbar"></div>
+    <section class="products-topbar" aria-label="Page controls">
+      <button id="productsBackBtn" class="products-top-btn products-top-btn--back" type="button" aria-label="Go back">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <div class="products-topbar-spacer" aria-hidden="true"></div>
+
+      <div class="products-theme-dock">
+        <button id="productsThemeBtn" class="products-theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="false">
+          <span class="products-theme-track" aria-hidden="true"></span>
+          <span class="products-theme-knob" aria-hidden="true">
+            <svg class="products-theme-sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
+              <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
+              </g>
+            </svg>
+            <svg class="products-theme-moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </section>
 
     <section class="products-head">
       <h1 class="products-title">Products</h1>
@@ -50,50 +74,30 @@
   <nav class="products-bottom-bar" aria-label="Primary">
     <div class="products-bottom-bar-inner">
       <button type="button" class="cb-nav-btn" id="productsSearchBtn" aria-label="Search">
-        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-        </svg>
+        <img class="cb-nav-icon" src="/uxui/bottombar/search.svg" alt="">
         <span>Search</span>
       </button>
 
       <a class="cb-nav-btn" href="/" aria-label="Home">
-        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img class="cb-nav-icon" src="/uxui/bottombar/home.svg" alt="">
         <span>Home</span>
       </a>
 
       <a class="cb-nav-btn" href="/pos/favorites/" aria-label="Favorites">
-        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 21s-6.7-4.35-9.33-7.02C.7 12.02 1.1 8.5 4 7.1c1.9-.9 4.1-.3 5.3 1.2 1.2-1.5 3.4-2.1 5.3-1.2 2.9 1.4 3.3 4.92 1.33 6.88C18.7 16.65 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img class="cb-nav-icon" src="/uxui/bottombar/favorites.svg" alt="">
         <span>Favorites</span>
       </a>
 
-      <a class="cb-nav-btn" href="/pos/invoice/" aria-label="Cart">
-        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M7 6h14l-1.7 6.8a2 2 0 0 1-1.94 1.52H10.1a2 2 0 0 1-1.95-1.57L6.1 4.5H3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="10" cy="18.5" r="1.6" fill="currentColor"/>
-          <circle cx="17.5" cy="18.5" r="1.6" fill="currentColor"/>
-        </svg>
+      <a class="cb-nav-btn cb-nav-btn--cart" href="/pos/invoice/" aria-label="Cart">
+        <img class="cb-nav-icon" src="/uxui/bottombar/cart.svg" alt="">
         <span>Cart</span>
+        <span id="productsCartBadge" class="cb-nav-badge" data-cart-badge hidden>0</span>
       </a>
     </div>
   </nav>
 
-  <script src="/uxui/topbar/topbar.js?v=31" defer></script>
-  <script src="/pos/cart.js?v=31" defer></script>
-  <script src="/pos/products/products.js?v=31" defer></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      window.CigarOSTopbar?.mount("#universalTopbar", {
-        backHref: "/"
-      });
-
-      document.getElementById("productsSearchBtn")?.addEventListener("click", () => {
-        window.openGlobalSearch?.();
-      });
-    });
-  </script>
+  <script src="/pos/cart.js?v=34" defer></script>
+  <script src="/pos/pos.js?v=34" defer></script>
+  <script src="/pos/products/products.js?v=34" defer></script>
 </body>
 </html>
