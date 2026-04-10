@@ -108,7 +108,14 @@
   </section>
 
   <script defer src="/uxui/topbar/topbar.js?v=33"></script>
-  <script defer src="/pos/cart.js?v=33"></script>
-  <script defer src="/pos/cigars/brand.js?v=33"></script>
+<script defer src="/pos/cart.js?v=33"></script>
+<script defer src="/pos/cigars/brand.js?v=33"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    window.CigarOSTopbar.mount(".brand-topbar");
+  });
+</script>
+
 </body>
 </html>
