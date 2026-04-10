@@ -446,6 +446,197 @@ body.pos-home .pos-card-icon{
   place-items: center;
 }
 
+/* =========================================
+   OPEN TABS PAGE
+   ========================================= */
+.open-tabs-page{
+  width:min(430px, calc(100% - 22px));
+  margin:0 auto;
+  padding:calc(12px + env(safe-area-inset-top)) 0 calc(28px + env(safe-area-inset-bottom));
+  min-height:100dvh;
+}
+
+.open-tabs-topbar{
+  display:grid;
+  grid-template-columns:24px 1fr 48px;
+  align-items:center;
+  gap:10px;
+  padding:0 0 12px;
+}
+
+.open-tabs-back{
+  width:24px;
+  height:24px;
+  border:0;
+  padding:0;
+  display:grid;
+  place-items:center;
+  background:transparent;
+  color:var(--text, #fff);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:none;
+  border-radius:0;
+}
+
+.open-tabs-back svg{
+  width:24px;
+  height:24px;
+  display:block;
+}
+
+.open-tabs-spacer{
+  width:24px;
+  height:24px;
+}
+
+.open-tabs-theme-dock{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+}
+
+.open-tabs-head{
+  padding:2px 2px 16px;
+}
+
+.open-tabs-title{
+  margin:0;
+  font:900 48px/.92 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.055em;
+  color:var(--text, #fff);
+}
+
+.open-tabs-groups{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.open-tabs-group{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.open-tabs-group-title{
+  margin:0;
+  padding:0 2px;
+  font:800 18px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.03em;
+  color:var(--text, #fff);
+}
+
+.open-tabs-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.open-tabs-item{
+  display:block;
+  border-radius:22px;
+  padding:16px 16px 14px;
+  background:linear-gradient(180deg, var(--surface-2, #13223f) 0%, var(--surface-3, #172949) 100%);
+  box-shadow:0 18px 40px rgba(0,0,0,.22);
+  color:var(--text, #fff);
+  text-decoration:none;
+  position:relative;
+  overflow:hidden;
+}
+
+.open-tabs-item::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  box-shadow:inset 0 0 0 1px var(--border, rgba(255,255,255,.10));
+  border-radius:22px;
+}
+
+.open-tabs-item-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.open-tabs-item-title{
+  font:900 22px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.04em;
+}
+
+.open-tabs-item-sub{
+  margin-top:8px;
+  font:500 14px/1.2 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  color:var(--muted, rgba(255,255,255,.62));
+}
+
+.open-tabs-item-total{
+  flex:0 0 auto;
+  font:900 20px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.03em;
+}
+
+.open-tabs-item-meta{
+  margin-top:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.open-tabs-item-count{
+  font:700 12px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted, rgba(255,255,255,.62));
+}
+
+.open-tabs-item-arrow{
+  font:900 26px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  color:var(--muted, rgba(255,255,255,.62));
+}
+
+.open-tabs-empty{
+  border-radius:22px;
+  padding:18px 16px;
+  background:linear-gradient(180deg, var(--surface-2, #13223f) 0%, var(--surface-3, #172949) 100%);
+  box-shadow:0 18px 40px rgba(0,0,0,.22);
+  color:var(--muted, rgba(255,255,255,.62));
+  font:700 15px/1.25 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+}
+
+html[data-theme="light"] .open-tabs-item,
+html[data-theme="light"] .open-tabs-empty{
+  box-shadow:0 12px 26px rgba(15,26,44,.08);
+}
+
+@media (max-width:390px){
+  .open-tabs-page{
+    width:calc(100% - 18px);
+  }
+
+  .open-tabs-title{
+    font-size:42px;
+  }
+
+  .open-tabs-topbar{
+    grid-template-columns:22px 1fr 46px;
+  }
+
+  .open-tabs-back,
+  .open-tabs-spacer{
+    width:22px;
+    height:22px;
+  }
+
+  .open-tabs-back svg{
+    width:22px;
+    height:22px;
+  }
+}
+
 /* =========================================================
    UNIVERSAL SITE TOPBAR
    ========================================================= */
