@@ -64,12 +64,16 @@ body.cigar-detail-page{
   top:0;
   z-index:20;
   display:grid;
-  grid-template-columns:48px 1fr 48px;
+  grid-template-columns:48px 1fr 58px;
   align-items:center;
-  gap:8px;
+  gap:10px;
   padding:8px 14px 6px;
   padding-top:calc(8px + var(--safe-top));
   background:transparent;
+}
+
+.cd-topbar-center{
+  min-height:48px;
 }
 
 .cd-back{
@@ -88,12 +92,11 @@ body.cigar-detail-page{
 }
 
 .cd-back svg{ width:22px; height:22px; }
-.cd-topbar-spacer{ width:48px; height:48px; }
 
 .cd-theme-dock,
 .theme-dock{
   display:flex;
-  justify-content:center;
+  justify-content:flex-end;
   align-items:center;
 }
 
@@ -142,7 +145,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   margin:0 auto;
   height:auto;
   min-height:calc(100dvh - var(--safe-top) - 64px);
-  padding:2px 0 calc(104px + var(--safe-bottom));
+  padding:2px 0 calc(126px + var(--safe-bottom));
 }
 
 .cd-shell{
@@ -178,18 +181,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   flex:1 1 auto;
 }
 
-.cd-head-copy--editing{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.cd-head-edit-grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:8px;
-}
-
 .cd-brand{
   font:800 32px/.92 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   letter-spacing:-.045em;
@@ -207,31 +198,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-}
-
-.cd-brand-input,
-.cd-name-input{
-  width:100%;
-  border:1px solid var(--border);
-  outline:none;
-  background:rgba(255,255,255,.06);
-  color:var(--text);
-  border-radius:12px;
-  padding:10px 12px;
-  font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-}
-
-.cd-brand-input{
-  font-size:28px;
-  font-weight:800;
-  letter-spacing:-.04em;
-  line-height:1;
-}
-
-.cd-name-input{
-  font-size:14px;
-  font-weight:500;
-  letter-spacing:-.01em;
 }
 
 .cd-badge{
@@ -323,13 +289,13 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   margin-bottom:4px;
 }
 
-.cd-spec-grid{
+.cd-stat-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:8px;
 }
 
-.cd-spec{
+.cd-stat{
   min-height:64px;
   padding:10px 12px;
   display:flex;
@@ -337,11 +303,11 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   justify-content:flex-start;
 }
 
-.cd-spec .cd-card-label{
+.cd-stat .cd-card-label{
   text-align:right;
 }
 
-.cd-spec-value{
+.cd-stat-value{
   margin-top:4px;
   text-align:right;
   font-size:18px;
@@ -353,11 +319,34 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   text-overflow:ellipsis;
 }
 
-.cd-spec-value.spec-text{
+.cd-mini-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.cd-mini{
+  min-height:64px;
+  padding:10px 12px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+}
+
+.cd-mini .cd-card-label{
+  text-align:right;
+}
+
+.cd-mini-value{
+  margin-top:4px;
+  text-align:right;
   font-size:17px;
-  line-height:1.08;
+  font-weight:700;
   letter-spacing:-.02em;
+  color:var(--text);
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .cd-tobaccos{
@@ -383,12 +372,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   word-break:break-word;
 }
 
-.cd-meta-stack{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
 .cd-origin{
   min-height:54px;
   padding:8px 12px;
@@ -406,10 +389,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   gap:7px;
 }
 
-.cd-origin-row.is-editing{
-  justify-content:stretch;
-}
-
 .cd-origin-value{
   text-align:right;
   font:700 13px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
@@ -424,6 +403,26 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   font-size:18px;
   line-height:1;
   flex:0 0 auto;
+}
+
+.cd-shade{
+  min-height:54px;
+  padding:8px 12px;
+}
+
+.cd-shade .cd-card-label{
+  text-align:right;
+}
+
+.cd-shade-value{
+  margin-top:2px;
+  text-align:right;
+  font:700 13px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.01em;
+  color:var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .cd-accolades{
@@ -450,11 +449,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   text-overflow:ellipsis;
 }
 
-.cd-accolade-empty{
-  color:var(--muted);
-  font:600 12px/1.2 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-}
-
 .cd-actions{
   position:sticky;
   bottom:calc(10px + var(--safe-bottom));
@@ -462,7 +456,7 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
   display:grid;
   grid-template-columns:repeat(4, 1fr);
   gap:8px;
-  margin-top:6px;
+  margin-top:14px;
   padding:10px;
   border-radius:22px;
   background:rgba(20, 30, 52, .58);
@@ -475,10 +469,6 @@ html[data-theme="dark"] .moon-toggle .moon-knob{
 html[data-theme="light"] .cd-actions{
   background:rgba(255,255,255,.72);
   border:1px solid rgba(15,26,44,.08);
-}
-
-.cd-actions.is-editing{
-  grid-template-columns:repeat(4, 1fr);
 }
 
 .cd-action{
@@ -517,57 +507,6 @@ html[data-theme="light"] .cd-action{
   color:var(--text);
 }
 
-.cd-msrp{
-  margin-top:6px;
-  text-align:right;
-  color:var(--muted);
-  font:600 11px/1.1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-}
-
-.cd-msrp-edit{
-  margin-top:2px;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-
-.cd-inline-input,
-.cd-edit-input,
-.cd-edit-textarea{
-  width:100%;
-  border:1px solid var(--border);
-  outline:none;
-  background:rgba(255,255,255,.06);
-  color:var(--text);
-  border-radius:12px;
-  padding:10px 12px;
-  font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-}
-
-.cd-edit-input{
-  font-size:16px;
-  font-weight:600;
-  text-align:right;
-}
-
-.cd-edit-input.is-text{
-  font-size:15px;
-}
-
-.cd-edit-input--origin,
-.cd-edit-input--msrp{
-  text-align:left;
-}
-
-.cd-edit-textarea{
-  resize:vertical;
-  min-height:56px;
-  font-size:15px;
-  line-height:1.3;
-  font-weight:600;
-  text-align:left;
-}
-
 @media (max-width:390px){
   .cd-wrap{ width:calc(100% - 12px); }
 
@@ -588,13 +527,14 @@ html[data-theme="light"] .cd-action{
     min-height:340px;
   }
 
-  .cd-spec-value,
-  .cd-spec-value.spec-text,
+  .cd-stat-value,
+  .cd-mini-value,
   .cd-tobacco-value{
     font-size:16px;
   }
 
-  .cd-origin-value{
+  .cd-origin-value,
+  .cd-shade-value{
     font-size:12px;
   }
 
