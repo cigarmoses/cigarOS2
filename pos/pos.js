@@ -1,16 +1,14 @@
 // /pos/pos.js
-// Global UI helpers (badge + invoice nav) + Contacts wiring + Filter Modal Engine
-// ✅ Compatible with /pos/cart.js (localStorage cart: "cigaros_pos_cart_v3")
-// ✅ Option A: ALL invoice navigation goes to /pos/invoice/ (never invoice.html)
-// ❌ Does NOT create its own cart or invoice popup (old behavior removed)
+// Global UI helpers + Open Tabs counts
 
 (function () {
   "use strict";
 
-  // Must match /pos/cart.js
   const CART_KEY = "cigaros_pos_cart_v3";
   const SHOP_KEY = "cigaros_pos_shop_name";
   const INV_KEY  = "cigaros_pos_invoice_number";
+  const OPEN_TABS_KEY = "cigaros_pos_open_tabs_v1";
+  const OPEN_ORDERS_KEY = "cigaros_pos_open_orders_v1";
 
   const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -30,11 +28,9 @@
   function updateInvoiceBadges() {
     const count = getCartProductCount();
 
-    // Old badge id used in some pages
     const legacy = document.getElementById("receipt-count");
     if (legacy) legacy.textContent = String(count);
 
-    // New universal badge selector (we used this across pages)
     document.querySelectorAll("[data-cart-badge]").forEach((el) => {
       el.textContent = String(count);
       if ("hidden" in el) el.hidden = count <= 0;
@@ -47,7 +43,6 @@
   }
 
   function forceInvoiceLinks() {
-    // Any old invoice.html links -> /pos/invoice/
     document.querySelectorAll("a[href]").forEach((a) => {
       const href = a.getAttribute("href") || "";
       if (href.includes("/pos/invoice.html") || href.endsWith("invoice.html")) {
@@ -57,15 +52,12 @@
   }
 
   function wireInvoiceButtons() {
-    // Any element can become an invoice trigger by adding:
-    // data-invoice-btn="true"
     document.querySelectorAll("[data-invoice-btn]").forEach((el) => {
       if (el.__invoiceBound) return;
       el.__invoiceBound = true;
       el.addEventListener("click", goToInvoice);
     });
 
-    // Also bind common legacy ids/classes if they still exist
     const legacyIds = ["open-receipt", "invoice-btn", "invoiceButton"];
     legacyIds.forEach((id) => {
       const el = document.getElementById(id);
@@ -82,34 +74,76 @@
       });
   }
 
-  // Keep badges synced if cart changes in other tabs/pages
+  function readList(key) {
+    const data = safeJSONParse(localStorage.getItem(key), []);
+    return Array.isArray(data) ? data : [];
+  }
+
+  function isTodayIso(isoString) {
+    if (!isoString) return false;
+    const d = new Date(isoString);
+    if (Number.isNaN(d.getTime())) return false;
+
+    const now = new Date();
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    );
+  }
+
+  function updateOpenTabsCounts() {
+    const todayEl = document.getElementById("openTabsTodayCount");
+    const ordersEl = document.getElementById("openTabsOrdersCount");
+    if (!todayEl && !ordersEl) return;
+
+    const tabs = readList(OPEN_TABS_KEY);
+    const orders = readList(OPEN_ORDERS_KEY);
+
+    const todayCount = tabs.filter((item) => isTodayIso(item.createdAt)).length;
+    const ordersCount = orders.length;
+
+    if (todayEl) todayEl.textContent = String(todayCount);
+    if (ordersEl) ordersEl.textContent = String(ordersCount);
+  }
+
+  function refreshAllPosCounts() {
+    updateInvoiceBadges();
+    updateOpenTabsCounts();
+  }
+
   window.addEventListener("storage", (e) => {
-    if (e.key === CART_KEY) updateInvoiceBadges();
+    if (
+      e.key === CART_KEY ||
+      e.key === OPEN_TABS_KEY ||
+      e.key === OPEN_ORDERS_KEY ||
+      !e.key
+    ) {
+      refreshAllPosCounts();
+    }
   });
 
-  // Our cart.js dispatches this event; listen for it here
-  document.addEventListener("cigaros:cart-changed", updateInvoiceBadges);
-  window.addEventListener("cigaros:cart", updateInvoiceBadges); // back-compat
+  document.addEventListener("cigaros:cart-changed", refreshAllPosCounts);
+  window.addEventListener("cigaros:cart", refreshAllPosCounts);
 
   document.addEventListener("DOMContentLoaded", () => {
     forceInvoiceLinks();
     wireInvoiceButtons();
-    updateInvoiceBadges();
+    refreshAllPosCounts();
   });
 
-  // Expose a tiny helper in case any page wants it
   window.POS = {
     updateInvoiceBadges,
     goToInvoice,
     loadCart,
-    keys: { CART_KEY, SHOP_KEY, INV_KEY },
+    updateOpenTabsCounts,
+    keys: { CART_KEY, SHOP_KEY, INV_KEY, OPEN_TABS_KEY, OPEN_ORDERS_KEY },
   };
 })();
 
 
 // ===========================
 // LOYALTY CONTACTS WIRING
-// (kept, but safe — runs only if elements exist)
 // ===========================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -221,7 +255,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ===========================
 // GLOBAL FILTER MODAL ENGINE
-// (kept as-is, only tiny path safety)
 // ===========================
 
 (function () {
@@ -234,9 +267,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const filterModalBackdrop = document.querySelector(".filter-modal-backdrop");
 
   let currentFilterId = null;
-  let currentFilterItems = []; // [{ value, label, iconSlug?, selected }]
+  let currentFilterItems = [];
   let currentWithIcons = false;
-  let currentIconBasePath = "/img/icons/brands/"; // ✅ per your repo convention
+  let currentIconBasePath = "/img/icons/brands/";
   let onFilterConfirm = null;
 
   function brandSlug(name) {
@@ -260,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentIconBasePath = iconBasePath;
     onFilterConfirm = typeof onConfirm === "function" ? onConfirm : null;
 
-    if (!filterModal) return; // safety if modal HTML isn't on this page
+    if (!filterModal) return;
 
     filterModalTitle.textContent = title || "";
     filterModalSearch.value = "";
@@ -297,7 +330,6 @@ document.addEventListener("DOMContentLoaded", () => {
           "filter-row" + (item.selected ? " filter-row--selected" : "");
         row.dataset.index = index.toString();
 
-        // Optional icon (Brands)
         if (currentWithIcons && item.iconSlug) {
           const iconWrapper = document.createElement("div");
           iconWrapper.className = "filter-row-icon";
@@ -311,18 +343,15 @@ document.addEventListener("DOMContentLoaded", () => {
           row.appendChild(iconWrapper);
         }
 
-        // Checkbox square
         const check = document.createElement("div");
         check.className = "filter-row-check";
         row.appendChild(check);
 
-        // Label
         const label = document.createElement("div");
         label.className = "filter-row-label";
         label.textContent = item.label || "";
         row.appendChild(label);
 
-        // Toggle selection
         row.addEventListener("click", () => {
           item.selected = !item.selected;
           row.classList.toggle("filter-row--selected", item.selected);
