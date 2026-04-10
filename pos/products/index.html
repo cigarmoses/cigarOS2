@@ -1,44 +1,50 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Products</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=34" />
-  <link rel="stylesheet" href="/css/ios26-system.css?v=34" />
-  <link rel="stylesheet" href="/pos/products/products.css?v=34" />
+  <link rel="stylesheet" href="/css/type.css?v=32" />
+  <link rel="stylesheet" href="/css/ios26-system.css?v=32" />
+  <link rel="stylesheet" href="/pos/pos.css?v=32" />
+  <link rel="stylesheet" href="/pos/products/products.css?v=32" />
 </head>
 
 <body class="products-page">
   <main class="products-page-wrap">
-    <section class="products-topbar" aria-label="Page controls">
-      <button id="productsBackBtn" class="products-top-btn products-top-btn--back" type="button" aria-label="Go back">
+    <header class="products-topbar-shell">
+      <button
+        type="button"
+        class="products-back"
+        aria-label="Back"
+        onclick="history.length > 1 ? history.back() : window.location.href='/pos/'"
+      >
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
         </svg>
       </button>
 
       <div class="products-topbar-spacer" aria-hidden="true"></div>
 
       <div class="products-theme-dock">
-        <button id="productsThemeBtn" class="products-theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="false">
-          <span class="products-theme-track" aria-hidden="true"></span>
-          <span class="products-theme-knob" aria-hidden="true">
-            <svg class="products-theme-sun" viewBox="0 0 24 24" aria-hidden="true">
+        <button id="theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="true">
+          <span class="track" aria-hidden="true"></span>
+          <span class="knob" aria-hidden="true">
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
               <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
                 <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
               </g>
             </svg>
-            <svg class="products-theme-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
             </svg>
           </span>
         </button>
       </div>
-    </section>
+    </header>
 
     <section class="products-head">
       <h1 class="products-title">Products</h1>
@@ -88,16 +94,42 @@
         <span>Favorites</span>
       </a>
 
-      <a class="cb-nav-btn cb-nav-btn--cart" href="/pos/invoice/" aria-label="Cart">
+      <a class="cb-nav-btn" href="/pos/invoice/" aria-label="Cart">
         <img class="cb-nav-icon" src="/uxui/bottombar/cart.svg" alt="">
         <span>Cart</span>
-        <span id="productsCartBadge" class="cb-nav-badge" data-cart-badge hidden>0</span>
+        <span class="cb-nav-badge" data-cart-badge hidden>0</span>
       </a>
     </div>
   </nav>
 
-  <script src="/pos/cart.js?v=34" defer></script>
-  <script src="/pos/pos.js?v=34" defer></script>
-  <script src="/pos/products/products.js?v=34" defer></script>
+  <script src="/pos/cart.js?v=32" defer></script>
+  <script src="/pos/pos.js?v=32" defer></script>
+  <script src="/pos/products/products.js?v=32" defer></script>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const toggle = document.getElementById("theme-toggle");
+      const saved = localStorage.getItem("theme") || "dark";
+
+      function applyTheme(theme) {
+        const next = theme === "light" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        if (toggle) toggle.setAttribute("aria-pressed", String(next === "dark"));
+      }
+
+      applyTheme(saved);
+
+      toggle?.addEventListener("click", () => {
+        applyTheme((root.getAttribute("data-theme") || "dark") === "dark" ? "light" : "dark");
+      });
+
+      document.getElementById("productsSearchBtn")?.addEventListener("click", () => {
+        if (typeof window.openGlobalSearch === "function") {
+          window.openGlobalSearch();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
