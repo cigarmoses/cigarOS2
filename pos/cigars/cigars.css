@@ -1,6 +1,8 @@
-/* /pos/cigars/cigars.css
+4) /pos/cigars/cigars.css
+
+Replace your bottom bar section and topbar section with this full file so the cigar main page matches Products and loses the oversized bar:  /* /pos/cigars/cigars.css
    POS Cigars
-   Unified with POS/Products topbar + bottom bar
+   Elite iOS-style layout
 */
 
 :root{
@@ -68,7 +70,7 @@ html[data-theme="light"] .cigars-page{
   --card-border:rgba(15,23,40,.08);
   --pill:rgba(255,255,255,.92);
   --pill-border:rgba(15,23,40,.08);
-  --glass:rgba(13,21,39,.58);
+  --glass:rgba(255,255,255,.66);
   --glass-2:rgba(255,255,255,.82);
   --glass-border:rgba(15,23,40,.08);
   --glass-shadow:0 12px 30px rgba(15,26,44,.10);
@@ -78,7 +80,6 @@ html[data-theme="light"] .cigars-main{
   background:transparent;
 }
 
-/* shared POS-home style topbar */
 .cigars-topbar{
   width:min(430px, calc(100% - 28px));
   margin:0 auto;
@@ -190,10 +191,9 @@ html[data-theme="dark"] #theme-toggle .icon-moon{
 .cigars-main{
   width:min(430px, calc(100% - 28px));
   margin:0 auto;
-  padding:6px 0 120px;
+  padding:6px 0 calc(96px + env(safe-area-inset-bottom));
 }
 
-/* title */
 .cigars-title-row{
   display:flex;
   align-items:flex-end;
@@ -253,7 +253,6 @@ html[data-theme="light"] .cigars-filter-btn{
   transform:scale(.96);
 }
 
-/* search */
 .cigars-search-wrap{
   margin:0 0 18px;
 }
@@ -311,7 +310,6 @@ html[data-theme="light"] #cigars-search-input{
   color:transparent !important;
 }
 
-/* filters applied */
 .cigars-applied-filters{
   margin-top:10px;
   display:flex;
@@ -375,7 +373,6 @@ html[data-theme="light"] .af-clear{
   border-color:rgba(15,26,44,.12);
 }
 
-/* brands grid */
 .brands-grid{
   display:grid;
   grid-template-columns:repeat(3, minmax(0,1fr));
@@ -419,7 +416,6 @@ html[data-theme="light"] .brands-grid .category-name{
   color:#2f3b52;
 }
 
-/* results mode */
 .cigars-results{
   margin-top:14px;
   display:flex;
@@ -553,7 +549,6 @@ html[data-theme="light"] .cigars-empty{
   color:#425066;
 }
 
-/* bottom bar unified with POS/Products */
 .cigars-bottom-bar{
   position:fixed;
   left:0;
@@ -565,26 +560,19 @@ html[data-theme="light"] .cigars-empty{
 }
 
 .cigars-bottom-bar-inner{
-  width:min(430px, 100%);
+  width:min(430px, calc(100% - 0px));
   margin:0 auto;
   display:grid;
   grid-template-columns:repeat(4, 1fr);
   gap:8px;
   padding:10px;
   border-radius:26px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(13,21,39,.58);
-  box-shadow:0 12px 34px rgba(0,0,0,.26);
+  border:1px solid var(--glass-border);
+  background:var(--glass);
+  box-shadow:var(--glass-shadow);
   backdrop-filter:blur(26px) saturate(1.12);
   -webkit-backdrop-filter:blur(26px) saturate(1.12);
-  animation:cbSlideUp .34s ease;
   pointer-events:auto;
-}
-
-html[data-theme="light"] .cigars-bottom-bar-inner{
-  border:1px solid rgba(15,23,40,.08);
-  background:rgba(255,255,255,.72);
-  box-shadow:0 12px 30px rgba(15,26,44,.10);
 }
 
 .cb-nav-btn{
@@ -606,32 +594,24 @@ html[data-theme="light"] .cigars-bottom-bar-inner{
   transition:transform .16s ease, background .16s ease;
   cursor:pointer;
   appearance:none;
-  position:relative;
 }
 
-.cb-nav-icon{
-  width:22px;
-  height:22px;
+.cb-nav-svg{
+  width:22px !important;
+  height:22px !important;
+  min-width:22px !important;
+  min-height:22px !important;
+  max-width:22px !important;
+  max-height:22px !important;
   display:block;
-  object-fit:contain;
+  flex:0 0 22px;
 }
 
-.cb-nav-badge{
-  position:absolute;
-  top:6px;
-  right:12px;
-  min-width:18px;
-  height:18px;
-  padding:0 5px;
-  border-radius:999px;
-  background:#ff3b30;
-  color:#fff;
-  display:grid;
-  place-items:center;
+.cb-nav-btn span{
+  display:block;
   font-size:10px;
-  line-height:1;
   font-weight:800;
-  box-shadow:0 6px 14px rgba(255,59,48,.28);
+  line-height:1.1;
 }
 
 .cb-nav-btn:active{
@@ -646,18 +626,13 @@ html[data-theme="light"] .cb-nav-btn:hover{
   background:rgba(15,23,40,.05);
 }
 
-@keyframes cbSlideUp{
-  from{
-    transform:translateY(34px);
-    opacity:0;
-  }
-  to{
-    transform:translateY(0);
-    opacity:1;
-  }
+/* keep any stray image-based bottom-bar assets from blowing up the nav */
+.cigars-bottom-bar img,
+.cigars-bottom-bar svg:not(.cb-nav-svg){
+  max-width:100%;
+  max-height:100%;
 }
 
-/* filter sheet */
 .fm{
   position:fixed;
   inset:0;
@@ -946,7 +921,6 @@ html[data-theme="light"] .cb-nav-btn:hover{
 
   .cigars-main{
     width:calc(100% - 28px);
-    padding-bottom:118px;
   }
 
   .cigars-title{
@@ -1051,7 +1025,7 @@ html[data-theme="light"] .cb-nav-btn:hover{
 
 @supports (padding:max(0px)){
   .cigars-main{
-    padding-bottom:max(120px,env(safe-area-inset-bottom));
+    padding-bottom:max(96px,env(safe-area-inset-bottom));
   }
 
   .cigars-bottom-bar{
