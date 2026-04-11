@@ -500,6 +500,7 @@
   }
 
   function applyWrapperMode(rows) {
+    if (normalizeBrand(state.brand) !== "padron") return rows;
     if (state.wrapperMode === "all") return rows;
 
     return rows.filter((r) => {
@@ -749,13 +750,18 @@
   });
 
   segSwitch?.addEventListener("click", () => {
+    if (normalizeBrand(state.brand) !== "padron") return;
+
     if (state.wrapperMode === "maduro") setWrapperMode("natural");
     else if (state.wrapperMode === "natural") setWrapperMode("all");
     else setWrapperMode("maduro");
   });
 
   segBtns.forEach((b) => {
-    b.addEventListener("click", () => setWrapperMode(b.dataset.state || "all"));
+    b.addEventListener("click", () => {
+      if (normalizeBrand(state.brand) !== "padron") return;
+      setWrapperMode(b.dataset.state || "all");
+    });
   });
 
   brandSearchBtn?.addEventListener("click", () => {
@@ -783,11 +789,22 @@
     state.brand = (getParam("brand") || "Padron").trim();
     setBrandHeader();
 
+    const isPadron = normalizeBrand(state.brand) === "padron";
+
     if (btnBands) {
-      btnBands.style.display = normalizeBrand(state.brand) === "padron" ? "" : "none";
+      btnBands.style.display = isPadron ? "" : "none";
     }
 
-    if (seg) seg.setAttribute("data-state", state.wrapperMode);
+    if (seg) {
+      if (isPadron) {
+        seg.style.display = "";
+        seg.setAttribute("data-state", state.wrapperMode);
+      } else {
+        seg.style.display = "none";
+        state.wrapperMode = "all";
+      }
+    }
+
     segBtns.forEach((b) => b.classList.toggle("is-on", b.dataset.state === state.wrapperMode));
 
     const res = await fetch(CSV_URL, { cache: "no-store" });
