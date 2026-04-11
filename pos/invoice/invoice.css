@@ -33,7 +33,7 @@ a{
 .inv-wrap{
   width:min(760px, calc(100% - 28px));
   margin:0 auto;
-  padding:18px 0 40px;
+  padding:18px 0 120px;
 }
 
 /* =========================
@@ -410,12 +410,12 @@ a{
 }
 
 .inv-actions{
-  position:sticky;
+  position:relative;
   left:auto;
-  bottom:0;
+  bottom:auto;
   transform:none;
   width:min(760px, calc(100% - 28px));
-  margin:28px auto calc(18px + var(--safe-bottom));
+  margin:20px auto calc(18px + var(--safe-bottom));
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:16px 18px;
@@ -498,7 +498,7 @@ a{
   .inv-wrap{
     width:calc(100% - 24px);
     padding-top:10px;
-    padding-bottom:24px;
+    padding-bottom:120px;
   }
 
   .inv-title{
