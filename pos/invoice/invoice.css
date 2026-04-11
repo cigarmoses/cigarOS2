@@ -20,7 +20,8 @@ body.inv-page{
   min-height:100dvh;
   background:var(--bg);
   color:var(--ink);
-  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  -webkit-font-smoothing:antialiased;
 }
 
 .inv-wrap{
@@ -29,10 +30,173 @@ body.inv-page{
   padding:18px 0 calc(138px + var(--safe-bottom));
 }
 
-.inv-title{
-  font-size:58px;
-  font-weight:900;
+.inv-head{
   text-align:center;
+  padding:10px 0 14px;
+}
+
+.inv-title{
+  font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size:58px;
+  line-height:.9;
+  font-weight:900;
+  letter-spacing:-.05em;
+}
+
+.inv-meta,
+.inv-shop,
+.inv-num{
+  margin-top:6px;
+  font-size:15px;
+  font-weight:700;
+}
+
+.inv-customer-wrap{
+  position:relative;
+  width:min(420px, 100%);
+  margin:0 auto 18px;
+}
+
+.inv-customer{
+  width:100%;
+  height:40px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,40,.20);
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font-weight:700;
+  color:#101828;
+  cursor:pointer;
+}
+
+.inv-customer-label{
+  color:#101828;
+}
+
+.inv-customer-menu{
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(100% + 8px);
+  border-radius:18px;
+  border:1px solid rgba(15,23,40,.10);
+  background:#fff;
+  box-shadow:0 16px 40px rgba(15,26,44,.10);
+  overflow:hidden;
+  z-index:30;
+}
+
+.inv-customer-search-wrap{
+  padding:10px;
+  border-bottom:1px solid var(--hair);
+}
+
+.inv-customer-search{
+  width:100%;
+  height:42px;
+  border-radius:12px;
+  border:1px solid rgba(15,23,40,.10);
+  padding:0 12px;
+  font:600 15px/1 var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.inv-customer-list{
+  max-height:260px;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+.inv-customer-item{
+  width:100%;
+  border:0;
+  background:#fff;
+  text-align:left;
+  padding:12px 14px;
+  border-bottom:1px solid var(--hair);
+  cursor:pointer;
+}
+
+.inv-customer-item:last-child{
+  border-bottom:0;
+}
+
+.inv-customer-name{
+  font-weight:800;
+}
+
+.inv-customer-sub,
+.inv-customer-empty{
+  font-size:13px;
+  color:var(--muted);
+  padding:0 14px 14px;
+}
+
+.inv-items{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  border-top:1px solid var(--hair);
+}
+
+.inv-empty{
+  padding:18px 0;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.inv-row{
+  display:grid;
+  grid-template-columns:168px minmax(0, 1fr);
+  gap:18px;
+  align-items:start;
+  padding:18px 0;
+  border-bottom:1px solid var(--hair);
+}
+
+.inv-thumb{
+  width:168px;
+  height:168px;
+  border-radius:28px;
+  overflow:hidden;
+  background:#d9dee5;
+}
+
+.inv-thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.inv-copy{
+  min-width:0;
+}
+
+.inv-line1{
+  font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size:32px;
+  line-height:1.02;
+  font-weight:800;
+  letter-spacing:-.03em;
+  color:#101828;
+}
+
+.inv-line1-link{
+  color:var(--blue);
+  text-decoration:underline;
+  text-underline-offset:4px;
+}
+
+.inv-line2,
+.inv-line3,
+.inv-line4{
+  font-size:24px;
+  line-height:1.12;
+  color:#666;
+  margin-top:6px;
 }
 
 .inv-meta-row{
@@ -43,28 +207,192 @@ body.inv-page{
   align-items:center;
 }
 
+.inv-msrp-wrap,
+.inv-qty-wrap,
+.inv-total-wrap{
+  min-width:0;
+}
+
+.inv-msrp-wrap{
+  text-align:left;
+}
+
+.inv-qty-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.inv-total-wrap{
+  text-align:right;
+}
+
+.inv-msrp-wrap label,
+.inv-qty-wrap label{
+  display:none;
+}
+
 .inv-msrp{
+  font-size:24px;
+  color:#666;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.inv-qty-wrap::before{
+  content:"QTY";
   font-size:24px;
   color:#666;
   font-weight:700;
 }
 
-.inv-qty-wrap{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:10px;
+.inv-qty-select{
+  border:0;
+  background:transparent;
+  font-size:24px;
+  color:#666;
+  font-weight:700;
+  appearance:auto;
 }
 
 .inv-total{
-  text-align:right;
   font-size:30px;
   color:#666;
   font-weight:700;
+  white-space:nowrap;
 }
 
-/* REMOVE split section spacing */
-.split-invoice,
-.split-note{
-  display:none !important;
+.inv-summary-area{
+  display:flex;
+  justify-content:flex-end;
+  padding-top:18px;
+}
+
+.inv-totals{
+  width:min(320px, 100%);
+  margin-right:22px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.trow,
+.grand{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:22px;
+  color:#666;
+}
+
+.grand{
+  margin-top:4px;
+  font-size:28px;
+  font-weight:900;
+  color:var(--red);
+}
+
+.inv-actions{
+  position:fixed;
+  left:50%;
+  bottom:calc(18px + var(--safe-bottom));
+  transform:translateX(-50%);
+  width:min(760px, calc(100% - 28px));
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  z-index:20;
+}
+
+.inv-action{
+  height:72px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,40,.12);
+  background:#eef1f5;
+  color:#6d7484;
+  font:800 20px/1 var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  letter-spacing:.02em;
+  cursor:pointer;
+}
+
+.inv-action--primary{
+  background:var(--navy);
+  color:#fff;
+}
+
+@media (max-width:760px){
+  .inv-wrap{
+    width:calc(100% - 24px);
+    padding-bottom:calc(130px + var(--safe-bottom));
+  }
+
+  .inv-title{
+    font-size:44px;
+  }
+
+  .inv-row{
+    grid-template-columns:92px minmax(0, 1fr);
+    gap:14px;
+    padding:16px 0;
+  }
+
+  .inv-thumb{
+    width:92px;
+    height:92px;
+    border-radius:20px;
+  }
+
+  .inv-line1{
+    font-size:22px;
+  }
+
+  .inv-line2,
+  .inv-line3,
+  .inv-line4{
+    font-size:18px;
+  }
+
+  .inv-meta-row{
+    grid-template-columns:82px 1fr 82px;
+    gap:10px;
+    margin-top:12px;
+  }
+
+  .inv-msrp,
+  .inv-qty-wrap::before,
+  .inv-qty-select{
+    font-size:18px;
+  }
+
+  .inv-total{
+    font-size:22px;
+  }
+
+  .inv-summary-area{
+    justify-content:flex-end;
+  }
+
+  .inv-totals{
+    width:min(290px, 100%);
+    margin-right:4px;
+  }
+
+  .trow{
+    font-size:18px;
+  }
+
+  .grand{
+    font-size:22px;
+  }
+
+  .inv-actions{
+    width:calc(100% - 24px);
+    gap:12px;
+  }
+
+  .inv-action{
+    height:58px;
+    font-size:16px;
+  }
 }
