@@ -1,104 +1,70 @@
-<!-- /pos/invoice/index.html -->
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="format-detection" content="telephone=no,email=no,address=no" />
-  <title>Invoice</title>
+/* /pos/invoice/invoice.css */
 
-  <link rel="stylesheet" href="/css/type.css?v=16" />
-  <link rel="stylesheet" href="/pos/pos.css?v=16" />
-  <link rel="stylesheet" href="/pos/invoice/invoice.css?v=16" />
-</head>
+:root{
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --bg:#eff2f7;
+  --ink:#101828;
+  --muted:rgba(16,24,40,.58);
+  --muted-2:rgba(16,24,40,.42);
+  --hair:rgba(15,23,40,.10);
+  --blue:#1b8fe6;
+  --navy:#152d63;
+  --red:#e63333;
+  --surface:#ffffff;
+}
 
-<body class="inv-page">
-  <main class="inv-wrap" role="main">
-    <header class="inv-head">
-      <div class="inv-title">INVOICE</div>
-      <div class="inv-meta" id="invMeta">—</div>
-      <div class="inv-shop" id="invShop">Smoke Cigar Lounge</div>
-      <div class="inv-num" id="invNum">INV #—</div>
-    </header>
+*{ box-sizing:border-box; }
+html, body{ margin:0; min-height:100%; }
 
-    <section class="inv-customer-wrap" aria-label="Loyalty profile selector">
-      <button
-        class="inv-customer"
-        id="invCustomerBtn"
-        type="button"
-        aria-expanded="false"
-        aria-controls="invCustomerMenu"
-      >
-        <span class="inv-customer-text">
-          <span class="inv-customer-prefix">Link order to:</span>
-          <span class="inv-customer-value" id="invCustomerLabel">Select Profile</span>
-        </span>
-        <span class="inv-customer-caret" aria-hidden="true"></span>
-      </button>
+body.inv-page{
+  min-height:100dvh;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
 
-      <div class="inv-customer-menu" id="invCustomerMenu" hidden>
-        <div class="inv-customer-search-wrap">
-          <input
-            id="invCustomerSearch"
-            class="inv-customer-search"
-            type="search"
-            placeholder="Search customers"
-            autocomplete="off"
-          />
-        </div>
-        <div class="inv-customer-list" id="invCustomerList"></div>
-      </div>
-    </section>
+.inv-wrap{
+  width:min(760px, calc(100% - 28px));
+  margin:0 auto;
+  padding:18px 0 calc(138px + var(--safe-bottom));
+}
 
-    <section class="inv-items" id="invItems" aria-label="Invoice items"></section>
+.inv-title{
+  font-size:58px;
+  font-weight:900;
+  text-align:center;
+}
 
-    <section class="inv-summary-area" aria-label="Invoice summary">
-      <div class="inv-summary-left">
-        <button class="inv-split-link" id="invSplitLink" type="button">Split invoice by category</button>
-        <div class="inv-split-mode" id="invSplitMode">No split selected</div>
-      </div>
+.inv-meta-row{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:116px 1fr 116px;
+  gap:16px;
+  align-items:center;
+}
 
-      <section class="inv-totals" aria-label="Totals">
-        <div class="trow"><div>Tobacco:</div><div id="tTobacco">$0.00</div></div>
-        <div class="trow"><div>Alcohol:</div><div id="tAlcohol">$0.00</div></div>
-        <div class="trow"><div>Other:</div><div id="tOther">$0.00</div></div>
-        <div class="trow"><div>Subtotal:</div><div id="tSubtotal">$0.00</div></div>
-        <div class="trow"><div>Tax:</div><div id="tTax">$0.00</div></div>
+.inv-msrp{
+  font-size:24px;
+  color:#666;
+  font-weight:700;
+}
 
-        <div class="grand">
-          <div>Total:</div>
-          <div id="tGrand">$0.00</div>
-        </div>
-      </section>
-    </section>
-  </main>
+.inv-qty-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+}
 
-  <footer class="inv-actions">
-    <div class="inv-action-wrap">
-      <button class="inv-action" id="keepTabOpenBtn" type="button">Keep Tab Open</button>
-    </div>
+.inv-total{
+  text-align:right;
+  font-size:30px;
+  color:#666;
+  font-weight:700;
+}
 
-    <div class="inv-action-wrap">
-      <button class="inv-action inv-action--primary" id="cashOutBtn" type="button">Cash Out</button>
-    </div>
-
-    <div class="inv-action-wrap">
-      <button class="inv-action" id="saveToProfileBtn" type="button">Save To Profile</button>
-    </div>
-
-    <div class="inv-action-wrap">
-      <button class="inv-action" id="splitBillBtn" type="button" aria-expanded="false" aria-controls="splitBillPopup">Split Bill</button>
-
-      <div class="split-bill-popup" id="splitBillPopup">
-        <button class="split-bill-option alcohol-separate" type="button" data-split-mode="alcohol-separate">Alcohol Separate</button>
-        <button class="split-bill-option tobacco-separate" type="button" data-split-mode="tobacco-separate">Tobacco Separate</button>
-        <button class="split-bill-option food-separate" type="button" data-split-mode="food-separate">Food Separate</button>
-        <button class="split-bill-option custom-split" type="button" data-split-mode="custom-split">Custom Split</button>
-      </div>
-    </div>
-  </footer>
-
-  <script src="/pos/cart.js?v=16" defer></script>
-  <script src="/pos/invoice/invoice.js?v=16" defer></script>
-</body>
-</html>
+/* REMOVE split section spacing */
+.split-invoice,
+.split-note{
+  display:none !important;
+}
