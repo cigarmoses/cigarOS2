@@ -1,5 +1,9 @@
 /* /pos/invoice/invoice.js
    Invoice page
+   - dedupes cart rows for display
+   - cigar links only
+   - products/alcohol/food are plain text
+   - header format restored
 */
 
 (() => {
@@ -46,9 +50,7 @@
   }
 
   function numberFrom(value, fallback = 0) {
-    if (typeof value === "number" && Number.isFinite(value)) return value;
-    const cleaned = String(value ?? "").replace(/[^0-9.-]/g, "");
-    const n = Number(cleaned);
+    const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
   }
 
@@ -152,41 +154,103 @@
   }
 
   function itemThirdLine(item) {
-    if (isCigarItem(item)) return normStr(item.vitola) || "—";
-    return normStr(item.variation) || "";
+    if (isCigarItem(item)) return normStr(item.brand) || "—";
+    return normStr(item.brand) || "";
   }
 
   function itemFourthLine(item) {
-    if (isCigarItem(item)) {
-      const ring = normStr(item.ring);
-      const length = normStr(item.length);
+    if (isCigarItem(item)) return normStr(item.vitola) ? `Cigars - ${normStr(item.vitola)}` : "Cigars - —";
+    return normStr(item.category) || "";
+  }
 
-      if (ring && length) return `${ring} x ${length}`;
-      if (ring) return ring;
-      if (length) return length;
-      return "";
-    }
+  function itemImage(item) {
+    return normStr(item.image) || "/img/icons/categories/other.png";
+  }
+
+  function itemUnitPrice(item) {
+    const fromMsrp = numberFrom(item.msrp, NaN);
+    if (Number.isFinite(fromMsrp)) return fromMsrp;
+
+    const fromPrice = numberFrom(item.price, NaN);
+    if (Number.isFinite(fromPrice)) return fromPrice;
+
+    const fromCost = numberFrom(item.cost, NaN);
+    if (Number.isFinite(fromCost)) return fromCost;
+
+    return 0;
+  }
+
+  function itemIdentity(item) {
+    const key = normStr(item.key);
+    if (key) return `key:${key.toLowerCase()}`;
+
+    const type = normStr(item.type).toLowerCase();
+    const brand = normStr(item.brand).toLowerCase();
+    const line = normStr(item.line).toLowerCase();
+    const name = normStr(item.name).toLowerCase();
+    const vitola = normStr(item.vitola).toLowerCase();
+    const category = normStr(item.category).toLowerCase();
+    const msrp = String(itemUnitPrice(item));
+
+    return [type, brand, line, name, vitola, category, msrp].join("|");
+  }
+
+  function collapseCart(cart) {
+    const map = new Map();
+
+    cart.forEach((item) => {
+      const qty = Math.max(0, Math.round(numberFrom(item.qty, 0)));
+      if (!qty) return;
+
+      const id = itemIdentity(item);
+
+      if (!map.has(id)) {
+        map.set(id, {
+          ...item,
+          qty
+        });
+        return;
+      }
+
+      const existing = map.get(id);
+      existing.qty += qty;
+
+      if (!normStr(existing.image) && normStr(item.image)) existing.image = item.image;
+      if (!normStr(existing.url) && normStr(item.url)) existing.url = item.url;
+      if (!normStr(existing.key) && normStr(item.key)) existing.key = item.key;
+      if (!normStr(existing.brand) && normStr(item.brand)) existing.brand = item.brand;
+      if (!normStr(existing.line) && normStr(item.line)) existing.line = item.line;
+      if (!normStr(existing.vitola) && normStr(item.vitola)) existing.vitola = item.vitola;
+      if (!numberFrom(existing.msrp, 0) && numberFrom(item.msrp, 0)) existing.msrp = item.msrp;
+    });
+
+    return Array.from(map.values());
+  }
+
+  function buildCigarHref(item) {
+    if (!isCigarItem(item)) return "";
+
+    const key = normStr(item.key);
+    const id = normStr(item.id);
+
+    if (key) return `/pos/cigars/cigar.html?key=${encodeURIComponent(key)}`;
+    if (id) return `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
 
     return "";
   }
 
-  function itemUnitPrice(item) {
-    return numberFrom(
-      item.msrp ??
-      item.price ??
-      item.unitPrice ??
-      item.unit_price ??
-      item.cigar_cost ??
-      item.cost,
-      0
-    );
-  }
-
   function buildLineOne(item) {
     const text = itemLineName(item);
-    const url = isCigarItem(item) ? toAbsUrl(item.url || "") : "";
 
-    if (!url) {
+    if (!isCigarItem(item)) {
+      const div = document.createElement("div");
+      div.className = "inv-line1";
+      div.textContent = text;
+      return div;
+    }
+
+    const href = buildCigarHref(item);
+    if (!href) {
       const div = document.createElement("div");
       div.className = "inv-line1";
       div.textContent = text;
@@ -195,9 +259,7 @@
 
     const a = document.createElement("a");
     a.className = "inv-line1 inv-line1-link";
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
+    a.href = href;
     a.textContent = text;
     return a;
   }
@@ -224,7 +286,6 @@
           </div>
 
           <div class="inv-qty-wrap">
-            <label>QTY</label>
             <select class="inv-qty-select" aria-label="Quantity"></select>
           </div>
 
@@ -236,7 +297,7 @@
     `;
 
     const img = row.querySelector(".inv-thumb img");
-    img.src = normStr(item.image) || "/img/icons/categories/other.png";
+    img.src = itemImage(item);
     img.onerror = () => {
       img.onerror = null;
       img.src = "/img/icons/categories/other.png";
@@ -245,16 +306,13 @@
     const line1 = buildLineOne(item);
     row.querySelector(".inv-copy").prepend(line1);
 
-    row.querySelector(".inv-line2").textContent = itemBrand(item);
+    row.querySelector(".inv-line2").textContent = itemThirdLine(item);
 
-    const line3 = `${itemCategory(item)}${itemThirdLine(item) ? ` - ${itemThirdLine(item)}` : ""}`;
-    const line4 = itemFourthLine(item);
-
+    const line3 = itemFourthLine(item);
     row.querySelector(".inv-line3").textContent = line3;
     row.querySelector(".inv-line3").style.display = line3 ? "" : "none";
 
-    row.querySelector(".inv-line4").textContent = line4;
-    row.querySelector(".inv-line4").style.display = line4 ? "" : "none";
+    row.querySelector(".inv-line4").style.display = "none";
 
     const select = row.querySelector(".inv-qty-select");
     for (let i = 0; i <= 24; i++) {
@@ -266,23 +324,33 @@
     }
 
     select.addEventListener("change", () => {
-      setQty(item.key, Number(select.value));
+      setQty(item, Number(select.value));
     });
 
     return row;
   }
 
-  function setQty(itemKey, newQty) {
+  function setQty(targetItem, newQty) {
     const cart = loadCart();
-    const idx = cart.findIndex((x) => x.key === itemKey);
-    if (idx === -1) return;
-
+    const id = itemIdentity(targetItem);
     const q = Math.max(0, Math.round(numberFrom(newQty, 0)));
 
-    if (q <= 0) {
-      cart.splice(idx, 1);
-    } else {
-      cart[idx].qty = q;
+    let matched = false;
+
+    for (let i = cart.length - 1; i >= 0; i--) {
+      if (itemIdentity(cart[i]) !== id) continue;
+
+      matched = true;
+
+      if (q <= 0) {
+        cart.splice(i, 1);
+      } else {
+        cart[i].qty = q;
+      }
+    }
+
+    if (!matched && q > 0) {
+      cart.push({ ...targetItem, qty: q });
     }
 
     saveCart(cart);
@@ -503,7 +571,8 @@
   }
 
   function render() {
-    const cart = loadCart();
+    const rawCart = loadCart();
+    const cart = collapseCart(rawCart);
     renderHeader();
     renderItems(cart);
     renderTotals(cart);
