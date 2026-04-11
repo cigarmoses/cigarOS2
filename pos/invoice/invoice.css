@@ -27,7 +27,7 @@ body.inv-page{
 .inv-wrap{
   width:min(760px, calc(100% - 28px));
   margin:0 auto;
-  padding:18px 0 calc(138px + var(--safe-bottom));
+  padding:18px 0 calc(230px + var(--safe-bottom));
 }
 
 .inv-head{
@@ -41,14 +41,34 @@ body.inv-page{
   line-height:.9;
   font-weight:900;
   letter-spacing:-.05em;
+  color:#0d1630;
 }
 
-.inv-meta,
-.inv-shop,
-.inv-num{
-  margin-top:6px;
+.inv-meta{
+  margin-top:10px;
   font-size:15px;
-  font-weight:700;
+  line-height:1.18;
+  font-weight:900;
+  letter-spacing:-.02em;
+  color:#0d1630;
+}
+
+.inv-shop{
+  margin-top:8px;
+  font-size:15px;
+  line-height:1.15;
+  font-weight:900;
+  letter-spacing:-.02em;
+  color:#0d1630;
+}
+
+.inv-num{
+  margin-top:8px;
+  font-size:15px;
+  line-height:1.15;
+  font-weight:900;
+  letter-spacing:-.02em;
+  color:#0d1630;
 }
 
 .inv-customer-wrap{
@@ -67,13 +87,15 @@ body.inv-page{
   align-items:center;
   justify-content:center;
   gap:10px;
-  font-weight:700;
+  font-weight:800;
   color:#101828;
   cursor:pointer;
 }
 
 .inv-customer-label{
   color:#101828;
+  font-size:13px;
+  line-height:1;
 }
 
 .inv-customer-menu{
@@ -131,7 +153,7 @@ body.inv-page{
 .inv-customer-empty{
   font-size:13px;
   color:var(--muted);
-  padding:0 14px 14px;
+  padding:10px 14px;
 }
 
 .inv-items{
@@ -202,79 +224,82 @@ body.inv-page{
 .inv-meta-row{
   margin-top:18px;
   display:grid;
-  grid-template-columns:116px 1fr 116px;
+  grid-template-columns:124px 1fr 132px;
   gap:16px;
   align-items:center;
 }
 
-.inv-msrp-wrap,
 .inv-qty-wrap,
+.inv-msrp-wrap,
 .inv-total-wrap{
-  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
 }
 
-.inv-msrp-wrap{
+.inv-qty-wrap label,
+.inv-msrp-wrap label{
+  display:none;
+}
+
+.inv-msrp{
+  font-size:22px;
+  line-height:1;
+  color:#6d7484;
   text-align:left;
+  font-weight:700;
+  letter-spacing:-.02em;
 }
 
 .inv-qty-wrap{
-  display:flex;
+  flex-direction:row;
   align-items:center;
   justify-content:center;
   gap:10px;
 }
 
-.inv-total-wrap{
-  text-align:right;
-}
-
-.inv-msrp-wrap label,
-.inv-qty-wrap label{
-  display:none;
-}
-
-.inv-msrp{
-  font-size:24px;
-  color:#666;
-  font-weight:700;
-  white-space:nowrap;
-}
-
 .inv-qty-wrap::before{
   content:"QTY";
-  font-size:24px;
-  color:#666;
+  font-size:22px;
+  line-height:1;
+  color:#6d7484;
   font-weight:700;
+  letter-spacing:-.02em;
 }
 
 .inv-qty-select{
   border:0;
   background:transparent;
-  font-size:24px;
-  color:#666;
+  font-size:22px;
+  line-height:1;
+  color:#6d7484;
   font-weight:700;
   appearance:auto;
 }
 
 .inv-total{
-  font-size:30px;
-  color:#666;
+  font-size:22px;
+  line-height:1;
+  color:#6d7484;
+  text-align:right;
   font-weight:700;
-  white-space:nowrap;
+  letter-spacing:-.02em;
+  padding-right:6px;
 }
 
 .inv-summary-area{
   display:flex;
   justify-content:flex-end;
-  padding-top:18px;
+  padding-top:22px;
+  padding-bottom:12px;
 }
 
 .inv-totals{
   width:min(320px, 100%);
-  margin-right:22px;
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:8px;
+  margin-right:10px;
 }
 
 .trow,
@@ -287,7 +312,7 @@ body.inv-page{
 }
 
 .grand{
-  margin-top:4px;
+  margin-top:8px;
   font-size:28px;
   font-weight:900;
   color:var(--red);
@@ -324,11 +349,17 @@ body.inv-page{
 @media (max-width:760px){
   .inv-wrap{
     width:calc(100% - 24px);
-    padding-bottom:calc(130px + var(--safe-bottom));
+    padding-bottom:calc(250px + var(--safe-bottom));
   }
 
   .inv-title{
     font-size:44px;
+  }
+
+  .inv-meta,
+  .inv-shop,
+  .inv-num{
+    font-size:13px;
   }
 
   .inv-row{
@@ -354,28 +385,30 @@ body.inv-page{
   }
 
   .inv-meta-row{
-    grid-template-columns:82px 1fr 82px;
+    grid-template-columns:82px 1fr 94px;
     gap:10px;
     margin-top:12px;
   }
 
   .inv-msrp,
   .inv-qty-wrap::before,
-  .inv-qty-select{
+  .inv-qty-select,
+  .inv-total{
     font-size:18px;
   }
 
   .inv-total{
-    font-size:22px;
+    padding-right:2px;
   }
 
   .inv-summary-area{
     justify-content:flex-end;
+    padding-top:18px;
   }
 
   .inv-totals{
     width:min(290px, 100%);
-    margin-right:4px;
+    margin-right:6px;
   }
 
   .trow{
