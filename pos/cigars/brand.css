@@ -50,107 +50,109 @@ html[data-theme="light"] body.brand-page{
   top:0;
   z-index:20;
   display:grid;
-  grid-template-columns:44px 1fr 66px;
+  grid-template-columns:24px 1fr 48px;
   align-items:center;
   width:min(430px, calc(100% - 28px));
   margin:0 auto;
-  padding:14px 0 10px;
-  padding-top:calc(14px + env(safe-area-inset-top, 0px));
+  padding:10px 0 8px;
+  padding-top:calc(10px + env(safe-area-inset-top, 0px));
 }
 
-.icon-btn{
-  width:44px;
-  height:44px;
-  border-radius:14px;
-  border:1px solid transparent;
-  background:transparent;
-  color:var(--ink);
+.brand-back{
+  width:24px;
+  height:24px;
+  border:0;
+  padding:0;
   display:grid;
   place-items:center;
+  background:transparent;
+  color:var(--ink);
   cursor:pointer;
-  padding:0;
-  appearance:none;
   -webkit-tap-highlight-color:transparent;
+  box-shadow:none;
+  border-radius:0;
+  appearance:none;
 }
 
-.icon-btn svg{
-  width:22px;
-  height:22px;
+.brand-back svg{
+  width:24px;
+  height:24px;
   display:block;
 }
 
-.theme-dock{
+.brand-topbar-spacer{
+  width:24px;
+  height:24px;
+}
+
+.brand-theme-dock{
   display:flex;
   align-items:center;
   justify-content:flex-end;
 }
 
-.brand-topbar-spacer{
-  width:44px;
-  height:44px;
-}
-
-.moon-toggle{
+#theme-toggle{
   position:relative;
-  width:66px;
-  height:23px;
+  width:48px;
+  height:28px;
+  border:1px solid rgba(255,255,255,.10);
   padding:0;
-  border:1px solid var(--glassBorder);
   border-radius:999px;
-  background:rgba(255,255,255,.12);
-  box-shadow:var(--shadowSoft);
+  background:rgba(255,255,255,.10);
   cursor:pointer;
-  appearance:none;
   -webkit-tap-highlight-color:transparent;
+  box-shadow:0 10px 24px rgba(0,0,0,.18);
+  appearance:none;
 }
 
-html[data-theme="light"] .moon-toggle{
-  background:rgba(0,0,0,.08);
-  border-color:rgba(0,0,0,.10);
+html[data-theme="light"] #theme-toggle{
+  border:1px solid rgba(15,26,44,.08);
+  background:rgba(255,255,255,.96);
+  box-shadow:0 10px 24px rgba(15,26,44,.06);
 }
 
-.moon-track,
-.moon-track svg,
-.moon-track img,
-.moon-icon,
-.moon-toggle__icon,
-.moon-knob svg,
-.moon-knob img{
-  display:none !important;
-}
-
-.moon-knob{
+#theme-toggle .track{
   position:absolute;
-  top:50%;
+  inset:0;
+  border-radius:999px;
+}
+
+#theme-toggle .knob{
+  position:absolute;
+  top:2px;
   left:2px;
   width:22px;
   height:22px;
-  background:transparent;
-  box-shadow:none;
-  transition:transform .22s ease;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  border-radius:999px;
+  background:#fff;
+  color:#0b1323;
+  box-shadow:0 3px 10px rgba(0,0,0,.16);
+  transition:transform .25s ease;
+  display:grid;
+  place-items:center;
 }
 
-html[data-theme="dark"] .moon-knob{
-  transform:translateY(-50%) translateX(0);
+#theme-toggle .icon-sun,
+#theme-toggle .icon-moon{
+  position:absolute;
+  width:12px;
+  height:12px;
 }
 
-html[data-theme="light"] .moon-knob{
-  transform:translateY(-50%) translateX(40px);
+#theme-toggle .icon-moon{
+  display:none;
 }
 
-.moon-knob::before{
-  content:"";
-  width:18px;
-  height:18px;
+html[data-theme="dark"] #theme-toggle .knob{
+  transform:translateX(20px);
+}
+
+html[data-theme="dark"] #theme-toggle .icon-sun{
+  display:none;
+}
+
+html[data-theme="dark"] #theme-toggle .icon-moon{
   display:block;
-  background:url("/img/icons/moon.svg") center/contain no-repeat;
-}
-
-html[data-theme="light"] .moon-knob::before{
-  background:url("/img/icons/sun.svg") center/contain no-repeat;
 }
 
 .brand-main{
@@ -878,29 +880,29 @@ html[data-theme="light"] .brand-row{
     padding-top:calc(10px + env(safe-area-inset-top, 0px));
   }
 
-  .icon-btn,
+  .brand-back,
   .brand-topbar-spacer{
     width:22px;
     height:22px;
   }
 
-  .icon-btn svg{
+  .brand-back svg{
     width:22px;
     height:22px;
   }
 
-  .moon-toggle{
+  #theme-toggle{
     width:46px;
     height:27px;
   }
 
-  .moon-knob{
+  #theme-toggle .knob{
     width:21px;
     height:21px;
   }
 
-  html[data-theme="light"] .moon-knob{
-    transform:translateY(-50%) translateX(19px);
+  html[data-theme="dark"] #theme-toggle .knob{
+    transform:translateX(19px);
   }
 }
 
