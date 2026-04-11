@@ -14,28 +14,18 @@
 
 <body class="brand-page">
   <header class="brand-topbar">
-    <button id="back-btn" class="brand-back" type="button" aria-label="Back">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+    <button id="back-btn" class="icon-btn" type="button" aria-label="Back">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
         <path d="M15.5 19.5L8 12l7.5-7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
 
     <div class="brand-topbar-spacer" aria-hidden="true"></div>
 
-    <div class="brand-theme-dock">
-      <button id="theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="true">
-        <span class="track" aria-hidden="true"></span>
-        <span class="knob" aria-hidden="true">
-          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
-            <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
-            </g>
-          </svg>
-          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
-          </svg>
-        </span>
+    <div class="theme-dock">
+      <button id="theme-toggle" class="moon-toggle" type="button" aria-label="Toggle theme" aria-pressed="true">
+        <span class="moon-track" aria-hidden="true"></span>
+        <span class="moon-knob" aria-hidden="true"></span>
       </button>
     </div>
   </header>
@@ -61,7 +51,7 @@
         <button id="btn-filters" class="pill-btn" type="button">Filters</button>
         <button id="btn-bands" class="pill-btn" type="button">Bands</button>
 
-        <div id="wrapper-seg" class="seg" data-state="maduro">
+        <div id="wrapper-seg" class="seg" data-state="all">
           <button class="seg-btn" type="button" data-state="maduro">Maduro</button>
           <button id="wrapper-switch" class="seg-switch" type="button" aria-label="Toggle wrapper"></button>
           <button class="seg-btn" type="button" data-state="natural">Natural</button>
@@ -75,24 +65,33 @@
   <nav class="cigars-bottom-bar" aria-label="Primary">
     <div class="cigars-bottom-bar-inner">
       <button type="button" class="cb-nav-btn" id="brandSearchBtn" aria-label="Search">
-        <img class="cb-nav-icon" src="/uxui/bottombar/search.svg" alt="">
+        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
         <span>Search</span>
       </button>
 
       <a class="cb-nav-btn" href="/" aria-label="Home">
-        <img class="cb-nav-icon" src="/uxui/bottombar/home.svg" alt="">
+        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
         <span>Home</span>
       </a>
 
       <a class="cb-nav-btn" href="/pos/favorites/" aria-label="Favorites">
-        <img class="cb-nav-icon" src="/uxui/bottombar/favorites.svg" alt="">
+        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 21s-6.7-4.35-9.33-7.02C.7 12.02 1.1 8.5 4 7.1c1.9-.9 4.1-.3 5.3 1.2 1.2-1.5 3.4-2.1 5.3-1.2 2.9 1.4 3.3 4.92 1.33 6.88C18.7 16.65 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
         <span>Favorites</span>
       </a>
 
       <a class="cb-nav-btn" href="/pos/invoice/" aria-label="Cart">
-        <img class="cb-nav-icon" src="/uxui/bottombar/cart.svg" alt="">
+        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 6h14l-1.7 6.8a2 2 0 0 1-1.94 1.52H10.1a2 2 0 0 1-1.95-1.57L6.1 4.5H3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="10" cy="18.5" r="1.6" fill="currentColor"/>
+          <circle cx="17.5" cy="18.5" r="1.6" fill="currentColor"/>
+        </svg>
         <span>Cart</span>
-        <span class="cb-nav-badge" data-cart-badge hidden>0</span>
       </a>
     </div>
   </nav>
@@ -113,7 +112,6 @@
   </section>
 
   <script defer src="/pos/cart.js?v=34"></script>
-  <script defer src="/pos/pos.js?v=34"></script>
   <script defer src="/pos/cigars/brand.js?v=34"></script>
   <script>
     (() => {
@@ -125,13 +123,14 @@
         const next = theme === "light" ? "light" : "dark";
         root.setAttribute("data-theme", next);
         localStorage.setItem("theme", next);
-        if (toggle) toggle.setAttribute("aria-pressed", String(next === "dark"));
+        toggle?.setAttribute("aria-pressed", String(next === "dark"));
       }
 
       applyTheme(saved);
 
       toggle?.addEventListener("click", () => {
-        applyTheme((root.getAttribute("data-theme") || "dark") === "dark" ? "light" : "dark");
+        const current = root.getAttribute("data-theme") || "dark";
+        applyTheme(current === "dark" ? "light" : "dark");
       });
     })();
   </script>
