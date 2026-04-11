@@ -1,9 +1,10 @@
 /* /pos/invoice/invoice.js
    Invoice page
-   - dedupes cart rows for display
-   - cigar links only
-   - products/alcohol/food are plain text
-   - header format restored
+   - 3-section invoice layout
+   - loyalty profile dropdown
+   - cigar + product row rendering
+   - split bill popup state
+   - keep tab open / save to profile hooks
 */
 
 (() => {
@@ -17,7 +18,13 @@
   const CONTACTS_URL = "/loyalty/loyalty-contacts.json";
   const SELECTED_CUSTOMER_KEY = "cigaros_pos_invoice_customer";
 
+  const SPLIT_MODE_KEY = "cigaros_pos_invoice_split_mode";
+  const OPEN_TABS_KEY = "cigaros_pos_open_tabs_v1";
+  const OPEN_ORDERS_KEY = "cigaros_pos_open_orders_v1";
+  const CUSTOMER_ORDER_HISTORY_KEY = "cigaros_pos_customer_order_history_v1";
+
   const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
   const itemsEl = $("#invItems");
   const metaEl = $("#invMeta");
@@ -29,6 +36,16 @@
   const customerMenu = $("#invCustomerMenu");
   const customerList = $("#invCustomerList");
   const customerSearch = $("#invCustomerSearch");
+
+  const splitLink = $("#invSplitLink");
+  const splitModeEl = $("#invSplitMode");
+  const splitBillBtn = $("#splitBillBtn");
+  const splitBillPopup = $("#splitBillPopup");
+  const splitBillOptions = $$(".split-bill-option");
+
+  const keepTabOpenBtn = $("#keepTabOpenBtn");
+  const saveToProfileBtn = $("#saveToProfileBtn");
+  const cashOutBtn = $("#cashOutBtn");
 
   const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
@@ -50,8 +67,24 @@
   }
 
   function numberFrom(value, fallback = 0) {
-    const n = Number(value);
+    if (value == null || value === "") return fallback;
+
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    const cleaned = String(value).replace(/[$,]/g, "").trim();
+    const n = Number(cleaned);
     return Number.isFinite(n) ? n : fallback;
+  }
+
+  function readList(key) {
+    const data = safeJSONParse(localStorage.getItem(key), []);
+    return Array.isArray(data) ? data : [];
+  }
+
+  function writeList(key, value) {
+    localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
   }
 
   function toAbsUrl(url) {
@@ -84,21 +117,12 @@
     }
   }
 
-  function nowStamp() {
+  function formatHeaderStamp() {
     const d = new Date();
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const day = days[d.getDay()];
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    const yyyy = d.getFullYear();
-
-    let h = d.getHours();
-    const ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12;
-    if (h === 0) h = 12;
-
-    const min = String(d.getMinutes()).padStart(2, "0");
-    return `${day} ${mm}-${dd}-${yyyy} ${h}:${min} ${ampm}`;
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${m}-${day}-${yy}`;
   }
 
   function getShopName() {
@@ -138,119 +162,66 @@
   }
 
   function itemBrand(item) {
-    return normStr(item.brand) || "—";
+    return normStr(item.brand);
   }
 
   function itemLineName(item) {
-    const line = normStr(item.line);
-    const name = normStr(item.name);
+    if (isCigarItem(item)) {
+      const line = normStr(item.line);
+      const name = normStr(item.name);
 
-    if (line && name) {
-      if (name.toLowerCase().startsWith(line.toLowerCase())) return name;
-      return `${line} ${name}`;
+      if (line && name) {
+        if (name.toLowerCase().startsWith(line.toLowerCase())) return name;
+        return `${line} ${name}`;
+      }
+
+      return name || line || "Cigar";
     }
 
-    return name || line || "Item";
+    return normStr(item.name) || normStr(item.line) || "Item";
   }
 
-  function itemThirdLine(item) {
-    if (isCigarItem(item)) return normStr(item.brand) || "—";
-    return normStr(item.brand) || "";
+  function itemLineTwo(item) {
+    if (isCigarItem(item)) {
+      return itemBrand(item) || "—";
+    }
+
+    return itemBrand(item) || itemCategory(item) || "—";
   }
 
-  function itemFourthLine(item) {
-    if (isCigarItem(item)) return normStr(item.vitola) ? `Cigars - ${normStr(item.vitola)}` : "Cigars - —";
-    return normStr(item.category) || "";
-  }
+  function itemLineThree(item) {
+    if (isCigarItem(item)) {
+      const vitola = normStr(item.vitola);
+      return `Cigars - ${vitola || "—"}`;
+    }
 
-  function itemImage(item) {
-    return normStr(item.image) || "/img/icons/categories/other.png";
+    const category = itemCategory(item);
+    const variation = normStr(item.variation);
+
+    if (variation) return `${category} - ${variation}`;
+    return category || "";
   }
 
   function itemUnitPrice(item) {
-    const fromMsrp = numberFrom(item.msrp, NaN);
-    if (Number.isFinite(fromMsrp)) return fromMsrp;
-
-    const fromPrice = numberFrom(item.price, NaN);
-    if (Number.isFinite(fromPrice)) return fromPrice;
-
-    const fromCost = numberFrom(item.cost, NaN);
-    if (Number.isFinite(fromCost)) return fromCost;
-
-    return 0;
-  }
-
-  function itemIdentity(item) {
-    const key = normStr(item.key);
-    if (key) return `key:${key.toLowerCase()}`;
-
-    const type = normStr(item.type).toLowerCase();
-    const brand = normStr(item.brand).toLowerCase();
-    const line = normStr(item.line).toLowerCase();
-    const name = normStr(item.name).toLowerCase();
-    const vitola = normStr(item.vitola).toLowerCase();
-    const category = normStr(item.category).toLowerCase();
-    const msrp = String(itemUnitPrice(item));
-
-    return [type, brand, line, name, vitola, category, msrp].join("|");
-  }
-
-  function collapseCart(cart) {
-    const map = new Map();
-
-    cart.forEach((item) => {
-      const qty = Math.max(0, Math.round(numberFrom(item.qty, 0)));
-      if (!qty) return;
-
-      const id = itemIdentity(item);
-
-      if (!map.has(id)) {
-        map.set(id, {
-          ...item,
-          qty
-        });
-        return;
-      }
-
-      const existing = map.get(id);
-      existing.qty += qty;
-
-      if (!normStr(existing.image) && normStr(item.image)) existing.image = item.image;
-      if (!normStr(existing.url) && normStr(item.url)) existing.url = item.url;
-      if (!normStr(existing.key) && normStr(item.key)) existing.key = item.key;
-      if (!normStr(existing.brand) && normStr(item.brand)) existing.brand = item.brand;
-      if (!normStr(existing.line) && normStr(item.line)) existing.line = item.line;
-      if (!normStr(existing.vitola) && normStr(item.vitola)) existing.vitola = item.vitola;
-      if (!numberFrom(existing.msrp, 0) && numberFrom(item.msrp, 0)) existing.msrp = item.msrp;
-    });
-
-    return Array.from(map.values());
-  }
-
-  function buildCigarHref(item) {
-    if (!isCigarItem(item)) return "";
-
-    const key = normStr(item.key);
-    const id = normStr(item.id);
-
-    if (key) return `/pos/cigars/cigar.html?key=${encodeURIComponent(key)}`;
-    if (id) return `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
-
-    return "";
+    return numberFrom(
+      item.msrp ??
+      item.MSRP ??
+      item.price ??
+      item.Price ??
+      item.unitPrice ??
+      item.unit_price ??
+      item.retailPrice ??
+      item.retail_price ??
+      0,
+      0
+    );
   }
 
   function buildLineOne(item) {
     const text = itemLineName(item);
+    const url = toAbsUrl(item.url || item.link || "");
 
-    if (!isCigarItem(item)) {
-      const div = document.createElement("div");
-      div.className = "inv-line1";
-      div.textContent = text;
-      return div;
-    }
-
-    const href = buildCigarHref(item);
-    if (!href) {
+    if (!isCigarItem(item) || !url) {
       const div = document.createElement("div");
       div.className = "inv-line1";
       div.textContent = text;
@@ -259,7 +230,9 @@
 
     const a = document.createElement("a");
     a.className = "inv-line1 inv-line1-link";
-    a.href = href;
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
     a.textContent = text;
     return a;
   }
@@ -282,10 +255,13 @@
 
         <div class="inv-meta-row">
           <div class="inv-msrp-wrap">
+            <label>MSRP</label>
             <div class="inv-msrp">${fmt(unit)}</div>
           </div>
 
           <div class="inv-qty-wrap">
+            <span class="inv-qty-label">QTY</span>
+            <label>QTY</label>
             <select class="inv-qty-select" aria-label="Quantity"></select>
           </div>
 
@@ -297,7 +273,7 @@
     `;
 
     const img = row.querySelector(".inv-thumb img");
-    img.src = itemImage(item);
+    img.src = normStr(item.image) || "/img/icons/categories/other.png";
     img.onerror = () => {
       img.onerror = null;
       img.src = "/img/icons/categories/other.png";
@@ -306,13 +282,12 @@
     const line1 = buildLineOne(item);
     row.querySelector(".inv-copy").prepend(line1);
 
-    row.querySelector(".inv-line2").textContent = itemThirdLine(item);
+    const line2 = itemLineTwo(item);
+    const line3 = itemLineThree(item);
 
-    const line3 = itemFourthLine(item);
-    row.querySelector(".inv-line3").textContent = line3;
+    row.querySelector(".inv-line2").textContent = line2 || "—";
+    row.querySelector(".inv-line3").textContent = line3 || "";
     row.querySelector(".inv-line3").style.display = line3 ? "" : "none";
-
-    row.querySelector(".inv-line4").style.display = "none";
 
     const select = row.querySelector(".inv-qty-select");
     for (let i = 0; i <= 24; i++) {
@@ -324,33 +299,23 @@
     }
 
     select.addEventListener("change", () => {
-      setQty(item, Number(select.value));
+      setQty(item.key, Number(select.value));
     });
 
     return row;
   }
 
-  function setQty(targetItem, newQty) {
+  function setQty(itemKey, newQty) {
     const cart = loadCart();
-    const id = itemIdentity(targetItem);
+    const idx = cart.findIndex((x) => x.key === itemKey);
+    if (idx === -1) return;
+
     const q = Math.max(0, Math.round(numberFrom(newQty, 0)));
 
-    let matched = false;
-
-    for (let i = cart.length - 1; i >= 0; i--) {
-      if (itemIdentity(cart[i]) !== id) continue;
-
-      matched = true;
-
-      if (q <= 0) {
-        cart.splice(i, 1);
-      } else {
-        cart[i].qty = q;
-      }
-    }
-
-    if (!matched && q > 0) {
-      cart.push({ ...targetItem, qty: q });
+    if (q <= 0) {
+      cart.splice(idx, 1);
+    } else {
+      cart[idx].qty = q;
     }
 
     saveCart(cart);
@@ -385,7 +350,7 @@
   }
 
   function renderHeader() {
-    if (metaEl) metaEl.textContent = nowStamp();
+    if (metaEl) metaEl.textContent = formatHeaderStamp();
     if (shopEl) shopEl.textContent = getShopName();
     if (numEl) numEl.textContent = `INV #${getInvoiceNumber()}`;
   }
@@ -503,9 +468,7 @@
   function renderSelectedCustomer() {
     const selected = loadSelectedCustomer();
     if (customerLabel) {
-      customerLabel.textContent = selected?.name
-        ? `Link order to: ${selected.name}`
-        : "Link order to: Select Profile";
+      customerLabel.textContent = selected?.name || "Select Profile";
     }
   }
 
@@ -570,13 +533,212 @@
     });
   }
 
+  function getSplitMode() {
+    return normStr(localStorage.getItem(SPLIT_MODE_KEY));
+  }
+
+  function setSplitMode(mode) {
+    localStorage.setItem(SPLIT_MODE_KEY, normStr(mode));
+    renderSplitMode();
+  }
+
+  function splitModeLabel(mode) {
+    switch (mode) {
+      case "alcohol-separate":
+        return "Alcohol Separate selected";
+      case "tobacco-separate":
+        return "Tobacco Separate selected";
+      case "food-separate":
+        return "Food Separate selected";
+      case "custom-split":
+        return "Custom Split selected";
+      default:
+        return "No split selected";
+    }
+  }
+
+  function renderSplitMode() {
+    const mode = getSplitMode();
+
+    if (splitModeEl) {
+      splitModeEl.textContent = splitModeLabel(mode);
+    }
+
+    splitBillOptions.forEach((btn) => {
+      btn.classList.toggle("is-selected", btn.dataset.splitMode === mode);
+    });
+  }
+
+  function openSplitBillPopup() {
+    if (!splitBillPopup || !splitBillBtn) return;
+    splitBillPopup.classList.add("is-open");
+    splitBillBtn.setAttribute("aria-expanded", "true");
+  }
+
+  function closeSplitBillPopup() {
+    if (!splitBillPopup || !splitBillBtn) return;
+    splitBillPopup.classList.remove("is-open");
+    splitBillBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleSplitBillPopup() {
+    if (!splitBillPopup) return;
+    if (splitBillPopup.classList.contains("is-open")) {
+      closeSplitBillPopup();
+    } else {
+      openSplitBillPopup();
+    }
+  }
+
+  function setupSplitBillPopup() {
+    splitBillBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleSplitBillPopup();
+    });
+
+    splitLink?.addEventListener("click", () => {
+      openSplitBillPopup();
+    });
+
+    splitBillOptions.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const mode = normStr(btn.dataset.splitMode);
+        setSplitMode(mode);
+        closeSplitBillPopup();
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (
+        splitBillPopup?.classList.contains("is-open") &&
+        !e.target.closest(".inv-action-wrap") &&
+        !e.target.closest(".inv-summary-left")
+      ) {
+        closeSplitBillPopup();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeSplitBillPopup();
+    });
+
+    renderSplitMode();
+  }
+
+  function buildOrderSnapshot(cart) {
+    const totals = computeBuckets(cart);
+    const selectedCustomer = loadSelectedCustomer();
+
+    return {
+      id: `ord_${Date.now()}`,
+      invoiceNumber: getInvoiceNumber(),
+      createdAt: new Date().toISOString(),
+      createdAtLabel: formatHeaderStamp(),
+      shopName: getShopName(),
+      customer: selectedCustomer || null,
+      splitMode: getSplitMode() || "",
+      items: cart.map((item) => ({
+        ...item,
+        qty: Math.max(0, Math.round(numberFrom(item.qty, 0))),
+        msrp: itemUnitPrice(item)
+      })),
+      totals
+    };
+  }
+
+  function handleKeepTabOpen() {
+    const cart = loadCart();
+    if (!cart.length) {
+      window.alert("There are no items on this invoice yet.");
+      return;
+    }
+
+    const note = window.prompt("Add a note for this open tab:");
+    if (note == null) return;
+
+    const tabs = readList(OPEN_TABS_KEY);
+    const nextNumber = tabs.length + 1;
+    const order = buildOrderSnapshot(cart);
+
+    tabs.unshift({
+      id: `tab_${Date.now()}`,
+      tabNumber: nextNumber,
+      label: `Open Tab #${nextNumber}${normStr(note) ? ` — ${normStr(note)}` : ""}`,
+      note: normStr(note),
+      status: "open-tab",
+      ...order
+    });
+
+    writeList(OPEN_TABS_KEY, tabs);
+    window.alert("Tab saved to Open Tabs.");
+  }
+
+  function handleSaveToProfile() {
+    const cart = loadCart();
+    if (!cart.length) {
+      window.alert("There are no items on this invoice yet.");
+      return;
+    }
+
+    const customer = loadSelectedCustomer();
+    if (!customer) {
+      window.alert("Select a loyalty profile first.");
+      return;
+    }
+
+    const order = buildOrderSnapshot(cart);
+
+    const openOrders = readList(OPEN_ORDERS_KEY);
+    openOrders.unshift({
+      id: `open_${Date.now()}`,
+      status: "open-order",
+      ...order
+    });
+    writeList(OPEN_ORDERS_KEY, openOrders);
+
+    const history = safeJSONParse(localStorage.getItem(CUSTOMER_ORDER_HISTORY_KEY), {});
+    const list = Array.isArray(history[customer.id]) ? history[customer.id] : [];
+    list.unshift(order);
+    history[customer.id] = list;
+    localStorage.setItem(CUSTOMER_ORDER_HISTORY_KEY, JSON.stringify(history));
+
+    window.alert(`Order saved to ${customer.name}'s profile and Open Orders.`);
+  }
+
+  function handleCashOut() {
+    const cart = loadCart();
+    if (!cart.length) {
+      window.alert("There are no items on this invoice yet.");
+      return;
+    }
+
+    document.dispatchEvent(
+      new CustomEvent("cigaros:invoice-cashout", {
+        detail: {
+          invoiceNumber: getInvoiceNumber(),
+          cart,
+          totals: computeBuckets(cart),
+          splitMode: getSplitMode()
+        }
+      })
+    );
+
+    window.alert("Cash Out is ready to connect to your payment flow next.");
+  }
+
+  function setupActionButtons() {
+    keepTabOpenBtn?.addEventListener("click", handleKeepTabOpen);
+    saveToProfileBtn?.addEventListener("click", handleSaveToProfile);
+    cashOutBtn?.addEventListener("click", handleCashOut);
+  }
+
   function render() {
-    const rawCart = loadCart();
-    const cart = collapseCart(rawCart);
+    const cart = loadCart();
     renderHeader();
     renderItems(cart);
     renderTotals(cart);
     renderSelectedCustomer();
+    renderSplitMode();
   }
 
   function handleStorage(e) {
@@ -586,7 +748,8 @@
       e.key === CART_KEY ||
       SHOP_KEYS.includes(e.key) ||
       e.key === INV_KEY ||
-      e.key === SELECTED_CUSTOMER_KEY
+      e.key === SELECTED_CUSTOMER_KEY ||
+      e.key === SPLIT_MODE_KEY
     ) {
       render();
     }
@@ -602,6 +765,8 @@
 
   document.addEventListener("DOMContentLoaded", async () => {
     setupCustomerMenu();
+    setupSplitBillPopup();
+    setupActionButtons();
     render();
     await loadCustomers();
   });
