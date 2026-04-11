@@ -6,9 +6,9 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Cigars</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=21" />
-  <link rel="stylesheet" href="/pos/pos.css?v=22" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=31" />
+  <link rel="stylesheet" href="/css/type.css?v=34" />
+  <link rel="stylesheet" href="/pos/pos.css?v=34" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=34" />
 </head>
 
 <body class="cigars-page">
@@ -17,7 +17,7 @@
       type="button"
       class="cigars-back"
       aria-label="Back"
-      onclick="history.length > 1 ? history.back() : window.location.href='/'"
+      onclick="history.length > 1 ? history.back() : window.location.href='/pos/'"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -84,39 +84,31 @@
   <nav class="cigars-bottom-bar" aria-label="Primary">
     <div class="cigars-bottom-bar-inner">
       <button type="button" class="cb-nav-btn" id="cbSearchBtn" aria-label="Search">
-        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-        </svg>
+        <img class="cb-nav-icon" src="/uxui/bottombar/search.svg" alt="">
         <span>Search</span>
       </button>
 
       <a class="cb-nav-btn" href="/" aria-label="Home">
-        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img class="cb-nav-icon" src="/uxui/bottombar/home.svg" alt="">
         <span>Home</span>
       </a>
 
       <a class="cb-nav-btn" href="/pos/favorites/" aria-label="Favorites">
-        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 21s-6.7-4.35-9.33-7.02C.7 12.02 1.1 8.5 4 7.1c1.9-.9 4.1-.3 5.3 1.2 1.2-1.5 3.4-2.1 5.3-1.2 2.9 1.4 3.3 4.92 1.33 6.88C18.7 16.65 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img class="cb-nav-icon" src="/uxui/bottombar/favorites.svg" alt="">
         <span>Favorites</span>
       </a>
 
       <a class="cb-nav-btn" href="/pos/invoice/" aria-label="Cart">
-        <svg class="cb-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M7 6h14l-1.7 6.8a2 2 0 0 1-1.94 1.52H10.1a2 2 0 0 1-1.95-1.57L6.1 4.5H3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="10" cy="18.5" r="1.6" fill="currentColor"/>
-          <circle cx="17.5" cy="18.5" r="1.6" fill="currentColor"/>
-        </svg>
+        <img class="cb-nav-icon" src="/uxui/bottombar/cart.svg" alt="">
         <span>Cart</span>
+        <span class="cb-nav-badge" data-cart-badge hidden>0</span>
       </a>
     </div>
   </nav>
 
-  <script src="/pos/cart.js?v=30" defer></script>
-  <script src="/pos/cigars/cigars.js?v=22" defer></script>
+  <script src="/pos/cart.js?v=34" defer></script>
+  <script src="/pos/pos.js?v=34" defer></script>
+  <script src="/pos/cigars/cigars.js?v=34" defer></script>
   <script>
     (() => {
       const root = document.documentElement;
