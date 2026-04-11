@@ -1,70 +1,32 @@
-/* /pos/invoice/invoice.css */
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invoice</title>
 
-:root{
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --bg:#eff2f7;
-  --ink:#101828;
-  --muted:rgba(16,24,40,.58);
-  --muted-2:rgba(16,24,40,.42);
-  --hair:rgba(15,23,40,.10);
-  --blue:#1b8fe6;
-  --navy:#152d63;
-  --red:#e63333;
-  --surface:#ffffff;
-}
+<link rel="stylesheet" href="/pos/invoice/invoice.css" />
+</head>
 
-*{ box-sizing:border-box; }
-html, body{ margin:0; min-height:100%; }
+<body class="inv-page">
 
-body.inv-page{
-  min-height:100dvh;
-  background:var(--bg);
-  color:var(--ink);
-  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
+<main class="inv-wrap">
 
-.inv-wrap{
-  width:min(760px, calc(100% - 28px));
-  margin:0 auto;
-  padding:18px 0 calc(138px + var(--safe-bottom));
-}
+  <h1 class="inv-title">INVOICE</h1>
+  <div id="invMeta"></div>
+  <div id="invShop"></div>
+  <div id="invNum"></div>
 
-.inv-title{
-  font-size:58px;
-  font-weight:900;
-  text-align:center;
-}
+  <section id="invItems"></section>
 
-.inv-meta-row{
-  margin-top:18px;
-  display:grid;
-  grid-template-columns:116px 1fr 116px;
-  gap:16px;
-  align-items:center;
-}
+  <section class="inv-summary-area">
+    <div>Tobacco: <span id="tTobacco">$0.00</span></div>
+    <div>Alcohol: <span id="tAlcohol">$0.00</span></div>
+    <div>Total: <span id="tGrand">$0.00</span></div>
+  </section>
 
-.inv-msrp{
-  font-size:24px;
-  color:#666;
-  font-weight:700;
-}
+</main>
 
-.inv-qty-wrap{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:10px;
-}
-
-.inv-total{
-  text-align:right;
-  font-size:30px;
-  color:#666;
-  font-weight:700;
-}
-
-/* REMOVE split section spacing */
-.split-invoice,
-.split-note{
-  display:none !important;
-}
+<script src="/pos/invoice/invoice.js"></script>
+</body>
+</html>
