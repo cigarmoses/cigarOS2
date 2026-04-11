@@ -1,10 +1,5 @@
 /* /pos/cigars/brand.js
    Brand page
-   - Loads cigar rows from Google Sheets CSV
-   - Brand-specific filtering
-   - Bands sheet
-   - Bottom-sheet filters
-   - Cart qty steppers
 */
 
 (() => {
@@ -189,12 +184,25 @@
     return getField(r, ["vitola", "style", "vitola_name"]);
   }
 
+  function resolvePriceRaw(r) {
+    return getField(r, [
+      "msrp",
+      "price",
+      "cost",
+      "cigar_cost",
+      "cigar_price",
+      "single_price",
+      "retail",
+      "unit_price"
+    ]);
+  }
+
   function resolvePrice(r) {
-    return fmtMoney(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
+    return fmtMoney(resolvePriceRaw(r));
   }
 
   function resolvePriceNumber(r) {
-    return parseMoneyValue(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
+    return parseMoneyValue(resolvePriceRaw(r));
   }
 
   function resolveRing(r) {
