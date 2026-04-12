@@ -43,8 +43,11 @@
   writeTheme(readTheme());
 
   function getParam(name) {
-    try { return new URL(window.location.href).searchParams.get(name) || ""; }
-    catch { return ""; }
+    try {
+      return new URL(window.location.href).searchParams.get(name) || "";
+    } catch {
+      return "";
+    }
   }
 
   function escapeHTML(s) {
@@ -56,7 +59,9 @@
       .replaceAll("'", "&#039;");
   }
 
-  function escapeAttr(s) { return escapeHTML(s); }
+  function escapeAttr(s) {
+    return escapeHTML(s);
+  }
 
   function parseCSV(text) {
     const rows = [];
@@ -78,14 +83,14 @@
         continue;
       }
 
-      if (!inQuotes && ch === ',') {
+      if (!inQuotes && ch === ",") {
         row.push(field);
         field = "";
         continue;
       }
 
-      if (!inQuotes && (ch === '\n' || ch === '\r')) {
-        if (ch === '\r' && next === '\n') i += 1;
+      if (!inQuotes && (ch === "\n" || ch === "\r")) {
+        if (ch === "\r" && next === "\n") i += 1;
         row.push(field);
         if (row.some((cell) => String(cell || "").trim() !== "")) rows.push(row);
         row = [];
@@ -130,7 +135,9 @@
 
   function getField(rec, keys) {
     for (const key of keys) {
-      if (rec && rec[key] != null && String(rec[key]).trim() !== "") return String(rec[key]).trim();
+      if (rec && rec[key] != null && String(rec[key]).trim() !== "") {
+        return String(rec[key]).trim();
+      }
     }
     return "";
   }
@@ -142,6 +149,17 @@
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "")
+      .trim();
+  }
+
+  function normalizeText(v) {
+    return String(v || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/["']/g, "")
+      .replace(/\s+/g, " ")
       .trim();
   }
 
@@ -235,6 +253,14 @@
     return slugify(parts.join(" "));
   }
 
+  function buildLegacyId(rec) {
+    return [
+      normalizeText(getBrand(rec)),
+      normalizeText(displayName(rec)),
+      normalizeText(getVitola(rec))
+    ].join("|");
+  }
+
   function readSet(key) {
     try {
       const raw = JSON.parse(localStorage.getItem(key) || "[]");
@@ -245,7 +271,9 @@
   }
 
   function writeSet(key, set) {
-    try { localStorage.setItem(key, JSON.stringify(Array.from(set))); } catch {}
+    try {
+      localStorage.setItem(key, JSON.stringify(Array.from(set)));
+    } catch {}
   }
 
   function flagForCountry(country) {
@@ -357,6 +385,7 @@
       const year = getField(row, ["Year", "year"]);
       const rank = getField(row, ["Rank", "rank"]);
       if (!media && !year && !rank) return;
+
       const sig = [media, year, rank].join("|");
       if (seen.has(sig)) return;
       seen.add(sig);
@@ -393,12 +422,14 @@
 
     document.title = `${brand} ${name}`.trim();
 
-    const accoladesMarkup = accolades.length ? `
+    const accoladesMarkup = `
       <div class="cd-card cd-accolades">
         <div class="cd-card-label">Accolades</div>
-        <div class="cd-accolade-list">${renderAccolades(accolades)}</div>
+        <div class="cd-accolade-list">
+          ${accolades.length ? renderAccolades(accolades) : `<div class="cd-accolade-line cd-accolade-line--empty">—</div>`}
+        </div>
       </div>
-    ` : "";
+    `;
 
     shell.innerHTML = `
       <div class="cd-head">
@@ -406,12 +437,16 @@
           <div class="cd-brand">${escapeHTML(brand)}</div>
           <div class="cd-name">${escapeHTML(name)}</div>
         </div>
-        ${brandImg ? `<img class="cd-badge" src="${escapeAttr(brandImg)}" alt="${escapeAttr(brand)}" loading="lazy" decoding="async">` : `<div class="cd-badge-placeholder">Brand</div>`}
+        ${brandImg
+          ? `<img class="cd-badge" src="${escapeAttr(brandImg)}" alt="${escapeAttr(brand)}" loading="lazy" decoding="async">`
+          : `<div class="cd-badge-placeholder">Brand</div>`}
       </div>
 
       <div class="cd-grid">
         <div class="cd-left">
-          ${cigarImg ? `<img class="cd-stick" src="${escapeAttr(cigarImg)}" alt="${escapeAttr(name)}" loading="lazy" decoding="async">` : `<div class="cd-stick-placeholder">No cigar image</div>`}
+          ${cigarImg
+            ? `<img class="cd-stick" src="${escapeAttr(cigarImg)}" alt="${escapeAttr(name)}" loading="lazy" decoding="async">`
+            : `<div class="cd-stick-placeholder">No cigar image</div>`}
         </div>
 
         <div class="cd-right">
@@ -489,9 +524,9 @@
     const connectBtn = $("#btnConnect", shell);
 
     function syncButtonState() {
-      favoriteBtn?.classList.toggle("is-on", favoriteSet.has(key));
-      wishlistBtn?.classList.toggle("is-on", wishlistSet.has(key));
-      compareBtn?.classList.toggle("is-on", compareSet.has(key));
+      favoriteBtn?.classList.toggle("is-on", key && favoriteSet.has(key));
+      wishlistBtn?.classList.toggle("is-on", key && wishlistSet.has(key));
+      compareBtn?.classList.toggle("is-on", key && compareSet.has(key));
     }
 
     favoriteBtn?.addEventListener("click", () => {
@@ -526,6 +561,25 @@
     shell.innerHTML = `<div class="cd-loading">Cigar not found.</div>`;
   }
 
+  function findRecord(records, wantedKey, wantedSlug) {
+    let rec = null;
+
+    if (wantedKey) {
+      rec = records.find((row) => getKey(row) === wantedKey) || null;
+    }
+
+    if (!rec && wantedSlug) {
+      rec = records.find((row) => makeSlug(row) === wantedSlug) || null;
+    }
+
+    if (!rec && wantedKey && wantedKey.includes("|")) {
+      const normalizedWanted = normalizeText(wantedKey);
+      rec = records.find((row) => normalizeText(buildLegacyId(row)) === normalizedWanted) || null;
+    }
+
+    return rec;
+  }
+
   async function boot() {
     const wantedKey = getParam("key") || getParam("id");
     const wantedSlug = getParam("slug");
@@ -533,12 +587,10 @@
     try {
       const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
       const text = await res.text();
       const records = rowsToObjects(parseCSV(text));
-
-      let rec = null;
-      if (wantedKey) rec = records.find((row) => getKey(row) === wantedKey) || null;
-      if (!rec && wantedSlug) rec = records.find((row) => makeSlug(row) === wantedSlug) || null;
+      const rec = findRecord(records, wantedKey, wantedSlug);
 
       if (!rec) {
         showNotFound();
