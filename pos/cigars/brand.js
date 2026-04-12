@@ -178,7 +178,20 @@
   }
 
   function resolveId(r) {
-    return getField(r, ["key", "cigar_id", "id", "row_id", "name", "cigar", "title"]);
+    return getField(r, [
+      "key",
+      "cigar_id",
+      "id",
+      "row_id",
+      "slug",
+      "name",
+      "cigar",
+      "title"
+    ]);
+  }
+
+  function resolveDetailKey(r) {
+    return getField(r, ["key", "cigar_id", "id", "row_id", "slug"]);
   }
 
   function resolveName(r) {
@@ -310,9 +323,9 @@
   }
 
   function openDetail(r) {
-    const id = resolveId(r);
-    if (!id) return;
-    window.location.href = `/pos/cigars/cigar.html?id=${encodeURIComponent(id)}`;
+    const key = resolveDetailKey(r);
+    if (!key) return;
+    window.location.href = `/pos/cigars/cigar.html?key=${encodeURIComponent(key)}`;
   }
 
   let filterModal = null;
@@ -567,11 +580,12 @@
   }
 
   function buildCartItem(r) {
+    const detailKey = resolveDetailKey(r);
     return {
-      key: resolveId(r) || `${normalizeBrand(state.brand)}|${resolveName(r)}|${resolveVitola(r)}`,
+      key: detailKey || `${normalizeBrand(state.brand)}|${resolveName(r)}|${resolveVitola(r)}`,
       type: "cigar",
       category: "Cigars",
-      id: resolveId(r) || resolveName(r),
+      id: detailKey || resolveId(r) || resolveName(r),
       brand: state.brand,
       line: "",
       name: resolveName(r),
@@ -587,7 +601,9 @@
       strength: resolveStrength(r),
       msrp: resolvePriceNumber(r),
       image: normalizeAssetPath(resolveImage(r)) || brandIconPath(),
-      url: resolveUrl(r) || `/pos/cigars/cigar.html?id=${encodeURIComponent(resolveId(r) || "")}`
+      url: detailKey
+        ? `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`
+        : (resolveUrl(r) || "")
     };
   }
 
