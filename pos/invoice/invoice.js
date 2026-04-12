@@ -97,6 +97,24 @@
     }
   }
 
+  function buildCigarDetailUrl(item) {
+    if (!isCigarItem(item)) return "";
+
+    const key = normStr(item.key || item.id);
+    if (!key) return "";
+
+    return `/pos/cigars/cigar.html?key=${encodeURIComponent(key)}`;
+  }
+
+  function itemLinkUrl(item) {
+    if (isCigarItem(item)) {
+      const detailUrl = buildCigarDetailUrl(item);
+      if (detailUrl) return detailUrl;
+    }
+
+    return normStr(item.url || item.link || "");
+  }
+
   function loadCart() {
     const cart = safeJSONParse(localStorage.getItem(CART_KEY), []);
     return Array.isArray(cart) ? cart : [];
@@ -219,7 +237,7 @@
 
   function buildLineOne(item) {
     const text = itemLineName(item);
-    const url = toAbsUrl(item.url || item.link || "");
+    const url = toAbsUrl(itemLinkUrl(item));
 
     if (!isCigarItem(item) || !url) {
       const div = document.createElement("div");
