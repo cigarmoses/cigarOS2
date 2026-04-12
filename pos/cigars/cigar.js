@@ -32,7 +32,9 @@
     htmlEl.setAttribute("data-theme", theme);
     themeToggle?.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
     THEME_KEYS.forEach((key) => {
-      try { localStorage.setItem(key, theme); } catch {}
+      try {
+        localStorage.setItem(key, theme);
+      } catch {}
     });
   }
 
@@ -50,8 +52,8 @@
     }
   }
 
-  function escapeHTML(s) {
-    return String(s ?? "")
+  function escapeHTML(value) {
+    return String(value ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -59,8 +61,8 @@
       .replaceAll("'", "&#039;");
   }
 
-  function escapeAttr(s) {
-    return escapeHTML(s);
+  function escapeAttr(value) {
+    return escapeHTML(value);
   }
 
   function parseCSV(text) {
@@ -244,10 +246,6 @@
     return combined || cigar || line || "Cigar";
   }
 
-  function displayVitola(rec) {
-    return getVitola(rec) || getShape(rec) || "—";
-  }
-
   function makeSlug(rec) {
     const parts = [displayBrand(rec), getLine(rec), getName(rec), getVitola(rec), getKey(rec)].filter(Boolean);
     return slugify(parts.join(" "));
@@ -396,8 +394,13 @@
   }
 
   function renderAccolades(accolades) {
+    if (!accolades.length) return `<div class="cd-accolade-line cd-accolade-line--empty">—</div>`;
+
     return accolades.map((item) => {
-      const line = [item.media, item.year, item.rank ? `#${item.rank}` : ""].filter(Boolean).join(" • ");
+      const line = [item.rank ? `#${item.rank}` : "", item.year ? `of ${item.year}` : "", item.media || ""]
+        .filter(Boolean)
+        .join(" - ")
+        .replace(" - of ", " of ");
       return `<div class="cd-accolade-line">${escapeHTML(line || "—")}</div>`;
     }).join("");
   }
@@ -409,7 +412,8 @@
     const ring = getRing(rec) || "—";
     const length = getLength(rec) || "—";
     const strength = getStrength(rec) || "—";
-    const vitola = displayVitola(rec);
+    const vitola = getVitola(rec) || "—";
+    const shape = getShape(rec) || "—";
     const wrapper = getWrapper(rec) || "—";
     const binder = getBinder(rec) || "—";
     const filler = getFiller(rec) || "—";
@@ -421,15 +425,6 @@
     const refLink = getField(rec, ["Reference link", "reference_link", "url", "link", "href"]);
 
     document.title = `${brand} ${name}`.trim();
-
-    const accoladesMarkup = `
-      <div class="cd-card cd-accolades">
-        <div class="cd-card-label">Accolades</div>
-        <div class="cd-accolade-list">
-          ${accolades.length ? renderAccolades(accolades) : `<div class="cd-accolade-line cd-accolade-line--empty">—</div>`}
-        </div>
-      </div>
-    `;
 
     shell.innerHTML = `
       <div class="cd-head">
@@ -463,12 +458,20 @@
 
           <div class="cd-mini-grid">
             <div class="cd-card cd-mini">
+              <div class="cd-card-label">Vitola</div>
+              <div class="cd-mini-value">${escapeHTML(vitola)}</div>
+            </div>
+            <div class="cd-card cd-mini">
+              <div class="cd-card-label">Wrapper Shade</div>
+              <div class="cd-mini-value">${escapeHTML(shade)}</div>
+            </div>
+            <div class="cd-card cd-mini">
               <div class="cd-card-label">Strength</div>
               <div class="cd-mini-value">${escapeHTML(strength)}</div>
             </div>
             <div class="cd-card cd-mini">
-              <div class="cd-card-label">Vitola</div>
-              <div class="cd-mini-value">${escapeHTML(vitola)}</div>
+              <div class="cd-card-label">Shape</div>
+              <div class="cd-mini-value">${escapeHTML(shape)}</div>
             </div>
           </div>
 
@@ -485,31 +488,23 @@
               <div class="cd-card-label">Filler</div>
               <div class="cd-tobacco-value wrap-text">${escapeHTML(filler)}</div>
             </div>
-          </div>
 
-          <div class="cd-origin-row-wrap">
-            <div class="cd-card cd-origin">
-              <div class="cd-card-label">Origin</div>
-              <div class="cd-origin-row">
-                <div class="cd-origin-value">${escapeHTML(origin)}</div>
-                ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
-              </div>
-            </div>
-
-            <div class="cd-card cd-shade">
-              <div class="cd-card-label">Wrapper Shade</div>
-              <div class="cd-shade-value">${escapeHTML(shade)}</div>
+            <div class="cd-origin-inline">
+              <span class="cd-origin-inline-text">Rolled in ${escapeHTML(origin)}</span>
+              ${flag ? `<span class="cd-flag" aria-hidden="true">${flag}</span>` : ``}
             </div>
           </div>
 
-          ${accoladesMarkup}
+          <div class="cd-accolades-inline">
+            ${renderAccolades(accolades)}
+          </div>
         </div>
       </div>
 
       <div class="cd-actions">
         <button class="cd-action" type="button" id="btnCompare">Compare</button>
-        <button class="cd-action" type="button" id="btnFavorite">+ Favorites</button>
-        <button class="cd-action" type="button" id="btnWishlist">+ Wishlist</button>
+        <button class="cd-action" type="button" id="btnFavorite">Favorite</button>
+        <button class="cd-action" type="button" id="btnWishlist">Wishlist</button>
         <button class="cd-action cd-action--primary" type="button" id="btnConnect">Edit</button>
       </div>
     `;
@@ -524,9 +519,9 @@
     const connectBtn = $("#btnConnect", shell);
 
     function syncButtonState() {
-      favoriteBtn?.classList.toggle("is-on", key && favoriteSet.has(key));
-      wishlistBtn?.classList.toggle("is-on", key && wishlistSet.has(key));
-      compareBtn?.classList.toggle("is-on", key && compareSet.has(key));
+      favoriteBtn?.classList.toggle("is-on", !!key && favoriteSet.has(key));
+      wishlistBtn?.classList.toggle("is-on", !!key && wishlistSet.has(key));
+      compareBtn?.classList.toggle("is-on", !!key && compareSet.has(key));
     }
 
     favoriteBtn?.addEventListener("click", () => {
