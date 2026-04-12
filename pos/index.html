@@ -461,21 +461,40 @@
   background:transparent;
   text-decoration:none;
   color:var(--text);
+
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:5px;
+  gap:6px;
 
+  /* ✅ FORCE CONSISTENT FONT */
   font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-
   font-size:10px;
   font-weight:800;
-  letter-spacing:.02em;
+  letter-spacing:.04em;
   text-transform:uppercase;
+  line-height:1;
+
+  /* ✅ FIX BUTTON DEFAULT STYLING (this was your issue) */
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+
   transition:transform .16s ease, background .16s ease;
   cursor:pointer;
   position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ✅ FORCE TEXT TO MATCH ACROSS BUTTON + LINKS */
+.pos-bottom-btn span{
+  font-family:inherit;
+  font-size:inherit;
+  font-weight:inherit;
+  letter-spacing:inherit;
+  text-transform:inherit;
+  line-height:1;
 }
 
     .pos-bottom-btn:active{
@@ -554,7 +573,9 @@
       .pos-bottom-btn{
         min-height:52px;
         font-size:9px;
-      }
+        letter-spacing:.035em;
+        gap:5px;
+        }
     }
   </style>
 </head>
