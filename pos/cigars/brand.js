@@ -5,6 +5,7 @@
    - Bands sheet
    - Bottom-sheet filters
    - Cart qty steppers
+   - Vitola/shape SVG icons in brand filters
 */
 
 (() => {
@@ -297,6 +298,35 @@
     return brandIconPath();
   }
 
+  function getCigarFilterIcon(value = "", group = "") {
+    const v = String(value || "").toLowerCase().trim();
+
+    if (group === "vitola") {
+      if (v.includes("double corona")) return "/uxui/cigaricons/doublecorona.svg";
+      if (v.includes("petit corona")) return "/uxui/cigaricons/petitcorona.svg";
+      if (v.includes("corona gorda")) return "/uxui/cigaricons/corona.svg";
+      if (v.includes("lancero")) return "/uxui/cigaricons/lonsdale.svg";
+      if (v.includes("churchill")) return "/uxui/cigaricons/churchill.svg";
+      if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
+      if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
+      if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("lonsdale")) return "/uxui/cigaricons/lonsdale.svg";
+      if (v.includes("gordo")) return "/uxui/cigaricons/gordo.svg";
+      if (v.includes("robusto")) return "/uxui/cigaricons/robusto.svg";
+      if (v.includes("toro")) return "/uxui/cigaricons/toro.svg";
+      if (v.includes("corona")) return "/uxui/cigaricons/corona.svg";
+    }
+
+    if (group === "shape") {
+      if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
+      if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("parejo")) return "/uxui/cigaricons/robusto.svg";
+      if (v.includes("figurado")) return "/uxui/cigaricons/perfecto.svg";
+    }
+
+    return "";
+  }
+
   function setBrandHeader() {
     if (brandTitle) brandTitle.textContent = state.brand || "Brand";
     if (!brandIconImg) return;
@@ -417,15 +447,18 @@
 
       values.forEach((value) => {
         const row = document.createElement("button");
+        const isSelected = state.filters[activeKey].has(value);
+        const icon = getCigarFilterIcon(value, activeKey);
+
         row.type = "button";
-        row.className = `fm__row${state.filters[activeKey].has(value) ? " is-selected" : ""}`;
+        row.className = `fm__row${isSelected ? " is-selected" : ""}`;
         row.innerHTML = `
-          <span class="fm__cb${state.filters[activeKey].has(value) ? " is-checked" : ""}">
+          <span class="fm__cb${isSelected ? " is-checked" : ""}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </span>
-          <span class="fm__icon"></span>
+          <span class="fm__icon">${icon ? `<img src="${esc(icon)}" alt="">` : ""}</span>
           <span class="fm__label">${esc(value)}</span>
         `;
 
