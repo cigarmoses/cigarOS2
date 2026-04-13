@@ -1,48 +1,19 @@
 (() => {
   "use strict";
 
-  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+  const SHEET_CSV_URL =
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+
   const FAVORITES_KEY = "cigaros_favorite_keys";
-  const WISHLIST_KEY = "cigaros_wishlist_keys";
   const COMPARE_KEY = "cigaros_compare_keys";
-  const THEME_KEYS = ["cigaros_theme", "theme"];
 
   const $ = (sel, root = document) => root.querySelector(sel);
 
-  const shell = $("#cdCard");
+  const card = $("#cdCard");
   const loading = $("#cdLoading");
   const backBtn = $("#cdBack");
   const themeToggle = $("#theme-toggle");
-  const htmlEl = document.documentElement;
-
-  backBtn?.addEventListener("click", () => {
-    if (history.length > 1) history.back();
-    else window.location.href = "/pos/cigars/";
-  });
-
-  function readTheme() {
-    for (const key of THEME_KEYS) {
-      const value = localStorage.getItem(key);
-      if (value === "light" || value === "dark") return value;
-    }
-    return htmlEl.getAttribute("data-theme") === "light" ? "light" : "dark";
-  }
-
-  function writeTheme(theme) {
-    htmlEl.setAttribute("data-theme", theme);
-    themeToggle?.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
-    THEME_KEYS.forEach((key) => {
-      try {
-        localStorage.setItem(key, theme);
-      } catch {}
-    });
-  }
-
-  themeToggle?.addEventListener("click", () => {
-    writeTheme(readTheme() === "dark" ? "light" : "dark");
-  });
-
-  writeTheme(readTheme());
+  const rootEl = document.documentElement;
 
   function getParam(name) {
     try {
@@ -52,8 +23,58 @@
     }
   }
 
-  function escapeHTML(value) {
-    return String(value ?? "")
+  function getSavedTheme() {
+    return localStorage.getItem("theme") || rootEl.getAttribute("data-theme") || "dark";
+  }
+
+  function applyTheme(theme) {
+    const next = theme === "light" ? "light" : "dark";
+    rootEl.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    themeToggle?.setAttribute("aria-pressed", String(next === "dark"));
+  }
+
+  function normalizeLoose(s) {
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, " and ")
+      .replace(/["'’]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function slugify(s) {
+    return normalizeLoose(s).replace(/\s+/g, "-");
+  }
+
+  function compactKey(s) {
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/["'’]/g, "")
+      .replace(/[^a-z0-9]+/g, "");
+  }
+
+  function normalizeBrand(v) {
+    return compactKey(v);
+  }
+
+  function normalizeAssetPath(path) {
+    const value = String(path || "").trim();
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value)) return value;
+    return value.startsWith("/") ? value : `/${value}`;
+  }
+
+  function escapeHTML(s) {
+    return String(s ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -61,151 +82,124 @@
       .replaceAll("'", "&#039;");
   }
 
-  function escapeAttr(value) {
-    return escapeHTML(value);
+  function escapeAttr(s) {
+    return escapeHTML(s);
   }
 
   function parseCSV(text) {
     const rows = [];
     let row = [];
-    let field = "";
+    let cur = "";
     let inQuotes = false;
 
     for (let i = 0; i < text.length; i++) {
       const ch = text[i];
       const next = text[i + 1];
 
+      if (ch === '"' && inQuotes && next === '"') {
+        cur += '"';
+        i++;
+        continue;
+      }
+
       if (ch === '"') {
-        if (inQuotes && next === '"') {
-          field += '"';
-          i += 1;
-        } else {
-          inQuotes = !inQuotes;
-        }
+        inQuotes = !inQuotes;
         continue;
       }
 
-      if (!inQuotes && ch === ",") {
-        row.push(field);
-        field = "";
+      if (ch === "," && !inQuotes) {
+        row.push(cur);
+        cur = "";
         continue;
       }
 
-      if (!inQuotes && (ch === "\n" || ch === "\r")) {
-        if (ch === "\r" && next === "\n") i += 1;
-        row.push(field);
-        if (row.some((cell) => String(cell || "").trim() !== "")) rows.push(row);
+      if ((ch === "\n" || ch === "\r") && !inQuotes) {
+        if (ch === "\r" && next === "\n") i++;
+        row.push(cur);
+        rows.push(row);
         row = [];
-        field = "";
+        cur = "";
         continue;
       }
 
-      field += ch;
+      cur += ch;
     }
 
-    if (field.length || row.length) {
-      row.push(field);
-      if (row.some((cell) => String(cell || "").trim() !== "")) rows.push(row);
+    if (cur.length || row.length) {
+      row.push(cur);
+      rows.push(row);
     }
 
     return rows;
   }
 
   function normalizeHeader(h) {
-    return String(h || "")
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, " ")
-      .replace(/[^a-z0-9 ]/g, "")
-      .replace(/ /g, "_");
+    return String(h || "").trim().toLowerCase().replace(/\s+/g, "");
   }
 
   function rowsToObjects(rows) {
-    if (!rows.length) return [];
+    if (!rows || rows.length < 2) return [];
     const headers = rows[0].map((h) => String(h || "").trim());
-    const normalized = headers.map(normalizeHeader);
+    const normHeaders = headers.map(normalizeHeader);
 
-    return rows.slice(1).map((r) => {
+    const data = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || r.every((c) => !String(c || "").trim())) continue;
+
       const obj = {};
-      headers.forEach((h, i) => {
-        obj[h] = (r[i] ?? "").trim();
-        obj[normalized[i]] = (r[i] ?? "").trim();
-      });
-      return obj;
-    });
+      for (let j = 0; j < headers.length; j++) {
+        obj[headers[j]] = r[j] ?? "";
+        obj[normHeaders[j]] = r[j] ?? "";
+      }
+      data.push(obj);
+    }
+    return data;
   }
 
   function getField(rec, keys) {
     for (const key of keys) {
-      if (rec && rec[key] != null && String(rec[key]).trim() !== "") {
-        return String(rec[key]).trim();
-      }
+      const value = rec?.[key];
+      if (value != null && String(value).trim() !== "") return String(value).trim();
     }
     return "";
   }
 
-  function normalizeBrand(v) {
-    return String(v || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "")
-      .trim();
-  }
-
-  function normalizeText(v) {
-    return String(v || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/["']/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function slugify(v) {
-    return String(v || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/["']/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  }
-
-  function getKey(rec) {
-    return getField(rec, ["Key", "key", "cigar_id", "id", "row_id", "slug"]);
+  function getCigarId(rec) {
+    return getField(rec, [
+      "Key",
+      "key",
+      "Cigar ID",
+      "cigarId",
+      "cigarid",
+      "cigar_id",
+      "id",
+      "row_id"
+    ]);
   }
 
   function getBrand(rec) {
-    return getField(rec, ["Brand", "brand", "brand_aka", "Brand aka"]);
+    return getField(rec, ["Brand", "brand", "brandname", "Brand aka", "brandaka"]);
   }
 
   function getLine(rec) {
-    return getField(rec, ["Line", "line"]);
+    return getField(rec, ["Line", "line", "Series", "series"]);
   }
 
   function getName(rec) {
-    return getField(rec, ["Cigar", "cigar", "Name", "name", "Cigar Name", "cigar_name"]);
+    return getField(rec, ["Cigar", "cigar", "Name", "name"]);
   }
 
   function getVitola(rec) {
-    return getField(rec, ["Vitola", "vitola", "Style", "style"]);
+    return getField(rec, ["Vitola", "vitola", "Style", "style", "Size", "size"]);
   }
 
   function getShape(rec) {
     return getField(rec, ["Shape", "shape"]);
   }
 
-  function getStrength(rec) {
-    return getField(rec, ["Strength", "strength"]);
-  }
-
   function getWrapper(rec) {
-    return getField(rec, ["Wrapper", "wrapper", "wrapper_type"]);
+    return getField(rec, ["Wrapper", "wrapper"]);
   }
 
   function getBinder(rec) {
@@ -216,47 +210,100 @@
     return getField(rec, ["Filler", "filler"]);
   }
 
+  function getStrength(rec) {
+    return getField(rec, ["Strength", "strength"]);
+  }
+
+  function getRing(rec) {
+    return getField(rec, ["Ring", "ring", "RG", "rg"]);
+  }
+
+  function getLength(rec) {
+    return getField(rec, ["Length", "length"]);
+  }
+
   function getOrigin(rec) {
-    return getField(rec, ["Origin", "origin", "country", "country_of_origin"]);
+    return getField(rec, ["Origin", "origin", "Country", "country"]);
   }
 
   function getShade(rec) {
-    return getField(rec, ["Wrapper Shade", "wrapper_shade", "shade"]);
+    return getField(rec, ["Wrapper Shade", "wrappershade", "wrapper_shade", "shade"]);
   }
 
-  function getCigarImg(rec) {
-    return getField(rec, ["Cigar IMG", "cigar_img", "image", "img", "photo", "cigar_image"]);
+  function getImage(rec) {
+    return getField(rec, ["Cigar IMG", "cigarimg", "Image", "image", "Photo", "photo"]);
   }
 
-  function getBrandImg(rec) {
-    const direct = getField(rec, ["Brand IMG", "brand_img", "brand_image"]);
-    if (direct) return direct;
+  function getBrandImage(rec) {
+    return getField(rec, ["Brand IMG", "brandimg", "brand_image"]);
+  }
+
+  function makeSlugFromRecord(rec) {
+    const id = getCigarId(rec);
     const brand = getBrand(rec);
-    return brand ? `/img/icons/brands/${normalizeBrand(brand)}.svg` : "";
-  }
-
-  function displayBrand(rec) {
-    return getBrand(rec) || getField(rec, ["Manufacturer", "manufacturer"]) || "Cigar";
-  }
-
-  function displayName(rec) {
     const line = getLine(rec);
-    const cigar = getName(rec);
-    const combined = [line, cigar].filter(Boolean).join(" ").trim();
-    return combined || cigar || line || "Cigar";
+    const name = getName(rec);
+    const vitola = getVitola(rec);
+    return slugify([brand, line, name, vitola, id].filter(Boolean).join(" "));
   }
 
-  function makeSlug(rec) {
-    const parts = [displayBrand(rec), getLine(rec), getName(rec), getVitola(rec), getKey(rec)].filter(Boolean);
-    return slugify(parts.join(" "));
+  function scoreRecord(rec) {
+    let score = 0;
+    if (getRing(rec)) score += 5;
+    if (getLength(rec)) score += 5;
+    if (getImage(rec)) score += 5;
+    if (getVitola(rec)) score += 3;
+    if (getShape(rec)) score += 3;
+    if (getShade(rec)) score += 3;
+    if (getStrength(rec)) score += 3;
+    if (getWrapper(rec)) score += 2;
+    if (getBinder(rec)) score += 2;
+    if (getFiller(rec)) score += 2;
+    if (getOrigin(rec)) score += 1;
+    return score;
   }
 
-  function buildLegacyId(rec) {
-    return [
-      normalizeText(getBrand(rec)),
-      normalizeText(displayName(rec)),
-      normalizeText(getVitola(rec))
-    ].join("|");
+  function findById(records, id) {
+    const targetRaw = String(id || "").trim();
+    if (!targetRaw) return null;
+
+    const targetLoose = normalizeLoose(targetRaw);
+    const targetSlug = slugify(targetRaw);
+
+    const matches = records.filter((r) => {
+      const candidates = [
+        getField(r, ["Key", "key", "Cigar ID", "cigarId", "cigarid", "cigar_id", "id", "row_id"]),
+        getField(r, ["Cigar", "cigar", "Name", "name"]),
+        [getLine(r), getName(r)].filter(Boolean).join(" ").trim(),
+        [getBrand(r), getLine(r), getName(r)].filter(Boolean).join(" ").trim(),
+        [getBrand(r), getName(r)].filter(Boolean).join(" ").trim(),
+        [getName(r), getVitola(r)].filter(Boolean).join(" ").trim()
+      ]
+        .filter(Boolean)
+        .map((v) => String(v).trim());
+
+      return candidates.some((value) => {
+        return value === targetRaw || normalizeLoose(value) === targetLoose || slugify(value) === targetSlug;
+      });
+    });
+
+    if (!matches.length) return null;
+    matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
+    return matches[0];
+  }
+
+  function findBySlug(records, slug) {
+    const target = String(slug || "").trim();
+    if (!target) return null;
+
+    const targetSlug = slugify(target);
+    const matches = records.filter((r) => {
+      return makeSlugFromRecord(r) === targetSlug || slugify(getCigarId(r)) === targetSlug;
+    });
+
+    if (!matches.length) return null;
+    matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
+    return matches[0];
   }
 
   function readSet(key) {
@@ -286,162 +333,204 @@
     return "";
   }
 
-  function extractSizeParts(value) {
-    const raw = String(value || "").trim();
-    if (!raw) return null;
-
-    const normalized = raw
-      .replace(/×/g, "x")
-      .replace(/[–—]/g, "-")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    const match = normalized.match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/i);
-    if (!match) return null;
-
-    return {
-      length: match[1],
-      ring: match[2]
-    };
-  }
-
-  function cleanRing(value) {
-    const raw = String(value || "").trim();
-    if (!raw) return "";
-
-    const size = extractSizeParts(raw);
-    if (size?.ring) return size.ring;
-
-    const match = raw.match(/\d+(?:\.\d+)?/);
-    return match ? match[0] : raw;
-  }
-
-  function cleanLength(value) {
-    const raw = String(value || "").trim();
-    if (!raw) return "";
-
-    const size = extractSizeParts(raw);
-    if (size?.length) return size.length;
-
-    const match = raw.match(/\d+(?:\.\d+)?/);
-    return match ? match[0] : raw;
-  }
-
-  function getRing(rec) {
-    const direct = getField(rec, [
-      "RG", "rg",
-      "Ring", "ring",
-      "Ring Gauge", "ring_gauge",
-      "Ring Size", "ring_size"
-    ]);
-    if (direct) return cleanRing(direct);
-
-    const fromSize = getField(rec, [
-      "Size", "size",
-      "Dimensions", "dimensions",
-      "Length/Ring", "lengthring",
-      "Length x Ring", "length_x_ring"
-    ]);
-    const parsed = extractSizeParts(fromSize);
-    return parsed?.ring || "";
-  }
-
-  function getLength(rec) {
-    const direct = getField(rec, [
-      "Length", "length",
-      "Length Inches", "length_inches",
-      "Inches", "inches"
-    ]);
-    if (direct) return cleanLength(direct);
-
-    const fromSize = getField(rec, [
-      "Size", "size",
-      "Dimensions", "dimensions",
-      "Length/Ring", "lengthring",
-      "Length x Ring", "length_x_ring"
-    ]);
-    const parsed = extractSizeParts(fromSize);
-    return parsed?.length || "";
-  }
-
   function collectAccolades(records, rec) {
-    const key = getKey(rec);
+    const key = getCigarId(rec);
     const brand = getBrand(rec);
-    const cigar = getName(rec);
+    const name = getName(rec);
     const vitola = getVitola(rec);
 
     const matches = records.filter((row) => {
-      if (key && getKey(row) === key) return true;
-      return getBrand(row) === brand && getName(row) === cigar && getVitola(row) === vitola;
+      const rowKey = getCigarId(row);
+      if (key && rowKey && rowKey === key) return true;
+
+      return getBrand(row) === brand && getName(row) === name && getVitola(row) === vitola;
     });
 
-    const seen = new Set();
     const out = [];
+    const seen = new Set();
 
     matches.forEach((row) => {
-      const media = getField(row, ["Media", "media"]);
+      const media = getField(row, ["Media", "media", "Source", "source"]);
       const year = getField(row, ["Year", "year"]);
       const rank = getField(row, ["Rank", "rank"]);
       if (!media && !year && !rank) return;
 
-      const sig = [media, year, rank].join("|");
+      const sig = `${media}|${year}|${rank}`;
       if (seen.has(sig)) return;
       seen.add(sig);
+
       out.push({ media, year, rank });
     });
 
-    return out.slice(0, 6);
+    out.sort((a, b) => {
+      const rankA = parseInt(a.rank, 10);
+      const rankB = parseInt(b.rank, 10);
+      const yearA = parseInt(a.year, 10);
+      const yearB = parseInt(b.year, 10);
+
+      if (Number.isFinite(rankA) && Number.isFinite(rankB) && rankA !== rankB) return rankA - rankB;
+      if (Number.isFinite(yearA) && Number.isFinite(yearB) && yearA !== yearB) return yearB - yearA;
+      return String(a.media).localeCompare(String(b.media));
+    });
+
+    return out.slice(0, 2);
   }
 
   function renderAccolades(accolades) {
-    if (!accolades.length) return `<div class="cd-accolade-line cd-accolade-line--empty">—</div>`;
+    if (!accolades.length) return "";
 
     return accolades.map((item) => {
-      const line = [item.rank ? `#${item.rank}` : "", item.year ? `of ${item.year}` : "", item.media || ""]
-        .filter(Boolean)
-        .join(" - ")
-        .replace(" - of ", " of ");
-      return `<div class="cd-accolade-line">${escapeHTML(line || "—")}</div>`;
+      const parts = [];
+      if (item.rank) parts.push(`#${escapeHTML(item.rank)}`);
+      if (item.year) parts.push(`of ${escapeHTML(item.year)}`);
+      if (item.media) parts.push(escapeHTML(item.media));
+      return `<div class="cd-accolade-line">${parts.join(" - ").replace(" - of ", " of ")}</div>`;
     }).join("");
   }
 
-  function render(rec, accolades) {
-    const key = getKey(rec);
-    const brand = displayBrand(rec);
-    const name = displayName(rec);
-    const ring = getRing(rec) || "—";
-    const length = getLength(rec) || "—";
-    const strength = getStrength(rec) || "—";
+  function buildBrandIconCandidates(rec) {
+    const fromSheet = normalizeAssetPath(getBrandImage(rec));
+    const brand = getBrand(rec);
+    const brandKey = normalizeBrand(brand);
+
+    const out = [];
+    if (fromSheet) out.push(fromSheet);
+
+    if (brandKey) {
+      out.push(`/img/icons/brands/${brandKey}.svg`);
+      out.push(`/img/icons/brands/${brandKey}.png`);
+    }
+
+    return Array.from(new Set(out.filter(Boolean)));
+  }
+
+  function buildCigarImageCandidates(rec) {
+    const fromSheet = normalizeAssetPath(getImage(rec));
+    const brand = getBrand(rec);
+    const line = getLine(rec);
+    const name = getName(rec);
+    const vitola = getVitola(rec);
+    const shade = getShade(rec);
+
+    const brandFolder = normalizeBrand(brand);
+    const lineKey = compactKey(line);
+
+    const out = [];
+    if (fromSheet) out.push(fromSheet);
+
+    if (brandFolder) {
+      const combos = [
+        compactKey([brand, line, name].join(" ")),
+        compactKey([brand, line, name, vitola].join(" ")),
+        compactKey([brand, name].join(" ")),
+        compactKey([brand, name, vitola].join(" ")),
+        compactKey([brand, vitola].join(" ")),
+        compactKey([brand, name, shade].join(" ")),
+        compactKey([brand, vitola, shade].join(" ")),
+        compactKey([brand, line, vitola, shade].join(" "))
+      ];
+
+      if (lineKey.includes("1964")) {
+        combos.push(compactKey([brand, "1964", name].join(" ")));
+        combos.push(compactKey([brand, "1964", vitola].join(" ")));
+        combos.push(compactKey([brand, "1964", name, shade].join(" ")));
+        combos.push(compactKey([brand, "1964", vitola, shade].join(" ")));
+      }
+
+      combos.filter(Boolean).forEach((key) => {
+        out.push(`/img/cigars/${brandFolder}/${key}.png`);
+      });
+    }
+
+    return Array.from(new Set(out.filter(Boolean)));
+  }
+
+  function wireImageFallback(img, fallbackClass, fallbackText) {
+    if (!img) return;
+
+    function tryNext() {
+      let fallbacks = [];
+      try {
+        fallbacks = JSON.parse(img.dataset.fallbacks || "[]");
+      } catch {
+        fallbacks = [];
+      }
+
+      const next = fallbacks.shift();
+      img.dataset.fallbacks = JSON.stringify(fallbacks);
+
+      if (next) {
+        img.src = next;
+        return;
+      }
+
+      const fallback = document.createElement("div");
+      fallback.className = fallbackClass;
+      fallback.textContent = fallbackText;
+      img.replaceWith(fallback);
+    }
+
+    img.addEventListener("error", tryNext, { once: false });
+  }
+
+  function render(records, rec) {
+    const id = getCigarId(rec);
+    const brand = getBrand(rec) || "—";
+    const line = getLine(rec);
+    const name = getName(rec);
+    const displayName = [line, name].filter(Boolean).join(" ").trim() || name || line || "—";
     const vitola = getVitola(rec) || "—";
-    const shape = getShape(rec) || "—";
     const wrapper = getWrapper(rec) || "—";
     const binder = getBinder(rec) || "—";
     const filler = getFiller(rec) || "—";
     const origin = getOrigin(rec) || "—";
+    const strength = getStrength(rec) || "—";
     const shade = getShade(rec) || "—";
-    const cigarImg = getCigarImg(rec);
-    const brandImg = getBrandImg(rec);
+    const shape = getShape(rec) || "—";
+    const ring = getRing(rec) || "—";
+    const length = getLength(rec) || "—";
+    const cigarImgCandidates = buildCigarImageCandidates(rec);
+    const brandImgCandidates = buildBrandIconCandidates(rec);
     const flag = flagForCountry(origin);
-    const refLink = getField(rec, ["Reference link", "reference_link", "url", "link", "href"]);
+    const accolades = collectAccolades(records, rec);
 
-    document.title = `${brand} ${name}`.trim();
+    document.title = `${brand} ${displayName}`.trim();
 
-    shell.innerHTML = `
+    card.innerHTML = `
       <div class="cd-head">
         <div class="cd-head-copy">
           <div class="cd-brand">${escapeHTML(brand)}</div>
-          <div class="cd-name">${escapeHTML(name)}</div>
+          <div class="cd-name">${escapeHTML(displayName)}</div>
         </div>
-        ${brandImg
-          ? `<img class="cd-badge" src="${escapeAttr(brandImg)}" alt="${escapeAttr(brand)}" loading="lazy" decoding="async">`
-          : `<div class="cd-badge-placeholder">Brand</div>`}
+
+        ${
+          brandImgCandidates.length
+            ? `<img
+                class="cd-badge"
+                id="cdBrandBadge"
+                src="${escapeAttr(brandImgCandidates[0])}"
+                data-fallbacks='${escapeAttr(JSON.stringify(brandImgCandidates.slice(1)))}'
+                alt="${escapeAttr(brand)}"
+                loading="lazy"
+                decoding="async">`
+            : `<div class="cd-badge-placeholder">Brand</div>`
+        }
       </div>
 
       <div class="cd-grid">
         <div class="cd-left">
-          ${cigarImg
-            ? `<img class="cd-stick" src="${escapeAttr(cigarImg)}" alt="${escapeAttr(name)}" loading="lazy" decoding="async">`
-            : `<div class="cd-stick-placeholder">No cigar image</div>`}
+          ${
+            cigarImgCandidates.length
+              ? `<img
+                  class="cd-stick"
+                  id="cdStickImage"
+                  src="${escapeAttr(cigarImgCandidates[0])}"
+                  data-fallbacks='${escapeAttr(JSON.stringify(cigarImgCandidates.slice(1)))}'
+                  alt="${escapeAttr(displayName)}"
+                  loading="lazy"
+                  decoding="async">`
+              : `<div class="cd-stick-placeholder">No image</div>`
+          }
         </div>
 
         <div class="cd-right">
@@ -495,110 +584,121 @@
             </div>
           </div>
 
-          <div class="cd-accolades-inline">
-            ${renderAccolades(accolades)}
+          ${accolades.length ? `<div class="cd-accolades-inline">${renderAccolades(accolades)}</div>` : ``}
+
+          <div class="cd-actions">
+            <button class="cd-action" type="button" id="cdCompare">Compare</button>
+            <button class="cd-action" type="button" id="cdFavorite">Favorite</button>
+            <button class="cd-action" type="button" id="cdWishlist">Wishlist</button>
+            <button class="cd-action cd-action--primary" type="button" id="cdEdit">Edit</button>
           </div>
         </div>
-      </div>
-
-      <div class="cd-actions">
-        <button class="cd-action" type="button" id="btnCompare">Compare</button>
-        <button class="cd-action" type="button" id="btnFavorite">Favorite</button>
-        <button class="cd-action" type="button" id="btnWishlist">Wishlist</button>
-        <button class="cd-action cd-action--primary" type="button" id="btnConnect">Edit</button>
       </div>
     `;
 
     const favoriteSet = readSet(FAVORITES_KEY);
-    const wishlistSet = readSet(WISHLIST_KEY);
     const compareSet = readSet(COMPARE_KEY);
 
-    const favoriteBtn = $("#btnFavorite", shell);
-    const wishlistBtn = $("#btnWishlist", shell);
-    const compareBtn = $("#btnCompare", shell);
-    const connectBtn = $("#btnConnect", shell);
+    const favoriteBtn = $("#cdFavorite");
+    const compareBtn = $("#cdCompare");
+    const wishlistBtn = $("#cdWishlist");
 
-    function syncButtonState() {
-      favoriteBtn?.classList.toggle("is-on", !!key && favoriteSet.has(key));
-      wishlistBtn?.classList.toggle("is-on", !!key && wishlistSet.has(key));
-      compareBtn?.classList.toggle("is-on", !!key && compareSet.has(key));
+    function syncUI() {
+      favoriteBtn?.classList.toggle("is-on", favoriteSet.has(id));
+      compareBtn?.classList.toggle("is-on", compareSet.has(id));
     }
 
     favoriteBtn?.addEventListener("click", () => {
-      if (!key) return;
-      favoriteSet.has(key) ? favoriteSet.delete(key) : favoriteSet.add(key);
+      if (!id) return;
+      if (favoriteSet.has(id)) favoriteSet.delete(id);
+      else favoriteSet.add(id);
       writeSet(FAVORITES_KEY, favoriteSet);
-      syncButtonState();
-    });
-
-    wishlistBtn?.addEventListener("click", () => {
-      if (!key) return;
-      wishlistSet.has(key) ? wishlistSet.delete(key) : wishlistSet.add(key);
-      writeSet(WISHLIST_KEY, wishlistSet);
-      syncButtonState();
+      syncUI();
     });
 
     compareBtn?.addEventListener("click", () => {
-      if (!key) return;
-      compareSet.has(key) ? compareSet.delete(key) : compareSet.add(key);
-      writeSet(COMPARE_KEY, compareSet);
-      syncButtonState();
+      if (!id) return;
+      if (compareSet.has(id)) compareSet.delete(id);
+      else compareSet.add(id);
+
+      const capped = Array.from(compareSet).slice(0, 4);
+      writeSet(COMPARE_KEY, new Set(capped));
+      syncUI();
     });
 
-    connectBtn?.addEventListener("click", () => {
-      if (refLink) window.open(refLink, "_blank", "noopener,noreferrer");
+    wishlistBtn?.addEventListener("click", () => {
+      const cartApi = window.cigarOSCart;
+      if (!cartApi || typeof cartApi.add !== "function") return;
+
+      cartApi.add({
+        type: "cigar",
+        key: id,
+        id,
+        brand,
+        line,
+        name: displayName,
+        vitola,
+        ring,
+        length,
+        shape,
+        wrapper,
+        binder,
+        filler,
+        origin,
+        shade,
+        strength,
+        image: cigarImgCandidates[0] || "",
+        url: window.location.href
+      });
     });
 
-    syncButtonState();
+    syncUI();
+
+    wireImageFallback($("#cdBrandBadge"), "cd-badge-placeholder", "Brand");
+    wireImageFallback($("#cdStickImage"), "cd-stick-placeholder", "No image");
   }
 
-  function showNotFound() {
-    shell.innerHTML = `<div class="cd-loading">Cigar not found.</div>`;
-  }
+  async function load() {
+    applyTheme(getSavedTheme());
 
-  function findRecord(records, wantedKey, wantedSlug) {
-    let rec = null;
+    themeToggle?.addEventListener("click", () => {
+      applyTheme(getSavedTheme() === "dark" ? "light" : "dark");
+    });
 
-    if (wantedKey) {
-      rec = records.find((row) => getKey(row) === wantedKey) || null;
-    }
+    backBtn?.addEventListener("click", () => {
+      if (history.length > 1) history.back();
+      else window.location.href = "/pos/cigars/";
+    });
 
-    if (!rec && wantedSlug) {
-      rec = records.find((row) => makeSlug(row) === wantedSlug) || null;
-    }
-
-    if (!rec && wantedKey && wantedKey.includes("|")) {
-      const normalizedWanted = normalizeText(wantedKey);
-      rec = records.find((row) => normalizeText(buildLegacyId(row)) === normalizedWanted) || null;
-    }
-
-    return rec;
-  }
-
-  async function boot() {
-    const wantedKey = getParam("key") || getParam("id");
-    const wantedSlug = getParam("slug");
+    const idParam = getParam("id") || getParam("key");
+    const slugParam = getParam("slug");
 
     try {
       const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+      const csvText = await res.text();
 
-      const text = await res.text();
-      const records = rowsToObjects(parseCSV(text));
-      const rec = findRecord(records, wantedKey, wantedSlug);
+      const rows = parseCSV(csvText);
+      const records = rowsToObjects(rows);
+
+      let rec = null;
+      if (idParam) rec = findById(records, idParam);
+      if (!rec && idParam) rec = findBySlug(records, idParam);
+      if (!rec && slugParam) rec = findBySlug(records, slugParam);
 
       if (!rec) {
-        showNotFound();
-      } else {
-        render(rec, collectAccolades(records, rec));
+        card.innerHTML = `<div class="cd-loading">Cigar not found.</div>`;
+        return;
       }
-    } catch (err) {
-      console.warn("[cigar detail]", err);
-      shell.innerHTML = `<div class="cd-loading">Error loading cigar.</div>`;
+
+      render(records, rec);
+    } catch (e) {
+      card.innerHTML = `<div class="cd-loading">Error loading cigar data.</div>`;
+      console.warn("[cigar detail] load error:", e);
     } finally {
-      loading?.remove();
+      if (loading) loading.style.display = "none";
     }
   }
 
-  boot();
+  load();
 })();
