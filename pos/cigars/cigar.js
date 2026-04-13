@@ -1,8 +1,8 @@
 (() => {
-"use strict";
-console.log("CIGAR DETAIL JS LOADED");
+  "use strict";
+  console.log("CIGAR DETAIL JS LOADED");
 
-const SHEET_CSV_URL =
+  const SHEET_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const FAVORITES_KEY = "cigaros_favorite_keys";
@@ -729,6 +729,19 @@ const SHEET_CSV_URL =
         return;
       }
 
+alert(
+  [
+    "MATCHED RECORD",
+    "Brand: " + (rec.Brand || rec.brand || ""),
+    "Line: " + (rec.Line || rec.line || ""),
+    "Cigar: " + (rec.Cigar || rec.cigar || ""),
+    "Vitola: " + (rec.Vitola || rec.vitola || ""),
+    "Length raw: " + JSON.stringify(rec.Length ?? rec.length ?? ""),
+    "Ring raw: " + JSON.stringify(rec.Ring ?? rec.ring ?? ""),
+    "Keys: " + Object.keys(rec).join(", ")
+  ].join("\n")
+);
+        
       render(records, rec);
     } catch (e) {
       card.innerHTML = `<div class="cd-loading">Error loading cigar data.</div>`;
