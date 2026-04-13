@@ -177,21 +177,8 @@
     return getField(r, ["manufacturer", "maker"]);
   }
 
-  function resolveId(r) {
-    return getField(r, [
-      "key",
-      "cigar_id",
-      "id",
-      "row_id",
-      "slug",
-      "name",
-      "cigar",
-      "title"
-    ]);
-  }
-
   function resolveDetailKey(r) {
-    return getField(r, ["key", "cigar_id", "id", "row_id", "slug"]);
+    return getField(r, ["key", "cigar_id", "id", "row_id"]);
   }
 
   function resolveName(r) {
@@ -297,6 +284,17 @@
     const fromSheet = normalizeAssetPath(row ? resolveBrandImage(row) : "");
     if (fromSheet) return fromSheet;
     return `/img/icons/brands/${normalizeBrand(state.brand)}.svg`;
+  }
+
+  function listRowIconPath(r) {
+    if (normalizeBrand(state.brand) === "padron") {
+      return "/img/icons/brands/padron.svg";
+    }
+
+    const fromSheet = normalizeAssetPath(resolveBrandImage(r));
+    if (fromSheet) return fromSheet;
+
+    return brandIconPath();
   }
 
   function setBrandHeader() {
@@ -541,12 +539,7 @@
       const vitola = resolveVitola(r).toLowerCase();
       const ring = resolveRing(r).toLowerCase();
       const length = resolveLength(r).toLowerCase();
-      return (
-        name.includes(q) ||
-        vitola.includes(q) ||
-        ring.includes(q) ||
-        length.includes(q)
-      );
+      return name.includes(q) || vitola.includes(q) || ring.includes(q) || length.includes(q);
     });
   }
 
@@ -585,7 +578,7 @@
       key: detailKey || `${normalizeBrand(state.brand)}|${resolveName(r)}|${resolveVitola(r)}`,
       type: "cigar",
       category: "Cigars",
-      id: detailKey || resolveId(r) || resolveName(r),
+      id: detailKey || resolveName(r),
       brand: state.brand,
       line: "",
       name: resolveName(r),
@@ -600,10 +593,8 @@
       shade: resolveShade(r),
       strength: resolveStrength(r),
       msrp: resolvePriceNumber(r),
-      image: normalizeAssetPath(resolveImage(r)) || brandIconPath(),
-      url: detailKey
-        ? `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`
-        : (resolveUrl(r) || "")
+      image: listRowIconPath(r),
+      url: detailKey ? `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}` : (resolveUrl(r) || "")
     };
   }
 
@@ -624,12 +615,12 @@
       const item = buildCartItem(r);
       const qty = getRowQty(item);
       const priceText = resolvePrice(r) || "—";
-      const cigarImg = normalizeAssetPath(resolveImage(r)) || brandIconPath();
+      const iconPath = listRowIconPath(r);
 
       const row = document.createElement("article");
       row.className = "brand-row";
       row.innerHTML = `
-        <img class="row-ico" src="${esc(cigarImg)}" alt="" loading="lazy" />
+        <img class="row-ico" src="${esc(iconPath)}" alt="" loading="lazy" />
         <div class="brand-row-left">
           <div class="brand-row-title">${esc(resolveName(r) || "Unnamed cigar")}</div>
           <div class="brand-row-sub">${esc(resolveVitola(r) || "—")}</div>
@@ -644,10 +635,14 @@
         </div>
       `;
 
-      const left = $(".brand-row-left", row);
       const icon = $(".row-ico", row);
+      const left = $(".brand-row-left", row);
       const minusBtn = $(".qty-btn--minus", row);
       const plusBtn = $(".qty-btn--plus", row);
+
+      icon?.addEventListener("error", () => {
+        icon.src = brandIconPath();
+      });
 
       left?.addEventListener("click", () => openDetail(r));
       icon?.addEventListener("click", () => openDetail(r));
