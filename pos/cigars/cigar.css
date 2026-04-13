@@ -268,8 +268,8 @@ html[data-theme="light"] .moon-knob::before{
 
 .cd-stick{
   display:block;
-  width:auto;
-  max-width:128px;
+  width:128px;
+  max-width:none;
   max-height:min(56dvh, 620px);
   height:auto;
   object-fit:contain;
@@ -580,16 +580,17 @@ html[data-theme="light"] .cd-action--primary{
   }
 
   .cd-grid{
-    grid-template-columns:120px 1fr;
+    grid-template-columns:132px 1fr;
     gap:8px;
   }
 
-  .cd-stick{
-    max-width:110px;
-  }
+.cd-stick{
+  width:122px;
+  max-width:none;
+}
 
   .cd-stick-placeholder{
-    width:110px;
+    width:122px;
     min-height:340px;
   }
 
