@@ -682,7 +682,28 @@
       const records = rowsToObjects(rows);
 
       let rec = null;
-      if (idParam) rec = findById(records, idParam);
+
+if (idParam) {
+  const parts = idParam.split("|").map(s => s.trim().toLowerCase());
+
+  const matches = records.filter(r => {
+    const brand = (getBrand(r) || "").toLowerCase();
+    const name = ([getLine(r), getName(r)].filter(Boolean).join(" ") || "").toLowerCase();
+    const vitola = (getVitola(r) || "").toLowerCase();
+
+    return (
+      brand.includes(parts[0]) &&
+      name.includes(parts[1]) &&
+      vitola.includes(parts[2])
+    );
+  });
+
+  if (matches.length) {
+    matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
+    rec = matches[0];
+  }
+}
+      
       if (!rec && idParam) rec = findBySlug(records, idParam);
       if (!rec && slugParam) rec = findBySlug(records, slugParam);
 
