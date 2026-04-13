@@ -215,11 +215,11 @@
   }
 
   function getRing(rec) {
-    return getField(rec, ["Ring", "ring", "RG", "rg"]);
+    return getField(rec, ["Ring", "ring", "RG", "rg", "Ring Size", "ringsize"]);
   }
 
   function getLength(rec) {
-    return getField(rec, ["Length", "length"]);
+    return getField(rec, ["Length", "length", "Len", "len"]);
   }
 
   function getOrigin(rec) {
@@ -249,8 +249,8 @@
 
   function scoreRecord(rec) {
     let score = 0;
-    if (getRing(rec)) score += 5;
-    if (getLength(rec)) score += 5;
+    if (getRing(rec)) score += 50;
+    if (getLength(rec)) score += 50;
     if (getImage(rec)) score += 5;
     if (getVitola(rec)) score += 3;
     if (getShape(rec)) score += 3;
@@ -289,7 +289,7 @@
 
     if (!matches.length) return null;
     matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
-    return matches[0];
+    return matches.find((r) => getRing(r) && getLength(r)) || matches[0];
   }
 
   function findBySlug(records, slug) {
@@ -303,7 +303,40 @@
 
     if (!matches.length) return null;
     matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
-    return matches[0];
+    return matches.find((r) => getRing(r) && getLength(r)) || matches[0];
+  }
+
+  function findByPipeKey(records, idParam) {
+    const raw = String(idParam || "").trim();
+    if (!raw || !raw.includes("|")) return null;
+
+    const parts = raw.split("|").map((s) => normalizeLoose(s));
+    const [partBrand = "", partName = "", partVitola = ""] = parts;
+
+    const matches = records.filter((r) => {
+      const brand = normalizeLoose(getBrand(r));
+      const line = normalizeLoose(getLine(r));
+      const name = normalizeLoose(getName(r));
+      const vitola = normalizeLoose(getVitola(r));
+
+      const combinedNameA = normalizeLoose([line, name].filter(Boolean).join(" "));
+      const combinedNameB = name;
+      const combinedNameC = line;
+
+      const brandMatch = !partBrand || brand.includes(partBrand);
+      const nameMatch =
+        !partName ||
+        combinedNameA.includes(partName) ||
+        combinedNameB.includes(partName) ||
+        combinedNameC.includes(partName);
+      const vitolaMatch = !partVitola || vitola.includes(partVitola);
+
+      return brandMatch && nameMatch && vitolaMatch;
+    });
+
+    if (!matches.length) return null;
+    matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
+    return matches.find((r) => getRing(r) && getLength(r)) || matches[0];
   }
 
   function readSet(key) {
@@ -379,13 +412,15 @@
   function renderAccolades(accolades) {
     if (!accolades.length) return "";
 
-    return accolades.map((item) => {
-      const parts = [];
-      if (item.rank) parts.push(`#${escapeHTML(item.rank)}`);
-      if (item.year) parts.push(`of ${escapeHTML(item.year)}`);
-      if (item.media) parts.push(escapeHTML(item.media));
-      return `<div class="cd-accolade-line">${parts.join(" - ").replace(" - of ", " of ")}</div>`;
-    }).join("");
+    return accolades
+      .map((item) => {
+        const parts = [];
+        if (item.rank) parts.push(`#${escapeHTML(item.rank)}`);
+        if (item.year) parts.push(`of ${escapeHTML(item.year)}`);
+        if (item.media) parts.push(escapeHTML(item.media));
+        return `<div class="cd-accolade-line">${parts.join(" - ").replace(" - of ", " of ")}</div>`;
+      })
+      .join("");
   }
 
   function buildBrandIconCandidates(rec) {
@@ -683,27 +718,8 @@
 
       let rec = null;
 
-if (idParam) {
-  const parts = idParam.split("|").map(s => s.trim().toLowerCase());
-
-  const matches = records.filter(r => {
-    const brand = (getBrand(r) || "").toLowerCase();
-    const name = ([getLine(r), getName(r)].filter(Boolean).join(" ") || "").toLowerCase();
-    const vitola = (getVitola(r) || "").toLowerCase();
-
-    return (
-      brand.includes(parts[0]) &&
-      name.includes(parts[1]) &&
-      vitola.includes(parts[2])
-    );
-  });
-
-  if (matches.length) {
-    matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
-    rec = matches[0];
-  }
-}
-      
+      if (idParam) rec = findByPipeKey(records, idParam);
+      if (!rec && idParam) rec = findById(records, idParam);
       if (!rec && idParam) rec = findBySlug(records, idParam);
       if (!rec && slugParam) rec = findBySlug(records, slugParam);
 
