@@ -370,6 +370,10 @@
   function looksLikePlusButton(btn) {
     if (!btn) return false;
 
+    // Ignore brand page qty steppers.
+    // Those are already handled directly by /pos/cigars/brand.js via cigarOSCart.setQty().
+    if (btn.closest(".brand-row-qty")) return false;
+
     const text = normStr(btn.textContent).replace(/\s+/g, "");
     const aria = normStr(btn.getAttribute("aria-label")).toLowerCase();
     const title = normStr(btn.getAttribute("title")).toLowerCase();
