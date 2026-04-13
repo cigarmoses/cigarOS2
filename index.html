@@ -81,7 +81,6 @@
       position:relative;
     }
 
-    /* universal top bar */
     .uos-topbar{
       position:fixed;
       top:0;
@@ -267,42 +266,90 @@
         <div class="home-grid">
 
           <a href="/pos/" class="home-item">
-            <img src="/img/icons/glass/pos.png" class="tile-img">
+            <img
+              src="/uxui/lightmode/lightmodepos.png"
+              data-light="/uxui/lightmode/lightmodepos.png"
+              data-dark="/img/icons/glass/pos.png"
+              class="tile-img theme-icon"
+              alt="POS"
+            >
             <div class="icon-label">POS</div>
           </a>
 
           <a href="/today/" class="home-item">
-            <img src="/img/icons/glass/today.png" class="tile-img">
+            <img
+              src="/uxui/lightmode/lightmodetoday.png"
+              data-light="/uxui/lightmode/lightmodetoday.png"
+              data-dark="/img/icons/glass/today.png"
+              class="tile-img theme-icon"
+              alt="Today"
+            >
             <div class="icon-label">Today</div>
           </a>
 
           <a href="/loyalty/" class="home-item">
-            <img src="/img/icons/glass/loyalty.png" class="tile-img">
+            <img
+              src="/uxui/lightmode/lightmodeloyalty.png"
+              data-light="/uxui/lightmode/lightmodeloyalty.png"
+              data-dark="/img/icons/glass/loyalty.png"
+              class="tile-img theme-icon"
+              alt="Loyalty"
+            >
             <div class="icon-label">Loyalty</div>
           </a>
 
           <a href="/inventory/" class="home-item">
-            <img src="/img/icons/glass/inventory.png" class="tile-img">
+            <img
+              src="/uxui/lightmode/lightmodeinventory.png"
+              data-light="/uxui/lightmode/lightmodeinventory.png"
+              data-dark="/img/icons/glass/inventory.png"
+              class="tile-img theme-icon"
+              alt="Inventory"
+            >
             <div class="icon-label">Inventory</div>
           </a>
 
           <a href="/reports/" class="home-item">
-            <img src="/img/icons/glass/reports.png" class="tile-img">
+            <img
+              src="/uxui/lightmode/lightmodereports.png"
+              data-light="/uxui/lightmode/lightmodereports.png"
+              data-dark="/img/icons/glass/reports.png"
+              class="tile-img theme-icon"
+              alt="Reports"
+            >
             <div class="icon-label">Reports</div>
           </a>
 
           <a href="/learn/" class="home-item">
-            <img src="/img/icons/glass/learn.png" class="tile-img">
+            <img
+              src="/uxui/lightmode/lightmodelearn.png"
+              data-light="/uxui/lightmode/lightmodelearn.png"
+              data-dark="/img/icons/glass/learn.png"
+              class="tile-img theme-icon"
+              alt="Learn"
+            >
             <div class="icon-label">Learn</div>
           </a>
 
           <a href="/news/" class="home-item">
-            <img src="/img/icons/glass/news.png" class="tile-img">
+            <img
+              src="/uxui/lightmode/lightmodenews.png"
+              data-light="/uxui/lightmode/lightmodenews.png"
+              data-dark="/img/icons/glass/news.png"
+              class="tile-img theme-icon"
+              alt="News"
+            >
             <div class="icon-label">News</div>
           </a>
 
           <a href="/social/" class="home-item">
-            <img src="/img/icons/glass/cigarsocialglass.png" class="tile-img">
+            <img
+              src="/uxui/lightmode/lightmodecigarsocial.png"
+              data-light="/uxui/lightmode/lightmodecigarsocial.png"
+              data-dark="/img/icons/glass/cigarsocialglass.png"
+              class="tile-img theme-icon"
+              alt="Cigar Social"
+            >
             <div class="icon-label">Cigar Social</div>
           </a>
 
@@ -318,9 +365,20 @@
       const root = document.documentElement;
       const toggle = document.getElementById("themeToggle");
       const backBtn = document.getElementById("uosBack");
+      const themeIcons = Array.from(document.querySelectorAll(".theme-icon"));
 
       function getTheme() {
         return localStorage.getItem("theme") || root.getAttribute("data-theme") || "light";
+      }
+
+      function updateIcons(theme) {
+        themeIcons.forEach((img) => {
+          const nextSrc = theme === "dark"
+            ? img.getAttribute("data-dark")
+            : img.getAttribute("data-light");
+
+          if (nextSrc) img.src = nextSrc;
+        });
       }
 
       function applyTheme(theme) {
@@ -328,6 +386,7 @@
         root.setAttribute("data-theme", next);
         localStorage.setItem("theme", next);
         toggle?.setAttribute("aria-pressed", String(next === "dark"));
+        updateIcons(next);
       }
 
       applyTheme(getTheme());
