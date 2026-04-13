@@ -1,12 +1,16 @@
 (() => {
   "use strict";
-  console.log("CIGAR DETAIL JS LOADED");
 
   const SHEET_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const FAVORITES_KEY = "cigaros_favorite_keys";
   const COMPARE_KEY = "cigaros_compare_keys";
+
+  // Sheet column positions (0-based)
+  // A=0 ... J=9, K=10, L=11, M=12
+  const LENGTH_COL_INDEX = 11; // Column L
+  const RING_COL_INDEX = 12;   // Column M
 
   const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -153,6 +157,12 @@
         obj[headers[j]] = r[j] ?? "";
         obj[normHeaders[j]] = r[j] ?? "";
       }
+
+      // Preserve raw row and fixed-position fallbacks for columns that may have blank headers
+      obj.__row = r;
+      obj.__length_col = r[LENGTH_COL_INDEX] ?? "";
+      obj.__ring_col = r[RING_COL_INDEX] ?? "";
+
       data.push(obj);
     }
     return data;
@@ -216,11 +226,19 @@
   }
 
   function getRing(rec) {
-    return getField(rec, ["Ring", "ring", "RG", "rg", "Ring Size", "ringsize"]);
+    const direct = getField(rec, ["Ring", "ring", "RG", "rg", "Ring Size", "ringsize"]);
+    if (direct) return direct;
+
+    const raw = rec?.__ring_col ?? rec?.__row?.[RING_COL_INDEX] ?? "";
+    return String(raw || "").trim();
   }
 
   function getLength(rec) {
-    return getField(rec, ["Length", "length", "Len", "len"]);
+    const direct = getField(rec, ["Length", "length", "Len", "len"]);
+    if (direct) return direct;
+
+    const raw = rec?.__length_col ?? rec?.__row?.[LENGTH_COL_INDEX] ?? "";
+    return String(raw || "").trim();
   }
 
   function getOrigin(rec) {
@@ -729,19 +747,6 @@
         return;
       }
 
-alert(
-  [
-    "MATCHED RECORD",
-    "Brand: " + (rec.Brand || rec.brand || ""),
-    "Line: " + (rec.Line || rec.line || ""),
-    "Cigar: " + (rec.Cigar || rec.cigar || ""),
-    "Vitola: " + (rec.Vitola || rec.vitola || ""),
-    "Length raw: " + JSON.stringify(rec.Length ?? rec.length ?? ""),
-    "Ring raw: " + JSON.stringify(rec.Ring ?? rec.ring ?? ""),
-    "Keys: " + Object.keys(rec).join(", ")
-  ].join("\n")
-);
-        
       render(records, rec);
     } catch (e) {
       card.innerHTML = `<div class="cd-loading">Error loading cigar data.</div>`;
