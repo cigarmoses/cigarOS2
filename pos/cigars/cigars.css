@@ -431,7 +431,7 @@ html[data-theme="light"] .brands-grid .category-name{
   display:flex;
   align-items:center;
   gap:12px;
-  padding:14px 12px;
+  padding:12px 12px;
   border-radius:22px;
   text-decoration:none;
   color:inherit;
@@ -471,7 +471,8 @@ html[data-theme="light"] .cigars-results .row-ico{
 .cigars-results .brand-row-left{
   display:flex;
   flex-direction:column;
-  gap:4px;
+  justify-content:center;
+  gap:3px;
   min-width:0;
   flex:1 1 auto;
   cursor:pointer;
@@ -492,6 +493,14 @@ html[data-theme="light"] .cigars-results .brand-row-title{
   color:#0f1728;
 }
 
+.cigars-results .brand-row-meta-line{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  flex-wrap:nowrap;
+}
+
 .cigars-results .brand-row-sub{
   font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   font-size:12px;
@@ -505,42 +514,129 @@ html[data-theme="light"] .cigars-results .brand-row-sub{
   color:rgba(15,26,44,.50);
 }
 
+.cigars-results .brand-row-box-stock{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  min-width:0;
+  color:rgba(255,255,255,.56);
+  flex:0 0 auto;
+}
+
+html[data-theme="light"] .cigars-results .brand-row-box-stock{
+  color:rgba(15,26,44,.50);
+}
+
+.cigars-results .brand-row-box-icon{
+  width:13px;
+  height:13px;
+  display:inline-grid;
+  place-items:center;
+  flex:0 0 auto;
+}
+
+.cigars-results .brand-row-box-icon svg{
+  width:13px;
+  height:13px;
+  display:block;
+}
+
+.cigars-results .brand-row-box-value{
+  font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font-size:12px;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:-.01em;
+}
+
 .cigars-results .brand-row-right{
   display:flex;
-  align-items:center;
-  gap:12px;
+  flex-direction:column;
+  align-items:flex-end;
+  justify-content:center;
+  gap:6px;
   margin-left:auto;
+  flex:0 0 auto;
+  min-width:92px;
+}
+
+.cigars-results .brand-row-topline{
+  display:flex;
+  align-items:baseline;
   justify-content:flex-end;
+  gap:8px;
+  width:100%;
+}
+
+.cigars-results .brand-row-stick-stock{
+  font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font-size:12px;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:-.01em;
+  color:rgba(255,255,255,.42);
+  text-align:right;
+  flex:0 0 auto;
+}
+
+html[data-theme="light"] .cigars-results .brand-row-stick-stock{
+  color:rgba(15,26,44,.40);
 }
 
 .cigars-results .brand-row-msrp{
-  position:relative;
-  padding-left:10px;
+  font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   font-size:20px;
-  font-weight:800;
+  font-weight:700;
+  line-height:1;
   color:rgba(255,255,255,.97);
   min-width:44px;
   text-align:right;
   letter-spacing:-.03em;
+  flex:0 0 auto;
 }
 
 html[data-theme="light"] .cigars-results .brand-row-msrp{
   color:#0f1728;
 }
 
-.cigars-results .brand-row-msrp::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:50%;
-  transform:translateY(-50%);
-  width:1px;
-  height:34px;
-  background:rgba(255,255,255,.16);
+.cigars-results .brand-row-bottomline{
+  width:100%;
+  display:flex;
+  justify-content:flex-end;
+  padding-right:2px;
 }
 
-html[data-theme="light"] .cigars-results .brand-row-msrp::before{
-  background:rgba(15,26,44,.10);
+.cigars-results .qty-btn{
+  width:28px;
+  height:28px;
+  border:none;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  appearance:none;
+  -webkit-tap-highlight-color:transparent;
+  font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  font-size:18px;
+  font-weight:700;
+  line-height:1;
+  padding:0;
+  transition:transform .14s ease, filter .14s ease;
+}
+
+.cigars-results .qty-btn:active{
+  transform:scale(.94);
+}
+
+.cigars-results .qty-btn--plus{
+  background:var(--green);
+  color:#fff;
+  box-shadow:0 8px 18px rgba(52,199,89,.28);
+}
+
+html[data-theme="light"] .cigars-results .qty-btn--plus{
+  background:var(--green);
+  color:#fff;
 }
 
 .cigars-empty{
@@ -1015,6 +1111,35 @@ html[data-theme="light"] .cb-nav-btn:hover{
   .fm__label{
     font-size:20px;
   }
+
+  .cigars-results .brand-row{
+    gap:10px;
+    padding:11px 11px;
+  }
+
+  .cigars-results .row-ico{
+    width:52px;
+    height:52px;
+  }
+
+  .cigars-results .brand-row-right{
+    min-width:86px;
+    gap:5px;
+  }
+
+  .cigars-results .brand-row-topline{
+    gap:7px;
+  }
+
+  .cigars-results .brand-row-msrp{
+    font-size:19px;
+  }
+
+  .cigars-results .qty-btn{
+    width:27px;
+    height:27px;
+    font-size:17px;
+  }
 }
 
 @media (max-width: 390px){
@@ -1046,6 +1171,40 @@ html[data-theme="light"] .cb-nav-btn:hover{
 
   html[data-theme="dark"] #theme-toggle .knob{
     transform:translateX(19px);
+  }
+
+  .cigars-results .brand-row{
+    gap:9px;
+    padding:11px 10px;
+  }
+
+  .cigars-results .row-ico{
+    width:50px;
+    height:50px;
+  }
+
+  .cigars-results .brand-row-title{
+    font-size:15px;
+  }
+
+  .cigars-results .brand-row-sub,
+  .cigars-results .brand-row-box-value,
+  .cigars-results .brand-row-stick-stock{
+    font-size:11px;
+  }
+
+  .cigars-results .brand-row-right{
+    min-width:80px;
+  }
+
+  .cigars-results .brand-row-msrp{
+    font-size:18px;
+  }
+
+  .cigars-results .qty-btn{
+    width:26px;
+    height:26px;
+    font-size:17px;
   }
 }
 
