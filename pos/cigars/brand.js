@@ -71,6 +71,15 @@
     return value.startsWith("/") ? value : `/${value}`;
   }
 
+  function normalizeFilenamePart(v) {
+    return String(v || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "");
+  }
+
   function esc(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -182,21 +191,21 @@
     return getField(r, ["key", "cigar_id", "id", "row_id"]);
   }
 
-function resolveName(r) {
-  return getField(r, ["cigar"]); // strictly column H
-}
+  function resolveName(r) {
+    return getField(r, ["cigar"]); // strictly column H
+  }
 
-function resolveLine(r) {
-  return getField(r, ["line"]); // strictly column G
-}
+  function resolveLine(r) {
+    return getField(r, ["line"]); // strictly column G
+  }
 
-function resolveDisplayName(r) {
-  const line = resolveLine(r);
-  const name = resolveName(r);
+  function resolveDisplayName(r) {
+    const line = resolveLine(r);
+    const name = resolveName(r);
 
-  if (line && name) return `${line} ${name}`.replace(/\s+/g, " ").trim();
-  return (line || name || "").replace(/\s+/g, " ").trim();
-}
+    if (line && name) return `${line} ${name}`.replace(/\s+/g, " ").trim();
+    return (line || name || "").replace(/\s+/g, " ").trim();
+  }
 
   function resolveVitola(r) {
     return getField(r, ["vitola", "style", "vitola_name"]);
@@ -258,6 +267,75 @@ function resolveDisplayName(r) {
     return getField(r, ["url", "link", "href", "page_url", "product_url", "slug_url"]);
   }
 
+  function buildGeneratedImageNames(r) {
+    const brand = normalizeFilenamePart(resolveBrandVal(r) || state.brand);
+    const line = normalizeFilenamePart(resolveLine(r));
+    const cigar = normalizeFilenamePart(resolveName(r));
+    const vitola = normalizeFilenamePart(resolveVitola(r));
+
+    const names = [];
+
+    if (brand && line && cigar) {
+      names.push(`${brand}${line}${cigar}`);
+    }
+
+    if (brand && line && cigar && vitola) {
+      names.push(`${brand}${line}${cigar}${vitola}`);
+    }
+
+    if (line && cigar) {
+      names.push(`${line}${cigar}`);
+    }
+
+    if (line && cigar && vitola) {
+      names.push(`${line}${cigar}${vitola}`);
+    }
+
+    return Array.from(new Set(names));
+  }
+
+  function brandIconPath() {
+    const row = state.rowsAll.find((r) => normalizeBrand(resolveBrandVal(r)) === normalizeBrand(state.brand));
+    const fromSheet = normalizeAssetPath(row ? resolveBrandImage(row) : "");
+    if (fromSheet) return fromSheet;
+    return `/img/icons/brands/${normalizeBrand(state.brand)}.svg`;
+  }
+
+  function listRowImageCandidates(r) {
+    const candidates = [];
+    const fromSheet = normalizeAssetPath(resolveImage(r));
+    const brandFolder = normalizeBrand(resolveBrandVal(r) || state.brand);
+
+    if (fromSheet) candidates.push(fromSheet);
+
+    buildGeneratedImageNames(r).forEach((name) => {
+      candidates.push(`/img/cigars/${brandFolder}/${name}.png`);
+    });
+
+    candidates.push(brandIconPath());
+
+    return Array.from(new Set(candidates.filter(Boolean)));
+  }
+
+  function listRowIconPath(r) {
+    const candidates = listRowImageCandidates(r);
+    return candidates[0] || brandIconPath();
+  }
+
+  function bindImageFallback(img, candidates) {
+    if (!img || !Array.isArray(candidates) || !candidates.length) return;
+
+    let index = 0;
+    img.src = candidates[index];
+
+    img.addEventListener("error", () => {
+      index += 1;
+      if (index < candidates.length) {
+        img.src = candidates[index];
+      }
+    });
+  }
+
   function resolveBand(r) {
     const direct = getField(r, ["band", "band_key", "band_group", "band_name"]);
     if (direct) return direct;
@@ -290,24 +368,6 @@ function resolveDisplayName(r) {
     if (full.includes("damaso")) return "/img/icons/padrondamasoband.svg";
 
     return "/img/icons/padronseriesband.svg";
-  }
-
-  function brandIconPath() {
-    const row = state.rowsAll.find((r) => normalizeBrand(resolveBrandVal(r)) === normalizeBrand(state.brand));
-    const fromSheet = normalizeAssetPath(row ? resolveBrandImage(row) : "");
-    if (fromSheet) return fromSheet;
-    return `/img/icons/brands/${normalizeBrand(state.brand)}.svg`;
-  }
-
-  function listRowIconPath(r) {
-    if (normalizeBrand(state.brand) === "padron") {
-      return "/img/icons/brands/padron.svg";
-    }
-
-    const fromSheet = normalizeAssetPath(resolveBrandImage(r));
-    if (fromSheet) return fromSheet;
-
-    return brandIconPath();
   }
 
   function getCigarFilterIcon(value = "", group = "") {
@@ -617,32 +677,32 @@ function resolveDisplayName(r) {
     });
   }
 
-function buildCartItem(r) {
-  const detailKey = resolveDetailKey(r);
-  return {
-    key: detailKey || `${normalizeBrand(state.brand)}|${resolveLine(r)}|${resolveName(r)}|${resolveVitola(r)}`,
-    type: "cigar",
-    category: "Cigars",
-    id: detailKey || resolveName(r),
-    brand: state.brand,
-    line: resolveLine(r),
-    cigar: resolveName(r),
-    name: resolveName(r),
-    vitola: resolveVitola(r),
-    ring: resolveRing(r),
-    length: resolveLength(r),
-    shape: resolveShape(r),
-    wrapper: resolveWrapper(r),
-    binder: resolveBinder(r),
-    filler: resolveFiller(r),
-    origin: resolveOrigin(r),
-    shade: resolveShade(r),
-    strength: resolveStrength(r),
-    msrp: resolvePriceNumber(r),
-    image: listRowIconPath(r),
-    url: detailKey ? `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}` : (resolveUrl(r) || "")
-  };
-}
+  function buildCartItem(r) {
+    const detailKey = resolveDetailKey(r);
+    return {
+      key: detailKey || `${normalizeBrand(state.brand)}|${resolveLine(r)}|${resolveName(r)}|${resolveVitola(r)}`,
+      type: "cigar",
+      category: "Cigars",
+      id: detailKey || resolveName(r),
+      brand: state.brand,
+      line: resolveLine(r),
+      cigar: resolveName(r),
+      name: resolveName(r),
+      vitola: resolveVitola(r),
+      ring: resolveRing(r),
+      length: resolveLength(r),
+      shape: resolveShape(r),
+      wrapper: resolveWrapper(r),
+      binder: resolveBinder(r),
+      filler: resolveFiller(r),
+      origin: resolveOrigin(r),
+      shade: resolveShade(r),
+      strength: resolveStrength(r),
+      msrp: resolvePriceNumber(r),
+      image: listRowIconPath(r),
+      url: detailKey ? `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}` : (resolveUrl(r) || "")
+    };
+  }
 
   function getRowQty(item) {
     return window.cigarOSCart?.getItemQty?.(item) || 0;
@@ -661,7 +721,8 @@ function buildCartItem(r) {
       const item = buildCartItem(r);
       const qty = getRowQty(item);
       const priceText = resolvePrice(r) || "—";
-      const iconPath = listRowIconPath(r);
+      const iconCandidates = listRowImageCandidates(r);
+      const iconPath = iconCandidates[0] || brandIconPath();
 
       const row = document.createElement("article");
       row.className = "brand-row";
@@ -686,9 +747,7 @@ function buildCartItem(r) {
       const minusBtn = $(".qty-btn--minus", row);
       const plusBtn = $(".qty-btn--plus", row);
 
-      icon?.addEventListener("error", () => {
-        icon.src = brandIconPath();
-      });
+      bindImageFallback(icon, iconCandidates);
 
       left?.addEventListener("click", () => openDetail(r));
       icon?.addEventListener("click", () => openDetail(r));
