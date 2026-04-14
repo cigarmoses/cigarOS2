@@ -901,7 +901,7 @@
                   : `<span class="fm__info" aria-hidden="true"></span>`;
 
                 return `
-                  <div class="fm__row ${isSelected ? "is-selected" : ""}" data-key="${esc(c.key)}" data-value="${esc(label)}">
+                  <div class="fm__row ${isSelected ? " is-selected" : ""}" data-key="${esc(c.key)}" data-value="${esc(label)}">
                     <span class="fm__cb${isSelected ? " is-checked" : ""}">
                       ${isSelected ? `
                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1399,5 +1399,10 @@
     applyAll();
   }
 
-  init();
+  boot().catch((err) => {
+    console.error("Brand page boot failed:", err);
+    if (listEl) {
+      listEl.innerHTML = `<div class="empty">Error loading brand.</div>`;
+    }
+  });
 })();
