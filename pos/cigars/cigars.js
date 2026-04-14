@@ -3,7 +3,7 @@
    - Loads cigar sheet CSV
    - Brands grid
    - Search + filter bottom sheet
-   - Accordion-style filter modal
+   - Inline filter modal
    - Vitola + Shape ordering
    - Vitola/shape SVG icons in filters
    - Shape info buttons
@@ -93,7 +93,6 @@
       shade: new Set(),
     },
     activeKey: "vitola",
-    activeValues: [],
     activeSearch: "",
   };
 
@@ -597,39 +596,38 @@
   }
 
   function ensureInjectedStyles() {
-    if ($("#cigars-accordion-filter-style")) return;
+    if ($("#cigars-inline-filter-style")) return;
 
     const style = document.createElement("style");
-    style.id = "cigars-accordion-filter-style";
+    style.id = "cigars-inline-filter-style";
     style.textContent = `
-      .fm.fm--accordion .fm__sheet{
-        max-height: 88vh;
+      .fm.fm--inline .fm__sheet{
+        max-height:88vh;
       }
 
-      .fm.fm--accordion .fm__header{
-        padding: 18px 18px 14px;
+      .fm.fm--inline .fm__header{
+        padding:18px 18px 14px;
       }
 
-      .fm.fm--accordion .fm__body{
+      .fm.fm--inline .fm__title{
+        font-weight:800;
+      }
+
+      .fm.fm--inline .fm__body{
         display:block;
-        padding: 0 0 0;
-        overflow:hidden;
-      }
-
-      .fm.fm--accordion .fm__accordion{
-        display:flex;
-        flex-direction:column;
-        gap:0;
-        padding: 10px 18px 0;
+        padding:0;
         overflow:auto;
       }
 
-      .fm.fm--accordion .fm__section{
-        border-bottom:1px solid rgba(15,26,44,.06);
-        padding: 0 0 14px;
+      .fm.fm--inline .fm__stack{
+        padding:0 18px 8px;
       }
 
-      .fm.fm--accordion .fm__section-btn{
+      .fm.fm--inline .fm__section{
+        border-top:1px solid rgba(15,26,44,.06);
+      }
+
+      .fm.fm--inline .fm__section-btn{
         width:100%;
         border:0;
         background:transparent;
@@ -643,15 +641,15 @@
         appearance:none;
       }
 
-      .fm.fm--accordion .fm__section-title{
-        font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-        font-size: 22px;
-        font-weight: 800;
+      .fm.fm--inline .fm__section-title{
+        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        font-size:22px;
+        font-weight:600;
         letter-spacing:-.02em;
         color:#0f1a2c;
       }
 
-      .fm.fm--accordion .fm__section-meta{
+      .fm.fm--inline .fm__section-meta{
         min-width:26px;
         height:26px;
         padding:0 8px;
@@ -659,12 +657,12 @@
         background:#eef2ff;
         color:#6f85d8;
         font-size:15px;
-        font-weight:800;
+        font-weight:700;
         display:grid;
         place-items:center;
       }
 
-      .fm.fm--accordion .fm__section-toggle{
+      .fm.fm--inline .fm__section-toggle{
         width:24px;
         text-align:center;
         color:#6f85d8;
@@ -673,31 +671,15 @@
         font-weight:400;
       }
 
-      .fm.fm--accordion .fm__search-wrap{
-        padding: 16px 18px 10px;
-        border-top:1px solid rgba(15,26,44,.06);
-        background:#fff;
+      .fm.fm--inline .fm__section-content{
+        padding:0 0 16px;
       }
 
-      .fm.fm--accordion .fm__search-row{
-        margin:0;
+      .fm.fm--inline .fm__search-row{
+        margin:0 0 14px;
       }
 
-      .fm.fm--accordion .fm__list-wrap{
-        padding: 0 18px 14px;
-        overflow:auto;
-        min-height:180px;
-        max-height:42vh;
-      }
-
-      .fm.fm--accordion .fm__empty{
-        padding:20px 8px 4px;
-        color:rgba(15,26,44,.48);
-        font-size:16px;
-        font-weight:700;
-      }
-
-      .fm.fm--accordion .fm__row{
+      .fm.fm--inline .fm__row{
         display:grid;
         grid-template-columns:38px minmax(0,1fr) auto 140px;
         gap:10px;
@@ -709,50 +691,48 @@
         margin-bottom:12px;
       }
 
-      .fm.fm--accordion .fm__row:hover{
-        background:#fff;
-      }
-
-      .fm.fm--accordion .fm__cb{
+      .fm.fm--inline .fm__cb{
         width:28px;
         height:28px;
         border-radius:9px;
         border:2px solid rgba(15,26,44,.18);
         background:#fff;
+        display:grid;
+        place-items:center;
       }
 
-      .fm.fm--accordion .fm__cb.is-checked{
+      .fm.fm--inline .fm__cb.is-checked{
         background:#eef2ff;
         border-color:#8ea4eb;
         color:#8ea4eb;
       }
 
-      .fm.fm--accordion .fm__cb svg{
+      .fm.fm--inline .fm__cb svg{
         width:18px;
         height:18px;
       }
 
-      .fm.fm--accordion .fm__label{
+      .fm.fm--inline .fm__label{
         min-width:0;
-        font-family: var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
         font-size:18px;
-        font-weight:800;
+        font-weight:600;
         letter-spacing:-.02em;
         color:#0f1a2c;
       }
 
-      .fm.fm--accordion .fm__row.is-selected .fm__label{
+      .fm.fm--inline .fm__row.is-selected .fm__label{
         color:#0f1a2c;
       }
 
-      .fm.fm--accordion .fm__info{
+      .fm.fm--inline .fm__info{
         width:24px;
         height:24px;
         border:0;
         background:transparent;
         color:#8d96a8;
         font-size:18px;
-        font-weight:800;
+        font-weight:600;
         line-height:1;
         display:grid;
         place-items:center;
@@ -761,7 +741,7 @@
         appearance:none;
       }
 
-      .fm.fm--accordion .fm__icon{
+      .fm.fm--inline .fm__icon{
         width:140px;
         min-width:140px;
         height:22px;
@@ -771,32 +751,30 @@
         overflow:visible;
       }
 
-      .fm.fm--accordion .fm__icon img{
+      .fm.fm--inline .fm__icon img{
         height:14px;
         width:auto;
         max-width:132px;
         object-fit:contain;
         display:block;
+        transform:scaleX(-1);
+        transform-origin:center;
       }
 
-      .fm.fm--accordion .fm__icon--brand,
-      .fm.fm--accordion .fm__icon--manufacturer{
-        height:28px;
+      .fm.fm--inline .fm__icon--brand img,
+      .fm.fm--inline .fm__icon--manufacturer img{
+        transform:none;
       }
 
-      .fm.fm--accordion .fm__icon--brand img,
-      .fm.fm--accordion .fm__icon--manufacturer img{
-        height:24px;
-        max-width:120px;
+      .fm.fm--inline .fm__search-input{
+        font-weight:500;
       }
 
-      .fm.fm--accordion .fm__actions{
-        position:relative;
-        z-index:2;
-        background:#fff;
+      .fm.fm--inline .fm__btn{
+        font-weight:600;
       }
 
-      .fm.fm--accordion .fm__info-sheet{
+      .fm.fm--inline .fm__info-sheet{
         position:absolute;
         left:18px;
         right:18px;
@@ -809,27 +787,27 @@
         display:none;
       }
 
-      .fm.fm--accordion .fm__info-sheet.is-open{
+      .fm.fm--inline .fm__info-sheet.is-open{
         display:block;
       }
 
-      .fm.fm--accordion .fm__info-title{
+      .fm.fm--inline .fm__info-title{
         margin:0 0 6px;
         font-size:18px;
         line-height:1.2;
-        font-weight:800;
+        font-weight:700;
         color:#0f1a2c;
       }
 
-      .fm.fm--accordion .fm__info-text{
+      .fm.fm--inline .fm__info-text{
         margin:0;
         font-size:15px;
         line-height:1.35;
-        font-weight:600;
+        font-weight:500;
         color:rgba(15,26,44,.72);
       }
 
-      .fm.fm--accordion .fm__info-close{
+      .fm.fm--inline .fm__info-close{
         position:absolute;
         top:10px;
         right:10px;
@@ -847,45 +825,58 @@
         appearance:none;
       }
 
-      @media (max-width: 430px){
-        .fm.fm--accordion .fm__row{
+      .fm.fm--inline .fm__actions{
+        position:relative;
+        z-index:2;
+        background:#fff;
+      }
+
+      .fm.fm--inline .fm__empty{
+        padding:8px 8px 12px;
+        color:rgba(15,26,44,.48);
+        font-size:16px;
+        font-weight:500;
+      }
+
+      @media (max-width:430px){
+        .fm.fm--inline .fm__row{
           grid-template-columns:34px minmax(0,1fr) auto 118px;
           gap:10px;
           padding:13px 10px;
         }
 
-        .fm.fm--accordion .fm__icon{
+        .fm.fm--inline .fm__icon{
           width:118px;
           min-width:118px;
         }
 
-        .fm.fm--accordion .fm__icon img{
+        .fm.fm--inline .fm__icon img{
           max-width:110px;
           height:13px;
         }
 
-        .fm.fm--accordion .fm__label{
+        .fm.fm--inline .fm__label{
           font-size:17px;
         }
       }
 
-      @media (max-width: 390px){
-        .fm.fm--accordion .fm__row{
+      @media (max-width:390px){
+        .fm.fm--inline .fm__row{
           grid-template-columns:32px minmax(0,1fr) auto 104px;
           gap:8px;
         }
 
-        .fm.fm--accordion .fm__icon{
+        .fm.fm--inline .fm__icon{
           width:104px;
           min-width:104px;
         }
 
-        .fm.fm--accordion .fm__icon img{
+        .fm.fm--inline .fm__icon img{
           max-width:96px;
           height:12px;
         }
 
-        .fm.fm--accordion .fm__label{
+        .fm.fm--inline .fm__label{
           font-size:16px;
         }
       }
@@ -899,12 +890,12 @@
     if (!modalRoot) {
       modalRoot = document.createElement("div");
       modalRoot.id = "filter-modal";
-      modalRoot.className = "fm fm--hidden fm--accordion";
+      modalRoot.className = "fm fm--hidden fm--inline";
       modalRoot.hidden = true;
       modalRoot.setAttribute("aria-hidden", "true");
       document.body.appendChild(modalRoot);
     } else {
-      modalRoot.classList.add("fm--accordion");
+      modalRoot.classList.add("fm--inline");
     }
 
     if (!modalRoot.querySelector(".fm__sheet")) {
@@ -922,31 +913,7 @@
           </div>
 
           <div class="fm__body">
-            <div class="fm__accordion" id="fm-accordion"></div>
-
-            <div class="fm__search-wrap">
-              <div class="fm__search-row">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
-                        fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                </svg>
-
-                <input class="fm__search-input" id="fm-search" placeholder="Search" autocomplete="off" />
-
-                <button class="fm__mic-btn" type="button" aria-label="Clear search">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z"
-                          fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                    <path d="M19 11a7 7 0 0 1-14 0" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                    <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="fm__list-wrap">
-              <div class="fm__list" id="fm-list"></div>
-            </div>
+            <div class="fm__stack" id="fm-stack"></div>
           </div>
 
           <div class="fm__info-sheet" id="fm-info-sheet" aria-live="polite">
@@ -964,6 +931,10 @@
     }
   }
 
+  function closeInfoSheet() {
+    $("#fm-info-sheet", modalRoot)?.classList.remove("is-open");
+  }
+
   function openInfoSheet(title, text) {
     const sheet = $("#fm-info-sheet", modalRoot);
     const titleEl = $("#fm-info-title", modalRoot);
@@ -976,17 +947,97 @@
     sheet.classList.add("is-open");
   }
 
-  function closeInfoSheet() {
-    $("#fm-info-sheet", modalRoot)?.classList.remove("is-open");
-  }
+  function renderInlineSections() {
+    const stack = $("#fm-stack", modalRoot);
+    if (!stack) return;
 
-  function renderAccordion() {
-    const root = $("#fm-accordion", modalRoot);
-    if (!root) return;
-
-    root.innerHTML = CATEGORIES.map((c) => {
+    stack.innerHTML = CATEGORIES.map((c) => {
       const count = countSelectedForKey(c.key);
       const isOpen = c.key === state.activeKey;
+      const values = getValuesForKey(c.key);
+      const q = isOpen ? norm(state.activeSearch).toLowerCase() : "";
+      const filtered = isOpen
+        ? (!q ? values : values.filter((v) => norm(v).toLowerCase().includes(q)))
+        : [];
+
+      const rows = isOpen
+        ? filtered.length
+          ? filtered.map((v) => {
+              const label = norm(v);
+              const isSelected = state.selected[c.key].has(label);
+
+              const brandOrManufacturerIcon =
+                c.key === "manufacturer" || c.key === "brand"
+                  ? iconPathFor(c.key, label)
+                  : "";
+
+              const cigarIcon =
+                c.key === "vitola" || c.key === "shape"
+                  ? getCigarFilterIcon(label, c.key)
+                  : "";
+
+              const iconSrc = brandOrManufacturerIcon || cigarIcon;
+              const iconClass =
+                c.key === "manufacturer"
+                  ? "fm__icon fm__icon--manufacturer"
+                  : c.key === "brand"
+                  ? "fm__icon fm__icon--brand"
+                  : "fm__icon fm__icon--cigar";
+
+              const infoBtn =
+                c.key === "shape" && getShapeInfo(label)
+                  ? `<button class="fm__info" type="button" data-info="${escapeHtml(label)}" aria-label="About ${escapeHtml(label)}">ℹ</button>`
+                  : `<span class="fm__info" aria-hidden="true"></span>`;
+
+              const cb = isSelected
+                ? `<div class="fm__cb is-checked" aria-hidden="true">
+                     <svg viewBox="0 0 24 24" aria-hidden="true">
+                       <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                     </svg>
+                   </div>`
+                : `<div class="fm__cb" aria-hidden="true"></div>`;
+
+              const icon = iconSrc
+                ? `<div class="${iconClass}">
+                     <img src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
+                          onerror="this.style.display='none';" />
+                   </div>`
+                : `<div class="${iconClass}" aria-hidden="true"></div>`;
+
+              return `
+                <div class="fm__row ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(c.key)}" data-value="${escapeHtml(label)}">
+                  ${cb}
+                  <div class="fm__label">${escapeHtml(label)}</div>
+                  ${infoBtn}
+                  ${icon}
+                </div>
+              `;
+            }).join("")
+          : `<div class="fm__empty">No options found.</div>`
+        : "";
+
+      const search =
+        isOpen
+          ? `
+            <div class="fm__search-row">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
+                      fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+              </svg>
+
+              <input class="fm__search-input" id="fm-search-inline" placeholder="Search" autocomplete="off" value="${escapeHtml(state.activeSearch)}" />
+
+              <button class="fm__mic-btn" type="button" aria-label="Clear search" id="fm-search-clear">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z"
+                        fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                  <path d="M19 11a7 7 0 0 1-14 0" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                  <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          `
+          : "";
 
       return `
         <div class="fm__section">
@@ -995,23 +1046,62 @@
             <span class="fm__section-meta">${count}</span>
             <span class="fm__section-toggle">${isOpen ? "−" : "+"}</span>
           </button>
+          ${isOpen ? `<div class="fm__section-content">${search}${rows}</div>` : ""}
         </div>
       `;
     }).join("");
 
-    $$(".fm__section-btn", root).forEach((btn) => {
+    $$(".fm__section-btn", stack).forEach((btn) => {
       btn.addEventListener("click", () => {
         const key = btn.getAttribute("data-cat");
         if (!key) return;
         state.activeKey = key;
         state.activeSearch = "";
-        const inp = $("#fm-search", modalRoot);
-        if (inp) inp.value = "";
-        state.activeValues = getValuesForKey(key);
         closeInfoSheet();
-        renderAccordion();
-        renderList();
+        renderInlineSections();
+
+        const inp = $("#fm-search-inline", modalRoot);
+        inp?.focus();
       });
+    });
+
+    $$(".fm__row", stack).forEach((row) => {
+      row.addEventListener("click", (e) => {
+        const target = e.target;
+        if (target instanceof Element && target.closest(".fm__info")) return;
+
+        const key = row.getAttribute("data-key") || "";
+        const val = row.getAttribute("data-value") || "";
+        if (!key || !val || !(state.selected[key] instanceof Set)) return;
+
+        if (state.selected[key].has(val)) state.selected[key].delete(val);
+        else state.selected[key].add(val);
+
+        renderInlineSections();
+      });
+    });
+
+    $$("[data-info]", stack).forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const label = btn.getAttribute("data-info") || "";
+        const text = getShapeInfo(label);
+        if (!text) return;
+        openInfoSheet(label, text);
+      });
+    });
+
+    const inlineSearch = $("#fm-search-inline", modalRoot);
+    inlineSearch?.addEventListener("input", () => {
+      state.activeSearch = inlineSearch.value || "";
+      renderInlineSections();
+    });
+
+    $("#fm-search-clear", modalRoot)?.addEventListener("click", () => {
+      state.activeSearch = "";
+      renderInlineSections();
+      $("#fm-search-inline", modalRoot)?.focus();
     });
   }
 
@@ -1023,13 +1113,10 @@
     modalRoot.setAttribute("aria-hidden", "false");
     document.documentElement.classList.add("sheet-open");
 
-    renderAccordion();
-    state.activeValues = getValuesForKey(state.activeKey);
-    renderList();
+    renderInlineSections();
 
     window.setTimeout(() => {
-      const inp = $("#fm-search", modalRoot);
-      inp?.focus();
+      $("#fm-search-inline", modalRoot)?.focus();
     }, 60);
   }
 
@@ -1045,101 +1132,6 @@
         modalRoot.hidden = true;
       }
     }, 260);
-  }
-
-  function renderList() {
-    const listEl = $("#fm-list", modalRoot);
-    if (!listEl) return;
-
-    const key = state.activeKey;
-    const selectedSet = state.selected[key];
-    const q = norm(state.activeSearch).toLowerCase();
-    const values = state.activeValues || [];
-    const filtered = !q ? values : values.filter((v) => norm(v).toLowerCase().includes(q));
-
-    if (!filtered.length) {
-      listEl.innerHTML = `<div class="fm__empty">No options found.</div>`;
-      return;
-    }
-
-    listEl.innerHTML = filtered.map((v) => {
-      const label = norm(v);
-      const isSelected = selectedSet.has(label);
-
-      const brandOrManufacturerIcon =
-        key === "manufacturer" || key === "brand"
-          ? iconPathFor(key, label)
-          : "";
-
-      const cigarIcon =
-        key === "vitola" || key === "shape"
-          ? getCigarFilterIcon(label, key)
-          : "";
-
-      const iconSrc = brandOrManufacturerIcon || cigarIcon;
-      const iconClass =
-        key === "manufacturer"
-          ? "fm__icon fm__icon--manufacturer"
-          : key === "brand"
-          ? "fm__icon fm__icon--brand"
-          : "fm__icon fm__icon--cigar";
-
-      const cb = isSelected
-        ? `<div class="fm__cb is-checked" aria-hidden="true">
-             <svg viewBox="0 0 24 24" aria-hidden="true">
-               <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-             </svg>
-           </div>`
-        : `<div class="fm__cb" aria-hidden="true"></div>`;
-
-      const infoBtn =
-        key === "shape" && getShapeInfo(label)
-          ? `<button class="fm__info" type="button" data-info="${escapeHtml(label)}" aria-label="About ${escapeHtml(label)}">ℹ</button>`
-          : `<span class="fm__info" aria-hidden="true"></span>`;
-
-      const icon = iconSrc
-        ? `<div class="${iconClass}">
-             <img src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
-                  onerror="this.style.display='none';" />
-           </div>`
-        : `<div class="${iconClass}" aria-hidden="true"></div>`;
-
-      return `
-        <div class="fm__row ${isSelected ? "is-selected" : ""}" data-value="${escapeHtml(label)}">
-          ${cb}
-          <div class="fm__label">${escapeHtml(label)}</div>
-          ${infoBtn}
-          ${icon}
-        </div>
-      `;
-    }).join("");
-
-    $$(".fm__row", listEl).forEach((row) => {
-      row.addEventListener("click", (e) => {
-        const target = e.target;
-        if (target instanceof Element && target.closest(".fm__info")) return;
-
-        const val = row.getAttribute("data-value") || "";
-        if (!val) return;
-
-        if (selectedSet.has(val)) selectedSet.delete(val);
-        else selectedSet.add(val);
-
-        renderAccordion();
-        renderList();
-      });
-    });
-
-    $$("[data-info]", listEl).forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const label = btn.getAttribute("data-info") || "";
-        const text = getShapeInfo(label);
-        if (!text) return;
-        openInfoSheet(label, text);
-      });
-    });
   }
 
   function syncLocalFromGlobal() {
@@ -1166,8 +1158,7 @@
       state.selected[k].clear();
     }
     closeInfoSheet();
-    renderAccordion();
-    renderList();
+    renderInlineSections();
   }
 
   searchInput?.addEventListener("input", () => {
@@ -1195,6 +1186,16 @@
       closeInfoSheet();
       return;
     }
+
+    if (t.closest("#fm-reset")) {
+      resetLocalSelections();
+      return;
+    }
+
+    if (t.closest("#fm-apply")) {
+      pushLocalToGlobal();
+      closeModal();
+    }
   });
 
   document.addEventListener("keydown", (e) => {
@@ -1208,39 +1209,6 @@
     }
 
     closeModal();
-  });
-
-  document.addEventListener("input", (e) => {
-    if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
-    const t = e.target;
-    if (!(t instanceof HTMLInputElement)) return;
-    if (t.id !== "fm-search") return;
-    state.activeSearch = t.value || "";
-    renderList();
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
-    const t = e.target;
-    if (!(t instanceof Element)) return;
-
-    if (t.closest("#fm-reset")) {
-      resetLocalSelections();
-      return;
-    }
-
-    if (t.closest("#fm-apply")) {
-      pushLocalToGlobal();
-      closeModal();
-      return;
-    }
-
-    if (t.closest(".fm__mic-btn")) {
-      state.activeSearch = "";
-      const inp = $("#fm-search", modalRoot);
-      if (inp) inp.value = "";
-      renderList();
-    }
   });
 
   async function init() {
