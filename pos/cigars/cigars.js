@@ -4,6 +4,7 @@
    - Brands grid
    - Search + filter bottom sheet
    - Main-page filter button works
+   - Manufacturer/brand icons + vitola/shape cigar icons in filters
 */
 
 (() => {
@@ -101,6 +102,38 @@
     if (!slug) return "";
     if (key === "manufacturer") return `/img/icons/manufacturers/${slug}.svg`;
     if (key === "brand") return `/img/icons/brands/${slug}.svg`;
+    return "";
+  }
+
+  function getCigarFilterIcon(value = "", group = "") {
+    const v = String(value || "").toLowerCase().trim();
+
+    if (group === "vitola") {
+      if (v.includes("double corona")) return "/uxui/cigaricons/doublecorona.svg";
+      if (v.includes("petit corona")) return "/uxui/cigaricons/petitcorona.svg";
+      if (v.includes("corona gorda")) return "/uxui/cigaricons/corona.svg";
+      if (v.includes("lancero")) return "/uxui/cigaricons/lonsdale.svg";
+      if (v.includes("churchill")) return "/uxui/cigaricons/churchill.svg";
+      if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
+      if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
+      if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("lonsdale")) return "/uxui/cigaricons/lonsdale.svg";
+      if (v.includes("gordo")) return "/uxui/cigaricons/gordo.svg";
+      if (v.includes("robusto")) return "/uxui/cigaricons/robusto.svg";
+      if (v.includes("toro")) return "/uxui/cigaricons/toro.svg";
+      if (v.includes("corona")) return "/uxui/cigaricons/corona.svg";
+    }
+
+    if (group === "shape") {
+      if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
+      if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("parejo")) return "/uxui/cigaricons/robusto.svg";
+      if (v.includes("figurado")) return "/uxui/cigaricons/perfecto.svg";
+      if (v.includes("pyramid") || v.includes("piramide") || v.includes("piramides")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("belicoso")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("diadema")) return "/uxui/cigaricons/perfecto.svg";
+    }
+
     return "";
   }
 
@@ -628,8 +661,6 @@
 
     const key = state.activeKey;
     const selectedSet = state.selected[key];
-    const showIcons = key === "manufacturer" || key === "brand";
-
     const q = norm(state.activeSearch).toLowerCase();
     const values = state.activeValues || [];
     const filtered = !q ? values : values.filter((v) => norm(v).toLowerCase().includes(q));
@@ -637,7 +668,18 @@
     listEl.innerHTML = filtered.map((v) => {
       const label = norm(v);
       const isSelected = selectedSet.has(label);
-      const iconSrc = showIcons ? iconPathFor(key, label) : "";
+
+      const brandOrManufacturerIcon =
+        key === "manufacturer" || key === "brand"
+          ? iconPathFor(key, label)
+          : "";
+
+      const cigarIcon =
+        key === "vitola" || key === "shape"
+          ? getCigarFilterIcon(label, key)
+          : "";
+
+      const iconSrc = brandOrManufacturerIcon || cigarIcon;
 
       const cb = isSelected
         ? `<div class="fm__cb is-checked" aria-hidden="true">
@@ -647,7 +689,7 @@
            </div>`
         : `<div class="fm__cb" aria-hidden="true"></div>`;
 
-      const icon = showIcons
+      const icon = iconSrc
         ? `<div class="fm__icon">
              <img src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
                   onerror="this.style.display='none';" />
