@@ -3,9 +3,10 @@
    - Loads cigar rows from Google Sheets CSV
    - Brand-specific filtering
    - Bands sheet
-   - Bottom-sheet filters
+   - Inline bottom-sheet filters
    - Cart qty steppers
    - Vitola/shape SVG icons in brand filters
+   - Shape info buttons
 */
 
 (() => {
@@ -31,6 +32,56 @@
   const backBtn = $("#back-btn");
   const brandSearchBtn = $("#brandSearchBtn");
 
+  const VITOLA_ORDER = [
+    "Corona",
+    "Robusto",
+    "Toro",
+    "Gordo",
+    "Petit Corona",
+    "Corona Extra",
+    "Lonsdale",
+    "Lancero",
+    "Panetela",
+    "Pantela",
+    "Churchill",
+    "Double Corona",
+    "Gigante",
+    "Gran Corona",
+  ];
+
+  const SHAPE_ORDER = [
+    "Parejo",
+    "Torpedo",
+    "Presidente",
+    "Pyramid",
+    "Perfecto",
+    "Culebra",
+  ];
+
+  const SHAPE_INFO = {
+    parejo:
+      "Straight-sided cigars; standard or straight cigars. This is the most common shape.",
+    torpedo:
+      "Tapered at both the head and the foot, with a pointy head.",
+    presidente:
+      "A long tapered shape; often used like a Salomon-style reference with taper at the head and the foot.",
+    pyramid:
+      "Also called pyramide or piramide. Tapered to a point at the head and blossoms toward a cylindrical foot.",
+    perfecto:
+      "Usually about 4–6 inches long, tapered at both ends, with a rounded head and a bulbous center.",
+    culebra:
+      "Spanish for “snake.” Three loosely filled thin cigars braided together with string.",
+  };
+
+  const FILTER_CATEGORIES = [
+    { key: "vitola", label: "Vitolas" },
+    { key: "ring", label: "Ring" },
+    { key: "length", label: "Length" },
+    { key: "strength", label: "Strength" },
+    { key: "shape", label: "Shape" },
+    { key: "shade", label: "Wrap. Shade" },
+  ];
+
   const state = {
     brand: "",
     rowsAll: [],
@@ -45,6 +96,8 @@
       shape: new Set(),
       shade: new Set(),
     },
+    activeFilterKey: "vitola",
+    activeFilterSearch: "",
   };
 
   function getParam(name) {
@@ -80,6 +133,10 @@
       .replace(/[^a-z0-9]+/g, "");
   }
 
+  function norm(v) {
+    return String(v ?? "").trim().replace(/\s+/g, " ");
+  }
+
   function esc(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -87,6 +144,16 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function slugify(name) {
+    return String(name || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
   }
 
   function parseMoneyValue(v) {
@@ -192,11 +259,11 @@
   }
 
   function resolveName(r) {
-    return getField(r, ["cigar"]); // strictly column H
+    return getField(r, ["cigar"]);
   }
 
   function resolveLine(r) {
-    return getField(r, ["line"]); // strictly column G
+    return getField(r, ["line"]);
   }
 
   function resolveDisplayName(r) {
@@ -275,21 +342,10 @@
 
     const names = [];
 
-    if (brand && line && cigar) {
-      names.push(`${brand}${line}${cigar}`);
-    }
-
-    if (brand && line && cigar && vitola) {
-      names.push(`${brand}${line}${cigar}${vitola}`);
-    }
-
-    if (line && cigar) {
-      names.push(`${line}${cigar}`);
-    }
-
-    if (line && cigar && vitola) {
-      names.push(`${line}${cigar}${vitola}`);
-    }
+    if (brand && line && cigar) names.push(`${brand}${line}${cigar}`);
+    if (brand && line && cigar && vitola) names.push(`${brand}${line}${cigar}${vitola}`);
+    if (line && cigar) names.push(`${line}${cigar}`);
+    if (line && cigar && vitola) names.push(`${line}${cigar}${vitola}`);
 
     return Array.from(new Set(names));
   }
@@ -317,15 +373,20 @@
     return Array.from(new Set(candidates.filter(Boolean)));
   }
 
-  function listRowIconPath(r) {
+  function listRowIconPath() {
     return brandIconPath();
   }
 
-  function bindImageFallback(img) {
+  function bindImageFallback(img, candidates = []) {
     if (!img) return;
 
+    let idx = 0;
+    const fallbackList = Array.isArray(candidates) && candidates.length ? candidates : [brandIconPath()];
+
     img.addEventListener("error", () => {
-      img.src = brandIconPath();
+      idx += 1;
+      if (idx < fallbackList.length) img.src = fallbackList[idx];
+      else img.src = brandIconPath();
     });
   }
 
@@ -367,29 +428,610 @@
     const v = String(value || "").toLowerCase().trim();
 
     if (group === "vitola") {
+      if (v.includes("gran corona")) return "/uxui/cigaricons/doublecorona.svg";
       if (v.includes("double corona")) return "/uxui/cigaricons/doublecorona.svg";
-      if (v.includes("petit corona")) return "/uxui/cigaricons/petitcorona.svg";
-      if (v.includes("corona gorda")) return "/uxui/cigaricons/corona.svg";
-      if (v.includes("lancero")) return "/uxui/cigaricons/lonsdale.svg";
       if (v.includes("churchill")) return "/uxui/cigaricons/churchill.svg";
-      if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
-      if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
-      if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("panetela") || v.includes("pantela")) return "/uxui/cigaricons/lonsdale.svg";
+      if (v.includes("lancero")) return "/uxui/cigaricons/lonsdale.svg";
       if (v.includes("lonsdale")) return "/uxui/cigaricons/lonsdale.svg";
+      if (v.includes("gigante")) return "/uxui/cigaricons/gordo.svg";
       if (v.includes("gordo")) return "/uxui/cigaricons/gordo.svg";
-      if (v.includes("robusto")) return "/uxui/cigaricons/robusto.svg";
       if (v.includes("toro")) return "/uxui/cigaricons/toro.svg";
+      if (v.includes("robusto")) return "/uxui/cigaricons/robusto.svg";
+      if (v.includes("corona extra")) return "/uxui/cigaricons/corona.svg";
+      if (v.includes("petit corona")) return "/uxui/cigaricons/petitcorona.svg";
       if (v.includes("corona")) return "/uxui/cigaricons/corona.svg";
     }
 
     if (group === "shape") {
-      if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
-      if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
       if (v.includes("parejo")) return "/uxui/cigaricons/robusto.svg";
-      if (v.includes("figurado")) return "/uxui/cigaricons/perfecto.svg";
+      if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
+      if (v.includes("pyramid") || v.includes("piramide") || v.includes("piramides")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
+      if (v.includes("culebra")) return "/uxui/cigaricons/lonsdale.svg";
     }
 
     return "";
+  }
+
+  function getShapeInfo(value = "") {
+    return SHAPE_INFO[slugify(value)] || "";
+  }
+
+  function orderByCustomList(values, order, aliases = {}) {
+    const list = uniqSorted(values);
+    const orderMap = new Map();
+
+    order.forEach((item, index) => {
+      orderMap.set(item.toLowerCase(), index);
+    });
+
+    return list.sort((a, b) => {
+      const aa = (aliases[a.toLowerCase()] || a).toLowerCase();
+      const bb = (aliases[b.toLowerCase()] || b).toLowerCase();
+
+      const ai = orderMap.has(aa) ? orderMap.get(aa) : 999;
+      const bi = orderMap.has(bb) ? orderMap.get(bb) : 999;
+
+      if (ai !== bi) return ai - bi;
+      return a.localeCompare(b);
+    });
+  }
+
+  function uniqSortedBrand(vals, numeric = false) {
+    const arr = Array.from(new Set(vals.map((v) => String(v || "").trim()).filter(Boolean)));
+    return arr.sort((a, b) => {
+      if (!numeric) return a.localeCompare(b);
+      return parseFloat(a) - parseFloat(b);
+    });
+  }
+
+  function orderVitolas(values) {
+    return orderByCustomList(values, VITOLA_ORDER, {
+      pantela: "panetela",
+    });
+  }
+
+  function orderShapes(values) {
+    return orderByCustomList(values, SHAPE_ORDER, {
+      pyramide: "pyramid",
+      piramide: "pyramid",
+      piramides: "pyramid",
+    });
+  }
+
+  function buildFilterData(rows) {
+    return {
+      vitola: orderVitolas(rows.map(resolveVitola)),
+      ring: uniqSortedBrand(rows.map(resolveRing), true),
+      length: uniqSortedBrand(rows.map(resolveLength), true),
+      strength: uniqSortedBrand(rows.map(resolveStrength)),
+      shape: orderShapes(rows.map(resolveShape)),
+      shade: uniqSortedBrand(rows.map(resolveShade)),
+    };
+  }
+
+  function countSelectedForKey(key) {
+    return state.filters[key] instanceof Set ? state.filters[key].size : 0;
+  }
+
+  function ensureInjectedStyles() {
+    if ($("#brand-inline-filter-style")) return;
+
+    const style = document.createElement("style");
+    style.id = "brand-inline-filter-style";
+    style.textContent = `
+      .fm.fm--inline .fm__sheet{
+        max-height:88vh;
+      }
+
+      .fm.fm--inline .fm__header{
+        padding:18px 18px 14px;
+      }
+
+      .fm.fm--inline .fm__title{
+        font-weight:800;
+      }
+
+      .fm.fm--inline .fm__body{
+        display:block;
+        padding:0;
+        overflow:auto;
+      }
+
+      .fm.fm--inline .fm__stack{
+        padding:0 18px 8px;
+      }
+
+      .fm.fm--inline .fm__section{
+        border-top:1px solid rgba(15,26,44,.06);
+      }
+
+      .fm.fm--inline .fm__section-btn{
+        width:100%;
+        border:0;
+        background:transparent;
+        display:grid;
+        grid-template-columns:1fr auto auto;
+        gap:12px;
+        align-items:center;
+        padding:18px 6px;
+        text-align:left;
+        cursor:pointer;
+        appearance:none;
+      }
+
+      .fm.fm--inline .fm__section-title{
+        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        font-size:22px;
+        font-weight:600;
+        letter-spacing:-.02em;
+        color:#0f1a2c;
+      }
+
+      .fm.fm--inline .fm__section-meta{
+        min-width:26px;
+        height:26px;
+        padding:0 8px;
+        border-radius:999px;
+        background:#eef2ff;
+        color:#6f85d8;
+        font-size:15px;
+        font-weight:700;
+        display:grid;
+        place-items:center;
+      }
+
+      .fm.fm--inline .fm__section-toggle{
+        width:24px;
+        text-align:center;
+        color:#6f85d8;
+        font-size:32px;
+        line-height:1;
+        font-weight:400;
+      }
+
+      .fm.fm--inline .fm__section-content{
+        padding:0 0 16px;
+      }
+
+      .fm.fm--inline .fm__search-row{
+        margin:0 0 14px;
+      }
+
+      .fm.fm--inline .fm__row{
+        display:grid;
+        grid-template-columns:38px minmax(0,1fr) auto 140px;
+        gap:10px;
+        align-items:center;
+        padding:14px 12px;
+        border-radius:18px;
+        border:1px solid rgba(15,26,44,.08);
+        background:#fff;
+        margin-bottom:12px;
+      }
+
+      .fm.fm--inline .fm__cb{
+        width:28px;
+        height:28px;
+        border-radius:9px;
+        border:2px solid rgba(15,26,44,.18);
+        background:#fff;
+        display:grid;
+        place-items:center;
+      }
+
+      .fm.fm--inline .fm__cb.is-checked{
+        background:#eef2ff;
+        border-color:#8ea4eb;
+        color:#8ea4eb;
+      }
+
+      .fm.fm--inline .fm__cb svg{
+        width:18px;
+        height:18px;
+      }
+
+      .fm.fm--inline .fm__label{
+        min-width:0;
+        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        font-size:18px;
+        font-weight:600;
+        letter-spacing:-.02em;
+        color:#0f1a2c;
+      }
+
+      .fm.fm--inline .fm__row.is-selected .fm__label{
+        color:#0f1a2c;
+      }
+
+      .fm.fm--inline .fm__info{
+        width:24px;
+        height:24px;
+        border:0;
+        background:transparent;
+        color:#8d96a8;
+        font-size:18px;
+        font-weight:600;
+        line-height:1;
+        display:grid;
+        place-items:center;
+        cursor:pointer;
+        padding:0;
+        appearance:none;
+      }
+
+      .fm.fm--inline .fm__icon{
+        width:140px;
+        min-width:140px;
+        height:22px;
+        display:flex;
+        align-items:center;
+        justify-content:flex-start;
+        overflow:visible;
+      }
+
+      .fm.fm--inline .fm__icon img{
+        height:14px;
+        width:auto;
+        max-width:132px;
+        object-fit:contain;
+        display:block;
+        transform:scaleX(-1);
+        transform-origin:center;
+      }
+
+      .fm.fm--inline .fm__search-input{
+        font-weight:500;
+      }
+
+      .fm.fm--inline .fm__btn{
+        font-weight:600;
+      }
+
+      .fm.fm--inline .fm__info-sheet{
+        position:absolute;
+        left:18px;
+        right:18px;
+        bottom:92px;
+        border-radius:18px;
+        background:#fff;
+        border:1px solid rgba(15,26,44,.08);
+        box-shadow:0 18px 40px rgba(15,26,44,.14);
+        padding:14px 16px;
+        display:none;
+      }
+
+      .fm.fm--inline .fm__info-sheet.is-open{
+        display:block;
+      }
+
+      .fm.fm--inline .fm__info-title{
+        margin:0 0 6px;
+        font-size:18px;
+        line-height:1.2;
+        font-weight:700;
+        color:#0f1a2c;
+      }
+
+      .fm.fm--inline .fm__info-text{
+        margin:0;
+        font-size:15px;
+        line-height:1.35;
+        font-weight:500;
+        color:rgba(15,26,44,.72);
+      }
+
+      .fm.fm--inline .fm__info-close{
+        position:absolute;
+        top:10px;
+        right:10px;
+        width:28px;
+        height:28px;
+        border:0;
+        background:transparent;
+        color:#8d96a8;
+        font-size:22px;
+        line-height:1;
+        display:grid;
+        place-items:center;
+        cursor:pointer;
+        padding:0;
+        appearance:none;
+      }
+
+      .fm.fm--inline .fm__actions{
+        position:relative;
+        z-index:2;
+        background:#fff;
+      }
+
+      .fm.fm--inline .fm__empty{
+        padding:8px 8px 12px;
+        color:rgba(15,26,44,.48);
+        font-size:16px;
+        font-weight:500;
+      }
+
+      @media (max-width:430px){
+        .fm.fm--inline .fm__row{
+          grid-template-columns:34px minmax(0,1fr) auto 118px;
+          gap:10px;
+          padding:13px 10px;
+        }
+
+        .fm.fm--inline .fm__icon{
+          width:118px;
+          min-width:118px;
+        }
+
+        .fm.fm--inline .fm__icon img{
+          max-width:110px;
+          height:13px;
+        }
+
+        .fm.fm--inline .fm__label{
+          font-size:17px;
+        }
+      }
+
+      @media (max-width:390px){
+        .fm.fm--inline .fm__row{
+          grid-template-columns:32px minmax(0,1fr) auto 104px;
+          gap:8px;
+        }
+
+        .fm.fm--inline .fm__icon{
+          width:104px;
+          min-width:104px;
+        }
+
+        .fm.fm--inline .fm__icon img{
+          max-width:96px;
+          height:12px;
+        }
+
+        .fm.fm--inline .fm__label{
+          font-size:16px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  let filterModal = null;
+
+  function ensureFilterModal() {
+    ensureInjectedStyles();
+
+    if (filterModal) return filterModal;
+
+    const modal = document.createElement("div");
+    modal.className = "fm fm--hidden fm--inline";
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML = `
+      <div class="fm__backdrop" data-fm-close></div>
+      <div class="fm__sheet" role="dialog" aria-modal="true" aria-label="Filters">
+        <div class="fm__header">
+          <h2 class="fm__title">Filters</h2>
+          <button class="fm__close" type="button" data-fm-close aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="fm__body">
+          <div class="fm__stack"></div>
+        </div>
+
+        <div class="fm__info-sheet" aria-live="polite">
+          <button class="fm__info-close" type="button" aria-label="Close info">×</button>
+          <h3 class="fm__info-title"></h3>
+          <p class="fm__info-text"></p>
+        </div>
+
+        <div class="fm__actions">
+          <button class="fm__btn fm__btn--reset" type="button" data-fm-clear>Reset</button>
+          <button class="fm__btn fm__btn--apply" type="button" data-fm-apply>Apply</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const stack = $(".fm__stack", modal);
+    const infoSheet = $(".fm__info-sheet", modal);
+    const infoTitle = $(".fm__info-title", modal);
+    const infoText = $(".fm__info-text", modal);
+    const infoClose = $(".fm__info-close", modal);
+
+    let dataByKey = {};
+
+    function closeInfoSheet() {
+      infoSheet?.classList.remove("is-open");
+    }
+
+    function openInfoSheet(title, text) {
+      if (!infoSheet || !infoTitle || !infoText) return;
+      infoTitle.textContent = title;
+      infoText.textContent = text;
+      infoSheet.classList.add("is-open");
+    }
+
+    function renderInlineSections() {
+      stack.innerHTML = FILTER_CATEGORIES.map((c) => {
+        const count = countSelectedForKey(c.key);
+        const isOpen = c.key === state.activeFilterKey;
+        const values = dataByKey[c.key] || [];
+        const q = isOpen ? norm(state.activeFilterSearch).toLowerCase() : "";
+        const filtered = isOpen
+          ? (!q ? values : values.filter((v) => norm(v).toLowerCase().includes(q)))
+          : [];
+
+        const search = isOpen
+          ? `
+            <div class="fm__search-row">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M16 16l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              </svg>
+              <input class="fm__search-input" type="search" id="fm-search-inline" placeholder="Search" value="${esc(state.activeFilterSearch)}" />
+              <button class="fm__mic-btn" type="button" aria-label="Clear search" id="fm-search-clear">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 15a3 3 0 0 0 3-3V8a3 3 0 1 0-6 0v4a3 3 0 0 0 3 3Z" fill="currentColor"></path>
+                  <path d="M19 11a7 7 0 0 1-14 0M12 18v3M9 21h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+              </button>
+            </div>
+          `
+          : "";
+
+        const rows = isOpen
+          ? filtered.length
+            ? filtered.map((value) => {
+                const label = norm(value);
+                const isSelected = state.filters[c.key].has(label);
+                const icon = getCigarFilterIcon(label, c.key);
+                const shapeInfo = c.key === "shape" ? getShapeInfo(label) : "";
+
+                const infoBtn = shapeInfo
+                  ? `<button class="fm__info" type="button" data-info="${esc(label)}" aria-label="About ${esc(label)}">ℹ</button>`
+                  : `<span class="fm__info" aria-hidden="true"></span>`;
+
+                return `
+                  <div class="fm__row ${isSelected ? "is-selected" : ""}" data-key="${esc(c.key)}" data-value="${esc(label)}">
+                    <span class="fm__cb${isSelected ? " is-checked" : ""}">
+                      ${isSelected ? `
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                      ` : ""}
+                    </span>
+                    <span class="fm__label">${esc(label)}</span>
+                    ${infoBtn}
+                    <span class="fm__icon">${icon ? `<img src="${esc(icon)}" alt="">` : ""}</span>
+                  </div>
+                `;
+              }).join("")
+            : `<div class="fm__empty">No options found.</div>`
+          : "";
+
+        return `
+          <div class="fm__section">
+            <button class="fm__section-btn" type="button" data-cat="${esc(c.key)}" aria-expanded="${isOpen ? "true" : "false"}">
+              <span class="fm__section-title">${esc(c.label)}</span>
+              <span class="fm__section-meta">${count}</span>
+              <span class="fm__section-toggle">${isOpen ? "−" : "+"}</span>
+            </button>
+            ${isOpen ? `<div class="fm__section-content">${search}${rows}</div>` : ""}
+          </div>
+        `;
+      }).join("");
+
+      $$(".fm__section-btn", stack).forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const key = btn.getAttribute("data-cat");
+          if (!key) return;
+          state.activeFilterKey = key;
+          state.activeFilterSearch = "";
+          closeInfoSheet();
+          renderInlineSections();
+          $("#fm-search-inline", modal)?.focus();
+        });
+      });
+
+      $$(".fm__row", stack).forEach((row) => {
+        row.addEventListener("click", (e) => {
+          const target = e.target;
+          if (target instanceof Element && target.closest(".fm__info")) return;
+
+          const key = row.getAttribute("data-key") || "";
+          const value = row.getAttribute("data-value") || "";
+          if (!key || !value) return;
+
+          if (state.filters[key].has(value)) state.filters[key].delete(value);
+          else state.filters[key].add(value);
+
+          closeInfoSheet();
+          renderInlineSections();
+        });
+      });
+
+      $$("[data-info]", stack).forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const value = btn.getAttribute("data-info") || "";
+          const text = getShapeInfo(value);
+          if (!text) return;
+          openInfoSheet(value, text);
+        });
+      });
+
+      const inlineSearch = $("#fm-search-inline", modal);
+      inlineSearch?.addEventListener("input", () => {
+        state.activeFilterSearch = inlineSearch.value || "";
+        renderInlineSections();
+      });
+
+      $("#fm-search-clear", modal)?.addEventListener("click", () => {
+        state.activeFilterSearch = "";
+        renderInlineSections();
+        $("#fm-search-inline", modal)?.focus();
+      });
+    }
+
+    function open(data) {
+      dataByKey = data;
+      state.activeFilterKey = "vitola";
+      state.activeFilterSearch = "";
+      closeInfoSheet();
+      renderInlineSections();
+      modal.hidden = false;
+      modal.classList.remove("fm--hidden");
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+      document.documentElement.classList.add("sheet-open");
+    }
+
+    function close() {
+      closeInfoSheet();
+      modal.classList.remove("is-open");
+      modal.classList.add("fm--hidden");
+      modal.setAttribute("aria-hidden", "true");
+      document.documentElement.classList.remove("sheet-open");
+      window.setTimeout(() => {
+        if (!modal.classList.contains("is-open")) modal.hidden = true;
+      }, 260);
+    }
+
+    modal.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t && t.closest && t.closest("[data-fm-close]")) {
+        close();
+        return;
+      }
+      if (t && t.closest && t.closest("[data-fm-clear]")) {
+        Object.values(state.filters).forEach((set) => set.clear());
+        closeInfoSheet();
+        renderInlineSections();
+        return;
+      }
+      if (t && t.closest && t.closest("[data-fm-apply]")) {
+        close();
+        applyAll();
+        return;
+      }
+    });
+
+    infoClose?.addEventListener("click", () => {
+      closeInfoSheet();
+    });
+
+    filterModal = { open, close };
+    return filterModal;
   }
 
   function setBrandHeader() {
@@ -421,193 +1063,6 @@
     window.location.href = `/pos/cigars/cigar.html?key=${encodeURIComponent(key)}`;
   }
 
-  let filterModal = null;
-
-  function ensureFilterModal() {
-    if (filterModal) return filterModal;
-
-    const modal = document.createElement("div");
-    modal.className = "fm fm--hidden";
-    modal.hidden = true;
-    modal.setAttribute("aria-hidden", "true");
-    modal.innerHTML = `
-      <div class="fm__backdrop" data-fm-close></div>
-      <div class="fm__sheet" role="dialog" aria-modal="true" aria-label="Filters">
-        <div class="fm__header">
-          <h2 class="fm__title">Filters</h2>
-          <button class="fm__close" type="button" data-fm-close aria-label="Close">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
-            </svg>
-          </button>
-        </div>
-
-        <div class="fm__body">
-          <div class="fm__cats"></div>
-
-          <div class="fm__panel">
-            <div class="fm__search-row">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"></circle>
-                <path d="M16 16l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-              </svg>
-              <input class="fm__search-input" type="search" placeholder="Search" />
-              <button class="fm__mic-btn" type="button" aria-label="Clear search">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 15a3 3 0 0 0 3-3V8a3 3 0 1 0-6 0v4a3 3 0 0 0 3 3Z" fill="currentColor"></path>
-                  <path d="M19 11a7 7 0 0 1-14 0M12 18v3M9 21h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                </svg>
-              </button>
-            </div>
-
-            <div class="fm__list"></div>
-          </div>
-        </div>
-
-        <div class="fm__actions">
-          <button class="fm__btn fm__btn--reset" type="button" data-fm-clear>Reset</button>
-          <button class="fm__btn fm__btn--apply" type="button" data-fm-apply>Apply</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    const cats = $(".fm__cats", modal);
-    const list = $(".fm__list", modal);
-    const input = $(".fm__search-input", modal);
-    const micBtn = $(".fm__mic-btn", modal);
-
-    const categoryDefs = [
-      { key: "vitola", label: "Vitolas" },
-      { key: "ring", label: "Ring" },
-      { key: "length", label: "Length" },
-      { key: "strength", label: "Strength" },
-      { key: "shape", label: "Shape" },
-      { key: "shade", label: "Wrap. Shade" },
-    ];
-
-    let activeKey = "vitola";
-    let dataByKey = {};
-
-    function renderCats() {
-      cats.innerHTML = "";
-      categoryDefs.forEach((c) => {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = `fm__cat-btn${activeKey === c.key ? " is-active" : ""}`;
-        b.textContent = c.label;
-        b.addEventListener("click", () => {
-          activeKey = c.key;
-          renderCats();
-          renderList();
-        });
-        cats.appendChild(b);
-      });
-    }
-
-    function renderList() {
-      const q = String(input.value || "").trim().toLowerCase();
-      const values = (dataByKey[activeKey] || []).filter((v) => !q || v.toLowerCase().includes(q));
-      list.innerHTML = "";
-
-      values.forEach((value) => {
-        const row = document.createElement("button");
-        const isSelected = state.filters[activeKey].has(value);
-        const icon = getCigarFilterIcon(value, activeKey);
-
-        row.type = "button";
-        row.className = `fm__row${isSelected ? " is-selected" : ""}`;
-        row.innerHTML = `
-          <span class="fm__cb${isSelected ? " is-checked" : ""}">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-            </svg>
-          </span>
-          <span class="fm__icon">${icon ? `<img src="${esc(icon)}" alt="">` : ""}</span>
-          <span class="fm__label">${esc(value)}</span>
-        `;
-
-        row.addEventListener("click", () => {
-          if (state.filters[activeKey].has(value)) state.filters[activeKey].delete(value);
-          else state.filters[activeKey].add(value);
-          renderList();
-        });
-
-        list.appendChild(row);
-      });
-    }
-
-    function open(data) {
-      dataByKey = data;
-      activeKey = "vitola";
-      input.value = "";
-      renderCats();
-      renderList();
-      modal.hidden = false;
-      modal.classList.remove("fm--hidden");
-      modal.classList.add("is-open");
-      modal.setAttribute("aria-hidden", "false");
-      document.documentElement.classList.add("sheet-open");
-    }
-
-    function close() {
-      modal.classList.remove("is-open");
-      modal.classList.add("fm--hidden");
-      modal.setAttribute("aria-hidden", "true");
-      document.documentElement.classList.remove("sheet-open");
-      window.setTimeout(() => {
-        if (!modal.classList.contains("is-open")) modal.hidden = true;
-      }, 260);
-    }
-
-    modal.addEventListener("click", (e) => {
-      const t = e.target;
-      if (t && t.closest && t.closest("[data-fm-close]")) {
-        close();
-        return;
-      }
-      if (t && t.closest && t.closest("[data-fm-clear]")) {
-        Object.values(state.filters).forEach((set) => set.clear());
-        renderList();
-        return;
-      }
-      if (t && t.closest && t.closest("[data-fm-apply]")) {
-        close();
-        applyAll();
-      }
-    });
-
-    input.addEventListener("input", renderList);
-
-    micBtn?.addEventListener("click", () => {
-      input.value = "";
-      renderList();
-      input.focus();
-    });
-
-    filterModal = { open, close };
-    return filterModal;
-  }
-
-  function uniqSorted(vals, numeric = false) {
-    const arr = Array.from(new Set(vals.map((v) => String(v || "").trim()).filter(Boolean)));
-    return arr.sort((a, b) => {
-      if (!numeric) return a.localeCompare(b);
-      return parseFloat(a) - parseFloat(b);
-    });
-  }
-
-  function buildFilterData(rows) {
-    return {
-      vitola: uniqSorted(rows.map(resolveVitola)),
-      ring: uniqSorted(rows.map(resolveRing), true),
-      length: uniqSorted(rows.map(resolveLength), true),
-      strength: uniqSorted(rows.map(resolveStrength)),
-      shape: uniqSorted(rows.map(resolveShape)),
-      shade: uniqSorted(rows.map(resolveShade)),
-    };
-  }
-
   function applyWrapperMode(rows) {
     if (normalizeBrand(state.brand) !== "padron") return rows;
     if (state.wrapperMode === "all") return rows;
@@ -633,11 +1088,11 @@
     if (!q) return rows;
 
     return rows.filter((r) => {
-      const name = resolveName(r).toLowerCase();
+      const displayName = resolveDisplayName(r).toLowerCase();
       const vitola = resolveVitola(r).toLowerCase();
       const ring = resolveRing(r).toLowerCase();
       const length = resolveLength(r).toLowerCase();
-      return name.includes(q) || vitola.includes(q) || ring.includes(q) || length.includes(q);
+      return displayName.includes(q) || vitola.includes(q) || ring.includes(q) || length.includes(q);
     });
   }
 
@@ -714,12 +1169,13 @@
       const item = buildCartItem(r);
       const qty = getRowQty(item);
       const priceText = resolvePrice(r) || "—";
-      const iconPath = brandIconPath();
+      const fallbackCandidates = listRowImageCandidates(r);
+      const initialSrc = fallbackCandidates[0] || brandIconPath();
 
       const row = document.createElement("article");
       row.className = "brand-row";
       row.innerHTML = `
-        <img class="row-ico" src="${esc(iconPath)}" alt="" loading="lazy" />
+        <img class="row-ico" src="${esc(initialSrc)}" alt="" loading="lazy" />
         <div class="brand-row-left">
           <div class="brand-row-title">${esc(resolveDisplayName(r) || "Unnamed cigar")}</div>
           <div class="brand-row-sub">${esc(resolveVitola(r) || "—")}</div>
@@ -739,7 +1195,7 @@
       const minusBtn = $(".qty-btn--minus", row);
       const plusBtn = $(".qty-btn--plus", row);
 
-      bindImageFallback(icon);
+      bindImageFallback(icon, fallbackCandidates);
 
       left?.addEventListener("click", () => openDetail(r));
       icon?.addEventListener("click", () => openDetail(r));
@@ -943,10 +1399,5 @@
     applyAll();
   }
 
-  boot().catch((err) => {
-    console.error("Brand page boot failed:", err);
-    if (listEl) {
-      listEl.innerHTML = `<div class="empty">Error loading brand.</div>`;
-    }
-  });
+  init();
 })();
