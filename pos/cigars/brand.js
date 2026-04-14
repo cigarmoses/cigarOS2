@@ -186,6 +186,37 @@
     return getField(r, ["cigar", "name", "title"]);
   }
 
+  function resolveLine(r) {
+    return getField(r, ["line", "series", "collection"]);
+  }
+
+  function resolveDisplayName(r) {
+    const brand = state.brand || "";
+    const line = resolveLine(r);
+    const name = resolveName(r);
+
+    const parts = [brand];
+
+    if (line) {
+      const normBrand = normalizeBrand(brand);
+      const normLine = normalizeBrand(line);
+      if (normLine !== normBrand) parts.push(line);
+    }
+
+    if (name) {
+      const existing = normalizeBrand(parts.join(" "));
+      const normName = normalizeBrand(name);
+      if (!existing || !normName.startsWith(existing)) {
+        parts.push(name);
+      } else {
+        parts.length = 0;
+        parts.push(name);
+      }
+    }
+
+    return parts.join(" ").replace(/\s+/g, " ").trim();
+  }
+
   function resolveVitola(r) {
     return getField(r, ["vitola", "style", "vitola_name"]);
   }
@@ -613,7 +644,7 @@
       category: "Cigars",
       id: detailKey || resolveName(r),
       brand: state.brand,
-      line: "",
+      line: resolveLine(r),
       name: resolveName(r),
       vitola: resolveVitola(r),
       ring: resolveRing(r),
@@ -655,7 +686,7 @@
       row.innerHTML = `
         <img class="row-ico" src="${esc(iconPath)}" alt="" loading="lazy" />
         <div class="brand-row-left">
-          <div class="brand-row-title">${esc(resolveName(r) || "Unnamed cigar")}</div>
+          <div class="brand-row-title">${esc(resolveDisplayName(r) || "Unnamed cigar")}</div>
           <div class="brand-row-sub">${esc(resolveVitola(r) || "—")}</div>
         </div>
         <div class="brand-row-right">
