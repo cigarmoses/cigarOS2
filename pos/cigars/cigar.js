@@ -462,37 +462,39 @@
     const fromSheet = normalizeAssetPath(getImage(rec));
     const brand = getBrand(rec);
     const line = getLine(rec);
-    const name = getName(rec);
+    const cigar = getName(rec);
     const vitola = getVitola(rec);
-    const shade = getShade(rec);
 
     const brandFolder = normalizeBrand(brand);
+    const brandKey = compactKey(brand);
     const lineKey = compactKey(line);
+    const cigarKey = compactKey(cigar);
+    const vitolaKey = compactKey(vitola);
 
     const out = [];
     if (fromSheet) out.push(fromSheet);
 
     if (brandFolder) {
-      const combos = [
-        compactKey([brand, line, name].join(" ")),
-        compactKey([brand, line, name, vitola].join(" ")),
-        compactKey([brand, name].join(" ")),
-        compactKey([brand, name, vitola].join(" ")),
-        compactKey([brand, vitola].join(" ")),
-        compactKey([brand, name, shade].join(" ")),
-        compactKey([brand, vitola, shade].join(" ")),
-        compactKey([brand, line, vitola, shade].join(" "))
-      ];
+      const names = [];
 
-      if (lineKey.includes("1964")) {
-        combos.push(compactKey([brand, "1964", name].join(" ")));
-        combos.push(compactKey([brand, "1964", vitola].join(" ")));
-        combos.push(compactKey([brand, "1964", name, shade].join(" ")));
-        combos.push(compactKey([brand, "1964", vitola, shade].join(" ")));
+      if (brandKey && lineKey && cigarKey) {
+        names.push(`${brandKey}${lineKey}${cigarKey}`);
       }
 
-      combos.filter(Boolean).forEach((key) => {
-        out.push(`/img/cigars/${brandFolder}/${key}.png`);
+      if (brandKey && lineKey && cigarKey && vitolaKey) {
+        names.push(`${brandKey}${lineKey}${cigarKey}${vitolaKey}`);
+      }
+
+      if (lineKey && cigarKey) {
+        names.push(`${lineKey}${cigarKey}`);
+      }
+
+      if (lineKey && cigarKey && vitolaKey) {
+        names.push(`${lineKey}${cigarKey}${vitolaKey}`);
+      }
+
+      Array.from(new Set(names)).forEach((name) => {
+        out.push(`/img/cigars/${brandFolder}/${name}.png`);
       });
     }
 
