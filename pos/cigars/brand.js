@@ -318,21 +318,14 @@
   }
 
   function listRowIconPath(r) {
-    const candidates = listRowImageCandidates(r);
-    return candidates[0] || brandIconPath();
+    return brandIconPath();
   }
 
-  function bindImageFallback(img, candidates) {
-    if (!img || !Array.isArray(candidates) || !candidates.length) return;
-
-    let index = 0;
-    img.src = candidates[index];
+  function bindImageFallback(img) {
+    if (!img) return;
 
     img.addEventListener("error", () => {
-      index += 1;
-      if (index < candidates.length) {
-        img.src = candidates[index];
-      }
+      img.src = brandIconPath();
     });
   }
 
@@ -721,8 +714,7 @@
       const item = buildCartItem(r);
       const qty = getRowQty(item);
       const priceText = resolvePrice(r) || "—";
-      const iconCandidates = listRowImageCandidates(r);
-      const iconPath = iconCandidates[0] || brandIconPath();
+      const iconPath = brandIconPath();
 
       const row = document.createElement("article");
       row.className = "brand-row";
@@ -747,7 +739,7 @@
       const minusBtn = $(".qty-btn--minus", row);
       const plusBtn = $(".qty-btn--plus", row);
 
-      bindImageFallback(icon, iconCandidates);
+      bindImageFallback(icon);
 
       left?.addEventListener("click", () => openDetail(r));
       icon?.addEventListener("click", () => openDetail(r));
