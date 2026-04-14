@@ -458,48 +458,72 @@
     return Array.from(new Set(out.filter(Boolean)));
   }
 
-  function buildCigarImageCandidates(rec) {
-    const fromSheet = normalizeAssetPath(getImage(rec));
-    const brand = getBrand(rec);
-    const line = getLine(rec);
-    const cigar = getName(rec);
-    const vitola = getVitola(rec);
+function buildCigarImageCandidates(rec) {
+  const fromSheet = normalizeAssetPath(getImage(rec));
+  const brand = getBrand(rec);
+  const line = getLine(rec);
+  const cigar = getName(rec);
+  const vitola = getVitola(rec);
 
-    const brandFolder = normalizeBrand(brand);
-    const brandKey = compactKey(brand);
-    const lineKey = compactKey(line);
-    const cigarKey = compactKey(cigar);
-    const vitolaKey = compactKey(vitola);
+  const brandFolder = normalizeBrand(brand);
+  const brandKey = compactKey(brand);
+  const lineKey = compactKey(line);
+  const cigarKey = compactKey(cigar);
+  const vitolaKey = compactKey(vitola);
 
-    const out = [];
-    if (fromSheet) out.push(fromSheet);
+  const out = [];
+  if (fromSheet) out.push(fromSheet);
 
-    if (brandFolder) {
-      const names = [];
+  if (brandFolder) {
+    const names = [];
 
-      if (brandKey && lineKey && cigarKey) {
-        names.push(`${brandKey}${lineKey}${cigarKey}`);
-      }
-
-      if (brandKey && lineKey && cigarKey && vitolaKey) {
-        names.push(`${brandKey}${lineKey}${cigarKey}${vitolaKey}`);
-      }
-
-      if (lineKey && cigarKey) {
-        names.push(`${lineKey}${cigarKey}`);
-      }
-
-      if (lineKey && cigarKey && vitolaKey) {
-        names.push(`${lineKey}${cigarKey}${vitolaKey}`);
-      }
-
-      Array.from(new Set(names)).forEach((name) => {
-        out.push(`/img/cigars/${brandFolder}/${name}.png`);
-      });
+    // 1. (brand)(line)(cigar)
+    if (brandKey && lineKey && cigarKey) {
+      names.push(`${brandKey}${lineKey}${cigarKey}`);
     }
 
-    return Array.from(new Set(out.filter(Boolean)));
+    // 2. (brand)(line)(cigar)(vitola)
+    if (brandKey && lineKey && cigarKey && vitolaKey) {
+      names.push(`${brandKey}${lineKey}${cigarKey}${vitolaKey}`);
+    }
+
+    // 3. (line)(cigar)
+    if (lineKey && cigarKey) {
+      names.push(`${lineKey}${cigarKey}`);
+    }
+
+    // 4. (line)(cigar)(vitola)
+    if (lineKey && cigarKey && vitolaKey) {
+      names.push(`${lineKey}${cigarKey}${vitolaKey}`);
+    }
+
+    // 5. (brand)(cigar)
+    if (brandKey && cigarKey) {
+      names.push(`${brandKey}${cigarKey}`);
+    }
+
+    // 6. (brand)(cigar)(vitola)
+    if (brandKey && cigarKey && vitolaKey) {
+      names.push(`${brandKey}${cigarKey}${vitolaKey}`);
+    }
+
+    // 7. (cigar)
+    if (cigarKey) {
+      names.push(`${cigarKey}`);
+    }
+
+    // 8. (cigar)(vitola)
+    if (cigarKey && vitolaKey) {
+      names.push(`${cigarKey}${vitolaKey}`);
+    }
+
+    Array.from(new Set(names)).forEach((name) => {
+      out.push(`/img/cigars/${brandFolder}/${name}.png`);
+    });
   }
+
+  return Array.from(new Set(out.filter(Boolean)));
+}
 
   function wireImageFallback(img, fallbackClass, fallbackText) {
     if (!img) return;
