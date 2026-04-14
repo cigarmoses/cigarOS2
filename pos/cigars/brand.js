@@ -182,40 +182,21 @@
     return getField(r, ["key", "cigar_id", "id", "row_id"]);
   }
 
-  function resolveName(r) {
-    return getField(r, ["cigar", "name", "title"]);
-  }
+function resolveName(r) {
+  return getField(r, ["cigar"]); // strictly column H
+}
 
-  function resolveLine(r) {
-    return getField(r, ["line", "series", "collection"]);
-  }
+function resolveLine(r) {
+  return getField(r, ["line"]); // strictly column G
+}
 
-  function resolveDisplayName(r) {
-    const brand = state.brand || "";
-    const line = resolveLine(r);
-    const name = resolveName(r);
+function resolveDisplayName(r) {
+  const line = resolveLine(r);
+  const name = resolveName(r);
 
-    const parts = [brand];
-
-    if (line) {
-      const normBrand = normalizeBrand(brand);
-      const normLine = normalizeBrand(line);
-      if (normLine !== normBrand) parts.push(line);
-    }
-
-    if (name) {
-      const existing = normalizeBrand(parts.join(" "));
-      const normName = normalizeBrand(name);
-      if (!existing || !normName.startsWith(existing)) {
-        parts.push(name);
-      } else {
-        parts.length = 0;
-        parts.push(name);
-      }
-    }
-
-    return parts.join(" ").replace(/\s+/g, " ").trim();
-  }
+  if (line && name) return `${line} ${name}`.replace(/\s+/g, " ").trim();
+  return (line || name || "").replace(/\s+/g, " ").trim();
+}
 
   function resolveVitola(r) {
     return getField(r, ["vitola", "style", "vitola_name"]);
@@ -636,31 +617,32 @@
     });
   }
 
-  function buildCartItem(r) {
-    const detailKey = resolveDetailKey(r);
-    return {
-      key: detailKey || `${normalizeBrand(state.brand)}|${resolveName(r)}|${resolveVitola(r)}`,
-      type: "cigar",
-      category: "Cigars",
-      id: detailKey || resolveName(r),
-      brand: state.brand,
-      line: resolveLine(r),
-      name: resolveName(r),
-      vitola: resolveVitola(r),
-      ring: resolveRing(r),
-      length: resolveLength(r),
-      shape: resolveShape(r),
-      wrapper: resolveWrapper(r),
-      binder: resolveBinder(r),
-      filler: resolveFiller(r),
-      origin: resolveOrigin(r),
-      shade: resolveShade(r),
-      strength: resolveStrength(r),
-      msrp: resolvePriceNumber(r),
-      image: listRowIconPath(r),
-      url: detailKey ? `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}` : (resolveUrl(r) || "")
-    };
-  }
+function buildCartItem(r) {
+  const detailKey = resolveDetailKey(r);
+  return {
+    key: detailKey || `${normalizeBrand(state.brand)}|${resolveLine(r)}|${resolveName(r)}|${resolveVitola(r)}`,
+    type: "cigar",
+    category: "Cigars",
+    id: detailKey || resolveName(r),
+    brand: state.brand,
+    line: resolveLine(r),
+    cigar: resolveName(r),
+    name: resolveName(r),
+    vitola: resolveVitola(r),
+    ring: resolveRing(r),
+    length: resolveLength(r),
+    shape: resolveShape(r),
+    wrapper: resolveWrapper(r),
+    binder: resolveBinder(r),
+    filler: resolveFiller(r),
+    origin: resolveOrigin(r),
+    shade: resolveShade(r),
+    strength: resolveStrength(r),
+    msrp: resolvePriceNumber(r),
+    image: listRowIconPath(r),
+    url: detailKey ? `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}` : (resolveUrl(r) || "")
+  };
+}
 
   function getRowQty(item) {
     return window.cigarOSCart?.getItemQty?.(item) || 0;
