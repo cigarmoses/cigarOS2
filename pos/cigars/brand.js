@@ -1,22 +1,24 @@
+Yes. Replace your entire brand.js with this full code:
+
 /* /pos/cigars/brand.js
    Brand page
    - Loads cigar rows from Google Sheets CSV
    - Brand-specific filtering
    - Bands sheet
    - Inline bottom-sheet filters
-   - Cart qty steppers
    - Vitola/shape SVG icons in brand filters
    - Shape info buttons
    - Brand-row inventory layout
    - Brand icon only on rows
    - Better detail-page opening fallback
-   - Manufacturer subtitle under brand title
+   - Manufacturer subtitle under brand title only
 */
 
 (() => {
   "use strict";
 
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+  const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -162,6 +164,15 @@
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .trim();
+  }
+
+  function uniqSorted(values) {
+    const set = new Set();
+    for (const value of values || []) {
+      const s = norm(value);
+      if (s) set.add(s);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
 
   function parseMoneyValue(v) {
@@ -338,10 +349,6 @@
     return getField(r, ["brand_img", "brand_image", "brandicon", "brand_icon"]);
   }
 
-  function resolveUrl(r) {
-    return getField(r, ["url", "link", "href", "page_url", "product_url", "slug_url"]);
-  }
-
   function resolveBoxCount(r) {
     const raw = getField(r, [
       "box_count",
@@ -390,8 +397,7 @@
       if (["no", "false", "0", "non-cuban", "non cuban"].includes(v)) return false;
     }
 
-    const origin = resolveOrigin(r).toLowerCase();
-    return origin === "cuba";
+    return resolveOrigin(r).toLowerCase() === "cuba";
   }
 
   function buildGeneratedImageNames(r) {
@@ -411,37 +417,20 @@
   }
 
   function brandIconPath() {
-    const row = state.rowsAll.find((r) => normalizeBrand(resolveBrandVal(r)) === normalizeBrand(state.brand));
+    const row = state.rowsAll.find(
+      (r) => normalizeBrand(resolveBrandVal(r)) === normalizeBrand(state.brand)
+    );
     const fromSheet = normalizeAssetPath(row ? resolveBrandImage(row) : "");
     if (fromSheet) return fromSheet;
     return `/img/icons/brands/${normalizeBrand(state.brand)}.svg`;
-  }
-
-  function listRowImageCandidates(r) {
-    const candidates = [];
-    const fromSheet = normalizeAssetPath(resolveImage(r));
-    const brandFolder = normalizeBrand(resolveBrandVal(r) || state.brand);
-
-    if (fromSheet) candidates.push(fromSheet);
-
-    buildGeneratedImageNames(r).forEach((name) => {
-      candidates.push(`/img/cigars/${brandFolder}/${name}.png`);
-    });
-
-    candidates.push(brandIconPath());
-
-    return Array.from(new Set(candidates.filter(Boolean)));
-  }
-
-  function listRowIconPath() {
-    return brandIconPath();
   }
 
   function bindImageFallback(img, candidates = []) {
     if (!img) return;
 
     let idx = 0;
-    const fallbackList = Array.isArray(candidates) && candidates.length ? candidates : [brandIconPath()];
+    const fallbackList =
+      Array.isArray(candidates) && candidates.length ? candidates : [brandIconPath()];
 
     img.addEventListener("error", () => {
       idx += 1;
@@ -540,7 +529,7 @@
   }
 
   function uniqSortedBrand(vals, numeric = false) {
-    const arr = Array.from(new Set(vals.map((v) => String(v || "").trim()).filter(Boolean)));
+    const arr = Array.from(new Set((vals || []).map((v) => String(v || "").trim()).filter(Boolean)));
     return arr.sort((a, b) => {
       if (!numeric) return a.localeCompare(b);
       return parseFloat(a) - parseFloat(b);
@@ -963,11 +952,15 @@
                 return `
                   <div class="fm__row ${isSelected ? " is-selected" : ""}" data-key="${esc(c.key)}" data-value="${esc(label)}">
                     <span class="fm__cb${isSelected ? " is-checked" : ""}">
-                      ${isSelected ? `
+                      ${
+                        isSelected
+                          ? `
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
                         </svg>
-                      ` : ""}
+                      `
+                          : ""
+                      }
                     </span>
                     <span class="fm__label">${esc(label)}</span>
                     ${infoBtn}
@@ -1094,18 +1087,18 @@
     return filterModal;
   }
 
-function ensureBrandManufacturerMeta() {
-  const titleBlock = document.querySelector(".brand-title-block");
-  if (!titleBlock) return null;
+  function ensureBrandManufacturerMeta() {
+    const titleBlock = document.querySelector(".brand-title-block");
+    if (!titleBlock) return null;
 
-  let meta = titleBlock.querySelector(".brand-manufacturer");
-  if (!meta) {
-    meta = document.createElement("div");
-    meta.className = "brand-manufacturer";
-    titleBlock.appendChild(meta);
+    let meta = titleBlock.querySelector(".brand-manufacturer");
+    if (!meta) {
+      meta = document.createElement("div");
+      meta.className = "brand-manufacturer";
+      titleBlock.appendChild(meta);
+    }
+    return meta;
   }
-  return meta;
-}
 
   function setBrandHeader() {
     if (brandTitle) brandTitle.textContent = state.brand || "Brand";
@@ -1146,11 +1139,9 @@ function ensureBrandManufacturerMeta() {
       return `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`;
     }
 
-    const fallbackPipeKey = [
-      state.brand,
-      resolveDisplayName(r),
-      resolveVitola(r)
-    ].filter(Boolean).join("|");
+    const fallbackPipeKey = [state.brand, resolveDisplayName(r), resolveVitola(r)]
+      .filter(Boolean)
+      .join("|");
 
     if (fallbackPipeKey) {
       return `/pos/cigars/cigar.html?key=${encodeURIComponent(fallbackPipeKey)}`;
@@ -1199,6 +1190,7 @@ function ensureBrandManufacturerMeta() {
       const ring = resolveRing(r).toLowerCase();
       const length = resolveLength(r).toLowerCase();
       const manufacturer = resolveManufacturerVal(r).toLowerCase();
+
       return (
         displayName.includes(q) ||
         vitola.includes(q) ||
@@ -1240,6 +1232,7 @@ function ensureBrandManufacturerMeta() {
 
   function buildCartItem(r) {
     const detailKey = resolveDetailKey(r);
+
     return {
       key: detailKey || `${normalizeBrand(state.brand)}|${resolveDisplayName(r)}|${resolveVitola(r)}`,
       type: "cigar",
@@ -1261,13 +1254,9 @@ function ensureBrandManufacturerMeta() {
       shade: resolveShade(r),
       strength: resolveStrength(r),
       msrp: resolvePriceNumber(r),
-      image: listRowIconPath(),
-      url: makeDetailHref(r)
+      image: brandIconPath(),
+      url: makeDetailHref(r),
     };
-  }
-
-  function getRowQty(item) {
-    return window.cigarOSCart?.getItemQty?.(item) || 0;
   }
 
   function showBoxPurchasePrompt(r) {
@@ -1276,7 +1265,9 @@ function ensureBrandManufacturerMeta() {
     const msrp = resolvePriceNumber(r);
     const perCigar = boxQty > 0 && msrp > 0 ? (msrp / boxQty).toFixed(2) : "0.00";
 
-    window.alert(`Purchase box of ${displayName}?\n(${boxQty} cigars per box) @ $${perCigar} per cigar`);
+    window.alert(
+      `Purchase box of ${displayName}?\n(${boxQty} cigars per box) @ $${perCigar} per cigar`
+    );
   }
 
   function renderList(rows) {
@@ -1290,12 +1281,10 @@ function ensureBrandManufacturerMeta() {
 
     rows.forEach((r) => {
       const item = buildCartItem(r);
-      const qty = getRowQty(item);
       const priceText = resolvePrice(r) || "—";
       const iconPath = brandIconPath();
       const stickStock = resolveStickStock(r);
       const boxStock = resolveBoxStock(r);
-      const manufacturer = resolveManufacturerVal(r);
       const isCuban = resolveIsCuban(r);
 
       const row = document.createElement("article");
@@ -1331,11 +1320,7 @@ function ensureBrandManufacturerMeta() {
               <span class="brand-row-box-value">${esc(String(boxStock))}</span>
             </button>
 
-            <div class="brand-row-qty">
-              <button class="qty-btn qty-btn--minus" type="button" aria-label="Decrease">−</button>
-              <span class="qty-value">${qty}</span>
-              <button class="qty-btn qty-btn--plus" type="button" aria-label="Increase">+</button>
-            </div>
+            <button class="qty-btn qty-btn--plus" type="button" aria-label="Add cigar">+</button>
           </div>
         </div>
       `;
@@ -1343,7 +1328,6 @@ function ensureBrandManufacturerMeta() {
       const icon = $(".row-ico", row);
       const left = $(".brand-row-left", row);
       const title = $(".brand-row-title", row);
-      const minusBtn = $(".qty-btn--minus", row);
       const plusBtn = $(".qty-btn--plus", row);
       const boxBtn = $(".brand-row-box-stock", row);
 
@@ -1364,12 +1348,6 @@ function ensureBrandManufacturerMeta() {
         window.cigarOSCart?.setQty?.(item, current + 1);
       });
 
-      minusBtn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const current = window.cigarOSCart?.getItemQty?.(item) || 0;
-        window.cigarOSCart?.setQty?.(item, Math.max(0, current - 1));
-      });
-
       listEl.appendChild(row);
     });
   }
@@ -1382,7 +1360,7 @@ function ensureBrandManufacturerMeta() {
         { key: "1926", label: "1926", src: "/img/icons/padron1926serieband.svg" },
         { key: "Black Series", label: "Black Series", src: "/img/icons/padronblackseriesband.svg" },
         { key: "Damaso", label: "Damaso", src: "/img/icons/padrondamasoband.svg" },
-        { key: "1964 Anniversary", label: "1964 Anniversary", src: "/img/icons/padron1964anniversaryband.svg" }
+        { key: "1964 Anniversary", label: "1964 Anniversary", src: "/img/icons/padron1964anniversaryband.svg" },
       ];
     }
 
@@ -1417,11 +1395,13 @@ function ensureBrandManufacturerMeta() {
           <input class="band-check" type="checkbox" ${state.bandSelected.has(b.key) ? "checked" : ""} />
         </div>
       `;
+
       const cb = $(".band-check", card);
       cb?.addEventListener("change", () => {
         if (cb.checked) state.bandSelected.add(b.key);
         else state.bandSelected.delete(b.key);
       });
+
       bandsOptions.appendChild(card);
     });
   }
@@ -1541,8 +1521,9 @@ function ensureBrandManufacturerMeta() {
       const rb = normalizeBrand(resolveBrandVal(r));
       return rb && (rb.includes(normalizedPageBrand) || normalizedPageBrand.includes(rb));
     });
-
-    const manufacturerFallback = rows.filter((r) => normalizeBrand(resolveManufacturerVal(r)) === normalizedPageBrand);
+    const manufacturerFallback = rows.filter(
+      (r) => normalizeBrand(resolveManufacturerVal(r)) === normalizedPageBrand
+    );
 
     state.rowsAll = (exact.length ? exact : fuzzy.length ? fuzzy : manufacturerFallback).map((r) => ({
       ...r,
