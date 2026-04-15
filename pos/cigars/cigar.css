@@ -171,7 +171,7 @@ html[data-theme="light"] .moon-knob::before{
   width:min(430px, calc(100% - 14px));
   margin:0 auto;
   min-height:calc(100dvh - var(--safe-top) - 64px);
-  padding:2px 0 calc(112px + var(--safe-bottom));
+  padding:2px 0 calc(126px + var(--safe-bottom));
 }
 
 .cd-shell{
@@ -443,18 +443,18 @@ html[data-theme="light"] .moon-knob::before{
 }
 
 .cd-actions{
-  position:sticky;
-  bottom:calc(6px + var(--safe-bottom));
-  z-index:18;
+  position:fixed;
+  left:12px;
+  right:12px;
+  bottom:calc(env(safe-area-inset-bottom, 0px) + 4px);
+  z-index:50;
 
   display:grid;
   grid-template-columns:repeat(4, minmax(0, 1fr));
   align-items:center;
   gap:6px;
 
-  width:calc(100% + 6px);
-  margin:26px -3px 0;
-  padding:8px;
+  padding:10px;
 
   border-radius:26px;
   background:
