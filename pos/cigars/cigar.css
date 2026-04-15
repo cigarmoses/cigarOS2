@@ -489,8 +489,8 @@ html[data-theme="light"] .cd-actions{
   border-radius:18px;
   background:transparent;
   color:color-mix(in srgb, var(--text) 90%, transparent);
-  font:800 10px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:.035em;
+  font:700 12px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:.02em;
   text-transform:uppercase;
   white-space:nowrap;
   transition:
