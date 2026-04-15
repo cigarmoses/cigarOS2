@@ -3,7 +3,7 @@
    - Loads cigar sheet CSV
    - Brands grid
    - Search + filter bottom sheet
-   - Inline filter modal
+   - Horizontal tab filter modal
    - Vitola + Shape ordering
    - Vitola/shape SVG icons in filters
    - Shape info buttons
@@ -601,138 +601,150 @@
     const style = document.createElement("style");
     style.id = "cigars-inline-filter-style";
     style.textContent = `
-      .fm.fm--inline .fm__sheet{
+      .fm.fm--tabs .fm__sheet{
         max-height:88vh;
       }
 
-      .fm.fm--inline .fm__header{
-        padding:18px 18px 14px;
+      .fm.fm--tabs .fm__header{
+        padding:18px 18px 10px;
+        border-bottom:none;
       }
 
-      .fm.fm--inline .fm__title{
+      .fm.fm--tabs .fm__title{
         font-weight:800;
       }
 
-      .fm.fm--inline .fm__body{
+      .fm.fm--tabs .fm__body{
         display:block;
-        padding:0;
+        padding:0 0 0;
+        overflow:hidden;
+      }
+
+      .fm.fm--tabs .fm__tabbar{
+        display:flex;
+        gap:10px;
         overflow:auto;
+        padding:0 18px 14px;
+        -ms-overflow-style:none;
+        scrollbar-width:none;
       }
 
-      .fm.fm--inline .fm__stack{
-        padding:0 18px 8px;
+      .fm.fm--tabs .fm__tabbar::-webkit-scrollbar{
+        display:none;
       }
 
-      .fm.fm--inline .fm__section{
-        border-top:1px solid rgba(15,26,44,.06);
-      }
-
-      .fm.fm--inline .fm__section-btn{
-        width:100%;
-        border:0;
-        background:transparent;
-        display:grid;
-        grid-template-columns:1fr auto auto;
-        gap:12px;
+      .fm.fm--tabs .fm__tab{
+        flex:0 0 auto;
+        min-height:38px;
+        padding:0 14px;
+        border-radius:999px;
+        border:1px solid rgba(15,26,44,.08);
+        background:#f4f6fa;
+        color:rgba(15,26,44,.68);
+        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        font-size:15px;
+        font-weight:500;
+        letter-spacing:-.01em;
+        display:inline-flex;
         align-items:center;
-        padding:18px 6px;
-        text-align:left;
+        justify-content:center;
+        gap:8px;
         cursor:pointer;
         appearance:none;
+        white-space:nowrap;
       }
 
-      .fm.fm--inline .fm__section-title{
-        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-        font-size:22px;
-        font-weight:600;
-        letter-spacing:-.02em;
+      .fm.fm--tabs .fm__tab.is-active{
+        background:#ffffff;
         color:#0f1a2c;
+        border-color:rgba(15,26,44,.10);
+        box-shadow:0 10px 20px rgba(15,26,44,.06);
       }
 
-      .fm.fm--inline .fm__section-meta{
-        min-width:26px;
-        height:26px;
-        padding:0 8px;
+      .fm.fm--tabs .fm__tab-count{
+        min-width:18px;
+        height:18px;
+        padding:0 6px;
         border-radius:999px;
-        background:#eef2ff;
-        color:#6f85d8;
-        font-size:15px;
-        font-weight:700;
+        background:#e8eefc;
+        color:#5f7edc;
+        font-size:11px;
+        font-weight:600;
         display:grid;
         place-items:center;
       }
 
-      .fm.fm--inline .fm__section-toggle{
-        width:24px;
-        text-align:center;
-        color:#6f85d8;
-        font-size:32px;
-        line-height:1;
-        font-weight:400;
+      .fm.fm--tabs .fm__panel{
+        display:flex;
+        flex-direction:column;
+        min-height:0;
+        max-height:calc(88vh - 164px);
       }
 
-      .fm.fm--inline .fm__section-content{
-        padding:0 0 16px;
+      .fm.fm--tabs .fm__search-wrap{
+        padding:0 18px 10px;
       }
 
-      .fm.fm--inline .fm__search-row{
-        margin:0 0 14px;
+      .fm.fm--tabs .fm__search-row{
+        margin:0;
       }
 
-      .fm.fm--inline .fm__row{
+      .fm.fm--tabs .fm__list{
+        overflow:auto;
+        padding:0 18px 12px;
+      }
+
+      .fm.fm--tabs .fm__row{
         display:grid;
-        grid-template-columns:38px minmax(0,1fr) auto 140px;
+        grid-template-columns:30px minmax(0,1fr) auto 128px;
         gap:10px;
         align-items:center;
-        padding:14px 12px;
-        border-radius:18px;
+        min-height:58px;
+        padding:10px 12px;
+        border-radius:16px;
         border:1px solid rgba(15,26,44,.08);
         background:#fff;
-        margin-bottom:12px;
+        margin-bottom:10px;
       }
 
-      .fm.fm--inline .fm__cb{
-        width:28px;
-        height:28px;
-        border-radius:9px;
+      .fm.fm--tabs .fm__cb{
+        width:22px;
+        height:22px;
+        border-radius:7px;
         border:2px solid rgba(15,26,44,.18);
         background:#fff;
         display:grid;
         place-items:center;
       }
 
-      .fm.fm--inline .fm__cb.is-checked{
+      .fm.fm--tabs .fm__cb.is-checked{
         background:#eef2ff;
         border-color:#8ea4eb;
         color:#8ea4eb;
       }
 
-      .fm.fm--inline .fm__cb svg{
-        width:18px;
-        height:18px;
+      .fm.fm--tabs .fm__cb svg{
+        width:14px;
+        height:14px;
       }
 
-      .fm.fm--inline .fm__label{
+      .fm.fm--tabs .fm__label{
         min-width:0;
         font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-        font-size:18px;
+        font-size:17px;
         font-weight:600;
         letter-spacing:-.02em;
         color:#0f1a2c;
       }
 
-      .fm.fm--inline .fm__row.is-selected .fm__label{
-        color:#0f1a2c;
-      }
-
-      .fm.fm--inline .fm__info{
+      .fm.fm--tabs .fm__info{
         width:24px;
         height:24px;
         border:0;
         background:transparent;
-        color:#8d96a8;
-        font-size:18px;
-        font-weight:600;
+        color:#97a0b0;
+        font-size:16px;
+        font-weight:500;
         line-height:1;
         display:grid;
         place-items:center;
@@ -741,40 +753,48 @@
         appearance:none;
       }
 
-      .fm.fm--inline .fm__icon{
-        width:140px;
-        min-width:140px;
+      .fm.fm--tabs .fm__icon{
+        width:128px;
+        min-width:128px;
         height:22px;
         display:flex;
         align-items:center;
-        justify-content:flex-start;
+        justify-content:flex-end;
         overflow:visible;
       }
 
-      .fm.fm--inline .fm__icon img{
-        height:14px;
+      .fm.fm--tabs .fm__icon img{
+        height:12px;
         width:auto;
-        max-width:132px;
+        max-width:118px;
         object-fit:contain;
         display:block;
         transform:scaleX(-1);
         transform-origin:center;
       }
 
-      .fm.fm--inline .fm__icon--brand img,
-      .fm.fm--inline .fm__icon--manufacturer img{
+      .fm.fm--tabs .fm__icon--brand,
+      .fm.fm--tabs .fm__icon--manufacturer{
+        justify-content:flex-end;
+        height:24px;
+      }
+
+      .fm.fm--tabs .fm__icon--brand img,
+      .fm.fm--tabs .fm__icon--manufacturer img{
+        height:20px;
+        max-width:110px;
         transform:none;
       }
 
-      .fm.fm--inline .fm__search-input{
+      .fm.fm--tabs .fm__search-input{
         font-weight:500;
       }
 
-      .fm.fm--inline .fm__btn{
+      .fm.fm--tabs .fm__btn{
         font-weight:600;
       }
 
-      .fm.fm--inline .fm__info-sheet{
+      .fm.fm--tabs .fm__info-sheet{
         position:absolute;
         left:18px;
         right:18px;
@@ -787,11 +807,11 @@
         display:none;
       }
 
-      .fm.fm--inline .fm__info-sheet.is-open{
+      .fm.fm--tabs .fm__info-sheet.is-open{
         display:block;
       }
 
-      .fm.fm--inline .fm__info-title{
+      .fm.fm--tabs .fm__info-title{
         margin:0 0 6px;
         font-size:18px;
         line-height:1.2;
@@ -799,7 +819,7 @@
         color:#0f1a2c;
       }
 
-      .fm.fm--inline .fm__info-text{
+      .fm.fm--tabs .fm__info-text{
         margin:0;
         font-size:15px;
         line-height:1.35;
@@ -807,7 +827,7 @@
         color:rgba(15,26,44,.72);
       }
 
-      .fm.fm--inline .fm__info-close{
+      .fm.fm--tabs .fm__info-close{
         position:absolute;
         top:10px;
         right:10px;
@@ -825,59 +845,73 @@
         appearance:none;
       }
 
-      .fm.fm--inline .fm__actions{
+      .fm.fm--tabs .fm__actions{
         position:relative;
         z-index:2;
         background:#fff;
       }
 
-      .fm.fm--inline .fm__empty{
-        padding:8px 8px 12px;
+      .fm.fm--tabs .fm__empty{
+        padding:16px 6px 10px;
         color:rgba(15,26,44,.48);
         font-size:16px;
         font-weight:500;
       }
 
       @media (max-width:430px){
-        .fm.fm--inline .fm__row{
-          grid-template-columns:34px minmax(0,1fr) auto 118px;
+        .fm.fm--tabs .fm__row{
+          grid-template-columns:28px minmax(0,1fr) auto 112px;
           gap:10px;
-          padding:13px 10px;
+          min-height:56px;
+          padding:10px 10px;
         }
 
-        .fm.fm--inline .fm__icon{
-          width:118px;
-          min-width:118px;
+        .fm.fm--tabs .fm__icon{
+          width:112px;
+          min-width:112px;
         }
 
-        .fm.fm--inline .fm__icon img{
-          max-width:110px;
-          height:13px;
+        .fm.fm--tabs .fm__icon img{
+          max-width:102px;
+          height:11px;
         }
 
-        .fm.fm--inline .fm__label{
-          font-size:17px;
+        .fm.fm--tabs .fm__icon--brand img,
+        .fm.fm--tabs .fm__icon--manufacturer img{
+          height:18px;
+          max-width:102px;
+        }
+
+        .fm.fm--tabs .fm__label{
+          font-size:16px;
         }
       }
 
       @media (max-width:390px){
-        .fm.fm--inline .fm__row{
-          grid-template-columns:32px minmax(0,1fr) auto 104px;
+        .fm.fm--tabs .fm__row{
+          grid-template-columns:26px minmax(0,1fr) auto 98px;
           gap:8px;
         }
 
-        .fm.fm--inline .fm__icon{
-          width:104px;
-          min-width:104px;
+        .fm.fm--tabs .fm__icon{
+          width:98px;
+          min-width:98px;
         }
 
-        .fm.fm--inline .fm__icon img{
-          max-width:96px;
-          height:12px;
+        .fm.fm--tabs .fm__icon img{
+          max-width:88px;
+          height:10px;
         }
 
-        .fm.fm--inline .fm__label{
-          font-size:16px;
+        .fm.fm--tabs .fm__icon--brand img,
+        .fm.fm--tabs .fm__icon--manufacturer img{
+          height:17px;
+          max-width:88px;
+        }
+
+        .fm.fm--tabs .fm__tab{
+          padding:0 12px;
+          font-size:14px;
         }
       }
     `;
@@ -890,12 +924,12 @@
     if (!modalRoot) {
       modalRoot = document.createElement("div");
       modalRoot.id = "filter-modal";
-      modalRoot.className = "fm fm--hidden fm--inline";
+      modalRoot.className = "fm fm--hidden fm--tabs";
       modalRoot.hidden = true;
       modalRoot.setAttribute("aria-hidden", "true");
       document.body.appendChild(modalRoot);
     } else {
-      modalRoot.classList.add("fm--inline");
+      modalRoot.classList.add("fm--tabs");
     }
 
     if (!modalRoot.querySelector(".fm__sheet")) {
@@ -913,7 +947,31 @@
           </div>
 
           <div class="fm__body">
-            <div class="fm__stack" id="fm-stack"></div>
+            <div class="fm__tabbar" id="fm-tabbar"></div>
+
+            <div class="fm__panel">
+              <div class="fm__search-wrap">
+                <div class="fm__search-row">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
+                          fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                  </svg>
+
+                  <input class="fm__search-input" id="fm-search-inline" placeholder="Search" autocomplete="off" />
+
+                  <button class="fm__mic-btn" type="button" aria-label="Clear search" id="fm-search-clear">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z"
+                            fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                      <path d="M19 11a7 7 0 0 1-14 0" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                      <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="fm__list" id="fm-list"></div>
+            </div>
           </div>
 
           <div class="fm__info-sheet" id="fm-info-sheet" aria-live="polite">
@@ -947,141 +1005,132 @@
     sheet.classList.add("is-open");
   }
 
-  function renderInlineSections() {
-    const stack = $("#fm-stack", modalRoot);
-    if (!stack) return;
+  function renderTabs() {
+    const tabbar = $("#fm-tabbar", modalRoot);
+    if (!tabbar) return;
 
-    stack.innerHTML = CATEGORIES.map((c) => {
+    tabbar.innerHTML = CATEGORIES.map((c) => {
+      const active = c.key === state.activeKey ? " is-active" : "";
       const count = countSelectedForKey(c.key);
-      const isOpen = c.key === state.activeKey;
-      const values = getValuesForKey(c.key);
-      const q = isOpen ? norm(state.activeSearch).toLowerCase() : "";
-      const filtered = isOpen
-        ? (!q ? values : values.filter((v) => norm(v).toLowerCase().includes(q)))
-        : [];
-
-      const rows = isOpen
-        ? filtered.length
-          ? filtered.map((v) => {
-              const label = norm(v);
-              const isSelected = state.selected[c.key].has(label);
-
-              const brandOrManufacturerIcon =
-                c.key === "manufacturer" || c.key === "brand"
-                  ? iconPathFor(c.key, label)
-                  : "";
-
-              const cigarIcon =
-                c.key === "vitola" || c.key === "shape"
-                  ? getCigarFilterIcon(label, c.key)
-                  : "";
-
-              const iconSrc = brandOrManufacturerIcon || cigarIcon;
-              const iconClass =
-                c.key === "manufacturer"
-                  ? "fm__icon fm__icon--manufacturer"
-                  : c.key === "brand"
-                  ? "fm__icon fm__icon--brand"
-                  : "fm__icon fm__icon--cigar";
-
-              const infoBtn =
-                c.key === "shape" && getShapeInfo(label)
-                  ? `<button class="fm__info" type="button" data-info="${escapeHtml(label)}" aria-label="About ${escapeHtml(label)}">ℹ</button>`
-                  : `<span class="fm__info" aria-hidden="true"></span>`;
-
-              const cb = isSelected
-                ? `<div class="fm__cb is-checked" aria-hidden="true">
-                     <svg viewBox="0 0 24 24" aria-hidden="true">
-                       <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                     </svg>
-                   </div>`
-                : `<div class="fm__cb" aria-hidden="true"></div>`;
-
-              const icon = iconSrc
-                ? `<div class="${iconClass}">
-                     <img src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
-                          onerror="this.style.display='none';" />
-                   </div>`
-                : `<div class="${iconClass}" aria-hidden="true"></div>`;
-
-              return `
-                <div class="fm__row ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(c.key)}" data-value="${escapeHtml(label)}">
-                  ${cb}
-                  <div class="fm__label">${escapeHtml(label)}</div>
-                  ${infoBtn}
-                  ${icon}
-                </div>
-              `;
-            }).join("")
-          : `<div class="fm__empty">No options found.</div>`
-        : "";
-
-      const search =
-        isOpen
-          ? `
-            <div class="fm__search-row">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
-                      fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-              </svg>
-
-              <input class="fm__search-input" id="fm-search-inline" placeholder="Search" autocomplete="off" value="${escapeHtml(state.activeSearch)}" />
-
-              <button class="fm__mic-btn" type="button" aria-label="Clear search" id="fm-search-clear">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z"
-                        fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                  <path d="M19 11a7 7 0 0 1-14 0" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                  <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                </svg>
-              </button>
-            </div>
-          `
-          : "";
 
       return `
-        <div class="fm__section">
-          <button class="fm__section-btn" type="button" data-cat="${escapeHtml(c.key)}" aria-expanded="${isOpen ? "true" : "false"}">
-            <span class="fm__section-title">${escapeHtml(c.label)}</span>
-            <span class="fm__section-meta">${count}</span>
-            <span class="fm__section-toggle">${isOpen ? "−" : "+"}</span>
-          </button>
-          ${isOpen ? `<div class="fm__section-content">${search}${rows}</div>` : ""}
-        </div>
+        <button class="fm__tab${active}" type="button" data-cat="${escapeHtml(c.key)}">
+          <span>${escapeHtml(c.label)}</span>
+          ${count ? `<span class="fm__tab-count">${count}</span>` : ""}
+        </button>
       `;
     }).join("");
 
-    $$(".fm__section-btn", stack).forEach((btn) => {
+    $$(".fm__tab", tabbar).forEach((btn) => {
       btn.addEventListener("click", () => {
         const key = btn.getAttribute("data-cat");
         if (!key) return;
         state.activeKey = key;
         state.activeSearch = "";
         closeInfoSheet();
-        renderInlineSections();
-
+        renderTabs();
+        renderList();
         const inp = $("#fm-search-inline", modalRoot);
-        inp?.focus();
+        if (inp) {
+          inp.value = "";
+          inp.focus();
+        }
       });
     });
+  }
 
-    $$(".fm__row", stack).forEach((row) => {
+  function renderList() {
+    const list = $("#fm-list", modalRoot);
+    const input = $("#fm-search-inline", modalRoot);
+    if (!list) return;
+
+    if (input) input.value = state.activeSearch;
+
+    const key = state.activeKey;
+    const values = getValuesForKey(key);
+    const selectedSet = state.selected[key];
+    const q = norm(state.activeSearch).toLowerCase();
+
+    const filtered = !q
+      ? values
+      : values.filter((v) => norm(v).toLowerCase().includes(q));
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="fm__empty">No options found.</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((v) => {
+      const label = norm(v);
+      const isSelected = selectedSet.has(label);
+
+      const brandOrManufacturerIcon =
+        key === "manufacturer" || key === "brand"
+          ? iconPathFor(key, label)
+          : "";
+
+      const cigarIcon =
+        key === "vitola" || key === "shape"
+          ? getCigarFilterIcon(label, key)
+          : "";
+
+      const iconSrc = brandOrManufacturerIcon || cigarIcon;
+      const iconClass =
+        key === "manufacturer"
+          ? "fm__icon fm__icon--manufacturer"
+          : key === "brand"
+          ? "fm__icon fm__icon--brand"
+          : "fm__icon fm__icon--cigar";
+
+      const infoBtn =
+        key === "shape" && getShapeInfo(label)
+          ? `<button class="fm__info" type="button" data-info="${escapeHtml(label)}" aria-label="About ${escapeHtml(label)}">i</button>`
+          : `<span class="fm__info" aria-hidden="true"></span>`;
+
+      const cb = isSelected
+        ? `<div class="fm__cb is-checked" aria-hidden="true">
+             <svg viewBox="0 0 24 24" aria-hidden="true">
+               <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+             </svg>
+           </div>`
+        : `<div class="fm__cb" aria-hidden="true"></div>`;
+
+      const icon = iconSrc
+        ? `<div class="${iconClass}">
+             <img src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
+                  onerror="this.style.display='none';" />
+           </div>`
+        : `<div class="${iconClass}" aria-hidden="true"></div>`;
+
+      return `
+        <div class="fm__row ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
+          ${cb}
+          <div class="fm__label">${escapeHtml(label)}</div>
+          ${infoBtn}
+          ${icon}
+        </div>
+      `;
+    }).join("");
+
+    $$(".fm__row", list).forEach((row) => {
       row.addEventListener("click", (e) => {
         const target = e.target;
         if (target instanceof Element && target.closest(".fm__info")) return;
 
-        const key = row.getAttribute("data-key") || "";
+        const rowKey = row.getAttribute("data-key") || "";
         const val = row.getAttribute("data-value") || "";
-        if (!key || !val || !(state.selected[key] instanceof Set)) return;
+        if (!rowKey || !val || !(state.selected[rowKey] instanceof Set)) return;
 
-        if (state.selected[key].has(val)) state.selected[key].delete(val);
-        else state.selected[key].add(val);
+        if (state.selected[rowKey].has(val)) state.selected[rowKey].delete(val);
+        else state.selected[rowKey].add(val);
 
-        renderInlineSections();
+        closeInfoSheet();
+        renderTabs();
+        renderList();
       });
     });
 
-    $$("[data-info]", stack).forEach((btn) => {
+    $$("[data-info]", list).forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1090,18 +1139,6 @@
         if (!text) return;
         openInfoSheet(label, text);
       });
-    });
-
-    const inlineSearch = $("#fm-search-inline", modalRoot);
-    inlineSearch?.addEventListener("input", () => {
-      state.activeSearch = inlineSearch.value || "";
-      renderInlineSections();
-    });
-
-    $("#fm-search-clear", modalRoot)?.addEventListener("click", () => {
-      state.activeSearch = "";
-      renderInlineSections();
-      $("#fm-search-inline", modalRoot)?.focus();
     });
   }
 
@@ -1113,7 +1150,8 @@
     modalRoot.setAttribute("aria-hidden", "false");
     document.documentElement.classList.add("sheet-open");
 
-    renderInlineSections();
+    renderTabs();
+    renderList();
 
     window.setTimeout(() => {
       $("#fm-search-inline", modalRoot)?.focus();
@@ -1158,7 +1196,8 @@
       state.selected[k].clear();
     }
     closeInfoSheet();
-    renderInlineSections();
+    renderTabs();
+    renderList();
   }
 
   searchInput?.addEventListener("input", () => {
@@ -1195,7 +1234,23 @@
     if (t.closest("#fm-apply")) {
       pushLocalToGlobal();
       closeModal();
+      return;
     }
+
+    if (t.closest("#fm-search-clear")) {
+      state.activeSearch = "";
+      renderList();
+      $("#fm-search-inline", modalRoot)?.focus();
+    }
+  });
+
+  document.addEventListener("input", (e) => {
+    if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return;
+    if (t.id !== "fm-search-inline") return;
+    state.activeSearch = t.value || "";
+    renderList();
   });
 
   document.addEventListener("keydown", (e) => {
