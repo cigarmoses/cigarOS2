@@ -584,11 +584,11 @@ html[data-theme="light"] .cd-action--primary{
     gap:8px;
   }
 
-.cd-stick{
-  width:122px;
-  max-width:none;
-}
-
+  .cd-stick{
+    width:122px;
+    max-width:none;
+  }
+  
   .cd-stick-placeholder{
     width:122px;
     min-height:340px;
