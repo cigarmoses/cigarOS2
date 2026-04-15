@@ -507,17 +507,15 @@ html[data-theme="light"] .cd-actions{
 }
 
 .cd-action:active{
-  transform:scale(.965);
-  background:rgba(255,255,255,.12);
+ transform:scale(.965);
+ background:transparent;
 }
 
 .cd-action.is-on,
 .cd-action--primary{
   color:var(--text);
-  background:rgba(255,255,255,.10);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.10),
-    inset 0 -1px 0 rgba(0,0,0,.12);
+  background:transparent;
+  box-shadow:none;
 }
 
 html[data-theme="light"] .cd-action:hover{
@@ -525,7 +523,7 @@ html[data-theme="light"] .cd-action:hover{
 }
 
 html[data-theme="light"] .cd-action:active{
-  background:rgba(15,26,44,.07);
+  background:transparent;
 }
 
 html[data-theme="light"] .cd-action.is-on,
