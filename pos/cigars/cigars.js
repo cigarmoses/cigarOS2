@@ -7,6 +7,7 @@
    - Vitola + Shape ordering
    - Vitola/shape SVG icons in filters
    - Shape info buttons
+   - Include Cubans toggle
 */
 
 (() => {
@@ -94,12 +95,14 @@
     },
     activeKey: "vitola",
     activeSearch: "",
+    includeCubans: false,
   };
 
   function ensureGlobalState() {
     if (!window.__CIGAR_FILTER_STATE__) {
       window.__CIGAR_FILTER_STATE__ = {
         q: "",
+        includeCubans: false,
         filters: {
           manufacturer: new Set(),
           brand: new Set(),
@@ -131,6 +134,7 @@
         else g.filters[k] = new Set();
       }
       if (typeof g.q !== "string") g.q = String(g.q ?? "");
+      g.includeCubans = !!g.includeCubans;
     }
   }
 
@@ -151,7 +155,7 @@
     const set = new Set();
     for (const v of values) {
       const s = norm(v);
-      if (s) set.add(s);
+      if (s && s !== "-") set.add(s);
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
@@ -218,6 +222,23 @@
     return "";
   }
 
+  function isTruthyLike(v) {
+    const s = String(v ?? "").trim().toLowerCase();
+    return ["1", "true", "yes", "y", "x", "cuban"].includes(s);
+  }
+
+  function isCubanRow(row) {
+    const brand = norm(getField(row, ["Brand", "brand", "Brand aka", "brand_aka"])).toLowerCase();
+    const manufacturer = norm(getField(row, ["Manufacturer", "manufacturer"])).toLowerCase();
+    const origin = norm(getField(row, ["Origin", "origin", "Country", "country", "Country of Origin", "country_of_origin"])).toLowerCase();
+    const cubanField = getField(row, ["Cuban", "cuban", "Is Cuban", "is_cuban"]);
+
+    if (isTruthyLike(cubanField)) return true;
+    if (origin.includes("cuba") || origin.includes("cuban")) return true;
+    if (brand.includes("(cuban)") || manufacturer.includes("(cuban)")) return true;
+    return false;
+  }
+
   function hasActiveFilters(g) {
     const f = g?.filters || {};
     for (const k of Object.keys(f)) {
@@ -227,6 +248,8 @@
   }
 
   function rowMatchesFilters(row, g) {
+    if (!g?.includeCubans && isCubanRow(row)) return false;
+
     const f = g?.filters || {};
 
     const manufacturer = norm(getField(row, ["Manufacturer", "manufacturer"]));
@@ -352,6 +375,19 @@
     const chips = [];
     const f = g.filters || {};
 
+    if (g.includeCubans) {
+      chips.push(`
+        <div class="af-chip" data-chip-key="includeCubans" data-chip-val="true">
+          <span>Include Cubans 🇨🇺</span>
+          <button class="af-chip__x" type="button" aria-label="Disable Include Cubans">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      `);
+    }
+
     for (const key of ["manufacturer", "brand", "vitola", "ring", "length", "strength", "shape", "shade"]) {
       const set = f[key];
       if (!(set instanceof Set) || !set.size) continue;
@@ -371,7 +407,7 @@
       }
     }
 
-    if ((g.q && g.q.trim()) || hasActiveFilters(g)) {
+    if ((g.q && g.q.trim()) || hasActiveFilters(g) || g.includeCubans) {
       chips.push(`
         <div class="af-chip af-clear">
           <span>Clear</span>
@@ -396,6 +432,7 @@
 
         if (xBtn.id === "af-clear-all") {
           g.q = "";
+          g.includeCubans = false;
           for (const k of Object.keys(g.filters)) g.filters[k] = new Set();
           if (searchInput) searchInput.value = "";
           renderAll();
@@ -404,8 +441,14 @@
 
         const key = chip.getAttribute("data-chip-key");
         const val = chip.getAttribute("data-chip-val");
-        if (!key || !val) return;
 
+        if (key === "includeCubans") {
+          g.includeCubans = false;
+          renderAll();
+          return;
+        }
+
+        if (!key || !val) return;
         const set = g.filters[key];
         if (set instanceof Set) set.delete(val);
         renderAll();
@@ -481,7 +524,7 @@
       return;
     }
 
-    if (qOn || filtersOn) renderResultsRows(summary);
+    if (qOn || filtersOn || g.includeCubans) renderResultsRows(summary);
     else renderBrandsGrid(summary);
   }
 
@@ -558,6 +601,8 @@
   function getValuesForKey(key) {
     if (!DATA_ROWS.length) return [];
 
+    const visibleRows = DATA_ROWS.filter((row) => state.includeCubans || !isCubanRow(row));
+
     const fieldMap = {
       manufacturer: ["Manufacturer", "manufacturer"],
       brand: ["Brand", "brand", "Brand aka", "brand_aka"],
@@ -572,7 +617,7 @@
     const keysToTry = fieldMap[key] || [key];
     const vals = [];
 
-    for (const r of DATA_ROWS) {
+    for (const r of visibleRows) {
       if (!r) continue;
       for (const k of keysToTry) {
         if (r[k] != null && r[k] !== "") {
@@ -610,8 +655,62 @@
         border-bottom:none;
       }
 
+      .fm.fm--tabs .fm__header-top{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:12px;
+      }
+
+      .fm.fm--tabs .fm__header-left{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        min-width:0;
+        flex:1 1 auto;
+      }
+
       .fm.fm--tabs .fm__title{
         font-weight:800;
+      }
+
+      .fm.fm--tabs .fm__cuban-toggle{
+        border:0;
+        background:transparent;
+        padding:0;
+        margin:0;
+        display:inline-flex;
+        align-items:center;
+        gap:10px;
+        cursor:pointer;
+        appearance:none;
+        color:#0f1a2c;
+        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        font-size:16px;
+        font-weight:500;
+        letter-spacing:-.01em;
+        align-self:flex-start;
+      }
+
+      .fm.fm--tabs .fm__cuban-check{
+        width:24px;
+        height:24px;
+        border-radius:7px;
+        border:2px solid rgba(15,26,44,.14);
+        background:#fff;
+        display:grid;
+        place-items:center;
+        font-size:15px;
+        line-height:1;
+        color:transparent;
+        flex:0 0 auto;
+      }
+
+      .fm.fm--tabs .fm__cuban-toggle.is-on .fm__cuban-check{
+        background:#34c759;
+        border-color:#34c759;
+        color:#fff;
       }
 
       .fm.fm--tabs .fm__body{
@@ -678,7 +777,7 @@
         display:flex;
         flex-direction:column;
         min-height:0;
-        max-height:calc(88vh - 164px);
+        max-height:calc(88vh - 198px);
       }
 
       .fm.fm--tabs .fm__search-wrap{
@@ -696,8 +795,8 @@
 
       .fm.fm--tabs .fm__row{
         display:grid;
-        grid-template-columns:30px minmax(0,1fr) auto 128px;
-        gap:10px;
+        grid-template-columns:30px minmax(0,1fr) auto 150px;
+        gap:12px;
         align-items:center;
         min-height:58px;
         padding:10px 12px;
@@ -705,6 +804,10 @@
         border:1px solid rgba(15,26,44,.08);
         background:#fff;
         margin-bottom:10px;
+      }
+
+      .fm.fm--tabs .fm__row--logo{
+        grid-template-columns:30px 42px minmax(0,1fr);
       }
 
       .fm.fm--tabs .fm__cb{
@@ -754,12 +857,12 @@
       }
 
       .fm.fm--tabs .fm__icon{
-        width:128px;
-        min-width:128px;
+        width:150px;
+        min-width:150px;
         height:22px;
         display:flex;
         align-items:center;
-        justify-content:flex-end;
+        justify-content:flex-start;
         overflow:visible;
       }
 
@@ -775,14 +878,18 @@
 
       .fm.fm--tabs .fm__icon--brand,
       .fm.fm--tabs .fm__icon--manufacturer{
-        justify-content:flex-end;
-        height:24px;
+        width:42px;
+        min-width:42px;
+        height:42px;
+        justify-content:center;
       }
 
       .fm.fm--tabs .fm__icon--brand img,
       .fm.fm--tabs .fm__icon--manufacturer img{
-        height:20px;
-        max-width:110px;
+        width:36px;
+        height:36px;
+        max-width:36px;
+        object-fit:contain;
         transform:none;
       }
 
@@ -859,27 +966,51 @@
       }
 
       @media (max-width:430px){
+        .fm.fm--tabs .fm__header{
+          padding:18px 18px 10px;
+        }
+
+        .fm.fm--tabs .fm__cuban-toggle{
+          font-size:15px;
+        }
+
+        .fm.fm--tabs .fm__panel{
+          max-height:calc(88vh - 194px);
+        }
+
         .fm.fm--tabs .fm__row{
-          grid-template-columns:28px minmax(0,1fr) auto 112px;
+          grid-template-columns:28px minmax(0,1fr) auto 132px;
           gap:10px;
           min-height:56px;
           padding:10px 10px;
         }
 
+        .fm.fm--tabs .fm__row--logo{
+          grid-template-columns:28px 40px minmax(0,1fr);
+        }
+
         .fm.fm--tabs .fm__icon{
-          width:112px;
-          min-width:112px;
+          width:132px;
+          min-width:132px;
         }
 
         .fm.fm--tabs .fm__icon img{
-          max-width:102px;
-          height:11px;
+          max-width:104px;
+          height:12px;
+        }
+
+        .fm.fm--tabs .fm__icon--brand,
+        .fm.fm--tabs .fm__icon--manufacturer{
+          width:40px;
+          min-width:40px;
+          height:40px;
         }
 
         .fm.fm--tabs .fm__icon--brand img,
         .fm.fm--tabs .fm__icon--manufacturer img{
-          height:18px;
-          max-width:102px;
+          width:34px;
+          height:34px;
+          max-width:34px;
         }
 
         .fm.fm--tabs .fm__label{
@@ -889,33 +1020,55 @@
 
       @media (max-width:390px){
         .fm.fm--tabs .fm__row{
-          grid-template-columns:26px minmax(0,1fr) auto 98px;
+          grid-template-columns:26px minmax(0,1fr) auto 118px;
           gap:8px;
         }
 
+        .fm.fm--tabs .fm__row--logo{
+          grid-template-columns:26px 38px minmax(0,1fr);
+        }
+
         .fm.fm--tabs .fm__icon{
-          width:98px;
-          min-width:98px;
+          width:118px;
+          min-width:118px;
         }
 
         .fm.fm--tabs .fm__icon img{
-          max-width:88px;
-          height:10px;
+          max-width:90px;
+          height:11px;
+        }
+
+        .fm.fm--tabs .fm__icon--brand,
+        .fm.fm--tabs .fm__icon--manufacturer{
+          width:38px;
+          min-width:38px;
+          height:38px;
         }
 
         .fm.fm--tabs .fm__icon--brand img,
         .fm.fm--tabs .fm__icon--manufacturer img{
-          height:17px;
-          max-width:88px;
+          width:32px;
+          height:32px;
+          max-width:32px;
         }
 
         .fm.fm--tabs .fm__tab{
           padding:0 12px;
           font-size:14px;
         }
+
+        .fm.fm--tabs .fm__cuban-toggle{
+          font-size:14px;
+        }
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function renderCubanToggle() {
+    const btn = $("#fm-cuban-toggle", modalRoot);
+    if (!btn) return;
+    btn.classList.toggle("is-on", !!state.includeCubans);
   }
 
   function ensureModal() {
@@ -938,12 +1091,21 @@
 
         <div class="fm__sheet" role="dialog" aria-modal="true" aria-label="Filters">
           <div class="fm__header">
-            <h2 class="fm__title">Filters</h2>
-            <button class="fm__close" type="button" aria-label="Close filters" data-fm-close>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-              </svg>
-            </button>
+            <div class="fm__header-top">
+              <div class="fm__header-left">
+                <h2 class="fm__title">Filters</h2>
+                <button class="fm__cuban-toggle" type="button" id="fm-cuban-toggle" aria-label="Include Cubans">
+                  <span class="fm__cuban-check">✓</span>
+                  <span class="fm__cuban-text">Include Cubans 🇨🇺</span>
+                </button>
+              </div>
+
+              <button class="fm__close" type="button" aria-label="Close filters" data-fm-close>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="fm__body">
@@ -987,22 +1149,6 @@
         </div>
       `;
     }
-  }
-
-  function closeInfoSheet() {
-    $("#fm-info-sheet", modalRoot)?.classList.remove("is-open");
-  }
-
-  function openInfoSheet(title, text) {
-    const sheet = $("#fm-info-sheet", modalRoot);
-    const titleEl = $("#fm-info-title", modalRoot);
-    const textEl = $("#fm-info-text", modalRoot);
-
-    if (!sheet || !titleEl || !textEl) return;
-
-    titleEl.textContent = title;
-    textEl.textContent = text;
-    sheet.classList.add("is-open");
   }
 
   function renderTabs() {
@@ -1063,12 +1209,9 @@
     list.innerHTML = filtered.map((v) => {
       const label = norm(v);
       const isSelected = selectedSet.has(label);
+      const isLogoRow = key === "manufacturer" || key === "brand";
 
-      const brandOrManufacturerIcon =
-        key === "manufacturer" || key === "brand"
-          ? iconPathFor(key, label)
-          : "";
-
+      const brandOrManufacturerIcon = isLogoRow ? iconPathFor(key, label) : "";
       const cigarIcon =
         key === "vitola" || key === "shape"
           ? getCigarFilterIcon(label, key)
@@ -1085,6 +1228,8 @@
       const infoBtn =
         key === "shape" && getShapeInfo(label)
           ? `<button class="fm__info" type="button" data-info="${escapeHtml(label)}" aria-label="About ${escapeHtml(label)}">i</button>`
+          : isLogoRow
+          ? ""
           : `<span class="fm__info" aria-hidden="true"></span>`;
 
       const cb = isSelected
@@ -1101,6 +1246,16 @@
                   onerror="this.style.display='none';" />
            </div>`
         : `<div class="${iconClass}" aria-hidden="true"></div>`;
+
+      if (isLogoRow) {
+        return `
+          <div class="fm__row fm__row--logo ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
+            ${cb}
+            ${icon}
+            <div class="fm__label">${escapeHtml(label)}</div>
+          </div>
+        `;
+      }
 
       return `
         <div class="fm__row ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
@@ -1142,8 +1297,26 @@
     });
   }
 
+  function closeInfoSheet() {
+    $("#fm-info-sheet", modalRoot)?.classList.remove("is-open");
+  }
+
+  function openInfoSheet(title, text) {
+    const sheet = $("#fm-info-sheet", modalRoot);
+    const titleEl = $("#fm-info-title", modalRoot);
+    const textEl = $("#fm-info-text", modalRoot);
+
+    if (!sheet || !titleEl || !textEl) return;
+
+    titleEl.textContent = title;
+    textEl.textContent = text;
+    sheet.classList.add("is-open");
+  }
+
   function openModal() {
     ensureModal();
+    renderCubanToggle();
+
     modalRoot.hidden = false;
     modalRoot.classList.remove("fm--hidden");
     modalRoot.classList.add("is-open");
@@ -1179,6 +1352,7 @@
       const set = g.filters?.[k];
       state.selected[k] = set instanceof Set ? new Set([...set]) : new Set();
     }
+    state.includeCubans = !!g.includeCubans;
   }
 
   function pushLocalToGlobal() {
@@ -1187,6 +1361,7 @@
     for (const k of Object.keys(state.selected)) {
       g.filters[k] = new Set([...state.selected[k]]);
     }
+    g.includeCubans = !!state.includeCubans;
     g.q = (searchInput?.value || g.q || "").toString();
     renderAll();
   }
@@ -1195,7 +1370,9 @@
     for (const k of Object.keys(state.selected)) {
       state.selected[k].clear();
     }
+    state.includeCubans = false;
     closeInfoSheet();
+    renderCubanToggle();
     renderTabs();
     renderList();
   }
@@ -1241,6 +1418,15 @@
       state.activeSearch = "";
       renderList();
       $("#fm-search-inline", modalRoot)?.focus();
+      return;
+    }
+
+    if (t.closest("#fm-cuban-toggle")) {
+      state.includeCubans = !state.includeCubans;
+      closeInfoSheet();
+      renderCubanToggle();
+      renderTabs();
+      renderList();
     }
   });
 
