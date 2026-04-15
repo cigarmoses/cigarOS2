@@ -88,6 +88,8 @@
 
   const DEFAULT_STICK_STOCK = 89;
   const DEFAULT_BOX_STOCK = 9;
+  const DEFAULT_BOX_QTY = 20;
+  const DEFAULT_MSRP = 11.5;
 
   const state = {
     brand: "",
@@ -175,14 +177,13 @@
 
   function parseMoneyValue(v) {
     const cleaned = String(v || "").replace(/[^0-9.-]/g, "").trim();
-    if (!cleaned) return 0;
+    if (!cleaned) return NaN;
     const n = Number(cleaned);
-    return Number.isFinite(n) ? n : 0;
+    return Number.isFinite(n) ? n : NaN;
   }
 
   function fmtMoney(v) {
-    const n = parseMoneyValue(v);
-    return Number.isFinite(n) && n > 0 ? n.toFixed(2) : "";
+    return Number(v || 0).toFixed(2);
   }
 
   function parseCSV(text) {
@@ -276,31 +277,32 @@
   }
 
   function resolveName(r) {
-    return getField(r, ["cigar"]);
+    return getField(r, ["cigar", "name"]);
   }
 
   function resolveLine(r) {
-    return getField(r, ["line"]);
+    return getField(r, ["line", "series"]);
   }
 
   function resolveDisplayName(r) {
     const line = resolveLine(r);
     const name = resolveName(r);
-
     if (line && name) return `${line} ${name}`.replace(/\s+/g, " ").trim();
     return (line || name || "").replace(/\s+/g, " ").trim();
   }
 
   function resolveVitola(r) {
-    return getField(r, ["vitola", "style", "vitola_name"]);
-  }
-
-  function resolvePrice(r) {
-    return fmtMoney(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
+    return getField(r, ["vitola", "style", "vitola_name", "size"]);
   }
 
   function resolvePriceNumber(r) {
-    return parseMoneyValue(getField(r, ["msrp", "price", "cost", "cigar_cost"]));
+    const raw = getField(r, ["msrp", "price", "cost", "cigar_cost"]);
+    const parsed = parseMoneyValue(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MSRP;
+  }
+
+  function resolvePrice(r) {
+    return fmtMoney(resolvePriceNumber(r));
   }
 
   function resolveRing(r) {
@@ -339,10 +341,6 @@
     return getField(r, ["wrapper_shade", "wrapper_shade_type", "shade", "wrapper"]);
   }
 
-  function resolveImage(r) {
-    return getField(r, ["cigar_img", "image", "img", "photo", "cigar_image"]);
-  }
-
   function resolveBrandImage(r) {
     return getField(r, ["brand_img", "brand_image", "brandicon", "brand_icon"]);
   }
@@ -358,7 +356,7 @@
       "qty_per_box",
     ]);
     const n = Number(String(raw || "").replace(/[^0-9.]/g, ""));
-    return Number.isFinite(n) && n > 0 ? n : 0;
+    return Number.isFinite(n) && n > 0 ? n : DEFAULT_BOX_QTY;
   }
 
   function resolveStickStock(r) {
@@ -372,7 +370,7 @@
       "single_stock",
     ]);
     const n = Number(String(raw || "").replace(/[^0-9.]/g, ""));
-    return Number.isFinite(n) && n >= 0 ? Math.round(n) : DEFAULT_STICK_STOCK;
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : DEFAULT_STICK_STOCK;
   }
 
   function resolveBoxStock(r) {
@@ -384,7 +382,7 @@
       "box_inventory",
     ]);
     const n = Number(String(raw || "").replace(/[^0-9.]/g, ""));
-    return Number.isFinite(n) && n >= 0 ? Math.round(n) : DEFAULT_BOX_STOCK;
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : DEFAULT_BOX_STOCK;
   }
 
   function resolveIsCuban(r) {
@@ -394,7 +392,6 @@
       if (["yes", "true", "1", "cuban"].includes(v)) return true;
       if (["no", "false", "0", "non-cuban", "non cuban"].includes(v)) return false;
     }
-
     return resolveOrigin(r).toLowerCase() === "cuba";
   }
 
@@ -403,7 +400,6 @@
     const line = normalizeFilenamePart(resolveLine(r));
     const cigar = normalizeFilenamePart(resolveName(r));
     const vitola = normalizeFilenamePart(resolveVitola(r));
-
     const names = [];
 
     if (brand && line && cigar) names.push(`${brand}${line}${cigar}`);
@@ -455,7 +451,13 @@
   }
 
   function resolveBandArt(r) {
-    const direct = getField(r, ["band_art", "band_image", "band_img", "band_art_url", "band_url"]);
+    const direct = getField(r, [
+      "band_art",
+      "band_image",
+      "band_img",
+      "band_art_url",
+      "band_url",
+    ]);
     if (direct) return direct;
 
     if (normalizeBrand(state.brand) !== "padron") return "";
@@ -463,7 +465,9 @@
     const full = `${resolveName(r)} ${resolveVitola(r)} ${resolveShade(r)}`.toLowerCase();
 
     if (full.includes("family reserve")) return "/img/icons/padronfamilyreserveband.svg";
-    if (full.includes("1964") || full.includes("anniversary")) return "/img/icons/padron1964anniversaryband.svg";
+    if (full.includes("1964") || full.includes("anniversary")) {
+      return "/img/icons/padron1964anniversaryband.svg";
+    }
     if (full.includes("1926")) return "/img/icons/padron1926serieband.svg";
     if (full.includes("black")) return "/img/icons/padronblackseriesband.svg";
     if (full.includes("damaso")) return "/img/icons/padrondamasoband.svg";
@@ -494,7 +498,9 @@
       if (v.includes("parejo")) return "/uxui/cigaricons/robusto.svg";
       if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
       if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
-      if (v.includes("pyramid") || v.includes("piramide") || v.includes("piramides")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("pyramid") || v.includes("piramide") || v.includes("piramides")) {
+        return "/uxui/cigaricons/torpedo.svg";
+      }
       if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
       if (v.includes("culebra")) return "/uxui/cigaricons/lonsdale.svg";
     }
@@ -569,279 +575,100 @@
     const style = document.createElement("style");
     style.id = "brand-inline-filter-style";
     style.textContent = `
-      .fm.fm--inline .fm__sheet{
-        max-height:88vh;
-      }
-
-      .fm.fm--inline .fm__header{
-        padding:18px 18px 14px;
-      }
-
-      .fm.fm--inline .fm__title{
-        font-weight:800;
-      }
-
-      .fm.fm--inline .fm__body{
-        display:block;
-        padding:0;
-        overflow:auto;
-      }
-
-      .fm.fm--inline .fm__stack{
-        padding:0 18px 8px;
-      }
-
-      .fm.fm--inline .fm__section{
-        border-top:1px solid rgba(15,26,44,.06);
-      }
-
+      .fm.fm--inline .fm__sheet{max-height:88vh;}
+      .fm.fm--inline .fm__header{padding:18px 18px 14px;}
+      .fm.fm--inline .fm__title{font-weight:800;}
+      .fm.fm--inline .fm__body{display:block;padding:0;overflow:auto;}
+      .fm.fm--inline .fm__stack{padding:0 18px 8px;}
+      .fm.fm--inline .fm__section{border-top:1px solid rgba(15,26,44,.06);}
       .fm.fm--inline .fm__section-btn{
-        width:100%;
-        border:0;
-        background:transparent;
-        display:grid;
-        grid-template-columns:1fr auto auto;
-        gap:12px;
-        align-items:center;
-        padding:18px 6px;
-        text-align:left;
-        cursor:pointer;
-        appearance:none;
+        width:100%;border:0;background:transparent;display:grid;
+        grid-template-columns:1fr auto auto;gap:12px;align-items:center;
+        padding:18px 6px;text-align:left;cursor:pointer;appearance:none;
       }
-
       .fm.fm--inline .fm__section-title{
         font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-        font-size:22px;
-        font-weight:600;
-        letter-spacing:-.02em;
-        color:#0f1a2c;
+        font-size:22px;font-weight:600;letter-spacing:-.02em;color:#0f1a2c;
       }
-
       .fm.fm--inline .fm__section-meta{
-        min-width:26px;
-        height:26px;
-        padding:0 8px;
-        border-radius:999px;
-        background:#eef2ff;
-        color:#6f85d8;
-        font-size:15px;
-        font-weight:700;
-        display:grid;
-        place-items:center;
+        min-width:26px;height:26px;padding:0 8px;border-radius:999px;
+        background:#eef2ff;color:#6f85d8;font-size:15px;font-weight:700;
+        display:grid;place-items:center;
       }
-
       .fm.fm--inline .fm__section-toggle{
-        width:24px;
-        text-align:center;
-        color:#6f85d8;
-        font-size:32px;
-        line-height:1;
-        font-weight:400;
+        width:24px;text-align:center;color:#6f85d8;font-size:32px;line-height:1;font-weight:400;
       }
-
-      .fm.fm--inline .fm__section-content{
-        padding:0 0 16px;
-      }
-
-      .fm.fm--inline .fm__search-row{
-        margin:0 0 14px;
-      }
-
+      .fm.fm--inline .fm__section-content{padding:0 0 16px;}
+      .fm.fm--inline .fm__search-row{margin:0 0 14px;}
       .fm.fm--inline .fm__row{
-        display:grid;
-        grid-template-columns:38px minmax(0,1fr) auto 140px;
-        gap:10px;
-        align-items:center;
-        padding:14px 12px;
-        border-radius:18px;
-        border:1px solid rgba(15,26,44,.08);
-        background:#fff;
-        margin-bottom:12px;
+        display:grid;grid-template-columns:38px minmax(0,1fr) auto 140px;gap:10px;
+        align-items:center;padding:14px 12px;border-radius:18px;
+        border:1px solid rgba(15,26,44,.08);background:#fff;margin-bottom:12px;
       }
-
       .fm.fm--inline .fm__cb{
-        width:28px;
-        height:28px;
-        border-radius:9px;
-        border:2px solid rgba(15,26,44,.18);
-        background:#fff;
-        display:grid;
-        place-items:center;
+        width:28px;height:28px;border-radius:9px;border:2px solid rgba(15,26,44,.18);
+        background:#fff;display:grid;place-items:center;
       }
-
       .fm.fm--inline .fm__cb.is-checked{
-        background:#eef2ff;
-        border-color:#8ea4eb;
-        color:#8ea4eb;
+        background:#eef2ff;border-color:#8ea4eb;color:#8ea4eb;
       }
-
-      .fm.fm--inline .fm__cb svg{
-        width:18px;
-        height:18px;
-      }
-
+      .fm.fm--inline .fm__cb svg{width:18px;height:18px;}
       .fm.fm--inline .fm__label{
-        min-width:0;
-        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-        font-size:18px;
-        font-weight:600;
-        letter-spacing:-.02em;
-        color:#0f1a2c;
+        min-width:0;font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+        font-size:18px;font-weight:600;letter-spacing:-.02em;color:#0f1a2c;
       }
-
-      .fm.fm--inline .fm__row.is-selected .fm__label{
-        color:#0f1a2c;
-      }
-
+      .fm.fm--inline .fm__row.is-selected .fm__label{color:#0f1a2c;}
       .fm.fm--inline .fm__info{
-        width:24px;
-        height:24px;
-        border:0;
-        background:transparent;
-        color:#8d96a8;
-        font-size:18px;
-        font-weight:600;
-        line-height:1;
-        display:grid;
-        place-items:center;
-        cursor:pointer;
-        padding:0;
-        appearance:none;
+        width:24px;height:24px;border:0;background:transparent;color:#8d96a8;
+        font-size:18px;font-weight:600;line-height:1;display:grid;place-items:center;
+        cursor:pointer;padding:0;appearance:none;
       }
-
       .fm.fm--inline .fm__icon{
-        width:140px;
-        min-width:140px;
-        height:22px;
-        display:flex;
-        align-items:center;
-        justify-content:flex-start;
-        overflow:visible;
+        width:140px;min-width:140px;height:22px;display:flex;align-items:center;
+        justify-content:flex-start;overflow:visible;
       }
-
       .fm.fm--inline .fm__icon img{
-        height:14px;
-        width:auto;
-        max-width:132px;
-        object-fit:contain;
-        display:block;
-        transform:scaleX(-1);
-        transform-origin:center;
+        height:14px;width:auto;max-width:132px;object-fit:contain;display:block;
+        transform:scaleX(-1);transform-origin:center;
       }
-
-      .fm.fm--inline .fm__search-input{
-        font-weight:500;
-      }
-
-      .fm.fm--inline .fm__btn{
-        font-weight:600;
-      }
-
+      .fm.fm--inline .fm__search-input{font-weight:500;}
+      .fm.fm--inline .fm__btn{font-weight:600;}
       .fm.fm--inline .fm__info-sheet{
-        position:absolute;
-        left:18px;
-        right:18px;
-        bottom:92px;
-        border-radius:18px;
-        background:#fff;
-        border:1px solid rgba(15,26,44,.08);
-        box-shadow:0 18px 40px rgba(15,26,44,.14);
-        padding:14px 16px;
-        display:none;
+        position:absolute;left:18px;right:18px;bottom:92px;border-radius:18px;background:#fff;
+        border:1px solid rgba(15,26,44,.08);box-shadow:0 18px 40px rgba(15,26,44,.14);
+        padding:14px 16px;display:none;
       }
-
-      .fm.fm--inline .fm__info-sheet.is-open{
-        display:block;
-      }
-
+      .fm.fm--inline .fm__info-sheet.is-open{display:block;}
       .fm.fm--inline .fm__info-title{
-        margin:0 0 6px;
-        font-size:18px;
-        line-height:1.2;
-        font-weight:700;
-        color:#0f1a2c;
+        margin:0 0 6px;font-size:18px;line-height:1.2;font-weight:700;color:#0f1a2c;
       }
-
       .fm.fm--inline .fm__info-text{
-        margin:0;
-        font-size:15px;
-        line-height:1.35;
-        font-weight:500;
-        color:rgba(15,26,44,.72);
+        margin:0;font-size:15px;line-height:1.35;font-weight:500;color:rgba(15,26,44,.72);
       }
-
       .fm.fm--inline .fm__info-close{
-        position:absolute;
-        top:10px;
-        right:10px;
-        width:28px;
-        height:28px;
-        border:0;
-        background:transparent;
-        color:#8d96a8;
-        font-size:22px;
-        line-height:1;
-        display:grid;
-        place-items:center;
-        cursor:pointer;
-        padding:0;
-        appearance:none;
+        position:absolute;top:10px;right:10px;width:28px;height:28px;border:0;
+        background:transparent;color:#8d96a8;font-size:22px;line-height:1;
+        display:grid;place-items:center;cursor:pointer;padding:0;appearance:none;
       }
-
-      .fm.fm--inline .fm__actions{
-        position:relative;
-        z-index:2;
-        background:#fff;
-      }
-
+      .fm.fm--inline .fm__actions{position:relative;z-index:2;background:#fff;}
       .fm.fm--inline .fm__empty{
-        padding:8px 8px 12px;
-        color:rgba(15,26,44,.48);
-        font-size:16px;
-        font-weight:500;
+        padding:8px 8px 12px;color:rgba(15,26,44,.48);font-size:16px;font-weight:500;
       }
-
       @media (max-width:430px){
         .fm.fm--inline .fm__row{
-          grid-template-columns:34px minmax(0,1fr) auto 118px;
-          gap:10px;
-          padding:13px 10px;
+          grid-template-columns:34px minmax(0,1fr) auto 118px;gap:10px;padding:13px 10px;
         }
-
-        .fm.fm--inline .fm__icon{
-          width:118px;
-          min-width:118px;
-        }
-
-        .fm.fm--inline .fm__icon img{
-          max-width:110px;
-          height:13px;
-        }
-
-        .fm.fm--inline .fm__label{
-          font-size:17px;
-        }
+        .fm.fm--inline .fm__icon{width:118px;min-width:118px;}
+        .fm.fm--inline .fm__icon img{max-width:110px;height:13px;}
+        .fm.fm--inline .fm__label{font-size:17px;}
       }
-
       @media (max-width:390px){
         .fm.fm--inline .fm__row{
-          grid-template-columns:32px minmax(0,1fr) auto 104px;
-          gap:8px;
+          grid-template-columns:32px minmax(0,1fr) auto 104px;gap:8px;
         }
-
-        .fm.fm--inline .fm__icon{
-          width:104px;
-          min-width:104px;
-        }
-
-        .fm.fm--inline .fm__icon img{
-          max-width:96px;
-          height:12px;
-        }
-
-        .fm.fm--inline .fm__label{
-          font-size:16px;
-        }
+        .fm.fm--inline .fm__icon{width:104px;min-width:104px;}
+        .fm.fm--inline .fm__icon img{max-width:96px;height:12px;}
+        .fm.fm--inline .fm__label{font-size:16px;}
       }
     `;
     document.head.appendChild(style);
@@ -950,15 +777,11 @@
                 return `
                   <div class="fm__row ${isSelected ? " is-selected" : ""}" data-key="${esc(c.key)}" data-value="${esc(label)}">
                     <span class="fm__cb${isSelected ? " is-checked" : ""}">
-                      ${
-                        isSelected
-                          ? `
+                      ${isSelected ? `
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
                         </svg>
-                      `
-                          : ""
-                      }
+                      ` : ""}
                     </span>
                     <span class="fm__label">${esc(label)}</span>
                     ${infoBtn}
@@ -1259,7 +1082,7 @@
 
   function showBoxPurchasePrompt(r) {
     const displayName = resolveDisplayName(r) || "this box";
-    const boxQty = resolveBoxCount(r) || 20;
+    const boxQty = resolveBoxCount(r);
     const msrp = resolvePriceNumber(r);
     const perCigar = boxQty > 0 && msrp > 0 ? (msrp / boxQty).toFixed(2) : "0.00";
 
@@ -1279,7 +1102,7 @@
 
     rows.forEach((r) => {
       const item = buildCartItem(r);
-      const priceText = resolvePrice(r) || "—";
+      const priceText = resolvePrice(r);
       const iconPath = brandIconPath();
       const stickStock = resolveStickStock(r);
       const boxStock = resolveBoxStock(r);
