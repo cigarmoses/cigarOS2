@@ -1,5 +1,3 @@
-Yes. Replace your entire brand.js with this full code:
-
 /* /pos/cigars/brand.js
    Brand page
    - Loads cigar rows from Google Sheets CSV
