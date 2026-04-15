@@ -1094,17 +1094,18 @@
     return filterModal;
   }
 
-  function ensureBrandManufacturerMeta() {
-    if (!brandTitle || !brandTitle.parentElement) return null;
+function ensureBrandManufacturerMeta() {
+  const titleBlock = document.querySelector(".brand-title-block");
+  if (!titleBlock) return null;
 
-    let meta = brandTitle.parentElement.querySelector(".brand-manufacturer");
-    if (!meta) {
-      meta = document.createElement("div");
-      meta.className = "brand-manufacturer";
-      brandTitle.insertAdjacentElement("afterend", meta);
-    }
-    return meta;
+  let meta = titleBlock.querySelector(".brand-manufacturer");
+  if (!meta) {
+    meta = document.createElement("div");
+    meta.className = "brand-manufacturer";
+    titleBlock.appendChild(meta);
   }
+  return meta;
+}
 
   function setBrandHeader() {
     if (brandTitle) brandTitle.textContent = state.brand || "Brand";
@@ -1310,7 +1311,6 @@
             ${isCuban ? `<div class="brand-row-flag" aria-hidden="true">🇨🇺</div>` : ``}
           </div>
           <div class="brand-row-sub">${esc(resolveVitola(r) || "—")}</div>
-          <div class="brand-row-manufacturer">${esc(manufacturer || "—")}</div>
         </div>
 
         <div class="brand-row-right">
