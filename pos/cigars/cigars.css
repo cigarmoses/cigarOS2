@@ -375,6 +375,103 @@ html[data-theme="light"] .af-clear{
   border-color:rgba(15,26,44,.12);
 }
 
+/* favorite brands rail */
+.fav-brands-wrap{
+  margin:4px 0 18px;
+}
+
+.fav-brands-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 4px 10px;
+}
+
+.fav-brands-title{
+  margin:0;
+  font-family:var(--font-display);
+  font-size:15px;
+  font-weight:800;
+  letter-spacing:-.02em;
+  color:var(--ink);
+}
+
+.fav-brands-scroll{
+  display:flex;
+  gap:14px;
+  overflow-x:auto;
+  padding:2px 2px 6px;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+
+.fav-brands-scroll::-webkit-scrollbar{
+  display:none;
+}
+
+.fav-brand-card{
+  flex:0 0 auto;
+  width:92px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  background:transparent;
+  border:0;
+  padding:0;
+  cursor:pointer;
+  scroll-snap-align:start;
+  -webkit-tap-highlight-color:transparent;
+  appearance:none;
+  text-decoration:none;
+  color:inherit;
+}
+
+.fav-brand-card:active{
+  transform:scale(.985);
+}
+
+.fav-brand-icon{
+  width:76px;
+  height:76px;
+  border-radius:22px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+  display:grid;
+  place-items:center;
+  box-shadow:0 10px 18px rgba(0,0,0,.25);
+  overflow:hidden;
+}
+
+html[data-theme="light"] .fav-brand-icon{
+  background:rgba(0,0,0,.04);
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:0 10px 18px rgba(0,0,0,.08);
+}
+
+.fav-brand-icon img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  padding:8px;
+  display:block;
+}
+
+.fav-brand-name{
+  font-family:var(--font-display);
+  font-size:12px;
+  font-weight:700;
+  text-align:center;
+  color:var(--ink);
+  line-height:1.05;
+  letter-spacing:-.02em;
+  max-width:84px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
 /* brands grid */
 .brands-grid{
   display:grid;
@@ -994,15 +1091,7 @@ html[data-theme="light"] .cb-nav-btn:hover{
 }
 
 .fm__label{
-  font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-  font-weight:400;
-  font-size:22px;
-  color:rgba(15,26,44,.55);
-  min-width:0;
-}
-
-.fm__row.is-selected .fm__label{
-  color:#007aff;
+  color:#0b1220;
 }
 
 .fm__actions{
@@ -1073,6 +1162,15 @@ html[data-theme="light"] .cb-nav-btn:hover{
   .cigars-search-bar{
     padding:13px 15px;
     border-radius:22px;
+  }
+
+  .fav-brand-card{
+    width:88px;
+  }
+
+  .fav-brand-icon{
+    width:72px;
+    height:72px;
   }
 
   .brands-grid{
