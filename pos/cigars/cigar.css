@@ -528,8 +528,8 @@ html[data-theme="light"] .cd-action:active{
 
 html[data-theme="light"] .cd-action.is-on,
 html[data-theme="light"] .cd-action--primary{
-  background:rgba(15,26,44,.075);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
+  background:transparent;
+  box-shadow:none;
 }
 
 @media (max-width:390px){
