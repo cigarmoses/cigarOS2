@@ -158,7 +158,6 @@
         obj[normHeaders[j]] = r[j] ?? "";
       }
 
-      // Preserve raw row and fixed-position fallbacks for columns that may have blank headers
       obj.__row = r;
       obj.__length_col = r[LENGTH_COL_INDEX] ?? "";
       obj.__ring_col = r[RING_COL_INDEX] ?? "";
@@ -458,72 +457,64 @@
     return Array.from(new Set(out.filter(Boolean)));
   }
 
-function buildCigarImageCandidates(rec) {
-  const fromSheet = normalizeAssetPath(getImage(rec));
-  const brand = getBrand(rec);
-  const line = getLine(rec);
-  const cigar = getName(rec);
-  const vitola = getVitola(rec);
+  function buildCigarImageCandidates(rec) {
+    const fromSheet = normalizeAssetPath(getImage(rec));
+    const brand = getBrand(rec);
+    const line = getLine(rec);
+    const cigar = getName(rec);
+    const vitola = getVitola(rec);
 
-  const brandFolder = normalizeBrand(brand);
-  const brandKey = compactKey(brand);
-  const lineKey = compactKey(line);
-  const cigarKey = compactKey(cigar);
-  const vitolaKey = compactKey(vitola);
+    const brandFolder = normalizeBrand(brand);
+    const brandKey = compactKey(brand);
+    const lineKey = compactKey(line);
+    const cigarKey = compactKey(cigar);
+    const vitolaKey = compactKey(vitola);
 
-  const out = [];
-  if (fromSheet) out.push(fromSheet);
+    const out = [];
+    if (fromSheet) out.push(fromSheet);
 
-  if (brandFolder) {
-    const names = [];
+    if (brandFolder) {
+      const names = [];
 
-    // 1. (brand)(line)(cigar)
-    if (brandKey && lineKey && cigarKey) {
-      names.push(`${brandKey}${lineKey}${cigarKey}`);
+      if (brandKey && lineKey && cigarKey) {
+        names.push(`${brandKey}${lineKey}${cigarKey}`);
+      }
+
+      if (brandKey && lineKey && cigarKey && vitolaKey) {
+        names.push(`${brandKey}${lineKey}${cigarKey}${vitolaKey}`);
+      }
+
+      if (lineKey && cigarKey) {
+        names.push(`${lineKey}${cigarKey}`);
+      }
+
+      if (lineKey && cigarKey && vitolaKey) {
+        names.push(`${lineKey}${cigarKey}${vitolaKey}`);
+      }
+
+      if (brandKey && cigarKey) {
+        names.push(`${brandKey}${cigarKey}`);
+      }
+
+      if (brandKey && cigarKey && vitolaKey) {
+        names.push(`${brandKey}${cigarKey}${vitolaKey}`);
+      }
+
+      if (cigarKey) {
+        names.push(`${cigarKey}`);
+      }
+
+      if (cigarKey && vitolaKey) {
+        names.push(`${cigarKey}${vitolaKey}`);
+      }
+
+      Array.from(new Set(names)).forEach((name) => {
+        out.push(`/img/cigars/${brandFolder}/${name}.png`);
+      });
     }
 
-    // 2. (brand)(line)(cigar)(vitola)
-    if (brandKey && lineKey && cigarKey && vitolaKey) {
-      names.push(`${brandKey}${lineKey}${cigarKey}${vitolaKey}`);
-    }
-
-    // 3. (line)(cigar)
-    if (lineKey && cigarKey) {
-      names.push(`${lineKey}${cigarKey}`);
-    }
-
-    // 4. (line)(cigar)(vitola)
-    if (lineKey && cigarKey && vitolaKey) {
-      names.push(`${lineKey}${cigarKey}${vitolaKey}`);
-    }
-
-    // 5. (brand)(cigar)
-    if (brandKey && cigarKey) {
-      names.push(`${brandKey}${cigarKey}`);
-    }
-
-    // 6. (brand)(cigar)(vitola)
-    if (brandKey && cigarKey && vitolaKey) {
-      names.push(`${brandKey}${cigarKey}${vitolaKey}`);
-    }
-
-    // 7. (cigar)
-    if (cigarKey) {
-      names.push(`${cigarKey}`);
-    }
-
-    // 8. (cigar)(vitola)
-    if (cigarKey && vitolaKey) {
-      names.push(`${cigarKey}${vitolaKey}`);
-    }
-
-    Array.from(new Set(names)).forEach((name) => {
-      out.push(`/img/cigars/${brandFolder}/${name}.png`);
-    });
+    return Array.from(new Set(out.filter(Boolean)));
   }
-
-  return Array.from(new Set(out.filter(Boolean)));
-}
 
   function wireImageFallback(img, fallbackClass, fallbackText) {
     if (!img) return;
@@ -614,26 +605,32 @@ function buildCigarImageCandidates(rec) {
         </div>
 
         <div class="cd-right">
-          <div class="cd-stat-grid">
-            <div class="cd-card cd-stat">
-              <div class="cd-card-label">Ring</div>
-              <div class="cd-stat-value">${escapeHTML(ring)}</div>
+          <div class="cd-top-stats">
+            <div class="cd-card cd-pair-card">
+              <div class="cd-pair-grid">
+                <div class="cd-pair-item">
+                  <div class="cd-card-label">Ring</div>
+                  <div class="cd-pair-value">${escapeHTML(ring)}</div>
+                </div>
+                <div class="cd-pair-item">
+                  <div class="cd-card-label">Length</div>
+                  <div class="cd-pair-value">${escapeHTML(length)}</div>
+                </div>
+              </div>
             </div>
-            <div class="cd-card cd-stat">
-              <div class="cd-card-label">Length</div>
-              <div class="cd-stat-value">${escapeHTML(length)}</div>
-            </div>
-          </div>
 
-          <div class="cd-mini-grid">
-            <div class="cd-card cd-mini">
+            <div class="cd-card cd-mini cd-mini--single">
               <div class="cd-card-label">Vitola</div>
               <div class="cd-mini-value">${escapeHTML(vitola)}</div>
             </div>
-            <div class="cd-card cd-mini">
-              <div class="cd-card-label">Wrapper Shade</div>
-              <div class="cd-mini-value">${escapeHTML(shade)}</div>
-            </div>
+          </div>
+
+          <div class="cd-card cd-shade-card">
+            <div class="cd-card-label">Wrapper Shade</div>
+            <div class="cd-shade-value">${escapeHTML(shade)}</div>
+          </div>
+
+          <div class="cd-mini-grid">
             <div class="cd-card cd-mini">
               <div class="cd-card-label">Strength</div>
               <div class="cd-mini-value">${escapeHTML(strength)}</div>
