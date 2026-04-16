@@ -8,6 +8,7 @@
    - Vitola/shape SVG icons in filters
    - Shape info buttons
    - Include Cubans toggle
+   - Favorite brands rail
 */
 
 (() => {
@@ -23,12 +24,22 @@
   const openBtn = $("#btn-open-filters") || $(".cigars-filter-btn") || $("#cigars-filter-btn");
   const listRoot = $("#cigarsList");
   const appliedRoot = $("#cigarsAppliedFilters");
+  const favBrandsRoot = $("#favBrandsScroll");
 
   let modalRoot = $("#filter-modal");
 
   let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__)
     ? window.__CIGAR_SHEET_ROWS__
     : [];
+
+  const FEATURED_FAVORITE_BRANDS = [
+    "Padron",
+    "Davidoff",
+    "Opus X",
+    "Arturo Fuente",
+    "Aladino",
+    "Rocky Patel",
+  ];
 
   const VITOLA_ORDER = [
     "Corona",
@@ -176,6 +187,78 @@
     if (key === "manufacturer") return `/img/icons/manufacturers/${slug}.svg`;
     if (key === "brand") return `/img/icons/brands/${slug}.svg`;
     return "";
+  }
+
+  function getFavoriteBrandCandidates(summary) {
+    const byNorm = new Map(
+      summary.map((b) => [norm(b.brand).toLowerCase(), b])
+    );
+
+    const out = [];
+
+    FEATURED_FAVORITE_BRANDS.forEach((name) => {
+      const exact = byNorm.get(norm(name).toLowerCase());
+      if (exact) {
+        out.push(exact);
+        return;
+      }
+
+      const fuzzy = summary.find((b) => {
+        const brand = norm(b.brand).toLowerCase();
+        const target = norm(name).toLowerCase();
+        return (
+          brand === target ||
+          brand.includes(target) ||
+          target.includes(brand)
+        );
+      });
+
+      if (fuzzy) out.push(fuzzy);
+      else {
+        out.push({
+          brand: name,
+          manufacturer: "",
+          count: 0,
+        });
+      }
+    });
+
+    const deduped = [];
+    const seen = new Set();
+    out.forEach((b) => {
+      const key = norm(b.brand).toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      deduped.push(b);
+    });
+
+    return deduped;
+  }
+
+  function renderFavoriteBrands(summary) {
+    if (!favBrandsRoot) return;
+
+    const brands = getFavoriteBrandCandidates(summary);
+
+    favBrandsRoot.innerHTML = brands.map((b) => {
+      const href = `/pos/cigars/brand/?brand=${encodeURIComponent(b.brand)}`;
+      const icon = iconPathFor("brand", b.brand);
+
+      return `
+        <a class="fav-brand-card" href="${href}" aria-label="${escapeHtml(b.brand)}">
+          <div class="fav-brand-icon">
+            <img
+              src="${escapeHtml(icon)}"
+              alt="${escapeHtml(b.brand)}"
+              loading="lazy"
+              decoding="async"
+              onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';"
+            />
+          </div>
+          <div class="fav-brand-name">${escapeHtml(b.brand)}</div>
+        </a>
+      `;
+    }).join("");
   }
 
   function getCigarFilterIcon(value = "", group = "") {
@@ -515,6 +598,8 @@
 
     const filteredRows = (DATA_ROWS || []).filter((r) => rowMatchesFilters(r, g));
     const summary = buildBrandSummary(filteredRows);
+
+    renderFavoriteBrands(summary);
 
     const qOn = !!(g.q && g.q.trim());
     const filtersOn = hasActiveFilters(g);
