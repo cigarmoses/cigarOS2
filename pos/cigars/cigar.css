@@ -219,7 +219,7 @@ html[data-theme="light"] .moon-knob::before{
 .cd-name{
   margin-top:6px;
   font:800 30px/.92 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.045em;
+  letter-spacing:-.055em;
   color:var(--text);
   display:-webkit-box;
   -webkit-line-clamp:2;
@@ -347,9 +347,9 @@ html[data-theme="light"] .moon-knob::before{
 .cd-pair-value{
   margin-top:4px;
   text-align:right;
-  font-size:18px;
+  font-size:19px;
   font-weight:700;
-  letter-spacing:-.02em;
+  letter-spacing:-.025em;
   color:var(--text);
   white-space:nowrap;
   overflow:hidden;
@@ -382,9 +382,9 @@ html[data-theme="light"] .moon-knob::before{
 .cd-mini-value{
   margin-top:4px;
   text-align:right;
-  font-size:17px;
+  font-size:18px;
   font-weight:700;
-  letter-spacing:-.02em;
+  letter-spacing:-.025em;
   color:var(--text);
   white-space:nowrap;
   overflow:hidden;
@@ -406,8 +406,8 @@ html[data-theme="light"] .moon-knob::before{
 .cd-shade-value{
   margin-top:6px;
   text-align:right;
-  font:700 17px/1.16 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.02em;
+  font:700 18px/1.16 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.025em;
   color:var(--text);
   white-space:normal;
   overflow:visible;
@@ -431,8 +431,8 @@ html[data-theme="light"] .moon-knob::before{
 .cd-tobacco-value{
   margin-top:4px;
   text-align:right;
-  font:700 15px/1.18 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  letter-spacing:-.01em;
+  font:700 16px/1.18 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  letter-spacing:-.015em;
   color:var(--text);
 }
 
@@ -636,7 +636,7 @@ html[data-theme="light"] .cd-action--primary{
   .cd-mini-value,
   .cd-shade-value,
   .cd-tobacco-value{
-    font-size:16px;
+    font-size:17px;
   }
 
   .cd-origin-inline-text{
