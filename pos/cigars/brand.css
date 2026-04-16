@@ -427,33 +427,40 @@ html[data-theme="light"] .brand-row{
 }
 
 .brand-row-right{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
+  display:grid;
+  grid-template-rows:18px 18px;
+  row-gap:8px;
   width:110px;
   min-width:110px;
   justify-self:end;
+  align-content:center;
 }
 
 .brand-row-topline,
 .brand-row-bottomline{
   display:grid;
-  grid-template-columns:1fr auto;
+  grid-template-columns:auto auto;
   align-items:center;
+  justify-content:end;
   column-gap:10px;
   width:100%;
+  min-height:18px;
 }
 
 .brand-row-stick-stock{
   justify-self:end;
-  min-width:24px;
+  width:28px;
   text-align:right;
   font-family:var(--font-display);
-  font-size:14px;
+  font-size:13px;
   font-weight:700;
   line-height:1;
   letter-spacing:-.01em;
   color:var(--muted2);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  height:18px;
 }
 
 .brand-row-msrp{
@@ -466,13 +473,19 @@ html[data-theme="light"] .brand-row{
   line-height:1;
   letter-spacing:-.02em;
   color:var(--ink);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  height:18px;
 }
 
 .brand-row-box-stock{
   justify-self:end;
-  display:inline-flex;
+  display:flex;
   align-items:center;
-  gap:5px;
+  justify-content:flex-end;
+  width:28px;
+  gap:4px;
   color:var(--muted2);
   background:transparent;
   border:0;
@@ -481,6 +494,7 @@ html[data-theme="light"] .brand-row{
   cursor:pointer;
   appearance:none;
   -webkit-tap-highlight-color:transparent;
+  min-height:18px;
 }
 
 .brand-row-box-icon{
@@ -499,10 +513,13 @@ html[data-theme="light"] .brand-row{
 
 .brand-row-box-value{
   font-family:var(--font-display);
-  font-size:12px;
+  font-size:13px;
   font-weight:700;
   line-height:1;
   letter-spacing:-.01em;
+  display:flex;
+  align-items:center;
+  height:18px;
 }
 
 .qty-btn{
@@ -973,11 +990,15 @@ html[data-theme="light"] .brand-row{
   .brand-row-right{
     width:100px;
     min-width:100px;
-    gap:6px;
+    row-gap:6px;
   }
 
   .brand-row-stick-stock{
-    font-size:13px;
+    font-size:12px;
+  }
+
+  .brand-row-box-value{
+    font-size:12px;
   }
 
   .brand-row-msrp{
