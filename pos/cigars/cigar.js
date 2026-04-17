@@ -544,6 +544,41 @@
     img.addEventListener("error", tryNext, { once: false });
   }
 
+  function buildBrandHref(brand) {
+    const value = String(brand || "").trim();
+    if (!value) return "/pos/cigars/";
+    return `/pos/cigars/brand?brand=${encodeURIComponent(value)}`;
+  }
+
+  function wireBrandNavigation(brand) {
+    const href = buildBrandHref(brand);
+    const brandTextEl = $(".cd-brand");
+    const brandBadgeEl = $("#cdBrandBadge");
+
+    const activate = (el) => {
+      if (!el) return;
+
+      el.style.cursor = "pointer";
+      el.setAttribute("role", "link");
+      el.setAttribute("tabindex", "0");
+
+      const go = () => {
+        window.location.href = href;
+      };
+
+      el.addEventListener("click", go);
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          go();
+        }
+      });
+    };
+
+    activate(brandTextEl);
+    activate(brandBadgeEl);
+  }
+
   function render(records, rec) {
     const id = getCigarId(rec);
     const brand = getBrand(rec) || "—";
@@ -733,6 +768,7 @@
 
     wireImageFallback($("#cdBrandBadge"), "cd-badge-placeholder", "Brand");
     wireImageFallback($("#cdStickImage"), "cd-stick-placeholder", "No image");
+    wireBrandNavigation(brand);
   }
 
   async function load() {
