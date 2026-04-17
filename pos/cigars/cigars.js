@@ -8,7 +8,7 @@
    - Vitola/shape SVG icons in filters
    - Shape info buttons
    - Include Cubans toggle
-   - Favorite brands rail
+   - Smart favorite brands rail
 */
 
 (() => {
@@ -32,7 +32,7 @@
     ? window.__CIGAR_SHEET_ROWS__
     : [];
 
-  const FEATURED_FAVORITE_BRANDS = [
+  const STARTER_RAIL_BRANDS = [
     "Padron",
     "Davidoff",
     "Opus X",
@@ -40,6 +40,12 @@
     "Aladino",
     "Rocky Patel",
   ];
+
+  const FAVORITE_BRANDS_KEY = "cigaros_favorite_brands";
+  const RECENT_BRANDS_KEY = "cigaros_recent_brands";
+  const MAX_RECENT_BRANDS = 12;
+  const MAX_RAIL_BRANDS = 8;
+  const LONG_PRESS_MS = 420;
 
   const VITOLA_ORDER = [
     "Corona",
@@ -189,76 +195,64 @@
     return "";
   }
 
-  function getFavoriteBrandCandidates(summary) {
-    const byNorm = new Map(
-      summary.map((b) => [norm(b.brand).toLowerCase(), b])
-    );
-
-    const out = [];
-
-    FEATURED_FAVORITE_BRANDS.forEach((name) => {
-      const exact = byNorm.get(norm(name).toLowerCase());
-      if (exact) {
-        out.push(exact);
-        return;
-      }
-
-      const fuzzy = summary.find((b) => {
-        const brand = norm(b.brand).toLowerCase();
-        const target = norm(name).toLowerCase();
-        return (
-          brand === target ||
-          brand.includes(target) ||
-          target.includes(brand)
-        );
-      });
-
-      if (fuzzy) out.push(fuzzy);
-      else {
-        out.push({
-          brand: name,
-          manufacturer: "",
-          count: 0,
-        });
-      }
-    });
-
-    const deduped = [];
-    const seen = new Set();
-    out.forEach((b) => {
-      const key = norm(b.brand).toLowerCase();
-      if (seen.has(key)) return;
-      seen.add(key);
-      deduped.push(b);
-    });
-
-    return deduped;
+  function readJsonArray(key) {
+    try {
+      const raw = JSON.parse(localStorage.getItem(key) || "[]");
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
   }
 
-  function renderFavoriteBrands(summary) {
-    if (!favBrandsRoot) return;
+  function writeJsonArray(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
+  }
 
-    const brands = getFavoriteBrandCandidates(summary);
+  function getFavoriteBrands() {
+    return readJsonArray(FAVORITE_BRANDS_KEY).map(norm).filter(Boolean);
+  }
 
-    favBrandsRoot.innerHTML = brands.map((b) => {
-      const href = `/pos/cigars/brand/?brand=${encodeURIComponent(b.brand)}`;
-      const icon = iconPathFor("brand", b.brand);
+  function setFavoriteBrands(arr) {
+    const unique = Array.from(new Set(arr.map(norm).filter(Boolean)));
+    writeJsonArray(FAVORITE_BRANDS_KEY, unique);
+  }
 
-      return `
-        <a class="fav-brand-card" href="${href}" aria-label="${escapeHtml(b.brand)}">
-          <div class="fav-brand-icon">
-            <img
-              src="${escapeHtml(icon)}"
-              alt="${escapeHtml(b.brand)}"
-              loading="lazy"
-              decoding="async"
-              onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';"
-            />
-          </div>
-          <div class="fav-brand-name">${escapeHtml(b.brand)}</div>
-        </a>
-      `;
-    }).join("");
+  function isFavoriteBrand(name) {
+    const target = norm(name).toLowerCase();
+    return getFavoriteBrands().some((b) => norm(b).toLowerCase() === target);
+  }
+
+  function toggleFavoriteBrand(name) {
+    const target = norm(name);
+    if (!target) return false;
+
+    const current = getFavoriteBrands();
+    const exists = current.some((b) => norm(b).toLowerCase() === target.toLowerCase());
+
+    const next = exists
+      ? current.filter((b) => norm(b).toLowerCase() !== target.toLowerCase())
+      : [target, ...current];
+
+    setFavoriteBrands(next);
+    return !exists;
+  }
+
+  function getRecentBrands() {
+    return readJsonArray(RECENT_BRANDS_KEY).map(norm).filter(Boolean);
+  }
+
+  function pushRecentBrand(name) {
+    const target = norm(name);
+    if (!target) return;
+
+    const next = [
+      target,
+      ...getRecentBrands().filter((b) => norm(b).toLowerCase() !== target.toLowerCase()),
+    ].slice(0, MAX_RECENT_BRANDS);
+
+    writeJsonArray(RECENT_BRANDS_KEY, next);
   }
 
   function getCigarFilterIcon(value = "", group = "") {
@@ -452,6 +446,123 @@
     return Array.from(map.values()).sort((a, b) => a.brand.localeCompare(b.brand));
   }
 
+  function getSmartRailBrands(summary) {
+    const favorites = getFavoriteBrands();
+    const recents = getRecentBrands();
+
+    const summaryByNorm = new Map(summary.map((b) => [norm(b.brand).toLowerCase(), b]));
+
+    function findBrandObject(name) {
+      const target = norm(name).toLowerCase();
+      if (summaryByNorm.has(target)) return summaryByNorm.get(target);
+
+      return summary.find((b) => {
+        const brand = norm(b.brand).toLowerCase();
+        return brand === target || brand.includes(target) || target.includes(brand);
+      }) || {
+        brand: name,
+        manufacturer: "",
+        count: 0,
+      };
+    }
+
+    const orderedNames = [
+      ...favorites,
+      ...recents,
+      ...STARTER_RAIL_BRANDS,
+    ];
+
+    const deduped = [];
+    const seen = new Set();
+
+    orderedNames.forEach((name) => {
+      const key = norm(name).toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      deduped.push(findBrandObject(name));
+    });
+
+    return deduped.slice(0, MAX_RAIL_BRANDS);
+  }
+
+  function bindSmartRailEvents(root) {
+    if (!root) return;
+
+    $$(".fav-brand-card", root).forEach((el) => {
+      const brand = el.getAttribute("data-brand") || "";
+      if (!brand) return;
+
+      let pressTimer = null;
+      let longPressTriggered = false;
+
+      const startPress = () => {
+        longPressTriggered = false;
+        clearTimeout(pressTimer);
+        pressTimer = window.setTimeout(() => {
+          longPressTriggered = true;
+          const on = toggleFavoriteBrand(brand);
+          renderAll();
+          if (navigator.vibrate) navigator.vibrate(on ? 18 : 10);
+        }, LONG_PRESS_MS);
+      };
+
+      const cancelPress = () => {
+        clearTimeout(pressTimer);
+      };
+
+      el.addEventListener("pointerdown", startPress);
+      el.addEventListener("pointerup", cancelPress);
+      el.addEventListener("pointerleave", cancelPress);
+      el.addEventListener("pointercancel", cancelPress);
+
+      el.addEventListener("click", (e) => {
+        if (longPressTriggered) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        pushRecentBrand(brand);
+      });
+    });
+  }
+
+  function renderFavoriteBrands(summary) {
+    if (!favBrandsRoot) return;
+
+    const brands = getSmartRailBrands(summary);
+
+    favBrandsRoot.innerHTML = brands.map((b) => {
+      const href = `/pos/cigars/brand/?brand=${encodeURIComponent(b.brand)}`;
+      const icon = iconPathFor("brand", b.brand);
+      const favorite = isFavoriteBrand(b.brand);
+      const recent = getRecentBrands().some((r) => norm(r).toLowerCase() === norm(b.brand).toLowerCase());
+
+      return `
+        <a
+          class="fav-brand-card${favorite ? " is-favorite" : ""}${recent ? " is-recent" : ""}"
+          href="${href}"
+          data-brand="${escapeHtml(b.brand)}"
+          aria-label="${escapeHtml(b.brand)}"
+          title="Tap to open · Long press to favorite"
+        >
+          <div class="fav-brand-icon">
+            <img
+              src="${escapeHtml(icon)}"
+              alt="${escapeHtml(b.brand)}"
+              loading="lazy"
+              decoding="async"
+              onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';"
+            />
+            ${favorite ? `<span class="fav-brand-badge" aria-hidden="true">★</span>` : ``}
+          </div>
+          <div class="fav-brand-name">${escapeHtml(b.brand)}</div>
+        </a>
+      `;
+    }).join("");
+
+    bindSmartRailEvents(favBrandsRoot);
+  }
+
   function renderAppliedChips(g) {
     if (!appliedRoot) return;
 
@@ -548,7 +659,7 @@
           const icon = iconPathFor("brand", c.brand);
           const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
           return `
-            <a href="${href}" aria-label="${escapeHtml(c.brand)}">
+            <a href="${href}" aria-label="${escapeHtml(c.brand)}" data-brand-link="${escapeHtml(c.brand)}">
               <img src="${escapeHtml(icon)}" alt="${escapeHtml(c.brand)}"
                    loading="lazy" decoding="async"
                    onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';" />
@@ -558,6 +669,13 @@
         }).join("")}
       </div>
     `;
+
+    $$("[data-brand-link]", listRoot).forEach((el) => {
+      el.addEventListener("click", () => {
+        const brand = el.getAttribute("data-brand-link") || "";
+        pushRecentBrand(brand);
+      });
+    });
   }
 
   function renderResultsRows(summary) {
@@ -569,7 +687,7 @@
           const icon = iconPathFor("brand", c.brand);
           const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
           return `
-            <a class="brand-row" href="${href}" style="text-decoration:none; color:inherit;">
+            <a class="brand-row" href="${href}" style="text-decoration:none; color:inherit;" data-brand-link="${escapeHtml(c.brand)}">
               <img class="row-ico" src="${escapeHtml(icon)}" alt=""
                    loading="lazy" decoding="async"
                    onerror="this.style.display='none';" />
@@ -588,6 +706,13 @@
         }).join("")}
       </div>
     `;
+
+    $$("[data-brand-link]", listRoot).forEach((el) => {
+      el.addEventListener("click", () => {
+        const brand = el.getAttribute("data-brand-link") || "";
+        pushRecentBrand(brand);
+      });
+    });
   }
 
   function renderAll() {
@@ -599,7 +724,7 @@
     const filteredRows = (DATA_ROWS || []).filter((r) => rowMatchesFilters(r, g));
     const summary = buildBrandSummary(filteredRows);
 
-    renderFavoriteBrands(summary);
+    renderFavoriteBrands(buildBrandSummary(DATA_ROWS || []));
 
     const qOn = !!(g.q && g.q.trim());
     const filtersOn = hasActiveFilters(g);
