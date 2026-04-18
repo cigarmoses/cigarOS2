@@ -95,7 +95,7 @@
   const DEFAULT_STICK_STOCK = 89;
   const DEFAULT_BOX_STOCK = 9;
   const DEFAULT_BOX_QTY = 20;
-  const DEFAULT_MSRP = 11.5;
+  const DEFAULT_MSRP = 0;
 
   const state = {
     brand: "",
@@ -317,15 +317,16 @@
     return getField(r, ["vitola", "style", "vitola_name", "size"]);
   }
 
-  function resolvePriceNumber(r) {
-    const raw = getField(r, ["msrp", "price", "cost", "cigar_cost"]);
-    const parsed = parseMoneyValue(raw);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MSRP;
-  }
+function resolvePriceNumber(r) {
+  const raw = getField(r, ["MSRP", "msrp"]);
+  const parsed = parseMoneyValue(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
 
-  function resolvePrice(r) {
-    return fmtMoney(resolvePriceNumber(r));
-  }
+function resolvePrice(r) {
+  const price = resolvePriceNumber(r);
+  return price > 0 ? fmtMoney(price) : "—";
+}
 
   function resolveRing(r) {
     return getField(r, ["ring", "ring_gauge", "rg"]);
