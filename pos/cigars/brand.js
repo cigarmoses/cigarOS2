@@ -1574,7 +1574,6 @@ function getBandOptions(rows) {
     const label = resolveBand(r);
     const art = resolveBandArt(r);
 
-    // 🔥 HARD BLOCK THEM HERE (THIS IS THE KEY)
     if (
       label === "50th Anniversary" ||
       label === "60th Anniversary"
@@ -1584,21 +1583,23 @@ function getBandOptions(rows) {
     if (!map.has(label)) map.set(label, { key: label, label, src: art });
   });
 
-const PADRON_ORDER = [
-  "1926",
-  "Padron Series",
-  "Damaso",
-  "1964 Anniversary",
-  "Family Reserve"
-];
+  const PADRON_ORDER = [
+    "1926",
+    "Padron Series",
+    "Damaso",
+    "1964 Anniversary",
+    "Family Reserve"
+  ];
 
-return Array.from(map.values()).sort((a, b) => {
-  const ai = PADRON_ORDER.indexOf(a.label);
-  const bi = PADRON_ORDER.indexOf(b.label);
-  return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-});
+  return Array.from(map.values()).sort((a, b) => {
+    const ai = PADRON_ORDER.indexOf(a.label);
+    const bi = PADRON_ORDER.indexOf(b.label);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  });
+}
 
-  function renderBandOptions(opts) {
+function renderBandOptions(opts) {
+
     if (!bandsOptions) return;
 
     bandsOptions.innerHTML = "";
