@@ -596,7 +596,8 @@
                 <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
               </svg>
             </button>
-          </div>
+          </button>
+        </div>
         `);
       }
     }
@@ -861,35 +862,54 @@
       }
 
       .fm.fm--tabs .fm__header{
-        padding:18px 18px 10px;
+        position:relative;
+        padding:18px 18px 8px;
         border-bottom:none;
       }
 
       .fm.fm--tabs .fm__header-top{
-        display:flex;
-        align-items:flex-start;
-        justify-content:space-between;
-        gap:12px;
-        margin-bottom:12px;
+        display:block;
+        margin-bottom:0;
       }
 
       .fm.fm--tabs .fm__header-left{
-        display:flex;
-        flex-direction:column;
-        gap:10px;
+        display:block;
         min-width:0;
-        flex:1 1 auto;
+        padding-right:56px;
       }
 
       .fm.fm--tabs .fm__title{
         font-weight:800;
+        margin:0;
+      }
+
+      .fm.fm--tabs .fm__close{
+        position:absolute;
+        top:18px;
+        right:18px;
+        width:40px;
+        height:40px;
+        border-radius:14px;
+        border:1px solid rgba(15,26,44,.10);
+        background:rgba(255,255,255,.85);
+        display:grid;
+        place-items:center;
+        cursor:pointer;
+        padding:0;
+        appearance:none;
+        z-index:3;
+      }
+
+      .fm.fm--tabs .fm__close svg{
+        width:18px;
+        height:18px;
       }
 
       .fm.fm--tabs .fm__cuban-toggle{
         border:0;
         background:transparent;
         padding:0;
-        margin:0;
+        margin:12px 0 0;
         display:inline-flex;
         align-items:center;
         gap:10px;
@@ -998,6 +1018,10 @@
         margin:0;
       }
 
+      .fm.fm--tabs .fm__cuban-row{
+        padding:0 18px 14px;
+      }
+
       .fm.fm--tabs .fm__list{
         overflow:auto;
         padding:0 18px 12px;
@@ -1084,6 +1108,10 @@
         display:block;
         transform:scaleX(-1);
         transform-origin:center;
+      }
+
+      .fm.fm--tabs .fm__icon img.fm__icon-robusto{
+        transform:scaleX(-1) rotate(180deg);
       }
 
       .fm.fm--tabs .fm__icon--brand,
@@ -1177,7 +1205,12 @@
 
       @media (max-width:430px){
         .fm.fm--tabs .fm__header{
-          padding:18px 18px 10px;
+          padding:18px 18px 8px;
+        }
+
+        .fm.fm--tabs .fm__close{
+          top:18px;
+          right:18px;
         }
 
         .fm.fm--tabs .fm__cuban-toggle{
@@ -1304,10 +1337,6 @@
             <div class="fm__header-top">
               <div class="fm__header-left">
                 <h2 class="fm__title">Filters</h2>
-                <button class="fm__cuban-toggle" type="button" id="fm-cuban-toggle" aria-label="Include Cubans">
-                  <span class="fm__cuban-check">✓</span>
-                  <span class="fm__cuban-text">Include Cubans 🇨🇺</span>
-                </button>
               </div>
 
               <button class="fm__close" type="button" aria-label="Close filters" data-fm-close>
@@ -1340,6 +1369,13 @@
                     </svg>
                   </button>
                 </div>
+              </div>
+
+              <div class="fm__cuban-row">
+                <button class="fm__cuban-toggle" type="button" id="fm-cuban-toggle" aria-label="Include Cubans">
+                  <span class="fm__cuban-check">✓</span>
+                  <span class="fm__cuban-text">Include Cubans 🇨🇺</span>
+                </button>
               </div>
 
               <div class="fm__list" id="fm-list"></div>
@@ -1450,9 +1486,14 @@
            </div>`
         : `<div class="fm__cb" aria-hidden="true"></div>`;
 
+      const robustoClass =
+        key === "vitola" && slugify(label) === "robusto"
+          ? " fm__icon-robusto"
+          : "";
+
       const icon = iconSrc
         ? `<div class="${iconClass}">
-             <img src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
+             <img class="${robustoClass.trim()}" src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
                   onerror="this.style.display='none';" />
            </div>`
         : `<div class="${iconClass}" aria-hidden="true"></div>`;
