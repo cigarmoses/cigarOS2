@@ -29,18 +29,23 @@ body.shops-page{
   padding:14px 16px;
   font-size:16px;
   border:1px solid rgba(0,0,0,.08);
-  background:white;
+  background:#fff;
+  color:#111;
   outline:none;
 }
 
+.sh-input::placeholder{
+  color:#b0b0b5;
+}
+
 .sh-input:focus{
-  border-color:rgba(35,93,201,.32);
-  box-shadow:0 0 0 4px rgba(35,93,201,.10);
+  border-color:rgba(35,93,201,.24);
+  box-shadow:0 0 0 4px rgba(35,93,201,.08);
 }
 
 .sh-filters{
   display:flex;
-  align-items:flex-end;
+  align-items:center;
   justify-content:space-between;
   gap:16px;
   margin-bottom:18px;
@@ -81,7 +86,8 @@ body.shops-page{
   color:#111;
   font-size:15px;
   font-weight:600;
-  padding:0 14px;
+  padding:0 42px 0 14px;
+  outline:none;
   appearance:none;
   -webkit-appearance:none;
   background-image:
@@ -95,9 +101,8 @@ body.shops-page{
 }
 
 .sh-state-select:focus{
-  outline:none;
-  border-color:rgba(35,93,201,.32);
-  box-shadow:0 0 0 4px rgba(35,93,201,.10);
+  border-color:rgba(35,93,201,.24);
+  box-shadow:0 0 0 4px rgba(35,93,201,.08);
 }
 
 .sh-taa-label{
@@ -120,8 +125,8 @@ body.shops-page{
   position:absolute;
   inset:0;
   border-radius:999px;
-  background:#c7d1de;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+  background:#cfd6e3;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
   transition:background .22s ease;
 }
 
@@ -132,13 +137,13 @@ body.shops-page{
   width:28px;
   height:28px;
   border-radius:999px;
-  background:#ffffff;
+  background:#fff;
   box-shadow:0 3px 8px rgba(0,0,0,.18);
   transition:transform .22s ease;
 }
 
 .sh-taa-toggle[aria-checked="true"] .sh-taa-toggle-track{
-  background:#5f74a8;
+  background:#667fc0;
 }
 
 .sh-taa-toggle[aria-checked="true"] .sh-taa-toggle-knob{
@@ -146,7 +151,7 @@ body.shops-page{
 }
 
 .sh-list{
-  background:white;
+  background:#fff;
   border-radius:22px;
   overflow:hidden;
   box-shadow:0 14px 40px rgba(0,0,0,.06);
@@ -212,7 +217,7 @@ body.shops-page{
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  min-width:34px;
+  min-width:40px;
 }
 
 .sh-item-taa{
@@ -224,6 +229,11 @@ body.shops-page{
 
 html[data-theme="dark"] body.shops-page{
   background:transparent;
+  color:#fff;
+}
+
+html[data-theme="dark"] .sh-title{
+  color:#fff;
 }
 
 html[data-theme="dark"] .sh-filter-label{
@@ -231,19 +241,27 @@ html[data-theme="dark"] .sh-filter-label{
 }
 
 html[data-theme="dark"] .sh-input,
-html[data-theme="dark"] .sh-state-select,
-html[data-theme="dark"] .sh-list{
-  background:rgba(255,255,255,.94);
-  color:#111;
-}
-
-html[data-theme="dark"] .sh-input,
 html[data-theme="dark"] .sh-state-select{
+  background:rgba(255,255,255,.96);
+  color:#111;
   border-color:rgba(255,255,255,.08);
 }
 
+html[data-theme="dark"] .sh-input::placeholder{
+  color:#b0b0b5;
+}
+
 html[data-theme="dark"] .sh-list{
+  background:rgba(255,255,255,.96);
   box-shadow:0 14px 40px rgba(0,0,0,.16);
+}
+
+html[data-theme="dark"] .sh-item{
+  color:#111;
+}
+
+html[data-theme="dark"] .sh-item-sub{
+  color:#8e8e93;
 }
 
 html[data-theme="dark"] .sh-taa-toggle-track{
@@ -252,10 +270,10 @@ html[data-theme="dark"] .sh-taa-toggle-track{
 }
 
 html[data-theme="dark"] .sh-taa-toggle[aria-checked="true"] .sh-taa-toggle-track{
-  background:#5f74a8;
+  background:#667fc0;
 }
 
-@media (max-width: 640px){
+@media (max-width:640px){
   .sh-wrap{
     padding:calc(env(safe-area-inset-top) + 8px) 0 24px;
   }
