@@ -27,7 +27,6 @@
   --glass-dark-border:rgba(255,255,255,.12);
 }
 
-/* Base */
 html,body{
   margin:0;
   min-height:100%;
@@ -37,7 +36,6 @@ body{
   font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
-/* Themes */
 html[data-theme="light"] body{
   background:var(--bg-light);
   color:var(--ink-light);
@@ -48,7 +46,6 @@ html[data-theme="dark"] body{
   color:var(--ink-dark);
 }
 
-/* Topbar */
 .topbar{
   position:sticky;
   top:0;
@@ -65,7 +62,6 @@ html[data-theme="dark"] body{
   justify-content:space-between;
 }
 
-/* Buttons */
 .tb-btn{
   width:42px;
   height:42px;
@@ -91,7 +87,6 @@ html[data-theme="dark"] .tb-btn{
   height:20px;
 }
 
-/* Toggle */
 .theme-toggle{
   position:relative;
   width:58px;
@@ -121,22 +116,18 @@ html[data-theme="dark"] .theme-toggle-track{
   border-radius:999px;
   background:#fff;
   transition:transform .2s ease;
-  display:grid;
-  place-items:center;
 }
 
 html[data-theme="dark"] .theme-toggle-knob{
   transform:translateX(24px);
 }
 
-/* Layout shell */
 .shell{
   width:min(430px, calc(100% - 28px));
   margin:0 auto;
   padding-bottom:calc(28px + var(--safe-bottom));
 }
 
-/* Title */
 .sh-title{
   font-family:var(--font-display);
   font-size:48px;
@@ -145,7 +136,6 @@ html[data-theme="dark"] .theme-toggle-knob{
   margin:8px 0 16px;
 }
 
-/* Search spacing fix */
 .sh-search{
   margin-bottom:12px;
 }
@@ -155,7 +145,6 @@ html[data-theme="dark"] .theme-toggle-knob{
 
 <body class="brands-page">
 
-<!-- TOPBAR -->
 <header class="topbar">
 
   <button id="backBtn" class="tb-btn" aria-label="Back">
@@ -176,7 +165,6 @@ html[data-theme="dark"] .theme-toggle-knob{
 
 </header>
 
-<!-- CONTENT -->
 <div class="shell">
 
 <main class="sh-wrap">
@@ -204,7 +192,6 @@ enterkeyhint="search"
 
 </div>
 
-<!-- THEME + BACK -->
 <script>
 (() => {
   const root = document.documentElement;
@@ -234,6 +221,7 @@ enterkeyhint="search"
 })();
 </script>
 
+<!-- ✅ CORRECT SCRIPT -->
 <script src="/brands/brands.js?v=1"></script>
 
 </body>
