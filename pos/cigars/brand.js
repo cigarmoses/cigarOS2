@@ -1580,23 +1580,21 @@ function getBandOptions(rows) {
       label === "60th Anniversary"
     ) return;
 
-    if (!label || !art) return;
+    if (!label) return;
     if (!map.has(label)) map.set(label, { key: label, label, src: art });
   });
 
 const PADRON_ORDER = [
   "1926",
   "Padron Series",
-  "Damaso"
-  "1964 Anniversary",  
-  "Family Reserve",
-  
+  "Damaso",
+  "1964 Anniversary",
+  "Family Reserve"
 ];
 
 return Array.from(map.values()).sort((a, b) => {
   const ai = PADRON_ORDER.indexOf(a.label);
   const bi = PADRON_ORDER.indexOf(b.label);
-
   return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
 });
 
