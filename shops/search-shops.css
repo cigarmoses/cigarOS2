@@ -1,118 +1,313 @@
 body.shops-page{
-
-margin:0;
-background:#f2f2f7;
-
-font-family:var(--font-display),-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui;
-
+  margin:0;
+  background:#f2f2f7;
+  font-family:var(--font-display),-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui;
 }
 
 .sh-wrap{
-
-max-width:920px;
-margin:auto;
-
-padding:calc(env(safe-area-inset-top) + 18px) 18px 40px;
-
+  max-width:920px;
+  margin:auto;
+  padding:calc(env(safe-area-inset-top) + 18px) 18px 40px;
 }
 
 .sh-title{
-
-font-size:56px;
-font-weight:800;
-letter-spacing:-0.03em;
-
-margin:0;
-
+  font-size:56px;
+  font-weight:800;
+  letter-spacing:-0.03em;
+  margin:0;
+  line-height:.94;
 }
 
 .sh-search{
-
-margin-top:14px;
-margin-bottom:18px;
-
+  margin-top:14px;
+  margin-bottom:18px;
 }
 
 .sh-input{
+  width:100%;
+  border-radius:18px;
+  padding:14px 16px;
+  font-size:16px;
+  border:1px solid rgba(0,0,0,.08);
+  background:white;
+  outline:none;
+}
 
-width:100%;
+.sh-input:focus{
+  border-color:rgba(35,93,201,.32);
+  box-shadow:0 0 0 4px rgba(35,93,201,.10);
+}
 
-border-radius:18px;
+.sh-filters{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:18px;
+}
 
-padding:14px 16px;
+.sh-filter-left,
+.sh-filter-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
 
-font-size:16px;
+.sh-filter-left{
+  flex:1 1 auto;
+  min-width:0;
+}
 
-border:1px solid rgba(0,0,0,.08);
+.sh-filter-right{
+  flex:0 0 auto;
+}
 
-background:white;
+.sh-filter-label{
+  font-size:16px;
+  font-weight:500;
+  color:#8e8e93;
+  letter-spacing:-0.02em;
+  white-space:nowrap;
+}
 
+.sh-state-select{
+  min-width:0;
+  width:170px;
+  max-width:100%;
+  height:42px;
+  border-radius:14px;
+  border:1px solid rgba(0,0,0,.08);
+  background:#fff;
+  color:#111;
+  font-size:15px;
+  font-weight:600;
+  padding:0 14px;
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size:6px 6px, 6px 6px;
+  background-repeat:no-repeat;
+}
+
+.sh-state-select:focus{
+  outline:none;
+  border-color:rgba(35,93,201,.32);
+  box-shadow:0 0 0 4px rgba(35,93,201,.10);
+}
+
+.sh-taa-label{
+  font-size:16px;
+}
+
+.sh-taa-toggle{
+  position:relative;
+  width:62px;
+  height:34px;
+  border:0;
+  padding:0;
+  border-radius:999px;
+  background:transparent;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.sh-taa-toggle-track{
+  position:absolute;
+  inset:0;
+  border-radius:999px;
+  background:#c7d1de;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+  transition:background .22s ease;
+}
+
+.sh-taa-toggle-knob{
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  background:#ffffff;
+  box-shadow:0 3px 8px rgba(0,0,0,.18);
+  transition:transform .22s ease;
+}
+
+.sh-taa-toggle[aria-checked="true"] .sh-taa-toggle-track{
+  background:#5f74a8;
+}
+
+.sh-taa-toggle[aria-checked="true"] .sh-taa-toggle-knob{
+  transform:translateX(28px);
 }
 
 .sh-list{
-
-background:white;
-
-border-radius:22px;
-
-overflow:hidden;
-
-box-shadow:0 14px 40px rgba(0,0,0,.06);
-
+  background:white;
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 14px 40px rgba(0,0,0,.06);
 }
 
 .sh-item{
-
-display:flex;
-align-items:center;
-justify-content:space-between;
-
-padding:16px;
-
-text-decoration:none;
-
-color:#111;
-
-border-top:1px solid rgba(0,0,0,.06);
-
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px;
+  text-decoration:none;
+  color:#111;
+  border-top:1px solid rgba(0,0,0,.06);
 }
 
 .sh-item:first-child{
-border-top:0;
+  border-top:0;
 }
 
 .sh-item-main{
-
-display:flex;
-align-items:center;
-
-gap:14px;
-
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-width:0;
+  flex:1 1 auto;
 }
 
 .sh-item-logo{
+  width:52px;
+  height:52px;
+  object-fit:contain;
+  flex:0 0 52px;
+  border-radius:12px;
+}
 
-width:52px;
-height:52px;
-
-object-fit:contain;
-
+.sh-item-copy{
+  min-width:0;
+  flex:1 1 auto;
 }
 
 .sh-item-name{
-
-font-size:18px;
-font-weight:600;
-
-letter-spacing:-0.02em;
-
+  font-size:18px;
+  font-weight:600;
+  letter-spacing:-0.02em;
+  line-height:1.1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .sh-item-sub{
+  font-size:14px;
+  color:#8e8e93;
+  margin-top:4px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 
-font-size:14px;
-color:#8e8e93;
+.sh-item-meta{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  min-width:34px;
+}
 
-margin-top:4px;
+.sh-item-taa{
+  width:40px;
+  height:40px;
+  object-fit:contain;
+  display:block;
+}
 
+html[data-theme="dark"] body.shops-page{
+  background:transparent;
+}
+
+html[data-theme="dark"] .sh-filter-label{
+  color:rgba(255,255,255,.72);
+}
+
+html[data-theme="dark"] .sh-input,
+html[data-theme="dark"] .sh-state-select,
+html[data-theme="dark"] .sh-list{
+  background:rgba(255,255,255,.94);
+  color:#111;
+}
+
+html[data-theme="dark"] .sh-input,
+html[data-theme="dark"] .sh-state-select{
+  border-color:rgba(255,255,255,.08);
+}
+
+html[data-theme="dark"] .sh-list{
+  box-shadow:0 14px 40px rgba(0,0,0,.16);
+}
+
+html[data-theme="dark"] .sh-taa-toggle-track{
+  background:rgba(255,255,255,.18);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+}
+
+html[data-theme="dark"] .sh-taa-toggle[aria-checked="true"] .sh-taa-toggle-track{
+  background:#5f74a8;
+}
+
+@media (max-width: 640px){
+  .sh-wrap{
+    padding:calc(env(safe-area-inset-top) + 8px) 0 24px;
+  }
+
+  .sh-title{
+    font-size:48px;
+    padding:0 8px;
+  }
+
+  .sh-search{
+    padding:0 8px;
+  }
+
+  .sh-filters{
+    padding:0 8px;
+    gap:10px;
+  }
+
+  .sh-filter-left{
+    gap:10px;
+  }
+
+  .sh-filter-label{
+    font-size:15px;
+  }
+
+  .sh-state-select{
+    width:140px;
+    height:38px;
+    font-size:14px;
+  }
+
+  .sh-item{
+    padding:16px 14px;
+  }
+
+  .sh-item-logo{
+    width:56px;
+    height:56px;
+    flex-basis:56px;
+  }
+
+  .sh-item-name{
+    font-size:18px;
+  }
+
+  .sh-item-sub{
+    font-size:13px;
+  }
+
+  .sh-item-taa{
+    width:36px;
+    height:36px;
+  }
 }
