@@ -6,7 +6,7 @@ const taaToggle = document.querySelector("#shTaaToggle");
 const DEFAULT_SHOP_ICON = "/uxui/darkmode/darkmodeshops.png";
 
 /* Use the same TAA asset path your detail page uses if needed */
-const TAA_LOGO = "/img/TAA.svg";
+const TAA_LOGO = "/img/icons/taa.svg";
 
 let ALL_SHOPS = [];
 let onlyTaa = false;
