@@ -4,7 +4,9 @@ const stateSelect = document.querySelector("#shState");
 const taaToggle = document.querySelector("#shTaaToggle");
 
 const DEFAULT_SHOP_ICON = "/uxui/darkmode/darkmodeshops.png";
-const TAA_LOGO = "/img/icons/taa.svg";
+
+/* Use the same TAA asset path your detail page uses if needed */
+const TAA_LOGO = "/img/TAA.svg";
 
 let ALL_SHOPS = [];
 let onlyTaa = false;
@@ -37,9 +39,10 @@ function shopDetailHref(shop) {
   return `/shops/shop-page.html?shop=${encodeURIComponent(key)}`;
 }
 
-function logoHtml(key, name) {
+function logoHtml(shop) {
+  const key = slugKey(shop.logoKey || shop.slug || shop.name);
   const safeKey = encodeURIComponent(key);
-  const safeName = escapeHtml(name);
+  const safeName = escapeHtml(shop.name);
   const fallback = DEFAULT_SHOP_ICON;
   const svg = `/img/icons/shops/${safeKey}.svg`;
   const png = `/img/icons/shops/${safeKey}.png`;
@@ -71,7 +74,8 @@ function getStateValue(shop) {
 }
 
 function shopHasTaa(shop) {
-  return shop.taa === true || String(shop.taa).toLowerCase() === "true";
+  const nested = shop?.features?.taa;
+  return nested === true || String(nested).toLowerCase() === "true";
 }
 
 function taaHtml(shop) {
@@ -139,7 +143,6 @@ function render(list, q = "", state = "", taaOnly = false) {
   const filtered = getFilteredShops(list, q, state, taaOnly);
 
   filtered.forEach((shop) => {
-    const key = slugKey(shop.slug || shop.name);
     const city = clean(shop.city);
     const stateVal = getStateValue(shop);
 
@@ -149,7 +152,7 @@ function render(list, q = "", state = "", taaOnly = false) {
 
     row.innerHTML = `
       <div class="sh-item-main">
-        ${logoHtml(key, shop.name)}
+        ${logoHtml(shop)}
         <div class="sh-item-copy">
           <div class="sh-item-name">${escapeHtml(shop.name)}</div>
           <div class="sh-item-sub">${escapeHtml(city)}${city && stateVal ? ", " : ""}${escapeHtml(stateVal)}</div>
