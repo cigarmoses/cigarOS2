@@ -4,13 +4,7 @@ const stateSelect = document.querySelector("#shState");
 const taaToggle = document.querySelector("#shTaaToggle");
 
 const DEFAULT_SHOP_ICON = "/uxui/darkmode/darkmodeshops.png";
-
-/*
-  IMPORTANT:
-  Replace this fallback path with the exact same TAA SVG path used on shop-page.js
-  if your detail page uses a different asset path.
-*/
-const TAA_LOGO_FALLBACK = "/img/icons/taa.svg";
+const TAA_LOGO = "/img/icons/taa.svg";
 
 let ALL_SHOPS = [];
 let onlyTaa = false;
@@ -73,67 +67,21 @@ function logoHtml(key, name) {
 }
 
 function getStateValue(shop) {
-  return clean(shop.state || shop.State || shop.us_state || shop.region);
+  return clean(shop.state || shop.State || "");
 }
 
 function shopHasTaa(shop) {
-  const directTruthyKeys = [
-    shop.taa,
-    shop.TAA,
-    shop.isTaa,
-    shop.is_taa,
-    shop.taaMember,
-    shop.taa_member,
-    shop.taamember,
-    shop.member_taa
-  ];
-
-  if (directTruthyKeys.some((v) => v === true)) return true;
-
-  const stringKeys = [
-    shop.taa,
-    shop.TAA,
-    shop.isTaa,
-    shop.is_taa,
-    shop.taaMember,
-    shop.taa_member,
-    shop.member_taa,
-    shop.memberships,
-    shop.memberType,
-    shop.badges,
-    shop.tags,
-    shop.associations
-  ]
-    .map((v) => clean(v).toLowerCase());
-
-  return stringKeys.some((v) => {
-    return v === "taa" ||
-      v === "true" ||
-      v.includes("taa") ||
-      v.includes("tobacconists' association of america") ||
-      v.includes("tobacconists association of america");
-  });
-}
-
-function getTaaLogoSrc(shop) {
-  return (
-    clean(shop.taaLogo) ||
-    clean(shop.taa_logo) ||
-    clean(shop.taaSvg) ||
-    clean(shop.taa_svg) ||
-    TAA_LOGO_FALLBACK
-  );
+  return shop.taa === true || String(shop.taa).toLowerCase() === "true";
 }
 
 function taaHtml(shop) {
   if (!shopHasTaa(shop)) return "";
 
-  const src = escapeHtml(getTaaLogoSrc(shop));
   return `
     <div class="sh-item-meta">
       <img
         class="sh-item-taa"
-        src="${src}"
+        src="${TAA_LOGO}"
         alt="TAA member"
         loading="lazy"
         onerror="this.style.display='none';"
@@ -146,13 +94,13 @@ function populateStates(list) {
   if (!stateSelect) return;
 
   const current = stateSelect.value;
+
   const uniqueStates = [...new Set(
-    list
-      .map(getStateValue)
-      .filter(Boolean)
+    list.map(getStateValue).filter(Boolean)
   )].sort((a, b) => a.localeCompare(b));
 
-  stateSelect.innerHTML = `<option value="">All States</option>` +
+  stateSelect.innerHTML =
+    `<option value="">All States</option>` +
     uniqueStates.map((state) => {
       const safe = escapeHtml(state);
       return `<option value="${safe}">${safe}</option>`;
@@ -171,9 +119,15 @@ function getFilteredShops(list, q, state, taaOnly) {
     const n = slugKey(shop.name);
     const c = slugKey(shop.city);
     const s = slugKey(getStateValue(shop));
-    const matchesQuery = !query || n.includes(query) || c.includes(query) || s.includes(query);
-    const matchesState = !stateValue || clean(getStateValue(shop)).toLowerCase() === stateValue;
-    const matchesTaa = !taaOnly || shopHasTaa(shop);
+
+    const matchesQuery =
+      !query || n.includes(query) || c.includes(query) || s.includes(query);
+
+    const matchesState =
+      !stateValue || clean(getStateValue(shop)).toLowerCase() === stateValue;
+
+    const matchesTaa =
+      !taaOnly || shopHasTaa(shop);
 
     return matchesQuery && matchesState && matchesTaa;
   });
@@ -186,8 +140,10 @@ function render(list, q = "", state = "", taaOnly = false) {
 
   filtered.forEach((shop) => {
     const key = slugKey(shop.slug || shop.name);
-    const row = document.createElement("a");
+    const city = clean(shop.city);
+    const stateVal = getStateValue(shop);
 
+    const row = document.createElement("a");
     row.className = "sh-item";
     row.href = shopDetailHref(shop);
 
@@ -196,7 +152,7 @@ function render(list, q = "", state = "", taaOnly = false) {
         ${logoHtml(key, shop.name)}
         <div class="sh-item-copy">
           <div class="sh-item-name">${escapeHtml(shop.name)}</div>
-          <div class="sh-item-sub">${escapeHtml(clean(shop.city))}, ${escapeHtml(getStateValue(shop))}</div>
+          <div class="sh-item-sub">${escapeHtml(city)}${city && stateVal ? ", " : ""}${escapeHtml(stateVal)}</div>
         </div>
       </div>
       ${taaHtml(shop)}
@@ -242,8 +198,13 @@ function rerender() {
 
 async function init() {
   try {
-    const res = await fetch(`/shops/shops.json?v=${Date.now()}`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Failed to load shops.json: ${res.status}`);
+    const res = await fetch(`/shops/shops.json?v=${Date.now()}`, {
+      cache: "no-store"
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to load shops.json: ${res.status}`);
+    }
 
     const data = await res.json();
     ALL_SHOPS = Array.isArray(data) ? data : [];
@@ -253,7 +214,6 @@ async function init() {
     rerender();
 
     searchInput?.addEventListener("input", rerender);
-
     stateSelect?.addEventListener("change", rerender);
 
     taaToggle?.addEventListener("click", () => {
