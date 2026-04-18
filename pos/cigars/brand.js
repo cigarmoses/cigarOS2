@@ -1,6 +1,9 @@
 /* /pos/cigars/brand.js
    Brand page
    - Loads cigar rows from Google Sheets CSV
+   - Loads brand metadata from /data/brands.json
+   - Brand header/icon resolved from data/brands.json first
+   - Row icons pull from /img/icons/brands/{slug}.svg then .png
    - Brand-specific filtering
    - Bands sheet
    - Tabbed bottom-sheet filters matching main cigars page
@@ -18,6 +21,8 @@
 
   const CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+
+  const BRANDS_URL = "/data/brands.json";
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -94,6 +99,9 @@
 
   const state = {
     brand: "",
+    brandQuery: "",
+    brandMeta: null,
+    brandsAll: [],
     rowsAll: [],
     search: "",
     wrapperMode: "all",
@@ -424,27 +432,96 @@
     return Array.from(new Set(names));
   }
 
-  function brandIconPath() {
-    const row = state.rowsAll.find(
-      (r) => normalizeBrand(resolveBrandVal(r)) === normalizeBrand(state.brand)
-    );
-    const fromSheet = normalizeAssetPath(row ? resolveBrandImage(row) : "");
-    if (fromSheet) return fromSheet;
-    return `/img/icons/brands/${normalizeBrand(state.brand)}.svg`;
+  function brandDisplayName() {
+    return state.brandMeta?.name || state.brand || "Brand";
   }
 
-  function bindImageFallback(img, candidates = []) {
+  function brandSlug() {
+    return normalizeBrand(state.brandMeta?.slug || state.brandMeta?.name || state.brand || state.brandQuery);
+  }
+
+  function brandIconCandidates() {
+    const metaImage = normalizeAssetPath(
+      state.brandMeta?.image ||
+      state.brandMeta?.icon ||
+      state.brandMeta?.svg ||
+      state.brandMeta?.img
+    );
+
+    const slug = brandSlug();
+    const out = [];
+
+    if (metaImage) out.push(metaImage);
+    if (slug) {
+      out.push(`/img/icons/brands/${slug}.svg`);
+      out.push(`/img/icons/brands/${slug}.png`);
+    }
+
+    const sheetRow = state.rowsAll.find(
+      (r) => normalizeBrand(resolveBrandVal(r)) === brandSlug()
+    );
+    const fromSheet = normalizeAssetPath(sheetRow ? resolveBrandImage(sheetRow) : "");
+    if (fromSheet) out.push(fromSheet);
+
+    return Array.from(new Set(out.filter(Boolean)));
+  }
+
+  function brandIconPath() {
+    const list = brandIconCandidates();
+    return list[0] || "";
+  }
+
+  function bindImageFallback(img, candidates = [], finalBehavior = "hide") {
     if (!img) return;
 
-    let idx = 0;
-    const fallbackList =
-      Array.isArray(candidates) && candidates.length ? candidates : [brandIconPath()];
+    const list = Array.from(new Set((candidates || []).filter(Boolean)));
+    if (!list.length) {
+      if (finalBehavior === "hide") img.style.visibility = "hidden";
+      return;
+    }
 
-    img.addEventListener("error", () => {
+    let idx = 0;
+    img.style.visibility = "";
+    img.onerror = () => {
       idx += 1;
-      if (idx < fallbackList.length) img.src = fallbackList[idx];
-      else img.src = brandIconPath();
-    });
+      if (idx < list.length) {
+        img.src = list[idx];
+      } else {
+        img.onerror = null;
+        if (finalBehavior === "hide") {
+          img.style.visibility = "hidden";
+        }
+      }
+    };
+    img.src = list[0];
+  }
+
+  function findBrandMeta(query, brands) {
+    const q = normalizeBrand(query);
+    if (!q || !Array.isArray(brands)) return null;
+
+    return (
+      brands.find((b) => normalizeBrand(b.slug) === q) ||
+      brands.find((b) => normalizeBrand(b.name) === q) ||
+      brands.find((b) => {
+        const slug = normalizeBrand(b.slug);
+        const name = normalizeBrand(b.name);
+        return !!slug && (slug.includes(q) || q.includes(slug) || name.includes(q) || q.includes(name));
+      }) ||
+      null
+    );
+  }
+
+  async function loadBrandsMeta() {
+    try {
+      const res = await fetch(`${BRANDS_URL}?v=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`brands.json fetch failed: ${res.status}`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.warn("[brand.js] brands.json load failed:", err);
+      return [];
+    }
   }
 
   function getPadronBandLabelFromLine(line) {
@@ -1222,7 +1299,9 @@
   }
 
   function setBrandHeader() {
-    if (brandTitle) brandTitle.textContent = state.brand || "Brand";
+    const displayBrand = brandDisplayName();
+
+    if (brandTitle) brandTitle.textContent = displayBrand || "Brand";
 
     const manufacturerMeta = ensureBrandManufacturerMeta();
     const firstRow = state.rowsAll[0];
@@ -1231,7 +1310,7 @@
     if (manufacturerMeta) {
       const show =
         manufacturer &&
-        normalizeBrand(manufacturer) !== normalizeBrand(state.brand);
+        normalizeBrand(manufacturer) !== normalizeBrand(displayBrand);
 
       manufacturerMeta.textContent = show ? manufacturer : "";
       manufacturerMeta.style.display = show ? "" : "none";
@@ -1239,11 +1318,8 @@
 
     if (!brandIconImg) return;
 
-    brandIconImg.style.visibility = "";
-    brandIconImg.src = brandIconPath();
-    brandIconImg.onerror = () => {
-      brandIconImg.style.visibility = "hidden";
-    };
+    brandIconImg.alt = displayBrand || "Brand";
+    bindImageFallback(brandIconImg, brandIconCandidates(), "hide");
   }
 
   function openBandsSheet() {
@@ -1402,14 +1478,16 @@
     listEl.innerHTML = "";
 
     if (!rows.length) {
-      listEl.innerHTML = `<div class="empty">No cigars found for ${esc(state.brand)}</div>`;
+      listEl.innerHTML = `<div class="empty">No cigars found for ${esc(brandDisplayName())}</div>`;
       return;
     }
+
+    const rowIconCandidates = brandIconCandidates();
+    const rowIconPath = rowIconCandidates[0] || "";
 
     rows.forEach((r) => {
       const item = buildCartItem(r);
       const priceText = resolvePrice(r);
-      const iconPath = brandIconPath();
       const stickStock = resolveStickStock(r);
       const boxStock = resolveBoxStock(r);
       const isCuban = resolveIsCuban(r);
@@ -1419,7 +1497,7 @@
       if (isCuban) row.setAttribute("data-cuban", "true");
 
       row.innerHTML = `
-        <img class="row-ico" src="${esc(iconPath)}" alt="" loading="lazy" />
+        <img class="row-ico" src="${esc(rowIconPath)}" alt="" loading="lazy" />
 
         <div class="brand-row-left">
           <div class="brand-row-title-wrap">
@@ -1458,7 +1536,7 @@
       const plusBtn = $(".qty-btn--plus", row);
       const boxBtn = $(".brand-row-box-stock", row);
 
-      bindImageFallback(icon, [iconPath]);
+      bindImageFallback(icon, rowIconCandidates, "hide");
 
       left?.addEventListener("click", () => openDetail(r));
       title?.addEventListener("click", () => openDetail(r));
@@ -1606,7 +1684,10 @@
   async function boot() {
     if (!listEl) return;
 
-    state.brand = (getParam("brand") || "Padron").trim();
+    state.brandQuery = (getParam("brand") || "Padron").trim();
+    state.brandsAll = await loadBrandsMeta();
+    state.brandMeta = findBrandMeta(state.brandQuery, state.brandsAll);
+    state.brand = state.brandMeta?.name || state.brandQuery;
 
     const isPadron = normalizeBrand(state.brand) === "padron";
 
@@ -1631,16 +1712,32 @@
 
     const txt = await res.text();
     const rows = mapRows(parseCSV(txt));
-    const normalizedPageBrand = normalizeBrand(state.brand);
 
-    const exact = rows.filter((r) => normalizeBrand(resolveBrandVal(r)) === normalizedPageBrand);
+    const needles = Array.from(
+      new Set(
+        [
+          normalizeBrand(state.brandQuery),
+          normalizeBrand(state.brandMeta?.slug),
+          normalizeBrand(state.brandMeta?.name),
+          normalizeBrand(state.brand),
+        ].filter(Boolean)
+      )
+    );
+
+    const exact = rows.filter((r) => {
+      const rb = normalizeBrand(resolveBrandVal(r));
+      return needles.includes(rb);
+    });
+
     const fuzzy = rows.filter((r) => {
       const rb = normalizeBrand(resolveBrandVal(r));
-      return rb && (rb.includes(normalizedPageBrand) || normalizedPageBrand.includes(rb));
+      return rb && needles.some((n) => rb.includes(n) || n.includes(rb));
     });
-    const manufacturerFallback = rows.filter(
-      (r) => normalizeBrand(resolveManufacturerVal(r)) === normalizedPageBrand
-    );
+
+    const manufacturerFallback = rows.filter((r) => {
+      const rm = normalizeBrand(resolveManufacturerVal(r));
+      return needles.includes(rm);
+    });
 
     state.rowsAll = (exact.length ? exact : fuzzy.length ? fuzzy : manufacturerFallback).map((r) => ({
       ...r,
@@ -1650,7 +1747,7 @@
     setBrandHeader();
 
     if (!state.rowsAll.length) {
-      listEl.innerHTML = `<div class="empty">No cigars found for ${esc(state.brand)}</div>`;
+      listEl.innerHTML = `<div class="empty">No cigars found for ${esc(brandDisplayName())}</div>`;
       return;
     }
 
