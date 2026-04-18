@@ -9,7 +9,7 @@
 <title>Shops • CigarOS</title>
 
 <link rel="stylesheet" href="/css/type.css"/>
-<link rel="stylesheet" href="/shops/search-shops.css?v=30"/>
+<link rel="stylesheet" href="/shops/search-shops.css?v=31"/>
 
 <style>
 :root{
@@ -235,6 +235,30 @@ html[data-theme="dark"] .theme-icon-moon{
       />
     </div>
 
+    <section class="sh-filters" aria-label="Shop filters">
+      <div class="sh-filter-left">
+        <label class="sh-filter-label" for="shState">Sort by State</label>
+        <select id="shState" class="sh-state-select" aria-label="Choose state">
+          <option value="">All States</option>
+        </select>
+      </div>
+
+      <div class="sh-filter-right">
+        <span class="sh-filter-label sh-taa-label">TAA</span>
+
+        <button
+          type="button"
+          id="shTaaToggle"
+          class="sh-taa-toggle"
+          role="switch"
+          aria-checked="false"
+          aria-label="Show only TAA stores">
+          <span class="sh-taa-toggle-track" aria-hidden="true"></span>
+          <span class="sh-taa-toggle-knob" aria-hidden="true"></span>
+        </button>
+      </div>
+    </section>
+
     <section id="shList" class="sh-list"></section>
 
   </main>
@@ -272,7 +296,7 @@ html[data-theme="dark"] .theme-icon-moon{
 })();
 </script>
 
-<script src="/shops/shop-search.js?v=30"></script>
+<script src="/shops/shop-search.js?v=31"></script>
 
 </body>
 </html>
