@@ -318,7 +318,7 @@
   }
 
 function resolvePriceNumber(r) {
-  const raw = getField(r, ["MSRP", "msrp"]);
+  const raw = getField(r, ["msrp"]);
   const parsed = parseMoneyValue(raw);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
