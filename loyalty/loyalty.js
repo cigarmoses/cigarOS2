@@ -27,6 +27,12 @@
      ✅ Brand icons show in filter brand list (left of name)
      ✅ Brand icons are “full” (NO outline wrapper), sized larger
      ✅ iOS keyboard: prevent sheet “dropping” by locking body scroll while sheet open
+
+   PRIVACY PATCH:
+     ✅ Clears emails
+     ✅ Changes last names
+     ✅ Randomizes phone numbers
+     ✅ Preserves locker numbers, icons, ids, and all other fields
 */
 
 (() => {
@@ -137,6 +143,82 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  // ---------- PRIVACY HELPERS ----------
+  // Put this near the top so it runs during normalization only.
+  const LAST_NAME_REPLACEMENTS = {
+    A: "Anderson",
+    B: "Bennett",
+    C: "Collins",
+    D: "Dawson",
+    E: "Ellis",
+    F: "Foster",
+    G: "Griffin",
+    H: "Harrison",
+    I: "Iverson",
+    J: "Jensen",
+    K: "Keller",
+    L: "Lawson",
+    M: "Morrison",
+    N: "Nelson",
+    O: "Owens",
+    P: "Parker",
+    Q: "Quincy",
+    R: "Reynolds",
+    S: "Sullivan",
+    T: "Turner",
+    U: "Underwood",
+    V: "Vaughn",
+    W: "Walker",
+    X: "Xavier",
+    Y: "Young",
+    Z: "Zimmerman",
+  };
+
+  function anonymizeLastName(original) {
+    const s = toStr(original);
+    if (!s) return "";
+    const firstLetter = s.charAt(0).toUpperCase();
+    return LAST_NAME_REPLACEMENTS[firstLetter] || `${firstLetter}son`;
+  }
+
+  function anonymizePhone(original) {
+    const s = toStr(original);
+    if (!s) return "";
+
+    let usedFirstThree = false;
+    return s.replace(/\d/g, () => {
+      // keep area code if you want; randomize the rest
+      if (!usedFirstThree) {
+        usedFirstThree = true;
+        return s.match(/\d/) ? RegExp.lastMatch : String(Math.floor(Math.random() * 10));
+      }
+      return String(Math.floor(Math.random() * 10));
+    });
+  }
+
+  function anonymizePhonePreserveFormat(original) {
+    const s = toStr(original);
+    if (!s) return "";
+
+    const digits = s.match(/\d/g) || [];
+    if (!digits.length) return s;
+
+    let digitIndex = 0;
+    const randomizedDigits = digits.map((_, idx) => {
+      digitIndex = idx;
+      // keep first 3 digits if present, randomize the rest
+      if (idx < 3) return digits[idx];
+      return String(Math.floor(Math.random() * 10));
+    });
+
+    let outIndex = 0;
+    return s.replace(/\d/g, () => randomizedDigits[outIndex++]);
+  }
+
+  function anonymizeEmail() {
+    return "";
   }
 
   // Marker values that should count as "true" in icon columns.
@@ -280,7 +362,6 @@
   // ---------- iOS sheet stability (keyboard / viewport) ----------
   let __sheetScrollY = 0;
   function lockBodyForSheet() {
-    // prevent background scrolling + “drop” behavior
     __sheetScrollY = window.scrollY || 0;
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
@@ -301,13 +382,12 @@
     window.scrollTo(0, __sheetScrollY || 0);
   }
 
-  // ---------- CSS overrides (so you don’t have to chase inline CSS right now) ----------
+  // ---------- CSS overrides ----------
   function injectOverridesCSS() {
     if (document.getElementById("loyOverridesCSS")) return;
     const style = document.createElement("style");
     style.id = "loyOverridesCSS";
     style.textContent = `
-      /* Role pills: SF Pro Display regular + larger (override inline <style> weight=800) */
       .pill-toggle{
         font-family: var(--font-display) !important;
         font-weight: 400 !important;
@@ -315,7 +395,7 @@
         letter-spacing: -0.1px !important;
         gap: 10px !important;
       }
-      .pill-toggle .mini{ display:none !important; } /* we use real icons instead */
+      .pill-toggle .mini{ display:none !important; }
       .pill-toggle .role-ico{
         width: 18px !important;
         height: 18px !important;
@@ -324,7 +404,6 @@
         object-fit: contain !important;
       }
 
-      /* Brand list: icon left, NO outline wrapper, bigger icon */
       .brand-row{
         padding: 12px 12px !important;
       }
@@ -351,14 +430,12 @@
         letter-spacing: -0.2px !important;
       }
 
-      /* Make sure the sheet is the scroll container on iOS */
       .sheet{ padding-bottom: env(safe-area-inset-bottom) !important; }
       .sheet-body{ -webkit-overflow-scrolling: touch !important; }
     `;
     document.head.appendChild(style);
   }
 
-  // Ensure role pills contain icon <img> next to text
   function initRolePillIcons() {
     const map = {
       Military: ICONS.military,
@@ -370,11 +447,8 @@
     roleButtons.forEach((btn) => {
       const role = btn.getAttribute("data-role");
       if (!role) return;
-
-      // If we already inserted an icon, skip
       if (btn.querySelector("img.role-ico")) return;
 
-      // Insert icon at the start of the button contents
       const src = map[role];
       if (!src) return;
 
@@ -384,13 +458,11 @@
       img.alt = "";
       img.setAttribute("aria-hidden", "true");
       img.loading = "lazy";
-      img.onerror = () => { img.remove(); }; // if path wrong, fail gracefully
+      img.onerror = () => { img.remove(); };
 
-      // Remove the dot if present
       const mini = btn.querySelector(".mini");
       if (mini) mini.remove();
 
-      // Put icon first
       btn.insertBefore(img, btn.firstChild);
     });
   }
@@ -417,9 +489,11 @@
       const id = toStr(r.id) || `c_${idx}_${Math.random().toString(16).slice(2)}`;
 
       const firstName = toStr(r["First Name"] ?? r.firstName ?? r.FirstName);
-      const lastName  = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
+      const originalLastName = toStr(r["Last Name"] ?? r.lastName ?? r.LastName);
 
-      // ✅ Handle your curly-quote header too:
+      // ✅ PRIVACY PATCH
+      const lastName = anonymizeLastName(originalLastName);
+
       const nick = toStr(
         r['Nickname AKA'] ??
         r['Nickname “aka”'] ??
@@ -429,22 +503,22 @@
         r.nick
       );
 
-      const phone    = toStr(r["Phone"] ?? r.phone);
-      const email    = toStr(r["Email"] ?? r.email);
+      // ✅ PRIVACY PATCH
+      const phone = anonymizePhonePreserveFormat(toStr(r["Phone"] ?? r.phone));
+      const email = anonymizeEmail();
+
       const birthday = toStr(r["Birthday"] ?? r.birthday);
 
       const pointsRaw = r["Rewards"] ?? r.points ?? r["Points"];
       const points = Number(String(pointsRaw ?? "0").replace(/[^0-9.\-]/g, "")) || 0;
 
-      // ✅ In your sheet, locker number is in the "Locker" column (numbers)
       const lockerNumber = toStr(
         r["Locker number"] ??
         r.lockerNumber ??
         r.locker ??
-        r["Locker"] // IMPORTANT
+        r["Locker"]
       );
 
-      // icon columns (preserve)
       const Military    = r["Military"] ?? r.Military ?? r["military"] ?? r.military;
       const Paramedic   = r["Paramedic"] ?? r.Paramedic ?? r["paramedic"] ?? r.paramedic;
       const Firefighter = r["Firefighter"] ?? r.Firefighter ?? r["firefighter"] ?? r.firefighter;
@@ -452,7 +526,6 @@
       const Locker      = r["Locker"] ?? r.Locker ?? r["locker"] ?? r.locker;
       const Regular     = r["Regular"] ?? r.Regular ?? r["regular"] ?? r.regular;
 
-      // ✅ preserve Fav brand 1..N columns if present (case-insensitive)
       const favBrandMap = {};
       Object.keys(r || {}).forEach((k) => {
         const key = String(k || "").trim();
@@ -476,7 +549,6 @@
 
         lockerNumber: lockerNumber || "",
 
-        // ICON COLUMNS (exact titles)
         Military,
         Paramedic,
         Firefighter,
@@ -484,7 +556,6 @@
         Locker,
         Regular,
 
-        // Fav brands (raw columns)
         ...favBrandMap,
 
         createdAt: r.createdAt || new Date().toISOString(),
@@ -493,7 +564,6 @@
     });
   }
 
-  // ✅ seed OR refresh when source changes
   async function seedCustomersFromJSONIfNeeded() {
     const existing = readCustomers();
     const prevSource = localStorage.getItem(CONTACTS_SOURCE_KEY) || "";
@@ -539,11 +609,7 @@
     }
   }
 
-  // ---------- favorites (brands) ----------
   function getCustomerFavBrands(c) {
-    // Support either:
-    // 1) Fav brand 1..N columns (preferred)
-    // 2) favBrands array (future)
     const out = [];
 
     if (Array.isArray(c?.favBrands)) {
@@ -560,7 +626,6 @@
       if (v) out.push(v);
     });
 
-    // normalize unique (case-insensitive)
     const seen = new Set();
     const uniq = [];
     out.forEach((b) => {
@@ -583,13 +648,10 @@
     return sel.some((s) => setFav.has(s));
   }
 
-  // ---------- filtering + sorting ----------
   function passesRoleFilters(c) {
     const roles = state.filters.roles || {};
     const need = Object.keys(roles).filter((k) => roles[k] === true);
     if (!need.length) return true;
-
-    // AND logic across checked roles
     return need.every((roleName) => hasColumnValue(c, roleName));
   }
 
@@ -597,18 +659,15 @@
     const q = norm(state.query);
     let list = (state.customers || []).slice();
 
-    // Segmented modes still apply first
     if (state.mode === "regular") {
       list = list.filter((c) => isRegularCustomer(c));
     } else if (state.mode === "lockers") {
       list = list.filter((c) => isLockerCustomer(c));
     }
 
-    // NEW: applied filters (roles + brands)
     list = list.filter((c) => passesRoleFilters(c));
     list = list.filter((c) => intersectsSelectedBrands(c, state.filters.brands));
 
-    // Search
     if (q) {
       list = list.filter((c) => {
         const hay = [
@@ -624,7 +683,6 @@
       });
     }
 
-    // Sort
     if (state.mode === "lockers") {
       list.sort((a, b) => {
         const na = Number(lockerNumOnly(a)) || 0;
@@ -658,7 +716,6 @@
     window.location.href = `/loyalty/contact.html?id=${encodeURIComponent(String(id))}`;
   }
 
-  // ---------- chips ----------
   function hasAnyActiveFilters() {
     const r = state.filters.roles || {};
     const anyRole = Object.keys(r).some((k) => r[k] === true);
@@ -722,7 +779,6 @@
     setFiltersBtnState();
   }
 
-  // ---------- render list ----------
   function render() {
     const list = filteredCustomers();
 
@@ -796,7 +852,6 @@
     renderChips();
   }
 
-  // ---------- A–Z index ----------
   function buildAZIndex(list) {
     if (!azIndexEl) return;
 
@@ -861,7 +916,6 @@
     });
   }
 
-  // ---------- Filters sheet ----------
   function cloneFilters(src) {
     return {
       roles: {
@@ -877,7 +931,6 @@
   function openFilters() {
     if (!filterSheet || !filterBackdrop) return;
 
-    // ✅ Ensure visual styling + role pill icons exist every time
     injectOverridesCSS();
     initRolePillIcons();
 
@@ -885,25 +938,17 @@
     state.brandQuery = "";
     if (brandSearchEl) brandSearchEl.value = "";
 
-    // sync role buttons
     roleButtons.forEach((btn) => {
       const role = btn.getAttribute("data-role");
       const on = !!state.draftFilters.roles[role];
       btn.classList.toggle("on", on);
     });
 
-    // build list
     renderBrandList();
-
-    // ✅ Lock background scroll (iOS keyboard stability)
     lockBodyForSheet();
 
     filterBackdrop.classList.add("open");
     filterSheet.classList.add("open");
-
-    // Don’t auto-focus on iOS (it tends to jump the sheet). User can tap.
-    // If you want it, uncomment:
-    // setTimeout(() => brandSearchEl?.focus?.(), 50);
   }
 
   function closeFilters() {
@@ -911,8 +956,6 @@
     filterSheet.classList.remove("open");
     filterBackdrop.classList.remove("open");
     state.draftFilters = null;
-
-    // ✅ restore scroll
     unlockBodyForSheet();
   }
 
@@ -1010,7 +1053,6 @@
     });
   }
 
-  // ---------- add customer ----------
   function openAddCustomer() {
     if (!addDlg) return;
     acFirst && (acFirst.value = "");
@@ -1054,10 +1096,7 @@
       Police: "",
       Locker: "",
       Regular: "",
-
-      // optional future-friendly favorites store
       favBrands: [],
-
       createdAt: now,
       updatedAt: now,
     };
@@ -1074,7 +1113,6 @@
     window.dispatchEvent(new Event("cigaros:customers-changed"));
   }
 
-  // ---------- events ----------
   function bindEvents() {
     modeButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1108,7 +1146,6 @@
       window.location.href = "/learn/";
     });
 
-    // Filters
     filtersBtn?.addEventListener("click", openFilters);
     filtersClose?.addEventListener("click", closeFilters);
     filtersReset?.addEventListener("click", resetDraftFilters);
@@ -1141,24 +1178,15 @@
     window.addEventListener("cigaros:sales-changed", () => loadAndRender(true));
   }
 
-  // ---------- load ----------
   async function loadAndRender() {
-    // ensure our CSS overrides exist once
     injectOverridesCSS();
-
     state.sales = readSales();
     state.customers = await seedCustomersFromJSONIfNeeded();
-
-    // load brands once
     await loadBrandsIfNeeded();
-
-    // ensure role pill icons exist once DOM is ready
     initRolePillIcons();
-
     render();
   }
 
-  // ---------- init ----------
   bindEvents();
   loadAndRender();
 })();
