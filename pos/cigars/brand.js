@@ -525,20 +525,29 @@ function resolvePrice(r) {
     }
   }
 
-  function getPadronBandLabelFromLine(line) {
-    const raw = norm(line);
-    const lc = raw.toLowerCase();
+function getPadronBandLabelFromLine(line) {
+  const raw = norm(line);
+  const lc = raw.toLowerCase();
 
-    if (!raw) return "";
-    if (lc.includes("family reserve")) return "Family Reserve";
-    if (lc.includes("1964")) return "1964 Anniversary";
-    if (lc.includes("1926")) return "1926";
-    if (lc.includes("black")) return "Black Series";
-    if (lc.includes("damaso")) return "Damaso";
-    if (lc.includes("serie 1926")) return "1926";
-    if (lc.includes("serie 1964")) return "1964 Anniversary";
-    return raw;
+  if (!raw) return "";
+
+  // 🔥 FORCE REMOVE BAD ONES
+  if (lc.includes("50th") || lc.includes("60th")) {
+    return "Padron Series";
   }
+
+  if (lc.includes("family reserve")) return "Family Reserve";
+  if (lc.includes("1964")) return "1964 Anniversary";
+  if (lc.includes("1926")) return "1926";
+  if (lc.includes("black")) return "Black Series";
+  if (lc.includes("damaso")) return "Damaso";
+  if (lc.includes("1926 serie")) return "1926";
+  if (lc.includes("serie 1926")) return "1926";
+  if (lc.includes("serie 1964")) return "1964 Anniversary";
+  if (lc.includes("1964 anniversary")) return "1964 Anniversary";
+
+  return "Padron Series"; // 🔥 default everything else correctly
+}
 
   function getPadronBandArtFromLabel(label) {
     const lc = norm(label).toLowerCase();
@@ -1558,18 +1567,25 @@ function resolvePrice(r) {
     });
   }
 
-  function getBandOptions(rows) {
-    const map = new Map();
+function getBandOptions(rows) {
+  const map = new Map();
 
-    rows.forEach((r) => {
-      const label = resolveBand(r);
-      const art = resolveBandArt(r);
-      if (!label || !art) return;
-      if (!map.has(label)) map.set(label, { key: label, label, src: art });
-    });
+  rows.forEach((r) => {
+    const label = resolveBand(r);
+    const art = resolveBandArt(r);
 
-    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }
+    // 🔥 HARD BLOCK THEM HERE (THIS IS THE KEY)
+    if (
+      label === "50th Anniversary" ||
+      label === "60th Anniversary"
+    ) return;
+
+    if (!label || !art) return;
+    if (!map.has(label)) map.set(label, { key: label, label, src: art });
+  });
+
+  return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+}
 
   function renderBandOptions(opts) {
     if (!bandsOptions) return;
