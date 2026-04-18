@@ -2,6 +2,7 @@
   "use strict";
 
   const $ = (sel) => document.querySelector(sel);
+  const DEFAULT_SHOP_ICON = "/uxui/darkmode/darkmodeshops.png";
 
   function cleanStr(v) {
     return String(v ?? "").trim();
@@ -27,9 +28,17 @@
     const qs = canonicalKey(u.searchParams.get("shop") || "");
     if (qs) return qs;
 
+    const qsId = canonicalKey(u.searchParams.get("id") || "");
+    if (qsId) return qsId;
+
     const parts = u.pathname.split("/").filter(Boolean);
+
     if (parts.length >= 2 && parts[0] === "shops") {
-      return canonicalKey(parts[1]);
+      const second = canonicalKey(parts[1]);
+
+      if (second && second !== "shoppagehtml") {
+        return second;
+      }
     }
 
     return "";
@@ -241,22 +250,34 @@
     return normalizeFromPerShop({ slug: key, name: "Shop" }, key);
   }
 
-  function setShopLogo(key) {
+  function setShopLogo(key, name) {
     const img = $("#spLogo");
-    if (!img || !key) return;
+    if (!img) return;
 
-    const svg = `/img/icons/shops/${key}.svg`;
-    const png = `/img/icons/shops/${key}.png`;
+    const safeKey = canonicalKey(key);
+    const svg = `/img/icons/shops/${encodeURIComponent(safeKey)}.svg`;
+    const png = `/img/icons/shops/${encodeURIComponent(safeKey)}.png`;
 
-    img.alt = key;
+    img.alt = cleanStr(name) || "Shop";
     img.style.display = "";
 
+    if (!safeKey) {
+      img.src = DEFAULT_SHOP_ICON;
+      img.onerror = null;
+      return;
+    }
+
     img.onerror = () => {
-      img.onerror = () => {
-        img.removeAttribute("src");
-        img.style.display = "none";
-      };
-      img.src = png;
+      if (!img.dataset.fallbackStep) {
+        img.dataset.fallbackStep = "png";
+        img.src = png;
+      } else if (img.dataset.fallbackStep === "png") {
+        img.dataset.fallbackStep = "default";
+        img.src = DEFAULT_SHOP_ICON;
+      } else {
+        img.onerror = null;
+        img.src = DEFAULT_SHOP_ICON;
+      }
     };
 
     img.src = svg;
@@ -331,14 +352,14 @@
   function normalizeWebsiteUrl(v) {
     const s = cleanStr(v);
     if (!s) return "";
-    if (/^https?:\\/\\//i.test(s)) return s;
+    if (/^https?:\/\//i.test(s)) return s;
     return `https://${s}`;
   }
 
   function normalizeInstagramUrl(v) {
     const s = cleanStr(v);
     if (!s) return "";
-    if (/^https?:\\/\\//i.test(s)) return s;
+    if (/^https?:\/\//i.test(s)) return s;
 
     const handle = s.replace(/^@/, "").trim();
     if (!handle) return "";
@@ -347,11 +368,11 @@
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#39;"
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
     }[c]));
   }
 
@@ -610,7 +631,7 @@
     const assetKey = canonicalKey(shop.key || key);
 
     renderHeader(shop);
-    setShopLogo(assetKey);
+    setShopLogo(assetKey, shop.name);
     renderTAABadge(shop);
     renderAmenities(shop);
     renderHours(shop);
