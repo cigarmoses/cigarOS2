@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
-
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="format-detection" content="telephone=no,email=no,address=no"/>
@@ -9,7 +8,7 @@
 <title>Shops • CigarOS</title>
 
 <link rel="stylesheet" href="/css/type.css"/>
-<link rel="stylesheet" href="/shops/search-shops.css?v=31"/>
+<link rel="stylesheet" href="/shops/search-shops.css?v=32"/>
 
 <style>
 :root{
@@ -31,9 +30,7 @@
   --shadow-dark:0 12px 34px rgba(0,0,0,.26);
 }
 
-*{
-  box-sizing:border-box;
-}
+*{ box-sizing:border-box; }
 
 html,body{
   margin:0;
@@ -157,17 +154,9 @@ html[data-theme="dark"] .theme-toggle-knob{
   height:14px;
 }
 
-.theme-icon-moon{
-  display:none;
-}
-
-html[data-theme="dark"] .theme-icon-sun{
-  display:none;
-}
-
-html[data-theme="dark"] .theme-icon-moon{
-  display:block;
-}
+.theme-icon-moon{ display:none; }
+html[data-theme="dark"] .theme-icon-sun{ display:none; }
+html[data-theme="dark"] .theme-icon-moon{ display:block; }
 
 .shell{
   width:min(430px, calc(100% - 28px));
@@ -179,7 +168,6 @@ html[data-theme="dark"] .theme-icon-moon{
   display:none !important;
 }
 </style>
-
 </head>
 
 <body class="shops-page">
@@ -219,7 +207,6 @@ html[data-theme="dark"] .theme-icon-moon{
 
 <div class="shell">
   <main class="sh-wrap">
-
     <header class="sh-top">
       <h1 class="sh-title">Shops</h1>
     </header>
@@ -235,32 +222,29 @@ html[data-theme="dark"] .theme-icon-moon{
       />
     </div>
 
-    <section class="sh-filters" aria-label="Shop filters">
+    <div class="sh-filters">
       <div class="sh-filter-left">
-        <label class="sh-filter-label" for="shState">Sort by State</label>
-        <select id="shState" class="sh-state-select" aria-label="Choose state">
+        <select id="shState" class="sh-state-select" aria-label="Filter by state">
           <option value="">All States</option>
         </select>
       </div>
 
       <div class="sh-filter-right">
         <span class="sh-filter-label sh-taa-label">TAA</span>
-
         <button
-          type="button"
           id="shTaaToggle"
           class="sh-taa-toggle"
+          type="button"
           role="switch"
           aria-checked="false"
-          aria-label="Show only TAA stores">
+          aria-label="Show TAA shops only">
           <span class="sh-taa-toggle-track" aria-hidden="true"></span>
           <span class="sh-taa-toggle-knob" aria-hidden="true"></span>
         </button>
       </div>
-    </section>
+    </div>
 
     <section id="shList" class="sh-list"></section>
-
   </main>
 </div>
 
@@ -296,7 +280,6 @@ html[data-theme="dark"] .theme-icon-moon{
 })();
 </script>
 
-<script src="/shops/shop-search.js?v=31"></script>
-
+<script src="/shops/shop-search.js?v=32"></script>
 </body>
 </html>
