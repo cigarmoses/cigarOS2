@@ -116,7 +116,6 @@
       "taa": true
     }
   },
-
   {
     "name": "The Brig Cigar Lounge",
     "slug": "thebrigcigarlounge",
@@ -155,8 +154,7 @@
       "chain": false,
       "taa": false
     }
-
-  
+  },
   {
     "name": "Matador Cigars",
     "slug": "matadorcigars",
@@ -13968,7 +13966,7 @@
     "slug": "waterwheelcigar",
     "logoKey": "waterwheelcigar",
     "address1": "5047 1St Coast Hwy",
-    "city": "Fernandina Beach",
+    "city": "Ferdina Beach",
     "state": "Florida",
     "zip": "32034",
     "country": "USA",
