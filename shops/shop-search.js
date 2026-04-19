@@ -7,7 +7,7 @@
   const taaToggle = document.querySelector("#shTaaToggle");
 
   const DEFAULT_SHOP_ICON = "/uxui/darkmode/darkmodeshops.png";
-  const TAA_ICON = "/img/icons/pca-shop.svg";
+  const TAA_ICON = "/img/icons/taa.svg";
 
   const state = {
     shops: [],
