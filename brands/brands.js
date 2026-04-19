@@ -1,9 +1,8 @@
-// /brands/brands.js (FULL UPDATED — uses /data/brands.json)
-
 (() => {
   "use strict";
 
-  const app = document.getElementById("app");
+  const listEl = document.querySelector("#shList");
+  const searchInput = document.querySelector("#shQuery");
 
   function clean(v) {
     return String(v ?? "").trim();
@@ -17,7 +16,7 @@
   }
 
   function escapeHtml(value) {
-    return String(value)
+    return String(value ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -25,99 +24,160 @@
       .replaceAll("'", "&#039;");
   }
 
-  function getIconPaths(name) {
-    const key = slugKey(name);
-    return {
-      svg: `/img/icons/brands/${key}.svg`,
-      png: `/img/icons/brands/${key}.png`
-    };
+  function normalizeBrandsPayload(data) {
+    if (Array.isArray(data)) {
+      return data
+        .map((item) => {
+          if (typeof item === "string") {
+            const name = clean(item);
+            if (!name) return null;
+            return { name, slug: slugKey(name) };
+          }
+
+          if (item && typeof item === "object") {
+            const name = clean(item.name || item.brand || item.title || item.label || item.slug);
+            if (!name) return null;
+            return {
+              ...item,
+              name,
+              slug: clean(item.slug) || slugKey(name),
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+    }
+
+    if (data && typeof data === "object") {
+      const possible =
+        data.brands ||
+        data.items ||
+        data.data ||
+        data.results ||
+        [];
+
+      return normalizeBrandsPayload(possible);
+    }
+
+    return [];
   }
 
-  function renderBrandCard(name) {
-    const { svg, png } = getIconPaths(name);
+  function getBrandName(item) {
+    return clean(item?.name || item?.brand || item?.title || item?.label || item);
+  }
+
+  function getBrandSlug(item) {
+    return slugKey(item?.slug || item?.name || item?.brand || item?.title || item);
+  }
+
+  function brandHref(item) {
+    const slug = getBrandSlug(item);
+    const name = getBrandName(item);
+    return `/pos/cigars/brand?brand=${encodeURIComponent(slug || name)}`;
+  }
+
+  function logoHtml(item) {
+    const name = getBrandName(item);
+    const key = getBrandSlug(item);
+    const svg = `/img/icons/brands/${key}.svg`;
+    const png = `/img/icons/brands/${key}.png`;
 
     return `
-      <a class="brand-card" href="/pos/cigars/brand?brand=${encodeURIComponent(name)}" aria-label="${escapeHtml(name)}">
-        <div class="brand-icon-wrap">
-          <img
-            class="brand-icon"
-            src="${svg}"
-            alt="${escapeHtml(name)} logo"
-            loading="lazy"
-            onerror="this.onerror=null;this.src='${png}'"
-          >
-        </div>
-
-        <h2 class="brand-name">${escapeHtml(name)}</h2>
-      </a>
+      <img
+        class="sh-item-logo"
+        src="${svg}"
+        alt="${escapeHtml(name)}"
+        loading="lazy"
+        onerror="
+          if (!this.dataset.fallbackStep) {
+            this.dataset.fallbackStep='png';
+            this.src='${png}';
+          } else {
+            this.onerror=null;
+            this.style.visibility='hidden';
+          }
+        "
+      />
     `;
   }
 
-  function renderBrandsPage(brands) {
-    app.innerHTML = `
-      <main class="page">
-        <section class="hero-card">
-          <button class="glass-pill back-pill universal-back" type="button" id="brandsBackBtn" aria-label="Go back">
-            <span class="back-chevron">‹</span>
-          </button>
+  function render(list, q) {
+    if (!listEl) return;
 
-          <div class="hero-inner">
-            <h1 class="page-title">Brands</h1>
+    const query = slugKey(q);
+    listEl.innerHTML = "";
 
-            <div class="search-bar" style="max-width:560px;margin:18px auto 0;">
-              <input type="text" placeholder="Search brands" id="brandSearch">
-            </div>
-          </div>
-        </section>
-
-        <section class="grid-shell">
-          <div class="brands-grid" id="brandsGrid">
-            ${brands.map(renderBrandCard).join("")}
-          </div>
-        </section>
-      </main>
-    `;
-
-    document.getElementById("brandsBackBtn")?.addEventListener("click", () => {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = "/";
-      }
+    const filtered = list.filter((item) => {
+      const name = slugKey(getBrandName(item));
+      return !query || name.includes(query);
     });
 
-    bindSearch(brands);
-  }
+    if (!filtered.length) {
+      listEl.innerHTML = `
+        <div class="sh-item">
+          <div class="sh-item-main">
+            <div class="sh-item-copy">
+              <div class="sh-item-name">No brands found</div>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
 
-  function bindSearch(brands) {
-    const input = document.getElementById("brandSearch");
-    const grid = document.getElementById("brandsGrid");
+    filtered.forEach((item) => {
+      const name = getBrandName(item);
 
-    input?.addEventListener("input", () => {
-      const q = input.value.trim().toLowerCase();
+      const row = document.createElement("a");
+      row.className = "sh-item";
+      row.href = brandHref(item);
 
-      const filtered = brands.filter(name =>
-        name.toLowerCase().includes(q)
-      );
+      row.innerHTML = `
+        <div class="sh-item-main">
+          ${logoHtml(item)}
+          <div class="sh-item-copy">
+            <div class="sh-item-name">${escapeHtml(name)}</div>
+          </div>
+        </div>
+      `;
 
-      grid.innerHTML = filtered.map(renderBrandCard).join("");
+      listEl.appendChild(row);
     });
   }
 
   async function init() {
     try {
-      const res = await fetch(`/data/brands.json?v=${Date.now()}`);
+      const res = await fetch(`/data/brands.json?v=${Date.now()}`, {
+        cache: "no-store"
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to load brands.json: ${res.status}`);
+      }
+
       const data = await res.json();
+      const brands = normalizeBrandsPayload(data);
 
-      const brands = data
-        .map(b => clean(b.name || b))
-        .filter(Boolean);
+      render(brands, "");
 
-      renderBrandsPage(brands);
-
+      searchInput?.addEventListener("input", () => {
+        render(brands, searchInput.value);
+      });
     } catch (err) {
-      console.error("Brands load failed:", err);
-      app.innerHTML = `<div style="padding:20px;">Error loading brands.</div>`;
+      console.error("[brands.js] init failed:", err);
+
+      if (listEl) {
+        listEl.innerHTML = `
+          <div class="sh-item">
+            <div class="sh-item-main">
+              <div class="sh-item-copy">
+                <div class="sh-item-name">Error loading brands</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
     }
   }
 
