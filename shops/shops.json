@@ -116,6 +116,47 @@
       "taa": true
     }
   },
+
+  {
+    "name": "The Brig Cigar Lounge",
+    "slug": "thebrigcigarlounge",
+    "logoKey": "thebrigcigarlounge",
+    "address1": "419 State Street",
+    "city": "Erie",
+    "state": "Pennsylvania",
+    "zip": "16507",
+    "country": "USA",
+    "phone": "814-636-5789",
+    "website": "https://brigcigar.com/",
+    "email": "brigcigar@gmail.com",
+    "instagram": "https://www.instagram.com/thebriglounge/",
+    "lat": 42.136499,
+    "lng": -80.089886,
+    "hours": {
+      "mon": "",
+      "tue": "",
+      "wed": "",
+      "thu": "",
+      "fri": "",
+      "sat": "",
+      "sun": ""
+    },
+    "features": {
+      "alcohol": true,
+      "byob": true,
+      "noAlcohol": false,
+      "food": true,
+      "tvs": true,
+      "outdoorSeating": true,
+      "indoorSeating": true,
+      "quietSpace": false,
+      "liveMusic": false,
+      "privateClub": false,
+      "chain": false,
+      "taa": false
+    }
+
+  
   {
     "name": "Matador Cigars",
     "slug": "matadorcigars",
@@ -553,45 +594,6 @@
     "city": "Tucson",
     "state": "Arizona",
     "zip": "85718",
-    "country": "USA",
-    "phone": "",
-    "website": "",
-    "email": "",
-    "instagram": "",
-    "lat": null,
-    "lng": null,
-    "hours": {
-      "mon": "",
-      "tue": "",
-      "wed": "",
-      "thu": "",
-      "fri": "",
-      "sat": "",
-      "sun": ""
-    },
-    "features": {
-      "alcohol": true,
-      "byob": false,
-      "noAlcohol": false,
-      "food": true,
-      "tvs": false,
-      "outdoorSeating": false,
-      "indoorSeating": false,
-      "quietSpace": false,
-      "liveMusic": true,
-      "privateClub": true,
-      "chain": true,
-      "taa": true
-    }
-  },
-  {
-    "name": "Anthonys Cigar Emporium IV",
-    "slug": "anthonyscigaremporiumiv",
-    "logoKey": "anthonyscigaremporiumiv",
-    "address1": "5563 N 7th Street #130",
-    "city": "Tucson",
-    "state": "Arizona",
-    "zip": "85014",
     "country": "USA",
     "phone": "",
     "website": "",
