@@ -1,8 +1,6 @@
 body.shops-page{
   margin:0;
-  background:#f2f2f7;
   font-family:var(--font-display),-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui;
-  color:#111;
 }
 
 .sh-wrap{
@@ -234,7 +232,6 @@ body.shops-page{
 /* DARK MODE */
 
 html[data-theme="dark"] body.shops-page{
-  background:transparent;
   color:#fff;
 }
 
