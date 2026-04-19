@@ -2,6 +2,7 @@ body.shops-page{
   margin:0;
   background:#f2f2f7;
   font-family:var(--font-display),-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui;
+  color:#111;
 }
 
 .sh-wrap{
@@ -16,6 +17,7 @@ body.shops-page{
   letter-spacing:-0.03em;
   margin:0;
   line-height:.94;
+  color:#111827;
 }
 
 .sh-search{
@@ -166,6 +168,7 @@ body.shops-page{
   text-decoration:none;
   color:#111;
   border-top:1px solid rgba(0,0,0,.06);
+  background:transparent;
 }
 
 .sh-item:first-child{
@@ -201,6 +204,7 @@ body.shops-page{
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+  color:inherit;
 }
 
 .sh-item-sub{
@@ -227,6 +231,8 @@ body.shops-page{
   display:block;
 }
 
+/* DARK MODE */
+
 html[data-theme="dark"] body.shops-page{
   background:transparent;
   color:#fff;
@@ -240,33 +246,58 @@ html[data-theme="dark"] .sh-filter-label{
   color:rgba(255,255,255,.72);
 }
 
-html[data-theme="dark"] .sh-input,
-html[data-theme="dark"] .sh-state-select{
-  background:rgba(255,255,255,.96);
-  color:#111;
-  border-color:rgba(255,255,255,.08);
+html[data-theme="dark"] .sh-input{
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  border-color:rgba(255,255,255,.12);
 }
 
 html[data-theme="dark"] .sh-input::placeholder{
-  color:#b0b0b5;
+  color:rgba(255,255,255,.55);
+}
+
+html[data-theme="dark"] .sh-input:focus{
+  border-color:rgba(125,169,255,.34);
+  box-shadow:0 0 0 4px rgba(125,169,255,.14);
+}
+
+html[data-theme="dark"] .sh-state-select{
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  border-color:rgba(255,255,255,.12);
+}
+
+html[data-theme="dark"] .sh-state-select:focus{
+  border-color:rgba(125,169,255,.34);
+  box-shadow:0 0 0 4px rgba(125,169,255,.14);
 }
 
 html[data-theme="dark"] .sh-list{
-  background:rgba(255,255,255,.96);
-  box-shadow:0 14px 40px rgba(0,0,0,.16);
+  background:rgba(255,255,255,.06);
+  box-shadow:0 14px 40px rgba(0,0,0,.20);
+  border:1px solid rgba(255,255,255,.08);
 }
 
 html[data-theme="dark"] .sh-item{
-  color:#111;
+  color:#fff;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+html[data-theme="dark"] .sh-item-name{
+  color:#fff;
 }
 
 html[data-theme="dark"] .sh-item-sub{
-  color:#8e8e93;
+  color:rgba(255,255,255,.62);
 }
 
 html[data-theme="dark"] .sh-taa-toggle-track{
   background:rgba(255,255,255,.18);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+}
+
+html[data-theme="dark"] .sh-taa-toggle-knob{
+  background:#fff;
 }
 
 html[data-theme="dark"] .sh-taa-toggle[aria-checked="true"] .sh-taa-toggle-track{
