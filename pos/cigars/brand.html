@@ -138,5 +138,69 @@
       });
     })();
   </script>
+
+<div class="qa-overlay" id="qaOverlay" hidden>
+  <div class="qa-backdrop"></div>
+
+  <div
+    class="qa-sheet"
+    id="qaSheet"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Add cigar to invoice"
+  >
+    <div class="qa-pill qa-item" id="qaStickPill">
+      <div class="qa-item-left">
+        <div class="qa-item-title">Stick</div>
+        <div class="qa-item-price" id="qaStickPrice">$0.00</div>
+      </div>
+
+      <div class="qa-item-right">
+        <button class="qa-qty-btn qa-qty-btn--minus" id="qaStickMinus" type="button" aria-label="Decrease stick quantity">−</button>
+
+        <div class="qa-qty-inline" aria-live="polite">
+          <span class="qa-qty-inline__paren">(</span>
+          <span class="qa-qty-inline__value" id="qaStickQty">1</span>
+          <span class="qa-qty-inline__paren">)</span>
+        </div>
+
+        <button class="qa-qty-btn qa-qty-btn--plus" id="qaStickPlus" type="button" aria-label="Increase stick quantity">+</button>
+      </div>
+    </div>
+
+    <div class="qa-pill qa-item qa-item--inactive" id="qaBoxPill">
+      <div class="qa-item-left">
+        <div class="qa-item-title">Box</div>
+        <div class="qa-item-price" id="qaBoxPrice">$0.00</div>
+      </div>
+
+      <div class="qa-item-right">
+        <button class="qa-qty-btn qa-qty-btn--minus" id="qaBoxMinus" type="button" aria-label="Decrease box quantity">−</button>
+
+        <div class="qa-qty-inline" aria-live="polite">
+          <span class="qa-qty-inline__paren">(</span>
+          <span class="qa-qty-inline__value" id="qaBoxQty">-</span>
+          <span class="qa-qty-inline__paren">)</span>
+        </div>
+
+        <button class="qa-qty-btn qa-qty-btn--plus" id="qaBoxPlus" type="button" aria-label="Increase box quantity">+</button>
+      </div>
+    </div>
+
+    <div class="qa-total-row" aria-live="polite">
+      <div class="qa-total-label">Total:</div>
+      <div class="qa-total-value" id="qaTotal">$0.00</div>
+    </div>
+
+    <button class="qa-pill qa-action qa-action--cancel" id="qaCancel" type="button" aria-label="Cancel">
+      <span>×</span>
+    </button>
+
+    <button class="qa-pill qa-action qa-action--add" id="qaAdd" type="button" aria-label="Add to invoice">
+      <span>+</span>
+    </button>
+  </div>
+</div>
+
 </body>
 </html>
