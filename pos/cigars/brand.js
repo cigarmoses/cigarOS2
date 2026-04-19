@@ -878,8 +878,6 @@ function getPadronBandLabelFromLine(line) {
         max-width:118px;
         object-fit:contain;
         display:block;
-        transform:scaleX(-1);
-        transform-origin:center;
       }
 
       .fm.fm--tabs .fm__search-input{
