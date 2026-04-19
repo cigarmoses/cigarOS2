@@ -10,8 +10,7 @@
    - Vitola/shape SVG icons in brand filters
    - Shape info buttons
    - Cleaner brand-row layout
-   - Add-to-invoice sheet with stick/box toggle
-   - Vertical quantity wheel (1–99)
+   - Glass quick-add sheet for stick / box
    - Brand icon only on rows
    - Better detail-page opening fallback
    - Manufacturer subtitle under brand title only when not duplicate
@@ -97,7 +96,6 @@
   const DEFAULT_STICK_STOCK = 89;
   const DEFAULT_BOX_STOCK = 9;
   const DEFAULT_BOX_QTY = 20;
-  const DEFAULT_MSRP = 0;
 
   const state = {
     brand: "",
@@ -1015,7 +1013,6 @@
   }
 
   let filterModal = null;
-  let invoiceSheet = null;
 
   function ensureFilterModal() {
     ensureInjectedStyles();
@@ -1306,247 +1303,6 @@
     return filterModal;
   }
 
-  function ensureInvoiceSheet() {
-    if (invoiceSheet) return invoiceSheet;
-
-    const root = document.createElement("div");
-    root.className = "invoice-sheet";
-    root.hidden = true;
-    root.setAttribute("aria-hidden", "true");
-
-    root.innerHTML = `
-      <div class="invoice-sheet__backdrop" data-invoice-close></div>
-      <div class="invoice-sheet__card" role="dialog" aria-modal="true" aria-label="Add to Invoice">
-        <div class="invoice-sheet__head">
-          <h2 class="invoice-sheet__title">Add to Invoice</h2>
-          <div class="invoice-sheet__name" id="invoice-sheet-name"></div>
-          <button class="invoice-sheet__close" type="button" aria-label="Close" data-invoice-close>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="invoice-sheet__body">
-          <div class="invoice-type-switch" id="invoice-type-switch"></div>
-
-          <div class="invoice-picker-card">
-            <div class="invoice-picker-card__top">
-              <div class="invoice-picker-card__meta">
-                <div class="invoice-picker-card__kind" id="invoice-kind-label"></div>
-                <div class="invoice-picker-card__each" id="invoice-each-label"></div>
-              </div>
-
-              <div class="invoice-picker-card__total">
-                <div class="invoice-picker-card__total-label">Total</div>
-                <div class="invoice-picker-card__total-value" id="invoice-total-value"></div>
-              </div>
-            </div>
-
-            <div class="invoice-wheel">
-              <div class="invoice-wheel__highlight"></div>
-              <div class="invoice-wheel__scroller" id="invoice-wheel-scroller"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="invoice-sheet__actions">
-          <button class="invoice-sheet__add" type="button" id="invoice-add-btn">Add</button>
-          <button class="invoice-sheet__cancel" type="button" data-invoice-close>Cancel</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(root);
-
-    const ui = {
-      root,
-      name: $("#invoice-sheet-name", root),
-      switchEl: $("#invoice-type-switch", root),
-      kindLabel: $("#invoice-kind-label", root),
-      eachLabel: $("#invoice-each-label", root),
-      totalValue: $("#invoice-total-value", root),
-      wheel: $("#invoice-wheel-scroller", root),
-      addBtn: $("#invoice-add-btn", root),
-    };
-
-    const localState = {
-      row: null,
-      options: [],
-      selectedType: "stick",
-      qty: 1,
-      onConfirm: null,
-      itemHeight: 44,
-    };
-
-    function getOption(type) {
-      return localState.options.find((opt) => opt.type === type) || null;
-    }
-
-    function getSelectedOption() {
-      return getOption(localState.selectedType) || localState.options[0] || null;
-    }
-
-    function renderTypeSwitch() {
-      ui.switchEl.innerHTML = localState.options.map((opt) => `
-        <button class="invoice-type-btn${opt.type === localState.selectedType ? " is-active" : ""}" type="button" data-type="${esc(opt.type)}">
-          <span class="invoice-type-btn__label">${esc(opt.label)}</span>
-          <span class="invoice-type-btn__price">$${esc(fmtMoney(opt.unitPrice))}</span>
-        </button>
-      `).join("");
-
-      $$("[data-type]", ui.switchEl).forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const type = btn.getAttribute("data-type") || "stick";
-          if (!getOption(type)) return;
-          localState.selectedType = type;
-          renderTypeSwitch();
-          renderSummary();
-        });
-      });
-    }
-
-    function renderWheel() {
-      const items = [];
-      for (let i = 1; i <= 99; i++) {
-        items.push(`
-          <div class="invoice-wheel__item${i === localState.qty ? " is-active" : ""}" data-qty="${i}">
-            ${i}
-          </div>
-        `);
-      }
-      ui.wheel.innerHTML = items.join("");
-    }
-
-    function renderSummary() {
-      const option = getSelectedOption();
-      if (!option) return;
-
-      ui.kindLabel.textContent = option.label;
-      ui.eachLabel.textContent = `$${fmtMoney(option.unitPrice)} each`;
-      ui.totalValue.textContent = `$${fmtMoney(option.unitPrice * localState.qty)}`;
-
-      $$(".invoice-wheel__item", ui.wheel).forEach((el) => {
-        const isActive = Number(el.getAttribute("data-qty")) === localState.qty;
-        el.classList.toggle("is-active", isActive);
-      });
-    }
-
-    function scrollWheelToQty(qty, smooth = false) {
-      const paddingTop = 62;
-      const top = paddingTop + (qty - 1) * localState.itemHeight;
-      ui.wheel.scrollTo({
-        top,
-        behavior: smooth ? "smooth" : "auto",
-      });
-    }
-
-    function snapWheel() {
-      const paddingTop = 62;
-      const raw = (ui.wheel.scrollTop - paddingTop) / localState.itemHeight;
-      const qty = Math.min(99, Math.max(1, Math.round(raw) + 1));
-      localState.qty = qty;
-      renderSummary();
-      scrollWheelToQty(qty, true);
-    }
-
-    let wheelSnapTimer = null;
-    ui.wheel.addEventListener("scroll", () => {
-      const paddingTop = 62;
-      const raw = (ui.wheel.scrollTop - paddingTop) / localState.itemHeight;
-      const qty = Math.min(99, Math.max(1, Math.round(raw) + 1));
-      if (qty !== localState.qty) {
-        localState.qty = qty;
-        renderSummary();
-      }
-
-      clearTimeout(wheelSnapTimer);
-      wheelSnapTimer = window.setTimeout(() => {
-        snapWheel();
-      }, 90);
-    });
-
-    ui.wheel.addEventListener("click", (e) => {
-      const item = e.target instanceof Element ? e.target.closest(".invoice-wheel__item") : null;
-      if (!item) return;
-      const qty = Number(item.getAttribute("data-qty") || "1");
-      localState.qty = Math.min(99, Math.max(1, qty));
-      renderSummary();
-      scrollWheelToQty(localState.qty, true);
-    });
-
-    function open(row, onConfirm) {
-      const stickPrice = resolvePriceNumber(row);
-      const boxPrice = resolveBoxMsrpNumber(row);
-
-      const options = [];
-      if (stickPrice > 0) {
-        options.push({ type: "stick", label: "Stick", unitPrice: stickPrice });
-      }
-      if (boxPrice > 0) {
-        options.push({ type: "box", label: "Box", unitPrice: boxPrice });
-      }
-
-      if (!options.length) return;
-
-      localState.row = row;
-      localState.options = options;
-      localState.selectedType = options[0].type;
-      localState.qty = 1;
-      localState.onConfirm = onConfirm;
-
-      ui.name.textContent = resolveDisplayName(row) || "Cigar";
-      renderTypeSwitch();
-      renderWheel();
-      renderSummary();
-
-      root.hidden = false;
-      root.classList.add("is-open");
-      root.setAttribute("aria-hidden", "false");
-      document.documentElement.classList.add("sheet-open");
-
-      window.setTimeout(() => {
-        scrollWheelToQty(localState.qty, false);
-      }, 20);
-    }
-
-    function close() {
-      root.classList.remove("is-open");
-      root.setAttribute("aria-hidden", "true");
-      document.documentElement.classList.remove("sheet-open");
-      window.setTimeout(() => {
-        if (!root.classList.contains("is-open")) root.hidden = true;
-      }, 220);
-    }
-
-    root.addEventListener("click", (e) => {
-      const t = e.target;
-      if (!(t instanceof Element)) return;
-
-      if (t.closest("[data-invoice-close]")) {
-        close();
-        return;
-      }
-
-      if (t.closest("#invoice-add-btn")) {
-        const option = getSelectedOption();
-        if (!option || typeof localState.onConfirm !== "function") return;
-
-        localState.onConfirm({
-          type: option.type,
-          qty: localState.qty,
-          unitPrice: option.unitPrice,
-        });
-
-        if (navigator.vibrate) navigator.vibrate(12);
-        close();
-      }
-    });
-
-    invoiceSheet = { open, close };
-    return invoiceSheet;
-  }
-
   function ensureBrandManufacturerMeta() {
     const titleBlock = document.querySelector(".brand-title-block");
     if (!titleBlock) return null;
@@ -1730,12 +1486,7 @@
   }
 
   function openAddSheet(r) {
-    const sheet = ensureInvoiceSheet();
-    sheet.open(r, ({ type, qty }) => {
-      const item = buildCartItem(r, type);
-      const current = window.cigarOSCart?.getItemQty?.(item) || 0;
-      window.cigarOSCart?.setQty?.(item, current + qty);
-    });
+    window.openQuickAddSheet?.(r);
   }
 
   function renderList(rows) {
@@ -1874,6 +1625,123 @@
     applyAll();
   }
 
+  /* quick add glass sheet */
+  (() => {
+    const overlay = document.getElementById("qaOverlay");
+    if (!overlay) return;
+
+    const stickPill = document.getElementById("qaStickPill");
+    const boxPill = document.getElementById("qaBoxPill");
+
+    const stickPriceEl = document.getElementById("qaStickPrice");
+    const boxPriceEl = document.getElementById("qaBoxPrice");
+
+    const stickQtyEl = document.getElementById("qaStickQty");
+    const boxQtyEl = document.getElementById("qaBoxQty");
+    const totalEl = document.getElementById("qaTotal");
+
+    const stickMinus = document.getElementById("qaStickMinus");
+    const stickPlus = document.getElementById("qaStickPlus");
+    const boxMinus = document.getElementById("qaBoxMinus");
+    const boxPlus = document.getElementById("qaBoxPlus");
+
+    const cancelBtn = document.getElementById("qaCancel");
+    const addBtn = document.getElementById("qaAdd");
+
+    const qaState = {
+      row: null,
+      stickPrice: 0,
+      boxPrice: 0,
+      stickQty: 1,
+      boxQty: 0
+    };
+
+    function updateQuickAddUI() {
+      stickPriceEl.textContent = qaState.stickPrice > 0 ? `$${fmtMoney(qaState.stickPrice)}` : "—";
+      boxPriceEl.textContent = qaState.boxPrice > 0 ? `$${fmtMoney(qaState.boxPrice)}` : "—";
+
+      stickQtyEl.textContent = String(qaState.stickQty);
+
+      if (qaState.boxQty <= 0) {
+        boxQtyEl.textContent = "-";
+        boxPill.classList.add("qa-item--inactive");
+      } else {
+        boxQtyEl.textContent = String(qaState.boxQty);
+        boxPill.classList.remove("qa-item--inactive");
+      }
+
+      const total = (qaState.stickQty * qaState.stickPrice) + (qaState.boxQty * qaState.boxPrice);
+      totalEl.textContent = `$${fmtMoney(total)}`;
+    }
+
+    function openQuickAddSheet(row) {
+      qaState.row = row;
+      qaState.stickPrice = resolvePriceNumber(row);
+      qaState.boxPrice = resolveBoxMsrpNumber(row);
+      qaState.stickQty = 1;
+      qaState.boxQty = 0;
+
+      updateQuickAddUI();
+      overlay.hidden = false;
+      document.documentElement.classList.add("sheet-open");
+    }
+
+    function closeQuickAddSheet() {
+      overlay.hidden = true;
+      document.documentElement.classList.remove("sheet-open");
+    }
+
+    stickMinus?.addEventListener("click", () => {
+      qaState.stickQty = Math.max(0, qaState.stickQty - 1);
+      updateQuickAddUI();
+    });
+
+    stickPlus?.addEventListener("click", () => {
+      qaState.stickQty += 1;
+      updateQuickAddUI();
+    });
+
+    boxMinus?.addEventListener("click", () => {
+      qaState.boxQty = Math.max(0, qaState.boxQty - 1);
+      updateQuickAddUI();
+    });
+
+    boxPlus?.addEventListener("click", () => {
+      if (qaState.boxPrice <= 0) return;
+      qaState.boxQty += 1;
+      updateQuickAddUI();
+    });
+
+    cancelBtn?.addEventListener("click", closeQuickAddSheet);
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay || e.target.classList.contains("qa-backdrop")) {
+        closeQuickAddSheet();
+      }
+    });
+
+    addBtn?.addEventListener("click", () => {
+      if (!qaState.row) return;
+
+      if (qaState.stickQty > 0) {
+        const stickItem = buildCartItem(qaState.row, "stick");
+        const currentStick = window.cigarOSCart?.getItemQty?.(stickItem) || 0;
+        window.cigarOSCart?.setQty?.(stickItem, currentStick + qaState.stickQty);
+      }
+
+      if (qaState.boxQty > 0 && qaState.boxPrice > 0) {
+        const boxItem = buildCartItem(qaState.row, "box");
+        const currentBox = window.cigarOSCart?.getItemQty?.(boxItem) || 0;
+        window.cigarOSCart?.setQty?.(boxItem, currentBox + qaState.boxQty);
+      }
+
+      if (navigator.vibrate) navigator.vibrate(12);
+      closeQuickAddSheet();
+    });
+
+    window.openQuickAddSheet = openQuickAddSheet;
+  })();
+
   backBtn?.addEventListener("click", () => {
     if (history.length > 1) history.back();
     else window.location.href = "/pos/cigars/";
@@ -1928,7 +1796,6 @@
     if (e.key === "Escape") {
       closeBandsSheet();
       if (filterModal) filterModal.close();
-      if (invoiceSheet) invoiceSheet.close();
     }
   });
 
