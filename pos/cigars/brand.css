@@ -1046,7 +1046,7 @@ html[data-theme="light"] .qa-pill{
 }
 
 .qa-item--inactive .qa-item-price{
-  color:rgba(255,255,255,.28);
+  color:rgba(255,255,255,.36);
 }
 
 html[data-theme="light"] .qa-item--inactive .qa-item-price{
