@@ -260,7 +260,11 @@
     const titleText = normStr(titleEl ? titleEl.textContent : row.textContent);
     const vitolaText = normStr(vitolaEl ? vitolaEl.textContent : "");
     const priceText = normStr(priceEl ? (priceEl.getAttribute("data-price") || priceEl.textContent) : "");
-    const msrp = priceText ? parsePriceFromText(priceText) : parsePriceFromText(row.textContent);
+
+    // Important:
+    // Do NOT parse fallback price from full row text.
+    // Brand rows like "1964 Belicoso Maduro" can otherwise become fake price 1964.
+    const msrp = priceText ? parsePriceFromText(priceText) : 0;
 
     const item = {
       type: "cigar",
@@ -327,7 +331,7 @@
 
     const name = normStr(nameEl ? nameEl.textContent : "");
     const vitola = normStr(vitolaEl ? vitolaEl.textContent : "");
-    const msrp = parsePriceFromText(priceEl ? priceEl.textContent : modal.textContent);
+    const msrp = parsePriceFromText(priceEl ? priceEl.textContent : "");
     const url = toAbsUrl(linkEl ? linkEl.getAttribute("href") || "" : "");
 
     return name ? { type: "cigar", brand: "", line: "", name, vitola, msrp, url } : null;
@@ -370,9 +374,9 @@
   function looksLikePlusButton(btn) {
     if (!btn) return false;
 
-    // Ignore brand page qty steppers.
-    // Those are already handled directly by /pos/cigars/brand.js via cigarOSCart.setQty().
-    if (btn.closest(".brand-row-qty")) return false;
+    // Ignore brand page add buttons entirely.
+    // /pos/cigars/brand.js handles these through the glass quick-add sheet.
+    if (btn.closest(".brand-row")) return false;
 
     const text = normStr(btn.textContent).replace(/\s+/g, "");
     const aria = normStr(btn.getAttribute("aria-label")).toLowerCase();
