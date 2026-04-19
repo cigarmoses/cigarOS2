@@ -318,6 +318,12 @@
   }
 
 function resolvePriceNumber(r) {
+  console.log("PRICE DEBUG", {
+    msrp: r?.msrp,
+    strength: r?.strength,
+    row: r
+  });
+
   const raw = getField(r, ["msrp"]);
   const parsed = parseMoneyValue(raw);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
