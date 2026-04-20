@@ -1,791 +1,216 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="format-detection" content="telephone=no,email=no,address=no" />
-  <title>POS</title>
-
-  <link rel="stylesheet" href="/css/type.css?v=24" />
-  <link rel="stylesheet" href="/pos/pos.css?v=24" />
-
-  <style>
-    :root{
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-
-      --bg:#071226;
-      --bg2:#0b1a35;
-      --glass:rgba(255,255,255,.10);
-      --glass-2:rgba(255,255,255,.08);
-      --glass-3:rgba(255,255,255,.06);
-      --stroke:rgba(255,255,255,.14);
-      --stroke-soft:rgba(255,255,255,.08);
-      --text:#ffffff;
-      --muted:rgba(255,255,255,.68);
-      --muted-2:rgba(255,255,255,.52);
-      --shadow:0 18px 60px rgba(0,0,0,.32);
-      --shadow-soft:0 12px 34px rgba(0,0,0,.22);
-      --highlight:rgba(255,255,255,.22);
-      --danger:#ff453a;
-      --blue-glow:rgba(76,124,255,.22);
-    }
-
-    html[data-theme="light"]{
-      --bg:#eef3fb;
-      --bg2:#f7f9fd;
-      --glass:rgba(255,255,255,.72);
-      --glass-2:rgba(255,255,255,.58);
-      --glass-3:rgba(255,255,255,.42);
-      --stroke:rgba(15,23,42,.08);
-      --stroke-soft:rgba(15,23,42,.05);
-      --text:#101828;
-      --muted:rgba(16,24,40,.66);
-      --muted-2:rgba(16,24,40,.48);
-      --shadow:0 16px 44px rgba(15,23,42,.10);
-      --shadow-soft:0 10px 24px rgba(15,23,42,.08);
-      --highlight:rgba(255,255,255,.75);
-      --blue-glow:rgba(118,157,255,.14);
-    }
-
-    *{ box-sizing:border-box; }
-    html,body{ min-height:100%; }
-
-    body{
-      margin:0;
-      color:var(--text);
-      font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      background:
-        radial-gradient(1200px 760px at 18% -4%, rgba(80,132,255,.26), transparent 58%),
-        radial-gradient(900px 620px at 100% 8%, rgba(61,201,255,.12), transparent 54%),
-        radial-gradient(700px 500px at 50% 100%, rgba(42,92,204,.14), transparent 56%),
-        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
-      background-attachment: fixed;
-    }
-
-    .pos-page{
-      width:min(430px, calc(100% - 22px));
-      margin:0 auto;
-      padding:calc(10px + var(--safe-top)) 0 calc(120px + var(--safe-bottom));
-      min-height:100dvh;
-      position:relative;
-    }
-
-    .glass-pill,
-    .glass-circle,
-    .glass-card,
-    .glass-panel,
-    .glass-dock{
-      position:relative;
-      overflow:hidden;
-      backdrop-filter:blur(24px) saturate(1.15);
-      -webkit-backdrop-filter:blur(24px) saturate(1.15);
-    }
-
-    .glass-pill::before,
-    .glass-circle::before,
-    .glass-card::before,
-    .glass-panel::before,
-    .glass-dock::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      border-radius:inherit;
-      box-shadow:inset 0 1px 0 var(--highlight), inset 0 0 0 1px var(--stroke-soft);
-    }
-
-    .pos-topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:14px;
-    }
-
-    .pos-back-wrap,
-    .pos-theme-wrap{
-      flex:0 0 auto;
-      display:flex;
-      align-items:center;
-    }
-
-    .pos-back{
-      width:42px;
-      height:42px;
-      border:0;
-      padding:0;
-      border-radius:999px;
-      background:var(--glass-3);
-      color:var(--text);
-      display:grid;
-      place-items:center;
-      box-shadow:var(--shadow-soft);
-      cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
-    }
-
-    .pos-back svg{
-      width:22px;
-      height:22px;
-      display:block;
-    }
-
-    .pos-topbar-spacer{
-      flex:1 1 auto;
-    }
-
-    #theme-toggle{
-      position:relative;
-      width:52px;
-      height:32px;
-      border:0;
-      padding:0;
-      border-radius:999px;
-      background:var(--glass-2);
-      box-shadow:var(--shadow-soft);
-      cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
-    }
-
-    #theme-toggle .track{
-      position:absolute;
-      inset:0;
-      border-radius:999px;
-    }
-
-    #theme-toggle .knob{
-      position:absolute;
-      top:3px;
-      left:3px;
-      width:26px;
-      height:26px;
-      border-radius:999px;
-      background:rgba(255,255,255,.96);
-      color:#0b1323;
-      display:grid;
-      place-items:center;
-      box-shadow:0 4px 12px rgba(0,0,0,.18);
-      transition:transform .25s ease;
-    }
-
-    #theme-toggle .icon-sun,
-    #theme-toggle .icon-moon{
-      position:absolute;
-      width:13px;
-      height:13px;
-    }
-
-    #theme-toggle .icon-moon{ display:none; }
-
-    html[data-theme="dark"] #theme-toggle .knob{
-      transform:translateX(20px);
-    }
-
-    html[data-theme="dark"] #theme-toggle .icon-sun{ display:none; }
-    html[data-theme="dark"] #theme-toggle .icon-moon{ display:block; }
-
-    .pos-hero{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:14px;
-      margin-bottom:16px;
-      padding:4px 2px 0;
-    }
-
-    .pos-title-wrap{
-      min-width:0;
-      flex:1 1 auto;
-    }
-
-    .pos-title{
-      margin:0;
-      font:900 52px/.90 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      letter-spacing:-.06em;
-      color:var(--text);
-      text-shadow:0 1px 0 rgba(255,255,255,.05);
-    }
-
-    .pos-subtitle{
-      margin-top:8px;
-      font:600 14px/1.25 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      color:var(--muted-2);
-      letter-spacing:-.01em;
-    }
-
-    .pos-cart-btn{
-      position:relative;
-      width:46px;
-      height:46px;
-      border-radius:999px;
-      background:var(--glass-3);
-      display:grid;
-      place-items:center;
-      color:var(--text);
-      text-decoration:none;
-      box-shadow:var(--shadow-soft);
-      flex:0 0 auto;
-      -webkit-tap-highlight-color:transparent;
-    }
-
-    .pos-cart-btn img{
-      width:24px;
-      height:24px;
-      object-fit:contain;
-      display:block;
-    }
-
-    .pos-cart-badge{
-      position:absolute;
-      top:-2px;
-      right:-1px;
-      min-width:18px;
-      height:18px;
-      padding:0 5px;
-      border-radius:999px;
-      background:var(--danger);
-      color:#fff;
-      font:800 11px/18px "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      text-align:center;
-      box-shadow:0 8px 18px rgba(255,69,58,.28);
-    }
-
-    .pos-grid{
-      display:grid !important;
-      grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
-      gap:14px !important;
-      align-items:stretch;
-    }
-
-    .pos-card{
-      position:relative;
-      display:flex;
-      flex-direction:column;
-      min-height:188px;
-      padding:16px;
-      border-radius:30px;
-      text-decoration:none;
-      color:var(--text);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.05) 100%);
-      box-shadow:var(--shadow);
-      isolation:isolate;
-    }
-
-    .pos-card::after{
-      content:"";
-      position:absolute;
-      inset:auto -18% -18% auto;
-      width:110px;
-      height:110px;
-      border-radius:50%;
-      background:radial-gradient(circle, var(--blue-glow) 0%, transparent 68%);
-      pointer-events:none;
-      z-index:0;
-    }
-
-    .pos-card > *{
-      position:relative;
-      z-index:1;
-    }
-
-    .pos-card-icon{
-      width:60px;
-      height:60px;
-      display:grid;
-      place-items:center;
-      margin-bottom:18px;
-      flex:0 0 auto;
-      filter:drop-shadow(0 8px 18px rgba(0,0,0,.18));
-    }
-
-    .pos-card-icon img{
-      width:56px;
-      height:56px;
-      object-fit:contain;
-      display:block;
-    }
-
-    .pos-card-icon .icon-dark,
-    .pos-card-icon .icon-light{
-      display:none;
-    }
-
-    html[data-theme="dark"] .pos-card-icon .icon-dark{ display:block !important; }
-    html[data-theme="light"] .pos-card-icon .icon-light{ display:block !important; }
-
-    .pos-card-title{
-      font:900 22px/1.02 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      letter-spacing:-.045em;
-      color:var(--text);
-    }
-
-    .pos-card-sub{
-      margin-top:8px;
-      font:500 14px/1.24 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      color:var(--muted);
-      max-width:15ch;
-    }
-
-    .pos-card-arrow{
-      margin-top:auto;
-      padding-top:20px;
-      display:flex;
-      justify-content:flex-end;
-      align-items:center;
-      color:var(--muted-2);
-      font:900 22px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-    }
-
-    .pos-open-tabs{
-      margin-top:16px;
-      display:block;
-      border-radius:32px;
-      padding:18px;
-      text-decoration:none;
-      color:var(--text);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.11) 0%, rgba(255,255,255,.06) 100%);
-      box-shadow:var(--shadow);
-      position:relative;
-      overflow:hidden;
-    }
-
-    .pos-open-tabs::after{
-      content:"";
-      position:absolute;
-      top:-30px;
-      right:-20px;
-      width:160px;
-      height:160px;
-      border-radius:50%;
-      background:radial-gradient(circle, rgba(96,152,255,.16) 0%, transparent 68%);
-      pointer-events:none;
-    }
-
-    .pos-open-tabs-head{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:14px;
-      position:relative;
-      z-index:1;
-    }
-
-    .pos-open-tabs-copy{
-      min-width:0;
-      flex:1 1 auto;
-    }
-
-    .pos-open-tabs-title{
-      font:900 28px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      letter-spacing:-.05em;
-      color:var(--text);
-    }
-
-    .pos-open-tabs-sub{
-      margin-top:8px;
-      font:500 14px/1.24 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      color:var(--muted);
-      max-width:25ch;
-    }
-
-    .pos-open-tabs-icon{
-      width:52px;
-      height:52px;
-      flex:0 0 52px;
-      border-radius:18px;
-      background:rgba(255,255,255,.08);
-      display:grid;
-      place-items:center;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
-    }
-
-    .pos-open-tabs-icon img{
-      width:30px;
-      height:30px;
-      object-fit:contain;
-      display:block;
-    }
-
-    .pos-open-tabs-meta{
-      margin-top:18px;
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-      gap:10px;
-      position:relative;
-      z-index:1;
-    }
-
-    .pos-open-tabs-stat{
-      min-height:82px;
-      border-radius:22px;
-      background:rgba(255,255,255,.08);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
-      padding:12px 14px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-    }
-
-    .pos-open-tabs-stat-label{
-      font:800 11px/1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color:var(--muted-2);
-    }
-
-    .pos-open-tabs-stat-value{
-      margin-top:8px;
-      font:900 32px/.92 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      letter-spacing:-.05em;
-      color:var(--text);
-    }
-
-    .pos-open-tabs-foot{
-      margin-top:14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      position:relative;
-      z-index:1;
-    }
-
-    .pos-open-tabs-note{
-      font:700 12px/1.1 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      color:var(--muted-2);
-      letter-spacing:.02em;
-    }
-
-    .pos-open-tabs-arrow{
-      color:var(--muted-2);
-      font:900 22px/1 "SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-    }
-
-    .pos-bottom-bar{
-      position:fixed;
-      left:0;
-      right:0;
-      bottom:0;
-      z-index:1000;
-      padding:0 12px calc(10px + env(safe-area-inset-bottom));
-      pointer-events:none;
-    }
-
-    .pos-bottom-bar-inner{
-      width:min(430px, 100%);
-      margin:0 auto;
-      display:grid;
-      grid-template-columns:repeat(4, minmax(0, 1fr));
-      gap:8px;
-      padding:10px;
-      border-radius:32px;
-      background:rgba(10,18,34,.56);
-      box-shadow:0 18px 44px rgba(0,0,0,.28);
-      pointer-events:auto;
-    }
-
-    html[data-theme="light"] .pos-bottom-bar-inner{
-      background:rgba(255,255,255,.68);
-    }
-
-    .pos-bottom-btn{
-      min-height:56px;
-      border-radius:22px;
-      border:0;
-      background:transparent;
-      text-decoration:none;
-      color:var(--text);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:6px;
-      font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      font-size:10px;
-      font-weight:800;
-      letter-spacing:.045em;
-      text-transform:uppercase;
-      line-height:1;
-      appearance:none;
-      -webkit-appearance:none;
-      -moz-appearance:none;
-      transition:transform .16s ease, background .16s ease;
-      cursor:pointer;
-      position:relative;
-      -webkit-tap-highlight-color:transparent;
-    }
-
-    .pos-bottom-btn span{
-      font-family:inherit;
-      font-size:inherit;
-      font-weight:inherit;
-      letter-spacing:inherit;
-      text-transform:inherit;
-      line-height:1;
-    }
-
-    .pos-bottom-btn:hover{
-      background:rgba(255,255,255,.08);
-    }
-
-    html[data-theme="light"] .pos-bottom-btn:hover{
-      background:rgba(15,23,42,.05);
-    }
-
-    .pos-bottom-btn:active{
-      transform:scale(.965);
-    }
-
-    .pos-bottom-btn img{
-      width:22px;
-      height:22px;
-      display:block;
-      object-fit:contain;
-    }
-
-    .pos-bottom-badge{
-      position:absolute;
-      top:6px;
-      right:11px;
-      min-width:18px;
-      height:18px;
-      padding:0 5px;
-      border-radius:999px;
-      background:#ff3b30;
-      color:#fff;
-      display:grid;
-      place-items:center;
-      font-size:10px;
-      line-height:1;
-      font-weight:800;
-      box-shadow:0 6px 14px rgba(255,59,48,.28);
-    }
-
-    @media (max-width:390px){
-      .pos-page{
-        width:calc(100% - 18px);
-        padding-bottom:calc(114px + var(--safe-bottom));
-      }
-
-      .pos-title{
-        font-size:46px;
-      }
-
-      .pos-subtitle{
-        font-size:13px;
-      }
-
-      .pos-grid{
-        gap:12px !important;
-      }
-
-      .pos-card{
-        min-height:178px;
-        padding:15px;
-        border-radius:28px;
-      }
-
-      .pos-card-title{
-        font-size:20px;
-      }
-
-      .pos-card-sub{
-        font-size:13px;
-      }
-
-      .pos-open-tabs{
-        border-radius:28px;
-        padding:16px;
-      }
-
-      .pos-open-tabs-title{
-        font-size:25px;
-      }
-
-      .pos-open-tabs-stat{
-        min-height:78px;
-        border-radius:20px;
-      }
-
-      .pos-open-tabs-stat-value{
-        font-size:29px;
-      }
-
-      .pos-back,
-      .pos-cart-btn{
-        width:40px;
-        height:40px;
-      }
-
-      #theme-toggle{
-        width:50px;
-        height:30px;
-      }
-
-      #theme-toggle .knob{
-        width:24px;
-        height:24px;
-      }
-
-      html[data-theme="dark"] #theme-toggle .knob{
-        transform:translateX(20px);
-      }
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+<title>POS</title>
+
+<style>
+:root{
+  --bg:#0b1323;
+  --glass:rgba(255,255,255,.08);
+  --glassBorder:rgba(255,255,255,.10);
+  --text:#fff;
+  --muted:rgba(255,255,255,.6);
+}
+
+html[data-theme="light"]{
+  --bg:#eef2f7;
+  --glass:rgba(255,255,255,.65);
+  --glassBorder:rgba(0,0,0,.08);
+  --text:#0b1220;
+  --muted:rgba(0,0,0,.5);
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system, SF Pro Display, sans-serif;
+}
+
+/* ===== Layout ===== */
+
+.wrap{
+  width:min(430px,100%);
+  margin:auto;
+  padding:20px 16px 100px;
+}
+
+/* ===== Header ===== */
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.btn{
+  width:42px;
+  height:42px;
+  border-radius:999px;
+  background:var(--glass);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--glassBorder);
+  display:grid;
+  place-items:center;
+}
+
+.title{
+  font-size:48px;
+  font-weight:900;
+  letter-spacing:-.04em;
+  margin:10px 0 12px;
+}
+
+/* ===== Grid ===== */
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+/* ===== Cards ===== */
+
+.card{
+  border-radius:24px;
+  padding:18px;
+  background:var(--glass);
+  backdrop-filter:blur(28px);
+  border:1px solid var(--glassBorder);
+  box-shadow:0 20px 40px rgba(0,0,0,.25);
+  min-height:150px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.card h2{
+  font-size:22px;
+  margin:0;
+}
+
+.arrow{
+  text-align:right;
+  font-size:26px;
+  opacity:.6;
+}
+
+/* ===== Open Tabs ===== */
+
+.tabs{
+  margin-top:18px;
+  border-radius:24px;
+  padding:18px;
+  background:var(--glass);
+  backdrop-filter:blur(28px);
+  border:1px solid var(--glassBorder);
+  box-shadow:0 20px 40px rgba(0,0,0,.25);
+}
+
+.tabs h2{
+  margin:0 0 12px;
+  font-size:26px;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.stat{
+  border-radius:16px;
+  padding:14px;
+  background:rgba(255,255,255,.05);
+  text-align:center;
+}
+
+.stat strong{
+  font-size:26px;
+  display:block;
+}
+
+/* ===== Bottom Bar ===== */
+
+.bottom{
+  position:fixed;
+  bottom:10px;
+  left:0;
+  right:0;
+}
+
+.bottom-inner{
+  margin:auto;
+  width:min(430px,100%);
+  padding:10px;
+  border-radius:26px;
+  background:rgba(0,0,0,.4);
+  backdrop-filter:blur(30px);
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+
+.nav{
+  text-align:center;
+  font-size:11px;
+}
+</style>
 </head>
 
-<body class="pos-home">
-  <main class="pos-page">
-    <header class="pos-topbar">
-      <div class="pos-back-wrap">
-        <button type="button" class="pos-back glass-circle" aria-label="Back" onclick="history.length > 1 ? history.back() : window.location.href='/'">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-          </svg>
-        </button>
-      </div>
+<body>
 
-      <div class="pos-topbar-spacer" aria-hidden="true"></div>
+<div class="wrap">
 
-      <div class="pos-theme-wrap">
-        <button id="theme-toggle" class="glass-pill" type="button" aria-label="Toggle theme" aria-pressed="true">
-          <span class="track" aria-hidden="true"></span>
-          <span class="knob" aria-hidden="true">
-            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
-              <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-                <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
-              </g>
-            </svg>
-            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
-            </svg>
-          </span>
-        </button>
-      </div>
-    </header>
+  <div class="top">
+    <div class="btn">←</div>
+    <div class="btn">☾</div>
+  </div>
 
-    <section class="pos-hero">
-      <div class="pos-title-wrap">
-        <h1 class="pos-title">POS</h1>
-        <div class="pos-subtitle">Fast checkout for cigars, products, and saved tabs.</div>
-      </div>
+  <div class="title">POS</div>
 
-      <a href="/pos/invoice/" class="pos-cart-btn glass-circle" aria-label="Invoice">
-        <img src="/uxui/bottombar/cart.svg" alt="">
-        <span class="pos-cart-badge" data-cart-badge hidden>0</span>
-      </a>
-    </section>
-
-    <section class="pos-grid">
-      <a href="/pos/cigars/" class="pos-card glass-card">
-        <div class="pos-card-icon">
-          <img class="icon-dark" src="/uxui/darkmode/darkmodecigars.png" alt="">
-          <img class="icon-light" src="/uxui/lightmode/lightmodecigars.png" alt="">
-        </div>
-        <div class="pos-card-title">Cigars</div>
-        <div class="pos-card-sub">Browse brands and add sticks</div>
-        <div class="pos-card-arrow">›</div>
-      </a>
-
-      <a href="/pos/products/" class="pos-card glass-card">
-        <div class="pos-card-icon">
-          <img class="icon-dark" src="/uxui/darkmode/darkmodeotherproducts.png" alt="">
-          <img class="icon-light" src="/uxui/lightmode/lightmodeotherproducts.png" alt="">
-        </div>
-        <div class="pos-card-title">Other Products</div>
-        <div class="pos-card-sub">Drinks, food, accessories, and more</div>
-        <div class="pos-card-arrow">›</div>
-      </a>
-    </section>
-
-    <a href="/pos/opentabs/" class="pos-open-tabs glass-panel">
-      <div class="pos-open-tabs-head">
-        <div class="pos-open-tabs-copy">
-          <div class="pos-open-tabs-title">Open Tabs</div>
-          <div class="pos-open-tabs-sub">Today and customer-linked saved orders.</div>
-        </div>
-
-        <div class="pos-open-tabs-icon" aria-hidden="true">
-          <img src="/uxui/opentabs/opentabs.jpeg" alt="">
-        </div>
-      </div>
-
-      <div class="pos-open-tabs-meta">
-        <div class="pos-open-tabs-stat">
-          <div class="pos-open-tabs-stat-label">Today</div>
-          <div class="pos-open-tabs-stat-value" id="openTabsTodayCount">0</div>
-        </div>
-
-        <div class="pos-open-tabs-stat">
-          <div class="pos-open-tabs-stat-label">Orders</div>
-          <div class="pos-open-tabs-stat-value" id="openTabsOrdersCount">0</div>
-        </div>
-      </div>
-
-      <div class="pos-open-tabs-foot">
-        <div class="pos-open-tabs-note">View active and saved tabs</div>
-        <div class="pos-open-tabs-arrow">›</div>
-      </div>
-    </a>
-  </main>
-
-  <nav class="pos-bottom-bar" aria-label="Primary">
-    <div class="pos-bottom-bar-inner glass-dock">
-      <button type="button" class="pos-bottom-btn" id="posBottomSearchBtn" aria-label="Search">
-        <img src="/uxui/bottombar/search.svg" alt="">
-        <span>Search</span>
-      </button>
-
-      <a class="pos-bottom-btn" href="/" aria-label="Home">
-        <img src="/uxui/bottombar/home.svg" alt="">
-        <span>Home</span>
-      </a>
-
-      <a class="pos-bottom-btn" href="/pos/favorites/" aria-label="Favorites">
-        <img src="/uxui/bottombar/favorites.svg" alt="">
-        <span>Favorites</span>
-      </a>
-
-      <a class="pos-bottom-btn" href="/pos/invoice/" aria-label="Cart">
-        <img src="/uxui/bottombar/cart.svg" alt="">
-        <span>Cart</span>
-        <span class="pos-bottom-badge" data-cart-badge hidden>0</span>
-      </a>
+  <div class="grid">
+    <div class="card">
+      <h2>Cigars</h2>
+      <div class="arrow">›</div>
     </div>
-  </nav>
 
-  <script src="/pos/cart.js?v=24" defer></script>
-  <script src="/pos/pos.js?v=24" defer></script>
-  <script>
-    (() => {
-      const root = document.documentElement;
-      const toggle = document.getElementById("theme-toggle");
-      const saved = localStorage.getItem("theme") || "dark";
+    <div class="card">
+      <h2>Other Products</h2>
+      <div class="arrow">›</div>
+    </div>
+  </div>
 
-      function applyTheme(theme) {
-        const next = theme === "light" ? "light" : "dark";
-        root.setAttribute("data-theme", next);
-        localStorage.setItem("theme", next);
-        if (toggle) toggle.setAttribute("aria-pressed", String(next === "dark"));
-      }
+  <div class="tabs">
+    <h2>Open Tabs</h2>
 
-      applyTheme(saved);
+    <div class="stats">
+      <div class="stat">
+        Today
+        <strong>0</strong>
+      </div>
+      <div class="stat">
+        Orders
+        <strong>0</strong>
+      </div>
+    </div>
 
-      toggle?.addEventListener("click", () => {
-        const current = root.getAttribute("data-theme") || "dark";
-        applyTheme(current === "dark" ? "light" : "dark");
-      });
+    <div class="arrow">›</div>
+  </div>
 
-      document.getElementById("posBottomSearchBtn")?.addEventListener("click", () => {
-        if (typeof window.openGlobalSearch === "function") {
-          window.openGlobalSearch();
-        }
-      });
-    })();
-  </script>
+</div>
+
+<div class="bottom">
+  <div class="bottom-inner">
+    <div class="nav">Search</div>
+    <div class="nav">Home</div>
+    <div class="nav">Favorites</div>
+    <div class="nav">Cart</div>
+  </div>
+</div>
+
 </body>
 </html>
