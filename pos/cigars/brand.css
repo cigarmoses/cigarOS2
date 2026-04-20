@@ -605,10 +605,6 @@ html[data-theme="light"] .row-ico{
   margin-top:1px;
 }
 
-.brand-row-sub{
-  display:none;
-}
-
 .brand-row-right{
   display:flex;
   flex-direction:column;
@@ -1297,5 +1293,73 @@ html[data-theme="light"] .row-ico{
 
   .brand-row-msrp{
     font-size:16px;
+  }
+/* =========================
+   BRAND ROW FIXES
+========================= */
+
+/* show vitola/subtitle again */
+.brand-row-sub{
+  display:block !important;
+  margin-top:4px;
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:500;
+  line-height:1.1;
+  letter-spacing:-.01em;
+  color:var(--muted2);
+}
+
+/* make MSRP match the rest of the UI */
+.brand-row-msrp{
+  font-family:var(--font-display) !important;
+  font-size:18px !important;
+  font-weight:700 !important;
+  letter-spacing:-.03em;
+  line-height:1;
+  color:var(--text);
+}
+
+/* smaller green add button */
+.qty-btn{
+  width:26px !important;
+  height:26px !important;
+  font-size:16px !important;
+  font-weight:700 !important;
+  box-shadow:0 8px 16px rgba(0,0,0,.18);
+}
+
+/* keep right side aligned nicely */
+.brand-row-right{
+  gap:10px;
+  width:78px;
+  min-width:78px;
+}
+
+/* slightly tighten title block */
+.brand-row-title{
+  line-height:1.05;
+}
+
+/* mobile */
+@media (max-width:390px){
+  .brand-row-sub{
+    display:block !important;
+    font-size:13px;
+  }
+
+  .brand-row-msrp{
+    font-size:17px !important;
+  }
+
+  .qty-btn{
+    width:24px !important;
+    height:24px !important;
+    font-size:15px !important;
+  }
+
+  .brand-row-right{
+    width:72px;
+    min-width:72px;
   }
 }
