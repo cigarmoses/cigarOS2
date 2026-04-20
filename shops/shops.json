@@ -2536,8 +2536,8 @@
   },
   {
     "name": "Emerson’s Cigars Chesapeake",
-    "slug": "emerson’scigarschesapeake",
-    "logoKey": "emerson’scigarschesapeake",
+    "slug": "emersonscigarschesapeake",
+    "logoKey": "emersonscigarschesapeake",
     "address1": "1412 Greenbrier Parkway #124",
     "city": "Chesapeake",
     "state": "Virginia",
@@ -2575,8 +2575,8 @@
   },
   {
     "name": "Emerson’s Cigars Hampton",
-    "slug": "emerson’scigarshampton",
-    "logoKey": "emerson’scigarshampton",
+    "slug": "emersonscigarshampton",
+    "logoKey": "emersonscigarshampton",
     "address1": "4310 East Claiborne Square",
     "city": "Hampton",
     "state": "Virginia",
@@ -2613,9 +2613,9 @@
     }
   },
   {
-    "name": "Emerson’s Cigar at Maker’s Craft",
-    "slug": "emerson’scigaratmaker’scraft",
-    "logoKey": "emerson’scigaratmaker’scraft",
+    "name": "Emerson’s Cigars at Maker’s Craft",
+    "slug": "emersonscigarsatmakerscraft",
+    "logoKey": "emersonscigarsatmakerscraft",
     "address1": "735 E 23Rd St",
     "city": "Norfolk",
     "state": "Virginia",
