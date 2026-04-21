@@ -1485,9 +1485,13 @@
     };
   }
 
-  function openAddSheet(r) {
-    window.openQuickAddSheet?.(r);
-  }
+function openAddSheet(r) {
+  const stickItem = buildCartItem(r, "stick");
+  const currentQty = window.cigarOSCart?.getItemQty?.(stickItem) || 0;
+  window.cigarOSCart?.setQty?.(stickItem, currentQty + 1);
+
+  if (navigator.vibrate) navigator.vibrate(12);
+}
 
   function renderList(rows) {
     if (!listEl) return;
