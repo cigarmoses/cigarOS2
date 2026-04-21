@@ -1859,12 +1859,42 @@
       return needles.includes(rm);
     });
 
-    state.rowsAll = (exact.length ? exact : fuzzy.length ? fuzzy : manufacturerFallback).map((r) => ({
-      ...r,
-      wrapper_shade: resolveShade(r),
-    }));
+let chosenRows = [];
 
-    setBrandHeader();
+if (exact.length) {
+  chosenRows = exact;
+} else if (fuzzy.length) {
+  chosenRows = fuzzy;
+} else if (manufacturerFallback.length) {
+  chosenRows = manufacturerFallback;
+} else {
+  // 🔥 NEW: last resort — show ANYTHING that loosely matches
+  chosenRows = rows.filter((r) => {
+    const brand = normalizeLoose(resolveBrandVal(r));
+    const query = normalizeLoose(state.brandQuery);
+
+    return brand.includes(query) || query.includes(brand);
+  });
+}
+
+// 🚨 FINAL SAFETY NET (THIS IS THE KEY FIX)
+if (!chosenRows.length) {
+  console.warn("[brand.js] No matches found, showing ALL rows as fallback");
+  chosenRows = rows;
+}
+
+state.rowsAll = chosenRows.map((r) => ({
+  ...r,
+  wrapper_shade: resolveShade(r),
+}));
+
+// ✅ DEBUG LOGS — ADD HERE
+console.log("Brand:", state.brand);
+console.log("Rows found:", state.rowsAll.length);
+console.log("First row brand:", state.rowsAll[0]?.brand);
+console.log("Raw brand field:", state.rowsAll[0]?.brand_name || state.rowsAll[0]?.brand);
+
+setBrandHeader();
 
     if (!state.rowsAll.length) {
       listEl.innerHTML = `<div class="empty">No cigars found for ${esc(brandDisplayName())}</div>`;
