@@ -612,31 +612,6 @@ html[data-theme="light"] .open-tabs-empty{
   box-shadow:0 12px 26px rgba(15,26,44,.08);
 }
 
-@media (max-width:390px){
-  .open-tabs-page{
-    width:calc(100% - 18px);
-  }
-
-  .open-tabs-title{
-    font-size:42px;
-  }
-
-  .open-tabs-topbar{
-    grid-template-columns:22px 1fr 46px;
-  }
-
-  .open-tabs-back,
-  .open-tabs-spacer{
-    width:22px;
-    height:22px;
-  }
-
-  .open-tabs-back svg{
-    width:22px;
-    height:22px;
-  }
-}
-
 /* =========================================================
    UNIVERSAL SITE TOPBAR
    ========================================================= */
@@ -684,8 +659,8 @@ html[data-theme="light"] .open-tabs-empty{
 
 .uos-toggle{
   position: relative;
-  width: 48px;
-  height: 28px;
+  width: 52px;
+  height: 32px;
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 999px;
   background: rgba(255,255,255,.10);
@@ -702,50 +677,64 @@ html[data-theme="light"] .open-tabs-empty{
 
 .uos-knob{
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #fff;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: transparent;
   color: #0b1323;
   display: grid;
   place-items: center;
   transition: transform .25s ease;
-  box-shadow: 0 3px 10px rgba(0,0,0,.16);
+  box-shadow: none;
 }
 
 .uos-sun,
 .uos-moon{
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 26px;
+  height: 26px;
+  display: block;
 }
 
 .uos-moon{
-  display: none;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));
 }
 
+/* default */
+.uos-sun{ display: none; }
+.uos-moon{ display: block; }
+
+/* dark */
 html[data-theme="dark"] .uos-knob{
   transform: translateX(20px);
 }
-
 html[data-theme="dark"] .uos-sun{
   display: none;
 }
-
 html[data-theme="dark"] .uos-moon{
   display: block;
 }
 
+/* light */
 html[data-theme="light"] .uos-back{
   color: #101828;
 }
-
 html[data-theme="light"] .uos-toggle{
   border: 1px solid rgba(15,26,44,.08);
   background: rgba(255,255,255,.96);
   box-shadow: 0 10px 24px rgba(15,26,44,.06);
+}
+html[data-theme="light"] .uos-knob{
+  transform: translateX(0);
+}
+html[data-theme="light"] .uos-sun{
+  display: block;
+}
+html[data-theme="light"] .uos-moon{
+  display: none;
 }
 
 /* =========================================================
@@ -830,8 +819,8 @@ html[data-theme="dark"] .pos-topbar .topbar-btn{
 .mode-toggle,
 .appearance-toggle{
   position: relative;
-  width: 48px;
-  height: 28px;
+  width: 52px;
+  height: 32px;
   border: 0;
   padding: 0;
   margin: 0;
@@ -843,9 +832,8 @@ html[data-theme="dark"] .pos-topbar .topbar-btn{
 .theme-toggle-track,
 .mode-toggle-track,
 .appearance-toggle-track{
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   border-radius: 999px;
   background: rgba(255,255,255,.12);
 }
@@ -860,16 +848,16 @@ html[data-theme="light"] .appearance-toggle-track{
 .mode-toggle-thumb,
 .appearance-toggle-thumb{
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 22px;
-  height: 22px;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
-  background: #fff;
+  background: transparent;
   display: grid;
   place-items: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,.12);
-  transition: transform .2s ease, background-color .2s ease;
+  box-shadow: none;
+  transition: transform .25s ease, background-color .25s ease;
 }
 
 html[data-theme="dark"] .theme-toggle.is-dark .theme-toggle-thumb,
@@ -978,15 +966,15 @@ html[data-theme="dark"] .appearance-toggle.is-dark .appearance-toggle-thumb{
   .theme-toggle,
   .mode-toggle,
   .appearance-toggle{
-    width:48px;
-    height:28px;
+    width:50px;
+    height:30px;
   }
 
   .theme-toggle-thumb,
   .mode-toggle-thumb,
   .appearance-toggle-thumb{
-    width:22px;
-    height:22px;
+    width:24px;
+    height:24px;
   }
 
   html[data-theme="dark"] .theme-toggle.is-dark .theme-toggle-thumb,
@@ -1019,16 +1007,26 @@ html[data-theme="dark"] .appearance-toggle.is-dark .appearance-toggle-thumb{
   }
 
   .uos-toggle{
-    width: 46px;
-    height: 27px;
+    width: 50px;
+    height: 30px;
   }
 
   .uos-knob{
-    width: 21px;
-    height: 21px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .uos-sun,
+  .uos-moon{
+    width: 24px;
+    height: 24px;
   }
 
   html[data-theme="dark"] .uos-knob{
-    transform: translateX(19px);
+    transform: translateX(20px);
+  }
+
+  html[data-theme="light"] .uos-knob{
+    transform: translateX(0);
   }
 }
