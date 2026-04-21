@@ -1170,7 +1170,7 @@
     }
   },
   {
-    "name": "Cigar, Cigars Sarasota University at Parkway",
+    "name": "Cigar Cigars Sarasota University at Parkway",
     "slug": "cigarcigarssarasotauniversityatparkway",
     "logoKey": "cigarcigarssarasotauniversityatparkway",
     "address1": "6396 North Lockwood Ridge Road",
@@ -1326,9 +1326,9 @@
     }
   },
   {
-    "name": "Iwan Ries & Co.",
-    "slug": "iwanriesandco",
-    "logoKey": "iwanriesandco",
+    "name": "Iwan Ries",
+    "slug": "iwanries",
+    "logoKey": "iwanries",
     "address1": "19 S. Wabash Ave.",
     "city": "Chicago",
     "state": "Illinois",
