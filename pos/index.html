@@ -180,13 +180,15 @@
 
     .pos-theme-btn .icon-sun,
     .pos-theme-btn .icon-moon{
-      position:absolute;
-      width:13px;
-      height:13px;
+    position:absolute;
+    width:16px;
+    height:16px;
+    object-fit:contain;
     }
 
-    .pos-theme-btn .icon-moon{
-      display:none;
+   .pos-theme-btn .icon-moon{
+   filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+   display:none;
     }
 
     html[data-theme="dark"] .pos-theme-btn .knob{
@@ -195,10 +197,6 @@
 
     html[data-theme="dark"] .pos-theme-btn .icon-sun{
       display:none;
-    }
-
-    html[data-theme="dark"] .pos-theme-btn .icon-moon{
-      display:block;
     }
 
     .pos-head{
@@ -670,9 +668,7 @@
               <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
             </g>
           </svg>
-          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
-          </svg>
+          <img class="icon-moon" src="/uxui/moon.svg" alt="" />
         </span>
       </button>
     </header>
