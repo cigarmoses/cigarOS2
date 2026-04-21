@@ -164,41 +164,46 @@
     }
 
     .pos-theme-btn .knob{
-      position:absolute;
-      top:3px;
-      left:3px;
-      width:26px;
-      height:26px;
-      border-radius:999px;
-      background:#fff;
-      color:#0b1323;
-      box-shadow:0 4px 12px rgba(0,0,0,.18);
-      transition:transform .25s ease;
-      display:grid;
-      place-items:center;
-    }
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:26px;
+  height:26px;
+  border-radius:999px;
+  background:#fff;
+  color:#0b1323;
+  box-shadow:0 4px 12px rgba(0,0,0,.18);
+  transition:transform .25s ease;
+  display:grid;
+  place-items:center;
+}
 
-    .pos-theme-btn .icon-sun,
-    .pos-theme-btn .icon-moon{
-    position:absolute;
-    width:16px;
-    height:16px;
-    object-fit:contain;
-    }
+.pos-theme-btn .icon-sun,
+.pos-theme-btn .icon-moon{
+  position:absolute;
+  width:16px;
+  height:16px;
+  object-fit:contain;
+}
 
-   .pos-theme-btn .icon-moon{
-   filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
-   display:none;
-    }
+/* Moon styling */
+.pos-theme-btn .icon-moon{
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+}
 
-    html[data-theme="dark"] .pos-theme-btn .knob{
-      transform:translateX(20px);
-    }
+/* DARK MODE */
+html[data-theme="dark"] .pos-theme-btn .icon-sun{
+  display:none;
+}
 
-    html[data-theme="dark"] .pos-theme-btn .icon-sun{
-      display:none;
-    }
+html[data-theme="dark"] .pos-theme-btn .icon-moon{
+  display:block;
+}
 
+html[data-theme="dark"] .pos-theme-btn .knob{
+  transform:translateX(20px);
+}
+    
     .pos-head{
       display:flex;
       align-items:flex-start;
