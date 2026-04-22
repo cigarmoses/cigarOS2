@@ -588,17 +588,16 @@
 
       for (const val of set) {
         const label = `${key}: ${val}`;
-        chips.push(`
-          <div class="af-chip" data-chip-key="${escapeHtml(key)}" data-chip-val="${escapeHtml(val)}">
-            <span>${escapeHtml(label)}</span>
-            <button class="af-chip__x" type="button" aria-label="Remove ${escapeHtml(label)}">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </button>
-        </div>
-        `);
+chips.push(`
+  <div class="af-chip" data-chip-key="${escapeHtml(key)}" data-chip-val="${escapeHtml(val)}">
+    <span>${escapeHtml(label)}</span>
+    <button class="af-chip__x" type="button" aria-label="Remove ${escapeHtml(label)}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+`);
       }
     }
 
@@ -1724,10 +1723,14 @@
     renderAll();
   });
 
-  openBtn?.addEventListener("click", () => {
-    syncLocalFromGlobal();
-    openModal();
-  });
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn");
+  if (!btn) return;
+
+  e.preventDefault();
+  syncLocalFromGlobal();
+  openModal();
+});
 
   document.addEventListener("click", (e) => {
     if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
