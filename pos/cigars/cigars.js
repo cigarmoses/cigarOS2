@@ -1723,20 +1723,21 @@ chips.push(`
     renderAll();
   });
 
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest("#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn");
-  if (!btn) return;
-
-  e.preventDefault();
-  syncLocalFromGlobal();
-  openModal();
-});
-
   document.addEventListener("click", (e) => {
     if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
     const t = e.target;
     if (!(t instanceof Element)) return;
 
+   document.addEventListener("click", (e) => {
+  const btn = e.target.closest("#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn");
+  if (!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+  syncLocalFromGlobal();
+  openModal();
+});
+     
     if (t.closest("[data-fm-close]")) {
       closeModal();
       return;
