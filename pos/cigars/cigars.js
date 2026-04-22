@@ -1,3 +1,5 @@
+Replace your entire /pos/cigars/cigars.js with this full file:
+
 /* /pos/cigars/cigars.js
    POS Cigars (Main)
    - Loads cigar sheet CSV
@@ -9,6 +11,7 @@
    - Shape info buttons
    - Include Cubans toggle
    - Smart favorite brands rail
+   - Hardened filter-button binding
 */
 (() => {
   "use strict";
@@ -116,28 +119,28 @@
           strength: new Set(),
         },
       };
-    } else {
-      const g = window.__CIGAR_FILTER_STATE__;
-      if (!g.filters) g.filters = {};
-      for (const k of [
-        "manufacturer",
-        "brand",
-        "shade",
-        "vitola",
-        "length",
-        "ring",
-        "shape",
-        "strength",
-      ]) {
-        const v = g.filters[k];
-        if (v instanceof Set) continue;
-        if (Array.isArray(v)) g.filters[k] = new Set(v);
-        else if (v && typeof v === "object") g.filters[k] = new Set(Object.keys(v));
-        else g.filters[k] = new Set();
-      }
-      if (typeof g.q !== "string") g.q = String(g.q ?? "");
-      g.includeCubans = !!g.includeCubans;
+      return;
     }
+    const g = window.__CIGAR_FILTER_STATE__;
+    if (!g.filters) g.filters = {};
+    for (const k of [
+      "manufacturer",
+      "brand",
+      "shade",
+      "vitola",
+      "length",
+      "ring",
+      "shape",
+      "strength",
+    ]) {
+      const v = g.filters[k];
+      if (v instanceof Set) continue;
+      if (Array.isArray(v)) g.filters[k] = new Set(v);
+      else if (v && typeof v === "object") g.filters[k] = new Set(Object.keys(v));
+      else g.filters[k] = new Set();
+    }
+    if (typeof g.q !== "string") g.q = String(g.q ?? "");
+    g.includeCubans = !!g.includeCubans;
   }
   function norm(v) {
     return String(v ?? "").trim().replace(/\s+/g, " ");
@@ -313,7 +316,8 @@
     if (q) {
       const cigarName = norm(getField(row, ["Cigar", "Cigar Name", "Name", "cigar", "cigar_name"]));
       const line = norm(getField(row, ["Line", "line"]));
-      const hay = `${manufacturer} ${brand} ${line} ${cigarName} ${vitola} ${shade} ${strength} ${shape} ${ring} ${length}`.toLowerCase();
+      const hay =
+        `${manufacturer} ${brand} ${line} ${cigarName} ${vitola} ${shade} ${strength} ${shape} ${ring} ${length}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -1468,6 +1472,43 @@
     renderTabs();
     renderList();
   }
+  function openFiltersFromButton(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    syncLocalFromGlobal();
+    openModal();
+  }
+  function bindFilterButton(root = document) {
+    const buttons = root.querySelectorAll?.(
+      "#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn, [data-open-filters]"
+    );
+    if (!buttons || !buttons.length) return;
+    buttons.forEach((btn) => {
+      if (btn.__cigarsFilterBound) return;
+      btn.__cigarsFilterBound = true;
+      btn.addEventListener("click", openFiltersFromButton, { passive: false });
+      btn.addEventListener("pointerup", openFiltersFromButton, { passive: false });
+      btn.addEventListener("touchend", openFiltersFromButton, { passive: false });
+    });
+  }
+  function observeForFilterButton() {
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (const n of m.addedNodes) {
+          if (!(n instanceof Element)) continue;
+          bindFilterButton(n);
+          if (
+            n.matches?.("#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn, [data-open-filters]")
+          ) {
+            bindFilterButton(document);
+          }
+        }
+      }
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+  }
   searchInput?.addEventListener("input", () => {
     ensureGlobalState();
     window.__CIGAR_FILTER_STATE__.q = (searchInput.value || "").toString();
@@ -1476,12 +1517,11 @@
   document.addEventListener("click", (e) => {
     const target = e.target;
     if (!(target instanceof Element)) return;
-    const filterBtn = target.closest("#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn");
+    const filterBtn = target.closest(
+      "#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn, [data-open-filters]"
+    );
     if (filterBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      syncLocalFromGlobal();
-      openModal();
+      openFiltersFromButton(e);
       return;
     }
     if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
@@ -1540,6 +1580,8 @@
       ensureGlobalState();
       ensureModal();
       if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
+      bindFilterButton(document);
+      observeForFilterButton();
       if (Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length) {
         DATA_ROWS = window.__CIGAR_SHEET_ROWS__;
       } else {
