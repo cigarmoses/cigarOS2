@@ -1,11 +1,8 @@
-Replace your entire /pos/cigars/cigars.js with this full file:
-
 /* /pos/cigars/cigars.js
    POS Cigars (Main)
    - Loads cigar sheet CSV
    - Brands grid
-   - Search + filter bottom sheet
-   - Horizontal tab filter modal
+   - Search + filter modal
    - Vitola + Shape ordering
    - Vitola/shape SVG icons in filters
    - Shape info buttons
@@ -245,15 +242,16 @@ Replace your entire /pos/cigars/cigars.js with this full file:
       if (v.includes("parejo")) return "/uxui/cigaricons/robusto.svg";
       if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
       if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
-      if (v.includes("pyramid") || v.includes("piramide") || v.includes("piramides")) return "/uxui/cigaricons/torpedo.svg";
+      if (v.includes("pyramid") || v.includes("piramide") || v.includes("piramides")) {
+        return "/uxui/cigaricons/torpedo.svg";
+      }
       if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
       if (v.includes("culebra")) return "/uxui/cigaricons/lonsdale.svg";
     }
     return "";
   }
   function getShapeInfo(value = "") {
-    const k = slugify(value);
-    return SHAPE_INFO[k] || "";
+    return SHAPE_INFO[slugify(value)] || "";
   }
   function getField(r, keys) {
     for (const k of keys) {
@@ -308,9 +306,7 @@ Replace your entire /pos/cigars/cigars.js with this full file:
     ];
     for (const [key, val] of checks) {
       const set = f[key];
-      if (set instanceof Set && set.size) {
-        if (!set.has(val)) return false;
-      }
+      if (set instanceof Set && set.size && !set.has(val)) return false;
     }
     const q = norm(g?.q).toLowerCase();
     if (q) {
@@ -401,11 +397,7 @@ Replace your entire /pos/cigars/cigars.js with this full file:
         count: 0,
       };
     }
-    const orderedNames = [
-      ...favorites,
-      ...recents,
-      ...STARTER_RAIL_BRANDS,
-    ];
+    const orderedNames = [...favorites, ...recents, ...STARTER_RAIL_BRANDS];
     const deduped = [];
     const seen = new Set();
     orderedNames.forEach((name) => {
@@ -567,9 +559,13 @@ Replace your entire /pos/cigars/cigars.js with this full file:
           const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
           return `
             <a href="${href}" aria-label="${escapeHtml(c.brand)}" data-brand-link="${escapeHtml(c.brand)}">
-              <img src="${escapeHtml(icon)}" alt="${escapeHtml(c.brand)}"
-                   loading="lazy" decoding="async"
-                   onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';" />
+              <img
+                src="${escapeHtml(icon)}"
+                alt="${escapeHtml(c.brand)}"
+                loading="lazy"
+                decoding="async"
+                onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';"
+              />
               <div class="category-name">${escapeHtml(c.brand)}</div>
             </a>
           `;
@@ -601,7 +597,7 @@ Replace your entire /pos/cigars/cigars.js with this full file:
               </div>
               <div class="brand-row-right">
                 <div class="brand-row-msrp">${escapeHtml(String(c.count))}</div>
-                <div style="font:700 20px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui; color: rgba(255,255,255,.55);">›</div>
+                <div style="font:700 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui; color: rgba(255,255,255,.55);">›</div>
               </div>
             </a>
           `;
@@ -1489,8 +1485,6 @@ Replace your entire /pos/cigars/cigars.js with this full file:
       if (btn.__cigarsFilterBound) return;
       btn.__cigarsFilterBound = true;
       btn.addEventListener("click", openFiltersFromButton, { passive: false });
-      btn.addEventListener("pointerup", openFiltersFromButton, { passive: false });
-      btn.addEventListener("touchend", openFiltersFromButton, { passive: false });
     });
   }
   function observeForFilterButton() {
@@ -1498,11 +1492,10 @@ Replace your entire /pos/cigars/cigars.js with this full file:
       for (const m of mutations) {
         for (const n of m.addedNodes) {
           if (!(n instanceof Element)) continue;
-          bindFilterButton(n);
-          if (
-            n.matches?.("#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn, [data-open-filters]")
-          ) {
+          if (n.matches?.("#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn, [data-open-filters]")) {
             bindFilterButton(document);
+          } else {
+            bindFilterButton(n);
           }
         }
       }
@@ -1554,7 +1547,6 @@ Replace your entire /pos/cigars/cigars.js with this full file:
       renderCubanToggle();
       renderTabs();
       renderList();
-      return;
     }
   });
   document.addEventListener("input", (e) => {
@@ -1579,9 +1571,11 @@ Replace your entire /pos/cigars/cigars.js with this full file:
     try {
       ensureGlobalState();
       ensureModal();
-      if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
       bindFilterButton(document);
       observeForFilterButton();
+      if (searchInput) {
+        searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
+      }
       if (Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length) {
         DATA_ROWS = window.__CIGAR_SHEET_ROWS__;
       } else {
@@ -1595,7 +1589,9 @@ Replace your entire /pos/cigars/cigars.js with this full file:
       renderAll();
     } catch (err) {
       console.error("cigars.js init error:", err);
-      if (listRoot) listRoot.innerHTML = `<div class="cigars-empty">Failed to load cigars.</div>`;
+      if (listRoot) {
+        listRoot.innerHTML = `<div class="cigars-empty">Failed to load cigars.</div>`;
+      }
     }
   }
   init();
