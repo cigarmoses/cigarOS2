@@ -1,5 +1,3 @@
-Yes — here is the cleaned full new /pos/cigars/brand.css with that broken duplicate block removed and the mobile section closed correctly.
-
 /* /pos/cigars/brand.css */
 :root{
   --safe-top: env(safe-area-inset-top, 0px);
