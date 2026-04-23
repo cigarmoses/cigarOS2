@@ -2,14 +2,15 @@
    POS Cigars (Main)
    - Loads cigar sheet CSV
    - Brands grid
-   - Search + filter modal
+   - Search + filter bottom sheet
+   - Horizontal tab filter modal
    - Vitola + Shape ordering
    - Vitola/shape SVG icons in filters
    - Shape info buttons
    - Include Cubans toggle
    - Smart favorite brands rail
+   - Hardened filter-button binding
 */
-
 (() => {
   "use strict";
 
@@ -20,13 +21,14 @@
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const searchInput = $("#cigars-search-input");
-  const openBtn = $("#btn-open-filters");
   const listRoot = $("#cigarsList");
   const appliedRoot = $("#cigarsAppliedFilters");
   const favBrandsRoot = $("#favBrandsScroll");
 
   let modalRoot = $("#filter-modal");
-  let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__) ? window.__CIGAR_SHEET_ROWS__ : [];
+  let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__)
+    ? window.__CIGAR_SHEET_ROWS__
+    : [];
 
   const STARTER_RAIL_BRANDS = [
     "Padron",
@@ -67,21 +69,6 @@
     "Pyramid",
     "Perfecto",
     "Culebra",
-  ];
-
-  const WRAPPER_SHADE_ORDER = [
-    "Natural",
-    "Connecticut",
-    "Maduro",
-    "Oscuro",
-    "Connecticut Shade",
-    "EMS",
-    "Claro",
-    "Colorado",
-    "Colorado Claro",
-    "Colorado Maduro",
-    "Mixed",
-    "Candela",
   ];
 
   const SHAPE_INFO = {
@@ -148,7 +135,7 @@
     const g = window.__CIGAR_FILTER_STATE__;
     if (!g.filters) g.filters = {};
 
-    for (const key of [
+    for (const k of [
       "manufacturer",
       "brand",
       "shade",
@@ -158,10 +145,11 @@
       "shape",
       "strength",
     ]) {
-      const v = g.filters[key];
+      const v = g.filters[k];
       if (v instanceof Set) continue;
-      if (Array.isArray(v)) g.filters[key] = new Set(v);
-      else g.filters[key] = new Set();
+      if (Array.isArray(v)) g.filters[k] = new Set(v);
+      else if (v && typeof v === "object") g.filters[k] = new Set(Object.keys(v));
+      else g.filters[k] = new Set();
     }
 
     if (typeof g.q !== "string") g.q = String(g.q ?? "");
@@ -183,7 +171,7 @@
 
   function uniqSorted(values) {
     const set = new Set();
-    for (const v of values || []) {
+    for (const v of values) {
       const s = norm(v);
       if (s && s !== "-") set.add(s);
     }
@@ -291,9 +279,7 @@
       if (v.includes("parejo")) return "/uxui/cigaricons/robusto.svg";
       if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
       if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
-      if (v.includes("pyramid") || v.includes("piramide") || v.includes("piramides")) {
-        return "/uxui/cigaricons/torpedo.svg";
-      }
+      if (v.includes("pyramid") || v.includes("piramide") || v.includes("piramides")) return "/uxui/cigaricons/torpedo.svg";
       if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
       if (v.includes("culebra")) return "/uxui/cigaricons/lonsdale.svg";
     }
@@ -302,7 +288,8 @@
   }
 
   function getShapeInfo(value = "") {
-    return SHAPE_INFO[slugify(value)] || "";
+    const k = slugify(value);
+    return SHAPE_INFO[k] || "";
   }
 
   function getField(r, keys) {
@@ -329,7 +316,6 @@
     if (isTruthyLike(cubanField)) return true;
     if (origin.includes("cuba") || origin.includes("cuban")) return true;
     if (brand.includes("(cuban)") || manufacturer.includes("(cuban)")) return true;
-
     return false;
   }
 
@@ -368,7 +354,9 @@
 
     for (const [key, val] of checks) {
       const set = f[key];
-      if (set instanceof Set && set.size && !set.has(val)) return false;
+      if (set instanceof Set && set.size) {
+        if (!set.has(val)) return false;
+      }
     }
 
     const q = norm(g?.q).toLowerCase();
@@ -419,6 +407,7 @@
 
         if (c === "\r" && text[i + 1] === "\n") i += 2;
         else i += 1;
+
         continue;
       }
 
@@ -466,25 +455,29 @@
   function getSmartRailBrands(summary) {
     const favorites = getFavoriteBrands();
     const recents = getRecentBrands();
+
     const summaryByNorm = new Map(summary.map((b) => [norm(b.brand).toLowerCase(), b]));
 
     function findBrandObject(name) {
       const target = norm(name).toLowerCase();
       if (summaryByNorm.has(target)) return summaryByNorm.get(target);
 
-      return (
-        summary.find((b) => {
-          const brand = norm(b.brand).toLowerCase();
-          return brand === target || brand.includes(target) || target.includes(brand);
-        }) || {
-          brand: name,
-          manufacturer: "",
-          count: 0,
-        }
-      );
+      return summary.find((b) => {
+        const brand = norm(b.brand).toLowerCase();
+        return brand === target || brand.includes(target) || target.includes(brand);
+      }) || {
+        brand: name,
+        manufacturer: "",
+        count: 0,
+      };
     }
 
-    const orderedNames = [...favorites, ...recents, ...STARTER_RAIL_BRANDS];
+    const orderedNames = [
+      ...favorites,
+      ...recents,
+      ...STARTER_RAIL_BRANDS,
+    ];
+
     const deduped = [];
     const seen = new Set();
 
@@ -544,38 +537,36 @@
 
     const brands = getSmartRailBrands(summary);
 
-    favBrandsRoot.innerHTML = brands
-      .map((b) => {
-        const href = `/pos/cigars/brand/?brand=${encodeURIComponent(b.brand)}`;
-        const icon = iconPathFor("brand", b.brand);
-        const favorite = isFavoriteBrand(b.brand);
-        const recent = getRecentBrands().some(
-          (r) => norm(r).toLowerCase() === norm(b.brand).toLowerCase()
-        );
+    favBrandsRoot.innerHTML = brands.map((b) => {
+      const href = `/pos/cigars/brand/?brand=${encodeURIComponent(b.brand)}`;
+      const icon = iconPathFor("brand", b.brand);
+      const favorite = isFavoriteBrand(b.brand);
+      const recent = getRecentBrands().some(
+        (r) => norm(r).toLowerCase() === norm(b.brand).toLowerCase()
+      );
 
-        return `
-          <a
-            class="fav-brand-card${favorite ? " is-favorite" : ""}${recent ? " is-recent" : ""}"
-            href="${href}"
-            data-brand="${escapeHtml(b.brand)}"
-            aria-label="${escapeHtml(b.brand)}"
-            title="Tap to open · Long press to favorite"
-          >
-            <div class="fav-brand-icon">
-              <img
-                src="${escapeHtml(icon)}"
-                alt="${escapeHtml(b.brand)}"
-                loading="lazy"
-                decoding="async"
-                onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';"
-              />
-              ${favorite ? `<span class="fav-brand-badge" aria-hidden="true">★</span>` : ``}
-            </div>
-            <div class="fav-brand-name">${escapeHtml(b.brand)}</div>
-          </a>
-        `;
-      })
-      .join("");
+      return `
+        <a
+          class="fav-brand-card${favorite ? " is-favorite" : ""}${recent ? " is-recent" : ""}"
+          href="${href}"
+          data-brand="${escapeHtml(b.brand)}"
+          aria-label="${escapeHtml(b.brand)}"
+          title="Tap to open · Long press to favorite"
+        >
+          <div class="fav-brand-icon">
+            <img
+              src="${escapeHtml(icon)}"
+              alt="${escapeHtml(b.brand)}"
+              loading="lazy"
+              decoding="async"
+              onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';"
+            />
+            ${favorite ? `<span class="fav-brand-badge" aria-hidden="true">★</span>` : ``}
+          </div>
+          <div class="fav-brand-name">${escapeHtml(b.brand)}</div>
+        </a>
+      `;
+    }).join("");
 
     bindSmartRailEvents(favBrandsRoot);
   }
@@ -672,25 +663,18 @@
 
     listRoot.innerHTML = `
       <div class="brands-grid">
-        ${summary
-          .map((c) => {
-            const icon = iconPathFor("brand", c.brand);
-            const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
-
-            return `
-              <a href="${href}" aria-label="${escapeHtml(c.brand)}" data-brand-link="${escapeHtml(c.brand)}">
-                <img
-                  src="${escapeHtml(icon)}"
-                  alt="${escapeHtml(c.brand)}"
-                  loading="lazy"
-                  decoding="async"
-                  onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';"
-                />
-                <div class="category-name">${escapeHtml(c.brand)}</div>
-              </a>
-            `;
-          })
-          .join("")}
+        ${summary.map((c) => {
+          const icon = iconPathFor("brand", c.brand);
+          const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
+          return `
+            <a href="${href}" aria-label="${escapeHtml(c.brand)}" data-brand-link="${escapeHtml(c.brand)}">
+              <img src="${escapeHtml(icon)}" alt="${escapeHtml(c.brand)}"
+                   loading="lazy" decoding="async"
+                   onerror="this.style.opacity='.18'; this.style.filter='grayscale(1)';" />
+              <div class="category-name">${escapeHtml(c.brand)}</div>
+            </a>
+          `;
+        }).join("")}
       </div>
     `;
 
@@ -707,33 +691,25 @@
 
     listRoot.innerHTML = `
       <div class="cigars-results">
-        ${summary
-          .map((c) => {
-            const icon = iconPathFor("brand", c.brand);
-            const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
-
-            return `
-              <a class="brand-row" href="${href}" style="text-decoration:none; color:inherit;" data-brand-link="${escapeHtml(c.brand)}">
-                <img
-                  class="row-ico"
-                  src="${escapeHtml(icon)}"
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  onerror="this.style.display='none';"
-                />
-                <div class="brand-row-left">
-                  <div class="brand-row-title">${escapeHtml(c.brand)}</div>
-                  <div class="brand-row-sub">${escapeHtml(c.manufacturer || "—")}</div>
-                </div>
-                <div class="brand-row-right">
-                  <div class="brand-row-msrp">${escapeHtml(String(c.count))}</div>
-                  <div style="font:700 20px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui; color: rgba(255,255,255,.55);">›</div>
-                </div>
-              </a>
-            `;
-          })
-          .join("")}
+        ${summary.map((c) => {
+          const icon = iconPathFor("brand", c.brand);
+          const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
+          return `
+            <a class="brand-row" href="${href}" style="text-decoration:none; color:inherit;" data-brand-link="${escapeHtml(c.brand)}">
+              <img class="row-ico" src="${escapeHtml(icon)}" alt=""
+                   loading="lazy" decoding="async"
+                   onerror="this.style.display='none';" />
+              <div class="brand-row-left">
+                <div class="brand-row-title">${escapeHtml(c.brand)}</div>
+                <div class="brand-row-sub">${escapeHtml(c.manufacturer || "—")}</div>
+              </div>
+              <div class="brand-row-right">
+                <div class="brand-row-msrp">${escapeHtml(String(c.count))}</div>
+                <div style="font:700 20px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui; color: rgba(255,255,255,.55);">›</div>
+              </div>
+            </a>
+          `;
+        }).join("")}
       </div>
     `;
 
@@ -787,6 +763,21 @@
       return a.localeCompare(b);
     });
   }
+
+  const WRAPPER_SHADE_ORDER = [
+    "Natural",
+    "Connecticut",
+    "Maduro",
+    "Oscuro",
+    "Connecticut Shade",
+    "EMS",
+    "Claro",
+    "Colorado",
+    "Colorado Claro",
+    "Colorado Maduro",
+    "Mixed",
+    "Candela",
+  ];
 
   function orderWrapperShades(values) {
     const list = uniqSorted(values);
@@ -881,27 +872,32 @@
         backdrop-filter:blur(28px) saturate(1.18);
         -webkit-backdrop-filter:blur(28px) saturate(1.18);
       }
+
       .fm.fm--tabs .fm__header{
         position:relative;
         padding:20px 18px 10px;
         border-bottom:none;
         background:transparent;
       }
+
       .fm.fm--tabs .fm__header-top{
         display:block;
         margin-bottom:0;
       }
+
       .fm.fm--tabs .fm__header-left{
         display:block;
         min-width:0;
         padding-right:64px;
       }
+
       .fm.fm--tabs .fm__title{
         margin:0;
         font-weight:800;
         letter-spacing:-.035em;
         color:#0f1a2c;
       }
+
       .fm.fm--tabs .fm__close{
         position:absolute;
         top:18px;
@@ -923,15 +919,18 @@
         appearance:none;
         z-index:4;
       }
+
       .fm.fm--tabs .fm__close svg{
         width:18px;
         height:18px;
       }
+
       .fm.fm--tabs .fm__body{
         display:block;
         padding:0;
         overflow:hidden;
       }
+
       .fm.fm--tabs .fm__tabbar{
         display:flex;
         gap:10px;
@@ -941,9 +940,11 @@
         scrollbar-width:none;
         scroll-behavior:smooth;
       }
+
       .fm.fm--tabs .fm__tabbar::-webkit-scrollbar{
         display:none;
       }
+
       .fm.fm--tabs .fm__tab{
         flex:0 0 auto;
         min-height:40px;
@@ -967,6 +968,7 @@
         white-space:nowrap;
         box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
       }
+
       .fm.fm--tabs .fm__tab.is-active{
         background:rgba(255,255,255,.92);
         color:#0f1a2c;
@@ -975,6 +977,7 @@
           0 10px 24px rgba(15,26,44,.10),
           inset 0 1px 0 rgba(255,255,255,.7);
       }
+
       .fm.fm--tabs .fm__tab-count{
         min-width:18px;
         height:18px;
@@ -987,15 +990,18 @@
         display:grid;
         place-items:center;
       }
+
       .fm.fm--tabs .fm__panel{
         display:flex;
         flex-direction:column;
         min-height:0;
         max-height:calc(88vh - 198px);
       }
+
       .fm.fm--tabs .fm__search-wrap{
         padding:0 18px 10px;
       }
+
       .fm.fm--tabs .fm__search-row{
         margin:0;
         display:grid;
@@ -1013,17 +1019,21 @@
           inset 0 1px 0 rgba(255,255,255,.58),
           0 8px 18px rgba(15,26,44,.06);
       }
+
       .fm.fm--tabs .fm__search-row svg{
         color:rgba(15,26,44,.42);
       }
+
       .fm.fm--tabs .fm__search-input{
         font-weight:500;
         font-size:17px;
         color:#0f1a2c;
       }
+
       .fm.fm--tabs .fm__search-input::placeholder{
         color:rgba(15,26,44,.36);
       }
+
       .fm.fm--tabs .fm__mic-btn{
         width:36px;
         height:36px;
@@ -1034,9 +1044,11 @@
         place-items:center;
         appearance:none;
       }
+
       .fm.fm--tabs .fm__cuban-row{
         padding:0 18px 14px;
       }
+
       .fm.fm--tabs .fm__cuban-toggle{
         border:0;
         background:transparent;
@@ -1054,6 +1066,7 @@
         letter-spacing:-.01em;
         align-self:flex-start;
       }
+
       .fm.fm--tabs .fm__cuban-check{
         width:24px;
         height:24px;
@@ -1068,16 +1081,19 @@
         flex:0 0 auto;
         box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
       }
+
       .fm.fm--tabs .fm__cuban-toggle.is-on .fm__cuban-check{
         background:#34c759;
         border-color:#34c759;
         color:#fff;
         box-shadow:0 8px 18px rgba(52,199,89,.24);
       }
+
       .fm.fm--tabs .fm__list{
         overflow:auto;
         padding:0 18px 12px;
       }
+
       .fm.fm--tabs .fm__row{
         display:grid;
         grid-template-columns:30px minmax(0,1fr) auto 150px;
@@ -1094,10 +1110,17 @@
         box-shadow:
           inset 0 1px 0 rgba(255,255,255,.56),
           0 8px 18px rgba(15,26,44,.05);
+        transition:transform .14s ease, box-shadow .14s ease, background .14s ease;
       }
+
+      .fm.fm--tabs .fm__row:active{
+        transform:scale(.992);
+      }
+
       .fm.fm--tabs .fm__row--logo{
         grid-template-columns:30px 42px minmax(0,1fr);
       }
+
       .fm.fm--tabs .fm__cb{
         width:22px;
         height:22px;
@@ -1108,15 +1131,18 @@
         place-items:center;
         box-shadow:inset 0 1px 0 rgba(255,255,255,.65);
       }
+
       .fm.fm--tabs .fm__cb.is-checked{
         background:rgba(15,122,255,.12);
         border-color:rgba(15,122,255,.42);
         color:#0f7aff;
       }
+
       .fm.fm--tabs .fm__cb svg{
         width:14px;
         height:14px;
       }
+
       .fm.fm--tabs .fm__label{
         min-width:0;
         font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
@@ -1125,6 +1151,7 @@
         letter-spacing:-.02em;
         color:#0f1a2c;
       }
+
       .fm.fm--tabs .fm__info{
         width:24px;
         height:24px;
@@ -1140,6 +1167,7 @@
         padding:0;
         appearance:none;
       }
+
       .fm.fm--tabs .fm__icon{
         width:150px;
         min-width:150px;
@@ -1149,6 +1177,7 @@
         justify-content:flex-start;
         overflow:visible;
       }
+
       .fm.fm--tabs .fm__icon img{
         height:12px;
         width:auto;
@@ -1158,9 +1187,11 @@
         transform:scaleX(-1);
         transform-origin:center;
       }
+
       .fm.fm--tabs .fm__icon img.fm__icon-robusto{
         transform:scaleX(-1) rotate(180deg);
       }
+
       .fm.fm--tabs .fm__icon--brand,
       .fm.fm--tabs .fm__icon--manufacturer{
         width:42px;
@@ -1168,6 +1199,7 @@
         height:42px;
         justify-content:center;
       }
+
       .fm.fm--tabs .fm__icon--brand img,
       .fm.fm--tabs .fm__icon--manufacturer img{
         width:36px;
@@ -1176,6 +1208,7 @@
         object-fit:contain;
         transform:none;
       }
+
       .fm.fm--tabs .fm__btn{
         font-weight:700;
         height:58px;
@@ -1183,17 +1216,20 @@
         backdrop-filter:blur(16px);
         -webkit-backdrop-filter:blur(16px);
       }
+
       .fm.fm--tabs .fm__btn--reset{
         background:rgba(15,26,44,.06);
         color:#0f1a2c;
         border:1px solid rgba(15,26,44,.06);
         box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
       }
+
       .fm.fm--tabs .fm__btn--apply{
         background:rgba(10,132,255,.92);
         color:#fff;
         box-shadow:0 14px 28px rgba(10,132,255,.22);
       }
+
       .fm.fm--tabs .fm__info-sheet{
         position:absolute;
         left:18px;
@@ -1208,9 +1244,11 @@
         padding:14px 16px;
         display:none;
       }
+
       .fm.fm--tabs .fm__info-sheet.is-open{
         display:block;
       }
+
       .fm.fm--tabs .fm__info-title{
         margin:0 0 6px;
         font-size:18px;
@@ -1218,6 +1256,7 @@
         font-weight:700;
         color:#0f1a2c;
       }
+
       .fm.fm--tabs .fm__info-text{
         margin:0;
         font-size:15px;
@@ -1225,6 +1264,7 @@
         font-weight:500;
         color:rgba(15,26,44,.72);
       }
+
       .fm.fm--tabs .fm__info-close{
         position:absolute;
         top:10px;
@@ -1242,6 +1282,7 @@
         padding:0;
         appearance:none;
       }
+
       .fm.fm--tabs .fm__actions{
         position:relative;
         z-index:2;
@@ -1249,91 +1290,111 @@
         backdrop-filter:blur(22px) saturate(1.12);
         -webkit-backdrop-filter:blur(22px) saturate(1.12);
       }
+
       .fm.fm--tabs .fm__empty{
         padding:16px 6px 10px;
         color:rgba(15,26,44,.48);
         font-size:16px;
         font-weight:500;
       }
+
       @media (max-width:430px){
         .fm.fm--tabs .fm__header{
           padding:20px 18px 10px;
         }
+
         .fm.fm--tabs .fm__close{
           top:18px;
           right:18px;
         }
+
         .fm.fm--tabs .fm__cuban-toggle{
           font-size:15px;
         }
+
         .fm.fm--tabs .fm__panel{
           max-height:calc(88vh - 194px);
         }
+
         .fm.fm--tabs .fm__row{
           grid-template-columns:28px minmax(0,1fr) auto 132px;
           gap:10px;
           min-height:56px;
           padding:10px 10px;
         }
+
         .fm.fm--tabs .fm__row--logo{
           grid-template-columns:28px 40px minmax(0,1fr);
         }
+
         .fm.fm--tabs .fm__icon{
           width:132px;
           min-width:132px;
         }
+
         .fm.fm--tabs .fm__icon img{
           max-width:104px;
           height:12px;
         }
+
         .fm.fm--tabs .fm__icon--brand,
         .fm.fm--tabs .fm__icon--manufacturer{
           width:40px;
           min-width:40px;
           height:40px;
         }
+
         .fm.fm--tabs .fm__icon--brand img,
         .fm.fm--tabs .fm__icon--manufacturer img{
           width:34px;
           height:34px;
           max-width:34px;
         }
+
         .fm.fm--tabs .fm__label{
           font-size:16px;
         }
       }
+
       @media (max-width:390px){
         .fm.fm--tabs .fm__row{
           grid-template-columns:26px minmax(0,1fr) auto 118px;
           gap:8px;
         }
+
         .fm.fm--tabs .fm__row--logo{
           grid-template-columns:26px 38px minmax(0,1fr);
         }
+
         .fm.fm--tabs .fm__icon{
           width:118px;
           min-width:118px;
         }
+
         .fm.fm--tabs .fm__icon img{
           max-width:90px;
           height:11px;
         }
+
         .fm.fm--tabs .fm__icon--brand,
         .fm.fm--tabs .fm__icon--manufacturer{
           width:38px;
           min-width:38px;
           height:38px;
         }
+
         .fm.fm--tabs .fm__icon--brand img,
         .fm.fm--tabs .fm__icon--manufacturer img{
           width:32px;
           height:32px;
           max-width:32px;
         }
+
         .fm.fm--tabs .fm__tab{
           padding:0 12px;
           font-size:14px;
         }
+
         .fm.fm--tabs .fm__cuban-toggle{
           font-size:14px;
         }
@@ -1477,75 +1538,80 @@
     const selectedSet = state.selected[key];
     const q = norm(state.activeSearch).toLowerCase();
 
-    const filtered = !q ? values : values.filter((v) => norm(v).toLowerCase().includes(q));
+    const filtered = !q
+      ? values
+      : values.filter((v) => norm(v).toLowerCase().includes(q));
 
     if (!filtered.length) {
       list.innerHTML = `<div class="fm__empty">No options found.</div>`;
       return;
     }
 
-    list.innerHTML = filtered
-      .map((v) => {
-        const label = norm(v);
-        const isSelected = selectedSet.has(label);
-        const isLogoRow = key === "manufacturer" || key === "brand";
+    list.innerHTML = filtered.map((v) => {
+      const label = norm(v);
+      const isSelected = selectedSet.has(label);
+      const isLogoRow = key === "manufacturer" || key === "brand";
 
-        const brandOrManufacturerIcon = isLogoRow ? iconPathFor(key, label) : "";
-        const cigarIcon = key === "vitola" || key === "shape" ? getCigarFilterIcon(label, key) : "";
-        const iconSrc = brandOrManufacturerIcon || cigarIcon;
+      const brandOrManufacturerIcon = isLogoRow ? iconPathFor(key, label) : "";
+      const cigarIcon =
+        key === "vitola" || key === "shape"
+          ? getCigarFilterIcon(label, key)
+          : "";
 
-        const iconClass =
-          key === "manufacturer"
-            ? "fm__icon fm__icon--manufacturer"
-            : key === "brand"
-            ? "fm__icon fm__icon--brand"
-            : "fm__icon fm__icon--cigar";
+      const iconSrc = brandOrManufacturerIcon || cigarIcon;
+      const iconClass =
+        key === "manufacturer"
+          ? "fm__icon fm__icon--manufacturer"
+          : key === "brand"
+          ? "fm__icon fm__icon--brand"
+          : "fm__icon fm__icon--cigar";
 
-        const infoBtn =
-          key === "shape" && getShapeInfo(label)
-            ? `<button class="fm__info" type="button" data-info="${escapeHtml(label)}" aria-label="About ${escapeHtml(label)}">i</button>`
-            : isLogoRow
-            ? ""
-            : `<span class="fm__info" aria-hidden="true"></span>`;
+      const infoBtn =
+        key === "shape" && getShapeInfo(label)
+          ? `<button class="fm__info" type="button" data-info="${escapeHtml(label)}" aria-label="About ${escapeHtml(label)}">i</button>`
+          : isLogoRow
+          ? ""
+          : `<span class="fm__info" aria-hidden="true"></span>`;
 
-        const cb = isSelected
-          ? `<div class="fm__cb is-checked" aria-hidden="true">
-               <svg viewBox="0 0 24 24" aria-hidden="true">
-                 <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-               </svg>
-             </div>`
-          : `<div class="fm__cb" aria-hidden="true"></div>`;
+      const cb = isSelected
+        ? `<div class="fm__cb is-checked" aria-hidden="true">
+             <svg viewBox="0 0 24 24" aria-hidden="true">
+               <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+             </svg>
+           </div>`
+        : `<div class="fm__cb" aria-hidden="true"></div>`;
 
-        const robustoClass =
-          key === "vitola" && slugify(label) === "robusto" ? " fm__icon-robusto" : "";
+      const robustoClass =
+        key === "vitola" && slugify(label) === "robusto"
+          ? " fm__icon-robusto"
+          : "";
 
-        const icon = iconSrc
-          ? `<div class="${iconClass}">
-               <img class="${robustoClass.trim()}" src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
-                    onerror="this.style.display='none';" />
-             </div>`
-          : `<div class="${iconClass}" aria-hidden="true"></div>`;
+      const icon = iconSrc
+        ? `<div class="${iconClass}">
+             <img class="${robustoClass.trim()}" src="${escapeHtml(iconSrc)}" alt="" loading="lazy" decoding="async"
+                  onerror="this.style.display='none';" />
+           </div>`
+        : `<div class="${iconClass}" aria-hidden="true"></div>`;
 
-        if (isLogoRow) {
-          return `
-            <div class="fm__row fm__row--logo ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
-              ${cb}
-              ${icon}
-              <div class="fm__label">${escapeHtml(label)}</div>
-            </div>
-          `;
-        }
-
+      if (isLogoRow) {
         return `
-          <div class="fm__row ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
+          <div class="fm__row fm__row--logo ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
             ${cb}
-            <div class="fm__label">${escapeHtml(label)}</div>
-            ${infoBtn}
             ${icon}
+            <div class="fm__label">${escapeHtml(label)}</div>
           </div>
         `;
-      })
-      .join("");
+      }
+
+      return `
+        <div class="fm__row ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
+          ${cb}
+          <div class="fm__label">${escapeHtml(label)}</div>
+          ${infoBtn}
+          ${icon}
+        </div>
+      `;
+    }).join("");
 
     $$(".fm__row", list).forEach((row) => {
       row.addEventListener("click", (e) => {
@@ -1586,7 +1652,6 @@
     const titleEl = $("#fm-info-title", modalRoot);
     const textEl = $("#fm-info-text", modalRoot);
     if (!sheet || !titleEl || !textEl) return;
-
     titleEl.textContent = title;
     textEl.textContent = text;
     sheet.classList.add("is-open");
@@ -1620,7 +1685,9 @@
     document.documentElement.classList.remove("sheet-open");
 
     window.setTimeout(() => {
-      if (!modalRoot.classList.contains("is-open")) modalRoot.hidden = true;
+      if (!modalRoot.classList.contains("is-open")) {
+        modalRoot.hidden = true;
+      }
     }, 260);
   }
 
@@ -1670,17 +1737,58 @@
     openModal();
   }
 
+  function bindFilterButton(root = document) {
+    const buttons = root.querySelectorAll?.(
+      "#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn, [data-open-filters]"
+    );
+
+    if (!buttons || !buttons.length) return;
+
+    buttons.forEach((btn) => {
+      if (btn.__cigarsFilterBound) return;
+      btn.__cigarsFilterBound = true;
+      btn.addEventListener("click", openFiltersFromButton, { passive: false });
+      btn.addEventListener("pointerup", openFiltersFromButton, { passive: false });
+      btn.addEventListener("touchend", openFiltersFromButton, { passive: false });
+    });
+  }
+
+  function observeForFilterButton() {
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (const n of m.addedNodes) {
+          if (!(n instanceof Element)) continue;
+          bindFilterButton(n);
+          if (
+            n.matches?.("#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn, [data-open-filters]")
+          ) {
+            bindFilterButton(document);
+          }
+        }
+      }
+    });
+
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
   searchInput?.addEventListener("input", () => {
     ensureGlobalState();
     window.__CIGAR_FILTER_STATE__.q = (searchInput.value || "").toString();
     renderAll();
   });
 
-  openBtn?.addEventListener("click", openFiltersFromButton);
-
   document.addEventListener("click", (e) => {
     const target = e.target;
     if (!(target instanceof Element)) return;
+
+    const filterBtn = target.closest(
+      "#btn-open-filters, .cigars-filter-btn, #cigars-filter-btn, [data-open-filters]"
+    );
+
+    if (filterBtn) {
+      openFiltersFromButton(e);
+      return;
+    }
 
     if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
 
@@ -1718,16 +1826,15 @@
       renderCubanToggle();
       renderTabs();
       renderList();
+      return;
     }
   });
 
   document.addEventListener("input", (e) => {
     if (!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
-
     const t = e.target;
     if (!(t instanceof HTMLInputElement)) return;
     if (t.id !== "fm-search-inline") return;
-
     state.activeSearch = t.value || "";
     renderList();
   });
@@ -1751,6 +1858,9 @@
       ensureModal();
 
       if (searchInput) searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
+
+      bindFilterButton(document);
+      observeForFilterButton();
 
       if (Array.isArray(window.__CIGAR_SHEET_ROWS__) && window.__CIGAR_SHEET_ROWS__.length) {
         DATA_ROWS = window.__CIGAR_SHEET_ROWS__;
