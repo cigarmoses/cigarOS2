@@ -38,27 +38,27 @@
   const MAX_RAIL_BRANDS = 8;
   const LONG_PRESS_MS = 420;
   const VITOLA_ORDER = [
-    "Corona",
     "Robusto",
     "Toro",
     "Gordo",
     "Petit Corona",
+    "Corona",
     "Corona Extra",
+     "Panetela",
     "Lonsdale",
     "Lancero",
-    "Panetela",
-    "Pantela",
     "Churchill",
     "Double Corona",
-    "Gigante",
     "Gran Corona",
+    "Gigante",
   ];
   const SHAPE_ORDER = [
     "Parejo",
     "Torpedo",
-    "Presidente",
-    "Pyramid",
     "Perfecto",
+    "Presidente",
+    "Salomon",
+    "Pyramid",
     "Culebra",
   ];
   const SHAPE_INFO = {
