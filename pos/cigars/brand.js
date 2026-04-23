@@ -44,20 +44,19 @@
   const brandSearchBtn = $("#brandSearchBtn");
 
   const VITOLA_ORDER = [
-    "Corona",
     "Robusto",
     "Toro",
     "Gordo",
     "Petit Corona",
+    "Corona",
     "Corona Extra",
+    "Panetela",
     "Lonsdale",
     "Lancero",
-    "Panetela",
-    "Pantela",
     "Churchill",
     "Double Corona",
-    "Gigante",
     "Gran Corona",
+    "Gigante",
   ];
 
   const SHAPE_ORDER = [
