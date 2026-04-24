@@ -624,6 +624,13 @@
       if (v.includes("corona extra")) return "/uxui/cigaricons/coronaextra.svg";
       if (v.includes("petit corona")) return "/uxui/cigaricons/petitcorona.svg";
       if (v.includes("corona")) return "/uxui/cigaricons/corona.svg";
+      if (v.includes("corona")) return "/uxui/cigaricons/corona.svg";
+      if (v.includes("belicoso")) return "/uxui/cigaricons/belicoso.svg";
+      if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
+      if (v.includes("figurado")) return "/uxui/cigaricons/figurado.svg";
+      if (v.includes("chisel")) return "/uxui/cigaricons/chisel.svg";
+
+       
     }
 
     if (group === "shape") {
@@ -635,6 +642,9 @@
         return "/uxui/cigaricons/pyramid.svg";}
       if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
       if (v.includes("culebra")) return "/uxui/cigaricons/culebra.svg";
+      if (v.includes("chisel")) return "/uxui/cigaricons/chisel.svg";
+      if (v.includes("belicoso")) return "/uxui/cigaricons/belicoso.svg";
+      if (v.includes("figurado")) return "/uxui/cigaricons/figurado.svg";
     }
 
     return "";
