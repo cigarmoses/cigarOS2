@@ -70,9 +70,12 @@
   const SHAPE_ORDER = [
     "Parejo",
     "Torpedo",
-    "Presidente",
     "Pyramid",
+    "Presidente",
     "Perfecto",
+    "Chisel",
+    "Belicoso",
+    "Figurado",
     "Culebra",
   ];
 
