@@ -95,12 +95,12 @@
   };
 
   const FILTER_CATEGORIES = [
-    { key: "vitola", label: "Vitolas" },
+    { key: "vitola", label: "Vitola" },
     { key: "ring", label: "Ring" },
+    { key: "shape", label: "Shape" },
+    { key: "shade", label: "Wrapper Shade" },
     { key: "length", label: "Length" },
     { key: "strength", label: "Strength" },
-    { key: "shape", label: "Shape" },
-    { key: "shade", label: "Wrap. Shade" },
   ];
 
   const DEFAULT_STICK_STOCK = 89;
