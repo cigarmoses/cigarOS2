@@ -1388,4 +1388,19 @@ html[data-theme="light"] .cb-nav-btn:hover{
   .fm__actions{
     padding-bottom:max(16px,env(safe-area-inset-bottom));
   }
+
+/* FIX — filter sheet opens */
+.fm.is-open .fm__sheet{
+  transform:translateY(0) !important;
+  opacity:1 !important;
+}
+
+.fm.is-open .fm__backdrop{
+  opacity:1 !important;
+}
+
+.fm__backdrop{
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
 }
