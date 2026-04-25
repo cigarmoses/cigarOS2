@@ -719,9 +719,22 @@
 
     const style = document.createElement("style");
     style.id = "brand-inline-filter-style";
-    style.textContent = `
-      .fm.fm--tabs .fm__sheet{
+style.textContent = `
+      #brand-filter-modal.fm{
+        z-index:99999;
+      }
+
+      #brand-filter-modal .fm__sheet{
+        left:50% !important;
+        right:auto !important;
+        width:calc(100vw - 24px) !important;
+        max-width:430px !important;
+        transform:translate(-50%, 110%) !important;
         max-height:88vh;
+      }
+
+      #brand-filter-modal.is-open .fm__sheet{
+        transform:translate(-50%, 0) !important;
       }
 
       .fm.fm--tabs .fm__header{
