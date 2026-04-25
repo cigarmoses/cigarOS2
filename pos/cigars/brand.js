@@ -627,7 +627,10 @@
       if (v.includes("corona")) return "/uxui/cigaricons/corona.svg";
       if (v.includes("belicoso")) return "/uxui/cigaricons/belicoso.svg";
       if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
+      if (v.includes("pyramid")) return "/uxui/cigaricons/pyramid.svg";
       if (v.includes("figurado")) return "/uxui/cigaricons/figurado.svg";
+      if (v.includes("salomon")) return "/uxui/cigaricons/salomon.svg";
+      if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
       if (v.includes("chisel")) return "/uxui/cigaricons/chisel.svg";
 
        
