@@ -734,11 +734,7 @@
         max-height:88vh;
       }
 
-      #brand-filter-modal.is-open .fm__sheet{
-        transform:translate(-50%, 0) !important;
-      }
-
-      #brand-filter-modal.is-open .fm__sheet{
+       #brand-filter-modal.is-open .fm__sheet{
         transform:translate(-50%, 0) !important;
       }
 
