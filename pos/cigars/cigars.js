@@ -252,6 +252,8 @@
       if (v.includes("chisel")) return "/uxui/cigaricons/chisel.svg";
       if (v.includes("cigarillo")) return "/uxui/cigaricons/cigarillo.svg";
       if (v.includes("diademas")) return "/uxui/cigaricons/diademas.svg";
+      if (v.includes("rothschild")) return "/uxui/cigaricons/rothschild.svg";
+
     }
     if (group === "shape") {
       if (v.includes("parejo")) return "/uxui/cigaricons/parejo.svg";
