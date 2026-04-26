@@ -1,5 +1,3 @@
-Paste this as the new full /pos/cigars/cigars.js:
-
 /* /pos/cigars/cigars.js
    POS Cigars (Main)
    - Loads cigar sheet CSV
