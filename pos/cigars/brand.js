@@ -632,6 +632,7 @@
       if (v.includes("salomon")) return "/uxui/cigaricons/salomon.svg";
       if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
       if (v.includes("chisel")) return "/uxui/cigaricons/chisel.svg";
+      if (v.includes("cigarillo")) return "/uxui/cigaricons/cigarillo.svg";
     }
 
     if (group === "shape") {
