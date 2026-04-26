@@ -1113,7 +1113,7 @@
 
       .fm.fm--tabs .fm__row{
         display:grid;
-        grid-template-columns:30px minmax(0,1fr) auto 150px;
+        grid-template-columns:30px minmax(0,1fr) 160px;
         gap:12px;
         align-items:center;
         min-height:58px;
@@ -1185,29 +1185,25 @@
         appearance:none;
       }
 
-      .fm.fm--tabs .fm__icon{
-        width:150px;
-        min-width:150px;
-        height:22px;
-        display:flex;
-        align-items:center;
-        justify-content:flex-start;
-        overflow:visible;
-      }
+.fm.fm--tabs .fm__icon{
+  width:160px;
+  min-width:160px;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start; /* 👈 LEFT aligned */
+  overflow:visible;
+}
 
-      .fm.fm--tabs .fm__icon img{
-        height:12px;
-        width:auto;
-        max-width:118px;
-        object-fit:contain;
-        display:block;
-        transform:scaleX(-1);
-        transform-origin:center;
-      }
+.fm.fm--tabs .fm__icon img{
+  height:28px;            /* 👈 BIGGER */
+  width:auto;
+  max-width:150px;
+  object-fit:contain;
+  display:block;
 
-      .fm.fm--tabs .fm__icon img.fm__icon-robusto{
-        transform:scaleX(-1) rotate(180deg);
-      }
+  transform:none !important;   /* 👈 🚨 KILLS ALL FLIPPING */
+}
 
       .fm.fm--tabs .fm__icon--brand,
       .fm.fm--tabs .fm__icon--manufacturer{
