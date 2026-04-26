@@ -68,6 +68,7 @@
     "Presidente",
     "Pyramid",
     "Perfecto",
+    "Chisel",
     "Culebra",
   ];
 
@@ -280,6 +281,9 @@
       if (v.includes("salomon")) return "/uxui/cigaricons/salomon.svg";
       if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
       if (v.includes("chisel")) return "/uxui/cigaricons/chisel.svg";
+      if (v.includes("cigarillo")) return "/uxui/cigaricons/cigarillo.svg";
+      if (v.includes("diademas")) return "/uxui/cigaricons/diademas.svg";
+      if (v.includes("gigante")) return "/uxui/cigaricons/gigante.svg";
     }
 
     if (group === "shape") {
@@ -292,6 +296,9 @@
       if (v.includes("culebra")) return "/uxui/cigaricons/lonsdale.svg";
       if (v.includes("belicoso")) return "/uxui/cigaricons/belicoso.svg";
       if (v.includes("figurado")) return "/uxui/cigaricons/figurado.svg";
+      if (v.includes("gigante")) return "/uxui/cigaricons/gigante.svg";
+      if (v.includes("diademas")) return "/uxui/cigaricons/diademas.svg";
+      if (v.includes("salomon")) return "/uxui/cigaricons/salomon.svg";
     }
 
     return "";
