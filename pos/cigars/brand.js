@@ -719,7 +719,8 @@
 
     const style = document.createElement("style");
     style.id = "brand-inline-filter-style";
-style.textContent = `
+
+     style.textContent = `
       #brand-filter-modal.fm{
         z-index:99999;
       }
@@ -731,6 +732,10 @@ style.textContent = `
         max-width:430px !important;
         transform:translate(-50%, 110%) !important;
         max-height:88vh;
+      }
+
+      #brand-filter-modal.is-open .fm__sheet{
+        transform:translate(-50%, 0) !important;
       }
 
       #brand-filter-modal.is-open .fm__sheet{
