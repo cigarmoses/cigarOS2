@@ -53,6 +53,8 @@
     "Double Corona",
     "Gigante",
     "Gran Corona",
+    "Torpedo", 
+    "Sampler", 
   ];
   const SHAPE_ORDER = [
     "Parejo",
