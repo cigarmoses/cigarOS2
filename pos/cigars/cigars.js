@@ -47,21 +47,26 @@
     "Corona Extra",
     "Lonsdale",
     "Lancero",
-    "Panetela",
-    "Cigarillo",
     "Churchill",
     "Double Corona",
-    "Gigante",
     "Gran Corona",
+    "Panetela",
+    "Cigarillo",
+    "Gigante",
+    "Hexagon",
+    "Laguito No 2",
   ];
   const SHAPE_ORDER = [
     "Parejo",
+    "Pigtail Parejo"
+    "Perfecto",
     "Torpedo",
     "Presidente",
+    "Salomon",
     "Pyramid",
-    "Perfecto",
     "Chisel",
     "Culebra",
+    "Gigante",
   ];
   const SHAPE_INFO = {
     parejo:
@@ -84,9 +89,9 @@
     { key: "brand", label: "Brands" },
     { key: "vitola", label: "Vitolas" },
     { key: "ring", label: "Ring" },
+    { key: "shape", label: "Shape" },
     { key: "length", label: "Length" },
     { key: "strength", label: "Strength" },
-    { key: "shape", label: "Shape" },
     { key: "shade", label: "Wrap. Shade" },
   ];
   const state = {
@@ -259,9 +264,7 @@
       if (v.includes("parejo")) return "/uxui/cigaricons/parejo.svg";
       if (v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
       if (v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
-      if (v.includes("pyramid") || v.includes("piramide") || v.includes("piramides")) {
-        return "/uxui/cigaricons/pyramid.svg";
-      }
+      if (v.includes("pyramid")) return "/uxui/cigaricons/pyramid.svg";
       if (v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
       if (v.includes("chisel")) return "/uxui/cigaricons/chisel.svg";
       if (v.includes("culebra")) return "/uxui/cigaricons/culebra.svg";
