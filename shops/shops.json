@@ -1170,45 +1170,6 @@
     }
   },
   {
-    "name": "Cigar Cigars Sarasota University at Parkway",
-    "slug": "cigarcigarssarasotauniversity",
-    "logoKey": "cigarcigarssarasotauniversity",
-    "address1": "6396 North Lockwood Ridge Road",
-    "city": "Sarasota",
-    "state": "Florida",
-    "zip": "342432531",
-    "country": "USA",
-    "phone": "215.328.0500",
-    "website": "http://www.cccigars.com",
-    "email": "arttoll98@gmail.com",
-    "instagram": "",
-    "lat": null,
-    "lng": null,
-    "hours": {
-      "mon": "",
-      "tue": "",
-      "wed": "",
-      "thu": "",
-      "fri": "",
-      "sat": "",
-      "sun": ""
-    },
-    "features": {
-      "alcohol": true,
-      "byob": false,
-      "noAlcohol": false,
-      "food": true,
-      "tvs": false,
-      "outdoorSeating": false,
-      "indoorSeating": false,
-      "quietSpace": false,
-      "liveMusic": true,
-      "privateClub": true,
-      "chain": true,
-      "taa": true
-    }
-  },
-  {
     "name": "Corona Cigar Sarasota",
     "slug": "coronacigarsarasota",
     "logoKey": "coronacigarsarasota",
