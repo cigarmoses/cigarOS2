@@ -714,339 +714,206 @@
     return state.filters[key] instanceof Set ? state.filters[key].size : 0;
   }
 
-  function ensureInjectedStyles() {
-    if ($("#brand-inline-filter-style")) return;
+Not correct — the CSS block is broken. Your .fm__row{ never closes before .fm__label.
 
-    const style = document.createElement("style");
-    style.id = "brand-inline-filter-style";
+Replace your entire ensureInjectedStyles() function with this:
 
-     style.textContent = `
-      #brand-filter-modal.fm{
-        z-index:99999;
-      }
-
-      #brand-filter-modal .fm__sheet{
-        left:50% !important;
-        right:auto !important;
-        width:calc(100vw - 24px) !important;
-        max-width:430px !important;
-        transform:translate(-50%, 110%) !important;
-        max-height:88vh;
-      }
-
-       #brand-filter-modal.is-open .fm__sheet{
-        transform:translate(-50%, 0) !important;
-      }
-
-      .fm.fm--tabs .fm__header{
-        padding:18px 18px 10px;
-        border-bottom:none;
-      }
-
-      .fm.fm--tabs .fm__header-top{
-        display:flex;
-        align-items:flex-start;
-        justify-content:space-between;
-        gap:12px;
-        margin-bottom:12px;
-      }
-
-      .fm.fm--tabs .fm__header-left{
-        display:flex;
-        flex-direction:column;
-        gap:10px;
-        min-width:0;
-        flex:1 1 auto;
-      }
-
-      .fm.fm--tabs .fm__title{
-        font-weight:800;
-      }
-
-      .fm.fm--tabs .fm__body{
-        display:block;
-        padding:0 0 0;
-        overflow:hidden;
-      }
-
-      .fm.fm--tabs .fm__tabbar{
-        display:flex;
-        gap:10px;
-        overflow:auto;
-        padding:0 18px 14px;
-        -ms-overflow-style:none;
-        scrollbar-width:none;
-      }
-
-      .fm.fm--tabs .fm__tabbar::-webkit-scrollbar{
-        display:none;
-      }
-
-      .fm.fm--tabs .fm__tab{
-        flex:0 0 auto;
-        min-height:38px;
-        padding:0 14px;
-        border-radius:999px;
-        border:1px solid rgba(15,26,44,.08);
-        background:#f4f6fa;
-        color:rgba(15,26,44,.68);
-        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-        font-size:15px;
-        font-weight:500;
-        letter-spacing:-.01em;
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        gap:8px;
-        cursor:pointer;
-        appearance:none;
-        white-space:nowrap;
-      }
-
-      .fm.fm--tabs .fm__tab.is-active{
-        background:#ffffff;
-        color:#0f1a2c;
-        border-color:rgba(15,26,44,.10);
-        box-shadow:0 10px 20px rgba(15,26,44,.06);
-      }
-
-      .fm.fm--tabs .fm__tab-count{
-        min-width:18px;
-        height:18px;
-        padding:0 6px;
-        border-radius:999px;
-        background:#e8eefc;
-        color:#5f7edc;
-        font-size:11px;
-        font-weight:600;
-        display:grid;
-        place-items:center;
-      }
-
+function ensureInjectedStyles() {
+  if ($("#brand-inline-filter-style")) return;
+  const style = document.createElement("style");
+  style.id = "brand-inline-filter-style";
+  style.textContent = `
+    #brand-filter-modal.fm{
+      z-index:99999;
+    }
+    #brand-filter-modal .fm__sheet{
+      left:50% !important;
+      right:auto !important;
+      width:calc(100vw - 24px) !important;
+      max-width:430px !important;
+      transform:translate(-50%, 110%) !important;
+      max-height:88vh;
+    }
+    #brand-filter-modal.is-open .fm__sheet{
+      transform:translate(-50%, 0) !important;
+    }
+    .fm.fm--tabs .fm__header{
+      padding:18px 18px 10px;
+      border-bottom:none;
+    }
+    .fm.fm--tabs .fm__header-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .fm.fm--tabs .fm__body{
+      display:block;
+      padding:0;
+      overflow:hidden;
+    }
+    .fm.fm--tabs .fm__tabbar{
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      padding:0 18px 14px;
+      scrollbar-width:none;
+    }
+    .fm.fm--tabs .fm__tabbar::-webkit-scrollbar{
+      display:none;
+    }
+    .fm.fm--tabs .fm__tab{
+      flex:0 0 auto;
+      min-height:38px;
+      padding:0 14px;
+      border-radius:999px;
+      border:1px solid rgba(15,26,44,.08);
+      background:#f4f6fa;
+      color:rgba(15,26,44,.68);
+      font-size:15px;
+      font-weight:600;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .fm.fm--tabs .fm__tab.is-active{
+      background:#fff;
+      color:#0f1a2c;
+      box-shadow:0 10px 20px rgba(15,26,44,.06);
+    }
+    .fm.fm--tabs .fm__panel{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      max-height:calc(88vh - 164px);
+    }
+    .fm.fm--tabs .fm__search-wrap{
+      padding:0 18px 10px;
+    }
+    .fm.fm--tabs .fm__search-row{
+      margin:0;
+    }
+    .fm.fm--tabs .fm__list{
+      overflow:auto;
+      padding:0 18px 12px;
+    }
+    .fm.fm--tabs .fm__row{
+      display:grid;
+      grid-template-columns:30px 150px 1fr;
+      gap:12px;
+      align-items:center;
+      min-height:58px;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px solid rgba(15,26,44,.08);
+      background:#fff;
+      margin-bottom:10px;
+    }
+    .fm.fm--tabs .fm__cb{
+      width:22px;
+      height:22px;
+      border-radius:7px;
+      border:2px solid rgba(15,26,44,.18);
+      background:#fff;
+      display:grid;
+      place-items:center;
+    }
+    .fm.fm--tabs .fm__cb.is-checked{
+      background:#eef2ff;
+      border-color:#8ea4eb;
+      color:#8ea4eb;
+    }
+    .fm.fm--tabs .fm__cb svg{
+      width:14px;
+      height:14px;
+    }
+    .fm.fm--tabs .fm__label{
+      grid-column:2;
+      min-width:0;
+      font-size:17px;
+      font-weight:700;
+      letter-spacing:-.02em;
+      color:#0f1a2c;
+    }
+    .fm.fm--tabs .fm__info{
+      display:none;
+    }
+    .fm.fm--tabs .fm__icon{
+      grid-column:3;
+      width:100%;
+      min-width:0;
+      height:42px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      overflow:visible;
+    }
+    .fm.fm--tabs .fm__icon img{
+      height:32px;
+      width:100%;
+      max-width:100%;
+      object-fit:contain;
+      object-position:left center;
+      display:block;
+      transform:none !important;
+    }
+    .fm.fm--tabs .fm__btn{
+      font-weight:700;
+    }
+    .fm.fm--tabs .fm__actions{
+      position:relative;
+      z-index:2;
+      background:#fff;
+    }
+    .fm.fm--tabs .fm__empty{
+      padding:16px 6px 10px;
+      color:rgba(15,26,44,.48);
+      font-size:16px;
+      font-weight:500;
+    }
+    @media (max-width:430px){
       .fm.fm--tabs .fm__panel{
-        display:flex;
-        flex-direction:column;
-        min-height:0;
-        max-height:calc(88vh - 164px);
+        max-height:calc(88vh - 160px);
       }
-
-      .fm.fm--tabs .fm__search-wrap{
-        padding:0 18px 10px;
-      }
-
-      .fm.fm--tabs .fm__search-row{
-        margin:0;
-      }
-
-      .fm.fm--tabs .fm__list{
-        overflow:auto;
-        padding:0 18px 12px;
-      }
-
       .fm.fm--tabs .fm__row{
-        display:grid;
-        grid-template-columns:30px minmax(0,1fr) auto 150px;
-        gap:12px;
-        align-items:center;
-        min-height:58px;
-        padding:10px 12px;
-        border-radius:16px;
-        border:1px solid rgba(15,26,44,.08);
-        background:#fff;
-        margin-bottom:10px;
+        grid-template-columns:28px 132px 1fr;
+        gap:10px;
+        min-height:56px;
+        padding:10px 10px;
       }
-
-      .fm.fm--tabs .fm__cb{
-        width:22px;
-        height:22px;
-        border-radius:7px;
-        border:2px solid rgba(15,26,44,.18);
-        background:#fff;
-        display:grid;
-        place-items:center;
-      }
-
-      .fm.fm--tabs .fm__cb.is-checked{
-        background:#eef2ff;
-        border-color:#8ea4eb;
-        color:#8ea4eb;
-      }
-
-      .fm.fm--tabs .fm__cb svg{
-        width:14px;
-        height:14px;
-      }
-
-      .fm.fm--tabs .fm__label{
-        min-width:0;
-        font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
-        font-size:17px;
-        font-weight:600;
-        letter-spacing:-.02em;
-        color:#0f1a2c;
-      }
-
-      .fm.fm--tabs .fm__info{
-        width:24px;
-        height:24px;
-        border:0;
-        background:transparent;
-        color:#97a0b0;
-        font-size:16px;
-        font-weight:500;
-        line-height:1;
-        display:grid;
-        place-items:center;
-        cursor:pointer;
-        padding:0;
-        appearance:none;
-      }
-
       .fm.fm--tabs .fm__icon{
-        width:150px;
-        min-width:150px;
-        height:22px;
-        display:flex;
-        align-items:center;
-        justify-content:flex-start;
-        overflow:visible;
+        height:40px;
       }
-
       .fm.fm--tabs .fm__icon img{
-        height:12px;
-        width:auto;
-        max-width:118px;
-        object-fit:contain;
-        display:block;
+        height:30px;
       }
-
-      .fm.fm--tabs .fm__search-input{
-        font-weight:500;
-      }
-
-      .fm.fm--tabs .fm__btn{
-        font-weight:600;
-      }
-
-      .fm.fm--tabs .fm__info-sheet{
-        position:absolute;
-        left:18px;
-        right:18px;
-        bottom:92px;
-        border-radius:18px;
-        background:#fff;
-        border:1px solid rgba(15,26,44,.08);
-        box-shadow:0 18px 40px rgba(15,26,44,.14);
-        padding:14px 16px;
-        display:none;
-      }
-
-      .fm.fm--tabs .fm__info-sheet.is-open{
-        display:block;
-      }
-
-      .fm.fm--tabs .fm__info-title{
-        margin:0 0 6px;
-        font-size:18px;
-        line-height:1.2;
-        font-weight:700;
-        color:#0f1a2c;
-      }
-
-      .fm.fm--tabs .fm__info-text{
-        margin:0;
-        font-size:15px;
-        line-height:1.35;
-        font-weight:500;
-        color:rgba(15,26,44,.72);
-      }
-
-      .fm.fm--tabs .fm__info-close{
-        position:absolute;
-        top:10px;
-        right:10px;
-        width:28px;
-        height:28px;
-        border:0;
-        background:transparent;
-        color:#8d96a8;
-        font-size:22px;
-        line-height:1;
-        display:grid;
-        place-items:center;
-        cursor:pointer;
-        padding:0;
-        appearance:none;
-      }
-
-      .fm.fm--tabs .fm__actions{
-        position:relative;
-        z-index:2;
-        background:#fff;
-      }
-
-      .fm.fm--tabs .fm__empty{
-        padding:16px 6px 10px;
-        color:rgba(15,26,44,.48);
+      .fm.fm--tabs .fm__label{
         font-size:16px;
-        font-weight:500;
       }
-
-      @media (max-width:430px){
-        .fm.fm--tabs .fm__header{
-          padding:18px 18px 10px;
-        }
-
-        .fm.fm--tabs .fm__panel{
-          max-height:calc(88vh - 160px);
-        }
-
-        .fm.fm--tabs .fm__row{
-          grid-template-columns:28px minmax(0,1fr) auto 132px;
-          gap:10px;
-          min-height:56px;
-          padding:10px 10px;
-        }
-
-        .fm.fm--tabs .fm__icon{
-          width:132px;
-          min-width:132px;
-        }
-
-        .fm.fm--tabs .fm__icon img{
-          max-width:104px;
-          height:12px;
-        }
-
-        .fm.fm--tabs .fm__label{
-          font-size:16px;
-        }
+    }
+    @media (max-width:390px){
+      .fm.fm--tabs .fm__row{
+        grid-template-columns:26px 118px 1fr;
+        gap:8px;
       }
-
-      @media (max-width:390px){
-        .fm.fm--tabs .fm__row{
-          grid-template-columns:26px minmax(0,1fr) auto 118px;
-          gap:8px;
-        }
-
-        .fm.fm--tabs .fm__icon{
-          width:118px;
-          min-width:118px;
-        }
-
-        .fm.fm--tabs .fm__icon img{
-          max-width:90px;
-          height:11px;
-        }
-
-        .fm.fm--tabs .fm__tab{
-          padding:0 12px;
-          font-size:14px;
-        }
+      .fm.fm--tabs .fm__icon{
+        height:38px;
       }
-    `;
-    document.head.appendChild(style);
-  }
+      .fm.fm--tabs .fm__icon img{
+        height:28px;
+      }
+      .fm.fm--tabs .fm__tab{
+        padding:0 12px;
+        font-size:14px;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
   let filterModal = null;
 
