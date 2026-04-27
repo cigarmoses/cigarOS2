@@ -714,10 +714,6 @@
     return state.filters[key] instanceof Set ? state.filters[key].size : 0;
   }
 
-Not correct — the CSS block is broken. Your .fm__row{ never closes before .fm__label.
-
-Replace your entire ensureInjectedStyles() function with this:
-
 function ensureInjectedStyles() {
   if ($("#brand-inline-filter-style")) return;
   const style = document.createElement("style");
