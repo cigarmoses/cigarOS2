@@ -52,6 +52,9 @@
     "Gran Corona",
     "Panetela",
     "Cigarillo",
+    "Torpedo",
+    "Pyramid",
+    "Presidente"
     "Gigante",
     "Hexagon",
     "Laguito No 2",
