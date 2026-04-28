@@ -760,39 +760,146 @@
   function countSelectedForKey(key) {
     return state.selected[key] instanceof Set ? state.selected[key].size : 0;
   }
-function ensureInjectedStyles() {
+
+  function ensureInjectedStyles() {
   if ($("#cigars-inline-filter-style")) return;
 
   const style = document.createElement("style");
   style.id = "cigars-inline-filter-style";
 
   style.textContent = `
+    #filter-modal.fm{
+      z-index:99999;
+    }
+
+    #filter-modal .fm__sheet{
+      left:50% !important;
+      right:auto !important;
+      width:calc(100vw - 24px) !important;
+      max-width:430px !important;
+      transform:translate(-50%, 110%) !important;
+      max-height:88vh;
+    }
+
+    #filter-modal.is-open .fm__sheet{
+      transform:translate(-50%, 0) !important;
+    }
+
+    .fm.fm--tabs .fm__header{
+      padding:18px 18px 10px;
+      border-bottom:none;
+    }
+
+    .fm.fm--tabs .fm__header-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+
+    .fm.fm--tabs .fm__body{
+      display:block;
+      padding:0;
+      overflow:hidden;
+    }
+
+    .fm.fm--tabs .fm__tabbar{
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      padding:0 18px 14px;
+      scrollbar-width:none;
+    }
+
+    .fm.fm--tabs .fm__tabbar::-webkit-scrollbar{
+      display:none;
+    }
+
+    .fm.fm--tabs .fm__tab{
+      flex:0 0 auto;
+      min-height:38px;
+      padding:0 14px;
+      border-radius:999px;
+      border:1px solid rgba(15,26,44,.08);
+      background:#f4f6fa;
+      color:rgba(15,26,44,.68);
+      font-size:15px;
+      font-weight:600;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .fm.fm--tabs .fm__tab.is-active{
+      background:#fff;
+      color:#0f1a2c;
+      box-shadow:0 10px 20px rgba(15,26,44,.06);
+    }
+
+    .fm.fm--tabs .fm__panel{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      max-height:calc(88vh - 164px);
+    }
+
+    .fm.fm--tabs .fm__search-wrap{
+      padding:0 18px 10px;
+    }
+
+    .fm.fm--tabs .fm__search-row{
+      margin:0;
+    }
+
+    .fm.fm--tabs .fm__cuban-row{
+      display:none;
+    }
+
+    .fm.fm--tabs .fm__list{
+      overflow:auto;
+      padding:0 18px 12px;
+    }
+
     .fm.fm--tabs .fm__row{
       display:grid;
-      grid-template-columns:30px minmax(0,1fr) 160px;
+      grid-template-columns:30px 150px 1fr;
       gap:12px;
       align-items:center;
       min-height:58px;
       padding:10px 12px;
-      border-radius:18px;
-      border:1px solid rgba(15,26,44,.06);
-      background:rgba(255,255,255,.64);
-      backdrop-filter:blur(16px) saturate(1.08);
-      -webkit-backdrop-filter:blur(16px) saturate(1.08);
+      border-radius:16px;
+      border:1px solid rgba(15,26,44,.08);
+      background:#fff;
       margin-bottom:10px;
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.56),
-        0 8px 18px rgba(15,26,44,.05);
     }
 
     .fm.fm--tabs .fm__row--logo{
       grid-template-columns:30px 42px minmax(0,1fr);
     }
 
+    .fm.fm--tabs .fm__cb{
+      width:22px;
+      height:22px;
+      border-radius:7px;
+      border:2px solid rgba(15,26,44,.18);
+      background:#fff;
+      display:grid;
+      place-items:center;
+    }
+
+    .fm.fm--tabs .fm__cb.is-checked{
+      background:#eef2ff;
+      border-color:#8ea4eb;
+      color:#8ea4eb;
+    }
+
     .fm.fm--tabs .fm__label{
       grid-column:2;
       min-width:0;
-      font-family:var(--font-display, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
       font-size:17px;
       font-weight:700;
       letter-spacing:-.02em;
@@ -839,46 +946,22 @@ function ensureInjectedStyles() {
       height:36px;
       max-width:36px;
       object-fit:contain;
-      transform:none !important;
+    }
+
+    .fm.fm--tabs .fm__actions{
+      position:relative;
+      z-index:2;
+      background:#fff;
     }
 
     @media (max-width:430px){
       .fm.fm--tabs .fm__row{
-        grid-template-columns:28px minmax(0,1fr) 140px;
+        grid-template-columns:28px 132px 1fr;
         gap:10px;
-        min-height:56px;
-        padding:10px 10px;
-      }
-
-      .fm.fm--tabs .fm__row--logo{
-        grid-template-columns:28px 40px minmax(0,1fr);
-      }
-
-      .fm.fm--tabs .fm__icon{
-        height:40px;
       }
 
       .fm.fm--tabs .fm__icon img{
         height:30px;
-        width:100%;
-        max-width:100%;
-        object-fit:contain;
-        object-position:left center;
-        transform:none !important;
-      }
-
-      .fm.fm--tabs .fm__icon--brand,
-      .fm.fm--tabs .fm__icon--manufacturer{
-        width:40px;
-        min-width:40px;
-        height:40px;
-      }
-
-      .fm.fm--tabs .fm__icon--brand img,
-      .fm.fm--tabs .fm__icon--manufacturer img{
-        width:34px;
-        height:34px;
-        max-width:34px;
       }
 
       .fm.fm--tabs .fm__label{
@@ -888,45 +971,19 @@ function ensureInjectedStyles() {
 
     @media (max-width:390px){
       .fm.fm--tabs .fm__row{
-        grid-template-columns:26px minmax(0,1fr) 120px;
+        grid-template-columns:26px 118px 1fr;
         gap:8px;
-      }
-
-      .fm.fm--tabs .fm__row--logo{
-        grid-template-columns:26px 38px minmax(0,1fr);
-      }
-
-      .fm.fm--tabs .fm__icon{
-        height:38px;
       }
 
       .fm.fm--tabs .fm__icon img{
         height:28px;
-        width:auto;
-        max-width:150px;
-        object-fit:contain;
-        object-position:left center;
-      }
-
-      .fm.fm--tabs .fm__icon--brand,
-      .fm.fm--tabs .fm__icon--manufacturer{
-        width:38px;
-        min-width:38px;
-        height:38px;
-      }
-
-      .fm.fm--tabs .fm__icon--brand img,
-      .fm.fm--tabs .fm__icon--manufacturer img{
-        width:32px;
-        height:32px;
-        max-width:32px;
       }
     }
   `;
 
   document.head.appendChild(style);
 }
-  function ensureModal() {
+   
     ensureInjectedStyles();
     if (!modalRoot) {
       modalRoot = document.createElement("div");
