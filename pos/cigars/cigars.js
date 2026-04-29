@@ -761,16 +761,14 @@
     return state.selected[key] instanceof Set ? state.selected[key].size : 0;
   }
 
-  function ensureInjectedStyles() {
+function ensureInjectedStyles() {
   if ($("#cigars-inline-filter-style")) return;
 
   const style = document.createElement("style");
   style.id = "cigars-inline-filter-style";
 
   style.textContent = `
-    #filter-modal.fm{
-      z-index:99999;
-    }
+    #filter-modal.fm{ z-index:99999; }
 
     #filter-modal .fm__sheet{
       left:50% !important;
@@ -790,14 +788,6 @@
       border-bottom:none;
     }
 
-    .fm.fm--tabs .fm__header-top{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:12px;
-    }
-
     .fm.fm--tabs .fm__body{
       display:block;
       padding:0;
@@ -812,9 +802,7 @@
       scrollbar-width:none;
     }
 
-    .fm.fm--tabs .fm__tabbar::-webkit-scrollbar{
-      display:none;
-    }
+    .fm.fm--tabs .fm__tabbar::-webkit-scrollbar{ display:none; }
 
     .fm.fm--tabs .fm__tab{
       flex:0 0 auto;
@@ -847,13 +835,8 @@
       max-height:calc(88vh - 164px);
     }
 
-    .fm.fm--tabs .fm__search-wrap{
-      padding:0 18px 10px;
-    }
-
-    .fm.fm--tabs .fm__search-row{
-      margin:0;
-    }
+    .fm.fm--tabs .fm__search-wrap{ padding:0 18px 10px; }
+    .fm.fm--tabs .fm__search-row{ margin:0; }
 
     .fm.fm--tabs .fm__cuban-row{
       display:none;
@@ -895,6 +878,11 @@
       background:#eef2ff;
       border-color:#8ea4eb;
       color:#8ea4eb;
+    }
+
+    .fm.fm--tabs .fm__cb svg{
+      width:14px;
+      height:14px;
     }
 
     .fm.fm--tabs .fm__label{
@@ -946,6 +934,7 @@
       height:36px;
       max-width:36px;
       object-fit:contain;
+      transform:none !important;
     }
 
     .fm.fm--tabs .fm__actions{
@@ -983,77 +972,87 @@
 
   document.head.appendChild(style);
 }
-   
-    ensureInjectedStyles();
-    if (!modalRoot) {
-      modalRoot = document.createElement("div");
-      modalRoot.id = "filter-modal";
-      modalRoot.className = "fm fm--hidden fm--tabs";
-      modalRoot.hidden = true;
-      modalRoot.setAttribute("aria-hidden", "true");
-      document.body.appendChild(modalRoot);
-    } else {
-      modalRoot.classList.add("fm--tabs");
-    }
-    if (!modalRoot.querySelector(".fm__sheet")) {
-      modalRoot.innerHTML = `
-        <div class="fm__backdrop" data-fm-close></div>
-        <div class="fm__sheet" role="dialog" aria-modal="true" aria-label="Filters">
-          <div class="fm__header">
-            <div class="fm__header-top">
-              <div class="fm__header-left">
-                <h2 class="fm__title">Filters</h2>
-              </div>
-              <button class="fm__close" type="button" aria-label="Close filters" data-fm-close>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                </svg>
-              </button>
+
+function ensureModal() {
+  ensureInjectedStyles();
+
+  if (!modalRoot) {
+    modalRoot = document.createElement("div");
+    modalRoot.id = "filter-modal";
+    modalRoot.className = "fm fm--hidden fm--tabs";
+    modalRoot.hidden = true;
+    modalRoot.setAttribute("aria-hidden", "true");
+    document.body.appendChild(modalRoot);
+  } else {
+    modalRoot.classList.add("fm--tabs");
+  }
+
+  if (!modalRoot.querySelector(".fm__sheet")) {
+    modalRoot.innerHTML = `
+      <div class="fm__backdrop" data-fm-close></div>
+      <div class="fm__sheet" role="dialog" aria-modal="true" aria-label="Filters">
+        <div class="fm__header">
+          <div class="fm__header-top">
+            <div class="fm__header-left">
+              <h2 class="fm__title">Filters</h2>
             </div>
-          </div>
-          <div class="fm__body">
-            <div class="fm__tabbar" id="fm-tabbar"></div>
-            <div class="fm__panel">
-              <div class="fm__search-wrap">
-                <div class="fm__search-row">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
-                          fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                  </svg>
-                  <input class="fm__search-input" id="fm-search-inline" placeholder="Search" autocomplete="off" />
-                  <button class="fm__mic-btn" type="button" aria-label="Clear search" id="fm-search-clear">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z"
-                            fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                      <path d="M19 11a7 7 0 0 1-14 0" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                      <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div class="fm__cuban-row">
-                <button class="fm__cuban-toggle" type="button" id="fm-cuban-toggle" aria-label="Include Cubans">
-                  <span class="fm__cuban-check">✓</span>
-                  <span class="fm__cuban-text">Include Cubans 🇨🇺</span>
-                </button>
-              </div>
-              <div class="fm__list" id="fm-list"></div>
-            </div>
-          </div>
-          <div class="fm__info-sheet" id="fm-info-sheet" aria-live="polite">
-            <button class="fm__info-close" type="button" id="fm-info-close" aria-label="Close info">×</button>
-            <h3 class="fm__info-title" id="fm-info-title"></h3>
-            <p class="fm__info-text" id="fm-info-text"></p>
-          </div>
-          <div class="fm__actions">
-            <button class="fm__btn fm__btn--reset" type="button" id="fm-reset">Reset</button>
-            <button class="fm__btn fm__btn--apply" type="button" id="fm-apply">Apply</button>
+            <button class="fm__close" type="button" aria-label="Close filters" data-fm-close>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+              </svg>
+            </button>
           </div>
         </div>
-      `;
-    }
+
+        <div class="fm__body">
+          <div class="fm__tabbar" id="fm-tabbar"></div>
+
+          <div class="fm__panel">
+            <div class="fm__search-wrap">
+              <div class="fm__search-row">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
+                        fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                </svg>
+
+                <input class="fm__search-input" id="fm-search-inline" placeholder="Search" autocomplete="off" />
+
+                <button class="fm__mic-btn" type="button" aria-label="Clear search" id="fm-search-clear">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z"
+                          fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                    <path d="M19 11a7 7 0 0 1-14 0" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                    <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="fm__cuban-row">
+              <button class="fm__cuban-toggle" type="button" id="fm-cuban-toggle" aria-label="Include Cubans">
+                <span class="fm__cuban-check">✓</span>
+                <span class="fm__cuban-text">Include Cubans 🇨🇺</span>
+              </button>
+            </div>
+
+            <div class="fm__list" id="fm-list"></div>
+          </div>
+        </div>
+
+        <div class="fm__info-sheet" id="fm-info-sheet" aria-live="polite">
+          <button class="fm__info-close" type="button" id="fm-info-close" aria-label="Close info">×</button>
+          <h3 class="fm__info-title" id="fm-info-title"></h3>
+          <p class="fm__info-text" id="fm-info-text"></p>
+        </div>
+
+        <div class="fm__actions">
+          <button class="fm__btn fm__btn--reset" type="button" id="fm-reset">Reset</button>
+          <button class="fm__btn fm__btn--apply" type="button" id="fm-apply">Apply</button>
+        </div>
+      </div>
+    `;
   }
-  function renderCubanToggle() {
+}
     const btn = $("#fm-cuban-toggle", modalRoot);
     if (!btn) return;
     btn.classList.toggle("is-on", !!state.includeCubans);
