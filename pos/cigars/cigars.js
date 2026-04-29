@@ -653,22 +653,39 @@
       });
     });
   }
-  function renderAll() {
-    ensureGlobalState();
-    const g = window.__CIGAR_FILTER_STATE__;
-    renderAppliedChips(g);
-    const filteredRows = (DATA_ROWS || []).filter((r) => rowMatchesFilters(r, g));
-    const summary = buildBrandSummary(filteredRows);
-    renderFavoriteBrands(buildBrandSummary(DATA_ROWS || []));
-    const qOn = !!(g.q && g.q.trim());
-    const filtersOn = hasActiveFilters(g);
-    if (!summary.length) {
-      if (listRoot) listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
-      return;
-    }
-    if (qOn || filtersOn || g.includeCubans) renderResultsRows(summary);
-    else renderBrandsGrid(summary);
+function renderAll() {
+  ensureGlobalState();
+
+  const g = window.__CIGAR_FILTER_STATE__;
+  renderAppliedChips(g);
+
+  const allRows = DATA_ROWS || [];
+  const fullSummary = buildBrandSummary(allRows);
+
+  renderFavoriteBrands(fullSummary);
+
+  const qOn = !!(g.q && g.q.trim());
+  const filtersOn = hasActiveFilters(g);
+
+  const filteredRows = allRows.filter((r) => rowMatchesFilters(r, g));
+  let summary = buildBrandSummary(filteredRows);
+
+  // Safety fallback so the home brand grid never disappears
+  if (!summary.length && !qOn && !filtersOn && !g.includeCubans) {
+    summary = fullSummary;
   }
+
+  if (!summary.length) {
+    if (listRoot) listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
+    return;
+  }
+
+  if (qOn || filtersOn || g.includeCubans) {
+    renderResultsRows(summary);
+  } else {
+    renderBrandsGrid(summary);
+  }
+}
   function orderByCustomList(values, order, aliases = {}) {
     const list = uniqSorted(values);
     const orderMap = new Map();
@@ -1053,10 +1070,13 @@ function ensureModal() {
     `;
   }
 }
-    const btn = $("#fm-cuban-toggle", modalRoot);
-    if (!btn) return;
-    btn.classList.toggle("is-on", !!state.includeCubans);
-  }
+
+function renderCubanToggle() {
+  const btn = $("#fm-cuban-toggle", modalRoot);
+  if (!btn) return;
+  btn.classList.toggle("is-on", !!state.includeCubans);
+}
+   
   function renderTabs() {
     const tabbar = $("#fm-tabbar", modalRoot);
     if (!tabbar) return;
