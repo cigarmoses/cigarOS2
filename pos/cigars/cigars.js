@@ -1162,14 +1162,30 @@ function renderCubanToggle() {
             <div class="fm__row fm__row--logo ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
               ${cb}
               ${icon}
-              <div class="fm__label">${escapeHtml(label)}</div>
+              <div class="fm__label">
+  ${
+    key === "length"
+      ? `<span class="fm__measure-main">${escapeHtml(label)}</span><span class="fm__measure-unit">inches</span>`
+      : key === "ring"
+      ? `<span class="fm__measure-main">${escapeHtml(label)}</span><span class="fm__measure-unit">ring gauge</span>`
+      : escapeHtml(label)
+  }
+</div>
             </div>
           `;
         }
         return `
           <div class="fm__row ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
             ${cb}
-            <div class="fm__label">${escapeHtml(label)}</div>
+            <div class="fm__label">
+  ${
+    key === "length"
+      ? `<span class="fm__measure-main">${escapeHtml(label)}</span><span class="fm__measure-unit">inches</span>`
+      : key === "ring"
+      ? `<span class="fm__measure-main">${escapeHtml(label)}</span><span class="fm__measure-unit">ring gauge</span>`
+      : escapeHtml(label)
+  }
+</div>
             ${infoBtn}
             ${icon}
           </div>
