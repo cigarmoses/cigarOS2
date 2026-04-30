@@ -175,7 +175,23 @@ function ensureGlobalState(){
         shade:new Set(),
       },
     };
+    return;
   }
+
+  const g = window.__CIGAR_FILTER_STATE__;
+  if(!g.filters) g.filters = {};
+
+  Object.keys(state.selected).forEach((k)=>{
+    const v = g.filters[k];
+
+    if(v instanceof Set) return;
+    if(Array.isArray(v)) g.filters[k] = new Set(v);
+    else if(v && typeof v === "object") g.filters[k] = new Set(Object.keys(v));
+    else g.filters[k] = new Set();
+  });
+
+  if(typeof g.q !== "string") g.q = String(g.q ?? "");
+  g.includeCubans = !!g.includeCubans;
 }
 
 function getField(row, keys){
@@ -1224,6 +1240,69 @@ function renderRingRangeFilter(list){
 
   update(currentMin, currentMax);
 }
+
+function getCigarFilterIcon(value = "", group = ""){
+  const v = String(value || "").toLowerCase().trim();
+
+  if(group === "vitola"){
+    if(v.includes("gran corona")) return "/uxui/cigaricons/grancorona.svg";
+    if(v.includes("double corona")) return "/uxui/cigaricons/doublecorona.svg";
+    if(v.includes("churchill")) return "/uxui/cigaricons/churchill.svg";
+    if(v.includes("lancero")) return "/uxui/cigaricons/lancero.svg";
+    if(v.includes("lonsdale")) return "/uxui/cigaricons/lonsdale.svg";
+    if(v.includes("gigante")) return "/uxui/cigaricons/gigante.svg";
+    if(v.includes("gordo")) return "/uxui/cigaricons/gordo.svg";
+    if(v.includes("toro")) return "/uxui/cigaricons/toro.svg";
+    if(v.includes("robusto")) return "/uxui/cigaricons/robusto.svg";
+    if(v.includes("corona extra")) return "/uxui/cigaricons/coronaextra.svg";
+    if(v.includes("petit corona")) return "/uxui/cigaricons/petitcorona.svg";
+    if(v.includes("corona")) return "/uxui/cigaricons/corona.svg";
+    if(v.includes("belicoso")) return "/uxui/cigaricons/belicoso.svg";
+    if(v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
+    if(v.includes("pyramid") || v.includes("piramide")) return "/uxui/cigaricons/pyramid.svg";
+    if(v.includes("panetela") || v.includes("pantela")) return "/uxui/cigaricons/panetela.svg";
+    if(v.includes("figurado")) return "/uxui/cigaricons/figurado.svg";
+    if(v.includes("salomon")) return "/uxui/cigaricons/salomon.svg";
+    if(v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
+    if(v.includes("chisel")) return "/uxui/cigaricons/chisel.svg";
+    if(v.includes("cigarillo")) return "/uxui/cigaricons/cigarillo.svg";
+    if(v.includes("diademas")) return "/uxui/cigaricons/diademas.svg";
+    if(v.includes("rothschild")) return "/uxui/cigaricons/rothschild.svg";
+    if(v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
+  }
+
+  if(group === "shape"){
+    if(v.includes("parejo")) return "/uxui/cigaricons/parejo.svg";
+    if(v.includes("torpedo")) return "/uxui/cigaricons/torpedo.svg";
+    if(v.includes("presidente")) return "/uxui/cigaricons/presidente.svg";
+    if(v.includes("pyramid") || v.includes("piramide")) return "/uxui/cigaricons/pyramid.svg";
+    if(v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
+    if(v.includes("chisel")) return "/uxui/cigaricons/chisel.svg";
+    if(v.includes("culebra")) return "/uxui/cigaricons/culebra.svg";
+    if(v.includes("belicoso")) return "/uxui/cigaricons/belicoso.svg";
+    if(v.includes("figurado")) return "/uxui/cigaricons/figurado.svg";
+    if(v.includes("gigante")) return "/uxui/cigaricons/gigante.svg";
+    if(v.includes("diademas")) return "/uxui/cigaricons/diademas.svg";
+    if(v.includes("salomon")) return "/uxui/cigaricons/salomon.svg";
+  }
+
+  return "";
+}
+
+function getShapeInfo(value = ""){
+  const info = {
+    parejo:"Straight-sided cigars; standard or straight cigars. This is the most common shape.",
+    torpedo:"Tapered at both the head and the foot, with a pointy head.",
+    presidente:"A long tapered shape; often used like a Salomon-style reference.",
+    pyramid:"Tapered to a point at the head and blossoms toward a cylindrical foot.",
+    perfecto:"Tapered at both ends, with a rounded head and a bulbous center.",
+    chisel:"A cigar shape with a flattened, chisel-like head.",
+    culebra:"Three loosely filled thin cigars braided together with string.",
+  };
+
+  return info[slugify(value)] || "";
+}
+   
 function renderList(){
   const list = $("#fm-list", modalRoot);
   const input = $("#fm-search-inline", modalRoot);
