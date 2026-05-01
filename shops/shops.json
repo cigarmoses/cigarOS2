@@ -1,5 +1,44 @@
 [
   {
+    "name": "Sunset Cigar Lounge",
+    "slug": "sunsetcigarlounge",
+    "logoKey": "sunsetcigarlounge",
+    "address1": "251 S US Hwy 1 Ste 3",
+    "city": "Jupiter",
+    "state": "Florida",
+    "zip": "33477",
+    "country": "USA",
+    "phone": "561-203-2096",
+    "website": "sunsetcigarlounge.com/",
+    "email": "",
+    "instagram": "sunsetloungejupiter",
+    "lat": 26.9319,
+    "lng": -80.0730,
+    "hours": {
+      "mon": "12:00 PM - 3:00 AM",
+      "tue": "12:00 PM - 3:00 AM",
+      "wed": "12:00 PM - 3:00 AM",
+      "thu": "12:00 PM - 3:00 AM",
+      "fri": "12:00 PM - 3:00 AM",
+      "sat": "12:00 PM - 3:00 AM",
+      "sun": "12:00 PM - 3:00 AM"
+    },
+    "features": {
+      "alcohol": true,
+      "byob": false,
+      "noAlcohol": false,
+      "food": true,
+      "tvs": true,
+      "outdoorSeating": false,
+      "indoorSeating": true,
+      "quietSpace": false,
+      "liveMusic": true,
+      "privateClub": false,
+      "chain": false,
+      "taa": false
+      }
+  },
+  {
     "name": "2 Guys Cigars Nashua",
     "slug": "2guyscigarsnashua",
     "logoKey": "2guyscigarsnashua",
