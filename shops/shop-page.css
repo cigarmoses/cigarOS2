@@ -85,7 +85,7 @@ body.shop-public{
   align-items:center;
   justify-content:center;
   gap:10px;
-  margin:12px auto 18px;
+  margin:12px auto 6px;
   width:fit-content;
   text-align:center;
   color:#8e8e93;
@@ -99,6 +99,32 @@ body.shop-public{
   height:18px;
   flex-shrink:0;
   fill:#ff3b30;
+}
+
+/* STATUS (OPEN/CLOSED) */
+.sp-status{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  margin-top:6px;
+  margin-bottom:10px;
+  font-weight:600;
+}
+
+.sp-status-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+}
+
+.sp-status-dot.open{ background:#34c759; }
+.sp-status-dot.closed{ background:#ff3b30; }
+
+.sp-status-text span{
+  color:#8e8e93;
+  font-weight:500;
+  font-size:14px;
 }
 
 /* TOP ACTION ICONS */
@@ -238,7 +264,7 @@ body.shop-public{
 
 .sp-card-right{
   color:#8e8e93;
-  font-weight:400; /* FIXED */
+  font-weight:400;
 }
 
 /* HOURS */
@@ -260,7 +286,7 @@ body.shop-public{
 
 .sp-hours-val{
   color:#8e8e93;
-  font-weight:400 !important; /* FIXED */
+  font-weight:400 !important;
   font-size:18px;
   text-align:right;
 }
