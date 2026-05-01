@@ -7,7 +7,7 @@
   <title>Shop • CigarOS</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/shops/shop-page.css?v=40" />
+  <link rel="stylesheet" href="/shops/shop-page.css?v=41" />
 </head>
 
 <body class="shop-public">
@@ -31,7 +31,6 @@
         <span id="spCity">—</span>
       </div>
 
-      <!-- TOP ACTION ICONS: ICONS ONLY -->
       <div class="sp-dock" id="spDock">
         <button class="sp-dock-btn" id="spActCall" type="button" aria-label="Call">
           <img class="sp-dock-ico" src="/img/icons/call.svg" alt="" />
@@ -54,13 +53,11 @@
         </button>
       </div>
 
-      <!-- AMENITIES -->
       <div class="sp-amen-panel">
         <div class="sp-amen-row" id="spAmenRow"></div>
       </div>
     </section>
 
-    <!-- BOTTOM TABS SECTION -->
     <section class="sp-bottom">
       <div class="sp-seg" role="tablist" aria-label="Shop tabs">
         <button class="sp-seg-btn" id="spTabHours" type="button" role="tab" aria-selected="false">Hours</button>
@@ -73,7 +70,7 @@
           <div class="sp-card">
             <div class="sp-card-head">
               <div class="sp-card-title">Hours</div>
-              <div class="sp-card-right" id="spHoursNow">—</div>
+              <div class="sp-card-right" id="spHoursNow"></div>
             </div>
             <div id="spHoursList"></div>
           </div>
@@ -97,7 +94,6 @@
 
   </main>
 
-  <!-- BRANDS MODAL -->
   <div class="sp-modal" id="spBrandsModal" hidden>
     <div class="sp-modal-backdrop" id="spBrandsCloseBg" aria-hidden="true"></div>
     <div class="sp-modal-sheet" role="dialog" aria-modal="true" aria-label="Brands">
@@ -111,6 +107,6 @@
 
   <div class="sp-toast" id="spToast" hidden></div>
 
-  <script src="/shops/shop-page.js?v=40"></script>
+  <script src="/shops/shop-page.js?v=41"></script>
 </body>
 </html>
