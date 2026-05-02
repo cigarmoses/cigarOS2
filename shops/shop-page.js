@@ -431,27 +431,32 @@
   }
 
   function renderStatus(shop) {
-    const old = document.querySelector(".sp-status");
-    if (old) old.remove();
+  const old = document.querySelector(".sp-status");
+  if (old) old.remove();
 
-    const status = computeOpenStatus(shop);
-    if (!status) return;
+  const status = computeOpenStatus(shop);
+  if (!status) return;
 
-    const city = $(".sp-city");
-    if (!city) return;
+  const city = $(".sp-city");
+  if (!city) return;
 
-    const container = document.createElement("div");
-    container.className = "sp-status";
-    container.innerHTML = `
-      <div class="sp-status-dot ${status.open ? "open" : "closed"}"></div>
-      <div class="sp-status-text">
-        ${status.open ? "Open Now" : "Closed"}
-        <span>• Closes ${escapeHtml(status.closeLabel)}</span>
-      </div>
-    `;
+  const label = status.open ? "Open Now" : "Closed";
+  const timeLabel = status.open ? "Closes" : "Opens";
+  const timeValue = status.open ? status.closeLabel : status.openLabel;
 
-    city.after(container);
-  }
+  const container = document.createElement("div");
+  container.className = "sp-status";
+
+  container.innerHTML = `
+    <div class="sp-status-dot ${status.open ? "open" : "closed"}"></div>
+    <div class="sp-status-text">
+      ${label}
+      <span>• ${timeLabel} ${escapeHtml(timeValue)}</span>
+    </div>
+  `;
+
+  city.after(container);
+}
 
   function renderHours(shop) {
     const list = $("#spHoursList");
