@@ -52,6 +52,23 @@
     return await res.json();
   }
 
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[c]));
+  }
+
+  function cleanHourValue(v) {
+    if (v == null) return "";
+    const s = String(v).trim();
+    if (!s || s === "—" || s.toLowerCase() === "nan" || s.includes("â")) return "";
+    return s;
+  }
+
   function normalizeHours(raw) {
     const h = raw.hours && typeof raw.hours === "object" ? raw.hours : {};
 
@@ -367,23 +384,6 @@
     return `https://instagram.com/${handle}`;
   }
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[c]));
-  }
-
-  function cleanHourValue(v) {
-    if (v == null) return "";
-    const s = String(v).trim();
-    if (!s || s === "—" || s.toLowerCase() === "nan" || s.includes("â")) return "";
-    return s;
-  }
-
   function parseTime(str) {
     const s = cleanStr(str);
     const m = s.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
@@ -424,39 +424,42 @@
       if (nowMin < open) nowMin += 1440;
     }
 
+    const isOpen = nowMin >= open && nowMin <= close;
+
     return {
-      open: nowMin >= open && nowMin <= close,
-      closeLabel: parts[1]
+      open: isOpen,
+      closeLabel: parts[1],
+      openLabel: parts[0]
     };
   }
 
   function renderStatus(shop) {
-  const old = document.querySelector(".sp-status");
-  if (old) old.remove();
+    const old = document.querySelector(".sp-status");
+    if (old) old.remove();
 
-  const status = computeOpenStatus(shop);
-  if (!status) return;
+    const status = computeOpenStatus(shop);
+    if (!status) return;
 
-  const city = $(".sp-city");
-  if (!city) return;
+    const city = $(".sp-city");
+    if (!city) return;
 
-  const label = status.open ? "Open Now" : "Closed";
-  const timeLabel = status.open ? "Closes" : "Opens";
-  const timeValue = status.open ? status.closeLabel : status.openLabel;
+    const label = status.open ? "Open Now" : "Closed";
+    const timeLabel = status.open ? "Closes" : "Opens";
+    const timeValue = status.open ? status.closeLabel : status.openLabel;
 
-  const container = document.createElement("div");
-  container.className = "sp-status";
+    const container = document.createElement("div");
+    container.className = "sp-status";
 
-  container.innerHTML = `
-    <div class="sp-status-dot ${status.open ? "open" : "closed"}"></div>
-    <div class="sp-status-text">
-      ${label}
-      <span>• ${timeLabel} ${escapeHtml(timeValue)}</span>
-    </div>
-  `;
+    container.innerHTML = `
+      <div class="sp-status-dot ${status.open ? "open" : "closed"}"></div>
+      <div class="sp-status-text">
+        ${label}
+        <span>• ${timeLabel} ${escapeHtml(timeValue)}</span>
+      </div>
+    `;
 
-  city.after(container);
-}
+    city.after(container);
+  }
 
   function renderHours(shop) {
     const list = $("#spHoursList");
