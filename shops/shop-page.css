@@ -291,6 +291,19 @@ body.shop-public{
   font-weight:400;
 }
 
+/* REMOVE DUPLICATE TAB CARD HEADERS + TIGHTEN SPACING */
+#spPanelHours .sp-card-head,
+#spPanelAbout .sp-card-title,
+#spPanelUpdates .sp-card-title{
+  display:none;
+}
+
+#spPanelHours .sp-card,
+#spPanelAbout .sp-card,
+#spPanelUpdates .sp-card{
+  padding-top:12px;
+}
+
 /* HOURS */
 .sp-hours-row{
   display:flex;
