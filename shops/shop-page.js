@@ -1,79 +1,94 @@
 (() => {
   "use strict";
 
-  const $ = (s) => document.querySelector(s);
+  const $ = (sel) => document.querySelector(sel);
   const DEFAULT_SHOP_ICON = "/uxui/darkmode/darkmodeshops.png";
 
   /* ---------------- UTIL ---------------- */
-  const clean = (v) => String(v ?? "").trim();
+  function cleanStr(v) {
+    return String(v ?? "").trim();
+  }
 
-  const keyify = (s) =>
-    clean(s)
+  function canonicalKey(s) {
+    return cleanStr(s)
       .toLowerCase()
       .replace(/&/g, "and")
       .replace(/[^a-z0-9]+/g, "");
+  }
 
-  const truthy = (v) => {
+  function isTruthy(v) {
     if (v === true) return true;
-    const s = clean(v).toLowerCase();
+    if (v === false || v == null) return false;
+    const s = String(v).trim().toLowerCase();
     return ["1", "true", "yes", "y", "x"].includes(s);
-  };
+  }
 
-  const fetchJSON = async (url) => {
-    const res = await fetch(`${url}?v=${Date.now()}`, { cache: "no-store" });
-    if (!res.ok) throw new Error("Fetch failed");
-    return res.json();
-  };
-
-  /* ---------------- URL ---------------- */
-  function getKey() {
+  function getKeyFromUrl() {
     const u = new URL(window.location.href);
 
-    const qs = keyify(u.searchParams.get("shop"));
+    const qs = canonicalKey(u.searchParams.get("shop") || "");
     if (qs) return qs;
 
+    const qsId = canonicalKey(u.searchParams.get("id") || "");
+    if (qsId) return qsId;
+
     const parts = u.pathname.split("/").filter(Boolean);
-    if (parts[1]) return keyify(parts[1]);
+
+    if (parts.length >= 2 && parts[0] === "shops") {
+      const second = canonicalKey(parts[1]);
+      if (second && second !== "shoppagehtml") return second;
+    }
 
     return "";
   }
 
+  function withCacheBust(url) {
+    const sep = url.includes("?") ? "&" : "?";
+    return `${url}${sep}v=${Date.now()}`;
+  }
+
+  async function fetchJson(url) {
+    const res = await fetch(withCacheBust(url), { cache: "no-store" });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return await res.json();
+  }
+
   /* ---------------- DATA ---------------- */
-  function normalize(raw) {
+  function normalizeFromMaster(raw) {
     return {
-      key: keyify(raw.slug || raw.name),
-      name: clean(raw.name),
-      city: clean(raw.city),
-      state: clean(raw.state),
-      address: clean(raw.address),
-      phone: clean(raw.phone),
-      website: clean(raw.website),
-      instagram: clean(raw.instagram),
-      email: clean(raw.email),
-      brands: raw.brands || [],
+      key: canonicalKey(raw.slug || raw.name),
+      name: cleanStr(raw.name),
+      city: cleanStr(raw.city),
+      state: cleanStr(raw.state),
+      address: cleanStr(raw.address),
+      phone: cleanStr(raw.phone),
+      website: cleanStr(raw.website),
+      email: cleanStr(raw.email),
+      instagram: cleanStr(raw.instagram),
       amenities: raw.amenities || raw.features || {},
+      brands: raw.brands || [],
       hours: {
-        mon: raw.mon || raw.Monday,
-        tue: raw.tue || raw.Tuesday,
-        wed: raw.wed || raw.Wednesday,
-        thu: raw.thu || raw.Thursday,
-        fri: raw.fri || raw.Friday,
-        sat: raw.sat || raw.Saturday,
-        sun: raw.sun || raw.Sunday,
-      }
+        mon: raw.mon || raw.Monday || "",
+        tue: raw.tue || raw.Tuesday || "",
+        wed: raw.wed || raw.Wednesday || "",
+        thu: raw.thu || raw.Thursday || "",
+        fri: raw.fri || raw.Friday || "",
+        sat: raw.sat || raw.Saturday || "",
+        sun: raw.sun || raw.Sunday || "",
+      },
+      raw
     };
   }
 
-  async function loadShop() {
-    const key = getKey();
-    const data = await fetchJSON("/shops/shops.json");
+  async function loadShop(key) {
+    const masterArr = await fetchJson("/shops/shops.json");
 
     const hit =
-      data.find(s => keyify(s.slug) === key) ||
-      data.find(s => keyify(s.name) === key) ||
-      data[0];
+      masterArr.find(x => canonicalKey(x.slug) === key) ||
+      masterArr.find(x => canonicalKey(x.name) === key) ||
+      masterArr[0];
 
-    return normalize(hit);
+    return normalizeFromMaster(hit);
   }
 
   /* ---------------- HEADER ---------------- */
@@ -83,18 +98,27 @@
       [shop.city, shop.state].filter(Boolean).join(", ") || "—";
   }
 
-  function setLogo(key) {
+  function setShopLogo(key, name) {
     const img = $("#spLogo");
     if (!img) return;
 
-    const src = `/img/icons/shops/${key}.svg`;
+    const svg = `/img/icons/shops/${key}.svg`;
+    const png = `/img/icons/shops/${key}.png`;
 
     img.onerror = () => {
-      img.src = `/img/icons/shops/${key}.png`;
+      img.src = png;
       img.onerror = () => (img.src = DEFAULT_SHOP_ICON);
     };
 
-    img.src = src;
+    img.src = svg;
+  }
+
+  function renderTAABadge(shop) {
+    const taaEl = $("#spTaa");
+    if (!taaEl) return;
+
+    const taa = isTruthy(shop.amenities?.taa);
+    taaEl.hidden = !taa;
   }
 
   /* ---------------- OPEN STATUS ---------------- */
@@ -127,12 +151,19 @@
     const parts = str.split("-");
     if (parts.length !== 2) return null;
 
-    const open = parseTime(parts[0]);
-    const close = parseTime(parts[1]);
-    const now = new Date();
-    const nowMin = now.getHours()*60 + now.getMinutes();
+    let open = parseTime(parts[0]);
+    let close = parseTime(parts[1]);
 
     if (open == null || close == null) return null;
+
+    const now = new Date();
+    let nowMin = now.getHours() * 60 + now.getMinutes();
+
+    // 🔥 Overnight fix
+    if (close < open) {
+      close += 1440;
+      if (nowMin < open) nowMin += 1440;
+    }
 
     const isOpen = nowMin >= open && nowMin <= close;
 
@@ -143,17 +174,16 @@
   }
 
   function renderStatus(shop) {
+    const status = computeOpenStatus(shop);
+    if (!status) return;
+
     const container = document.createElement("div");
     container.className = "sp-status";
-
-    const status = computeOpenStatus(shop);
-
-    if (!status) return;
 
     container.innerHTML = `
       <div class="sp-status-dot ${status.open ? "open" : "closed"}"></div>
       <div class="sp-status-text">
-        ${status.open ? "Open Now" : "Closed"} 
+        ${status.open ? "Open Now" : "Closed"}
         <span>• Closes ${status.closeLabel}</span>
       </div>
     `;
@@ -162,41 +192,51 @@
   }
 
   /* ---------------- HOURS ---------------- */
+  function cleanHourValue(v) {
+    if (!v) return "";
+    return String(v).trim();
+  }
+
   function renderHours(shop) {
     const list = $("#spHoursList");
-    list.innerHTML = "";
+    const now = $("#spHoursNow");
+    if (!list) return;
 
     const days = [
-      ["Monday", shop.hours.mon],
-      ["Tuesday", shop.hours.tue],
-      ["Wednesday", shop.hours.wed],
-      ["Thursday", shop.hours.thu],
-      ["Friday", shop.hours.fri],
-      ["Saturday", shop.hours.sat],
-      ["Sunday", shop.hours.sun],
+      ["Monday", cleanHourValue(shop.hours.mon)],
+      ["Tuesday", cleanHourValue(shop.hours.tue)],
+      ["Wednesday", cleanHourValue(shop.hours.wed)],
+      ["Thursday", cleanHourValue(shop.hours.thu)],
+      ["Friday", cleanHourValue(shop.hours.fri)],
+      ["Saturday", cleanHourValue(shop.hours.sat)],
+      ["Sunday", cleanHourValue(shop.hours.sun)],
     ];
 
-    const today = new Date().getDay();
+    list.innerHTML = "";
 
-    days.forEach(([d, v], i) => {
-      if (!v) return;
+    const any = days.some(d => d[1]);
+
+    if (!any) {
+      list.innerHTML = `<div class="sp-hours-empty">Hours coming soon</div>`;
+      if (now) now.textContent = "—";
+      return;
+    }
+
+    days.forEach(([day, val]) => {
+      if (!val) return;
 
       const row = document.createElement("div");
       row.className = "sp-hours-row";
 
-      if (i === (today === 0 ? 6 : today - 1)) {
-        row.style.background = "#f2f2f7";
-        row.style.borderRadius = "10px";
-        row.style.padding = "10px";
-      }
-
       row.innerHTML = `
-        <div class="sp-hours-day">${d}</div>
-        <div class="sp-hours-val">${v}</div>
+        <div class="sp-hours-day">${day}</div>
+        <div class="sp-hours-val">${val}</div>
       `;
 
       list.appendChild(row);
     });
+
+    if (now) now.textContent = "";
   }
 
   /* ---------------- ABOUT ---------------- */
@@ -254,15 +294,18 @@
 
   /* ---------------- INIT ---------------- */
   async function init() {
-    const shop = await loadShop();
+    wireTabs();
+
+    const key = getKeyFromUrl();
+    const shop = await loadShop(key);
 
     renderHeader(shop);
-    setLogo(shop.key);
-    renderStatus(shop);
+    setShopLogo(shop.key);
+    renderTAABadge(shop);
+    renderStatus(shop); // ✅ NEW
     renderHours(shop);
     renderAbout(shop);
     wireDock(shop);
-    wireTabs();
   }
 
   init().catch(console.error);
