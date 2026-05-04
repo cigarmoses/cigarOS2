@@ -24,7 +24,7 @@ body.map-page{
   position:fixed;
   left:18px;
   right:18px;
-  top:calc(env(safe-area-inset-top) + 16px);
+  top:calc(env(safe-area-inset-top) + 24px);
   z-index:20;
   display:flex;
   align-items:center;
@@ -80,7 +80,7 @@ body.map-page{
   position:fixed;
   left:18px;
   right:18px;
-  top:calc(env(safe-area-inset-top) + 90px);
+  top:calc(env(safe-area-inset-top) + 102px);
   z-index:20;
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -112,14 +112,14 @@ body.map-page{
 
 /* CUSTOM RED PIN */
 .shop-pin{
-  width:28px;
-  height:28px;
+  width:24px;
+  height:24px;
   border-radius:50% 50% 50% 0;
   transform:rotate(-45deg);
   background:#ff3b30;
   box-shadow:
-    0 0 0 4px rgba(255,59,48,.18),
-    0 12px 24px rgba(0,0,0,.35);
+    0 0 0 4px rgba(255,59,48,.14),
+    0 8px 18px rgba(0,0,0,.18);
   border:2px solid rgba(255,255,255,.96);
   cursor:pointer;
 }
@@ -127,8 +127,8 @@ body.map-page{
 .shop-pin::after{
   content:"";
   position:absolute;
-  width:8px;
-  height:8px;
+  width:7px;
+  height:7px;
   border-radius:50%;
   background:#fff;
   left:50%;
@@ -139,8 +139,34 @@ body.map-page{
 .shop-pin.is-active{
   background:#ff1f1f;
   box-shadow:
-    0 0 0 7px rgba(255,59,48,.20),
-    0 18px 34px rgba(0,0,0,.42);
+    0 0 0 7px rgba(255,59,48,.18),
+    0 12px 28px rgba(0,0,0,.24);
+}
+
+.shop-pin.is-small{
+  width:18px;
+  height:18px;
+  box-shadow:
+    0 0 0 3px rgba(255,59,48,.10),
+    0 5px 12px rgba(0,0,0,.14);
+}
+
+.shop-pin.is-small::after{
+  width:5px;
+  height:5px;
+}
+
+.shop-pin.is-tiny{
+  width:12px;
+  height:12px;
+  box-shadow:
+    0 0 0 2px rgba(255,59,48,.08),
+    0 4px 8px rgba(0,0,0,.10);
+}
+
+.shop-pin.is-tiny::after{
+  width:3px;
+  height:3px;
 }
 
 /* SHOP CARD */
@@ -157,6 +183,8 @@ body.map-page{
   box-shadow:0 26px 70px rgba(0,0,0,.28);
   border:1px solid rgba(255,255,255,.72);
   padding:10px 14px 14px;
+  cursor:pointer;
+  touch-action:pan-y;
 }
 
 .map-card-handle{
@@ -236,10 +264,20 @@ body.map-page{
   border:0;
   border-radius:17px;
   padding:13px 16px;
-  background:#ff3b30;
   color:#fff;
   font-weight:850;
   font-size:15px;
+  background:#34c759;
+  box-shadow:0 12px 26px rgba(52,199,89,.28);
+}
+
+.map-card-open.open{
+  background:#34c759;
+  box-shadow:0 12px 26px rgba(52,199,89,.28);
+}
+
+.map-card-open.closed{
+  background:#ff3b30;
   box-shadow:0 12px 26px rgba(255,59,48,.28);
 }
 
@@ -247,59 +285,4 @@ body.map-page{
 .mapboxgl-ctrl-bottom-left,
 .mapboxgl-ctrl-bottom-right{
   display:none !important;
-}
-
-/* MAP V2 PIN POLISH */
-.shop-pin{
-  width:24px;
-  height:24px;
-  box-shadow:
-    0 0 0 4px rgba(255,59,48,.14),
-    0 8px 18px rgba(0,0,0,.18) !important;
-}
-
-.shop-pin::after{
-  width:7px;
-  height:7px;
-}
-
-.shop-pin.is-active{
-  box-shadow:
-    0 0 0 7px rgba(255,59,48,.18),
-    0 12px 28px rgba(0,0,0,.24) !important;
-}
-
-.shop-pin.is-small{
-  width:18px;
-  height:18px;
-  box-shadow:
-    0 0 0 3px rgba(255,59,48,.10),
-    0 5px 12px rgba(0,0,0,.14) !important;
-}
-
-.shop-pin.is-small::after{
-  width:5px;
-  height:5px;
-}
-
-.shop-pin.is-tiny{
-  width:12px;
-  height:12px;
-  box-shadow:
-    0 0 0 2px rgba(255,59,48,.08),
-    0 4px 8px rgba(0,0,0,.10) !important;
-}
-
-.shop-pin.is-tiny::after{
-  width:3px;
-  height:3px;
-}
-
-/* LOWER TOP UI SO IT DOESN'T CLIP */
-.map-topbar{
-  top:calc(env(safe-area-inset-top) + 24px);
-}
-
-.map-filter-pill{
-  top:calc(env(safe-area-inset-top) + 102px);
 }
