@@ -55,15 +55,19 @@
       shop.slug,
       shop.Slug,
       shop.slug_id,
-      shopName(shop)
+      shop.name,
+      shop.Shop,
+      shop.shop
     ]
-      .map(keyify)
+      .map(clean)
+      .filter(Boolean)
+      .flatMap((k) => [k, keyify(k)])
       .filter(Boolean)
       .filter((v, i, arr) => arr.indexOf(v) === i);
   }
 
   function shopKey(shop) {
-    return logoKeys(shop)[0] || "shop";
+    return keyify(shop.logoKey || shop.slug || shop.Slug || shop.slug_id || shopName(shop));
   }
 
   function shopUrl(shop) {
@@ -98,6 +102,7 @@
 
   function normalizeHours(shop) {
     const h = shop.hours && typeof shop.hours === "object" ? shop.hours : {};
+
     return {
       sun: clean(h.sun || h.Sunday || shop.sun || shop.Sunday),
       mon: clean(h.mon || h.Monday || shop.mon || shop.Monday),
@@ -124,34 +129,61 @@
     return h * 60 + min;
   }
 
+  function getDayKey(offset = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][d.getDay()];
+  }
+
   function computeStatus(shop) {
     const hours = normalizeHours(shop);
-    const key = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
-    const today = clean(hours[key]);
-
-    if (!today || today === "—") return null;
-
-    const parts = today.split("-").map((s) => s.trim());
-    if (parts.length !== 2) return null;
-
-    let open = parseTime(parts[0]);
-    let close = parseTime(parts[1]);
-
-    if (open == null || close == null) return null;
-
     const now = new Date();
-    let nowMin = now.getHours() * 60 + now.getMinutes();
+    const nowMinReal = now.getHours() * 60 + now.getMinutes();
 
-    if (close < open) {
-      close += 1440;
-      if (nowMin < open) nowMin += 1440;
+    const checks = [
+      { day: getDayKey(0), offset: 0 },
+      { day: getDayKey(-1), offset: -1440 }
+    ];
+
+    for (const check of checks) {
+      const str = clean(hours[check.day]);
+      if (!str || str === "—") continue;
+
+      const parts = str.split("-").map((s) => s.trim());
+      if (parts.length !== 2) continue;
+
+      let open = parseTime(parts[0]);
+      let close = parseTime(parts[1]);
+
+      if (open == null || close == null) continue;
+
+      open += check.offset;
+      close += check.offset;
+
+      if (close < open) close += 1440;
+
+      if (nowMinReal >= open && nowMinReal <= close) {
+        return {
+          open: true,
+          label: `Open • Closes ${parts[1]}`
+        };
+      }
     }
 
-    const isOpen = nowMin >= open && nowMin <= close;
+    const today = clean(hours[getDayKey(0)]);
+    if (today && today !== "—") {
+      const parts = today.split("-").map((s) => s.trim());
+      if (parts.length === 2) {
+        return {
+          open: false,
+          label: `Closed • Opens ${parts[0]}`
+        };
+      }
+    }
 
     return {
-      open: isOpen,
-      label: isOpen ? `Open • Closes ${parts[1]}` : `Closed • Opens ${parts[0]}`
+      open: false,
+      label: "Closed"
     };
   }
 
@@ -206,8 +238,15 @@
     layers.forEach((layer) => {
       const id = layer.id || "";
 
-      if (id.includes("label") || id.includes("poi") || id.includes("transit")) {
+      if (id.includes("poi") || id.includes("transit") || id.includes("airport")) {
         try { map.setLayoutProperty(id, "visibility", "none"); } catch (e) {}
+      }
+
+      if (layer.type === "symbol") {
+        try { map.setLayoutProperty(id, "visibility", "visible"); } catch (e) {}
+        try { map.setPaintProperty(id, "text-color", "#8e8e93"); } catch (e) {}
+        try { map.setPaintProperty(id, "text-halo-color", "#ffffff"); } catch (e) {}
+        try { map.setPaintProperty(id, "text-halo-width", 1.5); } catch (e) {}
       }
 
       if (id.includes("water") && layer.type === "fill") {
@@ -346,21 +385,25 @@
     if (logo) setLogoWithFallback(logo, shop);
 
     const s = computeStatus(shop);
+
     if (status) {
-      if (s) {
-        status.textContent = s.label;
-        status.className = `map-card-status ${s.open ? "open" : "closed"}`;
-      } else {
-        status.textContent = "";
-        status.className = "map-card-status";
-      }
+      status.textContent = s?.label || "";
+      status.className = `map-card-status ${s?.open ? "open" : "closed"}`;
     }
 
     if (openBtn) {
+      openBtn.textContent = "Open";
+      openBtn.classList.toggle("open", !!s?.open);
+      openBtn.classList.toggle("closed", !s?.open);
       openBtn.onclick = () => {
         window.location.href = shopUrl(shop);
       };
     }
+
+    card.onclick = (e) => {
+      if (e.target.closest("button")) return;
+      window.location.href = shopUrl(shop);
+    };
 
     card.hidden = false;
   }
