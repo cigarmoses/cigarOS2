@@ -42,13 +42,30 @@
     return num(shop.lng) ?? num(shop.lon) ?? num(shop.longitude) ?? num(shop.Longitude) ?? num(shop.LNG);
   }
 
+  function stateAbbr(state) {
+    const s = clean(state);
+    const map = {
+      "Alabama":"AL","Alaska":"AK","Arizona":"AZ","Arkansas":"AR","California":"CA",
+      "Colorado":"CO","Connecticut":"CT","Delaware":"DE","Florida":"FL","Georgia":"GA",
+      "Hawaii":"HI","Idaho":"ID","Illinois":"IL","Indiana":"IN","Iowa":"IA",
+      "Kansas":"KS","Kentucky":"KY","Louisiana":"LA","Maine":"ME","Maryland":"MD",
+      "Massachusetts":"MA","Michigan":"MI","Minnesota":"MN","Mississippi":"MS","Missouri":"MO",
+      "Montana":"MT","Nebraska":"NE","Nevada":"NV","New Hampshire":"NH","New Jersey":"NJ",
+      "New Mexico":"NM","New York":"NY","North Carolina":"NC","North Dakota":"ND","Ohio":"OH",
+      "Oklahoma":"OK","Oregon":"OR","Pennsylvania":"PA","Rhode Island":"RI","South Carolina":"SC",
+      "South Dakota":"SD","Tennessee":"TN","Texas":"TX","Utah":"UT","Vermont":"VT",
+      "Virginia":"VA","Washington":"WA","West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY"
+    };
+    return map[s] || s;
+  }
+
   function shopName(shop) {
     return clean(shop.name || shop.Shop || shop.shop || "Shop");
   }
 
   function shopCityState(shop) {
     const city = clean(shop.city || shop.City);
-    const state = clean(shop.state || shop.ST || shop.State);
+    const state = stateAbbr(shop.state || shop.ST || shop.State);
     return [city, state].filter(Boolean).join(", ");
   }
 
@@ -118,6 +135,8 @@
     logoKeys(shop).forEach((k) => {
       candidates.push(`/img/icons/shops/${encodeURIComponent(k)}.svg`);
       candidates.push(`/img/icons/shops/${encodeURIComponent(k)}.png`);
+      candidates.push(`/img/icons/shops/${encodeURIComponent(k.toLowerCase())}.svg`);
+      candidates.push(`/img/icons/shops/${encodeURIComponent(k.toLowerCase())}.png`);
     });
 
     candidates.push(DEFAULT_SHOP_ICON);
@@ -489,10 +508,7 @@
     }
 
     if (openBtn) {
-      openBtn.textContent = s?.open ? "Open" : "Closed";
-      openBtn.classList.remove("open", "closed");
-      openBtn.classList.add(s?.open ? "open" : "closed");
-      openBtn.onclick = () => window.location.href = shopUrl(shop);
+      openBtn.hidden = true;
     }
 
     if (favBtn) {
@@ -505,19 +521,61 @@
     }
 
     if (details) {
-      const rows = [
-        ["Address", shopAddress(shop)],
-        ["Phone", shopPhone(shop)],
-        ["Website", shopWebsite(shop)],
-        ["Hours", normalizeHours(shop)[getDayKey(0)]]
-      ].filter((r) => r[1]);
+      const features = shop.features || shop.Features || shop.amenities || {};
+      const brands = Array.isArray(shop.brands)
+        ? shop.brands
+        : typeof shop.Brands === "string"
+          ? shop.Brands.split(",").map((s) => s.trim()).filter(Boolean)
+          : [];
 
-      details.innerHTML = rows.map(([k, v]) => `
+      const amenityItems = [
+        ["Indoor Seating", features.indoorSeating || features.indoor],
+        ["Outdoor Seating", features.outdoorSeating || features.outdoor],
+        ["TVs", features.tvs],
+        ["Food", features.food],
+        ["Alcohol", features.alcohol],
+        ["BYOB", features.byob],
+        ["Live Music", features.liveMusic || features.livemusic],
+        ["Quiet Space", features.quietSpace || features.quiet],
+        ["TAA", features.taa]
+      ].filter((x) => x[1] === true || x[1] === "true" || x[1] === "yes" || x[1] === "1");
+
+      details.innerHTML = `
         <div class="map-detail-row">
-          <div class="map-detail-k">${escapeHtml(k)}</div>
-          <div class="map-detail-v">${escapeHtml(v)}</div>
+          <div class="map-detail-k">Address</div>
+          <div class="map-detail-v">${escapeHtml(shopAddress(shop))}</div>
         </div>
-      `).join("");
+
+        <div class="map-detail-row">
+          <div class="map-detail-k">Phone</div>
+          <div class="map-detail-v">${escapeHtml(shopPhone(shop))}</div>
+        </div>
+
+        ${shopWebsite(shop) ? `
+          <div class="map-detail-row">
+            <div class="map-detail-k">Website</div>
+            <div class="map-detail-v">${escapeHtml(shopWebsite(shop))}</div>
+          </div>
+        ` : ""}
+
+        ${brands.length ? `
+          <div class="map-detail-section">
+            <div class="map-detail-section-title">Brands Available</div>
+            <div class="map-brand-chips">
+              ${brands.slice(0, 24).map((b) => `<span>${escapeHtml(b)}</span>`).join("")}
+            </div>
+          </div>
+        ` : ""}
+
+        ${amenityItems.length ? `
+          <div class="map-detail-section">
+            <div class="map-detail-section-title">Shop Features</div>
+            <div class="map-feature-chips">
+              ${amenityItems.map(([label]) => `<span>${escapeHtml(label)}</span>`).join("")}
+            </div>
+          </div>
+        ` : ""}
+      `;
     }
 
     card.onclick = (e) => {
