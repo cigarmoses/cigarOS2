@@ -1,15 +1,10 @@
 (() => {
   "use strict";
 
-  /*
-    IMPORTANT:
-    Replace this with your real Mapbox public token.
-    Mapbox dashboard → Tokens → Default public token.
-  */
-  mapboxgl.accessToken = "PASTE_YOUR_MAPBOX_PUBLIC_TOKEN_HERE";
+  mapboxgl.accessToken = "pk.eyJ1IjoiY2lnYXJzb2NpYWwiLCJhIjoiY21ianl5bHd1MGxicTJqcHdhb3dpZ3ZwNCJ9.ijIrVkm0sLmv9xApK1zxBw";
 
   const SHOPS_URL = "/shops/shops.json";
-  const DEFAULT_CENTER = [-80.1918, 25.7617]; // Florida-ish default
+  const DEFAULT_CENTER = [-80.1918, 25.7617];
   const DEFAULT_ZOOM = 6.4;
 
   const $ = (sel) => document.querySelector(sel);
@@ -41,9 +36,7 @@
       num(shop.lat) ??
       num(shop.latitude) ??
       num(shop.Latitude) ??
-      num(shop.LAT) ??
-      num(shop.coords?.lat) ??
-      num(shop.coordinates?.lat)
+      num(shop.LAT)
     );
   }
 
@@ -53,11 +46,7 @@
       num(shop.lon) ??
       num(shop.longitude) ??
       num(shop.Longitude) ??
-      num(shop.LNG) ??
-      num(shop.coords?.lng) ??
-      num(shop.coords?.lon) ??
-      num(shop.coordinates?.lng) ??
-      num(shop.coordinates?.lon)
+      num(shop.LNG)
     );
   }
 
@@ -113,12 +102,12 @@
 
   function computeStatus(shop) {
     const hours = normalizeHours(shop);
-    const key = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
+    const key = ["sun","mon","tue","wed","thu","fri","sat"][new Date().getDay()];
     const today = clean(hours[key]);
 
     if (!today || today === "—") return null;
 
-    const parts = today.split("-").map((s) => s.trim());
+    const parts = today.split("-").map(s => s.trim());
     if (parts.length !== 2) return null;
 
     let open = parseTime(parts[0]);
@@ -127,7 +116,7 @@
     if (open == null || close == null) return null;
 
     const now = new Date();
-    let nowMin = now.getHours() * 60 + now.getMinutes();
+    let nowMin = now.getHours()*60 + now.getMinutes();
 
     if (close < open) {
       close += 1440;
@@ -147,12 +136,12 @@
     const data = await res.json();
 
     shops = (Array.isArray(data) ? data : [])
-      .map((shop) => {
+      .map(shop => {
         const lat = getLat(shop);
         const lng = getLng(shop);
         return { ...shop, _lat: lat, _lng: lng };
       })
-      .filter((shop) => Number.isFinite(shop._lat) && Number.isFinite(shop._lng));
+      .filter(shop => Number.isFinite(shop._lat) && Number.isFinite(shop._lng));
   }
 
   function initMap() {
@@ -178,220 +167,107 @@
   function applyPremiumStyle() {
     const layers = map.getStyle().layers || [];
 
-    layers.forEach((layer) => {
+    layers.forEach(layer => {
       const id = layer.id;
 
       if (id.includes("water")) {
         map.setPaintProperty(id, "fill-color", "#9ed7ee");
-        map.setPaintProperty(id, "fill-opacity", 1);
         return;
       }
 
       if (id.includes("land") || id.includes("background")) {
-        if (layer.type === "background") {
-          map.setPaintProperty(id, "background-color", "#e9e9ea");
-        }
-
         if (layer.type === "fill") {
           map.setPaintProperty(id, "fill-color", "#ededee");
         }
       }
 
-      if (id.includes("road")) {
-        if (layer.type === "line") {
-          map.setPaintProperty(id, "line-color", "#b9b9bd");
-          map.setPaintProperty(id, "line-opacity", .72);
-        }
+      if (id.includes("road") && layer.type === "line") {
+        map.setPaintProperty(id, "line-color", "#b9b9bd");
       }
 
-      if (
-        id.includes("poi") ||
-        id.includes("transit") ||
-        id.includes("label") ||
-        id.includes("settlement") ||
-        id.includes("airport")
-      ) {
+      if (id.includes("label") || id.includes("poi")) {
         map.setLayoutProperty(id, "visibility", "none");
       }
-    });
-
-    map.setFog({
-      color: "#ffffff",
-      "high-color": "#d7d7da",
-      "horizon-blend": 0.18
     });
   }
 
   function add3DBuildings() {
     const layers = map.getStyle().layers;
     const labelLayerId = layers.find(
-      (layer) => layer.type === "symbol" && layer.layout && layer.layout["text-field"]
+      l => l.type === "symbol" && l.layout && l.layout["text-field"]
     )?.id;
 
-    if (map.getLayer("cigaros-3d-buildings")) return;
-
-    map.addLayer(
-      {
-        id: "cigaros-3d-buildings",
-        source: "composite",
-        "source-layer": "building",
-        filter: ["==", "extrude", "true"],
-        type: "fill-extrusion",
-        minzoom: 14,
-        paint: {
-          "fill-extrusion-color": [
-            "interpolate",
-            ["linear"],
-            ["get", "height"],
-            0, "#d8d8da",
-            80, "#a7a7ab",
-            180, "#6f6f75"
-          ],
-          "fill-extrusion-height": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            14, 0,
-            15.2, ["get", "height"]
-          ],
-          "fill-extrusion-base": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            14, 0,
-            15.2, ["get", "min_height"]
-          ],
-          "fill-extrusion-opacity": 0.92
-        }
-      },
-      labelLayerId
-    );
+    map.addLayer({
+      id: "3d-buildings",
+      source: "composite",
+      "source-layer": "building",
+      filter: ["==","extrude","true"],
+      type: "fill-extrusion",
+      minzoom: 14,
+      paint: {
+        "fill-extrusion-color": "#aaa",
+        "fill-extrusion-height": ["get","height"],
+        "fill-extrusion-base": ["get","min_height"],
+        "fill-extrusion-opacity": 0.9
+      }
+    }, labelLayerId);
   }
 
   function addShopMarkers() {
-    shops.forEach((shop) => {
-      const el = document.createElement("button");
+    shops.forEach(shop => {
+      const el = document.createElement("div");
       el.className = "shop-pin";
-      el.type = "button";
-      el.setAttribute("aria-label", shopName(shop));
 
-      el.addEventListener("click", () => {
-        setActiveShop(shop, el);
-      });
+      el.onclick = () => setActiveShop(shop, el);
 
-      const marker = new mapboxgl.Marker({
-        element: el,
-        anchor: "bottom"
-      })
+      new mapboxgl.Marker(el)
         .setLngLat([shop._lng, shop._lat])
         .addTo(map);
-
-      markers.push(marker);
     });
   }
 
-  function setActiveShop(shop, markerEl) {
+  function setActiveShop(shop, el) {
     if (activeMarkerEl) activeMarkerEl.classList.remove("is-active");
 
-    activeShop = shop;
-    activeMarkerEl = markerEl;
-    activeMarkerEl.classList.add("is-active");
+    activeMarkerEl = el;
+    el.classList.add("is-active");
 
     map.easeTo({
       center: [shop._lng, shop._lat],
-      zoom: Math.max(map.getZoom(), 15.4),
-      pitch: 66,
-      bearing: map.getBearing(),
-      duration: 700,
-      offset: [0, -90]
+      zoom: 15.4,
+      duration: 700
     });
 
     renderShopCard(shop);
   }
 
   function renderShopCard(shop) {
-    const card = $("#shopCard");
-    const logo = $("#cardLogo");
-    const name = $("#cardName");
-    const city = $("#cardCity");
-    const status = $("#cardStatus");
-    const openBtn = $("#cardOpenBtn");
+    $("#shopCard").hidden = false;
+    $("#cardName").textContent = shopName(shop);
+    $("#cardCity").textContent = shopCityState(shop);
 
-    name.textContent = shopName(shop);
-    city.textContent = shopCityState(shop) || "Cigar shop";
+    const status = computeStatus(shop);
+    const statusEl = $("#cardStatus");
 
-    logo.src = logoUrl(shop);
-    logo.onerror = () => {
-      logo.onerror = null;
-      logo.src = "/uxui/darkmode/darkmodeshops.png";
-    };
-
-    const s = computeStatus(shop);
-    if (s) {
-      status.textContent = s.label;
-      status.className = `map-card-status ${s.open ? "open" : "closed"}`;
-    } else {
-      status.textContent = "";
-      status.className = "map-card-status";
+    if (status) {
+      statusEl.textContent = status.label;
+      statusEl.className = `map-card-status ${status.open ? "open" : "closed"}`;
     }
-
-    openBtn.onclick = () => {
-      window.location.href = shopUrl(shop);
-    };
-
-    card.hidden = false;
   }
 
   function fitToShops() {
     if (!shops.length) return;
 
     const bounds = new mapboxgl.LngLatBounds();
+    shops.forEach(s => bounds.extend([s._lng, s._lat]));
 
-    shops.forEach((shop) => {
-      bounds.extend([shop._lng, shop._lat]);
-    });
-
-    map.fitBounds(bounds, {
-      padding: {
-        top: 170,
-        left: 60,
-        right: 60,
-        bottom: 160
-      },
-      maxZoom: 10.5,
-      duration: 900
-    });
-  }
-
-  function wireUI() {
-    $("#mapLocateBtn")?.addEventListener("click", () => {
-      if (!navigator.geolocation) return;
-
-      navigator.geolocation.getCurrentPosition((pos) => {
-        map.easeTo({
-          center: [pos.coords.longitude, pos.coords.latitude],
-          zoom: 14.8,
-          pitch: 66,
-          duration: 900
-        });
-      });
-    });
-
-    document.querySelectorAll(".map-filter").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".map-filter").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-      });
-    });
+    map.fitBounds(bounds, { padding: 80 });
   }
 
   async function init() {
     await loadShops();
     initMap();
-    wireUI();
   }
 
-  init().catch((err) => {
-    console.error("[map.js] init failed:", err);
-  });
+  init();
 })();
