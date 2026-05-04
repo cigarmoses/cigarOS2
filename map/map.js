@@ -540,42 +540,45 @@
         ["TAA", features.taa]
       ].filter((x) => x[1] === true || x[1] === "true" || x[1] === "yes" || x[1] === "1");
 
-      details.innerHTML = `
-        <div class="map-detail-row">
-          <div class="map-detail-k">Address</div>
-          <div class="map-detail-v">${escapeHtml(shopAddress(shop))}</div>
+details.innerHTML = `
+  <div class="map-detail-grid">
+
+    <div class="map-detail-row">
+      <div class="map-detail-k">Address</div>
+      <div class="map-detail-v">${escapeHtml(shopAddress(shop))}</div>
+    </div>
+
+    <div class="map-detail-row">
+      <div class="map-detail-k">Phone</div>
+      <div class="map-detail-v">${escapeHtml(shopPhone(shop))}</div>
+    </div>
+
+    ${shopWebsite(shop) ? `
+      <div class="map-detail-row">
+        <div class="map-detail-k">Website</div>
+        <div class="map-detail-v">${escapeHtml(shopWebsite(shop))}</div>
+      </div>
+    ` : ""}
+
+    ${brands.length ? `
+      <div class="map-detail-section">
+        <div class="map-detail-section-title">Brands</div>
+        <div class="map-brand-chips">
+          ${brands.slice(0, 24).map((b) => `<span>${escapeHtml(b)}</span>`).join("")}
         </div>
+      </div>
+    ` : ""}
 
-        <div class="map-detail-row">
-          <div class="map-detail-k">Phone</div>
-          <div class="map-detail-v">${escapeHtml(shopPhone(shop))}</div>
+    ${amenityItems.length ? `
+      <div class="map-detail-section">
+        <div class="map-detail-section-title">Features</div>
+        <div class="map-feature-chips">
+          ${amenityItems.map(([label]) => `<span>${escapeHtml(label)}</span>`).join("")}
         </div>
-
-        ${shopWebsite(shop) ? `
-          <div class="map-detail-row">
-            <div class="map-detail-k">Website</div>
-            <div class="map-detail-v">${escapeHtml(shopWebsite(shop))}</div>
-          </div>
-        ` : ""}
-
-        ${brands.length ? `
-          <div class="map-detail-section">
-            <div class="map-detail-section-title">Brands Available</div>
-            <div class="map-brand-chips">
-              ${brands.slice(0, 24).map((b) => `<span>${escapeHtml(b)}</span>`).join("")}
-            </div>
-          </div>
-        ` : ""}
-
-        ${amenityItems.length ? `
-          <div class="map-detail-section">
-            <div class="map-detail-section-title">Shop Features</div>
-            <div class="map-feature-chips">
-              ${amenityItems.map(([label]) => `<span>${escapeHtml(label)}</span>`).join("")}
-            </div>
-          </div>
-        ` : ""}
-      `;
+      </div>
+    ` : ""}
+  </div>
+`;
     }
 
     card.onclick = (e) => {
