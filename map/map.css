@@ -324,3 +324,71 @@ body.map-page{
 .mapboxgl-ctrl-bottom-right{
   display:none !important;
 }
+
+/* SHOP CARD V6 CLEANUP */
+.map-card-open{
+  display:none !important;
+}
+
+.map-card-main{
+  grid-template-columns:58px minmax(0,1fr) 44px;
+}
+
+.map-card-info{
+  min-width:0;
+  flex:1;
+}
+
+.map-card-title{
+  max-width:100%;
+}
+
+.map-card-subtitle{
+  max-width:100%;
+}
+
+.map-card-fav{
+  margin-left:auto;
+}
+
+.map-shop-card.expanded{
+  height:62vh;
+}
+
+.map-detail-section{
+  padding:18px 0 4px;
+  border-top:1px solid rgba(0,0,0,.08);
+}
+
+.map-detail-section-title{
+  font-size:18px;
+  font-weight:850;
+  letter-spacing:-.02em;
+  margin-bottom:12px;
+  color:#111;
+}
+
+.map-brand-chips,
+.map-feature-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.map-brand-chips span,
+.map-feature-chips span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 11px;
+  border-radius:999px;
+  background:#f2f2f7;
+  color:#111;
+  font-size:13px;
+  font-weight:700;
+}
+
+.map-feature-chips span{
+  background:rgba(52,199,89,.12);
+  color:#248a3d;
+}
