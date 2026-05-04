@@ -6,12 +6,14 @@
   const SHOPS_URLS = ["/shops/shops.json", "/data/shops/shops.json"];
   const DEFAULT_CENTER = [-80.1918, 25.7617];
   const DEFAULT_ZOOM = 6.4;
+  const DEFAULT_SHOP_ICON = "/uxui/darkmode/darkmodeshops.png";
 
   const $ = (sel) => document.querySelector(sel);
 
   let map;
   let shops = [];
   let activeMarkerEl = null;
+  let currentZoom = DEFAULT_ZOOM;
 
   function clean(v) {
     return String(v ?? "").trim();
@@ -47,16 +49,110 @@
     return [city, state].filter(Boolean).join(", ");
   }
 
+  function logoKeys(shop) {
+    return [
+      shop.logoKey,
+      shop.slug,
+      shop.Slug,
+      shop.slug_id,
+      shopName(shop)
+    ]
+      .map(keyify)
+      .filter(Boolean)
+      .filter((v, i, arr) => arr.indexOf(v) === i);
+  }
+
   function shopKey(shop) {
-    return keyify(shop.logoKey || shop.slug || shop.Slug || shop.slug_id || shopName(shop));
+    return logoKeys(shop)[0] || "shop";
   }
 
   function shopUrl(shop) {
     return `/shops/shop-page.html?shop=${encodeURIComponent(shopKey(shop))}`;
   }
 
-  function logoUrl(shop) {
-    return `/img/icons/shops/${encodeURIComponent(shopKey(shop))}.svg`;
+  function setLogoWithFallback(img, shop) {
+    const keys = logoKeys(shop);
+    const candidates = [];
+
+    keys.forEach((k) => {
+      candidates.push(`/img/icons/shops/${encodeURIComponent(k)}.svg`);
+      candidates.push(`/img/icons/shops/${encodeURIComponent(k)}.png`);
+    });
+
+    candidates.push(DEFAULT_SHOP_ICON);
+
+    let index = 0;
+
+    img.onerror = () => {
+      index += 1;
+      if (index < candidates.length) {
+        img.src = candidates[index];
+      } else {
+        img.onerror = null;
+        img.src = DEFAULT_SHOP_ICON;
+      }
+    };
+
+    img.src = candidates[0] || DEFAULT_SHOP_ICON;
+  }
+
+  function normalizeHours(shop) {
+    const h = shop.hours && typeof shop.hours === "object" ? shop.hours : {};
+    return {
+      sun: clean(h.sun || h.Sunday || shop.sun || shop.Sunday),
+      mon: clean(h.mon || h.Monday || shop.mon || shop.Monday),
+      tue: clean(h.tue || h.Tuesday || shop.tue || shop.Tuesday),
+      wed: clean(h.wed || h.Wednesday || shop.wed || shop.Wednesday),
+      thu: clean(h.thu || h.Thursday || shop.thu || shop.Thursday),
+      fri: clean(h.fri || h.Friday || shop.fri || shop.Friday),
+      sat: clean(h.sat || h.Saturday || shop.sat || shop.Saturday),
+    };
+  }
+
+  function parseTime(str) {
+    const s = clean(str);
+    const m = s.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+    if (!m) return null;
+
+    let h = Number(m[1]);
+    const min = Number(m[2] || 0);
+    const ap = m[3].toUpperCase();
+
+    if (ap === "PM" && h !== 12) h += 12;
+    if (ap === "AM" && h === 12) h = 0;
+
+    return h * 60 + min;
+  }
+
+  function computeStatus(shop) {
+    const hours = normalizeHours(shop);
+    const key = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
+    const today = clean(hours[key]);
+
+    if (!today || today === "—") return null;
+
+    const parts = today.split("-").map((s) => s.trim());
+    if (parts.length !== 2) return null;
+
+    let open = parseTime(parts[0]);
+    let close = parseTime(parts[1]);
+
+    if (open == null || close == null) return null;
+
+    const now = new Date();
+    let nowMin = now.getHours() * 60 + now.getMinutes();
+
+    if (close < open) {
+      close += 1440;
+      if (nowMin < open) nowMin += 1440;
+    }
+
+    const isOpen = nowMin >= open && nowMin <= close;
+
+    return {
+      open: isOpen,
+      label: isOpen ? `Open • Closes ${parts[1]}` : `Closed • Opens ${parts[0]}`
+    };
   }
 
   async function fetchShopsJson() {
@@ -80,8 +176,6 @@
         return { ...shop, _lat: lat, _lng: lng };
       })
       .filter((shop) => Number.isFinite(shop._lat) && Number.isFinite(shop._lng));
-
-    console.log("[map] shops loaded:", shops.length, shops);
   }
 
   function initMap() {
@@ -90,18 +184,19 @@
       style: "mapbox://styles/mapbox/light-v11",
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
-      pitch: 64,
+      pitch: 62,
       bearing: -18,
       antialias: true,
       attributionControl: false
     });
 
     map.on("load", () => {
-      try { applyPremiumStyle(); } catch (e) { console.warn("[map] style skipped:", e); }
-      try { add3DBuildings(); } catch (e) { console.warn("[map] 3D skipped:", e); }
+      try { applyPremiumStyle(); } catch (e) {}
+      try { add3DBuildings(); } catch (e) {}
 
       addShopMarkers();
       fitToShops();
+      wireZoomBehavior();
     });
   }
 
@@ -133,7 +228,7 @@
       if (id.includes("road") && layer.type === "line") {
         try {
           map.setPaintProperty(id, "line-color", "#b9b9bd");
-          map.setPaintProperty(id, "line-opacity", 0.72);
+          map.setPaintProperty(id, "line-opacity", 0.66);
         } catch (e) {}
       }
     });
@@ -141,7 +236,7 @@
     map.setFog({
       color: "#ffffff",
       "high-color": "#d7d7da",
-      "horizon-blend": 0.18
+      "horizon-blend": 0.16
     });
   }
 
@@ -166,13 +261,13 @@
             "interpolate",
             ["linear"],
             ["get", "height"],
-            0, "#d8d8da",
+            0, "#d6d6d8",
             80, "#a7a7ab",
-            180, "#6f6f75"
+            180, "#74747a"
           ],
           "fill-extrusion-height": ["get", "height"],
           "fill-extrusion-base": ["get", "min_height"],
-          "fill-extrusion-opacity": 0.92
+          "fill-extrusion-opacity": 0.9
         }
       },
       labelLayerId
@@ -196,6 +291,24 @@
       })
         .setLngLat([shop._lng, shop._lat])
         .addTo(map);
+    });
+
+    updatePinDensity();
+  }
+
+  function wireZoomBehavior() {
+    map.on("zoom", () => {
+      currentZoom = map.getZoom();
+      updatePinDensity();
+    });
+  }
+
+  function updatePinDensity() {
+    const zoom = map?.getZoom?.() || currentZoom;
+
+    document.querySelectorAll(".shop-pin").forEach((pin) => {
+      pin.classList.toggle("is-small", zoom < 8);
+      pin.classList.toggle("is-tiny", zoom < 5.5);
     });
   }
 
@@ -222,6 +335,7 @@
     const logo = $("#cardLogo");
     const name = $("#cardName");
     const city = $("#cardCity");
+    const status = $("#cardStatus");
     const openBtn = $("#cardOpenBtn");
 
     if (!card) return;
@@ -229,15 +343,24 @@
     name.textContent = shopName(shop);
     city.textContent = shopCityState(shop) || "Cigar shop";
 
-    logo.src = logoUrl(shop);
-    logo.onerror = () => {
-      logo.onerror = null;
-      logo.src = "/uxui/darkmode/darkmodeshops.png";
-    };
+    if (logo) setLogoWithFallback(logo, shop);
 
-    openBtn.onclick = () => {
-      window.location.href = shopUrl(shop);
-    };
+    const s = computeStatus(shop);
+    if (status) {
+      if (s) {
+        status.textContent = s.label;
+        status.className = `map-card-status ${s.open ? "open" : "closed"}`;
+      } else {
+        status.textContent = "";
+        status.className = "map-card-status";
+      }
+    }
+
+    if (openBtn) {
+      openBtn.onclick = () => {
+        window.location.href = shopUrl(shop);
+      };
+    }
 
     card.hidden = false;
   }
@@ -263,9 +386,32 @@
     });
   }
 
+  function wireUI() {
+    $("#mapLocateBtn")?.addEventListener("click", () => {
+      if (!navigator.geolocation) return;
+
+      navigator.geolocation.getCurrentPosition((pos) => {
+        map.easeTo({
+          center: [pos.coords.longitude, pos.coords.latitude],
+          zoom: 14.8,
+          pitch: 66,
+          duration: 900
+        });
+      });
+    });
+
+    document.querySelectorAll(".map-filter").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".map-filter").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  }
+
   async function init() {
     await loadShops();
     initMap();
+    wireUI();
   }
 
   init().catch((err) => {
