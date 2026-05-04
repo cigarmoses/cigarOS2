@@ -7,7 +7,7 @@
 
   <link rel="stylesheet" href="/css/type.css" />
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="/map/map.css?v=1" />
+  <link rel="stylesheet" href="/map/map.css?v=5" />
 </head>
 
 <body class="map-page">
@@ -44,13 +44,14 @@
         <div id="cardStatus" class="map-card-status"></div>
       </div>
 
-      <button id="cardOpenBtn" class="map-card-open" type="button">
-        Open
-      </button>
+      <button id="cardFavBtn" class="map-card-fav" type="button" aria-label="Favorite shop">☆</button>
+      <button id="cardOpenBtn" class="map-card-open" type="button">Open</button>
     </div>
+
+    <div id="cardDetails" class="map-card-details"></div>
   </section>
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js"></script>
-  <script src="/map/map.js?v=4"></script>
+  <script src="/map/map.js?v=5"></script>
 </body>
 </html>
