@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Map • CigarOS</title>
+
+  <link rel="stylesheet" href="/css/type.css" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/map/map.css?v=1" />
+</head>
+
+<body class="map-page">
+  <main id="map"></main>
+
+  <div class="map-topbar">
+    <div class="map-title-wrap">
+      <div class="map-eyebrow">CigarOS</div>
+      <div class="map-title">Map</div>
+    </div>
+
+    <button id="mapLocateBtn" class="map-glass-btn" type="button" aria-label="Locate me">
+      <span>⌖</span>
+    </button>
+  </div>
+
+  <div class="map-filter-pill">
+    <button class="map-filter active" type="button" data-layer="shops">Shops</button>
+    <button class="map-filter" type="button" data-layer="events">Events</button>
+    <button class="map-filter" type="button" data-layer="favorites">Favorites</button>
+  </div>
+
+  <section id="shopCard" class="map-shop-card" hidden>
+    <div class="map-card-handle"></div>
+
+    <div class="map-card-main">
+      <div class="map-card-logo-wrap">
+        <img id="cardLogo" class="map-card-logo" alt="" />
+      </div>
+
+      <div class="map-card-info">
+        <div id="cardName" class="map-card-title">Shop</div>
+        <div id="cardCity" class="map-card-subtitle">City, State</div>
+        <div id="cardStatus" class="map-card-status"></div>
+      </div>
+
+      <button id="cardOpenBtn" class="map-card-open" type="button">
+        Open
+      </button>
+    </div>
+  </section>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js"></script>
+  <script src="/map/map.js?v=1"></script>
+</body>
+</html>
