@@ -248,3 +248,58 @@ body.map-page{
 .mapboxgl-ctrl-bottom-right{
   display:none !important;
 }
+
+/* MAP V2 PIN POLISH */
+.shop-pin{
+  width:24px;
+  height:24px;
+  box-shadow:
+    0 0 0 4px rgba(255,59,48,.14),
+    0 8px 18px rgba(0,0,0,.18) !important;
+}
+
+.shop-pin::after{
+  width:7px;
+  height:7px;
+}
+
+.shop-pin.is-active{
+  box-shadow:
+    0 0 0 7px rgba(255,59,48,.18),
+    0 12px 28px rgba(0,0,0,.24) !important;
+}
+
+.shop-pin.is-small{
+  width:18px;
+  height:18px;
+  box-shadow:
+    0 0 0 3px rgba(255,59,48,.10),
+    0 5px 12px rgba(0,0,0,.14) !important;
+}
+
+.shop-pin.is-small::after{
+  width:5px;
+  height:5px;
+}
+
+.shop-pin.is-tiny{
+  width:12px;
+  height:12px;
+  box-shadow:
+    0 0 0 2px rgba(255,59,48,.08),
+    0 4px 8px rgba(0,0,0,.10) !important;
+}
+
+.shop-pin.is-tiny::after{
+  width:3px;
+  height:3px;
+}
+
+/* LOWER TOP UI SO IT DOESN'T CLIP */
+.map-topbar{
+  top:calc(env(safe-area-inset-top) + 24px);
+}
+
+.map-filter-pill{
+  top:calc(env(safe-area-inset-top) + 102px);
+}
