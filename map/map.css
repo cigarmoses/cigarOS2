@@ -392,3 +392,27 @@ body.map-page{
   background:rgba(52,199,89,.12);
   color:#248a3d;
 }
+
+.map-detail-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  padding:14px 0;
+  border-bottom:1px solid rgba(0,0,0,.06);
+}
+
+.map-detail-k{
+  font-weight:700;
+  color:#111;
+  font-size:15px;
+  min-width:90px;
+}
+
+.map-detail-v{
+  text-align:right;
+  font-weight:600;
+  color:#6e6e73;
+  font-size:15px;
+  max-width:70%;
+}
