@@ -436,5 +436,19 @@ body.map-page{
   color:#ffb400;
 }
 
-.shop-pin{display:block;}
-.shop-pin.hide-marker{display:none!important;}
+.mapboxgl-marker{
+  display:block !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+
+.shop-pin{
+  display:block !important;
+  opacity:1 !important;
+  visibility:visible !important;
+}
+
+.shop-pin.hide-marker{
+  display:none !important;
+}
