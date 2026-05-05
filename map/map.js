@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  mapboxgl.accessToken = "pk.eyJ1IjoiY2lnYXJzb2NpYWwiLCJhIjoiY21ianl5bHd1MGxicTJqcHdhb3dpZ3ZwNCJ9.ijIrVkm0sLmv9xApK1zxBw";
+  mapboxgl.accessToken =
+    "pk.eyJ1IjoiY2lnYXJzb2NpYWwiLCJhIjoiY21ianl5bHd1MGxicTJqcHdhb3dpZ3ZwNCJ9.ijIrVkm0sLmv9xApK1zxBw";
 
   const SHOPS_URLS = ["/shops/shops.json", "/data/shops/shops.json"];
   const DEFAULT_CENTER = [-80.1918, 25.7617];
@@ -14,7 +15,6 @@
   let map;
   let shops = [];
   let markers = [];
-  let activeShop = null;
   let activeMarkerEl = null;
   let userMarker = null;
   let currentFilter = "shops";
@@ -144,6 +144,14 @@
     return clean(shop.website || shop.Website);
   }
 
+  function shopKey(shop) {
+    return keyify(shop.logoKey || shop.slug || shop.Slug || shop.slug_id || shopName(shop));
+  }
+
+  function shopUrl(shop) {
+    return `/shops/shop-page.html?shop=${encodeURIComponent(shopKey(shop))}`;
+  }
+
   function logoKeys(shop) {
     return [
       shop.logoKey,
@@ -161,24 +169,10 @@
       .filter((v, i, arr) => arr.indexOf(v) === i);
   }
 
-  function shopKey(shop) {
-    return keyify(shop.logoKey || shop.slug || shop.Slug || shop.slug_id || shopName(shop));
-  }
-
-  function shopUrl(shop) {
-    return `/shops/shop-page.html?shop=${encodeURIComponent(shopKey(shop))}`;
-  }
-
-  function normalizeWebsiteUrl(v) {
-    const s = clean(v);
-    if (!s) return "";
-    return /^https?:\/\//i.test(s) ? s : `https://${s}`;
-  }
-
   function getFavorites() {
     try {
       return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
-    } catch (e) {
+    } catch {
       return [];
     }
   }
@@ -311,12 +305,24 @@
     };
   }
 
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[c]));
+  }
+
   async function fetchShopsJson() {
     for (const url of SHOPS_URLS) {
       try {
         const res = await fetch(`${url}?v=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) continue;
-        return await res.json();
+
+        const data = await res.json();
+        if (Array.isArray(data)) return data;
       } catch (e) {}
     }
 
@@ -326,7 +332,7 @@
   async function loadShops() {
     const data = await fetchShopsJson();
 
-    shops = (Array.isArray(data) ? data : [])
+    shops = data
       .map((shop) => {
         const lat = getLat(shop);
         const lng = getLng(shop);
@@ -338,9 +344,11 @@
         };
       })
       .filter((shop) => Number.isFinite(shop._lat) && Number.isFinite(shop._lng));
+
+    console.log("[map.js] shops loaded:", shops.length, shops.slice(0, 3));
   }
 
-  function toGeoJson(list) {
+  function toGeoJson(list = shops) {
     return {
       type: "FeatureCollection",
       features: list.map((shop, index) => ({
@@ -371,14 +379,8 @@
     });
 
     map.on("load", () => {
-      try {
-        applyPremiumStyle();
-      } catch (e) {}
-
-      try {
-        add3DBuildings();
-      } catch (e) {}
-
+      applyPremiumStyle();
+      add3DBuildings();
       addClusterLayers();
       addShopMarkers();
       fitToShops();
@@ -397,58 +399,51 @@
       if (id.includes("poi") || id.includes("transit") || id.includes("airport")) {
         try {
           map.setLayoutProperty(id, "visibility", "none");
-        } catch (e) {}
+        } catch {}
       }
 
       if (layer.type === "symbol") {
         try {
           map.setLayoutProperty(id, "visibility", "visible");
-        } catch (e) {}
-
-        try {
           map.setPaintProperty(id, "text-color", "#8e8e93");
-        } catch (e) {}
-
-        try {
           map.setPaintProperty(id, "text-halo-color", "#ffffff");
-        } catch (e) {}
-
-        try {
           map.setPaintProperty(id, "text-halo-width", 1.5);
-        } catch (e) {}
+        } catch {}
       }
 
       if (id.includes("water") && layer.type === "fill") {
         try {
           map.setPaintProperty(id, "fill-color", "#9ed7ee");
-        } catch (e) {}
+        } catch {}
       }
 
       if ((id.includes("land") || id.includes("background")) && layer.type === "background") {
         try {
           map.setPaintProperty(id, "background-color", "#f4f4f5");
-        } catch (e) {}
+        } catch {}
       }
 
       if ((id.includes("land") || id.includes("park")) && layer.type === "fill") {
         try {
           map.setPaintProperty(id, "fill-color", "#eeeeef");
-        } catch (e) {}
+        } catch {}
       }
 
       if (id.includes("road") && layer.type === "line") {
         try {
           map.setPaintProperty(id, "line-color", "#b9b9bd");
           map.setPaintProperty(id, "line-opacity", 0.66);
-        } catch (e) {}
+        } catch {}
       }
     });
 
-    map.setFog({
-      color: "#ffffff",
-      "high-color": "#d7d7da",
-      "horizon-blend": 0.16
-    });
+    try {
+      map.setFog({
+        color: "#ffffff",
+        "high-color": "#d7d7da",
+        "horizon-blend": 0.16
+      });
+    } catch {}
   }
 
   function add3DBuildings() {
@@ -459,37 +454,42 @@
       (layer) => layer.type === "symbol" && layer.layout && layer.layout["text-field"]
     )?.id;
 
-    map.addLayer(
-      {
-        id: "cigaros-3d-buildings",
-        source: "composite",
-        "source-layer": "building",
-        filter: ["==", "extrude", "true"],
-        type: "fill-extrusion",
-        minzoom: 14,
-        paint: {
-          "fill-extrusion-color": [
-            "interpolate",
-            ["linear"],
-            ["get", "height"],
-            0,
-            "#d6d6d8",
-            80,
-            "#a7a7ab",
-            180,
-            "#74747a"
-          ],
-          "fill-extrusion-height": ["get", "height"],
-          "fill-extrusion-base": ["get", "min_height"],
-          "fill-extrusion-opacity": 0.9
-        }
-      },
-      labelLayerId
-    );
+    try {
+      map.addLayer(
+        {
+          id: "cigaros-3d-buildings",
+          source: "composite",
+          "source-layer": "building",
+          filter: ["==", "extrude", "true"],
+          type: "fill-extrusion",
+          minzoom: 14,
+          paint: {
+            "fill-extrusion-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "height"],
+              0,
+              "#d6d6d8",
+              80,
+              "#a7a7ab",
+              180,
+              "#74747a"
+            ],
+            "fill-extrusion-height": ["get", "height"],
+            "fill-extrusion-base": ["get", "min_height"],
+            "fill-extrusion-opacity": 0.9
+          }
+        },
+        labelLayerId
+      );
+    } catch {}
   }
 
   function addClusterLayers() {
-    if (map.getSource("shops")) return;
+    if (map.getSource("shops")) {
+      map.getSource("shops").setData(toGeoJson(shops));
+      return;
+    }
 
     map.addSource("shops", {
       type: "geojson",
@@ -535,8 +535,9 @@
         layers: ["shop-clusters"]
       });
 
-      const clusterId = features[0]?.properties?.cluster_id;
-      if (clusterId == null) return;
+      if (!features.length) return;
+
+      const clusterId = features[0].properties.cluster_id;
 
       map.getSource("shops").getClusterExpansionZoom(clusterId, (err, zoom) => {
         if (err) return;
@@ -575,6 +576,7 @@
       markers.push(marker);
     });
 
+    console.log("[map.js] markers added:", markers.length);
     updateMarkerVisibility();
   }
 
@@ -603,7 +605,6 @@
   function setActiveShop(shop, markerEl) {
     if (activeMarkerEl) activeMarkerEl.classList.remove("is-active");
 
-    activeShop = shop;
     activeMarkerEl = markerEl;
 
     if (activeMarkerEl) {
@@ -682,8 +683,8 @@
         ["Quiet Space", features.quietSpace || features.quiet],
         ["TAA", features.taa]
       ].filter((x) => {
-        const v = x[1];
-        return v === true || v === "true" || v === "yes" || v === "1" || v === "x";
+        const v = String(x[1]).toLowerCase();
+        return x[1] === true || ["true", "yes", "1", "x"].includes(v);
       });
 
       details.innerHTML = `
@@ -761,16 +762,6 @@
 
       dragStartY = null;
     };
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[c]));
   }
 
   function fitToShops(list = shops) {
