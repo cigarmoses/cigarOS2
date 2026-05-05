@@ -435,3 +435,6 @@ body.map-page{
 #cardFavBtn.active{
   color:#ffb400;
 }
+
+.shop-pin{display:block;}
+.shop-pin.hide-marker{display:none!important;}
