@@ -230,11 +230,16 @@ body.map-page{
 .map-card-subtitle{
   margin-top:4px;
   color:#8e8e93;
-  font-size:14px;
-  font-weight:650;
+  font-size:15px;
+  font-weight:590;
+  letter-spacing:-0.015em;
+  line-height:1.15;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
 }
 
 .map-card-status{
@@ -411,10 +416,15 @@ body.map-page{
 
 .map-detail-v{
   text-align:right;
-  font-weight:600;
+  font-weight:560;
   color:#6e6e73;
-  font-size:15px;
+  font-size:16px;
+  letter-spacing:-0.015em;
+  line-height:1.2;
   max-width:70%;
+
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
 }
 
 #cardFavBtn{
