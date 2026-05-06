@@ -194,20 +194,21 @@ body.map-page{
 }
 
 .map-card-logo-wrap{
-  width:58px;
-  height:58px;
-  border-radius:18px;
-  background:#fff;
+  width:128px;
+  height:128px;
+  border-radius:0;
+  background:transparent;
   display:flex;
   align-items:center;
   justify-content:center;
-  box-shadow:0 12px 28px rgba(0,0,0,.10);
+  box-shadow:none;
   flex:0 0 auto;
+  overflow:visible;
 }
 
 .map-card-logo{
-  width:48px;
-  height:48px;
+  width:128px;
+  height:128px;
   object-fit:contain;
 }
 
