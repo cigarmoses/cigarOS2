@@ -509,3 +509,79 @@ body.map-page{
     grid-template-columns:repeat(4,1fr);
   }
 }
+/* FINAL SHOP CARD POLISH */
+
+.map-shop-card{
+  touch-action:pan-y;
+  -webkit-overflow-scrolling:touch;
+}
+
+.map-shop-card.expanded{
+  height:74vh;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+
+.map-card-main{
+  position:relative;
+  grid-template-columns:128px minmax(0,1fr);
+  align-items:center;
+  gap:18px;
+  padding-right:28px;
+}
+
+#cardFavBtn{
+  position:absolute;
+  top:4px;
+  right:0;
+  width:auto;
+  height:auto;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  color:#c7c7cc;
+  font-size:34px;
+  line-height:1;
+  padding:0;
+}
+
+#cardFavBtn.active{
+  color:#ffb400;
+}
+
+.map-card-title{
+  font-size:34px;
+  line-height:0.98;
+  font-weight:900;
+  letter-spacing:-0.045em;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+}
+
+.map-card-subtitle{
+  margin-top:10px;
+}
+
+.map-card-status{
+  margin-top:10px;
+}
+
+.map-hours-toggle{
+  cursor:pointer;
+}
+
+.map-hours-all[hidden]{
+  display:none !important;
+}
+
+.map-hours-all{
+  margin-top:14px;
+  padding-top:10px;
+}
+
+.map-detail-section{
+  padding-bottom:40px;
+}
