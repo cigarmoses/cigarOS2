@@ -32,6 +32,13 @@
       .replace(/[^a-z0-9]+/g, "");
   }
 
+  function isTruthy(v) {
+    if (v === true) return true;
+    if (v === false || v == null) return false;
+    const s = String(v).trim().toLowerCase();
+    return ["1", "true", "yes", "y", "x"].includes(s);
+  }
+
   function num(v) {
     const n = Number(String(v ?? "").replace(/[^0-9.-]/g, ""));
     return Number.isFinite(n) ? n : null;
@@ -67,56 +74,16 @@
     const key = raw.replace(/\s+/g, "");
 
     const map = {
-      Alabama: "AL",
-      Alaska: "AK",
-      Arizona: "AZ",
-      Arkansas: "AR",
-      California: "CA",
-      Colorado: "CO",
-      Connecticut: "CT",
-      Delaware: "DE",
-      Florida: "FL",
-      Georgia: "GA",
-      Hawaii: "HI",
-      Idaho: "ID",
-      Illinois: "IL",
-      Indiana: "IN",
-      Iowa: "IA",
-      Kansas: "KS",
-      Kentucky: "KY",
-      Louisiana: "LA",
-      Maine: "ME",
-      Maryland: "MD",
-      Massachusetts: "MA",
-      Michigan: "MI",
-      Minnesota: "MN",
-      Mississippi: "MS",
-      Missouri: "MO",
-      Montana: "MT",
-      Nebraska: "NE",
-      Nevada: "NV",
-      NewHampshire: "NH",
-      NewJersey: "NJ",
-      NewMexico: "NM",
-      NewYork: "NY",
-      NorthCarolina: "NC",
-      NorthDakota: "ND",
-      Ohio: "OH",
-      Oklahoma: "OK",
-      Oregon: "OR",
-      Pennsylvania: "PA",
-      RhodeIsland: "RI",
-      SouthCarolina: "SC",
-      SouthDakota: "SD",
-      Tennessee: "TN",
-      Texas: "TX",
-      Utah: "UT",
-      Vermont: "VT",
-      Virginia: "VA",
-      Washington: "WA",
-      WestVirginia: "WV",
-      Wisconsin: "WI",
-      Wyoming: "WY"
+      Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA",
+      Colorado: "CO", Connecticut: "CT", Delaware: "DE", Florida: "FL", Georgia: "GA",
+      Hawaii: "HI", Idaho: "ID", Illinois: "IL", Indiana: "IN", Iowa: "IA",
+      Kansas: "KS", Kentucky: "KY", Louisiana: "LA", Maine: "ME", Maryland: "MD",
+      Massachusetts: "MA", Michigan: "MI", Minnesota: "MN", Mississippi: "MS", Missouri: "MO",
+      Montana: "MT", Nebraska: "NE", Nevada: "NV", NewHampshire: "NH", NewJersey: "NJ",
+      NewMexico: "NM", NewYork: "NY", NorthCarolina: "NC", NorthDakota: "ND", Ohio: "OH",
+      Oklahoma: "OK", Oregon: "OR", Pennsylvania: "PA", RhodeIsland: "RI", SouthCarolina: "SC",
+      SouthDakota: "SD", Tennessee: "TN", Texas: "TX", Utah: "UT", Vermont: "VT",
+      Virginia: "VA", Washington: "WA", WestVirginia: "WV", Wisconsin: "WI", Wyoming: "WY"
     };
 
     return map[key] || raw;
@@ -136,6 +103,15 @@
     return clean(shop.address || shop.Address || shop.address1 || shop.Address1);
   }
 
+  function fullShopAddress(shop) {
+    const address = shopAddress(shop);
+    const city = clean(shop.city || shop.City);
+    const state = stateAbbr(shop.state || shop.ST || shop.State);
+    const zip = clean(shop.zip || shop.Zip || shop.ZIP);
+    const cityLine = [city, state, zip].filter(Boolean).join(" ");
+    return [address, cityLine].filter(Boolean).join("\n");
+  }
+
   function shopPhone(shop) {
     return clean(shop.phone || shop.Phone || shop.Cell);
   }
@@ -144,24 +120,25 @@
     return clean(shop.website || shop.Website);
   }
 
+  function shopClass(shop) {
+    return clean(
+      shop.shopClass ||
+      shop.ShopClass ||
+      shop.class ||
+      shop.Class ||
+      shop.level ||
+      shop.Level ||
+      shop.type ||
+      shop.Type
+    );
+  }
+
   function shopKey(shop) {
     return keyify(shop.logoKey || shop.slug || shop.Slug || shop.slug_id || shopName(shop));
   }
 
-  function shopUrl(shop) {
-    return `/shops/shop-page.html?shop=${encodeURIComponent(shopKey(shop))}`;
-  }
-
   function logoKeys(shop) {
-    return [
-      shop.logoKey,
-      shop.slug,
-      shop.Slug,
-      shop.slug_id,
-      shop.name,
-      shop.Shop,
-      shop.shop
-    ]
+    return [shop.logoKey, shop.slug, shop.Slug, shop.slug_id, shop.name, shop.Shop, shop.shop]
       .map(clean)
       .filter(Boolean)
       .flatMap((k) => [k, keyify(k), k.toLowerCase()])
@@ -188,9 +165,7 @@
   function toggleFavorite(shop) {
     const key = shopKey(shop);
     const favs = getFavorites();
-    const next = favs.includes(key)
-      ? favs.filter((x) => x !== key)
-      : [...favs, key];
+    const next = favs.includes(key) ? favs.filter((x) => x !== key) : [...favs, key];
 
     setFavorites(next);
     renderShopCard(shop);
@@ -212,7 +187,6 @@
     candidates.push(DEFAULT_SHOP_ICON);
 
     let index = 0;
-
     img.onerror = () => {
       index += 1;
       img.src = candidates[index] || DEFAULT_SHOP_ICON;
@@ -272,37 +246,55 @@
 
       let open = parseTime(parts[0]);
       let close = parseTime(parts[1]);
-
       if (open == null || close == null) continue;
 
       open += check.offset;
       close += check.offset;
-
       if (close < open) close += 1440;
 
       if (nowMin >= open && nowMin <= close) {
-        return {
-          open: true,
-          label: `Open • Closes ${parts[1]}`
-        };
+        return { open: true, label: "Open", detail: `Closes ${parts[1]}` };
       }
     }
 
     const today = clean(hours[getDayKey(0)]);
     if (today && today !== "—") {
       const parts = today.split("-").map((s) => s.trim());
-      if (parts.length === 2) {
-        return {
-          open: false,
-          label: `Closed • Opens ${parts[0]}`
-        };
-      }
+      if (parts.length === 2) return { open: false, label: "Closed", detail: `Opens ${parts[0]}` };
     }
 
-    return {
-      open: false,
-      label: "Closed"
-    };
+    return { open: false, label: "Closed", detail: "" };
+  }
+
+  function todayHoursLabel(shop) {
+    const h = normalizeHours(shop);
+    return clean(h[getDayKey(0)]) || "Hours unavailable";
+  }
+
+  function allHoursHtml(shop) {
+    const h = normalizeHours(shop);
+    const days = [
+      ["Monday", h.mon],
+      ["Tuesday", h.tue],
+      ["Wednesday", h.wed],
+      ["Thursday", h.thu],
+      ["Friday", h.fri],
+      ["Saturday", h.sat],
+      ["Sunday", h.sun]
+    ].filter(([, v]) => clean(v));
+
+    if (!days.length) return "";
+
+    return `
+      <div class="map-hours-all" hidden>
+        ${days.map(([day, val]) => `
+          <div class="map-hours-row">
+            <div class="map-hours-day">${escapeHtml(day)}</div>
+            <div>${escapeHtml(val)}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
   }
 
   function escapeHtml(s) {
@@ -313,6 +305,26 @@
       '"': "&quot;",
       "'": "&#39;"
     }[c]));
+  }
+
+  function featureIconPath(slug) {
+    return `/img/icons/${slug}.svg`;
+  }
+
+  function getAmenityItems(shop) {
+    const f = shop.features || shop.Features || shop.amenities || {};
+
+    return [
+      ["indoorseating", "Indoor Seating", f.indoorSeating || f.indoor],
+      ["outdoorseating", "Outdoor Seating", f.outdoorSeating || f.outdoor],
+      ["tv", "TVs", f.tvs],
+      ["food", "Food", f.food],
+      ["alcohol", "Alcohol", f.alcohol],
+      ["byob", "BYOB", f.byob],
+      ["livemusic", "Live Music", f.liveMusic || f.livemusic],
+      ["quiet", "Quiet Space", f.quietSpace || f.quiet],
+      ["taa", "TAA", f.taa]
+    ].filter(([, , ok]) => isTruthy(ok));
   }
 
   async function fetchShopsJson() {
@@ -336,12 +348,7 @@
       .map((shop) => {
         const lat = getLat(shop);
         const lng = getLng(shop);
-
-        return {
-          ...shop,
-          _lat: lat,
-          _lng: lng
-        };
+        return { ...shop, _lat: lat, _lng: lng };
       })
       .filter((shop) => Number.isFinite(shop._lat) && Number.isFinite(shop._lng));
 
@@ -397,9 +404,7 @@
       const id = layer.id || "";
 
       if (id.includes("poi") || id.includes("transit") || id.includes("airport")) {
-        try {
-          map.setLayoutProperty(id, "visibility", "none");
-        } catch {}
+        try { map.setLayoutProperty(id, "visibility", "none"); } catch {}
       }
 
       if (layer.type === "symbol") {
@@ -412,21 +417,15 @@
       }
 
       if (id.includes("water") && layer.type === "fill") {
-        try {
-          map.setPaintProperty(id, "fill-color", "#9ed7ee");
-        } catch {}
+        try { map.setPaintProperty(id, "fill-color", "#9ed7ee"); } catch {}
       }
 
       if ((id.includes("land") || id.includes("background")) && layer.type === "background") {
-        try {
-          map.setPaintProperty(id, "background-color", "#f4f4f5");
-        } catch {}
+        try { map.setPaintProperty(id, "background-color", "#f4f4f5"); } catch {}
       }
 
       if ((id.includes("land") || id.includes("park")) && layer.type === "fill") {
-        try {
-          map.setPaintProperty(id, "fill-color", "#eeeeef");
-        } catch {}
+        try { map.setPaintProperty(id, "fill-color", "#eeeeef"); } catch {}
       }
 
       if (id.includes("road") && layer.type === "line") {
@@ -465,15 +464,10 @@
           minzoom: 14,
           paint: {
             "fill-extrusion-color": [
-              "interpolate",
-              ["linear"],
-              ["get", "height"],
-              0,
-              "#d6d6d8",
-              80,
-              "#a7a7ab",
-              180,
-              "#74747a"
+              "interpolate", ["linear"], ["get", "height"],
+              0, "#d6d6d8",
+              80, "#a7a7ab",
+              180, "#74747a"
             ],
             "fill-extrusion-height": ["get", "height"],
             "fill-extrusion-base": ["get", "min_height"],
@@ -529,27 +523,6 @@
         "text-color": "#ffffff"
       }
     });
-
-    map.on("click", "shop-clusters", (e) => {
-      const features = map.queryRenderedFeatures(e.point, {
-        layers: ["shop-clusters"]
-      });
-
-      if (!features.length) return;
-
-      const clusterId = features[0].properties.cluster_id;
-
-      map.getSource("shops").getClusterExpansionZoom(clusterId, (err, zoom) => {
-        if (err) return;
-
-        map.easeTo({
-          center: features[0].geometry.coordinates,
-          zoom,
-          pitch: 62,
-          duration: 700
-        });
-      });
-    });
   }
 
   function addShopMarkers() {
@@ -561,15 +534,9 @@
       el.className = "shop-pin";
       el.type = "button";
       el.setAttribute("aria-label", shopName(shop));
+      el.addEventListener("click", () => setActiveShop(shop, el));
 
-      el.addEventListener("click", () => {
-        setActiveShop(shop, el);
-      });
-
-      const marker = new mapboxgl.Marker({
-        element: el,
-        anchor: "bottom"
-      })
+      const marker = new mapboxgl.Marker({ element: el, anchor: "bottom" })
         .setLngLat([shop._lng, shop._lat])
         .addTo(map);
 
@@ -587,16 +554,12 @@
     markers.forEach((marker, index) => {
       const el = marker.getElement();
       const shop = shops[index];
-
-      const shouldShowByFilter =
-        currentFilter !== "favorites" || (shop && isFavorite(shop));
-
+      const shouldShowByFilter = currentFilter !== "favorites" || (shop && isFavorite(shop));
       el.classList.toggle("hide-marker", !showPins || !shouldShowByFilter);
     });
 
     if (map.getLayer("shop-clusters")) {
       const showClusters = currentFilter !== "favorites";
-
       map.setLayoutProperty("shop-clusters", "visibility", showClusters ? "visible" : "none");
       map.setLayoutProperty("shop-cluster-count", "visibility", showClusters ? "visible" : "none");
     }
@@ -606,10 +569,7 @@
     if (activeMarkerEl) activeMarkerEl.classList.remove("is-active");
 
     activeMarkerEl = markerEl;
-
-    if (activeMarkerEl) {
-      activeMarkerEl.classList.add("is-active");
-    }
+    if (activeMarkerEl) activeMarkerEl.classList.add("is-active");
 
     map.easeTo({
       center: [shop._lng, shop._lat],
@@ -639,24 +599,21 @@
 
     if (name) name.textContent = shopName(shop);
     if (city) city.textContent = shopCityState(shop) || "Cigar shop";
-
     if (logo) setLogoWithFallback(logo, shop);
 
     const s = computeStatus(shop);
 
     if (status) {
       status.textContent = s?.label || "";
+      status.title = s?.detail || "";
       status.className = `map-card-status ${s?.open ? "open" : "closed"}`;
     }
 
-    if (openBtn) {
-      openBtn.hidden = true;
-    }
+    if (openBtn) openBtn.hidden = true;
 
     if (favBtn) {
       favBtn.textContent = isFavorite(shop) ? "★" : "☆";
       favBtn.classList.toggle("active", isFavorite(shop));
-
       favBtn.onclick = (e) => {
         e.stopPropagation();
         toggleFavorite(shop);
@@ -664,71 +621,91 @@
     }
 
     if (details) {
-      const features = shop.features || shop.Features || shop.amenities || {};
-
-      const brands = Array.isArray(shop.brands)
-        ? shop.brands
-        : typeof shop.Brands === "string"
-          ? shop.Brands.split(",").map((s) => s.trim()).filter(Boolean)
-          : [];
-
-      const amenityItems = [
-        ["Indoor Seating", features.indoorSeating || features.indoor],
-        ["Outdoor Seating", features.outdoorSeating || features.outdoor],
-        ["TVs", features.tvs],
-        ["Food", features.food],
-        ["Alcohol", features.alcohol],
-        ["BYOB", features.byob],
-        ["Live Music", features.liveMusic || features.livemusic],
-        ["Quiet Space", features.quietSpace || features.quiet],
-        ["TAA", features.taa]
-      ].filter((x) => {
-        const v = String(x[1]).toLowerCase();
-        return x[1] === true || ["true", "yes", "1", "x"].includes(v);
-      });
+      const address = fullShopAddress(shop);
+      const klass = shopClass(shop);
+      const website = shopWebsite(shop);
+      const phone = shopPhone(shop);
+      const amenityItems = getAmenityItems(shop);
 
       details.innerHTML = `
         <div class="map-detail-grid">
-          ${shopAddress(shop) ? `
-            <div class="map-detail-row">
-              <div class="map-detail-k">Address</div>
-              <div class="map-detail-v">${escapeHtml(shopAddress(shop))}</div>
-            </div>
-          ` : ""}
-
-          ${shopPhone(shop) ? `
+          ${phone ? `
             <div class="map-detail-row">
               <div class="map-detail-k">Phone</div>
-              <div class="map-detail-v">${escapeHtml(shopPhone(shop))}</div>
+              <div class="map-detail-v">${escapeHtml(phone)}</div>
             </div>
           ` : ""}
 
-          ${shopWebsite(shop) ? `
+          ${klass ? `
+            <div class="map-detail-row">
+              <div class="map-detail-k">Shop Class</div>
+              <div class="map-detail-v">${escapeHtml(klass)}</div>
+            </div>
+          ` : ""}
+
+          ${address ? `
+            <div class="map-detail-row">
+              <div>
+                <div class="map-detail-k">Address</div>
+                <button class="map-copy-btn" type="button" data-copy-address="${escapeHtml(address)}">Copy</button>
+              </div>
+              <div class="map-detail-v">${escapeHtml(address).replace(/\n/g, "<br>")}</div>
+            </div>
+          ` : ""}
+
+          ${website ? `
             <div class="map-detail-row">
               <div class="map-detail-k">Website</div>
-              <div class="map-detail-v">${escapeHtml(shopWebsite(shop))}</div>
+              <div class="map-detail-v">${escapeHtml(website)}</div>
             </div>
           ` : ""}
 
-          ${brands.length ? `
-            <div class="map-detail-section">
-              <div class="map-detail-section-title">Brands</div>
-              <div class="map-brand-chips">
-                ${brands.slice(0, 24).map((b) => `<span>${escapeHtml(b)}</span>`).join("")}
-              </div>
+          <div class="map-detail-row">
+            <div class="map-detail-k">Hours</div>
+            <div class="map-detail-v">
+              <button class="map-hours-toggle" type="button">
+                ${escapeHtml(todayHoursLabel(shop))}
+              </button>
+              ${allHoursHtml(shop)}
             </div>
-          ` : ""}
+          </div>
 
           ${amenityItems.length ? `
             <div class="map-detail-section">
               <div class="map-detail-section-title">Features</div>
               <div class="map-feature-chips">
-                ${amenityItems.map(([label]) => `<span>${escapeHtml(label)}</span>`).join("")}
+                ${amenityItems.map(([slug, label]) => `
+                  <span title="${escapeHtml(label)}">
+                    <img class="map-feature-icon" src="${featureIconPath(slug)}" alt="${escapeHtml(label)}">
+                  </span>
+                `).join("")}
               </div>
             </div>
           ` : ""}
         </div>
       `;
+
+      details.querySelectorAll(".map-copy-btn").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const text = btn.getAttribute("data-copy-address") || "";
+          try {
+            await navigator.clipboard.writeText(text);
+            btn.textContent = "Copied";
+            setTimeout(() => (btn.textContent = "Copy"), 1200);
+          } catch {
+            btn.textContent = "Copy";
+          }
+        });
+      });
+
+      details.querySelectorAll(".map-hours-toggle").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const all = btn.parentElement.querySelector(".map-hours-all");
+          if (all) all.hidden = !all.hidden;
+        });
+      });
     }
 
     card.onclick = (e) => {
@@ -752,13 +729,8 @@
       const diff = e.clientY - dragStartY;
       const quick = Date.now() - dragStartTime < 280;
 
-      if (diff < -35 || (quick && diff < -12)) {
-        card.classList.add("expanded");
-      }
-
-      if (diff > 35 || (quick && diff > 12)) {
-        card.classList.remove("expanded");
-      }
+      if (diff < -35 || (quick && diff < -12)) card.classList.add("expanded");
+      if (diff > 35 || (quick && diff > 12)) card.classList.remove("expanded");
 
       dragStartY = null;
     };
@@ -768,18 +740,10 @@
     if (!list.length) return;
 
     const bounds = new mapboxgl.LngLatBounds();
-
-    list.forEach((shop) => {
-      bounds.extend([shop._lng, shop._lat]);
-    });
+    list.forEach((shop) => bounds.extend([shop._lng, shop._lat]));
 
     map.fitBounds(bounds, {
-      padding: {
-        top: 170,
-        left: 60,
-        right: 60,
-        bottom: 160
-      },
+      padding: { top: 170, left: 60, right: 60, bottom: 160 },
       maxZoom: list.length === 1 ? 12 : 8.5,
       duration: 900
     });
@@ -832,9 +796,7 @@
         const el = document.createElement("div");
         el.className = "user-marker";
 
-        userMarker = new mapboxgl.Marker({
-          element: el
-        })
+        userMarker = new mapboxgl.Marker({ element: el })
           .setLngLat([lng, lat])
           .addTo(map);
 
