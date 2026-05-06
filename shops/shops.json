@@ -13,7 +13,7 @@
     "email": "",
     "instagram": "sunsetloungejupiter",
     "lat": 26.9319,
-    "lng": -80.0730,
+    "lng": -80.073,
     "hours": {
       "mon": "12:00 PM - 3:00 AM",
       "tue": "12:00 PM - 3:00 AM",
@@ -36,7 +36,7 @@
       "privateClub": false,
       "chain": false,
       "taa": false
-      }
+    }
   },
   {
     "name": "2 Guys Cigars Nashua",
@@ -45261,7 +45261,7 @@
       "thu": "9:00 AM - 9:00 PM",
       "fri": "9:00 AM - 12:00 AM",
       "sat": "9:00 AM - 12:00 AM",
-      "sun": "10:00 AM - 7:00 PM",
+      "sun": "10:00 AM - 7:00 PM"
     },
     "features": {
       "alcohol": true,
