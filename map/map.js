@@ -663,10 +663,11 @@
           <div class="map-detail-row">
             <div class="map-detail-k">Hours</div>
             <div class="map-detail-v">
-              <button class="map-hours-toggle" type="button">
-                ${escapeHtml(todayHoursLabel(shop))}
-              </button>
-              ${allHoursHtml(shop)}
+            <button class="map-hours-toggle" type="button">
+               ${escapeHtml(todayHoursLabel(shop))}
+            <span class="map-hours-more">View all</span>
+            </button>
+            ${allHoursHtml(shop)}
             </div>
           </div>
 
