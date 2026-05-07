@@ -169,22 +169,24 @@ body.map-page{
   bottom:calc(env(safe-area-inset-bottom) + 18px);
   z-index:30;
   border-radius:34px;
-  background:rgba(255,255,255,.88);
+  background:rgba(255,255,255,.90);
   backdrop-filter:blur(34px) saturate(1.55);
   -webkit-backdrop-filter:blur(34px) saturate(1.55);
   box-shadow:0 26px 70px rgba(0,0,0,.28);
   border:1px solid rgba(255,255,255,.72);
   padding:10px 24px 28px;
   cursor:pointer;
-  touch-action:none;
+  touch-action:pan-y;
   max-height:76vh;
   overflow:hidden;
   transition:height .28s ease, transform .28s ease;
+  -webkit-overflow-scrolling:touch;
 }
 
 .map-shop-card.expanded{
-  height:70vh;
-  overflow:auto;
+  height:74vh;
+  overflow-y:auto;
+  overflow-x:hidden;
 }
 
 .map-card-handle{
@@ -195,11 +197,14 @@ body.map-page{
   margin:0 auto 20px;
 }
 
+/* HEADER */
 .map-card-main{
   display:grid;
-  grid-template-columns:128px minmax(0,1fr) 44px;
-  align-items:center;
+  grid-template-columns:128px minmax(0,1fr);
+  align-items:start;
   gap:18px;
+  position:relative;
+  padding-right:0;
 }
 
 .map-card-logo-wrap{
@@ -208,10 +213,9 @@ body.map-page{
   border-radius:0;
   background:transparent;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
   box-shadow:none;
-  flex:0 0 auto;
   overflow:visible;
 }
 
@@ -219,18 +223,19 @@ body.map-page{
   width:128px;
   height:128px;
   object-fit:contain;
+  display:block;
 }
 
 .map-card-info{
   min-width:0;
-  flex:1;
+  padding-top:2px;
 }
 
 .map-card-title{
   font-size:38px;
   line-height:.92;
   font-weight:900;
-  letter-spacing:-.05em;
+  letter-spacing:-.052em;
   color:#050505;
   white-space:normal;
   overflow:visible;
@@ -238,8 +243,17 @@ body.map-page{
   max-width:100%;
 }
 
-.map-card-subtitle{
-  margin-top:10px;
+.map-card-meta{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-top:12px;
+  flex-wrap:nowrap;
+  min-width:0;
+}
+
+.map-card-meta .map-card-subtitle{
+  margin-top:0;
   color:#6e6e73;
   font-size:18px;
   font-weight:560;
@@ -248,6 +262,8 @@ body.map-page{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  flex:0 1 auto;
+  max-width:none;
 }
 
 .map-card-status{
@@ -255,7 +271,7 @@ body.map-page{
   align-items:center;
   justify-content:center;
   width:fit-content;
-  margin-top:10px;
+  margin-top:0;
   padding:4px 12px;
   border-radius:999px;
   font-size:13px;
@@ -263,6 +279,7 @@ body.map-page{
   letter-spacing:-.01em;
   line-height:1;
   text-transform:uppercase;
+  flex:0 0 auto;
 }
 
 .map-card-status.open{
@@ -275,28 +292,32 @@ body.map-page{
   background:#ff3b30;
 }
 
+/* STAR BESIDE OPEN/CLOSED PILL */
 .map-card-fav,
 #cardFavBtn{
-  width:44px;
-  height:44px;
-  border-radius:50%;
-  border:0;
-  background:rgba(255,255,255,.72);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  box-shadow:0 8px 20px rgba(0,0,0,.10);
-  color:#8e8e93;
-  font-size:24px;
+  position:static !important;
+  width:auto !important;
+  height:auto !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  color:#c7c7cc;
+  font-size:30px;
   font-weight:800;
-  display:flex;
+  line-height:1;
+  display:inline-flex;
   align-items:center;
   justify-content:center;
-  margin-left:auto;
+  flex:0 0 auto;
 }
 
 .map-card-fav.active,
 #cardFavBtn.active{
-  background:#fff4cc;
   color:#ffb400;
 }
 
@@ -307,7 +328,7 @@ body.map-page{
 /* DETAILS */
 .map-card-details{
   display:none;
-  padding:26px 0 4px;
+  padding:34px 0 4px;
 }
 
 .map-shop-card.expanded .map-card-details{
@@ -381,10 +402,26 @@ body.map-page{
   letter-spacing:-0.018em;
   padding:0;
   text-align:right;
+  cursor:pointer;
+}
+
+.map-hours-more{
+  display:block;
+  margin-top:4px;
+  color:#8e8e93;
+  font-size:12px;
+  font-weight:750;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+
+.map-hours-all[hidden]{
+  display:none !important;
 }
 
 .map-hours-all{
-  margin-top:12px;
+  margin-top:14px;
+  padding-top:10px;
   display:grid;
   gap:8px;
 }
@@ -406,7 +443,7 @@ body.map-page{
 
 /* SECTIONS */
 .map-detail-section{
-  padding:28px 0 4px;
+  padding:28px 0 40px;
   border-top:1px solid rgba(0,0,0,.06);
 }
 
@@ -438,11 +475,11 @@ body.map-page{
   font-weight:700;
 }
 
-/* FEATURE ICONS */
+/* FEATURE ICONS — NO WHITE BACKGROUND */
 .map-feature-chips{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:18px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:26px;
   align-items:center;
 }
 
@@ -450,22 +487,25 @@ body.map-page{
   display:flex;
   align-items:center;
   justify-content:center;
-  width:54px;
-  height:54px;
+  width:58px;
+  height:58px;
   border-radius:0;
-  background:transparent;
+  background:transparent !important;
+  box-shadow:none !important;
   padding:0;
-  overflow:hidden;
+  overflow:visible;
   font-size:0;
   color:transparent;
 }
 
 .map-feature-chips img,
 .map-feature-icon{
-  width:54px;
-  height:54px;
+  width:58px;
+  height:58px;
   object-fit:contain;
   display:block;
+  background:transparent !important;
+  mix-blend-mode:multiply;
 }
 
 /* MAPBOX CLEANUP */
@@ -487,7 +527,7 @@ body.map-page{
   }
 
   .map-card-main{
-    grid-template-columns:108px minmax(0,1fr) 42px;
+    grid-template-columns:108px minmax(0,1fr);
     gap:14px;
   }
 
@@ -499,6 +539,24 @@ body.map-page{
 
   .map-card-title{
     font-size:34px;
+    line-height:.94;
+  }
+
+  .map-card-meta{
+    gap:8px;
+  }
+
+  .map-card-meta .map-card-subtitle{
+    font-size:17px;
+  }
+
+  .map-card-status{
+    font-size:12px;
+    padding:4px 10px;
+  }
+
+  #cardFavBtn{
+    font-size:28px;
   }
 
   .map-detail-row{
@@ -506,92 +564,6 @@ body.map-page{
   }
 
   .map-feature-chips{
-    grid-template-columns:repeat(4,1fr);
+    gap:22px;
   }
-}
-/* FINAL SHOP CARD POLISH */
-
-.map-shop-card{
-  touch-action:pan-y;
-  -webkit-overflow-scrolling:touch;
-}
-
-.map-shop-card.expanded{
-  height:74vh;
-  overflow-y:auto;
-  overflow-x:hidden;
-}
-
-.map-card-main{
-  position:relative;
-  grid-template-columns:128px minmax(0,1fr);
-  align-items:center;
-  gap:18px;
-  padding-right:28px;
-}
-
-#cardFavBtn{
-  position:absolute;
-  top:4px;
-  right:0;
-  width:auto;
-  height:auto;
-  border-radius:0;
-  background:transparent;
-  box-shadow:none;
-  backdrop-filter:none;
-  -webkit-backdrop-filter:none;
-  color:#c7c7cc;
-  font-size:34px;
-  line-height:1;
-  padding:0;
-}
-
-#cardFavBtn.active{
-  color:#ffb400;
-}
-
-.map-card-title{
-  font-size:34px;
-  line-height:0.98;
-  font-weight:900;
-  letter-spacing:-0.045em;
-  white-space:normal;
-  overflow:visible;
-  text-overflow:clip;
-}
-
-.map-card-subtitle{
-  margin-top:10px;
-}
-
-.map-card-status{
-  margin-top:10px;
-}
-
-.map-hours-toggle{
-  cursor:pointer;
-}
-
-.map-hours-all[hidden]{
-  display:none !important;
-}
-
-.map-hours-all{
-  margin-top:14px;
-  padding-top:10px;
-}
-
-.map-detail-section{
-  padding-bottom:40px;
-}
-
-.map-hours-more{
-  display:block;
-  margin-top:4px;
-  color:#8e8e93;
-  font-size:12px;
-  font-weight:750;
-  text-transform:uppercase;
-  letter-spacing:.03em;
 }
