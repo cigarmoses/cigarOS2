@@ -585,3 +585,13 @@ body.map-page{
 .map-detail-section{
   padding-bottom:40px;
 }
+
+.map-hours-more{
+  display:block;
+  margin-top:4px;
+  color:#8e8e93;
+  font-size:12px;
+  font-weight:750;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
