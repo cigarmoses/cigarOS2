@@ -26,10 +26,7 @@
   }
 
   function keyify(s) {
-    return clean(s)
-      .toLowerCase()
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "");
+    return clean(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
   }
 
   function isTruthy(v) {
@@ -45,47 +42,28 @@
   }
 
   function getLat(shop) {
-    return (
-      num(shop.lat) ??
-      num(shop.latitude) ??
-      num(shop.Latitude) ??
-      num(shop.LAT) ??
-      num(shop.coords?.lat) ??
-      num(shop.coordinates?.lat)
-    );
+    return num(shop.lat) ?? num(shop.latitude) ?? num(shop.Latitude) ?? num(shop.LAT) ?? num(shop.coords?.lat) ?? num(shop.coordinates?.lat);
   }
 
   function getLng(shop) {
-    return (
-      num(shop.lng) ??
-      num(shop.lon) ??
-      num(shop.longitude) ??
-      num(shop.Longitude) ??
-      num(shop.LNG) ??
-      num(shop.coords?.lng) ??
-      num(shop.coords?.lon) ??
-      num(shop.coordinates?.lng) ??
-      num(shop.coordinates?.lon)
-    );
+    return num(shop.lng) ?? num(shop.lon) ?? num(shop.longitude) ?? num(shop.Longitude) ?? num(shop.LNG) ?? num(shop.coords?.lng) ?? num(shop.coords?.lon) ?? num(shop.coordinates?.lng) ?? num(shop.coordinates?.lon);
   }
 
   function stateAbbr(state) {
     const raw = clean(state);
     const key = raw.replace(/\s+/g, "");
-
     const map = {
-      Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA",
-      Colorado: "CO", Connecticut: "CT", Delaware: "DE", Florida: "FL", Georgia: "GA",
-      Hawaii: "HI", Idaho: "ID", Illinois: "IL", Indiana: "IN", Iowa: "IA",
-      Kansas: "KS", Kentucky: "KY", Louisiana: "LA", Maine: "ME", Maryland: "MD",
-      Massachusetts: "MA", Michigan: "MI", Minnesota: "MN", Mississippi: "MS", Missouri: "MO",
-      Montana: "MT", Nebraska: "NE", Nevada: "NV", NewHampshire: "NH", NewJersey: "NJ",
-      NewMexico: "NM", NewYork: "NY", NorthCarolina: "NC", NorthDakota: "ND", Ohio: "OH",
-      Oklahoma: "OK", Oregon: "OR", Pennsylvania: "PA", RhodeIsland: "RI", SouthCarolina: "SC",
-      SouthDakota: "SD", Tennessee: "TN", Texas: "TX", Utah: "UT", Vermont: "VT",
-      Virginia: "VA", Washington: "WA", WestVirginia: "WV", Wisconsin: "WI", Wyoming: "WY"
+      Alabama:"AL", Alaska:"AK", Arizona:"AZ", Arkansas:"AR", California:"CA",
+      Colorado:"CO", Connecticut:"CT", Delaware:"DE", Florida:"FL", Georgia:"GA",
+      Hawaii:"HI", Idaho:"ID", Illinois:"IL", Indiana:"IN", Iowa:"IA",
+      Kansas:"KS", Kentucky:"KY", Louisiana:"LA", Maine:"ME", Maryland:"MD",
+      Massachusetts:"MA", Michigan:"MI", Minnesota:"MN", Mississippi:"MS", Missouri:"MO",
+      Montana:"MT", Nebraska:"NE", Nevada:"NV", NewHampshire:"NH", NewJersey:"NJ",
+      NewMexico:"NM", NewYork:"NY", NorthCarolina:"NC", NorthDakota:"ND", Ohio:"OH",
+      Oklahoma:"OK", Oregon:"OR", Pennsylvania:"PA", RhodeIsland:"RI", SouthCarolina:"SC",
+      SouthDakota:"SD", Tennessee:"TN", Texas:"TX", Utah:"UT", Vermont:"VT",
+      Virginia:"VA", Washington:"WA", WestVirginia:"WV", Wisconsin:"WI", Wyoming:"WY"
     };
-
     return map[key] || raw;
   }
 
@@ -121,16 +99,7 @@
   }
 
   function shopClass(shop) {
-    return clean(
-      shop.shopClass ||
-      shop.ShopClass ||
-      shop.class ||
-      shop.Class ||
-      shop.level ||
-      shop.Level ||
-      shop.type ||
-      shop.Type
-    );
+    return clean(shop.shopClass || shop.ShopClass || shop.class || shop.Class || shop.level || shop.Level || shop.type || shop.Type);
   }
 
   function shopKey(shop) {
@@ -166,7 +135,6 @@
     const key = shopKey(shop);
     const favs = getFavorites();
     const next = favs.includes(key) ? favs.filter((x) => x !== key) : [...favs, key];
-
     setFavorites(next);
     renderShopCard(shop);
     applyFilter(currentFilter);
@@ -176,7 +144,6 @@
     if (!img) return;
 
     const candidates = [];
-
     logoKeys(shop).forEach((k) => {
       candidates.push(`/img/icons/shops/${encodeURIComponent(k)}.svg`);
       candidates.push(`/img/icons/shops/${encodeURIComponent(k)}.png`);
@@ -197,7 +164,6 @@
 
   function normalizeHours(shop) {
     const h = shop.hours && typeof shop.hours === "object" ? shop.hours : {};
-
     return {
       sun: clean(h.sun || h.Sunday || shop.sun || shop.Sunday),
       mon: clean(h.mon || h.Monday || shop.mon || shop.Monday),
@@ -299,11 +265,11 @@
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
     }[c]));
   }
 
@@ -313,7 +279,6 @@
 
   function getAmenityItems(shop) {
     const f = shop.features || shop.Features || shop.amenities || {};
-
     return [
       ["indoorseating", "Indoor Seating", f.indoorSeating || f.indoor],
       ["outdoorseating", "Outdoor Seating", f.outdoorSeating || f.outdoor],
@@ -325,6 +290,24 @@
       ["quiet", "Quiet Space", f.quietSpace || f.quiet],
       ["taa", "TAA", f.taa]
     ].filter(([, , ok]) => isTruthy(ok));
+  }
+
+  function ensureMetaRow(city, status, favBtn) {
+    if (!city || !status || !favBtn) return;
+
+    const info = city.closest(".map-card-info");
+    if (!info) return;
+
+    let meta = info.querySelector(".map-card-meta");
+    if (!meta) {
+      meta = document.createElement("div");
+      meta.className = "map-card-meta";
+      info.appendChild(meta);
+    }
+
+    meta.appendChild(city);
+    meta.appendChild(status);
+    meta.appendChild(favBtn);
   }
 
   async function fetchShopsJson() {
@@ -351,8 +334,6 @@
         return { ...shop, _lat: lat, _lng: lng };
       })
       .filter((shop) => Number.isFinite(shop._lat) && Number.isFinite(shop._lng));
-
-    console.log("[map.js] shops loaded:", shops.length, shops.slice(0, 3));
   }
 
   function toGeoJson(list = shops) {
@@ -360,15 +341,8 @@
       type: "FeatureCollection",
       features: list.map((shop, index) => ({
         type: "Feature",
-        properties: {
-          index,
-          name: shopName(shop),
-          key: shopKey(shop)
-        },
-        geometry: {
-          type: "Point",
-          coordinates: [shop._lng, shop._lat]
-        }
+        properties: { index, name: shopName(shop), key: shopKey(shop) },
+        geometry: { type: "Point", coordinates: [shop._lng, shop._lat] }
       }))
     };
   }
@@ -519,9 +493,7 @@
         "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
         "text-size": 13
       },
-      paint: {
-        "text-color": "#ffffff"
-      }
+      paint: { "text-color": "#ffffff" }
     });
   }
 
@@ -543,7 +515,6 @@
       markers.push(marker);
     });
 
-    console.log("[map.js] markers added:", markers.length);
     updateMarkerVisibility();
   }
 
@@ -596,6 +567,8 @@
     if (!card) return;
 
     card.classList.remove("expanded");
+
+    ensureMetaRow(city, status, favBtn);
 
     if (name) name.textContent = shopName(shop);
     if (city) city.textContent = shopCityState(shop) || "Cigar shop";
@@ -663,11 +636,11 @@
           <div class="map-detail-row">
             <div class="map-detail-k">Hours</div>
             <div class="map-detail-v">
-            <button class="map-hours-toggle" type="button">
-               ${escapeHtml(todayHoursLabel(shop))}
-            <span class="map-hours-more">View all</span>
-            </button>
-            ${allHoursHtml(shop)}
+              <button class="map-hours-toggle" type="button">
+                ${escapeHtml(todayHoursLabel(shop))}
+                <span class="map-hours-more">View all</span>
+              </button>
+              ${allHoursHtml(shop)}
             </div>
           </div>
 
