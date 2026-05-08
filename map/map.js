@@ -582,16 +582,15 @@
       status.className = `map-card-status ${s?.open ? "open" : "closed"}`;
     }
 
-    if (openBtn) openBtn.hidden = true;
+if (favBtn) {
+  favBtn.innerHTML = "";
+  favBtn.classList.toggle("active", isFavorite(shop));
 
-    if (favBtn) {
-      favBtn.textContent = isFavorite(shop) ? "★" : "☆";
-      favBtn.classList.toggle("active", isFavorite(shop));
-      favBtn.onclick = (e) => {
-        e.stopPropagation();
-        toggleFavorite(shop);
-      };
-    }
+  favBtn.onclick = (e) => {
+    e.stopPropagation();
+    toggleFavorite(shop);
+  };
+}
 
     if (details) {
       const address = fullShopAddress(shop);
