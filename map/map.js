@@ -564,20 +564,24 @@
     const favBtn = $("#cardFavBtn");
     const details = $("#cardDetails");
 
-    if (!card) return;
+  if (!card) return;
 
-    let closeBtn = card.querySelector(".map-card-close");
+/* close button */
+let closeBtn = card.querySelector(".map-card-close");
+
 if (!closeBtn) {
   closeBtn = document.createElement("button");
   closeBtn.className = "map-card-close";
   closeBtn.type = "button";
   closeBtn.textContent = "×";
   closeBtn.setAttribute("aria-label", "Close shop details");
+
   card.appendChild(closeBtn);
 }
 
 closeBtn.onclick = (e) => {
   e.stopPropagation();
+
   card.classList.remove("expanded");
   card.hidden = true;
 };
@@ -597,6 +601,8 @@ closeBtn.onclick = (e) => {
       status.title = s?.detail || "";
       status.className = `map-card-status ${s?.open ? "open" : "closed"}`;
     }
+
+    if (openBtn) openBtn.hidden = true;
 
     if (favBtn) {
       favBtn.innerHTML = "";
