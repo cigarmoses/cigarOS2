@@ -81,6 +81,19 @@
     return clean(shop.address || shop.Address || shop.address1 || shop.Address1);
   }
 
+  function splitAddressLine(address) {
+    const s = clean(address);
+    if (!s) return [];
+
+    const suiteMatch = s.match(/\s+(Suite|Ste|Unit|Apt|#)\s+/i);
+    if (suiteMatch) {
+      const i = suiteMatch.index;
+      return [s.slice(0, i).trim(), s.slice(i).trim()].filter(Boolean);
+    }
+
+    return [s];
+  }
+
   function fullShopAddress(shop) {
     const address = shopAddress(shop);
     const city = clean(shop.city || shop.City);
@@ -88,6 +101,19 @@
     const zip = clean(shop.zip || shop.Zip || shop.ZIP);
     const cityLine = [city, state, zip].filter(Boolean).join(" ");
     return [address, cityLine].filter(Boolean).join("\n");
+  }
+
+  function addressDisplayHtml(shop) {
+    const addressLines = splitAddressLine(shopAddress(shop));
+    const city = clean(shop.city || shop.City);
+    const state = stateAbbr(shop.state || shop.ST || shop.State);
+    const zip = clean(shop.zip || shop.Zip || shop.ZIP);
+    const cityLine = [city, state, zip].filter(Boolean).join(" ");
+
+    return [...addressLines, cityLine]
+      .filter(Boolean)
+      .map((line) => `<span class="map-address-line">${escapeHtml(line)}</span>`)
+      .join("");
   }
 
   function shopPhone(shop) {
@@ -308,6 +334,22 @@
     meta.appendChild(city);
     meta.appendChild(status);
     meta.appendChild(favBtn);
+  }
+
+  function showFeatureOverlay(label) {
+    const existing = document.querySelector(".feature-tooltip-overlay");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.className = "feature-tooltip-overlay";
+    overlay.innerHTML = `<div class="feature-tooltip-text">${escapeHtml(label)}</div>`;
+
+    overlay.addEventListener("click", () => overlay.remove());
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+      overlay.remove();
+    }, 1200);
   }
 
   async function fetchShopsJson() {
@@ -564,27 +606,23 @@
     const favBtn = $("#cardFavBtn");
     const details = $("#cardDetails");
 
-  if (!card) return;
+    if (!card) return;
 
-/* close button */
-let closeBtn = card.querySelector(".map-card-close");
+    let closeBtn = card.querySelector(".map-card-close");
+    if (!closeBtn) {
+      closeBtn = document.createElement("button");
+      closeBtn.className = "map-card-close";
+      closeBtn.type = "button";
+      closeBtn.textContent = "×";
+      closeBtn.setAttribute("aria-label", "Close shop details");
+      card.appendChild(closeBtn);
+    }
 
-if (!closeBtn) {
-  closeBtn = document.createElement("button");
-  closeBtn.className = "map-card-close";
-  closeBtn.type = "button";
-  closeBtn.textContent = "×";
-  closeBtn.setAttribute("aria-label", "Close shop details");
-
-  card.appendChild(closeBtn);
-}
-
-closeBtn.onclick = (e) => {
-  e.stopPropagation();
-
-  card.classList.remove("expanded");
-  card.hidden = true;
-};
+    closeBtn.onclick = (e) => {
+      e.stopPropagation();
+      card.classList.remove("expanded");
+      card.hidden = true;
+    };
 
     card.classList.remove("expanded");
 
@@ -610,8 +648,8 @@ closeBtn.onclick = (e) => {
       favBtn.classList.toggle("active", isFavorite(shop));
 
       favBtn.onclick = (e) => {
-       e.stopPropagation();
-       toggleFavorite(shop);
+        e.stopPropagation();
+        toggleFavorite(shop);
       };
     }
 
@@ -644,7 +682,7 @@ closeBtn.onclick = (e) => {
                 <div class="map-detail-k">Address</div>
                 <button class="map-copy-btn" type="button" data-copy-address="${escapeHtml(address)}">Copy</button>
               </div>
-              <div class="map-detail-v">${escapeHtml(address).replace(/\n/g, "<br>")}</div>
+              <div class="map-detail-v">${addressDisplayHtml(shop)}</div>
             </div>
           ` : ""}
 
@@ -671,9 +709,9 @@ closeBtn.onclick = (e) => {
               <div class="map-detail-section-title">Features</div>
               <div class="map-feature-chips">
                 ${amenityItems.map(([slug, label]) => `
-                  <span title="${escapeHtml(label)}">
+                  <button class="map-feature-item" type="button" data-label="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
                     <img class="map-feature-icon" src="${featureIconPath(slug)}" alt="${escapeHtml(label)}">
-                  </span>
+                  </button>
                 `).join("")}
               </div>
             </div>
@@ -700,6 +738,13 @@ closeBtn.onclick = (e) => {
           e.stopPropagation();
           const all = btn.parentElement.querySelector(".map-hours-all");
           if (all) all.hidden = !all.hidden;
+        });
+      });
+
+      details.querySelectorAll(".map-feature-item").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          showFeatureOverlay(btn.getAttribute("data-label") || "");
         });
       });
     }
