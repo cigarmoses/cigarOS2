@@ -566,6 +566,22 @@
 
     if (!card) return;
 
+    let closeBtn = card.querySelector(".map-card-close");
+if (!closeBtn) {
+  closeBtn = document.createElement("button");
+  closeBtn.className = "map-card-close";
+  closeBtn.type = "button";
+  closeBtn.textContent = "×";
+  closeBtn.setAttribute("aria-label", "Close shop details");
+  card.appendChild(closeBtn);
+}
+
+closeBtn.onclick = (e) => {
+  e.stopPropagation();
+  card.classList.remove("expanded");
+  card.hidden = true;
+};
+
     card.classList.remove("expanded");
 
     ensureMetaRow(city, status, favBtn);
@@ -582,15 +598,16 @@
       status.className = `map-card-status ${s?.open ? "open" : "closed"}`;
     }
 
-if (favBtn) {
-  favBtn.innerHTML = "";
-  favBtn.classList.toggle("active", isFavorite(shop));
+    if (favBtn) {
+      favBtn.innerHTML = "";
+      favBtn.setAttribute("aria-label", isFavorite(shop) ? "Remove favorite" : "Add favorite");
+      favBtn.classList.toggle("active", isFavorite(shop));
 
-  favBtn.onclick = (e) => {
-    e.stopPropagation();
-    toggleFavorite(shop);
-  };
-}
+      favBtn.onclick = (e) => {
+       e.stopPropagation();
+       toggleFavorite(shop);
+      };
+    }
 
     if (details) {
       const address = fullShopAddress(shop);
