@@ -563,8 +563,8 @@ body.map-page{
   }
 
   #cardFavBtn{
-    font-size:28px;
-  }
+  font-size:0 !important;
+}
 
   .map-detail-row{
     grid-template-columns:100px minmax(0,1fr);
