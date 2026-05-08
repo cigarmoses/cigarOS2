@@ -296,8 +296,10 @@ body.map-page{
 .map-card-fav,
 #cardFavBtn{
   position:static !important;
-  width:auto !important;
-  height:auto !important;
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  min-height:30px !important;
   padding:0 !important;
   margin:0 !important;
   border:0 !important;
@@ -306,19 +308,24 @@ body.map-page{
   box-shadow:none !important;
   backdrop-filter:none !important;
   -webkit-backdrop-filter:none !important;
-  color:#c7c7cc;
-  font-size:30px;
-  font-weight:800;
-  line-height:1;
+
   display:inline-flex;
   align-items:center;
   justify-content:center;
+
+  background-image:url("/img/icons/favoritestardefault.svg");
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+
+  font-size:0 !important;
+  color:transparent !important;
+
   flex:0 0 auto;
 }
 
-.map-card-fav.active,
 #cardFavBtn.active{
-  color:#ffb400;
+  background-image:url("/img/icons/favoritestar.svg");
 }
 
 .map-card-open{
