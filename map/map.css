@@ -197,6 +197,29 @@ body.map-page{
   margin:0 auto 20px;
 }
 
+/* CLOSE */
+.map-card-close{
+  position:absolute;
+  top:20px;
+  right:22px;
+  width:auto;
+  height:auto;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#111;
+  font-family:var(--font-display),-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
+  font-size:30px;
+  font-weight:400;
+  line-height:1;
+  z-index:5;
+}
+
+.map-shop-card:not(.expanded) .map-card-close{
+  display:none;
+}
+
 /* HEADER */
 .map-card-main{
   display:grid;
@@ -256,7 +279,7 @@ body.map-page{
   margin-top:0;
   color:#6e6e73;
   font-size:18px;
-  font-weight:560;
+  font-weight:500;
   letter-spacing:-0.018em;
   line-height:1.15;
   white-space:nowrap;
@@ -275,7 +298,7 @@ body.map-page{
   padding:4px 12px;
   border-radius:999px;
   font-size:13px;
-  font-weight:850;
+  font-weight:400;
   letter-spacing:-.01em;
   line-height:1;
   text-transform:uppercase;
@@ -292,14 +315,14 @@ body.map-page{
   background:#ff3b30;
 }
 
-/* STAR BESIDE OPEN/CLOSED PILL */
+/* STAR */
 .map-card-fav,
 #cardFavBtn{
   position:static !important;
-  width:30px !important;
-  height:30px !important;
-  min-width:30px !important;
-  min-height:30px !important;
+  width:22px !important;
+  height:22px !important;
+  min-width:22px !important;
+  min-height:22px !important;
   padding:0 !important;
   margin:0 !important;
   border:0 !important;
@@ -308,24 +331,20 @@ body.map-page{
   box-shadow:none !important;
   backdrop-filter:none !important;
   -webkit-backdrop-filter:none !important;
-
   display:inline-flex;
   align-items:center;
   justify-content:center;
-
-  background-image:url("/img/icons/favoritestardefault.svg");
-  background-repeat:no-repeat;
-  background-position:center;
-  background-size:contain;
-
+  background-image:url("/img/icons/favoritestardefault.svg") !important;
+  background-repeat:no-repeat !important;
+  background-position:center !important;
+  background-size:contain !important;
   font-size:0 !important;
   color:transparent !important;
-
   flex:0 0 auto;
 }
 
 #cardFavBtn.active{
-  background-image:url("/img/icons/favoritestar.svg");
+  background-image:url("/img/icons/favoritestar.svg") !important;
 }
 
 .map-card-open{
@@ -370,13 +389,17 @@ body.map-page{
 
 .map-detail-v{
   text-align:right;
-  font-weight:560;
+  font-weight:480;
   color:#6e6e73;
   font-size:17px;
   letter-spacing:-0.018em;
   line-height:1.2;
   max-width:100%;
-  word-break:break-word;
+  word-break:normal;
+}
+
+.map-address-line{
+  display:block;
 }
 
 /* COPY ADDRESS */
@@ -393,7 +416,7 @@ body.map-page{
   background:rgba(255,255,255,.65);
   color:#b0b0b5;
   font-size:11px;
-  font-weight:800;
+  font-weight:400;
   letter-spacing:.02em;
   text-transform:uppercase;
 }
@@ -405,7 +428,7 @@ body.map-page{
   background:transparent;
   color:#6e6e73;
   font-size:17px;
-  font-weight:560;
+  font-weight:480;
   letter-spacing:-0.018em;
   padding:0;
   text-align:right;
@@ -417,7 +440,7 @@ body.map-page{
   margin-top:4px;
   color:#8e8e93;
   font-size:12px;
-  font-weight:750;
+  font-weight:650;
   text-transform:uppercase;
   letter-spacing:.03em;
 }
@@ -439,7 +462,7 @@ body.map-page{
   gap:14px;
   color:#6e6e73;
   font-size:15px;
-  font-weight:560;
+  font-weight:480;
   letter-spacing:-.015em;
 }
 
@@ -463,56 +486,61 @@ body.map-page{
   color:#050505;
 }
 
-/* BRAND CHIPS */
-.map-brand-chips{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-}
-
-.map-brand-chips span{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:8px 11px;
-  border-radius:999px;
-  background:#f2f2f7;
-  color:#111;
-  font-size:13px;
-  font-weight:700;
-}
-
-/* FEATURE ICONS — NO WHITE BACKGROUND */
+/* FEATURE ICONS */
 .map-feature-chips{
   display:flex;
   flex-wrap:wrap;
-  gap:26px;
+  gap:22px;
   align-items:center;
 }
 
-.map-feature-chips span{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:58px;
-  height:58px;
-  border-radius:0;
+.map-feature-item{
+  appearance:none;
+  border:0;
   background:transparent !important;
   box-shadow:none !important;
   padding:0;
-  overflow:visible;
-  font-size:0;
-  color:transparent;
+  margin:0;
+  width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .map-feature-chips img,
 .map-feature-icon{
-  width:58px;
-  height:58px;
+  width:42px;
+  height:42px;
   object-fit:contain;
   display:block;
   background:transparent !important;
   mix-blend-mode:multiply;
+}
+
+/* FULL SCREEN FEATURE LABEL */
+.feature-tooltip-overlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:28px;
+  background:rgba(255,255,255,.38);
+  backdrop-filter:blur(22px) saturate(1.25);
+  -webkit-backdrop-filter:blur(22px) saturate(1.25);
+}
+
+.feature-tooltip-text{
+  color:#050505;
+  font-family:var(--font-display),-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
+  font-size:46px;
+  font-weight:900;
+  letter-spacing:-.045em;
+  line-height:.95;
+  text-align:center;
+  text-transform:none;
 }
 
 /* MAPBOX CLEANUP */
@@ -529,6 +557,7 @@ body.map-page{
 }
 
 @media (max-width:430px){
+
   .map-shop-card{
     padding:10px 20px 26px;
   }
@@ -563,8 +592,11 @@ body.map-page{
   }
 
   #cardFavBtn{
-  font-size:0 !important;
-}
+    width:21px !important;
+    height:21px !important;
+    min-width:21px !important;
+    min-height:21px !important;
+  }
 
   .map-detail-row{
     grid-template-columns:100px minmax(0,1fr);
@@ -573,63 +605,14 @@ body.map-page{
   .map-feature-chips{
     gap:22px;
   }
-}
-/* FINAL iOS CARD TUNING */
 
-.map-card-meta .map-card-subtitle{
-  font-weight:500 !important;
-  color:#6e6e73;
-}
+  .map-feature-item,
+  .map-feature-icon{
+    width:40px;
+    height:40px;
+  }
 
-.map-detail-v,
-.map-hours-toggle,
-.map-hours-row{
-  font-weight:480 !important;
-  color:#6e6e73;
-}
-
-.map-card-status{
-  font-weight:800 !important;
-}
-
-/* Favorite SVG star */
-#cardFavBtn{
-  width:28px !important;
-  height:28px !important;
-  min-width:28px !important;
-  min-height:28px !important;
-  background-image:url("/img/icons/favoritestardefault.svg") !important;
-  background-repeat:no-repeat !important;
-  background-position:center !important;
-  background-size:contain !important;
-  font-size:0 !important;
-  color:transparent !important;
-}
-
-#cardFavBtn.active{
-  background-image:url("/img/icons/favoritestar.svg") !important;
-}
-
-/* Close button */
-.map-card-close{
-  position:absolute;
-  top:22px;
-  right:22px;
-  width:32px;
-  height:32px;
-  border:0;
-  border-radius:50%;
-  background:rgba(120,120,128,.14);
-  color:#6e6e73;
-  font-size:20px;
-  font-weight:700;
-  line-height:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:5;
-}
-
-.map-shop-card:not(.expanded) .map-card-close{
-  display:none;
+  .feature-tooltip-text{
+    font-size:42px;
+  }
 }
