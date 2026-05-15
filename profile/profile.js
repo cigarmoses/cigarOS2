@@ -5,28 +5,35 @@
 
   const root = document.documentElement;
   const toggle = document.getElementById("themeToggle");
+  const themeIcon = document.getElementById("themeIcon");
 
   const STORAGE_KEY = "cigaros-theme";
+
+  const setTheme = (theme) => {
+    root.setAttribute("data-theme", theme);
+    localStorage.setItem(STORAGE_KEY, theme);
+
+    if (themeIcon) {
+      themeIcon.src = theme === "dark"
+        ? "/img/icons/moon.svg"
+        : "/img/icons/sun.svg";
+    }
+  };
 
   const savedTheme = localStorage.getItem(STORAGE_KEY);
   const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 
-  const initialTheme = savedTheme || preferredTheme;
-
-  root.setAttribute("data-theme", initialTheme);
+  setTheme(savedTheme || preferredTheme);
 
   toggle?.addEventListener("click", () => {
     const current = root.getAttribute("data-theme") || "light";
-    const next = current === "dark" ? "light" : "dark";
-
-    root.setAttribute("data-theme", next);
-    localStorage.setItem(STORAGE_KEY, next);
+    setTheme(current === "dark" ? "light" : "dark");
   });
 
   const pressables = document.querySelectorAll(
-    ".profile-row, .favorite-card, .id-card, .profile-back, .theme-toggle"
+    ".profile-row, .favorite-card, .qr-card, .back-btn, .theme-toggle"
   );
 
   pressables.forEach((el) => {
