@@ -3,31 +3,43 @@
 (() => {
   "use strict";
 
-  const idCard = document.querySelector(".id-card");
+  const root = document.documentElement;
+  const toggle = document.getElementById("themeToggle");
 
-  if (idCard) {
-    idCard.addEventListener("click", () => {
-      window.location.href = "/profile/my-card/";
+  const STORAGE_KEY = "cigaros-theme";
+
+  const savedTheme = localStorage.getItem(STORAGE_KEY);
+  const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+
+  const initialTheme = savedTheme || preferredTheme;
+
+  root.setAttribute("data-theme", initialTheme);
+
+  toggle?.addEventListener("click", () => {
+    const current = root.getAttribute("data-theme") || "light";
+    const next = current === "dark" ? "light" : "dark";
+
+    root.setAttribute("data-theme", next);
+    localStorage.setItem(STORAGE_KEY, next);
+  });
+
+  const pressables = document.querySelectorAll(
+    ".profile-row, .favorite-card, .id-card, .profile-back, .theme-toggle"
+  );
+
+  pressables.forEach((el) => {
+    el.addEventListener("pointerdown", () => {
+      el.style.filter = "brightness(.96)";
     });
-  }
 
-  const rows = document.querySelectorAll(".profile-row, .favorite-card, .id-card");
+    const clear = () => {
+      el.style.filter = "";
+    };
 
-  rows.forEach((row) => {
-    row.addEventListener("pointerdown", () => {
-      row.style.filter = "brightness(.985)";
-    });
-
-    row.addEventListener("pointerup", () => {
-      row.style.filter = "";
-    });
-
-    row.addEventListener("pointercancel", () => {
-      row.style.filter = "";
-    });
-
-    row.addEventListener("pointerleave", () => {
-      row.style.filter = "";
-    });
+    el.addEventListener("pointerup", clear);
+    el.addEventListener("pointercancel", clear);
+    el.addEventListener("pointerleave", clear);
   });
 })();
