@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -8,60 +8,102 @@
 </head>
 
 <body class="profile-page">
+
   <main class="profile-shell">
 
     <header class="profile-topbar">
-      <a class="back-btn" href="/" aria-label="Back">‹</a>
 
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">
-        <img class="theme-icon" id="themeIcon" src="/img/icons/sun.svg" alt="" />
+      <a class="back-btn" href="/" aria-label="Back">
+        ‹
+      </a>
+
+      <button
+        class="theme-toggle"
+        id="themeToggle"
+        type="button"
+        aria-label="Toggle dark mode"
+      >
+        <img
+          id="themeIcon"
+          class="theme-icon"
+          src="/img/icons/moon.svg"
+          alt=""
+        />
       </button>
+
     </header>
 
     <section class="profile-hero">
-      <h1>
-        Michael<br />
-        Moses
-      </h1>
 
-      <a class="qr-square" href="/profile/my-card/" aria-label="Open Cigar Social ID Card">
-        <div class="qr-grid">
-          <b></b><b></b><b></b><b></b><b></b><b></b><b></b>
-          <b></b><b></b><b></b><b></b><b></b><b></b><b></b>
-          <b></b><b></b><b></b><b></b><b></b><b></b><b></b>
-          <b></b><b></b><b></b><b></b><b></b><b></b><b></b>
-          <b></b><b></b><b></b><b></b><b></b><b></b><b></b>
-          <b></b><b></b><b></b><b></b><b></b><b></b><b></b>
-          <b></b><b></b><b></b><b></b><b></b><b></b><b></b>
-          <span>MM</span>
-        </div>
+      <div class="hero-copy">
+        <h1>
+          Michael<br />
+          Moses
+        </h1>
+      </div>
+
+      <a
+        class="qr-card"
+        href="/profile/my-card/"
+        aria-label="Open QR Card"
+      >
+        <img
+          src="/img/profile/mm-qr.png"
+          alt="Michael Moses QR"
+          class="qr-image"
+        />
       </a>
+
     </section>
 
     <section class="favorite-quick-grid">
-      <a class="favorite-card" href="/profile/favorites/?tab=cigars">
+
+      <a
+        class="favorite-card"
+        href="/profile/favorites/?tab=cigars"
+      >
         <div class="favorite-media cigar-media">
-          <img src="/img/cigars/padron/padron1964anniversaryseriesbelicosomaduro.png" alt="Cigars" />
+          <img
+            src="/img/cigars/padron/padron1964anniversaryseriesbelicosomaduro.png"
+            alt="Favorite Cigars"
+          />
         </div>
-        <strong>Cigars</strong>
+
+        <strong>12 Favorites</strong>
       </a>
 
-      <a class="favorite-card" href="/profile/favorites/?tab=brands">
+      <a
+        class="favorite-card"
+        href="/profile/favorites/?tab=brands"
+      >
         <div class="favorite-media brand-media">
-          <img src="/img/icons/brands/opusx.svg" alt="Brands" />
+          <img
+            src="/img/icons/brands/opusx.svg"
+            alt="Favorite Brands"
+          />
         </div>
-        <strong>Brands</strong>
+
+        <strong>8 Favorites</strong>
       </a>
 
-      <a class="favorite-card" href="/profile/favorites/?tab=shops">
+      <a
+        class="favorite-card"
+        href="/profile/favorites/?tab=shops"
+      >
         <div class="favorite-media shop-media">
-          <img src="/img/icons/shops/foxcigarbar.svg" alt="Shops" />
+          <img
+            src="/img/icons/shops/foxcigarbar.svg"
+            alt="Favorite Shops"
+          />
         </div>
-        <strong>Shops</strong>
+
+        <strong>6 Favorites</strong>
       </a>
+
     </section>
 
     <section class="glass-list">
+
       <a class="profile-row" href="/profile/wishlist/">
         <span class="row-icon row-emoji">🧞‍♂️</span>
         <span>Wish List</span>
@@ -85,9 +127,11 @@
         <span>Connections</span>
         <i>›</i>
       </a>
+
     </section>
 
     <section class="glass-list">
+
       <a class="profile-row" href="/profile/purchase-history/">
         <span class="row-icon icon-bag"></span>
         <span>Purchase History</span>
@@ -105,9 +149,11 @@
         <span>Sharing Permissions</span>
         <i>›</i>
       </a>
+
     </section>
 
     <section class="glass-list">
+
       <a class="profile-row" href="/profile/personal-info/">
         <span class="row-icon icon-user"></span>
         <span>Personal Info</span>
@@ -119,18 +165,22 @@
         <span>Login and Password</span>
         <i>›</i>
       </a>
+
     </section>
 
     <section class="support-card">
+
       <a class="profile-row support-row" href="/support/">
         <span class="row-icon icon-support"></span>
         <span>Support</span>
         <i>›</i>
       </a>
+
     </section>
 
   </main>
 
   <script src="./profile.js"></script>
+
 </body>
 </html>
