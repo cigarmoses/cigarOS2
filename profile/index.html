@@ -8,57 +8,103 @@
 </head>
 
 <body class="profile-page">
+
   <main class="profile-shell">
 
     <header class="profile-topbar">
-      <a class="back-btn" href="/" aria-label="Back">‹</a>
 
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">
-        <img id="themeIcon" class="theme-icon" src="/img/icons/moon.svg" alt="" />
+      <a class="back-btn" href="/" aria-label="Back">
+        ‹
+      </a>
+
+      <button
+        class="theme-toggle"
+        id="themeToggle"
+        type="button"
+        aria-label="Toggle dark mode"
+      >
+        <img
+          id="themeIcon"
+          class="theme-icon"
+          src="/img/icons/moon.svg"
+          alt=""
+        />
       </button>
+
     </header>
 
     <section class="profile-hero">
-      <div class="hero-copy">
-        <h1>Michael<br />Moses</h1>
-      </div>
 
-      <a class="qr-card" href="/profile/my-card/" aria-label="Open QR Card">
-        <img src="/img/profile/mm-qr.png" alt="Michael Moses QR" class="qr-image" />
+      <h1>
+        Michael<br />
+        Moses
+      </h1>
+
+      <a
+        class="qr-card"
+        href="/profile/my-card/"
+        aria-label="Open QR Card"
+      >
+        <img
+          src="/img/icons/318C950E-C0F9-4630-B367-FABBDF10A277.png"
+          alt="Michael Moses QR"
+          class="qr-image"
+        />
       </a>
+
     </section>
 
     <section class="favorites-block">
+
       <h2>Favorites</h2>
 
       <div class="favorite-quick-grid">
-        <a class="favorite-card" href="/profile/favorites/?tab=cigars">
-          <div class="favorite-media cigar-media">
-            <img
-              src="/img/cigars/padron/padron1964anniversaryseriesbelicosomaduro.png"
-              alt="Favorite Cigars"
-            />
-          </div>
-          <span class="favorite-label">Cigars</span>
+
+        <a
+          class="favorite-card"
+          href="/profile/favorites/?tab=cigars"
+        >
+          <img
+            class="favorite-icon cigar-fav-icon"
+            src="/img/icons/belicosohead.svg"
+            alt="Cigars"
+          />
+
+          <span>Cigars</span>
         </a>
 
-        <a class="favorite-card" href="/profile/favorites/?tab=brands">
-          <div class="favorite-media brand-media">
-            <img src="/img/icons/brands/opusx.svg" alt="Favorite Brands" />
-          </div>
-          <span class="favorite-label">Brands</span>
+        <a
+          class="favorite-card"
+          href="/profile/favorites/?tab=brands"
+        >
+          <img
+            class="favorite-icon brand-fav-icon"
+            src="/img/icons/brands/opusx.svg"
+            alt="Brands"
+          />
+
+          <span>Brands</span>
         </a>
 
-        <a class="favorite-card" href="/profile/favorites/?tab=shops">
-          <div class="favorite-media shop-media">
-            <img src="/img/icons/shops/foxcigarbar.svg" alt="Favorite Shops" />
-          </div>
-          <span class="favorite-label">Shops</span>
+        <a
+          class="favorite-card"
+          href="/profile/favorites/?tab=shops"
+        >
+          <img
+            class="favorite-icon shop-fav-icon"
+            src="/img/icons/shops/foxcigarbar.svg"
+            alt="Shops"
+          />
+
+          <span>Shops</span>
         </a>
+
       </div>
+
     </section>
 
     <section class="glass-list">
+
       <a class="profile-row" href="/profile/wishlist/">
         <span class="row-icon row-emoji">🧞‍♂️</span>
         <span>Wish List</span>
@@ -82,9 +128,11 @@
         <span>Connections</span>
         <i>›</i>
       </a>
+
     </section>
 
     <section class="glass-list">
+
       <a class="profile-row" href="/profile/purchase-history/">
         <span class="row-icon icon-bag"></span>
         <span>Purchase History</span>
@@ -102,9 +150,11 @@
         <span>Sharing Permissions</span>
         <i>›</i>
       </a>
+
     </section>
 
     <section class="glass-list">
+
       <a class="profile-row" href="/profile/personal-info/">
         <span class="row-icon icon-user"></span>
         <span>Personal Info</span>
@@ -116,18 +166,22 @@
         <span>Login and Password</span>
         <i>›</i>
       </a>
+
     </section>
 
     <section class="support-card">
+
       <a class="profile-row support-row" href="/support/">
         <span class="row-icon icon-support"></span>
         <span>Support</span>
         <i>›</i>
       </a>
+
     </section>
 
   </main>
 
   <script src="./profile.js"></script>
+
 </body>
 </html>
