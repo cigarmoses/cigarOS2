@@ -5,7 +5,6 @@
   const themeToggle = document.getElementById("themeToggle");
   const themeIcon = document.getElementById("themeIcon");
   const grid = document.getElementById("favGrid");
-  const pageTitle = document.getElementById("pageTitle");
   const tabs = Array.from(document.querySelectorAll(".tab-btn"));
 
   const STORAGE_KEY = "cigaros-theme";
@@ -31,14 +30,22 @@
   const data = {
     cigars: [
       {
+        name: "Girl With No Name Lonsdale",
+        img: "/img/cigars/girlwithnoname/girlwithnonamelonsdale.png",
+        href: "/pos/cigars/cigar.html?key=Girl%20With%20No%20Name%7CGirl%20With%20No%20Name%7CLonsdale"
+      },
+      {
         name: "Padron 1964 Anniversary",
-        meta: "Belicoso Maduro",
         img: "/img/cigars/padron/padron1964anniversaryseriesbelicosomaduro.png",
         href: "/pos/cigars/cigar.html?key=Padron%7C1964%20Anniversary%20Series%7CBelicoso%20Maduro"
       },
       {
+        name: "Camacho",
+        img: "/img/cigars/camacho/camacho.png",
+        href: "/pos/cigars/"
+      },
+      {
         name: "Tabak Cafe Con Leche",
-        meta: "Belicoso",
         img: "/img/cigars/tabak/cafeconlechebelicoso.png",
         href: "/pos/cigars/cigar.html?key=Tabak%7CCafe%20Con%20Leche%7CBelicoso"
       }
@@ -75,27 +82,30 @@
     ]
   };
 
-  const titleMap = {
-    cigars: "Cigars",
-    brands: "Brands",
-    shops: "Shops"
-  };
-
-  function render(tab){
-    const items = data[tab] || data.cigars;
-
-    pageTitle.textContent = titleMap[tab] || "Cigars";
-
-    tabs.forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.tab === tab);
-    });
-
+  function renderCigars(){
+    grid.className = "fav-list";
     grid.innerHTML = "";
 
-    items.forEach((item) => {
-      const card = document.createElement("a");
+    data.cigars.forEach((item) => {
+      const row = document.createElement("a");
+      row.className = "cigar-row";
+      row.href = item.href;
 
-      card.className = `item-card ${tab.slice(0, -1)}-card`;
+      row.innerHTML = `
+        <img src="${item.img}" alt="${item.name}">
+      `;
+
+      grid.appendChild(row);
+    });
+  }
+
+  function renderCards(tab){
+    grid.className = "fav-list brand-shop-grid";
+    grid.innerHTML = "";
+
+    data[tab].forEach((item) => {
+      const card = document.createElement("a");
+      card.className = "item-card";
       card.href = item.href;
 
       card.innerHTML = `
@@ -115,6 +125,19 @@
 
       grid.appendChild(card);
     });
+  }
+
+  function render(tab){
+    tabs.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.tab === tab);
+    });
+
+    if(tab === "cigars"){
+      renderCigars();
+      return;
+    }
+
+    renderCards(tab);
   }
 
   const params = new URLSearchParams(window.location.search);
