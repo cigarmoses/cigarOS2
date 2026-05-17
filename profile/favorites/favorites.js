@@ -1,5 +1,3 @@
-/* /profile/favorites/favorites.js */
-
 (() => {
   "use strict";
 
@@ -12,22 +10,22 @@
 
   const STORAGE_KEY = "cigaros-theme";
 
-  const setTheme = (theme) => {
+  function applyTheme(theme){
     root.setAttribute("data-theme", theme);
     localStorage.setItem(STORAGE_KEY, theme);
 
-    if (themeIcon) {
+    if(themeIcon){
       themeIcon.src = theme === "dark"
         ? "/img/icons/moon.svg"
         : "/img/icons/sun.svg";
     }
-  };
+  }
 
-  setTheme(localStorage.getItem(STORAGE_KEY) || "dark");
+  applyTheme(localStorage.getItem(STORAGE_KEY) || "dark");
 
   themeToggle?.addEventListener("click", () => {
     const current = root.getAttribute("data-theme") || "dark";
-    setTheme(current === "dark" ? "light" : "dark");
+    applyTheme(current === "dark" ? "light" : "dark");
   });
 
   const data = {
@@ -41,7 +39,7 @@
       {
         name: "Tabak Cafe Con Leche",
         meta: "Belicoso",
-        img: "/img/cigars/padron/padron1964anniversaryseriesbelicosomaduro.png",
+        img: "/img/cigars/tabak/cafeconlechebelicoso.png",
         href: "/pos/cigars/cigar.html?key=Tabak%7CCafe%20Con%20Leche%7CBelicoso"
       }
     ],
@@ -83,8 +81,10 @@
     shops: "Shops"
   };
 
-  const render = (tab) => {
-    pageTitle.textContent = titleMap[tab] || "Favorites";
+  function render(tab){
+    const items = data[tab] || data.cigars;
+
+    pageTitle.textContent = titleMap[tab] || "Cigars";
 
     tabs.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.tab === tab);
@@ -92,14 +92,17 @@
 
     grid.innerHTML = "";
 
-    data[tab].forEach((item) => {
+    items.forEach((item) => {
       const card = document.createElement("a");
-      card.className = "item-card";
+
+      card.className = `item-card ${tab.slice(0, -1)}-card`;
       card.href = item.href;
 
       card.innerHTML = `
         <button class="remove-btn" type="button" aria-label="Remove">×</button>
-        <img src="${item.img}" alt="${item.name}">
+        <div class="item-stage">
+          <img src="${item.img}" alt="${item.name}">
+        </div>
         <strong>${item.name}</strong>
         <span>${item.meta}</span>
       `;
@@ -112,7 +115,7 @@
 
       grid.appendChild(card);
     });
-  };
+  }
 
   const params = new URLSearchParams(window.location.search);
   const initialTab = params.get("tab") || "cigars";
