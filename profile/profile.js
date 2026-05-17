@@ -8,20 +8,34 @@
   const STORAGE_KEY = "cigaros-theme";
 
   function applyTheme(theme){
+
     root.setAttribute("data-theme", theme);
+
     localStorage.setItem(STORAGE_KEY, theme);
 
     if (icon) {
-      icon.src = theme === "dark"
-        ? "/img/icons/moon.svg"
-        : "/img/icons/sun.svg";
+
+      icon.src =
+        theme === "dark"
+          ? "/img/icons/moon.svg"
+          : "/img/icons/sun.svg";
     }
   }
 
-  applyTheme(localStorage.getItem(STORAGE_KEY) || "dark");
+  applyTheme(
+    localStorage.getItem(STORAGE_KEY) || "dark"
+  );
 
   toggle?.addEventListener("click", () => {
-    const current = root.getAttribute("data-theme") || "dark";
-    applyTheme(current === "dark" ? "light" : "dark");
+
+    const current =
+      root.getAttribute("data-theme") || "dark";
+
+    applyTheme(
+      current === "dark"
+        ? "light"
+        : "dark"
+    );
   });
+
 })();
