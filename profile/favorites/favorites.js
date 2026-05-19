@@ -6,6 +6,7 @@
   const icon = document.getElementById("themeIcon");
   const grid = document.getElementById("favGrid");
   const tabs = Array.from(document.querySelectorAll(".tab-btn"));
+  const addBtn = document.querySelector(".add-btn");
 
   const STORAGE_KEY = "cigaros-theme";
 
@@ -37,11 +38,11 @@
       {
         name: "Cohiba Nicaragua N50",
         img: "/img/cigars/cohiba/nicaraguarobusto.png",
-        href: "//pos/cigars/cigar.html?key=cohiba%7Cn%204%207%2F8%20x%2050%7Crobusto"
+        href: "/pos/cigars/cigar.html?key=cohiba%7Cn%204%207%2F8%20x%2050%7Crobusto"
       },
       {
         name: "Camacho Connecticut Robusto",
-        img: "/img/cigars/camacho/connecticutrobusto.png"
+        img: "/img/cigars/camacho/connecticutrobusto.png",
         href: "/pos/cigars/cigar.html?key=camacho%7Cconnecticut%20robusto%7Crobusto"
       },
       {
@@ -82,6 +83,8 @@
     ]
   };
 
+  let activeTab = new URLSearchParams(window.location.search).get("tab") || "cigars";
+
   function renderCigars(){
     grid.className = "fav-list";
     grid.innerHTML = "";
@@ -90,9 +93,7 @@
       const row = document.createElement("a");
       row.className = "cigar-row";
       row.href = item.href;
-
       row.innerHTML = `<img src="${item.img}" alt="${item.name}">`;
-
       grid.appendChild(row);
     });
   }
@@ -126,6 +127,8 @@
   }
 
   function render(tab){
+    activeTab = tab;
+
     tabs.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.tab === tab);
     });
@@ -137,9 +140,6 @@
     }
   }
 
-  const params = new URLSearchParams(window.location.search);
-  const initialTab = params.get("tab") || "cigars";
-
   tabs.forEach((btn) => {
     btn.addEventListener("click", () => {
       const tab = btn.dataset.tab;
@@ -148,5 +148,19 @@
     });
   });
 
-  render(data[initialTab] ? initialTab : "cigars");
+  addBtn?.addEventListener("click", () => {
+    if(activeTab === "brands"){
+      window.location.href = "/pos/cigars/";
+      return;
+    }
+
+    if(activeTab === "shops"){
+      window.location.href = "/shops/";
+      return;
+    }
+
+    window.location.href = "/pos/cigars/";
+  });
+
+  render(data[activeTab] ? activeTab : "cigars");
 })();
