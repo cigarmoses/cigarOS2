@@ -250,11 +250,11 @@ body.favorites-page{
 .cigar-row img{
   display:block;
 
-  max-width:384px;
-  max-height:72px;
-
-  width:auto;
+  width:340px;
   height:auto;
+
+  max-width:none;
+  max-height:none;
 
   object-fit:contain;
 
