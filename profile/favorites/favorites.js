@@ -1,4 +1,3 @@
-
 (() => {
   "use strict";
 
@@ -29,22 +28,21 @@
   });
 
   const data = {
-    
-  cigars: [
+    cigars: [
       {
         name: "Girl With No Name Lonsdale",
         img: "/img/cigars/girlwithnoname/girlwithnonamelonsdale.png",
         href: "/pos/cigars/cigar.html?key=Girl%20With%20No%20Name%7CGirl%20With%20No%20Name%7CLonsdale"
       },
       {
-        name: "Don Carlos Eye of the Shark",
-        img: "/img/cigars/arturofuente/doncarloseyeoftheshark.png",
-        href: "/pos/cigars/cigar.html?key=arturo%20fuente%7Ceye%20of%20the%20shark%7Ctorpedo
+        name: "Padron 1964 Anniversary",
+        img: "/img/cigars/padron/padron1964anniversaryseriesbelicosomaduro.png",
+        href: "/pos/cigars/cigar.html?key=Padron%7C1964%20Anniversary%20Series%7CBelicoso%20Maduro"
       },
       {
-        name: "Destino Al Siglo Shark",
-        img: "/img/cigars/opusx/destinoalsigloshark.png",
-        href: "/pos/cigars/cigar.html?key=opus%20x%7Copus%20x%20destino%20al%20siglo%20shark%7Ctorpedo/“
+        name: "Camacho",
+        img: "/img/cigars/camacho/camacho.png",
+        href: "/pos/cigars/"
       },
       {
         name: "Tabak Cafe Con Leche",
@@ -76,15 +74,14 @@
         href: "/pos/shops/shop.html?shop=Fox%20Cigar%20Bar"
       },
       {
-        name: "Cigars International Bridgeville",
+        name: "Smoke Cigar Shop",
         meta: "Bridgeville, PA",
-        img: "/img/icons/shops/cigarsinternationalbridgeville.svg",
-        href: "/pos/shops/shop.html?shop=Cigars%20International%20Bridgeville"
+        img: "/img/icons/shops/foxcigarbar.svg",
+        href: "/pos/shops/shop.html?shop=Smoke%20Cigar%20Shop"
       }
     ]
   };
 
-  
   function renderCigars(){
     grid.className = "fav-list";
     grid.innerHTML = "";
