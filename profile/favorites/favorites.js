@@ -1,9 +1,10 @@
+
 (() => {
   "use strict";
 
   const root = document.documentElement;
-  const themeToggle = document.getElementById("themeToggle");
-  const themeIcon = document.getElementById("themeIcon");
+  const toggle = document.getElementById("themeToggle");
+  const icon = document.getElementById("themeIcon");
   const grid = document.getElementById("favGrid");
   const tabs = Array.from(document.querySelectorAll(".tab-btn"));
 
@@ -13,8 +14,8 @@
     root.setAttribute("data-theme", theme);
     localStorage.setItem(STORAGE_KEY, theme);
 
-    if(themeIcon){
-      themeIcon.src = theme === "dark"
+    if(icon){
+      icon.src = theme === "dark"
         ? "/img/icons/moon.svg"
         : "/img/icons/sun.svg";
     }
@@ -22,13 +23,14 @@
 
   applyTheme(localStorage.getItem(STORAGE_KEY) || "dark");
 
-  themeToggle?.addEventListener("click", () => {
+  toggle?.addEventListener("click", () => {
     const current = root.getAttribute("data-theme") || "dark";
     applyTheme(current === "dark" ? "light" : "dark");
   });
 
   const data = {
-    cigars: [
+    
+  cigars: [
       {
         name: "Girl With No Name Lonsdale",
         img: "/img/cigars/girlwithnoname/girlwithnonamelonsdale.png",
@@ -82,6 +84,7 @@
     ]
   };
 
+  
   function renderCigars(){
     grid.className = "fav-list";
     grid.innerHTML = "";
@@ -91,9 +94,7 @@
       row.className = "cigar-row";
       row.href = item.href;
 
-      row.innerHTML = `
-        <img src="${item.img}" alt="${item.name}">
-      `;
+      row.innerHTML = `<img src="${item.img}" alt="${item.name}">`;
 
       grid.appendChild(row);
     });
@@ -109,7 +110,7 @@
       card.href = item.href;
 
       card.innerHTML = `
-        <button class="remove-btn" type="button" aria-label="Remove">×</button>
+        <button class="remove-btn" type="button">×</button>
         <div class="item-stage">
           <img src="${item.img}" alt="${item.name}">
         </div>
@@ -117,9 +118,9 @@
         <span>${item.meta}</span>
       `;
 
-      card.querySelector(".remove-btn").addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
+      card.querySelector(".remove-btn").addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         card.remove();
       });
 
@@ -134,10 +135,9 @@
 
     if(tab === "cigars"){
       renderCigars();
-      return;
+    } else {
+      renderCards(tab);
     }
-
-    renderCards(tab);
   }
 
   const params = new URLSearchParams(window.location.search);
