@@ -140,11 +140,11 @@ body.favorites-page{
 .fav-hero h1{
   margin:0;
 
-  font-size:56px;
+  font-size:54px;
   line-height:.92;
 
   font-weight:850;
-  letter-spacing:-.065em;
+  letter-spacing:-.04em;
 }
 
 /* ADD */
