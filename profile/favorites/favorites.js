@@ -40,13 +40,13 @@
         href: "/pos/cigars/cigar.html?key=Padron%7C1964%20Anniversary%20Series%7CBelicoso%20Maduro"
       },
       {
-        name: "Camacho",
-        img: "/img/cigars/camacho/camacho.png",
-        href: "/pos/cigars/"
+        name: "Camacho Connecticut Robusto",
+        img: "/img/cigars/camacho/connecticutrobusto.png",
+        href: "/pos/cigars/cigar.html?key=camacho%7Cconnecticut%20robusto%7Crobusto"
       },
       {
         name: "Tabak Cafe Con Leche",
-        img: "/img/cigars/tabak/cafeconlechebelicoso.png",
+        img: "/img/cigars/tabak/cafeconleche.png",
         href: "/pos/cigars/cigar.html?key=Tabak%7CCafe%20Con%20Leche%7CBelicoso"
       }
     ],
