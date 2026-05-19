@@ -35,13 +35,13 @@
         href: "/pos/cigars/cigar.html?key=Girl%20With%20No%20Name%7CGirl%20With%20No%20Name%7CLonsdale"
       },
       {
-        name: "Padron 1964 Anniversary",
-        img: "/img/cigars/padron/padron1964anniversaryseriesbelicosomaduro.png",
-        href: "/pos/cigars/cigar.html?key=Padron%7C1964%20Anniversary%20Series%7CBelicoso%20Maduro"
+        name: "Cohiba Nicaragua N50",
+        img: "/img/cigars/cohiba/nicaraguarobusto.png",
+        href: "//pos/cigars/cigar.html?key=cohiba%7Cn%204%207%2F8%20x%2050%7Crobusto"
       },
       {
         name: "Camacho Connecticut Robusto",
-        img: "/img/cigars/camacho/connecticutrobusto.png",
+        img: "/img/cigars/camacho/connecticutrobusto.png"
         href: "/pos/cigars/cigar.html?key=camacho%7Cconnecticut%20robusto%7Crobusto"
       },
       {
