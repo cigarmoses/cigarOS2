@@ -72,6 +72,10 @@ body.favorites-page{
   justify-content:flex-end;
 }
 
+html[data-theme="light"] .theme-toggle{
+  justify-content:flex-start;
+}
+
 .theme-icon{
   width:28px;
   height:28px;
@@ -142,8 +146,6 @@ body.favorites-page{
   gap:22px;
 }
 
-/* FIXED CIGAR ROWS */
-
 .cigar-row{
   width:100%;
   height:92px;
@@ -156,23 +158,15 @@ body.favorites-page{
 
 .cigar-row img{
   display:block;
-
-  /* Source cigar images are vertical.
-     Height controls the final horizontal visual width after rotation. */
   height:384px;
   width:auto;
-
   max-width:none;
   max-height:none;
-
   object-fit:contain;
   transform:rotate(90deg);
   transform-origin:center center;
-
   filter:drop-shadow(0 10px 18px rgba(0,0,0,.38));
 }
-
-/* BRANDS / SHOPS */
 
 .brand-shop-grid{
   display:grid;
@@ -241,6 +235,43 @@ body.favorites-page{
   font-size:16px;
   line-height:1.15;
   font-weight:500;
+}
+
+/* LIGHT MODE */
+
+html[data-theme="light"] body.favorites-page{
+  color:#050507;
+  background:
+    radial-gradient(circle at 78% 4%, rgba(178,204,255,.40), transparent 32%),
+    radial-gradient(circle at 14% 70%, rgba(255,255,255,.72), transparent 36%),
+    linear-gradient(180deg,#fbfdff 0%,#eef5ff 52%,#f9fbff 100%);
+}
+
+html[data-theme="light"] .back-btn,
+html[data-theme="light"] .theme-toggle,
+html[data-theme="light"] .add-btn,
+html[data-theme="light"] .tab-bar,
+html[data-theme="light"] .item-card{
+  background:linear-gradient(145deg, rgba(255,255,255,.66), rgba(255,255,255,.22));
+  color:#050507;
+}
+
+html[data-theme="light"] .back-btn,
+html[data-theme="light"] .add-btn{
+  color:#050507;
+}
+
+html[data-theme="light"] .tab-btn{
+  color:rgba(5,5,7,.48);
+}
+
+html[data-theme="light"] .tab-btn.active{
+  background:#050507;
+  color:#fff;
+}
+
+html[data-theme="light"] .item-card span{
+  color:rgba(5,5,7,.48);
 }
 
 @media (max-width:390px){
