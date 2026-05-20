@@ -718,55 +718,125 @@
     const compareBtn = $("#cdCompare");
     const wishlistBtn = $("#cdWishlist");
 
-    function syncUI() {
-      favoriteBtn?.classList.toggle("is-on", favoriteSet.has(id));
-      compareBtn?.classList.toggle("is-on", compareSet.has(id));
-    }
+const PROFILE_CIGAR_FAVORITES_KEY = "cigaros_user_favorite_cigars_v1";
 
-    favoriteBtn?.addEventListener("click", () => {
-      if (!id) return;
-      if (favoriteSet.has(id)) favoriteSet.delete(id);
-      else favoriteSet.add(id);
-      writeSet(FAVORITES_KEY, favoriteSet);
-      syncUI();
-    });
+function readFavoriteCigars(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(PROFILE_CIGAR_FAVORITES_KEY) || "[]");
+    return Array.isArray(raw) ? raw : [];
+  }catch{
+    return [];
+  }
+}
 
-    compareBtn?.addEventListener("click", () => {
-      if (!id) return;
-      if (compareSet.has(id)) compareSet.delete(id);
-      else compareSet.add(id);
+function writeFavoriteCigars(items){
+  localStorage.setItem(PROFILE_CIGAR_FAVORITES_KEY, JSON.stringify(items));
+}
 
-      const capped = Array.from(compareSet).slice(0, 4);
-      writeSet(COMPARE_KEY, new Set(capped));
-      syncUI();
-    });
+function makeFavoritePayload(){
+  return {
+    key: id || window.location.href,
+    name: displayName,
+    brand,
+    vitola,
+    img: cigarImgCandidates[0] || "",
+    href: window.location.pathname + window.location.search
+  };
+}
 
-    wishlistBtn?.addEventListener("click", () => {
-      const cartApi = window.cigarOSCart;
-      if (!cartApi || typeof cartApi.add !== "function") return;
+function cigarIsProfileFavorite(){
+  const payload = makeFavoritePayload();
+  return readFavoriteCigars().some((item) => item.href === payload.href || item.key === payload.key);
+}
 
-      cartApi.add({
-        type: "cigar",
-        key: id,
-        id,
-        brand,
-        line,
-        name: displayName,
-        vitola,
-        ring,
-        length,
-        shape,
-        wrapper,
-        binder,
-        filler,
-        origin,
-        shade,
-        strength,
-        image: cigarImgCandidates[0] || "",
-        url: window.location.href
-      });
-    });
+function addProfileFavorite(){
+  const payload = makeFavoritePayload();
+  const items = readFavoriteCigars();
 
+  const exists = items.some((item) => item.href === payload.href || item.key === payload.key);
+  if (!exists) {
+    items.unshift(payload);
+    writeFavoriteCigars(items);
+  }
+}
+
+function removeProfileFavorite(){
+  const payload = makeFavoritePayload();
+  const items = readFavoriteCigars().filter((item) => {
+    return item.href !== payload.href && item.key !== payload.key;
+  });
+
+  writeFavoriteCigars(items);
+}
+
+function syncUI() {
+  const isFavorite = favoriteSet.has(id) || cigarIsProfileFavorite();
+
+  favoriteBtn?.classList.toggle("is-on", isFavorite);
+  compareBtn?.classList.toggle("is-on", compareSet.has(id));
+
+  if (favoriteBtn) {
+    favoriteBtn.textContent = isFavorite ? "Favorited" : "Favorite";
+  }
+}
+
+favoriteBtn?.addEventListener("click", () => {
+  if (!id) return;
+
+  const isFavorite = favoriteSet.has(id) || cigarIsProfileFavorite();
+
+  if (isFavorite) {
+    favoriteSet.delete(id);
+    removeProfileFavorite();
+  } else {
+    favoriteSet.add(id);
+    addProfileFavorite();
+  }
+
+  writeSet(FAVORITES_KEY, favoriteSet);
+  syncUI();
+});
+
+compareBtn?.addEventListener("click", () => {
+  if (!id) return;
+
+  if (compareSet.has(id)) compareSet.delete(id);
+  else compareSet.add(id);
+
+  const capped = Array.from(compareSet).slice(0, 4);
+
+  writeSet(COMPARE_KEY, new Set(capped));
+
+  syncUI();
+});
+
+wishlistBtn?.addEventListener("click", () => {
+  const cartApi = window.cigarOSCart;
+
+  if (!cartApi || typeof cartApi.add !== "function") return;
+
+  cartApi.add({
+    type: "cigar",
+    key: id,
+    id,
+    brand,
+    line,
+    name: displayName,
+    vitola,
+    ring,
+    length,
+    shape,
+    wrapper,
+    binder,
+    filler,
+    origin,
+    shade,
+    strength,
+    image: cigarImgCandidates[0] || "",
+    url: window.location.href
+  });
+});
+    
     syncUI();
 
     wireImageFallback($("#cdBrandBadge"), "cd-badge-placeholder", "Brand");
