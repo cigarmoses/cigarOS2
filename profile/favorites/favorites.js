@@ -9,6 +9,7 @@
   const addBtn = document.querySelector(".add-btn");
 
   const STORAGE_KEY = "cigaros-theme";
+  const CIGAR_FAVORITES_KEY = "cigaros_user_favorite_cigars_v1";
 
   function applyTheme(theme){
     root.setAttribute("data-theme", theme);
@@ -18,6 +19,15 @@
       icon.src = theme === "dark"
         ? "/img/icons/moon.svg"
         : "/img/icons/sun.svg";
+    }
+  }
+
+  function readSavedCigars(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(CIGAR_FAVORITES_KEY) || "[]");
+      return Array.isArray(raw) ? raw : [];
+    }catch{
+      return [];
     }
   }
 
@@ -89,11 +99,18 @@
     grid.className = "fav-list";
     grid.innerHTML = "";
 
-    data.cigars.forEach((item) => {
+    const savedCigars = readSavedCigars();
+    const cigars = savedCigars.length ? savedCigars : data.cigars;
+
+    cigars.forEach((item) => {
       const row = document.createElement("a");
       row.className = "cigar-row";
-      row.href = item.href;
-      row.innerHTML = `<img src="${item.img}" alt="${item.name}">`;
+      row.href = item.href || "/pos/cigars/";
+
+      row.innerHTML = `
+        <img src="${item.img}" alt="${item.name || "Favorite cigar"}">
+      `;
+
       grid.appendChild(row);
     });
   }
@@ -149,11 +166,6 @@
   });
 
   addBtn?.addEventListener("click", () => {
-    if(activeTab === "brands"){
-      window.location.href = "/pos/cigars/";
-      return;
-    }
-
     if(activeTab === "shops"){
       window.location.href = "/shops/";
       return;
