@@ -1,4 +1,4 @@
-(() => {
+() => {
   "use strict";
 
   const root = document.documentElement;
@@ -95,25 +95,38 @@
 
   let activeTab = new URLSearchParams(window.location.search).get("tab") || "cigars";
 
-  function renderCigars(){
-    grid.className = "fav-list";
-    grid.innerHTML = "";
+function renderCigars(){
+  grid.className = "fav-list";
+  grid.innerHTML = "";
 
-    const savedCigars = readSavedCigars();
-    const cigars = savedCigars.length ? savedCigars : data.cigars;
+  const savedCigars = readSavedCigars();
 
-    cigars.forEach((item) => {
-      const row = document.createElement("a");
-      row.className = "cigar-row";
-      row.href = item.href || "/pos/cigars/";
+  const merged = [
+    ...savedCigars,
+    ...data.cigars
+  ];
 
-      row.innerHTML = `
-        <img src="${item.img}" alt="${item.name || "Favorite cigar"}">
-      `;
+  const seen = new Set();
 
-      grid.appendChild(row);
-    });
-  }
+  const cigars = merged.filter((item) => {
+    const key = item.href || item.key || item.name;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  cigars.forEach((item) => {
+    const row = document.createElement("a");
+    row.className = "cigar-row";
+    row.href = item.href || "/pos/cigars/";
+
+    row.innerHTML = 
+      <img src="${item.img}" alt="${item.name || "Favorite cigar"}">
+    ;
+
+    grid.appendChild(row);
+  });
+}
 
   function renderCards(tab){
     grid.className = "fav-list brand-shop-grid";
@@ -124,14 +137,14 @@
       card.className = "item-card";
       card.href = item.href;
 
-      card.innerHTML = `
+      card.innerHTML = 
         <button class="remove-btn" type="button">×</button>
         <div class="item-stage">
           <img src="${item.img}" alt="${item.name}">
         </div>
         <strong>${item.name}</strong>
         <span>${item.meta}</span>
-      `;
+      ;
 
       card.querySelector(".remove-btn").addEventListener("click", (e) => {
         e.preventDefault();
@@ -160,7 +173,7 @@
   tabs.forEach((btn) => {
     btn.addEventListener("click", () => {
       const tab = btn.dataset.tab;
-      history.replaceState(null, "", `?tab=${tab}`);
+      history.replaceState(null, "", ?tab=${tab});
       render(tab);
     });
   });
