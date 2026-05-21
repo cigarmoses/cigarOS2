@@ -4,37 +4,38 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Favorites | Cigar Social</title>
-
   <link rel="stylesheet" href="/profile/favorites/favorites.css" />
 </head>
 
 <body class="favorites-page">
   <main class="fav-page">
     <header class="fav-header">
-      <a class="fav-back" href="/profile/" aria-label="Back">
-        ‹
-      </a>
+      <a class="fav-back" href="/profile/" aria-label="Back">‹</a>
 
-      <div>
+      <div class="fav-title-wrap">
         <h1>Favorites</h1>
         <p>Your saved cigars, brands, and shops.</p>
       </div>
 
-      <button id="favEditBtn" class="fav-edit-btn" type="button">
-        Edit
-      </button>
+      <div class="fav-header-actions">
+        <button id="themeToggle" class="fav-theme-btn" type="button" aria-label="Toggle light or dark mode">
+          <img id="themeIcon" src="/img/icons/moon.svg" alt="" />
+        </button>
+
+        <button id="favAddBtn" class="fav-add-btn" type="button" aria-label="Add favorite">
+          +
+        </button>
+
+        <button id="favEditBtn" class="fav-edit-btn" type="button">
+          Edit
+        </button>
+      </div>
     </header>
 
     <section class="fav-tabs" aria-label="Favorite categories">
-      <button class="fav-tab active" type="button" data-type="cigar">
-        Cigars
-      </button>
-      <button class="fav-tab" type="button" data-type="brand">
-        Brands
-      </button>
-      <button class="fav-tab" type="button" data-type="shop">
-        Shops
-      </button>
+      <button class="fav-tab active" type="button" data-type="cigar">Cigars</button>
+      <button class="fav-tab" type="button" data-type="brand">Brands</button>
+      <button class="fav-tab" type="button" data-type="shop">Shops</button>
     </section>
 
     <section class="fav-tools">
