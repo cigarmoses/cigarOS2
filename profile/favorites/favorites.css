@@ -321,48 +321,287 @@ html[data-theme="light"] .fav-tab.active{
   flex-direction:column;
 }
 
-/* CIGARS = IMAGE ONLY */
+/* =========================
+   CIGAR VIEW
+========================= */
 
 .fav-list.is-cigars{
-  gap:28px;
+  display:flex;
+  flex-direction:column;
+  gap:34px;
+  padding-top:12px;
+  padding-bottom:60px;
 }
 
 .fav-cigar{
   position:relative;
+
+  width:100%;
+  min-height:118px;
+
   display:flex;
   align-items:center;
   justify-content:center;
-  min-height:76px;
+
+  overflow:visible;
   text-decoration:none;
+
+  -webkit-tap-highlight-color:transparent;
 }
 
 .fav-cigar img{
   display:block;
-  width:min(100%, 360px);
-  max-height:86px;
+
+  /*
+    Images are uploaded vertically.
+    Rotating makes the HEIGHT become
+    the visible horizontal cigar length.
+  */
+
+  height:520px;
+  width:auto;
+
+  max-width:none;
+  max-height:none;
+
   object-fit:contain;
-  filter:drop-shadow(0 12px 20px rgba(0,0,0,.38));
+
+  transform:rotate(90deg);
+  transform-origin:center center;
+
+  user-select:none;
+  -webkit-user-drag:none;
+
+  filter:
+    drop-shadow(0 16px 26px rgba(0,0,0,.42))
+    drop-shadow(0 4px 10px rgba(0,0,0,.22));
 }
+
+/* remove button */
 
 .fav-cigar-remove{
   position:absolute;
-  top:-10px;
-  right:6px;
-  z-index:3;
-  width:30px;
-  height:30px;
+  top:-4px;
+  left:0;
+
+  width:34px;
+  height:34px;
+
+  border:0;
   border-radius:999px;
-  border:1px solid var(--stroke);
+
   background:rgba(255,69,58,.18);
-  color:var(--red);
-  font-size:22px;
-  line-height:1;
+  color:#ff453a;
+
   display:none;
   place-items:center;
+
+  font-size:22px;
+  font-weight:800;
+
+  z-index:5;
 }
 
 body.fav-editing .fav-cigar-remove{
   display:grid;
+}
+
+/* drag handle */
+
+.fav-drag{
+  position:absolute;
+  right:0;
+  top:50%;
+
+  transform:translateY(-50%);
+
+  width:34px;
+  height:44px;
+
+  border:0;
+  border-radius:14px;
+
+  background:rgba(255,255,255,.08);
+
+  color:var(--muted2);
+
+  display:none;
+  place-items:center;
+
+  font-size:22px;
+  line-height:1;
+
+  cursor:grab;
+
+  z-index:5;
+}
+
+body.fav-editing .fav-drag{
+  display:grid;
+}
+
+/* dragging */
+
+.fav-cigar.dragging{
+  opacity:.6;
+  transform:scale(.98);
+}
+
+/* =========================
+   BRANDS / SHOPS GRID
+========================= */
+
+.fav-list.is-icons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:26px 18px;
+
+  padding-top:18px;
+  padding-bottom:60px;
+}
+
+.fav-icon-item{
+  position:relative;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+
+  text-decoration:none;
+
+  color:var(--text);
+}
+
+.fav-icon-art{
+  width:88px;
+  height:88px;
+
+  border-radius:28px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.10),
+      rgba(255,255,255,.03)
+    ),
+    var(--glass);
+
+  border:1px solid var(--stroke);
+
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+
+  box-shadow:var(--shadow);
+
+  display:grid;
+  place-items:center;
+
+  overflow:hidden;
+}
+
+.fav-icon-art img{
+  width:68%;
+  height:68%;
+  object-fit:contain;
+}
+
+.fav-icon-name{
+  margin-top:10px;
+
+  font-size:15px;
+  line-height:1.15;
+  font-weight:760;
+
+  text-align:center;
+
+  color:var(--text);
+}
+
+.fav-icon-meta{
+  margin-top:4px;
+
+  font-size:12px;
+  line-height:1.2;
+
+  color:var(--muted);
+
+  text-align:center;
+}
+
+.fav-icon-remove{
+  position:absolute;
+  top:-6px;
+  right:10px;
+
+  width:28px;
+  height:28px;
+
+  border:0;
+  border-radius:999px;
+
+  background:rgba(255,69,58,.18);
+  color:#ff453a;
+
+  display:none;
+  place-items:center;
+
+  font-size:18px;
+  font-weight:800;
+
+  z-index:5;
+}
+
+body.fav-editing .fav-icon-remove{
+  display:grid;
+}
+
+.fav-icon-item .fav-drag{
+  top:auto;
+  right:auto;
+  bottom:-14px;
+
+  transform:none;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width:430px){
+
+  .fav-cigar{
+    min-height:104px;
+  }
+
+  .fav-cigar img{
+    height:460px;
+  }
+
+  .fav-icon-art{
+    width:82px;
+    height:82px;
+    border-radius:24px;
+  }
+}
+
+@media (max-width:390px){
+
+  .fav-cigar img{
+    height:420px;
+  }
+
+  .fav-list.is-icons{
+    gap:22px 14px;
+  }
+
+  .fav-icon-art{
+    width:76px;
+    height:76px;
+  }
+
+  .fav-icon-name{
+    font-size:14px;
+  }
 }
 
 /* BRANDS / SHOPS = 3-COLUMN ICON GRID */
