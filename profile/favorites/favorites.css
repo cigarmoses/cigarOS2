@@ -4,7 +4,7 @@
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bottom:env(safe-area-inset-bottom,0px);
 
-  --bg1:#061120;
+  --bg1:#071426;
   --bg2:#030813;
   --bg3:#010409;
 
@@ -16,8 +16,8 @@
   --stroke-soft:rgba(255,255,255,.085);
 
   --text:#fff;
-  --muted:rgba(255,255,255,.66);
-  --muted2:rgba(255,255,255,.46);
+  --muted:rgba(255,255,255,.62);
+  --muted2:rgba(255,255,255,.42);
 
   --blue:#0a84ff;
   --red:#ff453a;
@@ -48,9 +48,7 @@ html[data-theme="light"]{
   --shadow-soft:0 12px 28px rgba(25,36,65,.10);
 }
 
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 html,
 body{
@@ -94,18 +92,19 @@ button{
   padding:calc(var(--safe-top) + 14px) 18px calc(var(--safe-bottom) + 34px);
 }
 
-.fav-header{
-  display:grid;
-  grid-template-columns:44px 1fr auto;
+.fav-topbar{
+  display:flex;
   align-items:center;
-  gap:12px;
-  margin-bottom:28px;
+  justify-content:space-between;
+  margin-bottom:30px;
 }
 
 .fav-back,
 .fav-theme-btn,
 .fav-add-btn,
-.fav-edit-btn{
+.fav-filter-btn,
+.fav-search-shell,
+.fav-tabs{
   border:1px solid var(--stroke);
   background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
   backdrop-filter:blur(24px) saturate(180%);
@@ -117,13 +116,9 @@ button{
 html[data-theme="light"] .fav-back,
 html[data-theme="light"] .fav-theme-btn,
 html[data-theme="light"] .fav-add-btn,
-html[data-theme="light"] .fav-edit-btn,
-html[data-theme="light"] .fav-tabs,
-html[data-theme="light"] .fav-search-shell,
 html[data-theme="light"] .fav-filter-btn,
-html[data-theme="light"] .fav-card,
-html[data-theme="light"] .fav-empty,
-html[data-theme="light"] .fav-status{
+html[data-theme="light"] .fav-search-shell,
+html[data-theme="light"] .fav-tabs{
   background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(255,255,255,.24)),var(--glass);
 }
 
@@ -138,32 +133,6 @@ html[data-theme="light"] .fav-status{
   font-size:34px;
   line-height:1;
   font-weight:300;
-}
-
-.fav-title-wrap{
-  min-width:0;
-}
-
-.fav-header h1{
-  margin:0;
-  font-size:54px;
-  line-height:.92;
-  letter-spacing:-.04em;
-  font-weight:850;
-}
-
-.fav-header p{
-  margin:5px 0 0;
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.25;
-  font-weight:520;
-}
-
-.fav-header-actions{
-  display:flex;
-  align-items:center;
-  gap:8px;
 }
 
 .fav-theme-btn{
@@ -187,30 +156,16 @@ html[data-theme="light"] .fav-theme-btn{
   display:block;
 }
 
-.fav-add-btn{
-  width:40px;
-  height:40px;
-  border-radius:999px;
-  display:grid;
-  place-items:center;
-  font-size:30px;
-  line-height:1;
-  font-weight:420;
-  padding-bottom:2px;
+.fav-hero{
+  margin-bottom:18px;
 }
 
-.fav-edit-btn{
-  height:40px;
-  padding:0 14px;
-  border-radius:999px;
-  font-size:14px;
-  font-weight:760;
-}
-
-body.fav-editing .fav-edit-btn{
-  background:rgba(10,132,255,.22);
-  border-color:rgba(10,132,255,.48);
-  color:#fff;
+.fav-hero h1{
+  margin:0;
+  font-size:58px;
+  line-height:.88;
+  letter-spacing:-.055em;
+  font-weight:900;
 }
 
 .fav-tabs{
@@ -220,10 +175,7 @@ body.fav-editing .fav-edit-btn{
   gap:6px;
   padding:5px;
   border-radius:999px;
-  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
-  border:1px solid var(--stroke);
-  box-shadow:var(--shadow);
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
 
 .fav-tab{
@@ -232,7 +184,7 @@ body.fav-editing .fav-edit-btn{
   color:var(--muted);
   background:transparent;
   font-size:16px;
-  font-weight:700;
+  font-weight:760;
   letter-spacing:-.03em;
 }
 
@@ -248,9 +200,10 @@ html[data-theme="light"] .fav-tab.active{
 
 .fav-tools{
   display:grid;
-  grid-template-columns:1fr auto;
+  grid-template-columns:1fr auto auto;
   gap:10px;
-  margin-bottom:10px;
+  align-items:center;
+  margin-bottom:24px;
 }
 
 .fav-search-shell{
@@ -260,9 +213,6 @@ html[data-theme="light"] .fav-tab.active{
   gap:8px;
   padding:0 14px;
   border-radius:18px;
-  background:var(--glass);
-  border:1px solid var(--stroke);
-  box-shadow:var(--shadow-soft);
 }
 
 .fav-search-icon{
@@ -279,7 +229,7 @@ html[data-theme="light"] .fav-tab.active{
   background:transparent;
   color:var(--text);
   font-size:16px;
-  font-weight:600;
+  font-weight:650;
 }
 
 .fav-search::placeholder{
@@ -289,18 +239,26 @@ html[data-theme="light"] .fav-tab.active{
 .fav-filter-btn{
   height:48px;
   padding:0 18px;
-  border:1px solid var(--stroke);
   border-radius:18px;
-  background:var(--glass);
-  color:var(--text);
   font-size:15px;
-  font-weight:800;
-  box-shadow:var(--shadow-soft);
+  font-weight:850;
 }
 
 .fav-filter-btn.has-filters{
   background:rgba(10,132,255,.20);
   border-color:rgba(10,132,255,.46);
+}
+
+.fav-add-btn{
+  width:48px;
+  height:48px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  font-size:36px;
+  line-height:1;
+  font-weight:420;
+  padding-bottom:3px;
 }
 
 .fav-applied-filters{
@@ -356,204 +314,145 @@ html[data-theme="light"] .fav-tab.active{
   font-weight:620;
 }
 
+/* LIST BASE */
+
 .fav-list{
   display:flex;
   flex-direction:column;
-  gap:14px;
 }
 
-.fav-card{
+/* CIGARS = IMAGE ONLY */
+
+.fav-list.is-cigars{
+  gap:28px;
+}
+
+.fav-cigar{
   position:relative;
-  display:grid;
-  grid-template-columns:auto 1fr auto;
-  gap:12px;
+  display:flex;
   align-items:center;
-  min-height:92px;
-  padding:13px;
-  border-radius:24px;
-  background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.055)),var(--glass);
-  border:1px solid var(--stroke);
-  box-shadow:var(--shadow-soft);
-  overflow:hidden;
-  touch-action:manipulation;
+  justify-content:center;
+  min-height:76px;
+  text-decoration:none;
 }
 
-.fav-card.type-cigar{
-  min-height:112px;
+.fav-cigar img{
+  display:block;
+  width:min(100%, 360px);
+  max-height:86px;
+  object-fit:contain;
+  filter:drop-shadow(0 12px 20px rgba(0,0,0,.38));
 }
 
-.fav-card.dragging{
-  opacity:.72;
-  transform:scale(.985);
-}
-
-.fav-remove{
-  width:0;
-  height:36px;
-  opacity:0;
-  overflow:hidden;
-  border:0;
+.fav-cigar-remove{
+  position:absolute;
+  top:-10px;
+  right:6px;
+  z-index:3;
+  width:30px;
+  height:30px;
   border-radius:999px;
+  border:1px solid var(--stroke);
   background:rgba(255,69,58,.18);
   color:var(--red);
-  font-size:24px;
-  font-weight:800;
-  display:grid;
+  font-size:22px;
+  line-height:1;
+  display:none;
   place-items:center;
-  transition:width .2s ease, opacity .2s ease;
 }
 
-body.fav-editing .fav-remove{
-  width:36px;
-  opacity:1;
-}
-
-.fav-art{
-  width:58px;
-  height:58px;
-  border-radius:18px;
+body.fav-editing .fav-cigar-remove{
   display:grid;
-  place-items:center;
-  overflow:hidden;
-  background:rgba(255,255,255,.08);
-  border:1px solid var(--stroke-soft);
 }
 
-.fav-card.type-cigar .fav-art{
-  width:128px;
-  height:76px;
-  border:0;
-  background:transparent;
-  overflow:hidden;
+/* BRANDS / SHOPS = 3-COLUMN ICON GRID */
+
+.fav-list.is-icons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:24px 16px;
+  align-items:start;
 }
 
-.fav-art img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  padding:8px;
-}
-
-.fav-card.type-cigar .fav-art img{
-  height:384px;
-  width:auto;
-  max-width:none;
-  max-height:none;
-  padding:0;
-  object-fit:contain;
-  transform:rotate(90deg);
-  transform-origin:center center;
-  filter:drop-shadow(0 10px 18px rgba(0,0,0,.38));
-}
-
-@media (max-width:390px){
-  .fav-card.type-cigar .fav-art{
-    width:118px;
-  }
-
-  .fav-card.type-cigar .fav-art img{
-    height:350px;
-  }
-}
-
-.fav-art-letter{
-  font-size:24px;
-  font-weight:900;
-  letter-spacing:-.05em;
+.fav-icon-item{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:9px;
+  text-align:center;
   color:var(--text);
-}
-
-.fav-main{
+  text-decoration:none;
   min-width:0;
 }
 
-.fav-kicker{
-  margin:0 0 3px;
-  color:var(--muted2);
-  font-size:11px;
-  font-weight:800;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.fav-title{
-  margin:0;
-  color:var(--text);
-  font-size:16px;
-  line-height:1.12;
-  font-weight:820;
-  letter-spacing:-.02em;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.fav-meta{
-  margin:5px 0 0;
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.2;
-  font-weight:580;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.fav-submeta{
-  margin:4px 0 0;
-  color:var(--muted2);
-  font-size:12px;
-  line-height:1.2;
-  font-weight:560;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.fav-card-action{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.fav-open{
-  width:34px;
-  height:34px;
+.fav-icon-art{
+  width:76px;
+  height:76px;
   display:grid;
   place-items:center;
-  border-radius:999px;
-  background:rgba(255,255,255,.10);
-  border:1px solid var(--stroke-soft);
+  border-radius:22px;
+  overflow:hidden;
+}
+
+.fav-icon-art img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+
+.fav-icon-name{
+  width:100%;
   color:var(--text);
-  text-decoration:none;
-  font-size:22px;
+  font-size:13px;
+  font-weight:760;
+  line-height:1.08;
+  letter-spacing:-.02em;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+
+.fav-icon-meta{
+  margin-top:-5px;
+  color:var(--muted2);
+  font-size:11px;
+  font-weight:600;
+  line-height:1.1;
+}
+
+.fav-icon-remove{
+  position:absolute;
+  top:-8px;
+  right:8px;
+  z-index:4;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  border:1px solid var(--stroke);
+  background:rgba(255,69,58,.18);
+  color:var(--red);
+  font-size:20px;
   line-height:1;
+  display:none;
+  place-items:center;
+}
+
+body.fav-editing .fav-icon-remove{
+  display:grid;
 }
 
 .fav-drag{
-  width:34px;
-  height:42px;
   display:none;
-  place-items:center;
-  border:0;
-  border-radius:14px;
-  background:transparent;
-  color:var(--muted2);
-  font-size:22px;
-  line-height:1;
-  cursor:grab;
 }
 
 body.fav-editing .fav-drag{
-  display:grid;
+  display:block;
 }
 
-body.fav-editing .fav-open{
-  display:none;
-}
+/* EMPTY */
 
 .fav-empty{
   padding:34px 20px;
@@ -786,36 +685,36 @@ html[data-theme="light"] .fav-range-inputs input{
   box-shadow:0 14px 30px rgba(10,132,255,.34);
 }
 
-@media (max-width:420px){
-  .fav-header{
-    grid-template-columns:40px 1fr auto;
-    gap:10px;
+@media (max-width:390px){
+  .fav-page{
+    padding-left:14px;
+    padding-right:14px;
   }
 
-  .fav-back{
-    width:40px;
-    height:40px;
+  .fav-hero h1{
+    font-size:52px;
   }
 
-  .fav-header h1{
-    font-size:46px;
+  .fav-tools{
+    grid-template-columns:1fr auto auto;
+    gap:8px;
   }
 
-  .fav-header p{
-    display:none;
-  }
-
-  .fav-theme-btn{
-    width:58px;
+  .fav-filter-btn{
+    padding:0 14px;
   }
 
   .fav-add-btn{
-    width:38px;
-    height:38px;
+    width:46px;
+    height:46px;
   }
 
-  .fav-edit-btn{
-    height:38px;
-    padding:0 12px;
+  .fav-cigar img{
+    width:min(100%,340px);
+  }
+
+  .fav-icon-art{
+    width:70px;
+    height:70px;
   }
 }
