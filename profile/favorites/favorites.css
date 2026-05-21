@@ -1,57 +1,51 @@
 /* /profile/favorites/favorites.css */
 
 :root{
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
 
-  --bg1:#071b33;
-  --bg2:#0b2a4f;
-  --bg3:#030916;
+  --bg1:#061120;
+  --bg2:#030813;
+  --bg3:#010409;
 
-  --glass:rgba(255,255,255,.09);
-  --glass2:rgba(255,255,255,.065);
-  --glass3:rgba(255,255,255,.045);
+  --glass:rgba(255,255,255,.075);
+  --glass2:rgba(255,255,255,.055);
+  --glass3:rgba(255,255,255,.04);
 
-  --stroke:rgba(255,255,255,.13);
-  --stroke-soft:rgba(255,255,255,.08);
+  --stroke:rgba(255,255,255,.14);
+  --stroke-soft:rgba(255,255,255,.085);
 
   --text:#fff;
-  --muted:rgba(255,255,255,.68);
-  --muted2:rgba(255,255,255,.48);
+  --muted:rgba(255,255,255,.66);
+  --muted2:rgba(255,255,255,.46);
 
   --blue:#0a84ff;
   --red:#ff453a;
-  --green:#34c759;
-  --gold:#f5c451;
 
-  --shadow:0 24px 70px rgba(0,0,0,.42);
-  --shadow-soft:0 14px 34px rgba(0,0,0,.26);
+  --shadow:0 18px 46px rgba(0,0,0,.36),0 0 18px rgba(255,255,255,.02);
+  --shadow-soft:0 12px 28px rgba(0,0,0,.26);
 
-  --radius-xl:28px;
-  --radius-lg:22px;
-  --radius-md:17px;
-
-  --font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
+  --font-display:"SF Pro Display",-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;
 }
 
 html[data-theme="light"]{
-  --bg1:#f2f2f7;
-  --bg2:#f7f7fb;
-  --bg3:#ffffff;
+  --bg1:#fbfdff;
+  --bg2:#eef5ff;
+  --bg3:#f9fbff;
 
-  --glass:rgba(255,255,255,.74);
-  --glass2:rgba(255,255,255,.58);
-  --glass3:rgba(255,255,255,.44);
+  --glass:rgba(255,255,255,.70);
+  --glass2:rgba(255,255,255,.56);
+  --glass3:rgba(255,255,255,.42);
 
   --stroke:rgba(0,0,0,.08);
   --stroke-soft:rgba(0,0,0,.055);
 
-  --text:#111827;
-  --muted:rgba(17,24,39,.64);
-  --muted2:rgba(17,24,39,.46);
+  --text:#050507;
+  --muted:rgba(5,5,7,.56);
+  --muted2:rgba(5,5,7,.38);
 
-  --shadow:0 22px 60px rgba(0,0,0,.13);
-  --shadow-soft:0 12px 28px rgba(0,0,0,.10);
+  --shadow:0 18px 46px rgba(25,36,65,.12),0 6px 18px rgba(25,36,65,.06);
+  --shadow-soft:0 12px 28px rgba(25,36,65,.10);
 }
 
 *{
@@ -67,12 +61,20 @@ body{
 body.favorites-page{
   min-height:100vh;
   background:
-    radial-gradient(900px 500px at 50% -10%, rgba(53,121,255,.32), transparent 60%),
-    linear-gradient(180deg, var(--bg2) 0%, var(--bg1) 48%, var(--bg3) 100%);
+    radial-gradient(circle at 78% 2%, rgba(31,86,177,.22), transparent 32%),
+    radial-gradient(circle at 14% 72%, rgba(255,255,255,.04), transparent 34%),
+    linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 48%,var(--bg3) 100%);
   color:var(--text);
   font-family:var(--font-display);
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
+}
+
+html[data-theme="light"] body.favorites-page{
+  background:
+    radial-gradient(circle at 78% 4%, rgba(178,204,255,.40), transparent 32%),
+    radial-gradient(circle at 14% 70%, rgba(255,255,255,.72), transparent 36%),
+    linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 52%,var(--bg3) 100%);
 }
 
 button,
@@ -87,9 +89,9 @@ button{
 
 .fav-page{
   width:100%;
-  max-width:760px;
+  max-width:430px;
   margin:0 auto;
-  padding:calc(var(--safe-top) + 18px) 16px calc(var(--safe-bottom) + 42px);
+  padding:calc(var(--safe-top) + 14px) 18px calc(var(--safe-bottom) + 34px);
 }
 
 .fav-header{
@@ -97,7 +99,32 @@ button{
   grid-template-columns:44px 1fr auto;
   align-items:center;
   gap:12px;
-  margin-bottom:18px;
+  margin-bottom:28px;
+}
+
+.fav-back,
+.fav-theme-btn,
+.fav-add-btn,
+.fav-edit-btn{
+  border:1px solid var(--stroke);
+  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  box-shadow:var(--shadow);
+  color:var(--text);
+}
+
+html[data-theme="light"] .fav-back,
+html[data-theme="light"] .fav-theme-btn,
+html[data-theme="light"] .fav-add-btn,
+html[data-theme="light"] .fav-edit-btn,
+html[data-theme="light"] .fav-tabs,
+html[data-theme="light"] .fav-search-shell,
+html[data-theme="light"] .fav-filter-btn,
+html[data-theme="light"] .fav-card,
+html[data-theme="light"] .fav-empty,
+html[data-theme="light"] .fav-status{
+  background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(255,255,255,.24)),var(--glass);
 }
 
 .fav-back{
@@ -108,76 +135,115 @@ button{
   border-radius:999px;
   color:var(--text);
   text-decoration:none;
-  font-size:36px;
+  font-size:34px;
   line-height:1;
-  background:var(--glass);
-  border:1px solid var(--stroke);
-  box-shadow:var(--shadow-soft);
+  font-weight:300;
+}
+
+.fav-title-wrap{
+  min-width:0;
 }
 
 .fav-header h1{
   margin:0;
-  font-size:38px;
-  line-height:.96;
-  letter-spacing:-.045em;
+  font-size:54px;
+  line-height:.92;
+  letter-spacing:-.04em;
   font-weight:850;
 }
 
 .fav-header p{
-  margin:6px 0 0;
-  font-size:14px;
-  line-height:1.25;
+  margin:5px 0 0;
   color:var(--muted);
+  font-size:13px;
+  line-height:1.25;
   font-weight:520;
 }
 
-.fav-edit-btn{
-  height:42px;
-  padding:0 16px;
+.fav-header-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.fav-theme-btn{
+  width:64px;
+  height:36px;
   border-radius:999px;
-  border:1px solid var(--stroke);
-  background:var(--glass);
-  color:var(--text);
-  font-size:15px;
-  font-weight:750;
-  box-shadow:var(--shadow-soft);
+  padding:4px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+}
+
+html[data-theme="light"] .fav-theme-btn{
+  justify-content:flex-start;
+}
+
+.fav-theme-btn img{
+  width:28px;
+  height:28px;
+  object-fit:contain;
+  display:block;
+}
+
+.fav-add-btn{
+  width:40px;
+  height:40px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  font-size:30px;
+  line-height:1;
+  font-weight:420;
+  padding-bottom:2px;
+}
+
+.fav-edit-btn{
+  height:40px;
+  padding:0 14px;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:760;
 }
 
 body.fav-editing .fav-edit-btn{
-  background:rgba(10,132,255,.18);
-  border-color:rgba(10,132,255,.42);
+  background:rgba(10,132,255,.22);
+  border-color:rgba(10,132,255,.48);
   color:#fff;
 }
 
 .fav-tabs{
+  height:54px;
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:6px;
   padding:5px;
   border-radius:999px;
-  background:rgba(0,0,0,.18);
-  border:1px solid var(--stroke-soft);
-  margin-bottom:14px;
-}
-
-html[data-theme="light"] .fav-tabs{
-  background:rgba(0,0,0,.045);
+  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
+  border:1px solid var(--stroke);
+  box-shadow:var(--shadow);
+  margin-bottom:16px;
 }
 
 .fav-tab{
-  height:40px;
   border:0;
   border-radius:999px;
   color:var(--muted);
   background:transparent;
-  font-size:14px;
-  font-weight:760;
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:-.03em;
 }
 
 .fav-tab.active{
-  color:var(--text);
-  background:var(--glass);
-  box-shadow:0 8px 18px rgba(0,0,0,.18);
+  color:#050507;
+  background:#fff;
+}
+
+html[data-theme="light"] .fav-tab.active{
+  background:#050507;
+  color:#fff;
 }
 
 .fav-tools{
@@ -233,8 +299,8 @@ html[data-theme="light"] .fav-tabs{
 }
 
 .fav-filter-btn.has-filters{
-  background:rgba(10,132,255,.18);
-  border-color:rgba(10,132,255,.42);
+  background:rgba(10,132,255,.20);
+  border-color:rgba(10,132,255,.46);
 }
 
 .fav-applied-filters{
@@ -259,13 +325,9 @@ html[data-theme="light"] .fav-tabs{
   border-radius:999px;
   border:1px solid rgba(10,132,255,.32);
   background:rgba(10,132,255,.16);
-  color:#fff;
+  color:var(--text);
   font-size:13px;
   font-weight:760;
-}
-
-html[data-theme="light"] .fav-chip{
-  color:#0b2a4f;
 }
 
 .fav-chip button{
@@ -285,7 +347,7 @@ html[data-theme="light"] .fav-chip{
 .fav-status{
   margin:20px 0;
   padding:18px;
-  border-radius:var(--radius-lg);
+  border-radius:22px;
   background:var(--glass);
   border:1px solid var(--stroke);
   color:var(--muted);
@@ -297,7 +359,7 @@ html[data-theme="light"] .fav-chip{
 .fav-list{
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:14px;
 }
 
 .fav-card{
@@ -306,34 +368,28 @@ html[data-theme="light"] .fav-chip{
   grid-template-columns:auto 1fr auto;
   gap:12px;
   align-items:center;
-  min-height:86px;
-  padding:13px 13px;
+  min-height:92px;
+  padding:13px;
   border-radius:24px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.065));
+  background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.055)),var(--glass);
   border:1px solid var(--stroke);
   box-shadow:var(--shadow-soft);
   overflow:hidden;
   touch-action:manipulation;
 }
 
-html[data-theme="light"] .fav-card{
-  background:rgba(255,255,255,.76);
+.fav-card.type-cigar{
+  min-height:112px;
 }
 
 .fav-card.dragging{
   opacity:.72;
   transform:scale(.985);
-  box-shadow:0 30px 80px rgba(0,0,0,.42);
-}
-
-.fav-card.hidden{
-  display:none;
 }
 
 .fav-remove{
   width:0;
-  height:38px;
+  height:36px;
   opacity:0;
   overflow:hidden;
   border:0;
@@ -344,11 +400,11 @@ html[data-theme="light"] .fav-card{
   font-weight:800;
   display:grid;
   place-items:center;
-  transition:width .2s ease, opacity .2s ease, margin .2s ease;
+  transition:width .2s ease, opacity .2s ease;
 }
 
 body.fav-editing .fav-remove{
-  width:38px;
+  width:36px;
   opacity:1;
 }
 
@@ -359,8 +415,16 @@ body.fav-editing .fav-remove{
   display:grid;
   place-items:center;
   overflow:hidden;
-  background:rgba(255,255,255,.10);
+  background:rgba(255,255,255,.08);
   border:1px solid var(--stroke-soft);
+}
+
+.fav-card.type-cigar .fav-art{
+  width:128px;
+  height:76px;
+  border:0;
+  background:transparent;
+  overflow:hidden;
 }
 
 .fav-art img{
@@ -368,6 +432,28 @@ body.fav-editing .fav-remove{
   height:100%;
   object-fit:contain;
   padding:8px;
+}
+
+.fav-card.type-cigar .fav-art img{
+  height:384px;
+  width:auto;
+  max-width:none;
+  max-height:none;
+  padding:0;
+  object-fit:contain;
+  transform:rotate(90deg);
+  transform-origin:center center;
+  filter:drop-shadow(0 10px 18px rgba(0,0,0,.38));
+}
+
+@media (max-width:390px){
+  .fav-card.type-cigar .fav-art{
+    width:118px;
+  }
+
+  .fav-card.type-cigar .fav-art img{
+    height:350px;
+  }
 }
 
 .fav-art-letter{
@@ -384,7 +470,7 @@ body.fav-editing .fav-remove{
 .fav-kicker{
   margin:0 0 3px;
   color:var(--muted2);
-  font-size:12px;
+  font-size:11px;
   font-weight:800;
   letter-spacing:.04em;
   text-transform:uppercase;
@@ -396,9 +482,9 @@ body.fav-editing .fav-remove{
 .fav-title{
   margin:0;
   color:var(--text);
-  font-size:17px;
+  font-size:16px;
   line-height:1.12;
-  font-weight:850;
+  font-weight:820;
   letter-spacing:-.02em;
   white-space:nowrap;
   overflow:hidden;
@@ -494,9 +580,7 @@ body.fav-editing .fav-open{
   font-weight:560;
 }
 
-/* =========================
-   FILTER SHEET
-========================= */
+/* FILTER SHEET */
 
 .fav-sheet{
   position:fixed;
@@ -526,13 +610,12 @@ body.fav-editing .fav-open{
   left:0;
   right:0;
   bottom:0;
-  max-height:min(82vh, 720px);
+  max-height:min(82vh,720px);
   display:flex;
   flex-direction:column;
   padding:10px 16px calc(var(--safe-bottom) + 16px);
   border-radius:30px 30px 0 0;
-  background:
-    linear-gradient(180deg, rgba(19,45,83,.96), rgba(7,19,43,.98));
+  background:linear-gradient(180deg,rgba(19,45,83,.96),rgba(7,19,43,.98));
   border-top:1px solid rgba(255,255,255,.16);
   box-shadow:0 -24px 70px rgba(0,0,0,.48);
   transform:translateY(104%);
@@ -636,10 +719,6 @@ html[data-theme="light"] .fav-sheet-handle{
   border-color:rgba(10,132,255,.62);
 }
 
-html[data-theme="light"] .fav-filter-option.active{
-  color:#fff;
-}
-
 .fav-range-wrap{
   padding:14px;
   border-radius:22px;
@@ -719,20 +798,24 @@ html[data-theme="light"] .fav-range-inputs input{
   }
 
   .fav-header h1{
-    font-size:34px;
+    font-size:46px;
   }
 
-  .fav-card{
-    grid-template-columns:auto 1fr auto;
-    padding:12px;
+  .fav-header p{
+    display:none;
   }
 
-  .fav-art{
-    width:54px;
-    height:54px;
+  .fav-theme-btn{
+    width:58px;
   }
 
-  .fav-title{
-    font-size:16px;
+  .fav-add-btn{
+    width:38px;
+    height:38px;
+  }
+
+  .fav-edit-btn{
+    height:38px;
+    padding:0 12px;
   }
 }
