@@ -9,28 +9,17 @@
 
 <body class="favorites-page">
   <main class="fav-page">
-    <header class="fav-header">
+    <header class="fav-topbar">
       <a class="fav-back" href="/profile/" aria-label="Back">‹</a>
 
-      <div class="fav-title-wrap">
-        <h1>Favorites</h1>
-        <p>Your saved cigars, brands, and shops.</p>
-      </div>
-
-      <div class="fav-header-actions">
-        <button id="themeToggle" class="fav-theme-btn" type="button" aria-label="Toggle light or dark mode">
-          <img id="themeIcon" src="/img/icons/moon.svg" alt="" />
-        </button>
-
-        <button id="favAddBtn" class="fav-add-btn" type="button" aria-label="Add favorite">
-          +
-        </button>
-
-        <button id="favEditBtn" class="fav-edit-btn" type="button">
-          Edit
-        </button>
-      </div>
+      <button id="themeToggle" class="fav-theme-btn" type="button" aria-label="Toggle theme">
+        <img id="themeIcon" src="/img/icons/moon.svg" alt="" />
+      </button>
     </header>
+
+    <section class="fav-hero">
+      <h1>Favorites</h1>
+    </section>
 
     <section class="fav-tabs" aria-label="Favorite categories">
       <button class="fav-tab active" type="button" data-type="cigar">Cigars</button>
@@ -41,24 +30,16 @@
     <section class="fav-tools">
       <div class="fav-search-shell">
         <span class="fav-search-icon">⌕</span>
-        <input
-          id="favSearch"
-          class="fav-search"
-          type="search"
-          placeholder="Search favorites"
-          autocomplete="off"
-        />
+        <input id="favSearch" class="fav-search" type="search" placeholder="Search favorites" autocomplete="off" />
       </div>
 
-      <button id="favFilterBtn" class="fav-filter-btn" type="button">
-        Filters
-      </button>
+      <button id="favFilterBtn" class="fav-filter-btn" type="button">Filters</button>
+
+      <button id="favAddBtn" class="fav-add-btn" type="button" aria-label="Add favorite">+</button>
     </section>
 
     <section id="favAppliedFilters" class="fav-applied-filters" hidden></section>
-
     <section id="favStatus" class="fav-status" hidden></section>
-
     <section id="favList" class="fav-list" aria-live="polite"></section>
   </main>
 
@@ -74,17 +55,13 @@
           <p id="favSheetSubtitle">Filter your saved cigars.</p>
         </div>
 
-        <button id="favClearFilters" class="fav-clear-btn" type="button">
-          Clear
-        </button>
+        <button id="favClearFilters" class="fav-clear-btn" type="button">Clear</button>
       </header>
 
       <div id="favFilterGroups" class="fav-filter-groups"></div>
 
       <footer class="fav-sheet-footer">
-        <button id="favDoneFilters" class="fav-done-btn" type="button">
-          Done
-        </button>
+        <button id="favDoneFilters" class="fav-done-btn" type="button">Done</button>
       </footer>
     </section>
   </div>
