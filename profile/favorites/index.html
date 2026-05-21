@@ -1,38 +1,93 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Favorites</title>
-  <link rel="stylesheet" href="./favorites.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Favorites | Cigar Social</title>
+
+  <link rel="stylesheet" href="/profile/favorites/favorites.css" />
 </head>
 
 <body class="favorites-page">
-  <main class="fav-shell">
+  <main class="fav-page">
+    <header class="fav-header">
+      <a class="fav-back" href="/profile/" aria-label="Back">
+        ‹
+      </a>
 
-    <header class="fav-topbar">
-      <a class="back-btn" href="/profile/">‹</a>
+      <div>
+        <h1>Favorites</h1>
+        <p>Your saved cigars, brands, and shops.</p>
+      </div>
 
-      <button class="theme-toggle" id="themeToggle" type="button">
-        <img id="themeIcon" class="theme-icon" src="/img/icons/moon.svg" alt="" />
+      <button id="favEditBtn" class="fav-edit-btn" type="button">
+        Edit
       </button>
     </header>
 
-    <section class="fav-hero">
-      <h1>Favorites</h1>
-      <button class="add-btn" type="button">+</button>
+    <section class="fav-tabs" aria-label="Favorite categories">
+      <button class="fav-tab active" type="button" data-type="cigar">
+        Cigars
+      </button>
+      <button class="fav-tab" type="button" data-type="brand">
+        Brands
+      </button>
+      <button class="fav-tab" type="button" data-type="shop">
+        Shops
+      </button>
     </section>
 
-    <nav class="tab-bar">
-      <button class="tab-btn active" data-tab="cigars" type="button">Cigars</button>
-      <button class="tab-btn" data-tab="brands" type="button">Brands</button>
-      <button class="tab-btn" data-tab="shops" type="button">Shops</button>
-    </nav>
+    <section class="fav-tools">
+      <div class="fav-search-shell">
+        <span class="fav-search-icon">⌕</span>
+        <input
+          id="favSearch"
+          class="fav-search"
+          type="search"
+          placeholder="Search favorites"
+          autocomplete="off"
+        />
+      </div>
 
-    <section class="fav-list" id="favGrid"></section>
+      <button id="favFilterBtn" class="fav-filter-btn" type="button">
+        Filters
+      </button>
+    </section>
 
+    <section id="favAppliedFilters" class="fav-applied-filters" hidden></section>
+
+    <section id="favStatus" class="fav-status" hidden></section>
+
+    <section id="favList" class="fav-list" aria-live="polite"></section>
   </main>
 
-  <script src="./favorites.js"></script>
+  <div id="favFilterSheet" class="fav-sheet" aria-hidden="true">
+    <div class="fav-sheet-backdrop" data-close-sheet></div>
+
+    <section class="fav-sheet-panel" role="dialog" aria-modal="true" aria-label="Filters">
+      <div class="fav-sheet-handle"></div>
+
+      <header class="fav-sheet-header">
+        <div>
+          <h2>Filters</h2>
+          <p id="favSheetSubtitle">Filter your saved cigars.</p>
+        </div>
+
+        <button id="favClearFilters" class="fav-clear-btn" type="button">
+          Clear
+        </button>
+      </header>
+
+      <div id="favFilterGroups" class="fav-filter-groups"></div>
+
+      <footer class="fav-sheet-footer">
+        <button id="favDoneFilters" class="fav-done-btn" type="button">
+          Done
+        </button>
+      </footer>
+    </section>
+  </div>
+
+  <script src="/profile/favorites/favorites.js"></script>
 </body>
 </html>
