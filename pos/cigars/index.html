@@ -6,16 +6,16 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Cigars</title>
 
-  <link rel="stylesheet" href="/css/type.css?v=34" />
-  <link rel="stylesheet" href="/pos/pos.css?v=34" />
-  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=34" />
+  <link rel="stylesheet" href="/css/type.css?v=35" />
+  <link rel="stylesheet" href="/pos/pos.css?v=35" />
+  <link rel="stylesheet" href="/pos/cigars/cigars.css?v=35" />
 </head>
 
 <body class="cigars-page">
   <header class="cigars-topbar">
     <button
       type="button"
-      class="cigars-back"
+      class="cigars-back glass-surface"
       aria-label="Back"
       onclick="history.length > 1 ? history.back() : window.location.href='/pos/'"
     >
@@ -26,22 +26,32 @@
 
     <div class="cigars-topbar-spacer" aria-hidden="true"></div>
 
-    <div class="cigars-theme-dock">
-      <button id="theme-toggle" type="button" aria-label="Toggle theme" aria-pressed="false">
-        <span class="track" aria-hidden="true"></span>
-        <span class="knob" aria-hidden="true">
-          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
-            <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
-            </g>
-          </svg>
-          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M14.5 3.5a8 8 0 1 0 6 13.3A9 9 0 0 1 14.5 3.5Z" fill="currentColor"></path>
-          </svg>
-        </span>
-      </button>
-    </div>
+    <button
+      id="theme-toggle"
+      class="cigars-theme-btn glass-surface"
+      type="button"
+      aria-label="Toggle theme"
+      aria-pressed="false"
+    >
+      <span class="track" aria-hidden="true"></span>
+
+      <span class="knob" aria-hidden="true">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
+
+          <g
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
+          </g>
+        </svg>
+
+        <img class="icon-moon" src="/uxui/moon.svg" alt="" />
+      </span>
+    </button>
   </header>
 
   <main class="cigars-main" role="main">
@@ -49,9 +59,20 @@
       <h1 class="cigars-title">Cigars</h1>
 
       <div class="cigars-title-actions">
-        <button type="button" class="cigars-filter-btn" id="btn-open-filters" aria-label="Filters">
+        <button
+          type="button"
+          class="cigars-filter-btn"
+          id="btn-open-filters"
+          aria-label="Filters"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            <path
+              d="M4 6h16M7 12h10M10 18h4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+            />
           </svg>
         </button>
       </div>
@@ -61,7 +82,13 @@
       <div class="cigars-search-bar">
         <div class="cigars-search-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            <path
+              d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+            />
           </svg>
         </div>
 
@@ -75,12 +102,18 @@
         />
       </div>
 
-      <div class="cigars-applied-filters" id="cigarsAppliedFilters" aria-label="Applied filters"></div>
+      <div
+        class="cigars-applied-filters"
+        id="cigarsAppliedFilters"
+        aria-label="Applied filters"
+      ></div>
     </div>
 
-    <!-- Favorite Brands Rail -->
-    <section class="fav-brands-wrap" id="favBrandsWrap" aria-label="Favorite brands">
-
+    <section
+      class="fav-brands-wrap"
+      id="favBrandsWrap"
+      aria-label="Favorite brands"
+    >
       <div class="fav-brands-scroll" id="favBrandsScroll"></div>
     </section>
 
@@ -89,56 +122,91 @@
 
   <nav class="cigars-bottom-bar" aria-label="Primary">
     <div class="cigars-bottom-bar-inner">
-      <button type="button" class="cb-nav-btn" id="cbSearchBtn" aria-label="Search">
-        <img class="cb-nav-icon" src="/uxui/bottombar/search.svg" alt="">
+      <button
+        type="button"
+        class="cb-nav-btn"
+        id="cbSearchBtn"
+        aria-label="Search"
+      >
+        <img
+          class="cb-nav-icon"
+          src="/uxui/bottombar/search.svg"
+          alt=""
+        />
         <span>Search</span>
       </button>
 
       <a class="cb-nav-btn" href="/" aria-label="Home">
-        <img class="cb-nav-icon" src="/uxui/bottombar/home.svg" alt="">
+        <img class="cb-nav-icon" src="/uxui/bottombar/home.svg" alt="" />
         <span>Home</span>
       </a>
 
-      <a class="cb-nav-btn" href="/pos/favorites/" aria-label="Favorites">
-        <img class="cb-nav-icon" src="/uxui/bottombar/favorites.svg" alt="">
+      <a
+        class="cb-nav-btn"
+        href="/pos/favorites/"
+        aria-label="Favorites"
+      >
+        <img
+          class="cb-nav-icon"
+          src="/uxui/bottombar/favorites.svg"
+          alt=""
+        />
         <span>Favorites</span>
       </a>
 
       <a class="cb-nav-btn" href="/pos/invoice/" aria-label="Cart">
-        <img class="cb-nav-icon" src="/uxui/bottombar/cart.svg" alt="">
+        <img class="cb-nav-icon" src="/uxui/bottombar/cart.svg" alt="" />
         <span>Cart</span>
         <span class="cb-nav-badge" data-cart-badge hidden>0</span>
       </a>
     </div>
   </nav>
 
-  <script src="/pos/cart.js?v=34" defer></script>
-  <script src="/pos/pos.js?v=34" defer></script>
-  <script src="/pos/cigars/cigars.js?v=34" defer></script>
+  <script src="/pos/cart.js?v=35" defer></script>
+  <script src="/pos/pos.js?v=35" defer></script>
+  <script src="/pos/cigars/cigars.js?v=35" defer></script>
+
   <script>
     (() => {
       const root = document.documentElement;
       const toggle = document.getElementById("theme-toggle");
-      const saved = localStorage.getItem("theme") || root.getAttribute("data-theme") || "light";
+
+      const saved =
+        localStorage.getItem("theme") ||
+        root.getAttribute("data-theme") ||
+        "light";
 
       function applyTheme(theme) {
         const next = theme === "dark" ? "dark" : "light";
+
         root.setAttribute("data-theme", next);
         localStorage.setItem("theme", next);
-        if (toggle) toggle.setAttribute("aria-pressed", String(next === "dark"));
+
+        if (toggle) {
+          toggle.setAttribute(
+            "aria-pressed",
+            String(next === "dark")
+          );
+        }
       }
 
       applyTheme(saved);
 
       toggle?.addEventListener("click", () => {
-        applyTheme((root.getAttribute("data-theme") || "light") === "dark" ? "light" : "dark");
+        applyTheme(
+          (root.getAttribute("data-theme") || "light") === "dark"
+            ? "light"
+            : "dark"
+        );
       });
 
-      document.getElementById("cbSearchBtn")?.addEventListener("click", () => {
-        if (typeof window.openGlobalSearch === "function") {
-          window.openGlobalSearch();
-        }
-      });
+      document
+        .getElementById("cbSearchBtn")
+        ?.addEventListener("click", () => {
+          if (typeof window.openGlobalSearch === "function") {
+            window.openGlobalSearch();
+          }
+        });
     })();
   </script>
 </body>
