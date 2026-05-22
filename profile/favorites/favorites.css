@@ -328,16 +328,16 @@ html[data-theme="light"] .fav-tab.active{
 .fav-list.is-cigars{
   display:flex;
   flex-direction:column;
-  gap:34px;
-  padding-top:12px;
-  padding-bottom:60px;
+  gap:2px;
+  padding-top:8px;
+  padding-bottom:40px;
 }
 
 .fav-cigar{
   position:relative;
 
   width:100%;
-  min-height:118px;
+  height:88px;
 
   display:flex;
   align-items:center;
@@ -358,7 +358,7 @@ html[data-theme="light"] .fav-tab.active{
     the visible horizontal cigar length.
   */
 
-  height:520px;
+  height:430px;
   width:auto;
 
   max-width:none;
