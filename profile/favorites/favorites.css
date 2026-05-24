@@ -4,7 +4,7 @@
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bottom:env(safe-area-inset-bottom,0px);
 
-  --bg1:#061120;
+  --bg1:#071426;
   --bg2:#030813;
   --bg3:#010409;
 
@@ -16,8 +16,8 @@
   --stroke-soft:rgba(255,255,255,.085);
 
   --text:#fff;
-  --muted:rgba(255,255,255,.66);
-  --muted2:rgba(255,255,255,.46);
+  --muted:rgba(255,255,255,.62);
+  --muted2:rgba(255,255,255,.42);
 
   --blue:#0a84ff;
   --red:#ff453a;
@@ -48,9 +48,7 @@ html[data-theme="light"]{
   --shadow-soft:0 12px 28px rgba(25,36,65,.10);
 }
 
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 html,
 body{
@@ -94,24 +92,34 @@ button{
   padding:calc(var(--safe-top) + 14px) 18px calc(var(--safe-bottom) + 34px);
 }
 
-.fav-header{
-  display:grid;
-  grid-template-columns:1fr auto;
-  align-items:start;
-  gap:14px;
-  margin-bottom:26px;
-}
-
-.fav-header-left{
+.fav-topbar{
   display:flex;
-  flex-direction:column;
-  gap:18px;
-}
-
-.fav-top-row{
-  display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
+  margin-bottom:30px;
+}
+
+.fav-back,
+.fav-theme-btn,
+.fav-add-btn,
+.fav-filter-btn,
+.fav-search-shell,
+.fav-tabs{
+  border:1px solid var(--stroke);
+  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  box-shadow:var(--shadow);
+  color:var(--text);
+}
+
+html[data-theme="light"] .fav-back,
+html[data-theme="light"] .fav-theme-btn,
+html[data-theme="light"] .fav-add-btn,
+html[data-theme="light"] .fav-filter-btn,
+html[data-theme="light"] .fav-search-shell,
+html[data-theme="light"] .fav-tabs{
+  background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(255,255,255,.24)),var(--glass);
 }
 
 .fav-back{
@@ -125,30 +133,16 @@ button{
   font-size:34px;
   line-height:1;
   font-weight:300;
-
-  border:1px solid var(--stroke);
-  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
-
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
 }
 
 .fav-theme-btn{
-  width:74px;
-  height:38px;
+  width:64px;
+  height:36px;
   border-radius:999px;
-
-  border:1px solid var(--stroke);
-  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
-
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
-
+  padding:4px;
   display:flex;
   align-items:center;
   justify-content:flex-end;
-
-  padding:4px;
 }
 
 html[data-theme="light"] .fav-theme-btn{
@@ -158,47 +152,45 @@ html[data-theme="light"] .fav-theme-btn{
 .fav-theme-btn img{
   width:28px;
   height:28px;
+  object-fit:contain;
+  display:block;
 }
 
-.fav-header h1{
+.fav-hero{
+  margin-bottom:18px;
+}
+
+.fav-hero h1{
   margin:0;
-  font-size:74px;
+  font-size:58px;
   line-height:.88;
-  letter-spacing:-.07em;
+  letter-spacing:-.055em;
   font-weight:900;
 }
 
 .fav-tabs{
-  height:62px;
-
+  height:54px;
   display:grid;
   grid-template-columns:repeat(3,1fr);
-
   gap:6px;
-  padding:6px;
-
+  padding:5px;
   border-radius:999px;
-
-  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
-
-  border:1px solid var(--stroke);
+  margin-bottom:14px;
 }
 
 .fav-tab{
   border:0;
   border-radius:999px;
-
-  background:transparent;
   color:var(--muted);
-
-  font-size:19px;
-  font-weight:800;
-  letter-spacing:-.04em;
+  background:transparent;
+  font-size:16px;
+  font-weight:760;
+  letter-spacing:-.03em;
 }
 
 .fav-tab.active{
+  color:#050507;
   background:#fff;
-  color:#000;
 }
 
 html[data-theme="light"] .fav-tab.active{
@@ -209,29 +201,25 @@ html[data-theme="light"] .fav-tab.active{
 .fav-tools{
   display:grid;
   grid-template-columns:1fr auto auto;
-  gap:12px;
-  margin-bottom:10px;
+  gap:10px;
+  align-items:center;
+  margin-bottom:24px;
 }
 
 .fav-search-shell{
-  height:62px;
-
+  height:48px;
   display:flex;
   align-items:center;
-  gap:10px;
-
-  padding:0 18px;
-
-  border-radius:22px;
-
-  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
-
-  border:1px solid var(--stroke);
+  gap:8px;
+  padding:0 14px;
+  border-radius:18px;
 }
 
 .fav-search-icon{
   color:var(--muted2);
   font-size:20px;
+  line-height:1;
+  transform:translateY(-1px);
 }
 
 .fav-search{
@@ -239,42 +227,103 @@ html[data-theme="light"] .fav-tab.active{
   border:0;
   outline:0;
   background:transparent;
-
   color:var(--text);
-
-  font-size:18px;
-  font-weight:700;
+  font-size:16px;
+  font-weight:650;
 }
 
 .fav-search::placeholder{
   color:var(--muted2);
 }
 
-.fav-filter-btn,
-.fav-add-btn{
-  height:62px;
-
-  border-radius:22px;
-
-  border:1px solid var(--stroke);
-
-  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
-
-  color:#fff;
-
+.fav-filter-btn{
+  height:48px;
+  padding:0 18px;
+  border-radius:18px;
+  font-size:15px;
   font-weight:850;
 }
 
-.fav-filter-btn{
-  padding:0 26px;
-  font-size:18px;
+.fav-filter-btn.has-filters{
+  background:rgba(10,132,255,.20);
+  border-color:rgba(10,132,255,.46);
 }
 
 .fav-add-btn{
-  width:62px;
-  font-size:38px;
+  width:48px;
+  height:48px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  font-size:36px;
   line-height:1;
+  font-weight:420;
+  padding-bottom:3px;
 }
+
+.fav-applied-filters{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:2px 0 12px;
+  scrollbar-width:none;
+}
+
+.fav-applied-filters::-webkit-scrollbar{
+  display:none;
+}
+
+.fav-chip{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:32px;
+  padding:0 11px;
+  border-radius:999px;
+  border:1px solid rgba(10,132,255,.32);
+  background:rgba(10,132,255,.16);
+  color:var(--text);
+  font-size:13px;
+  font-weight:760;
+}
+
+.fav-chip button{
+  width:20px;
+  height:20px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  color:inherit;
+  font-size:14px;
+  font-weight:900;
+  padding:0;
+}
+
+.fav-status{
+  margin:20px 0;
+  padding:18px;
+  border-radius:22px;
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.35;
+  font-weight:620;
+}
+
+/* LIST BASE */
+
+.fav-list{
+  display:flex;
+  flex-direction:column;
+}
+
+/* =========================
+   CIGAR VIEW
+========================= */
 
 .fav-list.is-cigars{
   display:flex;
@@ -301,49 +350,151 @@ html[data-theme="light"] .fav-tab.active{
 }
 
 .fav-cigar img{
+  display:block;
+
+  /*
+    Images are uploaded vertically.
+    Rotating makes the HEIGHT become
+    the visible horizontal cigar length.
+  */
+
   height:430px;
   width:auto;
 
+  max-width:none;
+  max-height:none;
+
   object-fit:contain;
 
-  filter:
-    drop-shadow(0 18px 22px rgba(0,0,0,.45))
-    drop-shadow(0 2px 2px rgba(0,0,0,.25));
+  transform:rotate(90deg);
+  transform-origin:center center;
 
   user-select:none;
-  pointer-events:none;
+  -webkit-user-drag:none;
+
+  filter:
+    drop-shadow(0 16px 26px rgba(0,0,0,.42))
+    drop-shadow(0 4px 10px rgba(0,0,0,.22));
 }
+
+/* remove button */
+
+.fav-cigar-remove{
+  position:absolute;
+  top:-4px;
+  left:0;
+
+  width:34px;
+  height:34px;
+
+  border:0;
+  border-radius:999px;
+
+  background:rgba(255,69,58,.18);
+  color:#ff453a;
+
+  display:none;
+  place-items:center;
+
+  font-size:22px;
+  font-weight:800;
+
+  z-index:5;
+}
+
+body.fav-editing .fav-cigar-remove{
+  display:grid;
+}
+
+/* drag handle */
+
+.fav-drag{
+  position:absolute;
+  right:0;
+  top:50%;
+
+  transform:translateY(-50%);
+
+  width:34px;
+  height:44px;
+
+  border:0;
+  border-radius:14px;
+
+  background:rgba(255,255,255,.08);
+
+  color:var(--muted2);
+
+  display:none;
+  place-items:center;
+
+  font-size:22px;
+  line-height:1;
+
+  cursor:grab;
+
+  z-index:5;
+}
+
+body.fav-editing .fav-drag{
+  display:grid;
+}
+
+/* dragging */
+
+.fav-cigar.dragging{
+  opacity:.6;
+  transform:scale(.98);
+}
+
+/* =========================
+   BRANDS / SHOPS GRID
+========================= */
 
 .fav-list.is-icons{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:26px 18px;
-  padding-top:26px;
+
+  padding-top:18px;
+  padding-bottom:60px;
 }
 
 .fav-icon-item{
   position:relative;
 
-  text-decoration:none;
-  color:var(--text);
-
   display:flex;
   flex-direction:column;
   align-items:center;
+
+  text-decoration:none;
+
+  color:var(--text);
 }
 
 .fav-icon-art{
-  width:86px;
-  height:86px;
+  width:88px;
+  height:88px;
 
-  border-radius:24px;
+  border-radius:28px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.10),
+      rgba(255,255,255,.03)
+    ),
+    var(--glass);
+
+  border:1px solid var(--stroke);
+
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+
+  box-shadow:var(--shadow);
 
   display:grid;
   place-items:center;
-
-  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
-
-  border:1px solid var(--stroke);
 
   overflow:hidden;
 }
@@ -357,69 +508,222 @@ html[data-theme="light"] .fav-tab.active{
 .fav-icon-name{
   margin-top:10px;
 
-  text-align:center;
-
   font-size:15px;
   line-height:1.15;
-  font-weight:750;
-  letter-spacing:-.02em;
+  font-weight:760;
+
+  text-align:center;
+
+  color:var(--text);
 }
 
 .fav-icon-meta{
   margin-top:4px;
 
-  text-align:center;
+  font-size:12px;
+  line-height:1.2;
 
   color:var(--muted);
 
-  font-size:12px;
-  line-height:1.2;
-  font-weight:600;
+  text-align:center;
 }
 
-.fav-applied-filters{
+.fav-icon-remove{
+  position:absolute;
+  top:-6px;
+  right:10px;
+
+  width:28px;
+  height:28px;
+
+  border:0;
+  border-radius:999px;
+
+  background:rgba(255,69,58,.18);
+  color:#ff453a;
+
+  display:none;
+  place-items:center;
+
+  font-size:18px;
+  font-weight:800;
+
+  z-index:5;
+}
+
+body.fav-editing .fav-icon-remove{
+  display:grid;
+}
+
+.fav-icon-item .fav-drag{
+  top:auto;
+  right:auto;
+  bottom:-14px;
+
+  transform:none;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width:430px){
+
+  .fav-cigar{
+    min-height:104px;
+  }
+
+  .fav-cigar img{
+    height:460px;
+  }
+
+  .fav-icon-art{
+    width:82px;
+    height:82px;
+    border-radius:24px;
+  }
+}
+
+@media (max-width:390px){
+
+  .fav-cigar img{
+    height:420px;
+  }
+
+  .fav-list.is-icons{
+    gap:22px 14px;
+  }
+
+  .fav-icon-art{
+    width:76px;
+    height:76px;
+  }
+
+  .fav-icon-name{
+    font-size:14px;
+  }
+}
+
+/* BRANDS / SHOPS = 3-COLUMN ICON GRID */
+
+.fav-list.is-icons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:24px 16px;
+  align-items:start;
+}
+
+.fav-icon-item{
+  position:relative;
   display:flex;
-  gap:8px;
-  overflow-x:auto;
-  padding:4px 0 12px;
-  scrollbar-width:none;
+  flex-direction:column;
+  align-items:center;
+  gap:9px;
+  text-align:center;
+  color:var(--text);
+  text-decoration:none;
+  min-width:0;
 }
 
-.fav-applied-filters::-webkit-scrollbar{
+.fav-icon-art{
+  width:76px;
+  height:76px;
+  display:grid;
+  place-items:center;
+  border-radius:22px;
+  overflow:hidden;
+}
+
+.fav-icon-art img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+
+.fav-icon-name{
+  width:100%;
+  color:var(--text);
+  font-size:13px;
+  font-weight:760;
+  line-height:1.08;
+  letter-spacing:-.02em;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+
+.fav-icon-meta{
+  margin-top:-5px;
+  color:var(--muted2);
+  font-size:11px;
+  font-weight:600;
+  line-height:1.1;
+}
+
+.fav-icon-remove{
+  position:absolute;
+  top:-8px;
+  right:8px;
+  z-index:4;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  border:1px solid var(--stroke);
+  background:rgba(255,69,58,.18);
+  color:var(--red);
+  font-size:20px;
+  line-height:1;
+  display:none;
+  place-items:center;
+}
+
+body.fav-editing .fav-icon-remove{
+  display:grid;
+}
+
+.fav-drag{
   display:none;
 }
 
-.fav-chip{
-  flex:0 0 auto;
-
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-
-  min-height:34px;
-  padding:0 12px;
-
-  border-radius:999px;
-
-  background:rgba(10,132,255,.18);
-  border:1px solid rgba(10,132,255,.36);
-
-  font-size:13px;
-  font-weight:760;
+body.fav-editing .fav-drag{
+  display:block;
 }
 
-.fav-chip button{
-  border:0;
-  background:transparent;
-  color:inherit;
-  font-size:16px;
+/* EMPTY */
+
+.fav-empty{
+  padding:34px 20px;
+  text-align:center;
+  border-radius:28px;
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  box-shadow:var(--shadow-soft);
 }
+
+.fav-empty h3{
+  margin:0;
+  font-size:24px;
+  line-height:1.05;
+  letter-spacing:-.035em;
+}
+
+.fav-empty p{
+  margin:8px auto 0;
+  max-width:300px;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.35;
+  font-weight:560;
+}
+
+/* FILTER SHEET */
 
 .fav-sheet{
   position:fixed;
   inset:0;
   z-index:9999;
-
   pointer-events:none;
 }
 
@@ -430,11 +734,9 @@ html[data-theme="light"] .fav-tab.active{
 .fav-sheet-backdrop{
   position:absolute;
   inset:0;
-
-  background:rgba(0,0,0,.52);
-
+  background:rgba(0,0,0,.46);
   opacity:0;
-  transition:opacity .25s ease;
+  transition:opacity .22s ease;
 }
 
 .fav-sheet.open .fav-sheet-backdrop{
@@ -446,22 +748,20 @@ html[data-theme="light"] .fav-tab.active{
   left:0;
   right:0;
   bottom:0;
-
-  max-height:82vh;
-
+  max-height:min(82vh,720px);
   display:flex;
   flex-direction:column;
-
-  padding:12px 18px calc(var(--safe-bottom) + 18px);
-
-  border-radius:34px 34px 0 0;
-
-  background:rgba(7,24,52,.97);
-
-  border-top:1px solid rgba(255,255,255,.12);
-
-  transform:translateY(102%);
+  padding:10px 16px calc(var(--safe-bottom) + 16px);
+  border-radius:30px 30px 0 0;
+  background:linear-gradient(180deg,rgba(19,45,83,.96),rgba(7,19,43,.98));
+  border-top:1px solid rgba(255,255,255,.16);
+  box-shadow:0 -24px 70px rgba(0,0,0,.48);
+  transform:translateY(104%);
   transition:transform .28s cubic-bezier(.2,.9,.2,1);
+}
+
+html[data-theme="light"] .fav-sheet-panel{
+  background:rgba(246,246,250,.96);
 }
 
 .fav-sheet.open .fav-sheet-panel{
@@ -469,14 +769,15 @@ html[data-theme="light"] .fav-tab.active{
 }
 
 .fav-sheet-handle{
-  width:56px;
+  width:48px;
   height:5px;
-
   border-radius:999px;
+  background:rgba(255,255,255,.28);
+  margin:2px auto 14px;
+}
 
-  background:rgba(255,255,255,.24);
-
-  margin:0 auto 16px;
+html[data-theme="light"] .fav-sheet-handle{
+  background:rgba(0,0,0,.18);
 }
 
 .fav-sheet-header{
@@ -484,194 +785,175 @@ html[data-theme="light"] .fav-tab.active{
   justify-content:space-between;
   align-items:flex-start;
   gap:16px;
-
-  margin-bottom:18px;
+  margin-bottom:14px;
 }
 
 .fav-sheet-header h2{
   margin:0;
-
-  font-size:58px;
-  line-height:.9;
-  letter-spacing:-.06em;
+  font-size:30px;
+  line-height:1;
+  letter-spacing:-.04em;
 }
 
 .fav-sheet-header p{
   margin:6px 0 0;
-
   color:var(--muted);
-
-  font-size:15px;
-  font-weight:600;
+  font-size:14px;
+  font-weight:560;
 }
 
 .fav-clear-btn{
-  height:48px;
-  padding:0 18px;
-
+  height:36px;
+  padding:0 13px;
   border-radius:999px;
-
   border:1px solid var(--stroke);
-
   background:var(--glass);
-
-  color:#fff;
-
-  font-size:17px;
-  font-weight:800;
+  color:var(--text);
+  font-size:14px;
+  font-weight:780;
 }
 
 .fav-filter-groups{
   overflow:auto;
-  padding-bottom:18px;
+  padding-right:2px;
+  scrollbar-width:none;
+}
+
+.fav-filter-groups::-webkit-scrollbar{
+  display:none;
 }
 
 .fav-filter-group{
-  margin-bottom:20px;
+  margin-bottom:18px;
 }
 
 .fav-filter-group h3{
-  margin:0 0 12px;
-
-  font-size:24px;
-  line-height:1;
-  letter-spacing:-.03em;
+  margin:0 0 10px;
+  font-size:17px;
+  line-height:1.05;
+  letter-spacing:-.02em;
 }
 
 .fav-filter-options{
   display:flex;
   flex-wrap:wrap;
-  gap:10px;
+  gap:8px;
 }
 
 .fav-filter-option{
-  min-height:46px;
-  padding:0 16px;
-
+  min-height:38px;
+  padding:0 13px;
   border-radius:999px;
-
-  border:1px solid rgba(255,255,255,.14);
-
-  background:rgba(255,255,255,.04);
-
-  color:#d7d7dc;
-
-  font-size:15px;
-  font-weight:750;
+  border:1px solid var(--stroke);
+  background:var(--glass3);
+  color:var(--muted);
+  font-size:14px;
+  font-weight:720;
 }
 
 .fav-filter-option.active{
-  background:rgba(10,132,255,.34);
-  border-color:rgba(10,132,255,.54);
   color:#fff;
+  background:rgba(10,132,255,.32);
+  border-color:rgba(10,132,255,.62);
 }
 
 .fav-range-wrap{
-  padding:16px;
-
-  border-radius:24px;
-
-  background:rgba(255,255,255,.03);
-
-  border:1px solid rgba(255,255,255,.08);
+  padding:14px;
+  border-radius:22px;
+  background:var(--glass3);
+  border:1px solid var(--stroke-soft);
 }
 
 .fav-range-values{
   display:flex;
   justify-content:space-between;
-
-  margin-bottom:12px;
-
+  gap:12px;
   color:var(--muted);
-
   font-size:13px;
-  font-weight:700;
+  font-weight:740;
+  margin-bottom:10px;
 }
 
 .fav-range-inputs{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:12px;
+  gap:10px;
 }
 
 .fav-range-inputs label{
   display:flex;
   flex-direction:column;
-  gap:7px;
-
+  gap:6px;
   color:var(--muted2);
-
-  font-size:11px;
+  font-size:12px;
   font-weight:800;
-
   text-transform:uppercase;
+  letter-spacing:.04em;
 }
 
 .fav-range-inputs input{
-  height:46px;
-
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
-
-  background:rgba(255,255,255,.06);
-
-  color:#fff;
-
-  padding:0 14px;
-
+  height:42px;
+  width:100%;
+  border:1px solid var(--stroke);
+  border-radius:15px;
+  outline:0;
+  background:rgba(255,255,255,.08);
+  color:var(--text);
+  padding:0 12px;
   font-size:15px;
-  font-weight:700;
+  font-weight:740;
+}
 
-  outline:none;
+html[data-theme="light"] .fav-range-inputs input{
+  background:rgba(255,255,255,.82);
 }
 
 .fav-sheet-footer{
-  padding-top:8px;
+  padding-top:12px;
 }
 
 .fav-done-btn{
   width:100%;
-  height:58px;
-
+  height:52px;
   border:0;
-  border-radius:20px;
-
+  border-radius:18px;
   background:var(--blue);
-
   color:#fff;
-
-  font-size:20px;
+  font-size:17px;
   font-weight:850;
+  box-shadow:0 14px 30px rgba(10,132,255,.34);
 }
 
-@media (max-width:430px){
+@media (max-width:390px){
+  .fav-page{
+    padding-left:14px;
+    padding-right:14px;
+  }
 
-  .fav-header h1{
-    font-size:66px;
+  .fav-hero h1{
+    font-size:52px;
   }
 
   .fav-tools{
     grid-template-columns:1fr auto auto;
+    gap:8px;
   }
 
   .fav-filter-btn{
-    padding:0 22px;
+    padding:0 14px;
   }
 
-  .fav-cigar{
-    height:76px;
+  .fav-add-btn{
+    width:46px;
+    height:46px;
   }
 
   .fav-cigar img{
-    height:360px;
+    width:min(100%,340px);
   }
 
   .fav-icon-art{
-    width:78px;
-    height:78px;
-  }
-
-  .fav-list.is-icons{
-    gap:24px 14px;
+    width:70px;
+    height:70px;
   }
 }
