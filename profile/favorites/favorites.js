@@ -11,6 +11,9 @@
   const ORDER_STORAGE_KEY = "cigarSocialFavoritesOrder";
   const THEME_KEY = "cigaros-theme";
 
+  const LONG_PRESS_MS = 210;
+  const MOVE_THRESHOLD = 7;
+
   const STORAGE_KEYS = [
     PROFILE_CIGAR_KEY,
     PRIMARY_STORAGE_KEY,
@@ -61,7 +64,8 @@
       lengthMin: "",
       lengthMax: ""
     },
-    draggingId: null
+    pointerDrag: null,
+    suppressClickUntil: 0
   };
 
   const fallbackFavorites = [
@@ -507,13 +511,6 @@
     });
   }
 
-  function itemImage(item){
-    if (item.image) return item.image;
-    if (item.type === "brand") return brandIconPath(item.brand || item.name);
-    if (item.type === "cigar") return cigarImagePath(item);
-    return "";
-  }
-
   function brandIconPath(brand){
     const slug = compact(String(brand || "").replace(/&/g,"and"));
     return slug ? `/img/icons/brands/${slug}.svg` : "";
@@ -524,6 +521,13 @@
     const cigar = compact(item.name || item.cigar);
     if (!brand || !cigar) return "";
     return `/img/cigars/${brand}/${cigar}.png`;
+  }
+
+  function itemImage(item){
+    if (item.image) return item.image;
+    if (item.type === "brand") return brandIconPath(item.brand || item.name);
+    if (item.type === "cigar") return cigarImagePath(item);
+    return "";
   }
 
   function detailUrl(item){
@@ -594,7 +598,7 @@
         const url = detailUrl(item);
 
         return `
-          <a class="fav-cigar" href="${escapeHtml(url)}" draggable="${state.editing ? "true" : "false"}" data-id="${escapeHtml(id)}">
+          <a class="fav-cigar" href="${escapeHtml(url)}" data-id="${escapeHtml(id)}">
             <button class="fav-cigar-remove" type="button" aria-label="Remove favorite" data-remove="${escapeHtml(id)}">×</button>
             ${
               img
@@ -613,7 +617,7 @@
         const title = item.type === "brand" ? (item.brand || item.name) : item.name;
 
         return `
-          <a class="fav-icon-item" href="${escapeHtml(url)}" draggable="${state.editing ? "true" : "false"}" data-id="${escapeHtml(id)}">
+          <a class="fav-icon-item" href="${escapeHtml(url)}" data-id="${escapeHtml(id)}">
             <button class="fav-icon-remove" type="button" aria-label="Remove favorite" data-remove="${escapeHtml(id)}">×</button>
             <div class="fav-icon-art">
               ${
@@ -643,14 +647,16 @@
     });
 
     $$("[data-id]", els.list).forEach((card) => {
-      card.addEventListener("dragstart", onDragStart);
-      card.addEventListener("dragover", onDragOver);
-      card.addEventListener("dragend", onDragEnd);
-      card.addEventListener("drop", onDrop);
-      card.addEventListener("touchstart", onTouchStart, {passive:true});
-      card.addEventListener("touchmove", onTouchMove, {passive:false});
-      card.addEventListener("touchend", onTouchEnd);
+      card.addEventListener("click", onItemClick);
+      card.addEventListener("pointerdown", onPointerDown);
     });
+  }
+
+  function onItemClick(e){
+    if (Date.now() < state.suppressClickUntil){
+      e.preventDefault();
+      e.stopPropagation();
+    }
   }
 
   function removeFavorite(id){
@@ -661,82 +667,108 @@
     renderList();
   }
 
-  function onDragStart(e){
-    if (!state.editing) return e.preventDefault();
-    state.draggingId = e.currentTarget.dataset.id;
-    e.currentTarget.classList.add("dragging");
-    e.dataTransfer?.setData("text/plain", state.draggingId);
+  function onPointerDown(e){
+    if (e.button !== 0) return;
+    if (e.target.closest("[data-remove]")) return;
+
+    const card = e.currentTarget;
+
+    state.pointerDrag = {
+      card,
+      id: card.dataset.id,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      active: false,
+      timer: window.setTimeout(() => {
+        beginPointerDrag(card, e.pointerId);
+      }, LONG_PRESS_MS)
+    };
+
+    try{
+      card.setPointerCapture(e.pointerId);
+    }catch{}
   }
 
-  function onDragOver(e){
-    if (!state.editing || !state.draggingId) return;
+  function beginPointerDrag(card, pointerId){
+    if (!state.pointerDrag || state.pointerDrag.card !== card) return;
+
+    state.pointerDrag.active = true;
+    state.suppressClickUntil = Date.now() + 700;
+
+    document.body.classList.add("fav-dragging-active");
+    card.classList.add("dragging");
+
+    card.addEventListener("pointermove", onPointerMove);
+    card.addEventListener("pointerup", onPointerUp);
+    card.addEventListener("pointercancel", onPointerCancel);
+
+    try{
+      card.setPointerCapture(pointerId);
+    }catch{}
+  }
+
+  function onPointerMove(e){
+    const drag = state.pointerDrag;
+    if (!drag) return;
+
+    const dx = Math.abs(e.clientX - drag.startX);
+    const dy = Math.abs(e.clientY - drag.startY);
+
+    if (!drag.active && (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD)){
+      clearPointerDrag(false);
+      return;
+    }
+
+    if (!drag.active) return;
+
     e.preventDefault();
 
-    const dragging = $(`[data-id="${cssEscape(state.draggingId)}"]`, els.list);
-    const target = e.currentTarget;
+    const target = document
+      .elementFromPoint(window.innerWidth / 2, e.clientY)
+      ?.closest("[data-id]");
 
-    if (!dragging || dragging === target) return;
+    if (!target || target === drag.card || !els.list.contains(target)) return;
 
     const rect = target.getBoundingClientRect();
     const before = e.clientY < rect.top + rect.height / 2;
 
-    els.list.insertBefore(dragging, before ? target : target.nextSibling);
+    els.list.insertBefore(drag.card, before ? target : target.nextSibling);
   }
 
-  function onDrop(e){
-    if (!state.editing) return;
-    e.preventDefault();
-    commitDomOrder();
+  function onPointerUp(e){
+    const drag = state.pointerDrag;
+    if (!drag) return;
+
+    if (drag.active){
+      e.preventDefault();
+      state.suppressClickUntil = Date.now() + 700;
+      commitDomOrder();
+    }
+
+    clearPointerDrag(false);
   }
 
-  function onDragEnd(e){
-    e.currentTarget.classList.remove("dragging");
-    state.draggingId = null;
-    commitDomOrder();
+  function onPointerCancel(){
+    clearPointerDrag(false);
   }
 
-  let touchDrag = null;
+  function clearPointerDrag(shouldCommit){
+    const drag = state.pointerDrag;
+    if (!drag) return;
 
-  function onTouchStart(e){
-    if (!state.editing) return;
+    window.clearTimeout(drag.timer);
 
-    const dragHandle = e.target.closest(".fav-drag");
-    if (!dragHandle) return;
+    drag.card.classList.remove("dragging");
+    drag.card.removeEventListener("pointermove", onPointerMove);
+    drag.card.removeEventListener("pointerup", onPointerUp);
+    drag.card.removeEventListener("pointercancel", onPointerCancel);
 
-    const card = e.currentTarget;
+    document.body.classList.remove("fav-dragging-active");
 
-    touchDrag = {
-      id: card.dataset.id,
-      card
-    };
+    if (shouldCommit) commitDomOrder();
 
-    state.draggingId = touchDrag.id;
-    card.classList.add("dragging");
-  }
-
-  function onTouchMove(e){
-    if (!state.editing || !touchDrag) return;
-    e.preventDefault();
-
-    const y = e.touches[0].clientY;
-    const target = document.elementFromPoint(window.innerWidth / 2, y)?.closest("[data-id]");
-
-    if (!target || target === touchDrag.card || !els.list.contains(target)) return;
-
-    const rect = target.getBoundingClientRect();
-    const before = y < rect.top + rect.height / 2;
-
-    els.list.insertBefore(touchDrag.card, before ? target : target.nextSibling);
-  }
-
-  function onTouchEnd(){
-    if (!touchDrag) return;
-
-    touchDrag.card.classList.remove("dragging");
-    touchDrag = null;
-    state.draggingId = null;
-
-    commitDomOrder();
+    state.pointerDrag = null;
   }
 
   function commitDomOrder(){
@@ -764,11 +796,6 @@
 
     state.favorites = rebuilt;
     saveFavorites();
-  }
-
-  function cssEscape(value){
-    if (window.CSS && CSS.escape) return CSS.escape(value);
-    return String(value).replace(/"/g,'\\"');
   }
 
   function renderFilters(){
