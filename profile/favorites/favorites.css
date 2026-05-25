@@ -48,9 +48,7 @@ html[data-theme="light"]{
   --shadow-soft:0 12px 28px rgba(25,36,65,.10);
 }
 
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 html,
 body{
@@ -70,18 +68,8 @@ body.favorites-page{
   text-rendering:optimizeLegibility;
 }
 
-html[data-theme="light"] body.favorites-page{
-  background:
-    radial-gradient(circle at 78% 4%, rgba(178,204,255,.40), transparent 32%),
-    radial-gradient(circle at 14% 70%, rgba(255,255,255,.72), transparent 36%),
-    linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 52%,var(--bg3) 100%);
-}
-
 button,
-input{
-  font-family:inherit;
-}
-
+input{font-family:inherit}
 button{
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
@@ -94,7 +82,7 @@ button{
   padding:calc(var(--safe-top) + 14px) 18px calc(var(--safe-bottom) + 34px);
 }
 
-/* TOP AREA */
+/* TOP */
 
 .fav-topbar{
   display:flex;
@@ -115,15 +103,6 @@ button{
   -webkit-backdrop-filter:blur(24px) saturate(180%);
   box-shadow:var(--shadow);
   color:var(--text);
-}
-
-html[data-theme="light"] .fav-back,
-html[data-theme="light"] .fav-theme-btn,
-html[data-theme="light"] .fav-add-btn,
-html[data-theme="light"] .fav-filter-btn,
-html[data-theme="light"] .fav-search-shell,
-html[data-theme="light"] .fav-tabs{
-  background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(255,255,255,.24)),var(--glass);
 }
 
 .fav-back{
@@ -190,13 +169,14 @@ html[data-theme="light"] .fav-theme-btn{
   color:var(--muted);
   background:transparent;
   font-size:16px;
-  font-weight:760;
+  font-weight:600;
   letter-spacing:-.03em;
 }
 
 .fav-tab.active{
   color:#050507;
   background:#fff;
+  font-weight:750;
 }
 
 html[data-theme="light"] .fav-tab.active{
@@ -204,7 +184,7 @@ html[data-theme="light"] .fav-tab.active{
   color:#fff;
 }
 
-/* SEARCH / FILTERS */
+/* SEARCH */
 
 .fav-tools{
   display:grid;
@@ -228,7 +208,6 @@ html[data-theme="light"] .fav-tab.active{
   color:var(--muted2);
   font-size:20px;
   line-height:1;
-  transform:translateY(-1px);
 }
 
 .fav-search{
@@ -239,11 +218,12 @@ html[data-theme="light"] .fav-tab.active{
   background:transparent;
   color:var(--text);
   font-size:16px;
-  font-weight:650;
+  font-weight:500;
 }
 
 .fav-search::placeholder{
   color:var(--muted2);
+  font-weight:500;
 }
 
 .fav-filter-btn{
@@ -251,7 +231,7 @@ html[data-theme="light"] .fav-tab.active{
   padding:0 18px;
   border-radius:18px;
   font-size:15px;
-  font-weight:850;
+  font-weight:650;
 }
 
 .fav-filter-btn.has-filters{
@@ -271,7 +251,7 @@ html[data-theme="light"] .fav-tab.active{
   padding-bottom:3px;
 }
 
-/* APPLIED FILTERS */
+/* FILTER CHIPS */
 
 .fav-applied-filters{
   display:flex;
@@ -281,9 +261,7 @@ html[data-theme="light"] .fav-tab.active{
   scrollbar-width:none;
 }
 
-.fav-applied-filters::-webkit-scrollbar{
-  display:none;
-}
+.fav-applied-filters::-webkit-scrollbar{display:none}
 
 .fav-chip{
   flex:0 0 auto;
@@ -297,7 +275,7 @@ html[data-theme="light"] .fav-tab.active{
   background:rgba(10,132,255,.16);
   color:var(--text);
   font-size:13px;
-  font-weight:760;
+  font-weight:650;
 }
 
 .fav-chip button{
@@ -310,7 +288,7 @@ html[data-theme="light"] .fav-tab.active{
   background:rgba(255,255,255,.18);
   color:inherit;
   font-size:14px;
-  font-weight:900;
+  font-weight:800;
   padding:0;
 }
 
@@ -326,14 +304,14 @@ html[data-theme="light"] .fav-tab.active{
   font-weight:620;
 }
 
-/* LIST BASE */
+/* LIST */
 
 .fav-list{
   display:flex;
   flex-direction:column;
 }
 
-/* CIGAR PHOTO-ONLY VIEW */
+/* CIGAR PHOTO-ONLY VIEW — DO NOT CHANGE IMAGE SIZING */
 
 .fav-list.is-cigars{
   display:flex;
@@ -346,30 +324,45 @@ html[data-theme="light"] .fav-tab.active{
 .fav-cigar{
   position:relative;
   width:100%;
-  height:92px;
+  height:104px;
   display:flex;
   align-items:center;
   justify-content:center;
   overflow:visible;
   text-decoration:none;
   -webkit-tap-highlight-color:transparent;
+  touch-action:pan-y;
+  transition:transform .18s ease, opacity .18s ease;
 }
 
 .fav-cigar img{
   display:block;
-  height:360px;
+  height:430px;
   width:auto;
   max-width:none;
   max-height:none;
   object-fit:contain;
+
   transform:rotate(90deg);
   transform-origin:center center;
+
   user-select:none;
   -webkit-user-drag:none;
   pointer-events:none;
+
   filter:
     drop-shadow(0 16px 26px rgba(0,0,0,.42))
     drop-shadow(0 4px 10px rgba(0,0,0,.22));
+}
+
+.fav-cigar.dragging{
+  opacity:.72;
+  transform:scale(1.035);
+  z-index:50;
+}
+
+body.fav-dragging-active .fav-cigar:not(.dragging){
+  transition:transform .18s ease;
 }
 
 .fav-cigar-remove{
@@ -394,31 +387,7 @@ body.fav-editing .fav-cigar-remove{
 }
 
 .fav-drag{
-  position:absolute;
-  right:0;
-  top:50%;
-  transform:translateY(-50%);
-  width:34px;
-  height:44px;
-  border:0;
-  border-radius:14px;
-  background:rgba(255,255,255,.08);
-  color:var(--muted2);
-  display:none;
-  place-items:center;
-  font-size:22px;
-  line-height:1;
-  cursor:grab;
-  z-index:5;
-}
-
-body.fav-editing .fav-drag{
-  display:grid;
-}
-
-.fav-cigar.dragging{
-  opacity:.6;
-  transform:scale(.98);
+  display:none !important;
 }
 
 /* BRANDS / SHOPS GRID */
@@ -442,6 +411,7 @@ body.fav-editing .fav-drag{
   color:var(--text);
   text-decoration:none;
   min-width:0;
+  touch-action:none;
 }
 
 .fav-icon-art{
@@ -467,7 +437,7 @@ body.fav-editing .fav-drag{
   width:100%;
   color:var(--text);
   font-size:13px;
-  font-weight:760;
+  font-weight:650;
   line-height:1.08;
   letter-spacing:-.02em;
   overflow:hidden;
@@ -480,8 +450,14 @@ body.fav-editing .fav-drag{
   margin-top:-5px;
   color:var(--muted2);
   font-size:11px;
-  font-weight:600;
+  font-weight:500;
   line-height:1.1;
+}
+
+.fav-icon-item.dragging{
+  opacity:.72;
+  transform:scale(1.04);
+  z-index:50;
 }
 
 .fav-icon-remove{
@@ -503,13 +479,6 @@ body.fav-editing .fav-drag{
 
 body.fav-editing .fav-icon-remove{
   display:grid;
-}
-
-.fav-icon-item .fav-drag{
-  top:auto;
-  right:auto;
-  bottom:-14px;
-  transform:none;
 }
 
 /* EMPTY */
@@ -548,9 +517,7 @@ body.fav-editing .fav-icon-remove{
   pointer-events:none;
 }
 
-.fav-sheet.open{
-  pointer-events:auto;
-}
+.fav-sheet.open{pointer-events:auto}
 
 .fav-sheet-backdrop{
   position:absolute;
@@ -560,9 +527,7 @@ body.fav-editing .fav-icon-remove{
   transition:opacity .22s ease;
 }
 
-.fav-sheet.open .fav-sheet-backdrop{
-  opacity:1;
-}
+.fav-sheet.open .fav-sheet-backdrop{opacity:1}
 
 .fav-sheet-panel{
   position:absolute;
@@ -581,13 +546,7 @@ body.fav-editing .fav-icon-remove{
   transition:transform .28s cubic-bezier(.2,.9,.2,1);
 }
 
-html[data-theme="light"] .fav-sheet-panel{
-  background:rgba(246,246,250,.96);
-}
-
-.fav-sheet.open .fav-sheet-panel{
-  transform:translateY(0);
-}
+.fav-sheet.open .fav-sheet-panel{transform:translateY(0)}
 
 .fav-sheet-handle{
   width:48px;
@@ -595,10 +554,6 @@ html[data-theme="light"] .fav-sheet-panel{
   border-radius:999px;
   background:rgba(255,255,255,.28);
   margin:2px auto 14px;
-}
-
-html[data-theme="light"] .fav-sheet-handle{
-  background:rgba(0,0,0,.18);
 }
 
 .fav-sheet-header{
@@ -631,7 +586,7 @@ html[data-theme="light"] .fav-sheet-handle{
   background:var(--glass);
   color:var(--text);
   font-size:14px;
-  font-weight:780;
+  font-weight:650;
 }
 
 .fav-filter-groups{
@@ -640,9 +595,7 @@ html[data-theme="light"] .fav-sheet-handle{
   scrollbar-width:none;
 }
 
-.fav-filter-groups::-webkit-scrollbar{
-  display:none;
-}
+.fav-filter-groups::-webkit-scrollbar{display:none}
 
 .fav-filter-group{
   margin-bottom:18px;
@@ -653,6 +606,7 @@ html[data-theme="light"] .fav-sheet-handle{
   font-size:17px;
   line-height:1.05;
   letter-spacing:-.02em;
+  font-weight:650;
 }
 
 .fav-filter-options{
@@ -669,13 +623,14 @@ html[data-theme="light"] .fav-sheet-handle{
   background:var(--glass3);
   color:var(--muted);
   font-size:14px;
-  font-weight:720;
+  font-weight:500;
 }
 
 .fav-filter-option.active{
   color:#fff;
   background:rgba(10,132,255,.32);
   border-color:rgba(10,132,255,.62);
+  font-weight:650;
 }
 
 .fav-range-wrap{
@@ -691,7 +646,7 @@ html[data-theme="light"] .fav-sheet-handle{
   gap:12px;
   color:var(--muted);
   font-size:13px;
-  font-weight:740;
+  font-weight:600;
   margin-bottom:10px;
 }
 
@@ -707,7 +662,7 @@ html[data-theme="light"] .fav-sheet-handle{
   gap:6px;
   color:var(--muted2);
   font-size:12px;
-  font-weight:800;
+  font-weight:650;
   text-transform:uppercase;
   letter-spacing:.04em;
 }
@@ -722,11 +677,7 @@ html[data-theme="light"] .fav-sheet-handle{
   color:var(--text);
   padding:0 12px;
   font-size:15px;
-  font-weight:740;
-}
-
-html[data-theme="light"] .fav-range-inputs input{
-  background:rgba(255,255,255,.82);
+  font-weight:600;
 }
 
 .fav-sheet-footer{
@@ -741,24 +692,20 @@ html[data-theme="light"] .fav-range-inputs input{
   background:var(--blue);
   color:#fff;
   font-size:17px;
-  font-weight:850;
+  font-weight:750;
   box-shadow:0 14px 30px rgba(10,132,255,.34);
 }
 
-/* MOBILE */
+/* MOBILE — PRESERVE APPROVED CIGAR SIZE */
 
 @media (max-width:430px){
-  .fav-page{
-    padding-left:18px;
-    padding-right:18px;
-  }
-
   .fav-cigar{
-    height:96px;
+    min-height:104px;
+    height:104px;
   }
 
   .fav-cigar img{
-    height:350px;
+    height:460px;
   }
 }
 
@@ -773,7 +720,6 @@ html[data-theme="light"] .fav-range-inputs input{
   }
 
   .fav-tools{
-    grid-template-columns:1fr auto auto;
     gap:8px;
   }
 
@@ -787,7 +733,7 @@ html[data-theme="light"] .fav-range-inputs input{
   }
 
   .fav-cigar img{
-    height:330px;
+    height:420px;
   }
 
   .fav-icon-art{
