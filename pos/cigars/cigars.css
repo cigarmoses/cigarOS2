@@ -259,6 +259,85 @@ html[data-theme="light"] .cigars-title{
   margin-bottom:10px;
 }
 
+/* Cuban include toggle */
+.cuban-toggle{
+  width:64px;
+  height:46px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border-radius:16px;
+  background:var(--glass-2);
+  color:var(--ink);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  padding:0 8px;
+  box-shadow:var(--glass-shadow);
+  border:1px solid var(--glass-border);
+  transition:transform .16s ease, background .16s ease;
+  appearance:none;
+  user-select:none;
+}
+
+.cuban-toggle:active{
+  transform:scale(.96);
+}
+
+.cuban-flag{
+  font-size:24px;
+  line-height:1;
+  display:block;
+}
+
+.cuban-toggle input{
+  display:none;
+}
+
+.cuban-check{
+  width:16px;
+  height:16px;
+  border-radius:5px;
+  border:2px solid rgba(255,255,255,.58);
+  position:relative;
+  flex:0 0 auto;
+  transition:.18s ease;
+  background:rgba(255,255,255,.04);
+}
+
+.cuban-toggle input:checked + .cuban-check{
+  background:#34c759;
+  border-color:#34c759;
+}
+
+.cuban-toggle input:checked + .cuban-check::after{
+  content:"";
+  position:absolute;
+  left:4px;
+  top:1px;
+  width:4px;
+  height:8px;
+  border:solid #fff;
+  border-width:0 2px 2px 0;
+  transform:rotate(45deg);
+}
+
+html[data-theme="light"] .cuban-toggle{
+  background:rgba(255,255,255,.82);
+  border:1px solid rgba(15,23,40,.08);
+  box-shadow:0 12px 30px rgba(15,26,44,.10);
+}
+
+html[data-theme="light"] .cuban-check{
+  border-color:rgba(15,23,40,.34);
+  background:rgba(15,23,40,.03);
+}
+
+html[data-theme="light"] .cuban-toggle input:checked + .cuban-check{
+  background:#34c759;
+  border-color:#34c759;
+}
+
 .cigars-filter-btn{
   width:46px;
   height:46px;
@@ -412,7 +491,7 @@ html[data-theme="light"] .af-clear{
   border-color:rgba(15,26,44,.12);
 }
 
-/* favorite brands rail (smart + tight) */
+/* favorite brands rail */
 .fav-brands-wrap{
   margin:6px 0 10px;
 }
@@ -950,14 +1029,14 @@ html[data-theme="light"] .cb-nav-btn:hover{
   position:absolute;
   inset:0;
   background:rgba(10,20,35,.28);
-  backdrop-filter:blur(2px);
-  -webkit-backdrop-filter:blur(2px);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
   opacity:0;
   transition:opacity 220ms ease;
 }
 
 .fm.is-open .fm__backdrop{
-  opacity:1;
+  opacity:1 !important;
 }
 
 .fm__sheet{
@@ -979,6 +1058,11 @@ html[data-theme="light"] .cb-nav-btn:hover{
   display:flex;
   flex-direction:column;
   overflow:hidden;
+}
+
+.fm.is-open .fm__sheet{
+  transform:translateY(0) !important;
+  opacity:1 !important;
 }
 
 .fm__header{
@@ -1250,6 +1334,32 @@ html[data-theme="light"] .cb-nav-btn:hover{
 
   .cigars-title-actions{
     margin-bottom:10px;
+    gap:8px;
+  }
+
+  .cuban-toggle{
+    width:60px;
+    height:44px;
+    border-radius:16px;
+    gap:5px;
+    padding:0 7px;
+  }
+
+  .cuban-flag{
+    font-size:23px;
+  }
+
+  .cuban-check{
+    width:15px;
+    height:15px;
+    border-radius:5px;
+  }
+
+  .cuban-toggle input:checked + .cuban-check::after{
+    left:3px;
+    top:1px;
+    width:4px;
+    height:8px;
   }
 
   .cigars-filter-btn{
@@ -1378,6 +1488,26 @@ html[data-theme="light"] .cb-nav-btn:hover{
     transform:translateX(19px);
   }
 
+  .cigars-title{
+    font-size:52px;
+  }
+
+  .cuban-toggle{
+    width:56px;
+    height:42px;
+    gap:4px;
+  }
+
+  .cuban-flag{
+    font-size:22px;
+  }
+
+  .cuban-check{
+    width:14px;
+    height:14px;
+    border-radius:5px;
+  }
+
   .cigars-results .brand-row{
     gap:9px;
     padding:11px 10px;
@@ -1425,19 +1555,4 @@ html[data-theme="light"] .cb-nav-btn:hover{
   .fm__actions{
     padding-bottom:max(16px,env(safe-area-inset-bottom));
   }
-
-/* FIX — filter sheet opens */
-.fm.is-open .fm__sheet{
-  transform:translateY(0) !important;
-  opacity:1 !important;
-}
-
-.fm.is-open .fm__backdrop{
-  opacity:1 !important;
-}
-
-.fm__backdrop{
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
-}
 }
