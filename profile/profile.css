@@ -432,10 +432,6 @@ html[data-theme="light"] .id-sharing p{
     height:78px;
   }
 
-  .id-avatar{
-  flex-shrink:0;
-}
-
   .id-info h1{
     font-size:27px;
     margin-bottom:14px;
@@ -767,30 +763,4 @@ html[data-theme="light"] .row-icon{
 
 .support-row{
   height:66px;
-}
-
-@media (max-width:370px){
-  .id-info h1{
-    font-size:32px;
-  }
-
-  .id-main{
-    grid-template-columns:68px 1fr;
-    gap:13px;
-  }
-
-  .id-avatar{
-    width:68px;
-    height:68px;
-    border-radius:999px;
-  }
-
-  .id-meta{
-    gap:7px;
-  }
-
-  .id-sharing{
-    grid-template-columns:1fr;
-    align-items:start;
-  }
 }
