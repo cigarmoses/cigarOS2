@@ -58,26 +58,35 @@
     <div class="cigars-title-row">
       <h1 class="cigars-title">Cigars</h1>
 
-      <div class="cigars-title-actions">
-        <button
-          type="button"
-          class="cigars-filter-btn"
-          id="btn-open-filters"
-          aria-label="Filters"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M4 6h16M7 12h10M10 18h4"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.2"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
+  <div class="cigars-title-actions">
 
+  <label class="cuban-toggle" for="includeCubans">
+    <span class="cuban-flag">🇨🇺</span>
+
+    <input id="includeCubans" type="checkbox" />
+
+    <span class="cuban-check"></span>
+  </label>
+
+  <button
+    type="button"
+    class="cigars-filter-btn"
+    id="btn-open-filters"
+    aria-label="Filters"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M4 6h16M7 12h10M10 18h4"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+      />
+     </svg>
+    </button>
+  </div>
+</div>
+    
     <div class="cigars-search-wrap">
       <div class="cigars-search-bar">
         <div class="cigars-search-icon" aria-hidden="true">
