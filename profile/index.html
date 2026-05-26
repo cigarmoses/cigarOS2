@@ -33,24 +33,106 @@
 
     </header>
 
-    <section class="profile-hero">
+    <section class="cigaros-id-wrap">
 
-      <h1>
-        Michael<br />
-        Moses
-      </h1>
+      <article class="cigaros-id-card" id="cigarosIdCard">
 
-      <a
-        class="qr-card"
-        href="/profile/my-card/"
-        aria-label="Open QR Card"
-      >
-        <img
-          src="/img/icons/318C950E-C0F9-4630-B367-FABBDF10A277.png"
-          alt="Michael Moses QR"
-          class="qr-image"
-        />
-      </a>
+        <div class="id-main">
+
+          <div class="id-avatar" aria-hidden="true">
+            <span class="id-avatar-head"></span>
+            <span class="id-avatar-body"></span>
+          </div>
+
+          <div class="id-info">
+            <h1>Michael Moses</h1>
+
+            <div class="id-meta">
+              <span>
+                <strong>Age</strong>
+                36
+              </span>
+
+              <span>
+                <strong>Birthday</strong>
+                08/15/1989
+              </span>
+
+              <span>
+                <strong>State</strong>
+                PA
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <button
+          class="id-expand-btn"
+          id="idExpandBtn"
+          type="button"
+          aria-expanded="false"
+          aria-controls="idExpandedPanel"
+        >
+          CARD +
+        </button>
+
+        <div class="id-expanded" id="idExpandedPanel" aria-hidden="true">
+
+          <div class="id-sharing">
+            <p>Sharing</p>
+
+            <label>
+              <input type="checkbox" checked />
+              <span>Cigars</span>
+            </label>
+
+            <label>
+              <input type="checkbox" checked />
+              <span>Brands</span>
+            </label>
+
+            <label>
+              <input type="checkbox" checked />
+              <span>Shops</span>
+            </label>
+          </div>
+
+          <div class="id-barcode" aria-label="Shop scan barcode">
+            <svg viewBox="0 0 320 72" role="img" aria-hidden="true">
+              <rect x="0" y="0" width="320" height="72" rx="10" fill="white"/>
+              <g fill="#050507">
+                <rect x="18" y="12" width="3" height="48"/>
+                <rect x="26" y="12" width="6" height="48"/>
+                <rect x="40" y="12" width="2" height="48"/>
+                <rect x="48" y="12" width="8" height="48"/>
+                <rect x="64" y="12" width="3" height="48"/>
+                <rect x="74" y="12" width="5" height="48"/>
+                <rect x="88" y="12" width="2" height="48"/>
+                <rect x="96" y="12" width="7" height="48"/>
+                <rect x="112" y="12" width="4" height="48"/>
+                <rect x="124" y="12" width="2" height="48"/>
+                <rect x="132" y="12" width="9" height="48"/>
+                <rect x="150" y="12" width="3" height="48"/>
+                <rect x="160" y="12" width="6" height="48"/>
+                <rect x="174" y="12" width="2" height="48"/>
+                <rect x="184" y="12" width="8" height="48"/>
+                <rect x="200" y="12" width="4" height="48"/>
+                <rect x="212" y="12" width="2" height="48"/>
+                <rect x="220" y="12" width="7" height="48"/>
+                <rect x="236" y="12" width="3" height="48"/>
+                <rect x="246" y="12" width="6" height="48"/>
+                <rect x="260" y="12" width="2" height="48"/>
+                <rect x="270" y="12" width="8" height="48"/>
+                <rect x="286" y="12" width="4" height="48"/>
+                <rect x="298" y="12" width="3" height="48"/>
+              </g>
+            </svg>
+          </div>
+
+        </div>
+
+      </article>
 
     </section>
 
@@ -60,42 +142,18 @@
 
       <div class="favorite-quick-grid">
 
-        <a
-          class="favorite-card"
-          href="/profile/favorites/?tab=cigars"
-        >
-          <img
-            class="favorite-icon cigar-fav-icon"
-            src="/img/icons/belicosohead.svg"
-            alt="Cigars"
-          />
-
+        <a class="favorite-card" href="/profile/favorites/?tab=cigars">
+          <img class="favorite-icon cigar-fav-icon" src="/img/icons/belicosohead.svg" alt="Cigars" />
           <span>Cigars</span>
         </a>
 
-        <a
-          class="favorite-card"
-          href="/profile/favorites/?tab=brands"
-        >
-          <img
-            class="favorite-icon brand-fav-icon"
-            src="/img/icons/brands/opusx.svg"
-            alt="Brands"
-          />
-
+        <a class="favorite-card" href="/profile/favorites/?tab=brands">
+          <img class="favorite-icon brand-fav-icon" src="/img/icons/brands/opusx.svg" alt="Brands" />
           <span>Brands</span>
         </a>
 
-        <a
-          class="favorite-card"
-          href="/profile/favorites/?tab=shops"
-        >
-          <img
-            class="favorite-icon shop-fav-icon"
-            src="/img/icons/shops/foxcigarbar.svg"
-            alt="Shops"
-          />
-
+        <a class="favorite-card" href="/profile/favorites/?tab=shops">
+          <img class="favorite-icon shop-fav-icon" src="/img/icons/shops/foxcigarbar.svg" alt="Shops" />
           <span>Shops</span>
         </a>
 
