@@ -2,9 +2,9 @@
    FULL PREMIUM REBUILD
    - iOS 26 style modal
    - Glass UI prep
-   - Fixed close button (top right)
-   - Cleaned interactions
+   - Fixed close button
    - Ring slider upgraded
+   - Main page Cuban toggle added
 */
 
 (() => {
@@ -23,6 +23,7 @@ const searchInput = $("#cigars-search-input");
 const listRoot = $("#cigarsList");
 const appliedRoot = $("#cigarsAppliedFilters");
 const favBrandsRoot = $("#favBrandsScroll");
+const includeCubansToggle = $("#includeCubans");
 
 let modalRoot = $("#filter-modal");
 
@@ -30,8 +31,8 @@ let modalRoot = $("#filter-modal");
    DATA
 ========================= */
 let DATA_ROWS = Array.isArray(window.__CIGAR_SHEET_ROWS__)
-? window.__CIGAR_SHEET_ROWS__
-: [];
+  ? window.__CIGAR_SHEET_ROWS__
+  : [];
 
 const FAVORITE_BRANDS_KEY = "cigaros_favorite_brands";
 const RECENT_BRANDS_KEY = "cigaros_recent_brands";
@@ -40,26 +41,26 @@ const RECENT_BRANDS_KEY = "cigaros_recent_brands";
    STATE
 ========================= */
 const state = {
-selected: {
-manufacturer: new Set(),
-brand: new Set(),
-vitola: new Set(),
-ring: new Set(),
-length: new Set(),
-strength: new Set(),
-shape: new Set(),
-shade: new Set(),
-},
-activeKey: "vitola",
-activeSearch: "",
-includeCubans: false,
+  selected: {
+    manufacturer: new Set(),
+    brand: new Set(),
+    vitola: new Set(),
+    ring: new Set(),
+    length: new Set(),
+    strength: new Set(),
+    shape: new Set(),
+    shade: new Set(),
+  },
+  activeKey: "vitola",
+  activeSearch: "",
+  includeCubans: false,
 };
 
 /* =========================
    UTILS
 ========================= */
 function norm(v){
-return String(v ?? "").trim();
+  return String(v ?? "").trim();
 }
 
 function escapeHtml(str){
@@ -72,90 +73,107 @@ function escapeHtml(str){
 }
 
 function slugify(name){
-return String(name || "")
-.toLowerCase()
-.replace(/[^a-z0-9]+/g,"");
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,"");
 }
 
 /* =========================
    ICONS
 ========================= */
 function iconPathFor(key,label){
-const slug = slugify(label);
-if(!slug) return "";
+  const slug = slugify(label);
+  if(!slug) return "";
 
-if(key==="brand") return `/img/icons/brands/${slug}.svg`;
-if(key==="manufacturer") return `/img/icons/manufacturers/${slug}.svg`;
+  if(key==="brand") return `/img/icons/brands/${slug}.svg`;
+  if(key==="manufacturer") return `/img/icons/manufacturers/${slug}.svg`;
 
-return "";
+  return "";
 }
 
 /* =========================
    CSV PARSER
 ========================= */
 function parseCSV(text){
-const rows=[];
-let i=0,field="",row=[],inQuotes=false;
+  const rows=[];
+  let i=0,field="",row=[],inQuotes=false;
 
-while(i<text.length){
-const c=text[i];
+  while(i<text.length){
+    const c=text[i];
 
-if(c==='"'){
-if(inQuotes && text[i+1]==='"'){
-field+='"'; i+=2; continue;
-}
-inQuotes=!inQuotes;
-i++; continue;
-}
+    if(c==='"'){
+      if(inQuotes && text[i+1]==='"'){
+        field+='"';
+        i+=2;
+        continue;
+      }
 
-if(!inQuotes && (c===","||c==="\n")){
-row.push(field); field="";
+      inQuotes=!inQuotes;
+      i++;
+      continue;
+    }
 
-if(c===","){ i++; continue; }
+    if(!inQuotes && (c===","||c==="\n")){
+      row.push(field);
+      field="";
 
-rows.push(row); row=[];
-i++; continue;
-}
+      if(c===","){
+        i++;
+        continue;
+      }
 
-field+=c; i++;
-}
+      rows.push(row);
+      row=[];
+      i++;
+      continue;
+    }
 
-if(field || row.length){
-row.push(field);
-rows.push(row);
-}
+    field+=c;
+    i++;
+  }
 
-return rows;
+  if(field || row.length){
+    row.push(field);
+    rows.push(row);
+  }
+
+  return rows;
 }
 
 function rowsToObjects(rows){
-const headers = rows[0];
-return rows.slice(1).map(r=>{
-const o={};
-headers.forEach((h,i)=> o[h]=r[i] ?? "");
-return o;
-});
+  const headers = rows[0] || [];
+
+  return rows.slice(1).map(r=>{
+    const o={};
+
+    headers.forEach((h,i)=>{
+      o[h]=r[i] ?? "";
+    });
+
+    return o;
+  });
 }
 
 /* =========================
    BRAND SUMMARY
 ========================= */
 function buildBrandSummary(rows){
-const map = new Map();
+  const map = new Map();
 
-rows.forEach(r=>{
-const brand = norm(r.Brand) || "Unknown";
-const manufacturer = norm(r.Manufacturer);
+  rows.forEach(r=>{
+    const brand = norm(r.Brand || r.brand) || "Unknown";
+    const manufacturer = norm(r.Manufacturer || r.manufacturer);
 
-if(!map.has(brand)){
-map.set(brand,{brand,manufacturer,count:0});
+    if(!map.has(brand)){
+      map.set(brand,{brand,manufacturer,count:0});
+    }
+
+    map.get(brand).count++;
+  });
+
+  return [...map.values()].sort((a,b)=>a.brand.localeCompare(b.brand));
 }
 
-map.get(brand).count++;
-});
-
-return [...map.values()];
-}
 /* =========================
    GLOBAL FILTER STATE
 ========================= */
@@ -194,18 +212,34 @@ function ensureGlobalState(){
   g.includeCubans = !!g.includeCubans;
 }
 
+function syncMainCubanToggle(){
+  ensureGlobalState();
+
+  if(includeCubansToggle){
+    includeCubansToggle.checked = !!window.__CIGAR_FILTER_STATE__.includeCubans;
+  }
+}
+
 function getField(row, keys){
   for(const k of keys){
     const v = row?.[k];
-    if(v != null && String(v).trim() !== "") return String(v);
+
+    if(v != null && String(v).trim() !== ""){
+      return String(v);
+    }
   }
+
   return "";
 }
 
 function isCubanRow(row){
   const cuban = getField(row, ["Cuban","cuban"]);
-  const origin = getField(row, ["Origin","origin","Country"]).toLowerCase();
-  return ["x","yes","true","1","cuban"].includes(cuban.toLowerCase()) || origin.includes("cuba");
+  const origin = getField(row, ["Origin","origin","Country","country"]).toLowerCase();
+
+  return (
+    ["x","yes","true","1","cuban"].includes(cuban.toLowerCase()) ||
+    origin.includes("cuba")
+  );
 }
 
 function rowMatchesFilters(row,g){
@@ -213,24 +247,38 @@ function rowMatchesFilters(row,g){
 
   const brand = norm(getField(row,["Brand","brand"]));
   const manufacturer = norm(getField(row,["Manufacturer","manufacturer"]));
-  const vitola = norm(getField(row,["Vitola","vitola","Style"]));
+  const vitola = norm(getField(row,["Vitola","vitola","Style","style"]));
   const ring = norm(getField(row,["RG","Ring","ring"]));
   const length = norm(getField(row,["Length","length"]));
   const strength = norm(getField(row,["Strength","strength"]));
   const shape = norm(getField(row,["Shape","shape"]));
-  const shade = norm(getField(row,["Wrapper Shade","shade"]));
+  const shade = norm(getField(row,["Wrapper Shade","WrapperShade","shade"]));
 
-  const checks = {brand,manufacturer,vitola,ring,length,strength,shape,shade};
+  const checks = {
+    brand,
+    manufacturer,
+    vitola,
+    ring,
+    length,
+    strength,
+    shape,
+    shade,
+  };
 
   for(const key in checks){
     const set = g.filters?.[key];
-    if(set instanceof Set && set.size && !set.has(checks[key])) return false;
+
+    if(set instanceof Set && set.size && !set.has(checks[key])){
+      return false;
+    }
   }
 
   const q = norm(g.q).toLowerCase();
+
   if(q){
-    const cigar = norm(getField(row,["Cigar","Name","Cigar Name"]));
+    const cigar = norm(getField(row,["Cigar","Name","Cigar Name","cigar"]));
     const hay = `${brand} ${manufacturer} ${vitola} ${ring} ${length} ${strength} ${shape} ${shade} ${cigar}`.toLowerCase();
+
     if(!hay.includes(q)) return false;
   }
 
@@ -280,10 +328,12 @@ function renderResultsRows(summary){
             <img class="row-ico" src="${escapeHtml(icon)}" alt=""
               loading="lazy" decoding="async"
               onerror="this.style.display='none';" />
+
             <div class="brand-row-left">
               <div class="brand-row-title">${escapeHtml(c.brand)}</div>
               <div class="brand-row-sub">${escapeHtml(c.manufacturer || "—")}</div>
             </div>
+
             <div class="brand-row-right">
               <div class="brand-row-msrp">${escapeHtml(String(c.count))}</div>
               <div class="brand-row-arrow">›</div>
@@ -308,7 +358,9 @@ function readJsonArray(key){
 }
 
 function writeJsonArray(key,value){
-  try{ localStorage.setItem(key, JSON.stringify(value)); }catch{}
+  try{
+    localStorage.setItem(key, JSON.stringify(value));
+  }catch{}
 }
 
 function getFavoriteBrands(){
@@ -342,7 +394,9 @@ function renderFavoriteBrands(summary){
 
   names.forEach(name=>{
     const key = norm(name).toLowerCase();
+
     if(!key || seen.has(key)) return;
+
     seen.add(key);
 
     const match = summary.find(b => norm(b.brand).toLowerCase() === key) || {brand:name};
@@ -372,6 +426,15 @@ function renderAppliedChips(g){
   if(!appliedRoot) return;
 
   const chips = [];
+
+  if(g.includeCubans){
+    chips.push(`
+      <div class="af-chip" data-chip-special="cubans">
+        <span>Include Cubans 🇨🇺</span>
+        <button class="af-chip__x" type="button">×</button>
+      </div>
+    `);
+  }
 
   Object.entries(g.filters || {}).forEach(([key,set])=>{
     if(!(set instanceof Set) || !set.size) return;
@@ -404,43 +467,58 @@ function renderAppliedChips(g){
       if(btn.id === "af-clear-all"){
         g.q = "";
         g.includeCubans = false;
-        Object.keys(g.filters).forEach(k => g.filters[k] = new Set());
+
+        Object.keys(g.filters).forEach(k=>{
+          g.filters[k] = new Set();
+        });
+
         if(searchInput) searchInput.value = "";
+
+        syncMainCubanToggle();
         renderAll();
         return;
       }
 
       const chip = btn.closest(".af-chip");
+
+      if(chip?.getAttribute("data-chip-special") === "cubans"){
+        g.includeCubans = false;
+        syncMainCubanToggle();
+        renderAll();
+        return;
+      }
+
       const key = chip?.getAttribute("data-chip-key");
       const val = chip?.getAttribute("data-chip-val");
 
-      if(key && val && g.filters[key]) g.filters[key].delete(val);
+      if(key && val && g.filters[key]){
+        g.filters[key].delete(val);
+      }
 
       renderAll();
     });
   });
 }
 
+/* =========================
+   MAIN RENDER
+========================= */
 function renderAll(){
   ensureGlobalState();
+  syncMainCubanToggle();
 
   const g = window.__CIGAR_FILTER_STATE__;
+
   renderAppliedChips(g);
 
   const allRows = DATA_ROWS || [];
-  const fullSummary = buildBrandSummary(allRows);
-
-  renderFavoriteBrands(fullSummary);
-
   const filteredRows = allRows.filter(r => rowMatchesFilters(r,g));
-  let summary = buildBrandSummary(filteredRows);
+  const summary = buildBrandSummary(filteredRows);
+
+  renderFavoriteBrands(summary);
 
   const qOn = !!norm(g.q);
   const filtersOn = hasActiveFilters(g);
-
-  if(!summary.length && !qOn && !filtersOn && !g.includeCubans){
-    summary = fullSummary;
-  }
 
   if(!summary.length){
     listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
@@ -454,6 +532,9 @@ function renderAll(){
   }
 }
 
+/* =========================
+   FILTER CONFIG
+========================= */
 const CATEGORIES = [
   { key:"manufacturer", label:"Manufacturers" },
   { key:"brand", label:"Brands" },
@@ -498,7 +579,7 @@ function getValuesForKey(key){
 function countSelectedForKey(key){
   return state.selected[key] instanceof Set ? state.selected[key].size : 0;
 }
-   
+
 /* =========================
    INLINE PREMIUM FILTER STYLES
 ========================= */
@@ -534,10 +615,6 @@ function ensureInjectedStyles(){
       position:relative;
       padding:22px 60px 12px 20px;
       border-bottom:none;
-    }
-
-    .fm.fm--tabs .fm__header-top{
-      display:block;
     }
 
     .fm.fm--tabs .fm__title{
@@ -583,7 +660,9 @@ function ensureInjectedStyles(){
       scrollbar-width:none;
     }
 
-    .fm.fm--tabs .fm__tabbar::-webkit-scrollbar{ display:none; }
+    .fm.fm--tabs .fm__tabbar::-webkit-scrollbar{
+      display:none;
+    }
 
     .fm.fm--tabs .fm__tab{
       flex:0 0 auto;
@@ -969,8 +1048,23 @@ function ensureInjectedStyles(){
       color:rgba(15,26,44,.46);
     }
 
+    .fm__empty{
+      padding:18px;
+      border-radius:20px;
+      background:rgba(255,255,255,.72);
+      color:rgba(15,26,44,.58);
+      font-weight:800;
+      text-align:center;
+    }
+
+    .fm__info-sheet{
+      display:none;
+    }
+
     @media (max-width:390px){
-      .fm__range-title{ font-size:32px; }
+      .fm__range-title{
+        font-size:32px;
+      }
 
       .fm__range-pill{
         min-width:86px;
@@ -991,6 +1085,10 @@ function ensureInjectedStyles(){
 
   document.head.appendChild(style);
 }
+
+/* =========================
+   MODAL
+========================= */
 function ensureModal(){
   ensureInjectedStyles();
 
@@ -1008,9 +1106,11 @@ function ensureModal(){
   if(!modalRoot.querySelector(".fm__sheet")){
     modalRoot.innerHTML = `
       <div class="fm__backdrop" data-fm-close></div>
+
       <div class="fm__sheet" role="dialog" aria-modal="true" aria-label="Filters">
         <div class="fm__header">
           <h2 class="fm__title">Filters</h2>
+
           <button class="fm__close" type="button" aria-label="Close filters" data-fm-close>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
@@ -1026,7 +1126,7 @@ function ensureModal(){
               <div class="fm__search-row">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21"
-                        fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                    fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
                 </svg>
 
                 <input class="fm__search-input" id="fm-search-inline" placeholder="Search" autocomplete="off" />
@@ -1037,13 +1137,6 @@ function ensureModal(){
                   </svg>
                 </button>
               </div>
-            </div>
-
-            <div class="fm__cuban-row">
-              <button class="fm__cuban-toggle" type="button" id="fm-cuban-toggle" aria-label="Include Cubans">
-                <span class="fm__cuban-check">✓</span>
-                <span class="fm__cuban-text">Include Cubans 🇨🇺</span>
-              </button>
             </div>
 
             <div class="fm__list" id="fm-list"></div>
@@ -1063,12 +1156,6 @@ function ensureModal(){
       </div>
     `;
   }
-}
-
-function renderCubanToggle(){
-  const btn = $("#fm-cuban-toggle", modalRoot);
-  if(!btn) return;
-  btn.classList.toggle("is-on", !!state.includeCubans);
 }
 
 function renderTabs(){
@@ -1100,7 +1187,8 @@ function renderTabs(){
       renderList();
 
       const inp = $("#fm-search-inline", modalRoot);
-      if(inp && key !== "ring") {
+
+      if(inp && key !== "ring"){
         inp.value = "";
         inp.focus();
       }
@@ -1156,6 +1244,7 @@ function renderRingRangeFilter(list){
 
         <div class="fm__range-track-wrap">
           <div class="fm__range-track-fill" id="ring-track-fill"></div>
+
           <div class="fm__range-sliders">
             <input id="ring-min-slider" type="range" min="${minValue}" max="${maxValue}" value="${currentMin}" step="1" />
             <input id="ring-max-slider" type="range" min="${minValue}" max="${maxValue}" value="${currentMax}" step="1" />
@@ -1214,7 +1303,9 @@ function renderRingRangeFilter(list){
     min = Math.max(minValue, Math.min(min, maxValue));
     max = Math.max(minValue, Math.min(max, maxValue));
 
-    if(min > max) [min, max] = [max, min];
+    if(min > max){
+      [min, max] = [max, min];
+    }
 
     minInput.value = min;
     maxInput.value = max;
@@ -1302,7 +1393,7 @@ function getShapeInfo(value = ""){
 
   return info[slugify(value)] || "";
 }
-   
+
 function renderList(){
   const list = $("#fm-list", modalRoot);
   const input = $("#fm-search-inline", modalRoot);
@@ -1320,6 +1411,7 @@ function renderList(){
   }
 
   const q = norm(state.activeSearch).toLowerCase();
+
   const filtered = !q
     ? values
     : values.filter((v) => norm(v).toLowerCase().includes(q));
@@ -1335,8 +1427,11 @@ function renderList(){
     const isLogoRow = key === "manufacturer" || key === "brand";
 
     const brandOrManufacturerIcon = isLogoRow ? iconPathFor(key, label) : "";
+
     const cigarIcon =
-      key === "vitola" || key === "shape" ? getCigarFilterIcon(label, key) : "";
+      key === "vitola" || key === "shape"
+        ? getCigarFilterIcon(label, key)
+        : "";
 
     const iconSrc = brandOrManufacturerIcon || cigarIcon;
 
@@ -1414,8 +1509,11 @@ function renderList(){
 
       if(!rowKey || !val || !(state.selected[rowKey] instanceof Set)) return;
 
-      if(state.selected[rowKey].has(val)) state.selected[rowKey].delete(val);
-      else state.selected[rowKey].add(val);
+      if(state.selected[rowKey].has(val)){
+        state.selected[rowKey].delete(val);
+      }else{
+        state.selected[rowKey].add(val);
+      }
 
       closeInfoSheet();
       renderTabs();
@@ -1456,7 +1554,6 @@ function openInfoSheet(title, text){
 
 function openModal(){
   ensureModal();
-  renderCubanToggle();
 
   modalRoot.hidden = false;
   modalRoot.classList.remove("fm--hidden");
@@ -1518,6 +1615,7 @@ function pushLocalToGlobal(){
   g.includeCubans = !!state.includeCubans;
   g.q = (searchInput?.value || g.q || "").toString();
 
+  syncMainCubanToggle();
   renderAll();
 }
 
@@ -1529,7 +1627,6 @@ function resetLocalSelections(){
   state.includeCubans = false;
 
   closeInfoSheet();
-  renderCubanToggle();
   renderTabs();
   renderList();
 }
@@ -1584,9 +1681,23 @@ function observeForFilterButton(){
   mo.observe(document.documentElement, { childList:true, subtree:true });
 }
 
+/* =========================
+   EVENTS
+========================= */
 searchInput?.addEventListener("input", () => {
   ensureGlobalState();
+
   window.__CIGAR_FILTER_STATE__.q = (searchInput.value || "").toString();
+
+  renderAll();
+});
+
+includeCubansToggle?.addEventListener("change", () => {
+  ensureGlobalState();
+
+  window.__CIGAR_FILTER_STATE__.includeCubans = !!includeCubansToggle.checked;
+  state.includeCubans = !!includeCubansToggle.checked;
+
   renderAll();
 });
 
@@ -1602,6 +1713,11 @@ document.addEventListener("click", (e) => {
   if(filterBtn){
     openFiltersFromButton(e);
     return;
+  }
+
+  if(target.closest("[data-brand-link]")){
+    const brand = target.closest("[data-brand-link]")?.getAttribute("data-brand-link");
+    if(brand) pushRecentBrand(brand);
   }
 
   if(!modalRoot || modalRoot.classList.contains("fm--hidden")) return;
@@ -1637,15 +1753,6 @@ document.addEventListener("click", (e) => {
 
     return;
   }
-
-  if(target.closest("#fm-cuban-toggle")){
-    state.includeCubans = !state.includeCubans;
-
-    closeInfoSheet();
-    renderCubanToggle();
-    renderTabs();
-    renderList();
-  }
 });
 
 document.addEventListener("input", (e) => {
@@ -1674,6 +1781,9 @@ document.addEventListener("keydown", (e) => {
   closeModal();
 });
 
+/* =========================
+   INIT
+========================= */
 async function init(){
   try{
     ensureGlobalState();
@@ -1682,6 +1792,8 @@ async function init(){
     if(searchInput){
       searchInput.value = window.__CIGAR_FILTER_STATE__.q || "";
     }
+
+    syncMainCubanToggle();
 
     bindFilterButton(document);
     observeForFilterButton();
@@ -1711,4 +1823,5 @@ async function init(){
 }
 
 init();
+
 })();
