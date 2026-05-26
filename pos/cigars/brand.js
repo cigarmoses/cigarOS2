@@ -394,6 +394,16 @@
     return getField(r, ["brand_img", "brand_image", "brandicon", "brand_icon"]);
   }
 
+  function resolveLineImage(r) {
+  return getField(r, [
+    "line_img",
+    "line_image",
+    "lineicon",
+    "line_icon",
+    "brand_line_img",
+  ]);
+}
+   
   function resolveBoxCount(r) {
     const raw = getField(r, [
       "box_count",
@@ -497,6 +507,25 @@
     const list = brandIconCandidates();
     return list[0] || "";
   }
+
+  function rowIconCandidatesForRow(r) {
+    const lineImg = normalizeAssetPath(resolveLineImage(r));
+    const brandCandidates = brandIconCandidates();
+
+    return Array.from(
+    new Set(
+      [
+        lineImg,
+        ...brandCandidates,
+      ].filter(Boolean)
+    )
+  );
+}
+
+function rowIconPathForRow(r) {
+  const list = rowIconCandidatesForRow(r);
+  return list[0] || "";
+}
 
   function bindImageFallback(img, candidates = [], finalBehavior = "hide") {
     if (!img) return;
@@ -1401,10 +1430,10 @@ function openAddSheet(r) {
       return;
     }
 
-    const rowIconCandidates = brandIconCandidates();
-    const rowIconPath = rowIconCandidates[0] || "";
-
     rows.forEach((r) => {
+  const rowIconCandidates = rowIconCandidatesForRow(r);
+  const rowIconPath = rowIconPathForRow(r);
+       
       const priceText = resolvePrice(r);
       const isCuban = resolveIsCuban(r);
 
