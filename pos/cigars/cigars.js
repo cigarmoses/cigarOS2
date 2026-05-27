@@ -81,18 +81,56 @@ function slugify(name){
 /* =========================
    ICONS
 ========================= */
-function iconPathFor(key,label){
-  let name = String(label || "");
+function iconPathFor(key, label, row = null){
 
-  if(key === "brand" && name.toLowerCase().includes("(cuban)")){
-    name = "cuban" + name.replace(/\(cuban\)/gi, "");
+  /* BRAND ICONS */
+  if(key === "brand"){
+
+    const img =
+      norm(
+        row?.brandImg ||
+        row?.["Brand IMG"] ||
+        row?.BrandIMG ||
+        row?.["brand img"]
+      );
+
+    if(img){
+      return img.startsWith("/")
+        ? img
+        : `/${img}`;
+    }
   }
 
-  const slug = slugify(name);
+  /* MANUFACTURER ICONS */
+  if(key === "manufacturer"){
+
+    const img =
+      norm(
+        row?.manufacturerImg ||
+        row?.["Manufacturer IMG"] ||
+        row?.ManufacturerIMG ||
+        row?.["manufacturer img"]
+      );
+
+    if(img){
+      return img.startsWith("/")
+        ? img
+        : `/${img}`;
+    }
+  }
+
+  /* FALLBACK */
+  const slug = slugify(label);
+
   if(!slug) return "";
 
-  if(key==="brand") return `/img/icons/brands/${slug}.svg`;
-  if(key==="manufacturer") return `/img/icons/manufacturers/${slug}.svg`;
+  if(key === "brand"){
+    return `/img/icons/brands/${slug}.svg`;
+  }
+
+  if(key === "manufacturer"){
+    return `/img/icons/manufacturers/${slug}.svg`;
+  }
 
   return "";
 }
@@ -171,7 +209,23 @@ function buildBrandSummary(rows){
     const manufacturer = norm(r.Manufacturer || r.manufacturer);
 
     if(!map.has(brand)){
-      map.set(brand,{brand,manufacturer,count:0});
+      map.set(brand,{
+        brand,
+        manufacturer,
+        brandImg: norm(
+          r["Brand IMG"] ||
+          r.BrandIMG ||
+          r["brand img"] ||
+          r.brandImg
+        ),
+        manufacturerImg: norm(
+          r["Manufacturer IMG"] ||
+          r.ManufacturerIMG ||
+          r["manufacturer img"] ||
+          r.manufacturerImg
+        ),
+        count:0
+      });
     }
 
     map.get(brand).count++;
@@ -308,7 +362,7 @@ function renderBrandsGrid(summary){
     <div class="brands-grid">
       ${summary.map(c=>{
         const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
-        const icon = iconPathFor("brand", c.brand);
+        const icon = iconPathFor("brand", c.brand, c);
 
         return `
           <a href="${href}" data-brand-link="${escapeHtml(c.brand)}">
@@ -330,7 +384,7 @@ function renderResultsRows(summary){
     <div class="cigars-results">
       ${summary.map(c=>{
         const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
-        const icon = iconPathFor("brand", c.brand);
+        const icon = iconPathFor("brand", c.brand, c);
 
         return `
           <a class="brand-row" href="${href}" data-brand-link="${escapeHtml(c.brand)}">
@@ -414,7 +468,7 @@ function renderFavoriteBrands(summary){
   });
 
   favBrandsRoot.innerHTML = cards.slice(0,8).map(b=>{
-    const icon = iconPathFor("brand", b.brand);
+    const icon = iconPathFor("brand", b.brand, b);
     const href = `/pos/cigars/brand/?brand=${encodeURIComponent(b.brand)}`;
 
     return `
@@ -1452,7 +1506,17 @@ function renderList(){
     const isSelected = selectedSet.has(label);
     const isLogoRow = key === "manufacturer" || key === "brand";
 
-    const brandOrManufacturerIcon = isLogoRow ? iconPathFor(key, label) : "";
+    const matchingRow = DATA_ROWS.find(r => {
+  const rowValue = key === "brand"
+    ? norm(r.Brand || r.brand)
+    : norm(r.Manufacturer || r.manufacturer);
+
+  return rowValue === label;
+});
+
+const brandOrManufacturerIcon = isLogoRow
+  ? iconPathFor(key, label, matchingRow)
+  : "";
 
     const cigarIcon =
       key === "vitola" || key === "shape"
