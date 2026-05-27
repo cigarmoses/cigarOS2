@@ -243,7 +243,10 @@ function isCubanRow(row){
 }
 
 function rowMatchesFilters(row,g){
-  if(!g.includeCubans && isCubanRow(row)) return false;
+  const isCuban = isCubanRow(row);
+
+  if(g.includeCubans && !isCuban) return false;
+  if(!g.includeCubans && isCuban) return false;
 
   const brand = norm(getField(row,["Brand","brand"]));
   const manufacturer = norm(getField(row,["Manufacturer","manufacturer"]));
