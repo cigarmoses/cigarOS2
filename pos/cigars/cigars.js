@@ -82,7 +82,13 @@ function slugify(name){
    ICONS
 ========================= */
 function iconPathFor(key,label){
-  const slug = slugify(label);
+  let name = String(label || "");
+
+  if(key === "brand" && name.toLowerCase().includes("(cuban)")){
+    name = "cuban" + name.replace(/\(cuban\)/gi, "");
+  }
+
+  const slug = slugify(name);
   if(!slug) return "";
 
   if(key==="brand") return `/img/icons/brands/${slug}.svg`;
