@@ -520,19 +520,34 @@ function renderAll(){
 
   renderFavoriteBrands(summary);
 
-  const qOn = !!norm(g.q);
-  const filtersOn = hasActiveFilters(g);
+const qOn = !!norm(g.q);
+const filtersOn = hasActiveFilters(g);
 
-  if(!summary.length){
-    listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
-    return;
+if(!summary.length){
+  listRoot.innerHTML = `<div class="cigars-empty">No results.</div>`;
+  return;
+}
+
+/* CUBAN GRID MODE */
+if(g.includeCubans && !qOn && !filtersOn){
+
+  if(favBrandsRoot?.parentElement){
+    favBrandsRoot.parentElement.style.display = "none";
   }
 
-  if(qOn || filtersOn || g.includeCubans){
-    renderResultsRows(summary);
-  }else{
-    renderBrandsGrid(summary);
-  }
+  renderBrandsGrid(summary);
+  return;
+}
+
+/* NORMAL MODE */
+if(favBrandsRoot?.parentElement){
+  favBrandsRoot.parentElement.style.display = "";
+}
+
+if(qOn || filtersOn){
+  renderResultsRows(summary);
+}else{
+  renderBrandsGrid(summary);
 }
 
 /* =========================
