@@ -433,7 +433,7 @@ function renderAppliedChips(g){
   if(g.includeCubans){
     chips.push(`
       <div class="af-chip" data-chip-special="cubans">
-        <span>Include Cubans 🇨🇺</span>
+        <span>Cubans 🇨🇺</span>
         <button class="af-chip__x" type="button">×</button>
       </div>
     `);
@@ -548,6 +548,8 @@ if(qOn || filtersOn){
   renderResultsRows(summary);
 }else{
   renderBrandsGrid(summary);
+}
+
 }
 
 /* =========================
