@@ -440,6 +440,19 @@
       .join("");
   }
 
+  function resolveIsCuban(rec) {
+  const explicit = getField(rec, ["Cuban", "cuban", "is_cuban"]);
+
+  if (explicit) {
+    const v = explicit.toLowerCase().trim();
+
+    if (["x", "yes", "true", "1", "cuban"].includes(v)) return true;
+    if (["no", "false", "0", "non-cuban", "non cuban"].includes(v)) return false;
+  }
+
+  return getOrigin(rec).toLowerCase() === "cuba";
+}
+  
   function buildBrandIconCandidates(rec) {
     const fromSheet = normalizeAssetPath(getBrandImage(rec));
     const brand = getBrand(rec);
@@ -457,67 +470,60 @@
   }
 
   function buildCigarImageCandidates(rec) {
-    const fromSheet = normalizeAssetPath(getImage(rec));
-    const brand = getBrand(rec);
-    const line = getLine(rec);
-    const cigar = getName(rec);
-    const vitola = getVitola(rec);
+  const fromSheet = normalizeAssetPath(getImage(rec));
+  const brand = getBrand(rec);
+  const line = getLine(rec);
+  const cigar = getName(rec);
+  const vitola = getVitola(rec);
 
-    const brandFolder = normalizeBrand(brand);
-    const brandKey = compactKey(brand);
-    const lineKey = compactKey(line);
-    const cigarKey = compactKey(cigar);
-    const vitolaKey = compactKey(vitola);
+  const brandFolder = normalizeBrand(brand);
+  const brandKey = compactKey(brand);
+  const lineKey = compactKey(line);
+  const cigarKey = compactKey(cigar);
+  const vitolaKey = compactKey(vitola);
 
-    const out = [];
-    if (fromSheet) out.push(fromSheet);
+  const out = [];
 
-    if (brandFolder) {
-      const names = [];
+const isCuban = resolveIsCuban(rec);
 
-      if (brandKey && lineKey && cigarKey) {
-        names.push(`${brandKey}${lineKey}${cigarKey}`);
-      }
-
-      if (brandKey && lineKey && cigarKey && vitolaKey) {
-        names.push(`${brandKey}${lineKey}${cigarKey}${vitolaKey}`);
-      }
-
-      if (lineKey && cigarKey) {
-        names.push(`${lineKey}${cigarKey}`);
-      }
-
-      if (lineKey && cigarKey && vitolaKey) {
-        names.push(`${lineKey}${cigarKey}${vitolaKey}`);
-      }
-
-      if (lineKey && vitolaKey) {
-        names.push(`${lineKey}${vitolaKey}`);
-      }
-
-      if (brandKey && cigarKey) {
-        names.push(`${brandKey}${cigarKey}`);
-      }
-
-      if (brandKey && cigarKey && vitolaKey) {
-        names.push(`${brandKey}${cigarKey}${vitolaKey}`);
-      }
-
-      if (cigarKey) {
-        names.push(`${cigarKey}`);
-      }
-
-      if (cigarKey && vitolaKey) {
-        names.push(`${cigarKey}${vitolaKey}`);
-      }
-
-      Array.from(new Set(names)).forEach((name) => {
-        out.push(`/img/cigars/${brandFolder}/${name}.png`);
-      });
-    }
-
-    return Array.from(new Set(out.filter(Boolean)));
+if (isCuban && brandFolder) {
+  if (lineKey && cigarKey) {
+    out.push(`/img/cigars/cuban/${brandFolder}/${lineKey}${cigarKey}.png`);
   }
+
+  if (lineKey && cigarKey && vitolaKey) {
+    out.push(`/img/cigars/cuban/${brandFolder}/${lineKey}${cigarKey}${vitolaKey}.png`);
+  }
+
+  if (cigarKey) {
+    out.push(`/img/cigars/cuban/${brandFolder}/${cigarKey}.png`);
+  }
+}
+
+if (fromSheet) out.push(fromSheet);
+
+  if (brandFolder) {
+    const names = [];
+
+    if (brandKey && lineKey && cigarKey) names.push(`${brandKey}${lineKey}${cigarKey}`);
+    if (brandKey && lineKey && cigarKey && vitolaKey) names.push(`${brandKey}${lineKey}${cigarKey}${vitolaKey}`);
+    if (lineKey && cigarKey) names.push(`${lineKey}${cigarKey}`);
+    if (lineKey && cigarKey && vitolaKey) names.push(`${lineKey}${cigarKey}${vitolaKey}`);
+    if (lineKey && vitolaKey) names.push(`${lineKey}${vitolaKey}`);
+    if (brandKey && cigarKey) names.push(`${brandKey}${cigarKey}`);
+    if (brandKey && cigarKey && vitolaKey) names.push(`${brandKey}${cigarKey}${vitolaKey}`);
+    if (cigarKey) names.push(`${cigarKey}`);
+    if (cigarKey && vitolaKey) names.push(`${cigarKey}${vitolaKey}`);
+
+    Array.from(new Set(names)).forEach((name) => {
+      out.push(`/img/cigars/${brandFolder}/${name}.png`);
+    });
+  }
+
+  return Array.from(new Set(out.filter(Boolean)));
+}
+
+    
 
   function wireImageFallback(img, fallbackClass, fallbackText) {
     if (!img) return;
