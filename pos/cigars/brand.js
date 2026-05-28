@@ -477,49 +477,32 @@
     return normalizeBrand(state.brandMeta?.slug || state.brandMeta?.name || state.brand || state.brandQuery);
   }
 
-  function brandIconCandidates() {
-    const metaImage = normalizeAssetPath(
-      state.brandMeta?.image ||
-      state.brandMeta?.icon ||
-      state.brandMeta?.svg ||
-      state.brandMeta?.img
-    );
+function brandIconCandidates() {
+  const sheetRow = state.rowsAll.find((r) => normalizeAssetPath(resolveBrandImage(r)));
 
-    const slug = brandSlug();
-    const out = [];
+  const fromSheet = normalizeAssetPath(sheetRow ? resolveBrandImage(sheetRow) : "");
 
-    if (metaImage) out.push(metaImage);
-    if (slug) {
-      out.push(`/img/icons/brands/${slug}.svg`);
-      out.push(`/img/icons/brands/${slug}.png`);
-    }
-
-    const sheetRow = state.rowsAll.find(
-      (r) => normalizeBrand(resolveBrandVal(r)) === brandSlug()
-    );
-    const fromSheet = normalizeAssetPath(sheetRow ? resolveBrandImage(sheetRow) : "");
-    if (fromSheet) out.push(fromSheet);
-
-    return Array.from(new Set(out.filter(Boolean)));
-  }
-
-  function brandIconPath() {
-    const list = brandIconCandidates();
-    return list[0] || "";
-  }
-
-  function rowIconCandidatesForRow(r) {
-    const lineImg = normalizeAssetPath(resolveLineImage(r));
-    const brandCandidates = brandIconCandidates();
-
-    return Array.from(
-    new Set(
-      [
-        lineImg,
-        ...brandCandidates,
-      ].filter(Boolean)
-    )
+  const metaImage = normalizeAssetPath(
+    state.brandMeta?.image ||
+    state.brandMeta?.icon ||
+    state.brandMeta?.svg ||
+    state.brandMeta?.img
   );
+
+  const slug = brandSlug();
+  const out = [];
+
+  // Sheet Brand IMG must win first
+  if (fromSheet) out.push(fromSheet);
+
+  if (metaImage) out.push(metaImage);
+
+  if (slug) {
+    out.push(`/img/icons/brands/${slug}.svg`);
+    out.push(`/img/icons/brands/${slug}.png`);
+  }
+
+  return Array.from(new Set(out.filter(Boolean)));
 }
 
 function rowIconPathForRow(r) {
@@ -527,6 +510,26 @@ function rowIconPathForRow(r) {
   return list[0] || "";
 }
 
+function brandIconPath() {
+  const list = brandIconCandidates();
+  return list[0] || "";
+}
+
+function rowIconCandidatesForRow(r) {
+  const brandImg = normalizeAssetPath(resolveBrandImage(r));
+  const lineImg = normalizeAssetPath(resolveLineImage(r));
+
+  return Array.from(
+    new Set(
+      [
+        lineImg,
+        brandImg,
+        ...brandIconCandidates(),
+      ].filter(Boolean)
+    )
+  );
+}
+   
   function bindImageFallback(img, candidates = [], finalBehavior = "hide") {
     if (!img) return;
 
