@@ -361,7 +361,7 @@ function renderBrandsGrid(summary){
   listRoot.innerHTML = `
     <div class="brands-grid">
       ${summary.map(c=>{
-        const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
+        const href = `/pos/cigars/brand?brand=${encodeURIComponent(c.brand)}`;;
         const icon = iconPathFor("brand", c.brand, c);
 
         return `
@@ -383,7 +383,7 @@ function renderResultsRows(summary){
   listRoot.innerHTML = `
     <div class="cigars-results">
       ${summary.map(c=>{
-        const href = `/pos/cigars/brand/?brand=${encodeURIComponent(c.brand)}`;
+        const href = `/pos/cigars/brand?brand=${encodeURIComponent(c.brand)}`;
         const icon = iconPathFor("brand", c.brand, c);
 
         return `
