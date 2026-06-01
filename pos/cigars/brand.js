@@ -576,57 +576,106 @@
     }
   }
 
-  function chooseRowsForBrand(rows) {
-    const query = normalizeBrand(state.brandQuery);
-    const metaSlug = normalizeBrand(state.brandMeta?.slug);
-    const metaName = normalizeBrand(state.brandMeta?.name);
-    const stateBrand = normalizeBrand(state.brand);
+function chooseRowsForBrand(rows) {
+  const query = normalizeBrand(state.brandQuery);
+  const metaSlug = normalizeBrand(state.brandMeta?.slug);
+  const metaName = normalizeBrand(state.brandMeta?.name);
+  const stateBrand = normalizeBrand(state.brand);
 
-    const needles = Array.from(new Set([query, metaSlug, metaName, stateBrand].filter(Boolean)));
+  const needles = Array.from(
+    new Set([query, metaSlug, metaName, stateBrand].filter(Boolean))
+  );
 
-    let exact = rows.filter((r) => {
-      const rb = normalizeBrand(resolveBrandVal(r));
-      return needles.includes(rb);
-    });
+  const CUBAN_CONFLICT_BRANDS = new Set([
+    "cohiba",
+    "montecristo",
+    "hupmann",
+    "hoyodemonterrey",
+    "saintluisrey",
+    "sanchopanza",
+    "trinidad",
+    "sancristobaldelahabana",
+  ]);
 
-    /*
-      Key fix:
-      Cohiba exists as both Cuban and domestic.
-      If the brand query is Cohiba and exact matches include Habanos/Cuba rows,
-      keep only Cuban Cohiba rows for this Cuban POS page.
-    */
-    if (query === "cohiba") {
-      const cubanRows = exact.filter(resolveIsCuban);
-      if (cubanRows.length) return cubanRows;
+  const isConflictBrand = needles.some((n) =>
+    CUBAN_CONFLICT_BRANDS.has(n)
+  );
+
+  let exact = rows.filter((r) => {
+    const rb = normalizeBrand(resolveBrandVal(r));
+    return needles.includes(rb);
+  });
+
+  /*
+    IMPORTANT FIX:
+    If this is one of the Cuban/domestic overlap brands,
+    ONLY keep Cuban rows.
+  */
+  if (isConflictBrand) {
+    const cubanRows = exact.filter(resolveIsCuban);
+
+    if (cubanRows.length) {
+      return cubanRows;
     }
-
-    if (exact.length) return exact;
-
-    const fuzzy = rows.filter((r) => {
-      const rb = normalizeBrand(resolveBrandVal(r));
-      return rb && needles.some((n) => rb.includes(n) || n.includes(rb));
-    });
-
-    if (query === "cohiba") {
-      const cubanRows = fuzzy.filter(resolveIsCuban);
-      if (cubanRows.length) return cubanRows;
-    }
-
-    if (fuzzy.length) return fuzzy;
-
-    const manufacturerFallback = rows.filter((r) => {
-      const rm = normalizeBrand(resolveManufacturerVal(r));
-      return needles.includes(rm);
-    });
-
-    if (manufacturerFallback.length) return manufacturerFallback;
-
-    return rows.filter((r) => {
-      const brand = normalizeLoose(resolveBrandVal(r));
-      const q = normalizeLoose(state.brandQuery);
-      return brand && q && (brand.includes(q) || q.includes(brand));
-    });
   }
+
+  if (exact.length) return exact;
+
+  const fuzzy = rows.filter((r) => {
+    const rb = normalizeBrand(resolveBrandVal(r));
+
+    return (
+      rb &&
+      needles.some((n) => rb.includes(n) || n.includes(rb))
+    );
+  });
+
+  if (isConflictBrand) {
+    const cubanRows = fuzzy.filter(resolveIsCuban);
+
+    if (cubanRows.length) {
+      return cubanRows;
+    }
+  }
+
+  if (fuzzy.length) return fuzzy;
+
+  const manufacturerFallback = rows.filter((r) => {
+    const rm = normalizeBrand(resolveManufacturerVal(r));
+    return needles.includes(rm);
+  });
+
+  if (isConflictBrand) {
+    const cubanRows = manufacturerFallback.filter(resolveIsCuban);
+
+    if (cubanRows.length) {
+      return cubanRows;
+    }
+  }
+
+  if (manufacturerFallback.length) return manufacturerFallback;
+
+  const loose = rows.filter((r) => {
+    const brand = normalizeLoose(resolveBrandVal(r));
+    const q = normalizeLoose(state.brandQuery);
+
+    return (
+      brand &&
+      q &&
+      (brand.includes(q) || q.includes(brand))
+    );
+  });
+
+  if (isConflictBrand) {
+    const cubanRows = loose.filter(resolveIsCuban);
+
+    if (cubanRows.length) {
+      return cubanRows;
+    }
+  }
+
+  return loose;
+}
 
   backBtn?.addEventListener("click", () => {
     if (history.length > 1) history.back();
