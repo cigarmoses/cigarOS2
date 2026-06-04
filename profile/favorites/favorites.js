@@ -11,8 +11,8 @@
   const ORDER_STORAGE_KEY = "cigarSocialFavoritesOrder";
   const THEME_KEY = "cigaros-theme";
 
-  const LONG_PRESS_MS = 210;
-  const MOVE_THRESHOLD = 7;
+  const LONG_PRESS_MS = 240;
+  const MOVE_THRESHOLD = 8;
 
   const STORAGE_KEYS = [
     PROFILE_CIGAR_KEY,
@@ -64,7 +64,7 @@
       lengthMin: "",
       lengthMax: ""
     },
-    pointerDrag: null,
+    drag: null,
     suppressClickUntil: 0
   };
 
@@ -646,9 +646,13 @@
       });
     });
 
-    $$("[data-id]", els.list).forEach((card) => {
-      card.addEventListener("click", onItemClick);
-      card.addEventListener("pointerdown", onPointerDown);
+    $$("[data-id]", els.list).forEach((item) => {
+      item.addEventListener("click", onItemClick);
+      item.addEventListener("touchstart", onTouchStart, { passive:false });
+      item.addEventListener("touchmove", onTouchMove, { passive:false });
+      item.addEventListener("touchend", onTouchEnd, { passive:false });
+      item.addEventListener("touchcancel", onTouchCancel, { passive:false });
+      item.addEventListener("mousedown", onMouseDown);
     });
   }
 
@@ -667,108 +671,146 @@
     renderList();
   }
 
-  function onPointerDown(e){
-    if (e.button !== 0) return;
-    if (e.target.closest("[data-remove]")) return;
-
-    const card = e.currentTarget;
-
-    state.pointerDrag = {
-      card,
-      id: card.dataset.id,
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      active: false,
-      timer: window.setTimeout(() => {
-        beginPointerDrag(card, e.pointerId);
-      }, LONG_PRESS_MS)
+  function beginDrag(item, clientX, clientY){
+    state.drag = {
+      item,
+      id:item.dataset.id,
+      startX:clientX,
+      startY:clientY,
+      lastY:clientY,
+      active:false,
+      timer:null
     };
 
-    try{
-      card.setPointerCapture(e.pointerId);
-    }catch{}
+    state.drag.timer = window.setTimeout(() => {
+      if (!state.drag || state.drag.item !== item) return;
+      state.drag.active = true;
+      state.suppressClickUntil = Date.now() + 900;
+      document.body.classList.add("fav-sorting");
+      item.classList.add("is-dragging");
+    }, LONG_PRESS_MS);
   }
 
-  function beginPointerDrag(card, pointerId){
-    if (!state.pointerDrag || state.pointerDrag.card !== card) return;
-
-    state.pointerDrag.active = true;
-    state.suppressClickUntil = Date.now() + 700;
-
-    document.body.classList.add("fav-dragging-active");
-    card.classList.add("dragging");
-
-    card.addEventListener("pointermove", onPointerMove);
-    card.addEventListener("pointerup", onPointerUp);
-    card.addEventListener("pointercancel", onPointerCancel);
-
-    try{
-      card.setPointerCapture(pointerId);
-    }catch{}
-  }
-
-  function onPointerMove(e){
-    const drag = state.pointerDrag;
+  function updateDrag(clientY){
+    const drag = state.drag;
     if (!drag) return;
 
-    const dx = Math.abs(e.clientX - drag.startX);
-    const dy = Math.abs(e.clientY - drag.startY);
+    const dy = Math.abs(clientY - drag.startY);
 
-    if (!drag.active && (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD)){
-      clearPointerDrag(false);
+    if (!drag.active && dy > MOVE_THRESHOLD){
+      clearDrag(false);
       return;
     }
 
     if (!drag.active) return;
 
-    e.preventDefault();
+    drag.lastY = clientY;
 
-    const target = document
-      .elementFromPoint(window.innerWidth / 2, e.clientY)
-      ?.closest("[data-id]");
+    $$(".is-drag-over-before,.is-drag-over-after", els.list).forEach((el) => {
+      el.classList.remove("is-drag-over-before","is-drag-over-after");
+    });
 
-    if (!target || target === drag.card || !els.list.contains(target)) return;
+    const centerX = window.innerWidth / 2;
+    const target = document.elementFromPoint(centerX, clientY)?.closest("[data-id]");
+
+    if (!target || target === drag.item || !els.list.contains(target)) return;
 
     const rect = target.getBoundingClientRect();
-    const before = e.clientY < rect.top + rect.height / 2;
+    const before = clientY < rect.top + rect.height / 2;
 
-    els.list.insertBefore(drag.card, before ? target : target.nextSibling);
+    target.classList.add(before ? "is-drag-over-before" : "is-drag-over-after");
+    els.list.insertBefore(drag.item, before ? target : target.nextSibling);
   }
 
-  function onPointerUp(e){
-    const drag = state.pointerDrag;
+  function finishDrag(){
+    const drag = state.drag;
     if (!drag) return;
 
-    if (drag.active){
-      e.preventDefault();
-      state.suppressClickUntil = Date.now() + 700;
+    const wasActive = drag.active;
+
+    if (wasActive){
+      state.suppressClickUntil = Date.now() + 900;
       commitDomOrder();
     }
 
-    clearPointerDrag(false);
+    clearDrag(false);
   }
 
-  function onPointerCancel(){
-    clearPointerDrag(false);
-  }
-
-  function clearPointerDrag(shouldCommit){
-    const drag = state.pointerDrag;
+  function clearDrag(){
+    const drag = state.drag;
     if (!drag) return;
 
     window.clearTimeout(drag.timer);
 
-    drag.card.classList.remove("dragging");
-    drag.card.removeEventListener("pointermove", onPointerMove);
-    drag.card.removeEventListener("pointerup", onPointerUp);
-    drag.card.removeEventListener("pointercancel", onPointerCancel);
+    drag.item.classList.remove("is-dragging");
+    document.body.classList.remove("fav-sorting");
 
-    document.body.classList.remove("fav-dragging-active");
+    $$(".is-drag-over-before,.is-drag-over-after", els.list).forEach((el) => {
+      el.classList.remove("is-drag-over-before","is-drag-over-after");
+    });
 
-    if (shouldCommit) commitDomOrder();
+    state.drag = null;
+  }
 
-    state.pointerDrag = null;
+  function onTouchStart(e){
+    if (e.target.closest("[data-remove]")) return;
+    if (e.touches.length !== 1) return;
+
+    const t = e.touches[0];
+    beginDrag(e.currentTarget, t.clientX, t.clientY);
+  }
+
+  function onTouchMove(e){
+    if (!state.drag) return;
+
+    const t = e.touches[0];
+    if (!t) return;
+
+    if (state.drag.active){
+      e.preventDefault();
+    }
+
+    updateDrag(t.clientY);
+  }
+
+  function onTouchEnd(e){
+    if (!state.drag) return;
+
+    if (state.drag.active){
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    finishDrag();
+  }
+
+  function onTouchCancel(){
+    clearDrag(false);
+  }
+
+  function onMouseDown(e){
+    if (e.button !== 0) return;
+    if (e.target.closest("[data-remove]")) return;
+
+    beginDrag(e.currentTarget, e.clientX, e.clientY);
+
+    const move = (ev) => {
+      if (state.drag?.active) ev.preventDefault();
+      updateDrag(ev.clientY);
+    };
+
+    const up = (ev) => {
+      if (state.drag?.active){
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
+      finishDrag();
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
   }
 
   function commitDomOrder(){
