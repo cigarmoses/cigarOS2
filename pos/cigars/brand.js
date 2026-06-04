@@ -539,7 +539,13 @@
         manufacturer &&
         normalizeBrand(manufacturer) !== normalizeBrand(displayBrand);
 
-      manufacturerMeta.textContent = show ? manufacturer : "";
+      const isCubanBrand =
+  firstRow &&
+  resolveIsCuban(firstRow);
+
+manufacturerMeta.textContent = show
+  ? `${isCubanBrand ? "🇨🇺 " : ""}${manufacturer}`
+  : "";
       manufacturerMeta.style.display = show ? "" : "none";
     }
 
