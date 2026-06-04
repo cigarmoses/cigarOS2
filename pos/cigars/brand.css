@@ -1137,13 +1137,11 @@ html[data-theme="light"] .brand-row:hover{
   width:24px;
   height:24px;
 }
-
 #theme-toggle .icon-sun,
 #theme-toggle .icon-moon{
   width:24px;
   height:24px;
 }
-  }
   html[data-theme="dark"] #theme-toggle .knob{
     transform:translateX(20px);
   }
