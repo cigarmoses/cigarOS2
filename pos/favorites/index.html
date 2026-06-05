@@ -7,343 +7,788 @@
   <title>Favorites</title>
 
   <link rel="stylesheet" href="/css/type.css" />
-  <link rel="stylesheet" href="/uxui/topbar/topbar.css" />
+  <link rel="stylesheet" href="/pos/pos.css?v=36" />
 
   <style>
     :root{
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --bg:#eff2f7;
-      --ink:#101828;
-      --muted:rgba(16,24,40,.58);
-
-      --surface:rgba(255,255,255,.92);
-      --surface-border:rgba(15,23,40,.08);
-      --surface-shadow:0 12px 30px rgba(15,26,44,.08);
-
-      --row-bg:rgba(255,255,255,.96);
-      --row-border:rgba(15,23,40,.08);
-      --row-shadow:0 8px 18px rgba(15,26,44,.06);
-
-      --pill-bg:rgba(16,24,40,.05);
-      --pill-border:rgba(16,24,40,.08);
-
-      --danger:#e11d48;
-      --accent:#0f7aff;
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-bottom:env(safe-area-inset-bottom,0px);
+      --bg:#eef3fb;
+      --bg2:#f7f9fd;
+      --glass:rgba(255,255,255,.70);
+      --glass2:rgba(255,255,255,.58);
+      --glass3:rgba(255,255,255,.42);
+      --stroke:rgba(15,23,42,.08);
+      --stroke-soft:rgba(15,23,42,.05);
+      --text:#0b1220;
+      --muted:rgba(11,18,32,.62);
+      --muted2:rgba(11,18,32,.46);
+      --shadow:0 18px 40px rgba(15,23,42,.10);
+      --shadow-soft:0 10px 22px rgba(15,23,42,.08);
+      --glow:rgba(118,157,255,.12);
+      --green:#34c759;
+      --blue:#3b82f6;
     }
 
     html[data-theme="dark"]{
-      --bg:
-        radial-gradient(1200px 540px at 50% -8%, rgba(63,108,194,.22) 0%, rgba(20,44,92,.16) 28%, rgba(4,13,34,0) 58%),
-        linear-gradient(180deg, #0f2856 0%, #07142f 48%, #041027 100%);
-      --ink:#ffffff;
-      --muted:rgba(255,255,255,.64);
-
-      --surface:rgba(13,21,39,.58);
-      --surface-border:rgba(255,255,255,.12);
-      --surface-shadow:0 12px 34px rgba(0,0,0,.26);
-
-      --row-bg:rgba(13,21,39,.66);
-      --row-border:rgba(255,255,255,.10);
-      --row-shadow:0 10px 22px rgba(0,0,0,.18);
-
-      --pill-bg:rgba(255,255,255,.06);
-      --pill-border:rgba(255,255,255,.10);
-
-      --danger:#ff4d73;
-      --accent:#5aa7ff;
+      --bg:#071b33;
+      --bg2:#0b2a4f;
+      --glass:rgba(255,255,255,.09);
+      --glass2:rgba(255,255,255,.07);
+      --glass3:rgba(255,255,255,.05);
+      --stroke:rgba(255,255,255,.12);
+      --stroke-soft:rgba(255,255,255,.08);
+      --text:#ffffff;
+      --muted:rgba(255,255,255,.68);
+      --muted2:rgba(255,255,255,.50);
+      --shadow:0 22px 60px rgba(0,0,0,.34);
+      --shadow-soft:0 12px 28px rgba(0,0,0,.22);
+      --glow:rgba(59,130,246,.22);
+      --green:#34c759;
+      --blue:#4c7cff;
     }
 
-    *{ box-sizing:border-box; }
-    html, body{ margin:0; min-height:100%; }
+    *{box-sizing:border-box;}
+    html,body{min-height:100%;margin:0;}
 
-    body{
-      min-height:100dvh;
-      background:var(--bg);
-      color:var(--ink);
-      font-family:var(--font-text), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      -webkit-font-smoothing:antialiased;
+    body.favorites-page{
+      color:var(--text);
+      font-family:var(--font-sans);
+      background:
+        radial-gradient(1200px 700px at 18% 0%, rgba(80,132,255,.10), transparent 58%),
+        radial-gradient(900px 620px at 100% 10%, rgba(61,201,255,.05), transparent 54%),
+        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+      background-attachment:fixed;
     }
 
-    .wrap{
+    html[data-theme="dark"] body.favorites-page{
+      background:
+        radial-gradient(1200px 700px at 15% 5%, rgba(72,117,210,.30), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(0,185,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+      background-attachment:fixed;
+    }
+
+    .glass-surface{
+      position:relative;
+      overflow:hidden;
+      backdrop-filter:blur(24px) saturate(1.14);
+      -webkit-backdrop-filter:blur(24px) saturate(1.14);
+    }
+
+    .glass-surface::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      pointer-events:none;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 0 0 1px var(--stroke-soft);
+    }
+
+    .favorites-topbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      display:grid;
+      grid-template-columns:42px 1fr 52px;
+      align-items:center;
       width:min(430px, calc(100% - 28px));
       margin:0 auto;
-      padding:6px 0 calc(34px + var(--safe-bottom));
+      padding:calc(10px + var(--safe-top)) 0 18px;
+    }
+
+    .favorites-back{
+      position:relative;
+      width:42px;
+      height:42px;
+      border:0;
+      padding:0;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      border-radius:999px;
+      box-shadow:0 12px 28px rgba(0,0,0,.22);
+      cursor:pointer;
+      appearance:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .favorites-back svg{
+      width:22px;
+      height:22px;
+      display:block;
+    }
+
+    .favorites-theme-dock{
+      display:flex;
+      justify-content:flex-end;
+    }
+
+    #theme-toggle{
+      position:relative;
+      width:52px;
+      height:32px;
+      border:0;
+      padding:0;
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      box-shadow:0 12px 28px rgba(0,0,0,.22);
+      cursor:pointer;
+      appearance:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    #theme-toggle .knob{
+      position:absolute;
+      top:3px;
+      left:3px;
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      background:transparent;
+      transition:transform .25s ease;
+      display:grid;
+      place-items:center;
+    }
+
+    #theme-toggle .icon-sun,
+    #theme-toggle .icon-moon{
+      position:absolute;
+      width:26px;
+      height:26px;
+      display:block;
+    }
+
+    #theme-toggle .icon-sun{
+      color:#ffcc00;
+      display:block;
+    }
+
+    #theme-toggle .icon-moon{
+      color:#fff4b8;
+      display:none;
+      filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+    }
+
+    html[data-theme="dark"] #theme-toggle .knob{
+      transform:translateX(20px);
+    }
+
+    html[data-theme="dark"] #theme-toggle .icon-sun{
+      display:none;
+    }
+
+    html[data-theme="dark"] #theme-toggle .icon-moon{
+      display:block;
+    }
+
+    html[data-theme="light"] .favorites-back,
+    html[data-theme="light"] #theme-toggle{
+      color:#101828;
+      background:rgba(255,255,255,.82);
+      box-shadow:0 10px 24px rgba(15,26,44,.08);
+    }
+
+    .favorites-main{
+      width:min(430px, calc(100% - 22px));
+      margin:0 auto;
+      padding:0 0 calc(118px + var(--safe-bottom));
     }
 
     .page-title{
-      margin:8px 2px 18px;
-      font-family:var(--font-display), -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-      font-size:58px;
-      line-height:.92;
-      font-weight:800;
-      letter-spacing:-.05em;
-      color:var(--ink);
-    }
-
-    .card{
-      border-radius:24px;
-      background:var(--surface);
-      border:1px solid var(--surface-border);
-      box-shadow:var(--surface-shadow);
-      padding:18px 16px;
-    }
-
-    .empty,
-    .loading,
-    .error{
-      font-size:15px;
-      line-height:1.45;
-      color:var(--muted);
-      font-weight:600;
-    }
-
-    .fav-list{
-      display:grid;
-      gap:12px;
-    }
-
-    .fav-row{
-      display:grid;
-      grid-template-columns:72px minmax(0, 1fr) auto;
-      gap:12px;
-      align-items:center;
-      padding:12px;
-      border-radius:22px;
-      background:var(--row-bg);
-      border:1px solid var(--row-border);
-      box-shadow:var(--row-shadow);
-      text-decoration:none;
-      color:inherit;
-      -webkit-tap-highlight-color:transparent;
-    }
-
-    .fav-thumb-wrap{
-      width:72px;
-      height:94px;
-      border-radius:18px;
-      background:var(--pill-bg);
-      border:1px solid var(--pill-border);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      flex:0 0 auto;
-    }
-
-    .fav-thumb{
-      max-width:54px;
-      max-height:82px;
-      width:auto;
-      height:auto;
-      display:block;
-      object-fit:contain;
-    }
-
-    .fav-thumb-placeholder{
-      font-size:12px;
-      line-height:1.2;
-      text-align:center;
-      font-weight:700;
-      color:var(--muted);
-      padding:8px;
-    }
-
-    .fav-main{
-      min-width:0;
-    }
-
-    .fav-brand-row{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      margin-bottom:4px;
-      min-width:0;
-    }
-
-    .fav-brand-link{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      min-width:0;
-      max-width:100%;
-      color:inherit;
-      text-decoration:none;
-      border-radius:10px;
-      -webkit-tap-highlight-color:transparent;
-    }
-
-    .fav-brand-link:focus-visible{
-      outline:2px solid var(--accent);
-      outline-offset:2px;
-    }
-
-    .fav-brand-icon-wrap{
-      width:24px;
-      height:24px;
-      border-radius:8px;
-      background:var(--pill-bg);
-      border:1px solid var(--pill-border);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      flex:0 0 auto;
-    }
-
-    .fav-brand-icon{
-      width:20px;
-      height:20px;
-      display:block;
-      object-fit:contain;
-    }
-
-    .fav-brand-icon-placeholder{
-      width:20px;
-      height:20px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:10px;
+      margin:8px 2px 10px;
+      font-family:var(--font-display);
+      font-size:56px;
       font-weight:900;
-      color:var(--muted);
-    }
-
-    .fav-brand{
-      font-size:13px;
-      line-height:1.15;
-      font-weight:800;
-      letter-spacing:-.01em;
-      color:var(--muted);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      min-width:0;
-    }
-
-    .fav-name{
-      font-size:21px;
-      line-height:1.02;
-      font-weight:800;
-      letter-spacing:-.04em;
-      color:var(--ink);
-      margin-bottom:10px;
-      word-break:break-word;
-    }
-
-    .fav-meta{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-
-    .fav-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      min-height:30px;
-      padding:6px 10px;
-      border-radius:999px;
-      background:var(--pill-bg);
-      border:1px solid var(--pill-border);
-      font-size:12px;
-      line-height:1;
-      font-weight:800;
-      letter-spacing:.02em;
-      color:var(--ink);
-    }
-
-    .fav-pill-label{
-      color:var(--muted);
-      font-weight:700;
-      letter-spacing:.04em;
-      text-transform:uppercase;
-    }
-
-    .fav-side{
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:10px;
-      min-height:94px;
-    }
-
-    .fav-open{
-      font-size:12px;
-      font-weight:800;
-      color:var(--accent);
-      letter-spacing:.04em;
-      text-transform:uppercase;
-      white-space:nowrap;
-    }
-
-    .fav-remove{
-      appearance:none;
-      border:0;
-      background:transparent;
-      color:var(--danger);
-      font-size:13px;
-      line-height:1;
-      font-weight:800;
-      padding:8px 4px;
-      cursor:pointer;
-      white-space:nowrap;
-    }
-
-    .fav-remove:active{
-      transform:translateY(1px);
+      letter-spacing:-.065em;
+      line-height:.90;
+      color:var(--text);
     }
 
     .summary{
-      margin:0 2px 14px;
-      font-size:14px;
-      line-height:1.35;
-      font-weight:700;
-      color:var(--muted);
+      margin:0 2px 18px;
+      color:var(--muted2);
+      font-family:var(--font-display);
+      font-size:15px;
+      font-weight:600;
     }
 
-    .top-actions{
+    .favorites-actions{
       display:flex;
       justify-content:flex-end;
-      margin-bottom:12px;
+      margin:0 2px 12px;
     }
 
     .clear-btn{
-      appearance:none;
-      border:1px solid var(--pill-border);
-      background:var(--pill-bg);
-      color:var(--ink);
-      min-height:38px;
+      height:38px;
       padding:0 14px;
+      border:0;
       border-radius:999px;
+      background:var(--glass2);
+      color:var(--muted);
+      box-shadow:var(--shadow-soft);
+      font-family:var(--font-display);
       font-size:13px;
-      font-weight:800;
-      letter-spacing:.02em;
+      font-weight:750;
       cursor:pointer;
+      appearance:none;
     }
 
     .clear-btn[hidden]{
       display:none !important;
     }
+
+    .brand-list{
+      padding:8px 2px 0;
+    }
+
+    .brand-row{
+      position:relative;
+      display:grid;
+      grid-template-columns:56px minmax(0,1fr) 84px;
+      align-items:center;
+      gap:12px;
+      padding:14px 12px;
+      border-radius:24px;
+      background:var(--glass2);
+      box-shadow:var(--shadow-soft);
+      margin-bottom:10px;
+      isolation:isolate;
+      text-decoration:none;
+      color:inherit;
+    }
+
+    .brand-row::after{
+      content:"";
+      position:absolute;
+      right:-18px;
+      bottom:-18px;
+      width:110px;
+      height:110px;
+      border-radius:50%;
+      background:radial-gradient(circle, var(--glow) 0%, transparent 68%);
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .brand-row > *{
+      position:relative;
+      z-index:1;
+    }
+
+    .row-ico{
+      width:56px;
+      height:56px;
+      border-radius:16px;
+      object-fit:cover;
+      background:transparent;
+      padding:0;
+      border:none;
+      box-shadow:none;
+    }
+
+    .brand-row-left{
+      min-width:0;
+      cursor:pointer;
+    }
+
+    .brand-row-title{
+      font-family:var(--font-display);
+      font-size:17px;
+      font-weight:750;
+      letter-spacing:-.02em;
+      color:var(--text);
+      line-height:1.04;
+    }
+
+    .brand-row-sub{
+      display:block;
+      margin-top:4px;
+      font-family:var(--font-display);
+      font-size:14px;
+      font-weight:500;
+      line-height:1.1;
+      letter-spacing:-.01em;
+      color:var(--muted2);
+    }
+
+    .brand-row-right{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:10px;
+      width:78px;
+      min-width:78px;
+    }
+
+    .brand-row-msrp{
+      font-family:var(--font-display);
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:-.03em;
+      line-height:1;
+      color:var(--text);
+    }
+
+    .qty-btn{
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      border:0;
+      background:var(--green);
+      color:#fff;
+      display:grid;
+      place-items:center;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+      appearance:none;
+      -webkit-tap-highlight-color:transparent;
+      box-shadow:0 8px 16px rgba(0,0,0,.18);
+    }
+
+    .empty,
+    .loading,
+    .error{
+      padding:24px 12px;
+      text-align:center;
+      color:var(--muted);
+      font-family:var(--font-display);
+      font-size:18px;
+      font-weight:700;
+    }
+
+    .cigars-bottom-bar{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      z-index:1000;
+      pointer-events:none;
+      padding:0 12px calc(10px + var(--safe-bottom));
+    }
+
+    .cigars-bottom-bar-inner{
+      width:min(430px, 100%);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      gap:8px;
+      padding:10px;
+      border-radius:26px;
+      border:1px solid var(--stroke);
+      background:var(--glass);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(26px) saturate(1.12);
+      -webkit-backdrop-filter:blur(26px) saturate(1.12);
+      pointer-events:auto;
+    }
+
+    .cb-nav-btn{
+      min-height:54px;
+      border-radius:18px;
+      border:0;
+      background:transparent;
+      text-decoration:none;
+      color:var(--text);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:5px;
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+      cursor:pointer;
+      appearance:none;
+      position:relative;
+    }
+
+    .cb-nav-icon{
+      width:22px;
+      height:22px;
+      display:block;
+      object-fit:contain;
+    }
+
+    .cb-nav-btn.is-active{
+      background:rgba(255,255,255,.08);
+    }
+
+    html[data-theme="light"] .cb-nav-btn.is-active{
+      background:rgba(15,23,40,.05);
+    }
+
+    .pos-action-sheet{
+      position:fixed;
+      inset:0;
+      z-index:5000;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding:18px 14px calc(18px + var(--safe-bottom));
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .18s ease;
+    }
+
+    .pos-action-sheet[hidden]{
+      display:none !important;
+    }
+
+    .pos-action-sheet.is-open{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .pos-action-backdrop{
+      position:absolute;
+      inset:0;
+      background:rgba(0,0,0,.34);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+    }
+
+    .pos-action-card{
+      position:relative;
+      z-index:1;
+      width:min(430px, 100%);
+      border-radius:30px;
+      padding:22px 18px 18px;
+      background:rgba(255,255,255,.94);
+      color:#0b1220;
+      border:1px solid rgba(255,255,255,.70);
+      box-shadow:0 24px 70px rgba(0,0,0,.30);
+      transform:translateY(22px);
+      transition:transform .22s cubic-bezier(.2,.9,.2,1);
+    }
+
+    .pos-action-sheet.is-open .pos-action-card{
+      transform:translateY(0);
+    }
+
+    .pos-action-title{
+      font-family:var(--font-display);
+      font-size:28px;
+      line-height:1;
+      font-weight:900;
+      letter-spacing:-.045em;
+      text-align:center;
+      margin:0 0 22px;
+      color:#0b1220;
+    }
+
+    .pos-action-lines{
+      display:grid;
+      gap:16px;
+    }
+
+    .pos-action-line{
+      padding:14px 14px 12px;
+      border-radius:22px;
+      background:rgba(15,26,44,.045);
+      border:1px solid rgba(15,26,44,.07);
+    }
+
+    .pos-action-line-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+
+    .pos-action-label{
+      font-family:var(--font-display);
+      font-size:22px;
+      line-height:1;
+      font-weight:850;
+      letter-spacing:-.035em;
+      color:#0b1220;
+    }
+
+    .pos-action-stepper{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:13px;
+      font-family:var(--font-display);
+      font-weight:900;
+      color:#0b1220;
+    }
+
+    .pos-action-stepper button{
+      width:32px;
+      height:32px;
+      border:0;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      background:#0b1220;
+      color:#fff;
+      font-size:20px;
+      line-height:1;
+      font-weight:800;
+      cursor:pointer;
+      appearance:none;
+    }
+
+    .pos-action-stepper span{
+      min-width:24px;
+      text-align:center;
+      font-size:22px;
+      line-height:1;
+      font-weight:900;
+    }
+
+    .pos-action-line-bottom{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding-top:10px;
+      font-family:var(--font-display);
+      font-size:17px;
+      line-height:1;
+      font-weight:800;
+      letter-spacing:-.02em;
+      color:rgba(11,18,32,.64);
+    }
+
+    .pos-action-line-bottom span:last-child{
+      color:#0b1220;
+    }
+
+    .pos-action-total{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:18px 2px 16px;
+      font-family:var(--font-display);
+      font-size:22px;
+      line-height:1;
+      font-weight:850;
+      letter-spacing:-.035em;
+      color:#0b1220;
+    }
+
+    .pos-action-total strong{
+      font-size:24px;
+      font-weight:950;
+    }
+
+    .pos-action-buttons{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .pos-action-buttons button,
+    .pos-action-favorite{
+      height:52px;
+      border:0;
+      border-radius:18px;
+      font-family:var(--font-display);
+      font-size:18px;
+      font-weight:850;
+      cursor:pointer;
+      appearance:none;
+    }
+
+    .pos-action-cancel{
+      background:rgba(15,26,44,.07);
+      color:#0b1220;
+    }
+
+    .pos-action-add{
+      background:#34c759;
+      color:#fff;
+      box-shadow:0 12px 24px rgba(52,199,89,.24);
+    }
+
+    .pos-action-favorite{
+      width:100%;
+      margin-top:12px;
+      background:rgba(255,204,0,.18);
+      color:#0b1220;
+    }
+
+    .pos-action-favorite.is-saved{
+      background:rgba(52,199,89,.16);
+      color:#168034;
+    }
+
+    .pos-toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(104px + var(--safe-bottom));
+      z-index:7000;
+      transform:translate(-50%, 12px);
+      opacity:0;
+      pointer-events:none;
+      padding:12px 16px;
+      border-radius:999px;
+      background:rgba(11,18,32,.92);
+      color:#fff;
+      font-family:var(--font-display);
+      font-size:14px;
+      font-weight:800;
+      box-shadow:0 12px 26px rgba(0,0,0,.28);
+      transition:opacity .18s ease, transform .18s ease;
+    }
+
+    .pos-toast.is-showing{
+      opacity:1;
+      transform:translate(-50%, 0);
+    }
+
+    @media (max-width:390px){
+      .favorites-topbar{
+        grid-template-columns:40px 1fr 50px;
+        width:calc(100% - 18px);
+      }
+
+      .favorites-back{
+        width:40px;
+        height:40px;
+      }
+
+      #theme-toggle{
+        width:50px;
+        height:30px;
+      }
+
+      #theme-toggle .knob{
+        width:24px;
+        height:24px;
+      }
+
+      #theme-toggle .icon-sun,
+      #theme-toggle .icon-moon{
+        width:24px;
+        height:24px;
+      }
+
+      html[data-theme="dark"] #theme-toggle .knob{
+        transform:translateX(20px);
+      }
+
+      .favorites-main{
+        width:calc(100% - 18px);
+      }
+
+      .page-title{
+        font-size:46px;
+      }
+
+      .brand-row{
+        grid-template-columns:52px minmax(0,1fr) 72px;
+        padding:12px;
+        border-radius:20px;
+        margin-bottom:9px;
+      }
+
+      .row-ico{
+        width:52px;
+        height:52px;
+      }
+
+      .brand-row-sub{
+        font-size:13px;
+      }
+
+      .brand-row-msrp{
+        font-size:17px;
+      }
+
+      .qty-btn{
+        width:24px;
+        height:24px;
+        font-size:15px;
+      }
+
+      .brand-row-right{
+        width:72px;
+        min-width:72px;
+      }
+    }
   </style>
 </head>
-<body>
-  <div id="universalTopbar"></div>
 
-  <main class="wrap">
+<body class="favorites-page">
+  <header class="favorites-topbar">
+    <button
+      type="button"
+      class="favorites-back glass-surface"
+      aria-label="Back"
+      onclick="history.length > 1 ? history.back() : window.location.href='/pos/cigars/'"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 18L9 12L15 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+
+    <div aria-hidden="true"></div>
+
+    <div class="favorites-theme-dock">
+      <button id="theme-toggle" class="glass-surface" type="button" aria-label="Toggle theme" aria-pressed="false">
+        <span class="knob" aria-hidden="true">
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.25" fill="currentColor"></circle>
+            <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23 5.46 5.46"></path>
+            </g>
+          </svg>
+          <img class="icon-moon" src="/uxui/moon.svg" alt="" />
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <main class="favorites-main">
     <h1 class="page-title">Favorites</h1>
     <div class="summary" id="favoritesSummary">Loading favorites…</div>
 
-    <div class="top-actions">
+    <div class="favorites-actions">
       <button class="clear-btn" id="clearFavoritesBtn" type="button" hidden>Clear All</button>
     </div>
 
-    <section class="card">
-      <div id="favoritesContent" class="loading">Loading favorites…</div>
+    <section class="brand-list" id="favoritesContent">
+      <div class="loading">Loading favorites…</div>
     </section>
   </main>
 
-  <script src="/uxui/topbar/topbar.js"></script>
+  <nav class="cigars-bottom-bar" aria-label="Primary">
+    <div class="cigars-bottom-bar-inner">
+      <button type="button" class="cb-nav-btn" id="cbSearchBtn" aria-label="Search">
+        <img class="cb-nav-icon" src="/uxui/bottombar/search.svg" alt="" />
+        <span>Search</span>
+      </button>
+
+      <a class="cb-nav-btn" href="/" aria-label="Home">
+        <img class="cb-nav-icon" src="/uxui/bottombar/home.svg" alt="" />
+        <span>Home</span>
+      </a>
+
+      <a class="cb-nav-btn is-active" href="/pos/favorites/" aria-label="Favorites">
+        <img class="cb-nav-icon" src="/uxui/bottombar/favorites.svg" alt="" />
+        <span>Favorites</span>
+      </a>
+
+      <a class="cb-nav-btn" href="/pos/invoice/" aria-label="Cart">
+        <img class="cb-nav-icon" src="/uxui/bottombar/cart.svg" alt="" />
+        <span>Cart</span>
+      </a>
+    </div>
+  </nav>
+
+  <script src="/pos/cart.js?v=35" defer></script>
+  <script src="/pos/pos.js?v=35" defer></script>
+
   <script>
     (() => {
       "use strict";
@@ -351,9 +796,7 @@
       const SHEET_CSV_URL =
         "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
-      const FAVORITES_KEY = "cigaros_favorite_keys";
-      const LENGTH_COL_INDEX = 11;
-      const RING_COL_INDEX = 12;
+      const POS_CIGAR_FAVORITES_KEY = "cigaros_pos_favorites_cigars";
 
       const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -361,100 +804,46 @@
       const summary = $("#favoritesSummary");
       const clearBtn = $("#clearFavoritesBtn");
 
-      function getSavedTheme() {
-        return localStorage.getItem("theme") || document.documentElement.getAttribute("data-theme") || "light";
+      const state = {
+        records: [],
+        actionRow: null,
+        singleQty: 1,
+        boxQty: 0,
+      };
+
+      function norm(v){
+        return String(v ?? "").trim().replace(/\s+/g, " ");
       }
 
-      function applyTheme(theme) {
-        document.documentElement.setAttribute("data-theme", theme === "dark" ? "dark" : "light");
+      function esc(s){
+        return String(s ?? "")
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;")
+          .replaceAll("'","&#039;");
       }
 
-      function parseCSV(text) {
-        const rows = [];
-        let row = [];
-        let cur = "";
-        let inQuotes = false;
-
-        for (let i = 0; i < text.length; i++) {
-          const ch = text[i];
-          const next = text[i + 1];
-
-          if (ch === '"' && inQuotes && next === '"') {
-            cur += '"';
-            i++;
-            continue;
-          }
-
-          if (ch === '"') {
-            inQuotes = !inQuotes;
-            continue;
-          }
-
-          if (ch === "," && !inQuotes) {
-            row.push(cur);
-            cur = "";
-            continue;
-          }
-
-          if ((ch === "\n" || ch === "\r") && !inQuotes) {
-            if (ch === "\r" && next === "\n") i++;
-            row.push(cur);
-            rows.push(row);
-            row = [];
-            cur = "";
-            continue;
-          }
-
-          cur += ch;
-        }
-
-        if (cur.length || row.length) {
-          row.push(cur);
-          rows.push(row);
-        }
-
-        return rows;
+      function normalizeHeader(h){
+        return String(h || "")
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .replace(/[^a-z0-9 ]/g, "")
+          .replace(/ /g, "_");
       }
 
-      function normalizeHeader(h) {
-        return String(h || "").trim().toLowerCase().replace(/\s+/g, "");
+      function normalizeBrand(v){
+        return String(v || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/&/g, "and")
+          .replace(/[^a-z0-9]+/g, "");
       }
 
-      function rowsToObjects(rows) {
-        if (!rows || rows.length < 2) return [];
-        const headers = rows[0].map((h) => String(h || "").trim());
-        const normHeaders = headers.map(normalizeHeader);
-
-        const data = [];
-        for (let i = 1; i < rows.length; i++) {
-          const r = rows[i];
-          if (!r || r.every((c) => !String(c || "").trim())) continue;
-
-          const obj = {};
-          for (let j = 0; j < headers.length; j++) {
-            obj[headers[j]] = r[j] ?? "";
-            obj[normHeaders[j]] = r[j] ?? "";
-          }
-
-          obj.__row = r;
-          obj.__length_col = r[LENGTH_COL_INDEX] ?? "";
-          obj.__ring_col = r[RING_COL_INDEX] ?? "";
-          data.push(obj);
-        }
-
-        return data;
-      }
-
-      function getField(rec, keys) {
-        for (const key of keys) {
-          const value = rec?.[key];
-          if (value != null && String(value).trim() !== "") return String(value).trim();
-        }
-        return "";
-      }
-
-      function normalizeLoose(s) {
-        return String(s || "")
+      function normalizeLoose(v){
+        return String(v || "")
           .trim()
           .toLowerCase()
           .normalize("NFD")
@@ -466,448 +855,640 @@
           .trim();
       }
 
-      function slugify(s) {
-        return normalizeLoose(s).replace(/\s+/g, "-");
-      }
-
-      function compactKey(s) {
-        return String(s || "")
-          .trim()
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/&/g, "and")
-          .replace(/["'’]/g, "")
-          .replace(/[^a-z0-9]+/g, "");
-      }
-
-      function normalizeBrand(v) {
-        return compactKey(v);
-      }
-
-      function normalizeAssetPath(path) {
+      function normalizeAssetPath(path){
         const value = String(path || "").trim();
-        if (!value) return "";
-        if (/^https?:\/\//i.test(value)) return value;
+        if(!value) return "";
+        if(/^https?:\/\//i.test(value)) return value;
         return value.startsWith("/") ? value : `/${value}`;
       }
 
-      function escapeHTML(s) {
-        return String(s ?? "")
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#039;");
-      }
+      function parseCSV(text){
+        const rows = [];
+        let cur = [];
+        let field = "";
+        let inQuotes = false;
 
-      function escapeAttr(s) {
-        return escapeHTML(s);
-      }
+        for(let i = 0; i < text.length; i++){
+          const ch = text[i];
+          const next = text[i + 1];
 
-      function getCigarId(rec) {
-        return getField(rec, [
-          "Key",
-          "key",
-          "Cigar ID",
-          "cigarId",
-          "cigarid",
-          "cigar_id",
-          "id",
-          "row_id"
-        ]);
-      }
-
-      function getBrand(rec) {
-        return getField(rec, ["Brand", "brand", "brandname", "Brand aka", "brandaka"]);
-      }
-
-      function getLine(rec) {
-        return getField(rec, ["Line", "line", "Series", "series"]);
-      }
-
-      function getName(rec) {
-        return getField(rec, ["Cigar", "cigar", "Name", "name"]);
-      }
-
-      function getVitola(rec) {
-        return getField(rec, ["Vitola", "vitola", "Style", "style", "Size", "size"]);
-      }
-
-      function getShape(rec) {
-        return getField(rec, ["Shape", "shape"]);
-      }
-
-      function getWrapper(rec) {
-        return getField(rec, ["Wrapper", "wrapper"]);
-      }
-
-      function getStrength(rec) {
-        return getField(rec, ["Strength", "strength"]);
-      }
-
-      function getRing(rec) {
-        const direct = getField(rec, ["Ring", "ring", "RG", "rg", "Ring Size", "ringsize"]);
-        if (direct) return direct;
-        return String(rec?.__ring_col || "").trim();
-      }
-
-      function getLength(rec) {
-        const direct = getField(rec, ["Length", "length", "Len", "len"]);
-        if (direct) return direct;
-        return String(rec?.__length_col || "").trim();
-      }
-
-      function getImage(rec) {
-        return getField(rec, ["Cigar IMG", "cigarimg", "Image", "image", "Photo", "photo"]);
-      }
-
-      function getBrandImage(rec) {
-        return getField(rec, ["Brand IMG", "brandimg", "brand_image"]);
-      }
-
-      function makeSlugFromRecord(rec) {
-        const id = getCigarId(rec);
-        const brand = getBrand(rec);
-        const line = getLine(rec);
-        const name = getName(rec);
-        const vitola = getVitola(rec);
-        return slugify([brand, line, name, vitola, id].filter(Boolean).join(" "));
-      }
-
-      function scoreRecord(rec) {
-        let score = 0;
-        if (getRing(rec)) score += 50;
-        if (getLength(rec)) score += 50;
-        if (getImage(rec)) score += 5;
-        if (getVitola(rec)) score += 3;
-        if (getShape(rec)) score += 3;
-        if (getWrapper(rec)) score += 2;
-        if (getStrength(rec)) score += 2;
-        return score;
-      }
-
-      function buildBrandHref(brand) {
-        const value = String(brand || "").trim();
-        if (!value) return "/pos/cigars/";
-        return `/pos/cigars/brand?brand=${encodeURIComponent(value)}`;
-      }
-
-      function buildBrandIconCandidates(rec) {
-        const fromSheet = normalizeAssetPath(getBrandImage(rec));
-        const brand = getBrand(rec);
-        const brandKey = normalizeBrand(brand);
-
-        const out = [];
-        if (fromSheet) out.push(fromSheet);
-
-        if (brandKey) {
-          out.push(`/img/icons/brands/${brandKey}.svg`);
-          out.push(`/img/icons/brands/${brandKey}.png`);
+          if(inQuotes){
+            if(ch === '"' && next === '"'){
+              field += '"';
+              i++;
+            }else if(ch === '"'){
+              inQuotes = false;
+            }else{
+              field += ch;
+            }
+          }else{
+            if(ch === '"') inQuotes = true;
+            else if(ch === ","){
+              cur.push(field);
+              field = "";
+            }else if(ch === "\n"){
+              cur.push(field);
+              rows.push(cur);
+              cur = [];
+              field = "";
+            }else if(ch !== "\r"){
+              field += ch;
+            }
+          }
         }
 
-        return Array.from(new Set(out.filter(Boolean)));
+        cur.push(field);
+        rows.push(cur);
+        return rows;
       }
 
-      function buildCigarImageCandidates(rec) {
-        const fromSheet = normalizeAssetPath(getImage(rec));
-        const brand = getBrand(rec);
-        const line = getLine(rec);
-        const cigar = getName(rec);
-        const vitola = getVitola(rec);
+      function mapRows(csv){
+        const headers = csv[0] || [];
+        const keys = headers.map(normalizeHeader);
 
-        const brandFolder = normalizeBrand(brand);
-        const brandKey = compactKey(brand);
-        const lineKey = compactKey(line);
-        const cigarKey = compactKey(cigar);
-        const vitolaKey = compactKey(vitola);
-
-        const out = [];
-        if (fromSheet) out.push(fromSheet);
-
-        if (brandFolder) {
-          const names = [];
-
-          if (brandKey && lineKey && cigarKey) names.push(`${brandKey}${lineKey}${cigarKey}`);
-          if (brandKey && lineKey && cigarKey && vitolaKey) names.push(`${brandKey}${lineKey}${cigarKey}${vitolaKey}`);
-          if (lineKey && cigarKey) names.push(`${lineKey}${cigarKey}`);
-          if (lineKey && cigarKey && vitolaKey) names.push(`${lineKey}${cigarKey}${vitolaKey}`);
-          if (brandKey && cigarKey) names.push(`${brandKey}${cigarKey}`);
-          if (brandKey && cigarKey && vitolaKey) names.push(`${brandKey}${cigarKey}${vitolaKey}`);
-          if (cigarKey) names.push(`${cigarKey}`);
-          if (cigarKey && vitolaKey) names.push(`${cigarKey}${vitolaKey}`);
-
-          Array.from(new Set(names)).forEach((name) => {
-            out.push(`/img/cigars/${brandFolder}/${name}.png`);
+        return csv.slice(1)
+          .filter((r) => r && !r.every((c) => !String(c || "").trim()))
+          .map((r) => {
+            const obj = {};
+            keys.forEach((k, i) => {
+              obj[k] = (r[i] ?? "").trim();
+            });
+            return obj;
           });
+      }
+
+      function getField(r, keys){
+        for(const k of keys){
+          if(r && r[k] != null && String(r[k]).trim() !== ""){
+            return String(r[k]).trim();
+          }
+        }
+        return "";
+      }
+
+      function resolveBrandVal(r){
+        return getField(r, ["brand", "brand_name", "manufacturer_brand", "cigar_brand"]);
+      }
+
+      function resolveManufacturerVal(r){
+        return getField(r, ["manufacturer", "maker"]);
+      }
+
+      function resolveLine(r){
+        return getField(r, ["line", "series"]);
+      }
+
+      function resolveName(r){
+        return getField(r, ["cigar", "name"]);
+      }
+
+      function resolveVitola(r){
+        return getField(r, ["vitola", "style", "vitola_name", "size"]);
+      }
+
+      function resolveRing(r){
+        return getField(r, ["ring", "ring_gauge", "rg"]);
+      }
+
+      function resolveLength(r){
+        return getField(r, ["length"]);
+      }
+
+      function resolveShape(r){
+        return getField(r, ["shape"]);
+      }
+
+      function resolveWrapper(r){
+        return getField(r, ["wrapper"]);
+      }
+
+      function resolveBinder(r){
+        return getField(r, ["binder"]);
+      }
+
+      function resolveFiller(r){
+        return getField(r, ["filler"]);
+      }
+
+      function resolveOrigin(r){
+        return getField(r, ["origin", "country_of_origin", "country"]);
+      }
+
+      function resolveStrength(r){
+        return getField(r, ["strength"]);
+      }
+
+      function resolveShade(r){
+        return getField(r, ["wrapper_shade", "wrapper_shade_type", "shade", "wrapper"]);
+      }
+
+      function resolveBrandImage(r){
+        return getField(r, ["brand_img", "brand_image", "brandicon", "brand_icon"]);
+      }
+
+      function resolveLineImage(r){
+        return getField(r, ["line_img", "line_image", "lineicon", "line_icon", "brand_line_img"]);
+      }
+
+      function resolveDetailKey(r){
+        return getField(r, ["key", "cigar_id", "id", "row_id"]);
+      }
+
+      function resolveDisplayName(r){
+        const line = resolveLine(r);
+        const cigar = resolveName(r);
+        return [line, cigar].filter(Boolean).join(" ").trim() || cigar || line || "";
+      }
+
+      function resolveFavoriteKey(r){
+        return (
+          resolveDetailKey(r) ||
+          [resolveBrandVal(r), resolveLine(r), resolveName(r), resolveVitola(r)]
+            .filter(Boolean)
+            .join("|")
+        );
+      }
+
+      function resolvePriceNumber(r){
+        const raw = getField(r, ["msrp", "cigar_msrp", "cigar_retail"]);
+        const n = Number(String(raw || "").replace(/[^0-9.-]/g, ""));
+        return Number.isFinite(n) && n > 0 ? n : 0;
+      }
+
+      function resolvePrice(r){
+        const n = resolvePriceNumber(r);
+        return n > 0 ? n.toFixed(2) : "—";
+      }
+
+      function resolveBoxCount(r){
+        const raw = getField(r, ["box_count", "box_qty", "box_quantity", "count_per_box"]);
+        const n = Number(String(raw || "").replace(/[^0-9.]/g, ""));
+        return Number.isFinite(n) && n > 0 ? n : 20;
+      }
+
+      function resolveBoxMsrpNumber(r){
+        const raw = getField(r, ["box_msrp", "box_price", "box_retail"]);
+        const n = Number(String(raw || "").replace(/[^0-9.-]/g, ""));
+        if(Number.isFinite(n) && n > 0) return n;
+        return resolvePriceNumber(r) * resolveBoxCount(r);
+      }
+
+      function makeDetailHref(r){
+        const detailKey = resolveDetailKey(r);
+        if(detailKey) return `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`;
+
+        const fallbackKey = [resolveBrandVal(r), resolveDisplayName(r), resolveVitola(r)]
+          .filter(Boolean)
+          .join("|");
+
+        return `/pos/cigars/cigar.html?key=${encodeURIComponent(fallbackKey)}`;
+      }
+
+      function buildBrandIconCandidates(r){
+        const brandImg = normalizeAssetPath(resolveBrandImage(r));
+        const brand = normalizeBrand(resolveBrandVal(r));
+        const out = [];
+
+        if(brandImg) out.push(brandImg);
+        if(brand){
+          out.push(`/img/icons/brands/${brand}.svg`);
+          out.push(`/img/icons/brands/${brand}.png`);
         }
 
         return Array.from(new Set(out.filter(Boolean)));
       }
 
-      function wireImageFallback(img, fallbackText, fallbackClass = "fav-thumb-placeholder") {
-        if (!img) return;
-
-        function tryNext() {
-          let fallbacks = [];
-          try {
-            fallbacks = JSON.parse(img.dataset.fallbacks || "[]");
-          } catch {
-            fallbacks = [];
-          }
-
-          const next = fallbacks.shift();
-          img.dataset.fallbacks = JSON.stringify(fallbacks);
-
-          if (next) {
-            img.src = next;
-            return;
-          }
-
-          const fallback = document.createElement("div");
-          fallback.className = fallbackClass;
-          fallback.textContent = fallbackText;
-          img.replaceWith(fallback);
-        }
-
-        img.addEventListener("error", tryNext, { once: false });
+      function rowIconCandidatesForRow(r){
+        const lineImg = normalizeAssetPath(resolveLineImage(r));
+        const brandImg = normalizeAssetPath(resolveBrandImage(r));
+        return Array.from(new Set([lineImg, brandImg, ...buildBrandIconCandidates(r)].filter(Boolean)));
       }
 
-      function readFavoriteIds() {
-        try {
-          const raw = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
-          return Array.isArray(raw) ? raw.filter(Boolean) : [];
-        } catch {
+      function bindImageFallback(img, candidates){
+        if(!img) return;
+
+        const list = Array.from(new Set(candidates.filter(Boolean)));
+        let idx = 0;
+
+        img.onerror = () => {
+          idx++;
+          if(idx < list.length){
+            img.src = list[idx];
+          }else{
+            img.onerror = null;
+            img.style.visibility = "hidden";
+          }
+        };
+
+        if(list[0]) img.src = list[0];
+        else img.style.visibility = "hidden";
+      }
+
+      function readFavorites(){
+        try{
+          const raw = JSON.parse(localStorage.getItem(POS_CIGAR_FAVORITES_KEY) || "[]");
+          return Array.isArray(raw) ? raw : [];
+        }catch{
           return [];
         }
       }
 
-      function writeFavoriteIds(ids) {
-        localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(new Set(ids))));
+      function writeFavorites(items){
+        localStorage.setItem(POS_CIGAR_FAVORITES_KEY, JSON.stringify(items));
       }
 
-      function removeFavorite(id) {
-        const next = readFavoriteIds().filter((v) => v !== id);
-        writeFavoriteIds(next);
-        return next;
-      }
+      function findRecordByFavorite(records, fav){
+        const key = String(fav?.key || fav || "").trim();
+        if(!key) return null;
 
-      function findRecordByFavoriteId(records, id) {
-        const raw = String(id || "").trim();
-        if (!raw) return null;
+        const loose = normalizeLoose(key);
 
-        const targetLoose = normalizeLoose(raw);
-        const targetSlug = slugify(raw);
-
-        const matches = records.filter((r) => {
+        return records.find((r) => {
           const candidates = [
-            getCigarId(r),
-            getName(r),
-            [getLine(r), getName(r)].filter(Boolean).join(" ").trim(),
-            [getBrand(r), getLine(r), getName(r)].filter(Boolean).join(" ").trim(),
-            [getBrand(r), getName(r)].filter(Boolean).join(" ").trim(),
-            [getName(r), getVitola(r)].filter(Boolean).join(" ").trim(),
-            makeSlugFromRecord(r)
-          ]
-            .filter(Boolean)
-            .map((v) => String(v).trim());
+            resolveFavoriteKey(r),
+            resolveDetailKey(r),
+            [resolveBrandVal(r), resolveLine(r), resolveName(r), resolveVitola(r)].filter(Boolean).join("|"),
+            [resolveBrandVal(r), resolveLine(r), resolveName(r), resolveVitola(r)].filter(Boolean).join(" "),
+            [resolveLine(r), resolveName(r)].filter(Boolean).join(" "),
+            resolveDisplayName(r),
+          ].filter(Boolean);
 
-          return candidates.some((value) => {
-            return value === raw || normalizeLoose(value) === targetLoose || slugify(value) === targetSlug;
-          });
-        });
-
-        if (!matches.length) return null;
-        matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
-        return matches[0];
+          return candidates.some((c) => String(c).trim() === key || normalizeLoose(c) === loose);
+        }) || null;
       }
 
-      function buildDetailHref(rec) {
-        const id = getCigarId(rec);
-        const slug = makeSlugFromRecord(rec);
-        const params = new URLSearchParams();
-        if (id) params.set("id", id);
-        if (slug) params.set("slug", slug);
-        return `/pos/cigars/cigar/?${params.toString()}`;
+      function isFavorite(r){
+        const key = resolveFavoriteKey(r);
+        return readFavorites().some((item) => item && item.key === key);
       }
 
-      function createRow(rec) {
-        const id = getCigarId(rec);
-        const brand = getBrand(rec) || "—";
-        const line = getLine(rec);
-        const name = getName(rec);
-        const displayName = [line, name].filter(Boolean).join(" ").trim() || name || line || "—";
-        const vitola = getVitola(rec) || "—";
-        const ring = getRing(rec) || "—";
-        const length = getLength(rec) || "—";
-        const shape = getShape(rec) || "—";
-        const wrapper = getWrapper(rec) || "—";
-        const strength = getStrength(rec) || "—";
+      function removeFavorite(r){
+        const key = resolveFavoriteKey(r);
+        writeFavorites(readFavorites().filter((item) => item && item.key !== key));
+      }
 
-        const imageCandidates = buildCigarImageCandidates(rec);
-        const brandImageCandidates = buildBrandIconCandidates(rec);
-        const href = buildDetailHref(rec);
-        const brandHref = buildBrandHref(brand);
+      function showToast(message){
+        let toast = document.querySelector(".pos-toast");
 
-        const row = document.createElement("a");
-        row.className = "fav-row";
-        row.href = href;
-        row.innerHTML = `
-          <div class="fav-thumb-wrap">
-            ${
-              imageCandidates.length
-                ? `<img
-                    class="fav-thumb"
-                    src="${escapeAttr(imageCandidates[0])}"
-                    data-fallbacks='${escapeAttr(JSON.stringify(imageCandidates.slice(1)))}'
-                    alt="${escapeAttr(displayName)}"
-                    loading="lazy"
-                    decoding="async">`
-                : `<div class="fav-thumb-placeholder">No image</div>`
-            }
-          </div>
+        if(!toast){
+          toast = document.createElement("div");
+          toast.className = "pos-toast";
+          document.body.appendChild(toast);
+        }
 
-          <div class="fav-main">
-            <div class="fav-brand-row">
-              <a class="fav-brand-link" href="${escapeAttr(brandHref)}" data-brand-link="true" aria-label="Open ${escapeAttr(brand)} brand page">
-                <span class="fav-brand-icon-wrap">
-                  ${
-                    brandImageCandidates.length
-                      ? `<img
-                          class="fav-brand-icon"
-                          src="${escapeAttr(brandImageCandidates[0])}"
-                          data-fallbacks='${escapeAttr(JSON.stringify(brandImageCandidates.slice(1)))}'
-                          alt="${escapeAttr(brand)}"
-                          loading="lazy"
-                          decoding="async">`
-                      : `<span class="fav-brand-icon-placeholder">${escapeHTML(String(brand).slice(0, 1).toUpperCase() || "B")}</span>`
-                  }
-                </span>
-                <span class="fav-brand">${escapeHTML(brand)}</span>
-              </a>
+        toast.textContent = message;
+        toast.classList.add("is-showing");
+
+        window.clearTimeout(toast.__timer);
+        toast.__timer = window.setTimeout(() => {
+          toast.classList.remove("is-showing");
+        }, 1300);
+      }
+
+      function money(n){
+        const num = Number(n || 0);
+        return Number.isFinite(num) ? num.toFixed(2) : "0.00";
+      }
+
+      function buildCartItem(r, type = "stick"){
+        const isBox = type === "box";
+        const unitPrice = isBox ? resolveBoxMsrpNumber(r) : resolvePriceNumber(r);
+        const detailKey = resolveDetailKey(r);
+
+        return {
+          key: `${detailKey || `${normalizeBrand(resolveBrandVal(r))}|${resolveDisplayName(r)}|${resolveVitola(r)}`}|${type}`,
+          type: "cigar",
+          purchaseType: type,
+          category: "Cigars",
+          id: detailKey || resolveName(r),
+          brand: resolveBrandVal(r),
+          manufacturer: resolveManufacturerVal(r),
+          line: resolveLine(r),
+          cigar: resolveName(r),
+          name: `${resolveDisplayName(r)}${isBox ? " (Box)" : ""}`,
+          displayName: resolveDisplayName(r),
+          vitola: resolveVitola(r),
+          ring: resolveRing(r),
+          length: resolveLength(r),
+          shape: resolveShape(r),
+          wrapper: resolveWrapper(r),
+          binder: resolveBinder(r),
+          filler: resolveFiller(r),
+          origin: resolveOrigin(r),
+          shade: resolveShade(r),
+          strength: resolveStrength(r),
+          image: rowIconCandidatesForRow(r)[0] || "",
+          msrp: unitPrice,
+          boxCount: resolveBoxCount(r),
+          url: makeDetailHref(r),
+        };
+      }
+
+      function ensureActionSheet(){
+        if($("#pos-action-sheet")) return;
+
+        const sheet = document.createElement("div");
+        sheet.id = "pos-action-sheet";
+        sheet.className = "pos-action-sheet";
+        sheet.hidden = true;
+
+        sheet.innerHTML = `
+          <div class="pos-action-backdrop" data-action-close></div>
+
+          <div class="pos-action-card" role="dialog" aria-modal="true" aria-label="Add cigar">
+            <div class="pos-action-title" id="pos-action-title">Cigar</div>
+
+            <div class="pos-action-lines">
+              <div class="pos-action-line">
+                <div class="pos-action-line-top">
+                  <div class="pos-action-label">Single</div>
+                  <div class="pos-action-stepper">
+                    <button type="button" data-qty-minus="single">−</button>
+                    <span id="singleQty">1</span>
+                    <button type="button" data-qty-plus="single">+</button>
+                  </div>
+                </div>
+                <div class="pos-action-line-bottom">
+                  <span id="singleUnit">0.00</span>
+                  <span id="singleTotal">0.00</span>
+                </div>
+              </div>
+
+              <div class="pos-action-line">
+                <div class="pos-action-line-top">
+                  <div class="pos-action-label">Box</div>
+                  <div class="pos-action-stepper">
+                    <button type="button" data-qty-minus="box">−</button>
+                    <span id="boxQty">0</span>
+                    <button type="button" data-qty-plus="box">+</button>
+                  </div>
+                </div>
+                <div class="pos-action-line-bottom">
+                  <span id="boxUnit">0.00</span>
+                  <span id="boxTotal">0.00</span>
+                </div>
+              </div>
             </div>
 
-            <div class="fav-name">${escapeHTML(displayName)}</div>
-
-            <div class="fav-meta">
-              <div class="fav-pill"><span class="fav-pill-label">Vitola</span>${escapeHTML(vitola)}</div>
-              <div class="fav-pill"><span class="fav-pill-label">Ring</span>${escapeHTML(ring)}</div>
-              <div class="fav-pill"><span class="fav-pill-label">Length</span>${escapeHTML(length)}</div>
-              <div class="fav-pill"><span class="fav-pill-label">Shape</span>${escapeHTML(shape)}</div>
-              <div class="fav-pill"><span class="fav-pill-label">Wrapper</span>${escapeHTML(wrapper)}</div>
-              <div class="fav-pill"><span class="fav-pill-label">Strength</span>${escapeHTML(strength)}</div>
+            <div class="pos-action-total">
+              <span>Total:</span>
+              <strong id="actionTotal">$0.00</strong>
             </div>
-          </div>
 
-          <div class="fav-side">
-            <div class="fav-open">Open</div>
-            <button class="fav-remove" type="button" data-remove-id="${escapeAttr(id)}">Remove</button>
+            <div class="pos-action-buttons">
+              <button type="button" class="pos-action-cancel" data-action-close>Cancel</button>
+              <button type="button" class="pos-action-add" id="actionAddBtn">Add</button>
+            </div>
+
+            <button type="button" class="pos-action-favorite is-saved" id="actionFavoriteBtn">
+              Saved as Favorite
+            </button>
           </div>
         `;
 
-        const img = row.querySelector(".fav-thumb");
-        wireImageFallback(img, "No image");
+        document.body.appendChild(sheet);
+      }
 
-        const brandImg = row.querySelector(".fav-brand-icon");
-        wireImageFallback(brandImg, String(brand).slice(0, 1).toUpperCase() || "B", "fav-brand-icon-placeholder");
+      function updateActionSheet(){
+        const r = state.actionRow;
+        if(!r) return;
 
-        row.querySelectorAll("[data-brand-link='true']").forEach((el) => {
-          el.addEventListener("click", (e) => {
-            e.stopPropagation();
-          });
+        const singlePrice = resolvePriceNumber(r);
+        const boxPrice = resolveBoxMsrpNumber(r);
+
+        $("#singleQty").textContent = String(state.singleQty);
+        $("#boxQty").textContent = String(state.boxQty);
+
+        $("#singleUnit").textContent = money(singlePrice);
+        $("#singleTotal").textContent = money(singlePrice * state.singleQty);
+
+        $("#boxUnit").textContent = money(boxPrice);
+        $("#boxTotal").textContent = money(boxPrice * state.boxQty);
+
+        $("#actionTotal").textContent = `$${money(singlePrice * state.singleQty + boxPrice * state.boxQty)}`;
+      }
+
+      function openActionSheet(r){
+        ensureActionSheet();
+
+        state.actionRow = r;
+        state.singleQty = 1;
+        state.boxQty = 0;
+
+        $("#pos-action-title").textContent = resolveDisplayName(r) || "Cigar";
+
+        updateActionSheet();
+
+        const sheet = $("#pos-action-sheet");
+        sheet.hidden = false;
+        requestAnimationFrame(() => sheet.classList.add("is-open"));
+      }
+
+      function closeActionSheet(){
+        const sheet = $("#pos-action-sheet");
+        if(!sheet) return;
+
+        sheet.classList.remove("is-open");
+        window.setTimeout(() => {
+          if(!sheet.classList.contains("is-open")) sheet.hidden = true;
+        }, 180);
+      }
+
+      function addActionItemsToCart(){
+        const r = state.actionRow;
+        if(!r) return;
+
+        if(state.singleQty > 0){
+          const stickItem = buildCartItem(r, "stick");
+          const currentQty = window.cigarOSCart?.getItemQty?.(stickItem) || 0;
+          window.cigarOSCart?.setQty?.(stickItem, currentQty + state.singleQty);
+        }
+
+        if(state.boxQty > 0){
+          const boxItem = buildCartItem(r, "box");
+          const currentQty = window.cigarOSCart?.getItemQty?.(boxItem) || 0;
+          window.cigarOSCart?.setQty?.(boxItem, currentQty + state.boxQty);
+        }
+
+        showToast("Added to invoice");
+        closeActionSheet();
+      }
+
+      function createRow(r){
+        const iconCandidates = rowIconCandidatesForRow(r);
+        const row = document.createElement("article");
+
+        row.className = "brand-row";
+        row.innerHTML = `
+          <img class="row-ico" src="${esc(iconCandidates[0] || "")}" alt="" loading="lazy" decoding="async" />
+
+          <div class="brand-row-left">
+            <div class="brand-row-title">${esc(resolveDisplayName(r) || "Unnamed cigar")}</div>
+            <div class="brand-row-sub">${esc(resolveVitola(r) || "—")}</div>
+          </div>
+
+          <div class="brand-row-right">
+            <div class="brand-row-msrp">${esc(resolvePrice(r))}</div>
+            <button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu">+</button>
+          </div>
+        `;
+
+        const icon = $(".row-ico", row);
+        const left = $(".brand-row-left", row);
+        const plus = $(".qty-btn--plus", row);
+
+        bindImageFallback(icon, iconCandidates);
+
+        icon?.addEventListener("click", () => {
+          window.location.href = makeDetailHref(r);
         });
 
-        const removeBtn = row.querySelector(".fav-remove");
-        removeBtn?.addEventListener("click", (e) => {
-          e.preventDefault();
+        left?.addEventListener("click", () => {
+          window.location.href = makeDetailHref(r);
+        });
+
+        plus?.addEventListener("click", (e) => {
           e.stopPropagation();
-          removeFavorite(id);
-          row.remove();
-          updateSummary();
-          toggleEmptyState();
+          openActionSheet(r);
         });
 
         return row;
       }
 
-      function updateSummary() {
-        const count = readFavoriteIds().length;
-        if (count === 0) {
-          summary.textContent = "No favorites saved yet.";
+      function updateSummary(count){
+        if(count <= 0){
+          summary.textContent = "No cigar favorites saved yet.";
           clearBtn.hidden = true;
           return;
         }
 
-        summary.textContent = count === 1 ? "1 cigar saved." : `${count} cigars saved.`;
+        summary.textContent = count === 1 ? "1 cigar favorite." : `${count} cigar favorites.`;
         clearBtn.hidden = false;
       }
 
-      function toggleEmptyState() {
-        const list = $(".fav-list", content);
-        if (list && list.children.length > 0) return;
+      async function loadFavorites(){
+        const favorites = readFavorites();
 
-        content.innerHTML = `<div class="empty">No favorites yet.</div>`;
-      }
+        updateSummary(favorites.length);
 
-      async function loadFavoritesUI() {
-        applyTheme(getSavedTheme());
-
-        const favoriteIds = readFavoriteIds();
-        updateSummary();
-
-        if (!favoriteIds.length) {
-          content.innerHTML = `<div class="empty">No favorites yet.</div>`;
+        if(!favorites.length){
+          content.innerHTML = `<div class="empty">No cigar favorites yet.</div>`;
           return;
         }
 
-        content.innerHTML = `<div class="loading">Loading favorites…</div>`;
+        const res = await fetch(SHEET_CSV_URL, { cache:"no-store" });
+        if(!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
 
-        const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
-        if (!res.ok) throw new Error(\`CSV fetch failed: \${res.status}\`);
+        const text = await res.text();
+        state.records = mapRows(parseCSV(text));
 
-        const csvText = await res.text();
-        const rows = parseCSV(csvText);
-        const records = rowsToObjects(rows);
+        const found = favorites
+          .map((fav) => findRecordByFavorite(state.records, fav))
+          .filter(Boolean);
 
-        const found = [];
-        for (const id of favoriteIds) {
-          const rec = findRecordByFavoriteId(records, id);
-          if (rec) found.push(rec);
-        }
+        updateSummary(found.length);
 
-        if (!found.length) {
-          content.innerHTML = `<div class="empty">Your saved favorites were not found in the current sheet.</div>`;
-          clearBtn.hidden = false;
+        if(!found.length){
+          content.innerHTML = `<div class="empty">Favorites were saved, but no matching cigars were found in the current sheet.</div>`;
           return;
         }
-
-        const list = document.createElement("div");
-        list.className = "fav-list";
-
-        found.forEach((rec) => {
-          list.appendChild(createRow(rec));
-        });
 
         content.innerHTML = "";
-        content.appendChild(list);
+        found.forEach((r) => content.appendChild(createRow(r)));
       }
 
-      clearBtn?.addEventListener("click", () => {
-        localStorage.setItem(FAVORITES_KEY, JSON.stringify([]));
-        updateSummary();
-        content.innerHTML = `<div class="empty">No favorites yet.</div>`;
+      function applyTheme(theme){
+        const next = theme === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        $("#theme-toggle")?.setAttribute("aria-pressed", String(next === "dark"));
+      }
+
+      document.addEventListener("click", (e) => {
+        const target = e.target;
+        if(!(target instanceof Element)) return;
+
+        if(target.closest("[data-action-close]")){
+          closeActionSheet();
+          return;
+        }
+
+        if(target.closest("[data-qty-plus='single']")){
+          state.singleQty += 1;
+          updateActionSheet();
+          return;
+        }
+
+        if(target.closest("[data-qty-minus='single']")){
+          state.singleQty = Math.max(0, state.singleQty - 1);
+          updateActionSheet();
+          return;
+        }
+
+        if(target.closest("[data-qty-plus='box']")){
+          state.boxQty += 1;
+          updateActionSheet();
+          return;
+        }
+
+        if(target.closest("[data-qty-minus='box']")){
+          state.boxQty = Math.max(0, state.boxQty - 1);
+          updateActionSheet();
+          return;
+        }
+
+        if(target.closest("#actionAddBtn")){
+          addActionItemsToCart();
+          return;
+        }
+
+        if(target.closest("#actionFavoriteBtn")){
+          if(!state.actionRow) return;
+
+          removeFavorite(state.actionRow);
+          showToast("Removed from Favorites");
+          closeActionSheet();
+
+          window.setTimeout(() => {
+            loadFavorites().catch(() => {
+              content.innerHTML = `<div class="error">Error loading favorites.</div>`;
+            });
+          }, 160);
+        }
       });
 
       document.addEventListener("DOMContentLoaded", () => {
-        window.CigarOSTopbar?.mount("#universalTopbar", {
-          homeHref: "/",
-          favoritesHref: "/pos/favorites/",
-          cartHref: "/pos/invoice/",
-          searchAction: "modal"
+        const savedTheme =
+          localStorage.getItem("theme") ||
+          document.documentElement.getAttribute("data-theme") ||
+          "light";
+
+        applyTheme(savedTheme);
+
+        $("#theme-toggle")?.addEventListener("click", () => {
+          applyTheme(
+            (document.documentElement.getAttribute("data-theme") || "light") === "dark"
+              ? "light"
+              : "dark"
+          );
         });
 
-        loadFavoritesUI().catch((err) => {
-          console.warn("[favorites] load error:", err);
+        $("#cbSearchBtn")?.addEventListener("click", () => {
+          if(typeof window.openGlobalSearch === "function"){
+            window.openGlobalSearch();
+          }
+        });
+
+        clearBtn?.addEventListener("click", () => {
+          writeFavorites([]);
+          updateSummary(0);
+          content.innerHTML = `<div class="empty">No cigar favorites yet.</div>`;
+        });
+
+        ensureActionSheet();
+
+        loadFavorites().catch((err) => {
+          console.warn("[pos favorites] load error:", err);
           content.innerHTML = `<div class="error">Error loading favorites.</div>`;
           summary.textContent = "Could not load favorites.";
         });
