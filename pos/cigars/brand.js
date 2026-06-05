@@ -7,6 +7,7 @@
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
   const BRANDS_URL = "/data/brands.json";
+  const POS_CIGAR_FAVORITES_KEY = "cigaros_pos_favorites_cigars";
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -38,6 +39,9 @@
       shape: new Set(),
       shade: new Set(),
     },
+    actionRow: null,
+    singleQty: 1,
+    boxQty: 0,
   };
 
   function norm(v) {
@@ -73,10 +77,6 @@
       .replace(/[^a-z0-9]+/g, " ")
       .replace(/\s+/g, " ")
       .trim();
-  }
-
-  function slugify(v) {
-    return normalizeLoose(v).replace(/\s+/g, "-");
   }
 
   function normalizeAssetPath(path) {
@@ -147,15 +147,16 @@
     const headers = csv[0] || [];
     const keys = headers.map(normalizeHeader);
 
-    return csv.slice(1).filter((r) => {
-      return r && !r.every((c) => !String(c || "").trim());
-    }).map((r) => {
-      const obj = {};
-      keys.forEach((k, i) => {
-        obj[k] = (r[i] ?? "").trim();
+    return csv
+      .slice(1)
+      .filter((r) => r && !r.every((c) => !String(c || "").trim()))
+      .map((r) => {
+        const obj = {};
+        keys.forEach((k, i) => {
+          obj[k] = (r[i] ?? "").trim();
+        });
+        return obj;
       });
-      return obj;
-    });
   }
 
   function getField(r, keys) {
@@ -256,7 +257,6 @@
     const raw = getField(r, ["box_msrp", "box_price", "box_retail"]);
     const n = Number(String(raw || "").replace(/[^0-9.-]/g, ""));
     if (Number.isFinite(n) && n > 0) return n;
-
     return resolvePriceNumber(r) * resolveBoxCount(r);
   }
 
@@ -264,6 +264,83 @@
     const line = resolveLine(r);
     const cigar = resolveName(r);
     return [line, cigar].filter(Boolean).join(" ").trim() || cigar || line || "";
+  }
+
+  function resolveFavoriteKey(r) {
+    return (
+      resolveDetailKey(r) ||
+      [resolveBrandVal(r), resolveLine(r), resolveName(r), resolveVitola(r)]
+        .filter(Boolean)
+        .join("|")
+    );
+  }
+
+  function readCigarFavorites() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(POS_CIGAR_FAVORITES_KEY) || "[]");
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeCigarFavorites(items) {
+    localStorage.setItem(POS_CIGAR_FAVORITES_KEY, JSON.stringify(items));
+  }
+
+  function isCigarFavorite(r) {
+    const key = resolveFavoriteKey(r);
+    return readCigarFavorites().some((item) => item && item.key === key);
+  }
+
+  function saveCigarFavorite(r) {
+    const key = resolveFavoriteKey(r);
+    if (!key) return false;
+
+    const current = readCigarFavorites();
+    const exists = current.some((item) => item && item.key === key);
+
+    if (exists) return false;
+
+    current.push({
+      type: "cigar",
+      section: "cigars",
+      key,
+      brand: resolveBrandVal(r) || state.brand,
+      line: resolveLine(r),
+      cigar: resolveName(r),
+      displayName: resolveDisplayName(r),
+      vitola: resolveVitola(r),
+      price: resolvePriceNumber(r),
+      boxPrice: resolveBoxMsrpNumber(r),
+      savedAt: Date.now(),
+    });
+
+    writeCigarFavorites(current);
+    return true;
+  }
+
+  function removeCigarFavorite(r) {
+    const key = resolveFavoriteKey(r);
+    writeCigarFavorites(readCigarFavorites().filter((item) => item && item.key !== key));
+  }
+
+  function showToast(message) {
+    let toast = document.querySelector(".pos-toast");
+
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.className = "pos-toast";
+      document.body.appendChild(toast);
+    }
+
+    toast.textContent = message;
+    toast.classList.add("is-showing");
+
+    window.clearTimeout(toast.__timer);
+    toast.__timer = window.setTimeout(() => {
+      toast.classList.remove("is-showing");
+    }, 1300);
   }
 
   function resolveIsCuban(r) {
@@ -295,9 +372,9 @@
 
     const metaImage = normalizeAssetPath(
       state.brandMeta?.image ||
-      state.brandMeta?.icon ||
-      state.brandMeta?.svg ||
-      state.brandMeta?.img
+        state.brandMeta?.icon ||
+        state.brandMeta?.svg ||
+        state.brandMeta?.img
     );
 
     const slug = brandSlug();
@@ -322,9 +399,7 @@
     const lineImg = normalizeAssetPath(resolveLineImage(r));
     const brandImg = normalizeAssetPath(resolveBrandImage(r));
 
-    return Array.from(
-      new Set([lineImg, brandImg, ...brandIconCandidates()].filter(Boolean))
-    );
+    return Array.from(new Set([lineImg, brandImg, ...brandIconCandidates()].filter(Boolean)));
   }
 
   function rowIconPathForRow(r) {
@@ -403,12 +478,150 @@
     };
   }
 
-  function openAddSheet(r) {
-    const stickItem = buildCartItem(r, "stick");
-    const currentQty = window.cigarOSCart?.getItemQty?.(stickItem) || 0;
-    window.cigarOSCart?.setQty?.(stickItem, currentQty + 1);
+  function money(n) {
+    const num = Number(n || 0);
+    return Number.isFinite(num) ? num.toFixed(2) : "0.00";
+  }
+
+  function ensureActionSheet() {
+    if ($("#pos-action-sheet")) return;
+
+    const sheet = document.createElement("div");
+    sheet.id = "pos-action-sheet";
+    sheet.className = "pos-action-sheet";
+    sheet.hidden = true;
+
+    sheet.innerHTML = `
+      <div class="pos-action-backdrop" data-action-close></div>
+
+      <div class="pos-action-card" role="dialog" aria-modal="true" aria-label="Add cigar">
+        <div class="pos-action-title" id="pos-action-title">Cigar</div>
+
+        <div class="pos-action-lines">
+          <div class="pos-action-line">
+            <div class="pos-action-line-top">
+              <div class="pos-action-label">Single</div>
+              <div class="pos-action-stepper">
+                <button type="button" data-qty-minus="single">−</button>
+                <span id="singleQty">1</span>
+                <button type="button" data-qty-plus="single">+</button>
+              </div>
+            </div>
+            <div class="pos-action-line-bottom">
+              <span id="singleUnit">0.00</span>
+              <span id="singleTotal">0.00</span>
+            </div>
+          </div>
+
+          <div class="pos-action-line">
+            <div class="pos-action-line-top">
+              <div class="pos-action-label">Box</div>
+              <div class="pos-action-stepper">
+                <button type="button" data-qty-minus="box">−</button>
+                <span id="boxQty">0</span>
+                <button type="button" data-qty-plus="box">+</button>
+              </div>
+            </div>
+            <div class="pos-action-line-bottom">
+              <span id="boxUnit">0.00</span>
+              <span id="boxTotal">0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pos-action-total">
+          <span>Total:</span>
+          <strong id="actionTotal">$0.00</strong>
+        </div>
+
+        <div class="pos-action-buttons">
+          <button type="button" class="pos-action-cancel" data-action-close>Cancel</button>
+          <button type="button" class="pos-action-add" id="actionAddBtn">Add</button>
+        </div>
+
+        <button type="button" class="pos-action-favorite" id="actionFavoriteBtn">
+          Save as Favorite
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(sheet);
+  }
+
+  function updateActionSheet() {
+    const r = state.actionRow;
+    if (!r) return;
+
+    const singlePrice = resolvePriceNumber(r);
+    const boxPrice = resolveBoxMsrpNumber(r);
+
+    $("#singleQty").textContent = String(state.singleQty);
+    $("#boxQty").textContent = String(state.boxQty);
+
+    $("#singleUnit").textContent = money(singlePrice);
+    $("#singleTotal").textContent = money(singlePrice * state.singleQty);
+
+    $("#boxUnit").textContent = money(boxPrice);
+    $("#boxTotal").textContent = money(boxPrice * state.boxQty);
+
+    $("#actionTotal").textContent = `$${money(singlePrice * state.singleQty + boxPrice * state.boxQty)}`;
+
+    const favBtn = $("#actionFavoriteBtn");
+    if (favBtn) {
+      const fav = isCigarFavorite(r);
+      favBtn.textContent = fav ? "Saved as Favorite" : "Save as Favorite";
+      favBtn.classList.toggle("is-saved", fav);
+    }
+  }
+
+  function openActionSheet(r) {
+    ensureActionSheet();
+
+    state.actionRow = r;
+    state.singleQty = 1;
+    state.boxQty = 0;
+
+    $("#pos-action-title").textContent = resolveDisplayName(r) || "Cigar";
+
+    updateActionSheet();
+
+    const sheet = $("#pos-action-sheet");
+    sheet.hidden = false;
+    requestAnimationFrame(() => sheet.classList.add("is-open"));
+
+    if (navigator.vibrate) navigator.vibrate(8);
+  }
+
+  function closeActionSheet() {
+    const sheet = $("#pos-action-sheet");
+    if (!sheet) return;
+
+    sheet.classList.remove("is-open");
+    window.setTimeout(() => {
+      if (!sheet.classList.contains("is-open")) sheet.hidden = true;
+    }, 180);
+  }
+
+  function addActionItemsToCart() {
+    const r = state.actionRow;
+    if (!r) return;
+
+    if (state.singleQty > 0) {
+      const stickItem = buildCartItem(r, "stick");
+      const currentQty = window.cigarOSCart?.getItemQty?.(stickItem) || 0;
+      window.cigarOSCart?.setQty?.(stickItem, currentQty + state.singleQty);
+    }
+
+    if (state.boxQty > 0) {
+      const boxItem = buildCartItem(r, "box");
+      const currentQty = window.cigarOSCart?.getItemQty?.(boxItem) || 0;
+      window.cigarOSCart?.setQty?.(boxItem, currentQty + state.boxQty);
+    }
 
     if (navigator.vibrate) navigator.vibrate(12);
+
+    showToast("Added to invoice");
+    closeActionSheet();
   }
 
   function openDetail(r) {
@@ -428,7 +641,9 @@
         resolveManufacturerVal(r),
         resolveLine(r),
         resolveOrigin(r),
-      ].join(" ").toLowerCase();
+      ]
+        .join(" ")
+        .toLowerCase();
 
       return hay.includes(q);
     });
@@ -479,7 +694,7 @@
 
         <div class="brand-row-right">
           <div class="brand-row-msrp">${esc(priceText)}</div>
-          <button class="qty-btn qty-btn--plus" type="button" aria-label="Add to invoice">+</button>
+          <button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu">+</button>
         </div>
       `;
 
@@ -496,7 +711,7 @@
 
       plusBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
-        openAddSheet(r);
+        openActionSheet(r);
       });
 
       listEl.appendChild(row);
@@ -535,17 +750,10 @@
     const manufacturer = firstRow ? resolveManufacturerVal(firstRow) : "";
 
     if (manufacturerMeta) {
-      const show =
-        manufacturer &&
-        normalizeBrand(manufacturer) !== normalizeBrand(displayBrand);
+      const show = manufacturer && normalizeBrand(manufacturer) !== normalizeBrand(displayBrand);
+      const isCubanBrand = firstRow && resolveIsCuban(firstRow);
 
-      const isCubanBrand =
-  firstRow &&
-  resolveIsCuban(firstRow);
-
-manufacturerMeta.textContent = show
-  ? `${isCubanBrand ? "🇨🇺 " : ""}${manufacturer}`
-  : "";
+      manufacturerMeta.textContent = show ? `${isCubanBrand ? "🇨🇺 " : ""}${manufacturer}` : "";
       manufacturerMeta.style.display = show ? "" : "none";
     }
 
@@ -582,106 +790,76 @@ manufacturerMeta.textContent = show
     }
   }
 
-function chooseRowsForBrand(rows) {
-  const query = normalizeBrand(state.brandQuery);
-  const metaSlug = normalizeBrand(state.brandMeta?.slug);
-  const metaName = normalizeBrand(state.brandMeta?.name);
-  const stateBrand = normalizeBrand(state.brand);
+  function chooseRowsForBrand(rows) {
+    const query = normalizeBrand(state.brandQuery);
+    const metaSlug = normalizeBrand(state.brandMeta?.slug);
+    const metaName = normalizeBrand(state.brandMeta?.name);
+    const stateBrand = normalizeBrand(state.brand);
 
-  const needles = Array.from(
-    new Set([query, metaSlug, metaName, stateBrand].filter(Boolean))
-  );
+    const needles = Array.from(new Set([query, metaSlug, metaName, stateBrand].filter(Boolean)));
 
-  const CUBAN_CONFLICT_BRANDS = new Set([
-    "cohiba",
-    "montecristo",
-    "hupmann",
-    "hoyodemonterrey",
-    "saintluisrey",
-    "sanchopanza",
-    "trinidad",
-    "sancristobaldelahabana",
-  ]);
+    const CUBAN_CONFLICT_BRANDS = new Set([
+      "cohiba",
+      "montecristo",
+      "hupmann",
+      "hoyodemonterrey",
+      "saintluisrey",
+      "sanchopanza",
+      "trinidad",
+      "sancristobaldelahabana",
+    ]);
 
-  const isConflictBrand = needles.some((n) =>
-    CUBAN_CONFLICT_BRANDS.has(n)
-  );
+    const isConflictBrand = needles.some((n) => CUBAN_CONFLICT_BRANDS.has(n));
 
-  let exact = rows.filter((r) => {
-    const rb = normalizeBrand(resolveBrandVal(r));
-    return needles.includes(rb);
-  });
+    let exact = rows.filter((r) => {
+      const rb = normalizeBrand(resolveBrandVal(r));
+      return needles.includes(rb);
+    });
 
-  /*
-    IMPORTANT FIX:
-    If this is one of the Cuban/domestic overlap brands,
-    ONLY keep Cuban rows.
-  */
-  if (isConflictBrand) {
-    const cubanRows = exact.filter(resolveIsCuban);
-
-    if (cubanRows.length) {
-      return cubanRows;
+    if (isConflictBrand) {
+      const cubanRows = exact.filter(resolveIsCuban);
+      if (cubanRows.length) return cubanRows;
     }
-  }
 
-  if (exact.length) return exact;
+    if (exact.length) return exact;
 
-  const fuzzy = rows.filter((r) => {
-    const rb = normalizeBrand(resolveBrandVal(r));
+    const fuzzy = rows.filter((r) => {
+      const rb = normalizeBrand(resolveBrandVal(r));
+      return rb && needles.some((n) => rb.includes(n) || n.includes(rb));
+    });
 
-    return (
-      rb &&
-      needles.some((n) => rb.includes(n) || n.includes(rb))
-    );
-  });
-
-  if (isConflictBrand) {
-    const cubanRows = fuzzy.filter(resolveIsCuban);
-
-    if (cubanRows.length) {
-      return cubanRows;
+    if (isConflictBrand) {
+      const cubanRows = fuzzy.filter(resolveIsCuban);
+      if (cubanRows.length) return cubanRows;
     }
-  }
 
-  if (fuzzy.length) return fuzzy;
+    if (fuzzy.length) return fuzzy;
 
-  const manufacturerFallback = rows.filter((r) => {
-    const rm = normalizeBrand(resolveManufacturerVal(r));
-    return needles.includes(rm);
-  });
+    const manufacturerFallback = rows.filter((r) => {
+      const rm = normalizeBrand(resolveManufacturerVal(r));
+      return needles.includes(rm);
+    });
 
-  if (isConflictBrand) {
-    const cubanRows = manufacturerFallback.filter(resolveIsCuban);
-
-    if (cubanRows.length) {
-      return cubanRows;
+    if (isConflictBrand) {
+      const cubanRows = manufacturerFallback.filter(resolveIsCuban);
+      if (cubanRows.length) return cubanRows;
     }
-  }
 
-  if (manufacturerFallback.length) return manufacturerFallback;
+    if (manufacturerFallback.length) return manufacturerFallback;
 
-  const loose = rows.filter((r) => {
-    const brand = normalizeLoose(resolveBrandVal(r));
-    const q = normalizeLoose(state.brandQuery);
+    const loose = rows.filter((r) => {
+      const brand = normalizeLoose(resolveBrandVal(r));
+      const q = normalizeLoose(state.brandQuery);
+      return brand && q && (brand.includes(q) || q.includes(brand));
+    });
 
-    return (
-      brand &&
-      q &&
-      (brand.includes(q) || q.includes(brand))
-    );
-  });
-
-  if (isConflictBrand) {
-    const cubanRows = loose.filter(resolveIsCuban);
-
-    if (cubanRows.length) {
-      return cubanRows;
+    if (isConflictBrand) {
+      const cubanRows = loose.filter(resolveIsCuban);
+      if (cubanRows.length) return cubanRows;
     }
-  }
 
-  return loose;
-}
+    return loose;
+  }
 
   backBtn?.addEventListener("click", () => {
     if (history.length > 1) history.back();
@@ -697,12 +875,78 @@ function chooseRowsForBrand(rows) {
     window.openGlobalSearch?.();
   });
 
+  document.addEventListener("click", (e) => {
+    const target = e.target;
+    if (!(target instanceof Element)) return;
+
+    if (target.closest("[data-action-close]")) {
+      closeActionSheet();
+      return;
+    }
+
+    const singlePlus = target.closest("[data-qty-plus='single']");
+    const singleMinus = target.closest("[data-qty-minus='single']");
+    const boxPlus = target.closest("[data-qty-plus='box']");
+    const boxMinus = target.closest("[data-qty-minus='box']");
+
+    if (singlePlus) {
+      state.singleQty += 1;
+      updateActionSheet();
+      return;
+    }
+
+    if (singleMinus) {
+      state.singleQty = Math.max(0, state.singleQty - 1);
+      updateActionSheet();
+      return;
+    }
+
+    if (boxPlus) {
+      state.boxQty += 1;
+      updateActionSheet();
+      return;
+    }
+
+    if (boxMinus) {
+      state.boxQty = Math.max(0, state.boxQty - 1);
+      updateActionSheet();
+      return;
+    }
+
+    if (target.closest("#actionAddBtn")) {
+      addActionItemsToCart();
+      return;
+    }
+
+    if (target.closest("#actionFavoriteBtn")) {
+      if (!state.actionRow) return;
+
+      if (isCigarFavorite(state.actionRow)) {
+        removeCigarFavorite(state.actionRow);
+        showToast("Removed from Favorites");
+      } else {
+        saveCigarFavorite(state.actionRow);
+        showToast("Saved to Favorites");
+      }
+
+      updateActionSheet();
+
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeActionSheet();
+  });
+
   if (btnBands) btnBands.style.display = "none";
   if (seg) seg.style.display = "none";
   segBtns.forEach((b) => b.classList.remove("is-on"));
 
   async function boot() {
     if (!listEl) return;
+
+    ensureActionSheet();
 
     state.brandQuery = (getParam("brand") || "Padron").trim();
 
@@ -722,11 +966,6 @@ function chooseRowsForBrand(rows) {
       ...r,
       wrapper_shade: resolveShade(r),
     }));
-
-    console.log("Brand:", state.brand);
-    console.log("Rows found:", state.rowsAll.length);
-    console.log("First row brand:", state.rowsAll[0]?.brand);
-    console.log("First row manufacturer:", state.rowsAll[0]?.manufacturer);
 
     if (!state.rowsAll.length) {
       listEl.innerHTML = `<div class="empty">No cigars found for ${esc(brandDisplayName())}</div>`;
