@@ -1191,10 +1191,12 @@ html[data-theme="light"] .brand-row:hover{
     height:24px;
     font-size:15px;
   }
-  .brand-row-right{
+    .brand-row-right{
     width:72px;
     min-width:72px;
   }
+}
+
 /* =========================
    POS ADD / FAVORITE ACTION SHEET
 ========================= */
