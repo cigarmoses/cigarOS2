@@ -106,21 +106,21 @@ html[data-theme="light"] body.cigar-detail-page{
 
 .moon-toggle{
   position:relative;
-  width:66px;
-  height:23px;
+  width:52px;
+  height:32px;
+  border:0;
   padding:0;
-  border:1px solid var(--border);
   border-radius:999px;
-  background:rgba(255,255,255,.12);
-  box-shadow:var(--shadow);
+  background:rgba(255,255,255,.05);
+  box-shadow:0 12px 28px rgba(0,0,0,.22);
   cursor:pointer;
   appearance:none;
   -webkit-tap-highlight-color:transparent;
 }
 
 html[data-theme="light"] .moon-toggle{
-  background:rgba(0,0,0,.08);
-  border-color:rgba(0,0,0,.10);
+  background:rgba(255,255,255,.82);
+  box-shadow:0 10px 24px rgba(15,26,44,.08);
 }
 
 .moon-track,
@@ -135,36 +135,38 @@ html[data-theme="light"] .moon-toggle{
 
 .moon-knob{
   position:absolute;
-  top:50%;
-  left:2px;
-  width:22px;
-  height:22px;
+  top:3px;
+  left:3px;
+  width:26px;
+  height:26px;
+  border-radius:999px;
   background:transparent;
   box-shadow:none;
-  transition:transform .22s ease;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  transition:transform .25s ease;
+  display:grid;
+  place-items:center;
 }
 
 html[data-theme="dark"] .moon-knob{
-  transform:translateY(-50%) translateX(0);
+  transform:translateX(20px);
 }
 
 html[data-theme="light"] .moon-knob{
-  transform:translateY(-50%) translateX(40px);
+  transform:translateX(0);
 }
 
 .moon-knob::before{
   content:"";
-  width:18px;
-  height:18px;
+  width:26px;
+  height:26px;
   display:block;
   background:url("/img/icons/moon.svg") center/contain no-repeat;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
 }
 
 html[data-theme="light"] .moon-knob::before{
   background:url("/img/icons/sun.svg") center/contain no-repeat;
+  filter:none;
 }
 
 .cd-wrap{
@@ -592,18 +594,27 @@ html[data-theme="light"] .cd-action--primary{
   }
 
   .moon-toggle{
-    width:46px;
-    height:27px;
-  }
+  width:50px;
+  height:30px;
+}
 
-  .moon-knob{
-    width:21px;
-    height:21px;
-  }
+.moon-knob{
+  width:24px;
+  height:24px;
+}
 
-  html[data-theme="light"] .moon-knob{
-    transform:translateY(-50%) translateX(19px);
-  }
+.moon-knob::before{
+  width:24px;
+  height:24px;
+}
+
+html[data-theme="dark"] .moon-knob{
+  transform:translateX(20px);
+}
+
+html[data-theme="light"] .moon-knob{
+  transform:translateX(0);
+}
 
   .cd-wrap{
     width:calc(100% - 12px);
