@@ -1257,11 +1257,11 @@ html[data-theme="light"] .brand-row:hover{
 .pos-action-title{
   font-family:var(--font-display);
   font-size:28px;
-  line-height:1.02;
+  line-height:1;
   font-weight:900;
   letter-spacing:-.045em;
   text-align:center;
-  margin:0 0 20px;
+  margin:0 0 34px;
   color:#0b1220;
 }
 
