@@ -479,9 +479,15 @@
   }
 
   function money(n) {
-    const num = Number(n || 0);
-    return Number.isFinite(num) ? num.toFixed(2) : "0.00";
-  }
+  const num = Number(n || 0);
+
+  return Number.isFinite(num)
+    ? num.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+    : "0.00";
+}
 
   function ensureActionSheet() {
     if ($("#pos-action-sheet")) return;
