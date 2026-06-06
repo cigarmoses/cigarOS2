@@ -1442,3 +1442,54 @@ html[data-theme="light"] .brand-row:hover{
   opacity:1;
   transform:translate(-50%, 0);
 }
+/* =========================
+   CURRENCY POPUP FIXES
+========================= */
+
+.currency-pop,
+.currency-card,
+.currency-card *{
+  font-family:
+    "SF Pro Display",
+    "SF Pro Text",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif !important;
+}
+
+.currency-sub{
+  margin-top:6px;
+  font-size:18px;
+  font-weight:500;
+  letter-spacing:-.02em;
+  line-height:1.2;
+  color:rgba(15,23,40,.48);
+}
+
+.currency-note{
+  display:none !important;
+}
+
+.currency-base{
+  background:rgba(255,255,255,.62) !important;
+  color:#0f1728 !important;
+  border:1px solid rgba(15,23,40,.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.70),
+    0 10px 24px rgba(15,23,40,.07) !important;
+}
+
+.currency-country{
+  display:block;
+  margin-top:3px;
+  font-size:16px;
+  font-weight:500;
+  letter-spacing:-.02em;
+  color:rgba(15,23,40,.52);
+}
+
+.currency-value{
+  font-weight:800;
+}
