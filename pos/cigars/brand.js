@@ -14,6 +14,7 @@
     CHF: 0.94,
     GBP: 0.84,
     CNY: 8.25,
+    AED: 4.22,
   };
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -496,21 +497,25 @@
       : "0.00";
   }
 
-  function formatCurrency(value, code) {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: code,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
-  }
-
   function ensureCurrencyPopupStyles() {
     if (document.getElementById("currency-popup-styles")) return;
 
     const style = document.createElement("style");
     style.id = "currency-popup-styles";
     style.textContent = `
+      .currency-pop,
+      .currency-card,
+      .currency-card *{
+        font-family:
+          "SF Pro Display",
+          "SF Pro Text",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Helvetica Neue",
+          Arial,
+          sans-serif !important;
+      }
+
       .currency-pop{
         position:fixed;
         inset:0;
@@ -545,18 +550,20 @@
 
       .currency-title{
         margin:0;
-        font-size:30px;
+        font-size:34px;
         line-height:1;
-        font-weight:900;
+        font-weight:850;
         letter-spacing:-.045em;
         color:#0f1728;
       }
 
       .currency-sub{
-        margin-top:6px;
-        font-size:13px;
-        font-weight:700;
-        color:rgba(15,23,40,.46);
+        margin-top:7px;
+        font-size:18px;
+        font-weight:500;
+        letter-spacing:-.02em;
+        line-height:1.2;
+        color:rgba(15,23,40,.48);
       }
 
       .currency-x{
@@ -576,24 +583,27 @@
       .currency-base{
         height:66px;
         border-radius:22px;
-        background:#0f1728;
-        color:#fff;
+        background:rgba(255,255,255,.62);
+        color:#0f1728;
         display:flex;
         align-items:center;
         justify-content:space-between;
         padding:0 18px;
         margin-bottom:12px;
-        box-shadow:0 14px 28px rgba(15,23,40,.20);
+        border:1px solid rgba(15,23,40,.08);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.70),
+          0 10px 24px rgba(15,23,40,.07);
       }
 
       .currency-base span{
         font-size:24px;
-        font-weight:900;
+        font-weight:800;
         letter-spacing:-.035em;
       }
 
       .currency-row{
-        min-height:60px;
+        min-height:72px;
         display:flex;
         align-items:center;
         justify-content:space-between;
@@ -605,19 +615,40 @@
       .currency-label{
         display:flex;
         align-items:center;
-        gap:10px;
+        gap:12px;
         min-width:0;
       }
 
       .currency-flag{
-        font-size:25px;
+        font-size:26px;
         line-height:1;
+        flex:0 0 auto;
+      }
+
+      .currency-name-wrap{
+        min-width:0;
+        display:flex;
+        flex-direction:column;
+        align-items:flex-start;
+        justify-content:center;
       }
 
       .currency-code{
-        font-size:17px;
+        font-size:22px;
         font-weight:800;
+        line-height:1;
+        letter-spacing:-.035em;
         color:#0f1728;
+      }
+
+      .currency-country{
+        display:block;
+        margin-top:5px;
+        font-size:16px;
+        font-weight:500;
+        line-height:1;
+        letter-spacing:-.02em;
+        color:rgba(15,23,40,.52);
       }
 
       .currency-value{
@@ -626,14 +657,6 @@
         letter-spacing:-.035em;
         color:#0f1728;
         white-space:nowrap;
-      }
-
-      .currency-note{
-        margin-top:12px;
-        text-align:center;
-        font-size:12px;
-        font-weight:700;
-        color:rgba(15,23,40,.45);
       }
 
       .price-convert-btn{
@@ -674,6 +697,7 @@
     const chf = eur * EUR_RATES.CHF;
     const gbp = eur * EUR_RATES.GBP;
     const cny = eur * EUR_RATES.CNY;
+    const aed = eur * EUR_RATES.AED;
 
     pop.innerHTML = `
       <div class="currency-card" role="dialog" aria-modal="true" aria-label="Currency conversion">
@@ -688,43 +712,64 @@
 
         <div class="currency-base">
           <span>🇪🇺 EUR</span>
-          <span>€${money(eur)}</span>
+          <span>€ ${money(eur)}</span>
         </div>
 
         <div class="currency-row">
           <div class="currency-label">
             <span class="currency-flag">🇺🇸</span>
-            <span class="currency-code">USD</span>
+            <span class="currency-name-wrap">
+              <span class="currency-code">USD</span>
+              <span class="currency-country">United States</span>
+            </span>
           </div>
-          <strong class="currency-value">${formatCurrency(usd, "USD")}</strong>
+          <strong class="currency-value">$ ${money(usd)}</strong>
         </div>
 
         <div class="currency-row">
           <div class="currency-label">
             <span class="currency-flag">🇨🇭</span>
-            <span class="currency-code">CHF</span>
+            <span class="currency-name-wrap">
+              <span class="currency-code">CHF</span>
+              <span class="currency-country">Swiss</span>
+            </span>
           </div>
-          <strong class="currency-value">${formatCurrency(chf, "CHF")}</strong>
+          <strong class="currency-value">CHF ${money(chf)}</strong>
         </div>
 
         <div class="currency-row">
           <div class="currency-label">
             <span class="currency-flag">🇬🇧</span>
-            <span class="currency-code">GBP</span>
+            <span class="currency-name-wrap">
+              <span class="currency-code">GBP</span>
+              <span class="currency-country">Great Britain</span>
+            </span>
           </div>
-          <strong class="currency-value">${formatCurrency(gbp, "GBP")}</strong>
+          <strong class="currency-value">£ ${money(gbp)}</strong>
         </div>
 
         <div class="currency-row">
           <div class="currency-label">
             <span class="currency-flag">🇨🇳</span>
-            <span class="currency-code">RMB</span>
+            <span class="currency-name-wrap">
+              <span class="currency-code">RMB</span>
+              <span class="currency-country">China</span>
+            </span>
           </div>
-          <strong class="currency-value">¥${money(cny)}</strong>
+          <strong class="currency-value">¥ ${money(cny)}</strong>
         </div>
-
-        <div class="currency-note">Rates are editable in brand.js</div>
       </div>
+
+      <div class="currency-row">
+  <div class="currency-label">
+    <span class="currency-flag">🇦🇪</span>
+    <span class="currency-name-wrap">
+      <span class="currency-code">AED</span>
+      <span class="currency-country">Dubai / UAE</span>
+    </span>
+  </div>
+  <strong class="currency-value">AED ${money(aed)}</strong>
+</div>
     `;
 
     document.body.appendChild(pop);
