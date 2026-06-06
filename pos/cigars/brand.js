@@ -685,7 +685,7 @@ function ensureCurrencyPopupStyles() {
   pop.className = "currency-pop";
 
   const usd = eur * EUR_RATES.USD;
-  const chf = eur * EUR_RATES.CHF;
+  const  = eur * EUR_RATES.;
   const gbp = eur * EUR_RATES.GBP;
   const cny = eur * EUR_RATES.CNY;
   const aed = eur * EUR_RATES.AED;
@@ -725,29 +725,29 @@ function ensureCurrencyPopupStyles() {
             <span class="currency-country">Swiss</span>
           </span>
         </div>
-        <strong class="currency-value">CHF ${money(chf)}</strong>
+        <strong class="currency-value">${money(chf)}</strong>
       </div>
 
       <div class="currency-row">
         <div class="currency-label">
           <span class="currency-flag">🇬🇧</span>
           <span class="currency-name-wrap">
-            <span class="currency-code">GBP</span>
+            <span class="currency-code">£ GBP</span>
             <span class="currency-country">Great Britain</span>
           </span>
         </div>
-        <strong class="currency-value">£ ${money(gbp)}</strong>
+        <strong class="currency-value">${money(gbp)}</strong>
       </div>
 
       <div class="currency-row">
         <div class="currency-label">
           <span class="currency-flag">🇨🇳</span>
           <span class="currency-name-wrap">
-            <span class="currency-code">RMB</span>
+            <span class="currency-code">¥ RMB</span>
             <span class="currency-country">China</span>
           </span>
         </div>
-        <strong class="currency-value">¥ ${money(cny)}</strong>
+        <strong class="currency-value"> ${money(cny)}</strong>
       </div>
 
       <div class="currency-row">
@@ -758,7 +758,7 @@ function ensureCurrencyPopupStyles() {
             <span class="currency-country">United Arab Emirates</span>
           </span>
         </div>
-        <strong class="currency-value">AED ${money(aed)}</strong>
+        <strong class="currency-value">${money(aed)}</strong>
       </div>
     </div>
   `;
