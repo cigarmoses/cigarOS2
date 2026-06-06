@@ -844,7 +844,8 @@ function ensureInjectedStyles(){
     }
 
     .fm.fm--tabs .fm__row--logo{
-      grid-template-columns:30px 42px minmax(0,1fr);
+      grid-template-columns:30px 64px minmax(0,1fr);
+      align-items:center;
     }
 
     .fm.fm--tabs .fm__cb{
@@ -869,13 +870,23 @@ function ensureInjectedStyles(){
     }
 
     .fm.fm--tabs .fm__label{
-      grid-column:2;
-      min-width:0;
-      font-size:17px;
-      font-weight:800;
-      letter-spacing:-.025em;
-      color:#0f1a2c;
-    }
+  grid-column:2;
+  min-width:0;
+  font-size:24px;
+  font-weight:400;
+  line-height:1.12;
+  letter-spacing:-.035em;
+  color:#0f1a2c;
+}
+
+.fm.fm--tabs .fm__row--logo .fm__label{
+  grid-column:auto;
+  font-size:26px;
+  font-weight:400;
+  line-height:1.12;
+  letter-spacing:-.04em;
+  white-space:normal;
+}
 
     .fm.fm--tabs .fm__info{
       display:none;
