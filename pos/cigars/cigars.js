@@ -627,6 +627,10 @@ const CATEGORIES = [
 ];
 
 function getValuesForKey(key){
+  ensureGlobalState();
+
+  const g = window.__CIGAR_FILTER_STATE__;
+
   const fieldMap = {
     manufacturer:["Manufacturer","manufacturer"],
     brand:["Brand","brand"],
@@ -642,7 +646,10 @@ function getValuesForKey(key){
   const vals = [];
 
   DATA_ROWS.forEach(row=>{
-    if(!state.includeCubans && isCubanRow(row)) return;
+    const rowIsCuban = isCubanRow(row);
+
+    if(g.includeCubans && !rowIsCuban) return;
+    if(!g.includeCubans && rowIsCuban) return;
 
     for(const k of keys){
       if(row[k] != null && String(row[k]).trim() !== ""){
