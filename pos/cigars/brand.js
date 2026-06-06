@@ -710,11 +710,11 @@ function ensureCurrencyPopupStyles() {
         <div class="currency-label">
           <span class="currency-flag">🇺🇸</span>
           <span class="currency-name-wrap">
-            <span class="currency-code">USD</span>
+            <span class="currency-code">$ USD</span>
             <span class="currency-country">United States</span>
           </span>
         </div>
-        <strong class="currency-value">$ ${money(usd)}</strong>
+        <strong class="currency-value">${money(usd)}</strong>
       </div>
 
       <div class="currency-row">
