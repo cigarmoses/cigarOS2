@@ -9,6 +9,13 @@
   const BRANDS_URL = "/data/brands.json";
   const POS_CIGAR_FAVORITES_KEY = "cigaros_pos_favorites_cigars";
 
+  const EUR_RATES = {
+    USD: 1.15,
+    CHF: 0.94,
+    GBP: 0.84,
+    CNY: 8.25,
+  };
+
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -479,15 +486,260 @@
   }
 
   function money(n) {
-  const num = Number(n || 0);
+    const num = Number(n || 0);
 
-  return Number.isFinite(num)
-    ? num.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    : "0.00";
-}
+    return Number.isFinite(num)
+      ? num.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      : "0.00";
+  }
+
+  function formatCurrency(value, code) {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  }
+
+  function ensureCurrencyPopupStyles() {
+    if (document.getElementById("currency-popup-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "currency-popup-styles";
+    style.textContent = `
+      .currency-pop{
+        position:fixed;
+        inset:0;
+        z-index:999999;
+        display:grid;
+        place-items:center;
+        padding:24px;
+        background:rgba(3,10,24,.42);
+        backdrop-filter:blur(16px) saturate(1.1);
+        -webkit-backdrop-filter:blur(16px) saturate(1.1);
+      }
+
+      .currency-card{
+        width:min(350px, calc(100vw - 44px));
+        border-radius:30px;
+        background:rgba(246,247,251,.94);
+        color:#0f1728;
+        padding:22px;
+        box-shadow:
+          0 24px 70px rgba(0,0,0,.38),
+          inset 0 1px 0 rgba(255,255,255,.74);
+        border:1px solid rgba(255,255,255,.62);
+      }
+
+      .currency-top{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:14px;
+        margin-bottom:16px;
+      }
+
+      .currency-title{
+        margin:0;
+        font-size:30px;
+        line-height:1;
+        font-weight:900;
+        letter-spacing:-.045em;
+        color:#0f1728;
+      }
+
+      .currency-sub{
+        margin-top:6px;
+        font-size:13px;
+        font-weight:700;
+        color:rgba(15,23,40,.46);
+      }
+
+      .currency-x{
+        width:42px;
+        height:42px;
+        border-radius:999px;
+        border:0;
+        background:rgba(15,23,40,.06);
+        color:rgba(15,23,40,.58);
+        font-size:30px;
+        line-height:1;
+        display:grid;
+        place-items:center;
+        cursor:pointer;
+      }
+
+      .currency-base{
+        height:66px;
+        border-radius:22px;
+        background:#0f1728;
+        color:#fff;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:0 18px;
+        margin-bottom:12px;
+        box-shadow:0 14px 28px rgba(15,23,40,.20);
+      }
+
+      .currency-base span{
+        font-size:24px;
+        font-weight:900;
+        letter-spacing:-.035em;
+      }
+
+      .currency-row{
+        min-height:60px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        padding:0 6px;
+        border-top:1px solid rgba(15,23,40,.08);
+      }
+
+      .currency-label{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        min-width:0;
+      }
+
+      .currency-flag{
+        font-size:25px;
+        line-height:1;
+      }
+
+      .currency-code{
+        font-size:17px;
+        font-weight:800;
+        color:#0f1728;
+      }
+
+      .currency-value{
+        font-size:22px;
+        font-weight:800;
+        letter-spacing:-.035em;
+        color:#0f1728;
+        white-space:nowrap;
+      }
+
+      .currency-note{
+        margin-top:12px;
+        text-align:center;
+        font-size:12px;
+        font-weight:700;
+        color:rgba(15,23,40,.45);
+      }
+
+      .price-convert-btn{
+        border:0;
+        background:transparent;
+        color:inherit;
+        font:inherit;
+        font-weight:inherit;
+        line-height:inherit;
+        letter-spacing:inherit;
+        padding:0;
+        margin:0;
+        cursor:pointer;
+        -webkit-tap-highlight-color:transparent;
+        text-align:right;
+      }
+
+      .price-convert-btn:active{
+        transform:scale(.96);
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function openCurrencyPopup(eurValue) {
+    const eur = Number(String(eurValue || "").replace(/[^0-9.]/g, ""));
+    if (!Number.isFinite(eur) || eur <= 0) return;
+
+    ensureCurrencyPopupStyles();
+
+    document.querySelector(".currency-pop")?.remove();
+
+    const pop = document.createElement("div");
+    pop.className = "currency-pop";
+
+    const usd = eur * EUR_RATES.USD;
+    const chf = eur * EUR_RATES.CHF;
+    const gbp = eur * EUR_RATES.GBP;
+    const cny = eur * EUR_RATES.CNY;
+
+    pop.innerHTML = `
+      <div class="currency-card" role="dialog" aria-modal="true" aria-label="Currency conversion">
+        <div class="currency-top">
+          <div>
+            <h3 class="currency-title">Currency</h3>
+            <div class="currency-sub">Euro conversion estimate</div>
+          </div>
+
+          <button class="currency-x" type="button" aria-label="Close currency popup">×</button>
+        </div>
+
+        <div class="currency-base">
+          <span>🇪🇺 EUR</span>
+          <span>€${money(eur)}</span>
+        </div>
+
+        <div class="currency-row">
+          <div class="currency-label">
+            <span class="currency-flag">🇺🇸</span>
+            <span class="currency-code">USD</span>
+          </div>
+          <strong class="currency-value">${formatCurrency(usd, "USD")}</strong>
+        </div>
+
+        <div class="currency-row">
+          <div class="currency-label">
+            <span class="currency-flag">🇨🇭</span>
+            <span class="currency-code">CHF</span>
+          </div>
+          <strong class="currency-value">${formatCurrency(chf, "CHF")}</strong>
+        </div>
+
+        <div class="currency-row">
+          <div class="currency-label">
+            <span class="currency-flag">🇬🇧</span>
+            <span class="currency-code">GBP</span>
+          </div>
+          <strong class="currency-value">${formatCurrency(gbp, "GBP")}</strong>
+        </div>
+
+        <div class="currency-row">
+          <div class="currency-label">
+            <span class="currency-flag">🇨🇳</span>
+            <span class="currency-code">RMB</span>
+          </div>
+          <strong class="currency-value">¥${money(cny)}</strong>
+        </div>
+
+        <div class="currency-note">Rates are editable in brand.js</div>
+      </div>
+    `;
+
+    document.body.appendChild(pop);
+
+    pop.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+
+      if (target.classList.contains("currency-pop") || target.closest(".currency-x")) {
+        pop.remove();
+      }
+    });
+
+    if (navigator.vibrate) navigator.vibrate(8);
+  }
 
   function ensureActionSheet() {
     if ($("#pos-action-sheet")) return;
@@ -681,6 +933,7 @@
       const rowIconCandidates = rowIconCandidatesForRow(r);
       const rowIconPath = rowIconPathForRow(r);
       const priceText = resolvePrice(r);
+      const priceNumber = resolvePriceNumber(r);
       const isCuban = resolveIsCuban(r);
 
       const row = document.createElement("article");
@@ -699,7 +952,11 @@
         </div>
 
         <div class="brand-row-right">
-          <div class="brand-row-msrp">${esc(priceText)}</div>
+          ${
+            priceNumber > 0
+              ? `<button class="brand-row-msrp price-convert-btn" type="button" data-eur="${esc(priceText)}" aria-label="Convert ${esc(priceText)} euros">${esc(priceText)}</button>`
+              : `<div class="brand-row-msrp">—</div>`
+          }
           <button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu">+</button>
         </div>
       `;
@@ -708,12 +965,19 @@
       const left = $(".brand-row-left", row);
       const title = $(".brand-row-title", row);
       const plusBtn = $(".qty-btn--plus", row);
+      const priceBtn = $(".price-convert-btn", row);
 
       bindImageFallback(icon, rowIconCandidates, "hide");
 
       left?.addEventListener("click", () => openDetail(r));
       title?.addEventListener("click", () => openDetail(r));
       icon?.addEventListener("click", () => openDetail(r));
+
+      priceBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openCurrencyPopup(priceBtn.dataset.eur || priceText);
+      });
 
       plusBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -942,7 +1206,10 @@
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeActionSheet();
+    if (e.key === "Escape") {
+      document.querySelector(".currency-pop")?.remove();
+      closeActionSheet();
+    }
   });
 
   if (btnBands) btnBands.style.display = "none";
@@ -953,6 +1220,7 @@
     if (!listEl) return;
 
     ensureActionSheet();
+    ensureCurrencyPopupStyles();
 
     state.brandQuery = (getParam("brand") || "Padron").trim();
 
