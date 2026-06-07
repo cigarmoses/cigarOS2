@@ -497,158 +497,153 @@
       : "0.00";
   }
 
-function ensureCurrencyPopupStyles() {
-  if (document.getElementById("currency-popup-styles")) return;
+.currency-pop,
+.currency-card,
+.currency-card *{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif !important;
+  font-synthesis:none;
+}
 
-  const style = document.createElement("style");
-  style.id = "currency-popup-styles";
-  style.textContent = `
-    .currency-pop,
-    .currency-card,
-    .currency-card *{
-      font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif !important;
-    }
+.currency-pop{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:rgba(3,10,24,.42);
+  backdrop-filter:blur(16px) saturate(1.1);
+  -webkit-backdrop-filter:blur(16px) saturate(1.1);
+}
 
-    .currency-pop{
-      position:fixed;
-      inset:0;
-      z-index:999999;
-      display:grid;
-      place-items:center;
-      padding:24px;
-      background:rgba(3,10,24,.42);
-      backdrop-filter:blur(16px) saturate(1.1);
-      -webkit-backdrop-filter:blur(16px) saturate(1.1);
-    }
+.currency-card{
+  width:min(350px, calc(100vw - 44px));
+  max-height:85vh;
+  overflow-y:auto;
+  border-radius:30px;
+  background:rgba(246,247,251,.94);
+  color:#0f1728;
+  padding:22px;
+  box-shadow:0 24px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.74);
+  border:1px solid rgba(255,255,255,.62);
+}
 
-    .currency-card{
-      width:min(350px, calc(100vw - 44px));
-      max-height:85vh;
-      overflow-y:auto;
-      border-radius:30px;
-      background:rgba(246,247,251,.94);
-      color:#0f1728;
-      padding:22px;
-      box-shadow:0 24px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.74);
-      border:1px solid rgba(255,255,255,.62);
-    }
+.currency-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:16px;
+}
 
-    .currency-top{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:14px;
-      margin-bottom:16px;
-    }
+.currency-title{
+  margin:0;
+  font-size:34px;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:-.035em;
+  color:#0f1728;
+}
 
-    .currency-title{
-      margin:0;
-      font-size:34px;
-      line-height:1;
-      font-weight:850;
-      letter-spacing:-.045em;
-      color:#0f1728;
-    }
+.currency-sub{
+  margin-top:7px;
+  font-size:18px;
+  font-weight:400;
+  letter-spacing:-.015em;
+  line-height:1.2;
+  color:rgba(15,23,40,.48);
+}
 
-    .currency-sub{
-      margin-top:7px;
-      font-size:18px;
-      font-weight:500;
-      letter-spacing:-.02em;
-      line-height:1.2;
-      color:rgba(15,23,40,.48);
-    }
+.currency-x{
+  width:42px;
+  height:42px;
+  border-radius:999px;
+  border:0;
+  background:rgba(15,23,40,.06);
+  color:rgba(15,23,40,.58);
+  font-size:30px;
+  line-height:1;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
 
-    .currency-x{
-      width:42px;
-      height:42px;
-      border-radius:999px;
-      border:0;
-      background:rgba(15,23,40,.06);
-      color:rgba(15,23,40,.58);
-      font-size:30px;
-      line-height:1;
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-    }
+.currency-base{
+  height:66px;
+  border-radius:22px;
+  background:rgba(255,255,255,.62);
+  color:#0f1728;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+  margin-bottom:12px;
+  border:1px solid rgba(15,23,40,.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.70), 0 10px 24px rgba(15,23,40,.07);
+}
 
-    .currency-base{
-      height:66px;
-      border-radius:22px;
-      background:rgba(255,255,255,.62);
-      color:#0f1728;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:0 18px;
-      margin-bottom:12px;
-      border:1px solid rgba(15,23,40,.08);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.70), 0 10px 24px rgba(15,23,40,.07);
-    }
+.currency-base span{
+  font-size:24px;
+  font-weight:600;
+  letter-spacing:-.025em;
+}
 
-    .currency-base span{
-      font-size:24px;
-      font-weight:700;
-      letter-spacing:-.035em;
-    }
+.currency-row{
+  min-height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 6px;
+  border-top:1px solid rgba(15,23,40,.08);
+}
 
-    .currency-row{
-      min-height:70px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:0 6px;
-      border-top:1px solid rgba(15,23,40,.08);
-    }
+.currency-label{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
 
-    .currency-label{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:0;
-    }
+.currency-flag{
+  font-size:26px;
+  line-height:1;
+  flex:0 0 auto;
+}
 
-    .currency-flag{
-      font-size:26px;
-      line-height:1;
-      flex:0 0 auto;
-    }
+.currency-name-wrap{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+}
 
-    .currency-name-wrap{
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      align-items:flex-start;
-      justify-content:center;
-    }
+.currency-code{
+  font-size:22px;
+  font-weight:650;
+  line-height:1;
+  letter-spacing:-.025em;
+  color:#0f1728;
+}
 
-    .currency-code{
-      font-size:22px;
-      font-weight:800;
-      line-height:1;
-      letter-spacing:-.035em;
-      color:#0f1728;
-    }
+.currency-country{
+  display:block;
+  margin-top:5px;
+  font-size:16px;
+  font-weight:400;
+  line-height:1;
+  letter-spacing:-.01em;
+  color:rgba(15,23,40,.52);
+}
 
-    .currency-country{
-      display:block;
-      margin-top:5px;
-      font-size:16px;
-      font-weight:500;
-      line-height:1;
-      letter-spacing:-.02em;
-      color:rgba(15,23,40,.52);
-    }
-
-    .currency-value{
-      font-size:22px;
-      font-weight:400;
-      letter-spacing:-.035em;
-      color:#0f1728;
-      white-space:nowrap;
-    }
+.currency-value{
+  font-size:22px;
+  font-weight:400;
+  letter-spacing:-.025em;
+  color:#0f1728;
+  white-space:nowrap;
+}
 
     .price-convert-btn{
       border:0;
