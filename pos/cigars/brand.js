@@ -351,324 +351,323 @@
     }, 1300);
   }
 
-  function resolveIsCuban(r) {
-    const explicit = getField(r, ["cuban", "is_cuban"]);
+function resolveIsCuban(r) {
+  const explicit = getField(r, ["cuban", "is_cuban"]);
 
-    if (explicit) {
-      const v = explicit.toLowerCase().trim();
-      if (["x", "yes", "true", "1", "cuban"].includes(v)) return true;
-      if (["no", "false", "0", "non-cuban", "non cuban"].includes(v)) return false;
-    }
-
-    const manufacturer = resolveManufacturerVal(r).toLowerCase();
-    const origin = resolveOrigin(r).toLowerCase();
-
-    return manufacturer.includes("habanos") || origin === "cuba";
+  if (explicit) {
+    const v = explicit.toLowerCase().trim();
+    if (["x", "yes", "true", "1", "cuban", "cuba"].includes(v)) return true;
+    if (["no", "false", "0", "non-cuban", "non cuban"].includes(v)) return false;
   }
 
-  function brandDisplayName() {
-    return state.brandMeta?.name || state.brand || state.brandQuery || "Brand";
+  const manufacturer = resolveManufacturerVal(r).toLowerCase();
+  const origin = resolveOrigin(r).toLowerCase();
+
+  return (
+    manufacturer.includes("habanos") ||
+    manufacturer.includes("habanos s.a") ||
+    origin.includes("cuba") ||
+    origin.includes("cuban")
+  );
+}
+
+function brandDisplayName() {
+  return state.brandMeta?.name || state.brand || state.brandQuery || "Brand";
+}
+
+function brandSlug() {
+  return normalizeBrand(state.brandMeta?.slug || state.brandMeta?.name || state.brand || state.brandQuery);
+}
+
+function brandIconCandidates() {
+  const sheetRow = state.rowsAll.find((r) => normalizeAssetPath(resolveBrandImage(r)));
+  const fromSheet = normalizeAssetPath(sheetRow ? resolveBrandImage(sheetRow) : "");
+
+  const metaImage = normalizeAssetPath(
+    state.brandMeta?.image ||
+      state.brandMeta?.icon ||
+      state.brandMeta?.svg ||
+      state.brandMeta?.img
+  );
+
+  const slug = brandSlug();
+  const out = [];
+
+  if (fromSheet) out.push(fromSheet);
+  if (metaImage) out.push(metaImage);
+
+  if (slug) {
+    out.push(`/img/icons/brands/${slug}.svg`);
+    out.push(`/img/icons/brands/${slug}.png`);
   }
 
-  function brandSlug() {
-    return normalizeBrand(state.brandMeta?.slug || state.brandMeta?.name || state.brand || state.brandQuery);
+  return Array.from(new Set(out.filter(Boolean)));
+}
+
+function brandIconPath() {
+  return brandIconCandidates()[0] || "";
+}
+
+function rowIconCandidatesForRow(r) {
+  const lineImg = normalizeAssetPath(resolveLineImage(r));
+  const brandImg = normalizeAssetPath(resolveBrandImage(r));
+
+  return Array.from(new Set([lineImg, brandImg, ...brandIconCandidates()].filter(Boolean)));
+}
+
+function rowIconPathForRow(r) {
+  return rowIconCandidatesForRow(r)[0] || "";
+}
+
+function bindImageFallback(img, candidates = [], finalBehavior = "hide") {
+  if (!img) return;
+
+  const list = Array.from(new Set(candidates.filter(Boolean)));
+  if (!list.length) {
+    if (finalBehavior === "hide") img.style.visibility = "hidden";
+    return;
   }
 
-  function brandIconCandidates() {
-    const sheetRow = state.rowsAll.find((r) => normalizeAssetPath(resolveBrandImage(r)));
-    const fromSheet = normalizeAssetPath(sheetRow ? resolveBrandImage(sheetRow) : "");
-
-    const metaImage = normalizeAssetPath(
-      state.brandMeta?.image ||
-        state.brandMeta?.icon ||
-        state.brandMeta?.svg ||
-        state.brandMeta?.img
-    );
-
-    const slug = brandSlug();
-    const out = [];
-
-    if (fromSheet) out.push(fromSheet);
-    if (metaImage) out.push(metaImage);
-
-    if (slug) {
-      out.push(`/img/icons/brands/${slug}.svg`);
-      out.push(`/img/icons/brands/${slug}.png`);
-    }
-
-    return Array.from(new Set(out.filter(Boolean)));
-  }
-
-  function brandIconPath() {
-    return brandIconCandidates()[0] || "";
-  }
-
-  function rowIconCandidatesForRow(r) {
-    const lineImg = normalizeAssetPath(resolveLineImage(r));
-    const brandImg = normalizeAssetPath(resolveBrandImage(r));
-
-    return Array.from(new Set([lineImg, brandImg, ...brandIconCandidates()].filter(Boolean)));
-  }
-
-  function rowIconPathForRow(r) {
-    return rowIconCandidatesForRow(r)[0] || "";
-  }
-
-  function bindImageFallback(img, candidates = [], finalBehavior = "hide") {
-    if (!img) return;
-
-    const list = Array.from(new Set(candidates.filter(Boolean)));
-    if (!list.length) {
+  let idx = 0;
+  img.style.visibility = "";
+  img.onerror = () => {
+    idx++;
+    if (idx < list.length) {
+      img.src = list[idx];
+    } else {
+      img.onerror = null;
       if (finalBehavior === "hide") img.style.visibility = "hidden";
-      return;
+    }
+  };
+
+  img.src = list[0];
+}
+
+function makeDetailHref(r) {
+  const detailKey = resolveDetailKey(r);
+
+  if (detailKey) {
+    return `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`;
+  }
+
+  const fallbackKey = [state.brand, resolveDisplayName(r), resolveVitola(r)]
+    .filter(Boolean)
+    .join("|");
+
+  return `/pos/cigars/cigar.html?key=${encodeURIComponent(fallbackKey)}`;
+}
+
+function buildCartItem(r, type = "stick") {
+  const isBox = type === "box";
+  const unitPrice = isBox ? resolveBoxMsrpNumber(r) : resolvePriceNumber(r);
+  const detailKey = resolveDetailKey(r);
+
+  return {
+    key: `${detailKey || `${normalizeBrand(state.brand)}|${resolveDisplayName(r)}|${resolveVitola(r)}`}|${type}`,
+    type: "cigar",
+    purchaseType: type,
+    category: "Cigars",
+    id: detailKey || resolveName(r),
+    brand: state.brand,
+    manufacturer: resolveManufacturerVal(r),
+    line: resolveLine(r),
+    cigar: resolveName(r),
+    name: `${resolveDisplayName(r)}${isBox ? " (Box)" : ""}`,
+    displayName: resolveDisplayName(r),
+    vitola: resolveVitola(r),
+    ring: resolveRing(r),
+    length: resolveLength(r),
+    shape: resolveShape(r),
+    wrapper: resolveWrapper(r),
+    binder: resolveBinder(r),
+    filler: resolveFiller(r),
+    origin: resolveOrigin(r),
+    shade: resolveShade(r),
+    strength: resolveStrength(r),
+    image: brandIconPath(),
+    msrp: unitPrice,
+    boxCount: resolveBoxCount(r),
+    url: makeDetailHref(r),
+  };
+}
+
+function money(n) {
+  const num = Number(n || 0);
+
+  return Number.isFinite(num)
+    ? num.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : "0.00";
+}
+
+function ensureCurrencyPopupStyles() {
+  if (document.getElementById("currency-popup-styles")) return;
+
+  const style = document.createElement("style");
+  style.id = "currency-popup-styles";
+  style.textContent = `
+    .currency-pop,
+    .currency-card,
+    .currency-card *{
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif !important;
+      font-synthesis:none;
     }
 
-    let idx = 0;
-    img.style.visibility = "";
-    img.onerror = () => {
-      idx++;
-      if (idx < list.length) {
-        img.src = list[idx];
-      } else {
-        img.onerror = null;
-        if (finalBehavior === "hide") img.style.visibility = "hidden";
-      }
-    };
-
-    img.src = list[0];
-  }
-
-  function makeDetailHref(r) {
-    const detailKey = resolveDetailKey(r);
-
-    if (detailKey) {
-      return `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`;
+    .currency-pop{
+      position:fixed;
+      inset:0;
+      z-index:999999;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      background:rgba(3,10,24,.42);
+      backdrop-filter:blur(16px) saturate(1.1);
+      -webkit-backdrop-filter:blur(16px) saturate(1.1);
     }
 
-    const fallbackKey = [state.brand, resolveDisplayName(r), resolveVitola(r)]
-      .filter(Boolean)
-      .join("|");
+    .currency-card{
+      width:min(350px, calc(100vw - 44px));
+      max-height:85vh;
+      overflow-y:auto;
+      border-radius:30px;
+      background:rgba(246,247,251,.94);
+      color:#0f1728;
+      padding:22px;
+      box-shadow:0 24px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.74);
+      border:1px solid rgba(255,255,255,.62);
+    }
 
-    return `/pos/cigars/cigar.html?key=${encodeURIComponent(fallbackKey)}`;
-  }
+    .currency-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:16px;
+    }
 
-  function buildCartItem(r, type = "stick") {
-    const isBox = type === "box";
-    const unitPrice = isBox ? resolveBoxMsrpNumber(r) : resolvePriceNumber(r);
-    const detailKey = resolveDetailKey(r);
+    .currency-title{
+      margin:0;
+      font-size:34px;
+      line-height:1;
+      font-weight:700;
+      letter-spacing:-.035em;
+      color:#0f1728;
+    }
 
-    return {
-      key: `${detailKey || `${normalizeBrand(state.brand)}|${resolveDisplayName(r)}|${resolveVitola(r)}`}|${type}`,
-      type: "cigar",
-      purchaseType: type,
-      category: "Cigars",
-      id: detailKey || resolveName(r),
-      brand: state.brand,
-      manufacturer: resolveManufacturerVal(r),
-      line: resolveLine(r),
-      cigar: resolveName(r),
-      name: `${resolveDisplayName(r)}${isBox ? " (Box)" : ""}`,
-      displayName: resolveDisplayName(r),
-      vitola: resolveVitola(r),
-      ring: resolveRing(r),
-      length: resolveLength(r),
-      shape: resolveShape(r),
-      wrapper: resolveWrapper(r),
-      binder: resolveBinder(r),
-      filler: resolveFiller(r),
-      origin: resolveOrigin(r),
-      shade: resolveShade(r),
-      strength: resolveStrength(r),
-      image: brandIconPath(),
-      msrp: unitPrice,
-      boxCount: resolveBoxCount(r),
-      url: makeDetailHref(r),
-    };
-  }
+    .currency-sub{
+      margin-top:7px;
+      font-size:18px;
+      font-weight:400;
+      letter-spacing:-.015em;
+      line-height:1.2;
+      color:rgba(15,23,40,.48);
+    }
 
-  function money(n) {
-    const num = Number(n || 0);
+    .currency-x{
+      width:42px;
+      height:42px;
+      border-radius:999px;
+      border:0;
+      background:rgba(15,23,40,.06);
+      color:rgba(15,23,40,.58);
+      font-size:30px;
+      line-height:1;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+    }
 
-    return Number.isFinite(num)
-      ? num.toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
-      : "0.00";
-  }
+    .currency-base{
+      height:66px;
+      border-radius:22px;
+      background:rgba(255,255,255,.62);
+      color:#0f1728;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 18px;
+      margin-bottom:12px;
+      border:1px solid rgba(15,23,40,.08);
+    }
 
-.currency-pop,
-.currency-card,
-.currency-card *{
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif !important;
-  font-synthesis:none;
-}
+    .currency-base span{
+      font-size:24px;
+      font-weight:600;
+      letter-spacing:-.025em;
+    }
 
-.currency-pop{
-  position:fixed;
-  inset:0;
-  z-index:999999;
-  display:grid;
-  place-items:center;
-  padding:24px;
-  background:rgba(3,10,24,.42);
-  backdrop-filter:blur(16px) saturate(1.1);
-  -webkit-backdrop-filter:blur(16px) saturate(1.1);
-}
+    .currency-row{
+      min-height:70px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:0 6px;
+      border-top:1px solid rgba(15,23,40,.08);
+    }
 
-.currency-card{
-  width:min(350px, calc(100vw - 44px));
-  max-height:85vh;
-  overflow-y:auto;
-  border-radius:30px;
-  background:rgba(246,247,251,.94);
-  color:#0f1728;
-  padding:22px;
-  box-shadow:0 24px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.74);
-  border:1px solid rgba(255,255,255,.62);
-}
+    .currency-label{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
 
-.currency-top{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:14px;
-  margin-bottom:16px;
-}
+    .currency-flag{
+      font-size:26px;
+      line-height:1;
+      flex:0 0 auto;
+    }
 
-.currency-title{
-  margin:0;
-  font-size:34px;
-  line-height:1;
-  font-weight:700;
-  letter-spacing:-.035em;
-  color:#0f1728;
-}
+    .currency-name-wrap{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+    }
 
-.currency-sub{
-  margin-top:7px;
-  font-size:18px;
-  font-weight:400;
-  letter-spacing:-.015em;
-  line-height:1.2;
-  color:rgba(15,23,40,.48);
-}
+    .currency-code{
+      font-size:22px;
+      font-weight:650;
+      line-height:1;
+      letter-spacing:-.025em;
+      color:#0f1728;
+    }
 
-.currency-x{
-  width:42px;
-  height:42px;
-  border-radius:999px;
-  border:0;
-  background:rgba(15,23,40,.06);
-  color:rgba(15,23,40,.58);
-  font-size:30px;
-  line-height:1;
-  display:grid;
-  place-items:center;
-  cursor:pointer;
-}
+    .currency-country{
+      margin-top:5px;
+      font-size:16px;
+      font-weight:400;
+      line-height:1;
+      letter-spacing:-.01em;
+      color:rgba(15,23,40,.52);
+    }
 
-.currency-base{
-  height:66px;
-  border-radius:22px;
-  background:rgba(255,255,255,.62);
-  color:#0f1728;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 18px;
-  margin-bottom:12px;
-  border:1px solid rgba(15,23,40,.08);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.70), 0 10px 24px rgba(15,23,40,.07);
-}
-
-.currency-base span{
-  font-size:24px;
-  font-weight:600;
-  letter-spacing:-.025em;
-}
-
-.currency-row{
-  min-height:70px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:0 6px;
-  border-top:1px solid rgba(15,23,40,.08);
-}
-
-.currency-label{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  min-width:0;
-}
-
-.currency-flag{
-  font-size:26px;
-  line-height:1;
-  flex:0 0 auto;
-}
-
-.currency-name-wrap{
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  justify-content:center;
-}
-
-.currency-code{
-  font-size:22px;
-  font-weight:650;
-  line-height:1;
-  letter-spacing:-.025em;
-  color:#0f1728;
-}
-
-.currency-country{
-  display:block;
-  margin-top:5px;
-  font-size:16px;
-  font-weight:400;
-  line-height:1;
-  letter-spacing:-.01em;
-  color:rgba(15,23,40,.52);
-}
-
-.currency-value{
-  font-size:22px;
-  font-weight:400;
-  letter-spacing:-.025em;
-  color:#0f1728;
-  white-space:nowrap;
-}
+    .currency-value{
+      font-size:22px;
+      font-weight:400;
+      letter-spacing:-.025em;
+      color:#0f1728;
+      white-space:nowrap;
+    }
 
     .price-convert-btn{
       border:0;
       background:transparent;
       color:inherit;
       font:inherit;
-      font-weight:inherit;
-      line-height:inherit;
-      letter-spacing:inherit;
       padding:0;
       margin:0;
       cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
       text-align:right;
-    }
-
-    .price-convert-btn:active{
-      transform:scale(.96);
     }
   `;
 
   document.head.appendChild(style);
 }
 
- function openCurrencyPopup(eurValue) {
+function openCurrencyPopup(eurValue) {
   const eur = Number(String(eurValue || "").replace(/[^0-9.]/g, ""));
   if (!Number.isFinite(eur) || eur <= 0) return;
 
@@ -692,69 +691,15 @@
           <h3 class="currency-title">Currency</h3>
           <div class="currency-sub">Euro conversion estimate</div>
         </div>
-
         <button class="currency-x" type="button" aria-label="Close currency popup">×</button>
       </div>
 
-      <div class="currency-base">
-        <span>🇪🇺 € EUR</span>
-        <span>${money(eur)}</span>
-      </div>
-
-      <div class="currency-row">
-        <div class="currency-label">
-          <span class="currency-flag">🇺🇸</span>
-          <span class="currency-name-wrap">
-            <span class="currency-code">$ USD</span>
-            <span class="currency-country">United States</span>
-          </span>
-        </div>
-        <strong class="currency-value">${money(usd)}</strong>
-      </div>
-
-      <div class="currency-row">
-        <div class="currency-label">
-          <span class="currency-flag">🇨🇭</span>
-          <span class="currency-name-wrap">
-            <span class="currency-code">CHF</span>
-            <span class="currency-country">Swiss</span>
-          </span>
-        </div>
-        <strong class="currency-value">${money(chf)}</strong>
-      </div>
-
-      <div class="currency-row">
-        <div class="currency-label">
-          <span class="currency-flag">🇬🇧</span>
-          <span class="currency-name-wrap">
-            <span class="currency-code">£ GBP</span>
-            <span class="currency-country">Great Britain</span>
-          </span>
-        </div>
-        <strong class="currency-value">${money(gbp)}</strong>
-      </div>
-
-      <div class="currency-row">
-        <div class="currency-label">
-          <span class="currency-flag">🇨🇳</span>
-          <span class="currency-name-wrap">
-            <span class="currency-code">¥ RMB</span>
-            <span class="currency-country">China</span>
-          </span>
-        </div>
-        <strong class="currency-value">${money(cny)}</strong>
-      </div>
-
-      <div class="currency-row">
-        <div class="currency-label">
-          <span class="currency-flag">🇦🇪</span>
-          <span class="currency-name-wrap">
-            <span class="currency-code">AED</span>
-            <span class="currency-country">United Arab Emirates</span>
-          </span>
-        </div>
-        <strong class="currency-value">${money(aed)}</strong>
-      </div>
+      <div class="currency-base"><span>🇪🇺 € EUR</span><span>${money(eur)}</span></div>
+      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇺🇸</span><span class="currency-name-wrap"><span class="currency-code">$ USD</span><span class="currency-country">United States</span></span></div><strong class="currency-value">${money(usd)}</strong></div>
+      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇨🇭</span><span class="currency-name-wrap"><span class="currency-code">CHF</span><span class="currency-country">Switzerland</span></span></div><strong class="currency-value">${money(chf)}</strong></div>
+      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇬🇧</span><span class="currency-name-wrap"><span class="currency-code">£ GBP</span><span class="currency-country">Great Britain</span></span></div><strong class="currency-value">${money(gbp)}</strong></div>
+      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇨🇳</span><span class="currency-name-wrap"><span class="currency-code">¥ RMB</span><span class="currency-country">China</span></span></div><strong class="currency-value">${money(cny)}</strong></div>
+      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇦🇪</span><span class="currency-name-wrap"><span class="currency-code">AED</span><span class="currency-country">United Arab Emirates</span></span></div><strong class="currency-value">${money(aed)}</strong></div>
     </div>
   `;
 
@@ -763,15 +708,12 @@
   pop.addEventListener("click", (e) => {
     const target = e.target;
     if (!(target instanceof Element)) return;
-
-    if (target.classList.contains("currency-pop") || target.closest(".currency-x")) {
-      pop.remove();
-    }
+    if (target.classList.contains("currency-pop") || target.closest(".currency-x")) pop.remove();
   });
 
   if (navigator.vibrate) navigator.vibrate(8);
 }
-
+  
   function ensureActionSheet() {
     if ($("#pos-action-sheet")) return;
 
