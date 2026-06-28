@@ -225,20 +225,26 @@
   }
 
   function getRing(rec) {
-    const direct = getField(rec, ["Ring", "ring", "RG", "rg", "Ring Size", "ringsize"]);
-    if (direct) return direct;
+  return getField(rec, [
+    "Ring",
+    "ring",
+    "RG",
+    "rg",
+    "Ring Gauge",
+    "ringgauge",
+    "Ring Size",
+    "ringsize"
+  ]);
+}
 
-    const raw = rec?.__ring_col ?? rec?.__row?.[RING_COL_INDEX] ?? "";
-    return String(raw || "").trim();
-  }
-
-  function getLength(rec) {
-    const direct = getField(rec, ["Length", "length", "Len", "len"]);
-    if (direct) return direct;
-
-    const raw = rec?.__length_col ?? rec?.__row?.[LENGTH_COL_INDEX] ?? "";
-    return String(raw || "").trim();
-  }
+function getLength(rec) {
+  return getField(rec, [
+    "Length",
+    "length",
+    "Len",
+    "len"
+  ]);
+}
 
   function getOrigin(rec) {
     return getField(rec, ["Origin", "origin", "Country", "country"]);
