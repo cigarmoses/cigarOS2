@@ -9,8 +9,8 @@
 
   // Sheet column positions (0-based)
   // A=0 ... J=9, K=10, L=11, M=12
-  const LENGTH_COL_INDEX = 11; // Column L
-  const RING_COL_INDEX = 12;   // Column M
+  const LENGTH_COL_INDEX = 10; // Column L
+  const RING_COL_INDEX = 11;   // Column M
 
   const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -325,37 +325,35 @@
   }
 
   function findByPipeKey(records, idParam) {
-    const raw = String(idParam || "").trim();
-    if (!raw || !raw.includes("|")) return null;
+  const raw = String(idParam || "").trim();
+  if (!raw || !raw.includes("|")) return null;
 
-    const parts = raw.split("|").map((s) => normalizeLoose(s));
-    const [partBrand = "", partName = "", partVitola = ""] = parts;
+  const parts = raw.split("|").map((s) => normalizeLoose(s));
+  const [partBrand = "", partName = "", partVitola = ""] = parts;
 
-    const matches = records.filter((r) => {
-      const brand = normalizeLoose(getBrand(r));
-      const line = normalizeLoose(getLine(r));
-      const name = normalizeLoose(getName(r));
-      const vitola = normalizeLoose(getVitola(r));
+  const matches = records.filter((r) => {
+    const brand = normalizeLoose(getBrand(r));
+    const line = normalizeLoose(getLine(r));
+    const cigar = normalizeLoose(getName(r));
+    const vitola = normalizeLoose(getVitola(r));
 
-      const combinedNameA = normalizeLoose([line, name].filter(Boolean).join(" "));
-      const combinedNameB = name;
-      const combinedNameC = line;
+    const fullName = normalizeLoose(
+      [line, cigar].filter(Boolean).join(" ")
+    );
 
-      const brandMatch = !partBrand || brand.includes(partBrand);
-      const nameMatch =
-        !partName ||
-        combinedNameA.includes(partName) ||
-        combinedNameB.includes(partName) ||
-        combinedNameC.includes(partName);
-      const vitolaMatch = !partVitola || vitola.includes(partVitola);
+    return (
+      (!partBrand || brand === partBrand) &&
+      (!partName || fullName === partName || cigar === partName) &&
+      (!partVitola || vitola === partVitola)
+    );
+  });
 
-      return brandMatch && nameMatch && vitolaMatch;
-    });
+  if (!matches.length) return null;
 
-    if (!matches.length) return null;
-    matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
-    return matches.find((r) => getRing(r) && getLength(r)) || matches[0];
-  }
+  matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
+
+  return matches[0];
+}
 
   function readSet(key) {
     try {
