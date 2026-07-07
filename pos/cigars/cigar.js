@@ -262,6 +262,17 @@ function getLength(rec) {
     return getField(rec, ["Brand IMG", "brandimg", "brand_image"]);
   }
 
+  function getLineImage(rec) {
+  return getField(rec, [
+    "Line IMG",
+    "lineimg",
+    "line_image",
+    "Line Image",
+    "lineimage",
+    "brand_line_img"
+  ]);
+  }
+
   function makeSlugFromRecord(rec) {
     const id = getCigarId(rec);
     const brand = getBrand(rec);
@@ -458,17 +469,20 @@ function getLength(rec) {
 }
   
   function buildBrandIconCandidates(rec) {
-    const fromSheet = normalizeAssetPath(getBrandImage(rec));
-    const brand = getBrand(rec);
-    const brandKey = normalizeBrand(brand);
+  const lineImg = normalizeAssetPath(getLineImage(rec));
+  const brandImg = normalizeAssetPath(getBrandImage(rec));
+  const brand = getBrand(rec);
+  const brandKey = normalizeBrand(brand);
 
-    const out = [];
-    if (fromSheet) out.push(fromSheet);
+  const out = [];
 
-    if (brandKey) {
-      out.push(`/img/icons/brands/${brandKey}.svg`);
-      out.push(`/img/icons/brands/${brandKey}.png`);
-    }
+  if (lineImg) out.push(lineImg);
+  if (brandImg) out.push(brandImg);
+
+  if (brandKey) {
+    out.push(`/img/icons/brands/${brandKey}.svg`);
+    out.push(`/img/icons/brands/${brandKey}.png`);
+  }
 
     return Array.from(new Set(out.filter(Boolean)));
   }
@@ -610,6 +624,13 @@ if (fromSheet) out.push(fromSheet);
     const length = getLength(rec) || "—";
     const cigarImgCandidates = buildCigarImageCandidates(rec);
     const brandImgCandidates = buildBrandIconCandidates(rec);
+    console.log({
+  key: getCigarId(rec),
+  line: getLine(rec),
+  cigar: getName(rec),
+  lineImg: getLineImage(rec),
+  brandImg: getBrandImage(rec)
+});
     const flag = flagForCountry(origin);
     const accolades = collectAccolades(records, rec);
 
