@@ -846,13 +846,15 @@ wishlistBtn?.addEventListener("click", () => {
 
   if (!cartApi || typeof cartApi.add !== "function") return;
 
+  const cigarKey = id || `${brand}|${name}|${vitola}`;
+
   cartApi.add({
     type: "cigar",
-    key: id,
-    id,
+    key: cigarKey,
+    id: cigarKey,
     brand,
     line,
-    name: displayName,
+    name,
     vitola,
     ring,
     length,
@@ -864,17 +866,18 @@ wishlistBtn?.addEventListener("click", () => {
     shade,
     strength,
     image: cigarImgCandidates[0] || "",
-    url: window.location.href
+    url: `/pos/cigars/cigar.html?key=${encodeURIComponent(cigarKey)}`
   });
 });
     
-    syncUI();
+syncUI();
 
-    wireImageFallback($("#cdBrandBadge"), "cd-badge-placeholder", "Brand");
-    wireImageFallback($("#cdStickImage"), "cd-stick-placeholder", "No image");
-    wireBrandNavigation(brand);
-  }
+wireImageFallback($("#cdBrandBadge"), "cd-badge-placeholder", "Brand");
+wireImageFallback($("#cdStickImage"), "cd-stick-placeholder", "No image");
+wireBrandNavigation(brand);
 
+} // <-- end render()
+  
   async function load() {
     applyTheme(getSavedTheme());
 
