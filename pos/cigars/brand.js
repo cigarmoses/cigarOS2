@@ -444,17 +444,27 @@ function bindImageFallback(img, candidates = [], finalBehavior = "hide") {
 }
 
 function makeDetailHref(r) {
+
   const detailKey = resolveDetailKey(r);
 
-  if (detailKey) {
+  // Use the sheet key whenever it exists
+  if (detailKey && detailKey.trim()) {
     return `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`;
   }
 
-  const fallbackKey = [state.brand, resolveDisplayName(r), resolveVitola(r)]
-    .filter(Boolean)
+  // Otherwise build the exact pipe key the detail page expects
+  const pipeKey = [
+    resolveBrandVal(r),
+    resolveDisplayName(r),
+    resolveVitola(r),
+    "stick"
+  ]
+    .map(v => String(v || "").trim())
     .join("|");
 
-  return `/pos/cigars/cigar.html?key=${encodeURIComponent(fallbackKey)}`;
+  console.log("DETAIL LINK:", pipeKey);
+
+  return `/pos/cigars/cigar.html?key=${encodeURIComponent(pipeKey)}`;
 }
 
 function buildCartItem(r, type = "stick") {
