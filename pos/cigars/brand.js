@@ -460,20 +460,27 @@ function makeDetailHref(r) {
 function buildCartItem(r, type = "stick") {
   const isBox = type === "box";
   const unitPrice = isBox ? resolveBoxMsrpNumber(r) : resolvePriceNumber(r);
-  const detailKey = resolveDetailKey(r);
+
+  const detailKey =
+    resolveDetailKey(r) ||
+    `${normalizeBrand(state.brand)}|${resolveDisplayName(r)}|${resolveVitola(r)}`;
 
   return {
-    key: `${detailKey || `${normalizeBrand(state.brand)}|${resolveDisplayName(r)}|${resolveVitola(r)}`}|${type}`,
+    key: `${detailKey}|${type}`,
+    detailKey,
     type: "cigar",
     purchaseType: type,
     category: "Cigars",
-    id: detailKey || resolveName(r),
+
+    id: detailKey,
     brand: state.brand,
     manufacturer: resolveManufacturerVal(r),
     line: resolveLine(r),
     cigar: resolveName(r),
+
     name: `${resolveDisplayName(r)}${isBox ? " (Box)" : ""}`,
     displayName: resolveDisplayName(r),
+
     vitola: resolveVitola(r),
     ring: resolveRing(r),
     length: resolveLength(r),
@@ -484,9 +491,13 @@ function buildCartItem(r, type = "stick") {
     origin: resolveOrigin(r),
     shade: resolveShade(r),
     strength: resolveStrength(r),
-    image: normalizeAssetPath(resolveLineImage(r)) ||
-       normalizeAssetPath(resolveBrandImage(r)) ||
-       brandIconPath(),
+
+    // Line image → Brand image → Brand icon
+    image:
+      normalizeAssetPath(resolveLineImage(r)) ||
+      normalizeAssetPath(resolveBrandImage(r)) ||
+      brandIconPath(),
+
     msrp: unitPrice,
     boxCount: resolveBoxCount(r),
     url: makeDetailHref(r),
