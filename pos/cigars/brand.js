@@ -484,7 +484,9 @@ function buildCartItem(r, type = "stick") {
     origin: resolveOrigin(r),
     shade: resolveShade(r),
     strength: resolveStrength(r),
-    image: brandIconPath(),
+    image: normalizeAssetPath(resolveLineImage(r)) ||
+       normalizeAssetPath(resolveBrandImage(r)) ||
+       brandIconPath(),
     msrp: unitPrice,
     boxCount: resolveBoxCount(r),
     url: makeDetailHref(r),
