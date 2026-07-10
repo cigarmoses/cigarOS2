@@ -345,11 +345,19 @@ function getLength(rec) {
   const raw = String(idParam || "").trim();
   if (!raw || !raw.includes("|")) return null;
 
-  const parts = raw.split("|").map((s) => normalizeLoose(s));
-  const [partBrand = "", partName = "", partVitola = ""] = parts;
+  const parts = raw.split("|").map((s) => String(s || "").trim());
+  const [rawBrand = "", rawName = "", rawVitola = ""] = parts;
+
+  const partBrandLoose = normalizeLoose(rawBrand);
+  const partBrandCompact = compactKey(rawBrand);
+  const partName = normalizeLoose(rawName);
+  const partVitola = normalizeLoose(rawVitola);
 
   const matches = records.filter((r) => {
-    const brand = normalizeLoose(getBrand(r));
+    const brandRaw = getBrand(r);
+    const brandLoose = normalizeLoose(brandRaw);
+    const brandCompact = compactKey(brandRaw);
+
     const line = normalizeLoose(getLine(r));
     const cigar = normalizeLoose(getName(r));
     const vitola = normalizeLoose(getVitola(r));
@@ -358,17 +366,28 @@ function getLength(rec) {
       [line, cigar].filter(Boolean).join(" ")
     );
 
-    return (
-      (!partBrand || brand === partBrand) &&
-      (!partName || fullName === partName || cigar === partName) &&
-      (!partVitola || vitola === partVitola)
-    );
+    const brandMatch =
+      !partBrandLoose ||
+      brandLoose === partBrandLoose ||
+      brandCompact === partBrandCompact;
+
+    const nameMatch =
+      !partName ||
+      fullName === partName ||
+      cigar === partName ||
+      fullName.includes(partName) ||
+      partName.includes(fullName);
+
+    const vitolaMatch =
+      !partVitola ||
+      vitola === partVitola;
+
+    return brandMatch && nameMatch && vitolaMatch;
   });
 
   if (!matches.length) return null;
 
   matches.sort((a, b) => scoreRecord(b) - scoreRecord(a));
-
   return matches[0];
 }
 
