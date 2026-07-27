@@ -85,6 +85,13 @@ function iconPathFor(key, label, row = null){
 
   /* BRAND ICONS */
   if(key === "brand"){
+    /*
+     * Some Cuban and domestic brands share the same display name.
+     * Resolve those collisions before accepting the sheet's generic Brand IMG.
+     */
+    if(row?.isCuban && slugify(label) === "cohiba"){
+      return "/img/icons/brands/cubancohiba.svg";
+    }
 
     const img =
       norm(
@@ -206,12 +213,17 @@ function buildBrandSummary(rows){
 
   rows.forEach(r=>{
     const brand = norm(r.Brand || r.brand) || "Unknown";
-    const manufacturer = norm(r.Manufacturer || r.manufacturer);
+    const isCuban = isCubanRow(r);
+    const manufacturer = isCuban
+      ? "Habanos S.A."
+      : norm(r.Manufacturer || r.manufacturer);
+    const summaryKey = `${brand.toLowerCase()}::${isCuban ? "cuban" : "domestic"}`;
 
-    if(!map.has(brand)){
-      map.set(brand,{
+    if(!map.has(summaryKey)){
+      map.set(summaryKey,{
         brand,
         manufacturer,
+        isCuban,
         brandImg: norm(
           r["Brand IMG"] ||
           r.BrandIMG ||
@@ -228,7 +240,7 @@ function buildBrandSummary(rows){
       });
     }
 
-    map.get(brand).count++;
+    map.get(summaryKey).count++;
   });
 
   return [...map.values()].sort((a,b)=>a.brand.localeCompare(b.brand));
@@ -361,7 +373,7 @@ function renderBrandsGrid(summary){
   listRoot.innerHTML = `
     <div class="brands-grid">
       ${summary.map(c=>{
-        const href = `/pos/cigars/brand?brand=${encodeURIComponent(c.brand)}`;;
+        const href = `/pos/cigars/brand?brand=${encodeURIComponent(c.brand)}${c.isCuban ? "&cuban=1" : ""}`;
         const icon = iconPathFor("brand", c.brand, c);
 
         return `
@@ -383,7 +395,7 @@ function renderResultsRows(summary){
   listRoot.innerHTML = `
     <div class="cigars-results">
       ${summary.map(c=>{
-        const href = `/pos/cigars/brand?brand=${encodeURIComponent(c.brand)}`;
+        const href = `/pos/cigars/brand?brand=${encodeURIComponent(c.brand)}${c.isCuban ? "&cuban=1" : ""}`;
         const icon = iconPathFor("brand", c.brand, c);
 
         return `
