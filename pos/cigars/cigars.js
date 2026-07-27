@@ -521,7 +521,7 @@ function renderFavoriteBrands(summary){
 
   favBrandsRoot.innerHTML = cards.slice(0,8).map(b=>{
     const icon = iconPathFor("brand", b.brand, b);
-    const href = `/pos/cigars/brand/?brand=${encodeURIComponent(b.brand)}`;
+    const href = `/pos/cigars/brand/?brand=${encodeURIComponent(b.brand)}${b.isCuban ? "&cuban=1" : ""}`;
 
     return `
       <a class="fav-brand-card" href="${href}" data-brand="${escapeHtml(b.brand)}">
