@@ -84,29 +84,35 @@ function slugify(name){
 function iconPathFor(key, label, row = null){
 
   /* BRAND ICONS */
-  if(key === "brand"){
-    /*
-     * Some Cuban and domestic brands share the same display name.
-     * Resolve those collisions before accepting the sheet's generic Brand IMG.
-     */
-    if(row?.isCuban && slugify(label) === "cohiba"){
-      return "/img/icons/brands/cubancohiba.svg";
-    }
+if(key === "brand"){
 
-    const img =
-      norm(
-        row?.brandImg ||
-        row?.["Brand IMG"] ||
-        row?.BrandIMG ||
-        row?.["brand img"]
-      );
-
-    if(img){
-      return img.startsWith("/")
-        ? img
-        : `/${img}`;
-    }
+  /*
+   * Some Cuban and domestic brands share the same display name.
+   */
+  if(row?.isCuban && slugify(label) === "cohiba"){
+    return "/img/icons/brands/cubancohiba.svg";
   }
+
+  const img = norm(
+    row?.brandImg ||
+    row?.["Brand IMG"] ||
+    row?.BrandIMG ||
+    row?.["brand img"] ||
+
+    /* NEW: fallback to Line IMG */
+    row?.lineImg ||
+    row?.["Line IMG"] ||
+    row?.LineIMG ||
+    row?.["line img"]
+  );
+
+  if(img){
+    return img.startsWith("/")
+      ? img
+      : `/${img}`;
+  }
+}
+   
 
   /* MANUFACTURER ICONS */
   if(key === "manufacturer"){
@@ -214,36 +220,70 @@ function buildBrandSummary(rows){
   rows.forEach(r=>{
     const brand = norm(r.Brand || r.brand) || "Unknown";
     const isCuban = isCubanRow(r);
+
     const manufacturer = isCuban
       ? "Habanos S.A."
       : norm(r.Manufacturer || r.manufacturer);
-    const summaryKey = `${brand.toLowerCase()}::${isCuban ? "cuban" : "domestic"}`;
+
+    const summaryKey =
+      `${brand.toLowerCase()}::${isCuban ? "cuban" : "domestic"}`;
+
+    const brandImg = norm(
+      r["Brand IMG"] ||
+      r.BrandIMG ||
+      r["brand img"] ||
+      r.brandImg
+    );
+
+    const lineImg = norm(
+      r["Line IMG"] ||
+      r.LineIMG ||
+      r["line img"] ||
+      r.lineImg
+    );
+
+    const manufacturerImg = norm(
+      r["Manufacturer IMG"] ||
+      r.ManufacturerIMG ||
+      r["manufacturer img"] ||
+      r.manufacturerImg
+    );
 
     if(!map.has(summaryKey)){
       map.set(summaryKey,{
         brand,
         manufacturer,
         isCuban,
-        brandImg: norm(
-          r["Brand IMG"] ||
-          r.BrandIMG ||
-          r["brand img"] ||
-          r.brandImg
-        ),
-        manufacturerImg: norm(
-          r["Manufacturer IMG"] ||
-          r.ManufacturerIMG ||
-          r["manufacturer img"] ||
-          r.manufacturerImg
-        ),
+        brandImg,
+        lineImg,
+        manufacturerImg,
         count:0
       });
+    }else{
+      const existing = map.get(summaryKey);
+
+      /*
+       * Do not let the first blank spreadsheet row permanently
+       * determine the brand's image.
+       */
+      if(!existing.brandImg && brandImg){
+        existing.brandImg = brandImg;
+      }
+
+      if(!existing.lineImg && lineImg){
+        existing.lineImg = lineImg;
+      }
+
+      if(!existing.manufacturerImg && manufacturerImg){
+        existing.manufacturerImg = manufacturerImg;
+      }
     }
 
     map.get(summaryKey).count++;
   });
 
-  return [...map.values()].sort((a,b)=>a.brand.localeCompare(b.brand));
+  return [...map.values()]
+    .sort((a,b)=>a.brand.localeCompare(b.brand));
 }
 
 /* =========================
