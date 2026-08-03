@@ -323,10 +323,11 @@ html[data-theme="light"] .search-wrap:focus-within{
   position:relative;
   z-index:1;
 }
-#brand-search::placeholder{
+#brand-search::placeholder,
+#brand-search::-webkit-input-placeholder{
+  font:inherit;
   color:var(--muted2);
-  font-family:var(--font-display);
-  font-weight:500;
+  opacity:1;
 }
 /* =========================
    CONTROLS
@@ -579,12 +580,23 @@ html[data-theme="light"] .brand-row:hover{
   min-width:78px;
 }
 .brand-row-msrp{
+  appearance:none;
+  -webkit-appearance:none;
+  border:0;
+  background:none;
+  padding:0;
+  margin:0;
+
   font-family:var(--font-display);
-  font-size:18px;
-  font-weight:700;
-  letter-spacing:-.03em;
-  line-height:1;
-  color:var(--text);
+  font-size:14px;          /* same as Vitola */
+  font-weight:500;         /* same as Vitola */
+  letter-spacing:-.01em;
+  line-height:1.1;
+
+  color:var(--muted2);
+
+  text-align:right;
+  cursor:pointer;
 }
 .qty-btn{
   width:26px;
