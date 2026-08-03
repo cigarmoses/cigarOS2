@@ -42,7 +42,7 @@ html,body{
 body.brand-page{
   margin:0;
   color:var(--text);
-  font-family:var(--font-sans);
+  font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   background:
     radial-gradient(1200px 700px at 15% 5%, rgba(72,117,210,.30), transparent 55%),
     radial-gradient(900px 600px at 90% 10%, rgba(0,185,255,.10), transparent 55%),
