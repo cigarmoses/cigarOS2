@@ -930,7 +930,6 @@ html[data-theme="light"] .cigars-bottom-bar-inner{
   background:rgba(255,255,255,.72);
   box-shadow:0 12px 30px rgba(15,26,44,.10);
 }
-
 .cb-nav-btn{
   min-height:54px;
   border-radius:18px;
@@ -952,6 +951,18 @@ html[data-theme="light"] .cigars-bottom-bar-inner{
   appearance:none;
   position:relative;
 }
+
+/* ADD THESE */
+
+html[data-theme="light"] .cb-nav-btn{
+  color:#0f1728;
+}
+
+html[data-theme="light"] .cb-nav-icon{
+  filter:brightness(0) saturate(100%);
+}
+
+/* EXISTING */
 
 .cb-nav-icon{
   width:22px;
