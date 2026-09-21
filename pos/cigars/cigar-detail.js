@@ -595,8 +595,249 @@
     });
 
     editBtn?.addEventListener("click", () => {
-      console.log("Edit clicked");
+  const existingEditor = document.getElementById("cdPosEditor");
+  if (existingEditor) existingEditor.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "cdPosEditor";
+
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(15, 23, 42, 0.42);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      width: 100%;
+      max-width: 430px;
+      max-height: 92vh;
+      overflow-y: auto;
+      background: #f5f7fa;
+      border-radius: 24px 24px 0 0;
+      padding:
+        12px
+        18px
+        calc(24px + env(safe-area-inset-bottom, 0px));
+      box-sizing: border-box;
+      box-shadow: 0 -12px 40px rgba(0,0,0,.16);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    ">
+
+      <div style="
+        width: 38px;
+        height: 5px;
+        border-radius: 999px;
+        background: #c7cbd1;
+        margin: 0 auto 14px;
+      "></div>
+
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      ">
+        <button
+          type="button"
+          id="cdEditCancel"
+          style="
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            font: inherit;
+            font-size: 15px;
+            padding: 8px 0;
+          "
+        >
+          Cancel
+        </button>
+
+        <div style="
+          font-size: 17px;
+          font-weight: 700;
+          color: #16263d;
+        ">
+          Edit POS Entry
+        </div>
+
+        <button
+          type="button"
+          id="cdEditSave"
+          style="
+            border: 0;
+            background: transparent;
+            color: #007aff;
+            font: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 8px 0;
+          "
+        >
+          Save
+        </button>
+      </div>
+
+      <div style="
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 16px;
+      ">
+        ${escapeHTML(brand)} · ${escapeHTML(name)}
+      </div>
+
+      <div id="cdEditFields"></div>
+
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const fields = [
+    {
+      id: "manufacturerSingleUPC",
+      label: "Manufacturer Single UPC",
+      type: "text",
+      inputmode: "numeric"
+    },
+    {
+      id: "manufacturerBoxUPC",
+      label: "Manufacturer Box UPC",
+      type: "text",
+      inputmode: "numeric"
+    },
+    {
+      id: "customSingleSKU",
+      label: "Custom Single SKU",
+      type: "text",
+      inputmode: "text"
+    },
+    {
+      id: "customBoxSKU",
+      label: "Custom Box SKU",
+      type: "text",
+      inputmode: "text"
+    },
+    {
+      id: "inventorySingles",
+      label: "Inventory (Singles)",
+      type: "number",
+      inputmode: "numeric"
+    },
+    {
+      id: "inventoryBoxes",
+      label: "Inventory (Boxes)",
+      type: "number",
+      inputmode: "numeric"
+    },
+    {
+      id: "unitsPerBox",
+      label: "Units per Box",
+      type: "number",
+      inputmode: "numeric"
+    },
+    {
+      id: "msrpSingle",
+      label: "MSRP Single",
+      type: "number",
+      inputmode: "decimal",
+      step: "0.01"
+    },
+    {
+      id: "msrpBox",
+      label: "MSRP Box",
+      type: "number",
+      inputmode: "decimal",
+      step: "0.01"
+    },
+    {
+      id: "costSingle",
+      label: "Cost Single",
+      type: "number",
+      inputmode: "decimal",
+      step: "0.01"
+    },
+    {
+      id: "costBox",
+      label: "Cost Box",
+      type: "number",
+      inputmode: "decimal",
+      step: "0.01"
+    }
+  ];
+
+  const fieldsContainer = document.getElementById("cdEditFields");
+
+  fields.forEach((field) => {
+    const row = document.createElement("label");
+
+    row.style.cssText = `
+      display: block;
+      margin-bottom: 12px;
+    `;
+
+    row.innerHTML = `
+      <div style="
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        margin: 0 0 6px 4px;
+      ">
+        ${field.label}
+      </div>
+
+      <input
+        id="${field.id}"
+        type="${field.type}"
+        inputmode="${field.inputmode}"
+        ${field.step ? `step="${field.step}"` : ""}
+        autocomplete="off"
+        style="
+          display: block;
+          width: 100%;
+          height: 48px;
+          box-sizing: border-box;
+          border: 1px solid rgba(22,38,61,.10);
+          border-radius: 14px;
+          background: #ffffff;
+          color: #16263d;
+          padding: 0 14px;
+          font: inherit;
+          font-size: 16px;
+          outline: none;
+          -webkit-appearance: none;
+          appearance: none;
+        "
+      >
+    `;
+
+    fieldsContainer.appendChild(row);
+  });
+
+  const closeEditor = () => {
+    overlay.remove();
+  };
+
+  document
+    .getElementById("cdEditCancel")
+    ?.addEventListener("click", closeEditor);
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) closeEditor();
+  });
+
+  document
+    .getElementById("cdEditSave")
+    ?.addEventListener("click", () => {
+      console.log("Save POS entry clicked");
     });
+});
 
     syncButtonState();
   }
