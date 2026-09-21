@@ -401,6 +401,275 @@
     `).join("");
   }
 
+  function openPosEditor(rec) {
+    const oldEditor = document.getElementById("cdPosEditor");
+
+    if (oldEditor) {
+      oldEditor.remove();
+    }
+
+    const brand = displayBrand(rec);
+    const name = displayName(rec);
+
+    const fields = [
+      {
+        id: "manufacturerSingleUPC",
+        label: "Manufacturer Single UPC",
+        type: "text",
+        inputmode: "numeric"
+      },
+      {
+        id: "manufacturerBoxUPC",
+        label: "Manufacturer Box UPC",
+        type: "text",
+        inputmode: "numeric"
+      },
+      {
+        id: "customSingleSKU",
+        label: "Custom Single SKU",
+        type: "text",
+        inputmode: "text"
+      },
+      {
+        id: "customBoxSKU",
+        label: "Custom Box SKU",
+        type: "text",
+        inputmode: "text"
+      },
+      {
+        id: "inventorySingles",
+        label: "Inventory (Singles)",
+        type: "number",
+        inputmode: "numeric"
+      },
+      {
+        id: "inventoryBoxes",
+        label: "Inventory (Boxes)",
+        type: "number",
+        inputmode: "numeric"
+      },
+      {
+        id: "unitsPerBox",
+        label: "Units per Box",
+        type: "number",
+        inputmode: "numeric"
+      },
+      {
+        id: "msrpSingle",
+        label: "MSRP Single",
+        type: "number",
+        inputmode: "decimal",
+        step: "0.01"
+      },
+      {
+        id: "msrpBox",
+        label: "MSRP Box",
+        type: "number",
+        inputmode: "decimal",
+        step: "0.01"
+      },
+      {
+        id: "costSingle",
+        label: "Cost Single",
+        type: "number",
+        inputmode: "decimal",
+        step: "0.01"
+      },
+      {
+        id: "costBox",
+        label: "Cost Box",
+        type: "number",
+        inputmode: "decimal",
+        step: "0.01"
+      }
+    ];
+
+    const overlay = document.createElement("div");
+
+    overlay.id = "cdPosEditor";
+
+    overlay.style.cssText = [
+      "position:fixed",
+      "top:0",
+      "right:0",
+      "bottom:0",
+      "left:0",
+      "z-index:2147483647",
+      "background:rgba(5,15,35,.55)",
+      "display:flex",
+      "align-items:flex-end",
+      "justify-content:center",
+      "padding:0",
+      "margin:0",
+      "box-sizing:border-box"
+    ].join(";");
+
+    const sheet = document.createElement("div");
+
+    sheet.style.cssText = [
+      "position:relative",
+      "width:100%",
+      "max-width:430px",
+      "max-height:90vh",
+      "overflow-y:auto",
+      "-webkit-overflow-scrolling:touch",
+      "background:#f5f7fa",
+      "border-radius:24px 24px 0 0",
+      "padding:12px 18px calc(24px + env(safe-area-inset-bottom, 0px))",
+      "box-sizing:border-box",
+      "box-shadow:0 -12px 40px rgba(0,0,0,.22)",
+      "font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif"
+    ].join(";");
+
+    sheet.innerHTML = `
+      <div style="
+        width:38px;
+        height:5px;
+        border-radius:999px;
+        background:#c7cbd1;
+        margin:0 auto 14px;
+      "></div>
+
+      <div style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:14px;
+      ">
+        <button
+          type="button"
+          id="cdEditCancel"
+          style="
+            border:0;
+            background:transparent;
+            color:#64748b;
+            font:inherit;
+            font-size:15px;
+            padding:10px 0;
+          "
+        >
+          Cancel
+        </button>
+
+        <div style="
+          color:#16263d;
+          font-size:17px;
+          font-weight:700;
+          text-align:center;
+        ">
+          Edit POS Entry
+        </div>
+
+        <button
+          type="button"
+          id="cdEditSave"
+          style="
+            border:0;
+            background:transparent;
+            color:#007aff;
+            font:inherit;
+            font-size:15px;
+            font-weight:700;
+            padding:10px 0;
+          "
+        >
+          Save
+        </button>
+      </div>
+
+      <div style="
+        color:#64748b;
+        font-size:13px;
+        margin:0 0 16px;
+      ">
+        ${escapeHTML(brand)} · ${escapeHTML(name)}
+      </div>
+
+      <div id="cdEditFields"></div>
+    `;
+
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+
+    const fieldsContainer = $("#cdEditFields", sheet);
+
+    fields.forEach((field) => {
+      const label = document.createElement("label");
+
+      label.style.cssText = `
+        display:block;
+        margin:0 0 12px;
+      `;
+
+      const stepAttr = field.step
+        ? `step="${escapeAttr(field.step)}"`
+        : "";
+
+      label.innerHTML = `
+        <div style="
+          margin:0 0 6px 4px;
+          color:#64748b;
+          font-size:12px;
+          font-weight:600;
+        ">
+          ${escapeHTML(field.label)}
+        </div>
+
+        <input
+          id="${escapeAttr(field.id)}"
+          type="${escapeAttr(field.type)}"
+          inputmode="${escapeAttr(field.inputmode)}"
+          ${stepAttr}
+          autocomplete="off"
+          style="
+            display:block;
+            width:100%;
+            height:48px;
+            box-sizing:border-box;
+            border:1px solid rgba(22,38,61,.12);
+            border-radius:14px;
+            background:#ffffff;
+            color:#16263d;
+            padding:0 14px;
+            font:inherit;
+            font-size:16px;
+            outline:none;
+            -webkit-appearance:none;
+            appearance:none;
+          "
+        >
+      `;
+
+      fieldsContainer.appendChild(label);
+    });
+
+    const closeEditor = () => {
+      overlay.remove();
+    };
+
+    $("#cdEditCancel", sheet)?.addEventListener(
+      "click",
+      closeEditor
+    );
+
+    $("#cdEditSave", sheet)?.addEventListener(
+      "click",
+      () => {
+        console.log("Save POS entry clicked");
+      }
+    );
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+        closeEditor();
+      }
+    });
+
+    sheet.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+  }
   function render(rec, accolades) {
     const key = getKey(rec);
     const brand = displayBrand(rec);
@@ -433,7 +702,13 @@
 
         ${
           brandImg
-            ? `<img class="cd-badge" src="${escapeAttr(brandImg)}" alt="${escapeAttr(brand)}" loading="lazy" decoding="async">`
+            ? `<img
+                class="cd-badge"
+                src="${escapeAttr(brandImg)}"
+                alt="${escapeAttr(brand)}"
+                loading="lazy"
+                decoding="async"
+              >`
             : ``
         }
       </div>
@@ -442,7 +717,13 @@
         <div class="cd-left">
           ${
             cigarImg
-              ? `<img class="cd-stick" src="${escapeAttr(cigarImg)}" alt="${escapeAttr(name)}" loading="lazy" decoding="async">`
+              ? `<img
+                  class="cd-stick"
+                  src="${escapeAttr(cigarImg)}"
+                  alt="${escapeAttr(name)}"
+                  loading="lazy"
+                  decoding="async"
+                >`
               : ``
           }
         </div>
@@ -452,78 +733,142 @@
           <div class="cd-stat-grid">
             <div class="cd-card cd-stat">
               <div class="cd-card-label">Ring</div>
-              <div class="cd-stat-value">${escapeHTML(ring)}</div>
+              <div class="cd-stat-value">
+                ${escapeHTML(ring)}
+              </div>
             </div>
 
             <div class="cd-card cd-stat">
               <div class="cd-card-label">Length</div>
-              <div class="cd-stat-value">${escapeHTML(length)}</div>
+              <div class="cd-stat-value">
+                ${escapeHTML(length)}
+              </div>
             </div>
           </div>
 
           <div class="cd-mini-grid">
             <div class="cd-card cd-mini">
               <div class="cd-card-label">Strength</div>
-              <div class="cd-mini-value">${escapeHTML(strength)}</div>
+              <div class="cd-mini-value">
+                ${escapeHTML(strength)}
+              </div>
             </div>
 
             <div class="cd-card cd-mini">
               <div class="cd-card-label">Vitola</div>
-              <div class="cd-mini-value">${escapeHTML(vitola)}</div>
+              <div class="cd-mini-value">
+                ${escapeHTML(vitola)}
+              </div>
             </div>
           </div>
 
           <div class="cd-card cd-tobaccos">
+
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Wrapper</div>
-              <div class="cd-tobacco-value">${escapeHTML(wrapper)}</div>
+              <div class="cd-tobacco-value">
+                ${escapeHTML(wrapper)}
+              </div>
             </div>
 
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Binder</div>
-              <div class="cd-tobacco-value">${escapeHTML(binder)}</div>
+              <div class="cd-tobacco-value">
+                ${escapeHTML(binder)}
+              </div>
             </div>
 
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Filler</div>
-              <div class="cd-tobacco-value">${escapeHTML(filler)}</div>
+              <div class="cd-tobacco-value">
+                ${escapeHTML(filler)}
+              </div>
             </div>
+
           </div>
 
           <div class="cd-card cd-origin">
-            <div class="cd-card-label">Origin</div>
+            <div class="cd-card-label">
+              Origin
+            </div>
 
             <div class="cd-origin-row">
-              <div class="cd-origin-value">${escapeHTML(origin)}</div>
+              <div class="cd-origin-value">
+                ${escapeHTML(origin)}
+              </div>
+
               ${
                 flag
-                  ? `<div class="cd-flag" aria-hidden="true">${flag}</div>`
+                  ? `<div
+                      class="cd-flag"
+                      aria-hidden="true"
+                    >${flag}</div>`
                   : ``
               }
             </div>
           </div>
 
           <div class="cd-card cd-shade">
-            <div class="cd-card-label">Wrapper Shade</div>
-            <div class="cd-shade-value">${escapeHTML(shade)}</div>
+            <div class="cd-card-label">
+              Wrapper Shade
+            </div>
+
+            <div class="cd-shade-value">
+              ${escapeHTML(shade)}
+            </div>
           </div>
 
           <div class="cd-card cd-accolades">
-            <div class="cd-card-label">Accolades</div>
-            <div class="cd-accolade-list">${renderAccolades(accolades)}</div>
+            <div class="cd-card-label">
+              Accolades
+            </div>
+
+            <div class="cd-accolade-list">
+              ${renderAccolades(accolades)}
+            </div>
           </div>
 
         </div>
       </div>
 
       <div class="cd-actions">
-        <button class="cd-action" type="button" id="btnFavorite">Favorite</button>
-        <button class="cd-action" type="button" id="btnCompare">Compare</button>
-        <button class="cd-action" type="button" id="btnWishlist">Wishlist</button>
-        <button class="cd-action" type="button" id="btnEdit">Edit</button>
+
+        <button
+          class="cd-action"
+          type="button"
+          id="btnFavorite"
+        >
+          Favorite
+        </button>
+
+        <button
+          class="cd-action"
+          type="button"
+          id="btnCompare"
+        >
+          Compare
+        </button>
+
+        <button
+          class="cd-action"
+          type="button"
+          id="btnWishlist"
+        >
+          Wishlist
+        </button>
+
+        <button
+          class="cd-action"
+          type="button"
+          id="btnEdit"
+        >
+          Edit
+        </button>
+
       </div>
     `;
-        const favoriteSet = readSet(FAVORITES_KEY);
+
+    const favoriteSet = readSet(FAVORITES_KEY);
     const wishlistSet = readSet(WISHLIST_KEY);
     const compareSet = readSet(COMPARE_KEY);
 
@@ -552,9 +897,11 @@
     favoriteBtn?.addEventListener("click", () => {
       if (!key) return;
 
-      favoriteSet.has(key)
-        ? favoriteSet.delete(key)
-        : favoriteSet.add(key);
+      if (favoriteSet.has(key)) {
+        favoriteSet.delete(key);
+      } else {
+        favoriteSet.add(key);
+      }
 
       writeSet(
         FAVORITES_KEY,
@@ -567,9 +914,11 @@
     wishlistBtn?.addEventListener("click", () => {
       if (!key) return;
 
-      wishlistSet.has(key)
-        ? wishlistSet.delete(key)
-        : wishlistSet.add(key);
+      if (wishlistSet.has(key)) {
+        wishlistSet.delete(key);
+      } else {
+        wishlistSet.add(key);
+      }
 
       writeSet(
         WISHLIST_KEY,
@@ -582,9 +931,11 @@
     compareBtn?.addEventListener("click", () => {
       if (!key) return;
 
-      compareSet.has(key)
-        ? compareSet.delete(key)
-        : compareSet.add(key);
+      if (compareSet.has(key)) {
+        compareSet.delete(key);
+      } else {
+        compareSet.add(key);
+      }
 
       writeSet(
         COMPARE_KEY,
@@ -594,255 +945,21 @@
       syncButtonState();
     });
 
-    editBtn?.addEventListener("click", () => {
-  const existingEditor = document.getElementById("cdPosEditor");
-  if (existingEditor) existingEditor.remove();
+    /*
+      EDIT is intentionally simple here:
+      the button calls the dedicated editor function
+      created in Part 1.
+    */
+    editBtn?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-  const overlay = document.createElement("div");
-  overlay.id = "cdPosEditor";
-
-  overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: rgba(15, 23, 42, 0.42);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  `;
-
-  overlay.innerHTML = `
-    <div style="
-      width: 100%;
-      max-width: 430px;
-      max-height: 92vh;
-      overflow-y: auto;
-      background: #f5f7fa;
-      border-radius: 24px 24px 0 0;
-      padding:
-        12px
-        18px
-        calc(24px + env(safe-area-inset-bottom, 0px));
-      box-sizing: border-box;
-      box-shadow: 0 -12px 40px rgba(0,0,0,.16);
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-    ">
-
-      <div style="
-        width: 38px;
-        height: 5px;
-        border-radius: 999px;
-        background: #c7cbd1;
-        margin: 0 auto 14px;
-      "></div>
-
-      <div style="
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 18px;
-      ">
-        <button
-          type="button"
-          id="cdEditCancel"
-          style="
-            border: 0;
-            background: transparent;
-            color: #64748b;
-            font: inherit;
-            font-size: 15px;
-            padding: 8px 0;
-          "
-        >
-          Cancel
-        </button>
-
-        <div style="
-          font-size: 17px;
-          font-weight: 700;
-          color: #16263d;
-        ">
-          Edit POS Entry
-        </div>
-
-        <button
-          type="button"
-          id="cdEditSave"
-          style="
-            border: 0;
-            background: transparent;
-            color: #007aff;
-            font: inherit;
-            font-size: 15px;
-            font-weight: 700;
-            padding: 8px 0;
-          "
-        >
-          Save
-        </button>
-      </div>
-
-      <div style="
-        font-size: 13px;
-        color: #64748b;
-        margin-bottom: 16px;
-      ">
-        ${escapeHTML(brand)} · ${escapeHTML(name)}
-      </div>
-
-      <div id="cdEditFields"></div>
-
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-
-  const fields = [
-    {
-      id: "manufacturerSingleUPC",
-      label: "Manufacturer Single UPC",
-      type: "text",
-      inputmode: "numeric"
-    },
-    {
-      id: "manufacturerBoxUPC",
-      label: "Manufacturer Box UPC",
-      type: "text",
-      inputmode: "numeric"
-    },
-    {
-      id: "customSingleSKU",
-      label: "Custom Single SKU",
-      type: "text",
-      inputmode: "text"
-    },
-    {
-      id: "customBoxSKU",
-      label: "Custom Box SKU",
-      type: "text",
-      inputmode: "text"
-    },
-    {
-      id: "inventorySingles",
-      label: "Inventory (Singles)",
-      type: "number",
-      inputmode: "numeric"
-    },
-    {
-      id: "inventoryBoxes",
-      label: "Inventory (Boxes)",
-      type: "number",
-      inputmode: "numeric"
-    },
-    {
-      id: "unitsPerBox",
-      label: "Units per Box",
-      type: "number",
-      inputmode: "numeric"
-    },
-    {
-      id: "msrpSingle",
-      label: "MSRP Single",
-      type: "number",
-      inputmode: "decimal",
-      step: "0.01"
-    },
-    {
-      id: "msrpBox",
-      label: "MSRP Box",
-      type: "number",
-      inputmode: "decimal",
-      step: "0.01"
-    },
-    {
-      id: "costSingle",
-      label: "Cost Single",
-      type: "number",
-      inputmode: "decimal",
-      step: "0.01"
-    },
-    {
-      id: "costBox",
-      label: "Cost Box",
-      type: "number",
-      inputmode: "decimal",
-      step: "0.01"
-    }
-  ];
-
-  const fieldsContainer = document.getElementById("cdEditFields");
-
-  fields.forEach((field) => {
-    const row = document.createElement("label");
-
-    row.style.cssText = `
-      display: block;
-      margin-bottom: 12px;
-    `;
-
-    row.innerHTML = `
-      <div style="
-        font-size: 12px;
-        font-weight: 600;
-        color: #64748b;
-        margin: 0 0 6px 4px;
-      ">
-        ${field.label}
-      </div>
-
-      <input
-        id="${field.id}"
-        type="${field.type}"
-        inputmode="${field.inputmode}"
-        ${field.step ? `step="${field.step}"` : ""}
-        autocomplete="off"
-        style="
-          display: block;
-          width: 100%;
-          height: 48px;
-          box-sizing: border-box;
-          border: 1px solid rgba(22,38,61,.10);
-          border-radius: 14px;
-          background: #ffffff;
-          color: #16263d;
-          padding: 0 14px;
-          font: inherit;
-          font-size: 16px;
-          outline: none;
-          -webkit-appearance: none;
-          appearance: none;
-        "
-      >
-    `;
-
-    fieldsContainer.appendChild(row);
-  });
-
-  const closeEditor = () => {
-    overlay.remove();
-  };
-
-  document
-    .getElementById("cdEditCancel")
-    ?.addEventListener("click", closeEditor);
-
-  overlay.addEventListener("click", (event) => {
-    if (event.target === overlay) closeEditor();
-  });
-
-  document
-    .getElementById("cdEditSave")
-    ?.addEventListener("click", () => {
-      console.log("Save POS entry clicked");
+      openPosEditor(rec);
     });
-});
 
     syncButtonState();
   }
-
-  function showNotFound() {
+    function showNotFound() {
     shell.innerHTML = `
       <div class="cd-loading">
         Cigar not found.
@@ -877,15 +994,17 @@
       let rec = null;
 
       if (wantedKey) {
-              rec =
-          records.find((row) => getKey(row) === wantedKey) ||
-          null;
+        rec =
+          records.find(
+            (row) => getKey(row) === wantedKey
+          ) || null;
       }
 
       if (!rec && wantedSlug) {
         rec =
-          records.find((row) => makeSlug(row) === wantedSlug) ||
-          null;
+          records.find(
+            (row) => makeSlug(row) === wantedSlug
+          ) || null;
       }
 
       if (!rec) {
@@ -898,7 +1017,10 @@
       }
 
     } catch (err) {
-      console.warn("[cigar detail]", err);
+      console.warn(
+        "[cigar detail]",
+        err
+      );
 
       shell.innerHTML = `
         <div class="cd-loading">
