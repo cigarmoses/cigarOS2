@@ -19,8 +19,11 @@
   });
 
   function getParam(name) {
-    try { return new URL(window.location.href).searchParams.get(name) || ""; }
-    catch { return ""; }
+    try {
+      return new URL(window.location.href).searchParams.get(name) || "";
+    } catch {
+      return "";
+    }
   }
 
   function escapeHTML(s) {
@@ -32,7 +35,9 @@
       .replaceAll("'", "&#039;");
   }
 
-  function escapeAttr(s) { return escapeHTML(s); }
+  function escapeAttr(s) {
+    return escapeHTML(s);
+  }
 
   function parseCSV(text) {
     const rows = [];
@@ -54,16 +59,21 @@
         continue;
       }
 
-      if (!inQuotes && ch === ',') {
+      if (!inQuotes && ch === ",") {
         row.push(field);
         field = "";
         continue;
       }
 
-      if (!inQuotes && (ch === '\n' || ch === '\r')) {
-        if (ch === '\r' && next === '\n') i += 1;
+      if (!inQuotes && (ch === "\n" || ch === "\r")) {
+        if (ch === "\r" && next === "\n") i += 1;
+
         row.push(field);
-        if (row.some((cell) => String(cell || "").trim() !== "")) rows.push(row);
+
+        if (row.some((cell) => String(cell || "").trim() !== "")) {
+          rows.push(row);
+        }
+
         row = [];
         field = "";
         continue;
@@ -74,7 +84,10 @@
 
     if (field.length || row.length) {
       row.push(field);
-      if (row.some((cell) => String(cell || "").trim() !== "")) rows.push(row);
+
+      if (row.some((cell) => String(cell || "").trim() !== "")) {
+        rows.push(row);
+      }
     }
 
     return rows;
@@ -91,23 +104,33 @@
 
   function rowsToObjects(rows) {
     if (!rows.length) return [];
+
     const headers = rows[0].map((h) => String(h || "").trim());
     const normalized = headers.map(normalizeHeader);
 
     return rows.slice(1).map((r) => {
       const obj = {};
+
       headers.forEach((h, i) => {
         obj[h] = (r[i] ?? "").trim();
         obj[normalized[i]] = (r[i] ?? "").trim();
       });
+
       return obj;
     });
   }
 
   function getField(rec, keys) {
     for (const key of keys) {
-      if (rec && rec[key] != null && String(rec[key]).trim() !== "") return String(rec[key]).trim();
+      if (
+        rec &&
+        rec[key] != null &&
+        String(rec[key]).trim() !== ""
+      ) {
+        return String(rec[key]).trim();
+      }
     }
+
     return "";
   }
 
@@ -133,11 +156,23 @@
   }
 
   function getKey(rec) {
-    return getField(rec, ["Key", "key", "cigar_id", "id", "row_id", "slug"]);
+    return getField(rec, [
+      "Key",
+      "key",
+      "cigar_id",
+      "id",
+      "row_id",
+      "slug"
+    ]);
   }
 
   function getBrand(rec) {
-    return getField(rec, ["Brand", "brand", "brand_aka", "Brand aka"]);
+    return getField(rec, [
+      "Brand",
+      "brand",
+      "brand_aka",
+      "Brand aka"
+    ]);
   }
 
   function getLine(rec) {
@@ -145,11 +180,23 @@
   }
 
   function getName(rec) {
-    return getField(rec, ["Cigar", "cigar", "Name", "name", "Cigar Name", "cigar_name"]);
+    return getField(rec, [
+      "Cigar",
+      "cigar",
+      "Name",
+      "name",
+      "Cigar Name",
+      "cigar_name"
+    ]);
   }
 
   function getVitola(rec) {
-    return getField(rec, ["Vitola", "vitola", "Style", "style"]);
+    return getField(rec, [
+      "Vitola",
+      "vitola",
+      "Style",
+      "style"
+    ]);
   }
 
   function getShape(rec) {
@@ -157,7 +204,12 @@
   }
 
   function getRing(rec) {
-    return getField(rec, ["RG", "rg", "Ring", "ring"]);
+    return getField(rec, [
+      "RG",
+      "rg",
+      "Ring",
+      "ring"
+    ]);
   }
 
   function getLength(rec) {
@@ -169,7 +221,11 @@
   }
 
   function getWrapper(rec) {
-    return getField(rec, ["Wrapper", "wrapper", "wrapper_type"]);
+    return getField(rec, [
+      "Wrapper",
+      "wrapper",
+      "wrapper_type"
+    ]);
   }
 
   function getBinder(rec) {
@@ -181,32 +237,66 @@
   }
 
   function getOrigin(rec) {
-    return getField(rec, ["Origin", "origin", "country", "country_of_origin"]);
+    return getField(rec, [
+      "Origin",
+      "origin",
+      "country",
+      "country_of_origin"
+    ]);
   }
 
   function getShade(rec) {
-    return getField(rec, ["Wrapper Shade", "wrapper_shade", "shade"]);
+    return getField(rec, [
+      "Wrapper Shade",
+      "wrapper_shade",
+      "shade"
+    ]);
   }
 
   function getCigarImg(rec) {
-    return getField(rec, ["Cigar IMG", "cigar_img", "image", "img", "photo", "cigar_image"]);
+    return getField(rec, [
+      "Cigar IMG",
+      "cigar_img",
+      "image",
+      "img",
+      "photo",
+      "cigar_image"
+    ]);
   }
 
   function getBrandImg(rec) {
-    const direct = getField(rec, ["Brand IMG", "brand_img", "brand_image"]);
+    const direct = getField(rec, [
+      "Brand IMG",
+      "brand_img",
+      "brand_image"
+    ]);
+
     if (direct) return direct;
+
     const brand = getBrand(rec);
-    return brand ? `/img/icons/brands/${normalizeBrand(brand)}.svg` : "";
+
+    return brand
+      ? `/img/icons/brands/${normalizeBrand(brand)}.svg`
+      : "";
   }
 
   function displayBrand(rec) {
-    return getBrand(rec) || getField(rec, ["Manufacturer", "manufacturer"]) || "Cigar";
+    return (
+      getBrand(rec) ||
+      getField(rec, ["Manufacturer", "manufacturer"]) ||
+      "Cigar"
+    );
   }
 
   function displayName(rec) {
     const line = getLine(rec);
     const cigar = getName(rec);
-    const combined = [line, cigar].filter(Boolean).join(" ").trim();
+
+    const combined = [line, cigar]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
     return combined || cigar || line || "Cigar";
   }
 
@@ -215,7 +305,14 @@
   }
 
   function makeSlug(rec) {
-    const parts = [displayBrand(rec), getLine(rec), getName(rec), getVitola(rec), getKey(rec)].filter(Boolean);
+    const parts = [
+      displayBrand(rec),
+      getLine(rec),
+      getName(rec),
+      getVitola(rec),
+      getKey(rec)
+    ].filter(Boolean);
+
     return slugify(parts.join(" "));
   }
 
@@ -229,11 +326,19 @@
   }
 
   function writeSet(key, set) {
-    try { localStorage.setItem(key, JSON.stringify(Array.from(set))); } catch {}
+    try {
+      localStorage.setItem(
+        key,
+        JSON.stringify(Array.from(set))
+      );
+    } catch {}
   }
 
   function flagForCountry(country) {
-    const c = String(country || "").trim().toLowerCase();
+    const c = String(country || "")
+      .trim()
+      .toLowerCase();
+
     if (c === "cuba") return "🇨🇺";
     if (c === "nicaragua") return "🇳🇮";
     if (c === "dominican republic") return "🇩🇴";
@@ -241,6 +346,7 @@
     if (c === "mexico") return "🇲🇽";
     if (c === "ecuador") return "🇪🇨";
     if (c === "usa" || c === "united states") return "🇺🇸";
+
     return "";
   }
 
@@ -252,7 +358,12 @@
 
     const matches = records.filter((row) => {
       if (key && getKey(row) === key) return true;
-      return getBrand(row) === brand && getName(row) === cigar && getVitola(row) === vitola;
+
+      return (
+        getBrand(row) === brand &&
+        getName(row) === cigar &&
+        getVitola(row) === vitola
+      );
     });
 
     const seen = new Set();
@@ -262,9 +373,13 @@
       const media = getField(row, ["Media", "media"]);
       const year = getField(row, ["Year", "year"]);
       const rank = getField(row, ["Rank", "rank"]);
+
       if (!media && !year && !rank) return;
+
       const sig = [media, year, rank].join("|");
+
       if (seen.has(sig)) return;
+
       seen.add(sig);
       out.push({ media, year, rank });
     });
@@ -273,7 +388,10 @@
   }
 
   function renderAccolades(accolades) {
-    if (!accolades.length) return `<div class="cd-accolade-empty">No accolades listed.</div>`;
+    if (!accolades.length) {
+      return `<div class="cd-accolade-empty">No accolades listed.</div>`;
+    }
+
     return accolades.map((item) => `
       <div class="cd-accolade-row">
         <div class="cd-accolade-media">${escapeHTML(item.media || "—")}</div>
@@ -299,10 +417,12 @@
     const cigarImg = getCigarImg(rec);
     const brandImg = getBrandImg(rec);
     const flag = flagForCountry(origin);
-    const refLink = getField(rec, ["Reference link", "reference_link", "url", "link", "href"]);
 
     document.title = `${brand} ${name}`.trim();
-    if (topbarTitle) topbarTitle.textContent = brand;
+
+    if (topbarTitle) {
+      topbarTitle.textContent = brand;
+    }
 
     shell.innerHTML = `
       <div class="cd-head">
@@ -310,20 +430,31 @@
           <div class="cd-brand">${escapeHTML(brand)}</div>
           <div class="cd-name">${escapeHTML(name)}</div>
         </div>
-        ${brandImg ? `<img class="cd-badge" src="${escapeAttr(brandImg)}" alt="${escapeAttr(brand)}" loading="lazy" decoding="async">` : ``}
+
+        ${
+          brandImg
+            ? `<img class="cd-badge" src="${escapeAttr(brandImg)}" alt="${escapeAttr(brand)}" loading="lazy" decoding="async">`
+            : ``
+        }
       </div>
 
       <div class="cd-grid">
         <div class="cd-left">
-          ${cigarImg ? `<img class="cd-stick" src="${escapeAttr(cigarImg)}" alt="${escapeAttr(name)}" loading="lazy" decoding="async">` : ``}
+          ${
+            cigarImg
+              ? `<img class="cd-stick" src="${escapeAttr(cigarImg)}" alt="${escapeAttr(name)}" loading="lazy" decoding="async">`
+              : ``
+          }
         </div>
 
         <div class="cd-right">
+
           <div class="cd-stat-grid">
             <div class="cd-card cd-stat">
               <div class="cd-card-label">Ring</div>
               <div class="cd-stat-value">${escapeHTML(ring)}</div>
             </div>
+
             <div class="cd-card cd-stat">
               <div class="cd-card-label">Length</div>
               <div class="cd-stat-value">${escapeHTML(length)}</div>
@@ -335,6 +466,7 @@
               <div class="cd-card-label">Strength</div>
               <div class="cd-mini-value">${escapeHTML(strength)}</div>
             </div>
+
             <div class="cd-card cd-mini">
               <div class="cd-card-label">Vitola</div>
               <div class="cd-mini-value">${escapeHTML(vitola)}</div>
@@ -346,10 +478,12 @@
               <div class="cd-card-label">Wrapper</div>
               <div class="cd-tobacco-value">${escapeHTML(wrapper)}</div>
             </div>
+
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Binder</div>
               <div class="cd-tobacco-value">${escapeHTML(binder)}</div>
             </div>
+
             <div class="cd-tobacco-row">
               <div class="cd-card-label">Filler</div>
               <div class="cd-tobacco-value">${escapeHTML(filler)}</div>
@@ -358,9 +492,14 @@
 
           <div class="cd-card cd-origin">
             <div class="cd-card-label">Origin</div>
+
             <div class="cd-origin-row">
               <div class="cd-origin-value">${escapeHTML(origin)}</div>
-              ${flag ? `<div class="cd-flag" aria-hidden="true">${flag}</div>` : ``}
+              ${
+                flag
+                  ? `<div class="cd-flag" aria-hidden="true">${flag}</div>`
+                  : ``
+              }
             </div>
           </div>
 
@@ -373,6 +512,7 @@
             <div class="cd-card-label">Accolades</div>
             <div class="cd-accolade-list">${renderAccolades(accolades)}</div>
           </div>
+
         </div>
       </div>
 
@@ -380,55 +520,93 @@
         <button class="cd-action" type="button" id="btnFavorite">Favorite</button>
         <button class="cd-action" type="button" id="btnCompare">Compare</button>
         <button class="cd-action" type="button" id="btnWishlist">Wishlist</button>
-        <button class="cd-action" type="button" id="btnConnect">Connect</button>
+        <button class="cd-action" type="button" id="btnEdit">Edit</button>
       </div>
     `;
-
-    const favoriteSet = readSet(FAVORITES_KEY);
+        const favoriteSet = readSet(FAVORITES_KEY);
     const wishlistSet = readSet(WISHLIST_KEY);
     const compareSet = readSet(COMPARE_KEY);
 
     const favoriteBtn = $("#btnFavorite", shell);
     const wishlistBtn = $("#btnWishlist", shell);
     const compareBtn = $("#btnCompare", shell);
-    const connectBtn = $("#btnConnect", shell);
+    const editBtn = $("#btnEdit", shell);
 
     function syncButtonState() {
-      favoriteBtn?.classList.toggle("is-on", favoriteSet.has(key));
-      wishlistBtn?.classList.toggle("is-on", wishlistSet.has(key));
-      compareBtn?.classList.toggle("is-on", compareSet.has(key));
+      favoriteBtn?.classList.toggle(
+        "is-on",
+        favoriteSet.has(key)
+      );
+
+      wishlistBtn?.classList.toggle(
+        "is-on",
+        wishlistSet.has(key)
+      );
+
+      compareBtn?.classList.toggle(
+        "is-on",
+        compareSet.has(key)
+      );
     }
 
     favoriteBtn?.addEventListener("click", () => {
       if (!key) return;
-      favoriteSet.has(key) ? favoriteSet.delete(key) : favoriteSet.add(key);
-      writeSet(FAVORITES_KEY, favoriteSet);
+
+      favoriteSet.has(key)
+        ? favoriteSet.delete(key)
+        : favoriteSet.add(key);
+
+      writeSet(
+        FAVORITES_KEY,
+        favoriteSet
+      );
+
       syncButtonState();
     });
 
     wishlistBtn?.addEventListener("click", () => {
       if (!key) return;
-      wishlistSet.has(key) ? wishlistSet.delete(key) : wishlistSet.add(key);
-      writeSet(WISHLIST_KEY, wishlistSet);
+
+      wishlistSet.has(key)
+        ? wishlistSet.delete(key)
+        : wishlistSet.add(key);
+
+      writeSet(
+        WISHLIST_KEY,
+        wishlistSet
+      );
+
       syncButtonState();
     });
 
     compareBtn?.addEventListener("click", () => {
       if (!key) return;
-      compareSet.has(key) ? compareSet.delete(key) : compareSet.add(key);
-      writeSet(COMPARE_KEY, compareSet);
+
+      compareSet.has(key)
+        ? compareSet.delete(key)
+        : compareSet.add(key);
+
+      writeSet(
+        COMPARE_KEY,
+        compareSet
+      );
+
       syncButtonState();
     });
 
-    connectBtn?.addEventListener("click", () => {
-      if (refLink) window.open(refLink, "_blank", "noopener,noreferrer");
+    editBtn?.addEventListener("click", () => {
+      console.log("Edit clicked");
     });
 
     syncButtonState();
   }
 
   function showNotFound() {
-    shell.innerHTML = `<div class="cd-loading">Cigar not found.</div>`;
+    shell.innerHTML = `
+      <div class="cd-loading">
+        Cigar not found.
+      </div>
+    `;
   }
 
   async function boot() {
@@ -436,23 +614,61 @@
     const wantedSlug = getParam("slug");
 
     try {
-      const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      const res = await fetch(
+        SHEET_CSV_URL,
+        {
+          cache: "no-store"
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(
+          `Request failed: ${res.status}`
+        );
+      }
+
       const text = await res.text();
-      const records = rowsToObjects(parseCSV(text));
+
+      const records = rowsToObjects(
+        parseCSV(text)
+      );
 
       let rec = null;
-      if (wantedKey) rec = records.find((row) => getKey(row) === wantedKey) || null;
-      if (!rec && wantedSlug) rec = records.find((row) => makeSlug(row) === wantedSlug) || null;
-      if (!rec) showNotFound();
-      else render(rec, collectAccolades(records, rec));
+
+      if (wantedKey) {
+              rec =
+          records.find((row) => getKey(row) === wantedKey) ||
+          null;
+      }
+
+      if (!rec && wantedSlug) {
+        rec =
+          records.find((row) => makeSlug(row) === wantedSlug) ||
+          null;
+      }
+
+      if (!rec) {
+        showNotFound();
+      } else {
+        render(
+          rec,
+          collectAccolades(records, rec)
+        );
+      }
+
     } catch (err) {
       console.warn("[cigar detail]", err);
-      shell.innerHTML = `<div class="cd-loading">Error loading cigar.</div>`;
+
+      shell.innerHTML = `
+        <div class="cd-loading">
+          Error loading cigar.
+        </div>
+      `;
     } finally {
       loading?.remove();
     }
   }
 
   boot();
+
 })();
