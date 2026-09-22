@@ -1294,78 +1294,78 @@
       line ||
       "—";
 
-    const fields = [
-      {
-        id: "manufacturerSingleUPC",
-        label: "Manufacturer Single UPC",
-        type: "text",
-        inputmode: "numeric"
-      },
-      {
-        id: "manufacturerBoxUPC",
-        label: "Manufacturer Box UPC",
-        type: "text",
-        inputmode: "numeric"
-      },
-      {
-        id: "customSingleSKU",
-        label: "Custom Single SKU",
-        type: "text",
-        inputmode: "text"
-      },
-      {
-        id: "customBoxSKU",
-        label: "Custom Box SKU",
-        type: "text",
-        inputmode: "text"
-      },
-      {
-        id: "inventorySingles",
-        label: "Inventory (Singles)",
-        type: "number",
-        inputmode: "numeric"
-      },
-      {
-        id: "inventoryBoxes",
-        label: "Inventory (Boxes)",
-        type: "number",
-        inputmode: "numeric"
-      },
-      {
-        id: "unitsPerBox",
-        label: "Units per Box",
-        type: "number",
-        inputmode: "numeric"
-      },
-      {
-        id: "msrpSingle",
-        label: "MSRP Single",
-        type: "number",
-        inputmode: "decimal",
-        step: "0.01"
-      },
-      {
-        id: "msrpBox",
-        label: "MSRP Box",
-        type: "number",
-        inputmode: "decimal",
-        step: "0.01"
-      },
-      {
-        id: "costSingle",
-        label: "Cost Single",
-        type: "number",
-        inputmode: "decimal",
-        step: "0.01"
-      },
-      {
-        id: "costBox",
-        label: "Cost Box",
-        type: "number",
-        inputmode: "decimal",
-        step: "0.01"
-      }
-    ];
+   const fields = [
+  {
+    id: "manufacturerSingleUPC",
+    label: "Manufacturer Single UPC",
+    type: "text",
+    inputmode: "numeric"
+  },
+  {
+    id: "manufacturerBoxUPC",
+    label: "Manufacturer Box UPC",
+    type: "text",
+    inputmode: "numeric"
+  },
+  {
+    id: "customSingleSKU",
+    label: "Custom Single SKU",
+    type: "text",
+    inputmode: "text"
+  },
+  {
+    id: "customBoxSKU",
+    label: "Custom Box SKU",
+    type: "text",
+    inputmode: "text"
+  },
+  {
+    id: "inventorySingles",
+    label: "Inventory Singles",
+    type: "number",
+    inputmode: "numeric"
+  },
+  {
+    id: "inventoryBoxes",
+    label: "Inventory Boxes",
+    type: "number",
+    inputmode: "numeric"
+  },
+  {
+    id: "boxCount",
+    label: "Box Count",
+    type: "number",
+    inputmode: "numeric"
+  },
+  {
+    id: "msrp",
+    label: "MSRP",
+    type: "number",
+    inputmode: "decimal",
+    step: "0.01"
+  },
+  {
+    id: "boxMSRP",
+    label: "Box MSRP",
+    type: "number",
+    inputmode: "decimal",
+    step: "0.01"
+  },
+  {
+    id: "cigarCost",
+    label: "Cigar Cost",
+    type: "number",
+    inputmode: "decimal",
+    step: "0.01"
+  },
+  {
+    id: "boxCost",
+    label: "Box Cost",
+    type: "number",
+    inputmode: "decimal",
+    step: "0.01"
+  }
+];
 
     const overlay =
       document.createElement("div");
