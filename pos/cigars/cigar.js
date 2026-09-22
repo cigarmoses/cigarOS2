@@ -726,7 +726,8 @@
 
     return "";
   }
-    function collectAccolades(records, rec) {
+
+  function collectAccolades(records, rec) {
     const key = getCigarId(rec);
     const brand = getBrand(rec);
     const name = getName(rec);
@@ -1258,15 +1259,63 @@
   }
 
   /*
-    POS ENTRY EDITOR
-
-    This stage only opens and displays
-    the editable fields.
-
-    Save persistence will be added
-    after the editor layout is approved.
+    Demo POS storage adapter. Replace only these async load/save functions
+    with an authenticated, store-scoped POS/HUB API for production.
+    localStorage is device/browser-specific demo data, not secure HUB storage.
+    Production authorization, MFA and access rules belong in the backend;
+    never put privileged Supabase credentials in browser code.
   */
-  function openPosEditor(rec) {
+  const POS_STORAGE_PREFIX = "cigaros_demo_pos_v1:";
+
+  async function loadPosRecord(key) {
+    if (!key) throw new Error("A cigar key is required.");
+    const raw = localStorage.getItem(POS_STORAGE_PREFIX + key);
+    if (raw === null) return null;
+    let record;
+    try {
+      record = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+    return record && typeof record === "object" &&
+      !Array.isArray(record) && record.key === key ? record : null;
+  }
+
+  async function savePosRecord(record) {
+    if (!record.key) throw new Error("A cigar key is required.");
+    // Let failures reach the editor so it never reports an unsuccessful save.
+    localStorage.setItem(
+      POS_STORAGE_PREFIX + record.key,
+      JSON.stringify(record)
+    );
+  }
+
+  function getPosFieldValue(rec, saved, field) {
+    // Empty strings and zero are intentional saved values.
+    if (saved && Object.prototype.hasOwnProperty.call(saved, field.id)) {
+      const value = saved[field.id];
+      if (typeof value === "string" || typeof value === "number") {
+        return value;
+      }
+    }
+    const keys = [field.label, normalizeHeader(field.label), field.id];
+    if (field.id === "inventorySingles") {
+      keys.push("Inventory singles", "Inventory", "inventory");
+    }
+    const hubValue = getField(rec, keys);
+    if (hubValue === "") {
+      return field.id === "inventorySingles" ? 89 : "";
+    }
+    if (field.type === "number") {
+      // HUB currency cells may include a dollar sign or grouping commas.
+      const numericValue = hubValue.replace(/[$,\\s]/g, "");
+      return numericValue !== "" && Number.isFinite(Number(numericValue))
+        ? Number(numericValue) : "";
+    }
+    return hubValue;
+  }
+
+  async function openPosEditor(rec) {
     const existingEditor =
       document.getElementById(
         "cdPosEditor"
@@ -1294,78 +1343,78 @@
       line ||
       "—";
 
-   const fields = [
-  {
-    id: "manufacturerSingleUPC",
-    label: "Manufacturer Single UPC",
-    type: "text",
-    inputmode: "numeric"
-  },
-  {
-    id: "manufacturerBoxUPC",
-    label: "Manufacturer Box UPC",
-    type: "text",
-    inputmode: "numeric"
-  },
-  {
-    id: "customSingleSKU",
-    label: "Custom Single SKU",
-    type: "text",
-    inputmode: "text"
-  },
-  {
-    id: "customBoxSKU",
-    label: "Custom Box SKU",
-    type: "text",
-    inputmode: "text"
-  },
-  {
-    id: "inventorySingles",
-    label: "Inventory Singles",
-    type: "number",
-    inputmode: "numeric"
-  },
-  {
-    id: "inventoryBoxes",
-    label: "Inventory Boxes",
-    type: "number",
-    inputmode: "numeric"
-  },
-  {
-    id: "boxCount",
-    label: "Box Count",
-    type: "number",
-    inputmode: "numeric"
-  },
-  {
-    id: "msrp",
-    label: "MSRP",
-    type: "number",
-    inputmode: "decimal",
-    step: "0.01"
-  },
-  {
-    id: "boxMSRP",
-    label: "Box MSRP",
-    type: "number",
-    inputmode: "decimal",
-    step: "0.01"
-  },
-  {
-    id: "cigarCost",
-    label: "Cigar Cost",
-    type: "number",
-    inputmode: "decimal",
-    step: "0.01"
-  },
-  {
-    id: "boxCost",
-    label: "Box Cost",
-    type: "number",
-    inputmode: "decimal",
-    step: "0.01"
-  }
-];
+    const fields = [
+      {
+        id: "manufacturerSingleUPC",
+        label: "Manufacturer Single UPC",
+        type: "text",
+        inputmode: "numeric"
+      },
+      {
+        id: "manufacturerBoxUPC",
+        label: "Manufacturer Box UPC",
+        type: "text",
+        inputmode: "numeric"
+      },
+      {
+        id: "customSingleSKU",
+        label: "Custom Single SKU",
+        type: "text",
+        inputmode: "text"
+      },
+      {
+        id: "customBoxSKU",
+        label: "Custom Box SKU",
+        type: "text",
+        inputmode: "text"
+      },
+      {
+        id: "inventorySingles",
+        label: "Inventory Singles",
+        type: "number",
+        inputmode: "numeric"
+      },
+      {
+        id: "inventoryBoxes",
+        label: "Inventory Boxes",
+        type: "number",
+        inputmode: "numeric"
+      },
+      {
+        id: "boxCount",
+        label: "Box Count",
+        type: "number",
+        inputmode: "numeric"
+      },
+      {
+        id: "msrp",
+        label: "MSRP",
+        type: "number",
+        inputmode: "decimal",
+        step: "0.01"
+      },
+      {
+        id: "boxMSRP",
+        label: "Box MSRP",
+        type: "number",
+        inputmode: "decimal",
+        step: "0.01"
+      },
+      {
+        id: "cigarCost",
+        label: "Cigar Cost",
+        type: "number",
+        inputmode: "decimal",
+        step: "0.01"
+      },
+      {
+        id: "boxCost",
+        label: "Box Cost",
+        type: "number",
+        inputmode: "decimal",
+        step: "0.01"
+      }
+    ];
 
     const overlay =
       document.createElement("div");
@@ -1492,6 +1541,8 @@
         ${escapeHTML(displayName)}
       </div>
 
+      <div id="cdEditStatus" role="status" aria-live="polite"
+        style="margin-bottom: 12px; color: #b00020;" hidden></div>
       <div id="cdEditFields"></div>
     `;
 
@@ -1567,15 +1618,42 @@
         closeEditor
       );
 
-    $("#cdEditSave", sheet)
-      ?.addEventListener(
-        "click",
-        () => {
-          console.log(
-            "Save POS entry clicked"
-          );
-        }
-      );
+    const key = getCigarId(rec);
+    const saveButton = $("#cdEditSave", sheet);
+    const status = $("#cdEditStatus", sheet);
+    let ready = false;
+    let saving = false;
+    const showError = (message) => {
+      status.textContent = message;
+      status.hidden = false;
+    };
+    saveButton.disabled = true;
+
+    saveButton.addEventListener("click", async () => {
+      if (!ready || saving) return;
+      const record = { key };
+      for (const field of fields) {
+        const input = $("#" + field.id, sheet);
+        if (!input.reportValidity()) return;
+        record[field.id] = field.type === "number" && input.value !== ""
+          ? Number(input.value) : input.value;
+      }
+      saving = true;
+      saveButton.disabled = true;
+      saveButton.textContent = "Saving…";
+      status.hidden = true;
+      try {
+        await savePosRecord(record);
+        closeEditor();
+      } catch (error) {
+        showError("Could not save your changes. Please try again. Your entries are still here.");
+        console.warn("[POS editor] Save failed:", error);
+      } finally {
+        saving = false;
+        saveButton.disabled = false;
+        saveButton.textContent = "Save";
+      }
+    });
 
     overlay.addEventListener(
       "click",
@@ -1594,8 +1672,30 @@
         event.stopPropagation();
       }
     );
+
+    fields.forEach((field) => {
+      $("#" + field.id, sheet).disabled = true;
+    });
+    try {
+      const saved = await loadPosRecord(key);
+      if (!overlay.isConnected) return;
+      fields.forEach((field) => {
+        const input = $("#" + field.id, sheet);
+        input.value = getPosFieldValue(rec, saved, field);
+        input.disabled = false;
+      });
+      ready = true;
+      saveButton.disabled = false;
+    } catch (error) {
+      showError(key
+        ? "Could not load saved values. Please allow browser storage and reopen Edit."
+        : "This cigar has no record key, so changes cannot be saved.");
+      console.warn("[POS editor] Load failed:", error);
+    }
+
   }
-    function render(records, rec) {
+
+  function render(records, rec) {
     const id = getCigarId(rec);
     const brand = getBrand(rec) || "—";
     const line = getLine(rec);
@@ -2191,7 +2291,8 @@
       brand
     );
   }
-    async function load() {
+
+  async function load() {
     applyTheme(
       getSavedTheme()
     );
