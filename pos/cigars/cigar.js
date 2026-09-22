@@ -1261,14 +1261,37 @@
   /*
     Demo POS storage adapter. Replace only these async load/save functions
     with an authenticated, store-scoped POS/HUB API for production.
-    localStorage is device/browser-specific demo data, not secure HUB storage.
+    IndexedDB stores fields and image together in this browser only.
+    Existing localStorage POS records are read until next saved to IndexedDB.
+    This is demo storage, not secure shared HUB storage.
     Production authorization, MFA and access rules belong in the backend;
     never put privileged Supabase credentials in browser code.
   */
   const POS_STORAGE_PREFIX = "cigaros_demo_pos_v1:";
+  const localCigarImages = new Map();
+
+  function openPosDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open("cigaros_demo_pos", 1);
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore("records", { keyPath: "key" });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error("Browser storage is busy."));
+    });
+  }
 
   async function loadPosRecord(key) {
     if (!key) throw new Error("A cigar key is required.");
+    const db = await openPosDatabase();
+    const saved = await new Promise((resolve, reject) => {
+      const tx = db.transaction("records", "readonly");
+      const request = tx.objectStore("records").get(key);
+      tx.oncomplete = () => { db.close(); resolve(request.result); };
+      tx.onabort = () => { db.close(); reject(tx.error); };
+    });
+    if (saved) return saved;
     const raw = localStorage.getItem(POS_STORAGE_PREFIX + key);
     if (raw === null) return null;
     let record;
@@ -1283,11 +1306,38 @@
 
   async function savePosRecord(record) {
     if (!record.key) throw new Error("A cigar key is required.");
-    // Let failures reach the editor so it never reports an unsuccessful save.
-    localStorage.setItem(
-      POS_STORAGE_PREFIX + record.key,
-      JSON.stringify(record)
-    );
+    // Fields and original image commit together. Do not close on failure.
+    const db = await openPosDatabase();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("records", "readwrite");
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onabort = () => { db.close(); reject(tx.error); };
+      tx.objectStore("records").put(record);
+    });
+  }
+
+  function cachePosImage(key, image) {
+    const previous = localCigarImages.get(key);
+    if (previous) URL.revokeObjectURL(previous);
+    localCigarImages.delete(key);
+    if (image?.blob instanceof Blob) {
+      localCigarImages.set(key, URL.createObjectURL(image.blob));
+    }
+  }
+
+  function showPosImage(rec) {
+    const url = localCigarImages.get(getCigarId(rec));
+    const container = $(".cd-left", card);
+    if (!url || !container) return;
+    const img = document.createElement("img");
+    img.id = "cdStickImage";
+    img.className = "cd-stick";
+    img.alt = [getBrand(rec), getName(rec)].filter(Boolean).join(" ");
+    img.src = url;
+    const existing = $("#cdStickImage", container) ||
+      $(".cd-stick-placeholder", container);
+    if (existing) existing.replaceWith(img);
+    else container.prepend(img);
   }
 
   function getPosFieldValue(rec, saved, field) {
@@ -1308,7 +1358,7 @@
     }
     if (field.type === "number") {
       // HUB currency cells may include a dollar sign or grouping commas.
-      const numericValue = hubValue.replace(/[$,\\s]/g, "");
+      const numericValue = hubValue.replace(/[$,\s]/g, "");
       return numericValue !== "" && Number.isFinite(Number(numericValue))
         ? Number(numericValue) : "";
     }
@@ -1543,6 +1593,20 @@
 
       <div id="cdEditStatus" role="status" aria-live="polite"
         style="margin-bottom: 12px; color: #b00020;" hidden></div>
+      <div style="margin: 0 0 18px;">
+        <button id="cdUploadImage" type="button" disabled style="
+          width: 100%; padding: 13px; border: 1px solid #007aff;
+          border-radius: 12px; background: white; color: #007aff;
+          font: inherit; font-weight: 700;">UPLOAD IMAGE</button>
+        <input id="cdImageFile" type="file"
+          accept="image/png,image/jpeg,image/webp" hidden>
+        <p style="color: #64748b; font-size: 12px;">
+          Demo: saved for this cigar in this browser only. PNG, JPG or WebP, up to 10 MB.
+        </p>
+        <img id="cdImagePreview" alt="Selected cigar image" hidden
+          style="display: none; max-width: 100%; max-height: 220px; margin: 12px auto; object-fit: contain;">
+        <div id="cdImageName" style="color: #64748b; font-size: 12px; overflow-wrap: anywhere;"></div>
+      </div>
       <div id="cdEditFields"></div>
     `;
 
@@ -1608,7 +1672,10 @@
       );
     });
 
+    let previewUrl = "";
     const closeEditor = () => {
+      if (saving) return;
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       overlay.remove();
     };
 
@@ -1623,15 +1690,61 @@
     const status = $("#cdEditStatus", sheet);
     let ready = false;
     let saving = false;
+    let selectingImage = false;
+    let selectedImage = null;
+    const uploadButton = $("#cdUploadImage", sheet);
+    const imageInput = $("#cdImageFile", sheet);
+    const preview = $("#cdImagePreview", sheet);
+    const imageName = $("#cdImageName", sheet);
+    const displayPreview = (image) => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = image?.blob instanceof Blob ? URL.createObjectURL(image.blob) : "";
+      preview.hidden = !previewUrl;
+      preview.style.display = previewUrl ? "block" : "none";
+      if (previewUrl) preview.src = previewUrl;
+      else preview.removeAttribute("src");
+      imageName.textContent = image?.name || "";
+    };
     const showError = (message) => {
       status.textContent = message;
       status.hidden = false;
     };
     saveButton.disabled = true;
+    uploadButton.addEventListener("click", () => imageInput.click());
+    imageInput.addEventListener("change", async () => {
+      const file = imageInput.files[0];
+      imageInput.value = "";
+      if (!file || !ready || saving || selectingImage) return;
+      status.hidden = true;
+      if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
+          file.size > 10 * 1024 * 1024) {
+        showError("Choose a PNG, JPG or WebP image no larger than 10 MB.");
+        return;
+      }
+      selectingImage = true;
+      saveButton.disabled = true;
+      uploadButton.disabled = true;
+      const candidateUrl = URL.createObjectURL(file);
+      try {
+        const check = new Image();
+        check.src = candidateUrl;
+        await check.decode();
+        if (!overlay.isConnected) return;
+        selectedImage = { blob: file, name: file.name };
+        displayPreview(selectedImage);
+      } catch {
+        showError("This image could not be opened. Please choose another file.");
+      } finally {
+        URL.revokeObjectURL(candidateUrl);
+        selectingImage = false;
+        saveButton.disabled = false;
+        uploadButton.disabled = false;
+      }
+    });
 
     saveButton.addEventListener("click", async () => {
-      if (!ready || saving) return;
-      const record = { key };
+      if (!ready || saving || selectingImage) return;
+      const record = { key, image: selectedImage };
       for (const field of fields) {
         const input = $("#" + field.id, sheet);
         if (!input.reportValidity()) return;
@@ -1639,17 +1752,22 @@
           ? Number(input.value) : input.value;
       }
       saving = true;
+      uploadButton.disabled = true;
       saveButton.disabled = true;
       saveButton.textContent = "Saving…";
       status.hidden = true;
       try {
         await savePosRecord(record);
+        cachePosImage(key, selectedImage);
+        showPosImage(rec);
+        saving = false;
         closeEditor();
       } catch (error) {
         showError("Could not save your changes. Please try again. Your entries are still here.");
         console.warn("[POS editor] Save failed:", error);
       } finally {
         saving = false;
+        uploadButton.disabled = false;
         saveButton.disabled = false;
         saveButton.textContent = "Save";
       }
@@ -1679,12 +1797,15 @@
     try {
       const saved = await loadPosRecord(key);
       if (!overlay.isConnected) return;
+      selectedImage = saved?.image || null;
+      displayPreview(selectedImage);
       fields.forEach((field) => {
         const input = $("#" + field.id, sheet);
         input.value = getPosFieldValue(rec, saved, field);
         input.disabled = false;
       });
       ready = true;
+      uploadButton.disabled = false;
       saveButton.disabled = false;
     } catch (error) {
       showError(key
@@ -2404,10 +2525,18 @@
         return;
       }
 
+      try {
+        const saved = await loadPosRecord(getCigarId(rec));
+        cachePosImage(getCigarId(rec), saved?.image);
+      } catch (error) {
+        console.warn("[POS image] Local image could not be loaded:", error);
+      }
+
       render(
         records,
         rec
       );
+      showPosImage(rec);
 
     } catch (e) {
       card.innerHTML = `
