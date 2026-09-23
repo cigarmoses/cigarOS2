@@ -1413,12 +1413,6 @@
         inputmode: "text"
       },
       {
-        id: "customBoxSKU",
-        label: "Custom Box SKU",
-        type: "text",
-        inputmode: "text"
-      },
-      {
         id: "inventorySingles",
         label: "Inventory Singles",
         type: "number",
@@ -1431,17 +1425,17 @@
         inputmode: "numeric"
       },
       {
-        id: "boxCount",
-        label: "Box Count",
-        type: "number",
-        inputmode: "numeric"
-      },
-      {
         id: "msrp",
         label: "MSRP",
         type: "number",
         inputmode: "decimal",
         step: "0.01"
+      },
+      {
+        id: "boxCount",
+        label: "Box Count",
+        type: "number",
+        inputmode: "numeric"
       },
       {
         id: "boxMSRP",
@@ -1456,6 +1450,12 @@
         type: "number",
         inputmode: "decimal",
         step: "0.01"
+      },
+      {
+        id: "customBoxSKU",
+        label: "Custom Box SKU",
+        type: "text",
+        inputmode: "text"
       },
       {
         id: "boxCost",
@@ -1607,7 +1607,7 @@
           style="display: none; max-width: 100%; max-height: 220px; margin: 12px auto; object-fit: contain;">
         <div id="cdImageName" style="color: #64748b; font-size: 12px; overflow-wrap: anywhere;"></div>
       </div>
-      <div id="cdEditFields"></div>
+      <div id="cdEditFields" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px; align-items: end;"></div>
     `;
 
     overlay.appendChild(sheet);
@@ -1622,7 +1622,9 @@
 
       fieldWrap.style.cssText = `
         display: block;
-        margin: 0 0 12px;
+        margin: 0;
+        min-width: 0;
+        ${field.id === "customSingleSKU" ? "grid-column: 1 / -1;" : ""}
       `;
 
       const stepAttribute =
@@ -1650,6 +1652,7 @@
             display: block;
             width: 100%;
             height: 48px;
+            min-width: 0;
             box-sizing: border-box;
             border:
               1px solid
