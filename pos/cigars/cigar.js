@@ -1365,6 +1365,92 @@
     return hubValue;
   }
 
+  // UPCs remain strings so manufacturer leading zeros are preserved.
+  function isValidManufacturerUPC(value) {
+    if (!/^[0-9]{12}$/.test(value)) return false;
+    let sum = 0;
+    for (let i = 0; i < 11; i++) {
+      sum += Number(value[i]) * (i % 2 === 0 ? 3 : 1);
+    }
+    return (10 - sum % 10) % 10 === Number(value[11]);
+  }
+
+  function wireManufacturerBarcodes(sheet) {
+    const entries = [
+      { input: $("#manufacturerSingleUPC", sheet), prefix: "cdSingle", label: "SINGLE STICK" },
+      { input: $("#manufacturerBoxUPC", sheet), prefix: "cdBox", label: "BOX" }
+    ];
+    const placeholder = $("#cdBarcodePlaceholder", sheet);
+
+    function update() {
+      let hasValue = false;
+      entries.forEach(({ input, prefix, label }) => {
+        const value = input.value;
+        const barcodeCard = $("#" + prefix + "BarcodeCard", sheet);
+        const svg = $("#" + prefix + "Barcode", sheet);
+        const message = $("#" + prefix + "BarcodeMessage", sheet);
+        const present = value.trim() !== "";
+        hasValue = hasValue || present;
+        barcodeCard.style.display = present ? "block" : "none";
+        // Remove any old bars immediately, including after an invalid edit.
+        svg.replaceChildren();
+        svg.style.display = "none";
+        svg.removeAttribute("aria-label");
+        message.textContent = "";
+        message.hidden = true;
+        if (!present) return;
+
+        const showMessage = (text) => {
+          message.textContent = text;
+          message.hidden = false;
+        };
+        if (!isValidManufacturerUPC(value)) {
+          showMessage(/^[0-9]{12}$/.test(value)
+            ? "Invalid UPC-A check digit."
+            : "Enter exactly 12 digits for a UPC-A barcode.");
+          return;
+        }
+        if (typeof window.JsBarcode !== "function") {
+          showMessage("Barcode preview unavailable. Please reload the page.");
+          return;
+        }
+        try {
+          window.JsBarcode(svg, value, {
+            format: "UPC",
+            width: 2,
+            height: 72,
+            displayValue: true,
+            fontSize: 18,
+            margin: 12,
+            background: "#ffffff",
+            lineColor: "#000000"
+          });
+          // Preserve the complete symbol and quiet zones on narrow screens.
+          const width = Number(svg.getAttribute("width"));
+          const height = Number(svg.getAttribute("height"));
+          if (!(width > 0 && height > 0)) throw new Error("Empty barcode");
+          svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+          svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+          svg.setAttribute("role", "img");
+          svg.setAttribute("aria-label", label + " UPC-A " + value);
+          svg.style.display = "block";
+        } catch {
+          svg.replaceChildren();
+          svg.style.display = "none";
+          showMessage("Barcode preview unavailable.");
+        }
+      });
+      placeholder.style.display = hasValue ? "none" : "flex";
+    }
+
+    entries.forEach(({ input }) => {
+      input.addEventListener("input", update);
+      input.addEventListener("change", update);
+    });
+    update();
+    return update;
+  }
+
   async function openPosEditor(rec) {
     const existingEditor =
       document.getElementById(
@@ -1591,6 +1677,45 @@
         ${escapeHTML(displayName)}
       </div>
 
+      <div id="cdBarcodeArea" style="
+        display: flex; flex-direction: column; gap: 10px;
+        width: 100%; margin: 0 0 18px; box-sizing: border-box;
+      ">
+        <div id="cdSingleBarcodeCard" style="
+          display: none; width: 100%; box-sizing: border-box; padding: 12px;
+          border: 1px solid rgba(22, 38, 61, 0.12); border-radius: 14px;
+          background: #ffffff; text-align: center;
+        ">
+          <div style="margin-bottom: 7px; color: #64748b; font-size: 10px;
+            font-weight: 700; letter-spacing: 0.08em;">SINGLE STICK</div>
+          <svg id="cdSingleBarcode" style="
+            display: none; width: 100%; height: auto; margin: 0 auto;
+          "></svg>
+          <div id="cdSingleBarcodeMessage" role="status" aria-live="polite"
+            style="padding: 16px 0; color: #64748b; font-size: 12px;" hidden></div>
+        </div>
+        <div id="cdBoxBarcodeCard" style="
+          display: none; width: 100%; box-sizing: border-box; padding: 12px;
+          border: 1px solid rgba(22, 38, 61, 0.12); border-radius: 14px;
+          background: #ffffff; text-align: center;
+        ">
+          <div style="margin-bottom: 7px; color: #64748b; font-size: 10px;
+            font-weight: 700; letter-spacing: 0.08em;">BOX</div>
+          <svg id="cdBoxBarcode" style="
+            display: none; width: 100%; height: auto; margin: 0 auto;
+          "></svg>
+          <div id="cdBoxBarcodeMessage" role="status" aria-live="polite"
+            style="padding: 16px 0; color: #64748b; font-size: 12px;" hidden></div>
+        </div>
+        <div id="cdBarcodePlaceholder" style="
+          display: flex; width: 100%; min-height: 92px; box-sizing: border-box;
+          align-items: center; justify-content: center; padding: 16px;
+          border: 1px dashed rgba(22, 38, 61, 0.20); border-radius: 14px;
+          background: rgba(255, 255, 255, 0.45); color: #64748b;
+          font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-align: center;
+        ">NO MANUFACTURER BARCODE ADDED</div>
+      </div>
+
       <div id="cdEditStatus" role="status" aria-live="polite"
         style="margin-bottom: 12px; color: #b00020;" hidden></div>
       <div style="margin: 0 0 18px;">
@@ -1674,6 +1799,8 @@
         fieldWrap
       );
     });
+
+    const updateManufacturerBarcodes = wireManufacturerBarcodes(sheet);
 
     let previewUrl = "";
     const closeEditor = () => {
@@ -1807,6 +1934,7 @@
         input.value = getPosFieldValue(rec, saved, field);
         input.disabled = false;
       });
+      updateManufacturerBarcodes();
       ready = true;
       uploadButton.disabled = false;
       saveButton.disabled = false;
