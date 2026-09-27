@@ -1427,8 +1427,6 @@
           });
           // Preserve the complete symbol and quiet zones on narrow screens.
           // JsBarcode 3.11.6 returns SVG dimensions such as "226px".
-          const width = Number(svg.getAttribute("width"));
-          const height = Number(svg.getAttribute("height"));
           const width = parseFloat(svg.getAttribute("width"));
           const height = parseFloat(svg.getAttribute("height"));
           if (!(width > 0 && height > 0)) throw new Error("Empty barcode");
@@ -1436,7 +1434,6 @@
           svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
           svg.setAttribute("role", "img");
           svg.setAttribute("aria-label", label + " UPC-A " + value);
-          svg.style.display = "block";
           // JsBarcode replaces the inline style, so restore responsive sizing.
           svg.style.cssText = "display: block; width: 100%; height: auto; margin: 0 auto;";
         } catch {
