@@ -4,6 +4,9 @@
   const SHEET_CSV_URL =
     "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
+  const CIGAROS_HUB_WRITE_URL =
+    "https://script.google.com/macros/s/AKfycbzJqlXzX9VpZUA2ZwrReXswto2K-fSdW_vm__xP1ir-xECCifZrpeyzaLQavUmRUYzpbA/exec";
+
   const FAVORITES_KEY = "cigaros_favorite_keys";
   const COMPARE_KEY = "cigaros_compare_keys";
 
@@ -1316,6 +1319,61 @@
     });
   }
 
+  async function saveManufacturerBoxUPCToHub(key, manufacturerBoxUPC) {
+    const cigarKey = String(key ?? "").trim();
+    const boxUPC = String(manufacturerBoxUPC ?? "").trim();
+    if (!cigarKey) throw new Error("A cigar key is required for the HUB save.");
+    if (boxUPC && !isValidManufacturerUPC(boxUPC)) {
+      throw new Error("Manufacturer Box UPC must be a valid 12-digit UPC-A, including its check digit.");
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      // JSON in a text/plain body avoids an Apps Script OPTIONS preflight.
+      // ContentService redirects to script.googleusercontent.com. Follow it
+      // and read the acknowledgement; an opaque no-cors response is not proof
+      // of a successful write.
+      const response = await fetch(CIGAROS_HUB_WRITE_URL, {
+        method: "POST",
+        mode: "cors",
+        credentials: "omit",
+        redirect: "follow",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify({ key: cigarKey, manufacturerBoxUPC: boxUPC }),
+        signal: controller.signal
+      });
+      if (!response.ok) {
+        throw new Error(`HUB returned HTTP ${response.status}. Check the web-app deployment and try Save again.`);
+      }
+      let result;
+      try {
+        result = await response.json();
+      } catch (error) {
+        if (error?.name === "AbortError") throw error;
+        throw new Error("HUB did not return a readable confirmation. Check that the web app is deployed with access set to Anyone, then try Save again.");
+      }
+      if (!result || result.ok !== true) {
+        throw new Error(typeof result?.error === "string" && result.error.trim()
+          ? `HUB: ${result.error}`
+          : "HUB did not confirm the save. Please try Save again.");
+      }
+      if (result.key !== cigarKey || result.manufacturerBoxUPC !== boxUPC) {
+        throw new Error("HUB returned a confirmation for a different key or UPC. Check the HUB writer deployment before trying again.");
+      }
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new Error("HUB confirmation timed out. The UPC may already have been written; check your connection and try Save again to confirm it.");
+      }
+      if (error instanceof TypeError) {
+        throw new Error("Could not confirm the HUB save. Check your connection and that the web app allows Anyone access. If this continues, check the deployment's cross-origin access. The UPC may already have been written; you can retry Save.");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   function cachePosImage(key, image) {
     const previous = localCigarImages.get(key);
     if (previous) URL.revokeObjectURL(previous);
@@ -1883,25 +1941,44 @@
         record[field.id] = field.type === "number" && input.value !== ""
           ? Number(input.value) : input.value;
       }
+      // Keep UPCs as text, including leading zeroes. Blank clears the HUB cell.
+      record.manufacturerBoxUPC = String(record.manufacturerBoxUPC ?? "").trim();
+      if (record.manufacturerBoxUPC && !isValidManufacturerUPC(record.manufacturerBoxUPC)) {
+        showError("Manufacturer Box UPC must contain exactly 12 digits with a valid UPC-A check digit, or be left blank.");
+        $("#manufacturerBoxUPC", sheet).focus();
+        return;
+      }
       saving = true;
       uploadButton.disabled = true;
       saveButton.disabled = true;
       saveButton.textContent = "Saving…";
+      fields.forEach((field) => { $("#" + field.id, sheet).disabled = true; });
       status.hidden = true;
+      let savedLocally = false;
+      let savedToHub = false;
       try {
         await savePosRecord(record);
-        cachePosImage(key, selectedImage);
+        savedLocally = true;
+        await saveManufacturerBoxUPCToHub(record.key, record.manufacturerBoxUPC);
+        savedToHub = true;
+        cachePosImage(key, record.image);
         showPosImage(rec);
         saving = false;
         closeEditor();
       } catch (error) {
-        showError("Could not save your changes. Please try again. Your entries are still here.");
+        const detail = error?.message || "Please try again.";
+        showError(savedToHub
+          ? `Your record and UPC were saved, but the image could not be refreshed. ${detail}`
+          : savedLocally
+            ? `Your full record and image are saved in this browser, but the HUB UPC save was not confirmed. ${detail} Your entries are still here.`
+            : `Could not save in this browser, so the HUB write was not attempted. ${detail} Your entries are still here.`);
         console.warn("[POS editor] Save failed:", error);
       } finally {
         saving = false;
         uploadButton.disabled = false;
         saveButton.disabled = false;
         saveButton.textContent = "Save";
+        fields.forEach((field) => { $("#" + field.id, sheet).disabled = false; });
       }
     });
 
