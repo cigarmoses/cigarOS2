@@ -252,11 +252,11 @@
     { src: "/img/bandart/padron/band1926.svg", label: "1926 Serie" },
     { src: "/img/bandart/padron/bandpadronseries.svg", label: "Padrón Series" },
     { src: "/img/bandart/padron/banddamaso.svg", label: "Damaso" },
-    { src: "/img/bandart/padron/bandblack.svg", label: "Black" },
+    { src: "/img/bandart/padron/bandblack2.svg", label: "Black" },
     { src: "/img/bandart/padron/band50th.svg", label: "50th Anniversary" },
     { src: "/img/bandart/padron/band60th.svg", label: "60th Anniversary" },
     { src: "/img/bandart/padron/bandmillennium.svg", label: "Millennium" },
-    { src: "/img/bandart/padron/bandhammeranddream.svg", label: "Hammer & Dream" },
+    { src: "/img/bandart/padron/bandhammeranddream2.svg", label: "Hammer & A Dream" },
   ];
 
   function bandArtOptions(paths) {
