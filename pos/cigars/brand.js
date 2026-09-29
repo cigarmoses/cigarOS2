@@ -236,7 +236,13 @@
   // Band assignments come only from HUB's "Band art IMG" column.
   // A blank cell stays unassigned; Line IMG and cigar names are unrelated.
   function resolveBandArt(r) {
-    return getField(r, ["band_art_img"]);
+    const src = getField(r, ["band_art_img"]);
+    // Accept the explicit 1926 path currently stored in HUB, using the
+    // established artwork location. This never assigns a band to a blank row.
+    if (src === "/img/icons/bandart/padron/band1926.svg") {
+      return "/img/bandart/padron/band1926.svg";
+    }
+    return src;
   }
 
   // Display metadata only: this list never assigns a band to a cigar.
