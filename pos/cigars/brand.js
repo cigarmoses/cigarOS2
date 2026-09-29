@@ -1127,6 +1127,249 @@ function openCurrencyPopup(eurValue) {
     return loose;
   }
 
+    // CigarOS brand-page Filters repair.
+  // INSERT this entire block immediately ABOVE:
+  //   backBtn?.addEventListener("click", () => {
+  // in /pos/cigars/brand.js. Do not replace the rest of that file.
+  (() => {
+    if (!btnFilters || btnFilters.dataset.brandFiltersBound === "true") return;
+
+    const fields = [
+      { key: "vitola", label: "Vitola", read: resolveVitola },
+      { key: "ring", label: "Ring", read: resolveRing },
+      { key: "length", label: "Length", read: resolveLength },
+      { key: "strength", label: "Strength", read: resolveStrength },
+      { key: "shape", label: "Shape", read: resolveShape },
+      { key: "shade", label: "Wrapper Shade", read: resolveShade },
+    ];
+    const id = "brand-filter-modal";
+    const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
+    let modal = null;
+    let draft = {};
+    let active = "vitola";
+    let options = {};
+    let savedOverflow = [];
+
+    function ensureModal() {
+      if (modal) return;
+
+      // Reuse the filter styles already in brand.css. All additional rules
+      // are scoped to this dialog, so cigar rows and other popups are untouched.
+      const style = document.createElement("style");
+      style.id = "brand-filter-repair-styles";
+      style.textContent = `
+        #${id} {
+          position:fixed; inset:0; width:100%; height:100%;
+          max-width:none; max-height:none; margin:0; padding:0;
+          border:0; background:transparent; color:#0b1220;
+          font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;
+        }
+        #${id}:not([open]) { display:none !important; }
+        #${id}[open] { display:block; opacity:1; pointer-events:auto; }
+        #${id}::backdrop { background:transparent; }
+        #${id}, #${id} * { box-sizing:border-box; }
+        #${id} .fm__sheet {
+          left:50%; right:auto; bottom:auto; max-height:none;
+          transform:translateX(-50%) !important; transition:none;
+          top:calc(12px + env(safe-area-inset-top,0px));
+          height:min(720px,calc(100vh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
+          height:min(720px,calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
+        }
+        #${id} .fm__body { padding:0; }
+        #${id} .fm__panel { padding-bottom:0; }
+        #${id} .fm__header { flex:0 0 auto; min-height:76px; }
+        #${id} .fm__title { margin:0; font-size:30px; font-weight:700; }
+        #${id} .fm__cat-btn { flex-shrink:0; }
+        #${id} .fm__search-row { flex:0 0 auto; }
+        #${id} .fm__item { cursor:pointer; }
+        #${id} .fm__item-label { overflow-wrap:anywhere; }
+        #${id} .fm__item input[type="checkbox"] {
+          appearance:auto; -webkit-appearance:checkbox;
+          display:block; position:static; opacity:1;
+          width:22px; height:22px; margin:0; accent-color:#0a84ff;
+        }
+        #${id} .bfm-actions {
+          display:flex; flex:0 0 auto; gap:12px; padding:14px 16px 16px;
+          border-top:1px solid rgba(15,26,44,.08);
+        }
+        #${id} .bfm-actions button {
+          flex:1; min-height:48px; border:0; border-radius:16px;
+          font:600 17px -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;
+          cursor:pointer; background:rgba(15,26,44,.07); color:#0b1220;
+        }
+        #${id} .bfm-actions [data-bfm-apply] { background:#0a84ff; color:white; }
+        #${id} .fm__list { overscroll-behavior:contain; }
+        @media (max-width:760px) {
+          #${id} .fm__body { grid-template-rows:auto minmax(0,1fr); }
+          #${id} .fm__cats { flex-direction:row; }
+        }
+      `;
+      document.head.appendChild(style);
+
+      // A native dialog keeps Filters above the bottom navigation and
+      // contains keyboard focus without changing any other page's z-index.
+      modal = document.createElement("dialog");
+      modal.id = id;
+      modal.className = "fm";
+      modal.hidden = true;
+      modal.setAttribute("aria-labelledby", "brand-filter-heading");
+      modal.innerHTML = `
+        <div class="fm__backdrop" data-bfm-close aria-hidden="true"></div>
+        <div class="fm__sheet">
+          <div class="fm__header">
+            <h2 class="fm__title" id="brand-filter-heading">Filters</h2>
+            <button class="fm__close" type="button" data-bfm-close aria-label="Close filters">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="fm__body">
+            <div class="fm__cats" role="group" aria-label="Filter categories"></div>
+            <div class="fm__panel">
+              <div class="fm__search-row">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                </svg>
+                <input class="fm__search-input" type="search" placeholder="Search options" aria-label="Search filter options" autocomplete="off" />
+              </div>
+              <div class="fm__list" role="group" aria-label="Filter options"></div>
+            </div>
+          </div>
+          <div class="bfm-actions">
+            <button type="button" data-bfm-clear>Clear</button>
+            <button type="button" data-bfm-apply>Apply</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        if (target.closest("[data-bfm-close]")) return close();
+
+        const category = target.closest("[data-bfm-category]");
+        if (category) {
+          active = category.dataset.bfmCategory;
+          modal.querySelector(".fm__search-input").value = "";
+          updateCategories();
+          renderOptions();
+          return;
+        }
+        if (target.closest("[data-bfm-clear]")) {
+          fields.forEach(({ key }) => draft[key].clear());
+          modal.querySelector(".fm__search-input").value = "";
+          updateCategories();
+          renderOptions();
+          return;
+        }
+        if (target.closest("[data-bfm-apply]")) {
+          fields.forEach(({ key }) => { state.filters[key] = new Set(draft[key]); });
+          const count = fields.reduce((sum, { key }) => sum + state.filters[key].size, 0);
+          btnFilters.textContent = count ? `Filters (${count})` : "Filters";
+          close();
+          applyAll();
+        }
+      });
+      modal.addEventListener("change", (event) => {
+        const input = event.target;
+        if (!(input instanceof HTMLInputElement) || !input.matches("[data-bfm-value]")) return;
+        if (input.checked) draft[active].add(input.value);
+        else draft[active].delete(input.value);
+        updateCategories();
+      });
+      modal.querySelector(".fm__search-input").addEventListener("input", renderOptions);
+      modal.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        close();
+      });
+    }
+
+    function updateCategories() {
+      modal.querySelectorAll("[data-bfm-category]").forEach((button) => {
+        const field = fields.find(({ key }) => key === button.dataset.bfmCategory);
+        const selected = field.key === active;
+        const count = draft[field.key].size;
+        button.classList.toggle("is-active", selected);
+        button.setAttribute("aria-pressed", String(selected));
+        button.textContent = field.label + (count ? ` (${count})` : "");
+      });
+    }
+
+    function renderOptions() {
+      const query = modal.querySelector(".fm__search-input").value.trim().toLowerCase();
+      const list = modal.querySelector(".fm__list");
+      const field = fields.find(({ key }) => key === active);
+      const values = options[active].filter((value) => value.toLowerCase().includes(query));
+      list.setAttribute("aria-label", field.label + " options");
+      list.innerHTML = values.length
+        ? values.map((value) => `
+            <label class="fm__item">
+              <span class="fm__item-label">${esc(value)}</span>
+              <input type="checkbox" data-bfm-value value="${esc(value)}" ${draft[active].has(value) ? "checked" : ""} />
+            </label>
+          `).join("")
+        : '<div class="fm__empty">No matching options.</div>';
+      list.scrollTop = 0;
+    }
+
+    function open() {
+      ensureModal();
+      if (modal.open) return;
+      fields.forEach(({ key, read }) => {
+        draft[key] = new Set(state.filters[key]);
+        // Keep exact values so they match the existing applyFilterSets().
+        options[key] = [...new Set(state.rowsAll.map(read).filter(Boolean))]
+          .sort((a, b) => collator.compare(a, b));
+      });
+      modal.querySelector(".fm__cats").innerHTML = fields.map(({ key }) =>
+        `<button class="fm__cat-btn" type="button" data-bfm-category="${key}"></button>`
+      ).join("");
+      modal.querySelector(".fm__search-input").value = "";
+      updateCategories();
+      renderOptions();
+
+      modal.hidden = false;
+      modal.classList.add("is-open");
+      modal.showModal();
+      savedOverflow = [document.documentElement, document.body].map((element) => ({
+        element,
+        value: element.style.getPropertyValue("overflow"),
+        priority: element.style.getPropertyPriority("overflow"),
+      }));
+      savedOverflow.forEach(({ element }) => element.style.setProperty("overflow", "hidden"));
+      btnFilters.setAttribute("aria-expanded", "true");
+      // Focus a button, not the search field: avoid opening the phone keyboard.
+      modal.querySelector("button[data-bfm-close]").focus({ preventScroll: true });
+    }
+
+    function close() {
+      if (!modal?.open) return;
+      modal.close();
+      modal.classList.remove("is-open");
+      modal.hidden = true;
+      savedOverflow.forEach(({ element, value, priority }) => {
+        if (value) element.style.setProperty("overflow", value, priority);
+        else element.style.removeProperty("overflow");
+      });
+      savedOverflow = [];
+      btnFilters.setAttribute("aria-expanded", "false");
+      btnFilters.focus({ preventScroll: true });
+      // Unapplied selections are discarded by cloning state on the next open.
+    }
+
+    btnFilters.dataset.brandFiltersBound = "true";
+    btnFilters.setAttribute("aria-haspopup", "dialog");
+    btnFilters.setAttribute("aria-controls", id);
+    btnFilters.setAttribute("aria-expanded", "false");
+    btnFilters.addEventListener("click", (event) => {
+      event.preventDefault();
+      open();
+    });
+  })();
+  // End CigarOS brand-page Filters repair.
+
   backBtn?.addEventListener("click", () => {
     if (history.length > 1) history.back();
     else window.location.href = "/pos/cigars/";
