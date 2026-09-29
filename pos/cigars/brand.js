@@ -40,6 +40,7 @@
     search: "",
     wrapperMode: "all",
     filters: {
+      bandArt: new Set(),
       vitola: new Set(),
       ring: new Set(),
       length: new Set(),
@@ -230,6 +231,37 @@
 
   function resolveShade(r) {
     return getField(r, ["wrapper_shade", "wrapper_shade_type", "shade", "wrapper"]);
+  }
+
+  // Band assignments come only from HUB's "Band art IMG" column.
+  // A blank cell stays unassigned; Line IMG and cigar names are unrelated.
+  function resolveBandArt(r) {
+    return getField(r, ["band_art_img"]);
+  }
+
+  // Display metadata only: this list never assigns a band to a cigar.
+  const BAND_ART_META = [
+    { src: "/img/bandart/padron/band1964.svg", label: "1964 Anniversary" },
+    { src: "/img/bandart/padron/bandfamilyreserve.svg", label: "Family Reserve" },
+    { src: "/img/bandart/padron/band1926.svg", label: "1926 Serie" },
+    { src: "/img/bandart/padron/bandpadronseries.svg", label: "Padrón Series" },
+    { src: "/img/bandart/padron/banddamaso.svg", label: "Damaso" },
+    { src: "/img/bandart/padron/bandblack.svg", label: "Black" },
+    { src: "/img/bandart/padron/band50th.svg", label: "50th Anniversary" },
+    { src: "/img/bandart/padron/band60th.svg", label: "60th Anniversary" },
+    { src: "/img/bandart/padron/bandmillennium.svg", label: "Millennium" },
+    { src: "/img/bandart/padron/bandhammeranddream.svg", label: "Hammer & Dream" },
+  ];
+
+  function bandArtOptions(paths) {
+    const available = new Set(paths.filter(Boolean));
+    const known = BAND_ART_META.filter(({ src }) => available.has(src));
+    const knownPaths = new Set(BAND_ART_META.map(({ src }) => src));
+    // Preserve any additional explicit HUB path, using the path as its label
+    // until display metadata is added. Never substitute another band's art.
+    const additional = [...available].filter((src) => !knownPaths.has(src))
+      .map((src) => ({ src, label: src }));
+    return [...known, ...additional];
   }
 
   function resolveBrandImage(r) {
@@ -905,6 +937,7 @@ function openCurrencyPopup(eurValue) {
 
   function applyFilterSets(rows) {
     return rows.filter((r) => {
+      if (state.filters.bandArt.size && !state.filters.bandArt.has(resolveBandArt(r))) return false;
       if (state.filters.vitola.size && !state.filters.vitola.has(resolveVitola(r))) return false;
       if (state.filters.ring.size && !state.filters.ring.has(resolveRing(r))) return false;
       if (state.filters.length.size && !state.filters.length.has(resolveLength(r))) return false;
@@ -1127,14 +1160,12 @@ function openCurrencyPopup(eurValue) {
     return loose;
   }
 
-    // CigarOS brand-page Filters repair.
-  // INSERT this entire block immediately ABOVE:
-  //   backBtn?.addEventListener("click", () => {
-  // in /pos/cigars/brand.js. Do not replace the rest of that file.
+  // CigarOS brand-page Filters, including HUB-driven Band Art.
   (() => {
     if (!btnFilters || btnFilters.dataset.brandFiltersBound === "true") return;
 
     const fields = [
+      { key: "bandArt", label: "Band Art", read: resolveBandArt },
       { key: "vitola", label: "Vitola", read: resolveVitola },
       { key: "ring", label: "Ring", read: resolveRing },
       { key: "length", label: "Length", read: resolveLength },
@@ -1146,7 +1177,7 @@ function openCurrencyPopup(eurValue) {
     const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
     let modal = null;
     let draft = {};
-    let active = "vitola";
+    let active = "bandArt";
     let options = {};
     let savedOverflow = [];
 
@@ -1199,6 +1230,47 @@ function openCurrencyPopup(eurValue) {
         }
         #${id} .bfm-actions [data-bfm-apply] { background:#0a84ff; color:white; }
         #${id} .fm__list { overscroll-behavior:contain; }
+        #${id} .fm__list--bands { padding:8px 10px 18px; }
+        #${id} .fm__band-option {
+          position:relative; display:block; width:100%; margin:0 0 10px;
+          padding:14px 14px 12px; border:1px solid rgba(15,26,44,.12);
+          border-radius:20px; background:rgba(255,255,255,.85); cursor:pointer;
+          transition:background .15s ease,border-color .15s ease,box-shadow .15s ease;
+        }
+        #${id} .fm__band-option.is-selected {
+          background:rgba(10,132,255,.07); border-color:rgba(10,132,255,.5);
+          box-shadow:inset 0 0 0 1px rgba(10,132,255,.12);
+        }
+        #${id} .fm__band-option:focus-within {
+          outline:3px solid #0a84ff; outline-offset:2px;
+        }
+        #${id} .fm__band-art-wrap {
+          width:100%; min-height:64px; display:flex; align-items:center;
+          justify-content:center; padding:2px 6px 10px;
+        }
+        #${id} .fm__band-art {
+          display:block; width:auto; height:auto; max-width:100%;
+          max-height:90px; object-fit:contain;
+        }
+        #${id} .fm__band-bottom { display:flex; align-items:center; gap:10px; min-height:30px; }
+        #${id} .fm__band-label {
+          flex:1; min-width:0; color:#0f1a2c; font-size:16px;
+          line-height:1.2; font-weight:600; overflow-wrap:anywhere;
+        }
+        #${id} .fm__band-check-ui {
+          width:26px; height:26px; flex:0 0 26px; display:grid; place-items:center;
+          border-radius:50%; border:1.5px solid rgba(15,26,44,.24);
+          background:#fff; color:transparent;
+        }
+        #${id} .fm__band-check-ui svg { width:16px; height:16px; }
+        #${id} .fm__band-option.is-selected .fm__band-check-ui {
+          border-color:#0a84ff; background:#0a84ff; color:#fff;
+        }
+        #${id} .fm__band-checkbox {
+          position:absolute !important; width:1px !important; height:1px !important;
+          padding:0 !important; margin:0 !important; opacity:0 !important;
+          overflow:hidden; clip-path:inset(50%);
+        }
         @media (max-width:760px) {
           #${id} .fm__body { grid-template-rows:auto minmax(0,1fr); }
           #${id} .fm__cats { flex-direction:row; }
@@ -1277,6 +1349,8 @@ function openCurrencyPopup(eurValue) {
         if (!(input instanceof HTMLInputElement) || !input.matches("[data-bfm-value]")) return;
         if (input.checked) draft[active].add(input.value);
         else draft[active].delete(input.value);
+        // Update in place so multi-select keeps scroll position and keyboard focus.
+        input.closest(".fm__band-option")?.classList.toggle("is-selected", input.checked);
         updateCategories();
       });
       modal.querySelector(".fm__search-input").addEventListener("input", renderOptions);
@@ -1301,6 +1375,33 @@ function openCurrencyPopup(eurValue) {
       const query = modal.querySelector(".fm__search-input").value.trim().toLowerCase();
       const list = modal.querySelector(".fm__list");
       const field = fields.find(({ key }) => key === active);
+      list.classList.toggle("fm__list--bands", active === "bandArt");
+      if (active === "bandArt") {
+        const bands = bandArtOptions(options.bandArt).filter(({ src, label }) =>
+          !query || label.toLowerCase().includes(query) || src.toLowerCase().includes(query)
+        );
+        list.setAttribute("aria-label", "Band Art options");
+        list.innerHTML = bands.length
+          ? bands.map(({ src, label }) => `
+              <label class="fm__band-option ${draft.bandArt.has(src) ? "is-selected" : ""}">
+                <input class="fm__band-checkbox" type="checkbox" data-bfm-value
+                  value="${esc(src)}" ${draft.bandArt.has(src) ? "checked" : ""} />
+                <span class="fm__band-art-wrap">
+                  <img class="fm__band-art" src="${esc(src)}" alt="" loading="lazy" decoding="async" />
+                </span>
+                <span class="fm__band-bottom">
+                  <span class="fm__band-label">${esc(label)}</span>
+                  <span class="fm__band-check-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none"
+                      stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                </span>
+              </label>
+            `).join("")
+          : `<div class="fm__empty">${query ? "No matching options." : "No band artwork available."}</div>`;
+        list.scrollTop = 0;
+        return;
+      }
       const values = options[active].filter((value) => value.toLowerCase().includes(query));
       list.setAttribute("aria-label", field.label + " options");
       list.innerHTML = values.length
