@@ -1096,75 +1096,57 @@ function openCurrencyPopup(eurValue) {
   }
 
   function chooseRowsForBrand(rows) {
-    const query = normalizeBrand(state.brandQuery);
-    const metaSlug = normalizeBrand(state.brandMeta?.slug);
-    const metaName = normalizeBrand(state.brandMeta?.name);
-    const stateBrand = normalizeBrand(state.brand);
+  const needles = Array.from(new Set([
+    normalizeBrand(state.brandQuery),
+    normalizeBrand(state.brandMeta?.slug),
+    normalizeBrand(state.brandMeta?.name),
+    normalizeBrand(state.brand),
+  ].filter(Boolean)));
 
-    const needles = Array.from(new Set([query, metaSlug, metaName, stateBrand].filter(Boolean)));
+  if (!needles.length) return [];
 
-    const CUBAN_CONFLICT_BRANDS = new Set([
-      "cohiba",
-      "montecristo",
-      "hupmann",
-      "hoyodemonterrey",
-      "saintluisrey",
-      "sanchopanza",
-      "trinidad",
-      "sancristobaldelahabana",
-    ]);
+  // Cuban links carry cuban=1. Ordinary brand links are domestic.
+  const wantsCuban = ["1", "true", "yes"].includes(
+    getParam("cuban").trim().toLowerCase()
+  );
 
-    const isConflictBrand = needles.some((n) => CUBAN_CONFLICT_BRANDS.has(n));
+  const inContext = (matches) => matches.filter(
+    (r) => resolveIsCuban(r) === wantsCuban
+  );
 
-    let exact = rows.filter((r) => {
-      const rb = normalizeBrand(resolveBrandVal(r));
-      return needles.includes(rb);
-    });
+  const exact = rows.filter((r) =>
+    needles.includes(normalizeBrand(resolveBrandVal(r)))
+  );
 
-    if (isConflictBrand) {
-      const cubanRows = exact.filter(resolveIsCuban);
-      if (cubanRows.length) return cubanRows;
-    }
+  // Do not substitute another brand when this origin has no rows.
+  if (exact.length) return inContext(exact);
 
-    if (exact.length) return exact;
+  const fuzzy = rows.filter((r) => {
+    const brand = normalizeBrand(resolveBrandVal(r));
+    return brand && needles.some(
+      (n) => brand.includes(n) || n.includes(brand)
+    );
+  });
 
-    const fuzzy = rows.filter((r) => {
-      const rb = normalizeBrand(resolveBrandVal(r));
-      return rb && needles.some((n) => rb.includes(n) || n.includes(rb));
-    });
+  if (fuzzy.length) return inContext(fuzzy);
 
-    if (isConflictBrand) {
-      const cubanRows = fuzzy.filter(resolveIsCuban);
-      if (cubanRows.length) return cubanRows;
-    }
+  const manufacturerMatches = rows.filter((r) =>
+    needles.includes(normalizeBrand(resolveManufacturerVal(r)))
+  );
 
-    if (fuzzy.length) return fuzzy;
-
-    const manufacturerFallback = rows.filter((r) => {
-      const rm = normalizeBrand(resolveManufacturerVal(r));
-      return needles.includes(rm);
-    });
-
-    if (isConflictBrand) {
-      const cubanRows = manufacturerFallback.filter(resolveIsCuban);
-      if (cubanRows.length) return cubanRows;
-    }
-
-    if (manufacturerFallback.length) return manufacturerFallback;
-
-    const loose = rows.filter((r) => {
-      const brand = normalizeLoose(resolveBrandVal(r));
-      const q = normalizeLoose(state.brandQuery);
-      return brand && q && (brand.includes(q) || q.includes(brand));
-    });
-
-    if (isConflictBrand) {
-      const cubanRows = loose.filter(resolveIsCuban);
-      if (cubanRows.length) return cubanRows;
-    }
-
-    return loose;
+  if (manufacturerMatches.length) {
+    return inContext(manufacturerMatches);
   }
+
+  const query = normalizeLoose(state.brandQuery);
+
+  return inContext(rows.filter((r) => {
+    const brand = normalizeLoose(resolveBrandVal(r));
+    return brand && query && (
+      brand.includes(query) || query.includes(brand)
+    );
+  }));
+}
 
   // CigarOS brand-page Filters, including HUB-driven Band Art.
   (() => {
