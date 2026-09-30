@@ -1251,18 +1251,39 @@ function openCurrencyPopup(eurValue) {
           outline:3px solid #0a84ff; outline-offset:2px;
         }
         #${id} .fm__band-art-wrap {
-          width:100%; min-height:64px; display:flex; align-items:center;
-          justify-content:center; padding:2px 6px 10px;
-        }
-        #${id} .fm__band-art {
-          display:block; width:auto; height:auto; max-width:100%;
-          max-height:90px; object-fit:contain;
-        }
-        #${id} .fm__band-bottom { display:flex; align-items:center; gap:10px; min-height:30px; }
-        #${id} .fm__band-label {
-          flex:1; min-width:0; color:#0f1a2c; font-size:16px;
-          line-height:1.2; font-weight:600; overflow-wrap:anywhere;
-        }
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 0 10px;
+}
+
+#${id} .fm__band-art {
+  display:block;
+  width:90%;
+  height:auto;
+  max-width:none;
+  max-height:none;
+  object-fit:contain;
+}
+
+#${id} .fm__band-bottom {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:30px;
+}
+
+#${id} .fm__band-label {
+  flex:1;
+  min-width:0;
+  color:#0f1a2c;
+  font-size:14px;
+  line-height:1.15;
+  font-weight:600;
+  letter-spacing:-.01em;
+  overflow-wrap:anywhere;
+}
         #${id} .fm__band-check-ui {
           width:26px; height:26px; flex:0 0 26px; display:grid; place-items:center;
           border-radius:50%; border:1.5px solid rgba(15,26,44,.24);
