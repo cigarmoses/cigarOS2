@@ -259,14 +259,27 @@
     { src: "/img/bandart/padron/bandhammeranddream2.svg", label: "Hammer & A Dream" },
   ];
 
-  function bandArtOptions(paths) {
-    const available = new Set(paths.filter(Boolean));
-    const known = BAND_ART_META.filter(({ src }) => available.has(src));
+  function bandArtOptions(rows) {
+    const byPath = new Map();
+
+    rows.forEach((r) => {
+      const src = resolveBandArt(r);
+      // Only a populated Band art IMG creates an option; Line only labels it.
+      if (!src) return;
+
+      const line = resolveLine(r);
+      if (!byPath.has(src)) {
+        byPath.set(src, { src, label: line || "" });
+      } else if (!byPath.get(src).label && line) {
+        // Use the first nonblank Line when several cigars share the artwork.
+        byPath.get(src).label = line;
+      }
+    });
+
+    // Preserve the curated Padrón labels and order exactly as defined above.
+    const known = BAND_ART_META.filter(({ src }) => byPath.has(src));
     const knownPaths = new Set(BAND_ART_META.map(({ src }) => src));
-    // Preserve any additional explicit HUB path, using the path as its label
-    // until display metadata is added. Never substitute another band's art.
-    const additional = [...available].filter((src) => !knownPaths.has(src))
-      .map((src) => ({ src, label: src }));
+    const additional = [...byPath.values()].filter(({ src }) => !knownPaths.has(src));
     return [...known, ...additional];
   }
 
@@ -1386,7 +1399,7 @@ function openCurrencyPopup(eurValue) {
       const field = fields.find(({ key }) => key === active);
       list.classList.toggle("fm__list--bands", active === "bandArt");
       if (active === "bandArt") {
-        const bands = bandArtOptions(options.bandArt).filter(({ src, label }) =>
+        const bands = bandArtOptions(state.rowsAll).filter(({ src, label }) =>
           !query || label.toLowerCase().includes(query) || src.toLowerCase().includes(query)
         );
         list.setAttribute("aria-label", "Band Art options");
