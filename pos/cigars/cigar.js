@@ -2384,27 +2384,27 @@
     }
 
     function makeFavoritePayload() {
-      return {
-        key:
-          id ||
-          window.location.href,
+  return {
+    key:
+      id ||
+      window.location.href,
 
-        name:
-          displayName,
+    name:
+      displayName,
 
-        brand,
+    brand,
 
-        vitola,
+    vitola,
 
-        img:
-          cigarImgCandidates[0] ||
-          "",
+    img:
+      cigarImgCandidates[0] ||
+      "",
 
-        href:
-          window.location.pathname +
-          window.location.search
-      };
-    }
+    href:
+      window.location.pathname +
+      window.location.search
+  };
+}
 
     function cigarIsProfileFavorite() {
       const payload =
