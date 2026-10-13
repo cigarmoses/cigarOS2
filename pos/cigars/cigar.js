@@ -370,8 +370,9 @@
 })();
 
 
-/* /pos/cigars/cigar.js — Favorites repair 2026-10-12-r1.
-   POS editor, image upload, barcode and HUB write behavior retained from supplied code. */
+/* /pos/cigars/cigar.js — Portfolio swipe 2026-10-13-r1.
+   Based on the supplied Favorites repair. Same editor fields, barcode renderer,
+   local storage keys, HUB write endpoint and explicit-save behavior. */
 (() => {
   "use strict";
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
@@ -545,7 +546,7 @@
   }
   function wireImageFallback(img,fallbackClass,fallbackText) {
     if(!img)return;
-    function tryNext(){let fallbacks=[];try{fallbacks=JSON.parse(img.dataset.fallbacks||"[]");}catch{}const next=fallbacks.shift();img.dataset.fallbacks=JSON.stringify(fallbacks);if(next){img.src=next;return;}const fallback=document.createElement("div");fallback.className=fallbackClass;fallback.textContent=fallbackText;img.replaceWith(fallback);}
+    function tryNext(){if(!img.isConnected)return;let fallbacks=[];try{fallbacks=JSON.parse(img.dataset.fallbacks||"[]");}catch{}const next=fallbacks.shift();img.dataset.fallbacks=JSON.stringify(fallbacks);if(next){img.src=next;return;}const fallback=document.createElement("div");fallback.className=fallbackClass;fallback.textContent=fallbackText;img.replaceWith(fallback);}
     img.addEventListener("error",tryNext);
     if(img.complete&&!img.naturalWidth)tryNext();
   }
@@ -597,8 +598,9 @@
       throw error;
     }finally{clearTimeout(timeout);}
   }
-  function cachePosImage(key,image){const previous=localCigarImages.get(key);if(previous)URL.revokeObjectURL(previous);localCigarImages.delete(key);if(image?.blob instanceof Blob)localCigarImages.set(key,URL.createObjectURL(image.blob));}
+  function cachePosImage(key,image){++localImageRequest;const previous=localCigarImages.get(key);if(previous)URL.revokeObjectURL(previous);localCigarImages.delete(key);if(image?.blob instanceof Blob)localCigarImages.set(key,URL.createObjectURL(image.blob));}
   function showPosImage(rec) {
+    if (activeRecord && activeRecord !== rec) return;
     const url=localCigarImages.get(getCigarId(rec)),container=$(".cd-left",card);if(!url||!container)return;
     const img=document.createElement("img");img.id="cdStickImage";img.className="cd-stick";img.alt=[getBrand(rec),getName(rec)].filter(Boolean).join(" ");img.src=url;
     const existing=$("#cdStickImage",container)||$(".cd-stick-placeholder",container);if(existing)existing.replaceWith(img);else container.prepend(img);
@@ -738,8 +740,383 @@
     }catch(error){showError(key?"Could not load saved values. Please allow browser storage and reopen Edit.":"This cigar has no record key, so changes cannot be saved.");console.warn("[POS editor] Load failed:",error);}
   }
 
+  /* Brand portfolio navigation — 2026-10-13-r1.
+     Arrows and touch/pen swipes share one controller. HUB order is preserved;
+     no server writes are made by browsing. Existing sheet keys are not changed. */
+  let portfolioRecords = [];
+  let portfolio = [];
+  let portfolioIndex = -1;
+  let activeRecord = null;
+  let portfolioBusy = false;
+  let portfolioControls = null;
+  let portfolioStatus = null;
+  let portfolioPositionFrame = 0;
+  let localImageRequest = 0;
+  let portfolioView = 0;
+
+  function portfolioKey(rec) {
+    return getCigarId(rec) || [
+      getBrand(rec), [getLine(rec), getName(rec)].filter(Boolean).join(" "), getVitola(rec)
+    ].join("|");
+  }
+
+  function portfolioMarket(rec) {
+    const explicit = getField(rec, ["Cuban", "cuban", "is_cuban"]).toLowerCase();
+    if (["x", "yes", "true", "1", "cuban"].includes(explicit)) return "cuban";
+    if (["no", "false", "0", "non-cuban", "non cuban"].includes(explicit)) return "non-cuban";
+    const manufacturer = getField(rec, ["Manufacturer", "manufacturer"]);
+    return resolveIsCuban(rec) || /\(cuban\)/i.test(getBrand(rec) + " " + manufacturer)
+      ? "cuban" : "non-cuban";
+  }
+
+  function portfolioLabel(rec) {
+    return [getLine(rec), getName(rec), getVitola(rec)].filter(Boolean).join(" · ");
+  }
+
+  function makePortfolio(records, seed) {
+    const brand = normalizeBrand(getBrand(seed)), market = portfolioMarket(seed);
+    const grouped = new Map();
+    for (const rec of records) {
+      if (!brand || normalizeBrand(getBrand(rec)) !== brand || portfolioMarket(rec) !== market) continue;
+      if (!getName(rec) && !getLine(rec)) continue;
+      // Repeated ratings/accolades for the same key are one portfolio entry.
+      const key = portfolioKey(rec);
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(rec);
+    }
+    // Map insertion order is the first appearance in the HUB. Never sort by rating.
+    const items = Array.from(grouped.values(), rows => bestRecord(rows));
+    if (!items.some(rec => portfolioKey(rec) === portfolioKey(seed))) items.push(seed);
+    return items;
+  }
+
+  function recordForLocation(records) {
+    const id = getParam("id") || getParam("key"), slug = getParam("slug");
+    const market = getParam("cdMarket");
+    const candidates = ["cuban", "non-cuban"].includes(market)
+      ? records.filter(rec => portfolioMarket(rec) === market) : records;
+    let rec = id ? bestRecord(candidates.filter(row => getCigarId(row) === id)) : null;
+    // Exact generated keys before legacy fuzzy matching (e.g. No. 1 vs No. 10).
+    if (!rec && id) {
+      const normalized = value => String(value).trim().normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ");
+      rec = bestRecord(candidates.filter(row => normalized(portfolioKey(row)) === normalized(id)));
+    }
+    if (!rec && id && id.includes("|")) {
+      const parts = id.split("|").map(value => value.trim());
+      if (parts.length === 3 || parts.length === 4) {
+        const brand = normalizeBrand(parts[0]);
+        const name = normalizeLoose(parts.length === 4 ? [parts[1], parts[2]].filter(Boolean).join(" ") : parts[1]);
+        const vitola = normalizeLoose(parts[parts.length - 1]);
+        rec = bestRecord(candidates.filter(row => {
+          const names = [getName(row), [getLine(row), getName(row)].filter(Boolean).join(" "),
+            [getBrand(row), getLine(row), getName(row)].filter(Boolean).join(" "),
+            [getBrand(row), getName(row)].filter(Boolean).join(" ")].map(normalizeLoose);
+          return brand === normalizeBrand(getBrand(row)) && names.includes(name)
+            && (!vitola || vitola === normalizeLoose(getVitola(row)));
+        }));
+      }
+    }
+    if (!rec && id) rec = findByPipeKey(candidates, id);
+    if (!rec && id) rec = findById(candidates, id);
+    if (!rec && id) rec = findBySlug(candidates, id);
+    if (!rec && slug) rec = findBySlug(candidates, slug);
+    return rec;
+  }
+
+  function portfolioURL(rec) {
+    const url = new URL(location.href);
+    url.searchParams.delete("id");
+    url.searchParams.delete("slug");
+    url.searchParams.set("key", portfolioKey(rec));
+    // Separate Cuban and non-Cuban portfolios, including brands with the same name.
+    url.searchParams.set("cdMarket", portfolioMarket(rec));
+    return url;
+  }
+
+  function portfolioBlocked() {
+    if (portfolioBusy || document.getElementById("cdPosEditor")) return true;
+    return Array.from(document.querySelectorAll('dialog[open], [role="dialog"][aria-modal="true"]'))
+      .some(dialog => !dialog.hidden && dialog.getClientRects().length > 0);
+  }
+
+  function addPortfolioStyles() {
+    if (document.getElementById("cdPortfolioStyle")) return;
+    const style = document.createElement("style");
+    style.id = "cdPortfolioStyle";
+    style.textContent = `
+      /* Only the detail surface handles horizontal swipes. Scrolling and zoom stay enabled. */
+      #cdCard.cd-portfolio-surface { touch-action: pan-y pinch-zoom; }
+      #cdCard.cd-portfolio-switching { pointer-events: none; will-change: transform, opacity; }
+      .cd-wrap.cd-portfolio-viewport { overflow-x: clip; }
+      #cdCard .cd-stick, #cdCard .cd-badge { -webkit-user-drag: none; }
+      #cdPortfolioControls { position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
+      #cdPortfolioControls[hidden] { display: none !important; }
+      #cdPortfolioControls .cd-portfolio-arrow {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        display: grid; place-items: center; width: 44px; height: 44px;
+        min-width: 44px; min-height: 44px; padding: 0; margin: 0;
+        border: 0; border-radius: 50%; appearance: none; -webkit-appearance: none;
+        background: transparent; color: #f6f8ff; cursor: pointer; pointer-events: auto;
+        touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        transition: opacity .15s ease; isolation: isolate;
+      }
+      #cdPortfolioControls .cd-portfolio-arrow::before {
+        content: ""; position: absolute; inset: 6px; border-radius: 50%; z-index: -1;
+        background: rgba(48, 68, 113, .72);
+        box-shadow: 0 0 16px rgba(71, 109, 189, .24), 0 2px 8px rgba(0, 0, 0, .13);
+        -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      }
+      #cdPortfolioPrev { left: 2px; }
+      #cdPortfolioNext { right: 2px; }
+      #cdPortfolioControls .cd-portfolio-arrow svg { display: block; width: 18px; height: 18px; }
+      #cdPortfolioControls .cd-portfolio-arrow:disabled { opacity: .22; cursor: default; }
+      #cdPortfolioControls .cd-portfolio-arrow:not(:disabled):active::before { transform: scale(.92); }
+      #cdPortfolioControls .cd-portfolio-arrow:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+      html[data-theme="light"] #cdPortfolioControls .cd-portfolio-arrow { color: #16263d; }
+      html[data-theme="light"] #cdPortfolioControls .cd-portfolio-arrow::before {
+        background: rgba(229, 236, 247, .88);
+        box-shadow: 0 2px 12px rgba(22, 38, 61, .15);
+      }
+      #cdPortfolioStatus {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%);
+        white-space: nowrap; border: 0;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #cdPortfolioControls .cd-portfolio-arrow { transition: none; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function positionPortfolioControls() {
+    portfolioPositionFrame = 0;
+    if (!portfolioControls || portfolioControls.hidden || !card) return;
+    const bounds = card.getBoundingClientRect(), width = document.documentElement.clientWidth;
+    const height = window.innerHeight;
+    const previous = $("#cdPortfolioPrev", portfolioControls), next = $("#cdPortfolioNext", portfolioControls);
+    // Sit outside the content when there is room; otherwise use the screen edges.
+    previous.style.left = Math.max(2, bounds.left - 46) + "px";
+    next.style.right = Math.max(2, width - bounds.right - 46) + "px";
+    // Prefer the gap below Wrapper Shade, matching the supplied mockup, rather than covering text.
+    const shade = $(".cd-shade-card", card), minis = $(".cd-mini-grid", card);
+    let y = height * .5;
+    if (shade && minis) {
+      const gap = (shade.getBoundingClientRect().bottom + minis.getBoundingClientRect().top) / 2;
+      if (gap >= height * .3 && gap <= height * .7) y = gap;
+    }
+    previous.style.top = next.style.top = Math.round(y) + "px";
+  }
+
+  function schedulePortfolioPosition() {
+    if (!portfolioPositionFrame) portfolioPositionFrame = requestAnimationFrame(positionPortfolioControls);
+  }
+
+  function updatePortfolioControls(announce = false) {
+    if (!portfolioControls) return;
+    portfolioControls.hidden = portfolio.length < 2;
+    portfolioControls.dataset.index = String(portfolioIndex);
+    portfolioControls.dataset.count = String(portfolio.length);
+    portfolioControls.setAttribute("aria-label", (getBrand(activeRecord) || "Brand") + " portfolio");
+    const previous = $("#cdPortfolioPrev", portfolioControls), next = $("#cdPortfolioNext", portfolioControls);
+    const first = portfolioIndex <= 0, last = portfolioIndex >= portfolio.length - 1;
+    previous.disabled = portfolioBusy || first;
+    next.disabled = portfolioBusy || last;
+    previous.title = first ? "First cigar in this portfolio" : "Previous: " + portfolioLabel(portfolio[portfolioIndex - 1]);
+    next.title = last ? "Last cigar in this portfolio" : "Next: " + portfolioLabel(portfolio[portfolioIndex + 1]);
+    previous.setAttribute("aria-label", previous.title);
+    next.setAttribute("aria-label", next.title);
+    card.classList.toggle("cd-portfolio-surface", portfolio.length > 1);
+    card.dataset.cigarKey = portfolioKey(activeRecord);
+    if (announce && portfolioStatus) {
+      portfolioStatus.textContent = `${getBrand(activeRecord)}. ${portfolioLabel(activeRecord)}. Cigar ${portfolioIndex + 1} of ${portfolio.length}.`;
+    }
+    schedulePortfolioPosition();
+  }
+
+  async function refreshPortfolioImage(rec, view) {
+    const key = getCigarId(rec);
+    if (!key) return; // Do not invent a storage/HUB key for a keyless row.
+    const request = ++localImageRequest;
+    try {
+      const saved = await loadPosRecord(key);
+      if (view !== portfolioView || activeRecord !== rec || request !== localImageRequest) return;
+      cachePosImage(key, saved?.image);
+      showPosImage(rec);
+      // Keep only the current uploaded photo; browsing a large brand must not retain every blob.
+      for (const [otherKey, url] of localCigarImages) {
+        if (otherKey !== key) { URL.revokeObjectURL(url); localCigarImages.delete(otherKey); }
+      }
+      schedulePortfolioPosition();
+    } catch (error) { console.warn("[POS image] Local image could not be loaded:", error); }
+  }
+
+  function animatePortfolio(frames, duration) {
+    if (typeof card.animate !== "function" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+    try { return card.animate(frames, {duration, easing:"cubic-bezier(.22,.61,.36,1)", fill:"forwards"}); }
+    catch { return null; }
+  }
+
+  async function movePortfolio(direction) {
+    if (portfolioBlocked() || ![-1, 1].includes(direction)) return;
+    const target = portfolioIndex + direction;
+    if (target < 0 || target >= portfolio.length) return;
+    const previousRecord = activeRecord, previousIndex = portfolioIndex, previousURL = location.href;
+    const nextRecord = portfolio[target], url = portfolioURL(nextRecord), scrollY = window.scrollY;
+    let outgoing = null, incoming = null, committed = false;
+    portfolioBusy = true;
+    card.classList.add("cd-portfolio-switching");
+    card.setAttribute("aria-busy", "true");
+    card.inert = true;
+    updatePortfolioControls();
+    try {
+      outgoing = animatePortfolio([
+        {transform:"translate3d(0,0,0)", opacity:1},
+        {transform:`translate3d(${-direction * 28}px,0,0)`, opacity:0}
+      ], 105);
+      if (outgoing) await outgoing.finished.catch(() => {});
+      try {
+        // One history entry for the detail browser: Back is not a replay of every swipe.
+        history.replaceState(history.state, "", url.href);
+      } catch (error) {
+        console.warn("[Portfolio] In-place URL update unavailable; opening the matching detail URL.", error);
+        location.replace(url.href);
+        return;
+      }
+      activeRecord = nextRecord;
+      portfolioIndex = target;
+      const view = ++portfolioView;
+      render(portfolioRecords, nextRecord);
+      showPosImage(nextRecord);
+      committed = true;
+      if (outgoing) { outgoing.cancel(); outgoing = null; }
+      // Preserve the user's vertical reading position (the browser clamps shorter pages).
+      window.scrollTo(0, scrollY);
+      updatePortfolioControls(true);
+      void refreshPortfolioImage(nextRecord, view);
+      incoming = animatePortfolio([
+        {transform:`translate3d(${direction * 28}px,0,0)`, opacity:0},
+        {transform:"translate3d(0,0,0)", opacity:1}
+      ], 165);
+      if (incoming) await incoming.finished.catch(() => {});
+    } catch (error) {
+      console.warn("[Portfolio] Cigar could not be switched:", error);
+      if (!committed) {
+        activeRecord = previousRecord;
+        portfolioIndex = previousIndex;
+        ++portfolioView;
+        try { history.replaceState(history.state, "", previousURL); render(portfolioRecords, previousRecord); showPosImage(previousRecord); }
+        catch { location.replace(previousURL); }
+      }
+      if (portfolioStatus) portfolioStatus.textContent = "Could not switch cigars. Please try again.";
+    } finally {
+      outgoing?.cancel(); incoming?.cancel();
+      card.inert = false;
+      card.classList.remove("cd-portfolio-switching");
+      card.removeAttribute("aria-busy");
+      portfolioBusy = false;
+      updatePortfolioControls();
+    }
+  }
+
+  function wirePortfolioGestures() {
+    let gesture = null, ignoreClickUntil = 0;
+    const interactive = 'button, a, input, select, textarea, label, [role="button"], [role="link"], [role="slider"], [contenteditable]:not([contenteditable="false"])';
+    // A second finger cancels the swipe so a pinch cannot switch cigars.
+    document.addEventListener("pointerdown", event => {
+      if (gesture && event.pointerId !== gesture.id) gesture = null;
+    }, {capture:true, passive:true});
+    card.addEventListener("pointerdown", event => {
+      ignoreClickUntil = 0;
+      if (!event.isPrimary || event.pointerType === "mouse" || portfolio.length < 2 || portfolioBlocked()) return;
+      if (event.target.closest?.(interactive)) return;
+      const width = document.documentElement.clientWidth;
+      // Leave the very edge to the browser's own back/forward gesture.
+      if (event.clientX < 24 || event.clientX > width - 24 || (window.visualViewport?.scale || 1) > 1.05) return;
+      gesture = {id:event.pointerId, x:event.clientX, y:event.clientY, time:performance.now(), axis:""};
+    }, {passive:true});
+    card.addEventListener("pointermove", event => {
+      if (!gesture || event.pointerId !== gesture.id) return;
+      const dx = Math.abs(event.clientX - gesture.x), dy = Math.abs(event.clientY - gesture.y);
+      if (!gesture.axis && Math.max(dx, dy) > 10) {
+        if (dy >= dx) { gesture = null; return; }
+        if (dx > dy * 1.35) gesture.axis = "x";
+      }
+    }, {passive:true});
+    document.addEventListener("pointerup", event => {
+      if (!gesture || event.pointerId !== gesture.id) return;
+      const start = gesture; gesture = null;
+      const dx = event.clientX - start.x, dy = event.clientY - start.y;
+      const threshold = Math.max(44, Math.min(80, card.clientWidth * .12));
+      if (performance.now() - start.time > 1200 || Math.abs(dx) < threshold || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      ignoreClickUntil = performance.now() + 400;
+      void movePortfolio(dx < 0 ? 1 : -1);
+    }, {passive:true});
+    document.addEventListener("pointercancel", () => { gesture = null; }, {passive:true});
+    window.addEventListener("blur", () => { gesture = null; });
+    card.addEventListener("click", event => {
+      if (portfolioBusy || (event.detail !== 0 && performance.now() < ignoreClickUntil)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+      }
+    }, true);
+    card.addEventListener("dragstart", event => {
+      if (event.target.closest?.(".cd-stick, .cd-badge")) event.preventDefault();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || portfolioBlocked()) return;
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      if (event.target.closest?.(interactive) && !event.target.closest?.("#cdPortfolioControls")) return;
+      if (window.getSelection()?.toString()) return;
+      const direction = event.key === "ArrowRight" ? 1 : -1;
+      if (portfolioIndex + direction < 0 || portfolioIndex + direction >= portfolio.length) return;
+      event.preventDefault(); void movePortfolio(direction);
+    });
+  }
+
+  function startPortfolio(records, seed) {
+    portfolioRecords = records;
+    portfolio = makePortfolio(records, seed);
+    portfolioIndex = portfolio.findIndex(rec => portfolioKey(rec) === portfolioKey(seed));
+    activeRecord = portfolio[portfolioIndex];
+    const view = ++portfolioView;
+    addPortfolioStyles();
+    card.closest(".cd-wrap")?.classList.add("cd-portfolio-viewport");
+    portfolioControls = document.createElement("nav");
+    portfolioControls.id = "cdPortfolioControls";
+    portfolioControls.hidden = true;
+    portfolioControls.innerHTML = `
+      <button id="cdPortfolioPrev" class="cd-portfolio-arrow" type="button" aria-label="Previous cigar" aria-controls="cdCard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button id="cdPortfolioNext" class="cd-portfolio-arrow" type="button" aria-label="Next cigar" aria-controls="cdCard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>`;
+    document.body.appendChild(portfolioControls);
+    portfolioStatus = document.createElement("div");
+    portfolioStatus.id = "cdPortfolioStatus";
+    portfolioStatus.setAttribute("role", "status");
+    portfolioStatus.setAttribute("aria-live", "polite");
+    portfolioStatus.setAttribute("aria-atomic", "true");
+    document.body.appendChild(portfolioStatus);
+    $("#cdPortfolioPrev", portfolioControls).addEventListener("click", () => { void movePortfolio(-1); });
+    $("#cdPortfolioNext", portfolioControls).addEventListener("click", () => { void movePortfolio(1); });
+    wirePortfolioGestures();
+    window.addEventListener("resize", schedulePortfolioPosition, {passive:true});
+    window.addEventListener("scroll", schedulePortfolioPosition, {passive:true});
+    window.addEventListener("pageshow", schedulePortfolioPosition);
+    if (typeof ResizeObserver === "function") new ResizeObserver(schedulePortfolioPosition).observe(card);
+    render(records, activeRecord);
+    showPosImage(activeRecord);
+    updatePortfolioControls();
+    void refreshPortfolioImage(activeRecord, view);
+  }
+
   let favoriteUnsubscribe = () => {};
+  let pageShowUnsubscribe = () => {};
   function render(records,rec) {
+    favoriteUnsubscribe(); pageShowUnsubscribe();
+    $("#cdFavoriteStatus")?.remove();
     const id=getCigarId(rec),brand=getBrand(rec)||"—",line=getLine(rec),name=getName(rec);
     const displayName=[line,name].filter(Boolean).join(" ").trim()||name||line||"—";
     const vitola=getVitola(rec)||"—",wrapper=getWrapper(rec)||"—",binder=getBinder(rec)||"—",filler=getFiller(rec)||"—",origin=getOrigin(rec)||"—",strength=getStrength(rec)||"—",shade=getShade(rec)||"—",shape=getShape(rec)||"—",ring=getRing(rec)||"—",length=getLength(rec)||"—";
@@ -793,11 +1170,13 @@
         href:"/pos/cigars/cigar.html?key="+encodeURIComponent(key)};
     }
     function favoriteMessage(message) {
+      if (!favoriteBtn?.isConnected) return;
       let notice=$("#cdFavoriteStatus");
       if(!notice){notice=document.createElement("div");notice.id="cdFavoriteStatus";notice.setAttribute("role","alert");notice.style.cssText="position:fixed;bottom:100px;left:16px;right:16px;z-index:99999;padding:14px;border-radius:14px;background:#fff;color:#9f1239;font:14px -apple-system,system-ui,sans-serif;";document.body.appendChild(notice);}
       notice.textContent=message;
     }
     function syncUI() {
+      if (!favoriteBtn?.isConnected) return;
       try {
         const isFavorite=Favorites.has(makeFavoritePayload());
         favoriteBtn?.classList.toggle("is-on",isFavorite);
@@ -814,8 +1193,9 @@
       catch(error){favoriteMessage(error.message);}
       finally{savingFavorite=false;favoriteBtn.disabled=false;}
     });
-    favoriteUnsubscribe();favoriteUnsubscribe=Favorites.subscribe(syncUI);
+    favoriteUnsubscribe=Favorites.subscribe(syncUI);
     window.addEventListener("pageshow",syncUI);
+    pageShowUnsubscribe=()=>window.removeEventListener("pageshow",syncUI);
     compareBtn?.addEventListener("click",()=>{
       if(!id)return;
       if(compareSet.has(id))compareSet.delete(id);else compareSet.add(id);
@@ -836,23 +1216,27 @@
     if(!card)return;
     applyTheme(getSavedTheme());
     themeToggle?.addEventListener("click",()=>applyTheme(getSavedTheme()==="dark"?"light":"dark"));
-    backBtn?.addEventListener("click",()=>{if(history.length>1)history.back();else location.href="/pos/cigars/";});
-    const idParam=getParam("id")||getParam("key"),slugParam=getParam("slug");
-    try{
-      const res=await fetch(SHEET_CSV_URL,{cache:"no-store"});if(!res.ok)throw new Error(`CSV fetch failed: ${res.status}`);
-      const records=rowsToObjects(parseCSV(await res.text()));
-      // Prefer the explicit sheet key over a fuzzy pipe/name match.
-      let rec=idParam?bestRecord(records.filter(r=>getCigarId(r)===idParam)):null;
-      if(!rec&&idParam)rec=findByPipeKey(records,idParam);
-      if(!rec&&idParam)rec=findById(records,idParam);
-      if(!rec&&idParam)rec=findBySlug(records,idParam);
-      if(!rec&&slugParam)rec=findBySlug(records,slugParam);
-      if(!rec){card.innerHTML=`<div class="cd-loading">Cigar not found.</div>`;return;}
-      try{const saved=await loadPosRecord(getCigarId(rec));cachePosImage(getCigarId(rec),saved?.image);}catch(error){console.warn("[POS image] Local image could not be loaded:",error);}
-      try{await Favorites.hydrateRecords(records);}catch(error){console.warn("[Favorites] Migration/enrichment failed:",error);}
-      render(records,rec);showPosImage(rec);
-    }catch(error){card.innerHTML=`<div class="cd-loading">Error loading cigar data.</div>`;console.warn("[cigar detail] load error:",error);}
-    finally{if(loading)loading.style.display="none";}
+    backBtn?.addEventListener("click",()=>{if(history.length>1)history.back();else location.href=buildBrandHref(getBrand(activeRecord));});
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000);
+      let input;
+      try {
+        const res = await fetch(SHEET_CSV_URL, {cache:"no-store", signal:controller.signal});
+        if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+        input = await res.text();
+        if (/^\s*</.test(input)) throw new Error("Catalog returned a page instead of CSV.");
+      } finally { clearTimeout(timeout); }
+      const records = rowsToObjects(parseCSV(input));
+      const rec = recordForLocation(records);
+      if (!rec) { card.innerHTML=`<div class="cd-loading">Cigar not found.</div>`; return; }
+      try { await Favorites.hydrateRecords(records); }
+      catch(error) { console.warn("[Favorites] Migration/enrichment failed:",error); }
+      startPortfolio(records,rec);
+    } catch(error) {
+      card.innerHTML=`<div class="cd-loading">Error loading cigar data. Please reload to try again.</div>`;
+      console.warn("[cigar detail] load error:",error);
+    } finally { if(loading)loading.style.display="none"; }
   }
   load();
 })();
