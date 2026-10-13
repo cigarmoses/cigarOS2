@@ -1,1619 +1,540 @@
-/* /pos/cigars/brand.js */
-
+/* CigarOS Favorites repair 2026-10-12-r1.
+   Shared helper bundled into each page script. No extra script tag required.
+   Browser-local storage, not an account/cloud database. */
 (() => {
   "use strict";
+  if (window.CigarFavorites?.version === 2) return;
+  const KEY = "cigaros_favorites_v2";
+  const BACKUP = "cigaros_favorites_backup_before_v2";
+  const EVENT = "cigaros:favorites-changed";
+  const SOURCES = [
+    "cigaros_user_favorite_cigars_v1", "cigaros_pos_favorites_cigars",
+    "cigarSocialFavorites", "cigaros_favorites_v1", "cigarosFavorites",
+    "favorites", "cs_favorites_v1", "cigaros_favorite_keys"
+  ];
+  const OLD_ORDER = "cigarSocialFavoritesOrder";
+  const CSV = "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+  const text = v => String(v ?? "").trim();
+  const norm = v => text(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/&/g, " and ").replace(/["'’]/g, "").replace(/\s+/g, " ").trim();
+  const compact = v => norm(v).replace(/[^a-z0-9]/g, "");
+  const unique = a => [...new Set(a.filter(Boolean))];
+  const fields = ["brand", "line", "cigar", "vitola", "ring", "length", "origin", "country", "manufacturer", "wrapper", "binder", "filler", "strength", "shape", "shade", "notes"];
+  let catalogPromise = null;
+  let queue = Promise.resolve();
 
-  const CSV_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
-
-  const BRANDS_URL = "/data/brands.json";
-  const POS_CIGAR_FAVORITES_KEY = "cigaros_pos_favorites_cigars";
-
-  const EUR_RATES = {
-    USD: 1.15,
-    CHF: 0.94,
-    GBP: 0.84,
-    CNY: 8.25,
-    AED: 4.22,
-  };
-
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-  const brandTitle = $("#brand-title");
-  const brandIconImg = $("#brand-icon-img");
-  const searchInput = $("#brand-search");
-  const btnFilters = $("#btn-filters");
-  const btnBands = $("#btn-bands");
-  const seg = $("#wrapper-seg");
-  const segBtns = $$(".seg-btn", seg || document);
-  const listEl = $("#brand-list");
-  const backBtn = $("#back-btn");
-  const brandSearchBtn = $("#brandSearchBtn");
-
-  const state = {
-    brand: "",
-    brandQuery: "",
-    brandMeta: null,
-    brandsAll: [],
-    rowsAll: [],
-    search: "",
-    wrapperMode: "all",
-    filters: {
-      bandArt: new Set(),
-      vitola: new Set(),
-      ring: new Set(),
-      length: new Set(),
-      strength: new Set(),
-      shape: new Set(),
-      shade: new Set(),
-    },
-    actionRow: null,
-    singleQty: 1,
-    boxQty: 0,
-  };
-
-  function norm(v) {
-    return String(v ?? "").trim().replace(/\s+/g, " ");
-  }
-
-  function esc(s) {
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function normalizeBrand(v) {
-    return String(v || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "");
-  }
-
-  function normalizeLoose(v) {
-    return String(v || "")
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/&/g, " and ")
-      .replace(/["'’]/g, "")
-      .replace(/[^a-z0-9]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function normalizeAssetPath(path) {
-    const value = String(path || "").trim();
-    if (!value) return "";
-    if (/^https?:\/\//i.test(value)) return value;
-    return value.startsWith("/") ? value : `/${value}`;
-  }
-
-  function getParam(name) {
-    try {
-      return new URL(window.location.href).searchParams.get(name) || "";
-    } catch {
-      return "";
+  function json(raw, fallback) { try { return JSON.parse(raw) ?? fallback; } catch { return fallback; } }
+  function field(row, names) {
+    if (!row || typeof row !== "object") return "";
+    for (const name of names) {
+      if (row[name] != null && text(row[name])) return text(row[name]);
     }
-  }
-
-  function parseCSV(text) {
-    const rows = [];
-    let cur = [];
-    let field = "";
-    let inQuotes = false;
-
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i];
-      const next = text[i + 1];
-
-      if (inQuotes) {
-        if (ch === '"' && next === '"') {
-          field += '"';
-          i++;
-        } else if (ch === '"') {
-          inQuotes = false;
-        } else {
-          field += ch;
-        }
-      } else {
-        if (ch === '"') inQuotes = true;
-        else if (ch === ",") {
-          cur.push(field);
-          field = "";
-        } else if (ch === "\n") {
-          cur.push(field);
-          rows.push(cur);
-          cur = [];
-          field = "";
-        } else if (ch !== "\r") {
-          field += ch;
-        }
-      }
-    }
-
-    cur.push(field);
-    rows.push(cur);
-    return rows;
-  }
-
-  function normalizeHeader(h) {
-    return String(h || "")
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, " ")
-      .replace(/[^a-z0-9 ]/g, "")
-      .replace(/ /g, "_");
-  }
-
-  function mapRows(csv) {
-    const headers = csv[0] || [];
-    const keys = headers.map(normalizeHeader);
-
-    return csv
-      .slice(1)
-      .filter((r) => r && !r.every((c) => !String(c || "").trim()))
-      .map((r) => {
-        const obj = {};
-        keys.forEach((k, i) => {
-          obj[k] = (r[i] ?? "").trim();
-        });
-        return obj;
-      });
-  }
-
-  function getField(r, keys) {
-    for (const k of keys) {
-      if (r && r[k] != null && String(r[k]).trim() !== "") {
-        return String(r[k]).trim();
-      }
+    const wanted = new Set(names.map(compact));
+    for (const [name, value] of Object.entries(row)) {
+      if (wanted.has(compact(name)) && value != null && text(value)) return text(value);
     }
     return "";
   }
-
-  function resolveBrandVal(r) {
-    return getField(r, ["brand", "brand_name", "manufacturer_brand", "cigar_brand"]);
-  }
-
-  function resolveManufacturerVal(r) {
-    return getField(r, ["manufacturer", "maker"]);
-  }
-
-  function resolveLine(r) {
-    return getField(r, ["line", "series"]);
-  }
-
-  function resolveName(r) {
-    return getField(r, ["cigar", "name"]);
-  }
-
-  function resolveVitola(r) {
-    return getField(r, ["vitola", "style", "vitola_name", "size"]);
-  }
-
-  function resolveOrigin(r) {
-    return getField(r, ["origin", "country_of_origin", "country"]);
-  }
-
-  function resolveRing(r) {
-    return getField(r, ["ring", "ring_gauge", "rg"]);
-  }
-
-  function resolveLength(r) {
-    return getField(r, ["length"]);
-  }
-
-  function resolveShape(r) {
-    return getField(r, ["shape"]);
-  }
-
-  function resolveWrapper(r) {
-    return getField(r, ["wrapper"]);
-  }
-
-  function resolveBinder(r) {
-    return getField(r, ["binder"]);
-  }
-
-  function resolveFiller(r) {
-    return getField(r, ["filler"]);
-  }
-
-  function resolveStrength(r) {
-    return getField(r, ["strength"]);
-  }
-
-  function resolveShade(r) {
-    return getField(r, ["wrapper_shade", "wrapper_shade_type", "shade", "wrapper"]);
-  }
-
-  // Band assignments come only from HUB's "Band art IMG" column.
-  // A blank cell stays unassigned; Line IMG and cigar names are unrelated.
-  function resolveBandArt(r) {
-    const src = getField(r, ["band_art_img"]);
-    // Accept the explicit 1926 path currently stored in HUB, using the
-    // established artwork location. This never assigns a band to a blank row.
-    if (src === "/img/icons/bandart/padron/band1926.svg") {
-      return "/img/bandart/padron/band1926.svg";
-    }
-    return src;
-  }
-
-  // Display metadata only: this list never assigns a band to a cigar.
-  const BAND_ART_META = [
-    { src: "/img/bandart/padron/band1964.svg", label: "1964 Anniversary" },
-    { src: "/img/bandart/padron/bandfamilyreserve.svg", label: "Family Reserve" },
-    { src: "/img/bandart/padron/band1926.svg", label: "1926 Serie" },
-    { src: "/img/bandart/padron/bandpadronseries.svg", label: "Padrón Series" },
-    { src: "/img/bandart/padron/banddamaso.svg", label: "Damaso" },
-    { src: "/img/bandart/padron/bandblack2.svg", label: "Black" },
-    { src: "/img/bandart/padron/band50th.svg", label: "50th Anniversary" },
-    { src: "/img/bandart/padron/band60th.svg", label: "60th Anniversary" },
-    { src: "/img/bandart/padron/bandmillennium.svg", label: "Millennium" },
-    { src: "/img/bandart/padron/bandhammeranddream2.svg", label: "Hammer & A Dream" },
-  ];
-
-  function bandArtOptions(rows) {
-    const byPath = new Map();
-
-    rows.forEach((r) => {
-      const src = resolveBandArt(r);
-      // Only a populated Band art IMG creates an option; Line only labels it.
-      if (!src) return;
-
-      const line = resolveLine(r);
-      if (!byPath.has(src)) {
-        byPath.set(src, { src, label: line || "" });
-      } else if (!byPath.get(src).label && line) {
-        // Use the first nonblank Line when several cigars share the artwork.
-        byPath.get(src).label = line;
-      }
-    });
-
-    // Preserve the curated Padrón labels and order exactly as defined above.
-    const known = BAND_ART_META.filter(({ src }) => byPath.has(src));
-    const knownPaths = new Set(BAND_ART_META.map(({ src }) => src));
-    const additional = [...byPath.values()].filter(({ src }) => !knownPaths.has(src));
-    return [...known, ...additional];
-  }
-
-  function resolveBrandImage(r) {
-    return getField(r, ["brand_img", "brand_image", "brandicon", "brand_icon"]);
-  }
-
-  function resolveLineImage(r) {
-    return getField(r, ["line_img", "line_image", "lineicon", "line_icon", "brand_line_img"]);
-  }
-
-  function resolveDetailKey(r) {
-    return getField(r, ["key", "cigar_id", "id", "row_id"]);
-  }
-
-  function resolvePriceNumber(r) {
-    const raw = getField(r, ["msrp", "cigar_msrp", "cigar_retail"]);
-    const n = Number(String(raw || "").replace(/[^0-9.-]/g, ""));
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  }
-
-  function resolvePrice(r) {
-    const n = resolvePriceNumber(r);
-    return n > 0 ? n.toFixed(2) : "—";
-  }
-
-  function resolveBoxCount(r) {
-    const raw = getField(r, ["box_count", "box_qty", "box_quantity", "count_per_box"]);
-    const n = Number(String(raw || "").replace(/[^0-9.]/g, ""));
-    return Number.isFinite(n) && n > 0 ? n : 20;
-  }
-
-  function resolveBoxMsrpNumber(r) {
-    const raw = getField(r, ["box_msrp", "box_price", "box_retail"]);
-    const n = Number(String(raw || "").replace(/[^0-9.-]/g, ""));
-    if (Number.isFinite(n) && n > 0) return n;
-    return resolvePriceNumber(r) * resolveBoxCount(r);
-  }
-
-  function resolveDisplayName(r) {
-    const line = resolveLine(r);
-    const cigar = resolveName(r);
-    return [line, cigar].filter(Boolean).join(" ").trim() || cigar || line || "";
-  }
-
-  function resolveFavoriteKey(r) {
-    return (
-      resolveDetailKey(r) ||
-      [resolveBrandVal(r), resolveLine(r), resolveName(r), resolveVitola(r)]
-        .filter(Boolean)
-        .join("|")
-    );
-  }
-
-  function readCigarFavorites() {
+  function imagePath(value) {
+    const v = text(value);
+    if (!v || /^(blob:|data:|javascript:)/i.test(v)) return "";
     try {
-      const raw = JSON.parse(localStorage.getItem(POS_CIGAR_FAVORITES_KEY) || "[]");
-      return Array.isArray(raw) ? raw : [];
-    } catch {
-      return [];
-    }
+      const url = new URL(v.startsWith("http") || v.startsWith("/") ? v : "/" + v, location.origin);
+      if (!["https:", "http:"].includes(url.protocol)) return "";
+      return url.origin === location.origin ? url.pathname + url.search : url.href;
+    } catch { return ""; }
   }
-
-  function writeCigarFavorites(items) {
-    localStorage.setItem(POS_CIGAR_FAVORITES_KEY, JSON.stringify(items));
+  function localHref(value) {
+    if (!value) return "";
+    try {
+      const url = new URL(value, location.origin);
+      return url.origin === location.origin ? url.pathname + url.search : "";
+    } catch { return ""; }
   }
-
-  function isCigarFavorite(r) {
-    const key = resolveFavoriteKey(r);
-    return readCigarFavorites().some((item) => item && item.key === key);
+  function hrefKey(href) {
+    try {
+      const u = new URL(href, location.origin);
+      return u.searchParams.get("key") || u.searchParams.get("id") || "";
+    } catch { return ""; }
   }
-
-  function saveCigarFavorite(r) {
-    const key = resolveFavoriteKey(r);
-    if (!key) return false;
-
-    const current = readCigarFavorites();
-    const exists = current.some((item) => item && item.key === key);
-
-    if (exists) return false;
-
-    current.push({
-      type: "cigar",
-      section: "cigars",
-      key,
-      brand: resolveBrandVal(r) || state.brand,
-      line: resolveLine(r),
-      cigar: resolveName(r),
-      displayName: resolveDisplayName(r),
-      vitola: resolveVitola(r),
-      price: resolvePriceNumber(r),
-      boxPrice: resolveBoxMsrpNumber(r),
-      savedAt: Date.now(),
-    });
-
-    writeCigarFavorites(current);
-    return true;
+  function hrefAlias(href) {
+    if (!href) return "";
+    const u = new URL(href, location.origin);
+    const identity = u.searchParams.get("key") || u.searchParams.get("id") || u.searchParams.get("slug");
+    if (identity && /\/pos\/cigars\/cigar(?:\.html)?\/?$/.test(u.pathname)) return "key:" + norm(identity);
+    u.searchParams.sort();
+    return "url:" + norm(u.pathname.replace(/\.html$/, "").replace(/\/$/, "") + u.search);
   }
-
-  function removeCigarFavorite(r) {
-    const key = resolveFavoriteKey(r);
-    writeCigarFavorites(readCigarFavorites().filter((item) => item && item.key !== key));
+  function normalize(raw, forcedType) {
+    if (typeof raw === "string" || typeof raw === "number") raw = { key: String(raw), type: forcedType || "cigar" };
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const candidateType = text(forcedType || raw.type || raw.kind || raw.category || "cigar").toLowerCase().replace(/s$/, "");
+    const type = ["cigar", "brand", "shop"].includes(candidateType) ? candidateType : "cigar";
+    const item = { type };
+    for (const key of fields) item[key] = field(raw, [key]);
+    item.name = field(raw, ["displayName", "name", "title", "Cigar"]);
+    item.cigar = field(raw, ["cigar", "Cigar"]);
+    item.vitola ||= field(raw, ["style", "size"]);
+    item.ring ||= field(raw, ["Ring Gauge", "RG"]);
+    item.shade ||= field(raw, ["Wrapper Shade", "wrapper_shade"]);
+    item.origin ||= field(raw, ["country", "Country of Origin"]);
+    item.country ||= item.origin || text(raw.meta);
+    item.img = imagePath(field(raw, ["img", "image", "Cigar IMG", "photo"]));
+    item.imageCandidates = unique([item.img, ...(Array.isArray(raw.imageCandidates) ? raw.imageCandidates.map(imagePath) : [])]);
+    item.href = localHref(field(raw, ["href", "url", "Detail URL"]));
+    item.key = field(raw, ["key", "cigarId", "Cigar ID", "cigar_id"]);
+    if (!item.key && !text(raw.id).startsWith(type + "|")) item.key = text(raw.id);
+    if (/^https?:|^\//.test(item.key)) item.key = hrefKey(item.key) || item.key;
+    if (!item.key) item.key = hrefKey(item.href);
+    if (type === "brand") { item.brand ||= item.name; item.name ||= item.brand; }
+    if (!item.name && item.cigar) item.name = [item.line, item.cigar].filter(Boolean).join(" ");
+    if (!item.key && item.name) item.key = type === "cigar" ? [item.brand, item.name, item.vitola].join("|") : item.name;
+    if (!item.key && !item.href) return null;
+    if (!item.href) {
+      if (type === "cigar") item.href = "/pos/cigars/cigar.html?key=" + encodeURIComponent(item.key);
+      if (type === "brand") item.href = "/pos/cigars/brand?brand=" + encodeURIComponent(item.brand || item.name);
+      // Never guess a specific shop slug: retain its existing URL or directory fallback.
+      if (type === "shop") item.href = "/shops/";
+    }
+    const aliases = [item.key ? "key:" + norm(item.key) : "", text(raw.id) ? "key:" + norm(raw.id) : ""];
+    if (!(type === "shop" && /^\/shops\/?$/.test(item.href))) aliases.push(hrefAlias(item.href));
+    item.aliases = unique([...(Array.isArray(raw.aliases) ? raw.aliases : []), ...aliases]);
+    item.uid = text(raw.uid) || `${type}:${encodeURIComponent(norm(item.key || item.href))}`;
+    item.posImageKey = text(raw.posImageKey) || (type === "cigar" ? item.key : "");
+    item.savedAt = Number(raw.savedAt) || 0;
+    item.catalogKey = text(raw.catalogKey);
+    return item;
   }
-
-  function showToast(message) {
-    let toast = document.querySelector(".pos-toast");
-
-    if (!toast) {
-      toast = document.createElement("div");
-      toast.className = "pos-toast";
-      document.body.appendChild(toast);
-    }
-
-    toast.textContent = message;
-    toast.classList.add("is-showing");
-
-    window.clearTimeout(toast.__timer);
-    toast.__timer = window.setTimeout(() => {
-      toast.classList.remove("is-showing");
-    }, 1300);
+  function same(a, b) {
+    if (a.type !== b.type) return false;
+    return a.uid === b.uid || a.aliases.some(alias => b.aliases.includes(alias));
   }
-
-function resolveIsCuban(r) {
-  const explicit = getField(r, ["cuban", "is_cuban"]);
-
-  if (explicit) {
-    const v = explicit.toLowerCase().trim();
-    if (["x", "yes", "true", "1", "cuban", "cuba"].includes(v)) return true;
-    if (["no", "false", "0", "non-cuban", "non cuban"].includes(v)) return false;
+  function merge(a, b, preferNew = false) {
+    const result = { ...a };
+    for (const [key, value] of Object.entries(b)) {
+      if (["uid", "aliases", "imageCandidates", "savedAt"].includes(key)) continue;
+      if (value !== "" && value != null && (preferNew || !result[key])) result[key] = value;
+    }
+    result.uid = a.uid;
+    result.aliases = unique([...a.aliases, ...b.aliases]);
+    result.imageCandidates = unique([result.img, ...a.imageCandidates, ...b.imageCandidates]);
+    result.savedAt = a.savedAt || b.savedAt;
+    return result;
   }
-
-  const manufacturer = resolveManufacturerVal(r).toLowerCase();
-  const origin = resolveOrigin(r).toLowerCase();
-
-  return (
-    manufacturer.includes("habanos") ||
-    manufacturer.includes("habanos s.a") ||
-    origin.includes("cuba") ||
-    origin.includes("cuban")
-  );
-}
-
-function brandDisplayName() {
-  return state.brandMeta?.name || state.brand || state.brandQuery || "Brand";
-}
-
-function brandSlug() {
-  return normalizeBrand(state.brandMeta?.slug || state.brandMeta?.name || state.brand || state.brandQuery);
-}
-
-function brandIconCandidates() {
-  const sheetRow = state.rowsAll.find((r) => normalizeAssetPath(resolveBrandImage(r)));
-  const fromSheet = normalizeAssetPath(sheetRow ? resolveBrandImage(sheetRow) : "");
-
-  const metaImage = normalizeAssetPath(
-    state.brandMeta?.image ||
-      state.brandMeta?.icon ||
-      state.brandMeta?.svg ||
-      state.brandMeta?.img
-  );
-
-  const slug = brandSlug();
-  const out = [];
-
-  if (fromSheet) out.push(fromSheet);
-  if (metaImage) out.push(metaImage);
-
-  if (slug) {
-    out.push(`/img/icons/brands/${slug}.svg`);
-    out.push(`/img/icons/brands/${slug}.png`);
+  function dedupe(items) {
+    const result = [];
+    for (const item of items.filter(Boolean)) {
+      const index = result.findIndex(other => same(other, item));
+      if (index < 0) result.push(item);
+      else result[index] = merge(result[index], item);
+    }
+    return result;
   }
-
-  return Array.from(new Set(out.filter(Boolean)));
-}
-
-function brandIconPath() {
-  return brandIconCandidates()[0] || "";
-}
-
-function rowIconCandidatesForRow(r) {
-  const lineImg = normalizeAssetPath(resolveLineImage(r));
-  const brandImg = normalizeAssetPath(resolveBrandImage(r));
-
-  return Array.from(new Set([lineImg, brandImg, ...brandIconCandidates()].filter(Boolean)));
-}
-
-function rowIconPathForRow(r) {
-  return rowIconCandidatesForRow(r)[0] || "";
-}
-
-function bindImageFallback(img, candidates = [], finalBehavior = "hide") {
-  if (!img) return;
-
-  const list = Array.from(new Set(candidates.filter(Boolean)));
-  if (!list.length) {
-    if (finalBehavior === "hide") img.style.visibility = "hidden";
-    return;
-  }
-
-  let idx = 0;
-  img.style.visibility = "";
-  img.onerror = () => {
-    idx++;
-    if (idx < list.length) {
-      img.src = list[idx];
-    } else {
-      img.onerror = null;
-      if (finalBehavior === "hide") img.style.visibility = "hidden";
-    }
-  };
-
-  img.src = list[0];
-}
-
-function makeDetailHref(r) {
-
-  const detailKey = resolveDetailKey(r);
-
-  // Use the sheet key whenever it exists
-  if (detailKey && detailKey.trim()) {
-    return `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`;
-  }
-
-  // Otherwise build the exact pipe key the detail page expects
-  const pipeKey = [
-    resolveBrandVal(r),
-    resolveDisplayName(r),
-    resolveVitola(r),
-    "stick"
-  ]
-    .map(v => String(v || "").trim())
-    .join("|");
-
-  console.log("DETAIL LINK:", pipeKey);
-
-  return `/pos/cigars/cigar.html?key=${encodeURIComponent(pipeKey)}`;
-}
-
-function buildCartItem(r, type = "stick") {
-  const isBox = type === "box";
-  const unitPrice = isBox ? resolveBoxMsrpNumber(r) : resolvePriceNumber(r);
-
-  const detailKey =
-    resolveDetailKey(r) ||
-    `${normalizeBrand(state.brand)}|${resolveDisplayName(r)}|${resolveVitola(r)}`;
-
-  return {
-    key: `${detailKey}|${type}`,
-    detailKey,
-    type: "cigar",
-    purchaseType: type,
-    category: "Cigars",
-
-    id: detailKey,
-    brand: state.brand,
-    manufacturer: resolveManufacturerVal(r),
-    line: resolveLine(r),
-    cigar: resolveName(r),
-
-    name: `${resolveDisplayName(r)}${isBox ? " (Box)" : ""}`,
-    displayName: resolveDisplayName(r),
-
-    vitola: resolveVitola(r),
-    ring: resolveRing(r),
-    length: resolveLength(r),
-    shape: resolveShape(r),
-    wrapper: resolveWrapper(r),
-    binder: resolveBinder(r),
-    filler: resolveFiller(r),
-    origin: resolveOrigin(r),
-    shade: resolveShade(r),
-    strength: resolveStrength(r),
-
-    // Line image → Brand image → Brand icon
-    image:
-      normalizeAssetPath(resolveLineImage(r)) ||
-      normalizeAssetPath(resolveBrandImage(r)) ||
-      brandIconPath(),
-
-    msrp: unitPrice,
-    boxCount: resolveBoxCount(r),
-    url: makeDetailHref(r),
-  };
-}
-
-function money(n) {
-  const num = Number(n || 0);
-
-  return Number.isFinite(num)
-    ? num.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-    : "0.00";
-}
-
-function ensureCurrencyPopupStyles() {
-  if (document.getElementById("currency-popup-styles")) return;
-
-  const style = document.createElement("style");
-  style.id = "currency-popup-styles";
-  style.textContent = `
-    .currency-pop,
-    .currency-card,
-    .currency-card *{
-      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif !important;
-      font-synthesis:none;
-    }
-
-    .currency-pop{
-      position:fixed;
-      inset:0;
-      z-index:999999;
-      display:grid;
-      place-items:center;
-      padding:24px;
-      background:rgba(3,10,24,.42);
-      backdrop-filter:blur(16px) saturate(1.1);
-      -webkit-backdrop-filter:blur(16px) saturate(1.1);
-    }
-
-    .currency-card{
-      width:min(350px, calc(100vw - 44px));
-      max-height:85vh;
-      overflow-y:auto;
-      border-radius:30px;
-      background:rgba(246,247,251,.94);
-      color:#0f1728;
-      padding:22px;
-      box-shadow:0 24px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.74);
-      border:1px solid rgba(255,255,255,.62);
-    }
-
-    .currency-top{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:14px;
-      margin-bottom:16px;
-    }
-
-    .currency-title{
-      margin:0;
-      font-size:34px;
-      line-height:1;
-      font-weight:700;
-      letter-spacing:-.035em;
-      color:#0f1728;
-    }
-
-    .currency-sub{
-      margin-top:7px;
-      font-size:18px;
-      font-weight:400;
-      letter-spacing:-.015em;
-      line-height:1.2;
-      color:rgba(15,23,40,.48);
-    }
-
-    .currency-x{
-      width:42px;
-      height:42px;
-      border-radius:999px;
-      border:0;
-      background:rgba(15,23,40,.06);
-      color:rgba(15,23,40,.58);
-      font-size:30px;
-      line-height:1;
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-    }
-
-    .currency-base{
-      height:66px;
-      border-radius:22px;
-      background:rgba(255,255,255,.62);
-      color:#0f1728;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:0 18px;
-      margin-bottom:12px;
-      border:1px solid rgba(15,23,40,.08);
-    }
-
-    .currency-base span{
-      font-size:24px;
-      font-weight:600;
-      letter-spacing:-.025em;
-    }
-
-    .currency-row{
-      min-height:70px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:0 6px;
-      border-top:1px solid rgba(15,23,40,.08);
-    }
-
-    .currency-label{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:0;
-    }
-
-    .currency-flag{
-      font-size:26px;
-      line-height:1;
-      flex:0 0 auto;
-    }
-
-    .currency-name-wrap{
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-    }
-
-    .currency-code{
-      font-size:22px;
-      font-weight:650;
-      line-height:1;
-      letter-spacing:-.025em;
-      color:#0f1728;
-    }
-
-    .currency-country{
-      margin-top:5px;
-      font-size:16px;
-      font-weight:400;
-      line-height:1;
-      letter-spacing:-.01em;
-      color:rgba(15,23,40,.52);
-    }
-
-    .currency-value{
-      font-size:22px;
-      font-weight:400;
-      letter-spacing:-.025em;
-      color:#0f1728;
-      white-space:nowrap;
-    }
-
-    .price-convert-btn{
-      border:0;
-      background:transparent;
-      color:inherit;
-      font:inherit;
-      padding:0;
-      margin:0;
-      cursor:pointer;
-      text-align:right;
-    }
-  `;
-
-  document.head.appendChild(style);
-}
-
-function openCurrencyPopup(eurValue) {
-  const eur = Number(String(eurValue || "").replace(/[^0-9.]/g, ""));
-  if (!Number.isFinite(eur) || eur <= 0) return;
-
-  ensureCurrencyPopupStyles();
-
-  document.querySelector(".currency-pop")?.remove();
-
-  const pop = document.createElement("div");
-  pop.className = "currency-pop";
-
-  const usd = eur * EUR_RATES.USD;
-  const chf = eur * EUR_RATES.CHF;
-  const gbp = eur * EUR_RATES.GBP;
-  const cny = eur * EUR_RATES.CNY;
-  const aed = eur * EUR_RATES.AED;
-
-  pop.innerHTML = `
-    <div class="currency-card" role="dialog" aria-modal="true" aria-label="Currency conversion">
-      <div class="currency-top">
-        <div>
-          <h3 class="currency-title">Currency</h3>
-          <div class="currency-sub">Euro conversion estimate</div>
-        </div>
-        <button class="currency-x" type="button" aria-label="Close currency popup">×</button>
-      </div>
-
-      <div class="currency-base"><span>🇪🇺 € EUR</span><span>${money(eur)}</span></div>
-      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇺🇸</span><span class="currency-name-wrap"><span class="currency-code">$ USD</span><span class="currency-country">United States</span></span></div><strong class="currency-value">${money(usd)}</strong></div>
-      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇨🇭</span><span class="currency-name-wrap"><span class="currency-code">CHF</span><span class="currency-country">Switzerland</span></span></div><strong class="currency-value">${money(chf)}</strong></div>
-      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇬🇧</span><span class="currency-name-wrap"><span class="currency-code">£ GBP</span><span class="currency-country">Great Britain</span></span></div><strong class="currency-value">${money(gbp)}</strong></div>
-      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇨🇳</span><span class="currency-name-wrap"><span class="currency-code">¥ RMB</span><span class="currency-country">China</span></span></div><strong class="currency-value">${money(cny)}</strong></div>
-      <div class="currency-row"><div class="currency-label"><span class="currency-flag">🇦🇪</span><span class="currency-name-wrap"><span class="currency-code">AED</span><span class="currency-country">United Arab Emirates</span></span></div><strong class="currency-value">${money(aed)}</strong></div>
-    </div>
-  `;
-
-  document.body.appendChild(pop);
-
-  pop.addEventListener("click", (e) => {
-    const target = e.target;
-    if (!(target instanceof Element)) return;
-    if (target.classList.contains("currency-pop") || target.closest(".currency-x")) pop.remove();
-  });
-
-  if (navigator.vibrate) navigator.vibrate(8);
-}
-  
-  function ensureActionSheet() {
-    if ($("#pos-action-sheet")) return;
-
-    const sheet = document.createElement("div");
-    sheet.id = "pos-action-sheet";
-    sheet.className = "pos-action-sheet";
-    sheet.hidden = true;
-
-    sheet.innerHTML = `
-      <div class="pos-action-backdrop" data-action-close></div>
-
-      <div class="pos-action-card" role="dialog" aria-modal="true" aria-label="Add cigar">
-        <div class="pos-action-title" id="pos-action-title">Cigar</div>
-
-        <div class="pos-action-lines">
-          <div class="pos-action-line">
-            <div class="pos-action-line-top">
-              <div class="pos-action-label">Single</div>
-              <div class="pos-action-stepper">
-                <button type="button" data-qty-minus="single">−</button>
-                <span id="singleQty">1</span>
-                <button type="button" data-qty-plus="single">+</button>
-              </div>
-            </div>
-            <div class="pos-action-line-bottom">
-              <span id="singleUnit">0.00</span>
-              <span id="singleTotal">0.00</span>
-            </div>
-          </div>
-
-          <div class="pos-action-line">
-            <div class="pos-action-line-top">
-              <div class="pos-action-label">Box</div>
-              <div class="pos-action-stepper">
-                <button type="button" data-qty-minus="box">−</button>
-                <span id="boxQty">0</span>
-                <button type="button" data-qty-plus="box">+</button>
-              </div>
-            </div>
-            <div class="pos-action-line-bottom">
-              <span id="boxUnit">0.00</span>
-              <span id="boxTotal">0.00</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="pos-action-total">
-          <span>Total:</span>
-          <strong id="actionTotal">$0.00</strong>
-        </div>
-
-        <div class="pos-action-buttons">
-          <button type="button" class="pos-action-cancel" data-action-close>Cancel</button>
-          <button type="button" class="pos-action-add" id="actionAddBtn">Add</button>
-        </div>
-
-        <button type="button" class="pos-action-favorite" id="actionFavoriteBtn">
-          Save as Favorite
-        </button>
-      </div>
-    `;
-
-    document.body.appendChild(sheet);
-  }
-
-  function updateActionSheet() {
-    const r = state.actionRow;
-    if (!r) return;
-
-    const singlePrice = resolvePriceNumber(r);
-    const boxPrice = resolveBoxMsrpNumber(r);
-
-    $("#singleQty").textContent = String(state.singleQty);
-    $("#boxQty").textContent = String(state.boxQty);
-
-    $("#singleUnit").textContent = money(singlePrice);
-    $("#singleTotal").textContent = money(singlePrice * state.singleQty);
-
-    $("#boxUnit").textContent = money(boxPrice);
-    $("#boxTotal").textContent = money(boxPrice * state.boxQty);
-
-    $("#actionTotal").textContent = `$${money(singlePrice * state.singleQty + boxPrice * state.boxQty)}`;
-
-    const favBtn = $("#actionFavoriteBtn");
-    if (favBtn) {
-      const fav = isCigarFavorite(r);
-      favBtn.textContent = fav ? "Saved as Favorite" : "Save as Favorite";
-      favBtn.classList.toggle("is-saved", fav);
-    }
-  }
-
-  function openActionSheet(r) {
-    ensureActionSheet();
-
-    state.actionRow = r;
-    state.singleQty = 1;
-    state.boxQty = 0;
-
-    $("#pos-action-title").textContent = resolveDisplayName(r) || "Cigar";
-
-    updateActionSheet();
-
-    const sheet = $("#pos-action-sheet");
-    sheet.hidden = false;
-    requestAnimationFrame(() => sheet.classList.add("is-open"));
-
-    if (navigator.vibrate) navigator.vibrate(8);
-  }
-
-  function closeActionSheet() {
-    const sheet = $("#pos-action-sheet");
-    if (!sheet) return;
-
-    sheet.classList.remove("is-open");
-    window.setTimeout(() => {
-      if (!sheet.classList.contains("is-open")) sheet.hidden = true;
-    }, 180);
-  }
-
-  function addActionItemsToCart() {
-    const r = state.actionRow;
-    if (!r) return;
-
-    if (state.singleQty > 0) {
-      const stickItem = buildCartItem(r, "stick");
-      const currentQty = window.cigarOSCart?.getItemQty?.(stickItem) || 0;
-      window.cigarOSCart?.setQty?.(stickItem, currentQty + state.singleQty);
-    }
-
-    if (state.boxQty > 0) {
-      const boxItem = buildCartItem(r, "box");
-      const currentQty = window.cigarOSCart?.getItemQty?.(boxItem) || 0;
-      window.cigarOSCart?.setQty?.(boxItem, currentQty + state.boxQty);
-    }
-
-    if (navigator.vibrate) navigator.vibrate(12);
-
-    showToast("Added to invoice");
-    closeActionSheet();
-  }
-
-  function openDetail(r) {
-    window.location.href = makeDetailHref(r);
-  }
-
-  function applySearch(rows) {
-    const q = state.search.trim().toLowerCase();
-    if (!q) return rows;
-
-    return rows.filter((r) => {
-      const hay = [
-        resolveDisplayName(r),
-        resolveVitola(r),
-        resolveRing(r),
-        resolveLength(r),
-        resolveManufacturerVal(r),
-        resolveLine(r),
-        resolveOrigin(r),
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      return hay.includes(q);
+  function unpack(parsed, type) {
+    if (Array.isArray(parsed)) return parsed.map(v => normalize(v, type)).filter(Boolean);
+    if (!parsed || typeof parsed !== "object") return [];
+    if (Array.isArray(parsed.items)) return unpack(parsed.items, type);
+    const grouped = ["cigars", "brands", "shops"].filter(k => Array.isArray(parsed[k]));
+    if (grouped.length) return grouped.flatMap(k => unpack(parsed[k], k.slice(0, -1)));
+    if (parsed.key || parsed.name || parsed.href || parsed.brand) return [normalize(parsed, type)].filter(Boolean);
+    return Object.entries(parsed).flatMap(([k, v]) => {
+      if (v === true) return [normalize({key:k}, type)].filter(Boolean);
+      return typeof v === "object" && v ? [normalize({key:k, ...v}, type)].filter(Boolean) : [];
     });
   }
-
-  function applyFilterSets(rows) {
-    return rows.filter((r) => {
-      if (state.filters.bandArt.size && !state.filters.bandArt.has(resolveBandArt(r))) return false;
-      if (state.filters.vitola.size && !state.filters.vitola.has(resolveVitola(r))) return false;
-      if (state.filters.ring.size && !state.filters.ring.has(resolveRing(r))) return false;
-      if (state.filters.length.size && !state.filters.length.has(resolveLength(r))) return false;
-      if (state.filters.strength.size && !state.filters.strength.has(resolveStrength(r))) return false;
-      if (state.filters.shape.size && !state.filters.shape.has(resolveShape(r))) return false;
-      if (state.filters.shade.size && !state.filters.shade.has(resolveShade(r))) return false;
+  function storageError(error) {
+    return new Error("Favorites could not be saved in this browser. Check available storage and site permissions; your existing data has not been cleared. " + (error?.message || ""));
+  }
+  function writeDocument(doc) {
+    try { localStorage.setItem(KEY, JSON.stringify(doc)); } catch (error) { throw storageError(error); }
+  }
+  function readDocument() {
+    let raw;
+    try { raw = localStorage.getItem(KEY); } catch (error) { throw storageError(error); }
+    if (raw === null) return migrate();
+    const doc = json(raw, null);
+    if (!doc || doc.version !== 2 || !Array.isArray(doc.items)) {
+      throw new Error("Saved Favorites data needs recovery. It has not been overwritten. Keep your browser data and contact support.");
+    }
+    return doc;
+  }
+  function migrate() {
+    const snapshot = {};
+    for (const key of [...SOURCES, OLD_ORDER]) snapshot[key] = localStorage.getItem(key);
+    if (localStorage.getItem(BACKUP) === null) {
+      try { localStorage.setItem(BACKUP, JSON.stringify({savedAt:Date.now(), values:snapshot})); }
+      catch (error) { throw storageError(error); }
+    }
+    const imported = SOURCES.flatMap(key => unpack(json(snapshot[key], [])));
+    const items = dedupe(imported);
+    const order = json(snapshot[OLD_ORDER], []);
+    if (Array.isArray(order)) {
+      const ranks = new Map(order.map((key, index) => ["key:" + norm(key), index]));
+      const rank = item => Math.min(...item.aliases.map(a => ranks.get(a) ?? Infinity));
+      items.sort((a,b) => rank(a) - rank(b));
+    }
+    const doc = {version:2, revision:0, migratedAt:Date.now(), updatedAt:Date.now(), items};
+    writeDocument(doc);
+    // Old stores are left untouched here. They are never re-imported after v2 exists.
+    return doc;
+  }
+  function mirror(doc) {
+    // Compatibility outputs for other existing profile widgets. Never primary inputs after migration.
+    const cigars = doc.items.filter(i => i.type === "cigar");
+    const mirrorValues = {
+      cigaros_user_favorite_cigars_v1: cigars.map(i => ({...i, image:i.img, url:i.href})),
+      cigaros_pos_favorites_cigars: cigars.map(i => ({...i, displayName:i.name, image:i.img, url:i.href})),
+      cigaros_favorite_keys: cigars.map(i => i.key),
+      cigarSocialFavorites: doc.items.map(i => ({...i, id:i.key, image:i.img, url:i.href})),
+      cigarSocialFavoritesOrder: doc.items.map(i => i.key)
+    };
+    for (const [key, value] of Object.entries(mirrorValues)) {
+      try { localStorage.setItem(key, JSON.stringify(value)); }
+      catch (error) { console.warn("[Favorites] Canonical save succeeded; compatibility mirror failed:", key, error); }
+    }
+  }
+  function mutate(fn) {
+    const run = () => {
+      const doc = readDocument();
+      const before = JSON.stringify(doc.items);
+      const value = fn(doc);
+      if (before !== JSON.stringify(doc.items)) {
+        doc.revision = (doc.revision || 0) + 1; doc.updatedAt = Date.now();
+        writeDocument(doc); mirror(doc);
+        window.dispatchEvent(new CustomEvent(EVENT, {detail:{revision:doc.revision}}));
+      }
+      return value;
+    };
+    const locked = () => navigator.locks?.request ? navigator.locks.request(KEY, run) : run();
+    const job = queue.then(locked, locked);
+    queue = job.catch(() => {});
+    return job;
+  }
+  function all() { return readDocument().items.map(item => normalize(item)).filter(Boolean); }
+  function has(payload) {
+    const item = normalize(payload);
+    return !!item && all().some(existing => same(existing, item));
+  }
+  function set(payload, wanted) {
+    const item = normalize(payload);
+    if (!item) return Promise.reject(new Error("This cigar does not have a usable identity or detail link."));
+    return mutate(doc => {
+      const matches = doc.items.filter(old => same(old, item));
+      if (!wanted) { doc.items = doc.items.filter(old => !same(old, item)); return false; }
+      if (matches.length) {
+        const first = matches[0];
+        doc.items = doc.items.filter(old => !same(old, item) || old.uid === first.uid);
+        const index = doc.items.findIndex(old => old.uid === first.uid);
+        doc.items[index] = merge(first, item, true);
+      } else doc.items.push({...item, savedAt:Date.now()});
       return true;
     });
   }
-
-  function renderList(rows) {
-    if (!listEl) return;
-
-    listEl.innerHTML = "";
-
-    if (!rows.length) {
-      listEl.innerHTML = `<div class="empty">No cigars found for ${esc(brandDisplayName())}</div>`;
-      return;
-    }
-
-    rows.forEach((r) => {
-      const rowIconCandidates = rowIconCandidatesForRow(r);
-      const rowIconPath = rowIconPathForRow(r);
-      const priceText = resolvePrice(r);
-      const priceNumber = resolvePriceNumber(r);
-      const isCuban = resolveIsCuban(r);
-
-      const row = document.createElement("article");
-      row.className = "brand-row";
-      if (isCuban) row.setAttribute("data-cuban", "true");
-
-      row.innerHTML = `
-        <img class="row-ico" src="${esc(rowIconPath)}" alt="" loading="lazy" decoding="async" />
-
-        <div class="brand-row-left">
-          <div class="brand-row-title-wrap">
-            <div class="brand-row-title">${esc(resolveDisplayName(r) || "Unnamed cigar")}</div>
-            ${isCuban ? `<div class="brand-row-flag" aria-hidden="true">🇨🇺</div>` : ""}
-          </div>
-          <div class="brand-row-sub">${esc(resolveVitola(r) || "—")}</div>
-        </div>
-
-        <div class="brand-row-right">
-          ${
-            priceNumber > 0
-              ? `<button class="brand-row-msrp price-convert-btn" type="button" data-eur="${esc(priceText)}" aria-label="Convert ${esc(priceText)} euros">${esc(priceText)}</button>`
-              : `<div class="brand-row-msrp">—</div>`
-          }
-          <button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu">+</button>
-        </div>
-      `;
-
-      const icon = $(".row-ico", row);
-      const left = $(".brand-row-left", row);
-      const title = $(".brand-row-title", row);
-      const plusBtn = $(".qty-btn--plus", row);
-      const priceBtn = $(".price-convert-btn", row);
-
-      bindImageFallback(icon, rowIconCandidates, "hide");
-
-      left?.addEventListener("click", () => openDetail(r));
-      title?.addEventListener("click", () => openDetail(r));
-      icon?.addEventListener("click", () => openDetail(r));
-
-      priceBtn?.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openCurrencyPopup(priceBtn.dataset.eur || priceText);
-      });
-
-      plusBtn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openActionSheet(r);
-      });
-
-      listEl.appendChild(row);
+  function remove(uid) {
+    return mutate(doc => { doc.items = doc.items.filter(item => item.uid !== uid); });
+  }
+  function reorder(type, ids) {
+    return mutate(doc => {
+      const wanted = unique(ids);
+      const byId = new Map(doc.items.filter(i => i.type === type).map(i => [i.uid, i]));
+      const ordered = wanted.map(id => byId.get(id)).filter(Boolean);
+      const set = new Set(ordered.map(i => i.uid)); let cursor = 0;
+      doc.items = doc.items.map(item => set.has(item.uid) ? ordered[cursor++] : item);
     });
   }
-
-  function applyAll() {
-    let rows = [...state.rowsAll];
-    rows = applyFilterSets(rows);
-    rows = applySearch(rows);
-    renderList(rows);
-    setBrandHeader();
+  function subscribe(callback) {
+    const changed = () => callback();
+    const storage = event => { if (event.key === KEY || event.key === null) callback(); };
+    window.addEventListener(EVENT, changed);
+    window.addEventListener("storage", storage);
+    return () => { window.removeEventListener(EVENT, changed); window.removeEventListener("storage", storage); };
   }
-
-  function ensureBrandManufacturerMeta() {
-    const titleBlock = document.querySelector(".brand-title-block");
-    if (!titleBlock) return null;
-
-    let meta = titleBlock.querySelector(".brand-manufacturer");
-    if (!meta) {
-      meta = document.createElement("div");
-      meta.className = "brand-manufacturer";
-      titleBlock.appendChild(meta);
+  function parseCSV(input) {
+    const rows = []; let row = [], value = "", quoted = false;
+    const text = input.replace(/^\uFEFF/, "");
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '"') {
+        if (quoted && text[i+1] === '"') { value += '"'; i++; }
+        else quoted = !quoted;
+      } else if (!quoted && ch === ',') { row.push(value); value = ""; }
+      else if (!quoted && (ch === '\n' || ch === '\r')) {
+        if (ch === '\r' && text[i+1] === '\n') i++;
+        row.push(value); rows.push(row); row = []; value = "";
+      } else value += ch;
     }
-
-    return meta;
+    if (value || row.length) {row.push(value); rows.push(row);}
+    const headers = rows.shift() || [];
+    return rows.filter(r => r.some(v => v.trim())).map(r => Object.fromEntries(headers.map((h,i) => [h.trim(), r[i] || ""])));
   }
-
-  function setBrandHeader() {
-    const displayBrand = brandDisplayName();
-
-    if (brandTitle) brandTitle.textContent = displayBrand || "Brand";
-
-    const manufacturerMeta = ensureBrandManufacturerMeta();
-    const firstRow = state.rowsAll[0];
-    const manufacturer = firstRow ? resolveManufacturerVal(firstRow) : "";
-
-    if (manufacturerMeta) {
-      const show = manufacturer && normalizeBrand(manufacturer) !== normalizeBrand(displayBrand);
-      const isCubanBrand = firstRow && resolveIsCuban(firstRow);
-
-      manufacturerMeta.textContent = show ? `${isCubanBrand ? "🇨🇺 " : ""}${manufacturer}` : "";
-      manufacturerMeta.style.display = show ? "" : "none";
-    }
-
-    if (!brandIconImg) return;
-
-    brandIconImg.alt = displayBrand || "Brand";
-    bindImageFallback(brandIconImg, brandIconCandidates(), "hide");
+  function rowPayload(row) {
+    const brand = field(row, ["Brand", "Brand Name"]);
+    const line = field(row, ["Line", "Series"]);
+    const cigar = field(row, ["Cigar", "Name"]);
+    const vitola = field(row, ["Vitola", "Style", "Size"]);
+    const name = [line, cigar].filter(Boolean).join(" ");
+    const key = field(row, ["Key", "Cigar ID", "id", "row_id"]) || [brand, name, vitola].join("|");
+    return normalize({...row, type:"cigar", key, catalogKey:key, name, cigar, brand, line, vitola,
+      href:"/pos/cigars/cigar.html?key=" + encodeURIComponent(key),
+      img:field(row, ["Cigar IMG", "image", "photo"]), posImageKey:key});
   }
-
-  function findBrandMeta(query, brands) {
-    const q = normalizeBrand(query);
-    if (!q || !Array.isArray(brands)) return null;
-
-    return (
-      brands.find((b) => normalizeBrand(b.slug) === q) ||
-      brands.find((b) => normalizeBrand(b.name) === q) ||
-      brands.find((b) => {
-        const slug = normalizeBrand(b.slug);
-        const name = normalizeBrand(b.name);
-        return !!slug && (slug.includes(q) || q.includes(slug) || name.includes(q) || q.includes(name));
-      }) ||
-      null
-    );
+  function recordAliases(item) {
+    const key3 = [item.brand, item.name, item.vitola].join("|");
+    const key4 = [item.brand, item.line, item.cigar, item.vitola].filter(Boolean).join("|");
+    return unique([...item.aliases, "key:"+norm(key3), "key:"+norm(key4)]);
   }
-
-  async function loadBrandsMeta() {
-    try {
-      const res = await fetch(`${BRANDS_URL}?v=${Date.now()}`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`brands.json fetch failed: ${res.status}`);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function chooseRowsForBrand(rows) {
-  const needles = Array.from(new Set([
-    normalizeBrand(state.brandQuery),
-    normalizeBrand(state.brandMeta?.slug),
-    normalizeBrand(state.brandMeta?.name),
-    normalizeBrand(state.brand),
-  ].filter(Boolean)));
-
-  if (!needles.length) return [];
-
-  // Cuban links carry cuban=1. Ordinary brand links are domestic.
-  const wantsCuban = ["1", "true", "yes"].includes(
-    getParam("cuban").trim().toLowerCase()
-  );
-
-  const inContext = (matches) => matches.filter(
-    (r) => resolveIsCuban(r) === wantsCuban
-  );
-
-  const exact = rows.filter((r) =>
-    needles.includes(normalizeBrand(resolveBrandVal(r)))
-  );
-
-  // Do not substitute another brand when this origin has no rows.
-  if (exact.length) return inContext(exact);
-
-  const fuzzy = rows.filter((r) => {
-    const brand = normalizeBrand(resolveBrandVal(r));
-    return brand && needles.some(
-      (n) => brand.includes(n) || n.includes(brand)
-    );
-  });
-
-  if (fuzzy.length) return inContext(fuzzy);
-
-  const manufacturerMatches = rows.filter((r) =>
-    needles.includes(normalizeBrand(resolveManufacturerVal(r)))
-  );
-
-  if (manufacturerMatches.length) {
-    return inContext(manufacturerMatches);
-  }
-
-  const query = normalizeLoose(state.brandQuery);
-
-  return inContext(rows.filter((r) => {
-    const brand = normalizeLoose(resolveBrandVal(r));
-    return brand && query && (
-      brand.includes(query) || query.includes(brand)
-    );
-  }));
-}
-
-  // CigarOS brand-page Filters, including HUB-driven Band Art.
-  (() => {
-    if (!btnFilters || btnFilters.dataset.brandFiltersBound === "true") return;
-
-    const fields = [
-      { key: "bandArt", label: "Band Art", read: resolveBandArt },
-      { key: "vitola", label: "Vitola", read: resolveVitola },
-      { key: "ring", label: "Ring", read: resolveRing },
-      { key: "length", label: "Length", read: resolveLength },
-      { key: "strength", label: "Strength", read: resolveStrength },
-      { key: "shape", label: "Shape", read: resolveShape },
-      { key: "shade", label: "Wrapper Shade", read: resolveShade },
-    ];
-    const id = "brand-filter-modal";
-    const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
-    let modal = null;
-    let draft = {};
-    let active = "bandArt";
-    let options = {};
-    let savedOverflow = [];
-
-    function ensureModal() {
-      if (modal) return;
-
-      // Reuse the filter styles already in brand.css. All additional rules
-      // are scoped to this dialog, so cigar rows and other popups are untouched.
-      const style = document.createElement("style");
-      style.id = "brand-filter-repair-styles";
-      style.textContent = `
-        #${id} {
-          position:fixed; inset:0; width:100%; height:100%;
-          max-width:none; max-height:none; margin:0; padding:0;
-          border:0; background:transparent; color:#0b1220;
-          font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;
-        }
-        #${id}:not([open]) { display:none !important; }
-        #${id}[open] { display:block; opacity:1; pointer-events:auto; }
-        #${id}::backdrop { background:transparent; }
-        #${id}, #${id} * { box-sizing:border-box; }
-        #${id} .fm__sheet {
-          left:50%; right:auto; bottom:auto; max-height:none;
-          transform:translateX(-50%) !important; transition:none;
-          top:calc(12px + env(safe-area-inset-top,0px));
-          height:min(720px,calc(100vh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
-          height:min(720px,calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
-        }
-        #${id} .fm__body { padding:0; }
-        #${id} .fm__panel { padding-bottom:0; }
-        #${id} .fm__header { flex:0 0 auto; min-height:76px; }
-        #${id} .fm__title { margin:0; font-size:30px; font-weight:700; }
-        #${id} .fm__cat-btn { flex-shrink:0; }
-        #${id} .fm__search-row { flex:0 0 auto; }
-        #${id} .fm__item { cursor:pointer; }
-        #${id} .fm__item-label { overflow-wrap:anywhere; }
-        #${id} .fm__item input[type="checkbox"] {
-          appearance:auto; -webkit-appearance:checkbox;
-          display:block; position:static; opacity:1;
-          width:22px; height:22px; margin:0; accent-color:#0a84ff;
-        }
-        #${id} .bfm-actions {
-          display:flex; flex:0 0 auto; gap:12px; padding:14px 16px 16px;
-          border-top:1px solid rgba(15,26,44,.08);
-        }
-        #${id} .bfm-actions button {
-          flex:1; min-height:48px; border:0; border-radius:16px;
-          font:600 17px -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;
-          cursor:pointer; background:rgba(15,26,44,.07); color:#0b1220;
-        }
-        #${id} .bfm-actions [data-bfm-apply] { background:#0a84ff; color:white; }
-        #${id} .fm__list { overscroll-behavior:contain; }
-        #${id} .fm__list--bands { padding:8px 10px 18px; }
-        #${id} .fm__band-option {
-          position:relative; display:block; width:100%; margin:0 0 10px;
-          padding:14px 14px 12px; border:1px solid rgba(15,26,44,.12);
-          border-radius:20px; background:rgba(255,255,255,.85); cursor:pointer;
-          transition:background .15s ease,border-color .15s ease,box-shadow .15s ease;
-        }
-        #${id} .fm__band-option.is-selected {
-          background:rgba(10,132,255,.07); border-color:rgba(10,132,255,.5);
-          box-shadow:inset 0 0 0 1px rgba(10,132,255,.12);
-        }
-        #${id} .fm__band-option:focus-within {
-          outline:3px solid #0a84ff; outline-offset:2px;
-        }
-        #${id} .fm__band-art-wrap {
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:8px 0 10px;
-}
-
-#${id} .fm__band-art {
-  display:block;
-  width:90%;
-  height:auto;
-  max-width:none;
-  max-height:none;
-  object-fit:contain;
-}
-
-#${id} .fm__band-bottom {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-height:30px;
-}
-
-#${id} .fm__band-label {
-  flex:1;
-  min-width:0;
-  color:#0f1a2c;
-  font-size:14px;
-  line-height:1.15;
-  font-weight:600;
-  letter-spacing:-.01em;
-  overflow-wrap:anywhere;
-}
-        #${id} .fm__band-check-ui {
-          width:26px; height:26px; flex:0 0 26px; display:grid; place-items:center;
-          border-radius:50%; border:1.5px solid rgba(15,26,44,.24);
-          background:#fff; color:transparent;
-        }
-        #${id} .fm__band-check-ui svg { width:16px; height:16px; }
-        #${id} .fm__band-option.is-selected .fm__band-check-ui {
-          border-color:#0a84ff; background:#0a84ff; color:#fff;
-        }
-        #${id} .fm__band-checkbox {
-          position:absolute !important; width:1px !important; height:1px !important;
-          padding:0 !important; margin:0 !important; opacity:0 !important;
-          overflow:hidden; clip-path:inset(50%);
-        }
-        @media (max-width:760px) {
-          #${id} .fm__body { grid-template-rows:auto minmax(0,1fr); }
-          #${id} .fm__cats { flex-direction:row; }
-        }
-      `;
-      document.head.appendChild(style);
-
-      // A native dialog keeps Filters above the bottom navigation and
-      // contains keyboard focus without changing any other page's z-index.
-      modal = document.createElement("dialog");
-      modal.id = id;
-      modal.className = "fm";
-      modal.hidden = true;
-      modal.setAttribute("aria-labelledby", "brand-filter-heading");
-      modal.innerHTML = `
-        <div class="fm__backdrop" data-bfm-close aria-hidden="true"></div>
-        <div class="fm__sheet">
-          <div class="fm__header">
-            <h2 class="fm__title" id="brand-filter-heading">Filters</h2>
-            <button class="fm__close" type="button" data-bfm-close aria-label="Close filters">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </div>
-          <div class="fm__body">
-            <div class="fm__cats" role="group" aria-label="Filter categories"></div>
-            <div class="fm__panel">
-              <div class="fm__search-row">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2L21 21" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
-                </svg>
-                <input class="fm__search-input" type="search" placeholder="Search options" aria-label="Search filter options" autocomplete="off" />
-              </div>
-              <div class="fm__list" role="group" aria-label="Filter options"></div>
-            </div>
-          </div>
-          <div class="bfm-actions">
-            <button type="button" data-bfm-clear>Clear</button>
-            <button type="button" data-bfm-apply>Apply</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-
-      modal.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) return;
-        if (target.closest("[data-bfm-close]")) return close();
-
-        const category = target.closest("[data-bfm-category]");
-        if (category) {
-          active = category.dataset.bfmCategory;
-          modal.querySelector(".fm__search-input").value = "";
-          updateCategories();
-          renderOptions();
-          return;
-        }
-        if (target.closest("[data-bfm-clear]")) {
-          fields.forEach(({ key }) => draft[key].clear());
-          modal.querySelector(".fm__search-input").value = "";
-          updateCategories();
-          renderOptions();
-          return;
-        }
-        if (target.closest("[data-bfm-apply]")) {
-          fields.forEach(({ key }) => { state.filters[key] = new Set(draft[key]); });
-          const count = fields.reduce((sum, { key }) => sum + state.filters[key].size, 0);
-          btnFilters.textContent = count ? `Filters (${count})` : "Filters";
-          close();
-          applyAll();
-        }
-      });
-      modal.addEventListener("change", (event) => {
-        const input = event.target;
-        if (!(input instanceof HTMLInputElement) || !input.matches("[data-bfm-value]")) return;
-        if (input.checked) draft[active].add(input.value);
-        else draft[active].delete(input.value);
-        // Update in place so multi-select keeps scroll position and keyboard focus.
-        input.closest(".fm__band-option")?.classList.toggle("is-selected", input.checked);
-        updateCategories();
-      });
-      modal.querySelector(".fm__search-input").addEventListener("input", renderOptions);
-      modal.addEventListener("cancel", (event) => {
-        event.preventDefault();
-        close();
+  function resolve(item, rows) {
+    if (item.type !== "cigar") return null;
+    let matches = rows.filter(row => item.aliases.some(a => recordAliases(row).includes(a)));
+    if (!matches.length) {
+      const names = unique([item.name, item.cigar].map(norm));
+      if (!item.brand || !names.length) return null;
+      matches = rows.filter(row => {
+        if (compact(item.brand) !== compact(row.brand)) return false;
+        if (item.vitola && norm(item.vitola) !== norm(row.vitola)) return false;
+        for (const k of ["ring", "length", "origin"]) if (item[k] && row[k] && norm(item[k]) !== norm(row[k])) return false;
+        const candidates = [row.cigar, row.name, [row.brand, row.name].join(" "), [row.brand, row.cigar].join(" ")].map(norm);
+        return names.some(name => candidates.includes(name));
       });
     }
-
-    function updateCategories() {
-      modal.querySelectorAll("[data-bfm-category]").forEach((button) => {
-        const field = fields.find(({ key }) => key === button.dataset.bfmCategory);
-        const selected = field.key === active;
-        const count = draft[field.key].size;
-        button.classList.toggle("is-active", selected);
-        button.setAttribute("aria-pressed", String(selected));
-        button.textContent = field.label + (count ? ` (${count})` : "");
-      });
-    }
-
-    function renderOptions() {
-      const query = modal.querySelector(".fm__search-input").value.trim().toLowerCase();
-      const list = modal.querySelector(".fm__list");
-      const field = fields.find(({ key }) => key === active);
-      list.classList.toggle("fm__list--bands", active === "bandArt");
-      if (active === "bandArt") {
-        const bands = bandArtOptions(state.rowsAll).filter(({ src, label }) =>
-          !query || label.toLowerCase().includes(query) || src.toLowerCase().includes(query)
-        );
-        list.setAttribute("aria-label", "Band Art options");
-        list.innerHTML = bands.length
-          ? bands.map(({ src, label }) => `
-              <label class="fm__band-option ${draft.bandArt.has(src) ? "is-selected" : ""}">
-                <input class="fm__band-checkbox" type="checkbox" data-bfm-value
-                  value="${esc(src)}" ${draft.bandArt.has(src) ? "checked" : ""} />
-                <span class="fm__band-art-wrap">
-                  <img class="fm__band-art" src="${esc(src)}" alt="" loading="lazy" decoding="async" />
-                </span>
-                <span class="fm__band-bottom">
-                  <span class="fm__band-label">${esc(label)}</span>
-                  <span class="fm__band-check-ui" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none"
-                      stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  </span>
-                </span>
-              </label>
-            `).join("")
-          : `<div class="fm__empty">${query ? "No matching options." : "No band artwork available."}</div>`;
-        list.scrollTop = 0;
-        return;
-      }
-      const values = options[active].filter((value) => value.toLowerCase().includes(query));
-      list.setAttribute("aria-label", field.label + " options");
-      list.innerHTML = values.length
-        ? values.map((value) => `
-            <label class="fm__item">
-              <span class="fm__item-label">${esc(value)}</span>
-              <input type="checkbox" data-bfm-value value="${esc(value)}" ${draft[active].has(value) ? "checked" : ""} />
-            </label>
-          `).join("")
-        : '<div class="fm__empty">No matching options.</div>';
-      list.scrollTop = 0;
-    }
-
-    function open() {
-      ensureModal();
-      if (modal.open) return;
-      fields.forEach(({ key, read }) => {
-        draft[key] = new Set(state.filters[key]);
-        // Keep exact values so they match the existing applyFilterSets().
-        options[key] = [...new Set(state.rowsAll.map(read).filter(Boolean))]
-          .sort((a, b) => collator.compare(a, b));
-      });
-      modal.querySelector(".fm__cats").innerHTML = fields.map(({ key }) =>
-        `<button class="fm__cat-btn" type="button" data-bfm-category="${key}"></button>`
-      ).join("");
-      modal.querySelector(".fm__search-input").value = "";
-      updateCategories();
-      renderOptions();
-
-      modal.hidden = false;
-      modal.classList.add("is-open");
-      modal.showModal();
-      savedOverflow = [document.documentElement, document.body].map((element) => ({
-        element,
-        value: element.style.getPropertyValue("overflow"),
-        priority: element.style.getPropertyPriority("overflow"),
+    const identities = unique(matches.map(row => norm(row.catalogKey)));
+    // Duplicate accolade rows for one cigar are safe; ambiguous different cigars are not.
+    if (identities.length !== 1) return null;
+    return matches.sort((a,b) => Object.values(b).filter(Boolean).length - Object.values(a).filter(Boolean).length)[0];
+  }
+  async function catalog() {
+    if (!catalogPromise) catalogPromise = (async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 18000);
+      try {
+        const response = await fetch(CSV, {cache:"no-store", signal:controller.signal});
+        if (!response.ok) throw new Error("Cigar catalog returned HTTP " + response.status);
+        const input = await response.text();
+        if (/^\s*</.test(input)) throw new Error("Cigar catalog returned a page instead of CSV.");
+        return parseCSV(input).map(rowPayload).filter(Boolean);
+      } finally { clearTimeout(timer); }
+    })().catch(error => {catalogPromise = null; throw error;});
+    return catalogPromise;
+  }
+  function reconcile(rows) {
+    return mutate(doc => {
+      doc.items = dedupe(doc.items.map(old => {
+        const match = resolve(old, rows);
+        if (!match) return old;
+        const merged = merge(old, match);
+        // Use an actual matched key, but keep old aliases and the original UID/order.
+        merged.key = match.key; merged.catalogKey = match.key;
+        merged.posImageKey = match.posImageKey;
+        merged.href = match.href;
+        merged.aliases = unique([...merged.aliases, ...recordAliases(match)]);
+        return merged;
       }));
-      savedOverflow.forEach(({ element }) => element.style.setProperty("overflow", "hidden"));
-      btnFilters.setAttribute("aria-expanded", "true");
-      // Focus a button, not the search field: avoid opening the phone keyboard.
-      modal.querySelector("button[data-bfm-close]").focus({ preventScroll: true });
-    }
-
-    function close() {
-      if (!modal?.open) return;
-      modal.close();
-      modal.classList.remove("is-open");
-      modal.hidden = true;
-      savedOverflow.forEach(({ element, value, priority }) => {
-        if (value) element.style.setProperty("overflow", value, priority);
-        else element.style.removeProperty("overflow");
-      });
-      savedOverflow = [];
-      btnFilters.setAttribute("aria-expanded", "false");
-      btnFilters.focus({ preventScroll: true });
-      // Unapplied selections are discarded by cloning state on the next open.
-    }
-
-    btnFilters.dataset.brandFiltersBound = "true";
-    btnFilters.setAttribute("aria-haspopup", "dialog");
-    btnFilters.setAttribute("aria-controls", id);
-    btnFilters.setAttribute("aria-expanded", "false");
-    btnFilters.addEventListener("click", (event) => {
-      event.preventDefault();
-      open();
     });
-  })();
-  // End CigarOS brand-page Filters repair.
+  }
+  async function hydrate() { return reconcile(await catalog()); }
+  function hydrateRecords(records) { return reconcile(records.map(rowPayload).filter(Boolean)); }
+  function imageCandidates(item) {
+    const brand = compact(item.brand), line = compact(item.line), cigar = compact(item.cigar || item.name), vitola = compact(item.vitola);
+    const names = unique([brand+line+cigar, brand+line+cigar+vitola, line+cigar, line+cigar+vitola, line+vitola, brand+cigar, brand+cigar+vitola, cigar, cigar+vitola, compact(item.name)]);
+    const paths = [item.img, ...(item.imageCandidates || [])];
+    if (brand && cigar) {
+      if (norm(item.origin) === "cuba") names.forEach(n => paths.push(`/img/cigars/cuban/${brand}/${n}.png`));
+      names.forEach(n => paths.push(`/img/cigars/${brand}/${n}.png`));
+    }
+    return unique(paths.map(imagePath));
+  }
+  async function localImage(key) {
+    if (!key || !window.indexedDB) return null;
+    return new Promise(resolve => {
+      let settled = false;
+      const done = value => {if (!settled) {settled=true; clearTimeout(timer); resolve(value);}};
+      const timer = setTimeout(() => done(null), 3000);
+      const request = indexedDB.open("cigaros_demo_pos");
+      request.onupgradeneeded = () => { request.transaction.abort(); };
+      request.onerror = () => done(null);
+      request.onblocked = () => done(null);
+      request.onsuccess = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains("records")) {db.close(); done(null); return;}
+        const tx = db.transaction("records", "readonly");
+        const get = tx.objectStore("records").get(key);
+        tx.oncomplete = () => {db.close(); done(get.result?.image?.blob instanceof Blob ? get.result.image.blob : null);};
+        tx.onabort = () => {db.close(); done(null);};
+      };
+    });
+  }
+  window.CigarFavorites = Object.freeze({version:2, KEY, BACKUP, EVENT,
+    all, has, set, remove, reorder, subscribe, hydrate, hydrateRecords, catalog, normalize,
+    imageCandidates, imagePath, localHref, localImage, field, norm, compact,
+    exportBackup: () => ({current:readDocument(), beforeRepair:json(localStorage.getItem(BACKUP),null)})});
+})();
 
-  backBtn?.addEventListener("click", () => {
-    if (history.length > 1) history.back();
-    else window.location.href = "/pos/cigars/";
+
+/* /pos/cigars/brand.js — Favorites repair 2026-10-12-r1.
+   Existing brand selection, list/cart and action-sheet classes retained.
+   Favorite writes now use the same store as detail and Favorites pages. */
+(() => {
+  "use strict";
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+  const BRANDS_URL = "/data/brands.json";
+  const Favorites = window.CigarFavorites;
+  const $ = (sel,root=document) => root.querySelector(sel);
+  const $$ = (sel,root=document) => Array.from(root.querySelectorAll(sel));
+  const brandTitle=$("#brand-title"),brandIconImg=$("#brand-icon-img"),searchInput=$("#brand-search"),btnFilters=$("#btn-filters"),btnBands=$("#btn-bands"),seg=$("#wrapper-seg"),segBtns=$$(".seg-btn",seg||document),listEl=$("#brand-list"),backBtn=$("#back-btn"),brandSearchBtn=$("#brandSearchBtn");
+  const state={brand:"",brandQuery:"",brandMeta:null,brandsAll:[],rowsAll:[],search:"",wrapperMode:"all",filters:{vitola:new Set(),ring:new Set(),length:new Set(),strength:new Set(),shape:new Set(),shade:new Set()},actionRow:null,singleQty:1,boxQty:0};
+  let favoriteBusy=false;
+  function norm(v){return String(v??"").trim().replace(/\s+/g," ");}
+  function esc(s){return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
+  function normalizeBrand(v){return String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g,"and").replace(/[^a-z0-9]+/g,"");}
+  function normalizeLoose(v){return String(v||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g," and ").replace(/["'’]/g,"").replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();}
+  function normalizeAssetPath(path){const v=String(path||"").trim();if(!v)return "";if(/^https?:\/\//i.test(v))return v;return v.startsWith("/")?v:`/${v}`;}
+  function getParam(name){try{return new URL(location.href).searchParams.get(name)||"";}catch{return "";}}
+  function parseCSV(text){const rows=[];let cur=[],field="",inQuotes=false;for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(inQuotes){if(ch==='"'&&next==='"'){field+='"';i++;}else if(ch==='"')inQuotes=false;else field+=ch;}else{if(ch==='"')inQuotes=true;else if(ch===","){cur.push(field);field="";}else if(ch==="\n"){cur.push(field);rows.push(cur);cur=[];field="";}else if(ch!=="\r")field+=ch;}}cur.push(field);rows.push(cur);return rows;}
+  function normalizeHeader(h){return String(h||"").trim().toLowerCase().replace(/\s+/g," ").replace(/[^a-z0-9 ]/g,"").replace(/ /g,"_");}
+  function mapRows(csv){const keys=(csv[0]||[]).map(normalizeHeader);return csv.slice(1).filter(r=>r&&!r.every(c=>!String(c||"").trim())).map(r=>{const obj={};keys.forEach((k,i)=>{obj[k]=(r[i]??"").trim();});return obj;});}
+  function getField(r,keys){for(const k of keys){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return String(r[k]).trim();}return "";}
+  function resolveBrandVal(r){return getField(r,["brand","brand_name","manufacturer_brand","cigar_brand"]);}
+  function resolveManufacturerVal(r){return getField(r,["manufacturer","maker"]);}
+  function resolveLine(r){return getField(r,["line","series"]);}
+  function resolveName(r){return getField(r,["cigar","name"]);}
+  function resolveVitola(r){return getField(r,["vitola","style","vitola_name","size"]);}
+  function resolveOrigin(r){return getField(r,["origin","country_of_origin","country"]);}
+  function resolveRing(r){return getField(r,["ring","ring_gauge","rg"]);}
+  function resolveLength(r){return getField(r,["length"]);}
+  function resolveShape(r){return getField(r,["shape"]);}
+  function resolveWrapper(r){return getField(r,["wrapper"]);}
+  function resolveBinder(r){return getField(r,["binder"]);}
+  function resolveFiller(r){return getField(r,["filler"]);}
+  function resolveStrength(r){return getField(r,["strength"]);}
+  function resolveShade(r){return getField(r,["wrapper_shade","wrapper_shade_type","shade","wrapper"]);}
+  function resolveBrandImage(r){return getField(r,["brand_img","brand_image","brandicon","brand_icon"]);}
+  function resolveLineImage(r){return getField(r,["line_img","line_image","lineicon","line_icon","brand_line_img"]);}
+  function resolveDetailKey(r){return getField(r,["key","cigar_id","id","row_id"]);}
+  function resolvePriceNumber(r){const raw=getField(r,["msrp","cigar_msrp","cigar_retail"]),n=Number(String(raw||"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)&&n>0?n:0;}
+  function resolvePrice(r){const n=resolvePriceNumber(r);return n>0?money(n):"—";}
+  function resolveBoxCount(r){const raw=getField(r,["box_count","box_qty","box_quantity","count_per_box"]),n=Number(String(raw||"").replace(/[^0-9.]/g,""));return Number.isFinite(n)&&n>0?n:20;}
+  function resolveBoxMsrpNumber(r){const raw=getField(r,["box_msrp","box_price","box_retail"]),n=Number(String(raw||"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)&&n>0?n:resolvePriceNumber(r)*resolveBoxCount(r);}
+  function resolveDisplayName(r){const line=resolveLine(r),cigar=resolveName(r);return [line,cigar].filter(Boolean).join(" ").trim()||cigar||line||"";}
+  function resolveFavoriteKey(r){return resolveDetailKey(r)||[resolveBrandVal(r)||state.brand,resolveDisplayName(r),resolveVitola(r)].join("|");}
+  function favoritePayload(r){
+    const key=resolveFavoriteKey(r);
+    return {type:"cigar",key,name:resolveDisplayName(r),cigar:resolveName(r),brand:resolveBrandVal(r)||state.brand,line:resolveLine(r),vitola:resolveVitola(r),ring:resolveRing(r),length:resolveLength(r),manufacturer:resolveManufacturerVal(r),wrapper:resolveWrapper(r),binder:resolveBinder(r),filler:resolveFiller(r),origin:resolveOrigin(r),country:resolveOrigin(r),strength:resolveStrength(r),shape:resolveShape(r),shade:resolveShade(r),
+      img:normalizeAssetPath(getField(r,["cigar_img","cigar_image","image","photo"])),href:makeDetailHref(r),posImageKey:resolveDetailKey(r)||key};
+  }
+  function isCigarFavorite(r){return Favorites.has(favoritePayload(r));}
+  function showToast(message){let toast=$(".pos-toast");if(!toast){toast=document.createElement("div");toast.className="pos-toast";toast.setAttribute("role","status");document.body.appendChild(toast);}toast.textContent=message;toast.classList.add("is-showing");clearTimeout(toast.__timer);toast.__timer=setTimeout(()=>toast.classList.remove("is-showing"),2600);}
+  function resolveIsCuban(r){const explicit=getField(r,["cuban","is_cuban"]);if(explicit){const v=explicit.toLowerCase().trim();if(["x","yes","true","1","cuban"].includes(v))return true;if(["no","false","0","non-cuban","non cuban"].includes(v))return false;}return resolveManufacturerVal(r).toLowerCase().includes("habanos")||resolveOrigin(r).toLowerCase()==="cuba";}
+  function brandDisplayName(){return state.brandMeta?.name||state.brand||state.brandQuery||"Brand";}
+  function brandSlug(){return normalizeBrand(state.brandMeta?.slug||state.brandMeta?.name||state.brand||state.brandQuery);}
+  function brandIconCandidates(){const sheetRow=state.rowsAll.find(r=>normalizeAssetPath(resolveBrandImage(r))),fromSheet=normalizeAssetPath(sheetRow?resolveBrandImage(sheetRow):""),metaImage=normalizeAssetPath(state.brandMeta?.image||state.brandMeta?.icon||state.brandMeta?.svg||state.brandMeta?.img),slug=brandSlug(),out=[];if(fromSheet)out.push(fromSheet);if(metaImage)out.push(metaImage);if(slug)out.push(`/img/icons/brands/${slug}.svg`,`/img/icons/brands/${slug}.png`);return [...new Set(out.filter(Boolean))];}
+  function brandIconPath(){return brandIconCandidates()[0]||"";}
+  function rowIconCandidatesForRow(r){return [...new Set([normalizeAssetPath(resolveLineImage(r)),normalizeAssetPath(resolveBrandImage(r)),...brandIconCandidates()].filter(Boolean))];}
+  function rowIconPathForRow(r){return rowIconCandidatesForRow(r)[0]||"";}
+  function bindImageFallback(img,candidates=[],finalBehavior="hide"){if(!img)return;const list=[...new Set(candidates.filter(Boolean))];if(!list.length){if(finalBehavior==="hide")img.style.visibility="hidden";return;}let idx=0;img.style.visibility="";img.onerror=()=>{idx++;if(idx<list.length)img.src=list[idx];else{img.onerror=null;if(finalBehavior==="hide")img.style.visibility="hidden";}};img.src=list[0];}
+  function makeDetailHref(r){const detailKey=resolveDetailKey(r);if(detailKey)return `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`;const key=[state.brand,resolveDisplayName(r),resolveVitola(r)].filter(Boolean).join("|");return `/pos/cigars/cigar.html?key=${encodeURIComponent(key)}`;}
+  function buildCartItem(r,type="stick"){
+    const isBox=type==="box",unitPrice=isBox?resolveBoxMsrpNumber(r):resolvePriceNumber(r),detailKey=resolveDetailKey(r);
+    return {key:`${detailKey||`${normalizeBrand(state.brand)}|${resolveDisplayName(r)}|${resolveVitola(r)}`}|${type}`,type:"cigar",purchaseType:type,category:"Cigars",id:detailKey||resolveName(r),brand:state.brand,manufacturer:resolveManufacturerVal(r),line:resolveLine(r),cigar:resolveName(r),name:`${resolveDisplayName(r)}${isBox?" (Box)":""}`,displayName:resolveDisplayName(r),vitola:resolveVitola(r),ring:resolveRing(r),length:resolveLength(r),shape:resolveShape(r),wrapper:resolveWrapper(r),binder:resolveBinder(r),filler:resolveFiller(r),origin:resolveOrigin(r),shade:resolveShade(r),strength:resolveStrength(r),image:brandIconPath(),msrp:unitPrice,boxCount:resolveBoxCount(r),url:makeDetailHref(r)};
+  }
+  function money(n){const num=Number(n||0);return Number.isFinite(num)?num.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"0.00";}
+  function ensureActionSheet(){
+    if($("#pos-action-sheet"))return;
+    const sheet=document.createElement("div");sheet.id="pos-action-sheet";sheet.className="pos-action-sheet";sheet.hidden=true;
+    sheet.innerHTML=`<div class="pos-action-backdrop" data-action-close></div>
+      <div class="pos-action-card" role="dialog" aria-modal="true" aria-label="Add cigar">
+        <div class="pos-action-title" id="pos-action-title">Cigar</div>
+        <div class="pos-action-lines">
+          <div class="pos-action-line"><div class="pos-action-line-top"><div class="pos-action-label">Single</div><div class="pos-action-stepper"><button type="button" data-qty-minus="single" aria-label="Fewer singles">−</button><span id="singleQty">1</span><button type="button" data-qty-plus="single" aria-label="More singles">+</button></div></div><div class="pos-action-line-bottom"><span id="singleUnit">0.00</span><span id="singleTotal">0.00</span></div></div>
+          <div class="pos-action-line"><div class="pos-action-line-top"><div class="pos-action-label">Box</div><div class="pos-action-stepper"><button type="button" data-qty-minus="box" aria-label="Fewer boxes">−</button><span id="boxQty">0</span><button type="button" data-qty-plus="box" aria-label="More boxes">+</button></div></div><div class="pos-action-line-bottom"><span id="boxUnit">0.00</span><span id="boxTotal">0.00</span></div></div>
+        </div>
+        <div class="pos-action-total"><span>Total:</span><strong id="actionTotal">$0.00</strong></div>
+        <div class="pos-action-buttons"><button type="button" class="pos-action-cancel" data-action-close>Cancel</button><button type="button" class="pos-action-add" id="actionAddBtn">Add</button></div>
+        <button type="button" class="pos-action-favorite" id="actionFavoriteBtn">Save as Favorite</button>
+      </div>`;
+    document.body.appendChild(sheet);
+  }
+  function updateActionSheet(){
+    const r=state.actionRow;if(!r)return;
+    const singlePrice=resolvePriceNumber(r),boxPrice=resolveBoxMsrpNumber(r);
+    $("#singleQty").textContent=String(state.singleQty);$("#boxQty").textContent=String(state.boxQty);
+    $("#singleUnit").textContent=money(singlePrice);$("#singleTotal").textContent=money(singlePrice*state.singleQty);
+    $("#boxUnit").textContent=money(boxPrice);$("#boxTotal").textContent=money(boxPrice*state.boxQty);
+    $("#actionTotal").textContent=`$${money(singlePrice*state.singleQty+boxPrice*state.boxQty)}`;
+    const btn=$("#actionFavoriteBtn");
+    if(btn){try{const saved=isCigarFavorite(r);btn.textContent=saved?"Saved as Favorite":"Save as Favorite";btn.classList.toggle("is-saved",saved);btn.setAttribute("aria-pressed",String(saved));}catch(error){btn.textContent="Save as Favorite";showToast(error.message);}}
+  }
+  function openActionSheet(r){ensureActionSheet();state.actionRow=r;state.singleQty=1;state.boxQty=0;$("#pos-action-title").textContent=resolveDisplayName(r)||"Cigar";updateActionSheet();const sheet=$("#pos-action-sheet");sheet.hidden=false;requestAnimationFrame(()=>sheet.classList.add("is-open"));if(navigator.vibrate)navigator.vibrate(8);}
+  function closeActionSheet(){const sheet=$("#pos-action-sheet");if(!sheet)return;sheet.classList.remove("is-open");setTimeout(()=>{if(!sheet.classList.contains("is-open"))sheet.hidden=true;},180);}
+  function addActionItemsToCart(){
+    const r=state.actionRow;if(!r)return;
+    if(state.singleQty>0){const item=buildCartItem(r,"stick"),qty=window.cigarOSCart?.getItemQty?.(item)||0;window.cigarOSCart?.setQty?.(item,qty+state.singleQty);}
+    if(state.boxQty>0){const item=buildCartItem(r,"box"),qty=window.cigarOSCart?.getItemQty?.(item)||0;window.cigarOSCart?.setQty?.(item,qty+state.boxQty);}
+    if(navigator.vibrate)navigator.vibrate(12);showToast("Added to invoice");closeActionSheet();
+  }
+  function openDetail(r){location.href=makeDetailHref(r);}
+  function applySearch(rows){const q=state.search.trim().toLowerCase();if(!q)return rows;return rows.filter(r=>[resolveDisplayName(r),resolveVitola(r),resolveRing(r),resolveLength(r),resolveManufacturerVal(r),resolveLine(r),resolveOrigin(r)].join(" ").toLowerCase().includes(q));}
+  function applyFilterSets(rows){return rows.filter(r=>{if(state.filters.vitola.size&&!state.filters.vitola.has(resolveVitola(r)))return false;if(state.filters.ring.size&&!state.filters.ring.has(resolveRing(r)))return false;if(state.filters.length.size&&!state.filters.length.has(resolveLength(r)))return false;if(state.filters.strength.size&&!state.filters.strength.has(resolveStrength(r)))return false;if(state.filters.shape.size&&!state.filters.shape.has(resolveShape(r)))return false;if(state.filters.shade.size&&!state.filters.shade.has(resolveShade(r)))return false;return true;});}
+  function renderList(rows){
+    if(!listEl)return;listEl.innerHTML="";
+    if(!rows.length){listEl.innerHTML=`<div class="empty">No cigars found for ${esc(brandDisplayName())}</div>`;return;}
+    rows.forEach(r=>{
+      const candidates=rowIconCandidatesForRow(r),iconPath=rowIconPathForRow(r),price=resolvePrice(r),cuban=resolveIsCuban(r),row=document.createElement("article");row.className="brand-row";if(cuban)row.setAttribute("data-cuban","true");
+      row.innerHTML=`<img class="row-ico" src="${esc(iconPath)}" alt="" loading="lazy" decoding="async"><div class="brand-row-left"><div class="brand-row-title-wrap"><div class="brand-row-title">${esc(resolveDisplayName(r)||"Unnamed cigar")}</div>${cuban?'<div class="brand-row-flag" aria-hidden="true">🇨🇺</div>':""}</div><div class="brand-row-sub">${esc(resolveVitola(r)||"—")}</div></div><div class="brand-row-right"><div class="brand-row-msrp">${esc(price)}</div><button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu">+</button></div>`;
+      const icon=$(".row-ico",row),left=$(".brand-row-left",row),plus=$(".qty-btn--plus",row);
+      bindImageFallback(icon,candidates,"hide");left?.addEventListener("click",()=>openDetail(r));icon?.addEventListener("click",()=>openDetail(r));
+      plus?.addEventListener("click",e=>{e.stopPropagation();openActionSheet(r);});listEl.appendChild(row);
+    });
+  }
+  function applyAll(){let rows=[...state.rowsAll];rows=applyFilterSets(rows);rows=applySearch(rows);renderList(rows);setBrandHeader();}
+  function ensureBrandManufacturerMeta(){const block=$(".brand-title-block");if(!block)return null;let meta=$(".brand-manufacturer",block);if(!meta){meta=document.createElement("div");meta.className="brand-manufacturer";block.appendChild(meta);}return meta;}
+  function setBrandHeader(){const display=brandDisplayName();if(brandTitle)brandTitle.textContent=display||"Brand";const meta=ensureBrandManufacturerMeta(),first=state.rowsAll[0],maker=first?resolveManufacturerVal(first):"";if(meta){const show=maker&&normalizeBrand(maker)!==normalizeBrand(display),cuban=first&&resolveIsCuban(first);meta.textContent=show?`${cuban?"🇨🇺 ":""}${maker}`:"";meta.style.display=show?"":"none";}if(!brandIconImg)return;brandIconImg.alt=display||"Brand";bindImageFallback(brandIconImg,brandIconCandidates(),"hide");}
+  function findBrandMeta(query,brands){const q=normalizeBrand(query);if(!q||!Array.isArray(brands))return null;return brands.find(b=>normalizeBrand(b.slug)===q)||brands.find(b=>normalizeBrand(b.name)===q)||brands.find(b=>{const slug=normalizeBrand(b.slug),name=normalizeBrand(b.name);return !!slug&&(slug.includes(q)||q.includes(slug)||name.includes(q)||q.includes(name));})||null;}
+  async function loadBrandsMeta(){try{const res=await fetch(`${BRANDS_URL}?v=${Date.now()}`,{cache:"no-store"});if(!res.ok)throw new Error(`brands.json fetch failed: ${res.status}`);const data=await res.json();return Array.isArray(data)?data:[];}catch{return [];}}
+  function chooseRowsForBrand(rows){
+    // Original Cuban/non-Cuban selection behavior is deliberately not changed here.
+    const needles=[...new Set([normalizeBrand(state.brandQuery),normalizeBrand(state.brandMeta?.slug),normalizeBrand(state.brandMeta?.name),normalizeBrand(state.brand)].filter(Boolean))];
+    const conflicts=new Set(["cohiba","montecristo","hupmann","hoyodemonterrey","saintluisrey","sanchopanza","trinidad","sancristobaldelahabana"]),conflict=needles.some(n=>conflicts.has(n));
+    const exact=rows.filter(r=>needles.includes(normalizeBrand(resolveBrandVal(r))));
+    if(conflict){const cuban=exact.filter(resolveIsCuban);if(cuban.length)return cuban;}if(exact.length)return exact;
+    const fuzzy=rows.filter(r=>{const rb=normalizeBrand(resolveBrandVal(r));return rb&&needles.some(n=>rb.includes(n)||n.includes(rb));});
+    if(conflict){const cuban=fuzzy.filter(resolveIsCuban);if(cuban.length)return cuban;}if(fuzzy.length)return fuzzy;
+    const makers=rows.filter(r=>needles.includes(normalizeBrand(resolveManufacturerVal(r))));
+    if(conflict){const cuban=makers.filter(resolveIsCuban);if(cuban.length)return cuban;}if(makers.length)return makers;
+    const loose=rows.filter(r=>{const b=normalizeLoose(resolveBrandVal(r)),q=normalizeLoose(state.brandQuery);return b&&q&&(b.includes(q)||q.includes(b));});
+    if(conflict){const cuban=loose.filter(resolveIsCuban);if(cuban.length)return cuban;}return loose;
+  }
+  backBtn?.addEventListener("click",()=>{if(history.length>1)history.back();else location.href="/pos/cigars/";});
+  searchInput?.addEventListener("input",()=>{state.search=searchInput.value||"";applyAll();});
+  brandSearchBtn?.addEventListener("click",()=>window.openGlobalSearch?.());
+  document.addEventListener("click",async e=>{
+    const target=e.target;if(!(target instanceof Element))return;
+    if(target.closest("[data-action-close]")){closeActionSheet();return;}
+    if(target.closest("[data-qty-plus='single']")){state.singleQty++;updateActionSheet();return;}
+    if(target.closest("[data-qty-minus='single']")){state.singleQty=Math.max(0,state.singleQty-1);updateActionSheet();return;}
+    if(target.closest("[data-qty-plus='box']")){state.boxQty++;updateActionSheet();return;}
+    if(target.closest("[data-qty-minus='box']")){state.boxQty=Math.max(0,state.boxQty-1);updateActionSheet();return;}
+    if(target.closest("#actionAddBtn")){addActionItemsToCart();return;}
+    if(target.closest("#actionFavoriteBtn")){
+      if(!state.actionRow||favoriteBusy)return;
+      const row=state.actionRow,button=$("#actionFavoriteBtn");favoriteBusy=true;button.disabled=true;
+      try{const payload=favoritePayload(row),wanted=!Favorites.has(payload);await Favorites.set(payload,wanted);showToast(wanted?"Saved to Favorites":"Removed from Favorites");updateActionSheet();}
+      catch(error){showToast(error.message);}
+      finally{favoriteBusy=false;button.disabled=false;}
+    }
   });
-
-  searchInput?.addEventListener("input", () => {
-    state.search = searchInput.value || "";
-    applyAll();
-  });
-
-  brandSearchBtn?.addEventListener("click", () => {
-    window.openGlobalSearch?.();
-  });
-
-  document.addEventListener("click", (e) => {
-    const target = e.target;
-    if (!(target instanceof Element)) return;
-
-    if (target.closest("[data-action-close]")) {
-      closeActionSheet();
-      return;
-    }
-
-    const singlePlus = target.closest("[data-qty-plus='single']");
-    const singleMinus = target.closest("[data-qty-minus='single']");
-    const boxPlus = target.closest("[data-qty-plus='box']");
-    const boxMinus = target.closest("[data-qty-minus='box']");
-
-    if (singlePlus) {
-      state.singleQty += 1;
-      updateActionSheet();
-      return;
-    }
-
-    if (singleMinus) {
-      state.singleQty = Math.max(0, state.singleQty - 1);
-      updateActionSheet();
-      return;
-    }
-
-    if (boxPlus) {
-      state.boxQty += 1;
-      updateActionSheet();
-      return;
-    }
-
-    if (boxMinus) {
-      state.boxQty = Math.max(0, state.boxQty - 1);
-      updateActionSheet();
-      return;
-    }
-
-    if (target.closest("#actionAddBtn")) {
-      addActionItemsToCart();
-      return;
-    }
-
-    if (target.closest("#actionFavoriteBtn")) {
-      if (!state.actionRow) return;
-
-      if (isCigarFavorite(state.actionRow)) {
-        removeCigarFavorite(state.actionRow);
-        showToast("Removed from Favorites");
-      } else {
-        saveCigarFavorite(state.actionRow);
-        showToast("Saved to Favorites");
-      }
-
-      updateActionSheet();
-
-      if (navigator.vibrate) navigator.vibrate(10);
-    }
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      document.querySelector(".currency-pop")?.remove();
-      closeActionSheet();
-    }
-  });
-
-  if (btnBands) btnBands.style.display = "none";
-  if (seg) seg.style.display = "none";
-  segBtns.forEach((b) => b.classList.remove("is-on"));
-
-  async function boot() {
-    if (!listEl) return;
-
-    ensureActionSheet();
-    ensureCurrencyPopupStyles();
-
-    state.brandQuery = (getParam("brand") || "Padron").trim();
-
-    state.brandsAll = await loadBrandsMeta();
-    state.brandMeta = findBrandMeta(state.brandQuery, state.brandsAll);
-    state.brand = state.brandMeta?.name || state.brandQuery;
-
-    const res = await fetch(CSV_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
-
-    const txt = await res.text();
-    const rows = mapRows(parseCSV(txt));
-
-    const chosenRows = chooseRowsForBrand(rows);
-
-    state.rowsAll = chosenRows.map((r) => ({
-      ...r,
-      wrapper_shade: resolveShade(r),
-    }));
-
-    if (!state.rowsAll.length) {
-      listEl.innerHTML = `<div class="empty">No cigars found for ${esc(brandDisplayName())}</div>`;
-      setBrandHeader();
-      return;
-    }
-
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeActionSheet();});
+  Favorites.subscribe(()=>{if(state.actionRow)updateActionSheet();});
+  window.addEventListener("pageshow",()=>{if(state.actionRow)updateActionSheet();});
+  if(btnBands)btnBands.style.display="none";if(seg)seg.style.display="none";segBtns.forEach(b=>b.classList.remove("is-on"));
+  async function boot(){
+    if(!listEl)return;ensureActionSheet();state.brandQuery=(getParam("brand")||"Padron").trim();
+    state.brandsAll=await loadBrandsMeta();state.brandMeta=findBrandMeta(state.brandQuery,state.brandsAll);state.brand=state.brandMeta?.name||state.brandQuery;
+    const res=await fetch(CSV_URL,{cache:"no-store"});if(!res.ok)throw new Error(`CSV fetch failed: ${res.status}`);
+    const rows=mapRows(parseCSV(await res.text()));
+    try{await Favorites.hydrateRecords(rows);}catch(error){showToast(error.message);}
+    state.rowsAll=chooseRowsForBrand(rows).map(r=>({...r,wrapper_shade:resolveShade(r)}));
+    if(!state.rowsAll.length){listEl.innerHTML=`<div class="empty">No cigars found for ${esc(brandDisplayName())}</div>`;setBrandHeader();return;}
     applyAll();
   }
-
-  boot().catch((err) => {
-    console.error("Brand page boot failed:", err);
-    if (listEl) listEl.innerHTML = `<div class="empty">Error loading brand.</div>`;
-  });
+  boot().catch(error=>{console.error("Brand page boot failed:",error);if(listEl)listEl.innerHTML='<div class="empty">Error loading brand.</div>';});
 })();
