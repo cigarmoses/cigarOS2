@@ -1,1137 +1,774 @@
-/* /profile/favorites/favorites.js */
-
+/* CigarOS Favorites repair 2026-10-12-r1.
+   Shared helper bundled into each page script. No extra script tag required.
+   Browser-local storage, not an account/cloud database. */
 (() => {
   "use strict";
-
-  const CSV_URL =
-    "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
-
-  const PROFILE_CIGAR_KEY = "cigaros_user_favorite_cigars_v1";
-  const PRIMARY_STORAGE_KEY = "cigarSocialFavorites";
-  const ORDER_STORAGE_KEY = "cigarSocialFavoritesOrder";
-  const THEME_KEY = "cigaros-theme";
-
-  const LONG_PRESS_MS = 240;
-  const MOVE_THRESHOLD = 8;
-
-  const STORAGE_KEYS = [
-    PROFILE_CIGAR_KEY,
-    PRIMARY_STORAGE_KEY,
-    "cigaros_favorites_v1",
-    "cigarosFavorites",
-    "favorites",
-    "cs_favorites_v1"
+  if (window.CigarFavorites?.version === 2) return;
+  const KEY = "cigaros_favorites_v2";
+  const BACKUP = "cigaros_favorites_backup_before_v2";
+  const EVENT = "cigaros:favorites-changed";
+  const SOURCES = [
+    "cigaros_user_favorite_cigars_v1", "cigaros_pos_favorites_cigars",
+    "cigarSocialFavorites", "cigaros_favorites_v1", "cigarosFavorites",
+    "favorites", "cs_favorites_v1", "cigaros_favorite_keys"
   ];
+  const OLD_ORDER = "cigarSocialFavoritesOrder";
+  const CSV = "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+  const text = v => String(v ?? "").trim();
+  const norm = v => text(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/&/g, " and ").replace(/["'’]/g, "").replace(/\s+/g, " ").trim();
+  const compact = v => norm(v).replace(/[^a-z0-9]/g, "");
+  const unique = a => [...new Set(a.filter(Boolean))];
+  const fields = ["brand", "line", "cigar", "vitola", "ring", "length", "origin", "country", "manufacturer", "wrapper", "binder", "filler", "strength", "shape", "shade", "notes"];
+  let catalogPromise = null;
+  let queue = Promise.resolve();
 
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-  const els = {
-    themeToggle: $("#themeToggle"),
-    themeIcon: $("#themeIcon"),
-    addBtn: $("#favAddBtn"),
-    list: $("#favList"),
-    status: $("#favStatus"),
-    search: $("#favSearch"),
-    filterBtn: $("#favFilterBtn"),
-    appliedFilters: $("#favAppliedFilters"),
-    tabs: $$(".fav-tab"),
-    sheet: $("#favFilterSheet"),
-    sheetSubtitle: $("#favSheetSubtitle"),
-    filterGroups: $("#favFilterGroups"),
-    clearFilters: $("#favClearFilters"),
-    doneFilters: $("#favDoneFilters")
-  };
-
-  const state = {
-    allSheetRows: [],
-    favorites: [],
-    filtered: [],
-    activeType: "cigar",
-    query: "",
-    editing: false,
-    filters: {
-      brand: new Set(),
-      country: new Set(),
-      wrapper: new Set(),
-      binder: new Set(),
-      filler: new Set(),
-      strength: new Set(),
-      shape: new Set(),
-      vitola: new Set(),
-      ringMin: "",
-      ringMax: "",
-      lengthMin: "",
-      lengthMax: ""
-    },
-    drag: null,
-    suppressClickUntil: 0
-  };
-
-  const fallbackFavorites = [
-    {
-      type: "cigar",
-      name: "Girl With No Name Lonsdale",
-      brand: "Girl With No Name",
-      vitola: "Lonsdale",
-      image: "/img/cigars/girlwithnoname/girlwithnonamelonsdale.png",
-      url: "/pos/cigars/cigar.html?key=Girl%20With%20No%20Name%7CGirl%20With%20No%20Name%7CLonsdale"
-    },
-    {
-      type: "cigar",
-      name: "Cohiba Nicaragua N50",
-      brand: "Cohiba",
-      vitola: "Robusto",
-      image: "/img/cigars/cohiba/nicaraguarobusto.png",
-      url: "/pos/cigars/cigar.html?key=cohiba%7Cn%204%207%2F8%20x%2050%7Crobusto"
-    },
-    {
-      type: "cigar",
-      name: "Camacho Connecticut Robusto",
-      brand: "Camacho",
-      vitola: "Robusto",
-      image: "/img/cigars/camacho/connecticutrobusto.png",
-      url: "/pos/cigars/cigar.html?key=camacho%7Cconnecticut%20robusto%7Crobusto"
-    },
-    {
-      type: "cigar",
-      name: "Tabak Cafe Con Leche",
-      brand: "Tabak",
-      vitola: "Belicoso",
-      image: "/img/cigars/tabak/cafeconleche.png",
-      url: "/pos/cigars/cigar.html?key=Tabak%7CCafe%20Con%20Leche%7CBelicoso"
-    },
-    {
-      type: "brand",
-      name: "Opus X",
-      brand: "Opus X",
-      image: "/img/icons/brands/opusx.svg",
-      url: "/pos/cigars/brand.html?brand=Opus%20X"
-    },
-    {
-      type: "brand",
-      name: "Padron",
-      brand: "Padron",
-      image: "/img/icons/brands/padron.svg",
-      url: "/pos/cigars/brand.html?brand=Padron"
-    },
-    {
-      type: "shop",
-      name: "Fox Cigar Bar",
-      image: "/img/icons/shops/foxcigarbar.svg",
-      url: "/shops/"
-    },
-    {
-      type: "shop",
-      name: "Smoke Cigar Shop",
-      country: "Bridgeville, PA",
-      image: "/img/icons/shops/foxcigarbar.svg",
-      url: "/shops/"
+  function json(raw, fallback) { try { return JSON.parse(raw) ?? fallback; } catch { return fallback; } }
+  function field(row, names) {
+    if (!row || typeof row !== "object") return "";
+    for (const name of names) {
+      if (row[name] != null && text(row[name])) return text(row[name]);
     }
-  ];
-
-  const fieldAliases = {
-    brand:["Brand","brand"],
-    cigar:["Cigar","Name","Cigar Name","cigar","name"],
-    line:["Line","Series","line","series"],
-    vitola:["Vitola","Style","Size","vitola","style","size"],
-    length:["Length","length"],
-    ring:["Ring","RG","Ring Gauge","ring","rg"],
-    country:["Country","Origin","Country of Origin","country","origin"],
-    wrapper:["Wrapper","Wrapper Type","wrapper"],
-    binder:["Binder","Binder Type","binder"],
-    filler:["Filler","Filler Type","filler"],
-    strength:["Strength","Body","strength","body"],
-    shape:["Shape","shape"],
-    image:["Cigar IMG","Image","Image URL","Photo","image","img","photo"],
-    url:["URL","Link","Detail URL","url","href","link"]
-  };
-
-  function norm(value){ return String(value ?? "").trim(); }
-  function low(value){ return norm(value).toLowerCase(); }
-
-  function compact(value){
-    return low(value)
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g,"")
-      .replace(/&/g,"and")
-      .replace(/[^a-z0-9]+/g,"");
-  }
-
-  function titleCase(value){
-    const s = norm(value);
-    if (!s) return "";
-    return s.toLowerCase().split(/\s+/).map((w) => w ? w[0].toUpperCase() + w.slice(1) : "").join(" ");
-  }
-
-  function escapeHtml(value){
-    return String(value ?? "")
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;")
-      .replace(/'/g,"&#039;");
-  }
-
-  function safeJsonParse(raw, fallback){
-    try{
-      const parsed = JSON.parse(raw);
-      return parsed ?? fallback;
-    }catch{
-      return fallback;
-    }
-  }
-
-  function get(row, key){
-    const aliases = fieldAliases[key] || [key];
-    for (const name of aliases){
-      if (row && Object.prototype.hasOwnProperty.call(row, name)){
-        const value = norm(row[name]);
-        if (value) return value;
-      }
+    const wanted = new Set(names.map(compact));
+    for (const [name, value] of Object.entries(row)) {
+      if (wanted.has(compact(name)) && value != null && text(value)) return text(value);
     }
     return "";
   }
-
-  function numberOnly(value){
-    const n = Number(String(value ?? "").replace(/[^0-9.]/g,""));
-    return Number.isFinite(n) ? n : 0;
+  function imagePath(value) {
+    const v = text(value);
+    if (!v || /^(blob:|data:|javascript:)/i.test(v)) return "";
+    try {
+      const url = new URL(v.startsWith("http") || v.startsWith("/") ? v : "/" + v, location.origin);
+      if (!["https:", "http:"].includes(url.protocol)) return "";
+      return url.origin === location.origin ? url.pathname + url.search : url.href;
+    } catch { return ""; }
   }
-
-  function splitValues(value){
-    return norm(value).split(/[,\|/]+/).map(norm).filter(Boolean);
+  function localHref(value) {
+    if (!value) return "";
+    try {
+      const url = new URL(value, location.origin);
+      return url.origin === location.origin ? url.pathname + url.search : "";
+    } catch { return ""; }
   }
-
-  function uniqueSorted(values){
-    return Array.from(new Set(values.map(norm).filter(Boolean)))
-      .sort((a,b) => a.localeCompare(b,undefined,{sensitivity:"base"}));
+  function hrefKey(href) {
+    try {
+      const u = new URL(href, location.origin);
+      return u.searchParams.get("key") || u.searchParams.get("id") || "";
+    } catch { return ""; }
   }
-
-  function itemId(item){
-    if (item.id) return String(item.id);
-
-    const type = item.type || "cigar";
-    const brand = item.brand || "";
-    const name = item.name || item.cigar || "";
-    const vitola = item.vitola || "";
-    const url = item.url || item.href || "";
-
-    return `${type}|${compact(brand)}|${compact(name)}|${compact(vitola)}|${compact(url)}`;
+  function hrefAlias(href) {
+    if (!href) return "";
+    const u = new URL(href, location.origin);
+    const identity = u.searchParams.get("key") || u.searchParams.get("id") || u.searchParams.get("slug");
+    if (identity && /\/pos\/cigars\/cigar(?:\.html)?\/?$/.test(u.pathname)) return "key:" + norm(identity);
+    u.searchParams.sort();
+    return "url:" + norm(u.pathname.replace(/\.html$/, "").replace(/\/$/, "") + u.search);
   }
-
-  function normalizeFavorite(raw){
-    const typeRaw = low(raw.type || raw.kind || raw.category || "cigar");
-    const type = ["brand","shop","cigar"].includes(typeRaw) ? typeRaw : "cigar";
-
-    const item = {
-      id: raw.id || raw.key || "",
-      type,
-      brand: norm(raw.brand || raw.Brand || ""),
-      name: norm(raw.name || raw.cigar || raw.Cigar || raw.title || raw.Title || ""),
-      cigar: norm(raw.cigar || raw.Cigar || raw.name || ""),
-      line: norm(raw.line || raw.Line || ""),
-      vitola: norm(raw.vitola || raw.Vitola || raw.style || raw.Style || ""),
-      length: norm(raw.length || raw.Length || ""),
-      ring: norm(raw.ring || raw.Ring || raw.rg || raw.RG || ""),
-      country: norm(raw.country || raw.Country || raw.origin || raw.Origin || raw.meta || ""),
-      wrapper: norm(raw.wrapper || raw.Wrapper || ""),
-      binder: norm(raw.binder || raw.Binder || ""),
-      filler: norm(raw.filler || raw.Filler || ""),
-      strength: norm(raw.strength || raw.Strength || ""),
-      shape: norm(raw.shape || raw.Shape || ""),
-      image: norm(raw.image || raw.img || raw.Image || raw.photo || raw.Photo || ""),
-      url: norm(raw.url || raw.href || raw.URL || raw.link || raw.Link || ""),
-      notes: norm(raw.notes || raw.Notes || "")
-    };
-
-    if (item.type === "brand" && !item.brand) item.brand = item.name;
-    if (item.type === "cigar" && !item.name) item.name = item.cigar;
-    if (!item.id) item.id = itemId(item);
-
+  function normalize(raw, forcedType) {
+    if (typeof raw === "string" || typeof raw === "number") raw = { key: String(raw), type: forcedType || "cigar" };
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const candidateType = text(forcedType || raw.type || raw.kind || raw.category || "cigar").toLowerCase().replace(/s$/, "");
+    const type = ["cigar", "brand", "shop"].includes(candidateType) ? candidateType : "cigar";
+    const item = { type };
+    for (const key of fields) item[key] = field(raw, [key]);
+    item.name = field(raw, ["displayName", "name", "title", "Cigar"]);
+    item.cigar = field(raw, ["cigar", "Cigar"]);
+    item.vitola ||= field(raw, ["style", "size"]);
+    item.ring ||= field(raw, ["Ring Gauge", "RG"]);
+    item.shade ||= field(raw, ["Wrapper Shade", "wrapper_shade"]);
+    item.origin ||= field(raw, ["country", "Country of Origin"]);
+    item.country ||= item.origin || text(raw.meta);
+    item.img = imagePath(field(raw, ["img", "image", "Cigar IMG", "photo"]));
+    item.imageCandidates = unique([item.img, ...(Array.isArray(raw.imageCandidates) ? raw.imageCandidates.map(imagePath) : [])]);
+    item.href = localHref(field(raw, ["href", "url", "Detail URL"]));
+    item.key = field(raw, ["key", "cigarId", "Cigar ID", "cigar_id"]);
+    if (!item.key && !text(raw.id).startsWith(type + "|")) item.key = text(raw.id);
+    if (/^https?:|^\//.test(item.key)) item.key = hrefKey(item.key) || item.key;
+    if (!item.key) item.key = hrefKey(item.href);
+    if (type === "brand") { item.brand ||= item.name; item.name ||= item.brand; }
+    if (!item.name && item.cigar) item.name = [item.line, item.cigar].filter(Boolean).join(" ");
+    if (!item.key && item.name) item.key = type === "cigar" ? [item.brand, item.name, item.vitola].join("|") : item.name;
+    if (!item.key && !item.href) return null;
+    if (!item.href) {
+      if (type === "cigar") item.href = "/pos/cigars/cigar.html?key=" + encodeURIComponent(item.key);
+      if (type === "brand") item.href = "/pos/cigars/brand?brand=" + encodeURIComponent(item.brand || item.name);
+      // Never guess a specific shop slug: retain its existing URL or directory fallback.
+      if (type === "shop") item.href = "/shops/";
+    }
+    const aliases = [item.key ? "key:" + norm(item.key) : "", text(raw.id) ? "key:" + norm(raw.id) : ""];
+    if (!(type === "shop" && /^\/shops\/?$/.test(item.href))) aliases.push(hrefAlias(item.href));
+    item.aliases = unique([...(Array.isArray(raw.aliases) ? raw.aliases : []), ...aliases]);
+    item.uid = text(raw.uid) || `${type}:${encodeURIComponent(norm(item.key || item.href))}`;
+    item.posImageKey = text(raw.posImageKey) || (type === "cigar" ? item.key : "");
+    item.savedAt = Number(raw.savedAt) || 0;
+    item.catalogKey = text(raw.catalogKey);
     return item;
   }
-
-  function readStorageArray(key){
-    const raw = localStorage.getItem(key);
-    if (!raw) return [];
-
-    const parsed = safeJsonParse(raw,null);
-
-    if (Array.isArray(parsed)) return parsed;
-    if (parsed && Array.isArray(parsed.items)) return parsed.items;
-    if (parsed && typeof parsed === "object") return Object.values(parsed);
-
-    return [];
+  function same(a, b) {
+    if (a.type !== b.type) return false;
+    return a.uid === b.uid || a.aliases.some(alias => b.aliases.includes(alias));
   }
-
-  function applySavedOrder(items){
-    const order = safeJsonParse(localStorage.getItem(ORDER_STORAGE_KEY),[]);
-    if (!Array.isArray(order) || !order.length) return items;
-
-    const orderMap = new Map(order.map((id,index) => [String(id),index]));
-
-    return [...items].sort((a,b) => {
-      const ai = orderMap.has(itemId(a)) ? orderMap.get(itemId(a)) : 999999;
-      const bi = orderMap.has(itemId(b)) ? orderMap.get(itemId(b)) : 999999;
-      return ai - bi;
+  function merge(a, b, preferNew = false) {
+    const result = { ...a };
+    for (const [key, value] of Object.entries(b)) {
+      if (["uid", "aliases", "imageCandidates", "savedAt"].includes(key)) continue;
+      if (value !== "" && value != null && (preferNew || !result[key])) result[key] = value;
+    }
+    result.uid = a.uid;
+    result.aliases = unique([...a.aliases, ...b.aliases]);
+    result.imageCandidates = unique([result.img, ...a.imageCandidates, ...b.imageCandidates]);
+    result.savedAt = a.savedAt || b.savedAt;
+    return result;
+  }
+  function dedupe(items) {
+    const result = [];
+    for (const item of items.filter(Boolean)) {
+      const index = result.findIndex(other => same(other, item));
+      if (index < 0) result.push(item);
+      else result[index] = merge(result[index], item);
+    }
+    return result;
+  }
+  function unpack(parsed, type) {
+    if (Array.isArray(parsed)) return parsed.map(v => normalize(v, type)).filter(Boolean);
+    if (!parsed || typeof parsed !== "object") return [];
+    if (Array.isArray(parsed.items)) return unpack(parsed.items, type);
+    const grouped = ["cigars", "brands", "shops"].filter(k => Array.isArray(parsed[k]));
+    if (grouped.length) return grouped.flatMap(k => unpack(parsed[k], k.slice(0, -1)));
+    if (parsed.key || parsed.name || parsed.href || parsed.brand) return [normalize(parsed, type)].filter(Boolean);
+    return Object.entries(parsed).flatMap(([k, v]) => {
+      if (v === true) return [normalize({key:k}, type)].filter(Boolean);
+      return typeof v === "object" && v ? [normalize({key:k, ...v}, type)].filter(Boolean) : [];
     });
   }
-
-  
-function readFavorites(){
-  const profileCigars = readStorageArray(PROFILE_CIGAR_KEY)
-    .map(raw => normalizeFavorite({
-      ...raw,
-      type: "cigar"
-    }));
-
-  const otherFavorites = readStorageArray(PRIMARY_STORAGE_KEY)
-    .map(normalizeFavorite)
-    .filter(item => item.type !== "cigar");
-
-  const collected = [
-    ...profileCigars,
-    ...otherFavorites
-  ];
-
-  const deduped = [];
-  const seen = new Set();
-
-  collected.forEach(item => {
-    const id = itemId(item);
-
-    if (seen.has(id)) return;
-
-    seen.add(id);
-    item.id = id;
-    deduped.push(item);
-  });
-
-  return applySavedOrder(deduped);
-}
-
-
-  function saveFavorites(){
-    localStorage.setItem(PRIMARY_STORAGE_KEY, JSON.stringify(state.favorites));
-    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(state.favorites.map(itemId)));
-
-    const cigarItems = state.favorites
-      .filter((item) => item.type === "cigar")
-      .map((item) => ({
-        key:item.id,
-        name:item.name,
-        brand:item.brand,
-        vitola:item.vitola,
-        img:item.image,
-        href:item.url
-      }));
-
-    localStorage.setItem(PROFILE_CIGAR_KEY, JSON.stringify(cigarItems));
+  function storageError(error) {
+    return new Error("Favorites could not be saved in this browser. Check available storage and site permissions; your existing data has not been cleared. " + (error?.message || ""));
   }
-
-  function parseCSV(text){
-    const rows = [];
-    let row = [];
-    let current = "";
-    let inQuotes = false;
-
-    for (let i = 0; i < text.length; i++){
-      const char = text[i];
-      const next = text[i + 1];
-
-      if (char === '"' && inQuotes && next === '"'){
-        current += '"';
-        i++;
-        continue;
-      }
-
-      if (char === '"'){
-        inQuotes = !inQuotes;
-        continue;
-      }
-
-      if (char === "," && !inQuotes){
-        row.push(current);
-        current = "";
-        continue;
-      }
-
-      if ((char === "\n" || char === "\r") && !inQuotes){
-        if (char === "\r" && next === "\n") i++;
-        row.push(current);
-        rows.push(row);
-        row = [];
-        current = "";
-        continue;
-      }
-
-      current += char;
-    }
-
-    if (current || row.length){
-      row.push(current);
-      rows.push(row);
-    }
-
-    const headers = rows.shift()?.map(norm) || [];
-
-    return rows
-      .filter((r) => r.some((cell) => norm(cell)))
-      .map((r) => {
-        const obj = {};
-        headers.forEach((h,i) => {
-          obj[h] = norm(r[i]);
-        });
-        return obj;
-      });
+  function writeDocument(doc) {
+    try { localStorage.setItem(KEY, JSON.stringify(doc)); } catch (error) { throw storageError(error); }
   }
-
-  async function loadSheetRows(){
-    try{
-      const res = await fetch(CSV_URL,{cache:"no-store"});
-      if (!res.ok) throw new Error("Could not load cigar sheet.");
-      const text = await res.text();
-      state.allSheetRows = parseCSV(text);
-    }catch(err){
-      console.warn("Favorites sheet load failed:",err);
-      state.allSheetRows = [];
+  function readDocument() {
+    let raw;
+    try { raw = localStorage.getItem(KEY); } catch (error) { throw storageError(error); }
+    if (raw === null) return migrate();
+    const doc = json(raw, null);
+    if (!doc || doc.version !== 2 || !Array.isArray(doc.items)) {
+      throw new Error("Saved Favorites data needs recovery. It has not been overwritten. Keep your browser data and contact support.");
+    }
+    return doc;
+  }
+  function migrate() {
+    const snapshot = {};
+    for (const key of [...SOURCES, OLD_ORDER]) snapshot[key] = localStorage.getItem(key);
+    if (localStorage.getItem(BACKUP) === null) {
+      try { localStorage.setItem(BACKUP, JSON.stringify({savedAt:Date.now(), values:snapshot})); }
+      catch (error) { throw storageError(error); }
+    }
+    const imported = SOURCES.flatMap(key => unpack(json(snapshot[key], [])));
+    const items = dedupe(imported);
+    const order = json(snapshot[OLD_ORDER], []);
+    if (Array.isArray(order)) {
+      const ranks = new Map(order.map((key, index) => ["key:" + norm(key), index]));
+      const rank = item => Math.min(...item.aliases.map(a => ranks.get(a) ?? Infinity));
+      items.sort((a,b) => rank(a) - rank(b));
+    }
+    const doc = {version:2, revision:0, migratedAt:Date.now(), updatedAt:Date.now(), items};
+    writeDocument(doc);
+    // Old stores are left untouched here. They are never re-imported after v2 exists.
+    return doc;
+  }
+  function mirror(doc) {
+    // Compatibility outputs for other existing profile widgets. Never primary inputs after migration.
+    const cigars = doc.items.filter(i => i.type === "cigar");
+    const mirrorValues = {
+      cigaros_user_favorite_cigars_v1: cigars.map(i => ({...i, image:i.img, url:i.href})),
+      cigaros_pos_favorites_cigars: cigars.map(i => ({...i, displayName:i.name, image:i.img, url:i.href})),
+      cigaros_favorite_keys: cigars.map(i => i.key),
+      cigarSocialFavorites: doc.items.map(i => ({...i, id:i.key, image:i.img, url:i.href})),
+      cigarSocialFavoritesOrder: doc.items.map(i => i.key)
+    };
+    for (const [key, value] of Object.entries(mirrorValues)) {
+      try { localStorage.setItem(key, JSON.stringify(value)); }
+      catch (error) { console.warn("[Favorites] Canonical save succeeded; compatibility mirror failed:", key, error); }
     }
   }
-
-  function enrichFavoritesFromSheet(){
-    if (!state.allSheetRows.length) return;
-
-    state.favorites = state.favorites.map((fav) => {
-      if (fav.type !== "cigar") return fav;
-
-      const favBrand = compact(fav.brand);
-      const favName = compact(fav.name || fav.cigar);
-      const favVitola = compact(fav.vitola);
-
-      const match = state.allSheetRows.find((row) => {
-        const rowBrand = compact(get(row,"brand"));
-        const rowName = compact(get(row,"cigar"));
-        const rowLine = compact(get(row,"line"));
-        const rowVitola = compact(get(row,"vitola"));
-
-        const brandMatch = !favBrand || favBrand === rowBrand;
-        const nameMatch =
-          favName &&
-          (rowName.includes(favName) || favName.includes(rowName) || rowLine.includes(favName) || favName.includes(rowLine));
-        const vitolaMatch = !favVitola || !rowVitola || favVitola === rowVitola;
-
-        return brandMatch && nameMatch && vitolaMatch;
-      });
-
-      if (!match) return fav;
-
-      return {
-        ...fav,
-        brand:fav.brand || get(match,"brand"),
-        name:fav.name || get(match,"cigar") || get(match,"line"),
-        cigar:fav.cigar || get(match,"cigar"),
-        line:fav.line || get(match,"line"),
-        vitola:fav.vitola || get(match,"vitola"),
-        length:fav.length || get(match,"length"),
-        ring:fav.ring || get(match,"ring"),
-        country:fav.country || get(match,"country"),
-        wrapper:fav.wrapper || get(match,"wrapper"),
-        binder:fav.binder || get(match,"binder"),
-        filler:fav.filler || get(match,"filler"),
-        strength:fav.strength || get(match,"strength"),
-        shape:fav.shape || get(match,"shape"),
-        image:fav.image || get(match,"image"),
-        url:fav.url || get(match,"url")
-      };
-    });
-
-    saveFavorites();
+  function mutate(fn) {
+    const run = () => {
+      const doc = readDocument();
+      const before = JSON.stringify(doc.items);
+      const value = fn(doc);
+      if (before !== JSON.stringify(doc.items)) {
+        doc.revision = (doc.revision || 0) + 1; doc.updatedAt = Date.now();
+        writeDocument(doc); mirror(doc);
+        window.dispatchEvent(new CustomEvent(EVENT, {detail:{revision:doc.revision}}));
+      }
+      return value;
+    };
+    const locked = () => navigator.locks?.request ? navigator.locks.request(KEY, run) : run();
+    const job = queue.then(locked, locked);
+    queue = job.catch(() => {});
+    return job;
   }
-
-  function activeFavorites(){
-    return state.favorites.filter((item) => item.type === state.activeType);
+  function all() { return readDocument().items.map(item => normalize(item)).filter(Boolean); }
+  function has(payload) {
+    const item = normalize(payload);
+    return !!item && all().some(existing => same(existing, item));
   }
-
-  function resetFilters(){
-    Object.keys(state.filters).forEach((key) => {
-      if (state.filters[key] instanceof Set) state.filters[key].clear();
-      else state.filters[key] = "";
-    });
-  }
-
-  function hasActiveFilters(){
-    const f = state.filters;
-    return (
-      f.brand.size || f.country.size || f.wrapper.size || f.binder.size ||
-      f.filler.size || f.strength.size || f.shape.size || f.vitola.size ||
-      f.ringMin || f.ringMax || f.lengthMin || f.lengthMax
-    );
-  }
-
-  function passesSetFilter(item, field){
-    const selected = state.filters[field];
-    if (!(selected instanceof Set) || selected.size === 0) return true;
-
-    const values = splitValues(item[field]);
-    if (!values.length) return false;
-
-    return values.some((value) => selected.has(value));
-  }
-
-  function passesRangeFilter(item, field, minKey, maxKey){
-    const value = numberOnly(item[field]);
-    const min = numberOnly(state.filters[minKey]);
-    const max = numberOnly(state.filters[maxKey]);
-
-    if (!min && !max) return true;
-    if (!value) return false;
-    if (min && value < min) return false;
-    if (max && value > max) return false;
-
-    return true;
-  }
-
-  function applyFilters(){
-    const q = low(state.query);
-
-    state.filtered = activeFavorites().filter((item) => {
-      const haystack = [
-        item.brand,item.name,item.cigar,item.line,item.vitola,item.country,
-        item.wrapper,item.binder,item.filler,item.strength,item.shape,item.notes
-      ].join(" ").toLowerCase();
-
-      if (q && !haystack.includes(q)) return false;
-      if (state.activeType !== "cigar") return true;
-
-      if (!passesSetFilter(item,"brand")) return false;
-      if (!passesSetFilter(item,"country")) return false;
-      if (!passesSetFilter(item,"wrapper")) return false;
-      if (!passesSetFilter(item,"binder")) return false;
-      if (!passesSetFilter(item,"filler")) return false;
-      if (!passesSetFilter(item,"strength")) return false;
-      if (!passesSetFilter(item,"shape")) return false;
-      if (!passesSetFilter(item,"vitola")) return false;
-      if (!passesRangeFilter(item,"ring","ringMin","ringMax")) return false;
-      if (!passesRangeFilter(item,"length","lengthMin","lengthMax")) return false;
-
+  function set(payload, wanted) {
+    const item = normalize(payload);
+    if (!item) return Promise.reject(new Error("This cigar does not have a usable identity or detail link."));
+    return mutate(doc => {
+      const matches = doc.items.filter(old => same(old, item));
+      if (!wanted) { doc.items = doc.items.filter(old => !same(old, item)); return false; }
+      if (matches.length) {
+        const first = matches[0];
+        doc.items = doc.items.filter(old => !same(old, item) || old.uid === first.uid);
+        const index = doc.items.findIndex(old => old.uid === first.uid);
+        doc.items[index] = merge(first, item, true);
+      } else doc.items.push({...item, savedAt:Date.now()});
       return true;
     });
   }
-
-  function brandIconPath(brand){
-    const slug = compact(String(brand || "").replace(/&/g,"and"));
-    return slug ? `/img/icons/brands/${slug}.svg` : "";
+  function remove(uid) {
+    return mutate(doc => { doc.items = doc.items.filter(item => item.uid !== uid); });
   }
-
-  function cigarImagePath(item){
-    const brand = compact(item.brand);
-    const cigar = compact(item.name || item.cigar);
-    if (!brand || !cigar) return "";
-    return `/img/cigars/${brand}/${cigar}.png`;
+  function reorder(type, ids) {
+    return mutate(doc => {
+      const wanted = unique(ids);
+      const byId = new Map(doc.items.filter(i => i.type === type).map(i => [i.uid, i]));
+      const ordered = wanted.map(id => byId.get(id)).filter(Boolean);
+      const set = new Set(ordered.map(i => i.uid)); let cursor = 0;
+      doc.items = doc.items.map(item => set.has(item.uid) ? ordered[cursor++] : item);
+    });
   }
-
-  function itemImage(item){
-    if (item.image) return item.image;
-    if (item.type === "brand") return brandIconPath(item.brand || item.name);
-    if (item.type === "cigar") return cigarImagePath(item);
-    return "";
+  function subscribe(callback) {
+    const changed = () => callback();
+    const storage = event => { if (event.key === KEY || event.key === null) callback(); };
+    window.addEventListener(EVENT, changed);
+    window.addEventListener("storage", storage);
+    return () => { window.removeEventListener(EVENT, changed); window.removeEventListener("storage", storage); };
   }
-
-  function detailUrl(item){
-    if (item.url) return item.url;
-
-    if (item.type === "brand"){
-      return `/pos/cigars/brand.html?brand=${encodeURIComponent(item.brand || item.name || "")}`;
+  function parseCSV(input) {
+    const rows = []; let row = [], value = "", quoted = false;
+    const text = input.replace(/^\uFEFF/, "");
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '"') {
+        if (quoted && text[i+1] === '"') { value += '"'; i++; }
+        else quoted = !quoted;
+      } else if (!quoted && ch === ',') { row.push(value); value = ""; }
+      else if (!quoted && (ch === '\n' || ch === '\r')) {
+        if (ch === '\r' && text[i+1] === '\n') i++;
+        row.push(value); rows.push(row); row = []; value = "";
+      } else value += ch;
     }
-
-    if (item.type === "shop"){
-      return "/shops/";
-    }
-
-    const key = `${item.brand || ""}|${item.name || item.cigar || ""}|${item.vitola || ""}`;
-    return `/pos/cigars/cigar.html?key=${encodeURIComponent(key)}`;
+    if (value || row.length) {row.push(value); rows.push(row);}
+    const headers = rows.shift() || [];
+    return rows.filter(r => r.some(v => v.trim())).map(r => Object.fromEntries(headers.map((h,i) => [h.trim(), r[i] || ""])));
   }
-
-  function fallbackLetter(item){
-    const source = item.type === "brand" ? (item.brand || item.name) : (item.name || item.brand);
-    return norm(source).slice(0,1).toUpperCase() || "★";
+  function rowPayload(row) {
+    const brand = field(row, ["Brand", "Brand Name"]);
+    const line = field(row, ["Line", "Series"]);
+    const cigar = field(row, ["Cigar", "Name"]);
+    const vitola = field(row, ["Vitola", "Style", "Size"]);
+    const name = [line, cigar].filter(Boolean).join(" ");
+    const key = field(row, ["Key", "Cigar ID", "id", "row_id"]) || [brand, name, vitola].join("|");
+    return normalize({...row, type:"cigar", key, catalogKey:key, name, cigar, brand, line, vitola,
+      href:"/pos/cigars/cigar.html?key=" + encodeURIComponent(key),
+      img:field(row, ["Cigar IMG", "image", "photo"]), posImageKey:key});
   }
-
-  function renderStatus(){
-    if (!els.status) return;
-
-    if (!activeFavorites().length){
-      els.status.hidden = true;
-      return;
+  function recordAliases(item) {
+    const key3 = [item.brand, item.name, item.vitola].join("|");
+    const key4 = [item.brand, item.line, item.cigar, item.vitola].filter(Boolean).join("|");
+    return unique([...item.aliases, "key:"+norm(key3), "key:"+norm(key4)]);
+  }
+  function resolve(item, rows) {
+    if (item.type !== "cigar") return null;
+    let matches = rows.filter(row => item.aliases.some(a => recordAliases(row).includes(a)));
+    if (!matches.length) {
+      const names = unique([item.name, item.cigar].map(norm));
+      if (!item.brand || !names.length) return null;
+      matches = rows.filter(row => {
+        if (compact(item.brand) !== compact(row.brand)) return false;
+        if (item.vitola && norm(item.vitola) !== norm(row.vitola)) return false;
+        for (const k of ["ring", "length", "origin"]) if (item[k] && row[k] && norm(item[k]) !== norm(row[k])) return false;
+        const candidates = [row.cigar, row.name, [row.brand, row.name].join(" "), [row.brand, row.cigar].join(" ")].map(norm);
+        return names.some(name => candidates.includes(name));
+      });
     }
+    const identities = unique(matches.map(row => norm(row.catalogKey)));
+    // Duplicate accolade rows for one cigar are safe; ambiguous different cigars are not.
+    if (identities.length !== 1) return null;
+    return matches.sort((a,b) => Object.values(b).filter(Boolean).length - Object.values(a).filter(Boolean).length)[0];
+  }
+  async function catalog() {
+    if (!catalogPromise) catalogPromise = (async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 18000);
+      try {
+        const response = await fetch(CSV, {cache:"no-store", signal:controller.signal});
+        if (!response.ok) throw new Error("Cigar catalog returned HTTP " + response.status);
+        const input = await response.text();
+        if (/^\s*</.test(input)) throw new Error("Cigar catalog returned a page instead of CSV.");
+        return parseCSV(input).map(rowPayload).filter(Boolean);
+      } finally { clearTimeout(timer); }
+    })().catch(error => {catalogPromise = null; throw error;});
+    return catalogPromise;
+  }
+  function reconcile(rows) {
+    return mutate(doc => {
+      doc.items = dedupe(doc.items.map(old => {
+        const match = resolve(old, rows);
+        if (!match) return old;
+        const merged = merge(old, match);
+        // Use an actual matched key, but keep old aliases and the original UID/order.
+        merged.key = match.key; merged.catalogKey = match.key;
+        merged.posImageKey = match.posImageKey;
+        merged.href = match.href;
+        merged.aliases = unique([...merged.aliases, ...recordAliases(match)]);
+        return merged;
+      }));
+    });
+  }
+  async function hydrate() { return reconcile(await catalog()); }
+  function hydrateRecords(records) { return reconcile(records.map(rowPayload).filter(Boolean)); }
+  function imageCandidates(item) {
+    const brand = compact(item.brand), line = compact(item.line), cigar = compact(item.cigar || item.name), vitola = compact(item.vitola);
+    const names = unique([brand+line+cigar, brand+line+cigar+vitola, line+cigar, line+cigar+vitola, line+vitola, brand+cigar, brand+cigar+vitola, cigar, cigar+vitola, compact(item.name)]);
+    const paths = [item.img, ...(item.imageCandidates || [])];
+    if (brand && cigar) {
+      if (norm(item.origin) === "cuba") names.forEach(n => paths.push(`/img/cigars/cuban/${brand}/${n}.png`));
+      names.forEach(n => paths.push(`/img/cigars/${brand}/${n}.png`));
+    }
+    return unique(paths.map(imagePath));
+  }
+  async function localImage(key) {
+    if (!key || !window.indexedDB) return null;
+    return new Promise(resolve => {
+      let settled = false;
+      const done = value => {if (!settled) {settled=true; clearTimeout(timer); resolve(value);}};
+      const timer = setTimeout(() => done(null), 3000);
+      const request = indexedDB.open("cigaros_demo_pos");
+      request.onupgradeneeded = () => { request.transaction.abort(); };
+      request.onerror = () => done(null);
+      request.onblocked = () => done(null);
+      request.onsuccess = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains("records")) {db.close(); done(null); return;}
+        const tx = db.transaction("records", "readonly");
+        const get = tx.objectStore("records").get(key);
+        tx.oncomplete = () => {db.close(); done(get.result?.image?.blob instanceof Blob ? get.result.image.blob : null);};
+        tx.onabort = () => {db.close(); done(null);};
+      };
+    });
+  }
+  window.CigarFavorites = Object.freeze({version:2, KEY, BACKUP, EVENT,
+    all, has, set, remove, reorder, subscribe, hydrate, hydrateRecords, catalog, normalize,
+    imageCandidates, imagePath, localHref, localImage, field, norm, compact,
+    exportBackup: () => ({current:readDocument(), beforeRepair:json(localStorage.getItem(BACKUP),null)})});
+})();
 
-    if (!state.filtered.length){
-      els.status.hidden = false;
+
+/* /profile/favorites/favorites.js — Favorites repair 2026-10-12-r1.
+   Tap opens the saved detail URL. Hold on touch; click-drag with a mouse.
+   No demo favorites, HTML changes, drag library, or image-size overrides. */
+(() => {
+  "use strict";
+  const F = window.CigarFavorites;
+  const $ = (s, root = document) => root.querySelector(s);
+  const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
+  const els = {
+    list: $("#favList"), status: $("#favStatus"), search: $("#favSearch"),
+    tabs: $$(".fav-tab"), theme: $("#themeToggle"), themeIcon: $("#themeIcon"),
+    add: $("#favAddBtn"), edit: $("#favEditBtn"), filter: $("#favFilterBtn"),
+    chips: $("#favAppliedFilters"), sheet: $("#favFilterSheet"),
+    subtitle: $("#favSheetSubtitle"), groups: $("#favFilterGroups"),
+    clear: $("#favClearFilters"), done: $("#favDoneFilters")
+  };
+  if (!els.list || !F) return;
+  // These are the same cigar fields used by the supplied POS brand filters.
+  const filterDefs = [
+    ["vitola", "Vitola"], ["ring", "Ring Gauge"], ["length", "Length"],
+    ["strength", "Strength"], ["shape", "Shape"], ["shade", "Wrapper Shade"]
+  ];
+  const state = {
+    type: tabType(new URL(location.href).searchParams.get("tab")),
+    query: "", filters: Object.fromEntries(filterDefs.map(([k]) => [k, new Set()])),
+    items: [], visible: [], rendered: false, editing: false, drag: null, settling: false,
+    suppressClickUntil: 0, ignoreMouseUntil: 0, imageGeneration: 0,
+    urls: [], sheetOpen: false, savedOverflow: "", lastFocus: null
+  };
+  const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const escape = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function tabType(value) { return ({cigar:"cigar",cigars:"cigar",brand:"brand",brands:"brand",shop:"shop",shops:"shop"})[value] || "cigar"; }
+  function title(item) { return item.name || item.cigar || item.brand || item.key || "Favorite cigar"; }
+  function listRows() { return Array.from(els.list.children).filter(el => el.hasAttribute("data-id")); }
+  function announce(message, error = false) {
+    let el = $(error ? "#favRepairError" : "#favAnnouncement");
+    if (!el) {
+      el = document.createElement("div"); el.id = error ? "favRepairError" : "favAnnouncement";
+      el.className = error ? "fav-repair-error" : "fav-visually-hidden";
+      el.setAttribute("role", error ? "alert" : "status");
+      document.body.appendChild(el);
+    }
+    el.textContent = message;
+    if (error) { clearTimeout(el.hideTimer); el.hideTimer = setTimeout(() => el.remove(), 9000); }
+  }
+  function refresh() {
+    if (state.drag || state.settling) return;
+    try {
+      const next = F.all();
+      const changed = !state.rendered || JSON.stringify(next) !== JSON.stringify(state.items);
+      state.items = next;
+      // Do not replace a tapped link on a focus/pageshow event when data is unchanged.
+      if (changed) { render(); if (state.sheetOpen) renderFilters(); }
+    }
+    catch (error) { announce(error.message, true); }
+  }
+  function selectedItems() { return state.items.filter(i => i.type === state.type); }
+  function applyFilters(items) {
+    const words = F.norm(state.query).split(/\s+/).filter(Boolean);
+    return items.filter(item => {
+      const hay = F.norm([item.name,item.brand,item.cigar,item.line,item.manufacturer,item.vitola,item.ring,item.length,item.wrapper,item.binder,item.filler,item.strength,item.shape,item.shade,item.origin,item.country,item.notes].join(" "));
+      if (!words.every(word => hay.includes(word))) return false;
+      return state.type !== "cigar" || filterDefs.every(([k]) => !state.filters[k].size || state.filters[k].has(F.norm(item[k])));
+    });
+  }
+  function render() {
+    if (state.drag || state.settling) return;
+    state.rendered = true;
+    state.imageGeneration++;
+    for (const url of state.urls) URL.revokeObjectURL(url);
+    state.urls = [];
+    state.visible = applyFilters(selectedItems());
+    els.list.classList.toggle("is-cigars", state.type === "cigar");
+    els.list.classList.toggle("is-icons", state.type !== "cigar");
+    els.tabs.forEach(tab => {
+      const active = tab.dataset.type === state.type;
+      tab.classList.toggle("active", active); tab.setAttribute("aria-pressed", String(active));
+    });
+    if (els.filter) els.filter.hidden = state.type !== "cigar";
+    if (els.search) els.search.placeholder = state.type === "cigar" ? "Search favorites" : `Search ${state.type}s`;
+    if (els.status) {
+      els.status.hidden = !selectedItems().length || !!state.visible.length;
       els.status.textContent = "No favorites match your search or filters.";
-      return;
     }
-
-    els.status.hidden = true;
-  }
-
-  function renderList(){
-    if (!els.list) return;
-
-    applyFilters();
-    renderStatus();
-
-    els.list.classList.toggle("is-cigars", state.activeType === "cigar");
-    els.list.classList.toggle("is-icons", state.activeType !== "cigar");
-
-    if (!activeFavorites().length){
-      els.list.innerHTML = `
-        <article class="fav-empty">
-          <h3>No ${escapeHtml(state.activeType)} favorites yet</h3>
-          <p>Tap the favorite button on a cigar, brand, or shop to save it here.</p>
-        </article>
-      `;
-      return;
+    if (!selectedItems().length) {
+      els.list.innerHTML = `<article class="fav-empty"><h3>No ${state.type}s saved yet</h3><p>Tap Favorite on a cigar detail page to save it here.</p></article>`;
+      renderChips(); return;
     }
-
-    if (!state.filtered.length){
-      els.list.innerHTML = "";
-      return;
-    }
-
-    if (state.activeType === "cigar"){
-      els.list.innerHTML = state.filtered.map((item) => {
-        const id = itemId(item);
-        const img = itemImage(item);
-        const url = detailUrl(item);
-
-        return `
-          <a class="fav-cigar" href="${escapeHtml(url)}" data-id="${escapeHtml(id)}">
-            <button class="fav-cigar-remove" type="button" aria-label="Remove favorite" data-remove="${escapeHtml(id)}">×</button>
-            ${
-              img
-                ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(item.name || "Favorite cigar")}" />`
-                : `<span class="fav-art-letter">${escapeHtml(fallbackLetter(item))}</span>`
-            }
-            <button class="fav-drag" type="button" aria-label="Drag to reorder">☰</button>
-          </a>
-        `;
-      }).join("");
-    } else {
-      els.list.innerHTML = state.filtered.map((item) => {
-        const id = itemId(item);
-        const img = itemImage(item);
-        const url = detailUrl(item);
-        const title = item.type === "brand" ? (item.brand || item.name) : item.name;
-
-        return `
-          <a class="fav-icon-item" href="${escapeHtml(url)}" data-id="${escapeHtml(id)}">
-            <button class="fav-icon-remove" type="button" aria-label="Remove favorite" data-remove="${escapeHtml(id)}">×</button>
-            <div class="fav-icon-art">
-              ${
-                img
-                  ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(title)}" />`
-                  : `<span class="fav-art-letter">${escapeHtml(fallbackLetter(item))}</span>`
-              }
-            </div>
-            <div class="fav-icon-name">${escapeHtml(title)}</div>
-            ${item.type === "shop" && item.country ? `<div class="fav-icon-meta">${escapeHtml(item.country)}</div>` : ""}
-            <button class="fav-drag" type="button" aria-label="Drag to reorder">☰</button>
-          </a>
-        `;
-      }).join("");
-    }
-
-    bindCardEvents();
-  }
-
-  function bindCardEvents(){
-    $$("[data-remove]", els.list).forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        removeFavorite(btn.dataset.remove);
-      });
-    });
-
-    $$("[data-id]", els.list).forEach((item) => {
-      item.addEventListener("click", onItemClick);
-      item.addEventListener("touchstart", onTouchStart, { passive:false });
-      item.addEventListener("touchmove", onTouchMove, { passive:false });
-      item.addEventListener("touchend", onTouchEnd, { passive:false });
-      item.addEventListener("touchcancel", onTouchCancel, { passive:false });
-      item.addEventListener("mousedown", onMouseDown);
-    });
-  }
-
-  function onItemClick(e){
-    if (Date.now() < state.suppressClickUntil){
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }
-
-  function removeFavorite(id){
-    state.favorites = state.favorites.filter((item) => itemId(item) !== id);
-    saveFavorites();
-    renderFilters();
-    renderAppliedFilters();
-    renderList();
-  }
-
-  function beginDrag(item, clientX, clientY){
-    state.drag = {
-      item,
-      id:item.dataset.id,
-      startX:clientX,
-      startY:clientY,
-      lastY:clientY,
-      active:false,
-      timer:null
-    };
-
-    state.drag.timer = window.setTimeout(() => {
-      if (!state.drag || state.drag.item !== item) return;
-      state.drag.active = true;
-      state.suppressClickUntil = Date.now() + 900;
-      document.body.classList.add("fav-sorting");
-      item.classList.add("is-dragging");
-    }, LONG_PRESS_MS);
-  }
-
-  function updateDrag(clientY){
-    const drag = state.drag;
-    if (!drag) return;
-
-    const dy = Math.abs(clientY - drag.startY);
-
-    if (!drag.active && dy > MOVE_THRESHOLD){
-      clearDrag(false);
-      return;
-    }
-
-    if (!drag.active) return;
-
-    drag.lastY = clientY;
-
-    $$(".is-drag-over-before,.is-drag-over-after", els.list).forEach((el) => {
-      el.classList.remove("is-drag-over-before","is-drag-over-after");
-    });
-
-    const centerX = window.innerWidth / 2;
-    const target = document.elementFromPoint(centerX, clientY)?.closest("[data-id]");
-
-    if (!target || target === drag.item || !els.list.contains(target)) return;
-
-    const rect = target.getBoundingClientRect();
-    const before = clientY < rect.top + rect.height / 2;
-
-    target.classList.add(before ? "is-drag-over-before" : "is-drag-over-after");
-    els.list.insertBefore(drag.item, before ? target : target.nextSibling);
-  }
-
-  function finishDrag(){
-    const drag = state.drag;
-    if (!drag) return;
-
-    const wasActive = drag.active;
-
-    if (wasActive){
-      state.suppressClickUntil = Date.now() + 900;
-      commitDomOrder();
-    }
-
-    clearDrag(false);
-  }
-
-  function clearDrag(){
-    const drag = state.drag;
-    if (!drag) return;
-
-    window.clearTimeout(drag.timer);
-
-    drag.item.classList.remove("is-dragging");
-    document.body.classList.remove("fav-sorting");
-
-    $$(".is-drag-over-before,.is-drag-over-after", els.list).forEach((el) => {
-      el.classList.remove("is-drag-over-before","is-drag-over-after");
-    });
-
-    state.drag = null;
-  }
-
-  function onTouchStart(e){
-    if (e.target.closest("[data-remove]")) return;
-    if (e.touches.length !== 1) return;
-
-    const t = e.touches[0];
-    beginDrag(e.currentTarget, t.clientX, t.clientY);
-  }
-
-  function onTouchMove(e){
-    if (!state.drag) return;
-
-    const t = e.touches[0];
-    if (!t) return;
-
-    if (state.drag.active){
-      e.preventDefault();
-    }
-
-    updateDrag(t.clientY);
-  }
-
-  function onTouchEnd(e){
-    if (!state.drag) return;
-
-    if (state.drag.active){
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    finishDrag();
-  }
-
-  function onTouchCancel(){
-    clearDrag(false);
-  }
-
-  function onMouseDown(e){
-    if (e.button !== 0) return;
-    if (e.target.closest("[data-remove]")) return;
-
-    beginDrag(e.currentTarget, e.clientX, e.clientY);
-
-    const move = (ev) => {
-      if (state.drag?.active) ev.preventDefault();
-      updateDrag(ev.clientY);
-    };
-
-    const up = (ev) => {
-      if (state.drag?.active){
-        ev.preventDefault();
-        ev.stopPropagation();
+    const fragment = document.createDocumentFragment();
+    for (const item of state.visible) {
+      const row = document.createElement("article");
+      row.className = item.type === "cigar" ? "fav-cigar" : "fav-icon-item";
+      row.dataset.id = item.uid;
+      const link = document.createElement("a");
+      link.className = item.type === "cigar" ? "fav-cigar-link" : "fav-icon-link";
+      link.href = item.href; link.draggable = false;
+      link.setAttribute("aria-label", title(item));
+      link.title = `${title(item)} — hold to reorder`;
+      if (item.type === "cigar") {
+        const img = document.createElement("img");
+        img.alt = title(item); img.draggable = false; img.decoding = "async";
+        link.appendChild(img); wireCigarImage(img, item, state.imageGeneration);
+      } else {
+        const art = document.createElement("div"); art.className = "fav-icon-art";
+        const path = item.img || (item.type === "brand" ? `/img/icons/brands/${F.compact(item.brand || item.name)}.svg` : "");
+        if (path) {
+          const img = document.createElement("img"); img.alt = ""; img.draggable = false;
+          img.onerror = () => { art.textContent = title(item).slice(0, 1); };
+          img.src = path; art.appendChild(img);
+        } else art.textContent = title(item).slice(0,1);
+        const name = document.createElement("div"); name.className = "fav-icon-name"; name.textContent = title(item);
+        link.append(art,name);
+        if (item.type === "shop" && item.country) {
+          const meta = document.createElement("div"); meta.className = "fav-icon-meta"; meta.textContent = item.country; link.appendChild(meta);
+        }
       }
-      finishDrag();
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
+      row.appendChild(link);
+      // A sibling button, not a button nested inside a link.
+      const remove = document.createElement("button");
+      remove.type = "button"; remove.dataset.remove = item.uid;
+      remove.className = item.type === "cigar" ? "fav-cigar-remove" : "fav-icon-remove";
+      remove.textContent = "×"; remove.setAttribute("aria-label", "Remove " + title(item));
+      row.appendChild(remove); fragment.appendChild(row);
+    }
+    els.list.replaceChildren(fragment); renderChips();
+  }
+  async function wireCigarImage(img, item, generation) {
+    const paths = F.imageCandidates(item);
+    let index = 0;
+    const next = () => {
+      if (generation !== state.imageGeneration) return;
+      if (index < paths.length) { img.src = paths[index++]; return; }
+      img.hidden = true;
+      if (!img.parentElement) return;
+      const note = document.createElement("span"); note.className = "fav-image-unavailable";
+      note.textContent = "Image unavailable"; img.parentElement.appendChild(note);
     };
-
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
+    img.onerror = next;
+    try {
+      const blob = await F.localImage(item.posImageKey || item.key);
+      if (generation !== state.imageGeneration) return;
+      if (blob) { const url = URL.createObjectURL(blob); state.urls.push(url); paths.unshift(url); }
+    } catch (error) { console.warn("[Favorites image]", error); }
+    next();
   }
-
-  
-function commitDomOrder(){
-  const visibleIds = $$("[data-id]", els.list)
-    .map(card => card.dataset.id);
-
-  if (!visibleIds.length) return;
-
-  const byId = new Map(
-    state.favorites.map(item => [
-      itemId(item),
-      item
-    ])
-  );
-
-  const reordered = visibleIds
-    .map(id => byId.get(id))
-    .filter(Boolean);
-
-  const visibleSet = new Set(visibleIds);
-  let index = 0;
-
-  state.favorites = state.favorites.map(item => {
-    if (!visibleSet.has(itemId(item))) {
-      return item;
-    }
-
-    return reordered[index++];
-  });
-
-  saveFavorites();
-}
-
-
-  function renderFilters(){
-    if (!els.filterGroups) return;
-
-    if (state.activeType !== "cigar"){
-      els.filterGroups.innerHTML = `
-        <div class="fav-filter-group">
-          <h3>No filters for ${escapeHtml(titleCase(state.activeType))} yet</h3>
-          <p style="margin:0;color:var(--muted);font-size:14px;font-weight:560;line-height:1.35;">
-            Search is available for this section. Cigar filters are available under Cigars.
-          </p>
-        </div>
-      `;
-      return;
-    }
-
-    const cigars = activeFavorites();
-
-    const groups = [
-      {key:"brand",label:"Brand",values:uniqueSorted(cigars.flatMap((i) => splitValues(i.brand)))},
-      {key:"country",label:"Country",values:uniqueSorted(cigars.flatMap((i) => splitValues(i.country)))},
-      {key:"wrapper",label:"Wrapper",values:uniqueSorted(cigars.flatMap((i) => splitValues(i.wrapper)))},
-      {key:"binder",label:"Binder",values:uniqueSorted(cigars.flatMap((i) => splitValues(i.binder)))},
-      {key:"filler",label:"Filler",values:uniqueSorted(cigars.flatMap((i) => splitValues(i.filler)))},
-      {key:"strength",label:"Strength",values:uniqueSorted(cigars.flatMap((i) => splitValues(i.strength)))},
-      {key:"shape",label:"Shape",values:uniqueSorted(cigars.flatMap((i) => splitValues(i.shape)))},
-      {key:"vitola",label:"Vitola",values:uniqueSorted(cigars.flatMap((i) => splitValues(i.vitola)))}
-    ];
-
-    els.filterGroups.innerHTML = `
-      ${groups.map(renderFilterGroup).join("")}
-
-      <div class="fav-filter-group">
-        <h3>Ring Gauge</h3>
-        ${renderRangeGroup("ringMin","ringMax","Min RG","Max RG")}
-      </div>
-
-      <div class="fav-filter-group">
-        <h3>Length</h3>
-        ${renderRangeGroup("lengthMin","lengthMax","Min Length","Max Length")}
-      </div>
-    `;
-
-    bindFilterEvents();
-  }
-
-  function renderFilterGroup(group){
-    if (!group.values.length) return "";
-
-    return `
-      <div class="fav-filter-group">
-        <h3>${escapeHtml(group.label)}</h3>
-        <div class="fav-filter-options">
-          ${group.values.map((value) => `
-            <button class="fav-filter-option ${state.filters[group.key].has(value) ? "active" : ""}" type="button" data-filter-key="${escapeHtml(group.key)}" data-filter-value="${escapeHtml(value)}">
-              ${escapeHtml(value)}
-            </button>
-          `).join("")}
-        </div>
-      </div>
-    `;
-  }
-
-  function renderRangeGroup(minKey, maxKey, minLabel, maxLabel){
-    return `
-      <div class="fav-range-wrap">
-        <div class="fav-range-values">
-          <span>${escapeHtml(minLabel)}</span>
-          <span>${escapeHtml(maxLabel)}</span>
-        </div>
-
-        <div class="fav-range-inputs">
-          <label>Min
-            <input type="number" inputmode="decimal" data-range-key="${escapeHtml(minKey)}" value="${escapeHtml(state.filters[minKey])}" placeholder="Any" />
-          </label>
-
-          <label>Max
-            <input type="number" inputmode="decimal" data-range-key="${escapeHtml(maxKey)}" value="${escapeHtml(state.filters[maxKey])}" placeholder="Any" />
-          </label>
-        </div>
-      </div>
-    `;
-  }
-
-  function bindFilterEvents(){
-    $$(".fav-filter-option", els.filterGroups).forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const key = btn.dataset.filterKey;
-        const value = btn.dataset.filterValue;
-
-        if (!(state.filters[key] instanceof Set)) return;
-
-        if (state.filters[key].has(value)) state.filters[key].delete(value);
-        else state.filters[key].add(value);
-
-        btn.classList.toggle("active");
-        renderAppliedFilters();
-        renderList();
-        updateFilterButton();
-      });
-    });
-
-    $$("[data-range-key]", els.filterGroups).forEach((input) => {
-      input.addEventListener("input", () => {
-        state.filters[input.dataset.rangeKey] = input.value;
-        renderAppliedFilters();
-        renderList();
-        updateFilterButton();
-      });
-    });
-  }
-
-  function renderAppliedFilters(){
-    if (!els.appliedFilters) return;
-
-    const chips = [];
-
-    Object.entries(state.filters).forEach(([key,value]) => {
-      if (value instanceof Set){
-        value.forEach((v) => chips.push({key,value:v,label:v}));
+  function renderFilters() {
+    if (!els.groups) return;
+    const cigars = state.items.filter(i => i.type === "cigar");
+    els.groups.innerHTML = filterDefs.map(([key,label]) => {
+      const options = new Map();
+      for (const item of cigars) {
+        const value = String(item[key] || "").trim();
+        if (value && !["n/a","—","unknown"].includes(value.toLowerCase())) options.set(F.norm(value), value);
       }
-    });
-
-    if (state.filters.ringMin) chips.push({key:"ringMin",value:state.filters.ringMin,label:`RG ≥ ${state.filters.ringMin}`});
-    if (state.filters.ringMax) chips.push({key:"ringMax",value:state.filters.ringMax,label:`RG ≤ ${state.filters.ringMax}`});
-    if (state.filters.lengthMin) chips.push({key:"lengthMin",value:state.filters.lengthMin,label:`Length ≥ ${state.filters.lengthMin}`});
-    if (state.filters.lengthMax) chips.push({key:"lengthMax",value:state.filters.lengthMax,label:`Length ≤ ${state.filters.lengthMax}`});
-
-    if (!chips.length){
-      els.appliedFilters.hidden = true;
-      els.appliedFilters.innerHTML = "";
-      return;
-    }
-
-    els.appliedFilters.hidden = false;
-    els.appliedFilters.innerHTML = chips.map((chip) => `
-      <span class="fav-chip">
-        ${escapeHtml(chip.label)}
-        <button type="button" data-remove-filter-key="${escapeHtml(chip.key)}" data-remove-filter-value="${escapeHtml(chip.value)}">×</button>
-      </span>
-    `).join("");
-
-    $$("[data-remove-filter-key]", els.appliedFilters).forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const key = btn.dataset.removeFilterKey;
-        const value = btn.dataset.removeFilterValue;
-
-        if (state.filters[key] instanceof Set) state.filters[key].delete(value);
-        else state.filters[key] = "";
-
-        renderFilters();
-        renderAppliedFilters();
-        renderList();
-        updateFilterButton();
-      });
-    });
+      const values = [...options].sort((a,b) => a[1].localeCompare(b[1],undefined,{numeric:true,sensitivity:"base"}));
+      return `<section class="fav-filter-group"><h3>${label}</h3><div class="fav-filter-options">${values.length ? values.map(([value,display]) => `<button type="button" class="fav-filter-option ${state.filters[key].has(value) ? "active" : ""}" data-filter-key="${key}" data-filter-value="${escape(value)}" aria-pressed="${state.filters[key].has(value)}">${escape(display)}</button>`).join("") : `<span class="fav-filter-note">No saved values yet.</span>`}</div></section>`;
+    }).join("");
   }
-
-  function updateFilterButton(){
-    els.filterBtn?.classList.toggle("has-filters", Boolean(hasActiveFilters()));
+  function renderChips() {
+    const chips = state.type === "cigar" ? filterDefs.flatMap(([key,label]) => [...state.filters[key]].map(value => ({key,label,value}))) : [];
+    if (els.filter) els.filter.classList.toggle("has-filters", !!chips.length);
+    if (!els.chips) return;
+    els.chips.hidden = !chips.length;
+    els.chips.innerHTML = chips.map(({key,label,value}) => `<span class="fav-chip">${escape(label)}: ${escape(value)}<button type="button" data-clear-key="${key}" data-clear-value="${escape(value)}" aria-label="Remove ${escape(label)} filter">×</button></span>`).join("");
   }
-
-  function openSheet(){
-    if (!els.sheet) return;
-    renderFilters();
-    els.sheet.classList.add("open");
-    els.sheet.setAttribute("aria-hidden","false");
-    document.body.style.overflow = "hidden";
+  function clearFilters() { Object.values(state.filters).forEach(set => set.clear()); renderFilters(); render(); }
+  function setType(type) {
+    cancelDrag();
+    state.type = tabType(type); state.query = ""; state.rendered = false;
+    if (els.search) els.search.value = "";
+    Object.values(state.filters).forEach(set => set.clear());
+    try { const u = new URL(location.href); u.searchParams.set("tab",state.type+"s"); history.replaceState(null,"",u); } catch {}
+    closeSheet(); refresh();
   }
-
-  function closeSheet(){
-    if (!els.sheet) return;
-    els.sheet.classList.remove("open");
-    els.sheet.setAttribute("aria-hidden","true");
-    document.body.style.overflow = "";
+  function openSheet() {
+    if (!els.sheet || state.type !== "cigar") return;
+    cancelDrag(); state.sheetOpen = true; state.lastFocus = document.activeElement;
+    state.savedOverflow = document.body.style.overflow; document.body.style.overflow = "hidden";
+    els.sheet.inert = false; els.sheet.classList.add("open"); els.sheet.setAttribute("aria-hidden","false");
+    if (els.subtitle) els.subtitle.textContent = "Filter your saved cigars.";
+    renderFilters(); els.done?.focus({preventScroll:true});
   }
-
-  function setActiveType(type){
-    state.activeType = type;
-    resetFilters();
-
-    els.tabs.forEach((tab) => {
-      tab.classList.toggle("active", tab.dataset.type === type);
-    });
-
-    if (els.sheetSubtitle){
-      els.sheetSubtitle.textContent =
-        type === "cigar" ? "Filter your saved cigars." : `Search your saved ${type}s.`;
-    }
-
-    renderFilters();
-    renderAppliedFilters();
-    updateFilterButton();
-    renderList();
+  function closeSheet() {
+    if (!state.sheetOpen || !els.sheet) return;
+    state.sheetOpen = false;
+    document.body.style.overflow = state.savedOverflow;
+    els.sheet.classList.remove("open"); els.sheet.setAttribute("aria-hidden","true"); els.sheet.inert = true;
+    state.lastFocus?.focus?.({preventScroll:true});
   }
-
-  function applyTheme(theme){
+  function applyTheme(theme, write = true) {
     const next = theme === "light" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem(THEME_KEY, next);
+    document.documentElement.setAttribute("data-theme",next);
+    if (write) { try { localStorage.setItem("cigaros-theme",next); localStorage.setItem("theme",next); } catch {} }
+    if (els.themeIcon) els.themeIcon.src = `/img/icons/${next === "dark" ? "moon" : "sun"}.svg`;
+    els.theme?.setAttribute("aria-label", `Switch to ${next === "dark" ? "light" : "dark"} mode`);
+  }
+  function setEditing(value) {
+    state.editing = value; document.body.classList.toggle("fav-editing",value);
+    if (els.edit) { els.edit.textContent = value ? "Done" : "Edit"; els.edit.setAttribute("aria-pressed",String(value)); }
+  }
 
-    if (els.themeIcon){
-      els.themeIcon.src = next === "dark" ? "/img/icons/moon.svg" : "/img/icons/sun.svg";
+  /* Drag lifecycle: the original row stays as a placeholder; a visual clone
+     follows the pointer. Pending touches do NOT prevent ordinary scrolling. */
+  function rowAt(target) {
+    const row = target instanceof Element ? target.closest("[data-id]") : null;
+    return row?.parentElement === els.list ? row : null;
+  }
+  function pending(row,x,y,kind,id) {
+    if (state.settling || state.sheetOpen) return;
+    cancelDrag();
+    const drag = {row,x,y,startX:x,startY:y,kind,id,active:false,timer:0,raf:0,
+      original:listRows().map(el => el.dataset.id), clone:null, animations:[], lastFrame:0};
+    state.drag = drag;
+    drag.timer = setTimeout(() => activate(drag), kind === "touch" ? 300 : 220);
+  }
+  function activate(drag) {
+    if (state.drag !== drag || !drag.row.isConnected) return;
+    clearTimeout(drag.timer); drag.active = true;
+    const rect = drag.row.getBoundingClientRect();
+    drag.rect = {top:rect.top,left:rect.left,width:rect.width,height:rect.height};
+    drag.offsetX = drag.startX - rect.left; drag.offsetY = drag.startY - rect.top;
+    const clone = drag.row.cloneNode(true);
+    clone.removeAttribute("data-id"); clone.removeAttribute("id");
+    $$('[id]',clone).forEach(el => el.removeAttribute("id"));
+    $$('a,button',clone).forEach(el => {el.tabIndex = -1; el.removeAttribute("href");});
+    clone.classList.add("fav-drag-preview"); clone.setAttribute("aria-hidden","true");
+    clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;margin:0;z-index:10001;pointer-events:none;transition:none;`;
+    document.body.appendChild(clone); drag.clone = clone;
+    drag.row.classList.add("fav-drag-placeholder"); document.body.classList.add("fav-sorting-v2");
+    announce("Picked up " + (drag.row.querySelector("a")?.getAttribute("aria-label") || "favorite"));
+    drag.raf = requestAnimationFrame(dragFrame);
+  }
+  function move(x,y,kind,id,event) {
+    const d = state.drag;
+    if (!d || d.kind !== kind || d.id !== id) return;
+    d.x = x; d.y = y;
+    if (!d.active && Math.hypot(x-d.startX,y-d.startY) > 8) {
+      if (kind === "touch") { cancelDrag(); return; }
+      activate(d);
+    }
+    if (d.active && event?.cancelable) event.preventDefault();
+  }
+  function layoutRect(el) {
+    const list = els.list.getBoundingClientRect();
+    return {top:list.top+el.offsetTop,left:list.left+el.offsetLeft,width:el.offsetWidth,height:el.offsetHeight};
+  }
+  function movePlaceholder(d) {
+    const others = listRows().filter(el => el !== d.row);
+    const cy = d.y - d.offsetY + d.rect.height/2;
+    const cx = d.x - d.offsetX + d.rect.width/2;
+    let next = null;
+    for (const el of others) {
+      const r = layoutRect(el);
+      if (state.type === "cigar" ? cy < r.top+r.height/2 : cy < r.top || (cy < r.top+r.height && cx < r.left+r.width/2)) { next = el; break; }
+    }
+    if (d.row.nextElementSibling === next) return;
+    const positions = new Map(others.map(el => [el,el.getBoundingClientRect()]));
+    for (const animation of d.animations) animation.cancel(); d.animations = [];
+    els.list.insertBefore(d.row,next);
+    if (!reducedMotion()) for (const el of others) {
+      const before = positions.get(el), after = el.getBoundingClientRect();
+      const dx = before.left-after.left,dy = before.top-after.top;
+      if ((dx || dy) && el.animate) d.animations.push(el.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:"translate(0,0)"}],{duration:150,easing:"ease-out"}));
     }
   }
-
-  function bindGlobalEvents(){
-    els.tabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        setActiveType(tab.dataset.type || "cigar");
-      });
-    });
-
-    els.search?.addEventListener("input", () => {
-      state.query = els.search.value;
-      renderList();
-    });
-
-    els.addBtn?.addEventListener("click", () => {
-      if (state.activeType === "shop"){
-        window.location.href = "/shops/";
-        return;
-      }
-
-      window.location.href = "/pos/cigars/";
-    });
-
-    els.themeToggle?.addEventListener("click", () => {
-      const current = document.documentElement.getAttribute("data-theme") || "dark";
-      applyTheme(current === "dark" ? "light" : "dark");
-    });
-
-    els.filterBtn?.addEventListener("click", openSheet);
-    els.doneFilters?.addEventListener("click", closeSheet);
-
-    els.clearFilters?.addEventListener("click", () => {
-      resetFilters();
-      renderFilters();
-      renderAppliedFilters();
-      renderList();
-      updateFilterButton();
-    });
-
-    $$("[data-close-sheet]").forEach((el) => {
-      el.addEventListener("click", closeSheet);
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeSheet();
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key.toLowerCase() === "e" && (e.metaKey || e.ctrlKey)){
-        e.preventDefault();
-        state.editing = !state.editing;
-        document.body.classList.toggle("fav-editing", state.editing);
-      }
-    });
+  function dragFrame(time) {
+    const d = state.drag; if (!d?.active) return;
+    const view = window.visualViewport;
+    const top = view?.offsetTop || 0, height = view?.height || innerHeight;
+    const dt = Math.min((time-(d.lastFrame || time))/16.67,2); d.lastFrame = time;
+    const edge = 64;
+    let scroll = d.y < top+edge ? -Math.min(12,(top+edge-d.y)/4) : d.y > top+height-edge ? Math.min(12,(d.y-(top+height-edge))/4) : 0;
+    if (scroll) window.scrollBy(0,scroll*dt);
+    const dx = state.type === "cigar" ? 0 : d.x-d.startX;
+    d.clone.style.transform = `translate3d(${dx}px,${d.y-d.startY}px,0)`;
+    movePlaceholder(d);
+    d.raf = requestAnimationFrame(dragFrame);
   }
-
-  async function init(){
-    bindGlobalEvents();
-
-    applyTheme(localStorage.getItem(THEME_KEY) || document.documentElement.getAttribute("data-theme") || "dark");
-
-    state.favorites = readFavorites();
-
-    renderList();
-    renderFilters();
-    renderAppliedFilters();
-    updateFilterButton();
-
-    await loadSheetRows();
-    enrichFavoritesFromSheet();
-
-    renderList();
-    renderFilters();
-    renderAppliedFilters();
-    updateFilterButton();
+  function cleanup(d) {
+    clearTimeout(d.timer); cancelAnimationFrame(d.raf);
+    for (const animation of d.animations) animation.cancel();
+    d.clone?.remove(); d.row.classList.remove("fav-drag-placeholder");
+    document.body.classList.remove("fav-sorting-v2");
   }
-
-  init();
+  function cancelDrag() {
+    const d = state.drag; if (!d) return;
+    if (d.active) {
+      const rows = new Map(listRows().map(row => [row.dataset.id,row]));
+      for (const id of d.original) if (rows.has(id)) els.list.appendChild(rows.get(id));
+      state.suppressClickUntil = Date.now()+600;
+    }
+    cleanup(d); state.drag = null;
+  }
+  async function finishDrag(event) {
+    const d = state.drag; if (!d) return;
+    clearTimeout(d.timer);
+    if (!d.active) { cleanup(d); state.drag = null; return; }
+    if (event?.cancelable) event.preventDefault();
+    state.suppressClickUntil = Date.now()+800;
+    cancelAnimationFrame(d.raf); state.settling = true;
+    const ids = listRows().map(el => el.dataset.id), type = state.type;
+    const target = d.row.getBoundingClientRect();
+    try {
+      if (d.clone?.animate && !reducedMotion()) {
+        const animation = d.clone.animate([
+          {transform:d.clone.style.transform},
+          {transform:`translate3d(${target.left-d.rect.left}px,${target.top-d.rect.top}px,0)`}
+        ],{duration:130,easing:"ease-out",fill:"forwards"});
+        await animation.finished.catch(() => {});
+      }
+      await F.reorder(type,ids);
+      announce("New favorites order saved.");
+    } catch (error) { announce(error.message,true); }
+    finally { cleanup(d); if (state.drag === d) state.drag=null; state.settling=false; state.rendered=false; refresh(); }
+  }
+  function touchById(list,id) { return Array.from(list).find(t => t.identifier === id); }
+  els.list.addEventListener("touchstart",event => {
+    state.ignoreMouseUntil = Date.now()+1200;
+    if (event.touches.length !== 1) { cancelDrag(); return; }
+    if (event.target instanceof Element && event.target.closest("button")) return;
+    const row = rowAt(event.target); if (!row) return;
+    const t = event.changedTouches[0]; pending(row,t.clientX,t.clientY,"touch",t.identifier);
+  },{passive:true});
+  document.addEventListener("touchstart",event => { if(event.touches.length > 1) cancelDrag(); },{passive:true});
+  document.addEventListener("touchmove",event => {
+    const d = state.drag; if (!d || d.kind !== "touch") return;
+    const t = touchById(event.touches,d.id); if (t) move(t.clientX,t.clientY,"touch",d.id,event);
+  },{passive:false});
+  document.addEventListener("touchend",event => {
+    const d = state.drag; if (d?.kind === "touch" && touchById(event.changedTouches,d.id)) { state.ignoreMouseUntil=Date.now()+1200; void finishDrag(event); }
+  },{passive:false});
+  document.addEventListener("touchcancel",() => cancelDrag(),{passive:true});
+  els.list.addEventListener("mousedown",event => {
+    if (event.button !== 0 || Date.now() < state.ignoreMouseUntil || event.target.closest("button")) return;
+    const row = rowAt(event.target); if (row) pending(row,event.clientX,event.clientY,"mouse",0);
+  });
+  document.addEventListener("mousemove",event => move(event.clientX,event.clientY,"mouse",0,event));
+  document.addEventListener("mouseup",event => { if (state.drag?.kind === "mouse") void finishDrag(event); });
+  els.list.addEventListener("dragstart",event => event.preventDefault());
+  els.list.addEventListener("contextmenu",event => { if (rowAt(event.target)) event.preventDefault(); });
+  els.list.addEventListener("click",event => {
+    if (Date.now() < state.suppressClickUntil || state.drag?.active || state.settling) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+    const remove = event.target.closest("[data-remove]");
+    if (remove) {
+      event.preventDefault(); event.stopPropagation();
+      const item = state.items.find(i => i.uid === remove.dataset.remove);
+      if (item && confirm("Remove " + title(item) + " from Favorites?")) F.remove(item.uid).catch(e => announce(e.message,true));
+    }
+  },true);
+  els.list.addEventListener("keydown",event => {
+    const row = rowAt(event.target); if (!row || !event.altKey || !["ArrowUp","ArrowDown"].includes(event.key)) return;
+    event.preventDefault();
+    const rows = listRows(), at = rows.indexOf(row), dest = at+(event.key === "ArrowUp" ? -1 : 1);
+    if (dest < 0 || dest >= rows.length) return;
+    [rows[at],rows[dest]] = [rows[dest],rows[at]];
+    F.reorder(state.type,rows.map(el => el.dataset.id)).then(() => {
+      listRows().find(el => el.dataset.id === row.dataset.id)?.querySelector("a")?.focus(); announce("New favorites order saved.");
+    }).catch(e => announce(e.message,true));
+  });
+  els.tabs.forEach(tab => tab.addEventListener("click",() => setType(tab.dataset.type)));
+  els.search?.addEventListener("input",() => { cancelDrag(); state.query=els.search.value; render(); });
+  els.add?.addEventListener("click",() => { location.href = state.type === "shop" ? "/shops/" : "/pos/cigars/"; });
+  els.theme?.addEventListener("click",() => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+  els.edit?.addEventListener("click",() => setEditing(!state.editing));
+  els.filter?.addEventListener("click",openSheet); els.done?.addEventListener("click",closeSheet); els.clear?.addEventListener("click",clearFilters);
+  $$('[data-close-sheet]').forEach(el => el.addEventListener("click",closeSheet));
+  els.groups?.addEventListener("click",event => {
+    const button=event.target.closest("[data-filter-key]"); if (!button) return;
+    const set=state.filters[button.dataset.filterKey],v=button.dataset.filterValue;
+    if(set.has(v))set.delete(v);else set.add(v);
+    button.classList.toggle("active",set.has(v));button.setAttribute("aria-pressed",String(set.has(v)));render();
+  });
+  els.chips?.addEventListener("click",event => {
+    const b=event.target.closest("[data-clear-key]");if(!b)return;
+    state.filters[b.dataset.clearKey].delete(b.dataset.clearValue);render();renderFilters();
+  });
+  document.addEventListener("keydown",event => {
+    if(event.key === "Escape"){cancelDrag();closeSheet();setEditing(false);}
+    if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="e"&&!/INPUT|TEXTAREA/.test(event.target.tagName)){event.preventDefault();setEditing(!state.editing);}
+    if(state.sheetOpen&&event.key==="Tab"){
+      const f=$$('button:not([disabled]),input:not([disabled])',els.sheet).filter(el=>el.getClientRects().length);
+      if(!f.length)return;
+      if(event.shiftKey&&document.activeElement===f[0]){event.preventDefault();f.at(-1).focus();}
+      else if(!event.shiftKey&&document.activeElement===f.at(-1)){event.preventDefault();f[0].focus();}
+    }
+  });
+  window.addEventListener("blur",cancelDrag);
+  window.addEventListener("pagehide",cancelDrag);
+  document.addEventListener("visibilitychange",() => {if(document.hidden)cancelDrag();else refresh();});
+  window.addEventListener("pageshow",refresh);
+  window.addEventListener("focus",refresh);
+  window.addEventListener("popstate",() => {state.type=tabType(new URL(location.href).searchParams.get("tab"));state.rendered=false;refresh();});
+  F.subscribe(refresh);
+  if (els.sheet) {els.sheet.inert=true;els.sheet.setAttribute("aria-hidden","true");}
+  let theme="dark";try{theme=localStorage.getItem("cigaros-theme")||localStorage.getItem("theme")||document.documentElement.dataset.theme;}catch{}
+  applyTheme(theme,false);
+  refresh();
+  F.hydrate().then(refresh).catch(error => {
+    console.warn("[Favorites] Saved records remain available; catalog enrichment failed:",error);
+    if(state.items.some(i=>i.type==="cigar"&&!i.name)) announce("Some older favorites need the cigar catalog to load. Your saved records are still here.",true);
+  });
 })();
