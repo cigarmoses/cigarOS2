@@ -277,32 +277,39 @@
     });
   }
 
-  function readFavorites(){
-    const collected = [];
+  
+function readFavorites(){
+  const profileCigars = readStorageArray(PROFILE_CIGAR_KEY)
+    .map(raw => normalizeFavorite({
+      ...raw,
+      type: "cigar"
+    }));
 
-    STORAGE_KEYS.forEach((key) => {
-      readStorageArray(key).forEach((raw) => collected.push(raw));
-    });
+  const otherFavorites = readStorageArray(PRIMARY_STORAGE_KEY)
+    .map(normalizeFavorite)
+    .filter(item => item.type !== "cigar");
 
-    fallbackFavorites.forEach((raw) => collected.push(raw));
+  const collected = [
+    ...profileCigars,
+    ...otherFavorites
+  ];
 
-    const normalized = collected
-      .map(normalizeFavorite)
-      .filter((item) => item.name || item.brand);
+  const deduped = [];
+  const seen = new Set();
 
-    const deduped = [];
-    const seen = new Set();
+  collected.forEach(item => {
+    const id = itemId(item);
 
-    normalized.forEach((item) => {
-      const id = itemId(item);
-      if (seen.has(id)) return;
-      seen.add(id);
-      item.id = id;
-      deduped.push(item);
-    });
+    if (seen.has(id)) return;
 
-    return applySavedOrder(deduped);
-  }
+    seen.add(id);
+    item.id = id;
+    deduped.push(item);
+  });
+
+  return applySavedOrder(deduped);
+}
+
 
   function saveFavorites(){
     localStorage.setItem(PRIMARY_STORAGE_KEY, JSON.stringify(state.favorites));
@@ -813,32 +820,38 @@
     window.addEventListener("mouseup", up);
   }
 
-  function commitDomOrder(){
-    const visibleIds = $$("[data-id]", els.list).map((card) => card.dataset.id);
-    if (!visibleIds.length) return;
+  
+function commitDomOrder(){
+  const visibleIds = $$("[data-id]", els.list)
+    .map(card => card.dataset.id);
 
-    const visibleSet = new Set(visibleIds);
-    const visibleItems = visibleIds
-      .map((id) => state.favorites.find((item) => itemId(item) === id))
-      .filter(Boolean);
+  if (!visibleIds.length) return;
 
-    const rebuilt = [];
-    let inserted = false;
+  const byId = new Map(
+    state.favorites.map(item => [
+      itemId(item),
+      item
+    ])
+  );
 
-    state.favorites.forEach((item) => {
-      if (visibleSet.has(itemId(item))){
-        if (!inserted){
-          rebuilt.push(...visibleItems);
-          inserted = true;
-        }
-      } else {
-        rebuilt.push(item);
-      }
-    });
+  const reordered = visibleIds
+    .map(id => byId.get(id))
+    .filter(Boolean);
 
-    state.favorites = rebuilt;
-    saveFavorites();
-  }
+  const visibleSet = new Set(visibleIds);
+  let index = 0;
+
+  state.favorites = state.favorites.map(item => {
+    if (!visibleSet.has(itemId(item))) {
+      return item;
+    }
+
+    return reordered[index++];
+  });
+
+  saveFavorites();
+}
+
 
   function renderFilters(){
     if (!els.filterGroups) return;
