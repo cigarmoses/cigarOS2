@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Favorites</title>
+  <!-- POS favorites horizontal photos: 2026-10-13-r1 -->
 
   <link rel="stylesheet" href="/css/type.css" />
   <link rel="stylesheet" href="/pos/pos.css?v=36" />
@@ -245,109 +246,103 @@
       padding:8px 2px 0;
     }
 
-    .brand-row{
+    /* Photos use the exact width of the former .brand-row cards.
+       The SVG rotates the original PNG without stretching it.
+       Only fully transparent image margins are excluded, when readable. */
+    #favoritesContent{ position:relative; }
+    .favorite-photo-row{
       position:relative;
-      display:grid;
-      grid-template-columns:56px minmax(0,1fr) 84px;
-      align-items:center;
-      gap:12px;
-      padding:14px 12px;
-      border-radius:24px;
-      background:var(--glass2);
-      box-shadow:var(--shadow-soft);
-      margin-bottom:10px;
-      isolation:isolate;
-      text-decoration:none;
-      color:inherit;
-    }
-
-    .brand-row::after{
-      content:"";
-      position:absolute;
-      right:-18px;
-      bottom:-18px;
-      width:110px;
-      height:110px;
-      border-radius:50%;
-      background:radial-gradient(circle, var(--glow) 0%, transparent 68%);
-      pointer-events:none;
-      z-index:0;
-    }
-
-    .brand-row > *{
-      position:relative;
-      z-index:1;
-    }
-
-    .row-ico{
-      width:56px;
-      height:56px;
-      border-radius:16px;
-      object-fit:cover;
-      background:transparent;
-      padding:0;
-      border:none;
-      box-shadow:none;
-    }
-
-    .brand-row-left{
-      min-width:0;
-      cursor:pointer;
-    }
-
-    .brand-row-title{
-      font-family:var(--font-display);
-      font-size:17px;
-      font-weight:750;
-      letter-spacing:-.02em;
-      color:var(--text);
-      line-height:1.04;
-    }
-
-    .brand-row-sub{
       display:block;
-      margin-top:4px;
-      font-family:var(--font-display);
-      font-size:14px;
-      font-weight:500;
-      line-height:1.1;
-      letter-spacing:-.01em;
-      color:var(--muted2);
-    }
-
-    .brand-row-right{
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-      gap:10px;
-      width:78px;
-      min-width:78px;
-    }
-
-    .brand-row-msrp{
-      font-family:var(--font-display);
-      font-size:18px;
-      font-weight:700;
-      letter-spacing:-.03em;
-      line-height:1;
-      color:var(--text);
-    }
-
-    .qty-btn{
-      width:26px;
-      height:26px;
-      border-radius:999px;
+      width:100%;
+      margin:0 0 10px;
+      padding:0;
       border:0;
-      background:var(--green);
-      color:#fff;
-      display:grid;
-      place-items:center;
-      font-size:16px;
-      font-weight:700;
-      cursor:pointer;
-      appearance:none;
+      background:transparent;
+      box-shadow:none;
+      touch-action:pan-y pinch-zoom;
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+    }
+    .favorite-photo-link{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      min-height:104px;
+      padding:10px 0;
+      color:var(--text);
+      text-decoration:none;
+      border:0;
+      background:transparent;
       -webkit-tap-highlight-color:transparent;
-      box-shadow:0 8px 16px rgba(0,0,0,.18);
+      -webkit-user-drag:none;
+      -webkit-touch-callout:none;
+      touch-action:pan-y pinch-zoom;
+      cursor:pointer;
+    }
+    .favorite-photo-link:focus-visible{
+      outline:2px solid var(--blue);
+      outline-offset:4px;
+      border-radius:8px;
+    }
+    .favorite-photo-art{
+      display:block;
+      flex:0 0 100%;
+      width:100%;
+      height:auto;
+      max-width:100%;
+      overflow:hidden;
+      pointer-events:none;
+      -webkit-user-select:none;
+      user-select:none;
+      filter:drop-shadow(0 8px 10px rgba(0,0,0,.16));
+    }
+    .favorite-photo-status{
+      color:var(--muted2);
+      font-family:var(--font-sans, -apple-system, sans-serif);
+      font-size:14px;
+      font-weight:400;
+      text-align:center;
+    }
+    .favorite-photo-row.is-photo-loading .favorite-photo-link{
+      min-height:104px;
+    }
+    .favorite-photo-row.is-sort-placeholder{
+      opacity:0 !important;
+      pointer-events:none !important;
+    }
+    .favorite-photo-preview{
+      opacity:.97;
+      will-change:transform;
+      pointer-events:none !important;
+    }
+    .favorite-photo-preview .favorite-photo-link{
+      cursor:grabbing;
+    }
+    .favorite-photo-preview .favorite-photo-art{
+      filter:drop-shadow(0 14px 14px rgba(0,0,0,.32));
+    }
+    body.favorites-is-sorting{
+      cursor:grabbing;
+      -webkit-user-select:none;
+      user-select:none;
+      overscroll-behavior:none;
+    }
+    .favorites-sr-only{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip-path:inset(50%);
+      white-space:nowrap;
+      border:0;
+    }
+    @media (prefers-reduced-motion:reduce){
+      .favorite-photo-row,.favorite-photo-preview{ transition:none; }
     }
 
     .empty,
@@ -685,36 +680,6 @@
         font-size:46px;
       }
 
-      .brand-row{
-        grid-template-columns:52px minmax(0,1fr) 72px;
-        padding:12px;
-        border-radius:20px;
-        margin-bottom:9px;
-      }
-
-      .row-ico{
-        width:52px;
-        height:52px;
-      }
-
-      .brand-row-sub{
-        font-size:13px;
-      }
-
-      .brand-row-msrp{
-        font-size:17px;
-      }
-
-      .qty-btn{
-        width:24px;
-        height:24px;
-        font-size:15px;
-      }
-
-      .brand-row-right{
-        width:72px;
-        min-width:72px;
-      }
     }
   </style>
 </head>
@@ -757,7 +722,9 @@
       <button class="clear-btn" id="clearFavoritesBtn" type="button" hidden>Clear All</button>
     </div>
 
-    <section class="brand-list" id="favoritesContent">
+    <p id="favoritesReorderHelp" class="favorites-sr-only">Tap a cigar photo to open its detail page. On a touch screen, hold then drag to reorder. With a mouse, click and drag. With a keyboard, focus a cigar link and press Alt plus Up or Down.</p>
+    <div id="favoritesAnnouncement" class="favorites-sr-only" role="status" aria-live="polite"></div>
+    <section class="brand-list" id="favoritesContent" role="list" aria-label="Favorite cigars">
       <div class="loading">Loading favorites…</div>
     </section>
   </main>
@@ -797,6 +764,8 @@
         "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
       const POS_CIGAR_FAVORITES_KEY = "cigaros_pos_favorites_cigars";
+      // Ordering is independent of membership: dragging never rewrites favorites.
+      const FAVORITES_ORDER_KEY = "cigaros_pos_favorites_order_v1";
 
       const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -806,6 +775,17 @@
 
       const state = {
         records: [],
+        catalogLoaded: false,
+        loadToken: 0,
+        visibleIds: [],
+        drag: null,
+        settling: false,
+        suppressClickUntil: 0,
+        ignoreMouseUntil: 0,
+        refreshQueued: false,
+        renderGeneration: 0,
+        photoJobs: [],
+        localImageUrls: [],
         actionRow: null,
         singleQty: 1,
         boxQty: 0,
@@ -1085,22 +1065,59 @@
       }
 
       function readFavorites(){
-        try{
-          const raw = JSON.parse(localStorage.getItem(POS_CIGAR_FAVORITES_KEY) || "[]");
-          return Array.isArray(raw) ? raw : [];
-        }catch{
-          return [];
-        }
+        const value = localStorage.getItem(POS_CIGAR_FAVORITES_KEY);
+        if(value === null) return [];
+        let items;
+        try { items = JSON.parse(value); }
+        catch { throw new Error("Saved favorites could not be read. Your stored data has not been changed."); }
+        if(!Array.isArray(items)) throw new Error("Saved favorites have an unrecognized format. Your stored data has not been changed.");
+        return items;
       }
 
       function writeFavorites(items){
         localStorage.setItem(POS_CIGAR_FAVORITES_KEY, JSON.stringify(items));
       }
 
+      function favoriteId(favorite){
+        if(typeof favorite === "string" || typeof favorite === "number") return String(favorite).trim();
+        if(!favorite || typeof favorite !== "object") return "";
+        return norm(favorite.key || favorite.id || favorite.href || favorite.url) ||
+          JSON.stringify([favorite.brand, favorite.line, favorite.cigar || favorite.name, favorite.vitola]);
+      }
+
+      function readOrder(){
+        try{
+          const value = JSON.parse(localStorage.getItem(FAVORITES_ORDER_KEY) || "[]");
+          return Array.isArray(value) ? value.filter(id => typeof id === "string") : [];
+        }catch { return []; }
+      }
+
+      function orderedFavorites(items){
+        const rank = new Map(readOrder().map((id, i) => [id, i]));
+        return items.map((item, i) => ({item, i})).sort((a,b) =>
+          (rank.get(favoriteId(a.item)) ?? Infinity) - (rank.get(favoriteId(b.item)) ?? Infinity) || a.i - b.i
+        ).map(entry => entry.item);
+      }
+
+      function persistOrder(ids){
+        // Read membership fresh. Keep newly added, hidden and unmatched items.
+        // Never write to POS_CIGAR_FAVORITES_KEY during a reorder.
+        const current = orderedFavorites(readFavorites());
+        const currentIds = [...new Set(current.map(favoriteId).filter(Boolean))];
+        const currentSet = new Set(currentIds);
+        const selected = [...new Set(ids)].filter(id => currentSet.has(id));
+        const selectedSet = new Set(selected);
+        let at = 0;
+        const next = currentIds.map(id => selectedSet.has(id) ? selected[at++] : id);
+        localStorage.setItem(FAVORITES_ORDER_KEY, JSON.stringify(next));
+      }
+
       function findRecordByFavorite(records, fav){
         const key = String(fav?.key || fav || "").trim();
         if(!key) return null;
 
+        const exact = records.find(r => resolveDetailKey(r) === key || resolveFavoriteKey(r) === key);
+        if(exact) return exact;
         const loose = normalizeLoose(key);
 
         return records.find((r) => {
@@ -1314,45 +1331,499 @@
         closeActionSheet();
       }
 
-      function createRow(r){
-        const iconCandidates = rowIconCandidatesForRow(r);
-        const row = document.createElement("article");
+      /* Horizontal cigar photos. No band/brand icon is used as a photo fallback. */
+      function photoURL(value){
+        const raw = String(value || "").trim();
+        if(!raw || /^(n\/a|none|null|undefined|—)$/i.test(raw)) return "";
+        if(/^blob:/.test(raw) || /^data:image\/(png|jpeg|webp);/i.test(raw)) return raw;
+        const path = normalizeAssetPath(raw);
+        try{
+          const url = new URL(path, location.origin);
+          return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+        }catch{ return ""; }
+      }
 
-        row.className = "brand-row";
-        row.innerHTML = `
-          <img class="row-ico" src="${esc(iconCandidates[0] || "")}" alt="" loading="lazy" decoding="async" />
+      function safeDetailHref(value){
+        if(!value) return "";
+        try{
+          const url = new URL(value, location.origin);
+          return url.origin === location.origin && /^\/pos\/cigars\/cigar(?:\.html)?\/?$/.test(url.pathname)
+            ? url.pathname + url.search + url.hash : "";
+        }catch{ return ""; }
+      }
 
-          <div class="brand-row-left">
-            <div class="brand-row-title">${esc(resolveDisplayName(r) || "Unnamed cigar")}</div>
-            <div class="brand-row-sub">${esc(resolveVitola(r) || "—")}</div>
-          </div>
-
-          <div class="brand-row-right">
-            <div class="brand-row-msrp">${esc(resolvePrice(r))}</div>
-            <button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu">+</button>
-          </div>
-        `;
-
-        const icon = $(".row-ico", row);
-        const left = $(".brand-row-left", row);
-        const plus = $(".qty-btn--plus", row);
-
-        bindImageFallback(icon, iconCandidates);
-
-        icon?.addEventListener("click", () => {
-          window.location.href = makeDetailHref(r);
+      function recordFromFavorite(favorite){
+        if(!favorite || typeof favorite !== "object") return {key:favoriteId(favorite), __fromFavorite:true};
+        const record = {};
+        Object.entries(favorite).forEach(([key,value]) => {
+          if(typeof value === "string" || typeof value === "number") record[normalizeHeader(key)] = String(value);
         });
+        record.key = favoriteId(favorite);
+        record.cigar = record.cigar || favorite.name || favorite.displayName || "";
+        // A saved display name may already contain the line.
+        if(!favorite.cigar && (favorite.name || favorite.displayName)) record.line = "";
+        record.__fromFavorite = true;
+        return record;
+      }
 
-        left?.addEventListener("click", () => {
-          window.location.href = makeDetailHref(r);
+      function photoCandidates(record, favorite){
+        const source = getField(record, ["cigar_img", "cigar_image", "cigarimg", "photo", "image"]);
+        const favoriteObject = favorite && typeof favorite === "object" ? favorite : {};
+        const saved = [favoriteObject.cigarImage, favoriteObject.img, favoriteObject.image];
+        const extra = Array.isArray(favoriteObject.imageCandidates) ? favoriteObject.imageCandidates : [];
+        const out = [source, ...saved, ...extra];
+        const brand = normalizeBrand(resolveBrandVal(record));
+        const line = normalizeBrand(resolveLine(record));
+        const cigar = normalizeBrand(resolveName(record));
+        const vitola = normalizeBrand(resolveVitola(record));
+        const explicit = getField(record,["cuban","is_cuban"]).toLowerCase();
+        const cuban = ["x","true","yes","1","cuba","cuban"].includes(explicit) ||
+          (!explicit && (resolveOrigin(record).toLowerCase() === "cuba" || /habanos/i.test(resolveManufacturerVal(record))));
+        if(cuban && brand){
+          if(line && cigar) out.push(`/img/cigars/cuban/${brand}/${line}${cigar}.png`);
+          if(line && cigar && vitola) out.push(`/img/cigars/cuban/${brand}/${line}${cigar}${vitola}.png`);
+          if(cigar) out.push(`/img/cigars/cuban/${brand}/${cigar}.png`);
+        }
+        if(brand && cigar){
+          const names = [
+            line ? brand+line+cigar : "",
+            line && vitola ? brand+line+cigar+vitola : "",
+            line ? line+cigar : "",
+            line && vitola ? line+cigar+vitola : "",
+            line && vitola ? line+vitola : "",
+            brand+cigar,
+            vitola ? brand+cigar+vitola : "",
+            cigar,
+            vitola ? cigar+vitola : ""
+          ];
+          [...new Set(names.filter(Boolean))].forEach(name => out.push(`/img/cigars/${brand}/${name}.png`));
+        }
+        return [...new Set(out.map(photoURL).filter(url => url && !/\/(?:icons|bandart)\//i.test(url)))];
+      }
+
+      let localPhotoDatabase;
+      function getLocalPhotoDatabase(){
+        if(localPhotoDatabase) return localPhotoDatabase;
+        localPhotoDatabase = new Promise(resolve => {
+          if(!window.indexedDB){ resolve(null); return; }
+          let request, done=false;
+          const timer=setTimeout(() => finish(null),2000);
+          const finish=value => {
+            if(done){ value?.close?.(); return; }
+            done=true;clearTimeout(timer);resolve(value);
+          };
+          try{ request = indexedDB.open("cigaros_demo_pos"); }
+          catch { finish(null); return; }
+          // Read an existing editor image only. Do not create a new database.
+          request.onupgradeneeded = () => request.transaction.abort();
+          request.onerror = () => finish(null);
+          request.onblocked = () => finish(null);
+          request.onsuccess = () => {
+            const db = request.result;
+            if(!db.objectStoreNames.contains("records")){ db.close(); finish(null); return; }
+            db.onversionchange = () => db.close();
+            finish(db);
+          };
         });
+        return localPhotoDatabase;
+      }
 
-        plus?.addEventListener("click", (e) => {
-          e.stopPropagation();
-          openActionSheet(r);
+      async function savedEditorPhoto(record){
+        const key = resolveDetailKey(record);
+        if(!key) return null;
+        const db = await getLocalPhotoDatabase();
+        if(!db) return null;
+        return new Promise(resolve => {
+          try{
+            const tx = db.transaction("records", "readonly");
+            const request = tx.objectStore("records").get(key);
+            tx.oncomplete = () => resolve(request.result?.image?.blob instanceof Blob ? request.result.image.blob : null);
+            tx.onabort = () => resolve(null);
+            tx.onerror = () => resolve(null);
+          }catch { resolve(null); }
         });
+      }
 
+      function releasePhotos(){
+        state.renderGeneration++;
+        for(const cancel of [...state.photoJobs]) cancel();
+        state.photoJobs = [];
+        state.localImageUrls.forEach(url => URL.revokeObjectURL(url));
+        state.localImageUrls = [];
+      }
+
+      function preloadPhoto(url){
+        return new Promise(resolve => {
+          const img = new Image();
+          let finished = false;
+          let timeout;
+          const finish = value => {
+            if(finished) return;
+            finished = true;
+            clearTimeout(timeout);
+            img.onload = img.onerror = null;
+            const at = state.photoJobs.indexOf(cancel);
+            if(at >= 0) state.photoJobs.splice(at,1);
+            resolve(value);
+          };
+          const cancel = () => { finish(null); img.removeAttribute("src"); };
+          state.photoJobs.push(cancel);
+          img.onload = () => finish(img.naturalWidth && img.naturalHeight ? img : null);
+          img.onerror = () => finish(null);
+          timeout = setTimeout(() => { finish(null); img.removeAttribute("src"); }, 6000);
+          img.decoding = "async";
+          img.src = url;
+        });
+      }
+
+      function visiblePhotoBounds(img){
+        const width = img.naturalWidth, height = img.naturalHeight;
+        const full = {x:0,y:0,width,height};
+        try{
+          // Remove transparent padding only, never leaf pixels or white backgrounds.
+          // Downsample solely for bounds detection; the displayed image stays original.
+          const scale = Math.min(1, 1400 / Math.max(width,height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.ceil(width*scale));
+          canvas.height = Math.max(1, Math.ceil(height*scale));
+          const ctx = canvas.getContext("2d", {willReadFrequently:true});
+          if(!ctx) return full;
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          const pixels = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+          let left=canvas.width, right=-1, top=canvas.height, bottom=-1;
+          for(let y=0;y<canvas.height;y++) for(let x=0;x<canvas.width;x++){
+            if(pixels[(y*canvas.width+x)*4+3] > 0){
+              left=Math.min(left,x); right=Math.max(right,x);
+              top=Math.min(top,y); bottom=Math.max(bottom,y);
+            }
+          }
+          if(right < left || bottom < top) return full;
+          const sx=width/canvas.width, sy=height/canvas.height;
+          const x=Math.max(0,Math.floor((left-1)*sx));
+          const y=Math.max(0,Math.floor((top-1)*sy));
+          const x2=Math.min(width,Math.ceil((right+2)*sx));
+          const y2=Math.min(height,Math.ceil((bottom+2)*sy));
+          return {x,y,width:x2-x,height:y2-y};
+        }catch{
+          // Cross-origin images without CORS remain usable, without alpha trimming.
+          return full;
+        }
+      }
+
+      function makePhotoArt(img, record, favorite){
+        const bounds=visiblePhotoBounds(img);
+        const hinted=normalizeLoose(getField(record,["cigar_image_orientation","image_orientation"]) || favorite?.imageOrientation || "");
+        const orientation=["head top","head bottom","head left","head right"].includes(hinted)
+          ? hinted : bounds.height > bounds.width ? "head top" : "head right";
+        const vertical=orientation === "head top" || orientation === "head bottom";
+        const w=vertical ? bounds.height : bounds.width;
+        const h=vertical ? bounds.width : bounds.height;
+        const ns="http://www.w3.org/2000/svg";
+        const art=document.createElementNS(ns,"svg");
+        art.classList.add("favorite-photo-art");
+        art.setAttribute("viewBox",`0 0 ${w} ${h}`);
+        art.setAttribute("width",String(w));
+        art.setAttribute("height",String(h));
+        art.setAttribute("preserveAspectRatio","xMidYMid meet");
+        art.setAttribute("aria-hidden","true");
+        art.setAttribute("focusable","false");
+        art.dataset.orientation=orientation;
+        art.style.aspectRatio=`${w} / ${h}`;
+        const image=document.createElementNS(ns,"image");
+        image.setAttribute("width",String(img.naturalWidth));
+        image.setAttribute("height",String(img.naturalHeight));
+        image.setAttribute("href",img.src);
+        image.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href",img.src);
+        const {x,y,width,height}=bounds;
+        const transform=orientation === "head top" ? `matrix(0 1 -1 0 ${y+height} ${-x})`
+          : orientation === "head bottom" ? `matrix(0 -1 1 0 ${-y} ${x+width})`
+          : orientation === "head left" ? `matrix(-1 0 0 -1 ${x+width} ${y+height})`
+          : `translate(${-x} ${-y})`;
+        image.setAttribute("transform",transform);
+        art.appendChild(image);
+        return art;
+      }
+
+      async function loadCigarPhoto(row, record, favorite, generation){
+        try{
+          const candidates=photoCandidates(record,favorite);
+          const local=await savedEditorPhoto(record);
+          if(generation !== state.renderGeneration || !row.isConnected) return;
+          if(local){
+            const url=URL.createObjectURL(local);
+            state.localImageUrls.push(url);
+            candidates.unshift(url);
+          }
+          for(const url of candidates){
+            const img=await preloadPhoto(url);
+            if(generation !== state.renderGeneration || !row.isConnected) return;
+            if(!img) continue;
+            const art=makePhotoArt(img,record,favorite);
+            row.querySelector(".favorite-photo-link").replaceChildren(art);
+            row.classList.remove("is-photo-loading");
+            row.dataset.photoSource=url;
+            return;
+          }
+          row.querySelector(".favorite-photo-status").textContent="Photo unavailable — tap for details";
+        }catch(error){
+          console.warn("[pos favorites] Photo unavailable:",error);
+          const message=row.querySelector(".favorite-photo-status");
+          if(message) message.textContent="Photo unavailable — tap for details";
+        }finally{
+          if(generation === state.renderGeneration) row.classList.remove("is-photo-loading");
+        }
+      }
+
+      function createRow(record, favorite, id){
+        const row=document.createElement("div");
+        row.className="favorite-photo-row is-photo-loading";
+        row.dataset.favoriteId=id;
+        row.setAttribute("role","listitem");
+        const link=document.createElement("a");
+        link.className="favorite-photo-link";
+        link.draggable=false;
+        link.href=record.__fromFavorite
+          ? safeDetailHref(favorite?.href || favorite?.url) || makeDetailHref(record)
+          : makeDetailHref(record);
+        const label=[resolveBrandVal(record),resolveDisplayName(record)].filter(Boolean).join(" ") || "Favorite cigar";
+        link.setAttribute("aria-label",label);
+        link.setAttribute("aria-describedby","favoritesReorderHelp");
+        const message=document.createElement("span");
+        message.className="favorite-photo-status";
+        message.textContent="Loading photo…";
+        link.appendChild(message);
+        row.appendChild(link);
         return row;
+      }
+
+      /* Touch and mouse sorting are local to this page. The actual favorite
+         records are never changed during sorting; only the separate ID order. */
+      const prefersReducedMotion=() => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const photoRows=() => Array.from(content.children).filter(el => el.matches(".favorite-photo-row[data-favorite-id]"));
+      function photoRowAt(target){
+        const row=target instanceof Element ? target.closest(".favorite-photo-row[data-favorite-id]") : null;
+        return row?.parentElement === content ? row : null;
+      }
+      function announce(message){
+        const live=$("#favoritesAnnouncement");
+        if(live) live.textContent=String(message || "");
+      }
+      function requestQueuedRefresh(){
+        if(!state.refreshQueued) return;
+        state.refreshQueued=false;
+        refreshFavorites();
+      }
+      function startPhotoPress(row,x,y,kind,id){
+        if(state.settling || row.classList.contains("is-photo-loading")) return;
+        cancelPhotoDrag();
+        const drag={row,x,y,startX:x,startY:y,kind,id,active:false,timer:0,raf:0,
+          original:photoRows().map(el => el.dataset.favoriteId),clone:null,animations:[],lastFrame:0};
+        state.drag=drag;
+        drag.timer=setTimeout(() => activatePhotoDrag(drag),kind === "touch" ? 300 : 240);
+      }
+      function activatePhotoDrag(drag){
+        if(state.drag !== drag || !drag.row.isConnected) return;
+        clearTimeout(drag.timer);
+        drag.active=true;
+        const rect=drag.row.getBoundingClientRect();
+        drag.rect={top:rect.top,left:rect.left,width:rect.width,height:rect.height};
+        drag.offsetY=drag.startY-rect.top;
+        const clone=drag.row.cloneNode(true);
+        clone.removeAttribute("data-favorite-id");
+        clone.removeAttribute("role");
+        clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+        clone.querySelectorAll("a").forEach(el => {el.removeAttribute("href");el.tabIndex=-1;});
+        clone.classList.add("favorite-photo-preview");
+        clone.setAttribute("aria-hidden","true");
+        clone.inert=true;
+        clone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;margin:0;z-index:1100;pointer-events:none;transition:none;`;
+        document.body.appendChild(clone);
+        drag.clone=clone;
+        drag.row.classList.add("is-sort-placeholder");
+        document.body.classList.add("favorites-is-sorting");
+        announce("Picked up "+drag.row.querySelector("a").getAttribute("aria-label"));
+        drag.raf=requestAnimationFrame(photoDragFrame);
+      }
+      function movePhotoDrag(x,y,kind,id,event){
+        const drag=state.drag;
+        if(!drag || drag.kind !== kind || drag.id !== id || state.settling) return;
+        drag.x=x;drag.y=y;
+        if(!drag.active && Math.hypot(x-drag.startX,y-drag.startY)>8){
+          if(kind === "touch"){
+            state.suppressClickUntil=Date.now()+350;
+            cancelPhotoDrag();
+            return; // A quick swipe remains native page scrolling.
+          }
+          activatePhotoDrag(drag);
+        }
+        if(drag.active && event.cancelable) event.preventDefault();
+      }
+      function movePhotoPlaceholder(drag){
+        const others=photoRows().filter(row => row !== drag.row);
+        const centerY=drag.y-drag.offsetY+drag.rect.height/2;
+        const listTop=content.getBoundingClientRect().top;
+        let next=null;
+        // offsetTop is layout-based, so animated neighbors cannot cause jitter.
+        for(const row of others){
+          if(centerY < listTop+row.offsetTop+row.offsetHeight/2){next=row;break;}
+        }
+        if(drag.row.nextElementSibling === next) return;
+        const before=new Map(others.map(row => [row,row.getBoundingClientRect()]));
+        drag.animations.forEach(animation => animation.cancel());
+        drag.animations=[];
+        content.insertBefore(drag.row,next);
+        if(!prefersReducedMotion()) others.forEach(row => {
+          const old=before.get(row),current=row.getBoundingClientRect();
+          const dy=old.top-current.top;
+          if(dy && row.animate) drag.animations.push(row.animate(
+            [{transform:`translateY(${dy}px)`},{transform:"translateY(0)"}],
+            {duration:160,easing:"ease-out"}
+          ));
+        });
+      }
+      function photoDragFrame(time){
+        const drag=state.drag;
+        if(!drag?.active || state.settling) return;
+        const view=window.visualViewport;
+        const top=view?.offsetTop || 0;
+        const height=view?.height || window.innerHeight;
+        const nav=document.querySelector(".cigars-bottom-bar-inner")?.getBoundingClientRect();
+        const bottom=Math.min(top+height,nav?.top || top+height);
+        const edge=64;
+        const elapsed=Math.min((time-(drag.lastFrame || time))/16.67,2);
+        drag.lastFrame=time;
+        const scroll=drag.y < top+edge ? -Math.min(12,(top+edge-drag.y)/4)
+          : drag.y > bottom-edge ? Math.min(12,(drag.y-bottom+edge)/4) : 0;
+        if(scroll) window.scrollBy(0,scroll*elapsed);
+        drag.clone.style.transform=`translate3d(0,${drag.y-drag.startY}px,0)`;
+        movePhotoPlaceholder(drag);
+        drag.raf=requestAnimationFrame(photoDragFrame);
+      }
+      function cleanupPhotoDrag(drag){
+        clearTimeout(drag.timer);
+        cancelAnimationFrame(drag.raf);
+        drag.animations.forEach(animation => animation.cancel());
+        drag.dropAnimation?.cancel();
+        drag.clone?.remove();
+        drag.row.classList.remove("is-sort-placeholder");
+        document.body.classList.remove("favorites-is-sorting");
+      }
+      function restorePhotoOrder(ids){
+        const rows=new Map(photoRows().map(row => [row.dataset.favoriteId,row]));
+        ids.forEach(id => {if(rows.has(id)) content.appendChild(rows.get(id));});
+      }
+      function cancelPhotoDrag(){
+        const drag=state.drag;
+        if(!drag) return;
+        if(drag.active){
+          restorePhotoOrder(drag.original);
+          state.suppressClickUntil=Date.now()+600;
+        }
+        cleanupPhotoDrag(drag);
+        state.drag=null;
+        state.settling=false;
+        requestQueuedRefresh();
+      }
+      async function finishPhotoDrag(event){
+        const drag=state.drag;
+        if(!drag || state.settling) return;
+        clearTimeout(drag.timer);
+        if(!drag.active){
+          cleanupPhotoDrag(drag);state.drag=null;
+          requestQueuedRefresh();return;
+        }
+        if(event?.cancelable) event.preventDefault();
+        state.suppressClickUntil=Date.now()+800;
+        cancelAnimationFrame(drag.raf);
+        state.settling=true;
+        const target=drag.row.getBoundingClientRect();
+        try{
+          if(drag.clone?.animate && !prefersReducedMotion()){
+            drag.dropAnimation=drag.clone.animate([
+              {transform:drag.clone.style.transform || "translate3d(0,0,0)"},
+              {transform:`translate3d(${target.left-drag.rect.left}px,${target.top-drag.rect.top}px,0)`}
+            ],{duration:130,easing:"ease-out",fill:"forwards"});
+            await drag.dropAnimation.finished.catch(() => {});
+          }
+          if(state.drag !== drag) return;
+          persistOrder(photoRows().map(row => row.dataset.favoriteId));
+          announce("New favorites order saved.");
+        }catch(error){
+          restorePhotoOrder(drag.original);
+          showToast("Could not save the new order. Your favorites have not changed.");
+          console.warn("[pos favorites] Order save failed:",error);
+        }finally{
+          if(state.drag === drag){
+            cleanupPhotoDrag(drag);state.drag=null;state.settling=false;
+            requestQueuedRefresh();
+          }
+        }
+      }
+      function touchWithId(list,id){return Array.from(list).find(touch => touch.identifier === id);}
+      function bindPhotoInteractions(){
+        content.addEventListener("touchstart",event => {
+          state.ignoreMouseUntil=Date.now()+1200;
+          if(event.touches.length !== 1){cancelPhotoDrag();return;}
+          const row=photoRowAt(event.target);if(!row) return;
+          const touch=event.changedTouches[0];
+          startPhotoPress(row,touch.clientX,touch.clientY,"touch",touch.identifier);
+        },{passive:true});
+        document.addEventListener("touchstart",event => {
+          if(event.touches.length>1) cancelPhotoDrag();
+        },{passive:true});
+        document.addEventListener("touchmove",event => {
+          const drag=state.drag;if(!drag || drag.kind !== "touch") return;
+          const touch=touchWithId(event.touches,drag.id);
+          if(touch) movePhotoDrag(touch.clientX,touch.clientY,"touch",drag.id,event);
+        },{passive:false});
+        document.addEventListener("touchend",event => {
+          const drag=state.drag;
+          if(drag?.kind === "touch" && touchWithId(event.changedTouches,drag.id)){
+            state.ignoreMouseUntil=Date.now()+1200;
+            void finishPhotoDrag(event);
+          }
+        },{passive:false});
+        document.addEventListener("touchcancel",cancelPhotoDrag,{passive:true});
+        content.addEventListener("mousedown",event => {
+          if(event.button !== 0 || event.ctrlKey || event.metaKey || Date.now()<state.ignoreMouseUntil) return;
+          const row=photoRowAt(event.target);
+          if(row) startPhotoPress(row,event.clientX,event.clientY,"mouse",0);
+        });
+        document.addEventListener("mousemove",event => movePhotoDrag(event.clientX,event.clientY,"mouse",0,event));
+        document.addEventListener("mouseup",event => {if(state.drag?.kind === "mouse") void finishPhotoDrag(event);});
+        content.addEventListener("dragstart",event => event.preventDefault());
+        content.addEventListener("contextmenu",event => {if(photoRowAt(event.target)) event.preventDefault();});
+        content.addEventListener("click",event => {
+          if(Date.now()<state.suppressClickUntil || state.drag?.active || state.settling){
+            event.preventDefault();event.stopImmediatePropagation();
+          }
+        },true);
+        content.addEventListener("keydown",event => {
+          const row=photoRowAt(event.target);
+          if(!row || !event.altKey || !["ArrowUp","ArrowDown"].includes(event.key)) return;
+          event.preventDefault();cancelPhotoDrag();
+          const rows=photoRows(),at=rows.indexOf(row),dest=at+(event.key === "ArrowUp" ? -1 : 1);
+          if(dest<0 || dest>=rows.length) return;
+          [rows[at],rows[dest]]=[rows[dest],rows[at]];
+          try{
+            persistOrder(rows.map(item => item.dataset.favoriteId));
+            rows.forEach(item => content.appendChild(item));
+            row.querySelector("a").focus({preventScroll:true});
+            announce("New favorites order saved.");
+          }catch(error){showToast("Could not save the new order.");}
+        });
+        document.addEventListener("keydown",event => {if(event.key === "Escape") cancelPhotoDrag();});
+        window.addEventListener("scroll",() => {if(state.drag && !state.drag.active) cancelPhotoDrag();},{passive:true});
+        window.addEventListener("resize",cancelPhotoDrag);
+        window.addEventListener("pagehide",cancelPhotoDrag);
+        document.addEventListener("visibilitychange",() => {
+          if(document.hidden) cancelPhotoDrag();
+          else refreshFavorites();
+        });
+        window.addEventListener("pageshow",event => {if(event.persisted) refreshFavorites();});
+        window.addEventListener("storage",event => {
+          if(event.key === POS_CIGAR_FAVORITES_KEY || event.key === FAVORITES_ORDER_KEY || event.key === null) refreshFavorites();
+        });
       }
 
       function updateSummary(count){
@@ -1367,34 +1838,66 @@
       }
 
       async function loadFavorites(){
-        const favorites = readFavorites();
-
+        if(state.drag || state.settling){ state.refreshQueued = true; return; }
+        const token = ++state.loadToken;
+        const favorites = orderedFavorites(readFavorites());
         updateSummary(favorites.length);
-
         if(!favorites.length){
-          content.innerHTML = `<div class="empty">No cigar favorites yet.</div>`;
+          releasePhotos();
+          content.innerHTML = '<div class="empty">No cigar favorites yet.</div>';
+          state.visibleIds = [];
           return;
         }
 
-        const res = await fetch(SHEET_CSV_URL, { cache:"no-store" });
-        if(!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
-
-        const text = await res.text();
-        state.records = mapRows(parseCSV(text));
-
-        const found = favorites
-          .map((fav) => findRecordByFavorite(state.records, fav))
-          .filter(Boolean);
-
-        updateSummary(found.length);
-
-        if(!found.length){
-          content.innerHTML = `<div class="empty">Favorites were saved, but no matching cigars were found in the current sheet.</div>`;
-          return;
+        let catalogError = null;
+        if(!state.catalogLoaded){
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 15000);
+          try{
+            const res = await fetch(SHEET_CSV_URL, {cache:"no-store", signal:controller.signal});
+            if(!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+            state.records = mapRows(parseCSV(await res.text()));
+            state.catalogLoaded = true;
+          }catch(error){ catalogError = error; }
+          finally{ clearTimeout(timeout); }
         }
+        if(token !== state.loadToken) return;
+        if(state.drag || state.settling){ state.refreshQueued = true; return; }
 
-        content.innerHTML = "";
-        found.forEach((r) => content.appendChild(createRow(r)));
+        releasePhotos();
+        const generation = state.renderGeneration;
+        const latest = orderedFavorites(readFavorites());
+        const seen = new Set();
+        const entries = latest.flatMap(favorite => {
+          const id = favoriteId(favorite);
+          if(!id || seen.has(id)) return [];
+          seen.add(id);
+          const record = findRecordByFavorite(state.records, favorite) || recordFromFavorite(favorite);
+          return [{record, favorite, id}];
+        });
+        content.replaceChildren();
+        state.visibleIds = entries.map(entry => entry.id);
+        entries.forEach(({record, favorite, id}) => {
+          const row = createRow(record, favorite, id);
+          content.appendChild(row);
+          void loadCigarPhoto(row, record, favorite, generation);
+        });
+        updateSummary(entries.length);
+        if(!entries.length) content.innerHTML = '<div class="empty">No cigar favorites yet.</div>';
+        if(catalogError){
+          console.warn("[pos favorites] Catalog unavailable:", catalogError);
+          announce("The cigar catalog could not be loaded. Saved favorites have not been changed.");
+        }
+      }
+
+      function refreshFavorites(){
+        loadFavorites().catch(error => {
+          console.warn("[pos favorites] Load error:", error);
+          summary.textContent = "Could not load favorites.";
+          // Do not erase stored favorites, even on a network/storage failure.
+          if(!content.querySelector(".favorite-photo-row")) content.innerHTML = '<div class="error">Could not read favorites. Please reload. Your saved data has not been cleared.</div>';
+          announce(error.message || "Could not load favorites.");
+        });
       }
 
       function applyTheme(theme){
@@ -1480,18 +1983,17 @@
         });
 
         clearBtn?.addEventListener("click", () => {
-          writeFavorites([]);
-          updateSummary(0);
-          content.innerHTML = `<div class="empty">No cigar favorites yet.</div>`;
+          cancelPhotoDrag();
+          try{
+            writeFavorites([]);
+            refreshFavorites();
+          }catch(error){ showToast("Could not clear favorites. Please allow browser storage."); }
         });
 
         ensureActionSheet();
 
-        loadFavorites().catch((err) => {
-          console.warn("[pos favorites] load error:", err);
-          content.innerHTML = `<div class="error">Error loading favorites.</div>`;
-          summary.textContent = "Could not load favorites.";
-        });
+        bindPhotoInteractions();
+        refreshFavorites();
       });
     })();
   </script>
