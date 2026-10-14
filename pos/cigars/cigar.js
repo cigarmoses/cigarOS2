@@ -370,7 +370,7 @@
 })();
 
 
-/* /pos/cigars/cigar.js — Portfolio swipe 2026-10-13-r1.
+/* /pos/cigars/cigar.js — Portfolio swipe / inline glass navigation 2026-10-14-r1.
    Based on the supplied Favorites repair. Same editor fields, barcode renderer,
    local storage keys, HUB write endpoint and explicit-save behavior. */
 (() => {
@@ -750,7 +750,6 @@
   let portfolioBusy = false;
   let portfolioControls = null;
   let portfolioStatus = null;
-  let portfolioPositionFrame = 0;
   let localImageRequest = 0;
   let portfolioView = 0;
 
@@ -850,33 +849,33 @@
       #cdCard.cd-portfolio-switching { pointer-events: none; will-change: transform, opacity; }
       .cd-wrap.cd-portfolio-viewport { overflow-x: clip; }
       #cdCard .cd-stick, #cdCard .cd-badge { -webkit-user-drag: none; }
-      #cdPortfolioControls { position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
+      #cdPortfolioControls {
+        display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+        gap: 16px; width: 100%; box-sizing: border-box; margin: 12px 0 0; padding: 4px;
+      }
       #cdPortfolioControls[hidden] { display: none !important; }
       #cdPortfolioControls .cd-portfolio-arrow {
-        position: absolute; top: 50%; transform: translateY(-50%);
-        display: grid; place-items: center; width: 44px; height: 44px;
-        min-width: 44px; min-height: 44px; padding: 0; margin: 0;
-        border: 0; border-radius: 50%; appearance: none; -webkit-appearance: none;
-        background: transparent; color: #f6f8ff; cursor: pointer; pointer-events: auto;
+        position: relative; display: grid; place-items: center; flex: 0 0 48px;
+        width: 48px; height: 48px; min-width: 48px; min-height: 48px;
+        padding: 0; margin: 0; box-sizing: border-box;
+        border: 1px solid rgba(255, 255, 255, .24); border-radius: 50%;
+        appearance: none; -webkit-appearance: none;
+        background: linear-gradient(145deg, rgba(255,255,255,.19), rgba(255,255,255,.03)), rgba(28,38,55,.58);
+        color: #f6f8ff; cursor: pointer;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(255,255,255,.06), 0 4px 14px rgba(0,0,0,.22);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        backdrop-filter: blur(20px) saturate(180%);
         touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-        transition: opacity .15s ease; isolation: isolate;
+        transition: opacity .15s ease, transform .15s ease;
       }
-      #cdPortfolioControls .cd-portfolio-arrow::before {
-        content: ""; position: absolute; inset: 6px; border-radius: 50%; z-index: -1;
-        background: rgba(48, 68, 113, .72);
-        box-shadow: 0 0 16px rgba(71, 109, 189, .24), 0 2px 8px rgba(0, 0, 0, .13);
-        -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-      }
-      #cdPortfolioPrev { left: 2px; }
-      #cdPortfolioNext { right: 2px; }
-      #cdPortfolioControls .cd-portfolio-arrow svg { display: block; width: 18px; height: 18px; }
-      #cdPortfolioControls .cd-portfolio-arrow:disabled { opacity: .22; cursor: default; }
-      #cdPortfolioControls .cd-portfolio-arrow:not(:disabled):active::before { transform: scale(.92); }
-      #cdPortfolioControls .cd-portfolio-arrow:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-      html[data-theme="light"] #cdPortfolioControls .cd-portfolio-arrow { color: #16263d; }
-      html[data-theme="light"] #cdPortfolioControls .cd-portfolio-arrow::before {
-        background: rgba(229, 236, 247, .88);
-        box-shadow: 0 2px 12px rgba(22, 38, 61, .15);
+      #cdPortfolioControls .cd-portfolio-arrow svg { display: block; width: 20px; height: 20px; }
+      #cdPortfolioControls .cd-portfolio-arrow:disabled { opacity: .35; cursor: default; }
+      #cdPortfolioControls .cd-portfolio-arrow:not(:disabled):active { transform: scale(.94); }
+      #cdPortfolioControls .cd-portfolio-arrow:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+      html[data-theme="light"] #cdPortfolioControls .cd-portfolio-arrow {
+        color: #16263d; border-color: rgba(255,255,255,.85);
+        background: linear-gradient(145deg, rgba(255,255,255,.72), rgba(255,255,255,.18)), rgba(225,233,244,.48);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(129,150,177,.16), 0 4px 14px rgba(22,38,61,.14);
       }
       #cdPortfolioStatus {
         position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -891,26 +890,12 @@
   }
 
   function positionPortfolioControls() {
-    portfolioPositionFrame = 0;
-    if (!portfolioControls || portfolioControls.hidden || !card) return;
-    const bounds = card.getBoundingClientRect(), width = document.documentElement.clientWidth;
-    const height = window.innerHeight;
-    const previous = $("#cdPortfolioPrev", portfolioControls), next = $("#cdPortfolioNext", portfolioControls);
-    // Sit outside the content when there is room; otherwise use the screen edges.
-    previous.style.left = Math.max(2, bounds.left - 46) + "px";
-    next.style.right = Math.max(2, width - bounds.right - 46) + "px";
-    // Prefer the gap below Wrapper Shade, matching the supplied mockup, rather than covering text.
-    const shade = $(".cd-shade-card", card), minis = $(".cd-mini-grid", card);
-    let y = height * .5;
-    if (shade && minis) {
-      const gap = (shade.getBoundingClientRect().bottom + minis.getBoundingClientRect().top) / 2;
-      if (gap >= height * .3 && gap <= height * .7) y = gap;
+    if (!portfolioControls || !card) return;
+    const tobacco = $(".cd-tobaccos", card);
+    // Reuse the same buttons after every render, preserving their click listeners.
+    if (tobacco && tobacco.nextElementSibling !== portfolioControls) {
+      tobacco.insertAdjacentElement("afterend", portfolioControls);
     }
-    previous.style.top = next.style.top = Math.round(y) + "px";
-  }
-
-  function schedulePortfolioPosition() {
-    if (!portfolioPositionFrame) portfolioPositionFrame = requestAnimationFrame(positionPortfolioControls);
   }
 
   function updatePortfolioControls(announce = false) {
@@ -932,7 +917,7 @@
     if (announce && portfolioStatus) {
       portfolioStatus.textContent = `${getBrand(activeRecord)}. ${portfolioLabel(activeRecord)}. Cigar ${portfolioIndex + 1} of ${portfolio.length}.`;
     }
-    schedulePortfolioPosition();
+    positionPortfolioControls();
   }
 
   async function refreshPortfolioImage(rec, view) {
@@ -948,7 +933,7 @@
       for (const [otherKey, url] of localCigarImages) {
         if (otherKey !== key) { URL.revokeObjectURL(url); localCigarImages.delete(otherKey); }
       }
-      schedulePortfolioPosition();
+      positionPortfolioControls();
     } catch (error) { console.warn("[POS image] Local image could not be loaded:", error); }
   }
 
@@ -1092,7 +1077,6 @@
       <button id="cdPortfolioNext" class="cd-portfolio-arrow" type="button" aria-label="Next cigar" aria-controls="cdCard">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>`;
-    document.body.appendChild(portfolioControls);
     portfolioStatus = document.createElement("div");
     portfolioStatus.id = "cdPortfolioStatus";
     portfolioStatus.setAttribute("role", "status");
@@ -1102,10 +1086,6 @@
     $("#cdPortfolioPrev", portfolioControls).addEventListener("click", () => { void movePortfolio(-1); });
     $("#cdPortfolioNext", portfolioControls).addEventListener("click", () => { void movePortfolio(1); });
     wirePortfolioGestures();
-    window.addEventListener("resize", schedulePortfolioPosition, {passive:true});
-    window.addEventListener("scroll", schedulePortfolioPosition, {passive:true});
-    window.addEventListener("pageshow", schedulePortfolioPosition);
-    if (typeof ResizeObserver === "function") new ResizeObserver(schedulePortfolioPosition).observe(card);
     render(records, activeRecord);
     showPosImage(activeRecord);
     updatePortfolioControls();
@@ -1211,6 +1191,7 @@
     wireImageFallback($("#cdBrandBadge"),"cd-badge-placeholder","Brand");
     wireImageFallback($("#cdStickImage"),"cd-stick-placeholder","No image");
     wireBrandNavigation(brand);
+    positionPortfolioControls();
   }
   async function load() {
     if(!card)return;
