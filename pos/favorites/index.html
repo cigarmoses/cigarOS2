@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Favorites</title>
+  <!-- Temporary local-save build: 2026-10-14. Approved photo layout unchanged. -->
   <!-- POS favorites horizontal photos: 2026-10-13-r1 -->
 
   <link rel="stylesheet" href="/css/type.css" />
@@ -764,7 +765,7 @@
         "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
 
       const POS_CIGAR_FAVORITES_KEY = "cigaros_pos_favorites_cigars";
-      // Ordering is independent of membership: dragging never rewrites favorites.
+      // Legacy order is imported once; the temporary local copy owns new ordering.
       const FAVORITES_ORDER_KEY = "cigaros_pos_favorites_order_v1";
 
       const $ = (sel, root = document) => root.querySelector(sel);
@@ -1064,18 +1065,192 @@
         else img.style.visibility = "hidden";
       }
 
+      /* TEMPORARY LOCAL SAVES
+         This page owns a browser-local snapshot. Other pages are import sources,
+         not authorities that may erase the snapshot. Clear All clears this copy;
+         it never rewrites the detail/brand page's collections or any HUB data.
+         Unchanged source entries are not re-imported after Clear All. */
+      const LOCAL_FAVORITES_KEY = "cigaros_pos_favorites_local_v1";
+      const IMPORT_SOURCE_KEYS = [
+        POS_CIGAR_FAVORITES_KEY,
+        "cigaros_user_favorite_cigars_v1"
+      ];
+
+      function localSaveNotice(message){
+        let notice = $("#favoritesLocalNotice");
+        if(!notice){
+          notice = document.createElement("div");
+          notice.id = "favoritesLocalNotice";
+          notice.setAttribute("role", "status");
+          notice.style.cssText = "margin:0 2px 16px;color:var(--muted);font:400 14px/1.4 var(--font-sans,-apple-system,sans-serif);";
+          content.before(notice);
+        }
+        notice.textContent = message || "";
+        notice.hidden = !message;
+      }
+
+      function detailKeyFromURL(value){
+        try{
+          const href = safeDetailHref(value);
+          if(!href) return "";
+          const url = new URL(href, location.origin);
+          return url.searchParams.get("key") || url.searchParams.get("id") || "";
+        }catch{ return ""; }
+      }
+
+      function normalizeLocalFavorite(raw){
+        if(typeof raw === "string" || typeof raw === "number") raw = {key:String(raw)};
+        if(!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+        const kind = String(raw.type || "cigar").toLowerCase();
+        if(!["cigar", "cigars"].includes(kind)) return null;
+        const item = {};
+        // Keep metadata, but never store temporary blob URLs or image binaries.
+        for(const [key,value] of Object.entries(raw)){
+          if(["__proto__", "constructor", "prototype"].includes(key)) continue;
+          if(typeof value === "string") item[key] = /^blob:/i.test(value) ? "" : value;
+          else if(typeof value === "number" || typeof value === "boolean") item[key] = value;
+        }
+        for(const key of ["imageCandidates", "_localAliases"]){
+          if(Array.isArray(raw[key])) item[key] = [...new Set(raw[key].filter(v =>
+            typeof v === "string" && v && !/^blob:/i.test(v)
+          ))];
+        }
+        if(raw._localRecord && typeof raw._localRecord === "object" && !Array.isArray(raw._localRecord)){
+          item._localRecord = Object.fromEntries(Object.entries(raw._localRecord).filter(([key,value]) =>
+            !["__proto__", "constructor", "prototype"].includes(key) &&
+            ["string", "number", "boolean"].includes(typeof value) &&
+            !(typeof value === "string" && /^blob:/i.test(value))
+          ));
+        }
+        const explicit = norm(raw.key || raw.id);
+        item.key = detailKeyFromURL(explicit) || explicit ||
+          detailKeyFromURL(raw.href || raw.url) ||
+          (raw.brand && (raw.cigar || raw.name || raw.displayName)
+            ? [raw.brand, raw.line, raw.cigar || raw.name || raw.displayName, raw.vitola].filter(Boolean).join("|") : "");
+        if(!item.key) return null;
+        item.type = "cigar";
+        return item;
+      }
+
+      function localAliases(item){
+        if(!item) return [];
+        const key = norm(item.key || item.id);
+        const hrefKey = detailKeyFromURL(item.href || item.url);
+        const catalogKey = item._localRecord ? resolveDetailKey(item._localRecord) : "";
+        return [...new Set([
+          ...[key, hrefKey, catalogKey].filter(Boolean).map(value => "key:" + value),
+          ...(Array.isArray(item._localAliases) ? item._localAliases : [])
+        ])];
+      }
+
+      function localItemIndex(items, item){
+        const aliases = new Set(localAliases(item));
+        return items.findIndex(saved => localAliases(saved).some(alias => aliases.has(alias)));
+      }
+
+      function mergeLocalMetadata(saved, incoming){
+        const result = {...saved};
+        for(const [key,value] of Object.entries(incoming)){
+          if(["key", "_localAliases", "_localRecord"].includes(key)) continue;
+          // Existing resolved data wins over a stale import; fill missing fields.
+          if((result[key] === undefined || result[key] === "") && value !== "") result[key] = value;
+        }
+        result._localAliases = [...new Set([...localAliases(saved), ...localAliases(incoming)])];
+        if(!result._localRecord && incoming._localRecord) result._localRecord = incoming._localRecord;
+        return result;
+      }
+
+      function readLocalDocument(){
+        const value = localStorage.getItem(LOCAL_FAVORITES_KEY);
+        if(value === null){
+          let oldOrder = [];
+          try{
+            const parsed = JSON.parse(localStorage.getItem(FAVORITES_ORDER_KEY) || "[]");
+            if(Array.isArray(parsed)) oldOrder = parsed.filter(id => typeof id === "string");
+          }catch{ /* The separate old order may be missing; leave it untouched. */ }
+          return {version:1, items:[], order:oldOrder, sources:{}};
+        }
+        let doc;
+        try{ doc = JSON.parse(value); }
+        catch{ throw new Error("The local Favorites copy could not be read. It has not been overwritten."); }
+        if(!doc || doc.version !== 1 || !Array.isArray(doc.items) || !Array.isArray(doc.order) ||
+           !doc.sources || typeof doc.sources !== "object" || Array.isArray(doc.sources)){
+          throw new Error("The local Favorites copy has an unrecognized format. It has not been overwritten.");
+        }
+        if(doc.items.some(item => !item || typeof item !== "object" || typeof item.key !== "string" || !item.key)){
+          throw new Error("A saved favorite could not be read. The local copy has not been overwritten.");
+        }
+        return doc;
+      }
+
+      function writeLocalDocument(doc){
+        const text = JSON.stringify(doc);
+        try{
+          if(localStorage.getItem(LOCAL_FAVORITES_KEY) !== text){
+            localStorage.setItem(LOCAL_FAVORITES_KEY, text);
+            if(localStorage.getItem(LOCAL_FAVORITES_KEY) !== text) throw new Error("Save verification failed.");
+          }
+        }catch(error){
+          localSaveNotice("Favorites could not be saved in this browser. Check that website storage is allowed and not full. Keep this page open; your original saved lists have not been changed.");
+          throw error;
+        }
+      }
+
+      function importFingerprint(item){
+        // A newly saved POS entry has a new savedAt value. Do not use image or
+        // price changes as a signal to resurrect an explicitly cleared item.
+        return JSON.stringify([item.key, item.savedAt ?? item.addedAt ?? item.createdAt ?? ""]);
+      }
+
+      function importCurrentFavorites(){
+        const doc = readLocalDocument();
+        const warnings = [];
+        for(const source of IMPORT_SOURCE_KEYS){
+          const value = localStorage.getItem(source);
+          let entries;
+          try{
+            const parsed = value === null ? [] : JSON.parse(value);
+            entries = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.items) ? parsed.items : null);
+            if(!entries) throw new Error("Unrecognized saved-list format.");
+          }catch(error){
+            warnings.push("One source list could not be read. The local Favorites copy is still retained.");
+            continue; // Malformed sources never wipe the last observed import.
+          }
+          const items = entries.map(normalizeLocalFavorite).filter(Boolean);
+          const previous = new Set(Array.isArray(doc.sources[source]) ? doc.sources[source] : []);
+          const current = [];
+          for(const item of items){
+            const fingerprint = importFingerprint(item);
+            current.push(fingerprint);
+            const index = localItemIndex(doc.items, item);
+            if(index >= 0) doc.items[index] = mergeLocalMetadata(doc.items[index], item);
+            else if(!previous.has(fingerprint)){
+              item._localAliases = localAliases(item);
+              doc.items.push(item);
+            }
+          }
+          doc.sources[source] = [...new Set(current)];
+        }
+        const ids = doc.items.map(item => item.key);
+        const present = new Set(ids);
+        doc.order = [...new Set([...doc.order.filter(id => present.has(id)), ...ids])];
+        writeLocalDocument(doc);
+        localSaveNotice(warnings[0] || "");
+        return doc;
+      }
+
       function readFavorites(){
-        const value = localStorage.getItem(POS_CIGAR_FAVORITES_KEY);
-        if(value === null) return [];
-        let items;
-        try { items = JSON.parse(value); }
-        catch { throw new Error("Saved favorites could not be read. Your stored data has not been changed."); }
-        if(!Array.isArray(items)) throw new Error("Saved favorites have an unrecognized format. Your stored data has not been changed.");
-        return items;
+        return importCurrentFavorites().items;
       }
 
       function writeFavorites(items){
-        localStorage.setItem(POS_CIGAR_FAVORITES_KEY, JSON.stringify(items));
+        // Explicit local removal only. Source fingerprints prevent unchanged
+        // entries in older pages from returning immediately after Clear All.
+        const doc = importCurrentFavorites();
+        doc.items = items.map(normalizeLocalFavorite).filter(Boolean);
+        const present = new Set(doc.items.map(item => item.key));
+        doc.order = doc.order.filter(id => present.has(id));
+        writeLocalDocument(doc);
       }
 
       function favoriteId(favorite){
@@ -1085,12 +1260,7 @@
           JSON.stringify([favorite.brand, favorite.line, favorite.cigar || favorite.name, favorite.vitola]);
       }
 
-      function readOrder(){
-        try{
-          const value = JSON.parse(localStorage.getItem(FAVORITES_ORDER_KEY) || "[]");
-          return Array.isArray(value) ? value.filter(id => typeof id === "string") : [];
-        }catch { return []; }
-      }
+      function readOrder(){ return readLocalDocument().order; }
 
       function orderedFavorites(items){
         const rank = new Map(readOrder().map((id, i) => [id, i]));
@@ -1100,38 +1270,99 @@
       }
 
       function persistOrder(ids){
-        // Read membership fresh. Keep newly added, hidden and unmatched items.
-        // Never write to POS_CIGAR_FAVORITES_KEY during a reorder.
-        const current = orderedFavorites(readFavorites());
-        const currentIds = [...new Set(current.map(favoriteId).filter(Boolean))];
-        const currentSet = new Set(currentIds);
-        const selected = [...new Set(ids)].filter(id => currentSet.has(id));
+        const doc = importCurrentFavorites();
+        const rank = new Map(doc.order.map((id, i) => [id, i]));
+        const currentIds = doc.items.map(item => item.key).sort((a,b) =>
+          (rank.get(a) ?? Infinity) - (rank.get(b) ?? Infinity)
+        );
+        const present = new Set(currentIds);
+        const selected = [...new Set(ids)].filter(id => present.has(id));
         const selectedSet = new Set(selected);
         let at = 0;
-        const next = currentIds.map(id => selectedSet.has(id) ? selected[at++] : id);
-        localStorage.setItem(FAVORITES_ORDER_KEY, JSON.stringify(next));
+        doc.order = currentIds.map(id => selectedSet.has(id) ? selected[at++] : id);
+        writeLocalDocument(doc);
+      }
+
+      function rememberCatalogRecords(entries){
+        const doc = readLocalDocument();
+        const fields = ["key", "brand", "line", "cigar", "name", "vitola", "ring", "length",
+          "shape", "wrapper", "binder", "filler", "origin", "country", "strength", "wrapper_shade",
+          "manufacturer", "cuban", "is_cuban", "cigar_img", "cigar_image", "cigarimg", "photo",
+          "cigar_image_orientation", "image_orientation"];
+        for(const {record, favorite} of entries){
+          if(record.__fromFavorite) continue;
+          const at = localItemIndex(doc.items, favorite);
+          if(at < 0) continue; // Do not re-add a favorite removed in another tab.
+          const cached = {};
+          for(const key of fields){
+            if(record[key] != null) cached[key] = String(record[key]);
+          }
+          doc.items[at]._localRecord = cached;
+          doc.items[at].href = makeDetailHref(record);
+          doc.items[at]._localAliases = localAliases(doc.items[at]);
+        }
+        // Exact catalogue keys can identify the same cigar imported through
+        // differently formatted old URLs. Only merge verified shared aliases.
+        const unique = [], redirects = new Map();
+        for(const item of doc.items){
+          const at = localItemIndex(unique,item);
+          if(at < 0) unique.push(item);
+          else{
+            redirects.set(item.key,unique[at].key);
+            unique[at] = mergeLocalMetadata(unique[at],item);
+          }
+        }
+        doc.items = unique;
+        doc.order = [...new Set(doc.order.map(id => redirects.get(id) || id))];
+        writeLocalDocument(doc);
+      }
+
+      function rememberPhotoSource(id,url){
+        // Object URLs belong to one document; reload editor-uploaded images
+        // from its existing IndexedDB instead of persisting a blob: string.
+        if(!url || /^blob:/i.test(url)) return;
+        try{
+          const doc = readLocalDocument();
+          const item = doc.items.find(item => item.key === id);
+          if(!item || item.resolvedImage === url) return;
+          item.resolvedImage = url;
+          writeLocalDocument(doc);
+        }catch(error){ console.warn("[pos favorites] Photo URL was not cached:",error); }
       }
 
       function findRecordByFavorite(records, fav){
-        const key = String(fav?.key || fav || "").trim();
-        if(!key) return null;
-
-        const exact = records.find(r => resolveDetailKey(r) === key || resolveFavoriteKey(r) === key);
-        if(exact) return exact;
-        const loose = normalizeLoose(key);
-
-        return records.find((r) => {
-          const candidates = [
-            resolveFavoriteKey(r),
-            resolveDetailKey(r),
-            [resolveBrandVal(r), resolveLine(r), resolveName(r), resolveVitola(r)].filter(Boolean).join("|"),
-            [resolveBrandVal(r), resolveLine(r), resolveName(r), resolveVitola(r)].filter(Boolean).join(" "),
-            [resolveLine(r), resolveName(r)].filter(Boolean).join(" "),
-            resolveDisplayName(r),
-          ].filter(Boolean);
-
-          return candidates.some((c) => String(c).trim() === key || normalizeLoose(c) === loose);
-        }) || null;
+        const key = favoriteId(fav);
+        const hrefKey = detailKeyFromURL(fav?.href || fav?.url);
+        const cachedKey = fav?._localRecord ? resolveDetailKey(fav._localRecord) : "";
+        const keys = [...new Set([cachedKey, key, hrefKey].filter(Boolean))];
+        for(const value of keys){
+          const exact = records.find(r => resolveDetailKey(r) === value || resolveFavoriteKey(r) === value);
+          if(exact) return exact;
+        }
+        for(const value of keys){
+          const parts = value.split("|").map(part => part.trim());
+          if(parts.length < 3) continue;
+          let brand, display, vitola;
+          if(parts.length === 3 || (parts.length === 4 && /^(stick|single|box)$/i.test(parts[3]))){
+            [brand, display, vitola] = parts;
+          }else if(parts.length === 4){
+            brand = parts[0]; display = [parts[1], parts[2]].filter(Boolean).join(" "); vitola = parts[3];
+          }else continue;
+          if(!brand || !display) continue;
+          const matches = records.filter(r => normalizeBrand(resolveBrandVal(r)) === normalizeBrand(brand) &&
+            [resolveDisplayName(r), resolveName(r)].some(name => name && normalizeLoose(name) === normalizeLoose(display)) &&
+            (!vitola || normalizeLoose(resolveVitola(r)) === normalizeLoose(vitola)));
+          if(matches.length === 1) return matches[0];
+        }
+        const brand = fav?.brand || "";
+        const display = fav?.displayName || fav?.name || [fav?.line, fav?.cigar].filter(Boolean).join(" ");
+        if(brand && display){
+          const matches = records.filter(r => normalizeBrand(resolveBrandVal(r)) === normalizeBrand(brand) &&
+            normalizeLoose(resolveDisplayName(r)) === normalizeLoose(display) &&
+            (!fav.vitola || normalizeLoose(resolveVitola(r)) === normalizeLoose(fav.vitola)));
+          if(matches.length === 1) return matches[0];
+        }
+        return null;
       }
 
       function isFavorite(r){
@@ -1353,6 +1584,9 @@
       }
 
       function recordFromFavorite(favorite){
+        if(favorite?._localRecord && typeof favorite._localRecord === "object"){
+          return {...favorite._localRecord, __fromFavorite:true};
+        }
         if(!favorite || typeof favorite !== "object") return {key:favoriteId(favorite), __fromFavorite:true};
         const record = {};
         Object.entries(favorite).forEach(([key,value]) => {
@@ -1369,7 +1603,7 @@
       function photoCandidates(record, favorite){
         const source = getField(record, ["cigar_img", "cigar_image", "cigarimg", "photo", "image"]);
         const favoriteObject = favorite && typeof favorite === "object" ? favorite : {};
-        const saved = [favoriteObject.cigarImage, favoriteObject.img, favoriteObject.image];
+        const saved = [favoriteObject.resolvedImage, favoriteObject.cigarImage, favoriteObject.img, favoriteObject.image];
         const extra = Array.isArray(favoriteObject.imageCandidates) ? favoriteObject.imageCandidates : [];
         const out = [source, ...saved, ...extra];
         const brand = normalizeBrand(resolveBrandVal(record));
@@ -1562,6 +1796,7 @@
             row.querySelector(".favorite-photo-link").replaceChildren(art);
             row.classList.remove("is-photo-loading");
             row.dataset.photoSource=url;
+            rememberPhotoSource(row.dataset.favoriteId, url);
             return;
           }
           row.querySelector(".favorite-photo-status").textContent="Photo unavailable — tap for details";
@@ -1596,8 +1831,8 @@
         return row;
       }
 
-      /* Touch and mouse sorting are local to this page. The actual favorite
-         records are never changed during sorting; only the separate ID order. */
+      /* Touch and mouse sorting stay exactly as approved. Drop saves the
+         local copy's order without rewriting other pages' saved collections. */
       const prefersReducedMotion=() => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const photoRows=() => Array.from(content.children).filter(el => el.matches(".favorite-photo-row[data-favorite-id]"));
       function photoRowAt(target){
@@ -1822,7 +2057,7 @@
         });
         window.addEventListener("pageshow",event => {if(event.persisted) refreshFavorites();});
         window.addEventListener("storage",event => {
-          if(event.key === POS_CIGAR_FAVORITES_KEY || event.key === FAVORITES_ORDER_KEY || event.key === null) refreshFavorites();
+          if(IMPORT_SOURCE_KEYS.includes(event.key) || event.key === LOCAL_FAVORITES_KEY || event.key === null) refreshFavorites();
         });
       }
 
@@ -1837,38 +2072,34 @@
         clearBtn.hidden = false;
       }
 
-      async function loadFavorites(){
-        if(state.drag || state.settling){ state.refreshQueued = true; return; }
-        const token = ++state.loadToken;
-        const favorites = orderedFavorites(readFavorites());
-        updateSummary(favorites.length);
-        if(!favorites.length){
-          releasePhotos();
-          content.innerHTML = '<div class="empty">No cigar favorites yet.</div>';
-          state.visibleIds = [];
-          return;
-        }
-
-        let catalogError = null;
-        if(!state.catalogLoaded){
+      let pendingCatalog = null;
+      function fetchFavoriteCatalog(){
+        if(state.catalogLoaded) return Promise.resolve(null);
+        if(pendingCatalog) return pendingCatalog;
+        pendingCatalog = (async () => {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 15000);
           try{
             const res = await fetch(SHEET_CSV_URL, {cache:"no-store", signal:controller.signal});
             if(!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
-            state.records = mapRows(parseCSV(await res.text()));
+            const rows = mapRows(parseCSV(await res.text()));
+            if(!rows.length || !rows.some(row => resolveBrandVal(row) && resolveName(row))){
+              throw new Error("The HUB did not return a readable cigar catalog.");
+            }
+            state.records = rows;
             state.catalogLoaded = true;
-          }catch(error){ catalogError = error; }
+            return null;
+          }catch(error){ return error; }
           finally{ clearTimeout(timeout); }
-        }
-        if(token !== state.loadToken) return;
-        if(state.drag || state.settling){ state.refreshQueued = true; return; }
+        })().finally(() => { pendingCatalog = null; });
+        return pendingCatalog;
+      }
 
+      function renderLocalFavorites(favorites){
         releasePhotos();
         const generation = state.renderGeneration;
-        const latest = orderedFavorites(readFavorites());
         const seen = new Set();
-        const entries = latest.flatMap(favorite => {
+        const entries = favorites.flatMap(favorite => {
           const id = favoriteId(favorite);
           if(!id || seen.has(id)) return [];
           seen.add(id);
@@ -1884,10 +2115,38 @@
         });
         updateSummary(entries.length);
         if(!entries.length) content.innerHTML = '<div class="empty">No cigar favorites yet.</div>';
-        if(catalogError){
-          console.warn("[pos favorites] Catalog unavailable:", catalogError);
-          announce("The cigar catalog could not be loaded. Saved favorites have not been changed.");
+        return entries;
+      }
+
+      async function loadFavorites(){
+        if(state.drag || state.settling){ state.refreshQueued = true; return; }
+        const token = ++state.loadToken;
+        const favorites = orderedFavorites(readFavorites());
+        // Show the saved copy now; the sheet is enrichment, not a prerequisite.
+        const firstEntries = renderLocalFavorites(favorites);
+        if(!favorites.length) return;
+        if(state.catalogLoaded){
+          try{
+            rememberCatalogRecords(firstEntries);
+            const saved = orderedFavorites(readLocalDocument().items);
+            if(saved.length !== firstEntries.length) renderLocalFavorites(saved);
+          }catch(error){ console.warn("[pos favorites] Catalog snapshot was not saved:",error); }
+          return;
         }
+        const catalogError = await fetchFavoriteCatalog();
+        if(token !== state.loadToken) return;
+        if(state.drag || state.settling){ state.refreshQueued = true; return; }
+        if(catalogError){
+          console.warn("[pos favorites] Catalog unavailable; displaying the local copy:",catalogError);
+          announce("The cigar catalog is unavailable. Your saved Favorites copy is still here.");
+          return;
+        }
+        const latest = orderedFavorites(readFavorites());
+        const entries = latest.map(favorite => ({favorite,
+          record:findRecordByFavorite(state.records,favorite) || recordFromFavorite(favorite)}));
+        try{ rememberCatalogRecords(entries); }
+        catch(error){ console.warn("[pos favorites] Catalog snapshot was not saved:",error); }
+        renderLocalFavorites(orderedFavorites(readLocalDocument().items));
       }
 
       function refreshFavorites(){
@@ -1896,6 +2155,7 @@
           summary.textContent = "Could not load favorites.";
           // Do not erase stored favorites, even on a network/storage failure.
           if(!content.querySelector(".favorite-photo-row")) content.innerHTML = '<div class="error">Could not read favorites. Please reload. Your saved data has not been cleared.</div>';
+          localSaveNotice("Favorites could not be read or saved locally. Your original collections have not been cleared. Check this browser's website-storage settings, then reload.");
           announce(error.message || "Could not load favorites.");
         });
       }
@@ -1903,7 +2163,7 @@
       function applyTheme(theme){
         const next = theme === "dark" ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", next);
-        localStorage.setItem("theme", next);
+        try{ localStorage.setItem("theme", next); }catch{ /* Favorites reports storage errors separately. */ }
         $("#theme-toggle")?.setAttribute("aria-pressed", String(next === "dark"));
       }
 
@@ -1961,10 +2221,8 @@
       });
 
       document.addEventListener("DOMContentLoaded", () => {
-        const savedTheme =
-          localStorage.getItem("theme") ||
-          document.documentElement.getAttribute("data-theme") ||
-          "light";
+        let savedTheme = document.documentElement.getAttribute("data-theme") || "light";
+        try{ savedTheme = localStorage.getItem("theme") || savedTheme; }catch{}
 
         applyTheme(savedTheme);
 
@@ -1986,6 +2244,7 @@
           cancelPhotoDrag();
           try{
             writeFavorites([]);
+            showToast("Local Favorites cleared.");
             refreshFavorites();
           }catch(error){ showToast("Could not clear favorites. Please allow browser storage."); }
         });
