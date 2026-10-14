@@ -683,6 +683,7 @@
 
     }
     .favorites-actions{flex-wrap:wrap}.lists-tools{display:flex;gap:6px}.favorites-lists-control{font-family:var(--font-sans,system-ui)}
+    .favorite-list-edit{width:30px;height:30px;padding:0;display:grid;place-items:center;font:400 22px/1 var(--font-sans,system-ui)}
   </style>
 </head>
 
@@ -722,7 +723,7 @@
 
     <div class="favorites-actions">
       <label class="favorites-lists-control">Lists <select id="favoritesLists" class="favorites-lists-select" aria-label="Lists"></select></label>
-      <div class="lists-tools"><button class="clear-btn" id="newFavoriteList" type="button">+ New List</button> <button class="clear-btn" id="editFavoriteList" type="button" hidden>Edit List</button></div>
+      <div class="lists-tools"><button class="clear-btn" id="shareFavoriteList" type="button" hidden>Share</button> <button class="clear-btn" id="editFavoriteList" type="button" hidden>Edit List</button></div>
     </div>
 
     <p id="favoritesReorderHelp" class="favorites-sr-only">Tap a cigar photo to open its detail page. On a touch screen, hold then drag to reorder. With a mouse, click and drag. With a keyboard, focus a cigar link and press Alt plus Up or Down.</p>
@@ -1901,6 +1902,7 @@
         const row=document.createElement("div");
         row.className="favorite-photo-row is-photo-loading";
         row.dataset.favoriteId=id;
+        row.shareDetails=[resolveBrandVal(record),resolveLine(record),resolveName(record),resolveVitola(record),resolveRing(record),resolveLength(record)].map(v=>String(v||"—"));
         row.setAttribute("role","listitem");
         const link=document.createElement("a");
         link.className="favorite-photo-link";
@@ -1917,7 +1919,7 @@
         link.appendChild(message);
         row.appendChild(link);
         const listsButton=document.createElement("button");
-        listsButton.type="button";listsButton.className="favorite-list-edit";listsButton.textContent="Lists +";
+        listsButton.type="button";listsButton.className="favorite-list-edit";listsButton.textContent="+";
         listsButton.setAttribute("aria-label","Edit lists for "+label);
         listsButton.addEventListener("click",()=>window.CigarosFavoriteLists.open(id,label));
         row.appendChild(listsButton);
@@ -2194,6 +2196,7 @@
       function syncLists(){
         const select=$("#favoritesLists");
         $("#editFavoriteList").hidden=selectedList===null;
+        $("#shareFavoriteList").hidden=selectedList===null;
         try{
           const lists=window.CigarosFavoriteLists.read();
           if(selectedList !== null && !Object.hasOwn(lists,selectedList)) selectedList=null;
@@ -2214,10 +2217,88 @@
           syncLists();refreshFavorites();
         }catch(error){showToast(error.message);syncLists();}
       });
-      $("#newFavoriteList").addEventListener("click",async()=>{
-        cancelPhotoDrag();const name=await window.CigarosFavoriteLists.create();
-        if(name)selectedList=name;syncLists();refreshFavorites();
+      function wrapShareText(ctx,text,maxWidth){
+        const lines=[];let line='';
+        for(const word of text.split(/\s+/)){
+          if(ctx.measureText(line+(line?' ':'')+word).width>maxWidth && line){lines.push(line);line='';}
+          for(const char of word){
+            if(ctx.measureText(line+char).width>maxWidth && line){lines.push(line);line='';}
+            line+=char;
+          }
+          line+=' ';
+        }
+        if(line.trim())lines.push(line.trim());return lines;
+      }
+      async function buildListImage(name,rows){
+        const width=1080,pad=60,canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+        if(!ctx)throw Error('Image sharing is unavailable in this browser.');
+        ctx.font='24px system-ui';
+        const cards=rows.map(row=>{
+          const art=row.querySelector('.favorite-photo-art');
+          if(!art)throw Error('Wait for all cigar photos to load before sharing.');
+          const box=art.viewBox.baseVal;
+          const photoHeight=(width-pad*2)*box.height/box.width;
+          const lines=wrapShareText(ctx,row.shareDetails.join(' – '),width-pad*2);
+          return {art,photoHeight,lines,height:photoHeight+lines.length*36+90};
+        });
+        ctx.font='bold 48px system-ui';const titleLines=wrapShareText(ctx,name,width-pad*2);
+        const header=100+titleLines.length*60;
+        const height=Math.ceil(header+cards.reduce((sum,c)=>sum+c.height,0)+pad);
+        if(height>30000)throw Error('This list is too long for one image. Please share a smaller list.');
+        canvas.width=width;canvas.height=height;
+        const dark=document.documentElement.dataset.theme==='dark';
+        ctx.fillStyle=dark?'#0b2343':'#f2f5fc';ctx.fillRect(0,0,width,height);
+        ctx.fillStyle=dark?'#ffffff':'#0b1220';ctx.font='bold 48px system-ui';
+        titleLines.forEach((line,i)=>ctx.fillText(line,pad,70+i*60));
+        ctx.font='24px system-ui';ctx.fillText(rows.length+' cigar'+(rows.length===1?'':'s'),pad,header-22);
+        let y=header;
+        for(const card of cards){
+          const source=card.art.querySelector('image');
+          const response=await fetch(source.getAttribute('href'));
+          if(!response.ok)throw Error('A cigar photo could not be included. Please try again.');
+          const blob=await response.blob(),url=URL.createObjectURL(blob);
+          try{
+            const img=new Image();img.src=url;await img.decode();
+            const box=card.art.viewBox.baseVal,scale=(width-pad*2)/box.width;
+            const matrix=source.transform.baseVal.consolidate().matrix;
+            ctx.save();ctx.translate(pad,y+20);ctx.scale(scale,scale);
+            ctx.transform(matrix.a,matrix.b,matrix.c,matrix.d,matrix.e,matrix.f);
+            ctx.drawImage(img,0,0,Number(source.getAttribute('width')),Number(source.getAttribute('height')));ctx.restore();
+          }finally{URL.revokeObjectURL(url);}
+          ctx.fillStyle=dark?'#ffffff':'#0b1220';ctx.font='24px system-ui';
+          card.lines.forEach((line,i)=>ctx.fillText(line,pad,y+card.photoHeight+60+i*36));
+          y+=card.height;
+        }
+        return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Could not create the list image.')),'image/png'));
+      }
+      $('#shareFavoriteList').addEventListener('click',async()=>{
+        if(selectedList===null)return;
+        cancelPhotoDrag();
+        const button=$('#shareFavoriteList'),name=selectedList,rows=photoRows();
+        if(!rows.length){showToast('Add a cigar to this list before sharing.');return;}
+        button.disabled=true;button.textContent='Preparing…';
+        try{
+          const blob=await buildListImage(name,rows);
+          const filename=(name.replace(/[^a-z0-9_-]/gi,'-')||'favorites')+'.png';
+          const file=new File([blob],filename,{type:'image/png'}),url=URL.createObjectURL(blob);
+          const preview=document.createElement('dialog');preview.className='favorite-lists-dialog';
+          const heading=document.createElement('h2');heading.textContent='Share '+name;
+          const img=document.createElement('img');img.src=url;img.alt='List image for '+name;img.style.cssText='width:100%;height:auto;border-radius:12px';
+          const send=document.createElement('button');send.type='button';send.className='lists-done';send.textContent='Share Image';
+          const download=document.createElement('a');download.href=url;download.download=filename;download.textContent='Download Image';download.style.cssText='display:inline-block;margin:24px 12px 0 0;color:inherit';
+          const close=document.createElement('button');close.type='button';close.textContent='Close';close.onclick=()=>preview.close();
+          send.onclick=async()=>{
+            try{
+              if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:name});
+              else download.click();
+            }catch(error){if(error.name!=='AbortError')showToast('Sharing was unavailable. Use Download Image.');}
+          };
+          preview.append(heading,img,download,close,send);document.body.append(preview);
+          preview.addEventListener('close',()=>{preview.remove();URL.revokeObjectURL(url);button.focus();},{once:true});preview.showModal();
+        }catch(error){console.warn('[favorites share]',error);showToast(error.message||'Could not prepare this list image.');}
+        finally{button.disabled=false;button.textContent='Share';}
       });
+
       $("#editFavoriteList").addEventListener("click",async()=>{
         if(selectedList===null)return;
         cancelPhotoDrag();const name=await window.CigarosFavoriteLists.rename(selectedList);
