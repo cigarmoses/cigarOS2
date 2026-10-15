@@ -684,6 +684,8 @@
     }
     .favorites-actions{flex-wrap:wrap}.lists-tools{display:flex;gap:6px}.favorites-lists-control{font-family:var(--font-sans,system-ui)}
     .favorite-photo-row .favorite-list-edit{width:30px;height:30px;padding:0;display:grid;place-items:center;background:transparent;box-shadow:none;text-shadow:none;filter:none;border:0;font:200 22px/1 Arial,sans-serif}
+    .favorite-photo-row .favorite-list-remove{left:0;right:auto}
+    .lists-tools .clear-btn{font-weight:400}
   </style>
 </head>
 
@@ -723,7 +725,7 @@
 
     <div class="favorites-actions">
       <label class="favorites-lists-control">Lists <select id="favoritesLists" class="favorites-lists-select" aria-label="Lists"></select></label>
-      <div class="lists-tools"><button class="clear-btn" id="shareFavoriteList" type="button" hidden>Share</button> <button class="clear-btn" id="editFavoriteList" type="button" hidden>Edit List</button></div>
+      <div class="lists-tools"><button class="clear-btn" id="shareFavoriteList" type="button" hidden>Share</button> <button class="clear-btn" id="editFavoriteList" type="button" hidden>Edit</button></div>
     </div>
 
     <p id="favoritesReorderHelp" class="favorites-sr-only">Tap a cigar photo to open its detail page. On a touch screen, hold then drag to reorder. With a mouse, click and drag. With a keyboard, focus a cigar link and press Alt plus Up or Down.</p>
@@ -1898,6 +1900,34 @@
         }
       }
 
+      function confirmFavoriteRemoval(listName){
+        return new Promise(resolve=>{
+          const dialog=document.createElement("dialog");
+          dialog.className="favorite-lists-dialog favorite-removal-dialog";
+          dialog.setAttribute("aria-labelledby","favoriteRemovalTitle");
+          const title=document.createElement("h2");title.id="favoriteRemovalTitle";
+          title.textContent=listName===null
+            ? "Are you sure you want to remove this from the favorites list?"
+            : "Remove from this list only?";
+          const actions=document.createElement("div");
+          actions.style.cssText="display:grid;gap:10px";
+          let choice=null;const previousFocus=document.activeElement;
+          function addButton(text,value){
+            const button=document.createElement("button");button.type="button";button.textContent=text;
+            button.addEventListener("click",()=>{choice=value;dialog.close();});
+            actions.append(button);return button;
+          }
+          if(listName!==null)addButton("Remove from list only","list");
+          addButton(listName===null?"Remove":"Remove from Favorites entirely","all");
+          const cancel=addButton("Cancel",null);
+          dialog.append(title,actions);document.body.append(dialog);
+          dialog.addEventListener("close",()=>{
+            dialog.remove();previousFocus?.focus?.();resolve(choice);
+          },{once:true});
+          dialog.showModal();cancel.focus();
+        });
+      }
+
       function createRow(record, favorite, id){
         const row=document.createElement("div");
         row.className="favorite-photo-row is-photo-loading";
@@ -1923,6 +1953,29 @@
         listsButton.setAttribute("aria-label","Edit lists for "+label);
         listsButton.addEventListener("click",()=>window.CigarosFavoriteLists.open(id,label));
         row.appendChild(listsButton);
+        const minus=document.createElement("button");
+        minus.type="button";minus.className="favorite-list-edit favorite-list-remove";minus.textContent="−";
+        minus.setAttribute("aria-label","Remove "+label+" from "+(selectedList===null?"Favorites":selectedList));
+        minus.addEventListener("click",async()=>{
+          cancelPhotoDrag();
+          const listName=selectedList;
+          const choice=await confirmFavoriteRemoval(listName);
+          if(!choice)return;
+          try{
+            const aliases=new Set([id,...localAliases(favorite).map(alias=>alias.replace(/^key:/,""))]);
+            const lists=window.CigarosFavoriteLists.read();
+            if(choice==="all"){
+              writeFavorites(readFavorites().filter(item=>favoriteId(item)!==id));
+              Object.keys(lists).forEach(name=>{lists[name]=lists[name].filter(key=>!aliases.has(key));});
+            }else if(Object.hasOwn(lists,listName)){
+              lists[listName]=lists[listName].filter(key=>!aliases.has(key));
+            }
+            localStorage.setItem("cigaros_favorite_lists_v1",JSON.stringify(lists));
+            window.dispatchEvent(new Event("favorite-lists-changed"));
+            showToast(choice==="all"?"Removed from Favorites":"Removed from list");
+          }catch(error){showToast("Could not remove cigar. "+error.message);refreshFavorites();}
+        });
+        row.appendChild(minus);
         return row;
       }
 
@@ -2160,12 +2213,12 @@
 
       function updateSummary(count){
         if(count <= 0){
-          summary.textContent = "No cigar favorites saved yet.";
+          summary.textContent = "0 cigars";
 
           return;
         }
 
-        summary.textContent = count === 1 ? "1 cigar favorite." : `${count} cigar favorites.`;
+        summary.textContent = count === 1 ? "1 cigar" : `${count} cigars`;
 
       }
 
@@ -2196,7 +2249,7 @@
       function syncLists(){
         const select=$("#favoritesLists");
         $("#editFavoriteList").hidden=selectedList===null;
-        $("#shareFavoriteList").hidden=selectedList===null;
+        $("#shareFavoriteList").hidden=false;
         try{
           const lists=window.CigarosFavoriteLists.read();
           if(selectedList !== null && !Object.hasOwn(lists,selectedList)) selectedList=null;
@@ -2298,9 +2351,8 @@
         return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Could not create the list image.')),'image/png'));
       }
       $('#shareFavoriteList').addEventListener('click',async()=>{
-        if(selectedList===null)return;
         cancelPhotoDrag();
-        const button=$('#shareFavoriteList'),name=selectedList,rows=photoRows();
+        const button=$('#shareFavoriteList'),name=selectedList===null?'All Favorites':selectedList,rows=photoRows();
         if(!rows.length){showToast('Add a cigar to this list before sharing.');return;}
         button.disabled=true;button.textContent='Preparing…';
         try{
@@ -2357,7 +2409,7 @@
         });
         updateSummary(entries.length);
 
-        if(selectedList!==null) summary.textContent=entries.length+" cigar"+(entries.length===1?"":"s")+" in "+selectedList+".";
+
         if(!entries.length) content.innerHTML = '<div class="empty">'+(selectedList===null?'No cigar favorites yet.':'No cigars in this list yet. Add cigars using the list button in All Favorites.')+'</div>';
         return entries;
       }
