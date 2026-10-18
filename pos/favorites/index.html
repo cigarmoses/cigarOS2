@@ -686,6 +686,8 @@
     .favorite-photo-row .favorite-list-edit{width:30px;height:30px;padding:0;display:grid;place-items:center;background:transparent;box-shadow:none;text-shadow:none;filter:none;border:0;font:200 22px/1 Arial,sans-serif}
     .favorite-photo-row .favorite-list-remove{left:0;right:auto}
     .lists-tools .clear-btn{font-weight:400}
+    .favorites-cart-badge{position:absolute;top:2px;right:4px;min-width:18px;padding:2px 5px;border-radius:20px;background:#ff3b30;color:white;font:700 11px/1.2 system-ui}
+    .favorites-cart-badge[hidden]{display:none}
   </style>
 </head>
 
@@ -755,12 +757,35 @@
       <a class="cb-nav-btn" href="/pos/invoice/" aria-label="Cart">
         <img class="cb-nav-icon" src="/uxui/bottombar/cart.svg" alt="" />
         <span>Cart</span>
+        <span id="favoritesCartBadge" class="favorites-cart-badge" hidden aria-label="Cart item count"></span>
       </a>
     </div>
   </nav>
 
-  <script src="/pos/cart.js?v=35" defer></script>
-  <script src="/pos/pos.js?v=35" defer></script>
+  <!-- Favorites has no cart-add controls. Read the badge without loading
+       the global POS handlers that interpret generic + buttons as products. -->
+  <script>
+  (() => {
+    const key = "cigaros_pos_cart_v3";
+    function refreshCartBadge(){
+      const badge = document.getElementById("favoritesCartBadge");
+      try{
+        const items = JSON.parse(localStorage.getItem(key) || "[]");
+        const count = Array.isArray(items)
+          ? items.reduce((total,item) => total + (Number(item?.qty || 0) > 0 ? 1 : 0),0) : 0;
+        badge.textContent = String(count);
+        badge.hidden = count === 0;
+      }catch{ badge.hidden = true; }
+    }
+    refreshCartBadge();
+    window.addEventListener("pageshow",refreshCartBadge);
+    window.addEventListener("storage",event => {
+      if(event.key === key || event.key === null) refreshCartBadge();
+    });
+    document.addEventListener("cigaros:cart-changed",refreshCartBadge);
+    window.addEventListener("cigaros:cart",refreshCartBadge);
+  })();
+  </script>
 
   <script>
 /* Favorites Lists: independent of all existing favorites storage. */
