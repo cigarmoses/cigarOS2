@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Favorites</title>
-  <!-- Publication lists build: 2026-10-19-cards-header. Based on the deployed Favorites page. -->
+  <!-- Publication lists build: 2026-10-19-expandable-cards. Based on the deployed Favorites page. -->
   <!-- Published awards use a separate data layer; existing personal lists retain their storage. -->
   <!-- POS favorites horizontal photos: 2026-10-13-r1 -->
 
@@ -725,6 +725,7 @@
       box-shadow:0 7px 17px var(--publication-card-shadow);
     }
     .publication-mode .publication-row:nth-of-type(even){--publication-card-tone:var(--publication-card-dark)}
+    .publication-card-summary{position:relative;border-radius:inherit}
     .publication-card-link{display:block;width:100%;min-width:0;padding:16px 18px 19px;border-radius:inherit;color:var(--text);text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:pan-y pinch-zoom}
     .publication-card-link:active{background:var(--glass3)}
     .publication-card-link:focus-visible,.publication-brand-picker:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
@@ -739,6 +740,31 @@
     .publication-cigar-name{display:block;font:450 16px/1.3 var(--font-sans,system-ui);letter-spacing:-.1px}
     .publication-cigar-brand ~ .publication-cigar-name{margin-top:4px}
     .publication-name-unsplit .publication-cigar-name{font:780 19px/1.22 var(--font-display,var(--font-sans));letter-spacing:-.35px}
+    .publication-card-summary .publication-name{padding-right:42px}
+    .publication-expand{position:absolute;right:9px;bottom:9px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:12px;background:transparent;color:var(--text);cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .publication-expand svg{width:22px;height:22px;transition:transform .18s ease}
+    .publication-expand[aria-expanded="true"] svg{transform:rotate(180deg)}
+    .publication-expand:focus-visible,.publication-action:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+    .publication-details{padding:0 18px 18px}
+    .publication-specs{position:relative;margin:0;padding-top:12px}
+    .publication-specs::before,.publication-actions::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(to right,transparent,var(--publication-card-line) 12%,var(--publication-card-line) 88%,transparent)}
+    .publication-spec-row{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);align-items:start;gap:16px;padding:6px 0;font:400 14px/1.45 var(--font-sans,system-ui)}
+    .publication-spec-row dt{margin:0;color:var(--muted);overflow-wrap:anywhere}
+    .publication-spec-row dd{margin:0;color:var(--text);text-align:right;font-weight:500;overflow-wrap:anywhere}
+    .publication-detail-note{margin:0 0 12px;color:var(--muted);font:400 13px/1.45 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .publication-actions{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;padding-top:12px}
+    .publication-action{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:72px;padding:7px 2px;border:0;border-radius:12px;background:transparent;color:var(--text);text-decoration:none;font:500 12px/1.3 var(--font-sans,system-ui);text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .publication-action-mark{display:grid;place-items:center;width:54px;height:32px}
+    .publication-action-mark svg{display:block;width:26px;height:26px}
+    .publication-action.is-saved .publication-action-mark svg{fill:currentColor}
+    .publication-action.is-saved .publication-icon-plus{display:none}
+    .publication-action[disabled]{opacity:.42;cursor:default}
+    .publication-action[aria-disabled="true"]{cursor:default}
+    .publication-action[aria-busy="true"]{opacity:.6}
+    .publication-brand-icon{display:block;max-width:54px;width:auto;max-height:32px;height:auto;object-fit:contain}
+    .publication-brand-fallback{font:750 16px/1 var(--font-display,var(--font-sans))}
+    .publication-action-status{margin:8px 0 0;color:var(--muted);font:400 13px/1.4 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .publication-action-status:empty{display:none}
     .publication-exemplar{margin:4px 0 0;color:var(--muted);font:400 12px/1.4 var(--font-sans,system-ui)}
     .publication-placeholder{display:flex;align-items:center;justify-content:center;width:100%;height:70px;padding:10px;border-radius:15px;background:var(--glass3);color:var(--muted);font:400 13px/1.4 var(--font-sans,system-ui)}
     .publication-footer{padding:10px 0 4px}
@@ -755,7 +781,10 @@
       .publication-mode .favorite-photo-art{height:67px;max-height:67px}
       .publication-cigar-brand,.publication-name-unsplit .publication-cigar-name{font-size:18px}
       .publication-cigar-name{font-size:15px}
+      .publication-details{padding:0 16px 16px}
+      .publication-spec-row{gap:12px}
     }
+    @media(prefers-reduced-motion:reduce){.publication-expand svg{transition:none}}
 /* Approved quick-switch sheet, scoped to its native dialog. */
 .cigaros-publication-switcher {
   --cps-sheet: #f4f8fd;
@@ -1279,6 +1308,379 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo.cps-logo-color {
     document.addEventListener("cigaros:cart-changed",refreshCartBadge);
     window.addEventListener("cigaros:cart",refreshCartBadge);
   })();
+  </script>
+
+  <script>
+/* CigarOS Favorites repair 2026-10-12-r1.
+   Shared helper bundled into each page script. No extra script tag required.
+   Browser-local storage, not an account/cloud database. */
+(() => {
+  "use strict";
+  if (window.CigarFavorites?.version === 2) return;
+  const KEY = "cigaros_favorites_v2";
+  const BACKUP = "cigaros_favorites_backup_before_v2";
+  const EVENT = "cigaros:favorites-changed";
+  const SOURCES = [
+    "cigaros_user_favorite_cigars_v1", "cigaros_pos_favorites_cigars",
+    "cigarSocialFavorites", "cigaros_favorites_v1", "cigarosFavorites",
+    "favorites", "cs_favorites_v1", "cigaros_favorite_keys"
+  ];
+  const OLD_ORDER = "cigarSocialFavoritesOrder";
+  const CSV = "https://docs.google.com/spreadsheets/d/10-5j7vKT123WtNhqLynxX3n9BXpb1VlKcuPZHj9YxdM/gviz/tq?tqx=out:csv";
+  const text = v => String(v ?? "").trim();
+  const norm = v => text(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/&/g, " and ").replace(/["'’]/g, "").replace(/\s+/g, " ").trim();
+  const compact = v => norm(v).replace(/[^a-z0-9]/g, "");
+  const unique = a => [...new Set(a.filter(Boolean))];
+  const fields = ["brand", "line", "cigar", "vitola", "ring", "length", "origin", "country", "manufacturer", "wrapper", "binder", "filler", "strength", "shape", "shade", "notes"];
+  let catalogPromise = null;
+  let queue = Promise.resolve();
+
+  function json(raw, fallback) { try { return JSON.parse(raw) ?? fallback; } catch { return fallback; } }
+  function field(row, names) {
+    if (!row || typeof row !== "object") return "";
+    for (const name of names) {
+      if (row[name] != null && text(row[name])) return text(row[name]);
+    }
+    const wanted = new Set(names.map(compact));
+    for (const [name, value] of Object.entries(row)) {
+      if (wanted.has(compact(name)) && value != null && text(value)) return text(value);
+    }
+    return "";
+  }
+  function imagePath(value) {
+    const v = text(value);
+    if (!v || /^(blob:|data:|javascript:)/i.test(v)) return "";
+    try {
+      const url = new URL(v.startsWith("http") || v.startsWith("/") ? v : "/" + v, location.origin);
+      if (!["https:", "http:"].includes(url.protocol)) return "";
+      return url.origin === location.origin ? url.pathname + url.search : url.href;
+    } catch { return ""; }
+  }
+  function localHref(value) {
+    if (!value) return "";
+    try {
+      const url = new URL(value, location.origin);
+      return url.origin === location.origin ? url.pathname + url.search : "";
+    } catch { return ""; }
+  }
+  function hrefKey(href) {
+    try {
+      const u = new URL(href, location.origin);
+      return u.searchParams.get("key") || u.searchParams.get("id") || "";
+    } catch { return ""; }
+  }
+  function hrefAlias(href) {
+    if (!href) return "";
+    const u = new URL(href, location.origin);
+    const identity = u.searchParams.get("key") || u.searchParams.get("id") || u.searchParams.get("slug");
+    if (identity && /\/pos\/cigars\/cigar(?:\.html)?\/?$/.test(u.pathname)) return "key:" + norm(identity);
+    u.searchParams.sort();
+    return "url:" + norm(u.pathname.replace(/\.html$/, "").replace(/\/$/, "") + u.search);
+  }
+  function normalize(raw, forcedType) {
+    if (typeof raw === "string" || typeof raw === "number") raw = { key: String(raw), type: forcedType || "cigar" };
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const candidateType = text(forcedType || raw.type || raw.kind || raw.category || "cigar").toLowerCase().replace(/s$/, "");
+    const type = ["cigar", "brand", "shop"].includes(candidateType) ? candidateType : "cigar";
+    const item = { type };
+    for (const key of fields) item[key] = field(raw, [key]);
+    item.name = field(raw, ["displayName", "name", "title", "Cigar"]);
+    item.cigar = field(raw, ["cigar", "Cigar"]);
+    item.vitola ||= field(raw, ["style", "size"]);
+    item.ring ||= field(raw, ["Ring Gauge", "RG"]);
+    item.shade ||= field(raw, ["Wrapper Shade", "wrapper_shade"]);
+    item.origin ||= field(raw, ["country", "Country of Origin"]);
+    item.country ||= item.origin || text(raw.meta);
+    item.img = imagePath(field(raw, ["img", "image", "Cigar IMG", "photo"]));
+    item.imageCandidates = unique([item.img, ...(Array.isArray(raw.imageCandidates) ? raw.imageCandidates.map(imagePath) : [])]);
+    item.href = localHref(field(raw, ["href", "url", "Detail URL"]));
+    item.key = field(raw, ["key", "cigarId", "Cigar ID", "cigar_id"]);
+    if (!item.key && !text(raw.id).startsWith(type + "|")) item.key = text(raw.id);
+    if (/^https?:|^\//.test(item.key)) item.key = hrefKey(item.key) || item.key;
+    if (!item.key) item.key = hrefKey(item.href);
+    if (type === "brand") { item.brand ||= item.name; item.name ||= item.brand; }
+    if (!item.name && item.cigar) item.name = [item.line, item.cigar].filter(Boolean).join(" ");
+    if (!item.key && item.name) item.key = type === "cigar" ? [item.brand, item.name, item.vitola].join("|") : item.name;
+    if (!item.key && !item.href) return null;
+    if (!item.href) {
+      if (type === "cigar") item.href = "/pos/cigars/cigar.html?key=" + encodeURIComponent(item.key);
+      if (type === "brand") item.href = "/pos/cigars/brand?brand=" + encodeURIComponent(item.brand || item.name);
+      // Never guess a specific shop slug: retain its existing URL or directory fallback.
+      if (type === "shop") item.href = "/shops/";
+    }
+    const aliases = [item.key ? "key:" + norm(item.key) : "", text(raw.id) ? "key:" + norm(raw.id) : ""];
+    if (!(type === "shop" && /^\/shops\/?$/.test(item.href))) aliases.push(hrefAlias(item.href));
+    item.aliases = unique([...(Array.isArray(raw.aliases) ? raw.aliases : []), ...aliases]);
+    item.uid = text(raw.uid) || `${type}:${encodeURIComponent(norm(item.key || item.href))}`;
+    item.posImageKey = text(raw.posImageKey) || (type === "cigar" ? item.key : "");
+    item.savedAt = Number(raw.savedAt) || 0;
+    item.catalogKey = text(raw.catalogKey);
+    return item;
+  }
+  function same(a, b) {
+    if (a.type !== b.type) return false;
+    return a.uid === b.uid || a.aliases.some(alias => b.aliases.includes(alias));
+  }
+  function merge(a, b, preferNew = false) {
+    const result = { ...a };
+    for (const [key, value] of Object.entries(b)) {
+      if (["uid", "aliases", "imageCandidates", "savedAt"].includes(key)) continue;
+      if (value !== "" && value != null && (preferNew || !result[key])) result[key] = value;
+    }
+    result.uid = a.uid;
+    result.aliases = unique([...a.aliases, ...b.aliases]);
+    result.imageCandidates = unique([result.img, ...a.imageCandidates, ...b.imageCandidates]);
+    result.savedAt = a.savedAt || b.savedAt;
+    return result;
+  }
+  function dedupe(items) {
+    const result = [];
+    for (const item of items.filter(Boolean)) {
+      const index = result.findIndex(other => same(other, item));
+      if (index < 0) result.push(item);
+      else result[index] = merge(result[index], item);
+    }
+    return result;
+  }
+  function unpack(parsed, type) {
+    if (Array.isArray(parsed)) return parsed.map(v => normalize(v, type)).filter(Boolean);
+    if (!parsed || typeof parsed !== "object") return [];
+    if (Array.isArray(parsed.items)) return unpack(parsed.items, type);
+    const grouped = ["cigars", "brands", "shops"].filter(k => Array.isArray(parsed[k]));
+    if (grouped.length) return grouped.flatMap(k => unpack(parsed[k], k.slice(0, -1)));
+    if (parsed.key || parsed.name || parsed.href || parsed.brand) return [normalize(parsed, type)].filter(Boolean);
+    return Object.entries(parsed).flatMap(([k, v]) => {
+      if (v === true) return [normalize({key:k}, type)].filter(Boolean);
+      return typeof v === "object" && v ? [normalize({key:k, ...v}, type)].filter(Boolean) : [];
+    });
+  }
+  function storageError(error) {
+    return new Error("Favorites could not be saved in this browser. Check available storage and site permissions; your existing data has not been cleared. " + (error?.message || ""));
+  }
+  function writeDocument(doc) {
+    try { localStorage.setItem(KEY, JSON.stringify(doc)); } catch (error) { throw storageError(error); }
+  }
+  function readDocument() {
+    let raw;
+    try { raw = localStorage.getItem(KEY); } catch (error) { throw storageError(error); }
+    if (raw === null) return migrate();
+    const doc = json(raw, null);
+    if (!doc || doc.version !== 2 || !Array.isArray(doc.items)) {
+      throw new Error("Saved Favorites data needs recovery. It has not been overwritten. Keep your browser data and contact support.");
+    }
+    return doc;
+  }
+  function migrate() {
+    const snapshot = {};
+    for (const key of [...SOURCES, OLD_ORDER]) snapshot[key] = localStorage.getItem(key);
+    if (localStorage.getItem(BACKUP) === null) {
+      try { localStorage.setItem(BACKUP, JSON.stringify({savedAt:Date.now(), values:snapshot})); }
+      catch (error) { throw storageError(error); }
+    }
+    const imported = SOURCES.flatMap(key => unpack(json(snapshot[key], [])));
+    const items = dedupe(imported);
+    const order = json(snapshot[OLD_ORDER], []);
+    if (Array.isArray(order)) {
+      const ranks = new Map(order.map((key, index) => ["key:" + norm(key), index]));
+      const rank = item => Math.min(...item.aliases.map(a => ranks.get(a) ?? Infinity));
+      items.sort((a,b) => rank(a) - rank(b));
+    }
+    const doc = {version:2, revision:0, migratedAt:Date.now(), updatedAt:Date.now(), items};
+    writeDocument(doc);
+    // Old stores are left untouched here. They are never re-imported after v2 exists.
+    return doc;
+  }
+  function mirror(doc) {
+    // Compatibility outputs for other existing profile widgets. Never primary inputs after migration.
+    const cigars = doc.items.filter(i => i.type === "cigar");
+    const mirrorValues = {
+      cigaros_user_favorite_cigars_v1: cigars.map(i => ({...i, image:i.img, url:i.href})),
+      cigaros_pos_favorites_cigars: cigars.map(i => ({...i, displayName:i.name, image:i.img, url:i.href})),
+      cigaros_favorite_keys: cigars.map(i => i.key),
+      cigarSocialFavorites: doc.items.map(i => ({...i, id:i.key, image:i.img, url:i.href})),
+      cigarSocialFavoritesOrder: doc.items.map(i => i.key)
+    };
+    for (const [key, value] of Object.entries(mirrorValues)) {
+      try { localStorage.setItem(key, JSON.stringify(value)); }
+      catch (error) { console.warn("[Favorites] Canonical save succeeded; compatibility mirror failed:", key, error); }
+    }
+  }
+  function mutate(fn) {
+    const run = () => {
+      const doc = readDocument();
+      const before = JSON.stringify(doc.items);
+      const value = fn(doc);
+      if (before !== JSON.stringify(doc.items)) {
+        doc.revision = (doc.revision || 0) + 1; doc.updatedAt = Date.now();
+        writeDocument(doc); mirror(doc);
+        window.dispatchEvent(new CustomEvent(EVENT, {detail:{revision:doc.revision}}));
+      }
+      return value;
+    };
+    const locked = () => navigator.locks?.request ? navigator.locks.request(KEY, run) : run();
+    const job = queue.then(locked, locked);
+    queue = job.catch(() => {});
+    return job;
+  }
+  function all() { return readDocument().items.map(item => normalize(item)).filter(Boolean); }
+  function has(payload) {
+    const item = normalize(payload);
+    return !!item && all().some(existing => same(existing, item));
+  }
+  function set(payload, wanted) {
+    const item = normalize(payload);
+    if (!item) return Promise.reject(new Error("This cigar does not have a usable identity or detail link."));
+    return mutate(doc => {
+      const matches = doc.items.filter(old => same(old, item));
+      if (!wanted) { doc.items = doc.items.filter(old => !same(old, item)); return false; }
+      if (matches.length) {
+        const first = matches[0];
+        doc.items = doc.items.filter(old => !same(old, item) || old.uid === first.uid);
+        const index = doc.items.findIndex(old => old.uid === first.uid);
+        doc.items[index] = merge(first, item, true);
+      } else doc.items.push({...item, savedAt:Date.now()});
+      return true;
+    });
+  }
+  function remove(uid) {
+    return mutate(doc => { doc.items = doc.items.filter(item => item.uid !== uid); });
+  }
+  function reorder(type, ids) {
+    return mutate(doc => {
+      const wanted = unique(ids);
+      const byId = new Map(doc.items.filter(i => i.type === type).map(i => [i.uid, i]));
+      const ordered = wanted.map(id => byId.get(id)).filter(Boolean);
+      const set = new Set(ordered.map(i => i.uid)); let cursor = 0;
+      doc.items = doc.items.map(item => set.has(item.uid) ? ordered[cursor++] : item);
+    });
+  }
+  function subscribe(callback) {
+    const changed = () => callback();
+    const storage = event => { if (event.key === KEY || event.key === null) callback(); };
+    window.addEventListener(EVENT, changed);
+    window.addEventListener("storage", storage);
+    return () => { window.removeEventListener(EVENT, changed); window.removeEventListener("storage", storage); };
+  }
+  function parseCSV(input) {
+    const rows = []; let row = [], value = "", quoted = false;
+    const text = input.replace(/^\uFEFF/, "");
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '"') {
+        if (quoted && text[i+1] === '"') { value += '"'; i++; }
+        else quoted = !quoted;
+      } else if (!quoted && ch === ',') { row.push(value); value = ""; }
+      else if (!quoted && (ch === '\n' || ch === '\r')) {
+        if (ch === '\r' && text[i+1] === '\n') i++;
+        row.push(value); rows.push(row); row = []; value = "";
+      } else value += ch;
+    }
+    if (value || row.length) {row.push(value); rows.push(row);}
+    const headers = rows.shift() || [];
+    return rows.filter(r => r.some(v => v.trim())).map(r => Object.fromEntries(headers.map((h,i) => [h.trim(), r[i] || ""])));
+  }
+  function rowPayload(row) {
+    const brand = field(row, ["Brand", "Brand Name"]);
+    const line = field(row, ["Line", "Series"]);
+    const cigar = field(row, ["Cigar", "Name"]);
+    const vitola = field(row, ["Vitola", "Style", "Size"]);
+    const name = [line, cigar].filter(Boolean).join(" ");
+    const key = field(row, ["Key", "Cigar ID", "id", "row_id"]) || [brand, name, vitola].join("|");
+    return normalize({...row, type:"cigar", key, catalogKey:key, name, cigar, brand, line, vitola,
+      href:"/pos/cigars/cigar.html?key=" + encodeURIComponent(key),
+      img:field(row, ["Cigar IMG", "image", "photo"]), posImageKey:key});
+  }
+  function recordAliases(item) {
+    const key3 = [item.brand, item.name, item.vitola].join("|");
+    const key4 = [item.brand, item.line, item.cigar, item.vitola].filter(Boolean).join("|");
+    return unique([...item.aliases, "key:"+norm(key3), "key:"+norm(key4)]);
+  }
+  function resolve(item, rows) {
+    if (item.type !== "cigar") return null;
+    let matches = rows.filter(row => item.aliases.some(a => recordAliases(row).includes(a)));
+    if (!matches.length) {
+      const names = unique([item.name, item.cigar].map(norm));
+      if (!item.brand || !names.length) return null;
+      matches = rows.filter(row => {
+        if (compact(item.brand) !== compact(row.brand)) return false;
+        if (item.vitola && norm(item.vitola) !== norm(row.vitola)) return false;
+        for (const k of ["ring", "length", "origin"]) if (item[k] && row[k] && norm(item[k]) !== norm(row[k])) return false;
+        const candidates = [row.cigar, row.name, [row.brand, row.name].join(" "), [row.brand, row.cigar].join(" ")].map(norm);
+        return names.some(name => candidates.includes(name));
+      });
+    }
+    const identities = unique(matches.map(row => norm(row.catalogKey)));
+    // Duplicate accolade rows for one cigar are safe; ambiguous different cigars are not.
+    if (identities.length !== 1) return null;
+    return matches.sort((a,b) => Object.values(b).filter(Boolean).length - Object.values(a).filter(Boolean).length)[0];
+  }
+  async function catalog() {
+    if (!catalogPromise) catalogPromise = (async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 18000);
+      try {
+        const response = await fetch(CSV, {cache:"no-store", signal:controller.signal});
+        if (!response.ok) throw new Error("Cigar catalog returned HTTP " + response.status);
+        const input = await response.text();
+        if (/^\s*</.test(input)) throw new Error("Cigar catalog returned a page instead of CSV.");
+        return parseCSV(input).map(rowPayload).filter(Boolean);
+      } finally { clearTimeout(timer); }
+    })().catch(error => {catalogPromise = null; throw error;});
+    return catalogPromise;
+  }
+  function reconcile(rows) {
+    return mutate(doc => {
+      doc.items = dedupe(doc.items.map(old => {
+        const match = resolve(old, rows);
+        if (!match) return old;
+        const merged = merge(old, match);
+        // Use an actual matched key, but keep old aliases and the original UID/order.
+        merged.key = match.key; merged.catalogKey = match.key;
+        merged.posImageKey = match.posImageKey;
+        merged.href = match.href;
+        merged.aliases = unique([...merged.aliases, ...recordAliases(match)]);
+        return merged;
+      }));
+    });
+  }
+  async function hydrate() { return reconcile(await catalog()); }
+  function hydrateRecords(records) { return reconcile(records.map(rowPayload).filter(Boolean)); }
+  function imageCandidates(item) {
+    const brand = compact(item.brand), line = compact(item.line), cigar = compact(item.cigar || item.name), vitola = compact(item.vitola);
+    const names = unique([brand+line+cigar, brand+line+cigar+vitola, line+cigar, line+cigar+vitola, line+vitola, brand+cigar, brand+cigar+vitola, cigar, cigar+vitola, compact(item.name)]);
+    const paths = [item.img, ...(item.imageCandidates || [])];
+    if (brand && cigar) {
+      if (norm(item.origin) === "cuba") names.forEach(n => paths.push(`/img/cigars/cuban/${brand}/${n}.png`));
+      names.forEach(n => paths.push(`/img/cigars/${brand}/${n}.png`));
+    }
+    return unique(paths.map(imagePath));
+  }
+  async function localImage(key) {
+    if (!key || !window.indexedDB) return null;
+    return new Promise(resolve => {
+      let settled = false;
+      const done = value => {if (!settled) {settled=true; clearTimeout(timer); resolve(value);}};
+      const timer = setTimeout(() => done(null), 3000);
+      const request = indexedDB.open("cigaros_demo_pos");
+      request.onupgradeneeded = () => { request.transaction.abort(); };
+      request.onerror = () => done(null);
+      request.onblocked = () => done(null);
+      request.onsuccess = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains("records")) {db.close(); done(null); return;}
+        const tx = db.transaction("records", "readonly");
+        const get = tx.objectStore("records").get(key);
+        tx.oncomplete = () => {db.close(); done(get.result?.image?.blob instanceof Blob ? get.result.image.blob : null);};
+        tx.onabort = () => {db.close(); done(null);};
+      };
+    });
+  }
+  window.CigarFavorites = Object.freeze({version:2, KEY, BACKUP, EVENT,
+    all, has, set, remove, reorder, subscribe, hydrate, hydrateRecords, catalog, normalize,
+    imageCandidates, imagePath, localHref, localImage, field, norm, compact,
+    exportBackup: () => ({current:readDocument(), beforeRepair:json(localStorage.getItem(BACKUP),null)})});
+})();
   </script>
 
   <script>
@@ -2286,6 +2688,7 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         photoJobs: [],
         localImageUrls: [],
         actionRow: null,
+        expandedAwards: new Set(),
         singleQty: 1,
         boxQty: 0,
       };
@@ -3358,6 +3761,194 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         return ["",full];
       }
 
+      let publicationPanelSerial=0;
+      let publicationSaveQueue=Promise.resolve();
+      function publicationActionIcon(kind){
+        const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+        for(const [key,value] of Object.entries({viewBox:"0 0 24 24",fill:"none",stroke:"currentColor","stroke-width":"1.8","stroke-linecap":"round","stroke-linejoin":"round","aria-hidden":"true",focusable:"false"}))svg.setAttribute(key,value);
+        const paths=kind==="favorites" ? ["m12 3 2.78 5.63 6.22.9-4.5 4.39 1.06 6.2L12 17.19l-5.56 2.93 1.06-6.2L3 9.53l6.22-.9L12 3Z"]
+          : kind==="wishlist" ? ["M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z","M9 10h6m-3-3v6"] : ["m6 9 6 6 6-6"];
+        paths.forEach((d,index)=>{const path=document.createElementNS(svg.namespaceURI,"path");path.setAttribute("d",d);if(index)path.classList.add("publication-icon-plus");svg.append(path);});
+        return svg;
+      }
+      function publicationFavoritePayload(record,favorite){
+        const key=resolveFavoriteKey(record),api=window.CigarFavorites;
+        return {type:"cigar",key,catalogKey:key,posImageKey:resolveDetailKey(record),
+          brand:resolveBrandVal(record),line:resolveLine(record),cigar:resolveName(record),name:resolveDisplayName(record),
+          vitola:resolveVitola(record),ring:resolveRing(record),length:resolveLength(record),
+          wrapper:resolveWrapper(record),binder:resolveBinder(record),filler:resolveFiller(record),
+          origin:resolveOrigin(record),strength:resolveStrength(record),shape:resolveShape(record),
+          shade:getField(record,["wrapper_shade","wrapper_shade_type","wrappershade","shade"]),
+          href:makeDetailHref(record),img:record.__publicationPhotoOverride || getField(record,["cigar_img","cigar_image","image"]) || "",
+          aliases:localAliases({...favorite,_localRecord:record}).filter(alias=>alias.startsWith("key:")).map(alias=>"key:"+api.norm(alias.slice(4)))};
+      }
+      function publicationWishListName(lists){
+        return Object.hasOwn(lists,"Wish List") ? "Wish List" : Object.keys(lists).find(name=>name.replace(/\s+/g,"").toLowerCase()==="wishlist") || null;
+      }
+      function publicationSavedState(ctx){
+        const api=window.CigarFavorites,payload=api.normalize(publicationFavoritePayload(ctx.record,ctx.favorite));
+        // Do not call has()/all() here: first-use migration belongs to an explicit save.
+        const raw=localStorage.getItem(api.KEY);
+        let items=[];
+        if(raw!==null){
+          const doc=JSON.parse(raw);
+          if(!doc || doc.version!==2 || !Array.isArray(doc.items))throw Error("Saved Favorites could not be read. Your saved data has not been changed.");
+          items=doc.items;
+        }else{
+          for(const key of IMPORT_SOURCE_KEYS){
+            try{const value=JSON.parse(localStorage.getItem(key)||"[]");items.push(...(Array.isArray(value)?value:Array.isArray(value?.items)?value.items:[]));}catch{/* The save helper handles recovery without replacing malformed data. */}
+          }
+        }
+        const favorited=!!payload && items.map(item=>api.normalize(item)).filter(Boolean).some(item=>item.type===payload.type && (item.uid===payload.uid || item.aliases.some(alias=>payload.aliases.includes(alias))));
+        const local=readLocalDocument(),incoming=normalizeLocalFavorite({...ctx.favorite,key:ctx.id,_localRecord:ctx.record});
+        const index=localItemIndex(local.items,incoming),saved=index<0?null:local.items[index];
+        const aliases=new Set([...localAliases(incoming),...localAliases(saved)].map(alias=>alias.replace(/^key:/,"")));
+        const lists=window.CigarosFavoriteLists.read(),wishName=publicationWishListName(lists);
+        return {favorited,wished:!!wishName && lists[wishName].some(id=>aliases.has(id.replace(/^key:/,""))),wishName,saved};
+      }
+      function refreshPublicationActionState(row){
+        const ctx=row.publicationContext;
+        if(!ctx?.actions || ctx.record.__publicationOnly)return;
+        try{
+          const saved=publicationSavedState(ctx);
+          for(const [kind,yes] of [["favorites",saved.favorited],["wishlist",saved.wished]]){
+            const button=ctx.actions[kind];
+            if(button.dataset.busy==="true")continue;
+            button.classList.toggle("is-saved",yes);
+            button.setAttribute("aria-disabled",String(yes));
+            button.setAttribute("aria-label",`${yes?"Already in":"Add to"} ${kind==="favorites"?"Favorites":"Wish List"}: ${ctx.label}`);
+            button.querySelector(".publication-action-label").textContent=yes ? kind==="favorites"?"Favorited":"On Wish List" : kind==="favorites"?"Favorites":"Wish List";
+          }
+        }catch(error){ctx.status.textContent=error.message;}
+      }
+      function refreshPublicationActionStates(){
+        content.querySelectorAll(".publication-row").forEach(refreshPublicationActionState);
+      }
+      function saveFromPublicationCard(row,kind){
+        const ctx=row.publicationContext,button=ctx.actions[kind];
+        if(button.disabled || button.dataset.busy==="true" || button.getAttribute("aria-disabled")==="true")return;
+        button.dataset.busy="true";button.setAttribute("aria-busy","true");
+        ctx.status.textContent="Saving…";
+        const work=async()=>{
+          let rollback;
+          try{
+            if(ctx.record.__publicationOnly)throw Error("This entry is not yet available to save.");
+            // A named list stores local cigar IDs. Check it before changing its backing record.
+            const lists=kind==="wishlist" ? window.CigarosFavoriteLists.read() : null;
+            const beforeLocal=localStorage.getItem(LOCAL_FAVORITES_KEY);
+            let ownedLocal=beforeLocal;
+            rollback=()=>{
+              // Preserve changes made by another writer while the canonical save was pending.
+              if(localStorage.getItem(LOCAL_FAVORITES_KEY)!==ownedLocal)return;
+              if(beforeLocal===null)localStorage.removeItem(LOCAL_FAVORITES_KEY);
+              else localStorage.setItem(LOCAL_FAVORITES_KEY,beforeLocal);
+            };
+            try{
+              importCurrentFavorites();
+              savePublicationFavorite(ctx.record,ctx.favorite,ctx.id);
+            }finally{ownedLocal=localStorage.getItem(LOCAL_FAVORITES_KEY);}
+            if(kind==="favorites"){
+              await window.CigarFavorites.set(publicationFavoritePayload(ctx.record,ctx.favorite),true);
+            }else{
+              const doc=readLocalDocument(),incoming=normalizeLocalFavorite({...ctx.favorite,key:ctx.id,_localRecord:ctx.record});
+              const at=localItemIndex(doc.items,incoming);
+              if(at<0)throw Error("This cigar could not be added to Wish List.");
+              const saved=doc.items[at],name=publicationWishListName(lists)||"Wish List";
+              const aliases=new Set([...localAliases(saved),...localAliases(incoming)].map(alias=>alias.replace(/^key:/,"")));
+              if(!Object.hasOwn(lists,name))Object.defineProperty(lists,name,{value:[],enumerable:true,writable:true,configurable:true});
+              if(!lists[name].some(id=>aliases.has(id.replace(/^key:/,""))))lists[name].push(saved.key);
+              const text=JSON.stringify(lists);
+              localStorage.setItem("cigaros_favorite_lists_v1",text);
+            }
+            rollback=null;
+            // Update in place: an inline save must not collapse the card or move focus.
+            try{
+              syncLists();
+              window.CigarosPublicationSwitcher?.refresh?.({personalLists:window.CigarosFavoriteLists.read()});
+            }catch{/* A saved action remains successful if a separate list cannot be read. */}
+            ctx.status.textContent=kind==="favorites"?"Added to Favorites.":"Added to Wish List.";
+            if(!row.isConnected)showToast(ctx.status.textContent);
+          }catch(error){
+            if(rollback){try{rollback();}catch{/* Keep the original save error visible. */}}
+            ctx.status.textContent="Could not save. "+error.message;
+          }finally{
+            delete button.dataset.busy;button.removeAttribute("aria-busy");
+            refreshPublicationActionStates();
+          }
+        };
+        publicationSaveQueue=publicationSaveQueue.then(work,work);
+      }
+      function buildPublicationDetails(row){
+        const ctx=row.publicationContext,{record,award,panel}=ctx;
+        if(panel.childElementCount)return;
+        const note=document.createElement("p");note.className="publication-detail-note";
+        if(record.__publicationOnly)note.textContent="Details and saved-list actions are not available for this entry yet.";
+        else if(award.scope==="blend")note.textContent="Example size: "+(record.__publicationPhotoCaption?.replace(/^Shown:\s*/i,"") || shareCaption([resolveBrandVal(record),resolveLine(record),resolveName(record),resolveVitola(record)]))+".";
+        if(note.textContent)panel.append(note);
+        const specs=document.createElement("dl");specs.className="publication-specs";
+        const fields=[
+          ["Vitola",resolveVitola(record)],["Ring",getField(record,["ring","ring_gauge","rg","ring_size"])],
+          ["Length",getField(record,["length","len"])],["Wrapper",resolveWrapper(record)],
+          ["Binder",resolveBinder(record)],["Filler",resolveFiller(record)],
+          ["Origin (rolled in)",resolveOrigin(record)],
+          ["Wrapper shade",getField(record,["wrapper_shade","wrapper_shade_type","wrappershade","shade"])],
+          ["Strength",resolveStrength(record)],["Shape",resolveShape(record)]
+        ];
+        for(const [label,value] of fields){
+          const line=document.createElement("div"),term=document.createElement("dt"),definition=document.createElement("dd");
+          line.className="publication-spec-row";term.textContent=label;definition.textContent=String(value||"").trim()||"—";
+          line.append(term,definition);specs.append(line);
+        }
+        panel.append(specs);
+        const actions=document.createElement("div");actions.className="publication-actions";ctx.actions={};
+        for(const kind of ["favorites","wishlist"]){
+          const button=document.createElement("button"),mark=document.createElement("span"),label=document.createElement("span");
+          button.type="button";button.className="publication-action";button.dataset.save=kind;button.disabled=!!record.__publicationOnly;
+          button.setAttribute("aria-disabled",String(button.disabled));button.setAttribute("aria-label",`Add to ${kind==="favorites"?"Favorites":"Wish List"}: ${ctx.label}`);
+          mark.className="publication-action-mark";mark.append(publicationActionIcon(kind));
+          label.className="publication-action-label";label.textContent=kind==="favorites"?"Favorites":"Wish List";
+          button.append(mark,label);button.addEventListener("click",()=>saveFromPublicationCard(row,kind));actions.append(button);ctx.actions[kind]=button;
+        }
+        const brand=resolveBrandVal(record),canVisit=!!brand && !record.__publicationOnly;
+        const brandLink=document.createElement(canVisit?"a":"button"),mark=document.createElement("span"),label=document.createElement("span");
+        brandLink.className="publication-action publication-brand-link";
+        brandLink.setAttribute("aria-label",canVisit?`Visit ${brand} brand page`:"Brand page unavailable");
+        if(canVisit)brandLink.href=`/pos/cigars/brand?brand=${encodeURIComponent(brand.trim())}`;
+        else {brandLink.type="button";brandLink.disabled=true;}
+        mark.className="publication-action-mark";
+        const fallback=document.createElement("span");fallback.className="publication-brand-fallback";fallback.textContent=brand?brand.split(/\s+/).map(word=>word[0]).slice(0,2).join(""):"—";
+        if(canVisit){
+          const img=document.createElement("img"),candidates=buildBrandIconCandidates(record);let index=0;
+          img.className="publication-brand-icon";img.alt="";img.decoding="async";fallback.hidden=true;
+          img.onerror=()=>{if(++index<candidates.length)img.src=candidates[index];else{img.hidden=true;fallback.hidden=false;}};
+          if(candidates.length)img.src=candidates[0];else fallback.hidden=false;
+          mark.append(img);
+        }
+        mark.append(fallback);label.className="publication-action-label";label.textContent="Brand";brandLink.append(mark,label);actions.append(brandLink);panel.append(actions);
+        const status=document.createElement("p");status.className="publication-action-status";status.setAttribute("role","status");panel.append(status);ctx.status=status;
+        refreshPublicationActionState(row);
+      }
+      function addPublicationDisclosure(row,link,name,record,favorite,id,award){
+        const serial=++publicationPanelSerial,summary=document.createElement("div"),toggle=document.createElement("button"),panel=document.createElement("div");
+        const label=record.__publishedName || name.textContent;
+        summary.className="publication-card-summary";summary.append(link);
+        name.id="publication-cigar-name-"+serial;
+        panel.id="publication-details-"+serial;panel.className="publication-details";panel.hidden=true;
+        panel.setAttribute("role","region");panel.setAttribute("aria-labelledby",name.id);
+        toggle.type="button";toggle.className="publication-expand";toggle.setAttribute("aria-controls",panel.id);
+        toggle.setAttribute("aria-expanded","false");toggle.setAttribute("aria-label",`Expand details: ${label}, ${award.year}`);toggle.append(publicationActionIcon("chevron"));
+        row.publicationContext={record,favorite,id,award,panel,label,actions:null};
+        const display=open=>{
+          if(open)buildPublicationDetails(row);
+          panel.hidden=!open;row.classList.toggle("is-expanded",open);toggle.setAttribute("aria-expanded",String(open));
+          toggle.setAttribute("aria-label",`${open?"Collapse":"Expand"} details: ${label}, ${award.year}`);
+          if(open){state.expandedAwards.add(award.id);refreshPublicationActionState(row);}else state.expandedAwards.delete(award.id);
+        };
+        toggle.addEventListener("click",()=>display(toggle.getAttribute("aria-expanded")!=="true"));
+        summary.append(toggle);row.append(summary,panel);
+        if(state.expandedAwards.has(award.id))display(true);
+      }
+
       function createRow(record, favorite, id, award=null){
         const row=document.createElement("div");
         row.className="favorite-photo-row is-photo-loading";
@@ -3404,6 +3995,7 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           else name.classList.add("publication-name-unsplit");
           const productName=document.createElement("span");productName.className="publication-cigar-name";productName.textContent=product;name.append(productName);link.append(name);
           if(record.__publicationPhotoCaption){const caption=document.createElement("p");caption.className="publication-exemplar";caption.textContent=record.__publicationPhotoCaption;link.append(caption);}
+          addPublicationDisclosure(row,link,name,record,favorite,id,award);
           return row;
         }
         const listsButton=document.createElement("button");
@@ -3855,6 +4447,8 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
       $("#publicationQuickSwitch").addEventListener("click",openCollectionSwitcher);
       $("#publicationLogoQuickSwitch").addEventListener("click",openCollectionSwitcher);
       $("#favoritesQuickSwitch").addEventListener("click",openCollectionSwitcher);
+      window.addEventListener(window.CigarFavorites.EVENT,refreshPublicationActionStates);
+      window.addEventListener("storage",event=>{if(event.key===window.CigarFavorites.KEY)refreshPublicationActionStates();});
       function savePublicationFavorite(record,favorite,id){
         if(record.__publicationOnly)throw Error("This published cigar has not been linked to a POS entry yet.");
         const doc=readLocalDocument(),before=JSON.stringify(doc);
