@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no,email=no,address=no" />
   <title>Favorites</title>
-  <!-- Publication lists build: 2026-10-19. Based on the deployed Favorites page. -->
+  <!-- Publication lists build: 2026-10-19-cards-header. Based on the deployed Favorites page. -->
   <!-- Published awards use a separate data layer; existing personal lists retain their storage. -->
   <!-- POS favorites horizontal photos: 2026-10-13-r1 -->
 
@@ -694,13 +694,17 @@
     .favorites-theme-dock{grid-column:3}
     .favorites-quick-switch{display:inline-flex;align-items:center;gap:9px;min-height:44px;max-width:100%;padding:0 14px;border:0;border-radius:22px;background:var(--glass2);color:var(--text);font:600 15px/1.3 var(--font-sans,system-ui);cursor:pointer}
     #favoritesQuickSwitchLabel{overflow-wrap:anywhere}
-    body.publication-mode{--text:#102d4b;--muted:#45627e;--muted2:#45627e;--publication-row-light:#eaf3fe;--publication-row-dark:#d5e5f7;background:linear-gradient(150deg,#dceafb,#bbd3ec);background-attachment:fixed}
-    html[data-theme="dark"] body.publication-mode{--text:#f8fbff;--muted:#b3c7e0;--muted2:#b3c7e0;--publication-row-light:#254d79;--publication-row-dark:#163757;background:linear-gradient(150deg,#1c4475,#091f36);background-attachment:fixed}
+    body.publication-mode{--text:#102d4b;--muted:#45627e;--muted2:#45627e;--publication-card-light:#edf5ff;--publication-card-dark:#dceafb;--publication-card-edge:#d3e5f9;--publication-card-shadow:#12355314;--publication-card-line:#49688930;background:linear-gradient(150deg,#dceafb,#bbd3ec);background-attachment:fixed}
+    html[data-theme="dark"] body.publication-mode{--text:#f8fbff;--muted:#b3c7e0;--muted2:#b3c7e0;--publication-card-light:#28517b;--publication-card-dark:#1d3e61;--publication-card-edge:#163653;--publication-card-shadow:#030e1926;--publication-card-line:#c6ddff2b;background:linear-gradient(150deg,#1c4475,#091f36);background-attachment:fixed}
     .publication-mode .favorites-topbar{position:relative;width:min(390px,calc(100% - 40px));padding-bottom:12px}
+    html[data-theme] .publication-mode .favorites-back,html[data-theme] .publication-mode #theme-toggle{border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+    .publication-mode .favorites-back::before,.publication-mode #theme-toggle::before{display:none}
     .publication-mode .publication-top-label{display:block;text-align:center;color:var(--muted);font:750 13px/1.4 var(--font-display,var(--font-sans));letter-spacing:.06em;text-transform:uppercase}
     .publication-mode .favorites-main{width:min(430px,100%);padding-left:20px;padding-right:20px}
     .publication-header{padding:8px 0 0;margin:0 0 8px}
+    .publication-clean-header .publication-header{margin-bottom:20px}
     .publication-brand{display:flex;align-items:center;height:50px;margin:6px 0 12px}
+    .publication-brand-picker{display:flex;align-items:center;height:100%;max-width:100%;padding:0;border:0;background:transparent;color:var(--text);cursor:pointer}
     .publication-logo{display:block;width:auto;max-width:224px;height:auto;max-height:50px;object-fit:contain;object-position:left center}
     .publication-logo[data-publication="ca"],.publication-logo[data-publication="consensus"]{filter:brightness(0) saturate(100%) invert(13%) sepia(30%) saturate(2185%) hue-rotate(175deg) brightness(92%)}
     html[data-theme="dark"] .publication-logo[data-publication="ca"],html[data-theme="dark"] .publication-logo[data-publication="consensus"]{filter:brightness(0) invert(1)}
@@ -712,31 +716,46 @@
     .publication-picker-mark svg{width:18px;height:18px}
     .publication-description{max-width:365px;margin:8px 0 0;color:var(--muted);font:400 14px/1.5 var(--font-sans,-apple-system,sans-serif)}
     .publication-mode .summary{display:flex;align-items:center;min-height:44px;margin:6px 0;color:var(--muted);font:650 12px/1.4 var(--font-sans,system-ui)}
-    .publication-mode #favoritesContent{padding:0}
+    .publication-mode #favoritesContent{display:grid;gap:14px;margin:4px -3px 0;padding:0}
+    .publication-clean-header #favoritesContent{margin-top:0}
     .publication-mode .publication-row{
-      --publication-row-tone:var(--publication-row-dark);
-      --publication-row-mid:color-mix(in srgb,var(--publication-row-light) 50%,var(--publication-row-dark) 50%);
-      --publication-row-start:var(--publication-row-mid);--publication-row-end:var(--publication-row-mid);
-      width:calc(100% + 40px);margin:0 -20px;padding:8px 20px 14px;
-      background:linear-gradient(to bottom,var(--publication-row-start) 0%,var(--publication-row-tone) 28%,var(--publication-row-tone) 72%,var(--publication-row-end) 100%);
+      --publication-card-tone:var(--publication-card-light);
+      width:100%;min-width:0;margin:0;padding:0;border-radius:24px;
+      background:linear-gradient(150deg,var(--publication-card-tone) 0%,var(--publication-card-tone) 48%,var(--publication-card-edge) 100%);
+      box-shadow:0 7px 17px var(--publication-card-shadow);
     }
-    .publication-row:nth-of-type(odd){--publication-row-tone:var(--publication-row-light)}
-    .publication-row:nth-of-type(even){--publication-row-tone:var(--publication-row-dark)}
-    .publication-row:first-of-type{--publication-row-start:transparent}
-    .publication-row:last-of-type{--publication-row-end:transparent}
-    .publication-meta{display:flex;align-items:center;gap:9px;min-height:44px;line-height:1.1}
-    .publication-year{font:820 24px/1.1 var(--font-display,var(--font-sans));letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+    .publication-mode .publication-row:nth-of-type(even){--publication-card-tone:var(--publication-card-dark)}
+    .publication-card-link{display:block;width:100%;min-width:0;padding:16px 18px 19px;border-radius:inherit;color:var(--text);text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:pan-y pinch-zoom}
+    .publication-card-link:active{background:var(--glass3)}
+    .publication-card-link:focus-visible,.publication-brand-picker:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
+    .publication-meta{display:flex;align-items:center;gap:9px;min-height:27px;line-height:1.1}
+    .publication-year{font:600 21px/1.1 var(--font-display,var(--font-sans));letter-spacing:-.5px;font-variant-numeric:tabular-nums}
     .publication-rank{font:650 12px/1.4 var(--font-sans);color:var(--muted)}
-    .publication-mode .favorite-photo-link,.publication-mode .favorite-photo-row.is-photo-loading .favorite-photo-link{height:78px;min-height:78px;padding:0}
-    .publication-mode .favorite-photo-art{height:78px;max-height:78px;filter:none}
-    .publication-name{margin:3px 0 0;font:650 14px/1.35 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .publication-mode .favorite-photo-link,.publication-mode .favorite-photo-row.is-photo-loading .favorite-photo-link{height:79px;min-height:79px;margin:10px 0 13px;padding:0}
+    .publication-mode .favorite-photo-art{height:79px;max-height:79px;filter:none}
+    .publication-name{position:relative;margin:0;padding-top:15px;font:450 16px/1.3 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .publication-name::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(to right,transparent,var(--publication-card-line) 12%,var(--publication-card-line) 88%,transparent)}
+    .publication-cigar-brand{display:block;font:780 19px/1.22 var(--font-display,var(--font-sans));letter-spacing:-.35px}
+    .publication-cigar-name{display:block;font:450 16px/1.3 var(--font-sans,system-ui);letter-spacing:-.1px}
+    .publication-cigar-brand ~ .publication-cigar-name{margin-top:4px}
+    .publication-name-unsplit .publication-cigar-name{font:780 19px/1.22 var(--font-display,var(--font-sans));letter-spacing:-.35px}
     .publication-exemplar{margin:4px 0 0;color:var(--muted);font:400 12px/1.4 var(--font-sans,system-ui)}
     .publication-placeholder{display:flex;align-items:center;justify-content:center;width:100%;height:70px;padding:10px;border-radius:15px;background:var(--glass3);color:var(--muted);font:400 13px/1.4 var(--font-sans,system-ui)}
     .publication-footer{padding:10px 0 4px}
     .publication-source{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--muted);font:400 12px/1.4 var(--font-sans,system-ui);text-decoration:none}
     .publication-notice{margin:0 0 14px;color:var(--muted);font:400 13px/1.45 var(--font-sans)}
     .publication-notice button{display:block;margin-top:10px;padding:10px 16px;border-radius:16px;border:1px solid var(--stroke);background:var(--glass);color:var(--text);font:inherit}
-    @media(max-width:380px){.publication-mode .favorites-main{padding-left:16px;padding-right:16px}.publication-mode .publication-row{width:calc(100% + 32px);margin:0 -16px;padding:8px 16px 14px}.publication-mode .favorites-topbar{width:calc(100% - 32px)}}
+    @media(max-width:380px){
+      .publication-mode .favorites-main{padding-left:16px;padding-right:16px}
+      .publication-mode .favorites-topbar{width:calc(100% - 32px)}
+      .publication-mode #favoritesContent{gap:12px;margin-left:-2px;margin-right:-2px}
+      .publication-mode .publication-row{border-radius:22px}
+      .publication-card-link{padding:14px 16px 17px}
+      .publication-mode .favorite-photo-link,.publication-mode .favorite-photo-row.is-photo-loading .favorite-photo-link{height:67px;min-height:67px;margin:8px 0 12px}
+      .publication-mode .favorite-photo-art{height:67px;max-height:67px}
+      .publication-cigar-brand,.publication-name-unsplit .publication-cigar-name{font-size:18px}
+      .publication-cigar-name{font-size:15px}
+    }
 /* Approved quick-switch sheet, scoped to its native dialog. */
 .cigaros-publication-switcher {
   --cps-sheet: #f4f8fd;
@@ -1189,9 +1208,9 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo.cps-logo-color {
   </header>
 
   <main class="favorites-main">
-    <section id="publicationHeader" class="publication-header" aria-labelledby="publicationTitle" hidden>
-      <div class="publication-brand"><img id="publicationLogo" class="publication-logo" alt="" /></div>
-      <h1 class="publication-heading"><button id="publicationQuickSwitch" class="publication-title-picker" type="button" aria-haspopup="dialog" aria-label="Change collection"><span id="publicationTitle" class="publication-title"></span><span class="publication-picker-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button></h1>
+    <section id="publicationHeader" class="publication-header" aria-labelledby="publicationHeading" hidden>
+      <div class="publication-brand"><button id="publicationLogoQuickSwitch" class="publication-brand-picker" type="button" aria-haspopup="dialog" aria-label="Change collection"><img id="publicationLogo" class="publication-logo" alt="" /></button></div>
+      <h1 id="publicationHeading" class="publication-heading"><span id="publicationWinnerTitle" class="favorites-sr-only" hidden>Cigar Aficionado Cigar of the Year winners</span><button id="publicationQuickSwitch" class="publication-title-picker" type="button" aria-haspopup="dialog" aria-label="Change collection"><span id="publicationTitle" class="publication-title"></span><span class="publication-picker-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button></h1>
       <p id="publicationDescription" class="publication-description"></p>
     </section>
     <h1 id="favoritesTitle" class="page-title">Favorites</h1>
@@ -1572,7 +1591,7 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo.cps-logo-color {
       lists.push({id:'pub:' + publisher.id + ':winners', publisherId:publisher.id, publisherName:publisher.name,
         kind:'winners', year:null, title:'No. 1s', description:publisher.id === 'consensus'
           ? 'The No. 1 blends from halfwheel’s yearly consensus of cigar media rankings.'
-          : publisher.id === 'ca' ? 'Every Cigar Aficionado Cigar of the Year, together in one list.' : 'Every No. 1 from Cigar Journal’s annual Top 25 New Cigars.',
+          : publisher.id === 'ca' ? "Cigar Aficionado's coveted #1 Cigar of the Year. View the list below for every cigar to claim the title (2004-2025)." : 'Every No. 1 from Cigar Journal’s annual Top 25 New Cigars.',
         sourceUrl:publisher.archiveUrl, entries:winners, actualCount:winners.length, expectedCount,
         complete:expectedCount !== null && winnerYears.size === expectedCount &&
           winners.every(entry => !entry.isTie && !problemYears.has(publisher.id + ':' + entry.year)) && winners.length === expectedCount});
@@ -3319,10 +3338,31 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         });
       }
 
+      function publicationCardLabel(record){
+        const full=String(record.__publishedName || shareCaption([resolveBrandVal(record),resolveLine(record),resolveName(record),resolveVitola(record)])).trim();
+        // Keep published labels authoritative; catalog sizes may only be photo exemplars.
+        if(full==="Dias de Gloria by A.J. Fernandez Brazil Figurado")return ["A.J. Fernandez","Dias de Gloria Brazil Figurado"];
+        const key=value=>String(value).normalize("NFD").replace(/\p{M}/gu,"").replace(/[^\p{L}\p{N}]/gu,"").toLowerCase();
+        const brands=new Set([
+          resolveBrandVal(record).replace(/\s*\(Cuban\)\s*$/i,""),
+          "Fuente Fuente OpusX","Flor de las Antillas","La Flor Dominicana","Arturo Fuente",
+          "E.P. Carrillo","Alec Bradley","Aging Room","Casa Magna","H. Upmann","Montecristo",
+          "My Father","Padrón","Bolívar","Cohiba","Oliva","Tatuaje","El Pulpo","Villa Zamorano",
+          "Rocky Patel","Plasencia","Perdomo","A.J. Fernandez","J.C. Newman","Liga Privada"
+        ].map(key).filter(Boolean));
+        // Match whole-word boundaries in the original label so accents and punctuation survive.
+        for(const match of [...full.matchAll(/\s+/g)].reverse()){
+          const prefix=full.slice(0,match.index);
+          if(brands.has(key(prefix)))return [prefix,full.slice(match.index).trim()];
+        }
+        return ["",full];
+      }
+
       function createRow(record, favorite, id, award=null){
         const row=document.createElement("div");
         row.className="favorite-photo-row is-photo-loading";
         row.dataset.favoriteId=id;
+        const card=award ? document.createElement("a") : null;
         if(award){
           row.classList.add("publication-row");
           row.dataset.awardId=award.id;
@@ -3333,12 +3373,12 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           primary.textContent=winners ? String(award.year) : award.rankLabel.replace(/^#/,"No. ");
           meta.append(primary);
           if(!winners){const year=document.createElement("span");year.className="publication-rank";year.textContent=String(award.year)+(award.scope==="blend"?" · Blend":"");meta.append(year);}
-          row.append(meta);
+          card.append(meta);
         }
         row.shareDetails=[resolveBrandVal(record),resolveLine(record),resolveName(record),resolveVitola(record),resolveRing(record),resolveLength(record)].map(v=>String(v||"—"));
         row.setAttribute("role","listitem");
-        const link=document.createElement("a");
-        link.className="favorite-photo-link";
+        const link=card || document.createElement("a");
+        link.className=award ? "publication-card-link" : "favorite-photo-link";
         link.draggable=false;
         link.href=record.__fromFavorite
           ? safeDetailHref(favorite?.href || favorite?.url) || makeDetailHref(record)
@@ -3352,12 +3392,18 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         const message=document.createElement("span");
         message.className="favorite-photo-status";
         message.textContent="Loading photo…";
-        link.appendChild(message);
+        // The photo loader replaces this slot only, leaving the full-card label intact.
+        const photo=award ? document.createElement("div") : link;
+        if(award){photo.className="favorite-photo-link";link.append(photo);}
+        photo.appendChild(message);
         row.appendChild(link);
         if(award){
+          const [brand,product]=publicationCardLabel(record);
           const name=document.createElement("h2");name.className="publication-name";
-          name.textContent=record.__publishedName || shareCaption(row.shareDetails.slice(0,4));row.append(name);
-          if(record.__publicationPhotoCaption){const caption=document.createElement("p");caption.className="publication-exemplar";caption.textContent=record.__publicationPhotoCaption;row.append(caption);}
+          if(brand){const label=document.createElement("span");label.className="publication-cigar-brand";label.textContent=brand;name.append(label,document.createTextNode(" "));}
+          else name.classList.add("publication-name-unsplit");
+          const productName=document.createElement("span");productName.className="publication-cigar-name";productName.textContent=product;name.append(productName);link.append(name);
+          if(record.__publicationPhotoCaption){const caption=document.createElement("p");caption.className="publication-exemplar";caption.textContent=record.__publicationPhotoCaption;link.append(caption);}
           return row;
         }
         const listsButton=document.createElement("button");
@@ -3707,20 +3753,26 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
       }
       function updatePublicationHeader(){
         const cfg=publicationConfig(),list=activePublicationList(),on=!!cfg;
+        const cleanHeader=on && cfg.id==="ca" && selectedPublication.endsWith(":winners");
         document.body.classList.toggle("publication-mode",on);
+        document.body.classList.toggle("publication-clean-header",cleanHeader);
+        summary.hidden=cleanHeader;
+        $("#publicationQuickSwitch").hidden=cleanHeader;
+        $("#publicationWinnerTitle").hidden=!cleanHeader;
         $("#favoritesTitle").hidden=on;
         $("#publicationHeader").hidden=!on;
         $("#publicationFooter").hidden=!on;
         $(".favorites-actions").hidden=on;
         $("#publicationNotice").hidden=true;
         $("#favoritesReorderHelp").textContent=on
-          ? "Tap a cigar photo for details. Entries without a catalog match open the publication’s original ranking. Publication order follows the published ranking."
+          ? "Tap a cigar card for details. Entries without a catalog match open the publication’s original ranking. Publication order follows the published ranking."
           : personalReorderHelp;
         content.setAttribute("aria-label",on ? `${cfg.name}: ${list?.title || 'Annual rankings'}` : "Favorite cigars");
         if(!on){document.title="Favorites";return;}
         const logo=$("#publicationLogo");logo.src=window.CigarosPublicationLogos?.[cfg.id] || cfg.logo;logo.alt=cfg.name;logo.dataset.publication=cfg.id;
         $("#publicationTitle").textContent=list?.title || `${selectedPublication.split(":")[2]} Rankings`;
         $("#publicationQuickSwitch").setAttribute("aria-label",`Change collection: ${cfg.name} ${list?.title || 'Rankings'}`);
+        $("#publicationLogoQuickSwitch").setAttribute("aria-label",`${cfg.name} — change list`);
         $("#publicationSource").textContent=selectedPublication.endsWith(":winners") ? "Publisher archive ↗" : "View original ranking ↗";
         $("#publicationDescription").textContent=list?.description || "Explore the publication’s annual cigar rankings.";
         $("#publicationSource").href=list?.sourceUrl || cfg.archiveUrl;
@@ -3786,7 +3838,8 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         selectedList=selectedPublication ? null : (selection.personal ?? null);
         rememberPublicationSelection();syncLists();refreshFavorites();
         window.scrollTo(0,0);
-        $(selectedPublication ? "#publicationQuickSwitch" : "#favoritesQuickSwitch").focus({preventScroll:true});
+        const trigger=selectedPublication ? $("#publicationQuickSwitch").hidden ? $("#publicationLogoQuickSwitch") : $("#publicationQuickSwitch") : $("#favoritesQuickSwitch");
+        trigger.focus({preventScroll:true});
       }
       function openCollectionSwitcher(){
         let personalLists={};
@@ -3800,6 +3853,7 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         });
       }
       $("#publicationQuickSwitch").addEventListener("click",openCollectionSwitcher);
+      $("#publicationLogoQuickSwitch").addEventListener("click",openCollectionSwitcher);
       $("#favoritesQuickSwitch").addEventListener("click",openCollectionSwitcher);
       function savePublicationFavorite(record,favorite,id){
         if(record.__publicationOnly)throw Error("This published cigar has not been linked to a POS entry yet.");
