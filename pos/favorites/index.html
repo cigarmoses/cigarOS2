@@ -56,7 +56,7 @@
 
     body.favorites-page{
       color:var(--text);
-      font-family:var(--font-sans);
+      font-family:var(--font-sans,var(--font-text,-apple-system,BlinkMacSystemFont,system-ui,sans-serif));
       background:
         radial-gradient(1200px 700px at 18% 0%, rgba(80,132,255,.10), transparent 58%),
         radial-gradient(900px 620px at 100% 10%, rgba(61,201,255,.05), transparent 54%),
@@ -752,6 +752,7 @@
     .publication-spec-group{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0;margin:0}
     .publication-spec-group[data-spec-row="measurements"]{grid-template-columns:repeat(3,minmax(0,1fr))}
     .publication-spec-group[data-spec-row="profile"],.publication-spec-group[data-spec-row="construction"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .publication-spec-group[data-spec-row="construction"]>.publication-spec-item:only-child{grid-column:1/-1}
     .publication-spec-tile,.publication-tobacco-block{min-width:0;border:1px solid var(--spec-border);border-radius:16px;background:var(--spec-fill);box-shadow:var(--spec-shadow)}
     .publication-spec-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:82px;padding:12px 9px;text-align:center}
     .publication-spec-group[data-spec-row="measurements"] .publication-spec-tile{min-height:94px}
@@ -772,19 +773,22 @@
     .publication-action[disabled]{opacity:.42;cursor:default}
     .publication-action[aria-disabled="true"]{cursor:default}
     .publication-action[aria-busy="true"]{opacity:.6}
-    .publication-brand-icon{display:block;max-width:54px;width:auto;max-height:32px;height:auto;object-fit:contain}
+    .publication-brand-link .publication-action-mark{width:100%;height:54px}
+    .publication-brand-icon{display:block;width:auto;height:54px;max-width:100%;max-height:54px;object-fit:contain}
     .publication-brand-fallback{font:750 16px/1 var(--font-display,var(--font-sans))}
     .publication-action-status{margin:8px 0 0;color:var(--muted);font:400 13px/1.4 var(--font-sans,system-ui);overflow-wrap:anywhere}
     .publication-action-status:empty{display:none}
-    .favorite-lists-dialog.cigar-card-preview{width:min(480px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:18px;overflow-y:auto;overscroll-behavior:contain}
-    .cigar-card-preview-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .favorite-lists-dialog.cigar-card-preview{width:min(480px,calc(100% - 24px));height:min(900px,calc(var(--cigar-card-viewport,100dvh) - 24px));max-height:calc(var(--cigar-card-viewport,100dvh) - 24px);padding:16px;overflow:hidden;overscroll-behavior:contain}
+    .favorite-lists-dialog.cigar-card-preview[open]{display:flex;flex-direction:column;gap:12px}
+    .cigar-card-preview-header{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;gap:12px;margin:0}
     .favorite-lists-dialog.cigar-card-preview h2{margin:0;font-size:22px}
     .favorite-lists-dialog.cigar-card-preview button{margin:0;min-height:44px;color:var(--text);background:var(--glass2,#eef2f7)}
     .favorite-lists-dialog.cigar-card-preview .cigar-card-preview-close{flex:0 0 44px;width:44px;padding:0;font-size:26px;line-height:1}
-    .cigar-card-preview-image{display:block;width:auto;height:auto;max-width:100%;max-height:58dvh;margin:0 auto;border-radius:14px;object-fit:contain}
-    .cigar-card-preview-status{margin:12px 0;color:var(--muted);font:400 14px/1.45 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .cigar-card-preview-stage{display:flex;flex:1 1 0;align-items:center;justify-content:center;min-height:0;min-width:0;overflow:hidden}
+    .cigar-card-preview-image{display:block;width:100%;height:100%;max-width:100%;max-height:100%;margin:0;object-fit:contain}
+    .cigar-card-preview-status{flex:0 0 auto;margin:0;color:var(--muted);font:400 14px/1.45 var(--font-sans,system-ui);overflow-wrap:anywhere}
     .cigar-card-preview-status:empty{display:none}
-    .cigar-card-preview-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin-top:16px}
+    .cigar-card-preview-actions{display:flex;flex:0 0 auto;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:0}
     .cigar-card-preview-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 16px;border-radius:14px;background:var(--glass2,#eef2f7);color:var(--text);font:500 14px/1.3 var(--font-sans,system-ui);text-decoration:none}
     .favorite-lists-dialog.cigar-card-preview .cigar-card-preview-share{background:#287447;color:#fff}
     .cigar-card-preview button:focus-visible,.cigar-card-preview a:focus-visible{outline:2px solid var(--blue,#2874da);outline-offset:3px}
@@ -3964,6 +3968,7 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           const group=document.createElement("dl");group.className="publication-spec-group";group.dataset.specRow=name;
           if(name==="tobaccos")group.classList.add("publication-tobacco-block");
           for(const [label,value] of fields){
+            if(name==="construction" && label==="Box-pressed" && value!=="Yes")continue;
             const item=document.createElement("div"),term=document.createElement("dt"),definition=document.createElement("dd");
             item.className="publication-spec-item"+(name==="tobaccos"?"":" publication-spec-tile");item.dataset.spec=label;
             const text=String(value??"").trim();
@@ -4663,7 +4668,11 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           tone:style.getPropertyValue("--publication-card-tone").trim() || (dark?"#28517b":"#edf5ff"),
           edge:style.getPropertyValue("--publication-card-edge").trim() || (dark?"#163653":"#d3e5f9")
         };
-        const family=getComputedStyle(panel).fontFamily || "system-ui, sans-serif";
+        // The panel can inherit a browser default; use the app's explicit SF font roles instead.
+        const displayFamily=style.getPropertyValue("--font-display").trim() || '"SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, "Helvetica Neue", Arial, sans-serif';
+        const textFamily=style.getPropertyValue("--font-text").trim() || '"SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, "Helvetica Neue", Arial, sans-serif';
+        const weightOf=(selector,fallback)=>{const node=row.querySelector(selector);return node?Number(getComputedStyle(node).fontWeight) || fallback:fallback;};
+        const brandWeight=weightOf(".publication-cigar-brand",780),productWeight=weightOf(".publication-cigar-name",450),valueWeight=weightOf(".publication-spec-item dd",650),labelWeight=weightOf(".publication-spec-item dt",450);
         const art=row.querySelector(".favorite-photo-art"),source=art?.querySelector("image");
         let photo=null;
         if(art && source){
@@ -4677,6 +4686,10 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         }
         const filename=[publisher,award.year,rank,brandName,productName].join("-").normalize("NFD").replace(/\p{M}/gu,"").replace(/[^a-z0-9_-]+/gi,"-").replace(/^-+|-+$/g,"").slice(0,180)+".png";
         await document.fonts?.ready;
+        if(document.fonts?.load)await Promise.allSettled([
+          `italic 400 38px ${displayFamily}`,`${brandWeight} 48px ${displayFamily}`,`${productWeight} 42px ${displayFamily}`,
+          `${valueWeight} 72px ${displayFamily}`,`${labelWeight} 30px ${textFamily}`
+        ].map(font=>document.fonts.load(font,"Cigar 0123456789")));
         let image=null;
         if(photo?.url){
           const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
@@ -4690,9 +4703,9 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
             throw Error("The cigar photo could not be included. Please try creating the card again.");
           }finally{clearTimeout(timeout);if(objectURL)URL.revokeObjectURL(objectURL);}
         }
-        const width=1080,pad=80,inner=width-pad*2,gap=24,canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+        const width=1080,pad=80,inner=width-pad*2,gap=22,canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
         if(!ctx)throw Error("Image downloads are unavailable in this browser.");
-        const font=(size,weight=500,italic=false)=>`${italic?"italic ":""}${weight} ${size}px ${family}`;
+        const font=(size,weight=500,italic=false,role="display")=>`${italic?"italic ":""}${weight} ${size}px ${role==="text"?textFamily:displayFamily}`;
         const wrap=(text,maxWidth)=>{
           const lines=[];let line="";
           for(const word of clean(text).split(" ")){
@@ -4707,15 +4720,15 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           if(line)lines.push(line);
           return lines.length?lines:["—"];
         };
-        const textBlock=(text,size,weight,maxWidth,italic=false)=>{
-          const type=font(size,weight,italic);ctx.font=type;
+        const textBlock=(text,size,weight,maxWidth,italic=false,role="display")=>{
+          const type=font(size,weight,italic,role);ctx.font=type;
           const lines=wrap(text,maxWidth),lineHeight=Math.ceil(size*1.25);
           return {lines,type,lineHeight,height:lines.length*lineHeight};
         };
         const heading=textBlock(title,38,400,inner,true);
-        const brandBlock=brand?textBlock(brand,48,750,inner):null;
-        const productBlock=textBlock(product || context.label,brand?42:48,brand?500:750,inner);
-        const noteBlock=note?textBlock(note,29,400,inner):null;
+        const brandBlock=brand?textBlock(brand,48,brandWeight,inner):null;
+        const productBlock=textBlock(product || context.label,brand?42:48,brand?productWeight:brandWeight,inner);
+        const noteBlock=note?textBlock(note,29,400,inner,false,"text"):null;
         const photoSpace=178;
         let y=88;
         const headingY=y;y+=heading.height+38;
@@ -4729,21 +4742,24 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           const tobacco=group.name==="tobaccos",columns=tobacco?1:group.items.length,tileWidth=(inner-gap*(columns-1))/columns;
           const items=group.items.map(item=>{
             const number=group.name==="measurements" && /^(Ring|Length)$/.test(item.label);
-            const value=textBlock(item.value,number?72:tobacco?42:44,700,tileWidth-44);
-            const label=textBlock(item.label,30,450,tileWidth-36);
-            return {...item,value,label,height:Math.max(tobacco?150:group.name==="measurements"?232:204,value.height+label.height+58)};
+            const value=textBlock(item.value,number?72:tobacco?42:44,valueWeight,tileWidth-44);
+            const label=textBlock(item.label,30,labelWeight,tileWidth-36,false,"text");
+            return {...item,value,label,height:Math.max(tobacco?138:group.name==="measurements"?216:180,value.height+label.height+58)};
           });
           const height=tobacco?items.reduce((sum,item)=>sum+item.height,0):Math.max(...items.map(item=>item.height));
           const result={name:group.name,tobacco,items,tileWidth,y,height};y+=height+gap;return result;
         });
         const height=Math.ceil(Math.max(width*1.7,y-gap+56));
         if(height>12000)throw Error("These cigar details are too long to fit in one image.");
-        canvas.width=width;canvas.height=height;
+        // Fixed portrait dimensions match the approved crop. Fit long content without trimming it.
+        const outputWidth=1290,outputHeight=2280,scale=Math.min(outputWidth/width,outputHeight/height);
+        canvas.width=outputWidth;canvas.height=outputHeight;
         const roundRect=(x,y,w,h,r)=>{
           const radius=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+radius,y);ctx.arcTo(x+w,y,x+w,y+h,radius);ctx.arcTo(x+w,y+h,x,y+h,radius);ctx.arcTo(x,y+h,x,y,radius);ctx.arcTo(x,y,x+w,y,radius);ctx.closePath();
         };
-        const background=ctx.createLinearGradient(0,0,width,height);
-        background.addColorStop(0,dark?"#1c4475":"#dceafb");background.addColorStop(1,dark?"#091f36":"#bbd3ec");ctx.fillStyle=background;ctx.fillRect(0,0,width,height);
+        const background=ctx.createLinearGradient(0,0,outputWidth,outputHeight);
+        background.addColorStop(0,dark?"#1c4475":"#dceafb");background.addColorStop(1,dark?"#091f36":"#bbd3ec");ctx.fillStyle=background;ctx.fillRect(0,0,outputWidth,outputHeight);
+        ctx.translate((outputWidth-width*scale)/2,(outputHeight-height*scale)/2);ctx.scale(scale,scale);
         const card=ctx.createLinearGradient(32,16,width-32,height-16);card.addColorStop(0,palette.tone);card.addColorStop(.48,palette.tone);card.addColorStop(1,palette.edge);
         roundRect(32,16,width-64,height-32,64);ctx.fillStyle=card;ctx.fill();
         const drawText=(block,x,y,color,align="left")=>{
@@ -4767,7 +4783,7 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           const x=pad+(inner-w)/2,top=photoY+(photoSpace-h)/2;
           ctx.save();ctx.beginPath();ctx.rect(x,top,w,h);ctx.clip();ctx.translate(x,top);ctx.scale(scale,scale);ctx.translate(-photo.box.x,-photo.box.y);ctx.transform(...photo.matrix);ctx.drawImage(image,0,0,photo.width || image.naturalWidth,photo.height || image.naturalHeight);ctx.restore();
         }else{
-          const placeholder=textBlock("Cigar photo unavailable",30,400,inner);
+          const placeholder=textBlock("Cigar photo unavailable",30,400,inner,false,"text");
           drawText(placeholder,width/2,photoY+(photoSpace-placeholder.height)/2,palette.muted,"center");
         }
         divider(pad,nameDivider,inner);
@@ -4782,14 +4798,14 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           }else group.items.forEach((item,index)=>{const x=pad+index*(group.tileWidth+gap);tile(x,group.y,group.tileWidth,group.height);drawItem(item,x,group.y,group.tileWidth,group.height);});
         }
         const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error("The portrait image could not be created. Please try again.")),"image/png"));
-        return {blob,filename,title,width,height};
+        return {blob,filename,title,width:outputWidth,height:outputHeight};
       }
 
       let activePublicationCardPreview=null,publicationCardPreviewSerial=0;
       function openPublicationCardPreview(row,button){
         if(activePublicationCardPreview?.open){activePublicationCardPreview.querySelector(".cigar-card-preview-close")?.focus();return;}
         const preview=document.createElement("dialog"),header=document.createElement("div"),heading=document.createElement("h2");
-        const close=document.createElement("button"),status=document.createElement("p"),img=document.createElement("img"),actions=document.createElement("div");
+        const close=document.createElement("button"),status=document.createElement("p"),stage=document.createElement("div"),img=document.createElement("img"),actions=document.createElement("div");
         const send=document.createElement("button"),download=document.createElement("a"),retry=document.createElement("button");
         const label=row.publicationContext.label;
         let closed=false,creating=false,url="",file=null,title="";
@@ -4801,14 +4817,17 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         close.addEventListener("click",()=>preview.close());header.append(heading,close);
         status.className="cigar-card-preview-status";status.setAttribute("role","status");status.setAttribute("aria-atomic","true");
         img.className="cigar-card-preview-image";img.hidden=true;
+        stage.className="cigar-card-preview-stage";stage.append(img);
         actions.className="cigar-card-preview-actions";actions.hidden=true;
         send.type="button";send.className="cigar-card-preview-share";send.textContent="Share Image";send.hidden=true;
         download.className="cigar-card-preview-download";download.textContent="Download PNG";download.hidden=true;
         retry.type="button";retry.className="cigar-card-preview-retry";retry.textContent="Try Again";retry.hidden=true;
-        actions.append(send,download,retry);preview.append(header,img,status,actions);
+        actions.append(send,download,retry);preview.append(header,stage,status,actions);
+        const fitViewport=()=>preview.style.setProperty("--cigar-card-viewport",(window.visualViewport?.height || window.innerHeight)+"px");
         function cleanup(){
           if(closed)return;closed=true;
           if(activePublicationCardPreview===preview)activePublicationCardPreview=null;
+          window.removeEventListener("resize",fitViewport);window.visualViewport?.removeEventListener("resize",fitViewport);
           if(url){URL.revokeObjectURL(url);url="";}
           file=null;preview.remove();button.disabled=false;button.removeAttribute("aria-busy");
           if(button.isConnected)button.focus();
@@ -4857,6 +4876,7 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         retry.addEventListener("click",prepare);
         preview.addEventListener("close",cleanup,{once:true});
         document.body.append(preview);activePublicationCardPreview=preview;
+        fitViewport();window.addEventListener("resize",fitViewport);window.visualViewport?.addEventListener("resize",fitViewport);
         try{preview.showModal();close.focus();void prepare();}
         catch(error){cleanup();showToast("Could not open the Cigar Card preview. Please try again.");}
       }
