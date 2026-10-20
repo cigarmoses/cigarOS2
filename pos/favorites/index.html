@@ -763,8 +763,8 @@
     .publication-tobacco-block .publication-spec-item+.publication-spec-item::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(to right,transparent,var(--publication-card-line) 15%,var(--publication-card-line) 85%,transparent)}
     .publication-tobacco-block dd{font-size:16px}
     .publication-detail-note{margin:0 0 12px;color:var(--muted);font:400 13px/1.45 var(--font-sans,system-ui);overflow-wrap:anywhere}
-    .publication-actions{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;padding-top:12px}
-    .publication-action{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:72px;padding:7px 2px;border:0;border-radius:12px;background:transparent;color:var(--text);text-decoration:none;font:500 12px/1.3 var(--font-sans,system-ui);text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .publication-actions{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px;padding-top:12px}
+    .publication-action{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;min-width:0;min-height:72px;padding:7px 2px;border:0;border-radius:12px;background:transparent;color:var(--text);text-decoration:none;font:500 12px/1.3 var(--font-sans,system-ui);text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .publication-action-mark{display:grid;place-items:center;width:54px;height:32px}
     .publication-action-mark svg{display:block;width:26px;height:26px}
     .publication-action.is-saved .publication-action-mark svg{fill:currentColor}
@@ -776,6 +776,19 @@
     .publication-brand-fallback{font:750 16px/1 var(--font-display,var(--font-sans))}
     .publication-action-status{margin:8px 0 0;color:var(--muted);font:400 13px/1.4 var(--font-sans,system-ui);overflow-wrap:anywhere}
     .publication-action-status:empty{display:none}
+    .favorite-lists-dialog.cigar-card-preview{width:min(480px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:18px;overflow-y:auto;overscroll-behavior:contain}
+    .cigar-card-preview-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .favorite-lists-dialog.cigar-card-preview h2{margin:0;font-size:22px}
+    .favorite-lists-dialog.cigar-card-preview button{margin:0;min-height:44px;color:var(--text);background:var(--glass2,#eef2f7)}
+    .favorite-lists-dialog.cigar-card-preview .cigar-card-preview-close{flex:0 0 44px;width:44px;padding:0;font-size:26px;line-height:1}
+    .cigar-card-preview-image{display:block;width:auto;height:auto;max-width:100%;max-height:58dvh;margin:0 auto;border-radius:14px;object-fit:contain}
+    .cigar-card-preview-status{margin:12px 0;color:var(--muted);font:400 14px/1.45 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .cigar-card-preview-status:empty{display:none}
+    .cigar-card-preview-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin-top:16px}
+    .cigar-card-preview-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 16px;border-radius:14px;background:var(--glass2,#eef2f7);color:var(--text);font:500 14px/1.3 var(--font-sans,system-ui);text-decoration:none}
+    .favorite-lists-dialog.cigar-card-preview .cigar-card-preview-share{background:#287447;color:#fff}
+    .cigar-card-preview button:focus-visible,.cigar-card-preview a:focus-visible{outline:2px solid var(--blue,#2874da);outline-offset:3px}
+    .favorite-lists-dialog.cigar-card-preview button[disabled]{opacity:.6;cursor:wait}
     .publication-exemplar{margin:4px 0 0;padding-right:42px;color:var(--muted);font:400 12px/1.4 var(--font-sans,system-ui)}
     .publication-placeholder{display:flex;align-items:center;justify-content:center;width:100%;height:70px;padding:10px;border-radius:15px;background:var(--glass3);color:var(--muted);font:400 13px/1.4 var(--font-sans,system-ui)}
     .publication-footer{padding:10px 0 4px}
@@ -3808,8 +3821,9 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
         const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
         for(const [key,value] of Object.entries({viewBox:"0 0 24 24",fill:"none",stroke:"currentColor","stroke-width":"1.8","stroke-linecap":"round","stroke-linejoin":"round","aria-hidden":"true",focusable:"false"}))svg.setAttribute(key,value);
         const paths=kind==="favorites" ? ["m12 3 2.78 5.63 6.22.9-4.5 4.39 1.06 6.2L12 17.19l-5.56 2.93 1.06-6.2L3 9.53l6.22-.9L12 3Z"]
-          : kind==="wishlist" ? ["M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z","M9 10h6m-3-3v6"] : ["m6 9 6 6 6-6"];
-        paths.forEach((d,index)=>{const path=document.createElementNS(svg.namespaceURI,"path");path.setAttribute("d",d);if(index)path.classList.add("publication-icon-plus");svg.append(path);});
+          : kind==="wishlist" ? ["M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z","M9 10h6m-3-3v6"]
+          : kind==="card" ? ["M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z","M8 8h8M8 12h8M8 16h5"] : ["m6 9 6 6 6-6"];
+        paths.forEach((d,index)=>{const path=document.createElementNS(svg.namespaceURI,"path");path.setAttribute("d",d);if(kind==="wishlist" && index)path.classList.add("publication-icon-plus");svg.append(path);});
         return svg;
       }
       function publicationFavoritePayload(record,favorite){
@@ -3968,8 +3982,14 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           label.className="publication-action-label";label.textContent=kind==="favorites"?"Favorites":"Wish List";
           button.append(mark,label);button.addEventListener("click",()=>saveFromPublicationCard(row,kind));actions.append(button);ctx.actions[kind]=button;
         }
+        const cardButton=document.createElement("button"),cardMark=document.createElement("span"),cardLabel=document.createElement("span");
+        cardButton.type="button";cardButton.className="publication-action publication-card-action";
+        cardButton.setAttribute("aria-label",`Create Cigar Card: ${ctx.label}`);cardButton.setAttribute("aria-haspopup","dialog");
+        cardMark.className="publication-action-mark";cardMark.append(publicationActionIcon("card"));
+        cardLabel.className="publication-action-label";cardLabel.textContent="Card";
+        cardButton.append(cardMark,cardLabel);cardButton.addEventListener("click",()=>openPublicationCardPreview(row,cardButton));actions.append(cardButton);
         const brand=resolveBrandVal(record),canVisit=!!brand && !record.__publicationOnly;
-        const brandLink=document.createElement(canVisit?"a":"button"),mark=document.createElement("span"),label=document.createElement("span");
+        const brandLink=document.createElement(canVisit?"a":"button"),mark=document.createElement("span");
         brandLink.className="publication-action publication-brand-link";
         brandLink.setAttribute("aria-label",canVisit?`Visit ${brand} brand page`:"Brand page unavailable");
         if(canVisit)brandLink.href=`/pos/cigars/brand?brand=${encodeURIComponent(brand.trim())}`;
@@ -3983,7 +4003,7 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           if(candidates.length)img.src=candidates[0];else fallback.hidden=false;
           mark.append(img);
         }
-        mark.append(fallback);label.className="publication-action-label";label.textContent="Brand";brandLink.append(mark,label);actions.append(brandLink);panel.append(actions);
+        mark.append(fallback);brandLink.append(mark);actions.append(brandLink);panel.append(actions);
         const status=document.createElement("p");status.className="publication-action-status";status.setAttribute("role","status");panel.append(status);ctx.status=status;
         refreshPublicationActionState(row);
       }
@@ -4561,7 +4581,7 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           if(record.__publicationOnly && !getField(record,["cigar_img","cigar_image","image"])){
             row.classList.remove("is-photo-loading");publicationPhotoPlaceholder(row,record);
           }else{
-            void loadCigarPhoto(row,record,favorite,generation).then(()=>{
+            row.publicationPhotoReady=loadCigarPhoto(row,record,favorite,generation).then(()=>{
               if(generation===state.renderGeneration && row.isConnected && !row.querySelector(".favorite-photo-art"))publicationPhotoPlaceholder(row,record);
             });
           }
@@ -4615,6 +4635,230 @@ window.CigarosPublicationLogos={"ca": "data:image/webp;base64,UklGRuAaAABXRUJQVl
           line+=' ';
         }
         if(line.trim())lines.push(line.trim());return lines;
+      }
+      async function buildPublicationCardImage(row){
+        const context=row.publicationContext;
+        if(!context)throw Error("This cigar card is not available.");
+        const {record,award,panel}=context;
+        const clean=value=>String(value??"").trim().replace(/\s+/g," ");
+        const rank=clean(award.rankLabel || "#"+award.rank).replace(/^No\.\s*/i,"#");
+        const publisher=award.publisherId==="ca"?"Cigar Aficionado":award.publisherId==="cj"?"Cigar Journal":"halfwheel Consensus";
+        const title=award.publisherId==="consensus"?`${publisher} ${rank} of ${award.year}`:`${publisher}’s ${rank} Cigar of ${award.year}`;
+        const [brandName,productName]=publicationCardLabel(record);
+        const flag=publicationIsCuban(record)?"🇨🇺 ":"";
+        const brand=brandName?flag+brandName:"",product=(brandName?"":flag)+productName;
+        const note=award.scope==="blend" && !record.__publicationOnly?clean(panel.querySelector(".publication-detail-note")?.textContent):"";
+        const groups=[...panel.querySelectorAll(".publication-spec-group")].map(group=>({
+          name:group.dataset.specRow,
+          items:[...group.querySelectorAll(".publication-spec-item")].map(item=>({
+            label:clean(item.querySelector("dt")?.textContent),value:clean(item.querySelector("dd")?.textContent)||"—"
+          }))
+        }));
+        if(groups.length!==5)throw Error("Open the cigar’s details before creating its card.");
+        // Capture the selected card before asynchronous work; switching lists cannot change this image.
+        const style=getComputedStyle(row),dark=document.documentElement.dataset.theme==="dark";
+        const palette={
+          text:style.getPropertyValue("--text").trim() || (dark?"#f8fbff":"#102d4b"),
+          muted:style.getPropertyValue("--muted").trim() || (dark?"#b3c7e0":"#45627e"),
+          tone:style.getPropertyValue("--publication-card-tone").trim() || (dark?"#28517b":"#edf5ff"),
+          edge:style.getPropertyValue("--publication-card-edge").trim() || (dark?"#163653":"#d3e5f9")
+        };
+        const family=getComputedStyle(panel).fontFamily || "system-ui, sans-serif";
+        const art=row.querySelector(".favorite-photo-art"),source=art?.querySelector("image");
+        let photo=null;
+        if(art && source){
+          const box=art.viewBox.baseVal,matrix=source.transform.baseVal.consolidate()?.matrix;
+          if(box.width>0 && box.height>0 && matrix)photo={
+            url:source.getAttribute("href") || source.getAttributeNS("http://www.w3.org/1999/xlink","href"),
+            box:{x:box.x,y:box.y,width:box.width,height:box.height},
+            matrix:[matrix.a,matrix.b,matrix.c,matrix.d,matrix.e,matrix.f],
+            width:Number(source.getAttribute("width")),height:Number(source.getAttribute("height"))
+          };
+        }
+        const filename=[publisher,award.year,rank,brandName,productName].join("-").normalize("NFD").replace(/\p{M}/gu,"").replace(/[^a-z0-9_-]+/gi,"-").replace(/^-+|-+$/g,"").slice(0,180)+".png";
+        await document.fonts?.ready;
+        let image=null;
+        if(photo?.url){
+          const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+          let objectURL="";
+          try{
+            const response=await fetch(photo.url,{signal:controller.signal});
+            if(!response.ok)throw Error("Photo request failed.");
+            objectURL=URL.createObjectURL(await response.blob());
+            image=new Image();image.src=objectURL;await image.decode();
+          }catch{
+            throw Error("The cigar photo could not be included. Please try creating the card again.");
+          }finally{clearTimeout(timeout);if(objectURL)URL.revokeObjectURL(objectURL);}
+        }
+        const width=1080,pad=80,inner=width-pad*2,gap=24,canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+        if(!ctx)throw Error("Image downloads are unavailable in this browser.");
+        const font=(size,weight=500,italic=false)=>`${italic?"italic ":""}${weight} ${size}px ${family}`;
+        const wrap=(text,maxWidth)=>{
+          const lines=[];let line="";
+          for(const word of clean(text).split(" ")){
+            if(!word)continue;
+            if(ctx.measureText(line+(line?" ":"")+word).width<=maxWidth){line+=(line?" ":"")+word;continue;}
+            if(line){lines.push(line);line="";}
+            for(const char of Array.from(word)){
+              if(line && ctx.measureText(line+char).width>maxWidth){lines.push(line);line="";}
+              line+=char;
+            }
+          }
+          if(line)lines.push(line);
+          return lines.length?lines:["—"];
+        };
+        const textBlock=(text,size,weight,maxWidth,italic=false)=>{
+          const type=font(size,weight,italic);ctx.font=type;
+          const lines=wrap(text,maxWidth),lineHeight=Math.ceil(size*1.25);
+          return {lines,type,lineHeight,height:lines.length*lineHeight};
+        };
+        const heading=textBlock(title,38,400,inner,true);
+        const brandBlock=brand?textBlock(brand,48,750,inner):null;
+        const productBlock=textBlock(product || context.label,brand?42:48,brand?500:750,inner);
+        const noteBlock=note?textBlock(note,29,400,inner):null;
+        const photoSpace=178;
+        let y=88;
+        const headingY=y;y+=heading.height+38;
+        const photoY=y;y+=photoSpace+38;
+        const nameDivider=y;y+=34;
+        const brandY=y;if(brandBlock)y+=brandBlock.height+8;
+        const productY=y;y+=productBlock.height+38;
+        const specsDivider=y;y+=34;
+        const noteY=y;if(noteBlock)y+=noteBlock.height+26;
+        const layouts=groups.map(group=>{
+          const tobacco=group.name==="tobaccos",columns=tobacco?1:group.items.length,tileWidth=(inner-gap*(columns-1))/columns;
+          const items=group.items.map(item=>{
+            const number=group.name==="measurements" && /^(Ring|Length)$/.test(item.label);
+            const value=textBlock(item.value,number?72:tobacco?42:44,700,tileWidth-44);
+            const label=textBlock(item.label,30,450,tileWidth-36);
+            return {...item,value,label,height:Math.max(tobacco?150:group.name==="measurements"?232:204,value.height+label.height+58)};
+          });
+          const height=tobacco?items.reduce((sum,item)=>sum+item.height,0):Math.max(...items.map(item=>item.height));
+          const result={name:group.name,tobacco,items,tileWidth,y,height};y+=height+gap;return result;
+        });
+        const height=Math.ceil(Math.max(width*1.7,y-gap+56));
+        if(height>12000)throw Error("These cigar details are too long to fit in one image.");
+        canvas.width=width;canvas.height=height;
+        const roundRect=(x,y,w,h,r)=>{
+          const radius=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+radius,y);ctx.arcTo(x+w,y,x+w,y+h,radius);ctx.arcTo(x+w,y+h,x,y+h,radius);ctx.arcTo(x,y+h,x,y,radius);ctx.arcTo(x,y,x+w,y,radius);ctx.closePath();
+        };
+        const background=ctx.createLinearGradient(0,0,width,height);
+        background.addColorStop(0,dark?"#1c4475":"#dceafb");background.addColorStop(1,dark?"#091f36":"#bbd3ec");ctx.fillStyle=background;ctx.fillRect(0,0,width,height);
+        const card=ctx.createLinearGradient(32,16,width-32,height-16);card.addColorStop(0,palette.tone);card.addColorStop(.48,palette.tone);card.addColorStop(1,palette.edge);
+        roundRect(32,16,width-64,height-32,64);ctx.fillStyle=card;ctx.fill();
+        const drawText=(block,x,y,color,align="left")=>{
+          ctx.font=block.type;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline="top";
+          block.lines.forEach((line,index)=>ctx.fillText(line,x,y+index*block.lineHeight));
+        };
+        const divider=(x,y,w)=>{
+          const line=ctx.createLinearGradient(x,0,x+w,0);line.addColorStop(0,"transparent");line.addColorStop(.12,dark?"#c6ddff2b":"#49688930");line.addColorStop(.88,dark?"#c6ddff2b":"#49688930");line.addColorStop(1,"transparent");ctx.fillStyle=line;ctx.fillRect(x,y,w,2);
+        };
+        const tile=(x,y,w,h)=>{
+          const fill=ctx.createLinearGradient(x,y,x+w,y+h);fill.addColorStop(0,dark?"#a1d3ff26":"#ffffff82");fill.addColorStop(.65,dark?"#c3e7ff0b":"#ffffff30");fill.addColorStop(1,dark?"#a1d3ff14":"#e2f1ff45");
+          roundRect(x,y,w,h,42);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=dark?"#d5ebff33":"#ffffffb0";ctx.lineWidth=2;ctx.stroke();
+        };
+        const drawItem=(item,x,y,w,h)=>{
+          const contents=item.value.height+10+item.label.height,top=y+(h-contents)/2;
+          drawText(item.value,x+w/2,top,palette.text,"center");drawText(item.label,x+w/2,top+item.value.height+10,palette.muted,"center");
+        };
+        drawText(heading,width/2,headingY,palette.text,"center");
+        if(image && photo){
+          const scale=Math.min(inner/photo.box.width,photoSpace/photo.box.height),w=photo.box.width*scale,h=photo.box.height*scale;
+          const x=pad+(inner-w)/2,top=photoY+(photoSpace-h)/2;
+          ctx.save();ctx.beginPath();ctx.rect(x,top,w,h);ctx.clip();ctx.translate(x,top);ctx.scale(scale,scale);ctx.translate(-photo.box.x,-photo.box.y);ctx.transform(...photo.matrix);ctx.drawImage(image,0,0,photo.width || image.naturalWidth,photo.height || image.naturalHeight);ctx.restore();
+        }else{
+          const placeholder=textBlock("Cigar photo unavailable",30,400,inner);
+          drawText(placeholder,width/2,photoY+(photoSpace-placeholder.height)/2,palette.muted,"center");
+        }
+        divider(pad,nameDivider,inner);
+        if(brandBlock)drawText(brandBlock,pad,brandY,palette.text);
+        drawText(productBlock,pad,productY,palette.text);
+        divider(pad,specsDivider,inner);
+        if(noteBlock)drawText(noteBlock,pad,noteY,palette.muted);
+        for(const group of layouts){
+          if(group.tobacco){
+            tile(pad,group.y,inner,group.height);let top=group.y;
+            group.items.forEach((item,index)=>{if(index)divider(pad+28,top,inner-56);drawItem(item,pad,top,inner,item.height);top+=item.height;});
+          }else group.items.forEach((item,index)=>{const x=pad+index*(group.tileWidth+gap);tile(x,group.y,group.tileWidth,group.height);drawItem(item,x,group.y,group.tileWidth,group.height);});
+        }
+        const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error("The portrait image could not be created. Please try again.")),"image/png"));
+        return {blob,filename,title,width,height};
+      }
+
+      let activePublicationCardPreview=null,publicationCardPreviewSerial=0;
+      function openPublicationCardPreview(row,button){
+        if(activePublicationCardPreview?.open){activePublicationCardPreview.querySelector(".cigar-card-preview-close")?.focus();return;}
+        const preview=document.createElement("dialog"),header=document.createElement("div"),heading=document.createElement("h2");
+        const close=document.createElement("button"),status=document.createElement("p"),img=document.createElement("img"),actions=document.createElement("div");
+        const send=document.createElement("button"),download=document.createElement("a"),retry=document.createElement("button");
+        const label=row.publicationContext.label;
+        let closed=false,creating=false,url="",file=null,title="";
+        preview.className="favorite-lists-dialog cigar-card-preview";
+        heading.id="cigar-card-preview-title-"+(++publicationCardPreviewSerial);heading.textContent="Cigar Card";
+        preview.setAttribute("aria-labelledby",heading.id);
+        header.className="cigar-card-preview-header";
+        close.type="button";close.className="cigar-card-preview-close";close.textContent="×";close.setAttribute("aria-label","Close Cigar Card preview");
+        close.addEventListener("click",()=>preview.close());header.append(heading,close);
+        status.className="cigar-card-preview-status";status.setAttribute("role","status");status.setAttribute("aria-atomic","true");
+        img.className="cigar-card-preview-image";img.hidden=true;
+        actions.className="cigar-card-preview-actions";actions.hidden=true;
+        send.type="button";send.className="cigar-card-preview-share";send.textContent="Share Image";send.hidden=true;
+        download.className="cigar-card-preview-download";download.textContent="Download PNG";download.hidden=true;
+        retry.type="button";retry.className="cigar-card-preview-retry";retry.textContent="Try Again";retry.hidden=true;
+        actions.append(send,download,retry);preview.append(header,img,status,actions);
+        function cleanup(){
+          if(closed)return;closed=true;
+          if(activePublicationCardPreview===preview)activePublicationCardPreview=null;
+          if(url){URL.revokeObjectURL(url);url="";}
+          file=null;preview.remove();button.disabled=false;button.removeAttribute("aria-busy");
+          if(button.isConnected)button.focus();
+        }
+        async function prepare(){
+          if(closed || creating)return;
+          creating=true;button.disabled=true;button.setAttribute("aria-busy","true");preview.setAttribute("aria-busy","true");
+          status.textContent="Preparing your portrait image…";actions.hidden=true;retry.hidden=true;img.hidden=true;
+          try{
+            // Finish this row's own photo load before taking a snapshot of its details.
+            if(row.classList.contains("is-photo-loading") && row.publicationPhotoReady)await row.publicationPhotoReady;
+            if(closed)return;
+            const result=await buildPublicationCardImage(row);
+            if(closed)return;
+            title=result.title;
+            if(url)URL.revokeObjectURL(url);
+            url=URL.createObjectURL(result.blob);
+            file=typeof File==="function"?new File([result.blob],result.filename,{type:"image/png"}):null;
+            img.src=url;img.alt=title+". "+label+". Cigar details.";
+            await img.decode();if(closed)return;
+            download.href=url;download.download=result.filename;download.hidden=false;
+            let shareable=false;
+            try{shareable=!!(file && typeof navigator.share==="function" && navigator.canShare?.({files:[file]}));}catch{/* Download remains available. */}
+            send.hidden=!shareable;img.hidden=false;status.textContent="";actions.hidden=false;
+          }catch(error){
+            if(closed)return;
+            if(url){URL.revokeObjectURL(url);url="";}file=null;send.hidden=true;download.hidden=true;
+            console.warn("[Cigar Card]",error);
+            status.textContent=error.message || "Could not create this Cigar Card. Please try again.";
+            retry.hidden=false;actions.hidden=false;
+          }finally{
+            creating=false;preview.removeAttribute("aria-busy");
+            if(!closed){button.disabled=false;button.removeAttribute("aria-busy");}
+          }
+        }
+        send.addEventListener("click",async()=>{
+          if(!file || send.disabled)return;send.disabled=true;
+          try{
+            // This fresh tap retains the user activation needed by native image sharing.
+            await navigator.share({files:[file],title});
+            if(!closed)status.textContent="";
+          }catch(error){
+            if(!closed && error.name!=="AbortError")status.textContent="Sharing is unavailable here. Use Download PNG to save your Cigar Card.";
+          }finally{send.disabled=false;}
+        });
+        retry.addEventListener("click",prepare);
+        preview.addEventListener("close",cleanup,{once:true});
+        document.body.append(preview);activePublicationCardPreview=preview;
+        try{preview.showModal();close.focus();void prepare();}
+        catch(error){cleanup();showToast("Could not open the Cigar Card preview. Please try again.");}
       }
       async function buildListImage(name,rows,publication=null){
         const width=1080,pad=60,canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
