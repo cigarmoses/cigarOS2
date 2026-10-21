@@ -752,6 +752,7 @@
   let portfolioStatus = null;
   let localImageRequest = 0;
   let portfolioView = 0;
+  const portfolioRouteKeys = new WeakMap();
 
   function portfolioKey(rec) {
     return getCigarId(rec) || [
@@ -770,6 +771,19 @@
 
   function portfolioLabel(rec) {
     return [getLine(rec), getName(rec), getVitola(rec)].filter(Boolean).join(" · ");
+  }
+
+  function explicitPortfolioRoute(records, seed) {
+    const parts = (getParam("id") || getParam("key")).split("|").map(normalizeLoose);
+    const fields = rec => [getBrand(rec), getLine(rec), getName(rec), getVitola(rec)];
+    const wanted = fields(seed).map(normalizeLoose), key = getCigarId(seed);
+    if (!key || parts.length !== 4 || parts.some((part, index) => part !== wanted[index])) return "";
+    const sameVariant = rec => fields(rec).every((value, index) => normalizeLoose(value) === wanted[index]);
+    const candidates = records.filter(rec => portfolioMarket(rec) === portfolioMarket(seed));
+    // Keep a precise route only when a shared HUB key covers different variants.
+    if (!candidates.some(rec => getCigarId(rec) === key && !sameVariant(rec))) return "";
+    if (candidates.some(rec => sameVariant(rec) && getCigarId(rec) !== key)) return "";
+    return fields(seed).join("|");
   }
 
   function makePortfolio(records, seed) {
@@ -827,7 +841,7 @@
     const url = new URL(location.href);
     url.searchParams.delete("id");
     url.searchParams.delete("slug");
-    url.searchParams.set("key", portfolioKey(rec));
+    url.searchParams.set("key", portfolioRouteKeys.get(rec) || portfolioKey(rec));
     // Separate Cuban and non-Cuban portfolios, including brands with the same name.
     url.searchParams.set("cdMarket", portfolioMarket(rec));
     return url;
@@ -1063,6 +1077,11 @@
     portfolioRecords = records;
     portfolio = makePortfolio(records, seed);
     portfolioIndex = portfolio.findIndex(rec => portfolioKey(rec) === portfolioKey(seed));
+    const explicitRoute = explicitPortfolioRoute(records, seed);
+    if (explicitRoute) {
+      portfolioRouteKeys.set(seed, explicitRoute);
+      portfolio[portfolioIndex] = seed;
+    }
     activeRecord = portfolio[portfolioIndex];
     const view = ++portfolioView;
     addPortfolioStyles();
