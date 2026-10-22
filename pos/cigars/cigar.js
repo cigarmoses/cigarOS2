@@ -753,6 +753,7 @@
   let localImageRequest = 0;
   let portfolioView = 0;
   const portfolioRouteKeys = new WeakMap();
+  const portfolioRouteHubKeys = new WeakMap();
 
   function portfolioKey(rec) {
     return getCigarId(rec) || [
@@ -782,7 +783,7 @@
     const candidates = records.filter(rec => portfolioMarket(rec) === portfolioMarket(seed));
     // Keep a precise route only when a shared HUB key covers different variants.
     if (!candidates.some(rec => getCigarId(rec) === key && !sameVariant(rec))) return "";
-    if (candidates.some(rec => sameVariant(rec) && getCigarId(rec) !== key)) return "";
+    if (candidates.some(rec => sameVariant(rec) && getCigarId(rec) !== key) && getParam("hubKey") !== key) return "";
     return fields(seed).join("|");
   }
 
@@ -808,6 +809,16 @@
     const market = getParam("cdMarket");
     const candidates = ["cuban", "non-cuban"].includes(market)
       ? records.filter(rec => portfolioMarket(rec) === market) : records;
+    // A publication can qualify an exact four-part variant with its original HUB identity.
+    // An invalid qualification must not fall through to another cigar or shared-key row.
+    const hubKey = getParam("hubKey");
+    if (hubKey) {
+      const parts = id.split("|").map(normalizeLoose);
+      if (parts.length !== 4) return null;
+      return bestRecord(candidates.filter(row => getCigarId(row) === hubKey &&
+        [getBrand(row), getLine(row), getName(row), getVitola(row)]
+          .every((value, index) => normalizeLoose(value) === parts[index])));
+    }
     let rec = id ? bestRecord(candidates.filter(row => getCigarId(row) === id)) : null;
     // Exact generated keys before legacy fuzzy matching (e.g. No. 1 vs No. 10).
     if (!rec && id) {
@@ -842,6 +853,9 @@
     url.searchParams.delete("id");
     url.searchParams.delete("slug");
     url.searchParams.set("key", portfolioRouteKeys.get(rec) || portfolioKey(rec));
+    const hubKey = portfolioRouteHubKeys.get(rec);
+    if (hubKey) url.searchParams.set("hubKey", hubKey);
+    else url.searchParams.delete("hubKey");
     // Separate Cuban and non-Cuban portfolios, including brands with the same name.
     url.searchParams.set("cdMarket", portfolioMarket(rec));
     return url;
@@ -1080,6 +1094,7 @@
     const explicitRoute = explicitPortfolioRoute(records, seed);
     if (explicitRoute) {
       portfolioRouteKeys.set(seed, explicitRoute);
+      if (getParam("hubKey") === getCigarId(seed)) portfolioRouteHubKeys.set(seed, getCigarId(seed));
       portfolio[portfolioIndex] = seed;
     }
     activeRecord = portfolio[portfolioIndex];
