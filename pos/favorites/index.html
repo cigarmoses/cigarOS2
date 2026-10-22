@@ -726,8 +726,7 @@
     }
     .publication-mode .publication-row:nth-of-type(even){--publication-card-tone:var(--publication-card-dark)}
     .publication-card-summary{position:relative;border-radius:inherit}
-    .publication-card-link{display:block;width:100%;min-width:0;padding:16px 18px 19px;border-radius:inherit;color:var(--text);text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:pan-y pinch-zoom}
-    .publication-card-link:active{background:var(--glass3)}
+    .publication-card-link{display:block;width:100%;min-width:0;padding:16px 18px 19px;border-radius:inherit;color:var(--text);text-decoration:none;cursor:default;-webkit-tap-highlight-color:transparent;touch-action:pan-y pinch-zoom}
     .publication-card-link:focus-visible,.publication-brand-picker:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
     .publication-meta{display:flex;align-items:center;gap:9px;min-height:27px;line-height:1.1}
     .publication-year{font:600 21px/1.1 var(--font-display,var(--font-sans));letter-spacing:-.5px;font-variant-numeric:tabular-nums}
@@ -1797,7 +1796,7 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
 
   </script>
   <script>
-/* Publication lists are derived views of HUB rows. This module never saves or mutates rows. */
+/* Publication lists use only the year/rank fields on their original HUB rows. */
 (function (root, factory) {
   'use strict';
   const api = factory();
@@ -1814,513 +1813,156 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
     {id:'consensus', name:'halfwheel Consensus', logo:'/img/icons/halfwheel.svg',
       archiveUrl:'https://halfwheel.com/category/miscellaneous/awards/the-consensus/', firstYear:2011}
   ].map(Object.freeze));
-  const schemas = {
-    ca: {prefixes:['cigar_aficionado_top_25','cigar_aficionado_top25'], domain:'cigaraficionado.com'},
-    cj: {prefixes:['cigar_journal_top_25','cigar_journal_top25'], domain:'cigarjournal.com'},
-    consensus: {prefixes:['hw_consensus','halfwheel_consensus'], domain:'halfwheel.com'}
-  };
+  const schemas = Object.freeze({
+    ca:{prefix:'cigar_aficionado_top_25',domain:'cigaraficionado.com'},
+    cj:{prefix:'cigar_journal_top_25',domain:'cigarjournal.com'},
+    consensus:{prefix:'hw_consensus',domain:'halfwheel.com'}
+  });
   const text = value => String(value == null ? '' : value).trim();
   const usable = value => text(value) && !/^(?:n\/a|none|null|undefined|[—–-])$/i.test(text(value));
   const keyOf = row => text(row.key || row.cigar_id || row.id || row.row_id);
-  const yearsIn = value => [...new Set((text(value).match(/\b(?:19|20)\d{2}\b/g) || []).map(Number))];
+  const yearsIn = value => (text(value).match(/\b(?:19|20)\d{2}\b/g) || []).map(Number);
+  const norm = value => text(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 
-  function quality(row) {
-    const fields = ['brand','line','cigar','name','vitola','ring','length','origin','wrapper',
-      'binder','filler','strength','shape','manufacturer','cigar_image_orientation','image_orientation'];
-    const photo = ['cigar_img','cigar_image','cigarimg','photo','image'].some(key =>
-      usable(row[key]) && !/\/(?:icons|bandart)\//i.test(text(row[key])));
-    return (photo ? 100 : 0) + (keyOf(row) ? 10 : 0) + fields.filter(key => usable(row[key])).length;
-  }
-
-  function groupsFor(row, publisher) {
-    const groups = new Map();
-    for (const prefix of schemas[publisher.id].prefixes) {
-      const pattern = new RegExp('^' + prefix + '_(year|rank|link|full_list|cigar_link)(?:_?(\\d+))?$');
-      for (const key of Object.keys(row)) {
-        const match = key.match(pattern);
-        if (!match || !usable(row[key])) continue;
-        const suffix = match[2] || '0';
-        if (!groups.has(suffix)) groups.set(suffix, {});
-        const group = groups.get(suffix);
-        if (!group[match[1]]) group[match[1]] = row[key];
+  function displayName(row) {
+    const brand=text(row.brand), line=text(row.line), cigar=text(row.cigar || row.name);
+    const parts=line && norm(brand) && (' '+norm(line)+' ').includes(' '+norm(brand)+' ')
+      ? [line,cigar] : [brand,line,cigar];
+    const words=[];
+    for (const part of parts.filter(usable)) {
+      const next=part.split(/\s+/); let overlap=0;
+      for (let n=1;n<=Math.min(words.length,next.length);n++) {
+        if (norm(words.slice(-n).join(' '))===norm(next.slice(0,n).join(' '))) overlap=n;
       }
+      words.push(...next.slice(overlap));
     }
-    return [...groups].sort((a,b) => Number(a[0])-Number(b[0])).map(([,group]) => group);
+    return words.join(' ') || text(row.vitola) || '—';
   }
 
   function parseRank(value) {
-    const year = yearsIn(value);
-    const clean = text(value).replace(/\(\s*(?:19|20)\d{2}\s*\)/g, '')
-      .replace(/^(?:19|20)\d{2}\s*[:=]\s*/, '').trim();
-    const match = clean.match(/^(?:(T(?:ied)?)[\s-]*)?(?:#|No\.?\s*)?(\d{1,2})$/i);
-    if (!match || Number(match[2]) < 1 || Number(match[2]) > 25) return null;
-    return {rank:Number(match[2]), isTie:Boolean(match[1]), explicitYear:year.length === 1 ? year[0] : null};
+    const years=yearsIn(value);
+    const clean=text(value).replace(/\(\s*(?:19|20)\d{2}\s*\)/g,'')
+      .replace(/^(?:19|20)\d{2}\s*[:=]\s*/,'').trim();
+    const match=clean.match(/^(?:(T(?:ied)?)[\s-]*)?(?:#|No\.?\s*)?(\d{1,2})$/i);
+    if (!match || Number(match[2])<1 || Number(match[2])>25) return null;
+    return {rank:Number(match[2]),isTie:Boolean(match[1]),explicitYear:years.length===1?years[0]:null};
   }
 
-  function pairedAwards(group, publisher, warn) {
-    const years = yearsIn(group.year).filter(year => year >= publisher.firstYear);
-    const parts = text(group.rank).split(/[;\n|,]+/).filter(part => part.trim());
-    const ranks = parts.map(parseRank);
-    if (!years.length || !parts.length || ranks.some(rank => !rank)) {
-      warn('has a missing or unreadable award year/rank');
-      return [];
+  function awardsFor(row,publisher,warn) {
+    const prefix=schemas[publisher.id].prefix;
+    const yearText=text(row[prefix+'_year']), rankText=text(row[prefix+'_rank']);
+    if (!usable(yearText) && !usable(rankText)) return [];
+    const years=yearsIn(yearText), parts=rankText.split(/[;\n|,]+/).filter(part=>part.trim());
+    const ranks=parts.map(parseRank);
+    if (!years.length || !parts.length || ranks.some(rank=>!rank)) {
+      warn('has a missing or unreadable award year/rank'); return [];
     }
-    const result = [];
-    years.forEach((year,index) => {
-      const explicit = ranks.filter(rank => rank.explicitYear === year);
-      const rank = explicit.length === 1 ? explicit[0] : explicit.length ? null :
-        (ranks.length === years.length && !ranks[index].explicitYear ? ranks[index] : null);
-      if (!rank) { warn('has an ambiguous rank for ' + year); return; }
-      result.push({...rank, year, yearIndex:index, yearCount:years.length});
+    const awards=[];
+    years.forEach((year,index)=>{
+      const explicit=ranks.filter(rank=>rank.explicitYear===year);
+      const rank=explicit.length===1 ? explicit[0] : explicit.length ? null
+        : ranks.length===years.length && !ranks[index].explicitYear ? ranks[index] : null;
+      if (!rank) {warn('has an ambiguous rank for '+year);return;}
+      if (!awards.some(award=>award.year===year && award.rank===rank.rank && award.isTie===rank.isTie))
+        awards.push({...rank,year,yearIndex:index,yearCount:years.length});
     });
-    return result;
+    return awards;
   }
 
-  // Match dated links by year; a lone 2021 link must never become a 2024 source.
-  function sourceFor(value, publisher, award) {
-    const domain = schemas[publisher.id].domain;
-    const urls = (text(value).match(/https?:\/\/[^\s;,]+/g) || []).flatMap(raw => {
-      try {
-        const url = new URL(raw.replace(/[)\].]+$/, ''));
-        if (url.hostname !== domain && !url.hostname.endsWith('.' + domain)) return [];
-        return [{url:url.href, years:yearsIn(url.pathname + url.search)}];
-      } catch { return []; }
-    });
-    const dated = urls.find(item => item.years.includes(award.year));
-    if (dated) return dated.url;
-    const paired = urls.length === award.yearCount ? urls[award.yearIndex] : null;
-    if (paired && !paired.years.length) return paired.url;
-    return award.yearCount === 1 && urls.length === 1 && !urls[0].years.length ? urls[0].url : '';
+  function sourceFor(row,publisher,award) {
+    const {prefix,domain}=schemas[publisher.id];
+    const fields=publisher.id==='cj' ? ['full_list','cigar_link','link'] : ['link','full_list'];
+    const urls=fields.flatMap(field=>(text(row[prefix+'_'+field]).match(/https?:\/\/[^\s;,]+/g)||[]))
+      .flatMap(raw=>{
+        try {
+          const url=new URL(raw.replace(/[)\].]+$/,''));
+          return url.hostname===domain || url.hostname.endsWith('.'+domain)
+            ? [{url:url.href,years:yearsIn(url.pathname+url.search)}] : [];
+        } catch {return [];}
+      });
+    return urls.find(item=>item.years.includes(award.year))?.url
+      || (award.yearCount===1 ? urls.find(item=>!item.years.length)?.url : '') || publisher.archiveUrl;
   }
 
-  function individualSource(url, publisher, fullList) {
-    if (!url || publisher.id === 'consensus' || url === fullList) return '';
-    const path = new URL(url).pathname;
-    if (publisher.id === 'ca') return /^\/top25cigar\//.test(path) ? url : '';
-    return /\/ratings\/|complete-list|\/top-25\/?$/.test(path) ? '' : url;
-  }
-
-  function deduplicate(candidates, warnings, problemYears) {
-    const index = new Map(), entries = [];
-    const root = entry => entry._merged ? (entry._merged = root(entry._merged)) : entry;
-    function merge(target, incoming) {
-      if (target.rank !== incoming.rank || target.isTie !== incoming.isTie) {
-        warnings.add(target.publisherId + ' ' + target.year + ': one cigar has conflicting rank labels.');
-        problemYears.add(target.publisherId + ':' + target.year);
-      }
-      if (quality(incoming.record) > quality(target.record)) target.record = incoming.record;
-      if (!target._source || (incoming._individual && !target._individual)) target._source = incoming._source;
-      if (!target._individual && incoming._individual) target._individual = incoming._individual;
-      if (!target._annual && incoming._annual) target._annual = incoming._annual;
-      incoming._merged = target;
-    }
-    for (const candidate of candidates) {
-      const prefix = candidate.publisherId + ':' + candidate.year + ':';
-      const aliases = [keyOf(candidate.record) && 'key:' + keyOf(candidate.record),
-        candidate._individual && 'source:' + candidate._individual].filter(Boolean).map(alias => prefix + alias);
-      const matches = [...new Set(aliases.map(alias => index.get(alias)).filter(Boolean).map(root))]
-        .sort((a,b) => a.sourceOrder-b.sourceOrder);
-      const target = matches[0] || candidate;
-      if (!matches.length) entries.push(target);
-      else {
-        matches.slice(1).forEach(entry => merge(target, entry));
-        merge(target, candidate);
-      }
-      aliases.forEach(alias => index.set(alias, target));
-    }
-    return entries.filter(entry => !entry._merged);
-  }
-
-  function completeness(entries, publisher) {
-    const expected = Number(entries[0]?.record.__publicationExpectedCount);
-    const canonical = entries.length && Number.isInteger(expected) && expected >= 25 &&
-      entries.every(entry => entry.record.__publicationCanonical === true &&
-        entry.record.__publicationPublisherId === publisher.id &&
-        Number(entry.record.__publicationYear) === entry.year &&
-        Number(entry.record.__publicationExpectedCount) === expected);
-    // A verified published list can contain an editorial rank-label error.
-    // Its complete, unique source membership takes precedence over inferred rank arithmetic.
-    if (canonical) return {expectedCount:expected, complete:entries.length === expected &&
-      new Set(entries.map(entry => entry.record.__publicationCanonicalId)).size === expected};
-    const groups = new Map();
-    entries.forEach(entry => {
-      if (!groups.has(entry.rank)) groups.set(entry.rank, []);
+  function completeness(entries) {
+    const groups=new Map();
+    entries.forEach(entry=>{
+      if (!groups.has(entry.rank)) groups.set(entry.rank,[]);
       groups.get(entry.rank).push(entry);
     });
-    if (publisher.id !== 'consensus') {
-      return {expectedCount:25, complete:entries.length === 25 && groups.size === 25 &&
-        entries.every(entry => !entry.isTie)};
+    let next=1,complete=true,expectedCount=25;
+    for (const [rank,members] of [...groups].sort((a,b)=>a[0]-b[0])) {
+      if (rank!==next || (members.length>1 && members.some(entry=>!entry.isTie))) complete=false;
+      next=rank+members.length;
+      expectedCount=Math.max(expectedCount,next-1);
     }
-    let next = 1, valid = true, expectedCount = 25;
-    for (const [rank, tied] of [...groups].sort((a,b) => a[0]-b[0])) {
-      if (rank !== next || (tied.length > 1 ? tied.some(entry => !entry.isTie) : tied[0].isTie)) valid = false;
-      next = rank + tied.length;
-      if (tied.every(entry => entry.isTie)) expectedCount = Math.max(expectedCount, next-1);
-    }
-    return {expectedCount, complete:valid && entries.length === expectedCount && next > 25};
+    return {expectedCount,complete:complete && next>25 && entries.length===expectedCount};
   }
 
   function build(records) {
     if (!Array.isArray(records)) throw new TypeError('Publication lists require an array of HUB rows.');
-    const warnings = new Set(), problemYears = new Set(), candidates = [], bestRecords = new Map();
-    records.forEach(record => {
-      if (!record || typeof record !== 'object' || Array.isArray(record)) return;
-      if (record.__publicationPublisherId) return; // Published labels belong to one membership only.
-      const key = keyOf(record), previous = bestRecords.get(key);
-      if (key && (!previous || quality(record) > quality(previous))) bestRecords.set(key, record);
-    });
-    let sourceOrder = 0;
-    records.forEach((record,rowIndex) => {
-      if (!record || typeof record !== 'object' || Array.isArray(record)) return;
-      publishers.forEach(publisher => {
-        groupsFor(record,publisher).forEach(group => {
-          const warn = message => warnings.add(publisher.name + ', HUB row ' + (rowIndex+2) + ' ' + message + '.');
-          for (const award of pairedAwards(group,publisher,warn)) {
-            const fullList = sourceFor(group.full_list,publisher,award);
-            const link = sourceFor(publisher.id === 'cj' ? group.cigar_link : group.link,publisher,award);
-            const individual = individualSource(link,publisher,fullList);
-            const chosen = record.__publicationPublisherId === publisher.id ? record : bestRecords.get(keyOf(record)) || record;
-            candidates.push({publisherId:publisher.id, year:award.year, rank:award.rank,
-              rankLabel:award.isTie ? 'T-' + award.rank : '#' + award.rank, isTie:award.isTie,
-              sourceOrder:Number.isFinite(record.__publicationSourceOrder) ? record.__publicationSourceOrder : sourceOrder++,
-              record:chosen, scope:publisher.id === 'consensus' ? 'blend' : 'cigar',
-              _identity:keyOf(record) || individual || 'row:' + rowIndex,
-              _individual:individual, _source:link || fullList,
-              _annual:fullList || (publisher.id === 'consensus' ? link : '')});
+    const warnings=new Set(), slots=new Map(), entries=[];
+    records.forEach((row,rowIndex)=>{
+      if (!row || typeof row!=='object' || Array.isArray(row)) return;
+      const hubRowNumber=Number(row.__hubSheetRow) || rowIndex+2;
+      for (const publisher of publishers) {
+        const warn=message=>warnings.add(publisher.name+', HUB row '+hubRowNumber+' '+message+'.');
+        for (const award of awardsFor(row,publisher,warn)) {
+          const slotId=publisher.id+':'+award.year+':'+award.rank;
+          if (!slots.has(slotId)) slots.set(slotId,{identities:new Set(),numeric:null});
+          const slot=slots.get(slotId);
+          // Only an actual Hub key establishes duplicate identity. A keyless tie
+          // remains its own row, even when another cigar has the same name.
+          const identity=keyOf(row) || 'row:'+hubRowNumber;
+          if (slot.identities.has(identity)) continue;
+          if (!award.isTie && slot.numeric) {
+            warn('duplicates '+award.year+' rank '+award.rank+'; the first HUB row supplies that slot');
+            continue;
           }
-        });
-      });
+          const record={...row,__publicationHubRow:true,__publicationHubRowNumber:hubRowNumber,__publishedName:displayName(row)};
+          const entry={id:'award:'+slotId+':'+encodeURIComponent(identity),
+            publisherId:publisher.id,year:award.year,rank:award.rank,
+            rankLabel:award.isTie?'T-'+award.rank:'#'+award.rank,isTie:award.isTie,
+            sourceOrder:rowIndex,record,sourceUrl:sourceFor(row,publisher,award),
+            scope:publisher.id==='consensus'?'blend':'cigar'};
+          slot.identities.add(identity);
+          if (!award.isTie) slot.numeric=entry;
+          entries.push(entry);
+        }
+      }
     });
-    const entries = deduplicate(candidates,warnings,problemYears), lists = [];
+    const lists=[];
     for (const publisher of publishers) {
-      const own = entries.filter(entry => entry.publisherId === publisher.id);
-      const years = [...new Set(own.map(entry => entry.year))].sort((a,b) => b-a);
-      const annual = years.map(year => {
-        const members = own.filter(entry => entry.year === year).sort((a,b) => a.rank-b.rank || a.sourceOrder-b.sourceOrder);
-        const sourceUrl = publisher.id === 'ca' ? 'https://www.cigaraficionado.com/top25/' + year :
-          members.find(entry => entry._annual)?._annual || publisher.archiveUrl;
-        const status = completeness(members,publisher);
-        if (problemYears.has(publisher.id + ':' + year)) status.complete = false;
-        const publicEntries = members.map(entry => ({id:'award:' + publisher.id + ':' + year + ':' + entry.rank + ':' + encodeURIComponent(entry._identity),
-          publisherId:entry.publisherId, year:entry.year, rank:entry.rank, rankLabel:entry.rankLabel,
-          isTie:entry.isTie, sourceOrder:entry.sourceOrder, record:entry.record,
-          sourceUrl:entry._source || entry._annual || sourceUrl, scope:entry.scope}));
-        if (!status.complete) warnings.add(publisher.name + ' ' + year + ': the HUB list is incomplete or has unresolved rank conflicts.');
-        return {id:'pub:' + publisher.id + ':' + year, publisherId:publisher.id, publisherName:publisher.name,
-          kind:'annual', year, title:year + (publisher.id === 'consensus' ? ' Consensus' : ' Top 25'),
-          description:publisher.id === 'consensus'
-            ? 'The Consensus combines annual rankings from cigar media into one list. Explore the highest-ranked blends for ' + year + '.'
-            : publisher.name + '’s ' + (publisher.id === 'cj' ? 'Top 25 New Cigars' : 'Top 25 Cigars') + ' of ' + year + ', selected through its annual blind tastings.',
-          sourceUrl, entries:publicEntries, actualCount:publicEntries.length, ...status};
+      const own=entries.filter(entry=>entry.publisherId===publisher.id);
+      const years=[...new Set(own.map(entry=>entry.year))].sort((a,b)=>b-a);
+      const annual=years.map(year=>{
+        const members=own.filter(entry=>entry.year===year).sort((a,b)=>a.rank-b.rank || a.sourceOrder-b.sourceOrder);
+        const status=completeness(members);
+        if (!status.complete) warnings.add(publisher.name+' '+year+': the HUB list is incomplete or has unresolved rank conflicts.');
+        return {id:'pub:'+publisher.id+':'+year,publisherId:publisher.id,publisherName:publisher.name,
+          kind:'annual',year,title:year+(publisher.id==='consensus'?' Consensus':' Top 25'),
+          description:publisher.id==='consensus'
+            ? 'The Consensus combines annual rankings from cigar media into one list. Explore the highest-ranked blends for '+year+'.'
+            : publisher.name+'’s '+(publisher.id==='cj'?'Top 25 New Cigars':'Top 25 Cigars')+' of '+year+', selected through its annual blind tastings.',
+          sourceUrl:members[0]?.sourceUrl || publisher.archiveUrl,entries:members,actualCount:members.length,...status};
       });
-      const winners = annual.flatMap(list => list.entries.filter(entry => entry.rank === 1))
-        .sort((a,b) => b.year-a.year || a.sourceOrder-b.sourceOrder);
-      const expectedCount = years.length ? years[0]-publisher.firstYear+1 : null;
-      const winnerYears = new Set(winners.map(entry => entry.year));
-      lists.push({id:'pub:' + publisher.id + ':winners', publisherId:publisher.id, publisherName:publisher.name,
-        kind:'winners', year:null, title:'No. 1s', description:publisher.id === 'consensus'
+      const winners=annual.flatMap(list=>list.entries.filter(entry=>entry.rank===1))
+        .sort((a,b)=>b.year-a.year || a.sourceOrder-b.sourceOrder);
+      const expectedCount=years.length ? years[0]-publisher.firstYear+1 : null;
+      const winnerYears=new Set(winners.map(entry=>entry.year));
+      lists.push({id:'pub:'+publisher.id+':winners',publisherId:publisher.id,publisherName:publisher.name,
+        kind:'winners',year:null,title:'No. 1s',description:publisher.id==='consensus'
           ? 'The No. 1 blends from halfwheel’s yearly consensus of cigar media rankings.'
-          : publisher.id === 'ca' ? "Cigar Aficionado's coveted #1 Cigar of the Year. View the list below for every cigar to claim the title (2004-2025)." : 'Every No. 1 from Cigar Journal’s annual Top 25 New Cigars.',
-        sourceUrl:publisher.archiveUrl, entries:winners, actualCount:winners.length, expectedCount,
-        complete:expectedCount !== null && winnerYears.size === expectedCount &&
-          winners.every(entry => !entry.isTie && !problemYears.has(publisher.id + ':' + entry.year)) && winners.length === expectedCount});
+          : publisher.id==='ca' ? "Cigar Aficionado's coveted #1 Cigar of the Year. View the list below for every cigar to claim the title (2004-2025)." : 'Every No. 1 from Cigar Journal’s annual Top 25 New Cigars.',
+        sourceUrl:publisher.archiveUrl,entries:winners,actualCount:winners.length,expectedCount,
+        complete:expectedCount!==null && winnerYears.size===expectedCount && winners.length===expectedCount});
       lists.push(...annual);
     }
-    return {lists, warnings:[...warnings]};
+    return {lists,warnings:[...warnings]};
   }
 
-  return Object.freeze({publishers, build});
-});
-
-/* Verified membership corrections, 2026-10-19. Sources accompany the compact data below.
-   prepare() returns a publication-only working copy; it never edits HUB or saved Favorites. */
-(function (root, factory) {
-  'use strict';
-  const api = factory();
-  if (typeof module === 'object' && module.exports) module.exports = api;
-  if (root) root.CigarosPublicationData = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  'use strict';
-  const DATA = {"verifiedOn":"2026-10-19","sources":{"2011":"https://halfwheel.com/consensus-2011-awards/22947/","2012":"https://halfwheel.com/2012-awards-consensus/34283/","2013":"https://halfwheel.com/2013-awards-consensus/47002/","2014":"https://halfwheel.com/2014-awards-consensus/77137/","2015":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","2016":"https://halfwheel.com/2016-awards-consensus/138925/","2017":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","2018":"https://halfwheel.com/the-consensus-2018/290498/","2019":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","2020":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","2021":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","2022":"https://halfwheel.com/the-consensus-2022/418745/","2023":"https://halfwheel.com/the-consensus/433845/","2024":"https://halfwheel.com/the-consensus-2024/433845/","2025":"https://halfwheel.com/the-consensus-2025/460719/"},"correctionSources":["https://www.cigaraficionado.com/top25cigar/padron-serie-1926-no-6-2019","https://www.cigaraficionado.com/ratings/21847/name/padron-serie-1926-no-6","https://www.cigarjournal.com/top-25-cigars-of-2018-the-complete-list/","https://www.cigaraficionado.com/top25cigar/alec-bradley-fine-and-rare-2012","https://www.cigaraficionado.com/top25cigar/alec-bradley-mundial-no-5-2014","https://www.cigaraficionado.com/top25cigar/alec-bradley-tempus-natural-centuria-2017","https://www.cigaraficionado.com/ratings/21975/name/alec-bradley-project-40-06-52-toro","https://www.cigaraficionado.com/top25cigar/ramon-allones-by-aj-fernandez-torpedo-2021","https://www.cigaraficionado.com/top25cigar/601-la-bomba-warhead-x-2024","https://www.cigarjournal.com/cuatro-cinco-reserva-especial-doble-robusto-24-top-25-cigars-of-2015/","https://www.cigarjournal.com/top-25-of-2020-the-complete-list/","https://www.cigarjournal.com/top-25-of-2021-the-complete-list/","https://www.cigaraficionado.com/top25cigar/bolivar-royal-corona-2006","https://www.cigaraficionado.com/top25cigar/padron-serie-1926-no-9-2007"],"exclude":[{"publication":"ca","year":2012,"rank":21,"key":"alec bradley|alec bradley fine and rare|"},{"publication":"ca","year":2014,"rank":16,"key":"alec bradley|alec bradley mundial no. 5|"},{"publication":"ca","year":2017,"rank":5,"key":"alec bradley|alec bradley tempus natural churchill|churchill"},{"publication":"ca","year":2019,"rank":24,"key":"alec bradley|alec bradley project 40 06.52|06.52"},{"publication":"ca","year":2021,"rank":22,"key":"ramon allones|ramon allones aj fernandez torpedo|torpedo"},{"publication":"ca","year":2024,"rank":18,"key":"601|601 la bomba warhead x toro|toro extra"},{"publication":"cj","year":2015,"rank":24,"key":"joya de nicaragua|joya de nicaragua cuatro cinco reserva doble robusto|robusto"},{"publication":"cj","year":2020,"rank":24,"key":"alec bradley|alec bradley project 40 toro|toro"},{"publication":"cj","year":2021,"rank":19,"key":"joya de nicaragua|joya de nicaragua cinco décadas el doctor|"},{"publication":"ca","year":2006,"rank":1,"key":"bolivar|bolivar royal coronas tubo|robusto"},{"publication":"ca","year":2007,"rank":1,"key":"padron|padron 1926 no. 9|robusto grande"}],"overrides":[{"publication":"ca","year":2012,"rank":21,"key":"alec bradley|alec bradley fine & rare hj10-i (2011)|toro","fields":{"cigar_aficionado_top_25_link":"https://www.cigaraficionado.com/top25cigar/alec-bradley-fine-and-rare-2012"}},{"publication":"ca","year":2014,"rank":16,"key":"alec bradley|alec bradley mundial pl no. 5|perfecto","fields":{"cigar_aficionado_top_25_link":"https://www.cigaraficionado.com/top25cigar/alec-bradley-mundial-no-5-2014"}},{"publication":"ca","year":2017,"rank":5,"key":"alec bradley|alec bradley tempus natural centuria|","fields":{"cigar_aficionado_top_25_link":"https://www.cigaraficionado.com/top25cigar/alec-bradley-tempus-natural-centuria-2017"}},{"publication":"ca","year":2019,"rank":24,"key":"alec bradley|alec bradley project 40 06.52|toro","fields":{"cigar_aficionado_top_25_link":"https://www.cigaraficionado.com/ratings/21975/name/alec-bradley-project-40-06-52-toro"}},{"publication":"ca","year":2021,"rank":22,"key":"ramon allones|ramon allones by aj fernandez torpedo|torpedo","fields":{"cigar_aficionado_top_25_link":"https://www.cigaraficionado.com/top25cigar/ramon-allones-by-aj-fernandez-torpedo-2021"}},{"publication":"ca","year":2024,"rank":18,"key":"601|601 la bomba warhead x|toro extra","fields":{"cigar_aficionado_top_25_link":"https://www.cigaraficionado.com/top25cigar/601-la-bomba-warhead-x-2024"}},{"publication":"cj","year":2015,"rank":24,"key":"joya de nicaragua|joya de nicaragua cuatro cinco reserva especial doble robusto|double robusto","fields":{"cigar_journal_top_25_cigar_link":"https://www.cigarjournal.com/cuatro-cinco-reserva-especial-doble-robusto-24-top-25-cigars-of-2015/"}},{"publication":"cj","year":2020,"rank":24,"key":"alec bradley|alec bradley project 40 06.52|toro","fields":{"cigar_journal_top_25_full_list":"https://www.cigarjournal.com/top-25-of-2020-the-complete-list/"}},{"publication":"cj","year":2021,"rank":19,"key":"joya de nicaragua|joya de nicaragua cinco décadas el doctor|belicoso","fields":{"cigar_journal_top_25_full_list":"https://www.cigarjournal.com/top-25-of-2021-the-complete-list/"}}],"supplements":[{"publication":"ca","year":2019,"rank":2,"key":"","name":"Padrón Serie 1926 No. 6","sourceUrl":"https://www.cigaraficionado.com/top25cigar/padron-serie-1926-no-6-2019","fields":{"cigar_aficionado_top_25_list":"Aficionado","cigar_aficionado_top_25_rating":"95","cigar_aficionado_top_25_year":"2019","cigar_aficionado_top_25_rank":"2","cigar_aficionado_top_25_link":"https://www.cigaraficionado.com/top25cigar/padron-serie-1926-no-6-2019"}},{"publication":"cj","year":2018,"rank":9,"key":"alec bradley|alec bradley prensado lost art torpedo|torpedo","name":"Alec Bradley Prensado Lost Art Torpedo","sourceUrl":"https://www.cigarjournal.com/top-25-cigars-of-2018-the-complete-list/","fields":{"cigar_journal_top_25_full_list":"https://www.cigarjournal.com/top-25-cigars-of-2018-the-complete-list/","cigar_journal_top_25_year":"2018","cigar_journal_top_25_rank":"9"}},{"publication":"ca","year":2006,"rank":1,"key":"bolivar|bolivar royal coronas|robusto","name":"Bolívar Royal Coronas","sourceUrl":"https://www.cigaraficionado.com/top25cigar/bolivar-royal-corona-2006","fields":{"cigar_aficionado_top_25_list":"Aficionado","cigar_aficionado_top_25_rating":"94","cigar_aficionado_top_25_year":"2006","cigar_aficionado_top_25_rank":"1","cigar_aficionado_top_25_link":"https://www.cigaraficionado.com/top25cigar/bolivar-royal-corona-2006","length":"4.875","ring":"50"}},{"publication":"ca","year":2007,"rank":1,"key":"","name":"Padrón Serie 1926 No. 9","sourceUrl":"https://www.cigaraficionado.com/top25cigar/padron-serie-1926-no-9-2007","fields":{"cigar_aficionado_top_25_list":"Aficionado","cigar_aficionado_top_25_rating":"97","cigar_aficionado_top_25_year":"2007","cigar_aficionado_top_25_rank":"1","cigar_aficionado_top_25_link":"https://www.cigaraficionado.com/top25cigar/padron-serie-1926-no-9-2007","length":"5.25","ring":"56"}}],"consensus":[{"year":2011,"rank":1,"label":"1","name":"Undercrown","order":1,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":2,"label":"2","name":"San Lotano Oval","order":2,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":3,"label":"3","name":"E.P Carrillo NWC","order":3,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":4,"label":"4","name":"Emilio Grimalkin","order":4,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":5,"label":"5","name":"Casa Magna Domus Magnus","order":5,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":6,"label":"6","name":"Adrians CroMagnon","order":6,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":7,"label":"7","name":"Tatuaje La Casita Criolla","order":7,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":8,"label":"8","name":"Tatuaje Black Label Petite Lancero","order":8,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":9,"label":"9","name":"Four Kicks","order":9,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":10,"label":"10","name":"Quesada Selección España","order":10,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":11,"label":"11","name":"My Father Le Bijou 1922","order":11,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":12,"label":"12","name":"Illusione Epernay","order":12,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":13,"label":"13","name":"Quesada Oktoberfest","order":13,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":14,"label":"14","name":"Tatuaje Avion 2011","order":14,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":15,"label":"15","name":"Emilio AF1","order":15,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":16,"label":"16","name":"Padrón 1964 SI-15","order":16,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":17,"label":"17","name":"Room 101 LTD Namakubi","order":17,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":18,"label":"18","name":"Jaime Garcia Reserva Especial Limited Edition 2011","order":18,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":19,"label":"19","name":"E.P Carrillo Edición Limitada 2011 “Dark Rituals”","order":19,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":20,"label":"20","name":"La Flor Dominicana Colorado Oscuro","order":20,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":21,"label":"21","name":"My Father El Hijo","order":21,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":22,"label":"22","name":"Viaje Exclusivo Tower Cigars 45th","order":22,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":23,"label":"23","name":"Tatuaje Fausto","order":23,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":24,"label":"24","name":"Tatuaje The Wolfman","order":24,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2011,"rank":25,"label":"25","name":"Man O’ War Armada","order":25,"sourceUrl":"https://halfwheel.com/consensus-2011-awards/22947/"},{"year":2012,"rank":1,"label":"1","name":"CyB BY JOYA DE NICARAGUA","order":1,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":2,"label":"2","name":"OLIVA SERIE V MELANIO","order":2,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":3,"label":"3","name":"ORTEGA SERIE D MADURO","order":3,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":4,"label":"4","name":"LA DUEÑA","order":4,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":5,"label":"5","name":"HEADLEY GRANGE ESTUPENDOS","order":5,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":6,"label":"6","name":"L’ATELIER LAT","order":6,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":7,"label":"7","name":"E.P. CARILLO CARDINAL MADURO","order":7,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/","aliases":["E.P. Carrillo Cardinal Maduro","EP Carrillo Cardinal Maduro"]},{"year":2012,"rank":8,"label":"8","name":"ORTEGA SERIE D NATURAL","order":8,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":9,"label":"9","name":"ROOM101 DARUMA","order":9,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":10,"label":"10","name":"NAT SHERMAN TIMELESS","order":10,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":11,"label":"11","name":"UNDERCROWN","order":11,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":12,"label":"12","name":"LA PALINA GOLDIE NO. 2","order":12,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":13,"label":"13","name":"FOUR KICKS","order":13,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":14,"label":"14","name":"FLOR DE LAS ANTILLAS","order":14,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":15,"label":"15","name":"FOUR KICKS LIMITED EDITION 2012 MULE KICK","order":15,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":16,"label":"16","name":"LIGA PRIVADA ÚNICO SERIE FERAL FLYING PIG","order":16,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":17,"label":"17","name":"Intemperance BA XXI","order":17,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":18,"label":"18","name":"UNDERCROWN CORONA ¡VIVA!","order":18,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":19,"label":"19","name":"QUESADA OKTOBERFEST","order":19,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":20,"label":"20","name":"262 REVERE","order":20,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":21,"label":"21","name":"RODRIGO LA FORTALEZA","order":21,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":22,"label":"22","name":"EZRA ZION INCEPTION","order":22,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":23,"label":"23","name":"LIGA PRIVADA NO. 9","order":23,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":24,"label":"24","name":"QUESADA JALAPA","order":24,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2012,"rank":25,"label":"25","name":"LA PALINA EL DIARIO KILL BILL","order":25,"sourceUrl":"https://halfwheel.com/2012-awards-consensus/34283/"},{"year":2013,"rank":1,"label":"1","name":"EZRA ZION TANTRUM","order":1,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-ezra-zion-tantrum-prerelease/"},{"year":2013,"rank":2,"label":"2","name":"LECCIA BLACK","order":2,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":3,"label":"3","name":"J.D. HOWARD RESERVE","order":3,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-crowned-heads-j-d-howard-reserve-hr50-prerelease/"},{"year":2013,"rank":4,"label":"4","name":"DAVIDOFF NICARAGUA","order":4,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-davidoff-nicaragua-prerelease/"},{"year":2013,"rank":5,"label":"5","name":"ILLUSIONE *R* ROTHCHILDES","order":5,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-illusione-r-rothchildes/"},{"year":2013,"rank":6,"label":"6","name":"HERRERA ESTELI","order":6,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-herrera-esteli-prerelease/"},{"year":2013,"rank":7,"label":"7","name":"LECCIA WHITE","order":7,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":8,"label":"8","name":"NICA RUSTICA","order":8,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-nica-rustica-prerelease/"},{"year":2013,"rank":9,"label":"9","name":"HEADLEY GRANGE","order":9,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/redux-headley-grange-estupendos/"},{"year":2013,"rank":10,"label":"10","name":"LIGA PRIVADA ÚNICO SERIE UF-13 DARK","order":10,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-liga-privada-unico-serie-uf-13-dark-prerelease/"},{"year":2013,"rank":11,"label":"11","name":"ORTEGA SERIE D MADURO","order":11,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-ortega-serie-maduro-lancero/"},{"year":2013,"rank":12,"label":"12","name":"NOMAD ESTELI LOT 1386","order":12,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-nomad-esteli-le-lot-1386-prerelease/"},{"year":2013,"rank":13,"label":"13","name":"L’ATELIER LAT MADURO","order":13,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":14,"label":"14","name":"TATUAJE BROWN LABEL 10TH ANNIVERSARY","order":14,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":15,"label":"15","name":"DRAIG CAYUQUERO","order":15,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":16,"label":"16","name":"1502 EMERALD","order":16,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":17,"label":"17","name":"262 REVERE","order":17,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-262-revere-lonsdale/"},{"year":2013,"rank":18,"label":"18","name":"LA BARBA","order":18,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":19,"label":"19","name":"EZRA ZION EMINENCE","order":19,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-ezra-zion-eminence-gran-prensado/"},{"year":2013,"rank":20,"label":"20","name":"RODRIGO LA FORTALEZA","order":20,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-rodrigo-la-fortaleza-absoluto/"},{"year":2013,"rank":21,"label":"21","name":"REINADO GRAND EMPIRE RESERVE","order":21,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/","entryUrl":"https://halfwheel.com/review-reinado-grand-empire-reserve-corona-gorda-prerelease/"},{"year":2013,"rank":22,"label":"22","name":"LA GLORIA CUBANA SERIE R ESTELÍ","order":22,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":23,"label":"23","name":"LA JUGADA HABANO","order":23,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":24,"label":"24","name":"1502 RUBY","order":24,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2013,"rank":25,"label":"25","name":"NOMAD S-307","order":25,"sourceUrl":"https://halfwheel.com/2013-awards-consensus/47002/"},{"year":2014,"rank":1,"label":"1","name":"HERRERA ESTELI NORTEÑO","order":1,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Herrera Esteli Norteño"],"entryUrl":"https://halfwheel.com/review-herrera-esteli-norteno-robusto-grande/66441"},{"year":2014,"rank":2,"label":"2","name":"SEÑORIAL","order":2,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Señorial"]},{"year":2014,"rank":3,"label":"3","name":"Illusione Fume D'Amour","order":3,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/"},{"year":2014,"rank":4,"label":"4","name":"DAVIDOFF ART EDITION 2014","order":4,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Davidoff Art Edition 2014"],"entryUrl":"https://halfwheel.com/davidoff-art-edition-2014/61758"},{"year":2014,"rank":5,"label":"5","name":"LUCHADOR","order":5,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Luchador"],"entryUrl":"https://halfwheel.com/leccia-tobacco-luchador-el-hombre-prerelease/53069"},{"year":2014,"rank":6,"label":"6","name":"LA PALINA BLACK LABEL","order":6,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["La Palina Black Label Robusto"],"entryUrl":"https://halfwheel.com/review-la-palina-black-label-robusto/69403"},{"year":2014,"rank":7,"label":"7","name":"NEW WORLD BY A.J. FERNANDEZ","order":7,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["New World by A.J. Fernandez"]},{"year":2014,"rank":8,"label":"8","name":"Herrera Esteli","order":8,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/"},{"year":2014,"rank":9,"label":"9","name":"JERICHO HILL","order":9,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Jericho Hill"],"entryUrl":"https://halfwheel.com/jericho-hill-obs-prerelease/63143"},{"year":2014,"rank":10,"label":"10","name":"Las Calaveras LC550","order":10,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/"},{"year":2014,"rank":11,"label":"T-11","name":"CASA FERNÁNDEZ ANIVERSARIO SERIE THE ARES","order":11,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Casa Fernández Aniversario Serie 2014 The Ares"],"entryUrl":"https://halfwheel.com/casa-fernandez-aniversario-serie-2014-ares/68524"},{"year":2014,"rank":11,"label":"T-11","name":"NOMAD CONNECTICUT FUERTE","order":12,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Nomad Connecticut Fuerte"],"entryUrl":"https://halfwheel.com/review-nomad-connecticut-fuerte-robusto-prerelease/49983"},{"year":2014,"rank":13,"label":"13","name":"Joya RED","order":13,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/"},{"year":2014,"rank":14,"label":"14","name":"Intemperance BA XXI","order":14,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/"},{"year":2014,"rank":15,"label":"15","name":"TATUAJE TATTOO","order":15,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Tatuaje Tattoo"]},{"year":2014,"rank":16,"label":"16","name":"QUESADA 40TH ANNIVERSARY CORONA CLASICA","order":16,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Quesada 40th Anniversary Corona Clasica"],"entryUrl":"https://halfwheel.com/quesada-40th-anniversary-corona-clasica/69066"},{"year":2014,"rank":17,"label":"17","name":"EIROA CBT","order":17,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["EIROA CBT Maduro"]},{"year":2014,"rank":18,"label":"18","name":"NAT SHERMAN EPOCA","order":18,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Nat Sherman Epoca"]},{"year":2014,"rank":19,"label":"19","name":"NOMAD C-276","order":19,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Nomad C-276"],"entryUrl":"https://halfwheel.com/nomad-c-276-robusto-prerelease/66911"},{"year":2014,"rank":20,"label":"20","name":"AVO 88 (LIMITED EDITION 2014)","order":20,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["AVO 88 LE14"],"entryUrl":"https://halfwheel.com/avo-88/52372"},{"year":2014,"rank":21,"label":"21","name":"PADILLA VINTAGE RESERVE","order":21,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Padilla Vintage Reserva"]},{"year":2014,"rank":22,"label":"22","name":"LARANJA RESERVA","order":22,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Laranjara Reserva"],"entryUrl":"https://halfwheel.com/review-laranja-reserva-robusto-extra/67949"},{"year":2014,"rank":23,"label":"23","name":"OLIVA SERIE V MELANIO","order":23,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Oliva Serie V Melanio"],"entryUrl":"https://halfwheel.com/review-oliva-serie-v-melanio-figurado"},{"year":2014,"rank":24,"label":"24","name":"LA PALINA GOLDIE LAGUITO ESPECIAL","order":24,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["La Palina Goldie Lagutio Especial"],"entryUrl":"https://halfwheel.com/la-palina-goldie-laguito-especial-2/74970"},{"year":2014,"rank":25,"label":"T-25","name":"HEADLEY GRANGE","order":25,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Headley Grange"],"entryUrl":"https://halfwheel.com/review-headley-grange-snaredrum/71234"},{"year":2014,"rank":25,"label":"T-25","name":"OLIVA SERIE V","order":26,"sourceUrl":"https://halfwheel.com/2014-awards-consensus/77137/","aliases":["Oliva Serie V"],"entryUrl":"https://halfwheel.com/review-oliva-serie-v-560/72978"},{"year":2015,"rank":1,"label":"1","name":"EL GÜEGÜENSE","order":1,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/el-gueguense-corona-gorda/99872"},{"year":2015,"rank":2,"label":"2","name":"SOBREMESA","order":2,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/sobremesa-cervantes-fino/101138"},{"year":2015,"rank":3,"label":"3","name":"NEANDERTHAL","order":3,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/neanderthal-hoxd/96254"},{"year":2015,"rank":4,"label":"4","name":"LA FLOR DOMINICANA LA NOX","order":4,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/la-flor-dominicana-la-nox/97966"},{"year":2015,"rank":5,"label":"5","name":"AVO SYNCRO NICARAGUA","order":5,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/avo-syncro-nicaragua-special-toro/96539"},{"year":2015,"rank":6,"label":"6","name":"DON REYNALDO","order":6,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/"},{"year":2015,"rank":7,"label":"7","name":"MATILDE OSCURA","order":7,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/matilde-oscura-corona/100244"},{"year":2015,"rank":8,"label":"8","name":"FLOR DEL VALLE","order":8,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/"},{"year":2015,"rank":9,"label":"9","name":"UNDERCROWN SHADE","order":9,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/undercrown-shade-gran-toro/94857"},{"year":2015,"rank":10,"label":"10","name":"LA MISSION DE L’ATELIER","order":10,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/la-mission-du-latelier-1959/94305"},{"year":2015,"rank":11,"label":"11","name":"ILLUSIONE ~ECCJ~ 20TH","order":11,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/illusione-eccj-20th/79914"},{"year":2015,"rank":12,"label":"12","name":"A.J. FERNANDEZ ENCLAVE","order":12,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/"},{"year":2015,"rank":13,"label":"13","name":"NOMAD ESTELÍ LOT 8613","order":13,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/nomad-esteli-lot-8613-toro/83351"},{"year":2015,"rank":14,"label":"14","name":"CAMACHO AMERICAN BARREL-AGED","order":14,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/camacho-american-barrel-aged-toro/88838"},{"year":2015,"rank":15,"label":"15","name":"LA IMPERIOSA","order":15,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/la-imperiosa-magicos/94231"},{"year":2015,"rank":16,"label":"T-16","name":"LAS CALAVERAS EDICIÓN LIMITADA 2015","order":16,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/las-calaveras-edicion-limitada-2015-lc46/88588"},{"year":2015,"rank":16,"label":"T-16","name":"SEÑORIAL","order":17,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/"},{"year":2015,"rank":18,"label":"18","name":"DAVIDOFF WINSTON CHURCHILL","order":18,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/davidoff-winston-churchill-churchill/80558"},{"year":2015,"rank":19,"label":"19","name":"FREYJA","order":19,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/freyja-valhalla-robusto-prerelease/94210"},{"year":2015,"rank":20,"label":"T-20","name":"ARANDOZA DEFCON","order":20,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/"},{"year":2015,"rank":20,"label":"T-20","name":"QUESADA RESERVA PRIVADA","order":21,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/quesada-reserva-privada-robusto-prerelease/82168"},{"year":2015,"rank":22,"label":"22","name":"FUTURO","order":22,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/futuro-seleccion-109/98259"},{"year":2015,"rank":23,"label":"23","name":"JOYA DE NICARAGUA CUATRO CINCO RESERVA ESPECIAL","order":23,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/joya-de-nicaragua-cuatro-cinco-reserva-especial-doble-robusto/94880"},{"year":2015,"rank":24,"label":"24","name":"TATUAJE VEROCŪ","order":24,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/"},{"year":2015,"rank":25,"label":"25","name":"ROOM101 MASTER COLLECTION THREE MUTANTE","order":25,"sourceUrl":"https://halfwheel.com/2015-awards-the-consensus-top-25-cigars/103870/","entryUrl":"https://halfwheel.com/room101-master-collection-three-mutante/79330"},{"year":2016,"rank":1,"label":"1","name":"Davidoff Yamasá","order":1,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/davidoff-yamasa-piramides-prerelease"},{"year":2016,"rank":2,"label":"2","name":"Mi Querida","order":2,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/mi-querida-fino-largo/133245"},{"year":2016,"rank":3,"label":"3","name":"Sobremesa","order":3,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/sobremesa-short-churchill/129390"},{"year":2016,"rank":4,"label":"4","name":"Maestro del Tiempo 6102R","order":4,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/maestro-del-tiempo-6102r/133952"},{"year":2016,"rank":5,"label":"5","name":"The Tabernacle","order":5,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/the-tabernacle-corona/133450"},{"year":2016,"rank":6,"label":"6","name":"Hoyo La Amistad","order":6,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/hoyo-la-amistad-robusto/133751"},{"year":2016,"rank":7,"label":"7","name":"Padrón 1926 Serie Natural","order":7,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/"},{"year":2016,"rank":8,"label":"8","name":"AVO Syncro Nicaragua Fogata","order":8,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/cornelius-toro/111849"},{"year":2016,"rank":9,"label":"9","name":"Cornelius","order":9,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/cornelius-toro/111849"},{"year":2016,"rank":10,"label":"T-10","name":"Illusione Haut 10","order":10,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/illusione-haut-10/133812"},{"year":2016,"rank":10,"label":"T-10","name":"Joya Black","order":11,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/joya-black-robusto/135762"},{"year":2016,"rank":12,"label":"12","name":"Maestro del Tiempo","order":12,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/"},{"year":2016,"rank":13,"label":"13","name":"Nomad Martial Law","order":13,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/"},{"year":2016,"rank":14,"label":"14","name":"Paul Garmirian 25th Connoisseur","order":14,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/paul-garmirian-25th-anniversary-connoisseur/104817"},{"year":2016,"rank":15,"label":"15","name":"Camacho Powerband","order":15,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/camacho-powerband-robusto/127964"},{"year":2016,"rank":16,"label":"16","name":"Bishop’s Blend","order":16,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/black-label-trading-co-bishops-blend-robusto/131370"},{"year":2016,"rank":17,"label":"17","name":"1502 XO","order":17,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/1502-xo/110704"},{"year":2016,"rank":18,"label":"18","name":"Herrera Estelí Miami Edition","order":18,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/herrera-esteli-miami-edition/135477"},{"year":2016,"rank":19,"label":"19","name":"Neanderthal","order":19,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/review-neanderthal/70538"},{"year":2016,"rank":20,"label":"20","name":"Davidoff Chefs Edition","order":20,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/davidoff-chefs-edition/128495"},{"year":2016,"rank":21,"label":"21","name":"Bellas Artes","order":21,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/bellas-artes-robusto-extra/135869"},{"year":2016,"rank":22,"label":"22","name":"Litto Gomez Diez Small Batch 6","order":22,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/litto-gomez-small-batch-no-6/106132"},{"year":2016,"rank":23,"label":"23","name":"Tatuaje TAA 2016","order":23,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/","entryUrl":"https://halfwheel.com/tatuaje-taa-2016/120840"},{"year":2016,"rank":24,"label":"T-24","name":"CAO Amazon Basin","order":24,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/"},{"year":2016,"rank":24,"label":"T-24","name":"Southern Draw Kudzu Code Duello","order":25,"sourceUrl":"https://halfwheel.com/2016-awards-consensus/138925/"},{"year":2017,"rank":1,"label":"1","name":"The Wise Man Maduro","order":1,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/wise-man-maduro-corona-gorda/210383"},{"year":2017,"rank":2,"label":"2","name":"Southern Draw Jacobs Ladder","order":2,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/southern-draw-jacobs-ladder-toro/216402"},{"year":2017,"rank":3,"label":"3","name":"Todos Las Dias","order":3,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/todos-las-dias-half-churchill/180000"},{"year":2017,"rank":4,"label":"4","name":"Undercrown Sun Grown","order":4,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/undercrown-sun-grown-robusto/208857"},{"year":2017,"rank":5,"label":"5","name":"Muestra de Saka Nacatamale","order":5,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/muestra-de-saka-nacatamale/216231"},{"year":2017,"rank":6,"label":"6","name":"Davidoff Winston Churchill The Late Hour","order":6,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/davidoff-winston-churchill-late-hour-robusto/177293"},{"year":2017,"rank":7,"label":"7","name":"Protocol Themis","order":7,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/"},{"year":2017,"rank":8,"label":"8","name":"Southern Draw Rose of Sharon","order":8,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/southern-draw-rose-sharon-toro/151619"},{"year":2017,"rank":9,"label":"9","name":"All Out Kings","order":9,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/all-out-kings-smash/146141"},{"year":2017,"rank":10,"label":"10","name":"Plasencia Alma Fuerte","order":10,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/plasencia-alma-fuerte-generacion-v-salomon/145899"},{"year":2017,"rank":11,"label":"11","name":"New World Puro Especial","order":11,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/new-world-puro-especial-short-churchill/175335"},{"year":2017,"rank":12,"label":"12","name":"Señor Esugars","order":12,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/cornelius-anthony-senor-esugars-robusto/209611"},{"year":2017,"rank":13,"label":"13","name":"Mi Querida","order":13,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/mi-querida-fino-largo/133245"},{"year":2017,"rank":14,"label":"14","name":"Tatuaje Reserva Broadleaf","order":14,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/tatuaje-reserva-j21-broadleaf/156959"},{"year":2017,"rank":15,"label":"15","name":"AVO Syncro South America Ritmo","order":15,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/avo-syncro-south-america-ritmo-torpedo-largo/174195"},{"year":2017,"rank":16,"label":"16","name":"My Father The Judge","order":16,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/father-cigars-judge-6-x-56/137708"},{"year":2017,"rank":17,"label":"17","name":"Sobremesa","order":17,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/sobremesa-short-churchill/129390"},{"year":2017,"rank":18,"label":"18","name":"Highclere Castle","order":18,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/highclere-castle-toro-prerelease/176909"},{"year":2017,"rank":19,"label":"19","name":"Protocol Probable Cause","order":19,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/review-neanderthal/70538"},{"year":2017,"rank":20,"label":"20","name":"CAO Amazon Anaconda","order":20,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/cao-amazon-anaconda/209803"},{"year":2017,"rank":21,"label":"21","name":"Pappy Van Winkle Tradition","order":21,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/pappy-van-winkle-tradition-coronita/208070"},{"year":2017,"rank":22,"label":"22","name":"Guardian of the Farm","order":22,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/guardian-farm-apollo-seleccion-de-warped/134259"},{"year":2017,"rank":23,"label":"23","name":"Monte by Montecristo AJ Fernandez","order":23,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/monte-montecristo-aj-fernandez-toro/174482"},{"year":2017,"rank":24,"label":"24","name":"La Flor de Ynclan","order":24,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/la-flor-de-ynclan-torpedo/174673"},{"year":2017,"rank":25,"label":"25","name":"FSG","order":25,"sourceUrl":"https://halfwheel.com/2017-awards-consensus-top-25-cigars/219301/","entryUrl":"https://halfwheel.com/fsg-belicoso/131164"},{"year":2018,"rank":1,"label":"1","name":"Joya de Nicaragua Cinco Décadas","order":1,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/joya-de-nicaragua-cinco-decadas-el-general/282051"},{"year":2018,"rank":2,"label":"2","name":"Sin Compromiso","order":2,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/sin-compromiso-seleccion-no-2/288337"},{"year":2018,"rank":3,"label":"3","name":"Southern Draw Cedrus The Hogan","order":3,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/southern-draw-cedrus-hogan/280554"},{"year":2018,"rank":4,"label":"4","name":"Cornelius & Anthony The Gent","order":4,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/cornelius-anthony-the-gent-gordo/281091"},{"year":2018,"rank":5,"label":"5","name":"AGANORSA Leaf Signature Selection","order":5,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/aganorsa-leaf-signature-series-corona-gorda/282992"},{"year":2018,"rank":6,"label":"6","name":"La Flor de Ynclan","order":6,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/la-flor-de-ynclan-torpedo/174673"},{"year":2018,"rank":7,"label":"7","name":"Warped Serie Gran Reserva 1988","order":7,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/warped-serie-gran-reserva-1988/281546"},{"year":2018,"rank":8,"label":"8","name":"Crowned Heads Court Reserve XVIII","order":8,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/"},{"year":2018,"rank":9,"label":"9","name":"The Wise Man Maduro","order":9,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/wise-man-maduro-corona-gorda/210383"},{"year":2018,"rank":10,"label":"10","name":"Mombacho Cosecha 2013","order":10,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/mombacho-cosecha-2013/279771"},{"year":2018,"rank":11,"label":"T-11","name":"My Father La Opulencia","order":11,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/father-la-opulencia-petite/215443"},{"year":2018,"rank":11,"label":"T-11","name":"Davidoff Diademas Finas Limited Edition 50th Anniversary","order":12,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/davidoff-diademas-finas-limited-edition-50th-anniversary-prerelease/269542"},{"year":2018,"rank":13,"label":"13","name":"Ramón Allones AJ Fernandez","order":13,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/ramon-allones-aj-fernandez-torpedo/278508"},{"year":2018,"rank":14,"label":"14","name":"Aladino Corojo Reserva","order":14,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/aladino-corojo-reserva-prerelease/278377"},{"year":2018,"rank":15,"label":"15","name":"Moon Garden","order":15,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/"},{"year":2018,"rank":16,"label":"16","name":"Liga Privada T52","order":16,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/review-liga-privada-t52/9438"},{"year":2018,"rank":17,"label":"17","name":"MBombay Classic Torpedo","order":17,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/mbombay-classic-torpedo/251376"},{"year":2018,"rank":18,"label":"18","name":"Tabernacle Havana Seed CT #142","order":18,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/"},{"year":2018,"rank":19,"label":"19","name":"Bellas Artes Maduro","order":19,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/bellas-artes-maduro-robusto/280897"},{"year":2018,"rank":20,"label":"20","name":"Espinosa Las 6 Provincias","order":20,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/espinosa-las-6-provincias-lhb/280248"},{"year":2018,"rank":21,"label":"21","name":"Mi Querida","order":21,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/mi-querida-fino-largo/133245"},{"year":2018,"rank":22,"label":"22","name":"The T.","order":22,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/t-short-churchill/214949"},{"year":2018,"rank":23,"label":"23","name":"Perez-Carrillo Encore","order":23,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/perez-carrillo-encore-majestic/261231"},{"year":2018,"rank":24,"label":"24","name":"Villiger La Vencedora","order":24,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/villiger-la-vencedora-toro/268381"},{"year":2018,"rank":25,"label":"25","name":"Joya Silver","order":25,"sourceUrl":"https://halfwheel.com/the-consensus-2018/290498/","entryUrl":"https://halfwheel.com/joya-silver-toro/283359"},{"year":2019,"rank":1,"label":"1","name":"Plasencia Alma del Fuego","order":1,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/plasencia-alma-del-fuego-candente/365364/"},{"year":2019,"rank":2,"label":"2","name":"Sin Compromiso","order":2,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/sin-compromiso-seleccion-no-2/288337"},{"year":2019,"rank":3,"label":"3","name":"Viva La Vida","order":3,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/viva-la-vida-jester/369764/"},{"year":2019,"rank":4,"label":"4","name":"Southern Draw Kudzu Lustrum","order":4,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/southern-draw-kudzu-lustrum-belicoso-fino/366102/"},{"year":2019,"rank":5,"label":"5","name":"Mi Querida Triqui Traca","order":5,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/mi-querida-triqui-traca-no-648/367587/"},{"year":2019,"rank":6,"label":"6","name":"Joya de Nicaragua Cinco Décadas","order":6,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/joya-de-nicaragua-cinco-decadas-el-general/282051"},{"year":2019,"rank":7,"label":"7","name":"Joya de Nicaragua Antaño CT","order":7,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/joya-de-nicaragua-antano-ct-robusto/365422/"},{"year":2019,"rank":8,"label":"8","name":"Laranja Reserva Escuro","order":8,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/laranja-reserva-escuro-corona-gorda/299451/"},{"year":2019,"rank":9,"label":"9","name":"Le Carême","order":9,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/la-careme-robusto/132594/"},{"year":2019,"rank":10,"label":"10","name":"Herrera Estelí Norteño","order":10,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/review-herrera-esteli-norteno-robusto-grande/66441/"},{"year":2019,"rank":11,"label":"11","name":"The Tabernacle Havana Seed CT #142","order":11,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/the-tabernacle-havana-seed-ct-142-corona/293756/"},{"year":2019,"rank":12,"label":"12","name":"The American","order":12,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/the-american-no-2/364900/"},{"year":2019,"rank":13,"label":"13","name":"Illusione Epernay 10th Anniversary d’Aosta","order":13,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/illusione-epernay-10th-anniversary-daosta/368928/"},{"year":2019,"rank":14,"label":"14","name":"Sobremesa Brûlée","order":14,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/sobremesa-brulee-robusto/365584/"},{"year":2019,"rank":15,"label":"15","name":"Crux Epicure Short Salomone","order":15,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/crux-epicure-short-salomone-prerelease/298070/"},{"year":2019,"rank":16,"label":"T-16","name":"Aging Room Quattro Nicaragua","order":16,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/"},{"year":2019,"rank":16,"label":"T-16","name":"My Father La Promesa","order":17,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/my-father-la-promesa-lancero/368854/"},{"year":2019,"rank":16,"label":"T-16","name":"Southern Draw Rose of Sharon Desert Rose","order":18,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/"},{"year":2019,"rank":16,"label":"T-16","name":"THE WISE MAN MADURO","order":19,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/wise-man-maduro-corona-gorda/210383"},{"year":2019,"rank":20,"label":"20","name":"La Coalición","order":20,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/"},{"year":2019,"rank":21,"label":"21","name":"Las Calaveras Edición Limitada 2019","order":21,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/las-calaveras-el-2019-lc54/365100/"},{"year":2019,"rank":22,"label":"22","name":"Perez-Carrillo La Historia","order":22,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/perez-carrillo-la-historia-regalias-dcelia/99073/"},{"year":2019,"rank":23,"label":"23","name":"Neanderthal","order":23,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/neanderthal-lh/369299/"},{"year":2019,"rank":24,"label":"24","name":"Davidoff Winston Churchill LE2019 The Traveller","order":24,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/davidoff-winston-churchill-limited-edition-2019-the-traveller-robusto/297123/"},{"year":2019,"rank":25,"label":"25","name":"Ramón Allones AJ Fernandez","order":25,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2019/371499/","entryUrl":"https://halfwheel.com/ramon-allones-aj-fernandez-torpedo/278508"},{"year":2020,"rank":1,"label":"1","name":"MI QUERIDA TRIQUI TRACA","order":1,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/mi-querida-triqui-traca-no-648/367587/","competitionRank":1},{"year":2020,"rank":2,"label":"2","name":"Liga Privada Único Serie Year of the Rat","order":2,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/liga-privada-year-of-the-rat-2020/378153/","competitionRank":2},{"year":2020,"rank":3,"label":"3","name":"Joya de Nicaragua Número Uno","order":3,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/joya-de-nicaragua-numero-uno-le-premier/380456/","competitionRank":3},{"year":2020,"rank":4,"label":"4","name":"Sobremesa Brûlée Blue","order":4,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/sobremesa-brulee-blue/381904/","competitionRank":4},{"year":2020,"rank":5,"label":"5","name":"Mil Días","order":5,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/mil-dias-sublime/382817/","competitionRank":5},{"year":2020,"rank":6,"label":"6","name":"VIVA LA VIDA","order":6,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/viva-la-vida-jester/369764/","competitionRank":6},{"year":2020,"rank":7,"label":"7","name":"Supreme Leaf","order":7,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/aganorsa-leaf-supreme-leaf-toro/380176/","competitionRank":7},{"year":2020,"rank":8,"label":"8","name":"Tatuaje TAA 2020","order":8,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/tatuaje-taa-2020/376727/","competitionRank":8},{"year":2020,"rank":9,"label":"9","name":"Fonseca","order":9,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/fonseca-belicosos/382494/","competitionRank":9},{"year":2020,"rank":10,"label":"10","name":"SIN COMPROMISO","order":10,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/sin-compromiso-seleccion-no-2/288337","competitionRank":10},{"year":2020,"rank":11,"label":"11","name":"E.P. Carrillo Pledge","order":11,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/e-p-carrillo-pledge-prequel/383058/","competitionRank":11},{"year":2020,"rank":12,"label":"T-12","name":"Las Calaveras Edición Limitada 2020","order":12,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/las-calaveras-edicion-limitada-2020-lc52/380492/","competitionRank":12},{"year":2020,"rank":12,"label":"T-12","name":"Southern Draw Rose of Sharon Desert Rose","order":13,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","competitionRank":12},{"year":2020,"rank":14,"label":"14","name":"Aladino Cameroon","order":14,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/aladino-cameroon-lonsdale/377615/","competitionRank":14},{"year":2020,"rank":15,"label":"15","name":"La Aurora 107 Nicaragua","order":15,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/la-aurora-107-nicaragua-robusto/383822/","competitionRank":15},{"year":2020,"rank":15,"label":"15","name":"Davidoff Limited Edition 2021 Year of the Ox","order":16,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/davidoff-limited-edition-2021-year-of-the-ox/385379/","competitionRank":16,"rankNote":"Article heading prints 15.; competition ranking from the linked published spreadsheet is 16."},{"year":2020,"rank":16,"label":"16","name":"HVC Hot Cake","order":17,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","competitionRank":17,"rankNote":"Article heading prints 16.; competition ranking from the linked published spreadsheet is 17."},{"year":2020,"rank":17,"label":"17","name":"THE TABERNACLE","order":18,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/the-tabernacle-corona/133450","competitionRank":18,"rankNote":"Article heading prints 17.; competition ranking from the linked published spreadsheet is 18."},{"year":2020,"rank":18,"label":"18","name":"HVC 500 Years Anniversary","order":19,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/hvc-500-years-anniversary/369586/","competitionRank":19,"rankNote":"Article heading prints 18.; competition ranking from the linked published spreadsheet is 19."},{"year":2020,"rank":19,"label":"19","name":"Camacho Nicaragua","order":20,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/camacho-nicaragua-toro/380810/","competitionRank":20,"rankNote":"Article heading prints 19.; competition ranking from the linked published spreadsheet is 20."},{"year":2020,"rank":20,"label":"20","name":"THE AMERICAN","order":21,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/the-american-no-2/364900/","competitionRank":21,"rankNote":"Article heading prints 20.; competition ranking from the linked published spreadsheet is 21."},{"year":2020,"rank":21,"label":"21","name":"Casa Cuevas La Mandarria","order":22,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","competitionRank":22,"rankNote":"Article heading prints 21.; competition ranking from the linked published spreadsheet is 22."},{"year":2020,"rank":22,"label":"22","name":"Baka","order":23,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/baka-gran-perfecto/381272/","competitionRank":23,"rankNote":"Article heading prints 22.; competition ranking from the linked published spreadsheet is 23."},{"year":2020,"rank":24,"label":"24","name":"Daniel Marshall by Carlos Fuente – XXXVIII Limited Edition","order":24,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/daniel-marshall-by-carlos-fuente-xxxviii-limited-edition-january-2020-prerelease/374586/","competitionRank":24},{"year":2020,"rank":25,"label":"T-25","name":"La Coalición","order":25,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/la-coalicion-corona-gorda/371862/","competitionRank":25},{"year":2020,"rank":25,"label":"T-25","name":"Southern Draw Jacobs Ladder Brimstone","order":26,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2020/386886/","entryUrl":"https://halfwheel.com/southern-draw-jacobs-ladder-brimstone/367235/","competitionRank":25},{"year":2021,"rank":1,"label":"1","name":"Undercrown 10","order":1,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/undercrown-10-robusto/399609/"},{"year":2021,"rank":2,"label":"2","name":"Sin Compromiso Paladin de Saka","order":2,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/"},{"year":2021,"rank":3,"label":"3","name":"ADVentura The Royal Return Queen’s Pearls","order":3,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/adventura-the-royal-return-queens-pearls-lancero/403258/"},{"year":2021,"rank":4,"label":"4","name":"Joya de Nicaragua Dos Cientos","order":4,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/joya-de-nicaragua-dos-cientos/403085/"},{"year":2021,"rank":5,"label":"5","name":"SUPREME LEAF","order":5,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/aganorsa-leaf-supreme-leaf-toro/380176/"},{"year":2021,"rank":6,"label":"6","name":"Davidoff Dominicana","order":6,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/davidoff-dominicana-robusto/399120/"},{"year":2021,"rank":7,"label":"7","name":"Alec & Bradley Kintsugi","order":7,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/aganorsa-leaf-supreme-leaf-toro/380176/"},{"year":2021,"rank":8,"label":"8","name":"Rare Leaf Reserve","order":8,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/aganorsa-leaf-rare-leaf-reserve-robusto/391614/"},{"year":2021,"rank":9,"label":"9","name":"Montecristo 1935 Anniversary Nicaragua","order":9,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/montecristo-1935-anniversary-nicaragua-no-2/387329/"},{"year":2021,"rank":10,"label":"10","name":"Davidoff Winston Churchill Limited Edition 2021","order":10,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/davidoff-winston-churchill-limited-edition-2021/391380/"},{"year":2021,"rank":11,"label":"11","name":"Perez-Carrillo Pledge","order":11,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/e-p-carrillo-pledge-prequel/383058/"},{"year":2021,"rank":12,"label":"12","name":"Plasencia Alma Fuerte Sixto I Colorado","order":12,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/plasencia-alma-fuerte-sixto-i-hexagon-colorado-claro/390486/"},{"year":2021,"rank":13,"label":"13","name":"Liga Privada Bauhaus","order":13,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/liga-privada-bauhaus/390223/"},{"year":2021,"rank":14,"label":"14","name":"Aging Room Rare Collection","order":14,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/aging-room-rare-collection-scherzo/403269/"},{"year":2021,"rank":15,"label":"15","name":"Rojas Street Tacos Barbacoa","order":15,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/rojas-street-tacos-barbacoa-robusto/394161/"},{"year":2021,"rank":16,"label":"16","name":"SOBREMESA BRÛLÉE BLUE","order":16,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/sobremesa-brulee-blue/381904/"},{"year":2021,"rank":17,"label":"17","name":"La Flor Dominicana Andalusian Bull","order":17,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/la-flor-dominicana-andalusian-bull-jack-schwartz-importer-100th-anniversary/402033/"},{"year":2021,"rank":18,"label":"18","name":"Stolen Throne Crook of the Crown","order":18,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/"},{"year":2021,"rank":19,"label":"T-19","name":"Casa Cuevas Patrimonio","order":19,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/casa-cuevas-patrimonio-toro/401242/"},{"year":2021,"rank":19,"label":"T-19","name":"La Palina Goldie","order":20,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/la-palina-goldie-laguito-no-1/401833/"},{"year":2021,"rank":21,"label":"T-21","name":"CAO Arcana Mortal Coil","order":21,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/cao-arcana-mortal-coil/391009/"},{"year":2021,"rank":21,"label":"T-21","name":"Sixty by Rocky Patel","order":22,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/sixty-by-rocky-patel-toro/402073/"},{"year":2021,"rank":23,"label":"23","name":"Liga Privada H99","order":23,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/"},{"year":2021,"rank":24,"label":"T-24","name":"Daughters of the Wind","order":24,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/daughters-of-the-wind-cremello/374779/"},{"year":2021,"rank":24,"label":"T-24","name":"Laranja Reserva Azulejo","order":25,"sourceUrl":"https://halfwheel.com/the-consensus-top-25-cigars-2021/404380/","entryUrl":"https://halfwheel.com/espinosa-laranja-reserva-azulejo-robusto-grande/402250/"},{"year":2022,"rank":1,"label":"1","name":"Mi Querida Black SakaKhan","order":1,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/mi-querida-black-sakakhan/415411/"},{"year":2022,"rank":2,"label":"2","name":"Olmec Maduro","order":2,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/"},{"year":2022,"rank":3,"label":"3","name":"Muestra de Saka The Bewitched","order":3,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/muestra-de-saka-the-bewitched/412821/"},{"year":2022,"rank":4,"label":"4","name":"Knuckle Sandwich Habano","order":4,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/knuckle-sandwich-habano-corona-gorda-r/407922/#"},{"year":2022,"rank":5,"label":"5","name":"Sin Compromiso Paladin de Saka","order":5,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/sin-compromiso-paladin-de-saka/405677/"},{"year":2022,"rank":6,"label":"6","name":"Oliva Serie V","order":6,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/oliva-serie-v-135th-anniversary-edicion-limitada/403894/"},{"year":2022,"rank":7,"label":"7","name":"Olmec Claro","order":7,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/olmec-claro-robusto/416682/"},{"year":2022,"rank":8,"label":"8","name":"Liga Privada H99","order":8,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/liga-privada-h99-connecticut-corojo-phineas-gage-lancero/414524/"},{"year":2022,"rank":9,"label":"9","name":"Illusione Allegria","order":9,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/illusione-allegria-lonsdale/416111/"},{"year":2022,"rank":10,"label":"10","name":"Plasencia Cosecha 149","order":10,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/plasencia-cosecha-149-azacualpa/403297/"},{"year":2022,"rank":11,"label":"11","name":"20 Acre Farm","order":11,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/20-acre-farm-robusto/405183/"},{"year":2022,"rank":12,"label":"12","name":"New World Dorado","order":12,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/new-world-dorado-toro/415752/"},{"year":2022,"rank":13,"label":"13","name":"Room101 Namakubi Ranfla (2021)","order":13,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/room101-namakubi-ranfla-2021/405080/"},{"year":2022,"rank":14,"label":"14","name":"Sixty by Rocky Patel","order":14,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/sixty-by-rocky-patel-toro/402073/"},{"year":2022,"rank":15,"label":"15","name":"Guardian of the Farm Cerberus","order":15,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/guardian-of-the-farm-cerberus-6-x-44/408034/"},{"year":2022,"rank":16,"label":"16","name":"Alfonso Extra Añejo","order":16,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/alfonso-extra-anejo-no-3/416343/"},{"year":2022,"rank":17,"label":"17","name":"Plasencia Year of the Tiger","order":17,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/plasencia-year-of-the-tiger/407536/"},{"year":2022,"rank":18,"label":"18","name":"Ferio Tego Generoso","order":18,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/ferio-tego-generoso/402823/"},{"year":2022,"rank":19,"label":"T-19","name":"1502 Aniversario 10","order":19,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/1502-aniversario-10/415767/"},{"year":2022,"rank":19,"label":"T-19","name":"Davidoff Winston Churchill Limited Edition 2022","order":20,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/davidoff-winston-churchill-limited-edition-2022/407303/"},{"year":2022,"rank":21,"label":"21","name":"Alec Bradley Double Broadleaf","order":21,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/alec-bradley-double-broadleaf-robusto/416565/"},{"year":2022,"rank":22,"label":"T-22","name":"Diamond Crown Black Diamond (2022)","order":22,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/diamond-crown-black-diamond-marquis-2022/416990/"},{"year":2022,"rank":22,"label":"T-22","name":"Le Pâtissier","order":23,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/","entryUrl":"https://halfwheel.com/le-patissier-no-54/414222/"},{"year":2022,"rank":22,"label":"T-22","name":"Tatuaje T110 Tuxtla","order":24,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/"},{"year":2022,"rank":25,"label":"25","name":"Mas Igneus","order":25,"sourceUrl":"https://halfwheel.com/the-consensus-2022/418745/"},{"year":2023,"rank":1,"label":"1","name":"Mi Querida Black","order":1,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/mi-querida-black-papasaka/430542/"},{"year":2023,"rank":2,"label":"2","name":"Muestra de Saka Krakatoa","order":2,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/muestra-de-saka-krakatoa/431941/"},{"year":2023,"rank":3,"label":"3","name":"Angel Cuesta","order":3,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/angel-cuesta-doble-robusto/428189/"},{"year":2023,"rank":4,"label":"4","name":"CAO Amazon Basin","order":4,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/cao-amazon-basin-extra-anejo/422396/"},{"year":2023,"rank":5,"label":"5","name":"Long Live the Queen","order":5,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/long-live-the-queen-queens-sword/423454/"},{"year":2023,"rank":6,"label":"6","name":"El Pulpo","order":6,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/el-pulo-octo-ocho/430880/"},{"year":2023,"rank":7,"label":"7","name":"La Vereda","order":7,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/la-vereda-no-54/431238/"},{"year":2023,"rank":8,"label":"8","name":"Micallef Black","order":8,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/micallef-black-robusto/428305/"},{"year":2023,"rank":9,"label":"9","name":"Room101 Johnny Tobacconaut (2023)","order":9,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/room101-johnny-tobacconaut-perfecto/432482/"},{"year":2023,"rank":10,"label":"10","name":"Intemperance Volstead VO 1920","order":10,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/intemperance-volstead-vo-1920-noble-experiment/429327/"},{"year":2023,"rank":11,"label":"11","name":"West Tampa Tobacco Co. Red","order":11,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/west-tampa-tobacco-co-red-toro/428145/"},{"year":2023,"rank":12,"label":"12","name":"Quinquagenario","order":12,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/quinquagenario/430822/"},{"year":2023,"rank":13,"label":"13","name":"Davidoff Millennium","order":13,"sourceUrl":"https://halfwheel.com/the-consensus/433845/"},{"year":2023,"rank":14,"label":"14","name":"Flor de las Antillas 10th Anniversary Limited Edition 2022","order":14,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/top25/14-flor-de-las-antillas-10th-anniversary-limited-edition-2022/"},{"year":2023,"rank":15,"label":"15","name":"Highclere Castle Senetjer","order":15,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/highclere-castle-senetjer/421999/"},{"year":2023,"rank":16,"label":"16","name":"Davidoff Signature No. 1 Limited Edition","order":16,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/davidoff-signature-no-1-limited-edition/421352/"},{"year":2023,"rank":17,"label":"17","name":"Arturo Fuente Don Carlos","order":17,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/arturo-fuente-don-carlos-lancero/157893/"},{"year":2023,"rank":18,"label":"18","name":"Tatuaje Lomo de Cerdo","order":18,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/tatuaje-lomo-de-cedro/423849/"},{"year":2023,"rank":19,"label":"T-19","name":"Knuckle Sandwich Connecticut","order":19,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/knuckle-sandwich-connecticut-robusto-j/422660/"},{"year":2023,"rank":19,"label":"T-19","name":"Tatuaje 20th Anniversary","order":20,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/tatuaje-20th-anniversary-grand-chasseur/433075/"},{"year":2023,"rank":21,"label":"21","name":"Blackened Cigars “M81”","order":21,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/blackened-cigars-m81-robusto/420461/"},{"year":2023,"rank":22,"label":"T-22","name":"Davidoff Aniversario No. 1 Limited Edition Collection","order":22,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/diamond-crown-black-diamond-marquis-2022/416990/"},{"year":2023,"rank":22,"label":"T-22","name":"Perez-Carrillo Allegiance","order":23,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/perez-carrillo-allegiance-wingman/421833/"},{"year":2023,"rank":24,"label":"24","name":"Rare Leaf Reserve Maduro","order":24,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/rare-leaf-reserve-maduro-belicoso/428896/"},{"year":2023,"rank":25,"label":"25","name":"Meerapfel Cigar Richard","order":25,"sourceUrl":"https://halfwheel.com/the-consensus/433845/","entryUrl":"https://halfwheel.com/meerapfel-cigar-richard-double-robusto/421332/"},{"year":2024,"rank":1,"label":"1","name":"Umbagog Bronzeback","order":1,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/muestra-de-saka-krakatoa/431941/"},{"year":2024,"rank":2,"label":"2","name":"Isla Del Cocodrilo","order":2,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/"},{"year":2024,"rank":3,"label":"3","name":"Davidoff Grand Cru Diademas Finas Limited Edition Collection","order":3,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/davidoff-grand-cru-diademas-finas-limited-edition-collection/442821/"},{"year":2024,"rank":4,"label":"4","name":"SIN COMPROMISO","order":4,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/sin-compromiso-seleccion-no-2/288337"},{"year":2024,"rank":5,"label":"5","name":"Black Label Trading Co. Orthodox","order":5,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/black-label-trading-co-orthodox-corona-gorda/442276/"},{"year":2024,"rank":6,"label":"6","name":"Plasencia Cosecha 151","order":6,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/plasencia-cosecha-151-la-musica/434249/"},{"year":2024,"rank":7,"label":"7","name":"Maestranza","order":7,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/maestranza-ciutadella-catalonia/445714/"},{"year":2024,"rank":8,"label":"8","name":"Fuente Fuente OpusX","order":8,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/opusx-the-undefeated/423286/"},{"year":2024,"rank":9,"label":"9","name":"Byron 21st Century","order":9,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/"},{"year":2024,"rank":10,"label":"10","name":"Sobremesa Brûlée Blue Wagashi","order":10,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/"},{"year":2024,"rank":11,"label":"11","name":"Arturo Fuente Don Carlos","order":11,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/arturo-fuente-don-carlos-lancero/157893/"},{"year":2024,"rank":12,"label":"12","name":"601 La Bomba Warhead X","order":12,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/review-601-la-bomba-warhead-x-2024/441119/"},{"year":2024,"rank":13,"label":"13","name":"Atabey Black Ritos","order":13,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/"},{"year":2024,"rank":14,"label":"14","name":"La Colmena","order":14,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/la-colmena-unico-especial-2019/371501/"},{"year":2024,"rank":15,"label":"15","name":"Las Calaveras Edición Limitada 2024","order":15,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/las-calaveras-edicion-limitada-2024-lc52/442745/"},{"year":2024,"rank":16,"label":"16","name":"Powstanie Connecticut","order":16,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/powstanie-connecticut-perfecto/432148/"},{"year":2024,"rank":17,"label":"17","name":"Dondurma","order":17,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/dondurma/372934/"},{"year":2024,"rank":18,"label":"18","name":"Principle Martinique","order":18,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/"},{"year":2024,"rank":19,"label":"19","name":"La Flor Dominicana Andalusian Bull","order":19,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/la-flor-dominicana-andalusian-bull-jack-schwartz-importer-100th-anniversary/402033/"},{"year":2024,"rank":20,"label":"20","name":"El Septimo Culinary Arts Collection","order":20,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/el-septimo-culinary-arts-collection-nigori/442270/"},{"year":2024,"rank":21,"label":"21","name":"AGANORSA Leaf Arsenio","order":21,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/aganorsa-leaf-arsenio-corona/444395/"},{"year":2024,"rank":22,"label":"22","name":"Black Works Studio Intergalactic Event Horizon","order":22,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/black-works-studio-intergalactic-event-horizon-petite-corona/444957/"},{"year":2024,"rank":23,"label":"23","name":"The Tabernacle","order":23,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/the-tabernacle-knight-commander/432840/"},{"year":2024,"rank":24,"label":"24","name":"Joya de Nicaragua Cinco de Cinco","order":24,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/joya-de-nicaragua-cinco-de-cinco-corona-extra/432967/"},{"year":2024,"rank":25,"label":"25","name":"Padrón Black Maduro","order":25,"sourceUrl":"https://halfwheel.com/the-consensus-2024/433845/","entryUrl":"https://halfwheel.com/padron-black-pb-97-maduro/445598/"},{"year":2025,"rank":1,"label":"1","name":"My Father Blue","order":1,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/my-father-blue-toro-gordo/454375/"},{"year":2025,"rank":2,"label":"2","name":"Sobremesa Solita Red","order":2,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/sobremesa-solita-red/451614/"},{"year":2025,"rank":3,"label":"3","name":"Plasencia Alma del Cielo","order":3,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/plasencia-alma-del-cielo-amanecer/452459/"},{"year":2025,"rank":4,"label":"4","name":"Avowed The Vow: 11.25","order":4,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"},{"year":2025,"rank":5,"label":"5","name":"AG Cigars Ambassador 109","order":5,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"},{"year":2025,"rank":6,"label":"6","name":"HVC La Rosa 520 10th Anniversary","order":6,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/hvc-la-rosa-520-10-year-anniversary-magnificos/452934/"},{"year":2025,"rank":7,"label":"7","name":"Bandolero Premium","order":7,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"},{"year":2025,"rank":8,"label":"8","name":"Powstanie San Andrés","order":8,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/powstanie-san-andres-belicoso/451794/"},{"year":2025,"rank":9,"label":"9","name":"Lampert Limitada 2025","order":9,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"},{"year":2025,"rank":10,"label":"10","name":"Davidoff Escurio 10th Anniversary Limited Edition","order":10,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/davidoff-escurio-10th-anniversary-limited-edition/451973/"},{"year":2025,"rank":11,"label":"11","name":"OpusX 25","order":11,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/opusx-25/408325/"},{"year":2025,"rank":12,"label":"12","name":"Davidoff Chefs Edition 2025","order":12,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/davidoff-chefs-edition-2025/455517/"},{"year":2025,"rank":13,"label":"13","name":"Perdomo Legacy Connecticut","order":13,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/perdomo-legacy-connecticut-epicure/453829/"},{"year":2025,"rank":14,"label":"14","name":"Aging Room Quattro Nicaragua Concerto","order":14,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"},{"year":2025,"rank":15,"label":"15","name":"La Aurora Family Creed Series Fuerte Sol","order":15,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/la-aurora-family-creed-series-fuerte-sol-robusto/452962/"},{"year":2025,"rank":16,"label":"16","name":"Aladino 85 Aniversario Reserva","order":16,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/aladino-85-aniversario-reserva-robusto/453515/"},{"year":2025,"rank":17,"label":"17","name":"OpusX 2020","order":17,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/opusx-2020-sol-damor/375389/"},{"year":2025,"rank":18,"label":"18","name":"Knuckle Sandwich Puro Nicaragua","order":18,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"},{"year":2025,"rank":19,"label":"19","name":"Red Meat Lovers Fritanga","order":19,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"},{"year":2025,"rank":20,"label":"T-20","name":"Perdomo Legacy Maduro","order":20,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/perdomo-legacy-maduro-gran-belicoso/453752/"},{"year":2025,"rank":20,"label":"T-20","name":"Perdomo Legacy Shade","order":21,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"},{"year":2025,"rank":22,"label":"22","name":"Romeo y Julieta 150th Anniversary","order":22,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/romeo-y-julieta-150th-anniversary-balconet/453221/"},{"year":2025,"rank":23,"label":"23","name":"Room101 15th Anniversary","order":23,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"},{"year":2025,"rank":24,"label":"T-24","name":"Room101 Johnny Tobacconaut 10th Anniversary","order":24,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/","entryUrl":"https://halfwheel.com/room101-johnny-tobacconaut-10th-anniversary/455439/"},{"year":2025,"rank":24,"label":"T-24","name":"Rare Finds 1229-42","order":25,"sourceUrl":"https://halfwheel.com/the-consensus-2025/460719/"}]};
-  const prefixes = {ca:['cigar_aficionado_top_25','cigar_aficionado_top25'],
-    cj:['cigar_journal_top_25','cigar_journal_top25'], consensus:['hw_consensus','halfwheel_consensus']};
-  const text = value => String(value == null ? '' : value).trim();
-  const keyOf = row => text(row.key || row.cigar_id || row.id || row.row_id);
-  const yearsIn = value => [...new Set((text(value).match(/\b(?:19|20)\d{2}\b/g) || []).map(Number))];
-  const useful = value => text(value) && !/^(?:n\/a|none|null|undefined|[—–-])$/i.test(text(value));
-  const norm = value => text(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
-    .replace(/&/g,' and ').replace(/[.'’‘“”"]/g,'').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
-  let lastReport = null;
-
-  function groups(row, publisher) {
-    const result = [];
-    for (const prefix of prefixes[publisher]) {
-      const found = new Map(), re = new RegExp('^' + prefix + '_(year|rank|link|full_list|cigar_link)(?:_?(\\d+))?$');
-      for (const key of Object.keys(row)) {
-        const match = key.match(re);
-        if (!match || !useful(row[key])) continue;
-        const suffix = match[2] || '';
-        if (!found.has(suffix)) found.set(suffix,{prefix,suffix,fields:{}});
-        found.get(suffix).fields[match[1]] = key;
-      }
-      result.push(...found.values());
-    }
-    return result;
-  }
-
-  function memberships(row, group) {
-    const years = yearsIn(row[group.fields.year]);
-    const tokens = text(row[group.fields.rank]).split(/[;\n|,]+/).filter(token=>token.trim());
-    return years.map((year,index) => {
-      const explicit = tokens.filter(token=>yearsIn(token).includes(year));
-      const token = explicit.length === 1 ? explicit[0] : tokens.length === years.length ? tokens[index] : '';
-      const clean = token.replace(/\(\s*(?:19|20)\d{2}\s*\)/g,'').replace(/^(?:19|20)\d{2}\s*[:=]\s*/,'').trim();
-      const match = clean.match(/^(?:T(?:ied)?[\s-]*)?(?:#|No\.?\s*)?(\d{1,2})$/i);
-      return {year,rank:match ? Number(match[1]) : null,rankText:token.trim()};
-    });
-  }
-
-  function removeMemberships(row, publisher, shouldRemove) {
-    let removed = 0;
-    for (const group of groups(row,publisher)) {
-      const all = memberships(row,group), keep = all.filter(member=>!shouldRemove(member));
-      if (keep.length === all.length) continue;
-      // A malformed mixed-year field is retained rather than damaging future data.
-      if (keep.length && keep.some(member=>!member.rankText)) continue;
-      removed += all.length-keep.length;
-      if (!keep.length) Object.values(group.fields).forEach(key=>{row[key]='';});
-      else {
-        row[group.fields.year] = keep.map(member=>member.year).join('; ');
-        row[group.fields.rank] = keep.map(member=>member.rankText).join('; ');
-      }
-    }
-    return removed;
-  }
-
-  function applyOverride(row, rule) {
-    if (keyOf(row) !== rule.key) return 0;
-    let changed = 0;
-    for (const group of groups(row,rule.publication)) {
-      const all = memberships(row,group);
-      if (!all.some(member=>member.year===rule.year && member.rank===rule.rank)) continue;
-      for (const [field,value] of Object.entries(rule.fields)) {
-        const attr = field.replace(new RegExp('^' + prefixes[rule.publication][0] + '_'),'');
-        const key = group.fields[attr] || group.prefix + '_' + attr + (group.suffix ? '_' + group.suffix : '');
-        if (all.length === 1) row[key] = value;
-        else {
-          const keep = (text(row[key]).match(/https?:\/\/[^\s;,]+/g) || []).filter(url=>!yearsIn(url).includes(rule.year));
-          row[key] = [...new Set([...keep,value])].join('; ');
-        }
-        changed++;
-      }
-    }
-    return changed;
-  }
-
-  function quality(row) {
-    const photo = ['cigar_img','cigar_image','cigarimg','photo','image'].some(key=>useful(row[key]) && !/\/(?:icons|bandart)\//i.test(text(row[key])));
-    return (photo ? 100 : 0) + ['brand','line','cigar','vitola','ring','length','origin','wrapper','binder','filler'].filter(key=>useful(row[key])).length;
-  }
-
-  function uniqueRecord(rows) {
-    const keyed = new Map();
-    rows.forEach(row=>{
-      const key = keyOf(row), old = keyed.get(key);
-      if (key && !row.__publicationOnly && (!old || quality(row)>quality(old))) keyed.set(key,row);
-    });
-    return keyed.size === 1 ? [...keyed.values()][0] : null;
-  }
-
-  function join(parts) {
-    const words = [];
-    parts.filter(useful).forEach(part=>{
-      const next = norm(part).split(' '); let overlap = 0;
-      for (let n=1;n<=Math.min(words.length,next.length);n++) {
-        if (words.slice(-n).join(' ')===next.slice(0,n).join(' ')) overlap=n;
-      }
-      words.push(...next.slice(overlap));
-    });
-    return words.join(' ');
-  }
-
-  function namesFor(row, wide) {
-    const brand=text(row.brand), line=text(row.line), cigar=text(row.cigar || row.name);
-    // A catalog-wide match must name the complete product. Dropping a size or
-    // edition here could bind a blend award to an unrelated catalog variant.
-    const values = [join([brand,line,cigar])];
-    if (!wide) values.push(join([brand,line]), join([brand,cigar]));
-    if (!wide) values.push(join([line,cigar]), norm(line), norm(cigar), norm(brand), norm(keyOf(row).split('|')[1]));
-    return [...new Set(values.filter(Boolean))];
-  }
-
-  function matchingIndex(rows) {
-    const byYear = new Map(), wide = new Map();
-    function add(map,name,item) {if (!map.has(name)) map.set(name,[]); map.get(name).push(item);}
-    rows.forEach(row=>{
-      if (!keyOf(row) || row.__publicationOnly) return;
-      const awards=groups(row,'consensus').flatMap(group=>memberships(row,group));
-      const item={row,awards};
-      namesFor(row,true).forEach(name=>add(wide,name,item));
-      for (const year of new Set(awards.map(award=>award.year))) {
-        if (!byYear.has(year)) byYear.set(year,new Map());
-        namesFor(row,false).forEach(name=>add(byYear.get(year),name,item));
-      }
-    });
-    return {byYear,wide};
-  }
-
-  function matchEntry(entry, index) {
-    const names=[...new Set([entry.name,...(entry.aliases || [])].map(norm))];
-    const from = map => [...new Set(names.flatMap(name=>map?.get(name) || []))];
-    const sameYear=from(index.byYear.get(entry.year));
-    const ranked=sameYear.filter(item=>item.awards.some(award=>award.year===entry.year &&
-      (award.rank===entry.rank || award.rank===entry.competitionRank)));
-    let record=uniqueRecord(ranked.map(item=>item.row));
-    if (record) return {record,method:'same-year name and rank'};
-    record=uniqueRecord(sameYear.map(item=>item.row));
-    if (record) return {record,method:'same-year exact name'};
-    const catalogue=from(index.wide);
-    record=uniqueRecord(catalogue.map(item=>item.row));
-    if (record) return {record,method:'unique exact catalog name'};
-    return {record:null,method:sameYear.length || catalogue.length ? 'multiple possible HUB entries' : 'no exact HUB name match'};
-  }
-
-  function awardOnly(row) {
-    const copy={...row};
-    // Other publications remain on their original copied row, never on this extra membership.
-    for (const key of Object.keys(copy)) {
-      if (/^(?:cigar_aficionado_top_?25|cigar_journal_top_?25|hw_consensus|halfwheel_consensus)_/.test(key)) delete copy[key];
-    }
-    return copy;
-  }
-
-  function sourceOnly(publisher,year,order,name,sourceUrl) {
-    return {key:'publication:' + publisher + ':' + year + ':' + order,brand:'',line:'',cigar:name,
-      vitola:'',cigar_img:'',__publicationOnly:true,__awardSourceOnly:true,
-      __publishedName:name,__publicationSource:sourceUrl,__publicationPublisherId:publisher};
-  }
-
-  function prepare(records) {
-    if (!Array.isArray(records)) throw new TypeError('Publication data requires an array of HUB rows.');
-    const rows=records.filter(row=>row && typeof row==='object' && !Array.isArray(row)).map(row=>({...row}));
-    const report={excludedAwards:0,sourceOverrides:0,supplements:0,consensusMatched:0,consensusSourceOnly:0,unresolved:[],methods:{}};
-    // The reported 2007 winner shares a HUB key with its unawarded Natural variant.
-    // Read the awarded row before the legacy exclusion removes its membership.
-    const reportedPadron2007=uniqueRecord(rows.filter(row=>
-      keyOf(row)==='padron|padron 1926 no. 9|robusto grande' &&
-      groups(row,'ca').some(group=>memberships(row,group).some(member=>member.year===2007 && member.rank===1))
-    ));
-    rows.forEach(row=>{
-      DATA.exclude.forEach(rule=>{
-        if (keyOf(row)===rule.key) report.excludedAwards+=removeMemberships(row,rule.publication,
-          member=>member.year===rule.year && member.rank===rule.rank);
-      });
-      DATA.overrides.forEach(rule=>{report.sourceOverrides+=applyOverride(row,rule);});
-    });
-    for (const supplement of DATA.supplements) {
-      const isReportedPadron=supplement.publication==='ca' && supplement.year===2007 && supplement.rank===1;
-      const existing=isReportedPadron ? reportedPadron2007
-        : supplement.key ? uniqueRecord(rows.filter(row=>keyOf(row)===supplement.key)) : null;
-      const row=existing ? awardOnly(existing) : sourceOnly(supplement.publication,supplement.year,supplement.rank,supplement.name,supplement.sourceUrl);
-      Object.assign(row,supplement.fields,{__publishedName:supplement.name,
-        __publicationPublisherId:supplement.publication,__publicationSource:supplement.sourceUrl});
-      if(isReportedPadron && existing){
-        // A four-part detail route distinguishes Maduro without changing its saved HUB identity.
-        row.__publicationDetailKey=[row.brand,row.line,row.cigar,row.vitola].map(text).join('|');
-      }
-      rows.push(row); report.supplements++;
-    }
-    const index=matchingIndex(rows), canonicalYears=new Set(DATA.consensus.map(entry=>entry.year));
-    // Bind the five reported 2021 cards from their original HUB memberships.
-    // Google's numeric BA feed can omit T-21 text, so those two ties also require their confirmed keys.
-    const reportedConsensus2021=new Map();
-    for(const [order,confirmedKey] of [
-      [7,''],[11,''],[12,''],
-      [21,'cao|cao mortal coil toro|toro'],
-      [22,'rocky patel|rocky patel sixty|toro']
-    ]){
-      const record=uniqueRecord(rows.filter(row=>
-        (!confirmedKey || keyOf(row)===confirmedKey) &&
-        groups(row,'consensus').some(group=>memberships(row,group).some(member=>
-          member.year===2021 && (confirmedKey ? [null,21,order].includes(member.rank) : member.rank===order)
-        ))
-      ));
-      reportedConsensus2021.set(order,{record,method:record
-        ? confirmedKey ? 'reported 2021 HUB year and confirmed tie key' : 'reported 2021 HUB year and rank'
-        : 'reported 2021 HUB membership unavailable or ambiguous'});
-    }
-    // Only these reported 2025 entries use the HUB's original year and rank.
-    // Capture memberships before the canonical archive rebuild clears them.
-    const reportedConsensus2025=new Map([3,6,15,17,23,24,25].map(rank=>[rank,[]]));
-    rows.forEach(row=>{
-      for (const group of groups(row,'consensus')) {
-        for (const member of memberships(row,group)) {
-          const candidates=member.year===2025 && reportedConsensus2025.get(member.rank);
-          if (candidates) candidates.push(row);
-        }
-      }
-    });
-    // These confirmed ties can lose T-24 text in Google's numeric BA feed.
-    // Require the original year and exact key even when that feed leaves the rank blank.
-    for(const [order,confirmedKey] of [
-      [24,'room 101|room 101 johnny tobacconaut 10th anniversary toro|toro'],
-      [25,'rare finds|rare finds 1229-42|']
-    ]){
-      reportedConsensus2025.set(order,rows.filter(row=>
-        keyOf(row)===confirmedKey && groups(row,'consensus').some(group=>memberships(row,group).some(member=>
-          member.year===2025 && [null,24,order].includes(member.rank)
-        ))
-      ));
-    }
-    for (const [rank,candidates] of reportedConsensus2025) {
-      const record=uniqueRecord(candidates);
-      reportedConsensus2025.set(rank,{
-        record,
-        method:record
-          ? rank>=24 ? 'reported 2025 HUB tie and confirmed key' : 'reported 2025 HUB year and ordinal rank'
-          : 'reported 2025 HUB year/rank unavailable or ambiguous'
-      });
-    }
-    rows.forEach(row=>removeMemberships(row,'consensus',member=>canonicalYears.has(member.year)));
-    const used=new Set(), expected=new Map();
-    DATA.consensus.forEach(entry=>expected.set(entry.year,(expected.get(entry.year)||0)+1));
-    // Confirmed catalog binding for the specifically reported 2025 No. 11 entry.
-    const opus25=uniqueRecord(rows.filter(row=>
-      keyOf(row)==='opus x|opus x 25 perfecto|perfecto'
-    ));
-    for (const entry of DATA.consensus) {
-      const match=entry.year===2025 && entry.rank===11
-        ? {record:opus25,method:opus25 ? 'confirmed HUB key' : 'confirmed HUB key unavailable'}
-        : entry.year===2025 && reportedConsensus2025.has(entry.order)
-          ? {...reportedConsensus2025.get(entry.order)}
-          : entry.year===2021 && reportedConsensus2021.has(entry.order)
-            ? {...reportedConsensus2021.get(entry.order)}
-            : matchEntry(entry,index);
-      const key=match.record && keyOf(match.record), binding=entry.year + ':' + key;
-      if (match.record && used.has(binding)) {match.record=null; match.method='HUB entry already represents a different published member';}
-      const row=match.record ? awardOnly(match.record) : sourceOnly('consensus',entry.year,entry.order,entry.name,entry.sourceUrl);
-      if (match.record) {used.add(binding); report.consensusMatched++;}
-      else {report.consensusSourceOnly++; report.unresolved.push({year:entry.year,rank:entry.label,name:entry.name,reason:match.method,sourceUrl:entry.sourceUrl});}
-      report.methods[match.method]=(report.methods[match.method]||0)+1;
-      Object.assign(row,{hw_consensus_year:String(entry.year),hw_consensus_rank:entry.label,hw_consensus_link:entry.sourceUrl,
-        __publishedName:entry.name,__publicationSource:entry.sourceUrl,__publicationPublisherId:'consensus',
-        __publicationCanonical:true,__publicationYear:entry.year,__publicationSourceOrder:entry.order,
-        __publicationExpectedCount:expected.get(entry.year),__publicationCanonicalId:'consensus:' + entry.year + ':' + entry.order});
-      if(entry.year===2021 && entry.order===22 && match.record){
-        // The 2022 Sixty row shares its key; keep this card's detail route on the selected 2021 row.
-        row.__publicationDetailKey=[row.brand,row.line,row.cigar,row.vitola].map(text).join('|');
-        row.__publicationDetailHubKey=keyOf(match.record);
-      }
-      if (entry.entryUrl) row.__publicationEntrySource=entry.entryUrl;
-      if (entry.rankNote) row.__publicationRankNote=entry.rankNote;
-      if (entry.competitionRank) row.__publicationCompetitionRank=entry.competitionRank;
-      rows.push(row);
-    }
-    lastReport=report;
-    return rows;
-  }
-
-  return Object.freeze({prepare,getReport:()=>lastReport,verifiedOn:DATA.verifiedOn});
+  return Object.freeze({publishers,build});
 });
 
 window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMTIuMjcgNjIuMjYiPgogIDxkZWZzPgogICAgPHN0eWxlPgogICAgICAuY2xzLTEgewogICAgICAgIGZpbGw6ICM5ODFiMWU7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTQwLjc5LDE5LjUxaC43MWMuNzQsMCwuNzIsMCwuNzItLjg3di03LjQyYzAtLjgyLS45OC0uOTgtMS4zNy0xLjE5di0uNGMxLjkyLS44MiwyLjk4LTEuNSwzLjIyLTEuNS4xNiwwLC4yNC4wOC4yNC4zNHYyLjM3aC4wNWMuNjYtMS4wMywxLjc2LTIuNzEsMy4zNy0yLjcxLjY2LDAsMS41LjQ1LDEuNSwxLjQsMCwuNzEtLjUsMS4zNS0xLjI0LDEuMzUtLjgyLDAtLjgyLS42My0xLjc0LS42My0uNDUsMC0xLjkyLjYxLTEuOTIsMi4xOXY2LjJjMCwuODctLjAyLjg3LjcyLjg3aDEuNDh2LjY4Yy0xLjQ1LS4wMi0yLjAxLS4wNS0zLjE1LS4wNXMtMS42NC4wMy0yLjU5LjA1di0uNjhaTTM5LjU5LDE4LjcyYy0uMjQuMjktLjYzLjQ1LS45OC40NS0uNTgsMC0uOTUtLjQyLS45NS0xLjV2LTcuM2MwLTEuNDUtMi4wMy0yLjIyLTMuMjItMi4yMi0xLDAtMS40NS4zNy0yLjM3Ljg0LTEuODUuOTUtMy4wMywxLjYxLTMuMDMsMy4wMSwwLC4xOS4wOC41My40Ny41My42MywwLDEuNDgtLjM3LDEuNDgtMS4xMS4wNS0xLjE5Ljg0LTEuODUsMi0xLjg1LDEuNjksMCwyLjU2Ljc5LDIuNTYsMi4yN3YxLjc0Yy01LjcsMS45NS02Ljc4LDIuMzUtNi44OCw0LjQ2LDAsMS40LDEuMTYsMi41NiwyLjg1LDIuNTZzMi44Mi0uODIsNC4wNi0xLjk1Yy4wNS45NS41NiwxLjk1LDEuNjMsMS45NXMxLjg3LS43NCwyLjYxLTEuNDJsLS4yNC0uNDVaTTM1LjU2LDE3LjgyYy0uODcuNzctMS42NiwxLjUzLTIuOSwxLjUzLTEuMDMsMC0xLjg3LS44Ny0xLjg3LTEuOSwwLTEuOTgsMy40Mi0yLjU5LDQuNzctMy4xMXYzLjQ4Wk0yNC4wMiwxMi4yOGMwLDEuNjEtLjc3LDMuMDgtMi41NiwzLjA4cy0yLjQ4LTItMi40OC0zLjUzYzAtMS40LjcxLTMuMDEsMi4zMi0zLjAxLDEuODUsMCwyLjcyLDEuODUsMi43MiwzLjQ2TTI4LjA2LDguODJjLS42OC4xLTEuMDUuMTMtMS41My4xMy0xLjA4LDAtMS44Mi0uMjQtMi41Ni0uNDUtLjYzLS4xOS0xLjUzLS4zNy0yLjMyLS4zNy0zLjI0LDAtNC45MywxLjc2LTQuOTMsNC4wNiwwLDEuNzQsMSwyLjc1LDIuNDgsMy41MS0uMzcuMzUtMS40NS44Ny0yLjE5LDEuMzItLjExLjI2LS4xMS41NS0uMTEuODQsMCwxLjIxLDEuMjEsMS45NywyLjMyLDIuMjl2LjA1Yy0xLjYxLjMyLTMuMDgsMS4zNS0zLjA4LDMuMDMsMCwxLjQzLDEuNjMsMi45Niw0Ljk4LDIuOTYsNS42MSwwLDYuOTktNC4wNCw2Ljk5LTUuMDYsMC0xLjk4LTEuMzUtMi42Ni0zLjYxLTIuNjYtMS4wNiwwLTIuMzUtLjAzLTMuNjQtLjAzLTEuNzQsMC0xLjg1LS44Mi0xLjg1LTEuMjEsMC0uNjMuMjktLjk4Ljc5LTEuMzUuNTIuMSwxLjA1LjE2LDEuNDUuMTYsMy4yNywwLDQuODgtMi4xNCw0Ljg4LTQuMDYsMC0uNzEtLjI0LTEuNDUtLjY4LTIuMDFsMi42MS4xMXYtMS4yN1pNMjYuMTYsMjIuMzNjMCwyLjM1LTMuMDEsMy4wMy00LjYyLDMuMDMtMS44NSwwLTMuNDgtLjg3LTMuNDgtMi42OSwwLTIuNDgsMi42Ni0yLjQ4LDQuMzgtMi40OCwxLjQsMCwzLjcyLjIxLDMuNzIsMi4xNE0xMy41Niw1LjU4Yy0uNjgsMC0xLjI5LS42My0xLjI5LTEuMzJzLjYzLTEuMjcsMS4yOS0xLjI3LDEuMy41NiwxLjMsMS4yNy0uNTgsMS4zMi0xLjMsMS4zMk0xMS4yOSwxOS41MWguNWMuNzQsMCwuNzIsMCwuNzItLjg3di03LjE1YzAtMS4xNi0uNC0xLjMyLTEuMzctMS44NXYtLjQyYzEuMjQtLjM3LDIuNzItLjg3LDIuODItLjk1LjE5LS4xLjM0LS4xMy40Ny0uMTNzLjE5LjE2LjE5LjM3djEwLjEzYzAsLjg3LjAzLjg3Ljc3Ljg3aC40NXYuNjhjLS45LDAtMS4yNy0uMDUtMi4yMi0uMDVzLTEuMzUuMDMtMi4zMy4wNXYtLjY4Wk0xMC4zOSwxNy44NWMtMS4yOSwxLjUtMy4wNiwyLjc0LTUuMTQsMi43NC0yLjc0LDAtNS4yNC0yLjY2LTUuMjQtNS40NiwwLTMuODIsMi43NC02Ljk5LDYuNTQtNi45OSwxLjM1LDAsMy41Ni40MiwzLjU2LDEuODIsMCwuNjEtLjM3LDEuMTYtMSwxLjE2LTEuMTEsMC0xLjA2LTIuMTMtMy41My0yLjEzLTIuMjcsMC0zLjQ2LDIuNTMtMy40Niw0LjU0LDAsMi43MSwxLjc0LDUuMTIsNC42Miw1LjEyLDEuMzUsMCwyLjIyLS40OCwzLjIyLTEuMjVsLjQ1LjQ1Wk0yNzQuNTUsNDMuNTVjMCwxMS4zNSw4LjcxLDE4LjcsMTkuMzQsMTguN3MxOC4zOC04LjcxLDE4LjM4LTE5LjAyYzAtMTEuMzUtOC4zMS0xOC43LTE5LjQyLTE4LjdzLTE4LjMsOC43MS0xOC4zLDE5LjAyTTI4MS45MSw0Mi43NWMwLTYuODcsMy4xMS0xNi4xNCwxMS4wMy0xNi4xNCw4LjQ3LDAsMTEuOTksMTAuODcsMTEuOTksMTcuNDJzLTMuMTIsMTYuMTQtMTEuMTEsMTYuMTRjLTguNCwwLTExLjkxLTEwLjg3LTExLjkxLTE3LjQyTTI3MS40MiwxLjEyYzAtLjY0LS4xNi0xLjEyLS42NC0xLjEyLS4yNCwwLS44OC40LTEuNzYuODgtMS42OC45Ni01LjAzLDIuNC04LjIzLDMuNDR2MS4yOGMzLjA0Ljg4LDQuMjQsMS4wNCw0LjI0LDYuMjN2MTQuMTRjLTIuMzItLjk2LTQuOTYtMS40NC03LjUxLTEuNDQtMTEuMDMsMC0xOS43NCw5LjU5LTE5Ljc0LDIwLjM4LDAsOC45NSw1LjI4LDE3LjM0LDE0Ljg3LDE3LjM0LDQuODgsMCw5LjM1LTIuODgsMTIuMjMtNS44M2guMTZ2My42OGMwLC45Ni4wOCwyLjE2Ljg4LDIuMTYuNDgsMCwyLjU2LS44LDUuMDMtMS42LDIuMzItLjcyLDMuOTgtMS4zNSw1LjE4LTEuNmguMDh2LTEuNmgtMS4zNmMtMy4xMSwwLTMuNDIsMC0zLjQyLTMuMjhWMS4xMlpNMjY1LjAyLDUyLjc1YzAsMi45Ni01LjM1LDQuNzItNy43NSw0LjcyLTcuMjcsMC0xMi42Mi02LjU1LTEyLjYyLTE1LjM1LDAtMTAuNzksNi4yMy0xNS4wMiwxMS45MS0xNS4wMiwzLjUxLDAsOC40NywxLjQ0LDguNDcsNy4zNXYxOC4zWk0yMzguNjEsNTYuNThjLS43Mi44OC0xLjkyLDEuMzYtMi45NiwxLjM2LTEuNzYsMC0yLjg4LTEuMjgtMi44OC00LjU2di0yMi4xNGMwLTQuNC02LjE1LTYuNzEtOS43NS02LjcxLTMuMDQsMC00LjM5LDEuMTItNy4xOSwyLjU2LTUuNTksMi44OC05LjE4LDQuODgtOS4xOCw5LjExLDAsLjU2LjI0LDEuNiwxLjQ0LDEuNiwxLjkyLDAsNC40Ny0xLjEyLDQuNDctMy4zNi4xNi0zLjU5LDIuNTYtNS41OSw2LjA3LTUuNTksNS4xMSwwLDcuNzUsMi4zOSw3Ljc1LDYuODd2NS4yOGMtMTcuMjYsNS45MS0yMC41NCw3LjExLTIwLjg2LDEzLjUsMCw0LjI0LDMuNTIsNy43NSw4LjYzLDcuNzVzOC41NS0yLjQ4LDEyLjMtNS45MWMuMTYsMi44OCwxLjY4LDUuOTEsNC45NSw1LjkxczUuNjgtMi4yNCw3LjkxLTQuMzFsLS43Mi0xLjM2Wk0yMjYuMzksNTMuODZjLTIuNjQsMi4zMi01LjAzLDQuNjMtOC43OSw0LjYzLTMuMTEsMC01LjY3LTIuNjQtNS42Ny01Ljc1LDAtNiwxMC4zOS03LjgzLDE0LjQ3LTkuNDN2MTAuNTVaTTE3MS4zMiwzNS4xN2MwLTIuOTYtLjg4LTMuNzYtNC42My01LjI4di0xLjUyYzMuNDMtMS4xMiw2LjcxLTIuMTYsMTAuNTUtMy44NC4yNCwwLC40OC4xNi40OC44djUuMTljNC41Ni0zLjI3LDguNDctNS45OSwxMy44Mi01Ljk5LDYuOCwwLDkuMTksNC45Niw5LjE5LDExLjE5djIwLjYyYzAsMi42NCwxLjI2LDIuNjQsMy40OSwyLjY0aC40NHYyLjA4Yy0yLjgsMC00LjEtLjE2LTYuOTctLjE2cy00LjI1LjA4LTcuMTMuMTZ2LTIuMDhoLjQ0YzIuMjQsMCwzLjM0LDAsMy4zNC0yLjY0di0yMC43YzAtNC41Ni0yLjgtNi43OS03LjM1LTYuNzktMi41NiwwLTYuNjQsMi4wOC05LjI3LDMuODN2MjMuNjZjMCwyLjY0LDEuMjYsMi42NCwzLjUsMi42NGguNDR2Mi4wOGMtMi44LDAtNC4xLS4xNi02Ljk3LS4xNnMtNC4yNS4wOC03LjEzLjE2di0yLjA4aC40NGMyLjIzLDAsMy4zMywwLDMuMzMtMi42NHYtMjEuMTdaTTEzMC42NSw0My41NWMwLDExLjM1LDguNzEsMTguNywxOS4zNCwxOC43czE4LjM4LTguNzEsMTguMzgtMTkuMDJjMC0xMS4zNS04LjMxLTE4LjctMTkuNDItMTguN3MtMTguMyw4LjcxLTE4LjMsMTkuMDJNMTM4LDQyLjc1YzAtNi44NywzLjExLTE2LjE0LDExLjAzLTE2LjE0LDguNDcsMCwxMS45OSwxMC44NywxMS45OSwxNy40MnMtMy4xMiwxNi4xNC0xMS4xMSwxNi4xNGMtOC4zOSwwLTExLjkxLTEwLjg3LTExLjkxLTE3LjQyTTcxLjg5LDU4Ljk4aC41MmMyLjI0LDAsMy4zNCwwLDMuMzQtMi42NHYtMjEuNjZjMC0zLjUyLTEuMi0zLjk5LTQuMTYtNS41OXYtMS4yOGMzLjc2LTEuMTIsOC4yMy0yLjY0LDguNTYtMi44OC41Ni0uMzIsMS4wNC0uNCwxLjQ0LS40cy41Ni40OC41NiwxLjEydjMwLjY4YzAsMi42NCwxLjI1LDIuNjQsMy40OSwyLjY0aC4zNnYyLjA4Yy0yLjcyLDAtNC4wMi0uMTYtNi44OS0uMTZzLTQuMjUuMDgtNy4yMS4xNnYtMi4wOFpNMTI0Ljg5LDEyLjIzYy0yLjA3LDAtMy45MS0xLjkyLTMuOTEtNHMxLjkyLTMuODQsMy45MS0zLjg0LDMuOTIsMS42OCwzLjkyLDMuODQtMS43Niw0LTMuOTIsNE0xMTcuODQsNTguOThoLjUyYzIuMjQsMCwzLjM0LDAsMy4zNC0yLjY0di0yMS42NmMwLTMuNTItMS4yLTMuOTktNC4xNi01LjU5di0xLjI4YzMuNzYtMS4xMiw4LjIzLTIuNjQsOC41NS0yLjg4LjU2LS4zMiwxLjA0LS40LDEuNDQtLjRzLjU2LjQ4LjU2LDEuMTJ2MzAuNjhjMCwyLjY0LDEuMjYsMi42NCwzLjUsMi42NGguMzZ2Mi4wOGMtMi43MiwwLTQuMDItLjE2LTYuOS0uMTZzLTQuMjYuMDgtNy4yMS4xNnYtMi4wOFpNMTE2LjM5LDUzLjk0Yy0zLjkyLDQuNTYtOS4yNyw4LjMxLTE1LjU4LDguMzEtOC4zMSwwLTE1LjkxLTguMDctMTUuOTEtMTYuNTQsMC0xMS41OSw4LjMxLTIxLjE4LDE5LjgyLTIxLjE4LDQuMDgsMCwxMC43OSwxLjI4LDEwLjc5LDUuNTEsMCwxLjg0LTEuMTIsMy41Mi0zLjA0LDMuNTItMy4zNiwwLTMuMi02LjQ3LTEwLjcxLTYuNDctNi44NywwLTEwLjk3LDguMTctMTAuOTcsMTQuMjUsMCw4LjIzLDUuMjcsMTUuNSwxMy45OCwxNS41LDQuMDgsMCw3LjIxLTEuOTQsMTAuMjUtNC4yNWwxLjM2LDEuMzVaTTY4LjgyLDI5LjA1bC03Ljc1LDEuNXYyNi41MWMwLDEuOTIsMS41LDEuOTIsMy4yNiwxLjkyaDEuMDh2Mi4wOGMtMS45Mi0uMDgtMy43OC0uMTYtNy4yMS0uMTZzLTUuMTMuMDgtOC4wMS4xNnYtMi4wOGgxLjY0YzIuOTYsMCwyLjg1LTEuMzYsMi44NS0yLjU2di0yNS44N2gtNS41OXYtMS4zNmMxLjI4LS43Miw1LjU5LTIuNCw1LjU5LTUuMTlDNTQuNjcsOS43Nyw2MS41OS4wNiw3My4zNSwwYzQuOTYtLjAyLDkuMjEsMi41OCw5LjIxLDYuNzQsMCwyLjg4LTEuNiwzLjc1LTMuNDQsMy43NS01LjU5LDAtLjQxLTcuMzEtOC42My03LjIxLTkuODMuMTEtOS4xOSw4LjU1LTkuNDMsMjIuNDZoNy43NXYzLjMyWk00OC4yNiw1Ni41OGMtLjcyLjg4LTEuOTIsMS4zNi0yLjk2LDEuMzYtMS43NiwwLTIuODgtMS4yOC0yLjg4LTQuNTZ2LTIyLjE0YzAtNC40LTYuMTUtNi43MS05Ljc1LTYuNzEtMy4wNCwwLTQuNCwxLjEyLTcuMTksMi41Ni01LjU5LDIuODgtOS4xOSw0Ljg4LTkuMTksOS4xMSwwLC41Ni4yNCwxLjYsMS40NCwxLjYsMS45MiwwLDQuNDctMS4xMiw0LjQ3LTMuMzYuMTYtMy41OSwyLjU2LTUuNTksNi4wNy01LjU5LDUuMTIsMCw3Ljc1LDIuMzksNy43NSw2Ljg3djUuMjhjLTE3LjI2LDUuOTEtMjAuNTQsNy4xMS0yMC44NiwxMy41LDAsNC4yNCwzLjUyLDcuNzUsOC42Myw3Ljc1czguNTUtMi40OCwxMi4zLTUuOTFjLjE2LDIuODgsMS42OCw1LjkxLDQuOTYsNS45MXM1LjY3LTIuMjQsNy45MS00LjMxbC0uNzItMS4zNlpNMzYuMDMsNTMuODZjLTIuNjQsMi4zMi01LjAzLDQuNjMtOC43OSw0LjYzLTMuMTEsMC01LjY3LTIuNjQtNS42Ny01Ljc1LDAtNiwxMC4zOS03LjgzLDE0LjQ3LTkuNDN2MTAuNTVaIi8+Cjwvc3ZnPg==","cj":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMzMuMjEgMTczLjI2Ij4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBmaWxsOiAjY2IyMDI2OwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KICA8Zz4KICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTEwMC4xMyw1Ni4zOWMtOC4yMiwwLTE2LjMyLDMuODctMjQuMzEsMTEuNjItOCw3Ljc0LTExLjk5LDE1LjU2LTExLjk5LDIzLjQ0LDAsNC40MSwxLjgyLDYuNjEsNS40Niw2LjYxLDMuOTcsMCw1Ljk1LTIuMDQsNS45NS02LjEyLDAtMy4wMy0xLjM5LTQuNTUtNC4xOC00LjU1LTEuMjYsMC0yLjYyLjY2LTQuMSwxLjk4LS4xNi4xNy0uMzguMjgtLjY2LjMzLS4zMywwLS40OS0uMjgtLjQ5LS44MywwLTYuMjgsMy45NS0xMy4wNSwxMS44NC0yMC4zLDcuODktNy4yNSwxNS4yOS0xMC44NywyMi4xNi0xMC44Nyw0LjI5LDAsNy43MywxLjI3LDEwLjMyLDMuOCwyLjU5LDIuNTQsMy44OCw1Ljk1LDMuODgsMTAuMjUsMCw4LjE2LTMuNzIsMTYuNzktMTEuMTYsMjUuODgtMTIuMjksMTUuMDUtMjYuMjksMjIuNTctNDIsMjIuNTctOC4zMywwLTE0LjktMi4yNi0xOS43Mi02Ljc4LTQuODItNC41Mi03LjI0LTEwLjY3LTcuMjQtMTguNDQsMC0xMS40MSw0LjQxLTIzLjI2LDEzLjIzLTM1LjU1LDEuMS4xMSwyLjQuMTYsMy44OC4xNiwxMC42NCwwLDIyLjg0LTIuMTYsMzYuNTktNi40OSwxMy43NS00LjMzLDI0LjYzLTkuNDcsMzIuNjItMTUuNDIsMy44Niw1LjY4LDUuNzksMTEuMjcsNS43OSwxNi43OCwwLDEuODIuMzMsMi43My45OSwyLjczLjgzLDAsMS4yNC0uNjksMS4yNC0yLjA3LDAtNS42Mi0yLjI2LTExLjc3LTYuNzgtMTguNDQsNC45Ni0zLjg2LDcuNDQtNy41OCw3LjQ0LTExLjE2LDAtNS40LTUuNDktOC4xLTE2LjQ1LTguMS0zLjQyLDAtNi43Ni4zMy0xMC4wMS45OUM4My41OSw2LjE1LDY0LjkzLDAsNDYuNDcsMGMtMTMuMjMsMC0yNC4yOCwyLjg5LTMzLjE2LDguNjhDNC40NCwxNC40NywwLDIxLjY2LDAsMzAuMjZjMCwxNC40NCwxMS45MywyMy44NywzNS44LDI4LjI4LTYuNTYsOS44Ny05Ljg0LDE5LjQ5LTkuODQsMjguODZzMy4zMiwxNy43NSw5Ljk2LDI0LjMxYzYuNjQsNi41NiwxNC44NCw5Ljg0LDI0LjYsOS44NCwxNCwwLDI2Ljc1LTQuOTUsMzguMjQtMTQuODQsMTEuNDktOS44OSwxNy4yNC0yMC44NSwxNy4yNC0zMi44N3MtNS4yOS0xNy40NS0xNS44OC0xNy40NVpNMTE0LjM1LDE4Ljc3YzguODIsMCwxMy4yMywyLjI2LDEzLjIzLDYuNzgsMCwyLjkyLTIuMjYsNi4zMS02Ljc4LDEwLjE3LTQuMy02LjAxLTkuNzMtMTEuMjctMTYuMjktMTUuNzksMy44LS43Nyw3LjA4LTEuMTYsOS44NC0xLjE2Wk0xMTkuNTYsMzYuNTVjLTguMTYsNi4wMS0xOS4yMiwxMS4xMi0zMy4yLDE1LjM0LTEzLjk3LDQuMjEtMjYuNzIsNi4zMi0zOC4yNCw2LjMyLDYuMjgtOC43NiwxNC4zMy0xNi41OCwyNC4xNC0yMy40NCw5LjgxLTYuODYsMTkuODctMTEuNywzMC4xOC0xNC41MSw3LjE3LDQuNzQsMTIuODcsMTAuMTcsMTcuMTIsMTYuMjlaTTIuODksMzEuODRjMC03LjM5LDQuMzctMTMuODQsMTMuMTEtMTkuMzUsOC43My01LjUxLDE4Ljk1LTguMjcsMzAuNjMtOC4yNywxOC45MSwwLDM2Ljc0LDQuODUsNTMuNSwxNC41NS0yOC41Niw2LjQtNDkuNzgsMTkuMjctNjMuNjcsMzguNjJDMTQuMDgsNTMuNTIsMi44OSw0NS4wMSwyLjg5LDMxLjg0WiIvPgogICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM2LjExLDY1Ljc3YzEuOCwwLDMuNDYtLjg0LDQuOTgtMi41MiwxLjUyLTEuNjgsMi4yOC0zLjQ4LDIuMjgtNS40LDAtMi4zNi0xLjExLTMuNTUtMy4zMi0zLjU1LTEuNzUsMC0zLjQyLjg0LTUuMDIsMi41Mi0xLjYsMS42OC0yLjM5LDMuNDItMi4zOSw1LjI0LDAsMi40OCwxLjE2LDMuNzEsMy40NywzLjcxWiIvPgogICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjc4LjgzLDkxLjQ3Yy0uMjYsMC0uOS42MS0xLjk0LDEuODItNC43NCw3LjEyLTkuMTMsMTAuNjgtMTMuMTUsMTAuNjgtMy4yNSwwLTQuODctMi4zMS00Ljg3LTYuOTMsMC0xLjY1LjM2LTMuNzQsMS4wOC02LjI3bC45My0uODNjMi4yNi0xLjQ4LDMuOTYtMi42MSw1LjEtMy4zOCw3LjE1LTQuODksMTAuNzMtOC42NiwxMC43My0xMS4zLDAtMS40OC0uOC0yLjIzLTIuMzktMi4yMy0yLjMyLDAtNC45MywxLjY1LTcuODMsNC45NS0yLjkxLDMuMy01LjM0LDcuNC03LjMsMTIuMjktMi40MiwyLjA5LTQuOTcsNC43OC03LjY0LDguMDgsNC4yMi02Ljk4LDYuMzMtMTIuNTksNi4zMy0xNi44MywwLTUuNjYtMi4wNi04LjUtNi4xOS04LjUtMi44MywwLTguMjIsNS42NS0xNi4xNiwxNi45NWwtMS4yOCwyLjAxYy0uMTUuMTctLjM3LjQ0LS40Mi43MiwwLC4wNy4wNy4wNy4wOC4xMy0uMTkuMTktLjM5LjQ0LS42Ljc5LTcuNTgsMTEuODUtMTYuMTMsMjQuODUtMTkuMDIsMjQuODUtLjk0LDAtMi4zNi0xLjA2LTIuOTQtMi4yNi0uMTEtLjQ3LS4xOC0uOTktLjE4LTEuNiwwLTIuNjksMi4zNy04LjI3LDcuMS0xNi43NWwxMy42Ni0yNC4xN2MtMi4yMS4zOC00LjAxLjU4LTUuNC41OC0xLjE5LDAtMi41NS0uMTktNC4wOS0uNThsLTMuOTQsOGMuNDEtMS41NC42Mi0yLjc4LjYyLTMuNzEsMC0zLjMtMS42LTQuOTUtNC43OS00Ljk1LTMuNzYsMC04LjcsMS44Mi0xNC44Miw1LjQ1LTEzLjk0LDguMTMtMjAuOTIsMTcuNDgtMjAuOTIsMjguMDMtMS4wNSwxLjEyLTIuMDcsMi4xNi0zLjA2LDMuMDgtNC4wNCwzLjc5LTkuNDMsNy43Mi0xNi4xNywxMS43OGwxOS4xNS0zNS4zMWM0LjE3LTcuNzUsNi40NC0xMS44OCw2Ljc5LTEyLjM3LTIuNTguMzgtNC41My41OC01Ljg3LjU4LTEuMDMsMC0yLjI0LS4xOS0zLjYzLS41OGwtNC4zMiw4LjMzYy40Ni0xLjM3LjY5LTIuNTYuNjktMy41NSwwLTMuNjMtMS41NC01LjQ1LTQuNjMtNS40NS00LjQzLDAtMTAuNTMsMi41OS0xOC4zLDcuNzYtMTEuNjMsNy43NS0xNy40NSwxNi4zOS0xNy40NSwyNS45LDAsLjQ3LjA2LjkxLjA5LDEuMzctNS42Niw2Ljk0LTkuOTQsMTAuNDMtMTIuODMsMTAuNDMtMi40MiwwLTMuNjMtMS4yNC0zLjYzLTMuNzFzMS4yNi01Ljg2LDMuNzgtMTAuMzFsMTcuNTItMzAuNzdjLTIuNTIuMzgtNC40Ny41OC01Ljg3LjU4LS45MiwwLTIuMTktLjE5LTMuNzgtLjU4bC0xMi4wNCwyMS44NmMtMy41NSw2LjQ5LTUuMzMsMTEuMzMtNS4zMywxNC41MiwwLDIuNzUuODEsNS4wNSwyLjQzLDYuODksMS42MywxLjg0LDMuNjUsMi43Nyw2LjA3LDIuNzcsMy41MSwwLDguMTItMy40OCwxMy43OS0xMC4yNy4zNywyLjQ1LDEuMjMsNC42MiwyLjYxLDYuNDcsMS44OCwyLjUzLDQuMTYsMy44LDYuODMsMy44LDIuNDcsMCw0Ljg4LTEuMTcsNy4yMi0zLjUxLDIuMzQtMi4zNCw2LjM3LTcuNTUsMTIuMDgtMTUuNjNsLTEzLjEyLDI1LjgyYy0xLjQ5Ljg4LTQuODEsMi41OS05Ljk2LDUuMTItMjMuODMsMTEuNi0zNS43NCwyMy4wNC0zNS43NCwzNC4zMSwwLDIuMDkuNzIsMy44NSwyLjE2LDUuMjgsMS40NCwxLjQzLDMuMjcsMi4xNCw1LjQ4LDIuMTQsNi4wNywwLDEzLjI4LTMuNiwyMS42Mi0xMC44MSw4LjctNy40OCwxNi41NS0xOC4xMiwyMy41NS0zMS45MmwzLjg2LTcuNTFjNy44Ny00LjU4LDE0LjUzLTkuNjksMjAuMDgtMTUuMjguMTgsMy4yNCwxLjA2LDYuMDEsMi43LDguMjMsMS44NSwyLjUsNC4xNSwzLjc2LDYuODcsMy43NiwyLjU4LDAsNS4yMi0xLjM1LDcuOTUtNC4wNCwyLjczLTIuNyw2LjY3LTcuODksMTEuODItMTUuNTktMS42NSwzLjQ3LTIuNDcsNi42OC0yLjQ3LDkuNjVzLjc1LDUuMjQsMi4yNCw3LjE0YzEuNDksMS45LDMuNDIsMi44NSw1LjgsMi44NXYtLjAycy4wNywwLC4xLDBjMi44MywwLDExLjUzLTEyLjczLDE5LjQ3LTI0LjAzbDEuMjgtMi4wMWMuMTYtLjE3LjM3LS40NC40Mi0uNzIsMC0uMDctLjA3LS4wNy0uMDgtLjEzLjE5LS4xOS4zOS0uNDQuNi0uNzksNy41OC0xMS44NSwxMi44Mi0xNy43NywxNS43MS0xNy43NywxLjE5LDAsMS43OC43NywxLjc4LDIuMzEsMCwyLjY0LTMuMTcsOS40Ni05LjUsMjAuNDZsLTEyLjY2LDIxLjk0YzIuOTMtLjIyLDQuNS0uMzMsNC43MS0uMzMuNDcsMCwyLjA2LjExLDQuNzkuMzMsNC45OS05LjEzLDguNS0xNS4xOCwxMC41NC0xOC4xNSwyLjAzLTIuOTcsNC42Ny01Ljk3LDcuOTEtOC45OS0uNjIsMi4zNi0uOTMsNC4zMi0uOTMsNS44NSwwLDQuODQsMS45Niw3LjI2LDUuODgsNy4yNiwzLjQ1LDAsNy4xNC0yLjMyLDExLjA2LTYuOTUsMy4xLTMuNTksNC42NC01LjYsNC42NC02LjA0LDAtLjMzLS4xNi0uNS0uNDYtLjVaTTE1Ny41OCwxMDMuOGMtNy4yNiw5Ljc5LTEyLjQxLDE0LjY4LTE1LjQ0LDE0LjY4cy00LjQ4LTEuODQtNC40OC01LjUzYzAtNi4wNSwzLjgyLTE0LjAxLDExLjQ3LTIzLjg4LDcuNjQtOS44NywxMy43OC0xNC44MSwxOC40MS0xNC44MSwyLjUyLDAsMy43OCwxLjQsMy43OCw0LjIxLDAsNC41MS00LjU4LDEyLjk1LTEzLjc0LDI1LjMyWk0xNDUuOTIsMTI5LjQ1Yy04LjA4LDE2LTE0LjgsMjcuMS0yMC4xNSwzMy4yOS01LjM1LDYuMTktMTAuODYsOS4yOC0xNi41Miw5LjI4LTEuODUsMC0zLjM3LS41OC00LjU2LTEuNzMtMS4xOC0xLjE2LTEuNzgtMi41OS0xLjc4LTQuMjksMC05LjksMTEuNzMtMjEuMDYsMzUuMjEtMzMuNDksNC44NC0yLjUzLDcuNzQtNC4wOSw4LjcyLTQuN2wtLjkzLDEuNjVaTTIwNy4yMyw5OS41OWMtOC43NSwxMi41OS0xNC45LDE4Ljg5LTE4LjQ2LDE4Ljg5LTIuOTksMC00LjQ4LTEuNzgtNC40OC01LjM2LDAtNi4xLDMuODUtMTQuMTEsMTEuNTQtMjQuMDEsNy42OS05LjksMTMuOTEtMTQuODUsMTguNjUtMTQuODUsMi4zMiwwLDMuNDcsMS4zNSwzLjQ3LDQuMDQsMCwzLjg1LTMuNTgsMTAuOTQtMTAuNzMsMjEuMjhaIi8+CiAgPC9nPgogIDxnPgogICAgPHBhdGggZD0iTTI1OS4wMywxMTUuNDhjMCw0LjE0LTIuNTYsNS40OS02LjgxLDUuNDktMi43MSwwLTQuODUtLjcyLTYuMzQtMS45MWwxLjE3LTEuNDhjMS4xNy44NywyLjY3LDEuNjEsNS4yMiwxLjYxLDMuMDksMCw0LjU4LS43LDQuNTgtMy43NXYtNy45NWgyLjE5djcuOTlaIi8+CiAgICA8cGF0aCBkPSJNMjY3Ljk0LDEyMC45N2MtNC4xOCwwLTcuMDgtMS45NS03LjA4LTUuMDNzMi45NC01LjAyLDcuMDgtNS4wMiw3LjA0LDEuOTksNy4wNCw1LTIuODQsNS4wNS03LjA0LDUuMDVaTTI2Ny45MiwxMTkuMzJjMy4yMiwwLDQuOTQtMS4xOSw0Ljk0LTMuMzdzLTEuNzItMy4zOS00Ljk0LTMuMzktNC45NCwxLjIxLTQuOTQsMy4zNywxLjcyLDMuMzksNC45NCwzLjM5WiIvPgogICAgPHBhdGggZD0iTTI4OS4xNSwxMjAuNzJoLTIuMDF2LTEuMjdjLTEuNDYuNzQtMy40MywxLjUzLTYuMDQsMS41M3MtNC4zNy0xLjE1LTQuMzctNC4yMnYtNS41NWgyLjA1djUuNmMwLDEuOTUuOTYsMi40LDIuODYsMi40LDIuMjUsMCwzLjY3LS40Miw1LjQ1LTEuMTd2LTYuODJoMi4wNnY5LjUyWiIvPgogICAgPHBhdGggZD0iTTI5My44OSwxMTQuMTF2Ni42MWgtMi4wNnYtOS41MmgyLjAydjEuNTNjMS4xNC0uOTEsMy4wOS0xLjc0LDYuMzYtMS43NHYxLjg5Yy0zLjA1LS4xNy00LjkyLjM0LTYuMzIsMS4yM1oiLz4KICAgIDxwYXRoIGQ9Ik0zMDEuOTIsMTExLjJoMi4wMnYxLjM4YzEuNDYtLjc4LDMuNS0xLjY1LDYuMjctMS42NSwyLjUyLDAsNC4xNCwxLjE1LDQuMTQsNC4yMnY1LjU4aC0yLjA2di01LjYyYzAtMS44Ny0uODktMi40NC0yLjYzLTIuNDQtMi40MiwwLTMuOS41My01LjY4LDEuMzF2Ni43NGgtMi4wNnYtOS41MloiLz4KICAgIDxwYXRoIGQ9Ik0zMjMsMTEwLjkzYzMuNDMsMCw1LjQ3LDEuMDIsNS40Nyw0LjEzdjIuNzRjMCwxLjU1LjE1LDIuMzcuNDcsMi44MnYuMTFoLTIuMDZjLS4xMi0uMjEtLjIzLS42NC0uMzItMS4xNS0uOTkuNTctMi44MiwxLjQtNS44MywxLjQtMi40OCwwLTQuNzMtLjUzLTQuNzMtMi45MSwwLTIuODYsMy45Mi0zLjA1LDEwLjM5LTMuMzUtLjExLTEuNjUtMS4xNy0yLjA4LTMuNzktMi4wOC0xLjgsMC0zLjU4LjI4LTUuMjguNjZsLS4zLTEuNjFjMS40OC0uMzYsMy4zNS0uNzYsNS45OC0uNzZaTTMyNi40MiwxMTYuMTZjLTYuOC4zNi04LjMzLjU5LTguMzMsMS45MywwLC45OSwxLjA0LDEuMjksMi42OSwxLjI5LDIuODgsMCw0LjU2LS42OCw1LjY0LTEuMjV2LTEuOTdaIi8+CiAgICA8cGF0aCBkPSJNMzMxLjE1LDEwNy41MWgyLjA2djEzLjIxaC0yLjA2di0xMy4yMVoiLz4KICA8L2c+Cjwvc3ZnPg==","consensus":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNzMuMjMgMzguMTUiPgogIDxwYXRoIGQ9Ik0xNC44MywyMC40N0g1LjU3Yy0uMDcsMC0uMTMuMDYtLjEzLjEzaDB2MTcuNDNjMCwuMDctLjA2LjEzLS4xMy4xM0guMTNjLS4wNywwLS4xMy0uMDYtLjEzLS4xM1YuMTNDMCwuMDYuMDYsMCwuMTMsMGg1LjE5Yy4wNywwLC4xMy4wNi4xMy4xM3YxNi4wNWMwLC4wNy4wNi4xMy4xMy4xM2g5LjI3Yy4wNywwLC4xMy0uMDYuMTMtLjEzVi4xM0MxNC45Ni4wNiwxNS4wMSwwLDE1LjA4LDBoNS4xOWMuMDcsMCwuMTMuMDYuMTMuMTN2MzcuODljMCwuMDctLjA2LjEzLS4xMy4xM2gtNS4xOWMtLjA3LDAtLjEzLS4wNi0uMTMtLjEzdi0xNy40M2MwLS4wNy0uMDYtLjEzLS4xMy0uMTNaIi8+CiAgPHBhdGggZD0iTTI5Ljc2LDM4LjE0aC01LjJjLS4wNywwLS4xMy0uMDYtLjEzLS4xMywwLDAsMC0uMDIsMC0uMDNMMzIuNTIuMTVjLjAxLS4wNi4wNy0uMTEuMTMtLjExaDUuMjhjLjA2LDAsLjEyLjA0LjEzLjExbDguMDgsMzcuODNjLjAyLjA3LS4wMy4xNC0uMS4xNiwwLDAtLjAyLDAtLjAzLDBoLTUuMmMtLjA2LDAtLjEyLS4wNC0uMTMtLjExbC0xLjk5LTkuMzRjLS4wMS0uMDYtLjA3LS4xMS0uMTMtLjExaC02LjU0Yy0uMDYsMC0uMTIuMDQtLjEzLjExbC0xLjk5LDkuMzRjLS4wMS4wNi0uMDcuMTEtLjEzLjExWk0zNS4yOSwyNC41M2MuOSwwLDEuNzktLjAyLDIuNjYtLjA3LTEuNy0xMC41Ny0yLjU5LTE1Ljg2LTIuNjctMTUuODZzLS45Niw1LjI5LTIuNjYsMTUuODZjLjg3LjA1LDEuNzYuMDcsMi42Ny4wN1oiLz4KICA8cGF0aCBkPSJNNTAuMjYsMzguMDJWLjEyYzAtLjA2LjA1LS4xMi4xMi0uMTJoNS4yYy4wNiwwLC4xMi4wNS4xMi4xMmgwdjMzLjc5YzAsLjA2LjA1LjEyLjEyLjEyaDkuMzFjLjA2LDAsLjEyLjA1LjEyLjEyaDB2My44N2MwLC4wNi0uMDUuMTItLjEyLjEyaC0xNC43NWMtLjA2LDAtLjEyLS4wNS0uMTItLjEyaDBaIi8+CiAgPHBhdGggZD0iTTg0LjIxLjEzdjMuODJjMCwuMDctLjA1LjEyLS4xMi4xMmgtOS4zYy0uMDcsMC0uMTIuMDUtLjEyLjEydjEyLjA0YzAsLjA3LjA1LjEyLjEyLjEyaDYuNTVjLjA3LDAsLjEyLjA1LjEyLjEydjMuODNjMCwuMDctLjA1LjEyLS4xMi4xMmgtNi41NWMtLjA3LDAtLjEyLjA1LS4xMi4xMnYxNy40OWMwLC4wNy0uMDUuMTItLjEyLjEyaC01LjE4Yy0uMDcsMC0uMTItLjA1LS4xMi0uMTJWLjEzYzAtLjA3LjA1LS4xMi4xMi0uMTJoMTQuNzNjLjA3LDAsLjEyLjA1LjEyLjEyaDBaIi8+CiAgPHBhdGggZD0iTTEwMy4yOCwwYy45NiwwLDEuODYuMDIsMi43Mi4wNiwxLjY4LDEwLjE5LDMuMDIsMTkuNTIsNC4wMiwyNy45OCwwLC4wMi4wMy4wNC4wNS4wMy4wMSwwLC4wMi0uMDEuMDMtLjAzLDEuMDctOC44LDIuNDItMTguMTQsNC4wNi0yOC4wNWg1LjQ0bC02Ljc5LDM4LjE0aC01LjQzYy0xLjYzLTkuODgtMi45OS0xOS4yNi00LjA3LTI4LjE0LDAtLjAxLS4wMS0uMDItLjAzLS4wMi0uMDEsMC0uMDMsMC0uMDMuMDItMS4wOCw4Ljg4LTIuNDQsMTguMjctNC4wNywyOC4xNGgtNS40M0w4Ni45NywwaDUuNDRjMS42Myw5LjksMi45OCwxOS4yNSw0LjA1LDI4LjA1LDAsLjAyLjAzLjA0LjA1LjAzLjAxLDAsLjAyLS4wMS4wMy0uMDMsMS04LjQ2LDIuMzQtMTcuNzksNC4wMi0yNy45OC44NS0uMDQsMS43Ni0uMDYsMi43Mi0uMDZaIi8+CiAgPHBhdGggZD0iTTEyOC45NCwzOC4xNGgtNS4xOWMtLjA3LDAtLjEzLS4wNi0uMTMtLjEzVi4xM2MwLS4wNy4wNi0uMTMuMTMtLjEzaDUuMTljLjA3LDAsLjEzLjA2LjEzLjEzdjE2LjA1YzAsLjA3LjA2LjEzLjEzLjEzaDkuMjZjLjA3LDAsLjEzLS4wNi4xMy0uMTNoMFYuMTNjMC0uMDcuMDYtLjEzLjEzLS4xM2g1LjE5Yy4wNywwLC4xMy4wNi4xMy4xM2gwdjM3Ljg4YzAsLjA3LS4wNi4xMy0uMTMuMTNoLTUuMTljLS4wNywwLS4xMy0uMDYtLjEzLS4xM2gwdi0xNy40M2MwLS4wNy0uMDYtLjEzLS4xMy0uMTNoLTkuMjZjLS4wNywwLS4xMy4wNi0uMTMuMTNoMHYxNy40MmMwLC4wNy0uMDYuMTMtLjEzLjEzWiIvPgogIDxwYXRoIGQ9Ik0xNDkuNTIsMGgxNC43MWMuMDcsMCwuMTMuMDYuMTMuMTNoMHYzLjgxYzAsLjA3LS4wNi4xMy0uMTMuMTNoLTkuMjhjLS4wNywwLS4xMy4wNi0uMTMuMTN2MTIuMDNjMCwuMDcuMDYuMTMuMTMuMTNoNi41M2MuMDcsMCwuMTMuMDUuMTMuMTJ2My44MmMwLC4wNy0uMDYuMTMtLjEzLjEzaC02LjUzYy0uMDcsMC0uMTMuMDYtLjEzLjEzdjEzLjM3YzAsLjA3LjA2LjEzLjEzLjEzaDkuMjhjLjA3LDAsLjEzLjA2LjEzLjEzaDB2My44NWMwLC4wNy0uMDYuMTMtLjEzLjEzaC0xNC43MWMtLjA3LDAtLjEzLS4wNS0uMTMtLjEyaDBWLjEzYzAtLjA3LjA2LS4xMy4xMy0uMTNoMFoiLz4KICA8cGF0aCBkPSJNMTY4LjYyLDBoMTQuNzJjLjA3LDAsLjEzLjA2LjEzLjEzaDB2My44MWMwLC4wNy0uMDYuMTMtLjEzLjEzaC05LjI5Yy0uMDcsMC0uMTMuMDYtLjEzLjEzdjEyLjAzYzAsLjA3LjA2LjEzLjEzLjEzaDYuNTRjLjA3LDAsLjEzLjA2LjEzLjEzaDB2My44MmMwLC4wNy0uMDYuMTMtLjEzLjEzaC02LjU0Yy0uMDcsMC0uMTMuMDYtLjEzLjEzdjEzLjM3YzAsLjA3LjA2LjEzLjEzLjEzaDkuMjljLjA3LDAsLjEzLjA2LjEzLjEzaDB2My44NWMwLC4wNy0uMDYuMTMtLjEzLjEzaC0xNC43MmMtLjA3LDAtLjEzLS4wNi0uMTMtLjEzaDBWLjEzYzAtLjA3LjA2LS4xMy4xMy0uMTNoMFoiLz4KICA8cGF0aCBkPSJNMTg3LjQ2LDM4LjAyVi4xM2MwLS4wNi4wNS0uMTIuMTItLjEyaDUuMmMuMDYsMCwuMTIuMDUuMTIuMTJoMHYzMy43OWMwLC4wNi4wNS4xMi4xMi4xMmg5LjMxYy4wNiwwLC4xMi4wNS4xMi4xMnYzLjg3YzAsLjA2LS4wNS4xMi0uMTIuMTJoLTE0Ljc1Yy0uMDYsMC0uMTItLjA1LS4xMi0uMTJaIi8+CiAgPHBhdGggZD0iTTI0MC44NiwxLjUxYzE4LjQ2LDAsMzIuODksMTUuMjcsMzIuMzYsMzMuNTItMS4xNiwwLTIuMzcsMC0zLjc0LjAxLS4wOS0uMjctLjA5LS4zOS0uMTUtLjU0bC0yNC41NC42M2MtMS4xLDEuMzEtMi40MSwxLjk2LTMuOTIsMS45NnMtMi44My0uNjUtMy45Mi0xLjk2bC0yNC41NC0uNjJjLS4wNi4xNS0uMDYuMjgtLjE1LjU0LTEuMzctLjAxLTIuNTgsMC0zLjc0LS4wMS0uNTQtMTguMjUsMTMuOS0zMy41MywzMi4zNS0zMy41M1pNMjMzLjI2LDUuNzFjLTEuNi40My0zLjI1LDEuMDMtNC45NywxLjc5LS44Mi4zNi0xLjA3LjcxLTEsMS42LDMuODcsNi4zMyw3LjY3LDEyLjU2LDExLjQ2LDE4Ljc2LjE0LjAzLjI5LjAzLjQ1LS4wMS4xNS0uMDQuMjgtLjExLjM5LS4yMS4xOC03LjI2LjM3LTE0LjU1LjU1LTIxLjk3LS4zOS0uOC0uNzgtLjk4LTEuNjctLjg4LTEuODcuMTktMy42LjUtNS4yLjkzWk0yNDguMzMsNS42N2MtMS42LS40My0zLjMzLS43NC01LjIxLS45My0uODktLjA5LTEuMjguMDktMS42Ny44OS4xOSw3LjQyLjM4LDE0LjczLjU2LDIyLC4xMS4xLjI0LjE3LjM5LjIxLjE1LjA0LjMuMDUuNDUuMDEsMy43OC02LjIxLDcuNTktMTIuNDQsMTEuNDYtMTguNzguMDYtLjg5LS4xOS0xLjI0LTEtMS42LTEuNzItLjc3LTMuMzgtMS4zNi00Ljk4LTEuNzlaTTIzNi44LDI5Ljg2Yy4xLS4xLjEyLS4yNS4wNS0uMzhsLTEwLjU3LTE5LjQ4Yy0uMjktLjUzLS45Ni0uNzMtMS41LS40NC0uMDIuMDEtLjA1LjAzLS4wNy4wNC0xLjU3LDEuMDEtMy4wNywyLjIzLTQuNDksMy42NS0xLjQyLDEuNDItMi42NCwyLjkxLTMuNjYsNC40OC0uMzMuNTEtLjE5LDEuMTkuMzIsMS41My4wMi4wMi4wNS4wMy4wOC4wNWwxOS40NiwxMC42MWMuMTIuMDcuMjguMDUuMzgtLjA1Wk0yNDQuODIsMjkuODJjLjEuMS4yNS4xMi4zOC4wNWwxOS40OS0xMC42MmMuNTQtLjI5LjczLS45Ny40NC0xLjUtLjAxLS4wMi0uMDMtLjA1LS4wNC0uMDctMS4wMi0xLjU3LTIuMjQtMy4wNy0zLjY3LTQuNDktMS40Mi0xLjQyLTIuOTItMi42NC00LjQ5LTMuNjYtLjUxLS4zMy0xLjItLjE4LTEuNTMuMzMtLjAyLjAyLS4wMy4wNS0uMDQuMDdsLTEwLjU5LDE5LjVjLS4wNy4xMi0uMDUuMjguMDUuMzhaTTIzNi4xMiwzMi41OWwtMTkuNzctMTIuMWMtLjU0LS4zMy0xLjI1LS4xNi0xLjU4LjM4LS4wMS4wMi0uMDIuMDQtLjAzLjA1LS44MiwxLjUyLTEuNSwzLjMxLTIuMDYsNS4zOC0uNTYsMi4wNy0uODYsMy45Ny0uOTEsNS42OS0uMDIuNjQuNDgsMS4xNywxLjEyLDEuMTguMDIsMCwuMDQsMCwuMDYsMGwyMy4xNy0uNTlaTTI0NS40OCwzMi41OWwyMy4yOC41OWMuNjQuMDIsMS4xNy0uNDksMS4xOC0xLjEzLDAtLjAyLDAtLjA0LDAtLjA2LS4wNS0xLjczLS4zNi0zLjYzLS45Mi01LjcxLS41Ni0yLjA4LTEuMjUtMy44OC0yLjA3LTUuNDEtLjMtLjU2LTEuMDEtLjc3LTEuNTctLjQ3LS4wMiwwLS4wNC4wMi0uMDUuMDNsLTE5Ljg1LDEyLjE2Wk0yNDIuMDYsMzIuMjNjMC0uNy0uNTctMS4yNy0xLjI3LTEuMjctLjcsMC0xLjI3LjU3LTEuMjcsMS4yN3MuNTcsMS4yNywxLjI3LDEuMjdjLjcsMCwxLjI3LS41NywxLjI3LTEuMjdaIi8+Cjwvc3ZnPg=="};
@@ -2892,14 +2534,14 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         const keys = headers.map(normalizeHeader);
 
         return csv.slice(1)
-          .filter((r) => r && !r.every((c) => !String(c || "").trim()))
-          .map((r) => {
-            const obj = {};
+          .map((r, index) => {
+            if(!r || r.every((c) => !String(c || "").trim()))return null;
+            const obj = {__hubSheetRow:index+2};
             keys.forEach((k, i) => {
               obj[k] = (r[i] ?? "").trim();
             });
             return obj;
-          });
+          }).filter(Boolean);
       }
 
       function getField(r, keys){
@@ -3608,6 +3250,8 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
       }
 
       function photoCandidates(record, favorite){
+        // Ranked cards use the image field on the selected Hub row, even if blank.
+        if(record.__publicationHubRow)return [photoURL(getField(record,["cigar_img"]))].filter(Boolean);
         const source = getField(record, ["cigar_img", "cigar_image", "cigarimg", "photo", "image"]);
         const favoriteObject = favorite && typeof favorite === "object" ? favorite : {};
         const saved = [favoriteObject.resolvedImage, favoriteObject.cigarImage, favoriteObject.img, favoriteObject.image];
@@ -3805,7 +3449,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
               return source.href;
             }catch{return url;}
           });
-          const local=record.__publicationPhotoOverride ? null : await savedEditorPhoto(record);
+          const local=record.__publicationHubRow || record.__publicationPhotoOverride ? null : await savedEditorPhoto(record);
           if(generation !== state.renderGeneration || !row.isConnected) return;
           if(local){
             const url=URL.createObjectURL(local);
@@ -3823,11 +3467,11 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
             if(!row.dataset.awardId) rememberPhotoSource(row.dataset.favoriteId, url);
             return;
           }
-          row.querySelector(".favorite-photo-status").textContent="Photo unavailable — tap for details";
+          row.querySelector(".favorite-photo-status").textContent=record.__publicationHubRow?"Photo unavailable":"Photo unavailable — tap for details";
         }catch(error){
           console.warn("[pos favorites] Photo unavailable:",error);
           const message=row.querySelector(".favorite-photo-status");
-          if(message) message.textContent="Photo unavailable — tap for details";
+          if(message) message.textContent=record.__publicationHubRow?"Photo unavailable":"Photo unavailable — tap for details";
         }finally{
           if(generation === state.renderGeneration) row.classList.remove("is-photo-loading");
         }
@@ -3863,8 +3507,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
 
       function publicationCardLabel(record){
         const full=String(record.__publishedName || shareCaption([resolveBrandVal(record),resolveLine(record),resolveName(record),resolveVitola(record)])).trim();
-        // Keep published labels authoritative; catalog sizes may only be photo exemplars.
-        if(full==="Dias de Gloria by A.J. Fernandez Brazil Figurado")return ["A.J. Fernandez","Dias de Gloria Brazil Figurado"];
+        // Split the selected Hub row's display name without replacing its wording.
         const key=value=>String(value).normalize("NFD").replace(/\p{M}/gu,"").replace(/[^\p{L}\p{N}]/gu,"").toLowerCase();
         const brands=new Set([
           resolveBrandVal(record).replace(/\s*\(Cuban\)\s*$/i,""),
@@ -4019,7 +3662,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         if(panel.childElementCount)return;
         const note=document.createElement("p");note.className="publication-detail-note";
         if(record.__publicationOnly)note.textContent="Details and saved-list actions are not available for this entry yet.";
-        else if(award.scope==="blend")note.textContent="Example size: "+(record.__publicationPhotoCaption?.replace(/^Shown:\s*/i,"") || shareCaption([resolveBrandVal(record),resolveLine(record),resolveName(record),resolveVitola(record)]))+".";
+        else if(award.scope==="blend" && !record.__publicationHubRow)note.textContent="Example size: "+(record.__publicationPhotoCaption?.replace(/^Shown:\s*/i,"") || shareCaption([resolveBrandVal(record),resolveLine(record),resolveName(record),resolveVitola(record)]))+".";
         if(note.textContent)panel.append(note);
         const specs=document.createElement("div");specs.className="publication-specs";
         const groups=[
@@ -4108,7 +3751,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         const row=document.createElement("div");
         row.className="favorite-photo-row is-photo-loading";
         row.dataset.favoriteId=id;
-        const card=award ? document.createElement("a") : null;
+        const card=award ? document.createElement("div") : null;
         if(award){
           row.classList.add("publication-row");
           row.dataset.awardId=award.id;
@@ -4126,13 +3769,11 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         const link=card || document.createElement("a");
         link.className=award ? "publication-card-link" : "favorite-photo-link";
         link.draggable=false;
-        link.href=record.__fromFavorite
+        if(!award)link.href=record.__fromFavorite
           ? safeDetailHref(favorite?.href || favorite?.url) || makeDetailHref(record)
           : makeDetailHref(record);
         const label=[resolveBrandVal(record),resolveDisplayName(record)].filter(Boolean).join(" ") || "Favorite cigar";
-        if(award && record.__publicationOnly){
-          link.href=award.sourceUrl;link.target="_blank";link.rel="noopener noreferrer";
-        }
+        if(award)link.setAttribute("role","group");
         link.setAttribute("aria-label",award ? `${publicationIsCuban(record)?"Cuban cigar, ":""}${award.year}, ${award.rankLabel}, ${record.__publishedName || label}${award.scope==="blend"?", blend award":""}` : label);
         link.setAttribute("aria-describedby","favoritesReorderHelp");
         const message=document.createElement("span");
@@ -4434,6 +4075,107 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
 
       }
 
+      // Recover text ranks (for example T-19) omitted by the typed whole-sheet feed.
+      async function recoverPublicationRanks(rows, {sheetUrl, signal} = {}) {
+        if (!Array.isArray(rows)) throw new TypeError('Hub rows must be an array.');
+        const recovered = rows.map(row => ({...row}));
+        const present = value => value != null && String(value).trim() !== '';
+        const pairs = [
+          ['hw_consensus_year', 'hw_consensus_rank', 'BA'],
+          ['cigar_aficionado_top_25_year', 'cigar_aficionado_top_25_rank', 'BG'],
+          ['cigar_journal_top_25_year', 'cigar_journal_top_25_rank', 'BN']
+        ];
+        const controller = new AbortController();
+        const forwardAbort = () => controller.abort(signal.reason);
+        const checkAbort = () => {
+          if (controller.signal.aborted) {
+            throw controller.signal.reason || new DOMException('The operation was aborted.', 'AbortError');
+          }
+        };
+        if (signal?.aborted) forwardAbort();
+        else signal?.addEventListener('abort', forwardAbort, {once:true});
+        try {
+          checkAbort();
+          const jobs = [];
+          for (const [yearField, rankField, column] of pairs) {
+            const candidates = recovered.filter(row => present(row[yearField]) && !present(row[rankField]));
+            for (const row of candidates) {
+              if (!Number.isInteger(row.__hubSheetRow) || row.__hubSheetRow < 2) {
+                throw new Error('A physical Hub row number is required to recover its rank.');
+              }
+            }
+            candidates.sort((a,b) => a.__hubSheetRow - b.__hubSheetRow);
+            let run = null;
+            for (const row of candidates) {
+              const number = row.__hubSheetRow;
+              if (run && number === run.end) throw new Error('Duplicate physical Hub row number.');
+              if (!run || number !== run.end + 1) {
+                run = {column, rankField, start:number, end:number, rows:[row]};
+                jobs.push(run);
+              } else {
+                run.end = number;
+                run.rows.push(row);
+              }
+            }
+          }
+          if (!jobs.length) return recovered;
+          const base = new URL(sheetUrl);
+          if (base.hostname !== 'docs.google.com' || !/^\/spreadsheets\/d\/[^/]+\/gviz\/tq$/.test(base.pathname)) {
+            throw new Error('A public Google Visualization Hub URL is required.');
+          }
+          let cursor = 0;
+          async function recoverRun(job) {
+            checkAbort();
+            const url = new URL(base.href);
+            url.searchParams.set('tqx', 'out:json');
+            url.searchParams.set('headers', '0');
+            url.searchParams.set('range', `${job.column}${job.start}:${job.column}${job.end}`);
+            url.searchParams.delete('tq');
+            const response = await fetch(url.href, {cache:'no-store', credentials:'omit', signal:controller.signal});
+            if (!response.ok) throw new Error(`Hub rank recovery failed (${response.status}).`);
+            let body = (await response.text()).trim().replace(/^\uFEFF/, '').replace(/^\/\*O_o\*\/\s*/, '');
+            checkAbort();
+            const wrapper = body.match(/^google\.visualization\.Query\.setResponse\(([\s\S]*)\);?$/);
+            if (wrapper) body = wrapper[1];
+            else if (!body.startsWith('{')) throw new Error('Hub rank recovery returned an invalid response.');
+            let payload;
+            try { payload = JSON.parse(body); }
+            catch { throw new Error('Hub rank recovery returned invalid JSON.'); }
+            const table = payload?.table;
+            if (payload.status !== 'ok' || !table || !Array.isArray(table.cols) || table.cols.length !== 1 ||
+                table.cols[0]?.id !== job.column || !Array.isArray(table.rows) || table.rows.length > job.rows.length) {
+              throw new Error('Hub rank recovery returned an invalid table.');
+            }
+            // Empty ranges and omitted trailing blank rows remain blank; never shift null cells.
+            table.rows.forEach((item, offset) => {
+              if (item == null) return;
+              if (!Array.isArray(item.c) || item.c.length > 1) throw new Error('Hub rank recovery returned an invalid row.');
+              const cell = item.c[0];
+              if (cell == null) return;
+              if (typeof cell !== 'object' || Array.isArray(cell)) throw new Error('Hub rank recovery returned an invalid cell.');
+              const value = cell.f != null ? cell.f : cell.v;
+              if (value == null) return;
+              if (!['string','number'].includes(typeof value)) throw new Error('Hub rank recovery returned an invalid rank.');
+              const row = job.rows[offset];
+              if (present(value) && !present(row[job.rankField])) row[job.rankField] = String(value).trim();
+            });
+          }
+          async function worker() {
+            while (cursor < jobs.length) {
+              checkAbort();
+              const job = jobs[cursor++];
+              try { await recoverRun(job); }
+              catch (error) { controller.abort(error); throw error; }
+            }
+          }
+          await Promise.all(Array.from({length:Math.min(4, jobs.length)}, worker));
+          checkAbort();
+          return recovered;
+        } finally {
+          signal?.removeEventListener('abort', forwardAbort);
+        }
+      }
+
       let pendingCatalog = null;
       let publicationCatalogFailed = false;
       function fetchFavoriteCatalog(){
@@ -4442,17 +4184,18 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         window.CigarosPublicationSwitcher?.refresh?.({loading:true});
         pendingCatalog = (async () => {
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 15000);
+          const timeout = setTimeout(() => controller.abort(), 45000);
           try{
             const res = await fetch(SHEET_CSV_URL, {cache:"no-store", signal:controller.signal});
             if(!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
-            const rows = mapRows(parseCSV(await res.text()));
+            let rows = mapRows(parseCSV(await res.text()));
             if(!rows.length || !rows.some(row => resolveBrandVal(row) && resolveName(row))){
               throw new Error("The HUB did not return a readable cigar catalog.");
             }
+            rows = await recoverPublicationRanks(rows, {sheetUrl:SHEET_CSV_URL,signal:controller.signal});
             state.records = rows;
-            state.catalogLoaded = true;
             rebuildPublicationLists(rows);
+            state.catalogLoaded = true;
             return null;
           }catch(error){ publicationCatalogFailed=true;window.CigarosPublicationSwitcher?.refresh?.({loading:false});return error; }
           finally{ clearTimeout(timeout); }
@@ -4460,7 +4203,6 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         return pendingCatalog;
       }
 
-      const publicationPresentation={"ca:2025:1":{"displayName":"Padrón 60th Anniversary Perfecto","photoPath":"/img/cigars/padron/padron60thanniversaryperfectonatural.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2025:2":{"displayName":"Cohiba Ambar","photoPath":"/img/cigars/cuban/cohiba/ambar.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2025:3":{"displayName":"Tatuaje Black Petite Lancero","photoPath":"/img/cigars/tatuaje/petitlancero.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2024:1":{"displayName":"My Father The Judge Grand Robusto","photoPath":"/img/cigars/myfather/thejudgegrandrobusto5x60.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2024:2":{"displayName":"Montecristo 1935 Anniversary Nicaragua Espeso","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"ca:2024:3":{"displayName":"E.P. Carrillo Encore Celestial","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"ca:2023:1":{"displayName":"Fuente Fuente OpusX Reserva d’Chateau","photoPath":"/img/cigars/opusx/reservadchateau.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2023:2":{"displayName":"Padrón Serie 1926 No. 48 Maduro","photoPath":"/img/cigars/padron/1926no48maduro.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2023:3":{"displayName":"Oliva Serie V Melanio Toro","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"cj:2025:1":{"displayName":"El Pulpo The Eel Lancero","photoPath":"/img/cigars/elpulpo/theeellancero.png","photoOrientation":"head-top","photoRotationDeg":90},"cj:2025:2":{"displayName":"Villa Zamorano Danlí Robusto","photoPath":"/img/cigars/villazamorano/danlirobusto.png","photoOrientation":"head-top","photoRotationDeg":90},"cj:2025:3":{"displayName":"Rocky Patel Emerald Robusto","suppressGuessedPhoto":true,"photoStatus":"ambiguous"},"cj:2024:1":{"displayName":"Plasencia Cosecha 151 La Tradición Toro","photoPath":"/img/cigars/plasencia/cosecha151latradicion.png","photoOrientation":"head-top","photoRotationDeg":90},"cj:2024:2":{"displayName":"Perdomo 30th Anniversary Connecticut Torpedo","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"cj:2024:3":{"displayName":"Dias de Gloria by A.J. Fernandez Brazil Figurado","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"cj:2023:1":{"displayName":"E.P. Carrillo Allegiance Confidant","photoPath":"/img/cigars/epcarrillo/allegianceconfidant.png","photoOrientation":"head-top","photoRotationDeg":90},"cj:2023:2":{"displayName":"J.C. Newman El Baton Belicoso","photoPath":"/img/cigars/elbaton/belicoso.png","photoOrientation":"head-top","photoRotationDeg":90},"cj:2023:3":{"displayName":"Liga Privada Único Serie Year of the Rabbit","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"consensus:2025:1":{"displayName":"My Father Blue","photoPath":"/img/cigars/myfather/myfatherbluetorogordo.png","photoOrientation":"head-left","photoRotationDeg":180,"scope":"blend","photoCaption":"Shown: My Father Blue Toro Gordo","catalogExemplarDisplayName":"My Father Blue Toro Gordo"},"consensus:2025:2":{"displayName":"Sobremesa Solita Red","photoPath":"/img/cigars/dunbarton/sobremesasolitared.png","photoOrientation":"head-top","photoRotationDeg":90,"scope":"blend","photoCaption":"Shown: Sobremesa Solita Red","catalogExemplarDisplayName":"Sobremesa Solita Red"},"consensus:2025:3":{"displayName":"Plasencia Alma del Cielo","suppressGuessedPhoto":true,"scope":"blend"},"consensus:2024:1":{"displayName":"Umbagog Bronzeback","suppressGuessedPhoto":true,"photoStatus":"unavailable","scope":"blend"},"consensus:2024:2":{"displayName":"Isla Del Cocodrilo","suppressGuessedPhoto":true,"photoStatus":"unavailable","scope":"blend"},"consensus:2024:3":{"displayName":"Davidoff Grand Cru Diademas Finas Limited Edition Collection","suppressGuessedPhoto":true,"photoStatus":"unavailable","scope":"blend"},"consensus:2023:1":{"displayName":"Mi Querida Black","suppressGuessedPhoto":true,"photoStatus":"source-only","scope":"blend","sourceOnly":true},"consensus:2023:2":{"displayName":"Muestra de Saka Krakatoa","suppressGuessedPhoto":true,"photoStatus":"unavailable","scope":"blend"},"consensus:2023:3":{"displayName":"Angel Cuesta","suppressGuessedPhoto":true,"photoStatus":"unavailable","scope":"blend"},"ca:2022:1":{"displayName":"H. Upmann No. 2","photoPath":"/img/cigars/cuban/hupmann/no2piramides.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2021:1":{"displayName":"Padrón 1964 Anniversary Series Torpedo Natural","photoPath":"/img/cigars/padron/padron1964torpedonatural.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2020:1":{"displayName":"E.P. Carrillo Pledge Prequel","photoPath":"/img/cigars/epcarrillo/pledgeprequel.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2019:1":{"displayName":"Aging Room Quattro Nicaragua Maestro","photoPath":"/img/cigars/agingroom/guattronicaraguamaestro.PNG","photoOrientation":"head-top","photoRotationDeg":90},"ca:2018:1":{"displayName":"E.P. Carrillo Encore Majestic","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"ca:2017:1":{"displayName":"Arturo Fuente Don Carlos Eye of the Shark","photoPath":"/img/cigars/arturofuente/doncarloseyeoftheshark.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2016:1":{"displayName":"La Flor Dominicana Andalusian Bull","photoPath":"/img/cigars/laflordominicana/andalusianbull.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2015:1":{"displayName":"My Father Le Bijou 1922 Torpedo Box Pressed","photoPath":"/img/cigars/myfather/lebijou1922torpedo.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2014:1":{"displayName":"Oliva Serie V Melanio Figurado","photoPath":"/img/cigars/oliva/serievmelaniofigurado2.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2013:1":{"displayName":"Montecristo No. 2","photoPath":"/img/cigars/cuban/montecristo/no2.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2012:1":{"displayName":"Flor de las Antillas Toro","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"ca:2011:1":{"displayName":"Alec Bradley Prensado Churchill","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"ca:2010:1":{"displayName":"Cohiba Behike BHK 52","suppressGuessedPhoto":true,"photoStatus":"ambiguous"},"ca:2009:1":{"displayName":"Padrón Family Reserve No. 45 Maduro","photoPath":"/img/cigars/padron/familyreserveno45maduro.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2008:1":{"displayName":"Casa Magna Colorado Robusto","suppressGuessedPhoto":true,"photoStatus":"unavailable"},"ca:2007:1":{"displayName":"Padrón Serie 1926 No. 9","suppressGuessedPhoto":true},"ca:2006:1":{"displayName":"Bolívar Royal Coronas","photoPath":"/img/cigars/cuban/bolivar/royalcoronas.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2005:1":{"displayName":"Fuente Fuente OpusX Double Corona","photoPath":"/img/cigars/opusx/doublecorona.png","photoOrientation":"head-top","photoRotationDeg":90},"ca:2004:1":{"displayName":"Padrón Serie 1926 40th Anniversary Natural","photoPath":"/img/cigars/padron/padron192640yearstorpedonatural.png","photoOrientation":"head-top","photoRotationDeg":90}};
       const publicationAPI=window.CigarosPublicationLists;
       let publicationCatalog=publicationAPI ? publicationAPI.build([]) : {lists:[],warnings:[]};
       let selectedList=null;
@@ -4474,24 +4216,8 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
 
       function rebuildPublicationLists(rows){
         if(!publicationAPI) return;
-        const prepared=window.CigarosPublicationData?.prepare(rows) || rows;
-        publicationCatalog=publicationAPI.build(prepared);
+        publicationCatalog=publicationAPI.build(rows);
         publicationCatalogFailed=false;
-        for(const list of publicationCatalog.lists){
-          for(const entry of list.entries){
-            const presentation=publicationPresentation[`${entry.publisherId}:${entry.year}:${entry.rank}`];
-            if(!presentation)continue;
-            const record={...entry.record,__publishedName:presentation.displayName};
-            if(presentation.photoPath){
-              record.__publicationPhotoOverride=presentation.photoPath;
-              record.cigar_image_orientation=presentation.photoOrientation.replace(/-/g," ");
-            }
-            if(presentation.suppressGuessedPhoto)record.__publicationSuppressGuesses=true;
-            if(presentation.photoStatus==="ambiguous")record.__publicationSuppressPhoto=true;
-            if(presentation.photoCaption)record.__publicationPhotoCaption=presentation.photoCaption;
-            entry.record=record;
-          }
-        }
         syncLists();
         window.CigarosPublicationSwitcher?.refresh?.({lists:publicationCatalog.lists,loading:false});
       }
@@ -4518,7 +4244,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         $(".favorites-actions").hidden=on;
         $("#publicationNotice").hidden=true;
         $("#favoritesReorderHelp").textContent=on
-          ? "Tap a cigar card for details. Entries without a catalog match open the publication’s original ranking. Publication order follows the published ranking."
+          ? "Use the arrow to view cigar details."
           : personalReorderHelp;
         content.setAttribute("aria-label",on ? `${cfg.name}: ${list?.title || 'Annual rankings'}` : "Favorite cigars");
         if(!on){document.title="Favorites";return;}
@@ -4646,7 +4372,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         summary.textContent=`${list.entries.length} ${list.publisherId==='consensus'?'blends':'cigars'} · ${span}`;
         if(!list.complete && selectedPublication!=="pub:cj:winners"){
           const notice=$("#publicationNotice");notice.hidden=false;
-          notice.textContent="Some published entries are still being added to this collection. Open the publisher archive below for the full list.";
+          notice.textContent="Some ranking positions are missing or repeated in this list.";
         }
         for(const award of list.entries){
           const record=award.record,key=resolveFavoriteKey(record);
