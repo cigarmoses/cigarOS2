@@ -2231,6 +2231,24 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
       rows.push(row); report.supplements++;
     }
     const index=matchingIndex(rows), canonicalYears=new Set(DATA.consensus.map(entry=>entry.year));
+    // Bind the five reported 2021 cards from their original HUB memberships.
+    // Google's numeric BA feed can omit T-21 text, so those two ties also require their confirmed keys.
+    const reportedConsensus2021=new Map();
+    for(const [order,confirmedKey] of [
+      [7,''],[11,''],[12,''],
+      [21,'cao|cao mortal coil toro|toro'],
+      [22,'rocky patel|rocky patel sixty|toro']
+    ]){
+      const record=uniqueRecord(rows.filter(row=>
+        (!confirmedKey || keyOf(row)===confirmedKey) &&
+        groups(row,'consensus').some(group=>memberships(row,group).some(member=>
+          member.year===2021 && (confirmedKey ? [null,21,order].includes(member.rank) : member.rank===order)
+        ))
+      ));
+      reportedConsensus2021.set(order,{record,method:record
+        ? confirmedKey ? 'reported 2021 HUB year and confirmed tie key' : 'reported 2021 HUB year and rank'
+        : 'reported 2021 HUB membership unavailable or ambiguous'});
+    }
     // Only these reported 2025 entries use the HUB's original year and rank.
     // Capture memberships before the canonical archive rebuild clears them.
     const reportedConsensus2025=new Map([3,6,15,17,23,24,25].map(rank=>[rank,[]]));
@@ -2242,15 +2260,18 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
         }
       }
     });
-    // These two reported entries may be stored as ordinal 24/25 or as the shared T-24.
-    // Keep their confirmed identities separate while preserving the published tie labels.
-    const reportedTiedCandidates=[...reportedConsensus2025.get(24),...reportedConsensus2025.get(25)];
-    reportedConsensus2025.set(24,reportedConsensus2025.get(24).filter(row=>
-      keyOf(row)==='room 101|room 101 johnny tobacconaut 10th anniversary toro|toro'
-    ));
-    reportedConsensus2025.set(25,reportedTiedCandidates.filter(row=>
-      keyOf(row)==='rare finds|rare finds 1229-42|'
-    ));
+    // These confirmed ties can lose T-24 text in Google's numeric BA feed.
+    // Require the original year and exact key even when that feed leaves the rank blank.
+    for(const [order,confirmedKey] of [
+      [24,'room 101|room 101 johnny tobacconaut 10th anniversary toro|toro'],
+      [25,'rare finds|rare finds 1229-42|']
+    ]){
+      reportedConsensus2025.set(order,rows.filter(row=>
+        keyOf(row)===confirmedKey && groups(row,'consensus').some(group=>memberships(row,group).some(member=>
+          member.year===2025 && [null,24,order].includes(member.rank)
+        ))
+      ));
+    }
     for (const [rank,candidates] of reportedConsensus2025) {
       const record=uniqueRecord(candidates);
       reportedConsensus2025.set(rank,{
@@ -2272,7 +2293,9 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
         ? {record:opus25,method:opus25 ? 'confirmed HUB key' : 'confirmed HUB key unavailable'}
         : entry.year===2025 && reportedConsensus2025.has(entry.order)
           ? {...reportedConsensus2025.get(entry.order)}
-          : matchEntry(entry,index);
+          : entry.year===2021 && reportedConsensus2021.has(entry.order)
+            ? {...reportedConsensus2021.get(entry.order)}
+            : matchEntry(entry,index);
       const key=match.record && keyOf(match.record), binding=entry.year + ':' + key;
       if (match.record && used.has(binding)) {match.record=null; match.method='HUB entry already represents a different published member';}
       const row=match.record ? awardOnly(match.record) : sourceOnly('consensus',entry.year,entry.order,entry.name,entry.sourceUrl);
@@ -2283,6 +2306,11 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
         __publishedName:entry.name,__publicationSource:entry.sourceUrl,__publicationPublisherId:'consensus',
         __publicationCanonical:true,__publicationYear:entry.year,__publicationSourceOrder:entry.order,
         __publicationExpectedCount:expected.get(entry.year),__publicationCanonicalId:'consensus:' + entry.year + ':' + entry.order});
+      if(entry.year===2021 && entry.order===22 && match.record){
+        // The 2022 Sixty row shares its key; keep this card's detail route on the selected 2021 row.
+        row.__publicationDetailKey=[row.brand,row.line,row.cigar,row.vitola].map(text).join('|');
+        row.__publicationDetailHubKey=keyOf(match.record);
+      }
       if (entry.entryUrl) row.__publicationEntrySource=entry.entryUrl;
       if (entry.rankNote) row.__publicationRankNote=entry.rankNote;
       if (entry.competitionRank) row.__publicationCompetitionRank=entry.competitionRank;
@@ -2992,7 +3020,10 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
 
       function makeDetailHref(r){
         const detailKey = r.__publicationDetailKey || resolveDetailKey(r);
-        if(detailKey) return `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}`;
+        if(detailKey){
+          const hubKey = r.__publicationDetailHubKey;
+          return `/pos/cigars/cigar.html?key=${encodeURIComponent(detailKey)}${hubKey ? '&hubKey=' + encodeURIComponent(hubKey) : ''}`;
+        }
 
         const fallbackKey = [resolveBrandVal(r), resolveDisplayName(r), resolveVitola(r)]
           .filter(Boolean)
