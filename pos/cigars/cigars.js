@@ -63,6 +63,18 @@ function norm(v){
   return String(v ?? "").trim();
 }
 
+// Awards decorate individual HUB rows; they are not separate brand identities.
+// Deliberately keep flags and other meaningful brand text (including Cuban labels).
+function brandName(value){
+  return norm(value).replace(/[🏆🥇🥈🥉🏅🎖]\uFE0F?/gu, "").replace(/\s+/g, " ").trim();
+}
+function brandKey(value){
+  return brandName(value).normalize("NFC").toLowerCase();
+}
+function compareBrandResults(a,b){
+  return b.count - a.count || a.brand.localeCompare(b.brand);
+}
+
 function escapeHtml(str){
   return String(str ?? "")
     .replaceAll("&","&amp;")
@@ -218,7 +230,7 @@ function buildBrandSummary(rows){
   const map = new Map();
 
   rows.forEach(r=>{
-    const brand = norm(r.Brand || r.brand) || "Unknown";
+    const brand = brandName(r.Brand || r.brand) || "Unknown";
     const isCuban = isCubanRow(r);
 
     const manufacturer = isCuban
@@ -226,7 +238,7 @@ function buildBrandSummary(rows){
       : norm(r.Manufacturer || r.manufacturer);
 
     const summaryKey =
-      `${brand.toLowerCase()}::${isCuban ? "cuban" : "domestic"}`;
+      `${brandKey(brand)}::${isCuban ? "cuban" : "domestic"}`;
 
     const brandImg = norm(
       r["Brand IMG"] ||
@@ -314,10 +326,11 @@ function ensureGlobalState(){
   Object.keys(state.selected).forEach((k)=>{
     const v = g.filters[k];
 
-    if(v instanceof Set) return;
-    if(Array.isArray(v)) g.filters[k] = new Set(v);
+    if(v instanceof Set) g.filters[k] = v;
+    else if(Array.isArray(v)) g.filters[k] = new Set(v);
     else if(v && typeof v === "object") g.filters[k] = new Set(Object.keys(v));
     else g.filters[k] = new Set();
+    if(k === "brand") g.filters[k] = new Set([...g.filters[k]].map(brandName).filter(Boolean));
   });
 
   if(typeof g.q !== "string") g.q = String(g.q ?? "");
@@ -383,7 +396,9 @@ function rowMatchesFilters(row,g){
   for(const key in checks){
     const set = g.filters?.[key];
 
-    if(set instanceof Set && set.size && !set.has(checks[key])){
+    if(set instanceof Set && set.size && !(key === "brand"
+      ? [...set].some(value => brandKey(value) === brandKey(checks[key]))
+      : set.has(checks[key]))){
       return false;
     }
   }
@@ -487,12 +502,12 @@ function getRecentBrands(){
 }
 
 function pushRecentBrand(name){
-  const target = norm(name);
+  const target = brandName(name);
   if(!target) return;
 
   const next = [
     target,
-    ...getRecentBrands().filter(b => norm(b).toLowerCase() !== target.toLowerCase())
+    ...getRecentBrands().filter(b => brandKey(b) !== brandKey(target))
   ].slice(0,12);
 
   writeJsonArray(RECENT_BRANDS_KEY,next);
@@ -508,13 +523,13 @@ function renderFavoriteBrands(summary){
   const cards = [];
 
   names.forEach(name=>{
-    const key = norm(name).toLowerCase();
+    const key = brandKey(name);
 
     if(!key || seen.has(key)) return;
 
     seen.add(key);
 
-    const match = summary.find(b => norm(b.brand).toLowerCase() === key) || {brand:name};
+    const match = summary.find(b => brandKey(b.brand) === key) || {brand:brandName(name)};
 
     cards.push(match);
   });
@@ -657,7 +672,7 @@ if(favBrandsRoot?.parentElement){
 }
 
 if(qOn || filtersOn){
-  renderResultsRows(summary);
+  renderResultsRows([...summary].sort(compareBrandResults));
 }else{
   renderBrandsGrid(summary);
 }
@@ -711,6 +726,11 @@ function getValuesForKey(key){
     }
   });
 
+  if(key === "brand"){
+    const names = new Map();
+    vals.forEach(value => { const name = brandName(value); if(name && !names.has(brandKey(name))) names.set(brandKey(name), name); });
+    return [...names.values()].sort((a,b)=>a.localeCompare(b));
+  }
   return [...new Set(vals.map(norm).filter(Boolean))]
     .sort((a,b)=>a.localeCompare(b));
 }
@@ -1579,10 +1599,10 @@ function renderList(){
 
     const matchingRow = DATA_ROWS.find(r => {
   const rowValue = key === "brand"
-    ? norm(r.Brand || r.brand)
+    ? brandName(r.Brand || r.brand)
     : norm(r.Manufacturer || r.manufacturer);
 
-  return rowValue === label;
+  return key === "brand" ? brandKey(rowValue) === brandKey(label) : rowValue === label;
 });
 
 const brandOrManufacturerIcon = isLogoRow
