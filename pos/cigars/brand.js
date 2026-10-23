@@ -423,7 +423,7 @@
   }
   function isCigarFavorite(r){return Favorites.has(favoritePayload(r));}
   function showToast(message){let toast=$(".pos-toast");if(!toast){toast=document.createElement("div");toast.className="pos-toast";toast.setAttribute("role","status");document.body.appendChild(toast);}toast.textContent=message;toast.classList.add("is-showing");clearTimeout(toast.__timer);toast.__timer=setTimeout(()=>toast.classList.remove("is-showing"),2600);}
-  function resolveIsCuban(r){const explicit=getField(r,["cuban","is_cuban"]);if(explicit){const v=explicit.toLowerCase().trim();if(["x","yes","true","1","cuban"].includes(v))return true;if(["no","false","0","non-cuban","non cuban"].includes(v))return false;}return resolveManufacturerVal(r).toLowerCase().includes("habanos")||resolveOrigin(r).toLowerCase()==="cuba";}
+  function resolveIsCuban(r){const explicit=getField(r,["cuban","is_cuban"]);if(explicit){const v=explicit.toLowerCase().trim();if(["x","yes","true","1","cuban"].includes(v))return true;if(["no","false","0","non-cuban","non cuban"].includes(v))return false;}return resolveManufacturerVal(r).toLowerCase().includes("habanos")||resolveOrigin(r).toLowerCase()==="cuba"||/🇨🇺|\(cuban\)/iu.test(resolveBrandVal(r)+" "+resolveManufacturerVal(r));}
   function brandDisplayName(){return state.brandMeta?.name||state.brand||state.brandQuery||"Brand";}
   function brandSlug(){return normalizeBrand(state.brandMeta?.slug||state.brandMeta?.name||state.brand||state.brandQuery);}
   function brandIconCandidates(){const sheetRow=state.rowsAll.find(r=>normalizeAssetPath(resolveBrandImage(r))),fromSheet=normalizeAssetPath(sheetRow?resolveBrandImage(sheetRow):""),metaImage=normalizeAssetPath(state.brandMeta?.image||state.brandMeta?.icon||state.brandMeta?.svg||state.brandMeta?.img),slug=brandSlug(),out=[];if(fromSheet)out.push(fromSheet);if(metaImage)out.push(metaImage);if(slug)out.push(`/img/icons/brands/${slug}.svg`,`/img/icons/brands/${slug}.png`);return [...new Set(out.filter(Boolean))];}
@@ -490,18 +490,36 @@
   function setBrandHeader(){const display=brandDisplayName();if(brandTitle)brandTitle.textContent=display||"Brand";const meta=ensureBrandManufacturerMeta(),first=state.rowsAll[0],maker=first?resolveManufacturerVal(first):"";if(meta){const show=maker&&normalizeBrand(maker)!==normalizeBrand(display),cuban=first&&resolveIsCuban(first);meta.textContent=show?`${cuban?"🇨🇺 ":""}${maker}`:"";meta.style.display=show?"":"none";}if(!brandIconImg)return;brandIconImg.alt=display||"Brand";bindImageFallback(brandIconImg,brandIconCandidates(),"hide");}
   function findBrandMeta(query,brands){const q=normalizeBrand(query);if(!q||!Array.isArray(brands))return null;return brands.find(b=>normalizeBrand(b.slug)===q)||brands.find(b=>normalizeBrand(b.name)===q)||brands.find(b=>{const slug=normalizeBrand(b.slug),name=normalizeBrand(b.name);return !!slug&&(slug.includes(q)||q.includes(slug)||name.includes(q)||q.includes(name));})||null;}
   async function loadBrandsMeta(){try{const res=await fetch(`${BRANDS_URL}?v=${Date.now()}`,{cache:"no-store"});if(!res.ok)throw new Error(`brands.json fetch failed: ${res.status}`);const data=await res.json();return Array.isArray(data)?data:[];}catch{return [];}}
+  function brandIdentity(value){
+    return normalizeBrand(String(value||"").replace(/\(cuban\)/gi, "").replace(/🇨🇺/gu, ""));
+  }
+  function requestedBrandMarket(){
+    const value=getParam("cuban").trim().toLowerCase();
+    if(["1","true","yes","cuban"].includes(value))return true;
+    if(["0","false","no","domestic","non-cuban"].includes(value))return false;
+    if(/🇨🇺|\(cuban\)/iu.test(state.brandQuery))return true;
+    const meta=state.brandMeta,q=normalizeBrand(state.brandQuery);
+    if(meta&&[meta.slug,meta.name].some(value=>normalizeBrand(value)===q)&&/🇨🇺|\(cuban\)/iu.test(meta.name||""))return true;
+    return null;
+  }
   function chooseRowsForBrand(rows){
-    // Original Cuban/non-Cuban selection behavior is deliberately not changed here.
-    const needles=[...new Set([normalizeBrand(state.brandQuery),normalizeBrand(state.brandMeta?.slug),normalizeBrand(state.brandMeta?.name),normalizeBrand(state.brand)].filter(Boolean))];
-    const conflicts=new Set(["cohiba","montecristo","hupmann","hoyodemonterrey","saintluisrey","sanchopanza","trinidad","sancristobaldelahabana"]),conflict=needles.some(n=>conflicts.has(n));
-    const exact=rows.filter(r=>needles.includes(normalizeBrand(resolveBrandVal(r))));
-    if(conflict){const cuban=exact.filter(resolveIsCuban);if(cuban.length)return cuban;}if(exact.length)return exact;
-    const fuzzy=rows.filter(r=>{const rb=normalizeBrand(resolveBrandVal(r));return rb&&needles.some(n=>rb.includes(n)||n.includes(rb));});
-    if(conflict){const cuban=fuzzy.filter(resolveIsCuban);if(cuban.length)return cuban;}if(fuzzy.length)return fuzzy;
-    const makers=rows.filter(r=>needles.includes(normalizeBrand(resolveManufacturerVal(r))));
-    if(conflict){const cuban=makers.filter(resolveIsCuban);if(cuban.length)return cuban;}if(makers.length)return makers;
+    const needles=[...new Set([state.brandQuery,state.brandMeta?.slug,state.brandMeta?.name,state.brand].map(brandIdentity).filter(Boolean))];
+    const market=requestedBrandMarket();
+    function selectMarket(matches){
+      if(market!==null)return matches.filter(r=>resolveIsCuban(r)===market);
+      // Legacy bare links mean domestic when both portfolios share a name.
+      // Keep legacy links for Cuban-only brands working, without mixing portfolios.
+      const domestic=matches.filter(r=>!resolveIsCuban(r));
+      return domestic.length?domestic:matches.filter(resolveIsCuban);
+    }
+    const exact=rows.filter(r=>needles.includes(brandIdentity(resolveBrandVal(r))));
+    if(exact.length)return selectMarket(exact);
+    const fuzzy=rows.filter(r=>{const rb=brandIdentity(resolveBrandVal(r));return rb&&needles.some(n=>rb.includes(n)||n.includes(rb));});
+    if(fuzzy.length)return selectMarket(fuzzy);
+    const makers=rows.filter(r=>needles.includes(brandIdentity(resolveManufacturerVal(r))));
+    if(makers.length)return selectMarket(makers);
     const loose=rows.filter(r=>{const b=normalizeLoose(resolveBrandVal(r)),q=normalizeLoose(state.brandQuery);return b&&q&&(b.includes(q)||q.includes(b));});
-    if(conflict){const cuban=loose.filter(resolveIsCuban);if(cuban.length)return cuban;}return loose;
+    return selectMarket(loose);
   }
   backBtn?.addEventListener("click",()=>{if(history.length>1)history.back();else location.href="/pos/cigars/";});
   searchInput?.addEventListener("input",()=>{state.search=searchInput.value||"";applyAll();});
