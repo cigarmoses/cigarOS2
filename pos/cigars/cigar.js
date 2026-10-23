@@ -529,7 +529,8 @@
   function resolveIsCuban(rec) {
     const explicit=getField(rec,["Cuban","cuban","is_cuban"]);
     if(explicit){const v=explicit.toLowerCase().trim();if(["x","yes","true","1","cuban"].includes(v))return true;if(["no","false","0","non-cuban","non cuban"].includes(v))return false;}
-    return getOrigin(rec).toLowerCase()==="cuba";
+    const maker=getField(rec,["Manufacturer","manufacturer","maker"]);
+    return getOrigin(rec).toLowerCase()==="cuba"||maker.toLowerCase().includes("habanos")||/🇨🇺|\(cuban\)/iu.test(getBrand(rec)+" "+maker);
   }
   function buildBrandIconCandidates(rec) {
     const lineImg=normalizeAssetPath(getLineImage(rec)),brandImg=normalizeAssetPath(getBrandImage(rec)),brandKey=normalizeBrand(getBrand(rec)),out=[];
@@ -550,7 +551,7 @@
     img.addEventListener("error",tryNext);
     if(img.complete&&!img.naturalWidth)tryNext();
   }
-  function buildBrandHref(brand){const v=String(brand||"").trim();return v?`/pos/cigars/brand?brand=${encodeURIComponent(v)}`:"/pos/cigars/";}
+  function buildBrandHref(brand,rec=activeRecord){const v=String(brand||"").trim();return v?`/pos/cigars/brand?brand=${encodeURIComponent(v)}&cuban=${portfolioMarket(rec)==="cuban"?"1":"0"}`:"/pos/cigars/";}
   function wireBrandNavigation(brand) {
     const href=buildBrandHref(brand);
     [$(".cd-brand"),$("#cdBrandBadge")].forEach(el=>{if(!el)return;el.style.cursor="pointer";el.setAttribute("role","link");el.setAttribute("tabindex","0");const go=()=>{location.href=href;};el.addEventListener("click",go);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});});
