@@ -1325,6 +1325,16 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
   .cigaros-publication-switcher.cps-resizable { transition: none; }
 }
 
+/* Query totals are unique cigars; publication counts can overlap. */
+.cigaros-publication-switcher .cps-search-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:0 0 8px; }
+.cigaros-publication-switcher .cps-search-filter { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-width:0; min-height:56px; padding:10px 12px; border:1px solid var(--stroke); border-radius:14px; background:var(--cps-soft); text-align:left; }
+.cigaros-publication-switcher .cps-search-filter-label { min-width:0; font-size:12px; font-weight:700; line-height:1.3; overflow-wrap:anywhere; }
+.cigaros-publication-switcher .cps-search-filter-count { flex:0 0 auto; font-size:21px; font-weight:800; line-height:1.1; font-variant-numeric:tabular-nums; }
+.cigaros-publication-switcher .cps-search-filter[aria-pressed="true"] { background:var(--cps-active); color:var(--cps-active-ink); border-color:transparent; box-shadow:0 3px 9px #0002; }
+.cigaros-publication-switcher .cps-search-count-note { margin:0 0 12px; color:var(--muted); font-size:11px; line-height:1.4; }
+@media(hover:hover){.cigaros-publication-switcher .cps-search-filter:not([aria-pressed="true"]):hover{background:var(--cps-current)}}
+@media(forced-colors:active){.cigaros-publication-switcher .cps-search-filter[aria-pressed="true"]{outline:2px solid Highlight;outline-offset:-3px}}
+
   </style>
 </head>
 
@@ -2138,7 +2148,29 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
     return index.filter(item=>terms.every(term=>term.number?item.numbers.has(term.number):
       item.fields.some(field=>field.includes(term.text))||item.compact.some(field=>field.includes(term.text))));
   }
-  return Object.freeze({normalize,build,search});
+  // A cigar appears once, ordered by its best rank in the selected publication(s).
+  // Projection only: never mutate the catalog's records, awards or keyword index.
+  function rankResults(matches,publishers,filter='all'){
+    const ids=new Set(publishers.map(p=>p.id));
+    const selected=filter==='all'||ids.has(filter)?filter:'all';
+    const counts=Object.fromEntries([['all',matches.length],...publishers.map(p=>[p.id,0])]);
+    const compareText=(a,b)=>normalize(a).localeCompare(normalize(b),'en',{numeric:true,sensitivity:'base'});
+    const compareAward=(a,b)=>Number(a.rank)-Number(b.rank)||Number(b.year)-Number(a.year)||
+      compareText(a.publisherId,b.publisherId)||String(a.id).localeCompare(String(b.id));
+    const nameOf=item=>item.record.__publishedName || [item.record.brand,item.record.line,item.record.cigar||item.record.name,item.record.vitola].filter(Boolean).join(' ');
+    const results=[];
+    for(const item of matches){
+      for(const id of new Set(item.awards.map(award=>award.publisherId))){if(ids.has(id))counts[id]++;}
+      const awards=item.awards.filter(award=>selected==='all'||award.publisherId===selected).sort(compareAward);
+      if(!awards.length)continue;
+      results.push({...item,awards,bestRank:Number(awards[0].rank)});
+    }
+    results.sort((a,b)=>a.bestRank-b.bestRank||compareText(a.record.brand,b.record.brand)||
+      compareText(nameOf(a),nameOf(b))||Number(b.awards[0].year)-Number(a.awards[0].year)||
+      String(a.id).localeCompare(String(b.id)));
+    return {results,counts,filter:selected};
+  }
+  return Object.freeze({normalize,build,search,rankResults});
 });
 
   </script>
@@ -2547,6 +2579,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
     }
 
     // Search is local to this open sheet. It never changes collection selection.
+    let searchPublication = 'all';
     let searchQuery = '', searchIndex = [], indexedLists = null, indexedRecords = null, searchTimer = null;
     let searchInput, searchOutput, searchMenu, searchClear, searchStatus;
     function rebuildSearchIndex(){
@@ -2599,7 +2632,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
       searchOutput.hidden=!activeQuery;
       searchOutput.replaceChildren();
       if(resetScroll)body.scrollTop=0;
-      if(!activeQuery)return;
+      if(!activeQuery){searchPublication='all';return;}
       searchStatus=element('p','cps-search-status');
       searchStatus.setAttribute('role','status');searchStatus.setAttribute('aria-live','polite');searchStatus.setAttribute('aria-atomic','true');
       searchOutput.append(searchStatus);
@@ -2611,10 +2644,36 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         retry.textContent='Try again';searchOutput.append(retry);return;
       }
       rebuildSearchIndex();
-      const matches=root.CigarosPublicationSearch.search(searchIndex,searchQuery);
-      if(!matches.length){searchStatus.textContent='No ranked cigars match “'+searchQuery.trim()+'”. Try fewer words or another Hub detail.';return;}
+      const baseMatches=root.CigarosPublicationSearch.search(searchIndex,searchQuery);
+      const view=root.CigarosPublicationSearch.rankResults(baseMatches,[...publisherMap.values()],searchPublication);
+      searchPublication=view.filter;
+      const filters=element('div','cps-search-filters');
+      filters.setAttribute('role','group');filters.setAttribute('aria-label','Filter ranked cigars by publication');
+      for(const [id,label] of [['all','All cigars'],...Array.from(publisherMap,([id,publisher])=>[id,id==='consensus'?'Halfwheel':publisher.name])]){
+        const count=view.counts[id]||0;
+        const control=button('cps-search-filter',label+': '+count+' '+(count===1?'cigar':'cigars'),()=>{
+          searchPublication=id;
+          renderSearch();
+          // Replacing only the results preserves the input and its caret. Restore
+          // the chosen native button so keyboard users never fall out of the sheet.
+          searchOutput.querySelector('[data-cps-key="search:filter:'+id+'"]')?.focus({preventScroll:true});
+        },'search:filter:'+id);
+        control.setAttribute('aria-pressed',String(searchPublication===id));
+        control.setAttribute('aria-controls',prefix+'-search-output');
+        control.append(element('span','cps-search-filter-label',label),element('strong','cps-search-filter-count',String(count)));
+        filters.append(control);
+      }
+      const note=element('p','cps-search-count-note','A cigar can count toward more than one publication.');
+      searchOutput.prepend(filters,note);
+      const matches=view.results;
+      if(!matches.length){
+        searchStatus.textContent=baseMatches.length
+          ? 'No '+publisherMap.get(searchPublication).name+' cigars match “'+searchQuery.trim()+'”. Choose All cigars or another publication.'
+          : 'No ranked cigars match “'+searchQuery.trim()+'”. Try fewer words or another Hub detail.';
+        return;
+      }
       const count=matches.length,results=element('ul','cps-search-results');
-      results.id=prefix+'-results-list';results.setAttribute('aria-label','Combined media ranking results');
+      results.id=prefix+'-results-list';results.setAttribute('aria-label','Ranked cigar results, by rank then brand');
       searchOutput.append(results);
       let shown=0;
       const more=button('cps-search-more',null,()=>appendBatch(true),'search:more');
@@ -2624,7 +2683,8 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         const fragment=document.createDocumentFragment();
         for(let i=start;i<shown;i++){const item=element('li');item.append(createSearchCard(matches[i]));fragment.append(item);}
         results.append(fragment);
-        searchStatus.textContent=count+' ranked '+(count===1?'cigar':'cigars')+' · All publications and years'+(shown<count?' · Showing '+shown:'');
+        const scope=searchPublication==='all'?'All publications':publisherMap.get(searchPublication).name;
+        searchStatus.textContent=count+' ranked '+(count===1?'cigar':'cigars')+' · '+scope+' · Rank, then brand A–Z'+(shown<count?' · Showing '+shown:'');
         more.hidden=shown>=count;
         more.textContent='Show more ('+(count-shown)+' remaining)';
         if(moveFocus)results.children[start]?.querySelector('a')?.focus({preventScroll:true});
