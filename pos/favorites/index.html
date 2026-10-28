@@ -1229,6 +1229,102 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
   }
 }
 
+/* Combined Media Rankings search; scoped to the existing Lists sheet. */
+.cigaros-publication-switcher .cps-search { margin: 4px 0 15px; }
+.cigaros-publication-switcher .cps-search-label { display:block; margin:0 0 7px; font-size:13px; font-weight:700; }
+.cigaros-publication-switcher .cps-search-box { display:flex; align-items:center; gap:8px; border:1px solid var(--stroke); border-radius:16px; padding:2px 4px 2px 13px; background:var(--cps-soft); box-shadow:inset 0 1px 0 #ffffff24; }
+.cigaros-publication-switcher .cps-search-box:focus-within { outline:2px solid var(--cps-link); outline-offset:2px; }
+.cigaros-publication-switcher .cps-search-box > svg { width:19px; height:19px; flex-basis:19px; color:var(--muted); }
+.cigaros-publication-switcher .cps-search-input { flex:1; min-width:0; min-height:44px; width:100%; border:0; outline:0; padding:8px 0; color:inherit; background:transparent; font:inherit; font-size:16px; appearance:none; }
+.cigaros-publication-switcher .cps-search-input::-webkit-search-cancel-button { appearance:none; }
+.cigaros-publication-switcher .cps-search-help { margin-top:8px; color:var(--muted); font-size:12px; line-height:1.45; }
+.cigaros-publication-switcher .cps-search-status { color:var(--muted); font-size:13px; margin:0 0 12px; }
+.cigaros-publication-switcher .cps-search-results { display:grid; gap:12px; margin:0; padding:0; list-style:none; }
+.cigaros-publication-switcher .cps-search-card { position:relative; display:block; min-width:0; padding:14px; border:1px solid var(--stroke); border-radius:20px; background:var(--cps-soft); box-shadow:0 5px 16px #102b4607,inset 0 1px 0 #ffffff24; color:inherit; text-decoration:none; overflow-wrap:anywhere; }
+.cigaros-publication-switcher .cps-search-card:focus-visible { outline:2px solid var(--cps-link); outline-offset:3px; }
+.cigaros-publication-switcher .cps-search-photo { display:flex; align-items:center; justify-content:center; height:78px; margin:0 0 9px; color:var(--muted); font-size:12px; }
+.cigaros-publication-switcher .cps-search-photo > img { width:100%; height:100%; object-fit:contain; }
+.cigaros-publication-switcher .cps-search-photo > svg { display:block; width:100%; height:78px; max-height:78px; flex-basis:auto; }
+.cigaros-publication-switcher .cps-search-card h3 { font-family:var(--font-display,var(--font-sans)); font-size:18px; line-height:1.25; letter-spacing:-.25px; }
+.cigaros-publication-switcher .cps-search-specs { margin:6px 0 10px; color:var(--muted); font-size:12px; line-height:1.5; }
+.cigaros-publication-switcher .cps-search-awards { display:flex; flex-wrap:wrap; gap:5px; list-style:none; padding:0; margin:10px 0 0; }
+.cigaros-publication-switcher .cps-search-awards li { padding:5px 8px; border-radius:9px; background:var(--cps-current); font-size:11px; font-weight:650; line-height:1.4; }
+.cigaros-publication-switcher .cps-search-more, .cigaros-publication-switcher .cps-search-retry { width:100%; padding:12px; margin-top:12px; border-radius:13px; background:var(--cps-current); color:var(--cps-link); font-weight:700; }
+.cigaros-publication-switcher .cps-search-details { display:block; margin-top:10px; color:var(--cps-link); font-size:12px; font-weight:650; }
+@media(hover:hover){.cigaros-publication-switcher .cps-search-card:hover{background:var(--cps-current)}}
+@media(max-width:350px){.cigaros-publication-switcher .cps-body{padding-left:15px;padding-right:15px}.cigaros-publication-switcher .cps-tabs{margin-left:15px;margin-right:15px}}
+
+/* Tall, resizable Lists sheet. Append after the existing switcher styles. */
+.cigaros-publication-switcher {
+  height: 85vh;
+  height: 85dvh;
+  max-height: calc(100vh - 8px - var(--safe-top, 0px));
+  max-height: calc(100dvh - 8px - var(--safe-top, 0px));
+}
+
+.cigaros-publication-switcher.cps-resizable {
+  inset: var(--cps-sheet-top) 0 auto;
+  height: var(--cps-sheet-height);
+  max-height: var(--cps-available-height);
+  transition: height 180ms ease, top 180ms ease, border-radius 180ms ease;
+}
+
+.cigaros-publication-switcher.cps-resizable[data-sheet-snap="full"] {
+  border-radius: 20px 20px 0 0;
+}
+
+.cigaros-publication-switcher.cps-is-resizing,
+.cigaros-publication-switcher.cps-viewport-resizing {
+  transition: none;
+}
+
+.cigaros-publication-switcher.cps-resizable .cps-handle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 72px;
+  height: 44px;
+  margin: -10px auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  opacity: 1;
+  cursor: ns-resize;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cigaros-publication-switcher.cps-resizable .cps-handle::before {
+  content: "";
+  width: 34px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--muted, #45627e);
+  opacity: .55;
+}
+
+.cigaros-publication-switcher.cps-resizable .cps-handle:focus-visible {
+  outline: 2px solid var(--cps-link);
+  outline-offset: -3px;
+}
+
+.cigaros-publication-switcher.cps-resizable .cps-heading {
+  touch-action: none;
+  cursor: ns-resize;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cigaros-publication-switcher.cps-resizable .cps-heading .cps-button {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cigaros-publication-switcher.cps-resizable { transition: none; }
+}
+
   </style>
 </head>
 
@@ -1968,6 +2064,266 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
 window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMTIuMjcgNjIuMjYiPgogIDxkZWZzPgogICAgPHN0eWxlPgogICAgICAuY2xzLTEgewogICAgICAgIGZpbGw6ICM5ODFiMWU7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTQwLjc5LDE5LjUxaC43MWMuNzQsMCwuNzIsMCwuNzItLjg3di03LjQyYzAtLjgyLS45OC0uOTgtMS4zNy0xLjE5di0uNGMxLjkyLS44MiwyLjk4LTEuNSwzLjIyLTEuNS4xNiwwLC4yNC4wOC4yNC4zNHYyLjM3aC4wNWMuNjYtMS4wMywxLjc2LTIuNzEsMy4zNy0yLjcxLjY2LDAsMS41LjQ1LDEuNSwxLjQsMCwuNzEtLjUsMS4zNS0xLjI0LDEuMzUtLjgyLDAtLjgyLS42My0xLjc0LS42My0uNDUsMC0xLjkyLjYxLTEuOTIsMi4xOXY2LjJjMCwuODctLjAyLjg3LjcyLjg3aDEuNDh2LjY4Yy0xLjQ1LS4wMi0yLjAxLS4wNS0zLjE1LS4wNXMtMS42NC4wMy0yLjU5LjA1di0uNjhaTTM5LjU5LDE4LjcyYy0uMjQuMjktLjYzLjQ1LS45OC40NS0uNTgsMC0uOTUtLjQyLS45NS0xLjV2LTcuM2MwLTEuNDUtMi4wMy0yLjIyLTMuMjItMi4yMi0xLDAtMS40NS4zNy0yLjM3Ljg0LTEuODUuOTUtMy4wMywxLjYxLTMuMDMsMy4wMSwwLC4xOS4wOC41My40Ny41My42MywwLDEuNDgtLjM3LDEuNDgtMS4xMS4wNS0xLjE5Ljg0LTEuODUsMi0xLjg1LDEuNjksMCwyLjU2Ljc5LDIuNTYsMi4yN3YxLjc0Yy01LjcsMS45NS02Ljc4LDIuMzUtNi44OCw0LjQ2LDAsMS40LDEuMTYsMi41NiwyLjg1LDIuNTZzMi44Mi0uODIsNC4wNi0xLjk1Yy4wNS45NS41NiwxLjk1LDEuNjMsMS45NXMxLjg3LS43NCwyLjYxLTEuNDJsLS4yNC0uNDVaTTM1LjU2LDE3LjgyYy0uODcuNzctMS42NiwxLjUzLTIuOSwxLjUzLTEuMDMsMC0xLjg3LS44Ny0xLjg3LTEuOSwwLTEuOTgsMy40Mi0yLjU5LDQuNzctMy4xMXYzLjQ4Wk0yNC4wMiwxMi4yOGMwLDEuNjEtLjc3LDMuMDgtMi41NiwzLjA4cy0yLjQ4LTItMi40OC0zLjUzYzAtMS40LjcxLTMuMDEsMi4zMi0zLjAxLDEuODUsMCwyLjcyLDEuODUsMi43MiwzLjQ2TTI4LjA2LDguODJjLS42OC4xLTEuMDUuMTMtMS41My4xMy0xLjA4LDAtMS44Mi0uMjQtMi41Ni0uNDUtLjYzLS4xOS0xLjUzLS4zNy0yLjMyLS4zNy0zLjI0LDAtNC45MywxLjc2LTQuOTMsNC4wNiwwLDEuNzQsMSwyLjc1LDIuNDgsMy41MS0uMzcuMzUtMS40NS44Ny0yLjE5LDEuMzItLjExLjI2LS4xMS41NS0uMTEuODQsMCwxLjIxLDEuMjEsMS45NywyLjMyLDIuMjl2LjA1Yy0xLjYxLjMyLTMuMDgsMS4zNS0zLjA4LDMuMDMsMCwxLjQzLDEuNjMsMi45Niw0Ljk4LDIuOTYsNS42MSwwLDYuOTktNC4wNCw2Ljk5LTUuMDYsMC0xLjk4LTEuMzUtMi42Ni0zLjYxLTIuNjYtMS4wNiwwLTIuMzUtLjAzLTMuNjQtLjAzLTEuNzQsMC0xLjg1LS44Mi0xLjg1LTEuMjEsMC0uNjMuMjktLjk4Ljc5LTEuMzUuNTIuMSwxLjA1LjE2LDEuNDUuMTYsMy4yNywwLDQuODgtMi4xNCw0Ljg4LTQuMDYsMC0uNzEtLjI0LTEuNDUtLjY4LTIuMDFsMi42MS4xMXYtMS4yN1pNMjYuMTYsMjIuMzNjMCwyLjM1LTMuMDEsMy4wMy00LjYyLDMuMDMtMS44NSwwLTMuNDgtLjg3LTMuNDgtMi42OSwwLTIuNDgsMi42Ni0yLjQ4LDQuMzgtMi40OCwxLjQsMCwzLjcyLjIxLDMuNzIsMi4xNE0xMy41Niw1LjU4Yy0uNjgsMC0xLjI5LS42My0xLjI5LTEuMzJzLjYzLTEuMjcsMS4yOS0xLjI3LDEuMy41NiwxLjMsMS4yNy0uNTgsMS4zMi0xLjMsMS4zMk0xMS4yOSwxOS41MWguNWMuNzQsMCwuNzIsMCwuNzItLjg3di03LjE1YzAtMS4xNi0uNC0xLjMyLTEuMzctMS44NXYtLjQyYzEuMjQtLjM3LDIuNzItLjg3LDIuODItLjk1LjE5LS4xLjM0LS4xMy40Ny0uMTNzLjE5LjE2LjE5LjM3djEwLjEzYzAsLjg3LjAzLjg3Ljc3Ljg3aC40NXYuNjhjLS45LDAtMS4yNy0uMDUtMi4yMi0uMDVzLTEuMzUuMDMtMi4zMy4wNXYtLjY4Wk0xMC4zOSwxNy44NWMtMS4yOSwxLjUtMy4wNiwyLjc0LTUuMTQsMi43NC0yLjc0LDAtNS4yNC0yLjY2LTUuMjQtNS40NiwwLTMuODIsMi43NC02Ljk5LDYuNTQtNi45OSwxLjM1LDAsMy41Ni40MiwzLjU2LDEuODIsMCwuNjEtLjM3LDEuMTYtMSwxLjE2LTEuMTEsMC0xLjA2LTIuMTMtMy41My0yLjEzLTIuMjcsMC0zLjQ2LDIuNTMtMy40Niw0LjU0LDAsMi43MSwxLjc0LDUuMTIsNC42Miw1LjEyLDEuMzUsMCwyLjIyLS40OCwzLjIyLTEuMjVsLjQ1LjQ1Wk0yNzQuNTUsNDMuNTVjMCwxMS4zNSw4LjcxLDE4LjcsMTkuMzQsMTguN3MxOC4zOC04LjcxLDE4LjM4LTE5LjAyYzAtMTEuMzUtOC4zMS0xOC43LTE5LjQyLTE4LjdzLTE4LjMsOC43MS0xOC4zLDE5LjAyTTI4MS45MSw0Mi43NWMwLTYuODcsMy4xMS0xNi4xNCwxMS4wMy0xNi4xNCw4LjQ3LDAsMTEuOTksMTAuODcsMTEuOTksMTcuNDJzLTMuMTIsMTYuMTQtMTEuMTEsMTYuMTRjLTguNCwwLTExLjkxLTEwLjg3LTExLjkxLTE3LjQyTTI3MS40MiwxLjEyYzAtLjY0LS4xNi0xLjEyLS42NC0xLjEyLS4yNCwwLS44OC40LTEuNzYuODgtMS42OC45Ni01LjAzLDIuNC04LjIzLDMuNDR2MS4yOGMzLjA0Ljg4LDQuMjQsMS4wNCw0LjI0LDYuMjN2MTQuMTRjLTIuMzItLjk2LTQuOTYtMS40NC03LjUxLTEuNDQtMTEuMDMsMC0xOS43NCw5LjU5LTE5Ljc0LDIwLjM4LDAsOC45NSw1LjI4LDE3LjM0LDE0Ljg3LDE3LjM0LDQuODgsMCw5LjM1LTIuODgsMTIuMjMtNS44M2guMTZ2My42OGMwLC45Ni4wOCwyLjE2Ljg4LDIuMTYuNDgsMCwyLjU2LS44LDUuMDMtMS42LDIuMzItLjcyLDMuOTgtMS4zNSw1LjE4LTEuNmguMDh2LTEuNmgtMS4zNmMtMy4xMSwwLTMuNDIsMC0zLjQyLTMuMjhWMS4xMlpNMjY1LjAyLDUyLjc1YzAsMi45Ni01LjM1LDQuNzItNy43NSw0LjcyLTcuMjcsMC0xMi42Mi02LjU1LTEyLjYyLTE1LjM1LDAtMTAuNzksNi4yMy0xNS4wMiwxMS45MS0xNS4wMiwzLjUxLDAsOC40NywxLjQ0LDguNDcsNy4zNXYxOC4zWk0yMzguNjEsNTYuNThjLS43Mi44OC0xLjkyLDEuMzYtMi45NiwxLjM2LTEuNzYsMC0yLjg4LTEuMjgtMi44OC00LjU2di0yMi4xNGMwLTQuNC02LjE1LTYuNzEtOS43NS02LjcxLTMuMDQsMC00LjM5LDEuMTItNy4xOSwyLjU2LTUuNTksMi44OC05LjE4LDQuODgtOS4xOCw5LjExLDAsLjU2LjI0LDEuNiwxLjQ0LDEuNiwxLjkyLDAsNC40Ny0xLjEyLDQuNDctMy4zNi4xNi0zLjU5LDIuNTYtNS41OSw2LjA3LTUuNTksNS4xMSwwLDcuNzUsMi4zOSw3Ljc1LDYuODd2NS4yOGMtMTcuMjYsNS45MS0yMC41NCw3LjExLTIwLjg2LDEzLjUsMCw0LjI0LDMuNTIsNy43NSw4LjYzLDcuNzVzOC41NS0yLjQ4LDEyLjMtNS45MWMuMTYsMi44OCwxLjY4LDUuOTEsNC45NSw1LjkxczUuNjgtMi4yNCw3LjkxLTQuMzFsLS43Mi0xLjM2Wk0yMjYuMzksNTMuODZjLTIuNjQsMi4zMi01LjAzLDQuNjMtOC43OSw0LjYzLTMuMTEsMC01LjY3LTIuNjQtNS42Ny01Ljc1LDAtNiwxMC4zOS03LjgzLDE0LjQ3LTkuNDN2MTAuNTVaTTE3MS4zMiwzNS4xN2MwLTIuOTYtLjg4LTMuNzYtNC42My01LjI4di0xLjUyYzMuNDMtMS4xMiw2LjcxLTIuMTYsMTAuNTUtMy44NC4yNCwwLC40OC4xNi40OC44djUuMTljNC41Ni0zLjI3LDguNDctNS45OSwxMy44Mi01Ljk5LDYuOCwwLDkuMTksNC45Niw5LjE5LDExLjE5djIwLjYyYzAsMi42NCwxLjI2LDIuNjQsMy40OSwyLjY0aC40NHYyLjA4Yy0yLjgsMC00LjEtLjE2LTYuOTctLjE2cy00LjI1LjA4LTcuMTMuMTZ2LTIuMDhoLjQ0YzIuMjQsMCwzLjM0LDAsMy4zNC0yLjY0di0yMC43YzAtNC41Ni0yLjgtNi43OS03LjM1LTYuNzktMi41NiwwLTYuNjQsMi4wOC05LjI3LDMuODN2MjMuNjZjMCwyLjY0LDEuMjYsMi42NCwzLjUsMi42NGguNDR2Mi4wOGMtMi44LDAtNC4xLS4xNi02Ljk3LS4xNnMtNC4yNS4wOC03LjEzLjE2di0yLjA4aC40NGMyLjIzLDAsMy4zMywwLDMuMzMtMi42NHYtMjEuMTdaTTEzMC42NSw0My41NWMwLDExLjM1LDguNzEsMTguNywxOS4zNCwxOC43czE4LjM4LTguNzEsMTguMzgtMTkuMDJjMC0xMS4zNS04LjMxLTE4LjctMTkuNDItMTguN3MtMTguMyw4LjcxLTE4LjMsMTkuMDJNMTM4LDQyLjc1YzAtNi44NywzLjExLTE2LjE0LDExLjAzLTE2LjE0LDguNDcsMCwxMS45OSwxMC44NywxMS45OSwxNy40MnMtMy4xMiwxNi4xNC0xMS4xMSwxNi4xNGMtOC4zOSwwLTExLjkxLTEwLjg3LTExLjkxLTE3LjQyTTcxLjg5LDU4Ljk4aC41MmMyLjI0LDAsMy4zNCwwLDMuMzQtMi42NHYtMjEuNjZjMC0zLjUyLTEuMi0zLjk5LTQuMTYtNS41OXYtMS4yOGMzLjc2LTEuMTIsOC4yMy0yLjY0LDguNTYtMi44OC41Ni0uMzIsMS4wNC0uNCwxLjQ0LS40cy41Ni40OC41NiwxLjEydjMwLjY4YzAsMi42NCwxLjI1LDIuNjQsMy40OSwyLjY0aC4zNnYyLjA4Yy0yLjcyLDAtNC4wMi0uMTYtNi44OS0uMTZzLTQuMjUuMDgtNy4yMS4xNnYtMi4wOFpNMTI0Ljg5LDEyLjIzYy0yLjA3LDAtMy45MS0xLjkyLTMuOTEtNHMxLjkyLTMuODQsMy45MS0zLjg0LDMuOTIsMS42OCwzLjkyLDMuODQtMS43Niw0LTMuOTIsNE0xMTcuODQsNTguOThoLjUyYzIuMjQsMCwzLjM0LDAsMy4zNC0yLjY0di0yMS42NmMwLTMuNTItMS4yLTMuOTktNC4xNi01LjU5di0xLjI4YzMuNzYtMS4xMiw4LjIzLTIuNjQsOC41NS0yLjg4LjU2LS4zMiwxLjA0LS40LDEuNDQtLjRzLjU2LjQ4LjU2LDEuMTJ2MzAuNjhjMCwyLjY0LDEuMjYsMi42NCwzLjUsMi42NGguMzZ2Mi4wOGMtMi43MiwwLTQuMDItLjE2LTYuOS0uMTZzLTQuMjYuMDgtNy4yMS4xNnYtMi4wOFpNMTE2LjM5LDUzLjk0Yy0zLjkyLDQuNTYtOS4yNyw4LjMxLTE1LjU4LDguMzEtOC4zMSwwLTE1LjkxLTguMDctMTUuOTEtMTYuNTQsMC0xMS41OSw4LjMxLTIxLjE4LDE5LjgyLTIxLjE4LDQuMDgsMCwxMC43OSwxLjI4LDEwLjc5LDUuNTEsMCwxLjg0LTEuMTIsMy41Mi0zLjA0LDMuNTItMy4zNiwwLTMuMi02LjQ3LTEwLjcxLTYuNDctNi44NywwLTEwLjk3LDguMTctMTAuOTcsMTQuMjUsMCw4LjIzLDUuMjcsMTUuNSwxMy45OCwxNS41LDQuMDgsMCw3LjIxLTEuOTQsMTAuMjUtNC4yNWwxLjM2LDEuMzVaTTY4LjgyLDI5LjA1bC03Ljc1LDEuNXYyNi41MWMwLDEuOTIsMS41LDEuOTIsMy4yNiwxLjkyaDEuMDh2Mi4wOGMtMS45Mi0uMDgtMy43OC0uMTYtNy4yMS0uMTZzLTUuMTMuMDgtOC4wMS4xNnYtMi4wOGgxLjY0YzIuOTYsMCwyLjg1LTEuMzYsMi44NS0yLjU2di0yNS44N2gtNS41OXYtMS4zNmMxLjI4LS43Miw1LjU5LTIuNCw1LjU5LTUuMTlDNTQuNjcsOS43Nyw2MS41OS4wNiw3My4zNSwwYzQuOTYtLjAyLDkuMjEsMi41OCw5LjIxLDYuNzQsMCwyLjg4LTEuNiwzLjc1LTMuNDQsMy43NS01LjU5LDAtLjQxLTcuMzEtOC42My03LjIxLTkuODMuMTEtOS4xOSw4LjU1LTkuNDMsMjIuNDZoNy43NXYzLjMyWk00OC4yNiw1Ni41OGMtLjcyLjg4LTEuOTIsMS4zNi0yLjk2LDEuMzYtMS43NiwwLTIuODgtMS4yOC0yLjg4LTQuNTZ2LTIyLjE0YzAtNC40LTYuMTUtNi43MS05Ljc1LTYuNzEtMy4wNCwwLTQuNCwxLjEyLTcuMTksMi41Ni01LjU5LDIuODgtOS4xOSw0Ljg4LTkuMTksOS4xMSwwLC41Ni4yNCwxLjYsMS40NCwxLjYsMS45MiwwLDQuNDctMS4xMiw0LjQ3LTMuMzYuMTYtMy41OSwyLjU2LTUuNTksNi4wNy01LjU5LDUuMTIsMCw3Ljc1LDIuMzksNy43NSw2Ljg3djUuMjhjLTE3LjI2LDUuOTEtMjAuNTQsNy4xMS0yMC44NiwxMy41LDAsNC4yNCwzLjUyLDcuNzUsOC42Myw3Ljc1czguNTUtMi40OCwxMi4zLTUuOTFjLjE2LDIuODgsMS42OCw1LjkxLDQuOTYsNS45MXM1LjY3LTIuMjQsNy45MS00LjMxbC0uNzItMS4zNlpNMzYuMDMsNTMuODZjLTIuNjQsMi4zMi01LjAzLDQuNjMtOC43OSw0LjYzLTMuMTEsMC01LjY3LTIuNjQtNS42Ny01Ljc1LDAtNiwxMC4zOS03LjgzLDE0LjQ3LTkuNDN2MTAuNTVaIi8+Cjwvc3ZnPg==","cj":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMzMuMjEgMTczLjI2Ij4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBmaWxsOiAjY2IyMDI2OwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KICA8Zz4KICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTEwMC4xMyw1Ni4zOWMtOC4yMiwwLTE2LjMyLDMuODctMjQuMzEsMTEuNjItOCw3Ljc0LTExLjk5LDE1LjU2LTExLjk5LDIzLjQ0LDAsNC40MSwxLjgyLDYuNjEsNS40Niw2LjYxLDMuOTcsMCw1Ljk1LTIuMDQsNS45NS02LjEyLDAtMy4wMy0xLjM5LTQuNTUtNC4xOC00LjU1LTEuMjYsMC0yLjYyLjY2LTQuMSwxLjk4LS4xNi4xNy0uMzguMjgtLjY2LjMzLS4zMywwLS40OS0uMjgtLjQ5LS44MywwLTYuMjgsMy45NS0xMy4wNSwxMS44NC0yMC4zLDcuODktNy4yNSwxNS4yOS0xMC44NywyMi4xNi0xMC44Nyw0LjI5LDAsNy43MywxLjI3LDEwLjMyLDMuOCwyLjU5LDIuNTQsMy44OCw1Ljk1LDMuODgsMTAuMjUsMCw4LjE2LTMuNzIsMTYuNzktMTEuMTYsMjUuODgtMTIuMjksMTUuMDUtMjYuMjksMjIuNTctNDIsMjIuNTctOC4zMywwLTE0LjktMi4yNi0xOS43Mi02Ljc4LTQuODItNC41Mi03LjI0LTEwLjY3LTcuMjQtMTguNDQsMC0xMS40MSw0LjQxLTIzLjI2LDEzLjIzLTM1LjU1LDEuMS4xMSwyLjQuMTYsMy44OC4xNiwxMC42NCwwLDIyLjg0LTIuMTYsMzYuNTktNi40OSwxMy43NS00LjMzLDI0LjYzLTkuNDcsMzIuNjItMTUuNDIsMy44Niw1LjY4LDUuNzksMTEuMjcsNS43OSwxNi43OCwwLDEuODIuMzMsMi43My45OSwyLjczLjgzLDAsMS4yNC0uNjksMS4yNC0yLjA3LDAtNS42Mi0yLjI2LTExLjc3LTYuNzgtMTguNDQsNC45Ni0zLjg2LDcuNDQtNy41OCw3LjQ0LTExLjE2LDAtNS40LTUuNDktOC4xLTE2LjQ1LTguMS0zLjQyLDAtNi43Ni4zMy0xMC4wMS45OUM4My41OSw2LjE1LDY0LjkzLDAsNDYuNDcsMGMtMTMuMjMsMC0yNC4yOCwyLjg5LTMzLjE2LDguNjhDNC40NCwxNC40NywwLDIxLjY2LDAsMzAuMjZjMCwxNC40NCwxMS45MywyMy44NywzNS44LDI4LjI4LTYuNTYsOS44Ny05Ljg0LDE5LjQ5LTkuODQsMjguODZzMy4zMiwxNy43NSw5Ljk2LDI0LjMxYzYuNjQsNi41NiwxNC44NCw5Ljg0LDI0LjYsOS44NCwxNCwwLDI2Ljc1LTQuOTUsMzguMjQtMTQuODQsMTEuNDktOS44OSwxNy4yNC0yMC44NSwxNy4yNC0zMi44N3MtNS4yOS0xNy40NS0xNS44OC0xNy40NVpNMTE0LjM1LDE4Ljc3YzguODIsMCwxMy4yMywyLjI2LDEzLjIzLDYuNzgsMCwyLjkyLTIuMjYsNi4zMS02Ljc4LDEwLjE3LTQuMy02LjAxLTkuNzMtMTEuMjctMTYuMjktMTUuNzksMy44LS43Nyw3LjA4LTEuMTYsOS44NC0xLjE2Wk0xMTkuNTYsMzYuNTVjLTguMTYsNi4wMS0xOS4yMiwxMS4xMi0zMy4yLDE1LjM0LTEzLjk3LDQuMjEtMjYuNzIsNi4zMi0zOC4yNCw2LjMyLDYuMjgtOC43NiwxNC4zMy0xNi41OCwyNC4xNC0yMy40NCw5LjgxLTYuODYsMTkuODctMTEuNywzMC4xOC0xNC41MSw3LjE3LDQuNzQsMTIuODcsMTAuMTcsMTcuMTIsMTYuMjlaTTIuODksMzEuODRjMC03LjM5LDQuMzctMTMuODQsMTMuMTEtMTkuMzUsOC43My01LjUxLDE4Ljk1LTguMjcsMzAuNjMtOC4yNywxOC45MSwwLDM2Ljc0LDQuODUsNTMuNSwxNC41NS0yOC41Niw2LjQtNDkuNzgsMTkuMjctNjMuNjcsMzguNjJDMTQuMDgsNTMuNTIsMi44OSw0NS4wMSwyLjg5LDMxLjg0WiIvPgogICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM2LjExLDY1Ljc3YzEuOCwwLDMuNDYtLjg0LDQuOTgtMi41MiwxLjUyLTEuNjgsMi4yOC0zLjQ4LDIuMjgtNS40LDAtMi4zNi0xLjExLTMuNTUtMy4zMi0zLjU1LTEuNzUsMC0zLjQyLjg0LTUuMDIsMi41Mi0xLjYsMS42OC0yLjM5LDMuNDItMi4zOSw1LjI0LDAsMi40OCwxLjE2LDMuNzEsMy40NywzLjcxWiIvPgogICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjc4LjgzLDkxLjQ3Yy0uMjYsMC0uOS42MS0xLjk0LDEuODItNC43NCw3LjEyLTkuMTMsMTAuNjgtMTMuMTUsMTAuNjgtMy4yNSwwLTQuODctMi4zMS00Ljg3LTYuOTMsMC0xLjY1LjM2LTMuNzQsMS4wOC02LjI3bC45My0uODNjMi4yNi0xLjQ4LDMuOTYtMi42MSw1LjEtMy4zOCw3LjE1LTQuODksMTAuNzMtOC42NiwxMC43My0xMS4zLDAtMS40OC0uOC0yLjIzLTIuMzktMi4yMy0yLjMyLDAtNC45MywxLjY1LTcuODMsNC45NS0yLjkxLDMuMy01LjM0LDcuNC03LjMsMTIuMjktMi40MiwyLjA5LTQuOTcsNC43OC03LjY0LDguMDgsNC4yMi02Ljk4LDYuMzMtMTIuNTksNi4zMy0xNi44MywwLTUuNjYtMi4wNi04LjUtNi4xOS04LjUtMi44MywwLTguMjIsNS42NS0xNi4xNiwxNi45NWwtMS4yOCwyLjAxYy0uMTUuMTctLjM3LjQ0LS40Mi43MiwwLC4wNy4wNy4wNy4wOC4xMy0uMTkuMTktLjM5LjQ0LS42Ljc5LTcuNTgsMTEuODUtMTYuMTMsMjQuODUtMTkuMDIsMjQuODUtLjk0LDAtMi4zNi0xLjA2LTIuOTQtMi4yNi0uMTEtLjQ3LS4xOC0uOTktLjE4LTEuNiwwLTIuNjksMi4zNy04LjI3LDcuMS0xNi43NWwxMy42Ni0yNC4xN2MtMi4yMS4zOC00LjAxLjU4LTUuNC41OC0xLjE5LDAtMi41NS0uMTktNC4wOS0uNThsLTMuOTQsOGMuNDEtMS41NC42Mi0yLjc4LjYyLTMuNzEsMC0zLjMtMS42LTQuOTUtNC43OS00Ljk1LTMuNzYsMC04LjcsMS44Mi0xNC44Miw1LjQ1LTEzLjk0LDguMTMtMjAuOTIsMTcuNDgtMjAuOTIsMjguMDMtMS4wNSwxLjEyLTIuMDcsMi4xNi0zLjA2LDMuMDgtNC4wNCwzLjc5LTkuNDMsNy43Mi0xNi4xNywxMS43OGwxOS4xNS0zNS4zMWM0LjE3LTcuNzUsNi40NC0xMS44OCw2Ljc5LTEyLjM3LTIuNTguMzgtNC41My41OC01Ljg3LjU4LTEuMDMsMC0yLjI0LS4xOS0zLjYzLS41OGwtNC4zMiw4LjMzYy40Ni0xLjM3LjY5LTIuNTYuNjktMy41NSwwLTMuNjMtMS41NC01LjQ1LTQuNjMtNS40NS00LjQzLDAtMTAuNTMsMi41OS0xOC4zLDcuNzYtMTEuNjMsNy43NS0xNy40NSwxNi4zOS0xNy40NSwyNS45LDAsLjQ3LjA2LjkxLjA5LDEuMzctNS42Niw2Ljk0LTkuOTQsMTAuNDMtMTIuODMsMTAuNDMtMi40MiwwLTMuNjMtMS4yNC0zLjYzLTMuNzFzMS4yNi01Ljg2LDMuNzgtMTAuMzFsMTcuNTItMzAuNzdjLTIuNTIuMzgtNC40Ny41OC01Ljg3LjU4LS45MiwwLTIuMTktLjE5LTMuNzgtLjU4bC0xMi4wNCwyMS44NmMtMy41NSw2LjQ5LTUuMzMsMTEuMzMtNS4zMywxNC41MiwwLDIuNzUuODEsNS4wNSwyLjQzLDYuODksMS42MywxLjg0LDMuNjUsMi43Nyw2LjA3LDIuNzcsMy41MSwwLDguMTItMy40OCwxMy43OS0xMC4yNy4zNywyLjQ1LDEuMjMsNC42MiwyLjYxLDYuNDcsMS44OCwyLjUzLDQuMTYsMy44LDYuODMsMy44LDIuNDcsMCw0Ljg4LTEuMTcsNy4yMi0zLjUxLDIuMzQtMi4zNCw2LjM3LTcuNTUsMTIuMDgtMTUuNjNsLTEzLjEyLDI1LjgyYy0xLjQ5Ljg4LTQuODEsMi41OS05Ljk2LDUuMTItMjMuODMsMTEuNi0zNS43NCwyMy4wNC0zNS43NCwzNC4zMSwwLDIuMDkuNzIsMy44NSwyLjE2LDUuMjgsMS40NCwxLjQzLDMuMjcsMi4xNCw1LjQ4LDIuMTQsNi4wNywwLDEzLjI4LTMuNiwyMS42Mi0xMC44MSw4LjctNy40OCwxNi41NS0xOC4xMiwyMy41NS0zMS45MmwzLjg2LTcuNTFjNy44Ny00LjU4LDE0LjUzLTkuNjksMjAuMDgtMTUuMjguMTgsMy4yNCwxLjA2LDYuMDEsMi43LDguMjMsMS44NSwyLjUsNC4xNSwzLjc2LDYuODcsMy43NiwyLjU4LDAsNS4yMi0xLjM1LDcuOTUtNC4wNCwyLjczLTIuNyw2LjY3LTcuODksMTEuODItMTUuNTktMS42NSwzLjQ3LTIuNDcsNi42OC0yLjQ3LDkuNjVzLjc1LDUuMjQsMi4yNCw3LjE0YzEuNDksMS45LDMuNDIsMi44NSw1LjgsMi44NXYtLjAycy4wNywwLC4xLDBjMi44MywwLDExLjUzLTEyLjczLDE5LjQ3LTI0LjAzbDEuMjgtMi4wMWMuMTYtLjE3LjM3LS40NC40Mi0uNzIsMC0uMDctLjA3LS4wNy0uMDgtLjEzLjE5LS4xOS4zOS0uNDQuNi0uNzksNy41OC0xMS44NSwxMi44Mi0xNy43NywxNS43MS0xNy43NywxLjE5LDAsMS43OC43NywxLjc4LDIuMzEsMCwyLjY0LTMuMTcsOS40Ni05LjUsMjAuNDZsLTEyLjY2LDIxLjk0YzIuOTMtLjIyLDQuNS0uMzMsNC43MS0uMzMuNDcsMCwyLjA2LjExLDQuNzkuMzMsNC45OS05LjEzLDguNS0xNS4xOCwxMC41NC0xOC4xNSwyLjAzLTIuOTcsNC42Ny01Ljk3LDcuOTEtOC45OS0uNjIsMi4zNi0uOTMsNC4zMi0uOTMsNS44NSwwLDQuODQsMS45Niw3LjI2LDUuODgsNy4yNiwzLjQ1LDAsNy4xNC0yLjMyLDExLjA2LTYuOTUsMy4xLTMuNTksNC42NC01LjYsNC42NC02LjA0LDAtLjMzLS4xNi0uNS0uNDYtLjVaTTE1Ny41OCwxMDMuOGMtNy4yNiw5Ljc5LTEyLjQxLDE0LjY4LTE1LjQ0LDE0LjY4cy00LjQ4LTEuODQtNC40OC01LjUzYzAtNi4wNSwzLjgyLTE0LjAxLDExLjQ3LTIzLjg4LDcuNjQtOS44NywxMy43OC0xNC44MSwxOC40MS0xNC44MSwyLjUyLDAsMy43OCwxLjQsMy43OCw0LjIxLDAsNC41MS00LjU4LDEyLjk1LTEzLjc0LDI1LjMyWk0xNDUuOTIsMTI5LjQ1Yy04LjA4LDE2LTE0LjgsMjcuMS0yMC4xNSwzMy4yOS01LjM1LDYuMTktMTAuODYsOS4yOC0xNi41Miw5LjI4LTEuODUsMC0zLjM3LS41OC00LjU2LTEuNzMtMS4xOC0xLjE2LTEuNzgtMi41OS0xLjc4LTQuMjksMC05LjksMTEuNzMtMjEuMDYsMzUuMjEtMzMuNDksNC44NC0yLjUzLDcuNzQtNC4wOSw4LjcyLTQuN2wtLjkzLDEuNjVaTTIwNy4yMyw5OS41OWMtOC43NSwxMi41OS0xNC45LDE4Ljg5LTE4LjQ2LDE4Ljg5LTIuOTksMC00LjQ4LTEuNzgtNC40OC01LjM2LDAtNi4xLDMuODUtMTQuMTEsMTEuNTQtMjQuMDEsNy42OS05LjksMTMuOTEtMTQuODUsMTguNjUtMTQuODUsMi4zMiwwLDMuNDcsMS4zNSwzLjQ3LDQuMDQsMCwzLjg1LTMuNTgsMTAuOTQtMTAuNzMsMjEuMjhaIi8+CiAgPC9nPgogIDxnPgogICAgPHBhdGggZD0iTTI1OS4wMywxMTUuNDhjMCw0LjE0LTIuNTYsNS40OS02LjgxLDUuNDktMi43MSwwLTQuODUtLjcyLTYuMzQtMS45MWwxLjE3LTEuNDhjMS4xNy44NywyLjY3LDEuNjEsNS4yMiwxLjYxLDMuMDksMCw0LjU4LS43LDQuNTgtMy43NXYtNy45NWgyLjE5djcuOTlaIi8+CiAgICA8cGF0aCBkPSJNMjY3Ljk0LDEyMC45N2MtNC4xOCwwLTcuMDgtMS45NS03LjA4LTUuMDNzMi45NC01LjAyLDcuMDgtNS4wMiw3LjA0LDEuOTksNy4wNCw1LTIuODQsNS4wNS03LjA0LDUuMDVaTTI2Ny45MiwxMTkuMzJjMy4yMiwwLDQuOTQtMS4xOSw0Ljk0LTMuMzdzLTEuNzItMy4zOS00Ljk0LTMuMzktNC45NCwxLjIxLTQuOTQsMy4zNywxLjcyLDMuMzksNC45NCwzLjM5WiIvPgogICAgPHBhdGggZD0iTTI4OS4xNSwxMjAuNzJoLTIuMDF2LTEuMjdjLTEuNDYuNzQtMy40MywxLjUzLTYuMDQsMS41M3MtNC4zNy0xLjE1LTQuMzctNC4yMnYtNS41NWgyLjA1djUuNmMwLDEuOTUuOTYsMi40LDIuODYsMi40LDIuMjUsMCwzLjY3LS40Miw1LjQ1LTEuMTd2LTYuODJoMi4wNnY5LjUyWiIvPgogICAgPHBhdGggZD0iTTI5My44OSwxMTQuMTF2Ni42MWgtMi4wNnYtOS41MmgyLjAydjEuNTNjMS4xNC0uOTEsMy4wOS0xLjc0LDYuMzYtMS43NHYxLjg5Yy0zLjA1LS4xNy00LjkyLjM0LTYuMzIsMS4yM1oiLz4KICAgIDxwYXRoIGQ9Ik0zMDEuOTIsMTExLjJoMi4wMnYxLjM4YzEuNDYtLjc4LDMuNS0xLjY1LDYuMjctMS42NSwyLjUyLDAsNC4xNCwxLjE1LDQuMTQsNC4yMnY1LjU4aC0yLjA2di01LjYyYzAtMS44Ny0uODktMi40NC0yLjYzLTIuNDQtMi40MiwwLTMuOS41My01LjY4LDEuMzF2Ni43NGgtMi4wNnYtOS41MloiLz4KICAgIDxwYXRoIGQ9Ik0zMjMsMTEwLjkzYzMuNDMsMCw1LjQ3LDEuMDIsNS40Nyw0LjEzdjIuNzRjMCwxLjU1LjE1LDIuMzcuNDcsMi44MnYuMTFoLTIuMDZjLS4xMi0uMjEtLjIzLS42NC0uMzItMS4xNS0uOTkuNTctMi44MiwxLjQtNS44MywxLjQtMi40OCwwLTQuNzMtLjUzLTQuNzMtMi45MSwwLTIuODYsMy45Mi0zLjA1LDEwLjM5LTMuMzUtLjExLTEuNjUtMS4xNy0yLjA4LTMuNzktMi4wOC0xLjgsMC0zLjU4LjI4LTUuMjguNjZsLS4zLTEuNjFjMS40OC0uMzYsMy4zNS0uNzYsNS45OC0uNzZaTTMyNi40MiwxMTYuMTZjLTYuOC4zNi04LjMzLjU5LTguMzMsMS45MywwLC45OSwxLjA0LDEuMjksMi42OSwxLjI5LDIuODgsMCw0LjU2LS42OCw1LjY0LTEuMjV2LTEuOTdaIi8+CiAgICA8cGF0aCBkPSJNMzMxLjE1LDEwNy41MWgyLjA2djEzLjIxaC0yLjA2di0xMy4yMVoiLz4KICA8L2c+Cjwvc3ZnPg==","consensus":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNzMuMjMgMzguMTUiPgogIDxwYXRoIGQ9Ik0xNC44MywyMC40N0g1LjU3Yy0uMDcsMC0uMTMuMDYtLjEzLjEzaDB2MTcuNDNjMCwuMDctLjA2LjEzLS4xMy4xM0guMTNjLS4wNywwLS4xMy0uMDYtLjEzLS4xM1YuMTNDMCwuMDYuMDYsMCwuMTMsMGg1LjE5Yy4wNywwLC4xMy4wNi4xMy4xM3YxNi4wNWMwLC4wNy4wNi4xMy4xMy4xM2g5LjI3Yy4wNywwLC4xMy0uMDYuMTMtLjEzVi4xM0MxNC45Ni4wNiwxNS4wMSwwLDE1LjA4LDBoNS4xOWMuMDcsMCwuMTMuMDYuMTMuMTN2MzcuODljMCwuMDctLjA2LjEzLS4xMy4xM2gtNS4xOWMtLjA3LDAtLjEzLS4wNi0uMTMtLjEzdi0xNy40M2MwLS4wNy0uMDYtLjEzLS4xMy0uMTNaIi8+CiAgPHBhdGggZD0iTTI5Ljc2LDM4LjE0aC01LjJjLS4wNywwLS4xMy0uMDYtLjEzLS4xMywwLDAsMC0uMDIsMC0uMDNMMzIuNTIuMTVjLjAxLS4wNi4wNy0uMTEuMTMtLjExaDUuMjhjLjA2LDAsLjEyLjA0LjEzLjExbDguMDgsMzcuODNjLjAyLjA3LS4wMy4xNC0uMS4xNiwwLDAtLjAyLDAtLjAzLDBoLTUuMmMtLjA2LDAtLjEyLS4wNC0uMTMtLjExbC0xLjk5LTkuMzRjLS4wMS0uMDYtLjA3LS4xMS0uMTMtLjExaC02LjU0Yy0uMDYsMC0uMTIuMDQtLjEzLjExbC0xLjk5LDkuMzRjLS4wMS4wNi0uMDcuMTEtLjEzLjExWk0zNS4yOSwyNC41M2MuOSwwLDEuNzktLjAyLDIuNjYtLjA3LTEuNy0xMC41Ny0yLjU5LTE1Ljg2LTIuNjctMTUuODZzLS45Niw1LjI5LTIuNjYsMTUuODZjLjg3LjA1LDEuNzYuMDcsMi42Ny4wN1oiLz4KICA8cGF0aCBkPSJNNTAuMjYsMzguMDJWLjEyYzAtLjA2LjA1LS4xMi4xMi0uMTJoNS4yYy4wNiwwLC4xMi4wNS4xMi4xMmgwdjMzLjc5YzAsLjA2LjA1LjEyLjEyLjEyaDkuMzFjLjA2LDAsLjEyLjA1LjEyLjEyaDB2My44N2MwLC4wNi0uMDUuMTItLjEyLjEyaC0xNC43NWMtLjA2LDAtLjEyLS4wNS0uMTItLjEyaDBaIi8+CiAgPHBhdGggZD0iTTg0LjIxLjEzdjMuODJjMCwuMDctLjA1LjEyLS4xMi4xMmgtOS4zYy0uMDcsMC0uMTIuMDUtLjEyLjEydjEyLjA0YzAsLjA3LjA1LjEyLjEyLjEyaDYuNTVjLjA3LDAsLjEyLjA1LjEyLjEydjMuODNjMCwuMDctLjA1LjEyLS4xMi4xMmgtNi41NWMtLjA3LDAtLjEyLjA1LS4xMi4xMnYxNy40OWMwLC4wNy0uMDUuMTItLjEyLjEyaC01LjE4Yy0uMDcsMC0uMTItLjA1LS4xMi0uMTJWLjEzYzAtLjA3LjA1LS4xMi4xMi0uMTJoMTQuNzNjLjA3LDAsLjEyLjA1LjEyLjEyaDBaIi8+CiAgPHBhdGggZD0iTTEwMy4yOCwwYy45NiwwLDEuODYuMDIsMi43Mi4wNiwxLjY4LDEwLjE5LDMuMDIsMTkuNTIsNC4wMiwyNy45OCwwLC4wMi4wMy4wNC4wNS4wMy4wMSwwLC4wMi0uMDEuMDMtLjAzLDEuMDctOC44LDIuNDItMTguMTQsNC4wNi0yOC4wNWg1LjQ0bC02Ljc5LDM4LjE0aC01LjQzYy0xLjYzLTkuODgtMi45OS0xOS4yNi00LjA3LTI4LjE0LDAtLjAxLS4wMS0uMDItLjAzLS4wMi0uMDEsMC0uMDMsMC0uMDMuMDItMS4wOCw4Ljg4LTIuNDQsMTguMjctNC4wNywyOC4xNGgtNS40M0w4Ni45NywwaDUuNDRjMS42Myw5LjksMi45OCwxOS4yNSw0LjA1LDI4LjA1LDAsLjAyLjAzLjA0LjA1LjAzLjAxLDAsLjAyLS4wMS4wMy0uMDMsMS04LjQ2LDIuMzQtMTcuNzksNC4wMi0yNy45OC44NS0uMDQsMS43Ni0uMDYsMi43Mi0uMDZaIi8+CiAgPHBhdGggZD0iTTEyOC45NCwzOC4xNGgtNS4xOWMtLjA3LDAtLjEzLS4wNi0uMTMtLjEzVi4xM2MwLS4wNy4wNi0uMTMuMTMtLjEzaDUuMTljLjA3LDAsLjEzLjA2LjEzLjEzdjE2LjA1YzAsLjA3LjA2LjEzLjEzLjEzaDkuMjZjLjA3LDAsLjEzLS4wNi4xMy0uMTNoMFYuMTNjMC0uMDcuMDYtLjEzLjEzLS4xM2g1LjE5Yy4wNywwLC4xMy4wNi4xMy4xM2gwdjM3Ljg4YzAsLjA3LS4wNi4xMy0uMTMuMTNoLTUuMTljLS4wNywwLS4xMy0uMDYtLjEzLS4xM2gwdi0xNy40M2MwLS4wNy0uMDYtLjEzLS4xMy0uMTNoLTkuMjZjLS4wNywwLS4xMy4wNi0uMTMuMTNoMHYxNy40MmMwLC4wNy0uMDYuMTMtLjEzLjEzWiIvPgogIDxwYXRoIGQ9Ik0xNDkuNTIsMGgxNC43MWMuMDcsMCwuMTMuMDYuMTMuMTNoMHYzLjgxYzAsLjA3LS4wNi4xMy0uMTMuMTNoLTkuMjhjLS4wNywwLS4xMy4wNi0uMTMuMTN2MTIuMDNjMCwuMDcuMDYuMTMuMTMuMTNoNi41M2MuMDcsMCwuMTMuMDUuMTMuMTJ2My44MmMwLC4wNy0uMDYuMTMtLjEzLjEzaC02LjUzYy0uMDcsMC0uMTMuMDYtLjEzLjEzdjEzLjM3YzAsLjA3LjA2LjEzLjEzLjEzaDkuMjhjLjA3LDAsLjEzLjA2LjEzLjEzaDB2My44NWMwLC4wNy0uMDYuMTMtLjEzLjEzaC0xNC43MWMtLjA3LDAtLjEzLS4wNS0uMTMtLjEyaDBWLjEzYzAtLjA3LjA2LS4xMy4xMy0uMTNoMFoiLz4KICA8cGF0aCBkPSJNMTY4LjYyLDBoMTQuNzJjLjA3LDAsLjEzLjA2LjEzLjEzaDB2My44MWMwLC4wNy0uMDYuMTMtLjEzLjEzaC05LjI5Yy0uMDcsMC0uMTMuMDYtLjEzLjEzdjEyLjAzYzAsLjA3LjA2LjEzLjEzLjEzaDYuNTRjLjA3LDAsLjEzLjA2LjEzLjEzaDB2My44MmMwLC4wNy0uMDYuMTMtLjEzLjEzaC02LjU0Yy0uMDcsMC0uMTMuMDYtLjEzLjEzdjEzLjM3YzAsLjA3LjA2LjEzLjEzLjEzaDkuMjljLjA3LDAsLjEzLjA2LjEzLjEzaDB2My44NWMwLC4wNy0uMDYuMTMtLjEzLjEzaC0xNC43MmMtLjA3LDAtLjEzLS4wNi0uMTMtLjEzaDBWLjEzYzAtLjA3LjA2LS4xMy4xMy0uMTNoMFoiLz4KICA8cGF0aCBkPSJNMTg3LjQ2LDM4LjAyVi4xM2MwLS4wNi4wNS0uMTIuMTItLjEyaDUuMmMuMDYsMCwuMTIuMDUuMTIuMTJoMHYzMy43OWMwLC4wNi4wNS4xMi4xMi4xMmg5LjMxYy4wNiwwLC4xMi4wNS4xMi4xMnYzLjg3YzAsLjA2LS4wNS4xMi0uMTIuMTJoLTE0Ljc1Yy0uMDYsMC0uMTItLjA1LS4xMi0uMTJaIi8+CiAgPHBhdGggZD0iTTI0MC44NiwxLjUxYzE4LjQ2LDAsMzIuODksMTUuMjcsMzIuMzYsMzMuNTItMS4xNiwwLTIuMzcsMC0zLjc0LjAxLS4wOS0uMjctLjA5LS4zOS0uMTUtLjU0bC0yNC41NC42M2MtMS4xLDEuMzEtMi40MSwxLjk2LTMuOTIsMS45NnMtMi44My0uNjUtMy45Mi0xLjk2bC0yNC41NC0uNjJjLS4wNi4xNS0uMDYuMjgtLjE1LjU0LTEuMzctLjAxLTIuNTgsMC0zLjc0LS4wMS0uNTQtMTguMjUsMTMuOS0zMy41MywzMi4zNS0zMy41M1pNMjMzLjI2LDUuNzFjLTEuNi40My0zLjI1LDEuMDMtNC45NywxLjc5LS44Mi4zNi0xLjA3LjcxLTEsMS42LDMuODcsNi4zMyw3LjY3LDEyLjU2LDExLjQ2LDE4Ljc2LjE0LjAzLjI5LjAzLjQ1LS4wMS4xNS0uMDQuMjgtLjExLjM5LS4yMS4xOC03LjI2LjM3LTE0LjU1LjU1LTIxLjk3LS4zOS0uOC0uNzgtLjk4LTEuNjctLjg4LTEuODcuMTktMy42LjUtNS4yLjkzWk0yNDguMzMsNS42N2MtMS42LS40My0zLjMzLS43NC01LjIxLS45My0uODktLjA5LTEuMjguMDktMS42Ny44OS4xOSw3LjQyLjM4LDE0LjczLjU2LDIyLC4xMS4xLjI0LjE3LjM5LjIxLjE1LjA0LjMuMDUuNDUuMDEsMy43OC02LjIxLDcuNTktMTIuNDQsMTEuNDYtMTguNzguMDYtLjg5LS4xOS0xLjI0LTEtMS42LTEuNzItLjc3LTMuMzgtMS4zNi00Ljk4LTEuNzlaTTIzNi44LDI5Ljg2Yy4xLS4xLjEyLS4yNS4wNS0uMzhsLTEwLjU3LTE5LjQ4Yy0uMjktLjUzLS45Ni0uNzMtMS41LS40NC0uMDIuMDEtLjA1LjAzLS4wNy4wNC0xLjU3LDEuMDEtMy4wNywyLjIzLTQuNDksMy42NS0xLjQyLDEuNDItMi42NCwyLjkxLTMuNjYsNC40OC0uMzMuNTEtLjE5LDEuMTkuMzIsMS41My4wMi4wMi4wNS4wMy4wOC4wNWwxOS40NiwxMC42MWMuMTIuMDcuMjguMDUuMzgtLjA1Wk0yNDQuODIsMjkuODJjLjEuMS4yNS4xMi4zOC4wNWwxOS40OS0xMC42MmMuNTQtLjI5LjczLS45Ny40NC0xLjUtLjAxLS4wMi0uMDMtLjA1LS4wNC0uMDctMS4wMi0xLjU3LTIuMjQtMy4wNy0zLjY3LTQuNDktMS40Mi0xLjQyLTIuOTItMi42NC00LjQ5LTMuNjYtLjUxLS4zMy0xLjItLjE4LTEuNTMuMzMtLjAyLjAyLS4wMy4wNS0uMDQuMDdsLTEwLjU5LDE5LjVjLS4wNy4xMi0uMDUuMjguMDUuMzhaTTIzNi4xMiwzMi41OWwtMTkuNzctMTIuMWMtLjU0LS4zMy0xLjI1LS4xNi0xLjU4LjM4LS4wMS4wMi0uMDIuMDQtLjAzLjA1LS44MiwxLjUyLTEuNSwzLjMxLTIuMDYsNS4zOC0uNTYsMi4wNy0uODYsMy45Ny0uOTEsNS42OS0uMDIuNjQuNDgsMS4xNywxLjEyLDEuMTguMDIsMCwuMDQsMCwuMDYsMGwyMy4xNy0uNTlaTTI0NS40OCwzMi41OWwyMy4yOC41OWMuNjQuMDIsMS4xNy0uNDksMS4xOC0xLjEzLDAtLjAyLDAtLjA0LDAtLjA2LS4wNS0xLjczLS4zNi0zLjYzLS45Mi01LjcxLS41Ni0yLjA4LTEuMjUtMy44OC0yLjA3LTUuNDEtLjMtLjU2LTEuMDEtLjc3LTEuNTctLjQ3LS4wMiwwLS4wNC4wMi0uMDUuMDNsLTE5Ljg1LDEyLjE2Wk0yNDIuMDYsMzIuMjNjMC0uNy0uNTctMS4yNy0xLjI3LTEuMjctLjcsMC0xLjI3LjU3LTEuMjcsMS4yN3MuNTcsMS4yNywxLjI3LDEuMjdjLjcsMCwxLjI3LS41NywxLjI3LTEuMjdaIi8+Cjwvc3ZnPg=="};
   </script>
   <script>
+/* All-field search over accepted publication awards. No inventory-only rows. */
+(function(root,factory){
+  const api=factory();
+  if(typeof module==='object' && module.exports)module.exports=api;
+  if(root)root.CigarosPublicationSearch=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(){
+  'use strict';
+  function normalize(value){
+    return String(value??'').normalize('NFKD').replace(/\p{M}/gu,'').toLowerCase()
+      .replace(/[’'`]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ');
+  }
+  function values(value){
+    if(value==null)return [];
+    if(Array.isArray(value))return value.flatMap(values);
+    if(typeof value==='object')return Object.entries(value).filter(([key])=>!key.startsWith('__')).flatMap(([,item])=>values(item));
+    return [String(value)];
+  }
+  function numericKey(value){
+    if(value.includes('/') || !value.includes('.'))return value;
+    const [whole,fraction]=value.split('.');
+    const tail=fraction.replace(/0+$/,'');
+    return (whole||'0')+(tail?'.'+tail:'');
+  }
+  function numericTokens(value){
+    return (String(value??'').normalize('NFKC').match(/(?:\d+(?:\.\d+)?|\.\d+)(?:\/\d+)?/g)||[]).map(numericKey);
+  }
+  function identity(entry){
+    const row=entry.record;
+    const key=String(row.key||row.cigar_id||row.id||row.row_id||'').trim();
+    return key?'key:'+key:'row:'+(row.__publicationHubRowNumber||row.__hubSheetRow||entry.sourceOrder);
+  }
+  function build(lists,publishers,records=[]){
+    const groups=new Map(),publisherMap=new Map(publishers.map(p=>[p.id,p.name]));
+    for(const list of lists){
+      // Winner views duplicate the annual entries and are deliberately excluded.
+      if(list.kind!=='annual' && !/:\d{4}$/.test(list.id))continue;
+      for(const entry of list.entries||[]){
+        if(!entry.record || !publisherMap.has(entry.publisherId))continue;
+        const key=identity(entry);
+        if(!groups.has(key))groups.set(key,{id:key,record:entry.record,awards:[],raw:[],seen:new Set()});
+        const group=groups.get(key);
+        if(group.seen.has(entry.id))continue;
+        group.seen.add(entry.id);group.awards.push(entry);
+        // Every original Hub column value is a keyword, including new columns.
+        group.raw.push(...values(entry.record),publisherMap.get(entry.publisherId),String(entry.year),entry.rankLabel);
+      }
+    }
+    // Same-key Hub rows may carry details omitted on an award's original row.
+    // Enrich keywords only; never infer awards by name or add inventory results.
+    for(const row of records){
+      if(!row || typeof row!=='object')continue;
+      const key=String(row.key||row.cigar_id||row.id||row.row_id||'').trim();
+      const group=key && groups.get('key:'+key);
+      if(group)group.raw.push(...values(row));
+    }
+    return [...groups.values()].map(group=>{
+      group.awards.sort((a,b)=>b.year-a.year||a.rank-b.rank||a.publisherId.localeCompare(b.publisherId));
+      const fields=[...new Set(group.raw.map(normalize).filter(Boolean))];
+      const numbers=new Set(group.raw.flatMap(numericTokens));
+      return {id:group.id,record:group.record,awards:group.awards,fields,compact:fields.map(field=>field.replace(/ /g,'')),numbers};
+    }).sort((a,b)=>b.awards[0].year-a.awards[0].year||a.awards[0].rank-b.awards[0].rank||
+      String(a.record.__publishedName||'').localeCompare(String(b.record.__publishedName||'')));
+  }
+  function search(index,query){
+    const parts=String(query??'').trim().split(/\s+/).filter(Boolean);
+    const terms=parts.flatMap(part=>{
+      const numeric=part.normalize('NFKC').replace(/^[#"'‘’“”([{]+|[)"'‘’“”\]},;:!?]+$/g,'').replace(/\.$/,'');
+      return /^(?:\d+(?:\.\d+)?|\.\d+)(?:\/\d+)?$/.test(numeric)
+        ? [{number:numericKey(numeric)}] : normalize(part).split(' ').filter(Boolean).map(text=>({text}));
+    });
+    if(!terms.length)return [];
+    return index.filter(item=>terms.every(term=>term.number?item.numbers.has(term.number):
+      item.fields.some(field=>field.includes(term.text))||item.compact.some(field=>field.includes(term.text))));
+  }
+  return Object.freeze({normalize,build,search});
+});
+
+  </script>
+  <script>
+/* Native Lists dialog sizing only. It does not own navigation or dismissal. */
+(function (root) {
+  'use strict';
+
+  function attach(dialog, {handle, heading, body}) {
+    if (!dialog?.open || !handle || !heading || !body) return () => {};
+    let disposed = false;
+    let snap = 'tall';
+    let drag = null;
+    let frame = 0;
+    let suppressClickUntil = 0;
+    const cleanups = [];
+    const page = document.body;
+    const scrollX = root.scrollX, scrollY = root.scrollY;
+    const pageProperties = ['position', 'top', 'left', 'width', 'overflow'];
+    const savedPageStyle = pageProperties.map(name => [name, page.style.getPropertyValue(name), page.style.getPropertyPriority(name)]);
+    const savedDialogStyle = ['--cps-sheet-top', '--cps-sheet-height', '--cps-available-height'].map(name => [name, dialog.style.getPropertyValue(name), dialog.style.getPropertyPriority(name)]);
+    const handleAttributes = ['role', 'tabindex', 'aria-hidden', 'aria-label', 'aria-pressed', 'title', 'data-cps-key'];
+    const savedHandleAttributes = handleAttributes.map(name => [name, handle.getAttribute(name)]);
+    // Fixed-body locking covers iOS Safari, where overflow:hidden alone can
+    // still let the document behind a modal drift when the keyboard opens.
+    page.style.position = 'fixed';
+    page.style.top = -scrollY + 'px';
+    page.style.left = -scrollX + 'px';
+    page.style.width = '100%';
+    page.style.overflow = 'hidden';
+
+    handle.removeAttribute('aria-hidden');
+    handle.setAttribute('role', 'button');
+    handle.tabIndex = 0;
+    handle.dataset.cpsKey = 'sheet-height';
+    dialog.classList.add('cps-resizable');
+
+    function on(target, type, listener, options) {
+      target.addEventListener(type, listener, options);
+      cleanups.push(() => target.removeEventListener(type, listener, options));
+    }
+    function geometry() {
+      const viewport = root.visualViewport;
+      const height = viewport?.height || root.innerHeight;
+      const offset = viewport?.offsetTop || 0;
+      // Computed padding resolves env(safe-area-inset-top) to a pixel length.
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px)';
+      dialog.append(probe);
+      const safeTop = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+      probe.remove();
+      const full = Math.max(1, height - safeTop - 8);
+      return {height, offset, full, tall: full * .85};
+    }
+    function paint(height, bounds = geometry()) {
+      const next = Math.max(1, Math.min(height, bounds.full));
+      dialog.style.setProperty('--cps-sheet-height', next + 'px');
+      dialog.style.setProperty('--cps-sheet-top', (bounds.offset + bounds.height - next) + 'px');
+      dialog.style.setProperty('--cps-available-height', bounds.full + 'px');
+    }
+    function setSnap(value) {
+      snap = value === 'full' ? 'full' : 'tall';
+      dialog.dataset.sheetSnap = snap;
+      const expanded = snap === 'full';
+      handle.setAttribute('aria-pressed', String(expanded));
+      handle.setAttribute('aria-label', expanded ? 'Reduce Lists sheet height' : 'Expand Lists sheet to full height');
+      handle.title = expanded ? 'Drag down or tap to reduce height' : 'Drag up or tap to expand';
+      const bounds = geometry();
+      paint(bounds[snap], bounds);
+    }
+    function cancelDrag() {
+      if (!drag) return;
+      const previous = drag;
+      drag = null;
+      try { previous.surface.releasePointerCapture(previous.id); } catch { /* already released */ }
+      dialog.classList.remove('cps-is-resizing');
+    }
+    function viewportChanged() {
+      if (disposed) return;
+      cancelDrag();
+      dialog.classList.add('cps-viewport-resizing');
+      setSnap(snap);
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        if (!disposed) dialog.classList.remove('cps-viewport-resizing');
+      });
+    }
+    function start(event) {
+      if (drag || !event.isPrimary || event.button !== 0) return;
+      if (event.currentTarget === heading && event.target.closest('button,a,input,select,textarea,[role="button"]')) return;
+      const bounds = geometry();
+      drag = {id:event.pointerId, surface:event.currentTarget, start:event.clientY,
+        height:dialog.getBoundingClientRect().height, bounds, moved:false, delta:0, snap};
+      try { drag.surface.setPointerCapture(event.pointerId); } catch { /* browser will still deliver local events */ }
+    }
+    function move(event) {
+      if (!drag || drag.id !== event.pointerId) return;
+      const delta = drag.start - event.clientY;
+      if (!drag.moved && Math.abs(delta) < 5) return;
+      drag.moved = true;
+      drag.delta = delta;
+      event.preventDefault();
+      dialog.classList.add('cps-is-resizing');
+      paint(Math.max(drag.bounds.tall, Math.min(drag.bounds.full, drag.height + delta)), drag.bounds);
+    }
+    function finish(event) {
+      if (!drag || drag.id !== event.pointerId) return;
+      const current = drag;
+      const height = dialog.getBoundingClientRect().height;
+      if (current.moved) suppressClickUntil = Date.now() + 350;
+      cancelDrag();
+      if (!current.moved) return;
+      setSnap(Math.abs(current.delta) >= 24 ? current.delta > 0 ? 'full' : 'tall'
+        : height >= (current.bounds.full + current.bounds.tall) / 2 ? 'full' : 'tall');
+    }
+    function canceled(event) {
+      if (!drag || drag.id !== event.pointerId) return;
+      const original = drag.snap;
+      if (drag.moved) suppressClickUntil = Date.now() + 350;
+      cancelDrag();
+      setSnap(original);
+    }
+    for (const surface of [handle, heading]) {
+      on(surface, 'pointerdown', start);
+      on(surface, 'pointermove', move);
+      on(surface, 'pointerup', finish);
+      on(surface, 'pointercancel', canceled);
+      on(surface, 'lostpointercapture', canceled);
+    }
+    on(handle, 'click', event => {
+      if (Date.now() < suppressClickUntil) { event.preventDefault(); return; }
+      setSnap(snap === 'full' ? 'tall' : 'full');
+    });
+    on(handle, 'keydown', event => {
+      let next;
+      if (event.key === 'ArrowUp' || event.key === 'Home') next = 'full';
+      else if (event.key === 'ArrowDown' || event.key === 'End') next = 'tall';
+      else if (event.key === 'Enter' || event.key === ' ') next = snap === 'full' ? 'tall' : 'full';
+      else return;
+      event.preventDefault();
+      setSnap(next);
+    });
+    on(dialog, 'focusin', event => {
+      if (event.target.matches('input:not([type=button]):not([type=submit]),textarea')) setSnap('full');
+    });
+    on(root, 'resize', viewportChanged);
+    if (root.visualViewport) {
+      on(root.visualViewport, 'resize', viewportChanged);
+      on(root.visualViewport, 'scroll', viewportChanged);
+    }
+    // The host should call cleanup synchronously before restoring opener focus
+    // or replacing a dialog. This close hook is an additional safety net.
+    on(dialog, 'close', cleanup);
+    setSnap('tall');
+
+    function cleanup() {
+      if (disposed) return;
+      disposed = true;
+      cancelAnimationFrame(frame);
+      cancelDrag();
+      cleanups.forEach(dispose => dispose());
+      for (const [name, value, priority] of savedPageStyle) {
+        if (value) page.style.setProperty(name, value, priority);
+        else page.style.removeProperty(name);
+      }
+      for (const [name, value, priority] of savedDialogStyle) {
+        if (value) dialog.style.setProperty(name, value, priority);
+        else dialog.style.removeProperty(name);
+      }
+      for (const [name, value] of savedHandleAttributes) {
+        if (value === null) handle.removeAttribute(name);
+        else handle.setAttribute(name, value);
+      }
+      dialog.classList.remove('cps-resizable', 'cps-is-resizing', 'cps-viewport-resizing');
+      delete dialog.dataset.sheetSnap;
+      root.scrollTo({left:scrollX, top:scrollY, behavior:'instant'});
+    }
+    return cleanup;
+  }
+  root.CigarosSheetHeight = Object.freeze({attach});
+})(window);
+
+  </script>
+  <script>
 /* Lists quick switcher. Receives current data; never reads or writes storage. */
 (function (root) {
   'use strict';
@@ -1976,6 +2332,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
   let nextId = 0;
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const paths = {
+    search: ['M21 21 16.5 16.5', 'M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0'],
     close: ['M18 6 6 18', 'm6 6 12 12'],
     back: ['m15 18-6-6 6-6'],
     next: ['m9 18 6-6-6-6'],
@@ -2108,6 +2465,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
     let publisherId = selectedList?.publisherId || (publisherMap.has(initialPublisher) ? initialPublisher : null);
     let pendingAction = null;
     let disposed = false;
+    let cleanupSheetHeight = null;
     let backdropStart = false;
     let publisherButtons = new Map();
     const tabButtons = new Map();
@@ -2188,7 +2546,121 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
       container.append(notice);
     }
 
+    // Search is local to this open sheet. It never changes collection selection.
+    let searchQuery = '', searchIndex = [], indexedLists = null, indexedRecords = null, searchTimer = null;
+    let searchInput, searchOutput, searchMenu, searchClear, searchStatus;
+    function rebuildSearchIndex(){
+      if(indexedLists===options.lists && indexedRecords===options.searchRecords)return;
+      indexedLists=options.lists;indexedRecords=options.searchRecords;
+      searchIndex=root.CigarosPublicationSearch.build([...listMap.values()],[...publisherMap.values()],options.searchRecords||[]);
+    }
+    function cancelSearch(){clearTimeout(searchTimer);searchTimer=null;}
+    function createSearchCard(result){
+      const record=result.record, card=element('a','cps-search-card');
+      // The host's existing POS link builder is the only destination source.
+      const href=typeof options.searchResultHref==='function'?options.searchResultHref(record):'';
+      let destination;
+      try{destination=new URL(href,location.href);}catch{}
+      if(!destination || destination.origin!==location.origin || destination.pathname!=='/pos/cigars/cigar.html'){
+        card.removeAttribute('href');
+      }else card.href=destination.pathname+destination.search;
+      const name=record.__publishedName || [record.brand,record.line,record.cigar,record.vitola].filter(Boolean).join(' ');
+      card.setAttribute('aria-label','View cigar details: '+name);
+      const photo=element('div','cps-search-photo');photo.setAttribute('aria-hidden','true');
+      const rawPhoto=String(record.cigar_img||'').trim();
+      let photoUrl;
+      try{const url=new URL(rawPhoto,location.href);if(rawPhoto && ['http:','https:'].includes(url.protocol))photoUrl=url.href;}catch{}
+      if(photoUrl){
+        const img=element('img');img.alt='';img.loading='lazy';img.decoding='async';
+        img.addEventListener('load',()=>{
+          if(!card.isConnected || typeof options.searchPhotoArt!=='function')return;
+          try{photo.replaceChildren(options.searchPhotoArt(img,record));}catch{/* The raw image is still usable. */}
+        },{once:true});
+        img.addEventListener('error',()=>{photo.textContent='Photo unavailable';},{once:true});
+        img.src=photoUrl;photo.append(img);
+      }else photo.textContent='Photo unavailable';
+      card.append(photo,element('h3','',name));
+      const specs=[record.vitola,record.shape,record.length?record.length+' in':null,record.ring?'Ring '+record.ring:null,record.wrapper,record.origin];
+      card.append(element('p','cps-search-specs',[...new Set(specs.filter(Boolean))].join(' · ')));
+      const awards=element('ul','cps-search-awards');awards.setAttribute('aria-label','Media rankings');
+      for(const award of result.awards){
+        const publisher=publisherMap.get(award.publisherId);
+        awards.append(element('li','',publisher.name+' · '+award.year+' · '+award.rankLabel));
+      }
+      card.append(awards,element('span','cps-search-details','View cigar details →'));
+      return card;
+    }
+    function renderSearch(resetScroll=true){
+      cancelSearch();
+      if(!searchOutput)return;
+      const activeQuery=!!searchQuery.trim();
+      searchClear.hidden=!searchQuery;
+      searchMenu.hidden=activeQuery;
+      searchOutput.hidden=!activeQuery;
+      searchOutput.replaceChildren();
+      if(resetScroll)body.scrollTop=0;
+      if(!activeQuery)return;
+      searchStatus=element('p','cps-search-status');
+      searchStatus.setAttribute('role','status');searchStatus.setAttribute('aria-live','polite');searchStatus.setAttribute('aria-atomic','true');
+      searchOutput.append(searchStatus);
+      searchOutput.setAttribute('aria-busy',String(!!options.loading));
+      if(options.loading){searchStatus.textContent='Loading rankings from all three publications…';return;}
+      if(options.error){
+        searchStatus.textContent='Rankings could not be loaded. Check your connection and try again.';
+        const retry=button('cps-search-retry',null,()=>{if(typeof options.onRetry==='function')options.onRetry();},'search:retry');
+        retry.textContent='Try again';searchOutput.append(retry);return;
+      }
+      rebuildSearchIndex();
+      const matches=root.CigarosPublicationSearch.search(searchIndex,searchQuery);
+      if(!matches.length){searchStatus.textContent='No ranked cigars match “'+searchQuery.trim()+'”. Try fewer words or another Hub detail.';return;}
+      const count=matches.length,results=element('ul','cps-search-results');
+      results.id=prefix+'-results-list';results.setAttribute('aria-label','Combined media ranking results');
+      searchOutput.append(results);
+      let shown=0;
+      const more=button('cps-search-more',null,()=>appendBatch(true),'search:more');
+      more.setAttribute('aria-controls',results.id);
+      function appendBatch(moveFocus){
+        const start=shown;shown=Math.min(shown+30,count);
+        const fragment=document.createDocumentFragment();
+        for(let i=start;i<shown;i++){const item=element('li');item.append(createSearchCard(matches[i]));fragment.append(item);}
+        results.append(fragment);
+        searchStatus.textContent=count+' ranked '+(count===1?'cigar':'cigars')+' · All publications and years'+(shown<count?' · Showing '+shown:'');
+        more.hidden=shown>=count;
+        more.textContent='Show more ('+(count-shown)+' remaining)';
+        if(moveFocus)results.children[start]?.querySelector('a')?.focus({preventScroll:true});
+      }
+      appendBatch(false);searchOutput.append(more);
+    }
+    function addSearch(panel){
+      const search=element('form','cps-search');search.setAttribute('role','search');search.setAttribute('aria-label','Search media rankings');
+      const label=element('label','cps-search-label','Search all media rankings');
+      searchInput=element('input','cps-search-input');searchInput.id=prefix+'-search';label.htmlFor=searchInput.id;
+      searchInput.type='search';searchInput.enterKeyHint='search';searchInput.autocomplete='off';searchInput.spellcheck=false;
+      searchInput.placeholder='Brand, wrapper, size, year…';searchInput.value=searchQuery;searchInput.dataset.cpsKey='search:input';
+      const box=element('div','cps-search-box');box.append(icon('search'),searchInput);
+      searchClear=button('cps-search-clear','Clear media ranking search',()=>{
+        searchQuery='';searchInput.value='';renderSearch();searchInput.focus({preventScroll:true});
+      },'search:clear');searchClear.append(icon('close'));box.append(searchClear);
+      const help=element('p','cps-search-help','All three publications · Every year · Any Hub detail');help.id=prefix+'-search-help';
+      searchInput.setAttribute('aria-describedby',help.id);searchInput.setAttribute('aria-controls',prefix+'-search-output');
+      search.append(label,box,help);panel.append(search);
+      searchOutput=element('div','cps-search-output');searchOutput.id=prefix+'-search-output';panel.append(searchOutput);
+      searchMenu=element('div','cps-publisher-menu');panel.append(searchMenu);
+      let composing=false;
+      const queue=()=>{searchQuery=searchInput.value;cancelSearch();if(!composing)searchTimer=setTimeout(()=>renderSearch(),120);};
+      searchInput.addEventListener('compositionstart',()=>{composing=true;cancelSearch();});
+      searchInput.addEventListener('compositionend',()=>{composing=false;queue();});
+      searchInput.addEventListener('input',queue);
+      searchInput.addEventListener('keydown',event=>{
+        if(event.key==='Escape' && searchInput.value){event.preventDefault();event.stopPropagation();searchQuery='';searchInput.value='';renderSearch();}
+      });
+      search.addEventListener('submit',event=>{event.preventDefault();if(!composing){searchQuery=searchInput.value;renderSearch();searchInput.blur();}});
+      renderSearch(false);
+      return searchMenu;
+    }
+
     function renderPublishers(panel) {
+      panel = addSearch(panel);
       publisherButtons = new Map();
       loadingNotice(panel);
       for (const publisher of publisherMap.values()) {
@@ -2207,6 +2679,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         panel.append(row);
         publisherButtons.set(publisher.id, row);
       }
+      if(options.error){const note=element('p','cps-empty','Rankings could not be loaded. Check your connection and try again.');panel.append(note);const retry=button('cps-search-retry',null,()=>options.onRetry?.(),'menu:retry');retry.textContent='Try again';panel.append(retry);}
       if (!publisherMap.size && !options.loading) panel.append(element('p', 'cps-empty', 'Published rankings are not available yet.'));
     }
 
@@ -2341,6 +2814,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         const focused = document.activeElement;
         const wasInside = dialog.contains(focused);
         const focusKey = wasInside ? focused.dataset?.cpsKey : null;
+        const selection = focusKey==='search:input' ? [focused.selectionStart,focused.selectionEnd] : null;
         const scrollTop = body.scrollTop;
         Object.assign(options, partialOptions);
         readOptions();
@@ -2350,11 +2824,14 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
           const matching = focusKey && [...dialog.querySelectorAll('[data-cps-key]')]
             .find(node => node.dataset.cpsKey === focusKey && !node.closest('[hidden]'));
           (matching || (publisherId ? back : tabButtons.get(tab))).focus({preventScroll:true});
+          if(selection && matching){try{matching.setSelectionRange(...selection);}catch{}}
         }
         body.scrollTop = scrollTop;
         return true;
       },
       replace() {
+        cancelSearch();
+        cleanupSheetHeight?.();
         disposed = true;
         pendingAction = null;
         if (dialog.open) dialog.close();
@@ -2363,6 +2840,8 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
       }
     };
     dialog.addEventListener('close', () => {
+      cancelSearch();
+      cleanupSheetHeight?.();
       if (disposed) return;
       disposed = true;
       const restore = active === session;
@@ -2385,6 +2864,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
     active = session;
     try {
       dialog.showModal();
+      cleanupSheetHeight = root.CigarosSheetHeight.attach(dialog,{handle,heading,body});
       (publisherId ? back : tabButtons.get(tab)).focus({preventScroll:true});
     } catch (error) {
       session.replace();
@@ -4181,7 +4661,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
       function fetchFavoriteCatalog(){
         if(state.catalogLoaded) return Promise.resolve(null);
         if(pendingCatalog) return pendingCatalog;
-        window.CigarosPublicationSwitcher?.refresh?.({loading:true});
+        window.CigarosPublicationSwitcher?.refresh?.({loading:true,error:false});
         pendingCatalog = (async () => {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 45000);
@@ -4197,7 +4677,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
             rebuildPublicationLists(rows);
             state.catalogLoaded = true;
             return null;
-          }catch(error){ publicationCatalogFailed=true;window.CigarosPublicationSwitcher?.refresh?.({loading:false});return error; }
+          }catch(error){ publicationCatalogFailed=true;window.CigarosPublicationSwitcher?.refresh?.({loading:false,error:true});return error; }
           finally{ clearTimeout(timeout); }
         })().finally(() => { pendingCatalog = null; });
         return pendingCatalog;
@@ -4219,7 +4699,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         publicationCatalog=publicationAPI.build(rows);
         publicationCatalogFailed=false;
         syncLists();
-        window.CigarosPublicationSwitcher?.refresh?.({lists:publicationCatalog.lists,loading:false});
+        window.CigarosPublicationSwitcher?.refresh?.({lists:publicationCatalog.lists,searchRecords:rows,loading:false,error:false});
       }
       function activePublicationList(){
         return publicationCatalog.lists.find(list=>list.id===selectedPublication) || null;
@@ -4328,6 +4808,8 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         window.CigarosPublicationSwitcher.open({
           publishers:(publicationAPI?.publishers || []).map(cfg=>({...cfg,logo:window.CigarosPublicationLogos?.[cfg.id] || cfg.logo})),
           lists:publicationCatalog.lists,loading:!state.catalogLoaded && !publicationCatalogFailed,selectedPublication,selectedPersonal:selectedList,personalLists,
+          searchRecords:state.records, error:publicationCatalogFailed, onRetry:()=>fetchFavoriteCatalog(),
+          searchResultHref:makeDetailHref, searchPhotoArt:(img,record)=>makePhotoArt(img,record,null,true),
           onSelect:selectCollection,
           onCreate:async()=>{try{const name=await window.CigarosFavoriteLists.create();if(name)selectCollection({publication:null,personal:name});}catch(error){showToast(error.message);}}
         });
