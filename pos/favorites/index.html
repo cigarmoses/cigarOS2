@@ -1231,13 +1231,12 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
 
 /* Combined Media Rankings search; scoped to the existing Lists sheet. */
 .cigaros-publication-switcher .cps-search { margin: 4px 0 15px; }
-.cigaros-publication-switcher .cps-search-label { display:block; margin:0 0 7px; font-size:13px; font-weight:700; }
+.cigaros-publication-switcher .cps-search-label { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); clip-path:inset(50%); white-space:nowrap; border:0; }
 .cigaros-publication-switcher .cps-search-box { display:flex; align-items:center; gap:8px; border:1px solid var(--stroke); border-radius:16px; padding:2px 4px 2px 13px; background:var(--cps-soft); box-shadow:inset 0 1px 0 #ffffff24; }
 .cigaros-publication-switcher .cps-search-box:focus-within { outline:2px solid var(--cps-link); outline-offset:2px; }
 .cigaros-publication-switcher .cps-search-box > svg { width:19px; height:19px; flex-basis:19px; color:var(--muted); }
 .cigaros-publication-switcher .cps-search-input { flex:1; min-width:0; min-height:44px; width:100%; border:0; outline:0; padding:8px 0; color:inherit; background:transparent; font:inherit; font-size:16px; appearance:none; }
 .cigaros-publication-switcher .cps-search-input::-webkit-search-cancel-button { appearance:none; }
-.cigaros-publication-switcher .cps-search-help { margin-top:8px; color:var(--muted); font-size:12px; line-height:1.45; }
 .cigaros-publication-switcher .cps-search-status { color:var(--muted); font-size:13px; margin:0 0 12px; }
 .cigaros-publication-switcher .cps-search-results { display:grid; gap:12px; margin:0; padding:0; list-style:none; }
 .cigaros-publication-switcher .cps-search-card { position:relative; display:block; min-width:0; padding:14px; border:1px solid var(--stroke); border-radius:20px; background:var(--cps-soft); box-shadow:0 5px 16px #102b4607,inset 0 1px 0 #ffffff24; color:inherit; text-decoration:none; overflow-wrap:anywhere; }
@@ -1331,7 +1330,6 @@ html[data-theme="dark"] .cigaros-publication-switcher .cps-logo {
 .cigaros-publication-switcher .cps-search-filter-label { min-width:0; font-size:12px; font-weight:700; line-height:1.3; overflow-wrap:anywhere; }
 .cigaros-publication-switcher .cps-search-filter-count { flex:0 0 auto; font-size:21px; font-weight:800; line-height:1.1; font-variant-numeric:tabular-nums; }
 .cigaros-publication-switcher .cps-search-filter[aria-pressed="true"] { background:var(--cps-active); color:var(--cps-active-ink); border-color:transparent; box-shadow:0 3px 9px #0002; }
-.cigaros-publication-switcher .cps-search-count-note { margin:0 0 12px; color:var(--muted); font-size:11px; line-height:1.4; }
 @media(hover:hover){.cigaros-publication-switcher .cps-search-filter:not([aria-pressed="true"]):hover{background:var(--cps-current)}}
 @media(forced-colors:active){.cigaros-publication-switcher .cps-search-filter[aria-pressed="true"]{outline:2px solid Highlight;outline-offset:-3px}}
 
@@ -2163,14 +2161,24 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
       for(const id of new Set(item.awards.map(award=>award.publisherId))){if(ids.has(id))counts[id]++;}
       const awards=item.awards.filter(award=>selected==='all'||award.publisherId===selected).sort(compareAward);
       if(!awards.length)continue;
-      results.push({...item,awards,bestRank:Number(awards[0].rank)});
+      // Awards are rank ASC / year DESC, so this year belongs to the best rank,
+      // never a newer but lower-ranked accolade on the same cigar.
+      results.push({...item,awards,bestRank:Number(awards[0].rank),bestYear:Number(awards[0].year)});
     }
-    results.sort((a,b)=>a.bestRank-b.bestRank||compareText(a.record.brand,b.record.brand)||
-      compareText(nameOf(a),nameOf(b))||Number(b.awards[0].year)-Number(a.awards[0].year)||
+    results.sort((a,b)=>a.bestRank-b.bestRank||b.bestYear-a.bestYear||
+      compareText(a.record.brand,b.record.brand)||compareText(nameOf(a),nameOf(b))||
       String(a.id).localeCompare(String(b.id)));
     return {results,counts,filter:selected};
   }
-  return Object.freeze({normalize,build,search,rankResults});
+  function formatSize(record){
+    const dimension=value=>{
+      const text=String(value??'').trim();
+      return /^(?:n\/a|na|none|null|undefined|unknown|[—–-]+|0(?:\.0+)?)$/i.test(text)?'':text;
+    };
+    const ring=dimension(record.ring),length=dimension(record.length);
+    return ring&&length?ring+' x '+length:ring?'Ring '+ring:length?'Length '+length:'';
+  }
+  return Object.freeze({normalize,build,search,rankResults,formatSize});
 });
 
   </script>
@@ -2613,7 +2621,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         img.src=photoUrl;photo.append(img);
       }else photo.textContent='Photo unavailable';
       card.append(photo,element('h3','',name));
-      const specs=[record.vitola,record.shape,record.length?record.length+' in':null,record.ring?'Ring '+record.ring:null,record.wrapper,record.origin];
+      const specs=[record.vitola,record.shape,root.CigarosPublicationSearch.formatSize(record),record.wrapper,record.origin];
       card.append(element('p','cps-search-specs',[...new Set(specs.filter(Boolean))].join(' · ')));
       const awards=element('ul','cps-search-awards');awards.setAttribute('aria-label','Media rankings');
       for(const award of result.awards){
@@ -2663,8 +2671,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         control.append(element('span','cps-search-filter-label',label),element('strong','cps-search-filter-count',String(count)));
         filters.append(control);
       }
-      const note=element('p','cps-search-count-note','A cigar can count toward more than one publication.');
-      searchOutput.prepend(filters,note);
+      searchOutput.prepend(filters);
       const matches=view.results;
       if(!matches.length){
         searchStatus.textContent=baseMatches.length
@@ -2673,7 +2680,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         return;
       }
       const count=matches.length,results=element('ul','cps-search-results');
-      results.id=prefix+'-results-list';results.setAttribute('aria-label','Ranked cigar results, by rank then brand');
+      results.id=prefix+'-results-list';results.setAttribute('aria-label','Ranked cigar results, by rank then newest year then brand');
       searchOutput.append(results);
       let shown=0;
       const more=button('cps-search-more',null,()=>appendBatch(true),'search:more');
@@ -2684,7 +2691,7 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         for(let i=start;i<shown;i++){const item=element('li');item.append(createSearchCard(matches[i]));fragment.append(item);}
         results.append(fragment);
         const scope=searchPublication==='all'?'All publications':publisherMap.get(searchPublication).name;
-        searchStatus.textContent=count+' ranked '+(count===1?'cigar':'cigars')+' · '+scope+' · Rank, then brand A–Z'+(shown<count?' · Showing '+shown:'');
+        searchStatus.textContent=count+' ranked '+(count===1?'cigar':'cigars')+' · '+scope+(shown<count?' · Showing '+shown:'');
         more.hidden=shown>=count;
         more.textContent='Show more ('+(count-shown)+' remaining)';
         if(moveFocus)results.children[start]?.querySelector('a')?.focus({preventScroll:true});
@@ -2701,9 +2708,8 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
       searchClear=button('cps-search-clear','Clear media ranking search',()=>{
         searchQuery='';searchInput.value='';renderSearch();searchInput.focus({preventScroll:true});
       },'search:clear');searchClear.append(icon('close'));box.append(searchClear);
-      const help=element('p','cps-search-help','All three publications · Every year · Any Hub detail');help.id=prefix+'-search-help';
-      searchInput.setAttribute('aria-describedby',help.id);searchInput.setAttribute('aria-controls',prefix+'-search-output');
-      search.append(label,box,help);panel.append(search);
+      searchInput.setAttribute('aria-controls',prefix+'-search-output');
+      search.append(label,box);panel.append(search);
       searchOutput=element('div','cps-search-output');searchOutput.id=prefix+'-search-output';panel.append(searchOutput);
       searchMenu=element('div','cps-publisher-menu');panel.append(searchMenu);
       let composing=false;
