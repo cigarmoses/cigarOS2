@@ -4622,14 +4622,30 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
       }
 
       // Recover text ranks (for example T-19) omitted by the typed whole-sheet feed.
-      async function recoverPublicationRanks(rows, {sheetUrl, signal} = {}) {
+      async function recoverPublicationRanks(rows, {sheetUrl, signal, headers} = {}) {
         if (!Array.isArray(rows)) throw new TypeError('Hub rows must be an array.');
         const recovered = rows.map(row => ({...row}));
         const present = value => value != null && String(value).trim() !== '';
+        // Resolve physical rank columns from this response's headers. HUB columns
+        // can move when fields are inserted; old fixed letters silently lost ties.
+        const headerKeys = Array.isArray(headers) ? headers.map(normalizeHeader) : [];
+        const columnFor = field => {
+          const index = headerKeys.indexOf(field);
+          if (index < 0 || headerKeys.lastIndexOf(field) !== index) {
+            throw new Error(`A unique HUB header is required to recover ${field}.`);
+          }
+          let number = index + 1, column = '';
+          while (number > 0) {
+            number--;
+            column = String.fromCharCode(65 + number % 26) + column;
+            number = Math.floor(number / 26);
+          }
+          return column;
+        };
         const pairs = [
-          ['hw_consensus_year', 'hw_consensus_rank', 'BA'],
-          ['cigar_aficionado_top_25_year', 'cigar_aficionado_top_25_rank', 'BG'],
-          ['cigar_journal_top_25_year', 'cigar_journal_top_25_rank', 'BN']
+          ['hw_consensus_year', 'hw_consensus_rank'],
+          ['cigar_aficionado_top_25_year', 'cigar_aficionado_top_25_rank'],
+          ['cigar_journal_top_25_year', 'cigar_journal_top_25_rank']
         ];
         const controller = new AbortController();
         const forwardAbort = () => controller.abort(signal.reason);
@@ -4643,8 +4659,10 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
         try {
           checkAbort();
           const jobs = [];
-          for (const [yearField, rankField, column] of pairs) {
+          for (const [yearField, rankField] of pairs) {
             const candidates = recovered.filter(row => present(row[yearField]) && !present(row[rankField]));
+            if (!candidates.length) continue;
+            const column = columnFor(rankField);
             for (const row of candidates) {
               if (!Number.isInteger(row.__hubSheetRow) || row.__hubSheetRow < 2) {
                 throw new Error('A physical Hub row number is required to recover its rank.');
@@ -4734,11 +4752,12 @@ window.CigarosPublicationLogos={"ca":"data:image/svg+xml;base64,PD94bWwgdmVyc2lv
           try{
             const res = await fetch(SHEET_CSV_URL, {cache:"no-store", signal:controller.signal});
             if(!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
-            let rows = mapRows(parseCSV(await res.text()));
+            const csv = parseCSV(await res.text());
+            let rows = mapRows(csv);
             if(!rows.length || !rows.some(row => resolveBrandVal(row) && resolveName(row))){
               throw new Error("The HUB did not return a readable cigar catalog.");
             }
-            rows = await recoverPublicationRanks(rows, {sheetUrl:SHEET_CSV_URL,signal:controller.signal});
+            rows = await recoverPublicationRanks(rows, {sheetUrl:SHEET_CSV_URL,signal:controller.signal,headers:csv[0]});
             state.records = rows;
             rebuildPublicationLists(rows);
             state.catalogLoaded = true;
