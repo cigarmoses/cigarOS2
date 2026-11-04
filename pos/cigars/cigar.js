@@ -1127,6 +1127,59 @@
     void refreshPortfolioImage(activeRecord, view);
   }
 
+  // Fit the complete name, rather than clamping/cropping the second line.
+  // Reset to the CSS size each time so short names and wider screens grow back.
+  let titleResizeObserver = null;
+  let titleFitFrame = 0;
+  function fitCigarTitle() {
+    const title = $(".cd-name", card);
+    if (!title || !title.isConnected || title.clientWidth <= 0) return;
+    title.style.removeProperty("font-size");
+    const maxSize = parseFloat(getComputedStyle(title).fontSize);
+    if (!Number.isFinite(maxSize) || maxSize <= 0) return;
+    function fitsTwoLines() {
+      const style = getComputedStyle(title);
+      const lineHeight = parseFloat(style.lineHeight);
+      const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+      return title.getBoundingClientRect().height <= lineHeight * 2 + padding + 0.5
+        && title.scrollWidth <= title.clientWidth + 1;
+    }
+    if (fitsTwoLines()) return;
+    let low = 1, high = maxSize;
+    for (let i = 0; i < 12; i++) {
+      const size = (low + high) / 2;
+      title.style.fontSize = `${size}px`;
+      if (fitsTwoLines()) low = size;
+      else high = size;
+    }
+    // Round down so pixel rounding cannot add an unwanted third line.
+    title.style.fontSize = `${Math.floor(low * 10) / 10}px`;
+  }
+  function scheduleCigarTitleFit() {
+    cancelAnimationFrame(titleFitFrame);
+    titleFitFrame = requestAnimationFrame(fitCigarTitle);
+  }
+  function watchCigarTitle() {
+    titleResizeObserver?.disconnect();
+    fitCigarTitle();
+    const copy = $(".cd-head-copy", card);
+    if (!copy || typeof ResizeObserver === "undefined") return;
+    let previousWidth = copy.getBoundingClientRect().width;
+    titleResizeObserver = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width || 0;
+      // Ignore height changes caused by fitting the name itself.
+      if (Math.abs(width - previousWidth) < 0.1) return;
+      previousWidth = width;
+      scheduleCigarTitleFit();
+    });
+    titleResizeObserver.observe(copy);
+  }
+  window.addEventListener("resize", scheduleCigarTitleFit, {passive:true});
+  if (document.fonts) {
+    document.fonts.ready.then(scheduleCigarTitleFit);
+    document.fonts.addEventListener?.("loadingdone", scheduleCigarTitleFit);
+  }
+
   let favoriteUnsubscribe = () => {};
   let pageShowUnsubscribe = () => {};
   function render(records,rec) {
@@ -1174,6 +1227,7 @@
           </div>
         </div>
       </div>`;
+    watchCigarTitle();
     const compareSet=readSet(COMPARE_KEY),favoriteBtn=$("#cdFavorite"),compareBtn=$("#cdCompare"),wishlistBtn=$("#cdWishlist"),editBtn=$("#cdEdit");
     let savingFavorite=false;
     function makeFavoritePayload() {
