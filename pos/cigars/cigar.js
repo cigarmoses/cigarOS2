@@ -918,14 +918,40 @@
     document.head.appendChild(style);
   }
 
+  let bottomDockObserver = null;
+  function measureBottomDock() {
+    const dock = document.getElementById("cdBottomDock");
+    if (!dock) return;
+    // Include real button/text sizing, rather than assuming a toolbar height.
+    const height = Math.ceil(dock.getBoundingClientRect().height);
+    rootEl.style.setProperty("--cd-bottom-dock-height", `${height}px`);
+  }
   function positionPortfolioControls() {
     if (!portfolioControls || !card) return;
-    const tobacco = $(".cd-tobaccos", card);
-    // Reuse the same buttons after every render, preserving their click listeners.
-    if (tobacco && tobacco.nextElementSibling !== portfolioControls) {
-      tobacco.insertAdjacentElement("afterend", portfolioControls);
+    let dock = document.getElementById("cdBottomDock");
+    if (!dock) {
+      dock = document.createElement("div");
+      dock.id = "cdBottomDock";
+      dock.className = "cd-bottom-dock";
+      // Keep fixed controls outside the card's swipe transform and inert state.
+      document.body.appendChild(dock);
+      if (typeof ResizeObserver !== "undefined") {
+        bottomDockObserver = new ResizeObserver(measureBottomDock);
+        bottomDockObserver.observe(dock);
+      }
     }
+    // Reuse arrow buttons and their listeners across every cigar render.
+    if (portfolioControls.parentElement !== dock) dock.prepend(portfolioControls);
+    const actions = $(".cd-actions", card);
+    if (actions) {
+      $(".cd-actions", dock)?.remove();
+      dock.appendChild(actions);
+    }
+    const currentActions = $(".cd-actions", dock);
+    if (currentActions) currentActions.inert = portfolioBusy;
+    measureBottomDock();
   }
+  window.addEventListener("resize", measureBottomDock, {passive:true});
 
   function updatePortfolioControls(announce = false) {
     if (!portfolioControls) return;
@@ -1227,6 +1253,7 @@
           </div>
         </div>
       </div>`;
+    positionPortfolioControls();
     watchCigarTitle();
     const compareSet=readSet(COMPARE_KEY),favoriteBtn=$("#cdFavorite"),compareBtn=$("#cdCompare"),wishlistBtn=$("#cdWishlist"),editBtn=$("#cdEdit");
     let savingFavorite=false;
@@ -1241,7 +1268,7 @@
     function favoriteMessage(message) {
       if (!favoriteBtn?.isConnected) return;
       let notice=$("#cdFavoriteStatus");
-      if(!notice){notice=document.createElement("div");notice.id="cdFavoriteStatus";notice.setAttribute("role","alert");notice.style.cssText="position:fixed;bottom:100px;left:16px;right:16px;z-index:99999;padding:14px;border-radius:14px;background:#fff;color:#9f1239;font:14px -apple-system,system-ui,sans-serif;";document.body.appendChild(notice);}
+      if(!notice){notice=document.createElement("div");notice.id="cdFavoriteStatus";notice.setAttribute("role","alert");notice.style.cssText="position:fixed;bottom:calc(var(--cd-bottom-dock-height, 126px) + env(safe-area-inset-bottom, 0px) + 16px);left:16px;right:16px;z-index:99999;padding:14px;border-radius:14px;background:#fff;color:#9f1239;font:14px -apple-system,system-ui,sans-serif;";document.body.appendChild(notice);}
       notice.textContent=message;
     }
     function syncUI() {
