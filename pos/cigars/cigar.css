@@ -41,6 +41,9 @@ html[data-theme="light"]{
 
 *{ box-sizing:border-box; }
 html,body{ min-height:100%; }
+html{
+  scroll-padding-bottom:calc(var(--cd-bottom-dock-height, 126px) + 24px + var(--safe-bottom));
+}
 
 body.cigar-detail-page{
   margin:0;
@@ -173,7 +176,8 @@ html[data-theme="light"] .moon-knob::before{
   width:min(430px, calc(100% - 14px));
   margin:0 auto;
   min-height:calc(100dvh - var(--safe-top) - 64px);
-  padding:2px 0 calc(126px + var(--safe-bottom));
+  /* Let the last detail scroll fully above the persistent controls. */
+  padding:2px 0 calc(var(--cd-bottom-dock-height, 126px) + 24px + var(--safe-bottom));
 }
 
 .cd-shell{
@@ -493,6 +497,35 @@ html[data-theme="light"] .moon-knob::before{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+}
+
+.cd-bottom-dock{
+  position:fixed;
+  left:12px;
+  right:12px;
+  bottom:calc(env(safe-area-inset-bottom, 0px) + 4px);
+  z-index:50;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  pointer-events:none;
+}
+
+.cd-bottom-dock #cdPortfolioControls{
+  /* Match the right-hand detail column without moving with its content. */
+  width:min(292px, calc(100% - 128px));
+  margin:0 max(0px, calc((100% - 430px) / 2)) 0 auto;
+  padding:4px;
+  pointer-events:none;
+}
+
+.cd-bottom-dock #cdPortfolioControls .cd-portfolio-arrow{
+  pointer-events:auto;
+}
+
+.cd-bottom-dock .cd-actions{
+  position:static;
+  pointer-events:auto;
 }
 
 .cd-actions{
