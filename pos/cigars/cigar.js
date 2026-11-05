@@ -1308,6 +1308,15 @@
     wireImageFallback($("#cdStickImage"),"cd-stick-placeholder","No image");
     wireBrandNavigation(brand);
     positionPortfolioControls();
+    // Optional, isolated manual market comparison. Does not write to POS or HUB.
+    try {
+      window.CigarMarketTracker?.mount({
+        record: {key:id,brand:getBrand(rec),line:getLine(rec),name:getName(rec),vitola:getVitola(rec),
+          length:getLength(rec),ring:getRing(rec),wrapper:getWrapper(rec),shade:getShade(rec),
+          shape:getShape(rec),origin:getOrigin(rec),msrp:getField(rec,["MSRP","msrp"])},
+        loadPos: id ? () => loadPosRecord(id) : null
+      });
+    } catch (error) { console.warn("[Market tracker] Could not mount comparison button:", error); }
   }
   async function load() {
     if(!card)return;
