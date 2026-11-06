@@ -1,16 +1,17 @@
-/* CigarOS manual market tracker, Option B UI, November 6 2026. No retailer requests, scraping or HUB writes. */
+/* CigarOS manual market tracker, horizontal-logo UI, November 6 2026. No retailer requests, scraping or HUB writes. */
 (function (root) {
   'use strict';
   const SCHEMA = 1;
   const PREFIX = 'cigaros_market_manual_v1:';
   const ASSETS = '/pos/cigars/market-assets/';
   const RETAILERS = Object.freeze([
-    {id:'neptune', name:'Neptune', initials:'N', domains:['neptunecigar.com'], logo:'neptune.svg'},
-    {id:'famous', name:'Famous', initials:'F', domains:['famous-smoke.com'], logo:'famous.svg'},
-    {id:'thompson', name:'Thompson', initials:'T', domains:['thompsoncigar.com'], logo:'thompson.svg'},
-    {id:'holts', name:'Holts', initials:'H', domains:['holts.com'], logo:'holts.svg'},
-    {id:'ci', name:'Cigars International', initials:'CI', domains:['cigarsinternational.com'], logo:'ci-smiley.svg'},
-    {id:'cigargod', name:'Cigar God', initials:'CG', domains:['cigargod.com'], logo:'cigargod.svg'}
+    {id:'neptune', name:'Neptune', initials:'N', domains:['neptunecigar.com'], logo:'hz-neptun.svg'},
+    {id:'cigarcountry', name:'Cigar Country', initials:'CC', domains:['cigarcountry.com'], logo:'hz-cigarcountry.svg'},
+    {id:'famous', name:'Famous', initials:'F', domains:['famous-smoke.com'], logo:'hz-famous.svg'},
+    {id:'thompson', name:'Thompson', initials:'T', domains:['thompsoncigar.com'], logo:'hz-thompson.svg'},
+    {id:'holts', name:'Holts', initials:'H', domains:['holts.com'], logo:'hz-holts.svg'},
+    {id:'ci', name:'Cigars International', initials:'CI', domains:['cigarsinternational.com'], logo:'hz-ci.svg'},
+    {id:'cigargod', name:'Cigar God', initials:'CG', domains:['cigargod.com'], logo:'hz-cigargod.svg'}
   ]);
   const FIELDS = ['brand','line','name','vitola','length','ring','wrapper','shade','shape','origin'];
   const clean = value => String(value ?? '').normalize('NFC').trim();
@@ -85,14 +86,17 @@
     return {schema:SCHEMA, identity:id, comparisonBasis:'single', yourPrice:null, savedAt:null, offers:RETAILERS.map(retailer => emptyOffer(retailer.id))};
   }
   function validateDocument(input, id) {
-    if (!input || input.schema !== SCHEMA || input.identity !== id || !Array.isArray(input.offers) || input.offers.length !== RETAILERS.length) throw new Error('Saved prices have an unsupported format or a different cigar identity.');
+    if (!input || input.schema !== SCHEMA || input.identity !== id || !Array.isArray(input.offers) || ![6, RETAILERS.length].includes(input.offers.length)) throw new Error('Saved prices have an unsupported format or a different cigar identity.');
     if (!['single','box'].includes(input.comparisonBasis)) throw new Error('Saved comparison basis is invalid.');
-    if (new Set(input.offers.map(offer => offer?.id)).size !== RETAILERS.length) throw new Error('Saved retailer entries are duplicated.');
+    if (new Set(input.offers.map(offer => offer?.id)).size !== input.offers.length) throw new Error('Saved retailer entries are duplicated.');
+    if (input.offers.some(offer => !RETAILERS.some(retailer => retailer.id === offer?.id))) throw new Error('A saved retailer is not supported.');
     const result = emptyDocument(id);
     result.comparisonBasis = input.comparisonBasis;
     result.yourPrice = price(input.yourPrice, 'Your price');
     result.offers = RETAILERS.map(retailer => {
       const value = input.offers.find(offer => offer?.id === retailer.id);
+      // Legacy six-retailer records gain only an empty Cigar Country row, without writing on read.
+      if (!value && retailer.id === 'cigarcountry' && input.offers.length === 6) return emptyOffer(retailer.id);
       if (!value) throw new Error('A saved retailer entry is missing.');
       return normalizeOffer(value, retailer.id);
     });
@@ -213,17 +217,27 @@
       const badge=node('span','cmt-badge cmt-badge-'+retailer.id);badge.setAttribute('aria-hidden','true');
       const fallback=node('span','cmt-logo-fallback',retailer.initials);badge.append(fallback);
       if(retailer.logo){
-        const img=node('img');img.src=ASSETS+retailer.logo;img.alt='';img.width=72;img.height=72;
+        const img=node('img');img.src=ASSETS+retailer.logo;img.alt='';img.width=630;img.height=322;img.decoding='async';
         img.addEventListener('load',()=>{fallback.hidden=true;badge.classList.add('cmt-logo-loaded');},{once:true});
         img.addEventListener('error',()=>{img.remove();fallback.hidden=false;badge.classList.remove('cmt-logo-loaded');},{once:true});badge.append(img);
       }
       const title=node('span','cmt-retailer-name',retailer.name);
-      if(offer.url){const arrow=icon('arrow');arrow.classList.add('cmt-link-arrow');title.append(arrow);}
       link.append(badge,title);row.append(link);
       const stockText={unknown:amount==null?'Add price':'Not checked',in_stock:'In stock',out_of_stock:'Out of stock'}[offer.stock];
       const stock=node('span','cmt-stock cmt-stock-'+offer.stock,stockText);
-      const money=node('strong','cmt-retailer-price',offer.stock==='out_of_stock'?'—':amount==null?'—':currency(amount));
-      const bottom=node('div','cmt-tile-bottom');bottom.append(stock,money);row.append(bottom);
+      if(offer.stock==='in_stock'||(offer.stock==='unknown'&&amount==null))stock.classList.add('cmt-sr-only');
+      const shownAmount=offer.stock==='out_of_stock'?null:amount;
+      const editLabel='Edit '+retailer.name+' price and link';
+      const edit=shownAmount==null
+        ?iconButton('pencil',editLabel,'cmt-edit-row cmt-empty-price',()=>openRetailerEditor(retailer.id))
+        :button(format(shownAmount),'cmt-edit-row cmt-retailer-price',()=>openRetailerEditor(retailer.id));
+      if(shownAmount!=null){
+        const basis=offer.basis==='box'?'box-derived price per cigar':'single cigar price';
+        edit.setAttribute('aria-label',editLabel+'. '+currency(shownAmount)+' USD, '+basis+', '+stockText.toLowerCase());
+        edit.title='Edit '+currency(shownAmount)+' USD · '+basis;
+        edit.classList.toggle('cmt-large-value',shownAmount>=1000);
+      }
+      const bottom=node('div','cmt-tile-bottom');bottom.append(stock,edit);row.append(bottom);
       if(offer.basis==='box'&&amount!=null)row.append(node('span','cmt-basis-label','Box ÷ '+offer.boxCount+' · per cigar'));
       if(amount!=null&&offer.basis!==draft.comparisonBasis)row.append(node('span','cmt-basis-label','Other basis · excluded'));
       const details=[];
@@ -231,8 +245,7 @@
       if(offer.stock==='out_of_stock'&&amount!=null)details.push('Last price '+currency(amount));
       if(offer.basis==='box'&&offer.boxPrice!=null)details.push(currency(offer.boxPrice)+' for '+offer.boxCount+' cigars');
       if(details.length)row.title=details.join(' · ');
-      const edit=iconButton('pencil','Edit '+retailer.name+' price and link','cmt-edit-row',()=>openRetailerEditor(retailer.id));
-      row.append(edit);list.append(row);
+      list.append(row);
     });
     panel.querySelector('#cmt-run').disabled=!!storageFailure||!context.id;
     panel.querySelector('#cmt-export').disabled=!saved?.savedAt;
@@ -280,7 +293,7 @@
     info.append(node('p','cmt-help','Manual prices only. Save prices recomputes the average and saves your entries; it never checks retailer websites.'));
     info.append(node('p','cmt-help','Only in-stock offers with the selected basis count. Single and box-derived prices are never mixed. Box prices require buying the full box. Tax, shipping, coupons and membership deals are excluded.'));
     info.append(node('p','cmt-help','Saved in this browser on this device. No sync or HUB backup. Clearing browser data removes prices. Your comparison price never changes POS pricing.'));
-    info.append(node('p','cmt-help','Tap a linked logo or retailer name to open its listing. Use the pencil to edit. Apply stages a change; Save prices stores it.'));
+    info.append(node('p','cmt-help','Tap a linked logo or retailer name to open its listing. Tap a price or pencil to edit. Apply stages a change; Save prices stores it.'));
     const timestamp=node('p','cmt-help');timestamp.id='cmt-last-saved';info.append(timestamp);
     const exportButton=button('Export saved prices','cmt-export',exportSaved);exportButton.id='cmt-export';exportButton.prepend(icon('download'));info.append(exportButton);content.append(info);
     const savebar=node('div','cmt-savebar');const status=node('p','cmt-status');status.id='cmt-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');savebar.append(status);
