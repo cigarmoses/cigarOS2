@@ -1,4 +1,4 @@
-/* CigarOS manual market tracker, v1. No retailer requests, scraping or HUB writes. */
+/* CigarOS manual market tracker, Option B UI, November 6 2026. No retailer requests, scraping or HUB writes. */
 (function (root) {
   'use strict';
   const SCHEMA = 1;
@@ -6,11 +6,11 @@
   const ASSETS = '/pos/cigars/market-assets/';
   const RETAILERS = Object.freeze([
     {id:'neptune', name:'Neptune', initials:'N', domains:['neptunecigar.com'], logo:'neptune.svg'},
-    {id:'famous', name:'Famous', initials:'F', domains:['famous-smoke.com']},
-    {id:'thompson', name:'Thompson', initials:'T', domains:['thompsoncigar.com']},
-    {id:'holts', name:'Holts', initials:'H', domains:['holts.com']},
-    {id:'ci', name:'Cigars International', initials:'CI', domains:['cigarsinternational.com']},
-    {id:'cigargod', name:'Cigar God', initials:'CG', domains:['cigargod.com']}
+    {id:'famous', name:'Famous', initials:'F', domains:['famous-smoke.com'], logo:'famous.svg'},
+    {id:'thompson', name:'Thompson', initials:'T', domains:['thompsoncigar.com'], logo:'thompson.svg'},
+    {id:'holts', name:'Holts', initials:'H', domains:['holts.com'], logo:'holts.svg'},
+    {id:'ci', name:'Cigars International', initials:'CI', domains:['cigarsinternational.com'], logo:'ci-smiley.svg'},
+    {id:'cigargod', name:'Cigar God', initials:'CG', domains:['cigargod.com'], logo:'cigargod.svg'}
   ]);
   const FIELDS = ['brand','line','name','vitola','length','ring','wrapper','shade','shape','origin'];
   const clean = value => String(value ?? '').normalize('NFC').trim();
@@ -137,6 +137,22 @@
     if (handler) el.addEventListener('click', handler);
     return el;
   }
+  function icon(name) {
+    const paths = {
+      close:'M6 6l12 12M18 6L6 18',
+      pencil:'M15 5l4 4M4 20l4-1 12-12-4-4L4 15z',
+      arrow:'M7 17L17 7M7 7h10v10',
+      download:'M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5'
+    };
+    const el=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    el.setAttribute('viewBox','0 0 24 24');el.setAttribute('aria-hidden','true');el.setAttribute('focusable','false');
+    const path=document.createElementNS(el.namespaceURI,'path');path.setAttribute('d',paths[name]);
+    path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','1.8');
+    path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');el.append(path);return el;
+  }
+  function iconButton(name, label, className, handler) {
+    const el=button('',className,handler);el.append(icon(name));el.setAttribute('aria-label',label);el.title=label;return el;
+  }
   function modal(id, labelledBy) {
     const el = node('dialog', 'cmt-dialog'); el.id = id;
     el.setAttribute('aria-labelledby', labelledBy); el.setAttribute('aria-modal', 'true');
@@ -155,6 +171,7 @@
     const hadPanel = !!panel?.open;
     ++view; removeDialog(discard); removeDialog(editor); removeDialog(panel);
     discard = editor = panel = null; draft = saved = null; dirty = false; editorDirty = false;
+    document.documentElement.classList.remove('cmt-modal-open');
     if (hadPanel) document.getElementById('cdMarketTracker')?.focus();
   }
   function confirmDiscard() {
@@ -162,57 +179,63 @@
     discard = modal('cmt-discard', 'cmt-discard-title');
     discard.append(node('h2', '', 'Discard unsaved changes?'));
     discard.querySelector('h2').id = 'cmt-discard-title';
-    discard.append(node('p', 'cmt-help', 'Run saves your changes. Your previous saved prices will stay unchanged if you discard.'));
+    discard.append(node('p', 'cmt-help', 'Your saved prices will stay unchanged. Choose Keep editing to save your changes.'));
     const actions = node('div', 'cmt-footer');
     actions.append(button('Keep editing', 'cmt-secondary', () => {removeDialog(discard); discard = null;}), button('Discard changes', 'cmt-danger', () => close(true)));
     discard.append(actions); discard.addEventListener('cancel', event => {event.preventDefault(); removeDialog(discard); discard = null;}); discard.showModal();
   }
   function snapshotLabel() {
-    if (dirty) return 'Unsaved changes · Run to save';
-    return draft.savedAt ? 'Last saved ' + new Date(draft.savedAt).toLocaleString() : 'No prices saved yet';
+    if (dirty) return 'Unsaved changes';
+    return draft.savedAt ? 'Saved on this device' : 'This device only';
   }
   function ownPrice() { return draft.yourPrice ?? posPrice; }
   function renderPanel() {
     if (!panel || !draft) return;
-    panel.querySelector('#cmt-online-average').textContent = format(summary(draft.offers, draft.comparisonBasis).average);
-    panel.querySelector('#cmt-your-price').textContent = format(ownPrice());
-    panel.querySelector('#cmt-own-source').textContent = draft.yourPrice != null ? 'Comparison override · single' : posPrice != null ? 'POS MSRP · single (fallback)' : 'Add your single price';
-    panel.querySelector('#cmt-basis').value = draft.comparisonBasis;
-    const result = summary(draft.offers, draft.comparisonBasis);
-    panel.querySelector('#cmt-average-note').textContent = result.count ? `${result.count} in-stock ${draft.comparisonBasis === 'single' ? 'actual-single' : 'box-derived'} ${result.count === 1 ? 'offer' : 'offers'}` : `No in-stock ${draft.comparisonBasis === 'single' ? 'actual-single' : 'box-derived'} prices`;
-    panel.querySelector('#cmt-saved').textContent = snapshotLabel();
-    const list = panel.querySelector('#cmt-retailers'); list.replaceChildren();
-    RETAILERS.forEach(retailer => {
-      const offer = draft.offers.find(item => item.id === retailer.id);
-      const row = node('div', 'cmt-retailer'); row.dataset.retailer = retailer.id;
-      row.addEventListener('contextmenu', event => {event.preventDefault(); openRetailerEditor(retailer.id);});
-      const link = node(offer.url ? 'a' : 'div', 'cmt-retailer-main');
-      if (offer.url) { link.href = safeURL(offer.url, retailer.id); link.target = '_blank'; link.rel = 'noopener noreferrer'; link.referrerPolicy = 'no-referrer'; link.setAttribute('aria-label', 'Open ' + retailer.name + ' product listing in a new tab'); }
-      const badge = node('span', 'cmt-badge cmt-badge-' + retailer.id);
-      if (retailer.logo) { const img = node('img'); img.src = ASSETS + retailer.logo; img.alt = ''; badge.append(img); }
-      else badge.textContent = retailer.initials;
-      const title = node('span', 'cmt-retailer-name', retailer.name);
-      if (offer.url) title.append(node('span', 'cmt-link-arrow', ' ↗'));
-      const stock = node('span', 'cmt-stock cmt-stock-' + offer.stock, {unknown:'NOT CHECKED',in_stock:'AVAILABLE',out_of_stock:'OUT OF STOCK'}[offer.stock]);
-      const money = node('span', 'cmt-retailer-price');
-      money.append(node('strong', '', offer.stock === 'out_of_stock' ? '—' : format(unitPrice(offer))));
-      const basis = offer.basis === 'single' ? 'Actual single' : 'Box-derived';
-      money.append(node('span', 'cmt-basis-label', unitPrice(offer) == null ? 'No price entered' : basis));
-      link.append(badge, title, stock, money); row.append(link);
-      const subline = node('div', 'cmt-retailer-subline');
-      const details = [];
-      if (offer.basis === 'box' && offer.boxPrice != null) details.push(currency(offer.boxPrice) + ' ÷ ' + offer.boxCount + ' cigars');
-      if (offer.stock === 'out_of_stock' && unitPrice(offer) != null) details.push('Last entered ' + currency(unitPrice(offer)) + ' / cigar');
-      if (offer.checkedAt) details.push('Entered ' + new Date(offer.checkedAt).toLocaleDateString());
-      if (!offer.url) details.push('No product link');
-      if (unitPrice(offer) != null && offer.basis !== draft.comparisonBasis) details.push('Other basis · not in average');
-      if (unitPrice(offer) != null && offer.stock !== 'in_stock') details.push('Not in average');
-      subline.append(node('span', '', details.join(' · ')));
-      const edit = button('Edit', 'cmt-edit-row', () => openRetailerEditor(retailer.id));
-      edit.setAttribute('aria-label', 'Edit ' + retailer.name + ' price and link'); subline.append(edit); row.append(subline); list.append(row);
+    const result=summary(draft.offers,draft.comparisonBasis);
+    [['cmt-online-average',result.average],['cmt-your-price',ownPrice()]].forEach(([id,value])=>{
+      const el=panel.querySelector('#'+id);el.textContent=format(value);el.dataset.hasPrice=String(value!=null);
+      el.setAttribute('aria-label',value==null?'No price':currency(value)+' USD');
+      el.classList.toggle('cmt-large-value',value!=null&&value>=1000);
     });
-    panel.querySelector('#cmt-run').disabled = !!storageFailure || !context.id;
-    panel.querySelector('#cmt-export').disabled = !saved?.savedAt;
+    panel.querySelector('#cmt-own-source').textContent=draft.yourPrice!=null?'Your single price':posPrice!=null?'POS MSRP · single':'Add your price';
+    panel.querySelector('#cmt-basis').value=draft.comparisonBasis;
+    panel.querySelectorAll('[data-basis]').forEach(el=>{const selected=el.dataset.basis===draft.comparisonBasis;el.setAttribute('aria-checked',String(selected));el.tabIndex=selected?0:-1;});
+    panel.querySelector('#cmt-average-note').textContent=result.count?`${result.count} available ${result.count===1?'offer':'offers'}`:'No available offers';
+    panel.querySelector('#cmt-saved').textContent=snapshotLabel();
+    panel.querySelector('#cmt-last-saved').textContent=draft.savedAt?'Last saved '+new Date(draft.savedAt).toLocaleString():'No saved prices yet.';
+    const list=panel.querySelector('#cmt-retailers');list.replaceChildren();
+    RETAILERS.forEach(retailer=>{
+      const offer=draft.offers.find(item=>item.id===retailer.id),amount=unitPrice(offer);
+      const row=node('div','cmt-retailer');row.dataset.retailer=retailer.id;
+      row.addEventListener('contextmenu',event=>{event.preventDefault();openRetailerEditor(retailer.id);});
+      const link=node(offer.url?'a':'div','cmt-retailer-main');
+      if(offer.url){link.href=safeURL(offer.url,retailer.id);link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';link.setAttribute('aria-label','Open '+retailer.name+' product listing in a new tab');}
+      const badge=node('span','cmt-badge cmt-badge-'+retailer.id);badge.setAttribute('aria-hidden','true');
+      const fallback=node('span','cmt-logo-fallback',retailer.initials);badge.append(fallback);
+      if(retailer.logo){
+        const img=node('img');img.src=ASSETS+retailer.logo;img.alt='';img.width=72;img.height=72;
+        img.addEventListener('load',()=>{fallback.hidden=true;badge.classList.add('cmt-logo-loaded');},{once:true});
+        img.addEventListener('error',()=>{img.remove();fallback.hidden=false;badge.classList.remove('cmt-logo-loaded');},{once:true});badge.append(img);
+      }
+      const title=node('span','cmt-retailer-name',retailer.name);
+      if(offer.url){const arrow=icon('arrow');arrow.classList.add('cmt-link-arrow');title.append(arrow);}
+      link.append(badge,title);row.append(link);
+      const stockText={unknown:amount==null?'Add price':'Not checked',in_stock:'In stock',out_of_stock:'Out of stock'}[offer.stock];
+      const stock=node('span','cmt-stock cmt-stock-'+offer.stock,stockText);
+      const money=node('strong','cmt-retailer-price',offer.stock==='out_of_stock'?'—':amount==null?'—':currency(amount));
+      const bottom=node('div','cmt-tile-bottom');bottom.append(stock,money);row.append(bottom);
+      if(offer.basis==='box'&&amount!=null)row.append(node('span','cmt-basis-label','Box ÷ '+offer.boxCount+' · per cigar'));
+      if(amount!=null&&offer.basis!==draft.comparisonBasis)row.append(node('span','cmt-basis-label','Other basis · excluded'));
+      const details=[];
+      if(offer.checkedAt)details.push('Entered '+new Date(offer.checkedAt).toLocaleDateString());
+      if(offer.stock==='out_of_stock'&&amount!=null)details.push('Last price '+currency(amount));
+      if(offer.basis==='box'&&offer.boxPrice!=null)details.push(currency(offer.boxPrice)+' for '+offer.boxCount+' cigars');
+      if(details.length)row.title=details.join(' · ');
+      const edit=iconButton('pencil','Edit '+retailer.name+' price and link','cmt-edit-row',()=>openRetailerEditor(retailer.id));
+      row.append(edit);list.append(row);
+    });
+    panel.querySelector('#cmt-run').disabled=!!storageFailure||!context.id;
+    panel.querySelector('#cmt-export').disabled=!saved?.savedAt;
   }
   async function open() {
     if (panel?.open) { panel.focus(); return; }
@@ -223,36 +246,50 @@
     catch (error) { saved = emptyDocument(context.id); storageFailure = 'Saved prices could not be loaded. Nothing was overwritten. ' + error.message; }
     draft = clone(saved); dirty = false;
     panel = modal('cmt-panel', 'cmt-title');
-    const header = node('div', 'cmt-header');
-    const title = node('h2', '', 'Market tracker'); title.id = 'cmt-title';
-    header.append(title, button('Close', 'cmt-secondary', () => close())); panel.append(header);
-    panel.append(node('p', 'cmt-cigar', [context.record.brand,context.record.line,context.record.name,context.record.vitola].map(clean).filter(Boolean).join(' · ')));
-    panel.append(node('p', 'cmt-variant', [context.record.length && context.record.ring ? `${context.record.length} × ${context.record.ring}` : '', context.record.wrapper, context.record.shade].filter(Boolean).join(' · ')));
-    const stats = node('div', 'cmt-stats');
-    [['ONLINE AVG:','cmt-online-average','cmt-average-note'],['YOUR PRICE:','cmt-your-price','cmt-own-source']].forEach(([label,id,note]) => {
-      const item = node('div', 'cmt-stat'); item.append(node('div', 'cmt-stat-label', label));
-      const amount = node('div', 'cmt-stat-amount', '—'); amount.id = id; item.append(amount);
-      const caption = node('div', 'cmt-stat-caption'); caption.id = note; item.append(caption);
-      if (id === 'cmt-your-price') item.append(button('Edit your price', 'cmt-text-button', openYourPriceEditor)); stats.append(item);
-    }); panel.append(stats);
-    const controls = node('div', 'cmt-controls'); const label = node('label', '', 'Average basis '); label.htmlFor = 'cmt-basis';
-    const select = node('select'); select.id = 'cmt-basis';
-    [['single','Actual singles'],['box','Box-derived / cigar']].forEach(([value,text]) => {const option = node('option','',text); option.value=value;select.append(option);});
-    select.addEventListener('change', () => {draft.comparisonBasis = select.value;markDirty();renderPanel();message('Run recomputes and saves your selected comparison.');});
-    controls.append(label, select); panel.append(controls);
-    const list = node('div', 'cmt-retailers'); list.id = 'cmt-retailers'; panel.append(list);
-    panel.append(node('p','cmt-help','USD per cigar, before tax, shipping or coupons. Only available offers with the selected price basis are averaged. Box-derived prices require buying the box.'));
-    panel.append(node('p','cmt-help','Manual entries only. Run recomputes the average and saves these entries; it does not check retailer websites. Click a linked row to visit its product page. Right-click a row or use Edit to change it.'));
-    panel.append(node('p','cmt-help','Saved on this browser and device only. No cross-device sync or HUB backup. Clearing browser data removes saved prices. Export a backup before clearing data.'));
-    const timestamp = node('p','cmt-saved'); timestamp.id='cmt-saved'; panel.append(timestamp);
-    const status = node('p','cmt-status'); status.id='cmt-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');panel.append(status);
-    const footer = node('div','cmt-footer');
-    const exportButton = button('Export saved', 'cmt-secondary', exportSaved); exportButton.id='cmt-export';
-    const run = button('Run', 'cmt-primary', runComparison);run.id='cmt-run';run.title='Recompute and save manual prices in this browser';
-    footer.append(exportButton,run); panel.append(footer);
-    panel.addEventListener('cancel', event => {event.preventDefault();close();});
-    renderPanel();panel.showModal();
-    message(storageFailure || 'Add or edit retailer entries, then Run to save.', !!storageFailure);
+    const shell=node('div','cmt-shell');panel.append(shell);
+    const header=node('div','cmt-header');const title=node('h2','','Market prices');title.id='cmt-title';
+    header.append(title,iconButton('close','Close market prices','cmt-close',()=>close()));shell.append(header);
+    const content=node('div','cmt-content');shell.append(content);
+    const cigar=node('div','cmt-cigar');
+    cigar.append(node('p','cmt-brand',[context.record.brand,context.record.line].map(clean).filter(Boolean).join(' · ')));
+    cigar.append(node('p','cmt-cigar-name',clean(context.record.name)||clean(context.record.vitola)||'Cigar'));
+    const variant=[context.record.vitola,context.record.length&&context.record.ring?`${context.record.length} × ${context.record.ring}`:'',context.record.wrapper,context.record.shade].map(clean).filter(Boolean);
+    cigar.append(node('p','cmt-variant',[...new Set(variant)].join(' · ')));content.append(cigar);
+    const stats=node('div','cmt-stats');
+    [['Online average','cmt-online-average','cmt-average-note'],['Your price','cmt-your-price','cmt-own-source']].forEach(([label,id,note])=>{
+      const item=node('div','cmt-stat');item.append(node('div','cmt-stat-label',label));
+      const amount=node('div','cmt-stat-amount','—');amount.id=id;item.append(amount);
+      const caption=node('div','cmt-stat-caption');caption.id=note;item.append(caption);
+      if(id==='cmt-your-price')item.append(iconButton('pencil','Edit your price','cmt-own-edit',openYourPriceEditor));stats.append(item);
+    });content.append(stats);
+    const controls=node('div','cmt-controls');controls.setAttribute('role','radiogroup');controls.setAttribute('aria-label','Average price basis');
+    const select=node('select');select.id='cmt-basis';select.hidden=true;select.setAttribute('aria-label','Average basis');
+    [['single','Single'],['box','Box / cigar']].forEach(([value,text])=>{
+      const option=node('option','',text);option.value=value;select.append(option);
+      const choice=button(text,'cmt-segment',()=>{select.value=value;select.dispatchEvent(new Event('change'));});choice.dataset.basis=value;choice.setAttribute('role','radio');
+      choice.addEventListener('keydown',event=>{
+        if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key))return;
+        event.preventDefault();const next=event.key==='Home'?'single':event.key==='End'?'box':choice.dataset.basis==='single'?'box':'single';
+        controls.querySelector('[data-basis="'+next+'"]').click();controls.querySelector('[data-basis="'+next+'"]').focus();
+      });controls.append(choice);
+    });
+    select.addEventListener('change',()=>{draft.comparisonBasis=select.value;markDirty();renderPanel();message('');});
+    content.append(select,controls);
+    const listHeader=node('div','cmt-list-header');listHeader.append(node('span','','Retailers'),node('span','','USD / cigar'));content.append(listHeader);
+    const list=node('div','cmt-retailers');list.id='cmt-retailers';content.append(list);
+    const info=node('details','cmt-info');info.append(node('summary','','About & backup'));
+    info.append(node('p','cmt-help','Manual prices only. Save prices recomputes the average and saves your entries; it never checks retailer websites.'));
+    info.append(node('p','cmt-help','Only in-stock offers with the selected basis count. Single and box-derived prices are never mixed. Box prices require buying the full box. Tax, shipping, coupons and membership deals are excluded.'));
+    info.append(node('p','cmt-help','Saved in this browser on this device. No sync or HUB backup. Clearing browser data removes prices. Your comparison price never changes POS pricing.'));
+    info.append(node('p','cmt-help','Tap a linked logo or retailer name to open its listing. Use the pencil to edit. Apply stages a change; Save prices stores it.'));
+    const timestamp=node('p','cmt-help');timestamp.id='cmt-last-saved';info.append(timestamp);
+    const exportButton=button('Export saved prices','cmt-export',exportSaved);exportButton.id='cmt-export';exportButton.prepend(icon('download'));info.append(exportButton);content.append(info);
+    const savebar=node('div','cmt-savebar');const status=node('p','cmt-status');status.id='cmt-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');savebar.append(status);
+    const run=button('Save prices','cmt-primary',runComparison);run.id='cmt-run';run.title='Recompute and save manual prices in this browser';savebar.append(run);
+    const meta=node('p','cmt-save-meta');meta.append(node('span','','Manual prices · '));const savedLabel=node('span','cmt-saved');savedLabel.id='cmt-saved';meta.append(savedLabel);savebar.append(meta);shell.append(savebar);
+    panel.addEventListener('cancel',event=>{event.preventDefault();close();});
+    renderPanel();document.documentElement.classList.add('cmt-modal-open');panel.showModal();
+    message(storageFailure,!!storageFailure);
     if (typeof openingContext.loadPos === 'function') {
       try {
         const pos = await openingContext.loadPos();
@@ -271,7 +308,7 @@
     try {
       const result = save(root.localStorage, draft, expectedRaw);
       draft = clone(result.data);saved = clone(result.data);expectedRaw = result.raw;dirty = false;
-      renderPanel();message('Recomputed and saved in this browser. No websites were checked.');
+      renderPanel();message('Prices saved.');
     } catch (error) { message('Not saved. Your edits are still open. ' + error.message, true); }
   }
   function exportSaved() {
@@ -295,11 +332,11 @@
     const cancel=()=>{removeDialog(editor);editor=null;editorDirty=false;if(opener?.isConnected)opener.focus();};
     actions.append(button('Cancel','cmt-secondary',cancel));const apply=node('button','cmt-primary','Apply');apply.type='submit';actions.append(apply);
     editor.addEventListener('cancel',event=>{event.preventDefault();cancel();});
-    return {form,error,actions,finish:()=>{removeDialog(editor);editor=null;editorDirty=false;markDirty();renderPanel();panel.querySelector('#cmt-run')?.focus();message(dirty?'Unsaved changes. Run recomputes and saves your entries.':'No changes to save.');},show:()=>{form.append(error,actions);editor.showModal();}};
+    return {form,error,actions,finish:()=>{removeDialog(editor);editor=null;editorDirty=false;markDirty();renderPanel();panel.querySelector('#cmt-run')?.focus();message(dirty?'Changes ready to save.':'No changes to save.');},show:()=>{form.append(error,actions);editor.showModal();}};
   }
   function openYourPriceEditor() {
     const shell=editorShell('Your single price',document.activeElement);if(!shell)return;
-    shell.form.append(node('p','cmt-help','A local comparison override only. This does not change your POS prices, MSRP or HUB. Leave blank to use the POS MSRP fallback.'));
+    shell.form.append(node('p','cmt-help','For this comparison only. POS prices stay unchanged. Leave blank to use POS MSRP.'));
     const input=field(shell.form,'Your price · USD','cmt-own-input');input.inputMode='decimal';input.maxLength=12;input.placeholder=posPrice==null?'e.g. 19.99':format(posPrice);input.value=draft.yourPrice??'';
     shell.form.addEventListener('submit',event=>{event.preventDefault();try{draft.yourPrice=price(input.value,'Your price');shell.finish();}catch(error){shell.error.textContent=error.message;input.focus();}});shell.show();
   }
@@ -307,8 +344,9 @@
     const retailer=RETAILERS.find(item=>item.id===id);if(!retailer)return;
     const shell=editorShell('Edit ' + retailer.name,document.activeElement);if(!shell)return;
     const current=draft.offers.find(item=>item.id===id);
-    shell.form.append(node('p','cmt-help','Match the exact cigar, vitola, wrapper and size shown above. Enter the regular listed price, not a coupon or membership deal.'));
-    const url=field(shell.form,'Exact product link · ' + retailer.domains[0],'cmt-url','url');url.placeholder='https://www.'+retailer.domains[0]+'/…';url.maxLength=2048;url.value=current.url;
+    if(current.checkedAt)shell.form.append(node('p','cmt-help','Last entered '+new Date(current.checkedAt).toLocaleString()));
+    shell.form.append(node('p','cmt-help','Match this exact cigar and size. Use the regular price, before coupons.'));
+    const url=field(shell.form,'Product link · ' + retailer.domains[0],'cmt-url','url');url.placeholder='https://www.'+retailer.domains[0]+'/…';url.maxLength=2048;url.value=current.url;
     const stockLabel=node('label','cmt-field','Stock status'),stock=node('select');stock.id='cmt-stock';stockLabel.htmlFor=stock.id;
     [['unknown','Not checked'],['in_stock','Available'],['out_of_stock','Out of stock']].forEach(([value,text])=>{const option=node('option','',text);option.value=value;stock.append(option);});stock.value=current.stock;stockLabel.append(stock);shell.form.append(stockLabel);
     const basisLabel=node('label','cmt-field','Price type'),basis=node('select');basis.id='cmt-price-type';basisLabel.htmlFor=basis.id;
