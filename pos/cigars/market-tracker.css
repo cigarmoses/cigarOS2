@@ -1,0 +1,74 @@
+/* All tracker styles are namespaced; the existing detail/dock layout is unchanged. */
+.cd-topbar-spacer.cmt-button-slot { display:flex; align-items:center; width:auto; min-width:0; height:44px; }
+.cmt-open { margin-left:12px; flex:0 0 44px; }
+.cmt-open img { display:block; width:27px; height:27px; }
+html[data-theme="dark"] .cmt-open img { filter:invert(1); }
+.cmt-dialog { color-scheme:light; --cmt-text:#595959; --cmt-muted:#6b6b6b; box-sizing:border-box; width:min(620px,calc(100% - 24px)); max-height:calc(100dvh - 32px); margin:auto; padding:22px; color:var(--cmt-text); background:#fff; border:0; border-radius:30px; box-shadow:0 24px 90px #0005; overflow-y:auto; overscroll-behavior:contain; font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif; text-align:left; }
+.cmt-dialog *, .cmt-dialog *::before, .cmt-dialog *::after { box-sizing:border-box; }
+.cmt-dialog::backdrop { background:rgba(5,15,35,.58); backdrop-filter:blur(6px); }
+.cmt-dialog h2 { margin:0; color:#444; font-size:20px; font-weight:650; }
+.cmt-dialog button,.cmt-dialog select,.cmt-dialog input { font:inherit; }
+.cmt-dialog button { cursor:pointer; }
+.cmt-dialog button:disabled { opacity:.45; cursor:not-allowed; }
+.cmt-dialog :focus-visible,.cmt-open:focus-visible { outline:3px solid #1766ce; outline-offset:3px; }
+.cmt-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.cmt-cigar { margin:14px 0 5px; color:#555; font-size:14px; line-height:1.4; overflow-wrap:anywhere; }
+.cmt-variant { margin:0; font-size:12px; line-height:1.4; color:var(--cmt-muted); }
+.cmt-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin:30px 5px 22px; }
+.cmt-stat-label { font-size:16px; color:#767676; font-weight:400; letter-spacing:-.3px; }
+.cmt-stat-amount { font-size:clamp(34px,9vw,56px); line-height:1.15; letter-spacing:-2px; font-weight:400; color:#767676; font-variant-numeric:tabular-nums; margin:8px 0; overflow-wrap:anywhere; }
+.cmt-stat-caption { font-size:11px; color:var(--cmt-muted); line-height:1.4; }
+.cmt-text-button { padding:8px 0; border:0; color:#005cc8; background:transparent; font-size:12px!important; text-decoration:underline; min-height:36px; }
+.cmt-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:0 0 16px; font-size:12px; }
+.cmt-dialog select { min-height:40px; border:1px solid #d5d9df; border-radius:10px; padding:8px 25px 8px 10px; color:#444; background:#fff; max-width:100%; }
+.cmt-retailers { display:grid; gap:10px; }
+.cmt-retailer { background:#f5f5f5; border-radius:28px; padding:13px 15px 8px; min-width:0; }
+.cmt-retailer-main { display:grid; grid-template-columns:42px minmax(0,1fr) minmax(65px,auto) minmax(55px,auto); gap:12px; align-items:center; color:inherit; text-decoration:none; }
+a.cmt-retailer-main:hover { color:#333; }
+a.cmt-retailer-main:hover .cmt-retailer-name { text-decoration:underline; }
+.cmt-badge { width:42px; height:42px; border-radius:50%; background:#dedfe2; color:#48515b; display:grid; place-items:center; font-size:15px; font-weight:700; }
+.cmt-badge img { width:100%; height:100%; object-fit:contain; }
+.cmt-badge-famous { background:#e6ddd0; color:#705a40; }
+.cmt-badge-thompson { background:#eadadc; color:#7b3942; }
+.cmt-badge-holts { background:#d9e2dd; color:#355b45; }
+.cmt-badge-ci { background:#e8e1d1; color:#6e5836; }
+.cmt-badge-cigargod { background:#ded9e8; color:#5b447c; }
+.cmt-retailer-name { font-size:17px; letter-spacing:-.4px; line-height:1.2; overflow-wrap:anywhere; }
+.cmt-link-arrow { font-size:11px; white-space:nowrap; }
+.cmt-stock { font-size:10px; text-align:center; line-height:1.35; }
+.cmt-stock-out_of_stock { color:#d00000; }
+.cmt-stock-unknown { color:#767676; }
+.cmt-retailer-price { text-align:right; font-variant-numeric:tabular-nums; }
+.cmt-retailer-price strong { display:block; font-size:22px; font-weight:600; letter-spacing:-.6px; }
+.cmt-basis-label { display:block; font-size:9px; margin-top:3px; color:#656565; }
+.cmt-retailer-subline { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-left:54px; min-height:28px; color:#6b6b6b; font-size:10px; line-height:1.4; }
+.cmt-edit-row { border:0; padding:7px 5px; background:transparent; color:#005cc8; min-height:36px; min-width:44px; font-size:12px!important; flex-shrink:0; }
+.cmt-help { font-size:12px; line-height:1.55; color:var(--cmt-muted); margin:15px 0 0; }
+.cmt-saved { font-size:11px; color:#5e5e5e; margin:16px 0 0; }
+.cmt-status { margin:9px 0; min-height:1.4em; line-height:1.45; font-size:12px; color:#355b45; }
+.cmt-error { color:#ad152e!important; line-height:1.5; font-size:13px; }
+.cmt-footer { display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-top:16px; }
+.cmt-primary,.cmt-secondary,.cmt-danger { min-height:44px; padding:10px 18px; border-radius:14px; border:0; background:#f0f2f4; color:#555; font-size:14px!important; }
+.cmt-primary { color:#fff; background:#1766ce; font-weight:650!important; min-width:80px; }
+.cmt-danger { color:#fff; background:#b4233b; }
+.cmt-form { display:grid; gap:14px; margin-top:12px; }
+.cmt-form .cmt-help { margin:0; }
+.cmt-field { display:grid; gap:6px; color:#555; font-size:13px; }
+.cmt-field input { width:100%; height:46px; background:#fff; color:#333; border:1px solid #c7cdd5; border-radius:12px; padding:0 12px; font-size:16px; }
+.cmt-field select { font-size:16px; }
+.cmt-field[hidden] { display:none; }
+#cmt-editor,#cmt-discard { width:min(470px,calc(100% - 24px)); border-radius:24px; }
+@media(max-width:430px) {
+  .cmt-dialog { padding:18px 14px; border-radius:24px; width:calc(100% - 16px); max-height:calc(100dvh - 20px); }
+  .cmt-stats { gap:12px; margin:25px 4px 18px; }
+  .cmt-stat-label { font-size:14px; }
+  .cmt-retailer { padding:12px 11px 6px; border-radius:25px; }
+  .cmt-retailer-main { grid-template-columns:34px minmax(0,1fr) 64px 55px; gap:8px; }
+  .cmt-badge { width:34px; height:34px; font-size:12px; }
+  .cmt-retailer-name { font-size:14px; }
+  .cmt-stock { font-size:9px; }
+  .cmt-retailer-price strong { font-size:19px; }
+  .cmt-basis-label { font-size:8px; }
+  .cmt-retailer-subline { margin-left:42px; }
+}
+@media(prefers-reduced-motion:reduce) { .cmt-dialog { scroll-behavior:auto; } }
