@@ -247,26 +247,26 @@
     draft = clone(saved); dirty = false;
     panel = modal('cmt-panel', 'cmt-title');
     const shell=node('div','cmt-shell');panel.append(shell);
-    const header=node('div','cmt-header');const title=node('h2','','Market prices');title.id='cmt-title';
+    const header=node('div','cmt-header');const title=node('h2','cmt-sr-only','Market prices');title.id='cmt-title';
     header.append(title,iconButton('close','Close market prices','cmt-close',()=>close()));shell.append(header);
     const content=node('div','cmt-content');shell.append(content);
     const cigar=node('div','cmt-cigar');
     cigar.append(node('p','cmt-brand',[context.record.brand,context.record.line].map(clean).filter(Boolean).join(' · ')));
     cigar.append(node('p','cmt-cigar-name',clean(context.record.name)||clean(context.record.vitola)||'Cigar'));
-    const variant=[context.record.vitola,context.record.length&&context.record.ring?`${context.record.length} × ${context.record.ring}`:'',context.record.wrapper,context.record.shade].map(clean).filter(Boolean);
+    const variant=[context.record.vitola,context.record.length&&context.record.ring?`${context.record.length} × ${context.record.ring}`:''].map(clean).filter(Boolean);
     cigar.append(node('p','cmt-variant',[...new Set(variant)].join(' · ')));content.append(cigar);
     const stats=node('div','cmt-stats');
     [['Online average','cmt-online-average','cmt-average-note'],['Your price','cmt-your-price','cmt-own-source']].forEach(([label,id,note])=>{
       const item=node('div','cmt-stat');item.append(node('div','cmt-stat-label',label));
-      const amount=node('div','cmt-stat-amount','—');amount.id=id;item.append(amount);
-      const caption=node('div','cmt-stat-caption');caption.id=note;item.append(caption);
+      const amount=node('div','cmt-stat-amount','—');amount.id=id;amount.setAttribute('aria-describedby',note);item.append(amount);
+      const caption=node('div','cmt-stat-caption cmt-sr-only');caption.id=note;item.append(caption);
       if(id==='cmt-your-price')item.append(iconButton('pencil','Edit your price','cmt-own-edit',openYourPriceEditor));stats.append(item);
     });content.append(stats);
     const controls=node('div','cmt-controls');controls.setAttribute('role','radiogroup');controls.setAttribute('aria-label','Average price basis');
     const select=node('select');select.id='cmt-basis';select.hidden=true;select.setAttribute('aria-label','Average basis');
-    [['single','Single'],['box','Box / cigar']].forEach(([value,text])=>{
+    [['single','Single'],['box','Box']].forEach(([value,text])=>{
       const option=node('option','',text);option.value=value;select.append(option);
-      const choice=button(text,'cmt-segment',()=>{select.value=value;select.dispatchEvent(new Event('change'));});choice.dataset.basis=value;choice.setAttribute('role','radio');
+      const choice=button(text,'cmt-segment',()=>{select.value=value;select.dispatchEvent(new Event('change'));});choice.dataset.basis=value;choice.setAttribute('role','radio');choice.setAttribute('aria-label',value==='box'?'Box price per cigar':'Single cigar price');
       choice.addEventListener('keydown',event=>{
         if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key))return;
         event.preventDefault();const next=event.key==='Home'?'single':event.key==='End'?'box':choice.dataset.basis==='single'?'box':'single';
@@ -275,8 +275,7 @@
     });
     select.addEventListener('change',()=>{draft.comparisonBasis=select.value;markDirty();renderPanel();message('');});
     content.append(select,controls);
-    const listHeader=node('div','cmt-list-header');listHeader.append(node('span','','Retailers'),node('span','','USD / cigar'));content.append(listHeader);
-    const list=node('div','cmt-retailers');list.id='cmt-retailers';content.append(list);
+    const list=node('div','cmt-retailers');list.id='cmt-retailers';list.setAttribute('role','group');list.setAttribute('aria-label','Retailer prices in US dollars per cigar');content.append(list);
     const info=node('details','cmt-info');info.append(node('summary','','About & backup'));
     info.append(node('p','cmt-help','Manual prices only. Save prices recomputes the average and saves your entries; it never checks retailer websites.'));
     info.append(node('p','cmt-help','Only in-stock offers with the selected basis count. Single and box-derived prices are never mixed. Box prices require buying the full box. Tax, shipping, coupons and membership deals are excluded.'));
