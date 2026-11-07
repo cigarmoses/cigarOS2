@@ -39,7 +39,6 @@ html[data-theme="light"] .cmt-dialog{
 .cmt-stat+.cmt-stat{padding-left:20px;border-left:1px solid var(--cmt-line)}
 .cmt-stat-label{font-size:13px;color:var(--cmt-muted);padding-right:18px}
 .cmt-stat-amount{font-family:var(--font-display,"SF Pro Display"),-apple-system,BlinkMacSystemFont,system-ui,sans-serif;font-size:clamp(38px,11vw,57px);font-weight:600;letter-spacing:-2px;line-height:1.16;margin:6px 0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.cmt-stat-amount[data-has-price="true"]::before{content:"$";font-size:.76em;vertical-align:.08em;margin-right:1px}
 .cmt-stat+.cmt-stat .cmt-stat-amount{font-size:clamp(27px,7.7vw,38px);letter-spacing:-1px;margin:8px 0}
 .cmt-stat-amount.cmt-large-value{font-size:clamp(24px,7vw,38px)}
 .cmt-stat+.cmt-stat .cmt-stat-amount.cmt-large-value{font-size:clamp(21px,6vw,29px)}
@@ -67,9 +66,9 @@ a.cmt-retailer-main:hover .cmt-retailer-name{color:var(--cmt-accent)}
 .cmt-dialog .cmt-edit-row{position:static;display:inline-flex;align-items:center;justify-content:flex-end;flex-shrink:0;margin-left:auto;min-width:44px;width:auto;max-width:100%;min-height:44px;height:auto;padding:4px 3px 4px 6px;border:0;border-radius:9px;background:transparent;color:var(--cmt-accent);text-align:right}
 .cmt-dialog .cmt-edit-row:hover{background:var(--cmt-control)}
 .cmt-edit-row svg{width:16px!important;height:16px!important}
-.cmt-dialog .cmt-retailer-price{font-family:var(--font-display,"SF Pro Display"),-apple-system,BlinkMacSystemFont,system-ui,sans-serif;font-size:clamp(26px,7.4vw,38px);font-weight:700;letter-spacing:-1.1px;line-height:1.15;color:var(--cmt-text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.cmt-dialog .cmt-retailer-price{font-family:var(--font-display,"SF Pro Display"),-apple-system,BlinkMacSystemFont,system-ui,sans-serif;font-size:clamp(20px,5vw,24px);font-weight:700;letter-spacing:-.6px;line-height:1.15;color:var(--cmt-text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 html[data-theme="light"] .cmt-retailer-price{color:#000}
-.cmt-dialog .cmt-retailer-price.cmt-large-value{font-size:clamp(16px,4.4vw,26px);letter-spacing:-.6px}
+.cmt-dialog .cmt-retailer-price.cmt-large-value{font-size:clamp(16px,4vw,20px);letter-spacing:-.4px}
 .cmt-basis-label{font-size:10px;color:var(--cmt-muted);line-height:1.4;margin-top:3px;overflow-wrap:anywhere}
 .cmt-info{margin-top:18px;color:var(--cmt-muted);font-size:12px}
 .cmt-info summary{cursor:pointer;min-height:44px;display:list-item;align-content:center;width:fit-content;padding:10px 2px;color:var(--cmt-muted)}
