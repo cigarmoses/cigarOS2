@@ -1505,3 +1505,81 @@ html[data-theme="light"] .brand-row:hover{
 .currency-value{
   font-weight:800;
 }
+
+/* Brand card disclosure: reused Media Lists tiles, photo and Card preview. */
+    .publication-details{padding:0 18px 18px}
+    .publication-specs{--spec-fill:linear-gradient(145deg,#ffffff82,#ffffff30 65%,#e2f1ff45);--spec-border:#ffffffb0;--spec-shadow:inset 0 1px 1px #fff9,0 3px 9px #21466c0a;position:relative;display:grid;gap:10px;margin:0;padding-top:14px}
+    html[data-theme="dark"] .publication-specs{--spec-fill:linear-gradient(145deg,#a1d3ff26,#c3e7ff0b 65%,#a1d3ff14);--spec-border:#d5ebff33;--spec-shadow:inset 0 1px 1px #e4f4ff18,0 3px 9px #0617290d}
+    .publication-specs::before,.publication-actions::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(to right,transparent,var(--publication-card-line) 12%,var(--publication-card-line) 88%,transparent)}
+    .publication-spec-group{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0;margin:0}
+    .publication-spec-group[data-spec-row="measurements"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .publication-spec-group[data-spec-row="profile"],.publication-spec-group[data-spec-row="construction"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .publication-spec-group[data-spec-row="construction"]>.publication-spec-item:only-child{grid-column:1/-1}
+    .publication-spec-tile,.publication-tobacco-block{min-width:0;border:1px solid var(--spec-border);border-radius:16px;background:var(--spec-fill);box-shadow:var(--spec-shadow)}
+    .publication-spec-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:82px;padding:12px 9px;text-align:center}
+    .publication-spec-group[data-spec-row="measurements"] .publication-spec-tile{min-height:94px}
+    .publication-spec-item dt{order:2;margin:0;color:var(--muted);font:450 12px/1.3 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .publication-spec-item dd{order:1;max-width:100%;margin:0;color:var(--text);font:650 17px/1.3 var(--font-display,var(--font-sans,system-ui));overflow-wrap:anywhere}
+    .publication-spec-item[data-spec="Ring"] dd,.publication-spec-item[data-spec="Length"] dd{font-size:28px;line-height:1.15;font-variant-numeric:tabular-nums}
+    .publication-tobacco-block{display:flex;flex-direction:column;gap:0;padding:4px 14px}
+    .publication-tobacco-block .publication-spec-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:10px 0;text-align:center}
+    .publication-tobacco-block .publication-spec-item+.publication-spec-item::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(to right,transparent,var(--publication-card-line) 15%,var(--publication-card-line) 85%,transparent)}
+    .publication-tobacco-block dd{font-size:16px}
+    .publication-detail-note{margin:0 0 12px;color:var(--muted);font:400 13px/1.45 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .publication-actions{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px;padding-top:12px}
+    .publication-action{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;min-width:0;min-height:72px;padding:7px 2px;border:0;border-radius:12px;background:transparent;color:var(--text);text-decoration:none;font:500 12px/1.3 var(--font-sans,system-ui);text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .publication-action-mark{display:grid;place-items:center;width:54px;height:32px}
+    .publication-action-mark svg{display:block;width:26px;height:26px}
+    .publication-action.is-saved .publication-action-mark svg{fill:currentColor}
+    .publication-action.is-saved .publication-icon-plus{display:none}
+    .publication-action[disabled]{opacity:.42;cursor:default}
+    .publication-action[aria-disabled="true"]{cursor:default}
+    .publication-action[aria-busy="true"]{opacity:.6}
+    .publication-brand-link .publication-action-mark{width:100%;height:54px}
+    .publication-brand-icon{display:block;width:auto;height:54px;max-width:100%;max-height:54px;object-fit:contain}
+    .publication-brand-fallback{font:750 16px/1 var(--font-display,var(--font-sans))}
+    .publication-action-status{margin:8px 0 0;color:var(--muted);font:400 13px/1.4 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .publication-action-status:empty{display:none}
+    .favorite-lists-dialog.cigar-card-preview{width:min(480px,calc(100% - 24px));height:min(900px,calc(var(--cigar-card-viewport,100dvh) - 24px));max-height:calc(var(--cigar-card-viewport,100dvh) - 24px);padding:16px;overflow:hidden;overscroll-behavior:contain}
+    .favorite-lists-dialog.cigar-card-preview[open]{display:flex;flex-direction:column;gap:12px}
+    .cigar-card-preview-header{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;gap:12px;margin:0}
+    .favorite-lists-dialog.cigar-card-preview h2{margin:0;font-size:22px}
+    .favorite-lists-dialog.cigar-card-preview button{margin:0;min-height:44px;color:var(--text);background:var(--glass2,#eef2f7)}
+    .favorite-lists-dialog.cigar-card-preview .cigar-card-preview-close{flex:0 0 44px;width:44px;padding:0;font-size:26px;line-height:1}
+    .cigar-card-preview-stage{display:flex;flex:1 1 0;align-items:center;justify-content:center;min-height:0;min-width:0;overflow:hidden}
+    .cigar-card-preview-image{display:block;width:100%;height:100%;max-width:100%;max-height:100%;margin:0;object-fit:contain}
+    .cigar-card-preview-status{flex:0 0 auto;margin:0;color:var(--muted);font:400 14px/1.45 var(--font-sans,system-ui);overflow-wrap:anywhere}
+    .cigar-card-preview-status:empty{display:none}
+    .cigar-card-preview-actions{display:flex;flex:0 0 auto;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:0}
+    .cigar-card-preview-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 16px;border-radius:14px;background:var(--glass2,#eef2f7);color:var(--text);font:500 14px/1.3 var(--font-sans,system-ui);text-decoration:none}
+    .favorite-lists-dialog.cigar-card-preview .cigar-card-preview-share{background:#287447;color:#fff}
+    .cigar-card-preview button:focus-visible,.cigar-card-preview a:focus-visible{outline:2px solid var(--blue,#2874da);outline-offset:3px}
+    .favorite-lists-dialog.cigar-card-preview button[disabled]{opacity:.6;cursor:wait}
+
+.brand-row{display:block;padding:0;overflow:hidden;box-shadow:none;background:linear-gradient(145deg,var(--bg2),var(--bg));--publication-card-line:var(--stroke)}
+.brand-row::after{display:none}.brand-row:active{transform:none}
+.brand-card-summary{position:relative;display:grid;grid-template-columns:28% minmax(0,1fr) 44px;gap:14px;padding:14px 16px 18px 18px;border-radius:24px;background:var(--glass2);align-items:center;min-height:132px}
+html[data-theme="light"] .brand-card-summary{background:#fff}
+.brand-card-summary .row-ico{width:100%;height:auto;aspect-ratio:1;border-radius:20%;object-fit:cover}
+.brand-row-title{font-size:17px;line-height:1.12;font-weight:750;overflow-wrap:anywhere}
+.brand-row-sub,.brand-row-size{font-size:16px;line-height:1.18;color:var(--muted2);margin-top:3px}
+.brand-row-msrp{color:#0097ff;text-align:left;font-size:18px;margin-top:12px;cursor:default}
+.brand-row-right{width:44px;min-width:0;gap:4px;align-self:stretch;align-items:center;justify-content:space-between}
+.brand-rating,.brand-card-summary .qty-btn{background:#ecf8ed;color:#60b571;border:0;border-radius:999px;width:36px;min-height:26px;box-shadow:none;font:400 15px/1.2 var(--font-display);display:grid;place-items:center}
+.brand-card-summary .qty-btn{font-size:25px;min-height:32px;width:44px}
+.brand-favorite{display:grid;place-items:center;background:transparent;border:0;padding:0;width:44px;height:44px;color:#dce0e4;cursor:pointer}
+.brand-favorite svg{width:38px;height:38px;stroke-width:1.1}.brand-favorite.is-saved svg{fill:#ffe500;stroke:#e5e6de}
+.brand-expand{position:absolute;left:0;bottom:0;width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;background:transparent;color:var(--muted2);cursor:pointer;transform:translate(-4px,7px)}
+.brand-expand svg{width:20px;height:20px;transition:transform .18s ease}.brand-expand[aria-expanded="true"] svg{transform:rotate(180deg)}
+.brand-expand:focus-visible,.brand-favorite:focus-visible{outline:2px solid var(--blue);outline-offset:-4px;border-radius:12px}
+.brand-row .publication-details{background:linear-gradient(145deg,#eff6ff,#d3e5f9);padding-top:12px;color:#12304e;--text:#12304e;--muted:#456685}
+html[data-theme="dark"] .brand-row .publication-details{background:linear-gradient(145deg,#254d76,#102e4a);--text:#f8fbff;--muted:#b4cae1}
+html[data-theme="dark"] .brand-rating,html[data-theme="dark"] .brand-card-summary .qty-btn{background:#173d33;color:#85d89b}
+.brand-cigar-photo{display:grid;place-items:center;min-height:64px;color:var(--muted);font-size:13px}
+.brand-cigar-photo .favorite-photo-art{display:block;width:100%;height:auto;max-height:150px}
+.brand-row .publication-specs{padding-top:10px}.brand-row .publication-specs::before{display:none}
+.brand-row .publication-action{font-size:11px}.brand-row .publication-details[hidden],[hidden]{display:none!important}
+.favorite-lists-dialog.cigar-card-preview{border:1px solid var(--stroke);border-radius:24px;background:var(--bg2);color:var(--text)}
+.favorite-lists-dialog::backdrop{background:#0008}.cigar-card-preview button{border:1px solid var(--stroke);border-radius:12px;padding:10px}
+@media(max-width:350px){.brand-card-summary{gap:10px;padding-right:10px;grid-template-columns:25% minmax(0,1fr) 40px}.brand-row-title{font-size:15px}.brand-row-sub,.brand-row-size{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.brand-row,.brand-expand svg{animation:none;transition:none}}
