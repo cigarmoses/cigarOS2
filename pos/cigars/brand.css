@@ -1565,16 +1565,16 @@ html[data-theme="light"] .brand-card-summary{background:#fff}
 .brand-row-sub,.brand-row-size{font-size:16px;line-height:1.18;color:var(--muted2);margin-top:3px}
 .brand-row-msrp{color:#0097ff;text-align:left;font-size:18px;margin-top:12px;cursor:default}
 .brand-row-right{width:44px;min-width:0;gap:4px;align-self:stretch;align-items:center;justify-content:space-between}
-.brand-rating,.brand-card-summary .qty-btn{background:#ecf8ed;color:#60b571;border:0;border-radius:999px;width:36px;min-height:26px;box-shadow:none;font:400 15px/1.2 var(--font-display);display:grid;place-items:center}
+.brand-stock,.brand-card-summary .qty-btn{background:#ecf8ed;color:#60b571;border:0;border-radius:999px;width:36px;min-height:26px;box-shadow:none;font:400 15px/1.2 var(--font-display);display:grid;place-items:center}
 .brand-card-summary .qty-btn{font-size:25px;min-height:32px;width:44px}
 .brand-favorite{display:grid;place-items:center;background:transparent;border:0;padding:0;width:44px;height:44px;color:#dce0e4;cursor:pointer}
-.brand-favorite svg{width:38px;height:38px;stroke-width:1.1}.brand-favorite.is-saved svg{fill:#ffe500;stroke:#e5e6de}
+.brand-favorite svg{width:38px;height:38px;stroke-width:1.1}.brand-favorite.is-saved svg{fill:#ffe500;stroke:#ffe500}
 .brand-expand{position:absolute;left:0;bottom:0;width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;background:transparent;color:var(--muted2);cursor:pointer;transform:translate(-4px,7px)}
 .brand-expand svg{width:20px;height:20px;transition:transform .18s ease}.brand-expand[aria-expanded="true"] svg{transform:rotate(180deg)}
 .brand-expand:focus-visible,.brand-favorite:focus-visible{outline:2px solid var(--blue);outline-offset:-4px;border-radius:12px}
 .brand-row .publication-details{background:linear-gradient(145deg,#eff6ff,#d3e5f9);padding-top:12px;color:#12304e;--text:#12304e;--muted:#456685}
 html[data-theme="dark"] .brand-row .publication-details{background:linear-gradient(145deg,#254d76,#102e4a);--text:#f8fbff;--muted:#b4cae1}
-html[data-theme="dark"] .brand-rating,html[data-theme="dark"] .brand-card-summary .qty-btn{background:#173d33;color:#85d89b}
+html[data-theme="dark"] .brand-stock,html[data-theme="dark"] .brand-card-summary .qty-btn{background:#173d33;color:#85d89b}
 .brand-cigar-photo{display:grid;place-items:center;min-height:64px;color:var(--muted);font-size:13px}
 .brand-cigar-photo .favorite-photo-art{display:block;width:100%;height:auto;max-height:150px}
 .brand-row .publication-specs{padding-top:10px}.brand-row .publication-specs::before{display:none}
@@ -1583,3 +1583,29 @@ html[data-theme="dark"] .brand-rating,html[data-theme="dark"] .brand-card-summar
 .favorite-lists-dialog::backdrop{background:#0008}.cigar-card-preview button{border:1px solid var(--stroke);border-radius:12px;padding:10px}
 @media(max-width:350px){.brand-card-summary{gap:10px;padding-right:10px;grid-template-columns:25% minmax(0,1fr) 40px}.brand-row-title{font-size:15px}.brand-row-sub,.brand-row-size{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.brand-row,.brand-expand svg{animation:none;transition:none}}
+
+/* Compact inventory cards, 2026-11-07. Summary sits above the recessed details. */
+.brand-row{overflow:visible;background:transparent;isolation:isolate}
+.brand-row>.brand-card-summary{z-index:2;min-height:98px;grid-template-columns:24% minmax(0,1fr) 40px;gap:10px;padding:8px 12px 10px 20px;border-radius:20px;background:#1c3856}
+html[data-theme="light"] .brand-row>.brand-card-summary{background:#fff}
+.brand-card-summary .row-ico{width:100%;max-height:80px;object-fit:contain}
+.brand-card-summary .brand-row-title{font-size:16px;line-height:1.08}
+.brand-card-summary .brand-row-sub,.brand-card-summary .brand-row-size{font-size:14px;line-height:1.12;margin-top:2px}
+.brand-card-summary .brand-row-msrp{font-size:16px;line-height:1.12;margin-top:6px}
+.brand-card-summary .brand-row-right{width:40px;gap:0;justify-content:space-between}
+.brand-card-summary .brand-stock{min-height:22px;min-width:34px;width:auto;padding:2px 6px;font-size:13px}
+.brand-card-summary .brand-favorite{width:40px;height:32px;min-height:32px}
+.brand-card-summary .brand-favorite svg{width:30px;height:30px}
+.brand-card-summary .brand-favorite.is-saved svg{fill:#ffe500;stroke:#ffe500}
+.brand-card-summary .qty-btn{width:38px;height:26px;min-height:26px;font-size:23px}
+.brand-card-summary .brand-expand{left:0;bottom:0;width:32px;height:32px;transform:none}
+.brand-card-summary .brand-expand svg{width:16px;height:16px}
+.brand-row>.publication-details{position:relative;z-index:1;margin:-20px 5px 0;padding:30px 12px 14px;border-radius:0 0 22px 22px;overflow:hidden}
+.brand-row>.publication-details[hidden]{display:none!important}
+.brand-row .brand-cigar-photo{position:relative;margin:0;min-height:64px}
+@media(max-width:350px){
+ .brand-row>.brand-card-summary{grid-template-columns:23% minmax(0,1fr) 36px;gap:8px;padding-right:9px;min-height:98px}
+ .brand-card-summary .brand-row-title{font-size:14px}
+ .brand-card-summary .brand-row-sub,.brand-card-summary .brand-row-size{font-size:13px}
+ .brand-card-summary .brand-row-right{width:36px}
+}
