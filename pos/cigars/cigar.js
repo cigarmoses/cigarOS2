@@ -964,6 +964,12 @@
         url.searchParams.set("hubKey", id);
       }
       return {href:url.pathname + url.search, label:[getBrand(rec),getLine(rec),getName(rec),getVitola(rec)].filter(Boolean).join(" · ")};
+    }, rec => {
+      const brand = getBrand(rec), key = normalizeBrand(brand);
+      // Search identifies the brand, never the cigar line's badge.
+      const images = [normalizeAssetPath(getBrandImage(rec))];
+      if (key) images.push(`/img/icons/brands/${key}.svg`, `/img/icons/brands/${key}.png`);
+      return {label:brand, href:buildBrandHref(brand, rec), market:portfolioMarket(rec), images:[...new Set(images.filter(Boolean))]};
     });
     measureBottomDock();
   }
@@ -1194,7 +1200,7 @@
         && title.scrollWidth <= title.clientWidth + 1;
     }
     if (fitsTwoLines()) return;
-    let low = 1, high = maxSize;
+    let low = Math.min(12, maxSize), high = maxSize;
     for (let i = 0; i < 12; i++) {
       const size = (low + high) / 2;
       title.style.fontSize = `${size}px`;
@@ -1204,13 +1210,24 @@
     // Round down so pixel rounding cannot add an unwanted third line.
     title.style.fontSize = `${Math.floor(low * 10) / 10}px`;
   }
+  // Try comfortable then compact type against the actual remaining viewport.
+  // Never truncate data or apply unreadably small scaling to force a fit.
+  function fitCigarScreen() {
+    const right = $(".cd-right", card);
+    if (!right || !right.isConnected) return;
+    document.body.classList.remove("cd-fit-scroll", "cd-fit-compact");
+    const fits = () => right.scrollHeight <= right.clientHeight + 1;
+    if (!fits()) document.body.classList.add("cd-fit-compact");
+    if (!fits()) document.body.classList.add("cd-fit-scroll");
+  }
   function scheduleCigarTitleFit() {
     cancelAnimationFrame(titleFitFrame);
-    titleFitFrame = requestAnimationFrame(fitCigarTitle);
+    titleFitFrame = requestAnimationFrame(() => { fitCigarTitle(); fitCigarScreen(); });
   }
   function watchCigarTitle() {
     titleResizeObserver?.disconnect();
     fitCigarTitle();
+    scheduleCigarTitleFit();
     const copy = $(".cd-head-copy", card);
     if (!copy || typeof ResizeObserver === "undefined") return;
     let previousWidth = copy.getBoundingClientRect().width;
@@ -1224,6 +1241,7 @@
     titleResizeObserver.observe(copy);
   }
   window.addEventListener("resize", scheduleCigarTitleFit, {passive:true});
+  window.visualViewport?.addEventListener("resize", scheduleCigarTitleFit, {passive:true});
   if (document.fonts) {
     document.fonts.ready.then(scheduleCigarTitleFit);
     document.fonts.addEventListener?.("loadingdone", scheduleCigarTitleFit);
