@@ -1,4 +1,4 @@
-/* CigarOS manual market tracker, horizontal-logo UI, November 6 2026. No retailer requests, scraping or HUB writes. */
+/* CigarOS manual market tracker, full-box pricing, November 7 2026. No retailer requests, scraping or HUB writes. */
 (function (root) {
   'use strict';
   const SCHEMA = 1;
@@ -76,14 +76,26 @@
     if (offer.basis === 'single') return offer.singlePrice;
     return offer.boxPrice != null && offer.boxCount > 0 ? offer.boxPrice / offer.boxCount : null;
   }
+  // Display only recorded full-box totals in Box mode. Never multiply a retailer's single price.
+  function displayPrice(offer, basis = 'single') {
+    return basis === 'box' ? (offer.basis === 'box' ? offer.boxPrice : null) : unitPrice(offer);
+  }
+  function validBoxCount(value) {
+    return /^\d+$/.test(String(value)) && Number(value) >= 1 && Number(value) <= 1000 ? Number(value) : null;
+  }
+  function shopBoxPrice(single, boxMSRP, boxCount) {
+    if (boxMSRP != null) return boxMSRP;
+    const count = validBoxCount(boxCount);
+    return single != null && count != null ? Math.round(single * 100) * count / 100 : null;
+  }
   function summary(offers, basis = 'single') {
     const eligible = offers.filter(offer => offer.stock === 'in_stock' && offer.basis === basis && unitPrice(offer) > 0);
-    // Sum integer cents for singles; divide box cents before averaging, never rounded unit prices.
-    const totalCents = eligible.reduce((sum, offer) => sum + (offer.basis === 'single' ? Math.round(offer.singlePrice * 100) : Math.round(offer.boxPrice * 100) / offer.boxCount), 0);
+    // Average full-box totals in Box mode; actual singles in Single mode.
+    const totalCents = eligible.reduce((sum, offer) => sum + (offer.basis === 'single' ? Math.round(offer.singlePrice * 100) : Math.round(offer.boxPrice * 100)), 0);
     return {count:eligible.length, average:eligible.length ? totalCents / eligible.length / 100 : null};
   }
   function emptyDocument(id) {
-    return {schema:SCHEMA, identity:id, comparisonBasis:'single', yourPrice:null, savedAt:null, offers:RETAILERS.map(retailer => emptyOffer(retailer.id))};
+    return {schema:SCHEMA, identity:id, comparisonBasis:'single', yourPrice:null, yourBoxPrice:null, savedAt:null, offers:RETAILERS.map(retailer => emptyOffer(retailer.id))};
   }
   function validateDocument(input, id) {
     if (!input || input.schema !== SCHEMA || input.identity !== id || !Array.isArray(input.offers) || ![6, RETAILERS.length].includes(input.offers.length)) throw new Error('Saved prices have an unsupported format or a different cigar identity.');
@@ -92,7 +104,9 @@
     if (input.offers.some(offer => !RETAILERS.some(retailer => retailer.id === offer?.id))) throw new Error('A saved retailer is not supported.');
     const result = emptyDocument(id);
     result.comparisonBasis = input.comparisonBasis;
-    result.yourPrice = price(input.yourPrice, 'Your price');
+    result.yourPrice = price(input.yourPrice, 'Your single price');
+    // Legacy yourPrice remains a single price regardless of the saved tab.
+    result.yourBoxPrice = price(input.yourBoxPrice, 'Your box price');
     result.offers = RETAILERS.map(retailer => {
       const value = input.offers.find(offer => offer?.id === retailer.id);
       // Legacy six-retailer records gain only an empty Cigar Country row, without writing on read.
@@ -121,13 +135,13 @@
     storage.setItem(key, raw);
     return {data:checked, raw};
   }
-  const api = {identity, storageKey, price, safeURL, emptyOffer, normalizeOffer, unitPrice, summary, emptyDocument, validateDocument, read, save, RETAILERS};
+  const api = {identity, storageKey, price, safeURL, emptyOffer, normalizeOffer, unitPrice, displayPrice, shopBoxPrice, summary, emptyDocument, validateDocument, read, save, RETAILERS};
   root.CigarMarketTracker = api;
   if (!root.document) return;
 
   const document = root.document;
   let context = null, panel = null, editor = null, discard = null, draft = null, saved = null;
-  let expectedRaw = null, dirty = false, editorDirty = false, storageFailure = '', posPrice = null, posNotice = '', view = 0;
+  let expectedRaw = null, dirty = false, editorDirty = false, storageFailure = '', posPrice = null, posBoxPrice = null, posBoxCount = null, posNotice = '', view = 0;
   const format = value => value == null ? '—' : value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
   const currency = value => '$' + format(value);
   function node(tag, className, text) {
@@ -192,7 +206,8 @@
     if (dirty) return 'Unsaved changes';
     return draft.savedAt ? 'Saved on this device' : 'This device only';
   }
-  function ownPrice() { return draft.yourPrice ?? posPrice; }
+  function ownBoxPrice() { return draft.yourBoxPrice ?? shopBoxPrice(draft.yourPrice ?? posPrice, posBoxPrice, posBoxCount); }
+  function ownPrice() { return draft.comparisonBasis === 'box' ? ownBoxPrice() : draft.yourPrice ?? posPrice; }
   function renderPanel() {
     if (!panel || !draft) return;
     const result=summary(draft.offers,draft.comparisonBasis);
@@ -201,15 +216,17 @@
       el.setAttribute('aria-label',value==null?'No price':currency(value)+' USD');
       el.classList.toggle('cmt-large-value',value!=null&&value>=1000);
     });
-    panel.querySelector('#cmt-own-source').textContent=draft.yourPrice!=null?'Your single price':posPrice!=null?'POS MSRP · single':'Add your price';
+    panel.querySelector('#cmt-own-source').textContent=draft.comparisonBasis==='box'
+      ? draft.yourBoxPrice!=null?'Your box price':posBoxPrice!=null?'POS box MSRP':ownBoxPrice()!=null?'Single price × '+posBoxCount+' cigars':'Add your box price'
+      : draft.yourPrice!=null?'Your single price':posPrice!=null?'POS MSRP · single':'Add your single price';
     panel.querySelector('#cmt-basis').value=draft.comparisonBasis;
     panel.querySelectorAll('[data-basis]').forEach(el=>{const selected=el.dataset.basis===draft.comparisonBasis;el.setAttribute('aria-checked',String(selected));el.tabIndex=selected?0:-1;});
     panel.querySelector('#cmt-average-note').textContent=result.count?`${result.count} available ${result.count===1?'offer':'offers'}`:'No available offers';
     panel.querySelector('#cmt-saved').textContent=snapshotLabel();
     panel.querySelector('#cmt-last-saved').textContent=draft.savedAt?'Last saved '+new Date(draft.savedAt).toLocaleString():'No saved prices yet.';
-    const list=panel.querySelector('#cmt-retailers');list.replaceChildren();
+    const list=panel.querySelector('#cmt-retailers');list.setAttribute('aria-label',draft.comparisonBasis==='box'?'Retailer full box prices in US dollars':'Retailer prices in US dollars per cigar');list.replaceChildren();
     RETAILERS.forEach(retailer=>{
-      const offer=draft.offers.find(item=>item.id===retailer.id),amount=unitPrice(offer);
+      const offer=draft.offers.find(item=>item.id===retailer.id),amount=displayPrice(offer,draft.comparisonBasis);
       const row=node('div','cmt-retailer');row.dataset.retailer=retailer.id;
       row.addEventListener('contextmenu',event=>{event.preventDefault();openRetailerEditor(retailer.id);});
       const link=node(offer.url?'a':'div','cmt-retailer-main');
@@ -232,13 +249,14 @@
         ?iconButton('pencil',editLabel,'cmt-edit-row cmt-empty-price',()=>openRetailerEditor(retailer.id))
         :button(format(shownAmount),'cmt-edit-row cmt-retailer-price',()=>openRetailerEditor(retailer.id));
       if(shownAmount!=null){
-        const basis=offer.basis==='box'?'box-derived price per cigar':'single cigar price';
+        const basis=draft.comparisonBasis==='box'?'full box of '+offer.boxCount+' cigars':offer.basis==='box'?'box-derived price per cigar':'single cigar price';
         edit.setAttribute('aria-label',editLabel+'. '+currency(shownAmount)+' USD, '+basis+', '+stockText.toLowerCase());
         edit.title='Edit '+currency(shownAmount)+' USD · '+basis;
         edit.classList.toggle('cmt-large-value',shownAmount>=1000);
       }
       const bottom=node('div','cmt-tile-bottom');bottom.append(stock,edit);row.append(bottom);
-      if(offer.basis==='box'&&amount!=null)row.append(node('span','cmt-basis-label','(box/'+offer.boxCount+')'));
+      if(offer.basis==='box'&&amount!=null)row.append(node('span','cmt-basis-label',draft.comparisonBasis==='box'?'Box of '+offer.boxCount:'(box/'+offer.boxCount+')'));
+      if(draft.comparisonBasis==='box'&&offer.basis==='single'&&offer.singlePrice!=null)row.append(node('span','cmt-basis-label','Box price not entered'));
       if(amount!=null&&offer.basis!==draft.comparisonBasis)row.append(node('span','cmt-basis-label cmt-sr-only','Other basis · excluded'));
       const details=[];
       if(offer.checkedAt)details.push('Entered '+new Date(offer.checkedAt).toLocaleDateString());
@@ -253,7 +271,7 @@
   async function open() {
     if (panel?.open) { panel.focus(); return; }
     const openingContext = context, token = ++view;
-    posPrice = optionalPrice(context.record.msrp); posNotice = '';
+    posPrice = optionalPrice(context.record.msrp); posBoxPrice = optionalPrice(context.record.boxMSRP); posBoxCount = validBoxCount(context.record.boxCount); posNotice = '';
     storageFailure = ''; expectedRaw = null;
     try { if (!context.id) throw new Error('This cigar needs a unique catalog key or complete variant details before prices can be saved.'); const loaded = read(root.localStorage, context.id); saved = loaded.data; expectedRaw = loaded.raw; }
     catch (error) { saved = emptyDocument(context.id); storageFailure = 'Saved prices could not be loaded. Nothing was overwritten. ' + error.message; }
@@ -289,7 +307,7 @@
     const select=node('select');select.id='cmt-basis';select.hidden=true;select.setAttribute('aria-label','Average basis');
     [['single','Single'],['box','Box']].forEach(([value,text])=>{
       const option=node('option','',text);option.value=value;select.append(option);
-      const choice=button(text,'cmt-segment',()=>{select.value=value;select.dispatchEvent(new Event('change'));});choice.dataset.basis=value;choice.setAttribute('role','radio');choice.setAttribute('aria-label',value==='box'?'Box price per cigar':'Single cigar price');
+      const choice=button(text,'cmt-segment',()=>{select.value=value;select.dispatchEvent(new Event('change'));});choice.dataset.basis=value;choice.setAttribute('role','radio');choice.setAttribute('aria-label',value==='box'?'Full box price':'Single cigar price');
       choice.addEventListener('keydown',event=>{
         if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key))return;
         event.preventDefault();const next=event.key==='Home'?'single':event.key==='End'?'box':choice.dataset.basis==='single'?'box':'single';
@@ -301,7 +319,7 @@
     const list=node('div','cmt-retailers');list.id='cmt-retailers';list.setAttribute('role','group');list.setAttribute('aria-label','Retailer prices in US dollars per cigar');content.append(list);
     const info=node('details','cmt-info');info.append(node('summary','','About & backup'));
     info.append(node('p','cmt-help','Manual prices only. Save prices recomputes the average and saves your entries; it never checks retailer websites.'));
-    info.append(node('p','cmt-help','Only in-stock offers with the selected basis count. Single and box-derived prices are never mixed. Box prices require buying the full box. Tax, shipping, coupons and membership deals are excluded.'));
+    info.append(node('p','cmt-help','Only in-stock offers with the selected basis count. Box shows recorded full-box totals, with the cigar count on each card; boxes may contain different quantities. Single shows per-cigar prices, with box-derived offers excluded from its average. Missing box totals are never estimated from retailer single prices. Tax, shipping, coupons and membership deals are excluded.'));
     info.append(node('p','cmt-help','Saved in this browser on this device. No sync or HUB backup. Clearing browser data removes prices. Your comparison price never changes POS pricing.'));
     info.append(node('p','cmt-help','Tap a linked logo or retailer name to open its listing. Tap a price or pencil to edit. Apply stages a change; Save prices stores it.'));
     const timestamp=node('p','cmt-help');timestamp.id='cmt-last-saved';info.append(timestamp);
@@ -317,6 +335,8 @@
         const pos = await openingContext.loadPos();
         if (view !== token || context !== openingContext || !panel?.open) return;
         if (pos && Object.prototype.hasOwnProperty.call(pos,'msrp')) posPrice = optionalPrice(pos.msrp);
+        if (pos && Object.prototype.hasOwnProperty.call(pos,'boxMSRP')) posBoxPrice = optionalPrice(pos.boxMSRP);
+        if (pos && Object.prototype.hasOwnProperty.call(pos,'boxCount')) posBoxCount = validBoxCount(pos.boxCount);
         renderPanel();
       } catch {
         if (view !== token || context !== openingContext || !panel?.open) return;
@@ -357,10 +377,14 @@
     return {form,error,actions,finish:()=>{removeDialog(editor);editor=null;editorDirty=false;markDirty();renderPanel();panel.querySelector('#cmt-run')?.focus();message(dirty?'Changes ready to save.':'No changes to save.');},show:()=>{form.append(error,actions);editor.showModal();}};
   }
   function openYourPriceEditor() {
-    const shell=editorShell('Your single price',document.activeElement);if(!shell)return;
-    shell.form.append(node('p','cmt-help','For this comparison only. POS prices stay unchanged. Leave blank to use POS MSRP.'));
-    const input=field(shell.form,'Your price · USD','cmt-own-input');input.inputMode='decimal';input.maxLength=12;input.placeholder=posPrice==null?'e.g. 19.99':format(posPrice);input.value=draft.yourPrice??'';
-    shell.form.addEventListener('submit',event=>{event.preventDefault();try{draft.yourPrice=price(input.value,'Your price');shell.finish();}catch(error){shell.error.textContent=error.message;input.focus();}});shell.show();
+    const isBox=draft.comparisonBasis==='box', key=isBox?'yourBoxPrice':'yourPrice';
+    const fallback=isBox?shopBoxPrice(draft.yourPrice??posPrice,posBoxPrice,posBoxCount):posPrice;
+    const shell=editorShell(isBox?'Your box price':'Your single price',document.activeElement);if(!shell)return;
+    shell.form.append(node('p','cmt-help',isBox
+      ? 'For this comparison only. POS prices stay unchanged. Leave blank to use POS box MSRP, or your single price multiplied by the saved POS box count. Without a known count or box MSRP, enter the full box total here.'
+      : 'For this comparison only. POS prices stay unchanged. Leave blank to use POS MSRP.'));
+    const input=field(shell.form,isBox?'Your full box price · USD':'Your single price · USD','cmt-own-input');input.inputMode='decimal';input.maxLength=12;input.placeholder=fallback==null?'Enter price':format(fallback);input.value=draft[key]??'';
+    shell.form.addEventListener('submit',event=>{event.preventDefault();try{draft[key]=price(input.value,isBox?'Your box price':'Your single price');shell.finish();}catch(error){shell.error.textContent=error.message;input.focus();}});shell.show();
   }
   function openRetailerEditor(id) {
     const retailer=RETAILERS.find(item=>item.id===id);if(!retailer)return;
@@ -372,7 +396,7 @@
     const stockLabel=node('label','cmt-field','Stock status'),stock=node('select');stock.id='cmt-stock';stockLabel.htmlFor=stock.id;
     [['unknown','Not checked'],['in_stock','Available'],['out_of_stock','Out of stock']].forEach(([value,text])=>{const option=node('option','',text);option.value=value;stock.append(option);});stock.value=current.stock;stockLabel.append(stock);shell.form.append(stockLabel);
     const basisLabel=node('label','cmt-field','Price type'),basis=node('select');basis.id='cmt-price-type';basisLabel.htmlFor=basis.id;
-    [['single','Actual single sold individually'],['box','Box price divided by cigar count']].forEach(([value,text])=>{const option=node('option','',text);option.value=value;basis.append(option);});basis.value=current.basis;basisLabel.append(basis);shell.form.append(basisLabel);
+    [['single','Actual single sold individually'],['box','Full box price and cigar count']].forEach(([value,text])=>{const option=node('option','',text);option.value=value;basis.append(option);});basis.value=current.basis;basisLabel.append(basis);shell.form.append(basisLabel);
     const single=field(shell.form,'Actual single price · USD','cmt-single');single.inputMode='decimal';single.maxLength=12;single.value=current.singlePrice??'';
     const box=field(shell.form,'Full box price · USD','cmt-box');box.inputMode='decimal';box.maxLength=12;box.value=current.boxPrice??'';
     const count=field(shell.form,'Cigars in this box','cmt-count');count.inputMode='numeric';count.maxLength=4;count.value=current.boxCount??'';
@@ -390,7 +414,7 @@
     });shell.show();
   }
   api.mount = function mount(options) {
-    const record = Object.fromEntries(['key','msrp',...FIELDS].map(field=>[field,clean(options.record?.[field])]));
+    const record = Object.fromEntries(['key','msrp','boxMSRP','boxCount',...FIELDS].map(field=>[field,clean(options.record?.[field])]));
     const id=identity(record);
     close(true);
     context={record,id,loadPos:options.loadPos};
