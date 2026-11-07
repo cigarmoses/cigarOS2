@@ -238,8 +238,8 @@
         edit.classList.toggle('cmt-large-value',shownAmount>=1000);
       }
       const bottom=node('div','cmt-tile-bottom');bottom.append(stock,edit);row.append(bottom);
-      if(offer.basis==='box'&&amount!=null)row.append(node('span','cmt-basis-label','Box ÷ '+offer.boxCount+' · per cigar'));
-      if(amount!=null&&offer.basis!==draft.comparisonBasis)row.append(node('span','cmt-basis-label','Other basis · excluded'));
+      if(offer.basis==='box'&&amount!=null)row.append(node('span','cmt-basis-label','(box/'+offer.boxCount+')'));
+      if(amount!=null&&offer.basis!==draft.comparisonBasis)row.append(node('span','cmt-basis-label cmt-sr-only','Other basis · excluded'));
       const details=[];
       if(offer.checkedAt)details.push('Entered '+new Date(offer.checkedAt).toLocaleDateString());
       if(offer.stock==='out_of_stock'&&amount!=null)details.push('Last price '+currency(amount));
@@ -264,10 +264,20 @@
     header.append(title,iconButton('close','Close market prices','cmt-close',()=>close()));shell.append(header);
     const content=node('div','cmt-content');shell.append(content);
     const cigar=node('div','cmt-cigar');
-    cigar.append(node('p','cmt-brand',[context.record.brand,context.record.line].map(clean).filter(Boolean).join(' · ')));
-    cigar.append(node('p','cmt-cigar-name',clean(context.record.name)||clean(context.record.vitola)||'Cigar'));
-    const variant=[context.record.vitola,context.record.length&&context.record.ring?`${context.record.length} × ${context.record.ring}`:''].map(clean).filter(Boolean);
-    cigar.append(node('p','cmt-variant',[...new Set(variant)].join(' · ')));content.append(cigar);
+    // Reuse the actual cigar artwork already resolved by the detail page.
+    // No brand badge, duplicate name, or specifications in the tracker header.
+    const original=document.querySelector('#cdStickImage');
+    const imageSources=[original?.currentSrc,original?.getAttribute('src'),context.record.img,context.record.image,context.record['Cigar IMG'],...(Array.isArray(context.record.imageCandidates)?context.record.imageCandidates:[])];
+    try { imageSources.push(...JSON.parse(original?.dataset.fallbacks||'[]')); } catch {}
+    const sources=[...new Set(imageSources.filter(value=>typeof value==='string'&&value.trim()))];
+    if(sources.length){
+      const image=node('img','cmt-cigar-image');
+      image.alt=[context.record.brand,context.record.name||context.record.vitola].map(clean).filter(Boolean).join(' ')||'Cigar';
+      image.decoding='async';
+      image.addEventListener('load',()=>{image.classList.toggle('cmt-cigar-portrait',image.naturalHeight>image.naturalWidth);cigar.hidden=false;});
+      image.addEventListener('error',()=>{if(sources.length)image.src=sources.shift();else cigar.hidden=true;});
+      cigar.hidden=true;cigar.append(image);image.src=sources.shift();content.append(cigar);
+    }
     const stats=node('div','cmt-stats');
     [['Online average','cmt-online-average','cmt-average-note'],['Your price','cmt-your-price','cmt-own-source']].forEach(([label,id,note])=>{
       const item=node('div','cmt-stat');item.append(node('div','cmt-stat-label',label));
