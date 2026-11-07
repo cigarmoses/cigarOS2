@@ -2,7 +2,7 @@
    Routes are verified against cigarOS2 HEAD 134f0c7. No new server endpoints. */
 (() => {
   'use strict';
-  let records = [], resolveRecord, launcher, dialog, previousOverflow = '';
+  let records = [], resolveRecord, resolveBrand, launcher, dialog, previousOverflow = '';
   const paths = {
     search: '<circle cx="10" cy="10" r="6.5"/><path d="m15 15 6 6"/>',
     library: '<path d="m3 10 9-7 9 7v11H3Z"/><path d="M12 12c-3-2-5-1-5-1v7s2-1 5 1c3-2 5-1 5-1v-7s-2-1-5 1v7"/>',
@@ -13,7 +13,7 @@
     grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'
   };
   const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
-  const normalized = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const normalized = text => String(text ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   function searchCatalog() {
     const input = dialog.querySelector('input'), list = dialog.querySelector('#cdSearchResults');
     const query = normalized(input.value.trim());
@@ -22,7 +22,38 @@
     if (!query) { list.textContent = 'Search by cigar, brand, or vitola.'; return; }
     const hits = records.filter(r => normalized(Object.values(r).join(' ')).includes(query));
     let count = 0; const seen = new Set();
+    // Brand results precede individual cigars. Exact names outrank collaborations.
+    const brands = new Map();
+    for (const row of records) {
+      const brand = resolveBrand?.(row);
+      if (!brand?.href || !brand.label) continue;
+      const name = normalized(brand.label.trim());
+      if (!name.includes(query)) continue;
+      const key = name + '|' + (brand.market || '');
+      const existing = brands.get(key);
+      if (!existing) brands.set(key, {...brand, rank:name === query ? 0 : name.startsWith(query) ? 1 : 2});
+      else existing.images = [...new Set([...(existing.images || []), ...(brand.images || [])])];
+    }
+    const brandHits = [...brands.values()].sort((a,b) => a.rank - b.rank || a.label.localeCompare(b.label));
+    for (const brand of brandHits) {
+      const a = document.createElement('a');
+      a.href = brand.href;
+      a.className = 'cd-search-brand';
+      const images = [...(brand.images || [])];
+      if (images.length) {
+        const img = document.createElement('img');
+        img.className = 'cd-search-brand-icon'; img.alt = ''; img.width = 44; img.height = 44;
+        img.addEventListener('error', () => { if (images.length) img.src = images.shift(); else img.remove(); });
+        img.src = images.shift(); a.append(img);
+      }
+      const copy = document.createElement('span'); copy.className = 'cd-search-brand-copy';
+      const name = document.createElement('strong'); name.textContent = brand.label;
+      const detail = document.createElement('small'); detail.textContent = brand.market === 'cuban' ? 'Cuban brand · View cigars' : 'Brand · View cigars';
+      copy.append(name, detail); a.append(copy); list.append(a); seen.add(brand.href);
+      if (++count === 40) break;
+    }
     for (const row of hits) {
+      if (count >= 40) break;
       const result = resolveRecord(row);
       if (!result?.href || seen.has(result.href)) continue;
       seen.add(result.href);
@@ -76,8 +107,9 @@
     window.addEventListener('popstate',close);
     window.addEventListener('pagehide',close);
   }
-  window.CigarDetailShell = {attach(dock, catalog, resolver) {
+  window.CigarDetailShell = {attach(dock, catalog, resolver, brandResolver) {
     resolveRecord = resolver;
+    resolveBrand = brandResolver;
     records = Array.isArray(catalog) ? catalog : [];
     if (!launcher) create();
     if (launcher.parentElement !== dock) dock.prepend(launcher);
