@@ -915,3 +915,117 @@ html[data-theme="light"] #cdCard #cdPortfolioControls .cd-portfolio-arrow {
 }
 #cdCard #cdPortfolioControls .cd-portfolio-arrow:disabled {opacity:.35;}
 #cdCard #cdPortfolioControls .cd-portfolio-arrow:focus-visible {outline:2px solid var(--cd-accent);outline-offset:3px;}
+
+/* Even detail rhythm, mid-panel glass navigation, and Home Screen dark palette. */
+#cdCard .cd-grid {
+  grid-template-rows:minmax(min-content,1fr);
+  padding:18px 36px 12px 18px;
+}
+#cdCard .cd-right {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:repeat(7,minmax(min-content,1fr)) auto auto auto;
+  justify-content:normal;
+  gap:0;
+  padding-top:6px;
+}
+/* Flatten the old section wrappers so each real row receives equal space. */
+#cdCard .cd-top-stats,#cdCard .cd-tobaccos {display:contents;}
+#cdCard .cd-pair-card,#cdCard .cd-mini--single,#cdCard .cd-shade-card,
+#cdCard .cd-tobacco-row {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:44px;
+  padding:7px 0;
+  margin:0;
+}
+#cdCard .cd-pair-grid {height:auto;}
+#cdCard .cd-mini-grid {align-items:center;}
+#cdCard .cd-mini-grid .cd-mini {padding:7px 0;}
+#cdCard .cd-origin-inline {grid-row:8;padding:10px 0 0;align-items:center;}
+#cdCard .cd-origin-inline-text {
+  font-family:var(--cd-font-text);
+  font-size:15px;
+  font-weight:600;
+  line-height:1.2;
+  letter-spacing:-.015em;
+}
+#cdCard .cd-accolades-inline {grid-row:9;}
+#cdCard .cd-edit-link {
+  grid-row:10;
+  justify-self:start;
+  align-self:end;
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  padding:10px;
+  margin-left:-10px;
+  text-decoration:none;
+  color:#007aff;
+}
+#cdCard .cd-edit-link svg {width:22px;height:22px;display:block;}
+/* Visible circles and chevrons are 80% of 44px / 20px.
+   Keep invisible 44px hit targets for touch accessibility. */
+#cdCard #cdPortfolioControls {
+  position:absolute;
+  top:50%;
+  left:-9px;
+  right:-9px;
+  width:auto;
+  margin:0;
+  padding:0;
+  transform:translateY(-50%);
+  pointer-events:none;
+  z-index:3;
+}
+#cdCard #cdPortfolioControls .cd-portfolio-arrow,
+html[data-theme="light"] #cdCard #cdPortfolioControls .cd-portfolio-arrow {
+  position:relative;
+  width:44px;height:44px;min-width:44px;min-height:44px;flex-basis:44px;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  color:var(--text);
+  pointer-events:auto;
+  isolation:isolate;
+}
+#cdCard #cdPortfolioControls .cd-portfolio-arrow::before {
+  content:"";
+  position:absolute;
+  inset:4.4px;
+  z-index:-1;
+  border:0;
+  border-radius:50%;
+  background:rgba(210,226,250,.12);
+  box-shadow:none;
+  backdrop-filter:blur(18px) saturate(1.6);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);
+}
+html[data-theme="light"] #cdCard #cdPortfolioControls .cd-portfolio-arrow::before {
+  background:rgba(255,255,255,.28);
+}
+#cdCard #cdPortfolioControls .cd-portfolio-arrow svg {width:16px;height:16px;}
+/* The exact Home background and text colors, scoped only to dark mode. */
+html[data-theme="dark"] body.cigar-detail-page {
+  --text:#eef5ff;
+  --muted:#acbbd0;
+  --muted-2:#8f9fb5;
+  --surface:#07152b;
+  --surface-2:rgba(14,34,68,.55);
+  --surface-3:rgba(2,9,18,.62);
+  --surface-soft:rgba(255,255,255,.08);
+  --border:rgba(172,187,208,.13);
+  --cd-panel:rgba(6,21,45,.76);
+  background:radial-gradient(1200px 700px at 50% -20%,#0e2244 0%,rgba(14,34,68,0) 55%),linear-gradient(180deg,#06152d 0%,#020912 60%,#000000 100%);
+  color:var(--text);
+}
+html[data-theme="dark"] .cd-topbar {background:transparent;}
+html[data-theme="dark"] .cd-edit-link {color:#0a84ff;}
+@media (max-width:360px) {
+  #cdCard .cd-grid {padding-left:12px;padding-right:30px;gap:6px 9px;}
+}
