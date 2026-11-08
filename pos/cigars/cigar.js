@@ -1182,64 +1182,8 @@
     void refreshPortfolioImage(activeRecord, view);
   }
 
-  // Fit the complete name, rather than clamping/cropping the second line.
-  // Reset to the CSS size each time so short names and wider screens grow back.
-  let titleResizeObserver = null;
-  let titleFitFrame = 0;
-  function fitCigarTitle() {
-    const title = $(".cd-name", card);
-    if (!title || !title.isConnected || title.clientWidth <= 0) return;
-    title.style.removeProperty("font-size");
-    const maxSize = parseFloat(getComputedStyle(title).fontSize);
-    if (!Number.isFinite(maxSize) || maxSize <= 0) return;
-    function fitsTwoLines() {
-      const style = getComputedStyle(title);
-      const lineHeight = parseFloat(style.lineHeight);
-      const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-      return title.getBoundingClientRect().height <= lineHeight * 2 + padding + 0.5
-        && title.scrollWidth <= title.clientWidth + 1;
-    }
-    if (fitsTwoLines()) return;
-    let low = Math.min(12, maxSize), high = maxSize;
-    for (let i = 0; i < 12; i++) {
-      const size = (low + high) / 2;
-      title.style.fontSize = `${size}px`;
-      if (fitsTwoLines()) low = size;
-      else high = size;
-    }
-    // Round down so pixel rounding cannot add an unwanted third line.
-    title.style.fontSize = `${Math.floor(low * 10) / 10}px`;
-  }
-  // The restored cinematic detail layout scrolls at its comfortable natural size.
-  function fitCigarScreen() {
-    document.body.classList.remove("cd-fit-scroll", "cd-fit-compact");
-  }
-  function scheduleCigarTitleFit() {
-    cancelAnimationFrame(titleFitFrame);
-    titleFitFrame = requestAnimationFrame(() => { fitCigarTitle(); fitCigarScreen(); });
-  }
-  function watchCigarTitle() {
-    titleResizeObserver?.disconnect();
-    fitCigarTitle();
-    scheduleCigarTitleFit();
-    const copy = $(".cd-head-copy", card);
-    if (!copy || typeof ResizeObserver === "undefined") return;
-    let previousWidth = copy.getBoundingClientRect().width;
-    titleResizeObserver = new ResizeObserver(entries => {
-      const width = entries[0]?.contentRect.width || 0;
-      // Ignore height changes caused by fitting the name itself.
-      if (Math.abs(width - previousWidth) < 0.1) return;
-      previousWidth = width;
-      scheduleCigarTitleFit();
-    });
-    titleResizeObserver.observe(copy);
-  }
-  window.addEventListener("resize", scheduleCigarTitleFit, {passive:true});
-  window.visualViewport?.addEventListener("resize", scheduleCigarTitleFit, {passive:true});
-  if (document.fonts) {
-    document.fonts.ready.then(scheduleCigarTitleFit);
-    document.fonts.addEventListener?.("loadingdone", scheduleCigarTitleFit);
-  }
+  // Names wrap naturally. Never shrink text to defeat user text-size settings.
+  function watchCigarTitle() {}
 
   let favoriteUnsubscribe = () => {};
   let pageShowUnsubscribe = () => {};
@@ -1282,7 +1226,7 @@
           ${accolades.length?`<div class="cd-accolades-inline">${renderAccolades(accolades)}</div>`:""}
           <div class="cd-actions">
             <button class="cd-action" type="button" id="cdCompare" aria-label="Add to comparison" aria-pressed="false" title="Compare"><span aria-hidden="true" class="cd-versus">vs.</span></button>
-            <button class="cd-action" type="button" id="cdFavorite" aria-label="Add to favorites" aria-pressed="false" title="Favorite"><span aria-hidden="true" class="cd-star">★</span></button>
+            <button class="cd-action" type="button" id="cdFavorite" aria-label="Add to favorites" aria-pressed="false" title="Favorite"><svg class="cd-star" viewBox="0 0 183.6 176.05" aria-hidden="true" focusable="false"><path fill="currentColor" d="M183.6,67.14h-70.23L91.81,0l-21.59,67.14H0l56.81,41.66-21.63,67.25,56.57-40.35h.02l56.65,40.35-21.63-67.25,56.82-41.66ZM123.41,141.53l-31.64-23.15-31.59,23.15,12.08-38.6-31.72-23.91h39.21l12.06-38.53,12.05,38.53h39.21l-31.73,23.91,12.08,38.6h0Z"/></svg></button>
             <button class="cd-action" type="button" id="cdWishlist" aria-label="Add to wishlist cart" title="Add to wishlist cart"><svg viewBox="0 0 48 32" aria-hidden="true"><path fill="currentColor" d="M12 13h27c-2 6-7 11-14 11-6 0-10-4-13-11Zm7 12h13l3 4H16l3-4ZM8 12C1 3-3 18 9 19l4-3-3-2c-6 3-6-5-2-2Zm31 1 8-5-2 7-9 3ZM20 10h11l-2-3h-7l-2 3Z"/><path d="M25 5c-6-5 6-4 1-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" transform="translate(0 4)"/></svg></button>
             
           </div>
