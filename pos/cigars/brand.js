@@ -1230,24 +1230,12 @@
       row.className='brand-row';row.brandRecord=r;
       if(resolveIsCuban(r))row.dataset.cuban='true';
       const inventory=getField(r,['inventory']);
-      row.innerHTML=`<div class="brand-card-summary"><button class="brand-icon-toggle" type="button" aria-expanded="false" aria-controls="brand-details-${id}" aria-label="Expand details: ${esc(name)}"><img class="row-ico" alt="" loading="lazy" decoding="async"></button><div class="brand-row-left"><div class="brand-row-title-wrap"><div class="brand-row-title" id="brand-name-${id}">${esc(name)}</div>${resolveIsCuban(r)?'<span class="brand-row-flag" aria-label="Cuban">🇨🇺</span>':''}</div><div class="brand-row-meta"><span class="brand-row-sub">${esc(resolveVitola(r)||'—')}</span><span class="brand-meta-dot" aria-hidden="true">·</span><span class="brand-row-size">${esc(resolveLength(r)||'—')} x ${esc(resolveRing(r)||'—')}</span></div><div class="brand-row-msrp">${esc(resolvePrice(r))}</div></div><div class="brand-row-right"><span class="brand-stock" aria-label="Inventory stock: ${esc(inventory||'unavailable')}">${esc(inventory||'—')}</span><button class="brand-favorite" type="button" aria-pressed="false"></button><button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu for ${esc(name)}">+</button></div></div><div class="publication-details" id="brand-details-${id}" role="region" aria-labelledby="brand-name-${id}" hidden></div>`;
+      row.innerHTML=`<div class="brand-card-summary"><a class="brand-icon-toggle" href="${esc(makeDetailHref(r))}" aria-label="View cigar: ${esc(name)}"><img class="row-ico" alt="" loading="lazy" decoding="async"></a><a class="brand-row-left brand-detail-link" href="${esc(makeDetailHref(r))}" aria-label="View cigar: ${esc(name)}"><div class="brand-row-title-wrap"><div class="brand-row-title" id="brand-name-${id}">${esc(name)}</div>${resolveIsCuban(r)?'<span class="brand-row-flag" aria-label="Cuban">🇨🇺</span>':''}</div><div class="brand-row-meta"><span class="brand-row-sub">${esc(resolveVitola(r)||'—')}</span><span class="brand-meta-dot" aria-hidden="true">·</span><span class="brand-row-size">${esc(resolveLength(r)||'—')} x ${esc(resolveRing(r)||'—')}</span></div><div class="brand-row-msrp">${esc(resolvePrice(r))}</div></a><div class="brand-row-right"><span class="brand-stock" aria-label="Inventory stock: ${esc(inventory||'unavailable')}">${esc(inventory||'—')}</span><button class="brand-favorite" type="button" aria-pressed="false"></button><button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu for ${esc(name)}">+</button></div></div>`;
       bindImageFallback($('.row-ico',row),rowIconCandidatesForRow(r),'hide');
-      const panel=$('.publication-details',row),toggle=$('.brand-icon-toggle',row);
       $('.brand-favorite',row).append(brandNavigationStar());
       $('.brand-favorite',row).addEventListener('click',()=>toggleBrandFavorite(row));
       $('.qty-btn--plus',row).addEventListener('click',()=>openActionSheet(r));
-      row.publicationContext={record:r,favorite:favoritePayload(r),id:key,award:{},panel,label:name,actions:null};
-      const display=open=>{
-        if(open && !panel.childElementCount){
-          buildPublicationDetails(row);
-          const photo=document.createElement('div');photo.className='brand-cigar-photo';photo.setAttribute('role','img');photo.setAttribute('aria-label',name+' cigar photo');photo.textContent='Loading photo…';panel.prepend(photo);
-          row.publicationPhotoReady=loadBrandPhoto(row);
-        }
-        panel.hidden=!open;row.classList.toggle('is-expanded',open);toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',`${open?'Collapse':'Expand'} details: ${name}`);
-        if(open)expandedBrands.add(key);else expandedBrands.delete(key);
-      };
-      toggle.addEventListener('click',()=>display(toggle.getAttribute('aria-expanded')!=='true'));
-      listEl.append(row);refreshBrandStar(row);if(expandedBrands.has(key))display(true);
+      listEl.append(row);refreshBrandStar(row);
     });
   }
   window.addEventListener('storage',refreshPublicationActionStates);
