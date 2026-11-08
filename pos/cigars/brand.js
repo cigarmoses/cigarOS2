@@ -1187,6 +1187,12 @@
         catch(error){cleanup();showToast("Could not open the Cigar Card preview. Please try again.");}
       }
 
+
+  function brandNavigationStar(){
+    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 183.6 176.05");svg.setAttribute("aria-hidden","true");svg.setAttribute("focusable","false");
+    const outline=document.createElementNS(svg.namespaceURI,"path");outline.setAttribute("d","M183.6,67.14h-70.23L91.81,0l-21.59,67.14H0l56.81,41.66-21.63,67.25,56.57-40.35h.02l56.65,40.35-21.63-67.25,56.82-41.66ZM123.41,141.53l-31.64-23.15-31.59,23.15,12.08-38.6-31.72-23.91h39.21l12.06-38.53,12.05,38.53h39.21l-31.73,23.91,12.08,38.6h0Z");outline.setAttribute("class","brand-star-outline");
+    const solid=document.createElementNS(svg.namespaceURI,"path");solid.setAttribute("d","M183.6,67.14h-70.23L91.81,0l-21.59,67.14H0l56.81,41.66-21.63,67.25,56.57-40.35h.02l56.65,40.35-21.63-67.25,56.82-41.66Z");solid.setAttribute("class","brand-star-solid");svg.append(outline,solid);return svg;
+  }
   const expandedBrands=new Set(), brandPhotoURLs=new Set();let brandPanelSerial=0;
   function refreshBrandStar(row){
     const r=row.brandRecord,button=row.querySelector('.brand-favorite');if(!r||!button)return;
@@ -1224,11 +1230,10 @@
       row.className='brand-row';row.brandRecord=r;
       if(resolveIsCuban(r))row.dataset.cuban='true';
       const inventory=getField(r,['inventory']);
-      row.innerHTML=`<div class="brand-card-summary"><img class="row-ico" alt="" loading="lazy" decoding="async"><div class="brand-row-left"><div class="brand-row-title-wrap"><div class="brand-row-title" id="brand-name-${id}">${esc(name)}</div>${resolveIsCuban(r)?'<span class="brand-row-flag" aria-label="Cuban">🇨🇺</span>':''}</div><div class="brand-row-sub">${esc(resolveVitola(r)||'—')}</div><div class="brand-row-size">${esc(resolveLength(r)||'—')} x ${esc(resolveRing(r)||'—')}</div><div class="brand-row-msrp">${esc(resolvePrice(r))}</div></div><div class="brand-row-right"><span class="brand-stock" aria-label="Inventory stock: ${esc(inventory||'unavailable')}">${esc(inventory||'—')}</span><button class="brand-favorite" type="button" aria-pressed="false"></button><button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu for ${esc(name)}">+</button></div><button class="brand-expand" type="button" aria-expanded="false" aria-controls="brand-details-${id}" aria-label="Expand details: ${esc(name)}"></button></div><div class="publication-details" id="brand-details-${id}" role="region" aria-labelledby="brand-name-${id}" hidden></div>`;
+      row.innerHTML=`<div class="brand-card-summary"><button class="brand-icon-toggle" type="button" aria-expanded="false" aria-controls="brand-details-${id}" aria-label="Expand details: ${esc(name)}"><img class="row-ico" alt="" loading="lazy" decoding="async"></button><div class="brand-row-left"><div class="brand-row-title-wrap"><div class="brand-row-title" id="brand-name-${id}">${esc(name)}</div>${resolveIsCuban(r)?'<span class="brand-row-flag" aria-label="Cuban">🇨🇺</span>':''}</div><div class="brand-row-meta"><span class="brand-row-sub">${esc(resolveVitola(r)||'—')}</span><span class="brand-meta-dot" aria-hidden="true">·</span><span class="brand-row-size">${esc(resolveLength(r)||'—')} x ${esc(resolveRing(r)||'—')}</span></div><div class="brand-row-msrp">${esc(resolvePrice(r))}</div></div><div class="brand-row-right"><span class="brand-stock" aria-label="Inventory stock: ${esc(inventory||'unavailable')}">${esc(inventory||'—')}</span><button class="brand-favorite" type="button" aria-pressed="false"></button><button class="qty-btn qty-btn--plus" type="button" aria-label="Open add menu for ${esc(name)}">+</button></div></div><div class="publication-details" id="brand-details-${id}" role="region" aria-labelledby="brand-name-${id}" hidden></div>`;
       bindImageFallback($('.row-ico',row),rowIconCandidatesForRow(r),'hide');
-      const panel=$('.publication-details',row),toggle=$('.brand-expand',row);
-      toggle.append(publicationActionIcon('chevron'));
-      $('.brand-favorite',row).append(publicationActionIcon('favorites'));
+      const panel=$('.publication-details',row),toggle=$('.brand-icon-toggle',row);
+      $('.brand-favorite',row).append(brandNavigationStar());
       $('.brand-favorite',row).addEventListener('click',()=>toggleBrandFavorite(row));
       $('.qty-btn--plus',row).addEventListener('click',()=>openActionSheet(r));
       row.publicationContext={record:r,favorite:favoritePayload(r),id:key,award:{},panel,label:name,actions:null};
@@ -1282,6 +1287,38 @@
     const loose=rows.filter(r=>{const b=normalizeLoose(resolveBrandVal(r)),q=normalizeLoose(state.brandQuery);return b&&q&&(b.includes(q)||q.includes(b));});
     return selectMarket(loose);
   }
+
+  // The old brand page had filter state but no button binding or dialog.
+  const brandFilterFields=[['vitola','Vitola',resolveVitola],['ring','Ring',resolveRing],['length','Length',resolveLength],['strength','Strength',resolveStrength],['shape','Shape',resolveShape],['shade','Wrapper shade',resolveShade]];
+  let brandFiltersDialog=null;
+  function updateFilterLabel(){const count=Object.values(state.filters).reduce((sum,set)=>sum+set.size,0);if(btnFilters)btnFilters.textContent=count?`Filters (${count})`:'Filters';}
+  function openBrandFilters(){
+    if(brandFiltersDialog?.open)return;
+    const dialog=document.createElement('dialog');dialog.className='brand-filter-dialog';dialog.setAttribute('aria-labelledby','brand-filter-title');
+    dialog.innerHTML='<form method="dialog"><header><h2 id="brand-filter-title">Filters</h2><button type="button" data-filter-cancel aria-label="Close filters">×</button></header><label class="brand-filter-search-label">Find a filter<input type="search" class="brand-filter-search" placeholder="Search filter options" autocomplete="off"></label><div class="brand-filter-options"></div><p class="brand-filter-empty" hidden>No matching options.</p><footer><button type="button" data-filter-clear>Clear all</button><button type="button" data-filter-cancel>Cancel</button><button type="submit" class="brand-filter-apply">Apply</button></footer></form>';
+    const draft=Object.fromEntries(brandFilterFields.map(([key])=>[key,new Set(state.filters[key])]));
+    const options=dialog.querySelector('.brand-filter-options');
+    for(const [key,label,resolver] of brandFilterFields){
+      const fieldset=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=label;fieldset.append(legend);fieldset.dataset.filterGroup=key;
+      const values=[...new Set([...state.rowsAll.map(resolver).filter(Boolean),...draft[key]])].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+      for(const value of values){const item=document.createElement('label'),input=document.createElement('input'),text=document.createElement('span');input.type='checkbox';input.value=value;input.dataset.filterKey=key;input.checked=draft[key].has(value);text.textContent=value;item.className='brand-filter-option';item.dataset.search=(label+' '+value).toLowerCase();input.addEventListener('change',()=>{if(input.checked)draft[key].add(value);else draft[key].delete(value);});item.append(input,text);fieldset.append(item);}
+      if(values.length)options.append(fieldset);
+    }
+    const close=()=>dialog.close();dialog.querySelectorAll('[data-filter-cancel]').forEach(button=>button.addEventListener('click',close));
+    dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
+    dialog.querySelector('[data-filter-clear]').addEventListener('click',()=>{Object.values(draft).forEach(set=>set.clear());dialog.querySelectorAll('input[type="checkbox"]').forEach(input=>{input.checked=false;});});
+    const filterSearch=dialog.querySelector('.brand-filter-search');
+    filterSearch.addEventListener('input',()=>{const q=filterSearch.value.trim().toLowerCase();let visible=0;options.querySelectorAll('fieldset').forEach(group=>{let groupVisible=0;group.querySelectorAll('.brand-filter-option').forEach(item=>{item.hidden=!item.dataset.search.includes(q);if(!item.hidden)groupVisible++;});group.hidden=!groupVisible;visible+=groupVisible;});dialog.querySelector('.brand-filter-empty').hidden=visible>0;});
+    dialog.querySelector('form').addEventListener('submit',event=>{event.preventDefault();for(const [key] of brandFilterFields)state.filters[key]=new Set(draft[key]);applyAll();updateFilterLabel();close();});
+    dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close();}});
+    const oldOverflow=document.body.style.overflow;
+    dialog.addEventListener('close',()=>{document.body.style.overflow=oldOverflow;dialog.remove();brandFiltersDialog=null;btnFilters?.setAttribute('aria-expanded','false');btnFilters?.focus();},{once:true});
+    document.body.append(dialog);brandFiltersDialog=dialog;
+    try{dialog.showModal();document.body.style.overflow='hidden';btnFilters?.setAttribute('aria-expanded','true');filterSearch.focus();}
+    catch(error){dialog.remove();brandFiltersDialog=null;showToast('Filters could not open. Please reload this page.');}
+  }
+  btnFilters?.setAttribute('aria-haspopup','dialog');btnFilters?.setAttribute('aria-expanded','false');btnFilters?.addEventListener('click',openBrandFilters);
+
   backBtn?.addEventListener("click",()=>{if(history.length>1)history.back();else location.href="/pos/cigars/";});
   searchInput?.addEventListener("input",()=>{state.search=searchInput.value||"";applyAll();});
   brandSearchBtn?.addEventListener("click",()=>window.openGlobalSearch?.());
