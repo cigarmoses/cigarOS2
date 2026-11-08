@@ -804,3 +804,71 @@ html[data-theme="light"] #cdPosLauncher {background:#171b29;color:#fff;}
 .cd-search-brand-copy small {font-size:11px;color:var(--muted);}
 
 .cd-right > * {flex-shrink:0;}
+
+/* Compact iPhone detail · 2026-11-08. Use Apple's native SF face on iOS.
+   No webfont substitutes, scaling transforms, content clipping, or image edits. */
+body.cigar-detail-page {
+  --cd-font-text:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  --cd-font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;
+  font-family:var(--cd-font-text);
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+body.cigar-detail-page :is(.cd-brand,.cd-loading,.cd-card-label,.cd-pair-value,.cd-mini-value,.cd-shade-value,.cd-tobacco-value,.cd-origin-inline-text,.cd-accolade-line,.cd-action,.cd-edit-link) {
+  font-family:var(--cd-font-text);
+  font-synthesis:none;
+}
+body.cigar-detail-page .cd-name {font-family:var(--cd-font-display);font-synthesis:none;}
+.cd-topbar {padding:var(--safe-top) 0 0;min-height:44px;position:relative;}
+.cd-topbar .icon-btn,.cd-topbar-spacer {width:44px;height:44px;}
+.cd-theme-dock {min-height:44px;}
+.moon-toggle::after {content:"";position:absolute;inset:-6px 0;}
+.cd-wrap {min-height:0;padding:0 0 calc(var(--cd-bottom-dock-height,60px) + 20px + var(--safe-bottom));}
+.cd-head {padding:10px 13px;gap:10px;margin-bottom:8px;border-radius:20px;}
+.cd-brand {font-size:12px;line-height:1.25;font-weight:500;white-space:normal;overflow:visible;}
+.cd-name {font-size:24px;font-weight:700;line-height:1.1;letter-spacing:-.025em;margin-top:3px;padding:0;overflow-wrap:anywhere;}
+.cd-badge,.cd-badge-placeholder {width:50px;height:50px;flex-basis:50px;border-radius:12px;}
+.cd-grid {grid-template-columns:minmax(0,36%) minmax(0,1fr);gap:6px 12px;padding:10px 12px 8px;border-radius:22px;}
+.cd-left {min-height:0;}
+.cd-stick {object-fit:contain;object-position:center;}
+.cd-stick-placeholder {min-height:0;}
+.cd-right {gap:0;}
+.cd-top-stats {gap:0;}
+.cd-pair-card,.cd-mini,.cd-mini--single,.cd-shade-card {padding:6px 0;min-height:0;}
+.cd-pair-card {padding-top:0;}
+.cd-pair-grid,.cd-mini-grid {gap:8px;}
+.cd-pair-item + .cd-pair-item {padding-left:8px;}
+.cd-card-label,.cd-mini .cd-card-label,.cd-shade-card .cd-card-label,.cd-tobacco-row .cd-card-label {font-size:10px;font-weight:500;letter-spacing:.06em;line-height:1.2;margin-bottom:2px;}
+.cd-pair-value {font-size:20px;font-weight:600;line-height:1.15;margin-top:0;}
+.cd-mini-value,.cd-mini--single .cd-mini-value,.cd-shade-value,.cd-tobacco-value {font-size:15px;font-weight:600;line-height:1.2;letter-spacing:-.015em;margin-top:0;}
+.cd-tobaccos {padding:0;min-height:0;}
+.cd-tobacco-row,.cd-tobacco-row + .cd-tobacco-row {padding:6px 0;margin:0;}
+.cd-origin-inline {margin-top:0;padding:7px 0 0;align-items:center;gap:4px;}
+.cd-origin-inline-text {font-size:11px;line-height:1.3;}
+.cd-flag {font-size:15px;}
+.cd-accolades-inline {padding:5px 0 0;gap:3px;}
+.cd-accolade-line {font-size:11px;line-height:1.25;overflow:visible;}
+.cd-edit-link {font-size:11px;font-weight:500;padding:8px 0;min-height:44px;}
+#cdCard #cdPortfolioControls {gap:8px;}
+.cd-bottom-dock {gap:10px;grid-template-columns:52px minmax(0,1fr);bottom:calc(6px + var(--safe-bottom));}
+.cd-bottom-dock .cd-actions {padding:3px;min-height:52px;border-radius:22px;}
+.cd-bottom-dock .cd-action,.cd-bottom-dock #cdMarketTracker {height:44px;min-height:44px;padding:6px;}
+#cdPosLauncher {width:52px;height:52px;border-radius:18px;}
+.cd-versus {font-size:23px;font-weight:700;}
+#cdFavorite .cd-star {display:block;width:28px;height:28px;}
+#cdWishlist svg {width:32px;height:27px;}
+.cd-bottom-dock #cdMarketTracker img {width:27px;height:27px;}
+/* Height, not just width, determines compact spacing when Safari chrome is open. */
+@media (max-height:650px) {
+  .cd-head {padding-block:8px;}
+  .cd-name {font-size:22px;}
+  .cd-grid {padding-block:8px;gap:4px 10px;}
+  .cd-pair-card,.cd-mini,.cd-mini--single,.cd-shade-card,.cd-tobacco-row,.cd-tobacco-row + .cd-tobacco-row {padding-block:4px;}
+  .cd-pair-card {padding-top:0;}
+}
+/* All controls remain reachable when text is enlarged or content is unusually long. */
+@media (max-width:340px) {
+  .cd-grid {grid-template-columns:minmax(0,31%) minmax(0,1fr);padding-inline:9px;gap:6px 9px;}
+  .cd-head {padding-inline:10px;}
+  .cd-badge,.cd-badge-placeholder {width:42px;height:42px;flex-basis:42px;}
+}
