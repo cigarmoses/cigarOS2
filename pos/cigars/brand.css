@@ -1635,3 +1635,9 @@ html[data-theme="light"] .brand-row>.brand-card-summary{background:#fff}
 .brand-filter-dialog .brand-filter-apply{background:var(--blue);color:white}
 
 .brand-row-meta .brand-row-sub{min-width:0;overflow-wrap:anywhere}.brand-meta-dot,.brand-row-meta .brand-row-size{flex-shrink:0}
+
+/* Full cigar details open as a page again; star/cart remain separate controls. */
+.brand-detail-link,.brand-icon-toggle{text-decoration:none;color:inherit}
+.brand-detail-link{display:block;min-width:0;border-radius:8px}
+.brand-detail-link:focus-visible{outline:3px solid var(--blue);outline-offset:4px}
+.brand-row>.brand-card-summary{width:100%}
