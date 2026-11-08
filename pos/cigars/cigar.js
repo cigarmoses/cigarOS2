@@ -1210,15 +1210,9 @@
     // Round down so pixel rounding cannot add an unwanted third line.
     title.style.fontSize = `${Math.floor(low * 10) / 10}px`;
   }
-  // Try comfortable then compact type against the actual remaining viewport.
-  // Never truncate data or apply unreadably small scaling to force a fit.
+  // The restored cinematic detail layout scrolls at its comfortable natural size.
   function fitCigarScreen() {
-    const right = $(".cd-right", card);
-    if (!right || !right.isConnected) return;
     document.body.classList.remove("cd-fit-scroll", "cd-fit-compact");
-    const fits = () => right.scrollHeight <= right.clientHeight + 1;
-    if (!fits()) document.body.classList.add("cd-fit-compact");
-    if (!fits()) document.body.classList.add("cd-fit-scroll");
   }
   function scheduleCigarTitleFit() {
     cancelAnimationFrame(titleFitFrame);
