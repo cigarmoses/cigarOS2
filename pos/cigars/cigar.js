@@ -1230,7 +1230,7 @@
             <button class="cd-action" type="button" id="cdWishlist" aria-label="Add to wishlist cart" title="Add to wishlist cart"><svg viewBox="0 0 48 32" aria-hidden="true"><path fill="currentColor" d="M12 13h27c-2 6-7 11-14 11-6 0-10-4-13-11Zm7 12h13l3 4H16l3-4ZM8 12C1 3-3 18 9 19l4-3-3-2c-6 3-6-5-2-2Zm31 1 8-5-2 7-9 3ZM20 10h11l-2-3h-7l-2 3Z"/><path d="M25 5c-6-5 6-4 1-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" transform="translate(0 4)"/></svg></button>
             
           </div>
-          <button class="cd-edit-link" type="button" id="cdEdit">Edit cigar</button>
+          <button class="cd-edit-link" type="button" id="cdEdit" aria-label="Edit cigar" title="Edit cigar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m16 3 5 5M3 21l5-1L21 7a2.1 2.1 0 0 0-4-4L4 16l-1 5Z"/></svg></button>
         </div>
       </div>`;
     positionPortfolioControls();
