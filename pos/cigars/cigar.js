@@ -537,12 +537,21 @@
     if(lineImg)out.push(lineImg);if(brandImg)out.push(brandImg);if(brandKey)out.push(`/img/icons/brands/${brandKey}.svg`,`/img/icons/brands/${brandKey}.png`);
     return [...new Set(out.filter(Boolean))];
   }
+  // File convention: Double Corona -> /img/cigars/defaults/defaultdoublecorona.svg.
+  // Exact normalized vitola only: do not mistake Petit Corona for Corona.
+  function defaultCigarImagePath(vitola) {
+    const key = compactKey(vitola);
+    return key ? `/img/cigars/defaults/default${key}.svg` : "";
+  }
   function buildCigarImageCandidates(rec) {
     const fromSheet=normalizeAssetPath(getImage(rec)),brand=getBrand(rec),line=getLine(rec),cigar=getName(rec),vitola=getVitola(rec);
     const folder=normalizeBrand(brand),b=compactKey(brand),l=compactKey(line),c=compactKey(cigar),v=compactKey(vitola),out=[];
     if(resolveIsCuban(rec)&&folder){if(l&&c)out.push(`/img/cigars/cuban/${folder}/${l}${c}.png`);if(l&&c&&v)out.push(`/img/cigars/cuban/${folder}/${l}${c}${v}.png`);if(c)out.push(`/img/cigars/cuban/${folder}/${c}.png`);}
     if(fromSheet)out.push(fromSheet);
     if(folder){const names=[];if(b&&l&&c)names.push(`${b}${l}${c}`);if(b&&l&&c&&v)names.push(`${b}${l}${c}${v}`);if(l&&c)names.push(`${l}${c}`);if(l&&c&&v)names.push(`${l}${c}${v}`);if(l&&v)names.push(`${l}${v}`);if(b&&c)names.push(`${b}${c}`);if(b&&c&&v)names.push(`${b}${c}${v}`);if(c)names.push(c);if(c&&v)names.push(`${c}${v}`);[...new Set(names)].forEach(n=>out.push(`/img/cigars/${folder}/${n}.png`));}
+    // Real sheet/folder photos retain their existing priority. A missing default
+    // continues through wireImageFallback to the existing "No image" placeholder.
+    out.push(defaultCigarImagePath(vitola));
     return [...new Set(out.filter(Boolean))];
   }
   function wireImageFallback(img,fallbackClass,fallbackText) {
