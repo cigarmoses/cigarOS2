@@ -395,6 +395,7 @@
     rootEl.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
     themeToggle?.setAttribute("aria-pressed", String(next === "dark"));
+    refreshDefaultCigarImage();
   }
   function normalizeLoose(s) {
     return String(s || "").trim().toLowerCase().normalize("NFD")
@@ -537,11 +538,48 @@
     if(lineImg)out.push(lineImg);if(brandImg)out.push(brandImg);if(brandKey)out.push(`/img/icons/brands/${brandKey}.svg`,`/img/icons/brands/${brandKey}.png`);
     return [...new Set(out.filter(Boolean))];
   }
-  // File convention: Double Corona -> /img/cigars/defaults/defaultdoublecorona.svg.
-  // Exact normalized vitola only: do not mistake Petit Corona for Corona.
-  function defaultCigarImagePath(vitola) {
+  // Full vitola names map to compact filenames, never partial substring matches.
+  // Corona2 is an unassigned alternate, not a fallback for Corona.
+  function defaultCigarImageCandidates(vitola) {
     const key = compactKey(vitola);
-    return key ? `/img/cigars/defaults/default${key}.svg` : "";
+    if (!key) return [];
+    const base = "/img/cigars/defaults/";
+    const day = `${base}default${key}.svg`;
+    const night = `${base}defaultdark${key}.svg`;
+    // Current repository exception: preserve the uploaded filename unchanged.
+    const dark = key === "carlotta" ? [`${base}carlotta-night.svg`, night] : [night];
+    return getSavedTheme() === "light" ? [day, ...dark] : [...dark, day];
+  }
+  function refreshDefaultCigarImage() {
+    if (!activeRecord || !card) return;
+    const defaults = defaultCigarImageCandidates(getVitola(activeRecord));
+    if (!defaults.length) return;
+    const current = $("#cdStickImage", card);
+    if (current && !defaults.includes(current.getAttribute("src"))) {
+      // Keep real/local photos. If lookup is pending, reorder only its defaults.
+      if (current.dataset.fallbacks) {
+        let pending = [];
+        try { pending = JSON.parse(current.dataset.fallbacks); } catch {}
+        if (Array.isArray(pending) && pending.some(path => defaults.includes(path))) {
+          current.dataset.fallbacks = JSON.stringify([
+            ...pending.filter(path => !defaults.includes(path)), ...defaults
+          ]);
+        }
+      }
+      return;
+    }
+    const target = current || $(".cd-stick-placeholder", card);
+    if (!target) return;
+    // Replace to detach old theme requests and their error handlers safely.
+    const img = document.createElement("img");
+    img.id = "cdStickImage";
+    img.className = "cd-stick";
+    img.alt = current?.alt || [getBrand(activeRecord), getName(activeRecord)].filter(Boolean).join(" ");
+    img.decoding = "async";
+    img.dataset.fallbacks = JSON.stringify(defaults.slice(1));
+    img.src = defaults[0];
+    target.replaceWith(img);
+    wireImageFallback(img, "cd-stick-placeholder", "No image");
   }
   function buildCigarImageCandidates(rec) {
     const fromSheet=normalizeAssetPath(getImage(rec)),brand=getBrand(rec),line=getLine(rec),cigar=getName(rec),vitola=getVitola(rec);
@@ -551,7 +589,7 @@
     if(folder){const names=[];if(b&&l&&c)names.push(`${b}${l}${c}`);if(b&&l&&c&&v)names.push(`${b}${l}${c}${v}`);if(l&&c)names.push(`${l}${c}`);if(l&&c&&v)names.push(`${l}${c}${v}`);if(l&&v)names.push(`${l}${v}`);if(b&&c)names.push(`${b}${c}`);if(b&&c&&v)names.push(`${b}${c}${v}`);if(c)names.push(c);if(c&&v)names.push(`${c}${v}`);[...new Set(names)].forEach(n=>out.push(`/img/cigars/${folder}/${n}.png`));}
     // Real sheet/folder photos retain their existing priority. A missing default
     // continues through wireImageFallback to the existing "No image" placeholder.
-    out.push(defaultCigarImagePath(vitola));
+    out.push(...defaultCigarImageCandidates(vitola));
     return [...new Set(out.filter(Boolean))];
   }
   function wireImageFallback(img,fallbackClass,fallbackText) {
