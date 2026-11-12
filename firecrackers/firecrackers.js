@@ -1,0 +1,76 @@
+(() => {
+'use strict';
+const $=id=>document.getElementById(id);
+let rows=[],loading=false,request=0;
+const text=v=>String(v??'').trim();
+const norm=v=>text(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const el=(tag,cls,value)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(value!==undefined)n.textContent=value;return n;};
+const isCuban=r=>/^(?:yes|true|1|y|cuban|cuba|🇨🇺)$/i.test(text(r.cuban))||/^cuba$/i.test(text(r.origin));
+function imageURL(raw){try{const u=new URL(raw,location.origin);return ['https:','http:'].includes(u.protocol)?u.href:null;}catch{return null;}}
+function showLogin(message=''){$('viewer').hidden=true;$('login').hidden=false;$('status').hidden=true;$('retry').hidden=true;$('loginError').textContent=message;$('password').value='';rows=[];$('results').replaceChildren();}
+      function visiblePhotoBounds(img){
+        const width = img.naturalWidth, height = img.naturalHeight;
+        const full = {x:0,y:0,width,height};
+        try{
+          // Remove transparent padding only, never leaf pixels or white backgrounds.
+          // Downsample solely for bounds detection; the displayed image stays original.
+          const scale = Math.min(1, 1400 / Math.max(width,height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.ceil(width*scale));
+          canvas.height = Math.max(1, Math.ceil(height*scale));
+          const ctx = canvas.getContext("2d", {willReadFrequently:true});
+          if(!ctx) return full;
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          const pixels = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+          let left=canvas.width, right=-1, top=canvas.height, bottom=-1;
+          for(let y=0;y<canvas.height;y++) for(let x=0;x<canvas.width;x++){
+            if(pixels[(y*canvas.width+x)*4+3] > 0){
+              left=Math.min(left,x); right=Math.max(right,x);
+              top=Math.min(top,y); bottom=Math.max(bottom,y);
+            }
+          }
+          if(right < left || bottom < top) return full;
+          const sx=width/canvas.width, sy=height/canvas.height;
+          const x=Math.max(0,Math.floor((left-1)*sx));
+          const y=Math.max(0,Math.floor((top-1)*sy));
+          const x2=Math.min(width,Math.ceil((right+2)*sx));
+          const y2=Math.min(height,Math.ceil((bottom+2)*sy));
+          return {x,y,width:x2-x,height:y2-y};
+        }catch{
+          // Cross-origin images without CORS remain usable, without alpha trimming.
+          return full;
+        }
+      }
+
+function horizontalPhoto(url){
+ const frame=el('div','photo-frame'),img=new Image();img.alt='';img.decoding='async';img.loading='lazy';
+ img.addEventListener('load',()=>{
+  const b=visiblePhotoBounds(img),vertical=b.height>b.width,ns='http://www.w3.org/2000/svg';
+  const art=document.createElementNS(ns,'svg'),source=document.createElementNS(ns,'image');
+  art.classList.add('photo');art.setAttribute('viewBox',`0 0 ${vertical?b.height:b.width} ${vertical?b.width:b.height}`);art.setAttribute('preserveAspectRatio','xMidYMid meet');art.setAttribute('aria-hidden','true');art.setAttribute('focusable','false');
+  source.setAttribute('width',img.naturalWidth);source.setAttribute('height',img.naturalHeight);source.setAttribute('href',url);
+  source.setAttribute('transform',vertical?`matrix(0 1 -1 0 ${b.y+b.height} ${-b.x})`:`translate(${-b.x} ${-b.y})`);art.append(source);frame.replaceChildren(art);
+ },{once:true});img.addEventListener('error',()=>frame.remove(),{once:true});img.src=url;frame.append(img);return frame;
+}
+function card(r){
+ const root=el('details','card'),s=el('summary'),copy=el('div','copy');
+ const photo=imageURL(r.cigar_img||'');if(r.cigar_img&&photo)s.append(horizontalPhoto(photo));
+ copy.append(el('div','brand',(isCuban(r)?'🇨🇺 ':'')+text(r.brand)),el('div','name',[r.line,r.cigar].filter(Boolean).join(' ')));
+ const chevron=el('span','chevron','⌄');chevron.setAttribute('aria-hidden','true');copy.append(chevron);s.append(copy);root.append(s);
+ const detail=el('div','details'),specs=el('div','specs');
+ const groups=[['measurements',[['ring','Ring'],['length','Length'],['vitola','Vitola']]],['profile',[['wrapper_shade','Wrapper shade'],['strength','Strength']]],['tobaccos',[['wrapper','Wrapper'],['binder','Binder'],['filler','Filler']]],['origin-shape',[['origin','Rolled in (origin)'],['shape','Shape']]],['extras',[['box_pressed','Box-pressed'],['msrp','MSRP']]]];
+ for(const [name,fields] of groups){const dl=el('dl','spec-group');dl.dataset.row=name;for(const [key,label] of fields){if(!text(r[key]))continue;const wrap=el('div','spec-pill');wrap.dataset.spec=key;wrap.append(el('dt','',label),el('dd','',r[key]));dl.append(wrap);}if(dl.children.length)specs.append(dl);}detail.append(specs);
+ const notes=r.cigar_journal_tasting_notes||r.excerpt;if(notes)detail.append(el('p','notes',notes));root.append(detail);return root;
+}
+
+const filters=['brand','wrapper_shade','strength'];
+const searchFields=['manufacturer','brand','line','cigar','vitola','shape','ring','length','wrapper_shade','strength','wrapper','binder','filler','origin'];
+function route(){const u=new URL(location.href);u.search='';if($('search').value)u.searchParams.set('q',$('search').value);for(const key of filters)if($(key).value)u.searchParams.set(key,$(key).value);history.replaceState(null,'',u.pathname+u.search);}
+function restore(){const u=new URL(location.href);$('search').value=u.searchParams.get('q')||'';for(const key of filters)$(key).value=u.searchParams.get(key)||'';render();}
+function render(){const terms=norm($('search').value).split(/\s+/).filter(Boolean);const matches=rows.filter(r=>filters.every(k=>!$(k).value||text(r[k])===$(k).value)&&terms.every(t=>searchFields.some(k=>norm(r[k]).includes(t))));$('summary').textContent=`${matches.length} of ${rows.length} Firecracker cigars`;$('results').replaceChildren(...matches.map(card));if(!matches.length)$('results').append(el('p','','No cigars match these filters.'));}
+async function load(){if(loading)return;loading=true;const seq=++request;$('status').hidden=false;$('status').textContent='Loading Firecrackers…';$('retry').hidden=true;
+try{const r=await fetch('/.netlify/functions/firecrackers-data',{cache:'no-store',credentials:'same-origin'});if(seq!==request)return;if(r.status===401){showLogin();return;}if(!r.ok)throw Error('Firecrackers could not be loaded. Please try again.');const data=await r.json();if(seq!==request)return;rows=data.rows;for(const key of filters){const values=[...new Set(rows.map(r=>text(r[key])).filter(Boolean))].sort((a,b)=>a.localeCompare(b));$(key).replaceChildren(new Option('All',''),...values.map(v=>new Option(v,v)));}$('login').hidden=true;$('viewer').hidden=false;$('status').hidden=true;restore();}catch(e){if(seq!==request)return;$('status').textContent=e.message;$('retry').hidden=false;}finally{loading=false;}}
+$('loginForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;$('loginError').textContent='';try{const r=await fetch('/.netlify/functions/rankings-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('password').value})});$('password').value='';if(r.status===429)throw Error('Too many attempts. Wait a minute and try again.');const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||'Could not sign in. Please try again.');await load();}catch(error){$('loginError').textContent=error.message;}finally{b.disabled=false;}};
+$('logout').onclick=async()=>{const b=$('logout');b.disabled=true;try{const r=await fetch('/.netlify/functions/rankings-logout',{method:'POST'});if(!r.ok)throw Error('Sign out failed. Please try again.');request++;showLogin();}catch(e){$('status').hidden=false;$('status').textContent=e.message;}finally{b.disabled=false;}};
+$('retry').onclick=load;for(const key of ['search',...filters])$(key).addEventListener(key==='search'?'input':'change',()=>{route();render();});$('clear').onclick=()=>{$('search').value='';for(const key of filters)$(key).value='';route();render();};window.addEventListener('popstate',restore);load();
+})();
