@@ -10,10 +10,59 @@ function imageURL(raw){try{const u=new URL(raw,location.origin);return ['https:'
 function sourceURL(raw){try{const u=new URL(raw);return u.protocol==='https:'&&['cigaraficionado.com','cigarjournal.com','halfwheel.com'].some(h=>u.hostname===h||u.hostname.endsWith('.'+h))?u.href:null;}catch{return null;}}
 function route(push=false){const u=new URL(location.href);u.search='';if(publisher){u.searchParams.set('publication',publisher);if($('year').value)u.searchParams.set('year',$('year').value);if($('search').value)u.searchParams.set('q',$('search').value);if(!$('cubans').checked)u.searchParams.set('cubans','0');}history[push?'pushState':'replaceState'](null,'',u.pathname+u.search);}
 function showLogin(message=''){$('viewer').hidden=true;$('login').hidden=false;$('status').hidden=true;$('retry').hidden=true;$('loginError').textContent=message;$('password').value='';lists=[];index=[];$('results').replaceChildren();}
-function card(item){const r=item.record,root=el('details','card'),s=el('summary'),copy=el('div','copy');
- const photo=imageURL(r.cigar_img||'');if(r.cigar_img&&photo){const img=el('img','photo');img.src=photo;img.alt='';img.loading='lazy';img.addEventListener('error',()=>img.remove(),{once:true});s.append(img);}
- const awards=item.awards.map(a=>`${a.rankLabel} · ${a.year}`).join('  /  ');copy.append(el('div','award',awards),el('div','brand',(isCuban(r)?'🇨🇺 ':'')+text(r.brand)),el('div','name',[r.line,r.cigar].filter(Boolean).join(' ')),el('div','size',[r.vitola,searchAPI.formatSize(r)].filter(Boolean).join(' · ')));s.append(copy,el('span','chevron','›'));root.append(s);
- const detail=el('div','details'),dl=el('dl','specs');for(const [key,label] of [['ring','Ring'],['length','Length'],['vitola','Vitola'],['wrapper_shade','Wrapper shade'],['strength','Strength'],['shape','Shape'],['wrapper','Wrapper'],['binder','Binder'],['filler','Filler'],['origin','Origin'],['box_pressed','Box-pressed'],['msrp','MSRP']]){if(!text(r[key]))continue;const wrap=el('div');wrap.append(el('dt','',label),el('dd','',r[key]));dl.append(wrap);}detail.append(dl);
+      function visiblePhotoBounds(img){
+        const width = img.naturalWidth, height = img.naturalHeight;
+        const full = {x:0,y:0,width,height};
+        try{
+          // Remove transparent padding only, never leaf pixels or white backgrounds.
+          // Downsample solely for bounds detection; the displayed image stays original.
+          const scale = Math.min(1, 1400 / Math.max(width,height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.ceil(width*scale));
+          canvas.height = Math.max(1, Math.ceil(height*scale));
+          const ctx = canvas.getContext("2d", {willReadFrequently:true});
+          if(!ctx) return full;
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          const pixels = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+          let left=canvas.width, right=-1, top=canvas.height, bottom=-1;
+          for(let y=0;y<canvas.height;y++) for(let x=0;x<canvas.width;x++){
+            if(pixels[(y*canvas.width+x)*4+3] > 0){
+              left=Math.min(left,x); right=Math.max(right,x);
+              top=Math.min(top,y); bottom=Math.max(bottom,y);
+            }
+          }
+          if(right < left || bottom < top) return full;
+          const sx=width/canvas.width, sy=height/canvas.height;
+          const x=Math.max(0,Math.floor((left-1)*sx));
+          const y=Math.max(0,Math.floor((top-1)*sy));
+          const x2=Math.min(width,Math.ceil((right+2)*sx));
+          const y2=Math.min(height,Math.ceil((bottom+2)*sy));
+          return {x,y,width:x2-x,height:y2-y};
+        }catch{
+          // Cross-origin images without CORS remain usable, without alpha trimming.
+          return full;
+        }
+      }
+
+function horizontalPhoto(url){
+ const frame=el('div','photo-frame'),img=new Image();img.alt='';img.decoding='async';img.loading='lazy';
+ img.addEventListener('load',()=>{
+  const b=visiblePhotoBounds(img),vertical=b.height>b.width,ns='http://www.w3.org/2000/svg';
+  const art=document.createElementNS(ns,'svg'),source=document.createElementNS(ns,'image');
+  art.classList.add('photo');art.setAttribute('viewBox',`0 0 ${vertical?b.height:b.width} ${vertical?b.width:b.height}`);art.setAttribute('preserveAspectRatio','xMidYMid meet');art.setAttribute('aria-hidden','true');art.setAttribute('focusable','false');
+  source.setAttribute('width',img.naturalWidth);source.setAttribute('height',img.naturalHeight);source.setAttribute('href',url);
+  source.setAttribute('transform',vertical?`matrix(0 1 -1 0 ${b.y+b.height} ${-b.x})`:`translate(${-b.x} ${-b.y})`);art.append(source);frame.replaceChildren(art);
+ },{once:true});img.addEventListener('error',()=>frame.remove(),{once:true});img.src=url;frame.append(img);return frame;
+}
+function card(item){
+ const r=item.record,root=el('details','card'),s=el('summary'),copy=el('div','copy');
+ const awards=item.awards.map(a=>`${a.rankLabel} · ${a.year}`).join('  /  ');s.append(el('div','award',awards));
+ const photo=imageURL(r.cigar_img||'');if(r.cigar_img&&photo)s.append(horizontalPhoto(photo));
+ copy.append(el('div','brand',(isCuban(r)?'🇨🇺 ':'')+text(r.brand)),el('div','name',[r.line,r.cigar].filter(Boolean).join(' ')));
+ const chevron=el('span','chevron','⌄');chevron.setAttribute('aria-hidden','true');copy.append(chevron);s.append(copy);root.append(s);
+ const detail=el('div','details'),specs=el('div','specs');
+ const groups=[['measurements',[['ring','Ring'],['length','Length'],['vitola','Vitola']]],['profile',[['wrapper_shade','Wrapper shade'],['strength','Strength']]],['tobaccos',[['wrapper','Wrapper'],['binder','Binder'],['filler','Filler']]],['origin-shape',[['origin','Rolled in (origin)'],['shape','Shape']]],['extras',[['box_pressed','Box-pressed'],['msrp','MSRP']]]];
+ for(const [name,fields] of groups){const dl=el('dl','spec-group');dl.dataset.row=name;for(const [key,label] of fields){if(!text(r[key]))continue;const wrap=el('div','spec-pill');wrap.dataset.spec=key;wrap.append(el('dt','',label),el('dd','',r[key]));dl.append(wrap);}if(dl.children.length)specs.append(dl);}detail.append(specs);
  const notes=r.cigar_journal_tasting_notes||r.excerpt;if(notes)detail.append(el('p','notes',notes));const source=sourceURL(item.awards[0]?.sourceUrl);if(source){const a=el('a','source','View original ranking ↗');a.href=source;a.target='_blank';a.rel='noopener noreferrer';detail.append(a);}root.append(detail);return root;
 }
 function render(){if(!publisher)return;let matches=$('search').value.trim()?searchAPI.search(index,$('search').value):index;matches=matches.map(item=>({...item,awards:item.awards.filter(a=>a.publisherId===publisher&&(!$('year').value||($('year').value==='winners'?a.rank===1:String(a.year)===$('year').value)))})).filter(item=>item.awards.length&&($('cubans').checked||!isCuban(item.record)));
