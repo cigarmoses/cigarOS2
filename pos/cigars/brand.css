@@ -1641,3 +1641,53 @@ html[data-theme="light"] .brand-row>.brand-card-summary{background:#fff}
 .brand-detail-link{display:block;min-width:0;border-radius:8px}
 .brand-detail-link:focus-visible{outline:3px solid var(--blue);outline-offset:4px}
 .brand-row>.brand-card-summary{width:100%}
+
+/* Approved POS row layout, 2026-11-12: inventory under vitola,
+   saved stars only, and a compact MSRP/add pill at the lower right. */
+.brand-row > .brand-card-summary{
+  --brand-detail-size:14px;
+  grid-template-columns:24% minmax(0,1fr) auto;
+  grid-template-rows:auto auto;
+  column-gap:10px;
+  row-gap:5px;
+  align-items:center;
+}
+.brand-card-summary > .brand-icon-toggle{grid-column:1;grid-row:1 / 3}
+.brand-card-summary > .brand-detail-link{grid-column:2 / 4;grid-row:1}
+.brand-card-summary .brand-row-meta{font-size:var(--brand-detail-size)}
+.brand-card-summary > .brand-stock{
+  grid-column:2;grid-row:2;justify-self:start;
+  width:auto;min-width:0;min-height:0;margin:0;padding:0;
+  display:block;border:0;border-radius:0;box-shadow:none;
+  background:transparent;color:var(--muted2);
+  font:400 var(--brand-detail-size)/1.15 var(--font-display);
+}
+.brand-card-summary > .brand-row-right{
+  grid-column:3;grid-row:2;align-self:center;
+  display:flex;flex-direction:row;justify-content:flex-end;align-items:center;
+  width:auto;min-width:0;gap:6px;
+}
+.brand-card-summary .brand-favorite:not(.is-saved){display:none}
+.brand-card-summary .brand-favorite.is-saved{width:28px;height:28px;min-height:28px}
+.brand-card-summary .brand-favorite.is-saved svg{width:22px;height:22px}
+.brand-card-summary .qty-btn.brand-price-pill{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  width:auto;min-width:0;height:auto;min-height:26px;padding:5px 11px;
+  border:0;border-radius:9px;box-shadow:none;
+  background:#e6f2e5;color:var(--muted2);
+  font:500 var(--brand-detail-size)/1.15 var(--font-display);
+  white-space:nowrap;touch-action:manipulation;
+}
+/* Keep the compact visual while providing a comfortable 44px touch target. */
+.brand-card-summary .brand-price-pill::before{content:"";position:absolute;inset:50% 0 auto;height:44px;transform:translateY(-50%)}
+.brand-card-summary .brand-price-pill .brand-row-msrp{
+  margin:0;padding:0;color:inherit;font:inherit;letter-spacing:inherit;cursor:inherit;
+}
+.brand-card-summary .brand-price-plus{display:block;width:1em;height:1em;flex:0 0 1em}
+.brand-card-summary .brand-price-pill:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+html[data-theme="dark"] .brand-card-summary > .brand-stock{background:transparent;color:var(--muted2)}
+html[data-theme="dark"] .brand-card-summary .brand-price-pill{background:#234737;color:var(--muted2)}
+@media(max-width:350px){
+  .brand-row > .brand-card-summary{--brand-detail-size:13px;grid-template-columns:23% minmax(0,1fr) auto;column-gap:8px}
+  .brand-card-summary .brand-price-pill{padding-inline:8px;gap:5px}
+}
