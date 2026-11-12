@@ -8,7 +8,7 @@ const el=(tag,cls,value)=>{const n=document.createElement(tag);if(cls)n.classNam
 const isCuban=r=>/^(?:yes|true|1|y|cuban|cuba|🇨🇺)$/i.test(text(r.cuban))||/^cuba$/i.test(text(r.origin));
 function imageURL(raw){try{const u=new URL(raw,location.origin);return ['https:','http:'].includes(u.protocol)?u.href:null;}catch{return null;}}
 function sourceURL(raw){try{const u=new URL(raw);return u.protocol==='https:'&&['cigaraficionado.com','cigarjournal.com','halfwheel.com'].some(h=>u.hostname===h||u.hostname.endsWith('.'+h))?u.href:null;}catch{return null;}}
-function route(push=false){const u=new URL(location.href);u.search='';if(publisher){u.searchParams.set('publication',publisher);if($('year').value)u.searchParams.set('year',$('year').value);if($('search').value)u.searchParams.set('q',$('search').value);if(!$('cubans').checked)u.searchParams.set('cubans','0');}history[push?'pushState':'replaceState'](null,'',u.pathname+u.search);}
+function route(push=false){const u=new URL(location.href);u.search='';if(publisher)u.searchParams.set('publication',publisher);if($('year').value)u.searchParams.set('year',$('year').value);if($('search').value)u.searchParams.set('q',$('search').value);if(!$('cubans').checked)u.searchParams.set('cubans','0');history[push?'pushState':'replaceState'](null,'',u.pathname+u.search);}
 function showLogin(message=''){$('viewer').hidden=true;$('login').hidden=false;$('status').hidden=true;$('retry').hidden=true;$('loginError').textContent=message;$('password').value='';lists=[];index=[];$('results').replaceChildren();}
       function visiblePhotoBounds(img){
         const width = img.naturalWidth, height = img.naturalHeight;
@@ -56,7 +56,7 @@ function horizontalPhoto(url){
 }
 function card(item){
  const r=item.record,root=el('details','card'),s=el('summary'),copy=el('div','copy');
- const awards=item.awards.map(a=>`${a.rankLabel} · ${a.year}`).join('  /  ');s.append(el('div','award',awards));
+ const awards=item.awards.map(a=>`${!publisher?pubs.find(p=>p.id===a.publisherId)?.name+' · ':''}${a.rankLabel} · ${a.year}`).join('  /  ');s.append(el('div','award',awards));
  const photo=imageURL(r.cigar_img||'');if(r.cigar_img&&photo)s.append(horizontalPhoto(photo));
  copy.append(el('div','brand',(isCuban(r)?'🇨🇺 ':'')+text(r.brand)),el('div','name',[r.line,r.cigar].filter(Boolean).join(' ')));
  const chevron=el('span','chevron','⌄');chevron.setAttribute('aria-hidden','true');copy.append(chevron);s.append(copy);root.append(s);
@@ -65,19 +65,27 @@ function card(item){
  for(const [name,fields] of groups){const dl=el('dl','spec-group');dl.dataset.row=name;for(const [key,label] of fields){if(!text(r[key]))continue;const wrap=el('div','spec-pill');wrap.dataset.spec=key;wrap.append(el('dt','',label),el('dd','',r[key]));dl.append(wrap);}if(dl.children.length)specs.append(dl);}detail.append(specs);
  const notes=r.cigar_journal_tasting_notes||r.excerpt;if(notes)detail.append(el('p','notes',notes));const source=sourceURL(item.awards[0]?.sourceUrl);if(source){const a=el('a','source','View original ranking ↗');a.href=source;a.target='_blank';a.rel='noopener noreferrer';detail.append(a);}root.append(detail);return root;
 }
-function render(){if(!publisher)return;let matches=$('search').value.trim()?searchAPI.search(index,$('search').value):index;matches=matches.map(item=>({...item,awards:item.awards.filter(a=>a.publisherId===publisher&&(!$('year').value||($('year').value==='winners'?a.rank===1:String(a.year)===$('year').value)))})).filter(item=>item.awards.length&&($('cubans').checked||!isCuban(item.record)));
- let results=searchAPI.rankResults(matches,pubs,publisher).results;if($('year').value==='winners')results.sort((a,b)=>b.bestYear-a.bestYear);
- $('summary').textContent=`${results.length} ranked ${results.length===1?'cigar':'cigars'}`;$('results').replaceChildren(...results.slice(0,shown).map(card));if(!results.length)$('results').append(el('p','','No cigars match these filters.'));$('more').hidden=results.length<=shown;
+function updateYears(value=''){const own=lists.filter(l=>l.kind==='annual'&&(!$('search').value.trim()&&publisher?l.publisherId===publisher:true));const years=[...new Set(own.map(l=>l.year))].sort((a,b)=>b-a);$('year').replaceChildren(new Option('All years',''),new Option('No. 1s','winners'),...years.map(y=>new Option(String(y),String(y))));$('year').value=[...$('year').options].some(o=>o.value===value)?value:'';}
+function render(){const searching=!!$('search').value.trim(),active=searching||!!publisher;
+ $('publications').hidden=active;$('publicationFilters').hidden=!searching;$('browse').hidden=!active;$('back').hidden=!active;$('publicationName').hidden=searching;
+ if(!active){$('results').replaceChildren();$('summary').textContent='';return;}
+ $('publicationName').textContent=publisher?pubs.find(p=>p.id===publisher).name:'All publications';
+ let matches=searching?searchAPI.search(index,$('search').value):index;
+ matches=matches.map(item=>({...item,awards:item.awards.filter(a=>(!$('year').value||($('year').value==='winners'?a.rank===1:String(a.year)===$('year').value)))})).filter(item=>item.awards.length&&($('cubans').checked||!isCuban(item.record)));
+ const view=searchAPI.rankResults(matches,pubs,publisher||'all');let results=view.results;
+ for(const b of $('publicationFilters').children){const id=b.dataset.publication,count=view.counts?.[id]||0;b.querySelector('strong').textContent=count;b.setAttribute('aria-pressed',String((publisher||'all')===id));b.setAttribute('aria-label',`${b.querySelector('span').textContent}: ${count} cigars`);}
+ if($('year').value==='winners')results.sort((a,b)=>b.bestYear-a.bestYear);
+ $('summary').textContent=`${results.length} ranked ${results.length===1?'cigar':'cigars'}${searching?' · '+(publisher?pubs.find(p=>p.id===publisher).name:'All publications'):''}`;$('results').replaceChildren(...results.slice(0,shown).map(card));if(!results.length)$('results').append(el('p','','No cigars match these filters.'));$('more').hidden=results.length<=shown;
 }
-function choose(id,{restore=false}={}){publisher=pubs.some(p=>p.id===id)?id:null;shown=30;$('publications').hidden=!!publisher;$('browse').hidden=!publisher;$('back').hidden=!publisher;if(!publisher){if(!restore)route(true);return;}
- $('publicationName').textContent=pubs.find(p=>p.id===publisher).name;const own=lists.filter(l=>l.publisherId===publisher&&l.kind==='annual').sort((a,b)=>b.year-a.year);$('year').replaceChildren(new Option('All years',''),new Option('No. 1s','winners'),...own.map(l=>new Option(String(l.year),String(l.year))));
- const u=new URL(location.href);$('year').value=restore&&[...$('year').options].some(o=>o.value===u.searchParams.get('year'))?u.searchParams.get('year'):'';$('search').value=restore?u.searchParams.get('q')||'':'';$('cubans').checked=restore?u.searchParams.get('cubans')!=='0':true;
- if(!restore)route(true);render();}
+function choose(id,{restore=false}={}){const u=new URL(location.href);publisher=pubs.some(p=>p.id===id)?id:null;shown=30;
+ if(restore){$('search').value=u.searchParams.get('q')||'';$('cubans').checked=u.searchParams.get('cubans')!=='0';}
+ updateYears(restore?u.searchParams.get('year')||'':$('year').value);if(!restore)route(true);render();}
 async function load(){if(loading)return;loading=true;const seq=++request;$('status').hidden=false;$('status').textContent='Loading rankings…';$('retry').hidden=true;
  try{const r=await fetch('/.netlify/functions/rankings-data',{cache:'no-store',credentials:'same-origin'});if(seq!==request)return;if(r.status===401){showLogin();return;}if(!r.ok)throw Error('Rankings could not be loaded. Please try again.');const data=await r.json();if(seq!==request)return;const built=api.build(data.rows);lists=built.lists;index=searchAPI.build(lists,pubs,data.rows);$('login').hidden=true;$('viewer').hidden=false;$('status').hidden=true;choose(new URL(location.href).searchParams.get('publication'),{restore:true});}
  catch(e){if(seq!==request)return;$('status').textContent=e.message;$('retry').hidden=false;}finally{loading=false;}}
 for(const p of pubs){const b=el('button');b.type='button';b.setAttribute('aria-label',p.name);const img=el('img');img.src=window.CigarosPublicationLogos[p.id]||p.logo;img.alt=p.name;b.append(img,el('span','arrow','›'));b.onclick=()=>choose(p.id);$('publications').append(b);}
 $('loginForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;$('loginError').textContent='';try{const r=await fetch('/.netlify/functions/rankings-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('password').value})});$('password').value='';if(r.status===429)throw Error('Too many attempts. Wait a minute and try again.');const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||'Could not sign in. Please try again.');await load();}catch(error){$('loginError').textContent=error.message;}finally{b.disabled=false;}};
 $('logout').onclick=async()=>{const b=$('logout');b.disabled=true;try{const r=await fetch('/.netlify/functions/rankings-logout',{method:'POST'});if(!r.ok)throw Error('Sign out failed. Please try again.');request++;showLogin();}catch(e){$('status').hidden=false;$('status').textContent=e.message;}finally{b.disabled=false;}};
-$('back').onclick=()=>choose(null);$('retry').onclick=load;for(const id of ['year','search','cubans'])$(id).addEventListener(id==='search'?'input':'change',()=>{shown=30;route();render();});$('more').onclick=()=>{shown+=30;render();};window.addEventListener('popstate',()=>choose(new URL(location.href).searchParams.get('publication'),{restore:true}));load();
+$('back').onclick=()=>{$('search').value='';$('year').value='';$('cubans').checked=true;choose(null);};$('retry').onclick=load;for(const id of ['year','search','cubans'])$(id).addEventListener(id==='search'?'input':'change',()=>{shown=30;if(id==='search'&&!$('search').value.trim()){publisher=null;updateYears('');}route();render();});for(const [id,label] of [['all','All cigars'],...pubs.map(p=>[p.id,p.id==='consensus'?'Halfwheel':p.name])]){const b=el('button','publication-filter');b.type='button';b.dataset.publication=id;b.append(el('span','',label),el('strong','','0'));b.onclick=()=>choose(id==='all'?null:id);$('publicationFilters').append(b);}
+$('more').onclick=()=>{shown+=30;render();};window.addEventListener('popstate',()=>choose(new URL(location.href).searchParams.get('publication'),{restore:true}));load();
 })();
