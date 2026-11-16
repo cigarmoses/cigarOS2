@@ -49,3 +49,8 @@ html[data-theme="light"] .length-cigar{filter:none}
 
 /* Preserve the whole cigar silhouette through the maximum selected length. */
 .length-cigar{width:var(--cigar-width,87.5%)}
+
+.brand-filter-visual .filter-section-toggle{display:inline-flex;align-items:center;gap:12px;border:0;background:transparent;padding:0 4px;min-height:44px;font:inherit;color:inherit;text-align:left}
+.filter-section-toggle::after{content:'⌄';font-size:18px;transition:transform .15s}
+.filter-section-toggle[aria-expanded="false"]::after{transform:rotate(-90deg)}
+.brand-filter-visual .filter-section-body[hidden]{display:none!important}

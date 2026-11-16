@@ -421,9 +421,16 @@
     const n=Number(text);return Number.isFinite(n)?n:null;
   }
   function bandArt(r){return normalizeAssetPath(getField(r,['band_art_img','band_art_image','band_img','band_image']));}
+  function strengthRank(value){
+    const key=String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(?:to|and)\b/g,'').replace(/[^a-z]/g,'');
+    const ranks={mild:0,mellow:0,light:0,mildmedium:1,mellowmedium:1,lightmedium:1,medium:2,mediumfull:3,full:4};
+    return Object.prototype.hasOwnProperty.call(ranks,key)?ranks[key]:null;
+  }
   function compareRows(a,b){
     const alpha=()=>resolveLine(a).localeCompare(resolveLine(b),undefined,{numeric:true,sensitivity:'base'})||resolveName(a).localeCompare(resolveName(b),undefined,{numeric:true,sensitivity:'base'});
-    if(state.sort==='alphabetical')return alpha();
+    if(state.sort==='alphabetical'||state.sort==='line')return alpha();
+    if(state.sort==='vitola'){const av=resolveVitola(a),bv=resolveVitola(b);if(!av||!bv)return !av?(!bv?alpha():1):-1;return av.localeCompare(bv,undefined,{numeric:true,sensitivity:'base'})||alpha();}
+    if(state.sort==='strength'){const av=strengthRank(resolveStrength(a)),bv=strengthRank(resolveStrength(b));if(av==null||bv==null)return av==null?(bv==null?alpha():1):-1;return av-bv||alpha();}
     const price=state.sort.startsWith('price'),value=r=>price?(resolvePriceNumber(r)||null):measurement(getField(r,['inventory']));
     const av=value(a),bv=value(b);if(av==null||bv==null)return av==null?(bv==null?alpha():1):-1;
     return (state.sort.endsWith('desc')?bv-av:av-bv)||alpha();
@@ -1260,7 +1267,7 @@
     });
   }
   window.addEventListener('storage',refreshPublicationActionStates);
-  function applyAll(){let rows=[...state.rowsAll];rows=applyFilterSets(rows);rows=applySearch(rows);rows.sort(compareRows);renderList(rows);setBrandHeader();updateBandControl();const count=document.querySelector("#brand-result-count");if(count)count.textContent=`${rows.length} cigar${rows.length===1?"":"s"}`;}
+  function applyAll(){let rows=[...state.rowsAll];rows=applyFilterSets(rows);rows=applySearch(rows);rows.sort(compareRows);renderList(rows);setBrandHeader();updateBandControl();const count=document.querySelector("#brand-result-count");if(count)count.textContent=`${rows.length} cigar${rows.length===1?"":"s"}`;const liveCount=document.querySelector(".brand-filter-live");if(liveCount)liveCount.textContent=`${rows.length} cigar${rows.length===1?"":"s"} match`;}
   function ensureBrandManufacturerMeta(){const block=$(".brand-title-block");if(!block)return null;let meta=$(".brand-manufacturer",block);if(!meta){meta=document.createElement("div");meta.className="brand-manufacturer";block.appendChild(meta);}return meta;}
   function setBrandHeader(){const display=brandDisplayName();if(brandTitle)brandTitle.textContent=display||"Brand";const meta=ensureBrandManufacturerMeta(),first=state.rowsAll[0],maker=first?resolveManufacturerVal(first):"";if(meta){const show=maker&&normalizeBrand(maker)!==normalizeBrand(display),cuban=first&&resolveIsCuban(first);meta.textContent=show?`${cuban?"🇨🇺 ":""}${maker}`:"";meta.style.display=show?"":"none";}if(!brandIconImg)return;brandIconImg.alt=display||"Brand";bindImageFallback(brandIconImg,brandIconCandidates(),"hide");}
   function findBrandMeta(query,brands){const q=normalizeBrand(query);if(!q||!Array.isArray(brands))return null;return brands.find(b=>normalizeBrand(b.slug)===q)||brands.find(b=>normalizeBrand(b.name)===q)||brands.find(b=>{const slug=normalizeBrand(b.slug),name=normalizeBrand(b.name);return !!slug&&(slug.includes(q)||q.includes(slug)||name.includes(q)||q.includes(name));})||null;}
@@ -1328,7 +1335,7 @@
   });
   const btnSort=document.querySelector('#btn-sort');
   btnSort?.addEventListener('click',()=>openChoiceDialog('Sort',btnSort,dialog=>{
-    for(const [value,label] of [['price-asc','Price (low–high)'],['price-desc','Price (high–low)'],['inventory-asc','Inventory (low–high)'],['inventory-desc','Inventory (high–low)'],['alphabetical','Alphabetical (Line, then Cigar)']]){
+    for(const [value,label] of [['price-asc','Price (low–high)'],['price-desc','Price (high–low)'],['inventory-asc','Inventory (low–high)'],['inventory-desc','Inventory (high–low)'],['alphabetical','Alphabetical'],['line','Line'],['vitola','Vitola'],['strength','Strength']]){
       const button=document.createElement('button');button.type='button';button.className='sort-choice';button.textContent=label;button.setAttribute('aria-pressed',String(state.sort===value));dialog.append(button);
       button.addEventListener('click',()=>{state.sort=value;btnSort.title=label;applyAll();dialog.close();});
     }
@@ -1342,10 +1349,10 @@
     if(brandFiltersDialog?.open)return;
     const originalFilters=Object.fromEntries(Object.entries(state.filters).map(([key,set])=>[key,new Set(set)]));
     const originalRanges=Object.fromEntries(Object.entries(state.ranges).map(([key,value])=>[key,value?[...value]:null]));
-    const originalLengthAbove8=state.lengthAbove8;
+    const originalLengthAbove8=state.lengthAbove8,originalSearch=state.search,originalBandSelection=new Set(state.bandSelection);
     let committed=false;
     const dialog=document.createElement('dialog');dialog.className='brand-filter-dialog brand-filter-visual';dialog.setAttribute('aria-labelledby','brand-filter-title');
-    dialog.innerHTML='<form method="dialog"><header><h2 id="brand-filter-title">Filters</h2><button type="button" data-filter-cancel aria-label="Cancel and close filters">×</button></header><p class="brand-filter-live" role="status" aria-live="polite"></p><label class="brand-filter-search-label">Find a filter<input type="search" class="brand-filter-search" placeholder="Search filter options" autocomplete="off"></label><div class="brand-filter-options"></div><p class="brand-filter-empty" hidden>No matching options.</p><footer><button type="button" data-filter-clear>Clear all</button><button type="button" data-filter-cancel>Cancel</button><button type="submit" class="brand-filter-apply">Done</button></footer></form>';
+    dialog.innerHTML='<form method="dialog"><header><h2 id="brand-filter-title">Filters</h2><button type="button" data-filter-cancel aria-label="Cancel and close filters">×</button></header><p class="brand-filter-live" role="status" aria-live="polite"></p><label class="brand-filter-search-label">Find a filter<input type="search" class="brand-filter-search" placeholder="Search filter options" autocomplete="off"></label><div class="brand-filter-options"></div><p class="brand-filter-empty" hidden>No matching options.</p><footer><button type="button" data-filter-clear>Clear Filters</button><button type="button" data-filter-cancel>Cancel</button><button type="submit" class="brand-filter-apply">Done</button></footer></form>';
     const options=dialog.querySelector('.brand-filter-options');
     const live=()=>{applyAll();updateFilterLabel();const count=listEl?.querySelectorAll('.brand-row').length||0;dialog.querySelector('.brand-filter-live').textContent=`${count} cigar${count===1?'':'s'} match`;};
     const asset='/pos/cigars/filter-assets/';
@@ -1391,15 +1398,22 @@
       values.forEach((value,index)=>{const item=document.createElement('label'),input=document.createElement('input'),text=document.createElement('span');input.type='checkbox';input.value=value;input.dataset.filterKey=key;input.checked=selected.has(value);text.textContent=value;item.className='brand-filter-option';item.dataset.search=(label+' '+value).toLowerCase();input.addEventListener('change',()=>{if(input.checked)state.filters[key].add(value);else state.filters[key].delete(value);live();});item.append(input);if(key==='shade'&&index<7){item.classList.add('shade-option');const img=document.createElement('img');img.src=asset+'shade-'+value.toLowerCase().replaceAll(' ','-')+'.svg';img.alt='';item.append(img);item.append(text);shadeRows[index<3?0:1].append(item);}else{item.append(text);fieldset.append(item);}});
       if(values.length)options.append(fieldset);
     }
+    // Keep initial open state; titles are keyboard-accessible collapse controls.
+    options.querySelectorAll('fieldset').forEach((group,index)=>{
+      const legend=group.querySelector('legend'),label=legend.textContent,body=document.createElement('div');body.className='filter-section-body';body.id=`brand-filter-body-${index}`;
+      for(const child of [...group.children])if(child!==legend)body.append(child);
+      const toggle=document.createElement('button');toggle.type='button';toggle.className='filter-section-toggle';toggle.textContent=label;toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-controls',body.id);legend.replaceChildren(toggle);group.append(body);
+      toggle.addEventListener('click',()=>{body.hidden=!body.hidden;toggle.setAttribute('aria-expanded',String(!body.hidden));});
+    });
     const close=()=>dialog.close();dialog.querySelectorAll('[data-filter-cancel]').forEach(button=>button.addEventListener('click',close));
     dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
-    dialog.querySelector('[data-filter-clear]').addEventListener('click',()=>{Object.values(state.filters).forEach(set=>set.clear());state.ranges.length=null;state.ranges.ring=null;state.lengthAbove8=false;dialog.querySelectorAll('input[type="checkbox"]').forEach(input=>{input.checked=false;});rangeRefresh.forEach(fn=>fn());live();});
+    dialog.querySelector('[data-filter-clear]').addEventListener('click',()=>{Object.values(state.filters).forEach(set=>set.clear());state.ranges.length=null;state.ranges.ring=null;state.lengthAbove8=false;state.bandSelection.clear();state.search='';if(searchInput)searchInput.value='';const search=dialog.querySelector('.brand-filter-search');search.value='';search.dispatchEvent(new Event('input'));dialog.querySelectorAll('input[type="checkbox"]').forEach(input=>{input.checked=false;});rangeRefresh.forEach(fn=>fn());live();});
     const filterSearch=dialog.querySelector('.brand-filter-search');
-    filterSearch.addEventListener('input',()=>{const q=filterSearch.value.trim().toLowerCase();let visible=0;options.querySelectorAll('fieldset').forEach(group=>{if(group.classList.contains('visual-range')){group.hidden=!group.dataset.search.includes(q);if(!group.hidden)visible++;return;}let groupVisible=0;group.querySelectorAll('.brand-filter-option').forEach(item=>{item.hidden=!item.dataset.search.includes(q);if(!item.hidden)groupVisible++;});group.hidden=!groupVisible;visible+=groupVisible;});dialog.querySelector('.brand-filter-empty').hidden=visible>0;});
+    filterSearch.addEventListener('input',()=>{const q=filterSearch.value.trim().toLowerCase();let visible=0;options.querySelectorAll('fieldset').forEach(group=>{if(group.classList.contains('visual-range')){group.hidden=!group.dataset.search.includes(q);if(!group.hidden){visible++;if(q){group.querySelector('.filter-section-body').hidden=false;group.querySelector('.filter-section-toggle').setAttribute('aria-expanded','true');}}return;}let groupVisible=0;group.querySelectorAll('.brand-filter-option').forEach(item=>{item.hidden=!item.dataset.search.includes(q);if(!item.hidden)groupVisible++;});group.hidden=!groupVisible;if(groupVisible&&q){group.querySelector('.filter-section-body').hidden=false;group.querySelector('.filter-section-toggle').setAttribute('aria-expanded','true');}visible+=groupVisible;});dialog.querySelector('.brand-filter-empty').hidden=visible>0;});
     dialog.querySelector('form').addEventListener('submit',event=>{event.preventDefault();committed=true;close();});
     dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close();}});
     const oldOverflow=document.body.style.overflow;
-    dialog.addEventListener('close',()=>{if(!committed){state.filters=originalFilters;state.ranges=originalRanges;state.lengthAbove8=originalLengthAbove8;applyAll();updateFilterLabel();}document.body.style.overflow=oldOverflow;dialog.remove();brandFiltersDialog=null;btnFilters?.setAttribute('aria-expanded','false');btnFilters?.focus();},{once:true});
+    dialog.addEventListener('close',()=>{if(!committed){state.filters=originalFilters;state.ranges=originalRanges;state.lengthAbove8=originalLengthAbove8;state.bandSelection=originalBandSelection;state.search=originalSearch;if(searchInput)searchInput.value=originalSearch;applyAll();updateFilterLabel();}document.body.style.overflow=oldOverflow;dialog.remove();brandFiltersDialog=null;btnFilters?.setAttribute('aria-expanded','false');btnFilters?.focus();},{once:true});
     document.body.append(dialog);brandFiltersDialog=dialog;
     try{dialog.showModal();document.body.style.overflow='hidden';btnFilters?.setAttribute('aria-expanded','true');live();dialog.querySelector('[data-filter-cancel]').focus();}
     catch(error){dialog.remove();brandFiltersDialog=null;showToast('Filters could not open. Please reload this page.');}
