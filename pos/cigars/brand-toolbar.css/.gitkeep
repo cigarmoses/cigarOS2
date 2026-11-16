@@ -1,1 +1,20 @@
-
+/* Brand browsing controls, scoped to preserve existing POS cards. */
+.brand-page .brand-controls{display:flex;align-items:center;justify-content:flex-start;gap:12px;flex-wrap:wrap}
+.brand-page .brand-controls .pill-btn{min-width:80px;min-height:44px;border-radius:18px;padding:10px 18px;color:var(--muted,#9ca4b3);background:transparent;border:1px solid rgba(145,153,170,.22);font:600 16px -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif}
+.brand-page .brand-controls [hidden]{display:none!important}
+.brand-page .band-icon-button img{width:52px;height:24px;object-fit:contain;display:block}
+.brand-page .brand-controls [aria-pressed=true]{background:rgba(122,133,158,.13);border-color:rgba(122,133,158,.3)}
+.brand-result-count{font-size:12px;color:var(--muted,#9399a5);margin:12px 0 8px}
+.brand-choice-dialog{border:1px solid #c7ccd540;border-radius:24px;max-height:80dvh;width:min(430px,calc(100vw - 32px));padding:22px;background:#101d30;color:#f2f4f8;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif}
+.brand-choice-dialog::backdrop{background:#08101c80;backdrop-filter:blur(4px)}
+.brand-choice-dialog h2{font-size:24px;margin:0 0 18px}
+.brand-choice-dialog button{font:inherit;color:inherit;border:1px solid #9ba4b444;border-radius:14px;padding:12px;background:transparent;cursor:pointer}
+.brand-choice-dialog button[aria-pressed=true]{background:#57a87530;border-color:#72b78d}
+.brand-choice-dialog .sort-choice{display:block;width:100%;margin:8px 0;text-align:left}
+.brand-choice-dialog .choice-close{margin-top:18px;width:100%;background:#79ba8d30}
+.band-art-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.band-art-grid button{display:flex;flex-direction:column;align-items:center;gap:10px;overflow-wrap:anywhere;font-size:13px}
+.band-art-grid img{width:100%;height:65px;object-fit:contain}
+html[data-theme=light] .brand-choice-dialog{background:#fff;color:#10131b}
+html[data-theme=light] .brand-controls .pill-btn{color:#626674}
+.brand-page button:focus-visible{outline:3px solid #5f9ddd;outline-offset:3px}
