@@ -381,7 +381,7 @@
   const $ = (sel,root=document) => root.querySelector(sel);
   const $$ = (sel,root=document) => Array.from(root.querySelectorAll(sel));
   const brandTitle=$("#brand-title"),brandIconImg=$("#brand-icon-img"),searchInput=$("#brand-search"),btnFilters=$("#btn-filters"),btnBands=$("#btn-bands"),seg=$("#wrapper-seg"),segBtns=$$(".seg-btn",seg||document),listEl=$("#brand-list"),backBtn=$("#back-btn"),brandSearchBtn=$("#brandSearchBtn");
-  const state={brand:"",brandQuery:"",brandMeta:null,brandsAll:[],rowsAll:[],search:"",wrapperMode:"all",filters:{vitola:new Set(),ring:new Set(),length:new Set(),strength:new Set(),shape:new Set(),shade:new Set()},actionRow:null,singleQty:1,boxQty:0};
+  const state={brand:"",brandQuery:"",brandMeta:null,brandsAll:[],rowsAll:[],search:"",wrapperMode:"all",sort:"alphabetical",bandSelection:new Set(),ranges:{length:null,ring:null},filters:{vitola:new Set(),ring:new Set(),length:new Set(),strength:new Set(),shape:new Set(),shade:new Set()},actionRow:null,singleQty:1,boxQty:0};
   let favoriteBusy=false;
   function norm(v){return String(v??"").trim().replace(/\s+/g," ");}
   function esc(s){return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
@@ -406,7 +406,28 @@
   function resolveBinder(r){return getField(r,["binder"]);}
   function resolveFiller(r){return getField(r,["filler"]);}
   function resolveStrength(r){return getField(r,["strength"]);}
-  function resolveShade(r){return getField(r,["wrapper_shade","wrapper_shade_type","shade","wrapper"]);}
+  function resolveShade(r){
+    const value=getField(r,["wrapper_shade","wrapper_shade_type","shade"]);
+    const known={'claro':'Claro','colorado claro':'Colorado Claro','col claro':'Colorado Claro','colorado':'Colorado','colorado maduro':'Colorado Maduro','col maduro':'Colorado Maduro','maduro':'Maduro','oscuro':'Oscuro','candela':'Candela'};
+    return known[normalizeLoose(value)] || value || '(Unspecified)';
+  }
+  function measurement(value){
+    const text=String(value??'').trim().replace(/[″”"]/g,'').replace(/inches|inch|in\.?$/gi,'').trim();
+    if(!text)return null;
+    const fractions={'¼':.25,'½':.5,'¾':.75,'⅛':.125,'⅜':.375,'⅝':.625,'⅞':.875};
+    if(fractions[text.slice(-1)]!=null){const base=text.slice(0,-1).trim();return (base?Number(base):0)+fractions[text.slice(-1)];}
+    const f=text.match(/^(?:(\d+)[ -]+)?(\d+)\/(\d+)$/);
+    if(f)return Number(f[1]||0)+Number(f[2])/Number(f[3]);
+    const n=Number(text);return Number.isFinite(n)?n:null;
+  }
+  function bandArt(r){return normalizeAssetPath(getField(r,['band_art_img','band_art_image','band_img','band_image']));}
+  function compareRows(a,b){
+    const alpha=()=>resolveLine(a).localeCompare(resolveLine(b),undefined,{numeric:true,sensitivity:'base'})||resolveName(a).localeCompare(resolveName(b),undefined,{numeric:true,sensitivity:'base'});
+    if(state.sort==='alphabetical')return alpha();
+    const price=state.sort.startsWith('price'),value=r=>price?(resolvePriceNumber(r)||null):measurement(getField(r,['inventory']));
+    const av=value(a),bv=value(b);if(av==null||bv==null)return av==null?(bv==null?alpha():1):-1;
+    return (state.sort.endsWith('desc')?bv-av:av-bv)||alpha();
+  }
   function resolveBrandImage(r){return getField(r,["brand_img","brand_image","brandicon","brand_icon"]);}
   function resolveLineImage(r){return getField(r,["line_img","line_image","lineicon","line_icon","brand_line_img"]);}
   function resolveDetailKey(r){return getField(r,["key","cigar_id","id","row_id"]);}
@@ -473,7 +494,7 @@
   }
   function openDetail(r){location.href=makeDetailHref(r);}
   function applySearch(rows){const q=state.search.trim().toLowerCase();if(!q)return rows;return rows.filter(r=>[resolveDisplayName(r),resolveVitola(r),resolveRing(r),resolveLength(r),resolveManufacturerVal(r),resolveLine(r),resolveOrigin(r)].join(" ").toLowerCase().includes(q));}
-  function applyFilterSets(rows){return rows.filter(r=>{if(state.filters.vitola.size&&!state.filters.vitola.has(resolveVitola(r)))return false;if(state.filters.ring.size&&!state.filters.ring.has(resolveRing(r)))return false;if(state.filters.length.size&&!state.filters.length.has(resolveLength(r)))return false;if(state.filters.strength.size&&!state.filters.strength.has(resolveStrength(r)))return false;if(state.filters.shape.size&&!state.filters.shape.has(resolveShape(r)))return false;if(state.filters.shade.size&&!state.filters.shade.has(resolveShade(r)))return false;return true;});}
+  function applyFilterSets(rows){return rows.filter(r=>{for(const [key,resolver] of [['length',resolveLength],['ring',resolveRing]]){const range=state.ranges[key],n=measurement(resolver(r));if(range&&(n==null||!Number.isFinite(n)||n<range[0]||n>range[1]))return false;}if(state.bandSelection.size&&!state.bandSelection.has(bandArt(r)))return false;if(state.filters.vitola.size&&!state.filters.vitola.has(resolveVitola(r)))return false;if(state.filters.ring.size&&!state.filters.ring.has(resolveRing(r)))return false;if(state.filters.length.size&&!state.filters.length.has(resolveLength(r)))return false;if(state.filters.strength.size&&!state.filters.strength.has(resolveStrength(r)))return false;if(state.filters.shape.size&&!state.filters.shape.has(resolveShape(r)))return false;if(state.filters.shade.size&&!state.filters.shade.has(resolveShade(r)))return false;return true;});}
 
   // Media Lists components reused here; no publication rankings or catalog fetches added.
   const content=listEl, LOCAL_FAVORITES_KEY="cigaros_pos_favorites_local_v1", FAVORITES_ORDER_KEY="cigaros_pos_favorites_order_v1";
@@ -1239,7 +1260,7 @@
     });
   }
   window.addEventListener('storage',refreshPublicationActionStates);
-  function applyAll(){let rows=[...state.rowsAll];rows=applyFilterSets(rows);rows=applySearch(rows);renderList(rows);setBrandHeader();}
+  function applyAll(){let rows=[...state.rowsAll];rows=applyFilterSets(rows);rows=applySearch(rows);rows.sort(compareRows);renderList(rows);setBrandHeader();updateBandControl();const count=document.querySelector("#brand-result-count");if(count)count.textContent=`${rows.length} cigar${rows.length===1?"":"s"}`;}
   function ensureBrandManufacturerMeta(){const block=$(".brand-title-block");if(!block)return null;let meta=$(".brand-manufacturer",block);if(!meta){meta=document.createElement("div");meta.className="brand-manufacturer";block.appendChild(meta);}return meta;}
   function setBrandHeader(){const display=brandDisplayName();if(brandTitle)brandTitle.textContent=display||"Brand";const meta=ensureBrandManufacturerMeta(),first=state.rowsAll[0],maker=first?resolveManufacturerVal(first):"";if(meta){const show=maker&&normalizeBrand(maker)!==normalizeBrand(display),cuban=first&&resolveIsCuban(first);meta.textContent=show?`${cuban?"🇨🇺 ":""}${maker}`:"";meta.style.display=show?"":"none";}if(!brandIconImg)return;brandIconImg.alt=display||"Brand";bindImageFallback(brandIconImg,brandIconCandidates(),"hide");}
   function findBrandMeta(query,brands){const q=normalizeBrand(query);if(!q||!Array.isArray(brands))return null;return brands.find(b=>normalizeBrand(b.slug)===q)||brands.find(b=>normalizeBrand(b.name)===q)||brands.find(b=>{const slug=normalizeBrand(b.slug),name=normalizeBrand(b.name);return !!slug&&(slug.includes(q)||q.includes(slug)||name.includes(q)||q.includes(name));})||null;}
@@ -1276,33 +1297,98 @@
     return selectMarket(loose);
   }
 
-  // The old brand page had filter state but no button binding or dialog.
-  const brandFilterFields=[['vitola','Vitola',resolveVitola],['ring','Ring',resolveRing],['length','Length',resolveLength],['strength','Strength',resolveStrength],['shape','Shape',resolveShape],['shade','Wrapper shade',resolveShade]];
+  function updateBandControl(){
+    if(!btnBands)return;
+    const eligible=state.rowsAll.some(r=>bandArt(r));
+    btnBands.hidden=!eligible;btnBands.disabled=!eligible;
+    btnBands.setAttribute('aria-pressed',String(state.bandSelection.size>0));
+    btnBands.title=state.bandSelection.size?'Band art filter active':'Filter by band art';
+  }
+  function openChoiceDialog(title,trigger,fill){
+    const dialog=document.createElement('dialog');dialog.className='brand-choice-dialog';
+    const heading=document.createElement('h2');heading.textContent=title;dialog.append(heading);
+    const close=document.createElement('button');close.type='button';close.className='choice-close';close.textContent='Done';close.addEventListener('click',()=>dialog.close());
+    fill(dialog);dialog.append(close);document.body.append(dialog);
+    dialog.setAttribute('aria-label',title);dialog.addEventListener('close',()=>{dialog.remove();trigger?.focus();},{once:true});dialog.showModal();
+  }
+  btnBands?.addEventListener('click',()=>{
+    if(btnBands.disabled)return;
+    openChoiceDialog('Band art',btnBands,dialog=>{
+      const clear=document.createElement('button');clear.type='button';clear.textContent='All band art';dialog.append(clear);
+      clear.addEventListener('click',()=>{state.bandSelection.clear();dialog.querySelectorAll('[data-band]').forEach(b=>b.setAttribute('aria-pressed','false'));applyAll();});
+      const groups=new Map();for(const r of state.rowsAll){const art=bandArt(r);if(!groups.has(art))groups.set(art,[]);groups.get(art).push(r);}
+      const grid=document.createElement('div');grid.className='band-art-grid';dialog.append(grid);
+      for(const [art,rows] of groups){const button=document.createElement('button');button.type='button';button.dataset.band=art;button.setAttribute('aria-pressed',String(state.bandSelection.has(art)));
+        const names=[...new Set(rows.map(resolveLine).filter(Boolean))].join(', '),label=art?(names||'Band art'):'No band art';
+        if(art){const img=document.createElement('img');img.src=art;img.alt='';img.onerror=()=>{img.hidden=true;};button.append(img);}
+        const text=document.createElement('span');text.textContent=label+' ('+rows.length+')';button.append(text);grid.append(button);
+        button.addEventListener('click',()=>{state.bandSelection.has(art)?state.bandSelection.delete(art):state.bandSelection.add(art);button.setAttribute('aria-pressed',String(state.bandSelection.has(art)));applyAll();});
+      }
+    });
+  });
+  const btnSort=document.querySelector('#btn-sort');
+  btnSort?.addEventListener('click',()=>openChoiceDialog('Sort',btnSort,dialog=>{
+    for(const [value,label] of [['price-asc','Price (low–high)'],['price-desc','Price (high–low)'],['inventory-asc','Inventory (low–high)'],['inventory-desc','Inventory (high–low)'],['alphabetical','Alphabetical (Line, then Cigar)']]){
+      const button=document.createElement('button');button.type='button';button.className='sort-choice';button.textContent=label;button.setAttribute('aria-pressed',String(state.sort===value));dialog.append(button);
+      button.addEventListener('click',()=>{state.sort=value;btnSort.title=label;applyAll();dialog.close();});
+    }
+  }));
+
+  // Live filters: Cancel/Escape restores the complete pre-dialog selection.
+  const brandFilterFields=[['vitola','Vitola',resolveVitola],['strength','Strength',resolveStrength],['shape','Shape',resolveShape],['shade','Wrapper shade',resolveShade]];
   let brandFiltersDialog=null;
-  function updateFilterLabel(){const count=Object.values(state.filters).reduce((sum,set)=>sum+set.size,0);if(btnFilters)btnFilters.textContent=count?`Filters (${count})`:'Filters';}
+  function updateFilterLabel(){const count=Object.values(state.filters).reduce((sum,set)=>sum+set.size,0)+Object.values(state.ranges).filter(Boolean).length;if(btnFilters)btnFilters.textContent=count?`Filters (${count})`:'Filters';}
   function openBrandFilters(){
     if(brandFiltersDialog?.open)return;
-    const dialog=document.createElement('dialog');dialog.className='brand-filter-dialog';dialog.setAttribute('aria-labelledby','brand-filter-title');
-    dialog.innerHTML='<form method="dialog"><header><h2 id="brand-filter-title">Filters</h2><button type="button" data-filter-cancel aria-label="Close filters">×</button></header><label class="brand-filter-search-label">Find a filter<input type="search" class="brand-filter-search" placeholder="Search filter options" autocomplete="off"></label><div class="brand-filter-options"></div><p class="brand-filter-empty" hidden>No matching options.</p><footer><button type="button" data-filter-clear>Clear all</button><button type="button" data-filter-cancel>Cancel</button><button type="submit" class="brand-filter-apply">Apply</button></footer></form>';
-    const draft=Object.fromEntries(brandFilterFields.map(([key])=>[key,new Set(state.filters[key])]));
+    const originalFilters=Object.fromEntries(Object.entries(state.filters).map(([key,set])=>[key,new Set(set)]));
+    const originalRanges=Object.fromEntries(Object.entries(state.ranges).map(([key,value])=>[key,value?[...value]:null]));
+    let committed=false;
+    const dialog=document.createElement('dialog');dialog.className='brand-filter-dialog brand-filter-visual';dialog.setAttribute('aria-labelledby','brand-filter-title');
+    dialog.innerHTML='<form method="dialog"><header><h2 id="brand-filter-title">Filters</h2><button type="button" data-filter-cancel aria-label="Cancel and close filters">×</button></header><p class="brand-filter-live" role="status" aria-live="polite"></p><label class="brand-filter-search-label">Find a filter<input type="search" class="brand-filter-search" placeholder="Search filter options" autocomplete="off"></label><div class="brand-filter-options"></div><p class="brand-filter-empty" hidden>No matching options.</p><footer><button type="button" data-filter-clear>Clear all</button><button type="button" data-filter-cancel>Cancel</button><button type="submit" class="brand-filter-apply">Done</button></footer></form>';
     const options=dialog.querySelector('.brand-filter-options');
+    const live=()=>{applyAll();updateFilterLabel();const count=listEl?.querySelectorAll('.brand-row').length||0;dialog.querySelector('.brand-filter-live').textContent=`${count} cigar${count===1?'':'s'} match`;};
+    const asset='/pos/cigars/filter-assets/';
+    const rangeRefresh=[];
+    function addRange(key,label,low,high,step){
+      const fieldset=document.createElement('fieldset');fieldset.className='visual-range';fieldset.dataset.filterGroup=key;fieldset.dataset.search=label.toLowerCase();
+      fieldset.innerHTML=`<legend>${label}</legend><div class="range-number-row">${['Minimum','Maximum'].map((name,i)=>`<label>${name}<input type="number" inputmode="decimal" min="${low}" max="${high}" step="${step}" data-bound="${i}" aria-label="${name} ${label.toLowerCase()}"></label>`).join('')}</div>`;
+      if(key==='ring')fieldset.insertAdjacentHTML('beforeend',`<div class="ring-comparison" aria-hidden="true">${['dime','quarter'].map((coin,i)=>`<div class="ring-reference"><div class="ring-stage"><img class="coin-art ${coin}" src="${asset}${coin}.svg" alt=""><img class="ring-art ring-art-${i}" src="${asset}cigar-end.svg" alt=""></div><div class="coin-caption">${i?'Quarter = 60':'Dime = 45'}</div></div>`).join('')}</div>`);
+      else fieldset.insertAdjacentHTML('beforeend','<div class="length-comparison" aria-hidden="true"><svg class="length-cigar" viewBox="0 0 1031 89" preserveAspectRatio="none"><image href="/defaultdarklancero.svg" width="88.289" height="1030.906" transform="translate(1031 0) rotate(90)"/></svg></div>');
+      const ticks=Array.from({length:key==='length'?37:31},(_,i)=>{const value=low+i*(key==='length'?.25:2),major=key==='length'?i%4===0:i%5===0;return `<span class="ruler-tick${major?' major':''}" style="left:${(value-low)/(high-low)*100}%">${major?`<span>${value}${key==='length'?'″':''}</span>`:''}</span>`;}).join('');
+      fieldset.insertAdjacentHTML('beforeend',`<div class="range-ruler"><div class="range-track"></div><div class="ruler-ticks" aria-hidden="true">${ticks}</div>${[0,1].map(i=>`<input type="range" min="${low}" max="${high}" step="${step}" data-bound="${i}" aria-label="${i?'Maximum':'Minimum'} ${label.toLowerCase()} slider">`).join('')}</div><p class="range-help">Drag either handle or enter ${key==='length'?'a length in inches':'a ring gauge'}.</p>${key==='ring'?'<p class="range-help">Proportional comparison · Not actual screen size</p>':''}<button type="button" class="range-reset">Any ${label.toLowerCase()}</button>`);
+      const refresh=(editing=null)=>{const values=state.ranges[key]||[low,high];fieldset.querySelectorAll('input').forEach(input=>{if(input!==editing)input.value=values[Number(input.dataset.bound)];});const min=(values[0]-low)/(high-low)*100,max=(values[1]-low)/(high-low)*100;fieldset.style.setProperty('--range-min',`${min}%`);fieldset.style.setProperty('--range-max',`${max}%`);fieldset.classList.toggle('range-active',!!state.ranges[key]);fieldset.querySelector('.range-reset').disabled=!state.ranges[key];if(key==='ring'){values.forEach((v,i)=>fieldset.querySelector(`.ring-art-${i}`).style.width=`${v/80*100}%`);}else{fieldset.style.setProperty('--cigar-solid',`${state.ranges[key]?values[0]/9*100:100}%`);fieldset.style.setProperty('--cigar-max',`${state.ranges[key]?values[1]/9*100:100}%`);}};
+      function editRange(input,final=false){
+        if(input.value===''||!Number.isFinite(input.valueAsNumber)){if(final)refresh();return;}
+        const bound=Number(input.dataset.bound),values=[...(state.ranges[key]||[low,high])],raw=input.valueAsNumber;
+        // Keep partially typed numbers intact; clamp only after editing finishes.
+        if(!final&&input.type==='number'&&(raw<low||raw>high||(!bound&&raw>values[1])||(bound&&raw<values[0])))return;
+        let value=Math.max(low,Math.min(high,Math.round(raw/step)*step));value=bound?Math.max(values[0],value):Math.min(values[1],value);values[bound]=value;state.ranges[key]=values;refresh(!final&&input.type==='number'?input:null);live();
+      }
+      fieldset.querySelectorAll('input').forEach(input=>input.addEventListener('input',()=>editRange(input)));
+      fieldset.querySelectorAll('input[type="number"]').forEach(input=>input.addEventListener('change',()=>editRange(input,true)));
+      fieldset.querySelector('.range-reset').addEventListener('click',()=>{state.ranges[key]=null;refresh();live();});rangeRefresh.push(refresh);refresh();options.append(fieldset);
+    }
+    addRange('length','Length',0,9,.125);addRange('ring','Ring gauge',20,80,1);
     for(const [key,label,resolver] of brandFilterFields){
-      const fieldset=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=label;fieldset.append(legend);fieldset.dataset.filterGroup=key;
-      const values=[...new Set([...state.rowsAll.map(resolver).filter(Boolean),...draft[key]])].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-      for(const value of values){const item=document.createElement('label'),input=document.createElement('input'),text=document.createElement('span');input.type='checkbox';input.value=value;input.dataset.filterKey=key;input.checked=draft[key].has(value);text.textContent=value;item.className='brand-filter-option';item.dataset.search=(label+' '+value).toLowerCase();input.addEventListener('change',()=>{if(input.checked)draft[key].add(value);else draft[key].delete(value);});item.append(input,text);fieldset.append(item);}
+      const fieldset=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=label;fieldset.append(legend);fieldset.dataset.filterGroup=key;fieldset.dataset.search=label.toLowerCase();
+      const selected=state.filters[key];const actual=[...new Set([...state.rowsAll.map(r=>resolver(r)||(key==='shade'?'(Unspecified)':'')),...selected].filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+      const standards=['Claro','Colorado Claro','Colorado','Colorado Maduro','Maduro','Oscuro','Candela'];
+      const values=key==='shade'?[...standards,...actual.filter(value=>!standards.includes(value))]:actual;
+      const shadeRows=[];if(key==='shade'){for(let i=0;i<2;i++){const row=document.createElement('div');row.className='shade-row';fieldset.append(row);shadeRows.push(row);}}
+      values.forEach((value,index)=>{const item=document.createElement('label'),input=document.createElement('input'),text=document.createElement('span');input.type='checkbox';input.value=value;input.dataset.filterKey=key;input.checked=selected.has(value);text.textContent=value;item.className='brand-filter-option';item.dataset.search=(label+' '+value).toLowerCase();input.addEventListener('change',()=>{if(input.checked)state.filters[key].add(value);else state.filters[key].delete(value);live();});item.append(input);if(key==='shade'&&index<7){item.classList.add('shade-option');const img=document.createElement('img');img.src=asset+'shade-'+value.toLowerCase().replaceAll(' ','-')+'.svg';img.alt='';item.append(img);item.append(text);shadeRows[index<3?0:1].append(item);}else{item.append(text);fieldset.append(item);}});
       if(values.length)options.append(fieldset);
     }
     const close=()=>dialog.close();dialog.querySelectorAll('[data-filter-cancel]').forEach(button=>button.addEventListener('click',close));
     dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
-    dialog.querySelector('[data-filter-clear]').addEventListener('click',()=>{Object.values(draft).forEach(set=>set.clear());dialog.querySelectorAll('input[type="checkbox"]').forEach(input=>{input.checked=false;});});
+    dialog.querySelector('[data-filter-clear]').addEventListener('click',()=>{Object.values(state.filters).forEach(set=>set.clear());state.ranges.length=null;state.ranges.ring=null;dialog.querySelectorAll('input[type="checkbox"]').forEach(input=>{input.checked=false;});rangeRefresh.forEach(fn=>fn());live();});
     const filterSearch=dialog.querySelector('.brand-filter-search');
-    filterSearch.addEventListener('input',()=>{const q=filterSearch.value.trim().toLowerCase();let visible=0;options.querySelectorAll('fieldset').forEach(group=>{let groupVisible=0;group.querySelectorAll('.brand-filter-option').forEach(item=>{item.hidden=!item.dataset.search.includes(q);if(!item.hidden)groupVisible++;});group.hidden=!groupVisible;visible+=groupVisible;});dialog.querySelector('.brand-filter-empty').hidden=visible>0;});
-    dialog.querySelector('form').addEventListener('submit',event=>{event.preventDefault();for(const [key] of brandFilterFields)state.filters[key]=new Set(draft[key]);applyAll();updateFilterLabel();close();});
+    filterSearch.addEventListener('input',()=>{const q=filterSearch.value.trim().toLowerCase();let visible=0;options.querySelectorAll('fieldset').forEach(group=>{if(group.classList.contains('visual-range')){group.hidden=!group.dataset.search.includes(q);if(!group.hidden)visible++;return;}let groupVisible=0;group.querySelectorAll('.brand-filter-option').forEach(item=>{item.hidden=!item.dataset.search.includes(q);if(!item.hidden)groupVisible++;});group.hidden=!groupVisible;visible+=groupVisible;});dialog.querySelector('.brand-filter-empty').hidden=visible>0;});
+    dialog.querySelector('form').addEventListener('submit',event=>{event.preventDefault();committed=true;close();});
     dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close();}});
     const oldOverflow=document.body.style.overflow;
-    dialog.addEventListener('close',()=>{document.body.style.overflow=oldOverflow;dialog.remove();brandFiltersDialog=null;btnFilters?.setAttribute('aria-expanded','false');btnFilters?.focus();},{once:true});
+    dialog.addEventListener('close',()=>{if(!committed){state.filters=originalFilters;state.ranges=originalRanges;applyAll();updateFilterLabel();}document.body.style.overflow=oldOverflow;dialog.remove();brandFiltersDialog=null;btnFilters?.setAttribute('aria-expanded','false');btnFilters?.focus();},{once:true});
     document.body.append(dialog);brandFiltersDialog=dialog;
-    try{dialog.showModal();document.body.style.overflow='hidden';btnFilters?.setAttribute('aria-expanded','true');filterSearch.focus();}
+    try{dialog.showModal();document.body.style.overflow='hidden';btnFilters?.setAttribute('aria-expanded','true');live();dialog.querySelector('[data-filter-cancel]').focus();}
     catch(error){dialog.remove();brandFiltersDialog=null;showToast('Filters could not open. Please reload this page.');}
   }
   btnFilters?.setAttribute('aria-haspopup','dialog');btnFilters?.setAttribute('aria-expanded','false');btnFilters?.addEventListener('click',openBrandFilters);
@@ -1329,7 +1415,7 @@
   document.addEventListener("keydown",e=>{if(e.key==="Escape")closeActionSheet();});
   Favorites.subscribe(()=>{if(state.actionRow)updateActionSheet();refreshPublicationActionStates();});
   window.addEventListener("pageshow",()=>{if(state.actionRow)updateActionSheet();});
-  if(btnBands)btnBands.style.display="none";if(seg)seg.style.display="none";segBtns.forEach(b=>b.classList.remove("is-on"));
+  if(seg)seg.style.display="none";segBtns.forEach(b=>b.classList.remove("is-on"));
   async function boot(){
     if(!listEl)return;ensureActionSheet();state.brandQuery=(getParam("brand")||"Padron").trim();
     state.brandsAll=await loadBrandsMeta();state.brandMeta=findBrandMeta(state.brandQuery,state.brandsAll);state.brand=state.brandMeta?.name||state.brandQuery;
