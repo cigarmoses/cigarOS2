@@ -1356,7 +1356,7 @@
       if(key==='ring'){
         fieldset.insertAdjacentHTML('beforeend',`<div class="ring-comparison" aria-hidden="true">${['dime','quarter'].map((coin,i)=>`<div class="ring-reference"><div class="ring-stage"><img class="coin-art ${coin}" src="${asset}${coin}.svg" alt=""><img class="ring-art ring-art-${i}" src="${asset}cigar-end.svg" alt=""></div><div class="coin-caption">${i?'Quarter = 60':'Dime = 45'}</div></div>`).join('')}</div><p class="range-help">Enter a minimum and maximum ring gauge.</p><p class="range-help">Proportional comparison · Not actual screen size</p>`);
       }else{
-        fieldset.insertAdjacentHTML('beforeend',`<div class="length-comparison" aria-hidden="true"><img class="length-cigar" src="${asset}length-cigar.svg?v=2" alt=""></div><div class="length-ruler-art"><img src="${asset}ruler-8-inch.svg" alt="Ruler from 0 to 8 inches"></div><div class="range-ruler length-slider"><div class="range-track"></div>${[0,1].map(i=>`<input type="range" min="${low}" max="${high}" step="${step}" data-bound="${i}" aria-label="${i?'Maximum':'Minimum'} length slider">`).join('')}</div><p class="range-help">Drag either handle or enter a length in inches.</p><button type="button" class="length-over-eight" aria-pressed="false">&gt;8″</button>`);
+        fieldset.insertAdjacentHTML('beforeend',`<div class="length-comparison" aria-hidden="true"><img class="length-cigar" src="${asset}length-cigar.png" alt=""></div><div class="length-ruler-art"><img src="${asset}ruler-8-inch.svg" alt="Ruler from 0 to 8 inches"></div><div class="range-ruler length-slider"><div class="range-track"></div>${[0,1].map(i=>`<input type="range" min="${low}" max="${high}" step="${step}" data-bound="${i}" aria-label="${i?'Maximum':'Minimum'} length slider">`).join('')}</div><p class="range-help">Drag either handle or enter a length in inches.</p><button type="button" class="length-over-eight" aria-pressed="false">&gt;8″</button>`);
       }
       fieldset.insertAdjacentHTML('beforeend',`<button type="button" class="range-reset">Any ${label.toLowerCase()}</button>`);
       const refresh=(editing=null)=>{
@@ -1365,7 +1365,7 @@
         const min=(values[0]-low)/(high-low)*100,max=(values[1]-low)/(high-low)*100;fieldset.style.setProperty('--range-min',`${min}%`);fieldset.style.setProperty('--range-max',`${max}%`);
         fieldset.classList.toggle('range-active',!!state.ranges[key]||over);fieldset.classList.toggle('length-over-active',over);fieldset.querySelector('.range-reset').disabled=!state.ranges[key]&&!over;
         if(key==='ring')values.forEach((v,i)=>fieldset.querySelector(`.ring-art-${i}`).style.width=`${v/80*100}%`);
-        else{fieldset.style.setProperty('--cigar-solid',`${over?100:values[0]/8*100}%`);fieldset.style.setProperty('--cigar-max',`${over?100:values[1]/8*100}%`);fieldset.querySelector('.length-over-eight').setAttribute('aria-pressed',String(over));}
+        else{fieldset.style.setProperty('--cigar-width',`${over?100:values[1]/8*100}%`);fieldset.style.setProperty('--cigar-solid',`${over||!values[1]?100:values[0]/values[1]*100}%`);fieldset.style.setProperty('--cigar-max','100%');fieldset.querySelector('.length-over-eight').setAttribute('aria-pressed',String(over));}
       };
       function editRange(input,final=false){
         if(input.value===''||!Number.isFinite(input.valueAsNumber)){if(final)refresh();return;}

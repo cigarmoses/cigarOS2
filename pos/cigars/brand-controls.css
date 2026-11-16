@@ -46,3 +46,6 @@ html[data-theme="light"] .length-cigar{filter:brightness(0) saturate(100%) inver
 
 /* Solid tobacco-colored silhouette stays visible in both themes. */
 html[data-theme="light"] .length-cigar{filter:none}
+
+/* Preserve the whole cigar silhouette through the maximum selected length. */
+.length-cigar{width:var(--cigar-width,87.5%)}
