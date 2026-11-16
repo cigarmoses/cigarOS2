@@ -32,3 +32,14 @@
 @media(prefers-reduced-motion:reduce){.brand-filter-visual *{scroll-behavior:auto!important}}
 /* Existing Lancero artwork is white; make it visible on light filter cards. */
 html[data-theme="light"] .length-cigar{filter:brightness(0) saturate(100%) invert(30%) sepia(35%) saturate(700%) hue-rotate(348deg) brightness(90%)}
+
+/* Revised 8-inch length ruler and numeric-only ring controls. */
+.length-comparison{width:100%;min-height:40px;height:auto;margin:14px 0 5px}
+.length-cigar{display:block;height:auto;aspect-ratio:1030.906/88.289;object-fit:fill;min-width:0}
+.length-ruler-art{width:100%;line-height:0}
+.length-ruler-art img{display:block;width:100%;height:auto}
+.visual-range .length-slider{margin:0 0 5px;height:44px}
+.brand-filter-visual .length-over-eight{display:block;min-width:80px;margin:12px auto 0;border-radius:18px}
+.brand-filter-visual .length-over-eight[aria-pressed="true"]{background:#65bf8b33;border-color:#65bf8b}
+.length-over-active .length-slider{opacity:.35}
+.range-number-row input:disabled{opacity:.45}
