@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="/pos/pos.css?v=34" />
   <link rel="stylesheet" href="/pos/cigars/cigars.css?v=34" />
   <link rel="stylesheet" href="/pos/cigars/brand.css?v=20261112-pos-pill" />
+  <link rel="stylesheet" href="/pos/cigars/brand-controls.css?v=20261116" />
+  <link rel="stylesheet" href="/pos/cigars/brand-toolbar.css?v=20261116" />
 </head>
 
 <body class="brand-page">
@@ -61,8 +63,9 @@
       </div>
 
       <div class="brand-controls">
+        <button id="btn-bands" class="pill-btn band-icon-button" type="button" aria-label="Filter by band art" aria-haspopup="dialog" hidden disabled><img src="/pos/cigars/filter-assets/band-icon.svg" alt="" aria-hidden="true"></button>
         <button id="btn-filters" class="pill-btn" type="button">Filters</button>
-        <button id="btn-bands" class="pill-btn" type="button">Bands</button>
+        <button id="btn-sort" class="pill-btn" type="button" aria-haspopup="dialog">Sort</button>
 
         <div id="wrapper-seg" class="seg" data-state="maduro">
           <button class="seg-btn" type="button" data-state="maduro">Maduro</button>
@@ -72,6 +75,7 @@
       </div>
     </section>
 
+    <p id="brand-result-count" class="brand-result-count" role="status" aria-live="polite"></p>
     <section class="brand-list" id="brand-list" aria-label="Cigars list"></section>
   </main>
 
@@ -117,7 +121,7 @@
 
   <script defer src="/pos/cart.js?v=34"></script>
   <script defer src="/pos/pos.js?v=34"></script>
-  <script defer src="/pos/cigars/brand.js?v=20261112-pos-pill"></script>
+  <script defer src="/pos/cigars/brand.js?v=20261116-filters"></script>
   <script>
     (() => {
       const root = document.documentElement;
