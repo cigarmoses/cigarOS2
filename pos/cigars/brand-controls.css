@@ -43,3 +43,6 @@ html[data-theme="light"] .length-cigar{filter:brightness(0) saturate(100%) inver
 .brand-filter-visual .length-over-eight[aria-pressed="true"]{background:#65bf8b33;border-color:#65bf8b}
 .length-over-active .length-slider{opacity:.35}
 .range-number-row input:disabled{opacity:.45}
+
+/* Solid tobacco-colored silhouette stays visible in both themes. */
+html[data-theme="light"] .length-cigar{filter:none}
