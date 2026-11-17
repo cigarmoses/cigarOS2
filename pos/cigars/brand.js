@@ -381,7 +381,7 @@
   const $ = (sel,root=document) => root.querySelector(sel);
   const $$ = (sel,root=document) => Array.from(root.querySelectorAll(sel));
   const brandTitle=$("#brand-title"),brandIconImg=$("#brand-icon-img"),searchInput=$("#brand-search"),btnFilters=$("#btn-filters"),btnBands=$("#btn-bands"),seg=$("#wrapper-seg"),segBtns=$$(".seg-btn",seg||document),listEl=$("#brand-list"),backBtn=$("#back-btn"),brandSearchBtn=$("#brandSearchBtn");
-  const state={brand:"",brandQuery:"",brandMeta:null,brandsAll:[],rowsAll:[],search:"",wrapperMode:"all",sort:"alphabetical",bandSelection:new Set(),ranges:{length:null,ring:null},lengthAbove8:false,filters:{vitola:new Set(),ring:new Set(),length:new Set(),strength:new Set(),shape:new Set(),shade:new Set()},actionRow:null,singleQty:1,boxQty:0};
+  const state={brand:"",brandQuery:"",brandMeta:null,brandsAll:[],rowsAll:[],search:"",wrapperMode:"all",sort:"alphabetical",bandSelection:new Set(),ranges:{length:null,ring:null,strength:null},lengthAbove8:false,filters:{vitola:new Set(),ring:new Set(),length:new Set(),strength:new Set(),shape:new Set(),shade:new Set()},actionRow:null,singleQty:1,boxQty:0};
   let favoriteBusy=false;
   function norm(v){return String(v??"").trim().replace(/\s+/g," ");}
   function esc(s){return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
@@ -501,7 +501,7 @@
   }
   function openDetail(r){location.href=makeDetailHref(r);}
   function applySearch(rows){const q=state.search.trim().toLowerCase();if(!q)return rows;return rows.filter(r=>[resolveDisplayName(r),resolveVitola(r),resolveRing(r),resolveLength(r),resolveManufacturerVal(r),resolveLine(r),resolveOrigin(r)].join(" ").toLowerCase().includes(q));}
-  function applyFilterSets(rows){return rows.filter(r=>{if(state.lengthAbove8){const n=measurement(resolveLength(r));if(n==null||!Number.isFinite(n)||n<=8)return false;}for(const [key,resolver] of [['length',resolveLength],['ring',resolveRing]]){const range=state.ranges[key],n=measurement(resolver(r));if(range&&(n==null||!Number.isFinite(n)||n<range[0]||n>range[1]))return false;}if(state.bandSelection.size&&!state.bandSelection.has(bandArt(r)))return false;if(state.filters.vitola.size&&!state.filters.vitola.has(resolveVitola(r)))return false;if(state.filters.ring.size&&!state.filters.ring.has(resolveRing(r)))return false;if(state.filters.length.size&&!state.filters.length.has(resolveLength(r)))return false;if(state.filters.strength.size&&!state.filters.strength.has(resolveStrength(r)))return false;if(state.filters.shape.size&&!state.filters.shape.has(resolveShape(r)))return false;if(state.filters.shade.size&&!state.filters.shade.has(resolveShade(r)))return false;return true;});}
+  function applyFilterSets(rows){return rows.filter(r=>{if(state.lengthAbove8){const n=measurement(resolveLength(r));if(n==null||!Number.isFinite(n)||n<=8)return false;}for(const [key,resolver] of [['length',resolveLength],['ring',resolveRing]]){const range=state.ranges[key],n=measurement(resolver(r));if(range&&(n==null||!Number.isFinite(n)||n<range[0]||n>range[1]))return false;}if(state.ranges.strength){const n=strengthRank(resolveStrength(r));if(n==null||n<state.ranges.strength[0]||n>state.ranges.strength[1])return false;}if(state.bandSelection.size&&!state.bandSelection.has(bandArt(r)))return false;if(state.filters.vitola.size&&!state.filters.vitola.has(resolveVitola(r)))return false;if(state.filters.ring.size&&!state.filters.ring.has(resolveRing(r)))return false;if(state.filters.length.size&&!state.filters.length.has(resolveLength(r)))return false;if(state.filters.strength.size&&!state.filters.strength.has(resolveStrength(r)))return false;if(state.filters.shape.size&&!state.filters.shape.has(resolveShape(r)))return false;if(state.filters.shade.size&&!state.filters.shade.has(resolveShade(r)))return false;return true;});}
 
   // Media Lists components reused here; no publication rankings or catalog fetches added.
   const content=listEl, LOCAL_FAVORITES_KEY="cigaros_pos_favorites_local_v1", FAVORITES_ORDER_KEY="cigaros_pos_favorites_order_v1";
@@ -1313,7 +1313,7 @@
   }
   function openChoiceDialog(title,trigger,fill){
     const dialog=document.createElement('dialog');dialog.className='brand-choice-dialog';
-    const heading=document.createElement('h2');heading.textContent=title;dialog.append(heading);
+    const heading=document.createElement('h2');heading.textContent=title;if(title==='Sort'){heading.tabIndex=-1;heading.setAttribute('autofocus','');}dialog.append(heading);
     const close=document.createElement('button');close.type='button';close.className='choice-close';close.textContent='Done';close.addEventListener('click',()=>dialog.close());
     fill(dialog);dialog.append(close);document.body.append(dialog);
     dialog.setAttribute('aria-label',title);dialog.addEventListener('close',()=>{dialog.remove();trigger?.focus();},{once:true});dialog.showModal();
@@ -1335,7 +1335,7 @@
   });
   const btnSort=document.querySelector('#btn-sort');
   btnSort?.addEventListener('click',()=>openChoiceDialog('Sort',btnSort,dialog=>{
-    for(const [value,label] of [['price-asc','Price (low–high)'],['price-desc','Price (high–low)'],['inventory-asc','Inventory (low–high)'],['inventory-desc','Inventory (high–low)'],['alphabetical','Alphabetical'],['line','Line'],['vitola','Vitola'],['strength','Strength']]){
+    for(const [value,label] of [['alphabetical','Alphabetical'],['price-asc','Price (low–high)'],['price-desc','Price (high–low)'],['inventory-asc','Inventory (low–high)'],['inventory-desc','Inventory (high–low)'],['line','Line'],['vitola','Vitola'],['strength','Strength']]){
       const button=document.createElement('button');button.type='button';button.className='sort-choice';button.textContent=label;button.setAttribute('aria-pressed',String(state.sort===value));dialog.append(button);
       button.addEventListener('click',()=>{state.sort=value;btnSort.title=label;applyAll();dialog.close();});
     }
@@ -1389,16 +1389,25 @@
       fieldset.querySelector('.range-reset').addEventListener('click',()=>{state.ranges[key]=null;if(key==='length')state.lengthAbove8=false;refresh();live();});rangeRefresh.push(refresh);refresh();options.append(fieldset);
     }
     addRange('length','Length',0,8,.125,[5,7]);addRange('ring','Ring gauge',20,80,1,[32,50]);
+    function addStrength(){
+      const labels=['Mild','Mild–Medium','Medium','Medium–Full','Full'];
+      const fieldset=document.createElement('fieldset');fieldset.className='visual-range strength-range';fieldset.dataset.filterGroup='strength';fieldset.dataset.search='strength mild mellow light medium full undisclosed unspecified';
+      fieldset.innerHTML='<legend>Strength</legend><p class="strength-selection" aria-live="polite"></p><div class="range-ruler strength-slider"><div class="range-track"></div>'+[0,1].map(i=>`<input type="range" min="0" max="4" step="1" data-strength-bound="${i}" aria-label="${i?'Maximum':'Minimum'} strength">`).join('')+'</div><div class="strength-scale" aria-hidden="true">'+labels.map(label=>`<span>${label.replace('–','–<br>')}</span>`).join('')+'</div><button type="button" class="range-reset">Any strength</button>';
+      const refresh=()=>{const range=state.ranges.strength||[0,4];fieldset.style.setProperty('--range-min',`${range[0]/4*100}%`);fieldset.style.setProperty('--range-max',`${range[1]/4*100}%`);fieldset.querySelectorAll('[data-strength-bound]').forEach(input=>{const v=range[Number(input.dataset.strengthBound)];input.value=v;input.setAttribute('aria-valuetext',labels[v]);});fieldset.querySelector('.strength-selection').textContent=state.ranges.strength?(range[0]===range[1]?labels[range[0]]:labels[range[0]]+' to '+labels[range[1]]):'Any strength';fieldset.querySelector('.range-reset').disabled=!state.ranges.strength;};
+      fieldset.querySelectorAll('[data-strength-bound]').forEach(input=>input.addEventListener('input',()=>{const i=Number(input.dataset.strengthBound),range=[...(state.ranges.strength||[0,4])];range[i]=Math.max(0,Math.min(4,Number(input.value)));if(range[0]>range[1])range[1-i]=range[i];state.ranges.strength=range;refresh();live();}));
+      fieldset.querySelector('.range-reset').addEventListener('click',()=>{state.ranges.strength=null;refresh();live();});rangeRefresh.push(refresh);refresh();options.append(fieldset);
+    }
     for(const [key,label,resolver] of brandFilterFields){
+      if(key==='strength'){addStrength();continue;}
       const fieldset=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=label;fieldset.append(legend);fieldset.dataset.filterGroup=key;fieldset.dataset.search=label.toLowerCase();
       const selected=state.filters[key];const actual=[...new Set([...state.rowsAll.map(r=>resolver(r)||(key==='shade'?'(Unspecified)':'')),...selected].filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
       const standards=['Claro','Colorado Claro','Colorado','Colorado Maduro','Maduro','Oscuro','Candela'];
       const values=key==='shade'?[...standards,...actual.filter(value=>!standards.includes(value))]:actual;
-      const shadeRows=[];if(key==='shade'){for(let i=0;i<2;i++){const row=document.createElement('div');row.className='shade-row';fieldset.append(row);shadeRows.push(row);}}
-      values.forEach((value,index)=>{const item=document.createElement('label'),input=document.createElement('input'),text=document.createElement('span');input.type='checkbox';input.value=value;input.dataset.filterKey=key;input.checked=selected.has(value);text.textContent=value;item.className='brand-filter-option';item.dataset.search=(label+' '+value).toLowerCase();input.addEventListener('change',()=>{if(input.checked)state.filters[key].add(value);else state.filters[key].delete(value);live();});item.append(input);if(key==='shade'&&index<7){item.classList.add('shade-option');const img=document.createElement('img');img.src=asset+'shade-'+value.toLowerCase().replaceAll(' ','-')+'.svg';img.alt='';item.append(img);item.append(text);shadeRows[index<3?0:1].append(item);}else{item.append(text);fieldset.append(item);}});
+      let shadeGrid;if(key==='shade'){shadeGrid=document.createElement('div');shadeGrid.className='shade-grid';fieldset.append(shadeGrid);}
+      values.forEach((value,index)=>{const item=document.createElement('label'),input=document.createElement('input'),text=document.createElement('span');input.type='checkbox';input.value=value;input.dataset.filterKey=key;input.checked=selected.has(value);text.textContent=value;item.className='brand-filter-option';item.dataset.search=(label+' '+value).toLowerCase();input.addEventListener('change',()=>{if(input.checked)state.filters[key].add(value);else state.filters[key].delete(value);live();});item.append(input);if(key==='shade'&&index<7){item.classList.add('shade-option');item.dataset.shade=value.toLowerCase().replaceAll(' ','-');const img=document.createElement('img');img.src=asset+'shade-'+value.toLowerCase().replaceAll(' ','-')+'.svg';img.alt='';item.append(img);item.append(text);shadeGrid.append(item);}else{item.append(text);fieldset.append(item);}});
       if(values.length)options.append(fieldset);
     }
-    // Keep initial open state; titles are keyboard-accessible collapse controls.
+    // Start with collapsed sections; titles remain keyboard-accessible controls.
     options.querySelectorAll('fieldset').forEach((group,index)=>{
       const legend=group.querySelector('legend'),label=group.dataset.filterGroup==='ring'?'Ring':legend.textContent,body=document.createElement('div');body.className='filter-section-body';body.hidden=true;body.id=`brand-filter-body-${index}`;
       for(const child of [...group.children])if(child!==legend)body.append(child);
@@ -1407,7 +1416,7 @@
     });
     const close=()=>dialog.close();dialog.querySelectorAll('[data-filter-cancel]').forEach(button=>button.addEventListener('click',close));
     dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
-    dialog.querySelector('[data-filter-clear]').addEventListener('click',()=>{Object.values(state.filters).forEach(set=>set.clear());state.ranges.length=null;state.ranges.ring=null;state.lengthAbove8=false;state.bandSelection.clear();state.search='';if(searchInput)searchInput.value='';const search=dialog.querySelector('.brand-filter-search');search.value='';search.dispatchEvent(new Event('input'));dialog.querySelectorAll('input[type="checkbox"]').forEach(input=>{input.checked=false;});rangeRefresh.forEach(fn=>fn());live();});
+    dialog.querySelector('[data-filter-clear]').addEventListener('click',()=>{Object.values(state.filters).forEach(set=>set.clear());state.ranges.length=null;state.ranges.ring=null;state.ranges.strength=null;state.lengthAbove8=false;state.bandSelection.clear();state.search='';if(searchInput)searchInput.value='';const search=dialog.querySelector('.brand-filter-search');search.value='';search.dispatchEvent(new Event('input'));dialog.querySelectorAll('input[type="checkbox"]').forEach(input=>{input.checked=false;});rangeRefresh.forEach(fn=>fn());live();});
     const filterSearch=dialog.querySelector('.brand-filter-search');
     filterSearch.addEventListener('input',()=>{const q=filterSearch.value.trim().toLowerCase();let visible=0;options.querySelectorAll('fieldset').forEach(group=>{if(group.classList.contains('visual-range')){group.hidden=!group.dataset.search.includes(q);if(!group.hidden){visible++;if(q){group.querySelector('.filter-section-body').hidden=false;group.querySelector('.filter-section-toggle').setAttribute('aria-expanded','true');}}return;}let groupVisible=0;group.querySelectorAll('.brand-filter-option').forEach(item=>{item.hidden=!item.dataset.search.includes(q);if(!item.hidden)groupVisible++;});group.hidden=!groupVisible;if(groupVisible&&q){group.querySelector('.filter-section-body').hidden=false;group.querySelector('.filter-section-toggle').setAttribute('aria-expanded','true');}visible+=groupVisible;});dialog.querySelector('.brand-filter-empty').hidden=visible>0;});
     dialog.querySelector('form').addEventListener('submit',event=>{event.preventDefault();committed=true;close();});
