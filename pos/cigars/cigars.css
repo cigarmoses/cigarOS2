@@ -1669,3 +1669,6 @@ html[data-theme="light"] .cb-nav-btn:hover{
 #filter-modal .main-visual-controls .shade-option:has(input:checked)::after{content:'✓';position:absolute;top:3px;right:3px;display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#8af4b1;color:#123720;text-shadow:none;font-size:12px;font-weight:800;pointer-events:none}
 #filter-modal .main-visual-controls .shade-option:has(input:focus-visible){outline:2px solid #1687ed;outline-offset:2px}
 #filter-modal .main-visual-controls .brand-filter-option:not(.shade-option){display:flex;align-items:center;gap:8px;margin:8px 0;color:var(--muted);font-size:14px}
+#filter-modal.fm.fm--tabs [hidden]{display:none!important}
+#filter-modal.fm.fm--tabs .fm__row--cigar>.fm__info[aria-hidden="true"]{display:none}
+#filter-modal.fm.fm--tabs .fm__row--cigar>.fm__info:not([aria-hidden]){grid-column:1;grid-row:2;justify-self:center}
