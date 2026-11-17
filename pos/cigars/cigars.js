@@ -1501,7 +1501,10 @@ function renderRingRangeFilter(list){
 }
 
 function getCigarFilterIcon(value = "", group = ""){
-  const v = String(value || "").toLowerCase().trim();
+  const v = String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+  const iconNames=new Set("a belicoso belicosohead boxpressed chisel churchill cigarillo corona coronaextra diadema diademas diademas2 doublecorona figurado gordo grancorona lancero lonsdale panetela parejo perfecto petitcorona petitecorona pigtailparejo piramides presidente pyramid robusto rothschild roundfoot salomon toro torpedo".split(" "));
+  const exact=v.replace(/[^a-z0-9]/g,"");
+  if(iconNames.has(exact))return `/uxui/cigaricons/${exact}.svg`;
 
   if(group === "vitola"){
     if(v.includes("gran corona")) return "/uxui/cigaricons/grancorona.svg";
@@ -1519,7 +1522,7 @@ function getCigarFilterIcon(value = "", group = ""){
     if(v.includes("belicoso")) return "/uxui/cigaricons/belicoso.svg";
     if(v.includes("perfecto")) return "/uxui/cigaricons/perfecto.svg";
     if(v.includes("pyramid") || v.includes("piramide")) return "/uxui/cigaricons/pyramid.svg";
-    if(v.includes("panetela") || v.includes("pantela")) return "/uxui/cigaricons/panetela.svg";
+    if(v.includes("panetela") || v.includes("panatela") || v.includes("pantela")) return "/uxui/cigaricons/panetela.svg";
     if(v.includes("figurado")) return "/uxui/cigaricons/figurado.svg";
     if(v.includes("salomon")) return "/uxui/cigaricons/salomon.svg";
     if(v.includes("firecracker")) return "/img/icons/vitolas/firecracker.svg";
@@ -1546,7 +1549,7 @@ function getCigarFilterIcon(value = "", group = ""){
     if(v.includes("salomon")) return "/uxui/cigaricons/salomon.svg";
   }
 
-  return "";
+  return group==="shape"?getCigarFilterIcon(value,"vitola"):"";
 }
 
 function getShapeInfo(value = ""){
