@@ -1361,18 +1361,17 @@
       const fieldset=document.createElement('fieldset');fieldset.className='visual-range';fieldset.dataset.filterGroup=key;fieldset.dataset.search=label.toLowerCase();
       fieldset.innerHTML=`<legend>${label}</legend><div class="range-number-row">${['Minimum','Maximum'].map((name,i)=>`<label>${name}<input type="number" inputmode="decimal" min="${low}" max="${high}" step="${step}" data-bound="${i}" aria-label="${name} ${label.toLowerCase()}"></label>`).join('')}</div>`;
       if(key==='ring'){
-        fieldset.insertAdjacentHTML('beforeend',`<div class="ring-comparison" aria-hidden="true">${['dime','quarter'].map((coin,i)=>`<div class="ring-reference"><div class="ring-stage"><img class="coin-art ${coin}" src="${asset}${coin}.svg" alt=""><img class="ring-art ring-art-${i}" src="${asset}cigar-end.svg" alt=""></div><div class="coin-caption">${i?'Quarter = 60':'Dime = 45'}</div></div>`).join('')}</div><p class="range-help">Enter a minimum and maximum ring gauge.</p><p class="range-help">Proportional comparison · Not actual screen size</p>`);
+        fieldset.insertAdjacentHTML('beforeend',`<div class="ring-comparison" aria-hidden="true">${['dime','quarter'].map((coin,i)=>`<div class="ring-reference"><div class="ring-stage"><img class="coin-art ${coin}" src="${asset}${coin}.svg" alt=""><img class="ring-art ring-art-${i}" src="${asset}cigar-end.svg" alt=""></div><div class="coin-caption">${i?'Quarter = 60':'Dime = 45'}</div></div>`).join('')}</div><p class="range-help">Enter a minimum and maximum ring gauge.</p>`);
       }else{
-        fieldset.insertAdjacentHTML('beforeend',`<div class="length-comparison" aria-hidden="true"><img class="length-cigar" src="${asset}length-cigar.png" alt=""></div><div class="length-ruler-art"><img src="${asset}ruler-8-inch.svg" alt="Ruler from 0 to 8 inches"></div><div class="range-ruler length-slider"><div class="range-track"></div>${[0,1].map(i=>`<input type="range" min="${low}" max="${high}" step="${step}" data-bound="${i}" aria-label="${i?'Maximum':'Minimum'} length slider">`).join('')}</div><p class="range-help">Drag either handle or enter a length in inches.</p><button type="button" class="length-over-eight" aria-pressed="false">&gt;8″</button>`);
+        fieldset.insertAdjacentHTML('beforeend',`<div class="length-comparison" aria-hidden="true"><img class="length-cigar" src="${asset}length-cigar.png" alt=""></div><div class="length-ruler-art"><img src="${asset}ruler-8-inch.svg" alt="Ruler from 0 to 8 inches"></div><div class="range-ruler length-slider"><div class="range-track"></div>${[0,1].map(i=>`<input type="range" min="${low}" max="${high}" step="${step}" data-bound="${i}" aria-label="${i?'Maximum':'Minimum'} length slider">`).join('')}</div><p class="range-help">Drag either handle or enter a length in inches.</p>`);
       }
-      fieldset.insertAdjacentHTML('beforeend',`<button type="button" class="range-reset">Any ${label.toLowerCase()}</button>`);
       const refresh=(editing=null)=>{
         const values=state.ranges[key]||defaults,over=key==='length'&&state.lengthAbove8;
         fieldset.querySelectorAll('input[data-bound]').forEach(input=>{if(input!==editing)input.value=values[Number(input.dataset.bound)];input.disabled=over;});
         const min=(values[0]-low)/(high-low)*100,max=(values[1]-low)/(high-low)*100;fieldset.style.setProperty('--range-min',`${min}%`);fieldset.style.setProperty('--range-max',`${max}%`);
-        fieldset.classList.toggle('range-active',!!state.ranges[key]||over);fieldset.classList.toggle('length-over-active',over);fieldset.querySelector('.range-reset').disabled=!state.ranges[key]&&!over;
+        fieldset.classList.toggle('range-active',!!state.ranges[key]||over);fieldset.classList.toggle('length-over-active',over);
         if(key==='ring')values.forEach((v,i)=>fieldset.querySelector(`.ring-art-${i}`).style.width=`${v/80*100}%`);
-        else{fieldset.style.setProperty('--cigar-width',`${over?100:values[1]/8*100}%`);fieldset.style.setProperty('--cigar-solid',`${over||!values[1]?100:values[0]/values[1]*100}%`);fieldset.style.setProperty('--cigar-max','100%');fieldset.querySelector('.length-over-eight').setAttribute('aria-pressed',String(over));}
+        else{fieldset.style.setProperty('--cigar-width',`${over?100:values[1]/8*100}%`);fieldset.style.setProperty('--cigar-solid',`${over||!values[1]?100:values[0]/values[1]*100}%`);fieldset.style.setProperty('--cigar-max','100%');}
       };
       function editRange(input,final=false){
         if(input.value===''||!Number.isFinite(input.valueAsNumber)){if(final)refresh();return;}
@@ -1385,17 +1384,16 @@
       }
       fieldset.querySelectorAll('input[data-bound]').forEach(input=>input.addEventListener('input',()=>editRange(input)));
       fieldset.querySelectorAll('input[type="number"]').forEach(input=>input.addEventListener('change',()=>editRange(input,true)));
-      fieldset.querySelector('.length-over-eight')?.addEventListener('click',()=>{state.lengthAbove8=!state.lengthAbove8;state.ranges.length=null;refresh();live();});
-      fieldset.querySelector('.range-reset').addEventListener('click',()=>{state.ranges[key]=null;if(key==='length')state.lengthAbove8=false;refresh();live();});rangeRefresh.push(refresh);refresh();options.append(fieldset);
+      rangeRefresh.push(refresh);refresh();options.append(fieldset);
     }
     addRange('length','Length',0,8,.125,[5,7]);addRange('ring','Ring gauge',20,80,1,[32,50]);
     function addStrength(){
       const labels=['Mild','Mild–Medium','Medium','Medium–Full','Full'];
       const fieldset=document.createElement('fieldset');fieldset.className='visual-range strength-range';fieldset.dataset.filterGroup='strength';fieldset.dataset.search='strength mild mellow light medium full undisclosed unspecified';
-      fieldset.innerHTML='<legend>Strength</legend><p class="strength-selection" aria-live="polite"></p><div class="range-ruler strength-slider"><div class="range-track"></div>'+[0,1].map(i=>`<input type="range" min="0" max="4" step="1" data-strength-bound="${i}" aria-label="${i?'Maximum':'Minimum'} strength">`).join('')+'</div><div class="strength-scale" aria-hidden="true">'+labels.map(label=>`<span>${label.replace('–','–<br>')}</span>`).join('')+'</div><button type="button" class="range-reset">Any strength</button>';
-      const refresh=()=>{const range=state.ranges.strength||[0,4];fieldset.style.setProperty('--range-min',`${range[0]/4*100}%`);fieldset.style.setProperty('--range-max',`${range[1]/4*100}%`);fieldset.querySelectorAll('[data-strength-bound]').forEach(input=>{const v=range[Number(input.dataset.strengthBound)];input.value=v;input.setAttribute('aria-valuetext',labels[v]);});fieldset.querySelector('.strength-selection').textContent=state.ranges.strength?(range[0]===range[1]?labels[range[0]]:labels[range[0]]+' to '+labels[range[1]]):'Any strength';fieldset.querySelector('.range-reset').disabled=!state.ranges.strength;};
+      fieldset.innerHTML='<legend>Strength</legend><p class="strength-selection" aria-live="polite"></p><div class="range-ruler strength-slider"><div class="range-track"></div>'+[0,1].map(i=>`<input type="range" min="0" max="4" step="1" data-strength-bound="${i}" aria-label="${i?'Maximum':'Minimum'} strength">`).join('')+'</div><div class="strength-scale" aria-hidden="true">'+labels.map(label=>`<span>${label.replace('–','–<br>')}</span>`).join('')+'</div>';
+      const refresh=()=>{const range=state.ranges.strength||[0,4];fieldset.style.setProperty('--range-min',`${range[0]/4*100}%`);fieldset.style.setProperty('--range-max',`${range[1]/4*100}%`);fieldset.querySelectorAll('[data-strength-bound]').forEach(input=>{const v=range[Number(input.dataset.strengthBound)];input.value=v;input.setAttribute('aria-valuetext',labels[v]);});fieldset.querySelector('.strength-selection').textContent=state.ranges.strength?(range[0]===range[1]?labels[range[0]]:labels[range[0]]+' to '+labels[range[1]]):'Any strength';};
       fieldset.querySelectorAll('[data-strength-bound]').forEach(input=>input.addEventListener('input',()=>{const i=Number(input.dataset.strengthBound),range=[...(state.ranges.strength||[0,4])];range[i]=Math.max(0,Math.min(4,Number(input.value)));if(range[0]>range[1])range[1-i]=range[i];state.ranges.strength=range;refresh();live();}));
-      fieldset.querySelector('.range-reset').addEventListener('click',()=>{state.ranges.strength=null;refresh();live();});rangeRefresh.push(refresh);refresh();options.append(fieldset);
+      rangeRefresh.push(refresh);refresh();options.append(fieldset);
     }
     for(const [key,label,resolver] of brandFilterFields){
       if(key==='strength'){addStrength();continue;}

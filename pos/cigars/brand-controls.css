@@ -7,8 +7,8 @@
 .range-number-row label{font-size:14px;color:var(--muted,#8b8f98)}
 .range-number-row input{display:block;width:100%;box-sizing:border-box;min-height:50px;padding:8px 12px;border:1px solid var(--stroke,#cfd1d8);border-radius:13px;background:var(--bg2);color:var(--text);line-height:1.2;font-family:inherit;font-size:25px;font-weight:700;margin-top:7px}
 .range-number-row input::-webkit-inner-spin-button{opacity:1}
-.ring-comparison{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:12px 0 24px}
-.ring-stage{aspect-ratio:1;position:relative;border-bottom:1px solid var(--stroke,#dedee6)}
+.ring-comparison{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:0 0 24px}
+.ring-stage{aspect-ratio:1.18;position:relative;border-bottom:1px solid var(--stroke,#dedee6)}
 .ring-stage img{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:auto;max-height:100%;object-fit:contain;object-position:bottom}
 .ring-stage .coin-art{opacity:.3}.ring-stage .dime{width:56.25%}.ring-stage .quarter{width:75%}.ring-stage .ring-art{z-index:1}
 .coin-caption{text-align:center;color:var(--muted,#9da0a6);font-size:clamp(14px,3.5vw,23px);white-space:nowrap;margin-top:12px}
