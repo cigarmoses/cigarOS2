@@ -51,6 +51,7 @@ const state = {
     shape: new Set(),
     shade: new Set(),
   },
+  ranges: {length:null,ring:null,strength:null},
   activeKey: "vitola",
   activeSearch: "",
   includeCubans: false,
@@ -304,6 +305,7 @@ function buildBrandSummary(rows){
 function ensureGlobalState(){
   if(!window.__CIGAR_FILTER_STATE__){
     window.__CIGAR_FILTER_STATE__ = {
+      ranges:{length:null,ring:null,strength:null},
       q:"",
       includeCubans:false,
       filters:{
@@ -322,6 +324,7 @@ function ensureGlobalState(){
 
   const g = window.__CIGAR_FILTER_STATE__;
   if(!g.filters) g.filters = {};
+  if(!g.ranges) g.ranges={length:null,ring:null,strength:null};
 
   Object.keys(state.selected).forEach((k)=>{
     const v = g.filters[k];
@@ -367,6 +370,22 @@ function isCubanRow(row){
   );
 }
 
+  function measurement(value){
+    const text=String(value??'').trim().replace(/[″”"]/g,'').replace(/inches|inch|in\.?$/gi,'').trim();
+    if(!text)return null;
+    const fractions={'¼':.25,'½':.5,'¾':.75,'⅛':.125,'⅜':.375,'⅝':.625,'⅞':.875};
+    if(fractions[text.slice(-1)]!=null){const base=text.slice(0,-1).trim();return (base?Number(base):0)+fractions[text.slice(-1)];}
+    const f=text.match(/^(?:(\d+)[ -]+)?(\d+)\/(\d+)$/);
+    if(f)return Number(f[1]||0)+Number(f[2])/Number(f[3]);
+    const n=Number(text);return Number.isFinite(n)?n:null;
+  }
+  function strengthRank(value){
+    const key=String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(?:to|and)\b/g,'').replace(/[^a-z]/g,'');
+    const ranks={mild:0,mellow:0,light:0,mildmedium:1,mellowmedium:1,lightmedium:1,medium:2,mediumfull:3,full:4};
+    return Object.prototype.hasOwnProperty.call(ranks,key)?ranks[key]:null;
+  }
+
+function normalizeShade(value){const key=norm(value).toLowerCase().replace(/[_-]/g," ").replace(/\s+/g," ");const known={claro:"Claro","colorado claro":"Colorado Claro","col claro":"Colorado Claro",colorado:"Colorado","colorado maduro":"Colorado Maduro","col maduro":"Colorado Maduro",maduro:"Maduro",oscuro:"Oscuro",candela:"Candela"};return known[key]||norm(value)||"(Unspecified)";}
 function rowMatchesFilters(row,g){
   const isCuban = isCubanRow(row);
 
@@ -380,7 +399,7 @@ function rowMatchesFilters(row,g){
   const length = norm(getField(row,["Length","length"]));
   const strength = norm(getField(row,["Strength","strength"]));
   const shape = norm(getField(row,["Shape","shape"]));
-  const shade = norm(getField(row,["Wrapper Shade","WrapperShade","shade"]));
+  const shade = normalizeShade(getField(row,["Wrapper Shade","WrapperShade","Wrapper_Shade","shade"]));
 
   const checks = {
     brand,
@@ -403,6 +422,7 @@ function rowMatchesFilters(row,g){
     }
   }
 
+  for(const key of ["ring","length","strength"]){const range=g.ranges?.[key];if(!range)continue;const n=key==="strength"?strengthRank(strength):measurement(key==="ring"?ring:length);if(n==null||!Number.isFinite(n)||n<range[0]||n>range[1])return false;}
   const q = norm(g.q).toLowerCase();
 
   if(q){
@@ -416,7 +436,7 @@ function rowMatchesFilters(row,g){
 }
 
 function hasActiveFilters(g){
-  return Object.values(g.filters || {}).some(v => v instanceof Set && v.size);
+  return Object.values(g.filters || {}).some(v => v instanceof Set && v.size) || Object.values(g.ranges||{}).some(Boolean);
 }
 
 /* =========================
@@ -579,6 +599,7 @@ function renderAppliedChips(g){
     });
   });
 
+  Object.entries(g.ranges||{}).forEach(([key,value])=>{if(value){const labels=["Mild","Mild–Medium","Medium","Medium–Full","Full"];const text=key==="strength"?value.map(v=>labels[v]).join("–"):value.join("–");chips.push(`<div class="af-chip" data-chip-range="${key}"><span>${key}: ${escapeHtml(text)}</span><button class="af-chip__x" type="button" aria-label="Remove ${key} filter">×</button></div>`);}});
   if(g.q || hasActiveFilters(g) || g.includeCubans){
     chips.push(`
       <div class="af-chip af-clear">
@@ -595,6 +616,7 @@ function renderAppliedChips(g){
       e.preventDefault();
 
       if(btn.id === "af-clear-all"){
+        g.ranges={length:null,ring:null,strength:null};
         g.q = "";
         g.includeCubans = false;
 
@@ -618,6 +640,7 @@ function renderAppliedChips(g){
         return;
       }
 
+      const rangeKey=chip?.getAttribute("data-chip-range");if(rangeKey){g.ranges[rangeKey]=null;renderAll();return;}
       const key = chip?.getAttribute("data-chip-key");
       const val = chip?.getAttribute("data-chip-val");
 
@@ -706,7 +729,7 @@ function getValuesForKey(key){
     length:["Length","length"],
     strength:["Strength","strength"],
     shape:["Shape","shape"],
-    shade:["Wrapper Shade","WrapperShade","shade"],
+    shade:["Wrapper Shade","WrapperShade","Wrapper_Shade","shade"],
   };
 
   const keys = fieldMap[key] || [key];
@@ -731,12 +754,13 @@ function getValuesForKey(key){
     vals.forEach(value => { const name = brandName(value); if(name && !names.has(brandKey(name))) names.set(brandKey(name), name); });
     return [...names.values()].sort((a,b)=>a.localeCompare(b));
   }
+  if(key==="shade") return [...new Set(vals.map(normalizeShade).concat(DATA_ROWS.some(r=>!getField(r,fieldMap.shade))?["(Unspecified)"]:[]))].sort();
   return [...new Set(vals.map(norm).filter(Boolean))]
     .sort((a,b)=>a.localeCompare(b));
 }
 
 function countSelectedForKey(key){
-  return state.selected[key] instanceof Set ? state.selected[key].size : 0;
+  return (state.selected[key] instanceof Set ? state.selected[key].size : 0)+(state.ranges[key]?1:0);
 }
 
 /* =========================
@@ -1332,38 +1356,12 @@ function renderTabs(){
   const tabbar = $("#fm-tabbar", modalRoot);
   if(!tabbar) return;
 
-  tabbar.innerHTML = CATEGORIES.map((c) => {
-    const active = c.key === state.activeKey ? " is-active" : "";
-    const count = countSelectedForKey(c.key);
-
-    return `
-      <button class="fm__tab${active}" type="button" data-cat="${escapeHtml(c.key)}">
-        <span>${escapeHtml(c.label)}</span>
-        ${count ? `<span class="fm__tab-count">${count}</span>` : ""}
-      </button>
-    `;
-  }).join("");
-
-  $$(".fm__tab", tabbar).forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const key = btn.getAttribute("data-cat");
-      if(!key) return;
-
-      state.activeKey = key;
-      state.activeSearch = "";
-
-      closeInfoSheet();
-      renderTabs();
-      renderList();
-
-      const inp = $("#fm-search-inline", modalRoot);
-
-      if(inp && key !== "ring"){
-        inp.value = "";
-        inp.focus();
-      }
-    });
-  });
+  if(!tabbar.children.length){
+    tabbar.setAttribute('role','tablist');tabbar.setAttribute('aria-label','Filter categories');
+    tabbar.innerHTML=CATEGORIES.map(c=>`<button class="fm__tab" type="button" role="tab" data-cat="${c.key}">${c.label}<span class="fm__tab-count" hidden></span></button>`).join('');
+    tabbar.addEventListener('click',e=>{const btn=e.target.closest('[data-cat]');if(!btn)return;e.preventDefault();e.stopPropagation();state.activeKey=btn.dataset.cat;state.activeSearch='';closeInfoSheet();renderTabs();renderList();});
+  }
+  $$('.fm__tab',tabbar).forEach(btn=>{const active=btn.dataset.cat===state.activeKey,count=countSelectedForKey(btn.dataset.cat);btn.classList.toggle('is-active',active);btn.setAttribute('aria-selected',String(active));const badge=btn.querySelector('.fm__tab-count');badge.hidden=!count;badge.textContent=count||'';});
 }
 
 function renderRingRangeFilter(list){
@@ -1573,6 +1571,12 @@ function renderList(){
   if(input) input.value = state.activeSearch;
 
   const key = state.activeKey;
+  const isVisual=['length','ring','strength','shade'].includes(key);
+  list.classList.toggle('main-visual-controls',isVisual);
+  const searchWrap=$('.fm__search-wrap',modalRoot);if(searchWrap)searchWrap.hidden=isVisual&&key!=='shade';
+  if(isVisual && window.CigarVisualFilters){
+    window.CigarVisualFilters.render({key,container:list,search:state.activeSearch,value:state.ranges[key],selected:state.selected.shade,shadeValues:getValuesForKey('shade').filter(v=>!state.activeSearch||v.toLowerCase().includes(state.activeSearch.toLowerCase())),onChange:value=>{state.ranges[key]=value;state.selected[key].clear();renderTabs();},onShadeChange:(value,checked)=>{if(checked)state.selected.shade.add(value);else state.selected.shade.delete(value);renderTabs();}});return;
+  }
   const values = getValuesForKey(key);
   const selectedSet = state.selected[key];
 
@@ -1659,9 +1663,10 @@ const brandOrManufacturerIcon = isLogoRow
         ? `<span class="fm__measure-main">${escapeHtml(label)}</span><span class="fm__measure-unit">inches</span>`
         : escapeHtml(label);
 
+    if(key==='vitola'||key==='shape')return `<div class="fm__row fm__row--cigar ${isSelected?'is-selected':''}" role="checkbox" aria-checked="${isSelected}" tabindex="0" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">${cb}<div class="fm__choice-content"><div class="fm__label">${labelHtml}</div>${icon}</div>${infoBtn}</div>`;
     if(isLogoRow){
       return `
-        <div class="fm__row fm__row--logo ${isSelected ? "is-selected" : ""}" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
+        <div class="fm__row fm__row--logo ${isSelected ? "is-selected" : ""}" role="checkbox" aria-checked="${isSelected}" tabindex="0" data-key="${escapeHtml(key)}" data-value="${escapeHtml(label)}">
           ${cb}
           ${icon}
           <div class="fm__label">${labelHtml}</div>
@@ -1680,7 +1685,9 @@ const brandOrManufacturerIcon = isLogoRow
   }).join("");
 
   $$(".fm__row", list).forEach((row) => {
+    row.addEventListener("keydown",e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();row.click();}});
     row.addEventListener("click", (e) => {
+      e.stopPropagation();
       const target = e.target;
 
       if(target instanceof Element && target.closest(".fm__info")) return;
@@ -1746,11 +1753,7 @@ function openModal(){
   renderTabs();
   renderList();
 
-  window.setTimeout(() => {
-    if(state.activeKey !== "ring"){
-      $("#fm-search-inline", modalRoot)?.focus();
-    }
-  }, 60);
+  $('.fm__tab.is-active',modalRoot)?.focus({preventScroll:true});
 }
 
 function closeModal(){
@@ -1781,6 +1784,7 @@ function syncLocalFromGlobal(){
     state.selected[k] = set instanceof Set ? new Set([...set]) : new Set();
   });
 
+  state.ranges=Object.fromEntries(Object.entries(g.ranges||{}).map(([k,v])=>[k,v?[...v]:null]));
   state.includeCubans = !!g.includeCubans;
 }
 
@@ -1793,6 +1797,7 @@ function pushLocalToGlobal(){
     g.filters[k] = new Set([...state.selected[k]]);
   });
 
+  g.ranges=Object.fromEntries(Object.entries(state.ranges).map(([k,v])=>[k,v?[...v]:null]));
   g.includeCubans = !!state.includeCubans;
   g.q = (searchInput?.value || g.q || "").toString();
 
@@ -1801,6 +1806,7 @@ function pushLocalToGlobal(){
 }
 
 function resetLocalSelections(){
+  state.ranges={length:null,ring:null,strength:null};
   Object.keys(state.selected).forEach((k) => {
     state.selected[k].clear();
   });
@@ -1835,8 +1841,6 @@ function bindFilterButton(root = document){
     btn.__cigarsFilterBound = true;
 
     btn.addEventListener("click", openFiltersFromButton, { passive:false });
-    btn.addEventListener("pointerup", openFiltersFromButton, { passive:false });
-    btn.addEventListener("touchend", openFiltersFromButton, { passive:false });
   });
 }
 
