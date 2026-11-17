@@ -1352,7 +1352,7 @@
     const originalLengthAbove8=state.lengthAbove8,originalSearch=state.search,originalBandSelection=new Set(state.bandSelection);
     let committed=false;
     const dialog=document.createElement('dialog');dialog.className='brand-filter-dialog brand-filter-visual';dialog.setAttribute('aria-labelledby','brand-filter-title');
-    dialog.innerHTML='<form method="dialog"><header><h2 id="brand-filter-title">Filters</h2><button type="button" data-filter-cancel aria-label="Cancel and close filters">×</button></header><p class="brand-filter-live" role="status" aria-live="polite"></p><label class="brand-filter-search-label"><input type="search" aria-label="Search filter options" class="brand-filter-search" placeholder="Search filter options" autocomplete="off"></label><div class="brand-filter-options"></div><p class="brand-filter-empty" hidden>No matching options.</p><footer><button type="button" data-filter-clear>Clear Filters</button><button type="button" data-filter-cancel>Cancel</button><button type="submit" class="brand-filter-apply">Done</button></footer></form>';
+    dialog.innerHTML='<form method="dialog"><header><h2 id="brand-filter-title">Filters</h2><button type="button" data-filter-cancel aria-label="Cancel and close filters">×</button></header><p class="brand-filter-live" role="status" aria-live="polite"></p><label class="brand-filter-search-label"><input type="search" aria-label="Search filter options" class="brand-filter-search" placeholder="Search" autocomplete="off"></label><div class="brand-filter-options"></div><p class="brand-filter-empty" hidden>No matching options.</p><footer><button type="button" data-filter-clear>Clear Filters</button><button type="button" data-filter-cancel>Cancel</button><button type="submit" class="brand-filter-apply">Done</button></footer></form>';
     const options=dialog.querySelector('.brand-filter-options');
     const live=()=>{applyAll();updateFilterLabel();const count=listEl?.querySelectorAll('.brand-row').length||0;dialog.querySelector('.brand-filter-live').textContent=`${count} cigar${count===1?'':'s'}`;};
     const asset='/pos/cigars/filter-assets/';
@@ -1400,9 +1400,9 @@
     }
     // Keep initial open state; titles are keyboard-accessible collapse controls.
     options.querySelectorAll('fieldset').forEach((group,index)=>{
-      const legend=group.querySelector('legend'),label=legend.textContent,body=document.createElement('div');body.className='filter-section-body';body.id=`brand-filter-body-${index}`;
+      const legend=group.querySelector('legend'),label=group.dataset.filterGroup==='ring'?'Ring':legend.textContent,body=document.createElement('div');body.className='filter-section-body';body.hidden=true;body.id=`brand-filter-body-${index}`;
       for(const child of [...group.children])if(child!==legend)body.append(child);
-      const toggle=document.createElement('button');toggle.type='button';toggle.className='filter-section-toggle';toggle.textContent=label;toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-controls',body.id);toggle.id=`brand-filter-toggle-${index}`;group.setAttribute('aria-labelledby',toggle.id);legend.remove();group.prepend(toggle);group.append(body);
+      const toggle=document.createElement('button');toggle.type='button';toggle.className='filter-section-toggle';toggle.textContent=label;toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls',body.id);toggle.id=`brand-filter-toggle-${index}`;group.setAttribute('aria-labelledby',toggle.id);legend.remove();group.prepend(toggle);group.append(body);
       toggle.addEventListener('click',()=>{body.hidden=!body.hidden;toggle.setAttribute('aria-expanded',String(!body.hidden));});
     });
     const close=()=>dialog.close();dialog.querySelectorAll('[data-filter-cancel]').forEach(button=>button.addEventListener('click',close));
